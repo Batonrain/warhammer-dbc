@@ -35,7 +35,7 @@
 
 **Размер:** M. **Риск:** нет.
 
-### 0.1. Создать `package.json`
+### 0.1. Создать `package.json` ✅
 
 Файл в корне репозитория:
 
@@ -82,7 +82,7 @@ Foundry `package.json` не читает, на работу системы он 
 **Готово, когда:** коммит, меняющий только `docs/`, не запускает Release
 (проверяется на вкладке Actions в GitHub).
 
-### 0.3. Настроить ESLint с глобалями Foundry
+### 0.3. Настроить ESLint с глобалями Foundry ✅
 
 `eslint.config.mjs` в корне:
 
@@ -102,7 +102,9 @@ export default [
         foundry: "readonly", CONFIG: "readonly", CONST: "readonly",
         Roll: "readonly", ChatMessage: "readonly", Dialog: "readonly",
         Actor: "readonly", Item: "readonly", ActiveEffect: "readonly",
-        canvas: "readonly", fromUuid: "readonly", renderTemplate: "readonly"
+        canvas: "readonly", fromUuid: "readonly", renderTemplate: "readonly",
+        Folder: "readonly", JournalEntry: "readonly", FilePicker: "readonly",
+        fromUuidSync: "readonly", Handlebars: "readonly", $: "readonly"
       }
     },
     rules: {
@@ -113,13 +115,20 @@ export default [
 ];
 ```
 
-Список глобалей придётся дополнить, `no-undef` сам покажет чем.
+Вторая строка глобалей — то, чем `no-undef` попросил дополнить список на первом же
+запуске: 115 ошибок в 108 файлах, из них 114 про эти шесть имён.
+
+Сто пятнадцатая оказалась настоящей ошибкой:
+[item-sheet.mjs:1024](../module/sheets/item-sheet.mjs) вызывал несуществующую
+`saveMechAndSyncWeaponProp`. Кнопка сброса зоны свойства оружия падала с
+`ReferenceError` и не сохраняла изменение. Заменено на `saveMech`, как в соседних
+семи обработчиках и как обещает комментарий строкой выше.
 
 **Готово, когда:** `npm run lint` завершается без ошибок категории `no-undef`.
 Предупреждения о неиспользуемых переменных на этом шаге не исправляем, их разбор
-не входит в план.
+не входит в план. Сейчас: 0 ошибок, 162 предупреждения.
 
-### 0.4. Первый тест
+### 0.4. Первый тест ✅
 
 Проверено: [talent-requirements.mjs](../module/constants/talent-requirements.mjs),
 [skills.mjs](../module/constants/skills.mjs) и
@@ -164,7 +173,7 @@ describe("parseRequirement", () => {
 
 **Готово, когда:** `npm test` показывает 5 пройденных тестов.
 
-### 0.5. Проверка на пул-реквестах
+### 0.5. Проверка на пул-реквестах ✅
 
 `.github/workflows/check.yml`:
 
