@@ -1021,7 +1021,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       if (prefix === "weaponProp" && (e.weaponPropAction === "increase" || e.weaponPropAction === "decrease")) {
         e.weaponPropAction = "add";
       }
-      saveMechAndSyncWeaponProp(arr);
+      saveMech(arr);
     });
 
     // ── Особенность комплекта силовой брони ──

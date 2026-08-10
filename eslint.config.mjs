@@ -1,0 +1,26 @@
+import globals from "globals";
+
+export default [
+  {
+    files: ["**/*.mjs"],
+    ignores: ["node_modules/**", "packs/**", "assets/**"],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: "module",
+      globals: {
+        ...globals.browser,
+        game: "readonly", ui: "readonly", Hooks: "readonly",
+        foundry: "readonly", CONFIG: "readonly", CONST: "readonly",
+        Roll: "readonly", ChatMessage: "readonly", Dialog: "readonly",
+        Actor: "readonly", Item: "readonly", ActiveEffect: "readonly",
+        canvas: "readonly", fromUuid: "readonly", renderTemplate: "readonly",
+        Folder: "readonly", JournalEntry: "readonly", FilePicker: "readonly",
+        fromUuidSync: "readonly", Handlebars: "readonly", $: "readonly"
+      }
+    },
+    rules: {
+      "no-undef": "error",
+      "no-unused-vars": ["warn", { args: "none" }]
+    }
+  }
+];
