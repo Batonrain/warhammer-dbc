@@ -1,0 +1,44 @@
+{
+  "name": "Bullet Press / Пулевой Пресс",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Набор для отливки пуль, прессовки гильз/капсюлей, ремонта боеприпасов.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": -1,
+    "quality": "common",
+    "toolCategory": "kits",
+    "effect": "Крафт боеприпасов авто/стаб-оружия и дробовиков в поле (без сложной внутренней структуры).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Только боеприпасы для дробовиков.",
+      "good": "Разрывные и пустотелые пули.",
+      "best": "Болты (требуют обеднённый дейтерий и ракетное топливо)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "7RcCrAuCY0AvI2aH",
+  "_id": "853V4a4i72F6FMi4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!853V4a4i72F6FMi4"
+}

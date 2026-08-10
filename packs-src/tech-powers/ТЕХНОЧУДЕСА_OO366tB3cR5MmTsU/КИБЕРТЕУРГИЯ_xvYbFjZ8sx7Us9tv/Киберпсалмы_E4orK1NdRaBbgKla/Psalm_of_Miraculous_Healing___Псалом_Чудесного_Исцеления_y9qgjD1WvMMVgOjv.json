@@ -1,0 +1,60 @@
+{
+  "name": "Psalm of Miraculous Healing / Псалом Чудесного Исцеления",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "E4orK1NdRaBbgKla",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "Киберпсалмы",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "medicae",
+    "testMod": 10,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Касание",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Medicae MCD или Technical MCD · Цена: 3К · Процесс: Нет · Тип: Физическое] Треб.: Medicae+10, Tech-Use+10. Тест Medicae(I)+10 или Tech-Use(I)+10. За Успех — 1 Рана/Структура/Аблативная Рана цели Размером ≤1 (как Первая Помощь, до I.b суммарно). Живые — Медицинским MCD (Medicae); машины — Техническим MCD (Tech-Use). Манипулятор/Серво-Рука/Коготь — цели Размером 2/3.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "y9qgjD1WvMMVgOjv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042893,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!y9qgjD1WvMMVgOjv"
+}

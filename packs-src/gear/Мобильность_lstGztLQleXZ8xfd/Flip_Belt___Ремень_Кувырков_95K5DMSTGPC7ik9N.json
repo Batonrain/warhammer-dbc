@@ -1,0 +1,53 @@
+{
+  "name": "Flip Belt / Ремень Кувырков",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Разгрузка с грав-пластинами, вводящая пользователя в невесомость на секунды по сигналу/жесту.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 4,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mobility",
+    "worn": "Пояс",
+    "effect": "+30 на Acrobatics для прыжков/вольтов; прыжки с разбега — без разбега; ×2 длина/высота прыжков с настоящим разбегом; +3 м к SPD в расчёте Отскока.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "При активации 1d10: на 1 пояс усиливает гравитацию — Крит. Провал (как минимум сбивает с ног).",
+      "good": "Сквозь Трудный Ландшафт как сквозь обычный (тест Acrobatics+0 как для прыжка).",
+      "best": "Как Good.Q; раз в Раунд Преимущество на тест Уклонения (объявить до броска)."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "lstGztLQleXZ8xfd",
+  "_id": "95K5DMSTGPC7ik9N",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!95K5DMSTGPC7ik9N"
+}

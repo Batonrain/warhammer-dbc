@@ -1,0 +1,52 @@
+{
+  "name": "Please At Any Cost! / Угодить Любой Ценой!",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "iHIB254yLHoj3UZX",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если Архонт просит или требует реквизировать что-то до R4, Иерарх может начать особое задание по поиску этого предмета и гарантированно выйдет к нему, даже если придётся сильно потратиться.",
+    "tier": 3,
+    "requirement": "Whatever You Want",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Иерарх",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "AneQ1mw7LTz3xAyV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121971176,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!AneQ1mw7LTz3xAyV"
+}

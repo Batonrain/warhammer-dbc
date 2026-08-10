@@ -1,0 +1,38 @@
+{
+  "name": "Последний выживший",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "Ua4iXGozhJwKvPyH",
+  "system": {
+    "table": "legend",
+    "rollMin": 6,
+    "rollMax": 7,
+    "description": "Предыдущий носитель участвовал в битве, в которой пали все остальные члены его отряда, и судьба продолжила улыбаться последующим владельцам доспехов.",
+    "effect": "В начале каждого Сговора владелец получает дополнительное очко Тёмной Славы. Непотраченным оно теряется в конце операции.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "eHyICXsxUigwkgLJ",
+  "effects": [],
+  "sort": 600000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354162,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!eHyICXsxUigwkgLJ"
+}

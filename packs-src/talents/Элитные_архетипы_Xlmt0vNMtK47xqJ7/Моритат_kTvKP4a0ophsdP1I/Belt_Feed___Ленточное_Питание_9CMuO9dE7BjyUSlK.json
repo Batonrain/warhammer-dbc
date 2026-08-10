@@ -1,0 +1,52 @@
+{
+  "name": "Belt Feed / Ленточное Питание",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kTvKP4a0ophsdP1I",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Модифицирует ранец для хранения болтов или пуль и создаёт продвинутую ленту, подающую патроны. Ранец может хранить до 200 припасов и подавать их по лентам в оружие; лента не понижает Надёжность оружия. Питая оружие от ленты, может использовать его для Цепного Выстрела.",
+    "tier": 2,
+    "requirement": "Неделимый, Trade (Weaponsmith)+20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Моритат",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "9CMuO9dE7BjyUSlK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121969884,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!9CMuO9dE7BjyUSlK"
+}

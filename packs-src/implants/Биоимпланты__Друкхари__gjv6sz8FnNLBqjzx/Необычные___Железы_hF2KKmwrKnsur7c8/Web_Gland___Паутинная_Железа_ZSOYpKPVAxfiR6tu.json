@@ -1,0 +1,67 @@
+{
+  "name": "Web Gland / Паутинная Железа",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Железы, вырабатывающие биопаутину.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Биопаутина: стрелковая атака 30 м, Snare(2); или для карабканья. Запас 5, восст. 1/час. Дефект (до Best.Q): всегда воспламеняется от касания пламени.\nPoor.Q: Snare(0); при провале BS заляпывает себя (−10 A до очистки).\nGood.Q: дальность 50 м, запас 5, восст. 1/час.\nBest.Q: огнеупорная пропитка, дефект устранён, запас 7 + 1 эффект (R +1 за каждый доп.): 1) Липкая ловушка (конус 5 м — трудный ландшафт−10 на 2 раунда); 2) Усиленный шелк (нить держит 1000 кг, тросы/мосты; −20 противнику на освобождение через S); 3) Парализующая пропитка (под Snare цель 1 урон в WS/A за раунд при открытой коже); 4) Регенерация запаса (полностью за 1 час).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "hF2KKmwrKnsur7c8",
+  "_id": "ZSOYpKPVAxfiR6tu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122014959,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ZSOYpKPVAxfiR6tu"
+}

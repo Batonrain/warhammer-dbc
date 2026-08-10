@@ -1,0 +1,51 @@
+{
+  "name": "Gladiators of Commoragh / Гладиаторы Комморага",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "boRSFGKT70wn9jGI",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Вооружённая примитивным оружием друкхари или метательным (кроме гранат), при успешном попадании (после щитов) может нанести себе непоглощённый урон, чтобы увеличить значение кубиков урона (до максимума 10): 1 урон себе = +1 к урону. После этого восстанавливает Раны, равные числу действующих на неё наркотиков и стимуляторов (не больше потерянных Ран), получая штраф −2×вылеченных Ран к A, Dodge и Parry на раунд (складывается). Элитный архетип Гладиатор стоит 500, и его покупка не удваивает цену других элитных архетипов.",
+    "source": "Элитный архетип: Ведьма",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "KS7bPvQacGXgcmmi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121958916,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KS7bPvQacGXgcmmi"
+}

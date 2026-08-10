@@ -1,0 +1,53 @@
+{
+  "name": "Undead Heart / Немертвое Сердце",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Костяной талисман-сердце, пожирающий и заменяющий собственное сердце (7 часов).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Имплант сердца",
+    "effect": "Тзинч: просто умирает. Иначе: Трейты Regeneration(1) и Stuff of Nightmares; внешность как у трупа (−30 соц. / бонусы с Нурглитами). Нургл: Regeneration → 7 и +30 на T для активации. Снять только пересадкой сердца или с трупа.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Раз в неделю заражает случайной болезнью другого человека в r7 км.",
+      "good": "Труп в r7 м: +1 Regeneration; 7+ трупов: +3.",
+      "best": "За каждый труп в r7 м: +1 Regeneration и +5 на T (до +7 и +35)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "s6diw72tx26wXTY7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!s6diw72tx26wXTY7"
+}

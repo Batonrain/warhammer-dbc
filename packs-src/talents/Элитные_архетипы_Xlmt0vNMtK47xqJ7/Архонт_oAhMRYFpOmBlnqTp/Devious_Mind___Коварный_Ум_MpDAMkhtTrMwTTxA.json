@@ -1,0 +1,52 @@
+{
+  "name": "Devious Mind / Коварный Ум",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "oAhMRYFpOmBlnqTp",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Чувствует использование Очков Бесчестия и Очков Судьбы в радиусе Inf метров. За Реакцию может пройти тест Inf+0 и при успехе отменить эффект от засеченной траты; при провале эффект применяется, но противник тратит вдвое больше очков. В радиусе 3 метров противники вообще не могут использовать Очки Судьбы и Бесчестия, кроме как на Чудесное Спасение или Божественную Защиту. Получает на +1d5 Cor больше, если это вызвано его эгоизмом или самомнением.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Архонт",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "MpDAMkhtTrMwTTxA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121979957,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MpDAMkhtTrMwTTxA"
+}

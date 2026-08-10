@@ -1,0 +1,55 @@
+{
+  "name": "Blindsight / Слепое Зрение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "rxYpvkyP8bmT7WzK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда персонаж не носит шлем, он получает Трейт Unnatural Senses (P.b). Когда его глаза закрыты или он ослеплён, Трейт улучшается до Unnatural Senses (3×P.b).",
+    "tier": "3",
+    "requirement": "P 50, Awareness+30",
+    "aptitudes": [
+      "per",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "3M3bq8Z5m7pev5cx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121965189,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!3M3bq8Z5m7pev5cx"
+}

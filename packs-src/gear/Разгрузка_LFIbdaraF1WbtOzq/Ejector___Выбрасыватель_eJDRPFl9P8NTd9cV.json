@@ -1,0 +1,59 @@
+{
+  "name": "Ejector / Выбрасыватель",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Выбрасыватель на наруч/предплечье под компактный пистолет или нож. По одному на каждую руку.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.5,
+    "availability": 1,
+    "quality": "common",
+    "gearCategory": "rig",
+    "worn": "Наруч / предплечье",
+    "effect": "Выхватывание = свободное действие. С Талантом Quick Draw +2 к Инициативе, если выхватывать из Выбрасывателей в первый Ход. Очень неудобен для Складывания. Под рукавом незаметен (Awareness−30).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "При выхватывании — тест A+30 или выронить оружие.",
+      "good": "Удобен для Складывания (механизм втягивает оружие).",
+      "best": "Как Good.Q; заряжается запасным магазином — перезарядка пистолета вдвое быстрее (окр.▼)."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "veryAwkward",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "2x1",
+          "count": 1,
+          "note": "компакт-пистолет / нож"
+        }
+      ],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "LFIbdaraF1WbtOzq",
+  "_id": "eJDRPFl9P8NTd9cV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!eJDRPFl9P8NTd9cV"
+}

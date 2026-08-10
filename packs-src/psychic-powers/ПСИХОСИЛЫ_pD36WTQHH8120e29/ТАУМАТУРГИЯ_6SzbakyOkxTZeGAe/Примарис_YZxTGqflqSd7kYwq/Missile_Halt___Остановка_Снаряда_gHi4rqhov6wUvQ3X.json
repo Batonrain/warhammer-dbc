@@ -1,0 +1,75 @@
+{
+  "name": "Missile Halt / Остановка Снаряда",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-thaumaturgy.svg",
+  "folder": "YZxTGqflqSd7kYwq",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 300,
+    "discipline": "thaumaturgy",
+    "subtype": "Примарис",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "reaction",
+    "range": "PR×20м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Избегание · Реакция. Треб.: Psychic Barrier, For.Lore(Psykers)+10. Реакцией на попадание снарядным оружием (пуля/болт/граната/ракета/стрела), если цель в дальности: отменяет одно попадание, снаряд зависает в 1 м от цели и через 1 Раунд падает (Blast — взрывается). Не работает на дистанции <1 м.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "gHi4rqhov6wUvQ3X",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122035283,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gHi4rqhov6wUvQ3X"
+}

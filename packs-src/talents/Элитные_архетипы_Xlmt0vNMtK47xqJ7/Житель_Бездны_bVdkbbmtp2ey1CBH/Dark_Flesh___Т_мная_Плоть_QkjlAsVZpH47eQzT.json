@@ -1,0 +1,52 @@
+{
+  "name": "Dark Flesh / Тёмная Плоть",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "bVdkbbmtp2ey1CBH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Автоматически преуспевает в тестах Stealth в местах с уровнем света Тьма. Атакованный оружием со свойством Sanctified, может пройти тест T+10 и при успехе считать, что его Daemonic игнорирует Sanctified. Регенерирует 1 рану в минуту в местах с уровнем света Слабый или Тьма.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Житель Бездны",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "QkjlAsVZpH47eQzT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121982876,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!QkjlAsVZpH47eQzT"
+}

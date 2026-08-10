@@ -1,0 +1,44 @@
+{
+  "name": "Hololith / Гололит",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Тяжёлая установка проекции 3D-голограмм (сенсоры/фиды, брифинги).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 35,
+    "availability": 2,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Брифинг: Tech-Use+0 + час подготовки → +10 Command (+20 для операций на местности с 3D-ориентированием).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Рябит: все бонусы вдвое.",
+      "good": "Неотличимо от реальности, или миниатюризован (1 кг, в броню).",
+      "best": "Оба Good.Q; через MIU с Best.Q кортикальным имплантом/Механикум — проекции «на ходу» ≤3×3×3м."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "5hnhGiS6MqExjPFS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!5hnhGiS6MqExjPFS"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Prophecy / Пророчество",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-divination.svg",
+  "folder": "nqE1OhMQPulNw6t6",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "divination",
+    "subtype": "Авгур",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "psyniscience",
+    "testMod": -30,
+    "action": "extended",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Треб.: Personal Augury. Сутки медитации (+10 за каждые доп. сутки). За каждый Успех — один факт/часть плана. Можно тратить Успехи на формирование пророчества: действия к нему авто-драматические Успехи, против — Критические Провалы; можно вплетать «избранных» (3 Успеха каждый). Только одно пророчество за раз.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "p6T9fg8n15MozWDB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122037605,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!p6T9fg8n15MozWDB"
+}

@@ -1,0 +1,50 @@
+{
+  "name": "Ирикиар (Воин Храма)",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "5PlmH5louPuHbgaQ",
+  "system": {
+    "key": "aelIrikiar",
+    "race": "azuriane",
+    "group": "Жители Мира-Корабля",
+    "charBonus": {},
+    "charChoice": "+5 и +2 к WS/BS/S/T/I (по выбору)",
+    "skills": "",
+    "talents": "",
+    "gear": "",
+    "wounds": "",
+    "infRoll": "2d5+10",
+    "requiredPath": "Путь Воина",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Воин Аспектного Храма.",
+    "trait": {
+      "name": "Dedication to the Shrine / Приверженность Храму",
+      "benefit": "В начале сессии избирает один Путь Воина и одну Характеристику (кроме Inf/Cor): все успешные тесты на неё +1 Успех. +20 на обслуживание оружия/брони выбранного Аспекта."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "gcKCeiYk2PCHHLTl",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536191,
+    "modifiedTime": 1786285536195,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!gcKCeiYk2PCHHLTl"
+}

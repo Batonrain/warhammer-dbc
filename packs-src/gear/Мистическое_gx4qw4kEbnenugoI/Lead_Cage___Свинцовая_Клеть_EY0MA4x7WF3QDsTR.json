@@ -1,0 +1,53 @@
+{
+  "name": "Lead Cage / Свинцовая Клеть",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Бутылочка из психоактивного хрусталя в свинцовой сетке; заполненная кровью псайкера — его личный фокус и Good.Q психофокус родной дисциплины.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Над сердцем / в руке",
+    "effect": "При манифестации через Клеть игнорирует эффекты-бонусы на Феномены (кроме +10 поддержания, усиления, природы силы) и эффекты авто-превращения Феноменов в Прорывы.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "5 неисцелимого урона в T, пока кровь не выльется из Клети.",
+      "good": "Игнорирует штрафы от Крит. Провала на психофокус.",
+      "best": "Как Good.Q; при Прорыве можно проигнорировать его, уничтожив всю кровь (деактивация до заполнения)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "EY0MA4x7WF3QDsTR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!EY0MA4x7WF3QDsTR"
+}

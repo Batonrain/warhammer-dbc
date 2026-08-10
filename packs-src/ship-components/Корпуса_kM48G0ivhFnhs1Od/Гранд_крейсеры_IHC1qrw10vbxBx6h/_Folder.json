@@ -1,0 +1,21 @@
+{
+  "name": "Гранд-крейсеры",
+  "type": "Item",
+  "folder": "kM48G0ivhFnhs1Od",
+  "sorting": "m",
+  "_id": "IHC1qrw10vbxBx6h",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!IHC1qrw10vbxBx6h"
+}

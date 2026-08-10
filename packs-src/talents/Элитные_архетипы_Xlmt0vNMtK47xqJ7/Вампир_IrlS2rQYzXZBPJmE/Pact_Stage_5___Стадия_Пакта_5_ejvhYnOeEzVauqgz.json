@@ -1,0 +1,52 @@
+{
+  "name": "Pact Stage 5 / Стадия Пакта 5",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "IrlS2rQYzXZBPJmE",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может пить кровь от любого рукопашного попадания клинковым оружием, а не только укусом (но это не вводит жертву в Ступор и нельзя тратить Реакции для усиления) — кровь извивающимися струями вытекает из ран и втягивается ему в рот или открытую кожу. Изгнанный из своего тела, получает Трейт Possession. Может раз в Раунд потратить 1 Жажды вместо Реакции. Может раз за Ход потратить 2 Жажды и получить 1 полудействие, которое тратит только на не-ментальные физические действия, манифестацию психосилы Слаанеш или трансформацию в боевую форму. При возвышении Раба Крови может поднять его до 3-й Стадии Пакта. Может ментальным полным действием превратить любого своего Раба Крови в Тварь Ночи; свежесозданные Твари дружественны и слушаются его команд ¼Inf.b (окр.▲) Раундов после трансформации, даже если не брать их Миньонами. Может брать до 2 Тварей Ночи в слот высшего Миньона.",
+    "tier": 3,
+    "requirement": "Слаанеш, 2000 xp: Inf 70, Cor 70; выпить до дна могучего чемпиона Кхорна с Inf 60+ (или сравнимого чемпиона Императора), не пролив его крови на пол",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Вампир",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ejvhYnOeEzVauqgz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121992926,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ejvhYnOeEzVauqgz"
+}

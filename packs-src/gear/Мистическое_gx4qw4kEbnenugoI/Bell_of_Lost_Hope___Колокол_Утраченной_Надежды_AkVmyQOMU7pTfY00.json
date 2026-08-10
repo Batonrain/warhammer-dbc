@@ -1,0 +1,53 @@
+{
+  "name": "Bell of Lost Hope / Колокол Утраченной Надежды",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Изъеденный коррозией колокол на стойке над воротником брони.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 14,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Стойка над воротником",
+    "effect": "Нургл: в Ход с Физическим действием колокол звонит. До начала след. Хода Нурглиты, слышавшие звон, авто-проходят Страх/Шок/Панику/Подавление; прочие −20 на эти тесты.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Не-Нурглиты не получают штрафов от звона.",
+      "good": "За полудействие сделать колокол бесшумным (отключить эффекты), и обратно.",
+      "best": "Усилием воли (свободное действие) ограничить дальность звона — за барьером звук обрывается."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "AkVmyQOMU7pTfY00",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!AkVmyQOMU7pTfY00"
+}

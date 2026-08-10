@@ -1,0 +1,166 @@
+{
+  "name": "Мир-улей",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "hive",
+    "description": "Персонаж игнорирует толпы при движении, считая их за открытую местность. В закрытом помещении получает бонус +20 к проверкам Navigation (Surface).",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Бесчисленные Толпы в Металлических Горах",
+    "featureDesc": "Персонаж игнорирует толпы при движении, считая их за открытую местность. В закрытом помещении получает бонус +20 к проверкам Navigation (Surface).",
+    "charModLabel": "+3 A, +3 P, −3 W",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "ag",
+          "value": 3
+        },
+        {
+          "stat": "per",
+          "value": 3
+        },
+        {
+          "stat": "wp",
+          "value": -3
+        }
+      ]
+    },
+    "notes": ""
+  },
+  "_id": "JESE93PEHaeKD7L8",
+  "effects": [],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 287110,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "oePYLjXL9MpEI86U",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "DX65jnuZ3qAIbVc4",
+              "kind": "characteristic",
+              "charKey": "ag",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "Bhc6egYt0NSSgWsR",
+              "kind": "characteristic",
+              "charKey": "per",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "Jq6UFNDcQnwcSjkY",
+              "kind": "characteristic",
+              "charKey": "wp",
+              "field": "total",
+              "op": "subtract",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "tD8g838F7kE9L9BI",
+              "kind": "rollmod",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 20,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "group",
+              "skillKey": "navigation",
+              "specKey": "surface",
+              "specialty": "Surface",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "Закрытые помещения",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836767,
+    "modifiedTime": 1786277486251,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!JESE93PEHaeKD7L8"
+}

@@ -1,0 +1,60 @@
+{
+  "name": "Numerica Subjugation / Нумерика Покорение",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "P4dYuZQ0qppVOtby",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "nootheurgy",
+    "subtype": "Нумерика",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 6,
+    "energyCost": 0,
+    "sustainCost": 3,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -20,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Ноосфера",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Hasta Numerica · Цена: 6К · Процесс: 3 · Тип: —] Треб.: I 55, Tech-Use+30, Numerica Dominion. vs цель. При победе контролирует действия цели в её Ход (только техночудеса, его I/Навыки/Когниция; WS/BS его, если выше). Цель отключена от Ноосферы. В конце Хода цель своб. действием встречный для освобождения.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "kaWSYWjLpb3mo6wn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042331,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!kaWSYWjLpb3mo6wn"
+}

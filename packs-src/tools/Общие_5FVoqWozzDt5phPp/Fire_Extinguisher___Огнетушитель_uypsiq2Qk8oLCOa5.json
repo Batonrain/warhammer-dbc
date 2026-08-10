@@ -1,0 +1,44 @@
+{
+  "name": "Fire Extinguisher / Огнетушитель",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Баллон с пеной/сжатым газом для тушения. 10 зарядов. Слот разгрузки 4×1.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": -3,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Двумя руками, полудействие, 1 заряд → Spray(5м): гасит стандартное (1d10) пламя. Мощнее — бросок урона: ≤10 гаснет, иначе −1 куб на 1 Раунд.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "6 кг, слот 4×2, или только 1 заряд.",
+      "good": "1 кг, слот 2×1, одной рукой, или неограниченные заряды.",
+      "best": "Оба эффекта Good.Q."
+    },
+    "bonuses": [],
+    "linkedWeapon": "Огнетушитель (струя)"
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "uypsiq2Qk8oLCOa5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!uypsiq2Qk8oLCOa5"
+}

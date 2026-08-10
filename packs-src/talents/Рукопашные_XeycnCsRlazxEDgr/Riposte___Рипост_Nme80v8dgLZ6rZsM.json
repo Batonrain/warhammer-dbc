@@ -1,0 +1,55 @@
+{
+  "name": "Riposte / Рипост",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "XeycnCsRlazxEDgr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Вооружённый двумя оружиями и успешно парировав атаку, персонаж может тут же атаковать противника базовой атакой +0 другим оружием, если его Баланс не ниже 0. Избегания против неё получают −20. Не тратит реакций/действий, только раз в Раунд. С Two Weapon Wielder (Ranged) можно использовать пистолеты (но не винтовки).",
+    "tier": 2,
+    "requirement": "Counter Attack, Two Weapon Wielder (Melee)",
+    "aptitudes": [
+      "ws",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Nme80v8dgLZ6rZsM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121980853,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Nme80v8dgLZ6rZsM"
+}

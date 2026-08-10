@@ -1,0 +1,44 @@
+{
+  "name": "Apothecarion / Апотекарион",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Комплекс диагностики + операционная + биохим-лаборатория. Нужен для операций и продвинутых мед-процедур.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "Бонусы Medicae / Chymistry / F.L.(Astartes Implants) по Редкости: R1 полевой госпиталь +10/+10/+0; R2 стандартный +30/+20/+10; R3 Легиона +50/+30/+20; R4 Биологис +70/+40/+30; R5 автоклиника +90/+50/+40.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "−10 (доп.).",
+      "good": "+10 (доп.).",
+      "best": "+20 (доп.)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "dUGR8Bja3dKsoUys",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!dUGR8Bja3dKsoUys"
+}

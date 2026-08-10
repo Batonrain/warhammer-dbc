@@ -1,0 +1,35 @@
+{
+  "name": "Вызов / Challenge (X)",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "i0yML1SKgQAz2uIn",
+  "system": {
+    "description": "Жажда битвы и гордость вливаются в цель (Кхорн). При попадании или парировании — тест W−10×X, иначе до конца следующего Хода нельзя добровольно выходить из рукопашной (кроме уклонения от атаки по площади).",
+    "reminder": "⚔️ Вызов (X): попадание/парир — W−10×X или нельзя выйти из рукопашной",
+    "category": "melee",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "challenge",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "uQTUx59nkCOP6qZB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353823,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!uQTUx59nkCOP6qZB"
+}

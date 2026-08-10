@@ -1,0 +1,44 @@
+{
+  "name": "Venic Noose / Веническая Петля",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Ритуальная петля из человеческих жил/волос, смазанная жиром заклятого врага заклинателя.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "mystic",
+    "effect": "На земле — быстрый ритуальный круг. Заключить демона (призывом в круг или накинув как лассо — правила Бола, Rng 5м): держащий конец +20 на Демоническое Владычество и социальные взаимодействия с этим демоном.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": "Веническая Петля (бросок)"
+  },
+  "folder": "RpwK7hjZB6380LhD",
+  "_id": "jQYhxHSK7lY1Sxha",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!jQYhxHSK7lY1Sxha"
+}

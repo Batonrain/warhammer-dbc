@@ -1,0 +1,50 @@
+{
+  "name": "Эльдарская Рейдерская Броня",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Дешевая броня, создаваемая эльдарскими корсарами и бандами на мирах–кораблях из того, что будет под рукой. Также, такую броню можно увидеть у некоторых друкхари, что имеют доступ к психокости через свои контакты. Носитель данной брони при совершении безоружной атаки может по его желанию считаться имеющим Best.Q Мононож. Все тесты ее починки получают бонус +30. \n",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 4,
+    "body": 4,
+    "leftArm": 4,
+    "rightArm": 4,
+    "leftLeg": 4,
+    "rightLeg": 4,
+    "quality": "common",
+    "availability": 0,
+    "weight": 2,
+    "properties": [
+      "sealed",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Безоружная атака может считаться Best.Q Мононожом; починка +30."
+  },
+  "_id": "RyGfwOH2RB8uRfeQ",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!RyGfwOH2RB8uRfeQ"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Electric Gland / Электрическая Железа",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Биологические конденсаторы в мышцах.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Биоконденсаторы: раз в 25 мин следующее безоружное попадание +доп. 1d10+8 E(El), Pen 2, Shocking. Дефект (до Best.Q): −10 WS и A (точные движения).\nPoor.Q: 1d5+4, Pen 0, без Shocking; при использовании сам 1d5 непогл. E(El); −20 A.\nGood.Q: −5.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Цепная молния (Arc(10−T.b/T.b)); 2) Электрический щит (сопротивление E(Fl), +30 против Shocking); 3) Зарядка (заряжать устройства касанием, 1 заряд/час); 4) Ускоренная перезарядка (раз в 10 мин).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "hF2KKmwrKnsur7c8",
+  "_id": "VIeLli8WPMq5VrGh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122014602,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VIeLli8WPMq5VrGh"
+}

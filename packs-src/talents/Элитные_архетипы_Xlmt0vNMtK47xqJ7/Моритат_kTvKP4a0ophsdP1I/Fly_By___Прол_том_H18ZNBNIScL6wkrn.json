@@ -1,0 +1,52 @@
+{
+  "name": "Fly-By / Пролётом",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kTvKP4a0ophsdP1I",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Способен танцевать в воздухе вокруг врагов, появляясь в их поле зрения на долю секунды для меткого выстрела и скрываясь от ответного огня. С прыжковым ранцем может провести Полудвижение и Одиночный Выстрел (возможно из нескольких оружий) за одно полудействие и сразу же провести второе Полудвижение за ещё одно полудействие. Если кто-то из противников задерживал действие или стоял в Карауле, они могут реагировать на этот манёвр только если их A выше, чем у Моритата.",
+    "tier": 3,
+    "requirement": "Неделимый, Operate (Aeronautica)+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Моритат",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "H18ZNBNIScL6wkrn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121975580,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!H18ZNBNIScL6wkrn"
+}

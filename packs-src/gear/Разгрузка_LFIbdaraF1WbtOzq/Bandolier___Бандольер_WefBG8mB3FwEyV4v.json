@@ -1,0 +1,59 @@
+{
+  "name": "Bandolier / Бандольер",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Ремень с кармашками/петлями для магазинов, патронов и гранат, носимый через плечо. Одновременно до двух штук.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.6,
+    "availability": -2,
+    "quality": "common",
+    "gearCategory": "rig",
+    "worn": "Через плечо",
+    "effect": "Даёт 4 кармана (1×1) спереди; каждый можно заменить петлями на 20 индивидуальных патронов/болтов.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Считается неудобным.",
+      "good": "Заменяет все карманы двумя магнитными замками 2×1 (или два кармана одним замком 2×1).",
+      "best": "Как Good.Q; взятие/складывание двух предметов с бандольера считается как одно."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "1x1",
+          "count": 4,
+          "note": "спереди"
+        }
+      ],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "LFIbdaraF1WbtOzq",
+  "_id": "WefBG8mB3FwEyV4v",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!WefBG8mB3FwEyV4v"
+}

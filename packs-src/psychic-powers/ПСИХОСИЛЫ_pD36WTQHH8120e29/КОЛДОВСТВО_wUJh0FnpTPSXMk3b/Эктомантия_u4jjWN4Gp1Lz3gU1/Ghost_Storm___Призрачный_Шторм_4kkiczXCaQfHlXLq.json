@@ -1,0 +1,75 @@
+{
+  "name": "Ghost Storm / Призрачный Шторм",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-ectomancy.svg",
+  "folder": "u4jjWN4Gp1Lz3gU1",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "sorcery",
+    "subtype": "Эктомантия",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×15м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв. Треб.: For.Lore(Warp)+30. Шаблон Blast (PR×2). Все существа/предметы внутри полупрозрачны (видно сквозь стены). Существа внутри используют W вместо S/T, I вместо A, P вместо WS/BS. Получают не перегружающийся сквозной щит 1-65 от атак извне сферы; цели вне — такой же щит от атак изнутри. Warp Weapon игнорирует щит.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "4kkiczXCaQfHlXLq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122023880,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4kkiczXCaQfHlXLq"
+}

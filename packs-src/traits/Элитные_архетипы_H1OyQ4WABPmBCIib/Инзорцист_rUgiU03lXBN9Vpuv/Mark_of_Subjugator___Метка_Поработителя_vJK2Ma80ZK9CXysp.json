@@ -1,0 +1,51 @@
+{
+  "name": "Mark of Subjugator / Метка Поработителя",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "rUgiU03lXBN9Vpuv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Душа отмечена связью с демонами. Демоны автоматически распознают его как поработителя своего рода при первом взгляде и получают Талант Hatred против него. Псайкеры могут засечь это, набрав 3 Успеха на Пси-Чутье в его присутствии; 2 Успеха если держит печать демона с Inf 31-50, 1 Успех для демона с Inf 51-70, автоматически для демона с Inf 71+.",
+    "source": "Элитный архетип: Инзорцист",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "vJK2Ma80ZK9CXysp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121962127,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!vJK2Ma80ZK9CXysp"
+}

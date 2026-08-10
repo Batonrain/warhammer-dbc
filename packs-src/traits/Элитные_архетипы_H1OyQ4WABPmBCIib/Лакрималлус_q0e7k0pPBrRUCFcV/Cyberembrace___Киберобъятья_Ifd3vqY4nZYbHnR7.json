@@ -1,0 +1,51 @@
+{
+  "name": "Cyberembrace / Киберобъятья",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "q0e7k0pPBrRUCFcV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За минуту работы может встроить в беспомощного или не сопротивляющегося человека рудиментарные кибернетические импланты (авто-фабрикаторы его собственных имплантов), превратив его в тех-тралла. Может делать тех-траллов из трупов, умерших не более 1 часа назад, бросая 1d10: на 1-3 тралл из 3 трупов, 4-6 — из 2, 7+ — из 1. Может брать тех-траллов как низших Миньонов-машин и Орду Миньонов (Магнитуда P−10, каждые Inf.b×5), игнорируя требования к Inf. Может заменять уничтоженных тех-траллов посреди миссии или восстанавливать Магнитуду Орды (1 за минуту).",
+    "source": "Элитный архетип: Лакрималлус",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Ifd3vqY4nZYbHnR7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121958710,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Ifd3vqY4nZYbHnR7"
+}

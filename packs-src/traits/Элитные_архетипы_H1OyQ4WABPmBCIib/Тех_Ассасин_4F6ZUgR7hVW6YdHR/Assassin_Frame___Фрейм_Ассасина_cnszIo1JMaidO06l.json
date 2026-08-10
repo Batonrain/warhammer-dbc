@@ -1,0 +1,51 @@
+{
+  "name": "Assassin Frame / Фрейм Ассасина",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "4F6ZUgR7hVW6YdHR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Фрейм почти полностью заменяет тело, оставляя только головной и спинной мозг, биологические глаза и уши. Оборудован бионическими глазами и слухом Best.Q (в дополнение к биологическим), двумя парами бионических рук Best.Q (+10 на тесты S и A, скрытые полости для ножа/компактного пистолета) и парой бионических ног Best.Q (Талант Sprint при беге, +20 на Athletics для прыжков и карабканья). Руки и ноги имеют когти Трейта Deadly Natural Weapons. Источники энергии и грав-пластины экранированы — считает любой эффект Haywire на 4 меньше в отношении своей бионики и кибернетики.",
+    "source": "Элитный архетип: Тех-Ассасин",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "cnszIo1JMaidO06l",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121960550,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!cnszIo1JMaidO06l"
+}

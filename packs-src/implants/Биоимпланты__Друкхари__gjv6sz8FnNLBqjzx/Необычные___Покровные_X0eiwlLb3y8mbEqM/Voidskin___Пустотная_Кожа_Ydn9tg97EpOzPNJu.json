@@ -1,0 +1,67 @@
+{
+  "name": "Voidskin / Пустотная Кожа",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Многослойная герметичная мембрана.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Герметичная мембрана и слизь: выживание в вакууме до 1 ч, иммунитет к урону от перепадов давления. Дефект (до Best.Q): влажный/липкий покров −10 Stealth, −10 социальные (если открыта).\nPoor.Q: вакуум до 10 мин; при крите герметичность рвётся (декомпрессия); штрафы −20.\nGood.Q: штрафы −5.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Рециркуляция дыхания (неограниченно в любой газовой среде, вакуум до 3 ч); 2) Усиленная герметизация (авто-стоп кровотечения при уроне, +10 T против газов/контактных токсинов); 3) Кислородный резерв (1/день 10 мин кислорода при закрытых ушах/рте); 4) Слизистый щит (1/день Реакцией +4 AP одной части против одной атаки, затем кожа сохнет час).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "X0eiwlLb3y8mbEqM",
+  "_id": "Ydn9tg97EpOzPNJu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781722725656,
+    "modifiedTime": 1786122014872,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Ydn9tg97EpOzPNJu"
+}

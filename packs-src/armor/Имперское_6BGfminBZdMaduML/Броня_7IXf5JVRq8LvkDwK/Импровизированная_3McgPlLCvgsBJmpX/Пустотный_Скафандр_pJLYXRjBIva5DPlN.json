@@ -1,0 +1,53 @@
+{
+  "name": "Пустотный Скафандр",
+  "type": "armor",
+  "folder": "3McgPlLCvgsBJmpX",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "simple",
+    "stacks": false,
+    "maxAgility": 30,
+    "equipped": false,
+    "head": 1,
+    "body": 2,
+    "leftArm": 2,
+    "rightArm": 2,
+    "leftLeg": 2,
+    "rightLeg": 2,
+    "quality": "common",
+    "availability": -1,
+    "weight": 4,
+    "properties": [
+      "open",
+      "sealed",
+      "soft",
+      "void"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "",
+    "propRatings": {}
+  },
+  "_id": "pJLYXRjBIva5DPlN",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!pJLYXRjBIva5DPlN"
+}

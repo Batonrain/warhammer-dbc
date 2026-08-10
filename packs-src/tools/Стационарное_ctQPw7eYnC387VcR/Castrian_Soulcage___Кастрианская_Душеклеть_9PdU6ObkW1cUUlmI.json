@@ -1,0 +1,44 @@
+{
+  "name": "Castrian Soulcage / Кастрианская Душеклеть",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Еретех Тёмных Механикус для связывания/хранения демонов (для машин/оружия).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 3,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "В круге призыва: ритуал +20, демон сразу в клеть. Нужна калибровка (Tech-Use+10); тесты Демонического Владычества каждый час (Tech-Use(I) вместо W). Переселение в технологичный сосуд +30, в другой +10. Вмещает 30 мелких / 10 низших / 5 высших / 1 герольд. Подключается к Телепортариуму (до 50 демонов, иммунны к стрессу, в Истинной Форме).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "9PdU6ObkW1cUUlmI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!9PdU6ObkW1cUUlmI"
+}

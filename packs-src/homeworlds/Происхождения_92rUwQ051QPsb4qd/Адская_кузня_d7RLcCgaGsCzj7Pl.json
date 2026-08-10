@@ -1,0 +1,194 @@
+{
+  "name": "Адская кузня",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "hellforge",
+    "description": "Персонаж с адской кузни получает 1к5 очков Порчи и может перебрасывать неуспешные проверки Страха от демонических существ.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Дым сожжённых душ",
+    "featureDesc": "Персонаж с адской кузни получает 1к5 очков Порчи и может перебрасывать неуспешные проверки Страха от демонических существ.",
+    "charModLabel": "+3 I, +3 T, −3 W",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "int",
+          "value": 3
+        },
+        {
+          "stat": "t",
+          "value": 3
+        },
+        {
+          "stat": "wp",
+          "value": -3
+        }
+      ]
+    },
+    "notes": ""
+  },
+  "_id": "d7RLcCgaGsCzj7Pl",
+  "effects": [],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 200000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "tgfV80FXNjNzcVMq",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "pXoRVPe1FGVCIZk3",
+              "kind": "characteristic",
+              "charKey": "int",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "dk3ilGuKZ2Zm8Mke",
+              "kind": "characteristic",
+              "charKey": "t",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "pvArzfEpHyv8JrnU",
+              "kind": "characteristic",
+              "charKey": "wp",
+              "field": "total",
+              "op": "add",
+              "value": -3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "AiTFbdXTttHsTtvx",
+              "kind": "corruption",
+              "corruptionValue": "1d5",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "DhQpWkBcpmjTb7b3",
+              "kind": "script",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "Переброс страха от демонов",
+              "code": "html.querySelectorAll(\".wh-fear-reroll-btn\").forEach(btn => {\n  btn.addEventListener(\"click\", async (ev) => {\n    ev.preventDefault();\n    const ctx = message.flags?.[\"warhammer-dbc\"]?.fearTest;\n    if (!ctx) return;\n    const actor = game.actors?.get(ctx.actorId);\n    if (!actor?.isOwner) {\n      return ui.notifications.warn(\"Перебросить может только владелец персонажа (или ГМ).\");\n    }\n    ev.currentTarget.disabled = true;\n    await _executeFearRoll(actor, ctx.ratingKey, ctx.type, ctx.infamy, ctx.mod, ctx.properties, { free: true });\n  });\n});"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836768,
+    "modifiedTime": 1786276416538,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!d7RLcCgaGsCzj7Pl"
+}

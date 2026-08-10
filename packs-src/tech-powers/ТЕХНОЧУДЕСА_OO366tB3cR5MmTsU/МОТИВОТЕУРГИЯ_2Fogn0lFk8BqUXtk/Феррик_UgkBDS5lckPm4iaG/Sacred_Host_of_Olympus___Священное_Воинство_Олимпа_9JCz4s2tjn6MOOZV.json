@@ -1,0 +1,60 @@
+{
+  "name": "Sacred Host of Olympus / Священное Воинство Олимпа",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "UgkBDS5lckPm4iaG",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Феррик",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 1,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "half",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×1м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Ferric Lure Implants · Цена: 3К+1Э · Процесс: 1 (У) · Тип: Компенсатор (1), Славословие (1)] Треб.: For.Lore (Mechanicum)+20. До Успехи незакреплённого рукопашного оружия зависает вокруг. Своб. действием 1 Энергия — запустить оружие в цель в I×3м (авто-попадание, I.b вместо S.b); +1 Энергия (Компенсатор) — +1 кубик урона. В конце Хода оружие в обычной дальности возвращается. Дольше ½I.b Ходов — Процесс +1 за каждый.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "9JCz4s2tjn6MOOZV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040567,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!9JCz4s2tjn6MOOZV"
+}

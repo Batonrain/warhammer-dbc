@@ -1,0 +1,39 @@
+{
+  "name": "Лёгкая болезнь",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "Lz3LWBvEP3AyJQKs",
+  "system": {
+    "diseaseType": "common",
+    "severity": "light",
+    "god": "",
+    "contagion": "",
+    "incubation": "—",
+    "symptoms": "1 уровень Усталости (не снимается до выздоровления).",
+    "vectors": "Векторы и заразность — на усмотрение МИ.",
+    "cure": "Само за 2–3 недели или 1 неделя постельного режима. Каждый успех Medicae+0 при постельном режиме −1 день.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "hX6eJXn2qDH1yabI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!hX6eJXn2qDH1yabI"
+}

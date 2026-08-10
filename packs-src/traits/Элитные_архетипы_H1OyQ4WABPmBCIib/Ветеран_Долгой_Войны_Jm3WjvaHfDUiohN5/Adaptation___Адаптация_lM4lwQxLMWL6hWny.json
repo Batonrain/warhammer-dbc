@@ -1,0 +1,51 @@
+{
+  "name": "Adaptation / Адаптация",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "Jm3WjvaHfDUiohN5",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может получить Трейт любого из стартовых Архетипов, кроме Трейтов Нумена (взятие Трейта Еретека требует сначала раздобыть Импланты Механикум, взятие Трейтов псайкеров возможно только при создании персонажа). Если Архетип берётся при создании персонажа, также может взять один предмет стартового снаряжения того класса, чей Трейт получил.",
+    "source": "Элитный архетип: Ветеран Долгой Войны",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "lM4lwQxLMWL6hWny",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121961361,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lM4lwQxLMWL6hWny"
+}

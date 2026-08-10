@@ -1,0 +1,53 @@
+{
+  "name": "Chirurgeon Pack / Рюкзак Хирургеон",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Редкий инструмент апотекариев Великого Крестового Похода, интегрируется в ранец силовой брони.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 20,
+    "availability": 5,
+    "quality": "common",
+    "gearCategory": "misc",
+    "worn": "Ранец силовой брони",
+    "effect": "Работает как Best.Q Нартеций + Best.Q Пыточный Набор, утраивает хранилища инъекций и Геносемени. Трейт Multiple Arms(+4): 2 доп. конечности атакуют профилем Нартеция, ещё 2 делают инъекции. Позволяет операции уровня апотекариона (вплоть до создания Астартес) в обычном помещении без штрафов.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "−10 на все связанные тесты.",
+      "good": "+5 на все связанные тесты.",
+      "best": "+10 на все связанные тесты."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": true,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": "Нартеций (рукопашный профиль)"
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "Ll96rDuhHk9wrapM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!Ll96rDuhHk9wrapM"
+}

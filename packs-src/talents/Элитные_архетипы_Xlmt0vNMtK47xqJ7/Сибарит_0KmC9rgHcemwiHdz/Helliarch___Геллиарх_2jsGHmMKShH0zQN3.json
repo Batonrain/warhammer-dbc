@@ -1,0 +1,52 @@
+{
+  "name": "Helliarch / Геллиарх",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "0KmC9rgHcemwiHdz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может трижды за раунд перебрасывать любые тесты Operate (Aeronautica) и добавляет к манёвренности своего геллиона. Получает приём «Возвышение В Небеса» (только с Адской Глефой): базовая рукопашная атака с бонусом +0, уклонение и парирование против неё получают −20. При попадании атака всегда идёт в торс; пробив броню, персонаж и цель проходят соревновательный тест Athletics (WS/S)+10 или Acrobatics (WS/A)+10 против Athletics (S)+0 или Acrobatics (A)+0. Победив, персонаж поднимает противника вертикально вверх на SPD своего геллиона (считая максимальный вес за S.b+T.b+WS.b), после чего сбрасывает. Попытки противника перегруппироваться или ухватиться получают −30.",
+    "tier": 3,
+    "requirement": "Быть Геллионом",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Сибарит",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "2jsGHmMKShH0zQN3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121964777,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!2jsGHmMKShH0zQN3"
+}

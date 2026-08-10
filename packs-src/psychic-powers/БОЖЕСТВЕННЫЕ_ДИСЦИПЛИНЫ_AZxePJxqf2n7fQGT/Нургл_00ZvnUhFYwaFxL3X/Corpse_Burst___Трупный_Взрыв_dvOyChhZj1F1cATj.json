@@ -1,0 +1,75 @@
+{
+  "name": "Corpse Burst / Трупный Взрыв",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-nurgle.svg",
+  "folder": "00ZvnUhFYwaFxL3X",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "nurgle",
+    "subtype": "",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "30м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+PR",
+    "damageType": "chemical",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение · Незримое. Только на труп: уничтожается, шаблон 1d10+PR C, Pen 0, Blast (PR), Toxic (2). Все в радиусе А+0 или −10 WS/BS на 1 Раунд; враги — Страх 2, если взорван труп товарища.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "dvOyChhZj1F1cATj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122034820,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!dvOyChhZj1F1cATj"
+}

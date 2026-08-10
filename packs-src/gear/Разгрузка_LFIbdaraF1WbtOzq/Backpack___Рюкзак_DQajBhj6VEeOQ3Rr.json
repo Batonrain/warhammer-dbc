@@ -1,0 +1,53 @@
+{
+  "name": "Backpack / Рюкзак",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Заплечный рюкзак для переноски тяжестей — для снаряжения, что не умещается на разгрузке, поясе, ремнях и в руках.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": -3,
+    "quality": "common",
+    "gearCategory": "rig",
+    "worn": "Спина",
+    "effect": "Доставание предмета из рюкзака = полное действие. Несовместим с другим снаряжением, занимающим спину.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Не позволяет совершать Бег.",
+      "good": "Жёсткий каркас распределяет вес: −20 кг переносимого в рюкзаке в расчёте веса Ношения; жёсткий, защищает содержимое от ударов и падения.",
+      "best": "Как Good.Q + магнитные замки: 3×3 сзади (очень неудобный), 5×1 на боках ×2 (неудобные), 3×1 под ранцем (неудобный)."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": true,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "LFIbdaraF1WbtOzq",
+  "_id": "DQajBhj6VEeOQ3Rr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!DQajBhj6VEeOQ3Rr"
+}

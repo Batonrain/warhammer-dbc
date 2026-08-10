@@ -1,0 +1,50 @@
+{
+  "name": "Меха",
+  "type": "armor",
+  "folder": "hTQ3Xaf6D1piA118",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "simple",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 0,
+    "body": 2,
+    "leftArm": 2,
+    "rightArm": 2,
+    "leftLeg": 0,
+    "rightLeg": 0,
+    "quality": "common",
+    "availability": -3,
+    "weight": 4,
+    "properties": [
+      "primitive",
+      "soft"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": ""
+  },
+  "_id": "0yiRAETgElOGob6P",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!0yiRAETgElOGob6P"
+}

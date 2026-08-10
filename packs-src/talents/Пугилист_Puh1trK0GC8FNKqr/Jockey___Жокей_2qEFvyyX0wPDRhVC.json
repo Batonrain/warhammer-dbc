@@ -1,0 +1,55 @@
+{
+  "name": "Jockey / Жокей",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Puh1trK0GC8FNKqr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может совершать Захват против целей крупнее себя через Acrobatics(A) вместо Athletics(S), игнорируя штрафы за разницу Размеров, против целей до на 2 Размера больше. При победе он взбирается на цель: цель не может его атаковать, атаки по ней — только половина бонуса Борьбы. Раз в Раунд при физическом действии цели персонаж может пройти Acrobatics(A)+30 vs Athletics(S)+0 (игнорируя Unnatural S цели) и заставить её совершить управляемое им Полудвижение.",
+    "tier": 3,
+    "requirement": "A 50, Acrobatics+10",
+    "aptitudes": [
+      "ag",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "2qEFvyyX0wPDRhVC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121964816,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!2qEFvyyX0wPDRhVC"
+}

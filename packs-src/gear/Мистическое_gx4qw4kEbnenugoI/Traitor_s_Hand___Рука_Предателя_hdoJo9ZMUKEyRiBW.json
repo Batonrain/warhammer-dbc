@@ -1,0 +1,53 @@
+{
+  "name": "Traitor's Hand / Рука Предателя",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Золотой браслет с фантомом-предателем, управляющим невидимой телекинетической рукой.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1.5,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Браслет (голое тело)",
+    "effect": "На голую кожу: преимущества Талантов Quick Draw и Quick Store; игнорирует штрафы неудобных/очень неудобных разгрузок и магнитных замков; мелкие удобства (не атаки). При новом приказе 1d100: на 1–5 дух бунтует — бросает предмет в случайном направлении на 1d5 м.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Бунт на 1–15; на 1 серьёзный саботаж (выкинуть магазин / выдернуть чеку) по решению ГМа.",
+      "good": "Раз в Ход расклинить оружие или активировать гранату на разгрузке за свободное действие.",
+      "best": "Как Good.Q; дух никогда не бунтует."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "hdoJo9ZMUKEyRiBW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!hdoJo9ZMUKEyRiBW"
+}

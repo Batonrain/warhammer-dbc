@@ -1,0 +1,38 @@
+{
+  "name": "Твоя рука да станет бичом",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "s8lKzSrVLBSddHVo",
+  "system": {
+    "table": "history",
+    "rollMin": 3,
+    "rollMax": 3,
+    "description": "Дух брони закалён долгими годами службы и бессчётно улучшался с единственной целью — нести гибель врагам в рукопашной схватке.",
+    "effect": "+5 к WS. Системы наведения своенравны: −5 к BS, если носитель в шлеме.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "YDYcIlcRfa6fPO2y",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354160,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!YDYcIlcRfa6fPO2y"
+}

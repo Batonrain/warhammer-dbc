@@ -1,0 +1,53 @@
+{
+  "name": "Mimic Mask / Маска Мимик",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Тяжёлая серебряная маска с защитными вязями изнутри.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Голова (голое лицо / под закрытый шлем)",
+    "effect": "На голую кожу: чтение мыслей/эмоций/судьбы или психозрение выдаёт правдоподобную ложь. Распознать — Logic−20.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Logic+0 вместо Logic−20.",
+      "good": "Успешное распознание должно быть переброшено.",
+      "best": "Как Good.Q; при надевании сливается с кожей (невидима, не мешает шлему); материализация обратно за полное действие."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "kzJXwFDt6jsrk3TR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!kzJXwFDt6jsrk3TR"
+}

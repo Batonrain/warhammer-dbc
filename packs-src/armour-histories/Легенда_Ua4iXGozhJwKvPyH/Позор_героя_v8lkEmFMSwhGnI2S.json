@@ -1,0 +1,38 @@
+{
+  "name": "Позор героя",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "Ua4iXGozhJwKvPyH",
+  "system": {
+    "table": "legend",
+    "rollMin": 2,
+    "rollMax": 2,
+    "description": "Броню носил могущественный герой, однако он не выполнил свой долг: битва была проиграна, многие космодесантники погибли. Последующие владельцы так и не стали великими лидерами.",
+    "effect": "+5 к WS и BS, но −10 к тестам Command.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "v8lkEmFMSwhGnI2S",
+  "effects": [],
+  "sort": 700000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354162,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!v8lkEmFMSwhGnI2S"
+}

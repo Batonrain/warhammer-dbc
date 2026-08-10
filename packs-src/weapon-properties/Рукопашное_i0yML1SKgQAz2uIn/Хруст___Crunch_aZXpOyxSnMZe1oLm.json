@@ -1,0 +1,35 @@
+{
+  "name": "Хруст / Crunch",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "i0yML1SKgQAz2uIn",
+  "system": {
+    "description": "Когда удерживаете цель в Борьбе, можете как свободное действие нанести автоматическое попадание (S.b в уроне ÷2, окр. ▲).",
+    "reminder": "🤜 Хруст: авто-удар в Борьбе (S.b ÷2)",
+    "category": "melee",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "crunch",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "aZXpOyxSnMZe1oLm",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353818,
+    "modifiedTime": 1786224353824,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!aZXpOyxSnMZe1oLm"
+}

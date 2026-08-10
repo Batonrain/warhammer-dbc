@@ -1,0 +1,47 @@
+{
+  "name": "Мк VI Корвус",
+  "type": "armor",
+  "folder": "hl9JbGSR0VtrRVA8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 8,
+    "body": 9,
+    "leftArm": 8,
+    "rightArm": 8,
+    "leftLeg": 8,
+    "rightLeg": 8,
+    "quality": "common",
+    "availability": 3,
+    "weight": 170,
+    "properties": [],
+    "strengthBonus": 20,
+    "wpBonus": 0,
+    "special": "Авточувства дают +15 вместо +10 и включают нюх. +10 на Operate (Aeronautica); нет обычного штрафа к Stealth."
+  },
+  "_id": "meWT8mCcGzAhiiPP",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785147451088,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!meWT8mCcGzAhiiPP"
+}

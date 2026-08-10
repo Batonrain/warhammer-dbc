@@ -1,0 +1,52 @@
+{
+  "name": "Eidolon / Эйдолон",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "3A1FkrektrBYX95x",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Позволяет превратить живого человека в податливую сжатую плоть, обвивающую его словно змея. Потратив три полных действия и тест Medicae+0, может убить другое разумное живое существо на рукопашном расстоянии и получить Плоти, равной T.b жертвы. Может накопить до Cor.b×2 Плоти (обвивает тело) и тратить её как Очки Бесчестия для Трейта Безумно Податливый, или как Усиления и Перебросы для него, либо мгновенно залечивать Раны за свободное действие, тратя 1 Плоть на Рану.",
+    "tier": 2,
+    "requirement": "Слаанеш, Cor 35",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Скульптор Плоти",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "vlLQaFVL6Ee99jp9",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122007155,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!vlLQaFVL6Ee99jp9"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "Chemical Laboratory / Хим-Лаборатория",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Переносная лаборатория для пополнения стимуляторов во время налётов. Требует Tech-Use+10 либо Trade (Chymist)+10 и Tech-Use+0.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 8,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "",
+    "effect": "Создаёт химикаты для мон-кай до R1 автоматически (тест бросается только ради Крит. Провала) и препараты друкхари до R0 при непосредственной работе алхимика. Бонус +10. Позволяет вымачивать в ядах боеприпасы Игольника. Время работы — 1 час на 2 дозы. Требует химические материалы.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Требует ручной работы, бонусов не даёт. Реквизируется как R0.",
+      "good": "Химикаты мон-кай до R2 автоматически, +20 на алхимию, препараты друкхари до R1. Крит. Провал 96–99 лишь портит реагенты без катастрофы. Время работы — 10 минут.",
+      "best": "Химикаты мон-кай до R3, препараты друкхари до R2. Время работы — 10 минут на 5 доз."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Инструменты"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "MimnkRznoG0vkv0K",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380042,
+    "modifiedTime": 1785349380045,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!MimnkRznoG0vkv0K"
+}

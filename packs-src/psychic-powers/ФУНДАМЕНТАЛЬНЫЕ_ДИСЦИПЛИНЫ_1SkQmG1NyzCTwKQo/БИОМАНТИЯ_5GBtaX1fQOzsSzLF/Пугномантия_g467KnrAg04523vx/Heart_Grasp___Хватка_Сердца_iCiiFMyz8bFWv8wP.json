@@ -1,0 +1,75 @@
+{
+  "name": "Heart Grasp / Хватка Сердца",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-biomancy.svg",
+  "folder": "g467KnrAg04523vx",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 700,
+    "discipline": "biomancy",
+    "subtype": "Пугномантия",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "attack",
+    "range": "Ближний бой",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Биоманипуляция · Рукопашное · Физическое. Психотест W−30 vs T+0. Действие: зависит от базы. Треб.: Flurry of Blows. Рукопашный Приём; Избегание до встречного T (цель должна набрать больше Успехов). Победа: PR часов чувствует сердце цели, до 2 раз/Раунд (даже вне Хода): боль (потеря Реакций+пропуск Хода), замедлить (T.b Усталости), усилить (одно действие → Неудача), разорвать (смерть, если нет 2-го сердца). Учит эту силу → Hammerhand/Iron Arm получают Цикл (5), Flurry — Феномены на 99.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "iCiiFMyz8bFWv8wP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122035764,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!iCiiFMyz8bFWv8wP"
+}

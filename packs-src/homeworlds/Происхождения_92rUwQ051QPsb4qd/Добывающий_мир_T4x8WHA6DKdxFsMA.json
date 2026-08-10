@@ -1,0 +1,199 @@
+{
+  "name": "Добывающий мир",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "mining",
+    "description": "Персонаж начинает получать штрафы за Усталость лишь накопив T.b Усталости.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Потом и кровью",
+    "featureDesc": "Персонаж начинает получать штрафы за Усталость лишь накопив T.b Усталости.",
+    "charModLabel": "+3 S, +3 T, −3 F",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "s",
+          "value": 3
+        },
+        {
+          "stat": "t",
+          "value": 3
+        },
+        {
+          "stat": "fel",
+          "value": -3
+        }
+      ]
+    },
+    "notes": ""
+  },
+  "_id": "T4x8WHA6DKdxFsMA",
+  "effects": [
+    {
+      "name": "Добывающий (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.s.total",
+            "type": "add",
+            "value": 3,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.t.total",
+            "type": "add",
+            "value": 3,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.fel.total",
+            "type": "add",
+            "value": -3,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "thrO5pMHruSoWet3",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122043433,
+        "modifiedTime": 1786185863632,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!T4x8WHA6DKdxFsMA.thrO5pMHruSoWet3"
+    }
+  ],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 262500,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "q8k18acjKku6jqSn",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "2jXTHukSBvy2aJd4",
+              "kind": "characteristic",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "eyQxjT5ZgCJVlkkE",
+              "kind": "characteristic",
+              "charKey": "t",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "6w1xqECAAXFIiLaR",
+              "kind": "characteristic",
+              "charKey": "fel",
+              "field": "total",
+              "op": "add",
+              "value": -3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836768,
+    "modifiedTime": 1786277106673,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!T4x8WHA6DKdxFsMA"
+}

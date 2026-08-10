@@ -1,0 +1,67 @@
+{
+  "folder": "ai5XtC0QXBo34wg9",
+  "name": "Мотивные Банки Манипулюс",
+  "type": "implant",
+  "_id": "imZJvWqruRXoxnI8",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "Тяжелый банк мотивирующей силы устанавливается на груди и животе техножреца, позволяя ему легче поглощать энергию и накапливать большее ее количество. ",
+    "notes": "",
+    "category": "mechanicus",
+    "quality": "common",
+    "effect": "Увеличивает максимум зарядов Катушки Потенции на 5 и дает 3 манипулятора, которыми нельзя атаковать, но можно держать предметы. Раз в Ход каждый из этих манипуляторов может за свободное действие: взять или сложить предмет, передать предмет в настоящую руку, подключиться к генератору или электросети в пределах 3м от персонажа (он может отключаться в любой момент). Держа батарею хотя бы двумя манипуляторами, или подключившись двумя из них к генератору или сети, персонаж может заряжать от них свою Катушку Потенции как Электу Индукторами, но тратя на это только полудействие вместо полного действия, и получая бонус +20 на тест.\n                Poor.Q: не дает бонуса на тест Электу-Индукторов.\n                Good.Q: дает +30 вместо +20 на тест Электу-Индукторов.\n                Best.Q: так же, как Good.Q, но имеет 4 манипулятора вместо 3, и если держать батарею или генератор всеми 4-мя, позволяет раз в Ход заряжаться от них за свободное действие.",
+    "installed": "Грудь, Живот",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "vdXN09JQBTra7ZZY": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781793119086,
+    "modifiedTime": 1786122015965,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!imZJvWqruRXoxnI8"
+}

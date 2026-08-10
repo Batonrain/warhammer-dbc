@@ -1,0 +1,60 @@
+{
+  "name": "Voidian Scepter / Пустотный Скипетр",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "QU1EHlGpa6Y3D7Fs",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "ЭФМ",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 4,
+    "energyCost": 3,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "3d10+2×I.b",
+    "damageType": "energy",
+    "penetration": 12,
+    "effect": "[Железо: EFM Circuits, Unctor Cognis · Цена: 4К+3Э · Процесс: Нет · Тип: Компенсатор (1), Славословие (1)] Треб.: For.Lore (Mechanicum)+20. Силовое оружие в Унктор Когнис до начала след. Хода: 3d10+2×I.b E, Pen 12, Contained, Extreme (7), Imprecise, Power Field, Razor Sharp, Bl −2. Считается на 2 Размера больше при Парировании; успешное Парирование — S+0 vs S+0 или удар проходит. Активация перегружает техно-щиты в 3м (кроме своих и до I.b союзников).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "P1f4LCvyIGnKAa4K",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041367,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!P1f4LCvyIGnKAa4K"
+}

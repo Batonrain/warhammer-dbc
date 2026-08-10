@@ -1,0 +1,53 @@
+{
+  "name": "Rebreather / Ребризер",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Тяжёлая дыхательная маска с запасом воздуха.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.8,
+    "availability": 0,
+    "quality": "common",
+    "gearCategory": "head",
+    "worn": "Голова (И)",
+    "effect": "1 час воздуха; иммунитет к вдыхаемым газам и удушью (не к вакууму). Баллон меняется за полное действие (R−1, 0.5 кг, как граната). Надеть за Реакцию/свободное действие (нужна свободная рука).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Баллон меняется за два полных действия.",
+      "good": "Баллон на 2 часа.",
+      "best": "Регенерирует воздух без баллона, весит 0.2 кг."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "UiZz594A4rVxruoa",
+  "_id": "ajya2Q9Q2Vqh8q73",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!ajya2Q9Q2Vqh8q73"
+}

@@ -1,0 +1,68 @@
+{
+  "name": "Multi-lung / Мульти-лёгкое",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "Искусственное третье лёгкое, опутанное собственной сеткой мышц, позволяющей ему сокращаться и раздуваться самостоятельно; имплантируется между двумя обычными лёгкими на месте, освободившемся после разрастания скелета под действием Оссмодулы. Известно также как Впитыватель.\n\nВозраст имплантации: 14-17 лет.",
+    "notes": "",
+    "category": "geneseed",
+    "quality": "common",
+    "effect": "Даёт Трейт Amphibious, перебросы тестов T на сопротивление Удушью и +30 на сопротивление вдыхаемым газам. Поглощает кислород из бедной им среды, позволяет безопаснее дышать ядовитым воздухом и дышать водой. Если у десантника сломаны рёбра или порвана диафрагма, это не мешает его дыханию — Мульти-лёгкое дышит самостоятельно.",
+    "installed": "лёгкие",
+    "geneSeedOrder": 9,
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, VIII. ПРОЧЕЕ («Геносемя» / «Трансформация в Астартес», стр. 485-487)",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "FwbqKKYqs2PGI08i",
+  "_id": "r0a0s3Hl090Azxu3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786046629033,
+    "modifiedTime": 1786287363636,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!r0a0s3Hl090Azxu3"
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Null Rod / Нуль Жезл",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Защитная дубинка от психосил с мерцающим нимбом силы.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 4,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Активна: псайкеры в r10м (в т.ч. союзные) −30 психотесты, −10 остальные. Даже без активации: носитель +30 на встречные броски против психосил. Держащий не может манифестировать. Активна — силовая булава Sanctified; втянуть нимб → обычная булава Sanctified+Reinforced. Попадание по голове псайкеру → теряет Psyker и обрывает поддержку сил до начала след. Хода атакующего. Качество как рукопашного оружия.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Нет эффекта, когда выключен.",
+      "good": "Настраиваемая дальность 1–20м.",
+      "best": "Как Good.Q; при парировании психосилового оружия (или его атаки) на 1 Ход лишает его Force."
+    },
+    "bonuses": [],
+    "linkedWeapon": "Нуль Жезл"
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "yL1oRmHAGSCQZpUH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!yL1oRmHAGSCQZpUH"
+}

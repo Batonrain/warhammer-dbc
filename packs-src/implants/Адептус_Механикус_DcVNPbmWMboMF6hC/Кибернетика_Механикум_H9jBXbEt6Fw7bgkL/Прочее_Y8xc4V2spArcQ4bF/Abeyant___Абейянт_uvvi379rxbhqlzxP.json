@@ -1,0 +1,67 @@
+{
+  "name": "Abeyant / Абейянт",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:4. Прочее.",
+    "notes": "",
+    "category": "mechOther",
+    "quality": "common",
+    "effect": "Парящий трон Магоса: Трейт Flyer (5), +20 аблативных Ран (восстановимы ремонтом), доп. полудействие/Ход только на движение, Верховые Атаки. Подключённый техножрец: +2 ⚡ и +1 ⚡/Ход, +20 Компенсаторы, переброс Техночудес и встречных Tech-Use. Размер до 1; АР до 10 и T.b до 8, если ниже. Poor.Q: 20 Ран/АР 8/T.b 6, +1 ⚡, без бонусов; Good.Q: 25/12/9, Flyer (6); Best.Q: 30/14/10, Flyer (7).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "Y8xc4V2spArcQ4bF",
+  "_id": "uvvi379rxbhqlzxP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122017373,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!uvvi379rxbhqlzxP"
+}

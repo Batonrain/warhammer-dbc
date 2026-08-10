@@ -1,0 +1,54 @@
+{
+  "name": "The Doomed Actor / Роковой Актёр",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "KL96OdH8roKxwvkZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает манифестацию психосил Хрономантии (PR = A.b, вместо W — A; без Варп-феноменов/прорывов) и бесплатно владеет: Внутренние Часы, Глаз Прошлого, Хроностазис, Стазис, Безвременный, Вор Времени, Сокровищница Времени (Раздорожье, Хроносфера и Темпоральная Кузница недоступны). Также может манифестировать психосилы Слаанеш (благословение, но обрекая душу): Двойник Цедрона, Чуждое Обожание, Шесть Клинков Просеферона, Стремительные Чувства, Экстатическое Забвение, Симфония Боли (Уколы Страдания, Змеиный Оберег, Адский Вопль и Высвобождение Тайн Души недоступны). Подробности эффектов — в описании архетипа.",
+    "tier": 3,
+    "requirement": "Сыграть сцену, удивившую Ту-Что-Жаждет",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "aVK8fwgSYGJYjclr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121989797,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aVK8fwgSYGJYjclr"
+}

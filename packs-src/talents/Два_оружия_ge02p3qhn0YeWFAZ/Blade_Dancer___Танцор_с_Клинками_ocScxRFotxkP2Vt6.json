@@ -1,0 +1,55 @@
+{
+  "name": "Blade Dancer / Танцор с Клинками",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ge02p3qhn0YeWFAZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж уменьшает штраф за парные мечи на 10.",
+    "tier": 3,
+    "requirement": "WS 40, Two Weapon Wielder (Melee)",
+    "aptitudes": [
+      "ws",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ocScxRFotxkP2Vt6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122001416,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ocScxRFotxkP2Vt6"
+}

@@ -1,0 +1,49 @@
+{
+  "name": "Кровавое Пламя",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Кровь чемпиона и его врагов усиливает его оружие мощью Кровавого Бога, медленно сгорая в пламени его гнева. Если персонаж вооружён рукопашным оружием, наносящим R Dmg, за полудействие он может нанести себе 1 непоглощаемого R Dmg в руку и дать этому оружию свойства Power Field и Flame. Оружие получает +2 Dmg за каждого убитого им с начала этого усиления персонажа до максимума в +8. По окончании боя или сцены оружие ломается и бесполезно, пока не будет починено.",
+    "source": "Дары Кхорн, d100 88…91",
+    "roll": "88…91",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "r57OV1R0PeDgTEm1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021929,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!r57OV1R0PeDgTEm1"
+}

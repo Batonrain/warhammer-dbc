@@ -1,0 +1,60 @@
+{
+  "name": "Ferric Chains / Феррические Цепи",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "UgkBDS5lckPm4iaG",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Феррик",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 0,
+    "cognitionCost": 2,
+    "energyCost": 1,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "half",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×1м",
+    "damage": "1d10+I.b",
+    "damageType": "impact",
+    "penetration": 0,
+    "effect": "[Железо: Ferric Lure Implants · Цена: 2К+1Э · Процесс: Нет · Тип: Атака, Компенсатор (0), Манипула (2), Незримое, Физическое] Треб.: I 40, Tech-Use+10, Ferric Summon. Два металлических предмета ≤I.b×50кг в I×1м притягиваются друг к другу (лёгкий «падает» на тяжёлый). На персонаже — S+0 vs I+0 за опору. Падение: 1d10+I.b I(Cr), Pen 0. «Примагниченные» до начала след. Хода (полудействием встречный снова). Примагниченный к тяжёлому не может двигаться/Уклоняться.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "yoVqTrcH8me9tMdz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042908,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!yoVqTrcH8me9tMdz"
+}

@@ -1,0 +1,93 @@
+{
+  "name": "Шахтёрский Лазер",
+  "type": "weapon",
+  "folder": "XvkWhdqh26nRkQZq",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "heavy",
+    "weaponType": "laser",
+    "range": 80,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "5",
+    "magazineCur": 60,
+    "magazineMax": 60,
+    "rof_single": 1,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "4d10+5",
+    "damageType": "energy",
+    "penetration": 5,
+    "quality": "common",
+    "availability": 0,
+    "weight": 15,
+    "attackBonus": 0,
+    "special": "",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "inaccurate"
+      },
+      {
+        "key": "surge",
+        "rating": 7
+      },
+      {
+        "key": "wrecker",
+        "rating": 3
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "0bcPJCTkPWI6FzVT",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784645463257,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!0bcPJCTkPWI6FzVT"
+}

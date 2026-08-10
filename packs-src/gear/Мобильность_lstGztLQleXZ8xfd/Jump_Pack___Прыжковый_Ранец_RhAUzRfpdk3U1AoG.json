@@ -1,0 +1,53 @@
+{
+  "name": "Jump Pack / Прыжковый Ранец",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Массивный ранец для реактивного полёта. Варианты: Mars Mk7 / Seraphim / Type 12; Raptor; Phaeton (R3); Alatus (R3).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 25,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "mobility",
+    "worn": "Спина",
+    "effect": "Трейт Flyer(12); нельзя летать на месте (нужно ≥12 м/Ход, иначе теряет Трейт и падает). Реакцией — безопасное приземление с любой высоты. Полёт >Полного Движения не по прямой — тест Operate(Aeronautica)+0 (без Навыка — всегда). Не поднимает >1 т. Бак: 1 час; сменный бак R0, 2 кг, как бомба на разгрузке, замена — полное действие.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "−10 на тесты Operate(Aeronautica) с ранцем.",
+      "good": "+5 на тесты Operate(Aeronautica) с ранцем.",
+      "best": "+10 на тесты Operate(Aeronautica) с ранцем."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": true,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "lstGztLQleXZ8xfd",
+  "_id": "RhAUzRfpdk3U1AoG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!RhAUzRfpdk3U1AoG"
+}

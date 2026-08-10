@@ -1,0 +1,35 @@
+{
+  "name": "Копьё / Lance",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "U5s2o5cGaKlCslI9",
+  "system": {
+    "description": "Эффективно против тяжелобронированных целей. При Избирательной атаке суммарное число СУ ×AP цели идёт в Пробитие (вместо обычного Pen), вычитая Pen.",
+    "reminder": "🔱 Копьё: при Избирательном попадании AP×СУ → Пробитие",
+    "category": "both",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "lance",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "dMeWtwQTGqvycdHZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353819,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!dMeWtwQTGqvycdHZ"
+}

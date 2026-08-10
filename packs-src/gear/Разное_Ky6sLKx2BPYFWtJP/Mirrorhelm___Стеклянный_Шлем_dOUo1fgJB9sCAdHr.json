@@ -1,0 +1,58 @@
+{
+  "name": "Mirrorhelm / Стеклянный Шлем",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Гладиаторский шлем Ведьм и чемпионов Арены: засекает любое движение противника, позволяя реагировать неестественно быстро.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1.5,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "шлем",
+    "effect": "+1 Реакция на физические избегания. Если противник начинает соревновательный тест WS или A и его характеристика ниже, чем P носителя, носитель получает Преимущество на этот тест.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Преимущества не даёт.",
+      "good": "Помимо Преимущества — бонус +10 на эти тесты.",
+      "best": "Даёт Unnatural WS (+1) и Unnatural P (+1)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "dOUo1fgJB9sCAdHr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!dOUo1fgJB9sCAdHr"
+}

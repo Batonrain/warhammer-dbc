@@ -1,0 +1,51 @@
+{
+  "name": "Momentum / Момент",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "WR5Z2pT0JK1JDn2W",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Удача сопутствует смелым, и опытный гладиатор извлекает максимум из даже мельчайшей победы. Каждый раз, успешно нанося удары в рукопашной или метательным оружием, или успешно Избегая вражеских атак, получает очко Момента; промахиваясь или получая попадание — теряет очко. Атаки, попавшие, но отменённые Избеганием, Момент не меняют. Атаки с множественными попаданиями дают или отнимают только одно очко. Может накапливать до A.b очков Момента (игнорируя Трейт Unnatural A) и теряет их в конце боя. За каждое очко Момента получает +5 на все тесты WS, S и A. Может тратить очки, чтобы добавлять +3 Успеха на успешные тесты по этим Характеристикам, или обращать неудачные броски по ним (но не Критические Провалы) в Успехи с 1 уровнем Успеха.",
+    "source": "Элитный архетип: Гладиатор",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "eQEDTb2OUimjCMeI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121960723,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!eQEDTb2OUimjCMeI"
+}

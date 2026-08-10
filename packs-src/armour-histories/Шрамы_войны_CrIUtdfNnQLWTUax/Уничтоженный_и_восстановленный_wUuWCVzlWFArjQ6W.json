@@ -1,0 +1,38 @@
+{
+  "name": "Уничтоженный и восстановленный",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "CrIUtdfNnQLWTUax",
+  "system": {
+    "table": "scars",
+    "rollMin": 6,
+    "rollMax": 6,
+    "description": "Доспех был полностью уничтожен вражеской артиллерией вместе с носителем, но части собрали и переделали в полностью функционирующий костюм. Где-то он слабее, где-то прочнее.",
+    "effect": "Бросьте к10 за каждую зону: 1-3 — на 1 ОБ меньше обычного, 8-10 — на 1 ОБ больше обычного.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": true,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "wUuWCVzlWFArjQ6W",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354161,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!wUuWCVzlWFArjQ6W"
+}

@@ -1,0 +1,57 @@
+{
+  "name": "Броня Варп-Паука",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Темная, черная и красная броня Варп–Паука отличается от брони всех остальных гигантскими наплечниками (и в принципе габаритами), а также дополнительными психокостяными конечностями. Носитель данной брони получает Multiple Arms (+2), которые обычно имеют встроенные Best.Q Мономечи, которые могут быть заменены на что–то другое за 1 час работы, кроме тяжелого оружия. Броня имеет встроенный генератор прыжков варп–пауков.\n",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 45,
+    "equipped": false,
+    "head": 7,
+    "body": 8,
+    "leftArm": 7,
+    "rightArm": 7,
+    "leftLeg": 7,
+    "rightLeg": 7,
+    "quality": "common",
+    "availability": 4,
+    "weight": 25,
+    "properties": [
+      "aspect",
+      "hard",
+      "protective",
+      "sealed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 5,
+    "special": "Aspect (Варп-Пауки). Multiple Arms (+2) с Best.Q Мономечами; генератор прыжков варп-пауков.",
+    "propRatings": {
+      "protective": 7
+    }
+  },
+  "_id": "Tu8SRtK8JZJsuaDi",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!Tu8SRtK8JZJsuaDi"
+}

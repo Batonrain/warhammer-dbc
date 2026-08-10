@@ -1,0 +1,55 @@
+{
+  "name": "Patching the Sacred Frame / Латание священного корпуса",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "lVHy1MIDBmyMR8Kb",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Руководя Длительным ремонтом силами экипажа, при успехе персонаж восстанавливает дополнительно свой I.b очков прочности корпуса.",
+    "tier": 2,
+    "requirement": "Trade (Shipwright) +20, Tech-Use +10",
+    "aptitudes": [
+      "int",
+      "tech"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "r2cUXKfV9y1Sh1ly",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160740113,
+    "modifiedTime": 1786122003873,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!r2cUXKfV9y1Sh1ly"
+}

@@ -1,0 +1,53 @@
+{
+  "name": "Thorn Heart / Терновое Сердце",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Серебряная брошь-змея, обвивающая сердце шипами.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Имплант сердца",
+    "effect": "Кхорн: при непоглощённом уроне +6 к A (теряется в конце боя/сцены). Слаанеш: уменьшает 1-й непоглощ. урон за бой на 1, 2-й на 2 и т.д. (мин. 1). Снять только пересадкой сердца или с трупа.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Змей замещает сердце 6 дней — в это время агония и Беспомощен.",
+      "good": "Урон от атаки Кхорнита считается дважды (и для бонуса к A, и для уменьшения урона).",
+      "best": "Как Good.Q; при непоглощённом уроне восстанавливает 1 потраченную Реакцию."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "oxzMB3JbsOJpAf1q",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!oxzMB3JbsOJpAf1q"
+}

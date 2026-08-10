@@ -1,0 +1,49 @@
+{
+  "name": "Поглотитель Страданий",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Как апостол Владыки Разложения, чемпион способен на время даровать другим освобождение от боли, поглощая их страдания и черпая из них силу. Он может за полудействие коснуться персонажа, страдающего от Критического Эффекта, и подавить этот эффект до конца боя или сцены, восстановив себе одно ранее потраченное Очко Бесчестия.",
+    "source": "Дары Нургл, d100 52…54",
+    "roll": "52…54",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "oYWfYcPClHUJ3oRT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021675,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!oYWfYcPClHUJ3oRT"
+}

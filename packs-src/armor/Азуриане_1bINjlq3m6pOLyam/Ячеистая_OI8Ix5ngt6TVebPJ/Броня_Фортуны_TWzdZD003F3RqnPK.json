@@ -1,0 +1,57 @@
+{
+  "name": "Броня Фортуны",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Модифицированная Рунная Броня, Броня Фортуны изменяет судьбу под своего владельца, превращая потенциально смертельное ранение в слабое, а атаку, что убила его товарищей и должна была убить его, в ничтожную для него. Многие носители Брони Фортуны переживают своих товарищей, что может сказаться на эмоциональном плане – но эльдары легко свыкаются с реальностью. Броня имеет те же правила, что и Рунная, но не обладает вариациями. Броня обладает Колдовским Щитом–Дефлектором с рейтингом 1–10+PR×5/–.  В начале своего хода персонаж может выбрать любое существо в поле своей видимости и передать ему этот щит–дефлектор, оставшись с щитом дефлектором 1–25/–\n",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 6,
+    "body": 6,
+    "leftArm": 6,
+    "rightArm": 6,
+    "leftLeg": 6,
+    "rightLeg": 6,
+    "quality": "common",
+    "availability": 4,
+    "weight": 5,
+    "properties": [
+      "protective",
+      "runesOfProtection",
+      "sealed",
+      "stealthed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Как Рунная. Колдовской Щит-Дефлектор 1–10+PR×5/−; можно передать союзнику (себе остаётся 1–25/−).",
+    "propRatings": {
+      "protective": 6
+    }
+  },
+  "_id": "TWzdZD003F3RqnPK",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!TWzdZD003F3RqnPK"
+}

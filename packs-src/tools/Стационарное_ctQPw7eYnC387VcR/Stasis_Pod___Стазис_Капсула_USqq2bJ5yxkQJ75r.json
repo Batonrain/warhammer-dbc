@@ -1,0 +1,44 @@
+{
+  "name": "Stasis-Pod / Стазис-Капсула",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Саркофаг Тёмной Эры, замораживающий время внутри (Размер до 0). Внутри абсолютно неуязвимо. При выключении/повреждении стазис спадает через 1d5+1 Раундов (переживает катастрофу, если источник короткоживущий).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Макс. Размер −1.",
+      "good": "Макс. Размер 1.",
+      "best": "Макс. Размер 2."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "USqq2bJ5yxkQJ75r",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!USqq2bJ5yxkQJ75r"
+}

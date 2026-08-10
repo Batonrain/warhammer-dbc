@@ -1,0 +1,34 @@
+{
+  "name": "Владычество",
+  "type": "aspiration",
+  "img": "icons/svg/aura.svg",
+  "folder": "Z9DYURk2FK31cTxi",
+  "system": {
+    "key": "motivation:3",
+    "table": "motivation",
+    "n": 3,
+    "mods": "+1 Inf, +2 W, +2 F, −4 A",
+    "description": "Ищет владычества над всеми, покоряя, пока никто не склонится.",
+    "bookSource": "Black Crusade — Стремления (стр. 22)"
+  },
+  "_id": "pTbzncwraA1lQgIY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285535467,
+    "modifiedTime": 1786285535471,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!pTbzncwraA1lQgIY"
+}

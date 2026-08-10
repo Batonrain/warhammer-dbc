@@ -1,0 +1,67 @@
+{
+  "name": "Photosynthetic Skin / Фотосинтезирующая Кожа",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Симбиотические водоросли в коже.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Симбиотические водоросли: ½ потребности в пище при ≥4 ч на ярком свету в день. Дефект (до Best.Q): в темноте водоросли спят, кожа истончается — +1 урон от всех атак.\nPoor.Q: −¼ потребности; в темноте +2 урона; без света >суток некроз (1 непогл. C/час).\nGood.Q: в темноте теряется бонус к питанию, но доп. урон исчезает.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Световая регенерация (на свету Regeneration(+1)); 2) Энергетический резерв (без пищи до 3 дней в темноте, затем 8 ч света); 3) Биолюминесценция (свободным действием тусклый свет 10 м; вспышка Blast(1) Blinding(T.b) на себя, иммунен, затем 24−T.b ч света); 4) Токсичный фотосинтез (Трейт Toxic(1)).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "X0eiwlLb3y8mbEqM",
+  "_id": "qQ7rdf460eYBU7Wj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122016875,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qQ7rdf460eYBU7Wj"
+}

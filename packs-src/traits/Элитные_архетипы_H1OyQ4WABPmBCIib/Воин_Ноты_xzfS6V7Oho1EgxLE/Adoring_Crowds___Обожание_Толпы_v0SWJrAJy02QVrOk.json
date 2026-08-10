@@ -1,0 +1,51 @@
+{
+  "name": "Adoring Crowds / Обожание Толпы",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "xzfS6V7Oho1EgxLE",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Фанаты стягиваются к нему из-за славы мечника и его выступлений. Может использовать A вместо F и Trade(Dancer) вместо Command для своих Миньонов-Людей, и все они получают Трейт Sycophant и Навык Trade(Musician) бесплатно. Когда убивает или внушительно выводит из боя вражеского чемпиона, чудовище или машину, все видевшие это его Миньоны-Люди могут потратить по Реакции и пройти тест Лояльности, при Успехе восстанавливая ему по Очку Бесчестия каждый.",
+    "source": "Элитный архетип: Воин Ноты",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "v0SWJrAJy02QVrOk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121962088,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!v0SWJrAJy02QVrOk"
+}

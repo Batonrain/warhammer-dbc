@@ -1,0 +1,54 @@
+{
+  "name": "Eternal Despair / Вечное Отчаяние",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "V2ME9AI050jFcoHO",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Все персонажи считаются неважными в расчёте тестов против Страха Шута Смерти. Провалив тест против страха от Шута Смерти и покинув поле битвы, жертва получает психотравму Контузия (триггер — Шуты Смерти): в новом бою каждый раунд проходит тест против страха от Шута Смерти, даже если уже проходила тест против другого равного источника.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "HyB2iYR1bA6RYSY1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121976406,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!HyB2iYR1bA6RYSY1"
+}

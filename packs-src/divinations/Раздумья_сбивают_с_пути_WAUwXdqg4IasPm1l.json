@@ -1,0 +1,112 @@
+{
+  "name": "Раздумья сбивают с пути",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "doubt",
+    "roll": "30-33",
+    "rollMin": 30,
+    "rollMax": 33,
+    "text": "Раздумья сбивают с пути",
+    "effect": "I −3, W +3.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "−3 I, +3 W",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "int",
+          "value": -3
+        },
+        {
+          "stat": "wp",
+          "value": 3
+        }
+      ]
+    },
+    "description": "",
+    "notes": ""
+  },
+  "_id": "WAUwXdqg4IasPm1l",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "mxaYfRUhSLWn32Fp",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "xYxZwv4uvjljQ2xz",
+              "kind": "characteristic",
+              "charKey": "int",
+              "field": "total",
+              "op": "add",
+              "value": -3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "N1615Q9VN4dM8cPE",
+              "kind": "characteristic",
+              "charKey": "wp",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786003756748,
+    "modifiedTime": 1786230667586,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!WAUwXdqg4IasPm1l"
+}

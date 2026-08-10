@@ -1,0 +1,52 @@
+{
+  "name": "Agonizing Dance / Агонизирующий Танец",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "IHeHzXN4eZXIenbD",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Каждый раз, нанося непоглощённый урон Агонайзером, заставляет цель пройти тест T+10 или получить 1 урон в S, T, A и P. Если жертва получила более 5 такого урона, теряет одну реакцию в начале каждого хода, пока не восстановит характеристики. Может совершить особую атаку: одиночная атака со штрафом −20 в шею (−60), затем жертва проходит тест против Snare (2); при провале получает по 3 урона в S, T, A и P за каждый провал, после чего хлыст освобождает её.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Ведьма",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "dO5lHHtWpwPNha4J",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121991965,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!dO5lHHtWpwPNha4J"
+}

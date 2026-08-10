@@ -1,0 +1,46 @@
+{
+  "name": "Диаволо",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
+  "folder": "i0uuZL5dVJmN892X",
+  "system": {
+    "description": "Снаряд с зажигательной смесью вместо взрывчатки. Меняет вид урона на I, убирает 1 кубик урона, даёт −4 Пробитие и свойство Flame; при непоглощённом уроне в корпус или башню машины бросьте 1d10: 10+ начинает Пожар (8+ при попадании в корму).",
+    "notes": "",
+    "weaponTypes": [
+      "solid"
+    ],
+    "ammoCategory": "auto_shells",
+    "rarity": 2,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 2,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "impact",
+    "penetrationMod": -4,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Flame; −1 кубик урона; поджог машины при непоглощённом уроне в корпус/башню (1d10:10+)",
+    "properties": []
+  },
+  "_id": "GWLRatdA0rPj3RLP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!GWLRatdA0rPj3RLP"
+}

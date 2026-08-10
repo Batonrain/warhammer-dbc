@@ -1,0 +1,98 @@
+{
+  "name": "Гекатрийский Клинок (Друкхари)",
+  "type": "weapon",
+  "folder": "oLbvhe4V7Kcniyy6",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "primitive",
+    "range": 1,
+    "balance": 1,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d5+2",
+    "damageType": "rending",
+    "penetration": 3,
+    "quality": "common",
+    "availability": -3,
+    "weight": 0.1,
+    "attackBonus": 0,
+    "special": "Нож; Хват 1р [Об]; Досягаемость 1. Реквизиция 1 = 4 клинка.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "eldarPrecise"
+      },
+      {
+        "key": "eldarRazorSharp"
+      },
+      {
+        "key": "extreme",
+        "rating": 4
+      },
+      {
+        "key": "reinforced"
+      },
+      {
+        "key": "tearing"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "7QygMDhFzYC1BN64",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785255155964,
+    "modifiedTime": 1785255155964,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!7QygMDhFzYC1BN64"
+}

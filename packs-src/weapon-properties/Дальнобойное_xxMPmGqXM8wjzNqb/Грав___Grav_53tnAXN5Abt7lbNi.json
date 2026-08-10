@@ -1,0 +1,35 @@
+{
+  "name": "Грав / Grav",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "За каждое попадание цель проходит тест S−(20×Размер)−(3×AP торса), иначе её сбивает с ног (летящие падают) и прижимает к земле на 1 Раунд, делая Беспомощной, плюс 1d10+Провалы I(Cr) Dmg в случайную ногу (или торс, если лежит). Техника: Размер×2 непоглощаемого урона в Шасси и SPD 0 на 1 Раунд; Шагоходы/Скиммеры/Самолёты — тест Operate(A)−10 или Опрокидывание/Крушение/Пике. Размер 4+ иммунны.",
+    "reminder": "🌀 Грав: цель — тест S−(20×Размер)−(3×AP торса) или сбита с ног и Прижата (Беспомощна 1 Раунд)",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "grav",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "53tnAXN5Abt7lbNi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353819,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!53tnAXN5Abt7lbNi"
+}

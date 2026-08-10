@@ -1,0 +1,53 @@
+{
+  "name": "Beguiling Gem / Заманчивый Самоцвет",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Гранёный самоцвет из дымчатого берилла, отражающий тёмные мечты.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Голова/грудь",
+    "effect": "Разумная душа, атакующая носителя в ближнем бою: W−10 или отменяет атаку и теряет действия. Пройдя тест — иммунна до конца боя/сцены. Не действует на Орков и Кхорнитов.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Действует и на самого носителя при каждой его атаке.",
+      "good": "Очко Бесчестия сбивает иммунитет противника.",
+      "best": "Как Good.Q; действует и против стрельбы."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "nGjXlvPzUdrXLm70",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!nGjXlvPzUdrXLm70"
+}

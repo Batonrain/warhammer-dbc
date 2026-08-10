@@ -1,0 +1,52 @@
+{
+  "name": "Trophies of Triumph / Трофеи Триумфа",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "F3sLK04PM0hXUP7f",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сила Богов позволяет извлекать больше силы из достойных трофеев. Убив достойную трофея цель с Inf 30-59, получает 2 очка Трофеев; 60-79 — 3 очка; 80+ — 4 очка.",
+    "tier": 1,
+    "requirement": "Неделимый, Inf 60",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Мастер Казней",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "phgjbXThNP6w7Bhr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122002592,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!phgjbXThNP6w7Bhr"
+}

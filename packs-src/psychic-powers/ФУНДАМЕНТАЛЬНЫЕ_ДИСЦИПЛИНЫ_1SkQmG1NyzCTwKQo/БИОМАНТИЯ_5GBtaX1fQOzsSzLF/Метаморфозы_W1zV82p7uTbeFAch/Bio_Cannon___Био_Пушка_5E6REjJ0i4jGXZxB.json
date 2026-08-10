@@ -1,0 +1,75 @@
+{
+  "name": "Bio-Cannon / Био-Пушка",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-biomancy.svg",
+  "folder": "W1zV82p7uTbeFAch",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 800,
+    "discipline": "biomancy",
+    "subtype": "Метаморфозы",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Биоманипуляция · Вливание · Истинная Плоть. Треб.: Living Sword. Отращивает «пистолет» (рука/торс/голова без брони, кроме Второй Кожи): Иглострел PR×5м S/3/6 1d10+PR R Pen PR Crippling(2),Scatter; Кислота 1d10+2×PR C Corrosive(2),Spray; Копьемёт 1d10+2×PR R Pen 2×PR Accurate,Piercing; Хлыст 1d10+2×PR R Precise,Tearing (WS, Контакт Плоти). Торс/голова — Independent.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "5E6REjJ0i4jGXZxB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122023967,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!5E6REjJ0i4jGXZxB"
+}

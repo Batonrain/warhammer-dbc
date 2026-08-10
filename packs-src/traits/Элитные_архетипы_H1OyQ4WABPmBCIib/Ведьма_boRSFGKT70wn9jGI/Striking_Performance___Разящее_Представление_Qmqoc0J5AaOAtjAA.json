@@ -1,0 +1,51 @@
+{
+  "name": "Striking Performance / Разящее Представление",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "boRSFGKT70wn9jGI",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Полное Движение на SPD×3, Натиск на SPD×6, Бег на SPD×12. Не ограничена полудвижением при движении через Reaper, пока не потратит всё движение Натиска. Провоцирует неограниченное число атак через Cleave, и ей нужно нанести цели лишь 10 непоглощённого урона вместо 16. Быстрая и Молниеносная Атака провоцируют Cleave и Whirlwind of Death; в их расчёте баланс всего оружия в одноручном хвате +1. Может использовать Trade (Dancer)(A) вместо BS для метательного оружия (включая гранаты) и вместо WS в Финтах и Давлении. Нанося экстремальный урон, может потратить 6 Очков Боли и увеличить его на +4. Assassin Strike даёт прыжок на полное движение, а не на полудвижение.",
+    "source": "Элитный архетип: Ведьма",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Qmqoc0J5AaOAtjAA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121959591,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Qmqoc0J5AaOAtjAA"
+}

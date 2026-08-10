@@ -1,0 +1,67 @@
+{
+  "name": "Blood Brother / Кровяной Брат",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Симбионт, сросшийся с кровью.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Симбионт в крови: нанеся рукопашной непогл. урон цели с кровью, можно нанести себе до T.b урона и столько же доп. урона врагу (высасывает силы из обоих). Дефект (до Best.Q): нужна двойная порция мяса/крови в день, иначе 1 усталость/день.\nPoor.Q: 2 усталости.\nGood.Q: 1/сессию отменить полученный от Брата урон по себе.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Вечный голод (2 урона врагу за 1 себе); 2) Кровавый вампир (убив существо с кровью, T+30 → +T.b жертвы ран); 3) Кровяной стабилизатор (иммунитет к кровотечению/обескровливанию, сверх-универсальный донор); 4) Железная кровь (+20 T против кровотечения/ядов, раны закрываются коркой).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "r3L1E0FleRYKkFs0",
+  "_id": "06m81ssqPAMY7ukj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122010685,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!06m81ssqPAMY7ukj"
+}

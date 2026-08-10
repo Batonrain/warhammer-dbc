@@ -1,0 +1,52 @@
+{
+  "name": "Twilight Puppeteer / Кукловод Сумерек",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "88DCqMbDTIO9eErM",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Черта Теневого Провидца. Персонаж проходит проверки F через W (с бонусами Unnatural W), но Command — через F (кроме как для теневидцев). +20 на все социальные тесты кроме Командования, критически преуспевает в Deceive и Scrutiny. Не получает/даёт штрафов от расовых признаков; не может иметь Enemy/Hatred (кроме как против Хаоса). В маске и голо-костюме — эмоции/интонация/манера нечитаемы; авто-успех против чтения мыслей/контроля/слежки (психосилы на это критически проваливаются). Знает Linguistics на каждый язык, равный его Linguistics(Harlequins). Получает Путь Видящего (Провидец) и (Варлок) на уровне Заблудившийся, игнорируя обычные ограничения Пути.",
+    "tier": 1,
+    "requirement": "Создание Персонажа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Черта архетипа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "wasGqFmWKK9CVrGq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122007892,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wasGqFmWKK9CVrGq"
+}

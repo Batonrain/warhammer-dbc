@@ -1,0 +1,51 @@
+{
+  "name": "Paladin Frame / Фрейм Паладина",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "tpsowQBwZylQxLvZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Фрейм почти полностью заменяет тело, оставляя головной и спинной мозг. Оборудован всеми кибернетическими чувствами Best.Q, двумя парами бионических рук Best.Q (вторичная пара по умолчанию руки-оружие) и парой бионических ног Best.Q (маг-сапоги и Талант Stonewall, если стоит на земле). Может устанавливать длинные винтовки, винтовки и обычные (не компактные) пистолеты на баллистические механодендриты.",
+    "source": "Элитный архетип: Секутор",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "dwmbQ4ys4DcBe8XD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121960678,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!dwmbQ4ys4DcBe8XD"
+}

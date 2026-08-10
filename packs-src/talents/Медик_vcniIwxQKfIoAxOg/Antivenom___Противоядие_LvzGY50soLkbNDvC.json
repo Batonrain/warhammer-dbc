@@ -1,0 +1,55 @@
+{
+  "name": "Antivenom / Противоядие",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "vcniIwxQKfIoAxOg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За полудействие, потратив 3 дозы Детокса, 1 Очко Бесчестия и пройдя тест Scholastic Lore (Chymistry)(I)+0, персонаж создаёт Успехи доз противоядия (инъекция) против известного яда. Против неизвестных ядов нужен образец или обследование поражённого (Medicae(P)−20). Инъекция мгновенно прекращает действие яда и даёт иммунитет к нему на 24 часа.",
+    "tier": 2,
+    "requirement": "Scholastic Lore (Chymistry)+10",
+    "aptitudes": [
+      "int",
+      "knowledge"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "LvzGY50soLkbNDvC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121979217,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LvzGY50soLkbNDvC"
+}

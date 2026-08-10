@@ -22,5 +22,10 @@ export default [
       "no-undef": "error",
       "no-unused-vars": ["warn", { args: "none" }]
     }
+  },
+  {
+    // Инструменты сборки компендиумов запускаются в Node, а не в браузере.
+    files: ["tools/**/*.mjs"],
+    languageOptions: { globals: globals.node }
   }
 ];

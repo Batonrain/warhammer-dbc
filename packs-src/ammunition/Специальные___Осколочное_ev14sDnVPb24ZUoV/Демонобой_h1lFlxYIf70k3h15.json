@@ -1,0 +1,46 @@
+{
+  "name": "Демонобой",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "ev14sDnVPb24ZUoV",
+  "system": {
+    "description": "Особо редкие ядовитые кристаллы, создаваемые преимущественно только гемункулами для своих нужд — они способны поражать сам варп своим ядом, но куда более слабее органику. Дают Toxic (2), игнорирующий трейты Daemonic и Stuff Of Nightmares. Снижают Toxic до 0 против живых целей.",
+    "notes": "",
+    "weaponTypes": [
+      "splinter"
+    ],
+    "ammoCategory": "splinter_crystals",
+    "rarity": 3,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 3,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Toxic (2) игнор Daemonic/Stuff Of Nightmares; против живых Toxic 0",
+    "properties": []
+  },
+  "_id": "h1lFlxYIf70k3h15",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783814777010,
+    "modifiedTime": 1783814777010,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!h1lFlxYIf70k3h15"
+}

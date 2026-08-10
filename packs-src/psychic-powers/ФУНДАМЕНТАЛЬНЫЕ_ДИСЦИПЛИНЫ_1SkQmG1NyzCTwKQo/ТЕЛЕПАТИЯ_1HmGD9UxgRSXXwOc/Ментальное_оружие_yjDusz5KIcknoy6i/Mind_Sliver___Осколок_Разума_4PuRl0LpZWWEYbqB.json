@@ -1,0 +1,75 @@
+{
+  "name": "Mind Sliver / Осколок Разума",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "yjDusz5KIcknoy6i",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "telepathy",
+    "subtype": "Ментальное оружие",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "full",
+    "range": "PR×5м / PR×20м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2d10+2×PR",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Незримое · Психический Снаряд · Стрельба. Треб.: Psychic Scream. Профиль: PR×5м, 2d10+2×PR E, Pen 0, Warp Weapon. Урон в W и I (поровну, приоритет W при нечёте), а не в Раны; поддерживается, если наносил урон в характеристики (отменяется при развеивании; одно поддержание держит эффект на многих). Warp Instability — урон в Раны как обычно.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "4PuRl0LpZWWEYbqB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122023636,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4PuRl0LpZWWEYbqB"
+}

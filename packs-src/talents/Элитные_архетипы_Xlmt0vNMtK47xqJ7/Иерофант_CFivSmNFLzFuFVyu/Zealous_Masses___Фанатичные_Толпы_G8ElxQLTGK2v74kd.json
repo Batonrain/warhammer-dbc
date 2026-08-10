@@ -1,0 +1,52 @@
+{
+  "name": "Zealous Masses / Фанатичные Толпы",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CFivSmNFLzFuFVyu",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Заведённые проповедями орды бросаются на врагов, невзирая на опасность. Может потратить Очко Бесчестия, чтобы дать одной из Орд Талант Frenzy до конца сцены или боя и сразу же ввести её в Ярость. Пока Орда в Ярости, она игнорирует весь урон в Магнитуду, полученный с конца своего предыдущего Хода, и отображает его только в конце своего текущего Хода.",
+    "tier": 2,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Иерофант",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "G8ElxQLTGK2v74kd",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121974809,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!G8ElxQLTGK2v74kd"
+}

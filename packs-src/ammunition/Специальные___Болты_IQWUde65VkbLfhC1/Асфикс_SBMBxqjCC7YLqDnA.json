@@ -1,0 +1,46 @@
+{
+  "name": "Асфикс",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-bolt.svg",
+  "folder": "IQWUde65VkbLfhC1",
+  "system": {
+    "description": "Болт с оболочкой из психоактивного яда, разработанный на Просперо против Психнойенов. Даёт Toxic (2), игнорирующий Трейты Daemonic и Stuff of Nightmares; цель, получившая урон от этого яда, также получает штраф −30 (не складывающийся) на все ментальные действия и встречные тесты против психосил, выжигания души, одержимости и прочих воздействий Варпа до конца следующего Хода стрелка.",
+    "notes": "",
+    "weaponTypes": [
+      "bolt"
+    ],
+    "ammoCategory": "bolts",
+    "rarity": 3,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 3,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Toxic (2) (игнор Daemonic/Stuff of Nightmares); −30 на ментальные/Варп-тесты до конца хода",
+    "properties": []
+  },
+  "_id": "SBMBxqjCC7YLqDnA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!SBMBxqjCC7YLqDnA"
+}

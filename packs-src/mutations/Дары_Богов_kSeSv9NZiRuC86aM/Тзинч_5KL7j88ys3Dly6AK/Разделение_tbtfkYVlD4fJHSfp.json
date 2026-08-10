@@ -1,0 +1,49 @@
+{
+  "name": "Разделение",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда чемпион умирает, он может потратить Очко Бесчестия, чтобы его тело исчезло и на его месте появилось две его копии на 1 Размер меньше. Копии имеют 9 Ран, −20 к S и T, Трейты Stuff of Nightmares, Daemonic (+1) и Warp Instability и находятся под контролем персонажа, действуя в его Инициативу. Их снаряжение такое же, как у самого чемпиона, но не соткано из Варпа. Если чемпион поддерживал психосилы или техночудеса, обе его копии поддерживают те же. Урон всех атак копий уменьшает кубики с 1d10 до 1d5 и заменяет 1d5 на 1. В конце сцены обе копии исчезают и на месте одной из них (по выбору персонажа) возникает он сам с 0 Ран. Если обе копии убиты или изгнаны, это считается как смерть персонажа как обычно и её можно избегать обычными способами.",
+    "source": "Дары Тзинч, d100 13…15",
+    "roll": "13…15",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "tbtfkYVlD4fJHSfp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122022197,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!tbtfkYVlD4fJHSfp"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Doom Runes / Губительные Руны",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "bVdkbbmtp2ey1CBH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Потратив 8 часов на нанесение зелёных рун, делает снаряжение способным находиться в теневом измерении, если его несёт Мандрагора. Для стрелкового оружия это снижает качество на 1. Снаряжение, извлечённое из теневого измерения, не работает 5 минут, пока руны очищают его от тёмных материй.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Житель Бездны",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "DLVkrdvxaqUcamew",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121972616,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!DLVkrdvxaqUcamew"
+}

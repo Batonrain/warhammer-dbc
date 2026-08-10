@@ -1,0 +1,51 @@
+{
+  "name": "Runic Shot / Рунный Выстрел",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "oqhaDTB4qKgYbmZb",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Одиночные выстрелы рунной пулей получают +тPR Dmg и +½тPR Pen (окр.▼). Раз в Ход после успешной одиночной стрелковой атаки рунной пулей может влести в выстрел другую психосилу. Манифестация уменьшает требуемое действие (полное > полудействие > свободное), а Феномены/Прорывы кроме обычного эффекта наносят Клин оружия. При успехе психосила применяется к цели, в которую попала пуля (психострельба наносит независимые от пули попадания, ауры распространяются от цели), даже за пределом обычной дальности. Поддерживаемые так психосилы не держатся дольше начала следующего Хода Питати.",
+    "source": "Элитный архетип: Питати",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Vxdhyiavgmszgo0T",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121959954,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Vxdhyiavgmszgo0T"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Butcher's Offering / Подношение Мясника",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-summon.svg",
+  "folder": "Y2ZSAnEJgGAPKxSQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 100,
+    "discipline": "sorcery",
+    "subtype": "Призыв",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "free",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение · Концентрация · Длительное (1 Раунд). Треб.: For.Lore(Daemons)+10. Убив разумного врага с душой, при Успехе одна награда до конца след. Хода: +10 на след. тест; Unnatural Characteristic (+2) (любая); или Таланты Jaded, Nerves of Steel, Resistance (Fear). Жертва (Талант Sacrifice): можно удержать бонус PR от Пути Жертвы 24 ч (ускользает при Оглушении/потере сознания).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "qgZzfewW9tfggO9I",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122037979,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qgZzfewW9tfggO9I"
+}

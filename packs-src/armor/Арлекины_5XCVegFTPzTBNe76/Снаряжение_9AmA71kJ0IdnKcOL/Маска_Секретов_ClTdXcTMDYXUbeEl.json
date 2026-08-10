@@ -1,0 +1,47 @@
+{
+  "name": "Маска Секретов",
+  "type": "armor",
+  "folder": "9AmA71kJ0IdnKcOL",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "mesh",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 3,
+    "body": 0,
+    "leftArm": 0,
+    "rightArm": 0,
+    "leftLeg": 0,
+    "rightLeg": 0,
+    "quality": "common",
+    "availability": 5,
+    "weight": 0.1,
+    "properties": [],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Как Best.Q Ложное Лицо (Agaith). Иммунитет к Страху/Шоку/Подавлению; Fear (4) (даже высшие демоны/бесстрашные). Провалившие тест Страха становятся Беспомощными (неуменьшаемо). После боя — цена по решению ГМ."
+  },
+  "_id": "ClTdXcTMDYXUbeEl",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782054428033,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!ClTdXcTMDYXUbeEl"
+}

@@ -1,0 +1,55 @@
+{
+  "name": "Concentrated Gaze / Сосредоточенный взгляд",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "DzEO0iL8uELWEUjw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Один раз за игровую встречу персонаж может заставить одного врага перебросить успешный тест сопротивления Силам навигатора.",
+    "tier": 2,
+    "requirement": "W 45",
+    "aptitudes": [
+      "wp",
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Hgjb6k3aOVtzMB8y",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160740113,
+    "modifiedTime": 1786121976164,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Hgjb6k3aOVtzMB8y"
+}

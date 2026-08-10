@@ -1,0 +1,51 @@
+{
+  "name": "Established Role / Установленная Роль",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "N2Z9oIGp00id8t49",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При взятии архетипа может взять один из его талантов бесплатно, если в отряде эта роль не занята. Все остальные таланты этого архетипа стоят на +250 больше обычного. Выполняя задачи своей роли, получает +10 и дополнительный успех при успехе. Выполняя задачу, полностью противоречащую роли, получает −10 и дополнительный провал даже при успехе. Если за всю сессию выполнял только свои или нейтральные задачи, получает +10% дополнительного опыта.",
+    "source": "Элитный архетип: Длань Архонта",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "HFOO3riC84SffyN3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121958582,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!HFOO3riC84SffyN3"
+}

@@ -1,0 +1,55 @@
+{
+  "name": "Рейнджерская Плетёная Броня",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Распространенная среди рейнджеров и отступников, данная броня сплетена из достаточно упругого и прочного материала искусственного происхождения, подобно материалам в броне стражей эльдар. Среди остальной эльдарской брони она обладает повышенной скрытностью, но чуть меньшей защитой. Имеет встроенный Best.Q Хамелеолиновый Плащ, а также фото–визор, охотничий визор и Best.Q ребризер.\n",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 4,
+    "body": 4,
+    "leftArm": 4,
+    "rightArm": 4,
+    "leftLeg": 4,
+    "rightLeg": 4,
+    "quality": "common",
+    "availability": 2,
+    "weight": 2,
+    "properties": [
+      "aspect",
+      "protective",
+      "stealthed",
+      "undersuit"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Рейнджеры). Best.Q Хамелеолиновый Плащ, фото-визор, охотничий визор, Best.Q ребризер.",
+    "propRatings": {
+      "protective": 2
+    }
+  },
+  "_id": "V5dmFLa9rWAfalhb",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!V5dmFLa9rWAfalhb"
+}

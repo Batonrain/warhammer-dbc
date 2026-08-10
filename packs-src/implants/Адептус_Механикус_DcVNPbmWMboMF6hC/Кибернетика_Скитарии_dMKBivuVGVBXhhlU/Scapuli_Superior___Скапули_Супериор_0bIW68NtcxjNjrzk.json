@@ -1,0 +1,67 @@
+{
+  "name": "Scapuli Superior / Скапули Супериор",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:2.",
+    "notes": "",
+    "category": "skitarii",
+    "quality": "common",
+    "effect": "Прыжковый ранец + крылья: Трейт Flyer (10), +20 Operate (Aeronautica) для полёта, без штрафов за погоду/ветер/плотность атмосферы. Взамен −30 социальные и авто-провал Scrutiny. Poor.Q: −10 P/F; Good.Q: соц. штраф −15, Scrutiny со штрафом −30; Best.Q: + переброс Operate (Aeronautica) раз/Ход.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "dMKBivuVGVBXhhlU",
+  "_id": "0bIW68NtcxjNjrzk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122010802,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0bIW68NtcxjNjrzk"
+}

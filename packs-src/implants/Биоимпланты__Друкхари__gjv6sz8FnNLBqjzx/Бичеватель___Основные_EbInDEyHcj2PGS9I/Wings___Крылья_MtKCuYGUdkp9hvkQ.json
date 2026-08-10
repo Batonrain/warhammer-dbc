@@ -1,0 +1,67 @@
+{
+  "name": "Wings / Крылья",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 1. Крылья, дарующие настоящий полёт.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "ОСНОВНОЙ ИМПЛАНТ (Крылья). Пара выращенных биоинженерией крыльев.\n• Трейт Flyer (A.b+4), где A.b — значение в воздухе.\n• +1 поглощения всего урона, попадающего в торс, руки и ноги с ЗАДНЕЙ арки 180°.\n• Крылья считаются ногами при Избирательных атаках; в полёте получают попадания вместо ног.\n• При попадании по крыльям (избирательном или случайном) бросьте 1d10: на 1–5 удар проходит сквозь оперение — по самой конечности не попадает и урона не наносит.\n• Не работают без Полых Костей и Модифицированных Мышц.\n• Не-бичеватель может реквизировать крылья как биоимплант R1, но с Flyer (8).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "EbInDEyHcj2PGS9I",
+  "_id": "MtKCuYGUdkp9hvkQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330254774,
+    "modifiedTime": 1786122013941,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MtKCuYGUdkp9hvkQ"
+}

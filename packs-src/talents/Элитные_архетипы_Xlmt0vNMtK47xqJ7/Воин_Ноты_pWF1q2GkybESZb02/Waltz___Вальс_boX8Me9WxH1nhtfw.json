@@ -1,0 +1,52 @@
+{
+  "name": "Waltz / Вальс",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "pWF1q2GkybESZb02",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Лёгкими танцующими движениями обходит телохранителей и свиту, добираясь напрямую к цели. Может совершать Напролом через Trade(Dancer)(A)+0 или Awareness(P)+0 вместо обычного теста; в таком случае успешный Напролом не смещает, не сбивает с ног и не наносит урон целям — воин просто проскальзывает мимо помех.",
+    "tier": 1,
+    "requirement": "Слаанеш, Trade (Dancer)+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Воин Ноты",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "boX8Me9WxH1nhtfw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121990550,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!boX8Me9WxH1nhtfw"
+}

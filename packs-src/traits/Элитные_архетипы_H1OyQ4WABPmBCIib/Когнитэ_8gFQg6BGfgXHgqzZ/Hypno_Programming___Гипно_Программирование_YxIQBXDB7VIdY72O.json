@@ -1,0 +1,51 @@
+{
+  "name": "Hypno-Programming / Гипно-Программирование",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "8gFQg6BGfgXHgqzZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Владеют невероятно эффективными техниками гипноза. Получают уникальный Навык Гипно-Программирование(W)+0 и могут развивать его как обычный Навык Неделимый. Использование требует 8 часов работы с беспомощным пленным и тест Гипно-Программирование(W)+0 vss W+0. За каждый Успех может заставить жертву ответить на вопрос или заложить запрограммированную команду; за 3 Успеха — заменить старые воспоминания новыми; длительное воздействие (10×W.b часов) — изменить личность жертвы. Механикум иммунны, а Астартес с работающим Каталептическим Узлом получают −30 на встречные тесты W против гипноза.",
+    "source": "Элитный архетип: Когнитэ",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "YxIQBXDB7VIdY72O",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121960098,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!YxIQBXDB7VIdY72O"
+}

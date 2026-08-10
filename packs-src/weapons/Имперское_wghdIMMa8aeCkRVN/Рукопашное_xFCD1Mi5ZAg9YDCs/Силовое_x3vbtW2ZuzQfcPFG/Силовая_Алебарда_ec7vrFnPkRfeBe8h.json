@@ -1,0 +1,151 @@
+{
+  "name": "Силовая Алебарда",
+  "type": "weapon",
+  "folder": "x3vbtW2ZuzQfcPFG",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "power",
+    "range": 5,
+    "balance": -1,
+    "grips": "2р (Бл)",
+    "profileLabel": "Топор",
+    "profiles": [
+      {
+        "label": "Крюк",
+        "range": "5",
+        "damage": "2d10+6",
+        "damageType": "energy",
+        "penetration": 8,
+        "weaponProps": [
+          {
+            "key": "felling",
+            "rating": 2,
+            "rating2": 0
+          },
+          {
+            "key": "powerField",
+            "rating": 0,
+            "rating2": 0
+          }
+        ]
+      },
+      {
+        "label": "Копьё",
+        "range": "5-6",
+        "damage": "1d10+6",
+        "damageType": "energy",
+        "penetration": 5,
+        "weaponProps": [
+          {
+            "key": "powerField",
+            "rating": 0,
+            "rating2": 0
+          }
+        ]
+      },
+      {
+        "label": "Посох",
+        "range": "2-4",
+        "damage": "1d10-2",
+        "damageType": "impact",
+        "penetration": 0,
+        "weaponProps": [
+          {
+            "key": "imprecise",
+            "rating": 0,
+            "rating2": 0
+          },
+          {
+            "key": "primitive",
+            "rating": 0,
+            "rating2": 0
+          },
+          {
+            "key": "reinforced",
+            "rating": 0,
+            "rating2": 0
+          }
+        ]
+      }
+    ],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "2d10+6",
+    "damageType": "energy",
+    "penetration": 7,
+    "quality": "common",
+    "availability": 2,
+    "weight": 4,
+    "attackBonus": 0,
+    "special": "Топор; Хват 2р [Бл]; Досягаемость 4–5. Крюк (5): 2d10+6 E, Pen 8, Felling (2), Power Field; Копьё (5–6): 1d10+6 E, Pen 5, Power Field; Посох (2–4): 1d10-2 I(Cr), Imprecise, Primitive, Reinforced.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "imprecise"
+      },
+      {
+        "key": "powerField"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "ec7vrFnPkRfeBe8h",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true,
+      "profilesAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!ec7vrFnPkRfeBe8h"
+}

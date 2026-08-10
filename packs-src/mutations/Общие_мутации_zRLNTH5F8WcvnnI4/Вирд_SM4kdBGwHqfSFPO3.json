@@ -1,0 +1,49 @@
+{
+  "name": "Вирд",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Боги искажают душу персонажа и даруют ему прямую связь с Варпом. Он получает Трейт Psyker, но стартует с PR 0 и не может манифестировать психосилы, пока не возьмёт хотя бы один пси-рейтинг и не выучит хотя бы одну психосилу. Он считается Несвязанным и получает фокус случайной фундаментальной дисциплины.",
+    "source": "Общие мутации, d100 105",
+    "roll": "105",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "SM4kdBGwHqfSFPO3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122019850,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SM4kdBGwHqfSFPO3"
+}

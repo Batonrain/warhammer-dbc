@@ -1,0 +1,49 @@
+{
+  "name": "Горящая Голова",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Нимб пламени окутывает голову персонажа. Пламя производит свет и жар, но не опаляет самого персонажа и его снаряжение. Его удар головой меняет профиль на Rng 0, Dmg 1d10 E(Fl), Pen 0, Cheap Shot, Tainted. Потратив полудействие и пройдя тест на W+0, персонаж может изменить форму нимба по своему усмотрению, убирая пламя с части головы или формируя его в рога, крылья или ангельский нимб, но не может полностью убрать его.\n\nКогда персонаж вызывает Феномен или Прорыв, пламя разгорается сильнее и растекается по всему его телу паутинным узором, который также окрашивает синим пламенем его психосилы, оставляя огненные следы за незримыми манифестациями до начала его следующего Хода.\n\nКогда персонаж впадает в Ярость, пламя укутывает всю его голову, а его шлем и плоть на голове становятся невидимыми, от чего его голова выглядит как пылающий череп, что даёт ему рейтинг Страха 2.",
+    "source": "Общие мутации, d100 43",
+    "roll": "43",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "WYg8hcvLjsTxGQHb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122020235,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WYg8hcvLjsTxGQHb"
+}

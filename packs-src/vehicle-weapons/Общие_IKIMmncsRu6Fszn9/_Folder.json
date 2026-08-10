@@ -1,0 +1,23 @@
+{
+  "name": "Общие",
+  "type": "Item",
+  "folder": null,
+  "sorting": "m",
+  "_id": "IKIMmncsRu6Fszn9",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783857422708,
+    "modifiedTime": 1783857422708,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!folders!IKIMmncsRu6Fszn9"
+}

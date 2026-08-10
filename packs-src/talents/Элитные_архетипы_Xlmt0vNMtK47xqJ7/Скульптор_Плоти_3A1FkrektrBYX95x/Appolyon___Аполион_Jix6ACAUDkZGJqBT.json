@@ -1,0 +1,52 @@
+{
+  "name": "Appolyon / Аполион",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "3A1FkrektrBYX95x",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может изменять одного подопытного месяцами до полной неузнаваемости. Может потратить Очко Бесчестия, чтобы провести повторный ритуал лепки плоти и добавить Успехи к текущим вместо замены. Обряд занимает T цели дней (цель беспомощна, Скульптор тратит не менее 8 часов в день). При Провале теста на ритуал подопытный автоматически умирает. Не может применяться при самомодификации Талантом Нарцисс.",
+    "tier": 3,
+    "requirement": "Слаанеш, Cor 45, Medicae+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Скульптор Плоти",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Jix6ACAUDkZGJqBT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121977573,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Jix6ACAUDkZGJqBT"
+}

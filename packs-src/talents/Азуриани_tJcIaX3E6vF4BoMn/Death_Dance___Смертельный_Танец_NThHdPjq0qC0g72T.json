@@ -1,0 +1,55 @@
+{
+  "name": "Death Dance / Смертельный Танец",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "tJcIaX3E6vF4BoMn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в битву после натиска, но до нанесения попаданий, персонаж может добавить себе трейт Brutal Charge (+A.b). Можно использовать ещё раз за 1 очко судьбы; последующее восстановление до новой битвы требует на +1 очко судьбы больше.",
+    "tier": 3,
+    "requirement": "A 60 и WS 50, или Путь Воющей Баньши (Следующий)",
+    "aptitudes": [
+      "ws",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "NThHdPjq0qC0g72T",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121980618,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!NThHdPjq0qC0g72T"
+}

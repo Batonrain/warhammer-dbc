@@ -1,0 +1,126 @@
+{
+  "name": "Невинность есть иллюзия",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "innocence",
+    "roll": "84-87",
+    "rollMin": 84,
+    "rollMax": 87,
+    "text": "Невинность есть иллюзия",
+    "effect": "I +5 и талант Analytical Eye.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "+5 I",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "int",
+          "value": 5
+        }
+      ]
+    },
+    "description": "",
+    "notes": ""
+  },
+  "_id": "HB2QIGNvG6ti3Sok",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "919A3KUAHReRmqgr",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "PCqBuFMFsmCJvvOK",
+              "kind": "characteristic",
+              "charKey": "int",
+              "field": "total",
+              "op": "add",
+              "value": 5,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "YmtNe4HePrrKwNtJ",
+              "kind": "talent",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.Dw0Oos03CyFDgtzB",
+              "sourceName": "Analytical Eye / Аналитический Взгляд",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786027360704,
+    "modifiedTime": 1786281499660,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!HB2QIGNvG6ti3Sok"
+}

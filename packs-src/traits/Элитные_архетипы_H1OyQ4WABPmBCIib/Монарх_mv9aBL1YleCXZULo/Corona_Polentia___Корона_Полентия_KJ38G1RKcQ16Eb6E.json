@@ -1,0 +1,51 @@
+{
+  "name": "Corona Polentia / Корона Полентия",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "mv9aBL1YleCXZULo",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Позволяет подсоединять к своему мозгу контейнеры с мозгами живых псайкеров, чтобы использовать их силы. Может изучать эксклюзивные псайкерам Таланты и Навыки (кроме психосил), используя PR своих вассалов вместо требований. Манифестация использует пси-рейтинг и арсенал порабощённого псайкера, но тесты — Характеристики, Навыки и Таланты Монарха; вместо действий Монарха используются доп. действия порабощённого псайкера (восстанавливаются медленнее). В начале каждого Хода активный вассал восстанавливает 1 ОД (накапливает до 4) и тратит на психосилы: 1 — свободным действием, 2 — полудействием/реакцией, 4 — полным действием. Может иметь сколько угодно контейнеров, но контролирует один за раз; за свободное действие раз в Ход переключается на другой (тот стартует с 1 ОД). Один контейнер может нести психический капюшон. Использует Пси-Чутьё как полноценный псайкер, но не может использовать Психосиловое оружие.",
+    "source": "Элитный архетип: Монарх",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "KJ38G1RKcQ16Eb6E",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121958897,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KJ38G1RKcQ16Eb6E"
+}

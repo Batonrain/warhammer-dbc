@@ -1,0 +1,49 @@
+{
+  "name": "Жрец Кровопролития",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Кровопролитие поля боя и крики умирающих служат молитвой чемпиону. Раз за Раунд, когда в пределах 8м от чемпиона другой персонаж получает Кровотечение или умирает, убитый в бою, чемпион получает одно Очко Бесчестия, которое пропадёт в конце его следующего Хода, если он его не потратит.",
+    "source": "Дары Кхорн, d100 55…58",
+    "roll": "55…58",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "PYgA6tKKRyvio3mE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019753,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!PYgA6tKKRyvio3mE"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Терминаторская",
+  "type": "Item",
+  "folder": "I4WDx5aRWYqdKhI3",
+  "sorting": "m",
+  "_id": "od7g4AunuERomXc7",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!od7g4AunuERomXc7"
+}

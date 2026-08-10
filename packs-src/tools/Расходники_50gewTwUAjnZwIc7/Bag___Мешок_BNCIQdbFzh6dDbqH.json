@@ -1,0 +1,44 @@
+{
+  "name": "Bag / Мешок",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Полотняный/пластековый мешок. Заполненный песком/землёй — Укрытие AP8 (два слоя в толщину = AP16; три-четыре слоя вверх — укрытие по плечи сидя).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.2,
+    "availability": -4,
+    "quality": "common",
+    "toolCategory": "consumable",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "50gewTwUAjnZwIc7",
+  "_id": "BNCIQdbFzh6dDbqH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!BNCIQdbFzh6dDbqH"
+}

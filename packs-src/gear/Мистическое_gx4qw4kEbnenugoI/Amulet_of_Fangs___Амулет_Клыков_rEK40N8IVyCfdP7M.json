@@ -1,0 +1,53 @@
+{
+  "name": "Amulet of Fangs / Амулет Клыков",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Овальный амулет из трансмутированного сердца биоманта/одержимого.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Над сердцем (голое тело)",
+    "effect": "Над сердцем на голое тело: естественное/безоружное оружие +5 WS. За полудействие вогнать в кожу (1 непоглощаемого R в грудь) — бонусное Очко Бесчестия только на атаки естественным/безоружным (максимум 1).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Нет бонуса.",
+      "good": "+10 WS.",
+      "best": "+15 WS."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "rEK40N8IVyCfdP7M",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!rEK40N8IVyCfdP7M"
+}

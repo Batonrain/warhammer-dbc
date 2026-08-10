@@ -1,0 +1,39 @@
+{
+  "name": "Мемовирус",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "",
+    "contagion": "",
+    "incubation": "1 день",
+    "symptoms": "Идеальная память (авто-успех на вспоминание), но утрата удовольствия от всего, кроме новой информации, и зависимость от неё. Возможность узнать неизвестное → W−20 или обязан узнать любой ценой. 4 недели: −5/неделю к соц. взаимодействиям без немедленного узнавания нового (до −20 навсегда).",
+    "vectors": "Инъекция заражённой крови/мозговой жидкости в кровь/мышцы/жир — авто-заражение.",
+    "cure": "Невозможно, кроме божественного вмешательства или мутации мозга.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "Al39b0YgVSG3BX94",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Al39b0YgVSG3BX94"
+}

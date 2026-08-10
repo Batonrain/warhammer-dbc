@@ -1,0 +1,49 @@
+{
+  "name": "Неназываемый",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Знающие лорды Хаоса и Инквизиторы не зря боятся произносить настоящие имена чемпионов Тзинча вслух, пользуясь прозвищами и титулами, ведь Владыка Перемен может передавать своему слуге всё, что было сказано одновременно с его именем. Через 9 минут после того, как кто-то вслух произнесёт имя чемпиона, чемпион чудесным образом получает воспоминания всего, что было сказано в том же месте в отрезок времени от 9 минут до его упоминания до 9 минут после. Чемпион понимает все языки, шифры и коды в этом воспоминании, даже если не знает их. Чемпион может сознательно подавить этот дар, чтобы он не отвлекал его во время задач, требующих концентрации, но тогда он теряет всю информацию, что он мог бы подслушать за время подавления.",
+    "source": "Дары Тзинч, d100 92…94",
+    "roll": "92…94",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "MEkQ9pSQBIh2JdmI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019460,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MEkQ9pSQBIh2JdmI"
+}

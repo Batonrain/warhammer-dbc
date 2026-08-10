@@ -1,0 +1,42 @@
+{
+  "name": "Celestial Shield / Небесный Щит",
+  "type": "forcefield",
+  "folder": "UnFkx3aiaggUpvuw",
+  "system": {
+    "description": "Лёгкий доступный щит обычных и штормовых стражей. Работает куполом 30 м, защищая всех от внешних атак. Рейтинг −1 за каждое дружественное существо в куполе; союзники могут пользоваться им как своим. При активации — купол 2 м на носителе, рейтинг до нового хода −20. Перегрузка: деактивация, восстановление 15 мин (1 мин рядом с Певцом Кости).",
+    "notes": "",
+    "shieldNature": "technological",
+    "shieldType": "dome",
+    "ratingMin": 1,
+    "ratingMax": 40,
+    "overloadThreshold": 10,
+    "currentRating": 0,
+    "isSpecialRating": false,
+    "equipped": false,
+    "status": "inactive",
+    "quality": "common",
+    "availability": 1,
+    "weight": 3
+  },
+  "_id": "8RXzv6Sctonbj9EG",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805492,
+    "modifiedTime": 1782752979845,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!8RXzv6Sctonbj9EG"
+}

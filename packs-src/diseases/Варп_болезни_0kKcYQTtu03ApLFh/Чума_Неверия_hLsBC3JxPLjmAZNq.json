@@ -1,0 +1,39 @@
+{
+  "name": "Чума Неверия",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "nurgle",
+    "contagion": "",
+    "incubation": "Нет",
+    "symptoms": "Каждые 3 ч тест Т+0 или Провалы непоглощаемого R урона в торс (игнор критов, кроме смерти). Смерть → через 7 мин Чумной Зомби: восстанавливает и удваивает Раны, Unnatural T (+3), Stuff of Nightmares; все хар-ки ½ (▲), не быстрее полного движения, только оружейные таланты. Покровительство Нургла и Орки игнорируют (кроме восстания).",
+    "vectors": "Воздух заражён 7 ч: вдох без респиратора Т+30; кожа-к-коже Т+0; контакт жидкостей Т−30. Прижигание 3 Хода/ампутация 1 мин предотвращает.",
+    "cure": "12 часов постельного режима + успех Medicae+0 (сложность — обеспечить покой среди эпидемии).",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "hLsBC3JxPLjmAZNq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!hLsBC3JxPLjmAZNq"
+}

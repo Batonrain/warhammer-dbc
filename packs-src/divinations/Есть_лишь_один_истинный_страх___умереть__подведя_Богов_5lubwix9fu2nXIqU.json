@@ -1,0 +1,126 @@
+{
+  "name": "Есть лишь один истинный страх — умереть, подведя Богов",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "onefear",
+    "roll": "76-79",
+    "rollMin": 76,
+    "rollMax": 79,
+    "text": "Есть лишь один истинный страх — умереть, подведя Богов",
+    "effect": "+5 Ран и +5 T.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "+5 T",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "t",
+          "value": 5
+        }
+      ]
+    },
+    "description": "",
+    "notes": ""
+  },
+  "_id": "5lubwix9fu2nXIqU",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "BzW7bReXycwyDLz9",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "jNtTDJck8SAOnbQp",
+              "kind": "characteristic",
+              "charKey": "t",
+              "field": "total",
+              "op": "add",
+              "value": 5,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "VkuHGj6NcKZvFore",
+              "kind": "wounds",
+              "corruptionValue": "1",
+              "woundsValue": "5",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786027360703,
+    "modifiedTime": 1786281460994,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!5lubwix9fu2nXIqU"
+}

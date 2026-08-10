@@ -1,0 +1,60 @@
+{
+  "name": "Luminen Channel / Люминен Канал",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "8Myy7biwI0W0j67k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Люминен",
+    "miracleType": "manipula",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 2,
+    "cognitionCost": 1,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "half",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×3м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Maglev Coils · Цена: 1К · Процесс: ½ · Тип: Манипула (2), Незримое, Физическое] Треб.: Luminen Surge. До ½I.b(окр.▲) незримых магнитных якорей. Люминен Всплеск можно нацелить на якорь, перенаправив молнию в цель/другой якорь в I×1м (огибая укрытия, удлиняя дальность). Перенаправление Люминен Сокрушения через якорь стоит 1 Энергию.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "HmE9fmj236AobsJk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041022,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!HmE9fmj236AobsJk"
+}

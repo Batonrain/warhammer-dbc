@@ -1,0 +1,52 @@
+{
+  "name": "The Cold of Darkness / Холод Тьмы",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kEOjSZaVHTSxYaIY",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В радиусе 24 метров существует аура абсолютного холода, сравнимого с сильной зимой арктического мира. Мандрагоры к нему иммунны; остальные, попавшие в радиус и начинающие в нём свой ход, проходят тест T−10 или получают две усталости и 1d5 урона в T, а остальное по правилам Опасностей (Холод). Аура увеличивает укрепление завесы на +2. Талант можно взять ещё три раза, считая его талантом 2-го уровня: каждое взятие даёт +12 метров радиуса, −10 к сложности и +1 к получаемой усталости. При третьем взятии урон в T растёт до 2d5+3, а укрепление завесы до +4.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Ночной Демон",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "73uZZZUrLksfMBv0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121968417,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!73uZZZUrLksfMBv0"
+}

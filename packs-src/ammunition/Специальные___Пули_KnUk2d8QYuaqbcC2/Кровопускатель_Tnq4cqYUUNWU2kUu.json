@@ -1,0 +1,46 @@
+{
+  "name": "Кровопускатель",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "KnUk2d8QYuaqbcC2",
+  "system": {
+    "description": "Пуля с пустым наконечником, заполненным антикоагулянтом. Когда наносит непоглощённый урон по биологической цели, бросьте 1d10 — если результат не выше урона, цель получает Кровотечение.",
+    "notes": "",
+    "weaponTypes": [
+      "solid"
+    ],
+    "ammoCategory": "bullets",
+    "rarity": 0,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 0,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Кровотечение при непоглощённом уроне по биологической цели (1d10 ≤ урон)",
+    "properties": []
+  },
+  "_id": "Tnq4cqYUUNWU2kUu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Tnq4cqYUUNWU2kUu"
+}

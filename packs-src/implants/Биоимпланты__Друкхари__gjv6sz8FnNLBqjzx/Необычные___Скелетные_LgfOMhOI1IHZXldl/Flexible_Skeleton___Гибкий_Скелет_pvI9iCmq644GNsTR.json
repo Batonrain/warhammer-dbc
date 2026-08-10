@@ -1,0 +1,67 @@
+{
+  "name": "Flexible Skeleton / Гибкий Скелет",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 3. Эластичные суставы и доп. сочленения.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Эластичные суставы и доп. сочленения: +10 A, +15 Acrobatics, +20 на выход из Захвата/Борьбы; протискивается в пространства вдвое уже своих габаритов и через проходы в ¼ базы. Дефект (до Best.Q): −10 S, −10 T (хрупкость).\nPoor.Q: без бонусов Acrobatics/выхода; протискивание требует T−20 или вывих (1d5 в раны/S/A); штрафы S/T до −15.\nGood.Q: штрафы S/T до −5.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Бескостный (Полным действием получать/убирать Трейт Amorphous); 2) Кнут-позвоночник (+30 Dodge); 3) Резиновая кожа (+2 T.b против I, R, X и подтипов); 4) Акробатический гений (+30 Acrobatics, 1/раунд переброс Acrobatics/Dodge, игнор трудного ландшафта).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "LgfOMhOI1IHZXldl",
+  "_id": "pvI9iCmq644GNsTR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122016831,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pvI9iCmq644GNsTR"
+}

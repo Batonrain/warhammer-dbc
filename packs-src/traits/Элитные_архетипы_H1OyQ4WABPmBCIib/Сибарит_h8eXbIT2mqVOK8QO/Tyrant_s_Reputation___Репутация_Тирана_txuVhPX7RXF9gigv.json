@@ -1,0 +1,51 @@
+{
+  "name": "Tyrant's Reputation / Репутация Тирана",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "h8eXbIT2mqVOK8QO",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Теряет Inf, если подчинённый подрывает его репутацию отказом подчиняться, бездействием или громким провалом: от 1 Inf за неподчинение до 10 Inf при восстании отряда или серьёзной катастрофе. Восстанавливает потерянное, поставив на место зарвавшегося подчинённого или исправив свои ошибки, что может дать дополнительный Inf. Добавляет ½ (окр. вверх) Inf к тестам Intimidate. Взятие архетипа Сибарит не повышает цену других Элитных Архетипов.",
+    "source": "Элитный архетип: Сибарит",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "txuVhPX7RXF9gigv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121962009,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!txuVhPX7RXF9gigv"
+}

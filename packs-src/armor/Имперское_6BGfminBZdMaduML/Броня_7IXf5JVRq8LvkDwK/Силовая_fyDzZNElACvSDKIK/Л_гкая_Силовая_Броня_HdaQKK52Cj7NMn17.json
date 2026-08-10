@@ -1,0 +1,47 @@
+{
+  "name": "Лёгкая Силовая Броня",
+  "type": "armor",
+  "folder": "fyDzZNElACvSDKIK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 7,
+    "body": 8,
+    "leftArm": 7,
+    "rightArm": 7,
+    "leftLeg": 7,
+    "rightLeg": 7,
+    "quality": "common",
+    "availability": 2,
+    "weight": 40,
+    "properties": [],
+    "strengthBonus": 10,
+    "wpBonus": 0,
+    "special": "Не увеличивает Размер, нет штрафа на тонкие манипуляции. Снять/надеть 15/5 мин. В выключенном состоянии — обычная броня с Max.A 35."
+  },
+  "_id": "HdaQKK52Cj7NMn17",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!HdaQKK52Cj7NMn17"
+}

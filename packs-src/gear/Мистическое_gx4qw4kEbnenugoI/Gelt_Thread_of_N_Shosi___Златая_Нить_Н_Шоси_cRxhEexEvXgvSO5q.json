@@ -1,0 +1,53 @@
+{
+  "name": "Gelt Thread of N'Shosi / Златая Нить Н'Шоси",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Золотая нить 9 м с хрустальной иглой на катушке из кости Психнойена.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Предплечье",
+    "effect": "После часа медитации псайкер управляет нитью как частью тела; для психосил касания нить считается частью тела.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Псайкер в r W.b м может за полное действие перехватить контроль и через неё манифестировать психосилу ≤ полного действия.",
+      "good": "Псайкер выпускает психосилы с кончика иглы вместо от себя.",
+      "best": "Как Good.Q; псайкер видит через иглу, как если бы на ней был глаз."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "cRxhEexEvXgvSO5q",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!cRxhEexEvXgvSO5q"
+}

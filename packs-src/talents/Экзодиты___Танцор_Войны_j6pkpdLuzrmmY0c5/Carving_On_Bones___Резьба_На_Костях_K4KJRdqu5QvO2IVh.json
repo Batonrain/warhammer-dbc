@@ -1,0 +1,52 @@
+{
+  "name": "Carving On Bones / Резьба На Костях",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "j6pkpdLuzrmmY0c5",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Черта Танцора Войны. Может создавать Фетиши, используя кости противника и Trade (Jeweler); заряды фетиша +A.b. Тесты фетишей/вязей через W (или A для Танцоров/Арлекинов/Ведьм). Может создавать Рунические Вязи на обработанных костях (до W.b−3, мин.1 активных). Может создать «кость» из черепа/позвоночника/ближайшего к сердцу ребра (Trade (Jeweler)−30) — работает как Чаша Кхейна с Inf.b жертвы +3 успехов; после использования рассыпается, истончая Завесу на +1 в радиусе Inf.b×100 м на Inf.b часов (до +4).",
+    "tier": 1,
+    "requirement": "Создание Персонажа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Черта архетипа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "K4KJRdqu5QvO2IVh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121977874,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!K4KJRdqu5QvO2IVh"
+}

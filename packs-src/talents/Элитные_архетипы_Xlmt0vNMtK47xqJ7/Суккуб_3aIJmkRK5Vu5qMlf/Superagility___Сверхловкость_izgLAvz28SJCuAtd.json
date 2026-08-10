@@ -1,0 +1,52 @@
+{
+  "name": "Superagility / Сверхловкость",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "3aIJmkRK5Vu5qMlf",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Пока носит Костюм Ведьмы или не носит брони вовсе, снижает урон всех видимых им атак на A.b до минимума в 1. Все короткие и длинные очереди, а также быстрые и молниеносные атаки наносят на ½ (окр. вверх) A.b попаданий меньше, вплоть до 1.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Суккуб",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "izgLAvz28SJCuAtd",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121997246,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!izgLAvz28SJCuAtd"
+}

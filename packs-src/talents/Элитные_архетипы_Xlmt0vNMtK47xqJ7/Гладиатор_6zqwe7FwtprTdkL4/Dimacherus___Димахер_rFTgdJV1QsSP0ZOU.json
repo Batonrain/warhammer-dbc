@@ -1,0 +1,52 @@
+{
+  "name": "Dimacherus / Димахер",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "6zqwe7FwtprTdkL4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сражается в агрессивном стиле, используя оружие в каждой руке. Если вооружён хотя бы двумя рукопашными оружиями, каждое попадание ими наносит дополнительный урон, равный его текущим очкам Момента. Также может получать бонусы Талантов группы Два Оружия, даже если вооружён только одним из требуемых Талантом оружий, но только для требуемого оружия.",
+    "tier": 2,
+    "requirement": "Неделимый, Two Weapon Wielder (Melee)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Гладиатор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "rFTgdJV1QsSP0ZOU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786122004057,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!rFTgdJV1QsSP0ZOU"
+}

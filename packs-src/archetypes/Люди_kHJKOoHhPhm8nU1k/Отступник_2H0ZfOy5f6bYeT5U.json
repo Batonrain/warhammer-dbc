@@ -1,0 +1,53 @@
+{
+  "name": "Отступник",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "kHJKOoHhPhm8nU1k",
+  "system": {
+    "key": "apostate",
+    "race": "human",
+    "group": "",
+    "charBonus": {
+      "fel": 5,
+      "int": 2
+    },
+    "charChoice": "",
+    "skills": "Linguistics (High Gothic, True Tongue), Awareness, Charm, Command, Deceive, Inquiry, Scrutiny, Schol. Lore (любые 3), Forbidden Lore (любые 3), Dodge или Parry, Interrogate или Sleight of Hand, Intimidate или Commerce, Security/Stealth/Logic, Charm+10 или Deceive+10, Command+10 или Inquiry+10",
+    "talents": "Air of Authority, Hatred (любые 2), Peer (любые 2), Cover Up, Total Recall, Unshakeable Will, Weapon Training (любые 3), Clues From the Crowd/Light Sleeper/Unremarkable, Disturbing Voice/Field Execution/Radiant Presence, Decadence/Polyglot/Mimic, Inspire Wrath/Iron Discipline/Minion (Средний)",
+    "gear": "Autopistol (Best.Q)/Laspistol (Good.Q)/Blast Pistol, Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), Full Flak Armour (Best.Q)/Mesh Armour, Cogitator (Best.Q)/Loud Hailer (Best.Q)/Hololith (Good.Q), Disguise Kit (Best.Q)/Torture Tools (Best.Q)/Unholy Tomes",
+    "wounds": "9+1d5",
+    "infRoll": "",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Знания, связи и навыки решают задачи словом, а не насилием.",
+    "trait": {
+      "name": "Serpent's Tongue / Змеиный Язык",
+      "benefit": "При провале социального/командного/допроса теста может потратить Очко Бесчестья, чтобы вместо этого преуспеть на 1 Успех. Игнорирует требования по Inf для Миньонов-людей."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "2H0ZfOy5f6bYeT5U",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536188,
+    "modifiedTime": 1786285536193,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!2H0ZfOy5f6bYeT5U"
+}

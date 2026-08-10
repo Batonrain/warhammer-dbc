@@ -1,0 +1,42 @@
+{
+  "name": "Personal Void Shield / Личный Пустотный Щит",
+  "type": "forcefield",
+  "folder": "AnN2qDXTrN7Qt3MS",
+  "system": {
+    "description": "Личная версия пустотного щита. Рейтинг особый.",
+    "notes": "",
+    "shieldNature": "technological",
+    "shieldType": "penetrating",
+    "ratingMin": 0,
+    "ratingMax": 0,
+    "overloadThreshold": 0,
+    "currentRating": 0,
+    "isSpecialRating": true,
+    "equipped": false,
+    "status": "inactive",
+    "quality": "common",
+    "availability": 5,
+    "weight": 5
+  },
+  "_id": "XFqOKv5Eg6f2jxEn",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805492,
+    "modifiedTime": 1782752979845,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!XFqOKv5Eg6f2jxEn"
+}

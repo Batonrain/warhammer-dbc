@@ -1,0 +1,52 @@
+{
+  "name": "Sorcerer's Plate / Латы Чародея",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "VtxB4oTCqDmAYaJ4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Латы Броненосцев, искушённых в колдовских практиках, отражаются в эмпиреях, защищая сами их души. Может использовать AP своих лат для поглощения урона варп-оружия и добавляет ½ AP (окр.▲) торса к своим Успехам на все встречные тесты W против психосил и демонических даров.",
+    "tier": 3,
+    "requirement": "Неделимый, Трейт Psyker или Dark Arts",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Броненосец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "g3MqmUYsILSU0En3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121994230,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!g3MqmUYsILSU0En3"
+}

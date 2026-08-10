@@ -1,0 +1,46 @@
+{
+  "name": "Хотшот Вливатель",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-battery.svg",
+  "folder": "WguZ0f93VifeyxSN",
+  "system": {
+    "description": "Перегруженная батарея, вгоняющая весь заряд одновременно, придавая лазгану мощь хотшота. Даёт +1d10 урона, +7 Пробитие, свойство Tearing, уменьшает Надёжность на 2. Разряжается после 1 выстрела в любом режиме. Несовместима с хотшот-оружием.",
+    "notes": "",
+    "weaponTypes": [
+      "laser"
+    ],
+    "ammoCategory": "batteries",
+    "rarity": 0,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 0,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 7,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "+1d10 урона, Tearing; −2 Надёжность; 1 выстрел; несовместим с хотшот-оружием",
+    "properties": []
+  },
+  "_id": "DxjvHiMyMXSPoA3q",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!DxjvHiMyMXSPoA3q"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Multivoice / Мультиголос",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 3. Аудиокомплекс в шее для имитации любых звуков.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Комплекс аудиосистем в шее, повторяющий любые звуки (подтип: Шея).\n• Если у персонажа нет таланта Mimic — он его получает.\n• Если талант уже был или куплен — +20 на тесты Deceive для Mimic.\n• На копирование чужого голоса нужна одна минута.\n• Можно повторять и не-голосовые звуки: стрельбу, природные звуки и подобное.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "ow2JRDLkYGDUWlM2",
+  "_id": "sGUE8tmWaRB4DlSo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330254774,
+    "modifiedTime": 1786122017138,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!sGUE8tmWaRB4DlSo"
+}

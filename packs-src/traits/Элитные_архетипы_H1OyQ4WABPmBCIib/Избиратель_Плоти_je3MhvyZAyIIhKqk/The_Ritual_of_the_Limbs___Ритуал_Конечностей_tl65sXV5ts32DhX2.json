@@ -1,0 +1,51 @@
+{
+  "name": "The Ritual of the Limbs / Ритуал Конечностей",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "je3MhvyZAyIIhKqk",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Каждый 21 день должен собрать 5 конечностей качества Good.Q — 2 руки, 2 ноги и 1 голову. Конечности должны быть добыты в бою, у пленников или после пыток и быть органическими. Собрав их, раскладывает в ритуальном кругу в полной тьме; конечности исчезают, и божество удовлетворено. Чем быстрее и качественнее исполнен ритуал, тем выше шанс награды на усмотрение ГМа. Если на 22-й день после прошлого ритуала новый не совершён, тьма утаскивает персонажа навсегда.",
+    "source": "Элитный архетип: Избиратель Плоти",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "tl65sXV5ts32DhX2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121961949,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!tl65sXV5ts32DhX2"
+}

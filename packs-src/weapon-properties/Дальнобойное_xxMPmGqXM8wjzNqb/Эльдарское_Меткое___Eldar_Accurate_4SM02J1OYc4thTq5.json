@@ -1,0 +1,35 @@
+{
+  "name": "Эльдарское Меткое / Eldar Accurate",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Полу-прицеливание превращается в Полное (бонусы Полного прицеливания удваиваются). На прицельных выстрелах: 3 СУ → +1d10 Dmg, 4 СУ → +2d10. На 5 СУ первый доп. кубик наносит Экстремальный урон, на 6 СУ — и второй. В прочих расчётах работает как обычное Меткое.",
+    "reminder": "🎯 Эльдарское Меткое: полу→полное прицеливание; +1d10/+2d10 по СУ, экстрем. на 5–6 СУ",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "eldarAccurate",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "4SM02J1OYc4thTq5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!4SM02J1OYc4thTq5"
+}

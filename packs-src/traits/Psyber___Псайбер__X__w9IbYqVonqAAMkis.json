@@ -1,0 +1,51 @@
+{
+  "name": "Psyber / Псайбер (X)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Душа связана с хозяином (пси-матрица): хозяин знает направление и расстояние до псайбера, может телепатически общаться и подсматривать через него; псайбер может манифестировать психосилы как Псайкер.",
+    "notes": "",
+    "benefit": "Связь хозяин↔псайбер; манифестация психосил.",
+    "source": "имплант",
+    "hasRating": true,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "w9IbYqVonqAAMkis",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781652440036,
+    "modifiedTime": 1786121962227,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!w9IbYqVonqAAMkis"
+}

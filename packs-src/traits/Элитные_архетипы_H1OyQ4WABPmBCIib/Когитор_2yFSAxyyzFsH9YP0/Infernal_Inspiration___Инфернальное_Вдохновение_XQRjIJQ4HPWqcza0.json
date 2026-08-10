@@ -1,0 +1,51 @@
+{
+  "name": "Infernal Inspiration / Инфернальное Вдохновение",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "2yFSAxyyzFsH9YP0",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Разум освобождён от многих ограничений смертного тела и способен на сверхъестественную концентрацию. Уменьшает время смены для любых исследований вдвое (обычно до 4 ч) и удваивает Успехи на исследования. Получает 4 Очка Вдохновения (больше на дальнейших Стадиях), которые тратит на: при Провале любого теста I или W заменить его 1 Успехом; +10 на любой тест I или W (складывается); пройти любой тест на Навык групп Lore, как если бы имел его на +0 (краткая вспышка знаний от демона-покровителя); изучить или продвинуть любой Навык групп Lore, Linguistics или Trade, как если бы имел нужную литературу или наставников; получить подсказки, где и как достать нужные материалы для исследования (литературу, артефакты, подопытных, пленников для допроса); мгновенно получить аналог полноценного сна, сняв всю Усталость и до 2d10 урона в I и W (один бросок для обоих). Может восстановить 1 Очко Вдохновения, потратив 9 часов на медитацию и ментальную фокусировку, либо ритуально принеся в жертву разумное существо с душой в 5-минутном ритуале.",
+    "source": "Элитный архетип: Когитор",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "XQRjIJQ4HPWqcza0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121960005,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!XQRjIJQ4HPWqcza0"
+}

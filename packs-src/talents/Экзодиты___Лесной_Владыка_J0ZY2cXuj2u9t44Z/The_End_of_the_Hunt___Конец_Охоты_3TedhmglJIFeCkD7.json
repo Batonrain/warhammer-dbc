@@ -1,0 +1,54 @@
+{
+  "name": "The End of the Hunt / Конец Охоты",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "J0ZY2cXuj2u9t44Z",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В начале 5-го и 6-го раундов все противники персонажа получают штраф ко всем броскам физического избегания/страха/шока/подавления/оглушения, равный 3×Потерянные Раны; к проваленным этим тестам добавляется дополнительный провал.",
+    "tier": 3,
+    "requirement": "The Middle of the Hunt",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "3TedhmglJIFeCkD7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121965229,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!3TedhmglJIFeCkD7"
+}

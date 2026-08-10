@@ -1,0 +1,35 @@
+{
+  "name": "Красота",
+  "type": "aspiration",
+  "img": "icons/svg/aura.svg",
+  "folder": "e2ebOseItYDN37He",
+  "system": {
+    "key": "pride:1",
+    "table": "pride",
+    "n": 1,
+    "mods": "+5 Inf, +5 F, −5 W",
+    "description": "Гордится внешностью и совершенством формы; тратит силы на поддержание.",
+    "bookSource": "Black Crusade — Стремления (стр. 22)",
+    "notes": ""
+  },
+  "_id": "TPjoG4Vnmp4l4hlG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285535465,
+    "modifiedTime": 1786286204871,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!TPjoG4Vnmp4l4hlG"
+}

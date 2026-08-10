@@ -1,0 +1,52 @@
+{
+  "name": "Yraqnae / Иракнае",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "IHeHzXN4eZXIenbD",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Вооружённый Осколочной Сетью и Пронзателем, может за одну атаку атаковать обоими: сначала сетью, затем пронзателем. Если жертва проиграла тест Snare против сети, персонаж за Свободное действие наносит атаку Пронзателем в шею (Сочленение) с бонусом +30; при непоглощённом уроне жертва получает открытые раны с обеих сторон шеи и Кровотечение. Жертва должна бросать на Обескровливание 12−T.b раз (мин. 1), пока не погибнет или не справится.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Ведьма",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "DMoWgLhFFRuo4GKp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121972682,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!DMoWgLhFFRuo4GKp"
+}

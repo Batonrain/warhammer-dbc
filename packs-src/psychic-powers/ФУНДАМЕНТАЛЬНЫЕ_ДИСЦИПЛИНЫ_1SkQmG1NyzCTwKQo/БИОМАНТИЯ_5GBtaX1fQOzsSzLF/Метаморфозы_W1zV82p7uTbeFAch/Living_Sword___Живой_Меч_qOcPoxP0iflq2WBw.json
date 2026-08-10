@@ -1,0 +1,75 @@
+{
+  "name": "Living Sword / Живой Меч",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-biomancy.svg",
+  "folder": "W1zV82p7uTbeFAch",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "biomancy",
+    "subtype": "Метаморфозы",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "Касание / PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Истинная Плоть · Призыв. Треб.: WS 45+, Flesh Mould. Нужна свободная рука с открытой плотью/Вторая Кожа. Создаёт примитивное рукопашное оружие Best.Q, Force, атаки → Контакт Плоти. PR очков на свойства: 2 Razor Sharp, 3 Tearing/доп. оружие, 4 Shocking/Toxic(1), 5 Flexible/Snare(0), 6 Concussive(1)/Crippling(3). Без контакта с плотью час — развеивается.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "qOcPoxP0iflq2WBw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122037835,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qOcPoxP0iflq2WBw"
+}

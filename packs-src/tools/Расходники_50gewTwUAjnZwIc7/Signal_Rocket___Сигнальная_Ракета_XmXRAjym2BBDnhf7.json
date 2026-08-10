@@ -1,0 +1,44 @@
+{
+  "name": "Signal Rocket / Сигнальная Ракета",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Одноразовая сигнальная ракетница: яркая цветная ракета с цветным дымом, видна за километры днём и ночью (сигналы при глушении вокса).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.2,
+    "availability": -2,
+    "quality": "common",
+    "toolCategory": "consumable",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "50gewTwUAjnZwIc7",
+  "_id": "XmXRAjym2BBDnhf7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!XmXRAjym2BBDnhf7"
+}

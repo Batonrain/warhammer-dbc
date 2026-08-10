@@ -1,0 +1,49 @@
+{
+  "name": "Чувство Похоти",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Владыка Излишеств одаривает своего чемпиона шестым чувством, засекающим удовольствия плоти. Персонаж получает дополнительное чувство, засекающее любые эмоции, связанные с сексом, в радиусе Cor.b км, определяя расстояние и направление до них и их природу. Он особенно чётко чувствует похоть персонажей, что нашли бы его самого привлекательным партнёром.",
+    "source": "Дары Слаанеш, d100 63…66",
+    "roll": "63…66",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "fr5vJgtKRF5w3ZdC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021137,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!fr5vJgtKRF5w3ZdC"
+}

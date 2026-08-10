@@ -1,0 +1,35 @@
+{
+  "name": "Выгорание / Deflagrate",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Перегревает куски брони цели. При выпадении 7–10 на кубе урона наносит ещё 1d10+X E Dmg, Pen 0, по правилам Взрыва.",
+    "reminder": "🔥 Выгорание (X): на 7–10 куба урона — доп. взрыв 1d10+X E",
+    "category": "ranged",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "deflagrate",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "v2qaiTmeBbg75MpZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353818,
+    "modifiedTime": 1786224353824,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!v2qaiTmeBbg75MpZ"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Wall of Discord / Стена Диссонанса",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "jO4JrtJaJI8wKP05",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За полудействие может потратить Очко Бесчестия, чтобы выпустить стену хаотического звука в радиусе Cor.b×2 м. Враги проходят тест S−30 или сбиваются с ног и отбрасываются на Cor.b×3 м. Не действует на Размер 2+ (или 3+, если Cor ≥ 66); летящие/парящие не имеют опоры и проваливают автоматически. Засекается пси-чутьём как сверхъестественное.",
+    "tier": 3,
+    "requirement": "Слаанеш, Cor 40",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Шумовой Десантник",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "4sEUiHs19niMFNV1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121966420,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4sEUiHs19niMFNV1"
+}

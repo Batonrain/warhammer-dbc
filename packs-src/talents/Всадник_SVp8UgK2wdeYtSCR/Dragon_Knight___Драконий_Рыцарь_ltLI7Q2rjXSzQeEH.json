@@ -1,0 +1,55 @@
+{
+  "name": "Dragon Knight / Драконий Рыцарь",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "SVp8UgK2wdeYtSCR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если персонаж и скакун действуют в одну Инициативу, за полудействие он может пройти Survival−10, чтобы дать скакуну +3×Успехи на все Атаки или Избегания до начала их следующего Хода (выбирая до броска).",
+    "tier": 3,
+    "requirement": "Survival+20",
+    "aptitudes": [
+      "offence",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ltLI7Q2rjXSzQeEH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121999446,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ltLI7Q2rjXSzQeEH"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Wormwalker / Червеход",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ik64WMhypctA7jlU",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За полное действие один из Роёв растекается и набрасывается на трупы в радиусе 7м, забираясь внутрь и замещая мышцы и органы чувств. За каждый труп теряет 5 Ран. Все трупы становятся Червеходом (−20 во всех Характеристиках кроме T, T.b×4 Ран, ведёт себя как Освобождённый Рой, не может ментальных действий, действует в Инициативу 1). Через 7 часов труп разваливается, порождая новый свободный Извивающийся Рой с 10 Ранами.",
+    "tier": 2,
+    "requirement": "Нургл, Cor 50, Free Roamer",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "Элитный архетип: Король Червей",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "b1Ifv17dvjdke1up",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121990194,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!b1Ifv17dvjdke1up"
+}

@@ -1,0 +1,53 @@
+{
+  "name": "Obsidian Web / Обсидиановая Паутина",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Корона из чёрного камня, укрепляющая завесу между Материумом и Варпом.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": 5,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Корона",
+    "effect": "При телепортации/использовании Врат Варпа (имперские/орочьи телепорты, эльдарская паутина) в/из r W.b км или манифестации демона в Истинной Форме — знает направление и дистанцию и может пропустить или нанести 2d10 R, Pen 0, Warp Weapon, +1d10 за каждый Размер поверх 0 (решение за доли секунды).",
+    "reminder": "Качество не влияет на функционал.",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": "Обсидиановая Паутина (удар)"
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "5k4DgUq94liuJ4ZK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!5k4DgUq94liuJ4ZK"
+}

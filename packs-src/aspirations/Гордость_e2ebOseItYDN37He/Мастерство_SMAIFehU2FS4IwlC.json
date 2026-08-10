@@ -1,0 +1,34 @@
+{
+  "name": "Мастерство",
+  "type": "aspiration",
+  "img": "icons/svg/aura.svg",
+  "folder": "e2ebOseItYDN37He",
+  "system": {
+    "key": "pride:8",
+    "table": "pride",
+    "n": 8,
+    "mods": "+5 WS или BS, −5 I",
+    "description": "Развивает мастерство воина любой ценой, ввязываясь в ненужные бои.",
+    "bookSource": "Black Crusade — Стремления (стр. 22)"
+  },
+  "_id": "SMAIFehU2FS4IwlC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285535466,
+    "modifiedTime": 1786285535470,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!SMAIFehU2FS4IwlC"
+}

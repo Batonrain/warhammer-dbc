@@ -1,0 +1,64 @@
+{
+  "name": "Belt / Ремень",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Ремень для снаряжения с карманами и кобурами.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": -2,
+    "quality": "common",
+    "gearCategory": "rig",
+    "worn": "Пояс",
+    "effect": "4 кармана (1×1) спереди + 2 кобуры под пистолет (каждую можно заменить ножнами под нож/меч/длинный меч или неудобной петлёй под одноручное топор/крюк/молот/булаву/кнут/баклер).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Кобуры и ножны считаются неудобными.",
+      "good": "Заменяет кобуры двумя магнитными замками 2×1 (одноручное рукопашное или длинный меч).",
+      "best": "Как Good.Q; взятие/складывание двух предметов с замков считается как одно."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "1x1",
+          "count": 4,
+          "note": "спереди"
+        },
+        {
+          "size": "2x1",
+          "count": 2,
+          "note": "кобуры под пистолет"
+        }
+      ],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "LFIbdaraF1WbtOzq",
+  "_id": "BjVlpNIzPw9hIDnh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!BjVlpNIzPw9hIDnh"
+}

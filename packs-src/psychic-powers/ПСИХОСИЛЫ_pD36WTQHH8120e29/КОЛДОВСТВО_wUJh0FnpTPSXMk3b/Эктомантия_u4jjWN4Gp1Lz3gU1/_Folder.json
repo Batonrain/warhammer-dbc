@@ -1,0 +1,22 @@
+{
+  "name": "Эктомантия",
+  "type": "Item",
+  "folder": "wUJh0FnpTPSXMk3b",
+  "sorting": "m",
+  "_id": "u4jjWN4Gp1Lz3gU1",
+  "description": "",
+  "sort": 1000000,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL",
+    "modifiedTime": 1783088675066
+  },
+  "_key": "!folders!u4jjWN4Gp1Lz3gU1"
+}

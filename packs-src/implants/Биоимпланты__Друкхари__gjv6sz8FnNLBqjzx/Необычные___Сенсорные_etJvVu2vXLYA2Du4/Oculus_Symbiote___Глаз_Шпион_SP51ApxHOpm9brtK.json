@@ -1,0 +1,67 @@
+{
+  "name": "Oculus Symbiote / Глаз-Шпион",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 3. Маленький крылатый глаз-симбионт.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Крылатый глаз-разведчик (в покое маскируется под нарост/глаз). Отделяется мыслью: 5 ран, 2 T.b, WS/BS/S/T 20, прочие 40 (кроме Inf/Cor), Трейты Flyer(9) и Size(−4); передаёт изображение в мозг, связь 200 м; при уничтожении регенерирует за 24 ч. Дефект (до Best.Q): −10 P по зрению (своё зрение туманится).\nPoor.Q: Flyer(3), связь 50 м, 1 рана; −20 зрение; гибель — восстановление 48 ч + мигрень (−10 всем на сутки).\nGood.Q: Flyer(12), 8 ран, 3 T.b; −5 зрение; восстановление 24 ч без штрафов.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Стелс-режим (Stealth+30 в полёте, незрим в тьме без движения); 2) Ядовитый укол (атака Toxic(3), урон в WS/A); 3) Звуковой сенсор (передаёт и звук); 4) Симбиотическая регенерация (восстановление за 1 час без штрафов).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "etJvVu2vXLYA2Du4",
+  "_id": "SP51ApxHOpm9brtK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122014423,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SP51ApxHOpm9brtK"
+}

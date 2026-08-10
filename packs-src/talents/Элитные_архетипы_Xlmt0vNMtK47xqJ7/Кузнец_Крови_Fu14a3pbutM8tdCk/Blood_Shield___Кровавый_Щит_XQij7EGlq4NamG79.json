@@ -1,0 +1,52 @@
+{
+  "name": "Blood Shield / Кровавый Щит",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Fu14a3pbutM8tdCk",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Утоляя голод демонического оружия кровью врагов, создаёт кокон из кровавых нитей, поглощающий удары. Убивая врага рукопашной атакой демонического оружия с порабощённым демоном, получает W.b демона аблативных Ран (складываются до максимума W.b×2). В Ход, когда никого не убил, в конце Хода проходит тест W+0, или теряет все эти аблативные Раны. За каждый последующий Ход без убийств тест получает складывающийся штраф −10 (−20 на 3-й Ход без убийств, −30 на 4-й, и т.д.).",
+    "tier": 3,
+    "requirement": "Кхорн, Forbidden Lore (Daemons)+20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Кузнец Крови",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "XQij7EGlq4NamG79",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121986798,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!XQij7EGlq4NamG79"
+}

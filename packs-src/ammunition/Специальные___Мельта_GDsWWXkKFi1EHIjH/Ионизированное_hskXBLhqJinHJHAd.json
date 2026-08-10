@@ -1,0 +1,46 @@
+{
+  "name": "Ионизированное",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-fuel.svg",
+  "folder": "GDsWWXkKFi1EHIjH",
+  "system": {
+    "description": "Топливо, облучённое экзотическими частицами, выдающее мощный поток энергии, быстро теряющий силу с дистанцией. Даёт +1 кубик урона и Blinding (1) в Упор, но на Боевой дистанции наибольший кубик урона заменяется наименьшим, а на Дальней и дальше — −1 кубик урона.",
+    "notes": "",
+    "weaponTypes": [
+      "melta"
+    ],
+    "ammoCategory": "melta_fuel",
+    "rarity": 2,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 2,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "В упор: +1 кубик урона, Blinding (1); на Боевой — макс. кубик→мин.; на Дальней+ −1 кубик",
+    "properties": []
+  },
+  "_id": "hskXBLhqJinHJHAd",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!hskXBLhqJinHJHAd"
+}

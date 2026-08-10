@@ -1,0 +1,46 @@
+{
+  "name": "Сверхтекучее",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-fuel.svg",
+  "folder": "GDsWWXkKFi1EHIjH",
+  "system": {
+    "description": "Редкое сверхтекучее топливо вливает больше топлива в камеру реакции. Даёт +1 кубик урона и Tearing, но тратит 2 топлива на выстрел; непрореагировавшие излишки выливаются из ствола шаблоном 2d10 E(Fl), Pen 2, Flame, Blast (2), Linger (1d5), центрированным на краю Базы стрелка в направлении выстрела.",
+    "notes": "",
+    "weaponTypes": [
+      "melta"
+    ],
+    "ammoCategory": "melta_fuel",
+    "rarity": 3,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 3,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "+1 кубик урона, Tearing; тратит 2 топлива; брызги 2d10 E(Fl), Pen 2, Flame, Blast (2), Linger (1d5)",
+    "properties": []
+  },
+  "_id": "hNGZDKtlF7uJaZGv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!hNGZDKtlF7uJaZGv"
+}

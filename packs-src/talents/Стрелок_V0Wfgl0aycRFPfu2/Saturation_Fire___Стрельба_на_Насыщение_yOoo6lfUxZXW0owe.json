@@ -1,0 +1,55 @@
+{
+  "name": "Saturation Fire / Стрельба на Насыщение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "V0Wfgl0aycRFPfu2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При длинной/короткой очереди половина непопавших выстрелов (окр.▲) вместо этого попадает в укрытие цели или другое укрытие в 2м по выбору. При огне на подавление каждый промах повреждает укрытие в области подавления.",
+    "tier": 2,
+    "requirement": "BS 35",
+    "aptitudes": [
+      "bs",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "yOoo6lfUxZXW0owe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122009088,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!yOoo6lfUxZXW0owe"
+}

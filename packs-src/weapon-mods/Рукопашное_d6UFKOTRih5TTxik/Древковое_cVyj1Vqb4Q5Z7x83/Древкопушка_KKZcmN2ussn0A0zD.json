@@ -1,0 +1,58 @@
+{
+  "name": "Древкопушка",
+  "type": "weaponMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/weaponmod.svg",
+  "folder": "cVyj1Vqb4Q5Z7x83",
+  "system": {
+    "description": "Интегрированное стрелковое оружие (любая винтовка/пистолет): теряет Accurate, получает Inaccurate, Rld ×2 (макс 10). Винтовка без Combi снижает Баланс на 1. Считается штыком для Bayonet Charge. Легион-оружие принимает не-Легион без штрафа, но не наоборот. Стрелковое добывается отдельно.",
+    "notes": "",
+    "category": "melee",
+    "modGroup": "polearm",
+    "requirement": "Древковое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "effects": {
+      "attackMod": 0,
+      "damageMod": 0,
+      "penMod": 0,
+      "rangeMod": 0,
+      "rangeMult": 1,
+      "clipMod": 0,
+      "clipMult": 1,
+      "rofSemiMod": 0,
+      "rofFullMod": 0,
+      "reliabilityMod": 0,
+      "balanceMod": 0,
+      "weightPct": 0,
+      "addProps": [],
+      "removeProps": []
+    },
+    "drukhari": false
+  },
+  "_id": "KKZcmN2ussn0A0zD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782557574411,
+    "modifiedTime": 1786122046410,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KKZcmN2ussn0A0zD"
+}

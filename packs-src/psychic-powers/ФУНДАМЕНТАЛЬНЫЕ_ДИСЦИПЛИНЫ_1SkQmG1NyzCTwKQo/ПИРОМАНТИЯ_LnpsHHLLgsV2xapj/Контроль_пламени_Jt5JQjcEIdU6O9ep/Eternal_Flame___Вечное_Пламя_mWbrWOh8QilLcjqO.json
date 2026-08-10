@@ -1,0 +1,75 @@
+{
+  "name": "Eternal Flame / Вечное Пламя",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-pyromancy.svg",
+  "folder": "Jt5JQjcEIdU6O9ep",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 300,
+    "discipline": "pyromancy",
+    "subtype": "Контроль пламени",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "Касание",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Длительное (PR часов) · Изменение. Треб.: One With the Flame. Кристаллизует пламя в кубе ≤PR×1м (светится, сохраняет цвет/прозрачность, чуть тяжелее воздуха). Прочность по PR: 1-3 ломается пальцами, 4-5 стекло, 6-7 сталь, 8-9 адамантий, 10+ алмаз. PR 6+ — оружие/броня из пламени (Един с Пламенем) пригодны (без I(Cr)-профилей); PR 8+ — теряют Primitive, оружие +Reinforced, броня +1 AP. Можно сделать постоянным за 1d10+PR в T. Повтор отменяет (постоянное — только большим PR).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "mWbrWOh8QilLcjqO",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122036893,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!mWbrWOh8QilLcjqO"
+}

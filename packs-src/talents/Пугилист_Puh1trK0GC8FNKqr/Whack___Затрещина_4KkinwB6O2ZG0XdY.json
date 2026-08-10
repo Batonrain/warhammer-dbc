@@ -1,0 +1,55 @@
+{
+  "name": "Whack / Затрещина",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Puh1trK0GC8FNKqr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может совершать безоружные атаки руками, в которых держит одноручное рукопашное оружие (кроме П+Л). Противники, ещё не видевшие этот приём в этом бою, получают −30 на Избегания от такой атаки.",
+    "tier": 1,
+    "requirement": "WS 30",
+    "aptitudes": [
+      "ws",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "4KkinwB6O2ZG0XdY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121965916,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4KkinwB6O2ZG0XdY"
+}

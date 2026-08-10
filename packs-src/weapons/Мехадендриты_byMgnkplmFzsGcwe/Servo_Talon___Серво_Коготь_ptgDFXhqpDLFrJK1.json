@@ -1,0 +1,92 @@
+{
+  "name": "Servo-Talon / Серво-Коготь",
+  "type": "weapon",
+  "folder": "byMgnkplmFzsGcwe",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "exotic",
+    "range": 5,
+    "balance": -2,
+    "grips": "П+Л",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "2d10+18",
+    "damageType": "energy",
+    "penetration": 10,
+    "quality": "common",
+    "availability": 4,
+    "weight": 12,
+    "attackBonus": 0,
+    "special": "Мехадендрит (2 порта); Досягаемость 1-5. S 75 (Unn 7). Боевая версия Серво-Руки с генератором силового поля. Занимает 2 порта Кибер-Мантии.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "imprecise"
+      },
+      {
+        "key": "powerField"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "ptgDFXhqpDLFrJK1",
+  "img": "systems/warhammer-dbc/assets/item-icons/mechadendrite.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!ptgDFXhqpDLFrJK1"
+}

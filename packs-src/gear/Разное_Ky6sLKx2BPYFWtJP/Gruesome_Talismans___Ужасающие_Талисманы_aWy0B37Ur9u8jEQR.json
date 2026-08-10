@@ -1,0 +1,58 @@
+{
+  "name": "Gruesome Talismans / Ужасающие Талисманы",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Талисманы из частей тела жертв — глаза, пальцы и подобное. Противник отвлекается на них и становится жертвой собственного страха и любопытства.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.2,
+    "availability": -1,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "на поясе/броне",
+    "effect": "Носитель получает Fear (1) против «обычных» солдат не-друкхари — гвардейцев, стражей эльдар и им подобных. Не действует на Некронов, Тиранид и Орков.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Простой косметический талисман без эффекта.",
+      "good": "Когда друкхари с талисманом пытаются атаковать в рукопашной «обычным» солдатом, тот проходит тест W+10 как против Страха; провал — атака отменяется с сохранением трат действий и реакций, а до начала следующего раунда он получает −30 на атаки по друкхари.",
+      "best": "Если противник проваливает тест страха против носителя, друкхари немедленно получает очко Боли."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "aWy0B37Ur9u8jEQR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380040,
+    "modifiedTime": 1785349380042,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!aWy0B37Ur9u8jEQR"
+}

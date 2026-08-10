@@ -1,0 +1,52 @@
+{
+  "name": "Hidden Patterns / Скрытые Узоры",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "stlADPYhfqyKmCE9",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Совершенствует сокрытие рунических узоров, дарующих ему силу, скрывая их даже от чувств Одарённых. Тесты на засекание работы Трейта Stances of Deceit пси-чутьём и другими методами, засекающими энергии Варпа, что-то обнаруживают только Критическим Успехом.",
+    "tier": 1,
+    "requirement": "Тзинч, Forbidden Lore (Warp)+20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Ворон",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zxc0XT0OzDaDh1bT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786122010586,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zxc0XT0OzDaDh1bT"
+}

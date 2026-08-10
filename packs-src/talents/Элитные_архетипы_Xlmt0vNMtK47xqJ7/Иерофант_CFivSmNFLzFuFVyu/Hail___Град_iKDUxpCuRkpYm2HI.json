@@ -1,0 +1,52 @@
+{
+  "name": "Hail / Град",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CFivSmNFLzFuFVyu",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Даже обычные булыжники становятся смертельным оружием, когда их метает толпа. Орды под Командным Присутствием могут отказываться от части стрелковых атак, чтобы за каждую пожертвованную атаку дать одной другой стрелковой атаке метательным оружием +10 на попадание и +1d10 Dmg (складывается в одну атаку до 3 раз).",
+    "tier": 2,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Иерофант",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "iKDUxpCuRkpYm2HI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121996785,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!iKDUxpCuRkpYm2HI"
+}

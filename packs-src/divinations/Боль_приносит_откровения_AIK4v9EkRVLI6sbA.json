@@ -1,0 +1,48 @@
+{
+  "name": "Боль приносит откровения",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "pain",
+    "roll": "10-13",
+    "rollMin": 10,
+    "rollMax": 13,
+    "text": "Боль приносит откровения",
+    "effect": "Получив первый раз за бой Критическую Рану, бросьте 1к10. На 10, получив урон, игнорируйте критический эффект.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": []
+    },
+    "description": "",
+    "notes": ""
+  },
+  "_id": "AIK4v9EkRVLI6sbA",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": []
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786003756748,
+    "modifiedTime": 1786230667585,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!AIK4v9EkRVLI6sbA"
+}

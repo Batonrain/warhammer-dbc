@@ -1,0 +1,44 @@
+{
+  "name": "Hypno-Pod / Гипно-Капсула",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Камера гипно-индоктринации/обучения спящих космодесантников.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "Имплант базовых знаний/навыков NPC-неофитам с Каталептическим Узлом. Индоктринация пленных десантников (W на 30 ниже реальной).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "2d10 урона в I за каждый сеанс.",
+      "good": "Действует на людей, а не только Астартес.",
+      "best": "Как Good.Q; при успешной Индоктринации полностью перестраивать личность."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "uvCfnDewb5qZzfL6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!uvCfnDewb5qZzfL6"
+}

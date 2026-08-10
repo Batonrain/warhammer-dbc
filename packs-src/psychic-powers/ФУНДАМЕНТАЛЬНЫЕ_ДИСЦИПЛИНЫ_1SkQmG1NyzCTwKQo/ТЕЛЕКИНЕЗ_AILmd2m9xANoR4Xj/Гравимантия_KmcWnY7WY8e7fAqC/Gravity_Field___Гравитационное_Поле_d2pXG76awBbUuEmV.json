@@ -1,0 +1,75 @@
+{
+  "name": "Gravity Field / Гравитационное Поле",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telekinesis.svg",
+  "folder": "KmcWnY7WY8e7fAqC",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "telekinesis",
+    "subtype": "Гравимантия",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×25м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Незримое · Призыв. Треб.: Personal Gravity. Сферический Blast (PR×3): невесомость — незакреплённые объекты медленно (0,5 м/Ход) взлетают, зависая на 2-3 м. Персонажи Реакцией A+10 ухватываются за опору (нужна свободная рука; маг-сапоги — авто). Зависший: −20 на координацию (−40 при стрельбе оружием с отдачей). Псайкер — Flyer (W.b) в поле; в начале Хода сдвигает поле на W.b×1 м.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "d2pXG76awBbUuEmV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122034575,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!d2pXG76awBbUuEmV"
+}

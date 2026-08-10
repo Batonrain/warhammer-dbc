@@ -1,0 +1,51 @@
+{
+  "name": "Shaimesh Disciple / Ученица Шаимеш",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "ry6eclHi9ICHSl4f",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Снижает редкость всех ядов на 1 в расчёте крафта. Заканчивая крафт яда, может тестом Trade (Chymist)(I)+10 поднять его качество на 1. Создавая яд Good.Q или Best.Q, делает I.b доз за раз вместо одной. Best.Q яд её работы игнорирует иммунитет любого существа к ядам, кроме демонов. Когда кто-либо в поле её видимости страдает от отравления или яда, получает Очко Боли. За 8 Очков Боли увеличивает Toxic своей следующей атаки на +2. Может создавать Яды и Наркотики с вектором Рана/Инъекция из любых остальных, повышая редкость итогового на 1-2 по усмотрению ГМа.",
+    "source": "Элитный архетип: Ламия",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "LkQlK6xxmVlAxGbw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121959110,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LkQlK6xxmVlAxGbw"
+}

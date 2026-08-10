@@ -1,0 +1,52 @@
+{
+  "name": "Game Has Only Just Begun / Игра Только Началась",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "EqUEc8xduRjbBMD4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может выпускать захваченную жертву из карманного измерения в любой участок тьмы, где находится сам, придавая иллюзиям резкий материальный окрас. Техника требует тонкого управления: существо, увидевшее ужасы Элиндраха при перемещении через тьму и не сломленное, может слишком рано сойти с ума.",
+    "tier": 3,
+    "requirement": "Sentence, Dark Omens",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Скорбные Пасти",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "3mInjfUZDf3gZuTb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121965453,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!3mInjfUZDf3gZuTb"
+}

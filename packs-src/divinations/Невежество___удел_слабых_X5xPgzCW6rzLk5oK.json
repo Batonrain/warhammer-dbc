@@ -1,0 +1,112 @@
+{
+  "name": "Невежество — удел слабых",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "ignorance",
+    "roll": "60-63",
+    "rollMin": 60,
+    "rollMax": 63,
+    "text": "Невежество — удел слабых",
+    "effect": "I +5; F −3.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "+5 I, −3 F",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "int",
+          "value": 5
+        },
+        {
+          "stat": "fel",
+          "value": -3
+        }
+      ]
+    },
+    "description": "",
+    "notes": ""
+  },
+  "_id": "X5xPgzCW6rzLk5oK",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "MulU9AmqNOLLlr2t",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "Bx7OPoN0LKK7Vcqi",
+              "kind": "characteristic",
+              "charKey": "int",
+              "field": "total",
+              "op": "add",
+              "value": 5,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "2eamfA5gG83BOMr3",
+              "kind": "characteristic",
+              "charKey": "fel",
+              "field": "total",
+              "op": "subtract",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786003756749,
+    "modifiedTime": 1786281374941,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!X5xPgzCW6rzLk5oK"
+}

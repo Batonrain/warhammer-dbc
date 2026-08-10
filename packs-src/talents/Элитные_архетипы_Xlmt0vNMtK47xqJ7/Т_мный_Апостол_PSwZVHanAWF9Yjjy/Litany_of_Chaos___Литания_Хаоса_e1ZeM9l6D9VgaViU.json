@@ -1,0 +1,52 @@
+{
+  "name": "Litany of Chaos / Литания Хаоса",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "PSwZVHanAWF9Yjjy",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Нечестивые литании наполняют паству силой Тёмных Богов. Может потратить Очко Бесчестия, чтобы дать всем подчинённым под его Командным Присутствием до конца боя один из бонусов по своему Богу (Апостол, посвящённый одному Богу, использует только его литанию): свойство Extreme(9/1) для их атак; +30 на все тесты Командования на них; авто-проход тестов на трудный ландшафт; Таланты Frenzy и Hatred(Все!); Трейт Fanatic.",
+    "tier": 2,
+    "requirement": "Неделимый, Forbidden Lore (Heresy)+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Тёмный Апостол",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "e1ZeM9l6D9VgaViU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121992380,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!e1ZeM9l6D9VgaViU"
+}

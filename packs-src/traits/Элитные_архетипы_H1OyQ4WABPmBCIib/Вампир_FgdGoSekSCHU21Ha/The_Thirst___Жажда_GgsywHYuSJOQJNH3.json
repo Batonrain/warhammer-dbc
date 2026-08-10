@@ -1,0 +1,51 @@
+{
+  "name": "The Thirst / Жажда",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "FgdGoSekSCHU21Ha",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Пробив укусом броню цели, имеющей душу, может выпить её кровь (или аналог, вплоть до машинного масла или реакторной жидкости мутанта-механоида). Цель получает 1 уровень Обескровливания и 2d10 урона в W, а Вампир получает 1 Жажды. Может тратить Жажду как Очки Бесчестия, но считает при этом свою Cor 0-19, и не может тратить более 2 Жажды в Раунд (максимумы растут по Стадиям Пакта). Пробив укусом броню, может не наносить непоглощённый урон, а только выпить кровь. Урон от варп-оружия наносится в его Жажду, считая каждый пункт как 5 Ран (расход Жажды округляется вверх); при этом его тошнит кровью и он проходит тест T+10 или Оглушается на 1 Раунд. Персонажи с Трейтом Warp Sight видят Жажду как осколки чужих душ, вихрящихся вокруг его души, но обычное Пси-чутьё не замечает ничего необычного.",
+    "source": "Элитный архетип: Вампир",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "GgsywHYuSJOQJNH3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121958546,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!GgsywHYuSJOQJNH3"
+}

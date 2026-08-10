@@ -1,0 +1,38 @@
+{
+  "name": "Наслаждение смертью",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "s8lKzSrVLBSddHVo",
+  "system": {
+    "table": "history",
+    "rollMin": 4,
+    "rollMax": 4,
+    "description": "Некоторые воины просто созданы убивать. Эта броня олицетворяет их суть, и бесчисленные враги научились страшиться одного её вида.",
+    "effect": "Атаки, нанёсшие Критический урон, наносят дополнительно +2 урона; любая успешная атака по Орде снижает её Размер ещё на −1.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "FbyqwGv0McUmJZ6d",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354160,
+    "modifiedTime": 1786229458935,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FbyqwGv0McUmJZ6d"
+}

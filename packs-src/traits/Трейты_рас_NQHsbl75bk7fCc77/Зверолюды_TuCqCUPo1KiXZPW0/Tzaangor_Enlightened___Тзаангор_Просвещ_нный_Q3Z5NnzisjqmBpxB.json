@@ -1,0 +1,52 @@
+{
+  "name": "Tzaangor Enlightened / Тзаангор Просвещённый",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "TuCqCUPo1KiXZPW0",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Проведя ритуал длительностью один час без тестов, Тзаангор призывает Диск Тзинча под своим управлением, как если бы провёл ритуал Трансформации Диска. Он получает 3d10 урона в W, как обычный ритуалист.\n\nБог: Тзинч. Требования: Cor 30, Inf 30, Forbidden Lore (Daemons) +0.",
+    "source": "Зверолюд (субраса)",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "requirement": ""
+  },
+  "_id": "Q3Z5NnzisjqmBpxB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160739696,
+    "modifiedTime": 1786121959519,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Q3Z5NnzisjqmBpxB"
+}

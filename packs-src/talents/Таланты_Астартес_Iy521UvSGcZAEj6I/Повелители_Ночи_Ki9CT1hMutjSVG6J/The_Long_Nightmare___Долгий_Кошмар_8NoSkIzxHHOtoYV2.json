@@ -1,0 +1,53 @@
+{
+  "name": "The Long Nightmare / Долгий Кошмар",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Ki9CT1hMutjSVG6J",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда ГМ посылает персонажу пророческий сон с его смертью, он может пройти тест W+20 и при Успехе растянуть сон на 2 часа за каждый Успех, проигрывая видение снова и снова во всё больших деталях и расширяя «область обзора», получая больше полезной информации о грядущей битве.",
+    "bookSource": "",
+    "tier": "2",
+    "requirement": "Проклятье Повелителей Ночи",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "8NoSkIzxHHOtoYV2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782159183773,
+    "modifiedTime": 1786230864062,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!8NoSkIzxHHOtoYV2"
+}

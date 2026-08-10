@@ -1,0 +1,53 @@
+{
+  "name": "Slave Collar / Рабский Ошейник",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Ошейник со взрывчаткой, детонирующий по вокс-сигналу и убивающий носителя.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.5,
+    "availability": -1,
+    "quality": "common",
+    "gearCategory": "head",
+    "worn": "Шея (П)",
+    "effect": "Замок открывается вокс-сигналом пульта. Неудачный взлом (Security(I)+0 или Tech-Use−20) → детонация: убивает носителя, 2d10 X Dmg взломщику.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "+10 к тестам взлома замка/вокс-частоты.",
+      "good": "−10 к тестам взлома.",
+      "best": "−20 к тестам взлома."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "UiZz594A4rVxruoa",
+  "_id": "yAD75g7qsABInGp3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!yAD75g7qsABInGp3"
+}

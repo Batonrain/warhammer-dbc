@@ -1,0 +1,53 @@
+{
+  "name": "Nightmare Choir / Кошмарный Хор",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Тяжёлый рюкзак-орган с плененными душами.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 12,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Спина",
+    "effect": "Слаанеш: игнорирует −10 от Усталости, Оглушение и все Крит. Эффекты кроме смерти/потери органов; Горит как обычно, но игнорирует прочие эффекты. Убийство души → до 6 осколков. Свободным действием выпустить осколок и усилить хор: другие Слаанешиты рядом получают те же эффекты до начала его следующего Хода, сам восстанавливает 1d5+1 Ран и снимает Усталость.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "При получении эффекта, к которому даёт иммунитет — тест W+0 или 1d5+Провалы I Dmg, Warp Weapon в голову (при реве авто-успех).",
+      "good": "Жертвы, умершие в Шоке/Подавлении/панике от горения, дают 2 осколка.",
+      "best": "Как Good.Q; активация рева даёт рейтинг Страха 1 до начала следующего Хода."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": true,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "MRhbbMAil5vijxP0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!MRhbbMAil5vijxP0"
+}

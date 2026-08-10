@@ -1,0 +1,52 @@
+{
+  "name": "Chrysalis / Куколка",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "TtMKPfCL2bv9aDlW",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Аркано-механические репликаторы в головном модуле восстанавливают фрейм даже из одной головы. В контакте с грудой металла как источником материалов может на 1 Раунд потерять способность двигаться, получив Трейт Regeneration (2). Отращивание конечности или механодендрита стоит 7 Ран, торса — 20 Ран. Прервав контакт с материалами, теряет накопленные Раны для регенерации. Части тела регенерируют со всей бионикой, кибернетикой и встроенным оружием.",
+    "tier": 3,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Тех-Ассасин",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "btkHMs3smGuEAogP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121990636,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!btkHMs3smGuEAogP"
+}

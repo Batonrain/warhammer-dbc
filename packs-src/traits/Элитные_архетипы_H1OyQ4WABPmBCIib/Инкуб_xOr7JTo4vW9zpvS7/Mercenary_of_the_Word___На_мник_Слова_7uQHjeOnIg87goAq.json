@@ -1,0 +1,51 @@
+{
+  "name": "Mercenary of the Word / Наёмник Слова",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "xOr7JTo4vW9zpvS7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Лишается всех Hatred и не имеет штрафов на общение с кем-либо, пока этот кто-то может быть потенциальным нанимателем. Получает +20 на все тесты Commerce, чтобы получить оплату, соразмерную угрозе. Не может предать нанимателя — иначе лишится права носить имя инкуба, и за ним начнётся охота других инкубов. Успешно закрыв контракт, получает +1 Inf, или +1d5 Inf, если наниматель очень известен (например, Архонт Кабала). Подчиняется в первую очередь нанимателю, затем Клэйвексу.",
+    "source": "Элитный архетип: Инкуб",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "7uQHjeOnIg87goAq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121957657,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7uQHjeOnIg87goAq"
+}

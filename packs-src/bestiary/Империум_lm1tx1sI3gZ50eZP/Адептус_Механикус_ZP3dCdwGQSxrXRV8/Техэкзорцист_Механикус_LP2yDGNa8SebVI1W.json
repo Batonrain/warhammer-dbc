@@ -1,0 +1,1406 @@
+{
+  "name": "Техэкзорцист Механикус",
+  "type": "character",
+  "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+  "folder": "ZP3dCdwGQSxrXRV8",
+  "system": {
+    "bodyType": "male",
+    "race": "human",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "alignment": "loyalist",
+    "patronGod": "undivided",
+    "isPsyker": false,
+    "isTechpriest": true,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 16,
+      "max": 16,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 1,
+      "max": 2
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 0,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 38,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 38,
+        "bonus": 3,
+        "cost": 0
+      },
+      "bs": {
+        "base": 40,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 40,
+        "bonus": 4,
+        "cost": 0
+      },
+      "s": {
+        "base": 38,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 38,
+        "bonus": 3,
+        "cost": 0
+      },
+      "t": {
+        "base": 42,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 42,
+        "bonus": 4,
+        "cost": 0
+      },
+      "ag": {
+        "base": 32,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 32,
+        "bonus": 3,
+        "cost": 0
+      },
+      "int": {
+        "base": 48,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 48,
+        "bonus": 4,
+        "cost": 0
+      },
+      "per": {
+        "base": 42,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 42,
+        "bonus": 4,
+        "cost": 0
+      },
+      "wp": {
+        "base": 50,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 50,
+        "bonus": 5,
+        "cost": 0
+      },
+      "fel": {
+        "base": 28,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 28,
+        "bonus": 2,
+        "cost": 0
+      },
+      "inf": {
+        "base": 19,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 19,
+        "bonus": 1,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "athletics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "awareness": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "charm": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "dodge": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "logic": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "medicae": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "parry": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "security": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "survival": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "techUse": {
+        "rank": "expert",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "max": 0
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 8,
+      "max": 8,
+      "regen": 2
+    },
+    "energy": {
+      "value": 6,
+      "max": 6
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "<p><b>Роль:</b> техножрец-специалист по <b>Техзорцизму</b> — изгоняет заражённые скрапкодом и одержимые демонами машинные духи. Аксиом Омниссии и лазпистолет, механикус-облачение поверх панциря. Мощная Сила Воли против варпа; серво-рука, МИУ, респиратор и Потенциа-катушка (вложены имплантами) питают его чудеса.</p><p><b>Дисциплина «Техзорцизм»</b> (вложена тех-силами): Чистка, Оберег, Восстание и Пробуждение Техзорцизма + Рунический Экзорцизм — против демонических машин и оружия.</p>",
+    "craftAvailable": false,
+    "possessed": false,
+    "haemonculus": {
+      "stage": 0,
+      "flesh": [],
+      "warp": [],
+      "splitPools": false,
+      "notes": ""
+    },
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "reactions": "",
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "vitals": {
+      "hunger": 0,
+      "thirst": 0,
+      "sleep": 0
+    }
+  },
+  "items": [
+    {
+      "name": "Силовой Топор",
+      "type": "weapon",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "power",
+        "range": 3,
+        "balance": -1,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+6",
+        "damageType": "energy",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 2,
+        "weight": 0.8,
+        "attackBonus": 0,
+        "special": "Топор; Хват 1р [2р, Кл]; Досягаемость 3",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "powerField"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "8z1zgHWw9PfQMovE",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.8z1zgHWw9PfQMovE"
+    },
+    {
+      "name": "Лазпистолет",
+      "type": "weapon",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "pistol",
+        "weaponType": "laser",
+        "range": 30,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "½",
+        "magazineCur": 30,
+        "magazineMax": 30,
+        "rof_single": 1,
+        "rof_semi": 2,
+        "rof_full": 0,
+        "damage": "1d10+2",
+        "damageType": "energy",
+        "penetration": 0,
+        "quality": "common",
+        "availability": -2,
+        "weight": 1,
+        "attackBonus": 0,
+        "special": "Моды: Power Setting",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "combi"
+          },
+          {
+            "key": "reliable"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "TKdh2oU9a9PprDll",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.TKdh2oU9a9PprDll"
+    },
+    {
+      "name": "Вулканизированный Плащ",
+      "type": "armor",
+      "system": {
+        "description": "",
+        "notes": "",
+        "armorType": "simple",
+        "stacks": true,
+        "maxAgility": 100,
+        "propRatings": {},
+        "apSecond": {},
+        "equipped": true,
+        "head": 4,
+        "body": 4,
+        "leftArm": 4,
+        "rightArm": 4,
+        "leftLeg": 4,
+        "rightLeg": 4,
+        "quality": "common",
+        "availability": 1,
+        "weight": 4,
+        "properties": [
+          "cloak",
+          "open",
+          "soft"
+        ],
+        "strengthBonus": 0,
+        "wpBonus": 0,
+        "drukhari": false,
+        "fieldMode": "",
+        "special": ""
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "hBhunGgqE4Thxv1e",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.hBhunGgqE4Thxv1e"
+    },
+    {
+      "name": "Панцирь Силовиков",
+      "type": "armor",
+      "system": {
+        "description": "",
+        "notes": "",
+        "armorType": "carapace",
+        "stacks": true,
+        "maxAgility": 45,
+        "propRatings": {},
+        "apSecond": {},
+        "equipped": true,
+        "head": 6,
+        "body": 6,
+        "leftArm": 6,
+        "rightArm": 6,
+        "leftLeg": 6,
+        "rightLeg": 6,
+        "quality": "common",
+        "availability": 1,
+        "weight": 15,
+        "properties": [
+          "conductive",
+          "hard",
+          "heavy"
+        ],
+        "strengthBonus": 0,
+        "wpBonus": 0,
+        "drukhari": false,
+        "fieldMode": "",
+        "special": ""
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "HvBJ3PLNUlkXDZVA",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.HvBJ3PLNUlkXDZVA"
+    },
+    {
+      "name": "Servo-Arm / Серво-Рука",
+      "type": "implant",
+      "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+      "system": {
+        "description": "R:3. Utility.",
+        "notes": "",
+        "category": "mechadendrite",
+        "quality": "common",
+        "effect": "S 75 (Unn 7), Дл. 1.5м, Rng 1-5. Удар 2d10+14 I(Cr), Imprecise, Primitive, Reinforced. Подъём огромных тяжестей (опорные штифты + усиленные сервоприводы; вес ношения до уровня руки). Свободным действием уцепиться за опору или впиться в камень (+20 Карабканье). Не для тонких манипуляций. Занимает 2 порта Кибер-Мантии.",
+        "installed": "",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "apHead": 0,
+          "apBody": 0,
+          "apArms": 0,
+          "apLegs": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "shield": {
+          "enabled": false,
+          "shieldNature": "technological",
+          "shieldType": "deflector",
+          "ratingMin": 1,
+          "ratingMax": 10,
+          "overloadThreshold": 0,
+          "isSpecialRating": false,
+          "currentRating": 0,
+          "equipped": false,
+          "status": "inactive"
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "ti0kC0iDR4LiEKLN",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.ti0kC0iDR4LiEKLN"
+    },
+    {
+      "name": "Mind Impulse Unit (MIU) / МИУ",
+      "type": "implant",
+      "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+      "system": {
+        "description": "R:1.",
+        "notes": "",
+        "category": "cybernetic",
+        "quality": "common",
+        "effect": "Подключение к машине: управлять ею мысленно, использовать сенсоры как чувства. +10 Tech-Use на свою машину. Best.Q +20.",
+        "installed": "",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "apHead": 0,
+          "apBody": 0,
+          "apArms": 0,
+          "apLegs": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "shield": {
+          "enabled": false,
+          "shieldNature": "technological",
+          "shieldType": "deflector",
+          "ratingMin": 1,
+          "ratingMax": 10,
+          "overloadThreshold": 0,
+          "isSpecialRating": false,
+          "currentRating": 0,
+          "equipped": false,
+          "status": "inactive"
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "iGyoNbah7D9XkrCw",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.iGyoNbah7D9XkrCw"
+    },
+    {
+      "name": "Respirator Unit / Респиратор",
+      "type": "implant",
+      "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+      "system": {
+        "description": "Кибернетическая замена дыхательной системы.",
+        "notes": "",
+        "category": "mechanicus",
+        "quality": "common",
+        "effect": "+30 на тесты против вдыхаемых газов; работает как респиратор соответствующего Качества.",
+        "installed": "",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "apHead": 0,
+          "apBody": 0,
+          "apArms": 0,
+          "apLegs": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "shield": {
+          "enabled": false,
+          "shieldNature": "technological",
+          "shieldType": "deflector",
+          "ratingMin": 1,
+          "ratingMax": 10,
+          "overloadThreshold": 0,
+          "isSpecialRating": false,
+          "currentRating": 0,
+          "equipped": false,
+          "status": "inactive"
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "Ic7b7SyXxUWVpoKz",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.Ic7b7SyXxUWVpoKz"
+    },
+    {
+      "name": "Potentia Coil / Потенциа Коил",
+      "type": "implant",
+      "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+      "system": {
+        "description": "Энергетический банк для мощных Техночудес.",
+        "notes": "",
+        "category": "mechanicus",
+        "quality": "common",
+        "effect": "Энергетический банк Техночудес: даёт заряды Энергии (число зависит от Качества и подключённой сети). Выставите максимум Энергии на вкладке ТЕХ; пополняется Электу-Индукторами.",
+        "installed": "",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "apHead": 0,
+          "apBody": 0,
+          "apArms": 0,
+          "apLegs": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "shield": {
+          "enabled": false,
+          "shieldNature": "technological",
+          "shieldType": "deflector",
+          "ratingMin": 1,
+          "ratingMax": 10,
+          "overloadThreshold": 0,
+          "isSpecialRating": false,
+          "currentRating": 0,
+          "equipped": false,
+          "status": "inactive"
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "NEWnbLTf5XbaJhPR",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.NEWnbLTf5XbaJhPR"
+    },
+    {
+      "name": "Mechadendrite Use / Использование Мехадендритов",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж получил обучение, посвящение и гипнонаставление по использованию конкретного типа мехадендритов.",
+        "tier": 2,
+        "requirement": "Нет",
+        "aptitudes": [
+          "int",
+          "tech"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Неделимый",
+        "specialization": "Weapon, Utility",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "OC142A5FhDArMnjz",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.OC142A5FhDArMnjz"
+    },
+    {
+      "name": "Techsorcism Purge / Чистка Техзорцизма",
+      "type": "techPower",
+      "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "discipline": "animatheurgy",
+        "subtype": "Техзорцизм",
+        "miracleType": "anima",
+        "extraTypes": [],
+        "iron": "",
+        "cost": 0,
+        "rating": 1,
+        "cognitionCost": 1,
+        "energyCost": 0,
+        "sustainCost": 0,
+        "sustainAction": "free",
+        "testSkill": "techUse",
+        "testMod": 0,
+        "action": "half",
+        "sustained": false,
+        "compiled": false,
+        "range": "I.b×1м",
+        "damage": "",
+        "damageType": "energy",
+        "penetration": 0,
+        "effect": "[Железо: Omnissiah Axe · Цена: 1К · Процесс: Нет · Тип: Анима, Физическое] vs Инфограждение/Заражение. Очищает машину от Скрапкода, кода ИИ, Некронов или Орочьих Меков, возвращая здоровый дух машины (далее — обычная имперская).",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": []
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "rfSx0LIKSGxhJytT",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.rfSx0LIKSGxhJytT"
+    },
+    {
+      "name": "Techsorcism Ward / Оберег Техзорцизма",
+      "type": "techPower",
+      "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "discipline": "animatheurgy",
+        "subtype": "Техзорцизм",
+        "miracleType": "anima",
+        "extraTypes": [],
+        "iron": "",
+        "cost": 0,
+        "rating": 1,
+        "cognitionCost": 2,
+        "energyCost": 0,
+        "sustainCost": 1,
+        "sustainAction": "free",
+        "testSkill": "techUse",
+        "testMod": 0,
+        "action": "half",
+        "sustained": false,
+        "compiled": false,
+        "range": "I.b×1м",
+        "damage": "",
+        "damageType": "energy",
+        "penetration": 0,
+        "effect": "[Железо: Omnissiah Axe · Цена: 2К · Процесс: 1 (У) · Тип: Анима, Физическое] Треб.: Tech-Use+20, Techsorcism Purge. До I.b целей: механизмы +½I.b(окр.▲) к Инфограждению против Скрапкода/Ксенотеха/ИИ, пока в одной Ноосфере со жрецом.",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": []
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "3uWjuQE8LQvNkaU0",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.3uWjuQE8LQvNkaU0"
+    },
+    {
+      "name": "Techsorcism Rebellion / Восстание Техзорцизма",
+      "type": "techPower",
+      "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "discipline": "animatheurgy",
+        "subtype": "Техзорцизм",
+        "miracleType": "anima",
+        "extraTypes": [],
+        "iron": "",
+        "cost": 0,
+        "rating": 1,
+        "cognitionCost": 2,
+        "energyCost": 0,
+        "sustainCost": 0,
+        "sustainAction": "free",
+        "testSkill": "techUse",
+        "testMod": -20,
+        "action": "half",
+        "sustained": false,
+        "compiled": false,
+        "range": "I.b×1м",
+        "damage": "",
+        "damageType": "energy",
+        "penetration": 0,
+        "effect": "[Железо: Omnissiah Axe · Цена: 2К · Процесс: Нет · Тип: Анима, Физическое] Треб.: Tech-Use+10, Techsorcism Purge. vs W демона. Демоническая машина/оружие: на 1 Раунд за нечётный Успех изолируется от демона (машина Беспомощна, оружие обычное; прекращает Одержимость носителя).",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": []
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "zzmYrf8jUOLovNc5",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.zzmYrf8jUOLovNc5"
+    },
+    {
+      "name": "Techsorcism Awakening / Пробуждение Техзорцизма",
+      "type": "techPower",
+      "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "discipline": "animatheurgy",
+        "subtype": "Техзорцизм",
+        "miracleType": "anima",
+        "extraTypes": [],
+        "iron": "",
+        "cost": 0,
+        "rating": 1,
+        "cognitionCost": 3,
+        "energyCost": 0,
+        "sustainCost": 1,
+        "sustainAction": "free",
+        "testSkill": "techUse",
+        "testMod": 0,
+        "action": "half",
+        "sustained": false,
+        "compiled": false,
+        "range": "I.b×1м",
+        "damage": "",
+        "damageType": "energy",
+        "penetration": 0,
+        "effect": "[Железо: Omnissiah Axe · Цена: 3К · Процесс: 1 (У) · Тип: Анима, Физическое] Треб.: Tech-Use+30, Techsorcism Ward. Как Чистка, но на очищенную машину накладывается Оберег Техзорцизма. Можно полудействием без траты Когниции очищать ещё одну машину рядом/по инфо-кабелю (+10 за каждую очищенную).",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": []
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "KXXxBtNjgZpEvLiO",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.KXXxBtNjgZpEvLiO"
+    },
+    {
+      "name": "Runic Exorcism / Рунический Экзорцизм",
+      "type": "techPower",
+      "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "discipline": "animatheurgy",
+        "subtype": "Рунический код",
+        "miracleType": "compensator",
+        "extraTypes": [],
+        "iron": "",
+        "cost": 0,
+        "rating": 1,
+        "cognitionCost": 5,
+        "energyCost": 2,
+        "sustainCost": 0,
+        "sustainAction": "free",
+        "testSkill": "techUse",
+        "testMod": -10,
+        "action": "free",
+        "sustained": false,
+        "compiled": false,
+        "range": "I×1м",
+        "damage": "",
+        "damageType": "energy",
+        "penetration": 0,
+        "effect": "[Железо: Runic Circuits · Цена: 5К+2Э · Процесс: Нет · Тип: Анима, Компенсатор (1)] Треб.: I 55, For.Lore (Warp)+30, Runic Interrupt. Шаблон I.b м (засёкшие Избегают). При проигрыше: демон в Истинной Форме/Вселении — проваленный тест Нестабильности + Ступор 1 Раунд; в хосте/машине/Одержимый — Ступор 1 Раунд (Одержимый — контроль человеку); демоническое оружие/байки — теряют Демоническое на 1 Раунд; псайкеры — тПР −Провалы на 1 Раунд, удвоение времени манифестации.",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": []
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "lH4bCoj9PuALG9Mm",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!LP2yDGNa8SebVI1W.lH4bCoj9PuALG9Mm"
+    }
+  ],
+  "_id": "LP2yDGNa8SebVI1W",
+  "prototypeToken": {
+    "name": "Техэкзорцист Механикус",
+    "displayName": 0,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783092390188,
+    "modifiedTime": 1783092390188,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!LP2yDGNa8SebVI1W"
+}

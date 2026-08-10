@@ -1,0 +1,60 @@
+{
+  "name": "Luminen Desecration / Люминен Осквернение",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "8Myy7biwI0W0j67k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Люминен",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 5,
+    "energyCost": 2,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -20,
+    "action": "full",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×0,5м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Luminen Capacitors · Цена: 5К+2Э · Процесс: Нет · Тип: Атака, Компенсатор (1), Манипула (1), Стрельба, Физическое] Треб.: I 60, For.Lore (Mechanicum)+20, Luminen Smite. За нечётный Успех — молния в цель (Избегание как от стрельбы, отдельные атаки). Без урона, но 1d5−1 Раундов эффект 7-8 «Мёртвая Зона» (Haywire). Разряжает батареи/источники (восстанавливая до 1 Энергии с каждого).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "hRo8g6EWTK3S55QX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042220,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hRo8g6EWTK3S55QX"
+}

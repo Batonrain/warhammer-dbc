@@ -1,0 +1,75 @@
+{
+  "name": "Telekine Shackles / Телекинетические Путы",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telekinesis.svg",
+  "folder": "OOKw6n1SDAMTIufD",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "telekinesis",
+    "subtype": "Тонкость",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение. Поддержание: Полудействие. Треб.: Telekine Mantle. При манифестации и в начале каждого Хода: противник S+0 vs W+3×PR. Проигрыш — −5×Провалы на физ. действия 1 Раунд; на S.b Провалов+ — не может физ. действия 1 Раунд, и псайкер в конце Хода заставляет его совершить не-ментальные действия (до полудействия): без Талантов жертвы, но с Талантами псайкера; рукопашные используют W.b псайкера; тесты — W псайкера. Оглушённую/мёртвую цель управляет авто.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "C7md2qYR2SrD2ObD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122025855,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!C7md2qYR2SrD2ObD"
+}

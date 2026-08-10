@@ -1,0 +1,60 @@
+{
+  "name": "Psalm of the Ashen Steps / Псалом Пепельной Поступи",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "E4orK1NdRaBbgKla",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "Киберпсалмы",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 2,
+    "energyCost": 0,
+    "sustainCost": 2,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "2d10+3",
+    "damageType": "energy",
+    "penetration": 2,
+    "effect": "[Железо: Fyceline Torch, Excursion Field · Цена: 2К · Процесс: 2 (У) · Тип: —] Треб.: Tech-Use+10. Шаблон на техножреце (движется с ним, Linger): 2d10+3 E(Fl), Pen 2, Blast (3), Flame, Linger. Сам и до ½I.b(окр.▲) других иммунны и +30 на А против E(Fl)-взрывов/спреев и иммунитет к Горению.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "d2hx5tcKu8Ne9RAj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042039,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!d2hx5tcKu8Ne9RAj"
+}

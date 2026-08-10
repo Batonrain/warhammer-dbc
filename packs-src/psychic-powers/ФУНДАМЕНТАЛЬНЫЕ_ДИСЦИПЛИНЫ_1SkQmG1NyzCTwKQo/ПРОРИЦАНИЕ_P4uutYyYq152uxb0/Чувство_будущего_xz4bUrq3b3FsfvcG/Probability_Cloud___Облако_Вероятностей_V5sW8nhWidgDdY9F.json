@@ -1,0 +1,75 @@
+{
+  "name": "Probability Cloud / Облако Вероятностей",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-divination.svg",
+  "folder": "xz4bUrq3b3FsfvcG",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "divination",
+    "subtype": "Чувство будущего",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "psyniscience",
+    "testMod": -40,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание · Длительное (½PR Раундов окр.▲). Треб.: Doom Strike. Не тратит Реакции на Избегания, +3×PR на любые тесты (кроме психотестов), встречные тесты против его действий (кроме психотестов и Избегания от физ. атак) −3×PR. Развеивает все др. силы Прорицания; нельзя манифестировать их, кроме Прекогнитивного Уклонения. По завершении 1 Усталости.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "V5sW8nhWidgDdY9F",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122032167,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!V5sW8nhWidgDdY9F"
+}

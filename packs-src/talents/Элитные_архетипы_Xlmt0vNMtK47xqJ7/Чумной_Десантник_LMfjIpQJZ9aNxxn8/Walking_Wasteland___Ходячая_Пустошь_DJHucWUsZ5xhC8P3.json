@@ -1,0 +1,52 @@
+{
+  "name": "Walking Wasteland / Ходячая Пустошь",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "LMfjIpQJZ9aNxxn8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Кровь и ошмётки некротической плоти оскверняют землю. Получив непоглощённый урон в бою, заражает всё поле боя вокруг (до 1 гектара); каждый непосвящённый без химзащиты или герметичной брони — тест T+0 или заражение. Может нанести себе 1 непоглощаемого R Dmg, чтобы намеренно заразить местность (держится минимум 7 дней, если не убрать чисткой, кислотой или огнём).",
+    "tier": 3,
+    "requirement": "Нургл, Cor 50",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "Элитный архетип: Чумной Десантник",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "DJHucWUsZ5xhC8P3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121972557,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!DJHucWUsZ5xhC8P3"
+}

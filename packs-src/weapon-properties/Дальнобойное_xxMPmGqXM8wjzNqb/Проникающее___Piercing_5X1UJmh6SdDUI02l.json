@@ -1,0 +1,35 @@
+{
+  "name": "Проникающее / Piercing",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Снаряд застревает в ране. При непоглощённом уроне цель получает −10 на все действия с этой частью тела (все действия при попадании в голову), а при попадании в торс/ногу — ещё −1 к SPD, пока снаряд не извлечён (полудействие, +1 R Dmg в эту часть).",
+    "reminder": "🏹 Проникающее: снаряд в ране — цель −10 к действиям поражённой части (−1 SPD при торсе/ноге)",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "piercing",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "5X1UJmh6SdDUI02l",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353820,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!5X1UJmh6SdDUI02l"
+}

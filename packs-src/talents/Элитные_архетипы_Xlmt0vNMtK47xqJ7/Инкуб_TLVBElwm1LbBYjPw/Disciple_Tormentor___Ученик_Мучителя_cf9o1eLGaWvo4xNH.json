@@ -1,0 +1,52 @@
+{
+  "name": "Disciple Tormentor / Ученик Мучителя",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "TLVBElwm1LbBYjPw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда противник, чей Inf ниже Inf персонажа, начинает свой ход в рукопашном бою с Инкубом, он проходит тест против страха персонажа. Если в прошлом раунде персонаж кого-то убил, его рейтинг растёт до 2, а если убил одним ударом в сочленение — до 3; рейтинг падает до 1 в начале нового хода персонажа. В начале каждого хода получает бесплатный финт на каждого противника, находящегося с ним в рукопашном бою. Противники, провалившие против него Финт, считают Инкуба имеющим на +1 страх больше.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Инкуб",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "cf9o1eLGaWvo4xNH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121991394,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!cf9o1eLGaWvo4xNH"
+}

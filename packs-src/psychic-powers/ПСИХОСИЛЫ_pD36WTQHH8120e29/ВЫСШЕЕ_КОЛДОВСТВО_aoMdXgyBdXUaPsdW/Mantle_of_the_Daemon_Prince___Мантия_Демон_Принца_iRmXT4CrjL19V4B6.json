@@ -1,0 +1,75 @@
+{
+  "name": "Mantle of the Daemon Prince / Мантия Демон-Принца",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-highSorcery.svg",
+  "folder": "aoMdXgyBdXUaPsdW",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 700,
+    "discipline": "highSorcery",
+    "subtype": "",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "cor",
+    "testMod": 0,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание · Длительное (PR+1 Раундов). Психотест Cor+0. Треб.: Cor 60+, Inf 60+, Child of the Warp. Трейты Daemonic (½PR окр.▲), Fear (3), Warp Instability + два набора: Стойкость (3 из Natural Armour+3/Regeneration+4/Sturdy/Stuff of Nightmares/Unnatural T+2); Звериная Форма (3 из Amphibious/Amorphous/Dark-Sight/Digitigrade 3/Flyer A.b/Multiple Arms+2/Quadruped 2/Toxic 2/Unnatural Senses 5); Хищнические Дары (Deadly Natural Weapons 2, Unnatural S+3, Warp Weapon + одно: Crippling 3/Felling 3/Flame/Flexible/Tearing/Toxic 2/Tainted). Не в безопасном режиме. При 0 Ран развеивается, Оглушение на 1 Раунд.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "iRmXT4CrjL19V4B6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122035803,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!iRmXT4CrjL19V4B6"
+}

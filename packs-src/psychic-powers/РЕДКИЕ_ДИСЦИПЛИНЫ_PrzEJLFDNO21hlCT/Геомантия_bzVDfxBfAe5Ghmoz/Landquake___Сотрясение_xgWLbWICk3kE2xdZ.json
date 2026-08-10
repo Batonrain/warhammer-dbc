@@ -1,0 +1,75 @@
+{
+  "name": "Landquake / Сотрясение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-geomancy.svg",
+  "folder": "bzVDfxBfAe5Ghmoz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 650,
+    "discipline": "geomancy",
+    "subtype": "",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2×PRd10",
+    "damageType": "impact",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура · Заземление. Поддержание: Полудействие. Треб.: Demolition. Можно исключить до PR персонажей/секторов. Все поверхности — Трудный Ландшафт −40 (Землетрясение, тесты при любом Движении). Заземлённые −20 на физ. действия. В начале Хода: объекты из камня 2×PRd10 I(Cr); Лежащие 2d10+2×PR I(Cr), Concussive (0), без Избегания.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "xgWLbWICk3kE2xdZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122039450,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!xgWLbWICk3kE2xdZ"
+}

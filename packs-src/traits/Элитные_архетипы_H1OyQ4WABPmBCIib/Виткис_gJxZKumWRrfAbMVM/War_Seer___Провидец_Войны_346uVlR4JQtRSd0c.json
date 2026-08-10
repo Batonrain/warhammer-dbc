@@ -1,0 +1,51 @@
+{
+  "name": "War Seer / Провидец Войны",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "gJxZKumWRrfAbMVM",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в Ход за свободное действие может сконцентрировать своё боевое всеведение на одном персонаже в том же бою и пройти тест Common Lore(War)(I)+10. При Успехе автоматически знает точное местоположение цели и получает 1 эффект против неё на выбор до начала своего следующего Хода: побеждает во всех тестах цели обмануть его (в т.ч. Финтом); +Успехи Dmg рукопашных атак по цели; +3×Успехи на рукопашные атаки по цели; −3×Успехи на Избегания от его атак; +5×Успехи на приказы атаковать цель или защищаться от неё; +5×Успехи на все встречные тесты WS, S и A против цели в атаке и защите. Если цель выходит из боя, эффект прекращается досрочно.",
+    "source": "Элитный архетип: Виткис",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "346uVlR4JQtRSd0c",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121957203,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!346uVlR4JQtRSd0c"
+}

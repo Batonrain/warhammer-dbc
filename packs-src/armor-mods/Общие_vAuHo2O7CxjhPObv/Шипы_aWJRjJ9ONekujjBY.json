@@ -1,0 +1,58 @@
+{
+  "name": "Шипы",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "vAuHo2O7CxjhPObv",
+  "system": {
+    "description": "Длинные шипы. Промахнувшийся рукопашной (Rng 0–3) или проведший безоружную/Захват/Борьбу получает попадание (Уклонение можно, Парирование нет): 1d5+S.b атакующего R, Pen 2. Персонаж вооружён запястными клинками (Rng 0, Mono). Но +10 на атаки клинками по нему; может мешать в тесноте. Примитивная броня: Pen 0 и Primitive.",
+    "notes": "",
+    "category": "armor",
+    "modGroup": "general",
+    "requirement": "Жёсткая броня. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 1.5,
+    "availability": -1,
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    },
+    "drukhari": false
+  },
+  "_id": "aWJRjJ9ONekujjBY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157649068,
+    "modifiedTime": 1786122045311,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aWJRjJ9ONekujjBY"
+}

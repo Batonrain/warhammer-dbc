@@ -1,0 +1,55 @@
+{
+  "name": "Eye of a Needle / Игольное ушко",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "LjsqJMH26Qgo0CQE",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Каждая купленная группа этого таланта считает, что относящиеся к ней корабли флотилии того же типа, что и корабль Проводника — штраф к Navigation (Warp) равен −5 вместо −5×разница между классами.",
+    "tier": 2,
+    "requirement": "Navigation (Warp) +20",
+    "aptitudes": [
+      "per",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Транспорты, Рейдеры, Фрегаты, Лёгкие крейсера, Крейсера, Линейные крейсера, Гранд-крейсера, Линкоры",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "1PeI0Kcy3O5DGjpR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160740113,
+    "modifiedTime": 1786121963572,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1PeI0Kcy3O5DGjpR"
+}

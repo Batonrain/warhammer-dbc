@@ -1,0 +1,46 @@
+{
+  "name": "Псиболт",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-bolt.svg",
+  "folder": "IQWUde65VkbLfhC1",
+  "system": {
+    "description": "Чрезвычайно редкий болт, заряженный психическими отходами Золотого Трона (Инквизиция, Серые Рыцари). Даёт +½ Cor.b цели (округление вверх) к урону и свойство Sanctified, уменьшает Надёжность на 1.",
+    "notes": "",
+    "weaponTypes": [
+      "bolt"
+    ],
+    "ammoCategory": "bolts",
+    "rarity": 4,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 4,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Sanctified; +½ Cor.b цели (окр. вверх) урона; −1 Надёжность",
+    "properties": []
+  },
+  "_id": "nAhO3wgzZ4PGdq8r",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!nAhO3wgzZ4PGdq8r"
+}

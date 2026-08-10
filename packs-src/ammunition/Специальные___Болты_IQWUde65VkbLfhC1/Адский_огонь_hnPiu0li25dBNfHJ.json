@@ -1,0 +1,46 @@
+{
+  "name": "Адский огонь",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-bolt.svg",
+  "folder": "IQWUde65VkbLfhC1",
+  "system": {
+    "description": "Болт с мутагенными токсинами. Меняет вид урона на C, против биологических существ игнорирует Трейт Natural Armour, даёт свойства Extreme (9) и Toxic (3).",
+    "notes": "",
+    "weaponTypes": [
+      "bolt"
+    ],
+    "ammoCategory": "bolts",
+    "rarity": 2,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 2,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "chemical",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Extreme (9), Toxic (3); против биологических игнорирует Natural Armour",
+    "properties": []
+  },
+  "_id": "hnPiu0li25dBNfHJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!hnPiu0li25dBNfHJ"
+}

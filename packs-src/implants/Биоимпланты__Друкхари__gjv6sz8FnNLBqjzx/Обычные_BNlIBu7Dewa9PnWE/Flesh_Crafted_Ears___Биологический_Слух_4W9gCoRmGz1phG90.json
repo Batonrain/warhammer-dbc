@@ -1,0 +1,67 @@
+{
+  "name": "Flesh-Crafted Ears / Биологический Слух",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 1. Живой слуховой орган.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Живой слуховой орган, заменяет внутреннее ухо/слуховую систему. Сам по себе восстанавливает слух без бонусов.\n\nВАРИАЦИИ:\n• Параболические раковины (R1): +20 слух, точное направление на звук без теста, ×2 дальность слуха; −15 социальные (огромные подвижные уши не спрятать).\n• Слух-фильтр (R1): иммунитет к оглушению звуком, −P.b весь урон от звука; свободным действием полная глухота; пассивно −10 на тихие/высокие звуки.\n• Эхолокационный орган (R2): Трейт Sonar Senses; −10 обычные тесты слуха (можно отключить сонар свободным действием); ультразвук слышен носителям такого же импланта/сенсорам.\n• Инфразвуковой орган (R2): Unnatural Senses(20) на вибрации; +30 P на обнаружение приближающихся существ/механизмов, оценка веса/числа шагающих; не работает в полёте/плавании/невесомости; взрывы → боль и −10 физические на 1 раунд; −10 различение речи в сильном шуме.\nPoor.Q: −20 слух; резкий громкий звук при провале на +2 → оглушение на 1 раунд.\nGood.Q: +10 слух; симбионт-ретранслятор — беззвучный шёпот с 1 союзником с таким же имплантом в 10 м (прямая видимость/общая поверхность).\nBest.Q: +10 слух и ретранслятор (как Good.Q) + 1 эффект (R +1 за каждый доп.): 1) Акустическая защита (иммунитет к оглушению звуком, +20 vs звук, звук-урон −½); 2) Ультразвуковой эхолот («видит» в темноте/дыму 20 м, +20 P на скрытых; не в вакууме); 3) Био-вокс (запись до 1 мин звука, беззвучная связь до 100 м без прямой видимости в замкнутой среде, под водой); 4) Избирательный фильтр (+40 слух на один источник, игнор штрафов окружения); 5) Паразитический шепот (+10 Charm/Commerce/Deceive/Intimidation; паразит ехидно комментирует).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "BNlIBu7Dewa9PnWE",
+  "_id": "4W9gCoRmGz1phG90",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122011020,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4W9gCoRmGz1phG90"
+}

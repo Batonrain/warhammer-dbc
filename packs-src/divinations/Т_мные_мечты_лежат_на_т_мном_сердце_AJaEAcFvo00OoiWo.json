@@ -1,0 +1,46 @@
+{
+  "name": "Тёмные мечты лежат на тёмном сердце",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "darkdreams",
+    "roll": "50-54",
+    "rollMin": 50,
+    "rollMax": 54,
+    "text": "Тёмные мечты лежат на тёмном сердце",
+    "effect": "При бросках мутаций считайте Inf.b на 1 выше.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": []
+    }
+  },
+  "_id": "AJaEAcFvo00OoiWo",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": []
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786027360703,
+    "modifiedTime": 1786229468447,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!AJaEAcFvo00OoiWo"
+}

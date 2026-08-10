@@ -1,0 +1,61 @@
+{
+  "name": "Апотекарий",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "LrQ76WufqFAvFdDy",
+  "system": {
+    "key": "apothecary",
+    "race": "astartes",
+    "group": "",
+    "charBonus": {
+      "ws": null,
+      "bs": null,
+      "s": null,
+      "t": null,
+      "ag": null,
+      "int": null,
+      "per": null,
+      "wp": null,
+      "fel": null
+    },
+    "charChoice": "",
+    "skills": "For. Lore (Astartes Implants), Trade (Chymist), Athletics +10, Medicae +10",
+    "talents": "Frontline Medic, Restitching, Sure Stitch, Fast Stitches или Precise Blow",
+    "gear": "L. Chain Weapon (до R1), Narthecium (Good.Q), 20 доз Химии до R1",
+    "wounds": "15+1d5",
+    "infRoll": "",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Боевой медик легиона.",
+    "trait": {
+      "name": "Legion Surgery / Хирургия Легиона",
+      "benefit": "Тратит Очко Бесчестья, чтобы авто-пройти тест лечения/работы с геносеменем с 1 Успехом; может пробудить десантника из Сус-ан анимации."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)",
+    "notes": ""
+  },
+  "_id": "9xoU0AONIjYkYlbp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536187,
+    "modifiedTime": 1786286345134,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!9xoU0AONIjYkYlbp"
+}

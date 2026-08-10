@@ -1,0 +1,75 @@
+{
+  "name": "Geas / Обет",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "9ssV0AszmvvEldQb",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 800,
+    "discipline": "telepathy",
+    "subtype": "Мезмеризм",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "extended",
+    "range": "PR×5м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Длительное (Особое) · Изменение. Действие: Дл. (W.b цели Ходов). Психотест W−30 vs W+0. Треб.: Enthrall. Внедряет приказ, выполнимый за PR дней; жертва посвящает все усилия его выполнению (с хитростью и самопожертвованием, но по возможности не нарушая принципы). По достижении цели/PR дням развеивается. 3+ Успеха победы — заставить забыть содеянное; 5+ — рационализировать как свои решения. Только один Обет; новый замещает прежний при большем PR.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "KdTW9KMK4rYkoAy0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122029248,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KdTW9KMK4rYkoAy0"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Shadow of Vengeance / Тень Отмщения",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "foutd4GzPCUo8Jyv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Считает Навыки Inquiry, Interrogate, Security и Stealth дружественными, а Acrobatics и Dodge — нейтральными, независимо от покровительства. Обман и пытки с целью выследить заклятых врагов, выведать их слабости и подготовиться к бою не вызывают Гнев Кхорна, равно как и попытки скрытно пробраться мимо их охраны. Медленное и мучительное убийство заклятого врага, если оно является наказанием, соразмерным его преступлению, не только не вызывает Гнев Кхорна, но может быть вознаграждено Бесчестием или мутациями.",
+    "source": "Элитный архетип: Ревенант",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "BkyoyHLSW2xJ7bzp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121958120,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!BkyoyHLSW2xJ7bzp"
+}

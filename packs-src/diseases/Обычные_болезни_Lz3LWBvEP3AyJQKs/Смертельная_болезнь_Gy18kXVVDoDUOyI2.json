@@ -1,0 +1,39 @@
+{
+  "name": "Смертельная болезнь",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "Lz3LWBvEP3AyJQKs",
+  "system": {
+    "diseaseType": "common",
+    "severity": "deadly",
+    "god": "",
+    "contagion": "",
+    "incubation": "—",
+    "symptoms": "Через промежутки (день–месяц) тест Т (мод −30…+30) или Провалы урона Т (не лечится отдыхом/медитацией). По мере урона — доп. симптомы (как тяжёлая болезнь и т.п.).",
+    "vectors": "Векторы и заразность — на усмотрение МИ.",
+    "cure": "Постельный режим + расширенный Medicae (мод −30…+30) через промежутки, Банк успехов 5–20.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "Gy18kXVVDoDUOyI2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Gy18kXVVDoDUOyI2"
+}

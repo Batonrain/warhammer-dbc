@@ -1,0 +1,60 @@
+{
+  "name": "Numerica Curse / Нумерика Проклятье",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "P4dYuZQ0qppVOtby",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "nootheurgy",
+    "subtype": "Нумерика",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -10,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Ноосфера",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Hasta Numerica · Цена: 3К · Процесс: Нет · Тип: —] Tech-Use(I)−10 vs Tech-Use(I)+0 (Инфограждение/пользователь). При победе отключает оружие/броню/снаряжение на ½I.b(окр.▲) Раундов. Пользователь полудействием Tech-Use(I)+0 (больше Успехов) включает обратно.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "UcRNNF2fQh30qFjQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041618,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!UcRNNF2fQh30qFjQ"
+}

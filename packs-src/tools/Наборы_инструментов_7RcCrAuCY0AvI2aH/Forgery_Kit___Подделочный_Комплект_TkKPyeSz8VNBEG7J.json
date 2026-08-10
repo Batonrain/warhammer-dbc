@@ -1,0 +1,44 @@
+{
+  "name": "Forgery Kit / Подделочный Комплект",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Инструменты копирования/модификации ключей, печатей, знаков отличия, документов, электронных ключей.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 2,
+    "quality": "common",
+    "toolCategory": "kits",
+    "effect": "+20 на тесты Ремесла для создания подделок.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Набор только для одного типа подделок.",
+      "good": "Без владения нужным Ремеслом (без штрафа −20).",
+      "best": "Как Good.Q; бонус +30."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "7RcCrAuCY0AvI2aH",
+  "_id": "TkKPyeSz8VNBEG7J",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!TkKPyeSz8VNBEG7J"
+}

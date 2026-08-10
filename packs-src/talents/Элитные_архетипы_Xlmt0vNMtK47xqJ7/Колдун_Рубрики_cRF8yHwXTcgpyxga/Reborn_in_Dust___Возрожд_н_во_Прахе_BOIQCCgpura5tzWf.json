@@ -1,0 +1,52 @@
+{
+  "name": "Reborn in Dust / Возрождён во Прахе",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "cRF8yHwXTcgpyxga",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За полное действие может потратить Очко Бесчестия и пройти психотест W−20 в Усиленном режиме, чтобы поднять одного из уничтоженных големов из мёртвых с числом Ран, равным Успехам. Пси-энергия собирает доспех воедино и запечатывает прорехи; павшему нужно время — он в Ступоре до начала следующего Хода колдуна.",
+    "tier": 3,
+    "requirement": "Тзинч, PR 9",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Колдун Рубрики",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "BOIQCCgpura5tzWf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121971387,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!BOIQCCgpura5tzWf"
+}

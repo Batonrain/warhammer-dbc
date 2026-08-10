@@ -1,0 +1,38 @@
+{
+  "name": "Твоя сила станет легендой",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "s8lKzSrVLBSddHVo",
+  "system": {
+    "table": "history",
+    "rollMin": 6,
+    "rollMax": 6,
+    "description": "Этот доспех делает носителя настоящим титаном — о таких боевых братьях слагают легенды, будто они руками переворачивали танки.",
+    "effect": "Дополнительный +10 к S сверх обычного бонуса силовой брони.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "ltbNyM4KtmzWzFhn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354160,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ltbNyM4KtmzWzFhn"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Орудийные Платформы",
+  "type": "Actor",
+  "sorting": "m",
+  "_id": "u6LoSVAx56ISVsHm",
+  "description": "",
+  "folder": null,
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783871636309,
+    "modifiedTime": 1783871636309,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!folders!u6LoSVAx56ISVsHm"
+}

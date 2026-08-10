@@ -1,0 +1,51 @@
+{
+  "name": "Beast Master / Мастер Зверей",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "WTyAdNbJXQQJegPf",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Игнорирует Inf для подчинения Миньонов-Зверей и увеличивает максимум миньонов на P.b×2. Его звери в его присутствии игнорируют страх, подавление и шок от не-неестественных источников, против неестественных получают +30 и автоматически выходят из оглушения на следующем ходу. Они не могут атаковать персонажа; под психосилой контроля разума бездействуют, застывая в страхе (но при захвате тела псайкером могут атаковать против воли). Пока персонаж на поле битвы, его звери получают Fanatic по отношению к нему (можно отключить перед боем) и теряют Bestial. Может одновременно обучать разным командам до P.b×3 зверей и приказывать не добивать противников. Может считать Орды, Малых и Средних Миньонов-Людей за Зверей, сломив их волю: тест Survival/Interrogate+10 vs W−10, считается пыткой в расчёте бонусов, но обходит иммунитет к пыткам (кроме метки Слаанеш).",
+    "source": "Элитный архетип: Укротитель",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "JzP8QDB6BIesYArq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121958863,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JzP8QDB6BIesYArq"
+}

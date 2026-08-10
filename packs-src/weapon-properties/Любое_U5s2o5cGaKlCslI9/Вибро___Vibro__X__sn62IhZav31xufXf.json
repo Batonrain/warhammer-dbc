@@ -1,0 +1,35 @@
+{
+  "name": "Вибро / Vibro (X)",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "U5s2o5cGaKlCslI9",
+  "system": {
+    "description": "Звук и резонанс вызывают внутренние травмы. При попадании цель проходит T−10×X (иначе X+Провалы непоглощаемого X урона) и S−10×X (иначе отброс на X метров и Ничком). Если у техники AP части ≤ 8×X — техника игнорируется, тест проходит экипаж; иначе тест проходит техника (T и S = Структура×2).",
+    "reminder": "〰️ Вибро (X): T−10×X (непоглощ. урон) и S−10×X (отброс/Ничком)",
+    "category": "both",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "vibro",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "sn62IhZav31xufXf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!sn62IhZav31xufXf"
+}

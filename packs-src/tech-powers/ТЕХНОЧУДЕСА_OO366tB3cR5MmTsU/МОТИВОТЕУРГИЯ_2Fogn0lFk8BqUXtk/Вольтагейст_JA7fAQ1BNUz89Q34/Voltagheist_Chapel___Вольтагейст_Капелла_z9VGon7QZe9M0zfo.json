@@ -1,0 +1,60 @@
+{
+  "name": "Voltagheist Chapel / Вольтагейст Капелла",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "JA7fAQ1BNUz89Q34",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Вольтагейст",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 2,
+    "energyCost": 1,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "reaction",
+    "sustained": false,
+    "compiled": false,
+    "range": "I.b×2м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Ferric Lure Implants, Luminen Capacitors · Цена: 2К+1Э · Процесс: Нет · Тип: Компенсатор (1), Реакция] Треб.: T 40, Tech-Use+20, Voltagheist Shield. Только с Вольтагейст Щитом в Процессах, как реакция на урон союзнику в дальности. Союзник получает щит 1-(½I окр.▲ +10) против этой атаки и до начала след. Хода. Каждое успешное отражение (кроме первого) тратит 1 Энергию (Компенсатор применим).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "z9VGon7QZe9M0zfo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042928,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!z9VGon7QZe9M0zfo"
+}

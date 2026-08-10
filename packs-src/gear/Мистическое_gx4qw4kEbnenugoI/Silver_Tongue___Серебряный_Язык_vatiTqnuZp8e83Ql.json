@@ -1,0 +1,53 @@
+{
+  "name": "Silver Tongue / Серебряный Язык",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Серебряный язык избранника Слаанеш, переплавленный в штангу для пирсинга.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Пирсинг языка",
+    "effect": "С Покровительством Слаанеш: иммунитет к зависимости и пост-эффектам наркотиков и ЗППП; произвольная фертильность (в т.ч. Астартес); под наркотиком в начале Раунда может перебрасывать Инициативу (игнор, если ниже текущей).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Вместо иммунитета — ×½ эффект/длительность наркотиков и переброс тестов зависимости.",
+      "good": "Также +50% времени действия наркотиков.",
+      "best": "×2 время действия наркотиков; сливается с языком (серебряный, как у Юного Принца)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "vatiTqnuZp8e83Ql",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!vatiTqnuZp8e83Ql"
+}

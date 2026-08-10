@@ -1,0 +1,59 @@
+{
+  "name": "Мк II Катафракт",
+  "type": "armor",
+  "folder": "od7g4AunuERomXc7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 35,
+    "equipped": false,
+    "head": 14,
+    "body": 15,
+    "leftArm": 15,
+    "rightArm": 15,
+    "leftLeg": 15,
+    "rightLeg": 15,
+    "quality": "common",
+    "availability": 4,
+    "weight": 1200,
+    "properties": [
+      "gorget"
+    ],
+    "strengthBonus": 30,
+    "wpBonus": 0,
+    "special": "Сверхброня. Второй профиль AP: 3/5/5/5. +10 аблативных Ран. Штраф −25 к Ловкости. Нельзя Бежать, обзор 120°. Неперегружаемый щит-купол 1–50.",
+    "propRatings": {
+      "gorget": 5
+    },
+    "apSecond": {
+      "head": 3,
+      "body": 5,
+      "arms": 5,
+      "legs": 5,
+      "kind": "super"
+    }
+  },
+  "_id": "pCguFdqdpFq0k5SK",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!pCguFdqdpFq0k5SK"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Militarius / Милитарий",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "6zqwe7FwtprTdkL4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сражается в оборонительной позиции, используя копьё или винтовку со штыком, изображая имперского гвардейца. Находясь в стойке Часовой и Задерживая действие, после успешной Свободной Атаки может потратить задержанное действие, чтобы провести приём Повалить с базой Стандартная Атака против той же цели. При Успехе может не только повалить, но и перекинуть противника через себя, если Размер врага не превосходит его собственный более чем на 1, нанося ему урон от падения с высоты 2 м.",
+    "tier": 1,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Гладиатор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "scueM4r2Xk297RM1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786122004942,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!scueM4r2Xk297RM1"
+}

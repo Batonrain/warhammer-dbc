@@ -1,0 +1,51 @@
+{
+  "name": "Daemonic Presence / Демоническое Присутствие (X/Y)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Само присутствие подтачивает разум смертных: все недружественные существа в радиусе Y получают штраф −X на тесты W.",
+    "notes": "",
+    "benefit": "Аура: −X к тестам W в радиусе Y.",
+    "source": "Варп",
+    "hasRating": true,
+    "rating": 1,
+    "hasRating2": true,
+    "rating2": 5,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "sMpFACsm7shZc4z4",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781652440036,
+    "modifiedTime": 1786121961812,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!sMpFACsm7shZc4z4"
+}

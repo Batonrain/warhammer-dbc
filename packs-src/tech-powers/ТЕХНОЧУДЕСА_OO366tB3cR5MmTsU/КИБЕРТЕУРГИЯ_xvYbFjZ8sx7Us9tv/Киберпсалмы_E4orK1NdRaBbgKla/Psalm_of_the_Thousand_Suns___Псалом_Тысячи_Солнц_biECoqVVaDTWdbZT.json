@@ -1,0 +1,60 @@
+{
+  "name": "Psalm of the Thousand Suns / Псалом Тысячи Солнц",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "E4orK1NdRaBbgKla",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "Киберпсалмы",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 4,
+    "energyCost": 2,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -10,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×1м",
+    "damage": "2d10+10",
+    "damageType": "energy",
+    "penetration": 12,
+    "effect": "[Железо: Plasma Cutter, Energeia Enhancer · Цена: 4К+2Э · Процесс: Нет · Тип: Стрельба, Физическое] Треб.: Tech-Use+20. Линия I.b×2м × 2м (как взрыв): 2d10+10 E, Pen 12, Blinding (1), Devastating (I.b), Extreme (9). Резак отключается на 1 Раунд (как Maximal); за 2 Когниции и 1 Энергию — охладить. Не тип Атака — не мешает др. атакам.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "biECoqVVaDTWdbZT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041914,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!biECoqVVaDTWdbZT"
+}

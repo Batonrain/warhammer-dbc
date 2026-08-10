@@ -1,0 +1,58 @@
+{
+  "name": "Reductor / Редуктор",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Инструмент для извлечения органов поверженных врагов и конкурентов. Требует друкхарийский Medicae+0.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1.5,
+    "availability": 0,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "на руке",
+    "effect": "Надевается на руку и в рукопашной считается цепным ножом с Крит. Провалом 91+. Пять отдельных ёмкостей для трофеев размером с предплечье. +20 на извлечение.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Просто набор резаков и контейнеров: солевой раствор держит трофей 24 часа для медицинских манипуляций. Реквизируется как R−2.",
+      "good": "Кроме части забирает её духовную сущность: 1 Боль при извлечении, или 1d3 если у жертвы было W 50+. Если это часть друкхари — его воскрешение дешевле и может быть отложено дольше. Укреплённый. Реквизируется как R2.",
+      "best": "Как Good.Q, плюс опустошает духовную сущность цели. Можно подключить к Душеловке, чтобы высосать душу свежеубитого по дороге в Варп. Опустошённый труп нельзя применить для Оккультизма, кроме извлечённой части. Реквизируется как R3."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Инструменты"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "iypVYtYfycrztRI8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380043,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!iypVYtYfycrztRI8"
+}

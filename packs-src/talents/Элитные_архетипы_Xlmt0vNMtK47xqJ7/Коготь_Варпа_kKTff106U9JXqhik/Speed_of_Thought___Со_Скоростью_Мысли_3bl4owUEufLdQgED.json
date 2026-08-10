@@ -1,0 +1,52 @@
+{
+  "name": "Speed of Thought / Со Скоростью Мысли",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kKTff106U9JXqhik",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Расстояние и время лишены смысла в Варпе. Находясь в Варпе, может потратить полное действие и пройти тест Navigation(Warp)+0, чтобы переместиться в любое знакомое место в пределах звёздной системы; при Провале теряется в Варпе и ищет путь на следующий Ход. При Критическом Провале дезориентируется и пропадает в Варпе до конца боя/сцены, после чего выпадает в случайном обитаемом месте звёздной системы по выбору ГМа.",
+    "tier": 2,
+    "requirement": "Неделимый, Navigation (Warp)+0",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Коготь Варпа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "3bl4owUEufLdQgED",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121965304,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!3bl4owUEufLdQgED"
+}

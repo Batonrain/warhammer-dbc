@@ -1,0 +1,35 @@
+{
+  "name": "Выстрел Насквозь / Through Shot",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Пробивает навылет любое укрепление/укрытие с AP < Pen×2. Если T.b+AP цели < Pen×2 — пробивает её насквозь, нанося попадание следующей цели позади со сниженным на 1d10 уроном (1d10→1d5→1). Если следующая цель получила непоглощённый урон, Pen снижается на её Поглощение и выстрел продолжает пробивать, пока Pen не станет отрицательным.",
+    "reminder": "🎯 Выстрел Насквозь: пробивает укрытия/цели с AP < Pen×2, бьёт цели позади",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "throughShot",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "kK1YTJZu5i6WLyzx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!kK1YTJZu5i6WLyzx"
+}

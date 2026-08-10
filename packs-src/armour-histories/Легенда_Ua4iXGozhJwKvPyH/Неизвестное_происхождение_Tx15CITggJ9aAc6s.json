@@ -1,0 +1,39 @@
+{
+  "name": "Неизвестное происхождение",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "Ua4iXGozhJwKvPyH",
+  "system": {
+    "table": "legend",
+    "rollMin": 10,
+    "rollMax": 10,
+    "description": "Все записи об истории костюма утеряны, а почести или проступки его носителей остаются загадкой. Машинный дух ведёт себя по-разному от операции к операции.",
+    "effect": "Бросайте к5 в начале каждого Сговора: 1 — +5 к BS, 2 — +5 к WS, 3 — +5 к S, 4 — +10 к тестам сопротивления Подавлению, 5 — −10 к A.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности",
+    "notes": ""
+  },
+  "_id": "Tx15CITggJ9aAc6s",
+  "effects": [],
+  "sort": 300000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354162,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Tx15CITggJ9aAc6s"
+}

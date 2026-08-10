@@ -1,0 +1,35 @@
+{
+  "name": "Эльдарское Точное / Eldar Precise",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "+20 на все выстрелы по Сочленениям; игнорирует отрицательный Size цели при стрельбе. В прочих расчётах работает как обычное Точное (−20 к штрафу Избирательных).",
+    "reminder": "🎯 Эльдарское Точное: +20 по сочленениям, игнор отриц. Size",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "eldarPrecise",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "o3o0nG1KNr5qDb6M",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!o3o0nG1KNr5qDb6M"
+}

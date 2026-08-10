@@ -1,0 +1,58 @@
+{
+  "name": "Броня Жалящего Скорпиона",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Традиционно темно–зеленая броня жалящего скорпиона обладает серьезным бронированием и системами для преследования и сокрытия. Броня имеет встроенный Good.Q хамелеоновый плащ, а его визоры позволяют видеть внутреннюю анатомию своего противника до невероятной детализации, что может давать ситуативные бонусы на разные тесты. Броня имеет встроенные мандибластреы.\n",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 65,
+    "equipped": false,
+    "head": 7,
+    "body": 8,
+    "leftArm": 7,
+    "rightArm": 7,
+    "leftLeg": 7,
+    "rightLeg": 7,
+    "quality": "common",
+    "availability": 4,
+    "weight": 8,
+    "properties": [
+      "aspect",
+      "hard",
+      "protective",
+      "sealed",
+      "stealthed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 10,
+    "wpBonus": 5,
+    "special": "Aspect (Жалящие Скорпионы). Good.Q хамелеоновый плащ; встроены мандибластеры.",
+    "propRatings": {
+      "protective": 7
+    }
+  },
+  "_id": "hEhtTVCzvBlClEN2",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!hEhtTVCzvBlClEN2"
+}

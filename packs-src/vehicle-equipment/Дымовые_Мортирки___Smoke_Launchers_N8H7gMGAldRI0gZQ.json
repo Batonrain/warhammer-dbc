@@ -1,0 +1,33 @@
+{
+  "name": "Дымовые Мортирки / Smoke Launchers",
+  "type": "vehicleGear",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Два блока мортирок с дымовыми гранатами. Водитель может как часть движения разместить 6 шаблонов Smoke (10) где угодно на пути машины, чтобы они касались машины в любой момент Хода хотя бы краем шаблона. Перезарядка мортирок возможна лишь снаружи машины и занимает 3 полных действия.",
+    "notes": "",
+    "availability": 0,
+    "quality": "common",
+    "active": true
+  },
+  "_id": "N8H7gMGAldRI0gZQ",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783179040775,
+    "modifiedTime": 1783179040775,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!N8H7gMGAldRI0gZQ"
+}

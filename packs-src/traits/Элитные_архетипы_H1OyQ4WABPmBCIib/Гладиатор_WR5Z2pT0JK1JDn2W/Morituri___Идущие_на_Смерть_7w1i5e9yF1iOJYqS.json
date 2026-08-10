@@ -1,0 +1,51 @@
+{
+  "name": "Morituri / Идущие на Смерть",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "WR5Z2pT0JK1JDn2W",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Тренировка Гладиаторов позволяет выдерживать невероятные ранения. При получении непоглощённого урона в часть тела с AP 2 или меньше от носимой брони, уменьшает этот урон (после поглощения) в 3 раза (окр.▲). Также может тратить очки Момента, чтобы игнорировать Оглушение, Кровотечение или получение Усталости (1 очко за каждый эффект).",
+    "source": "Элитный архетип: Гладиатор",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "7w1i5e9yF1iOJYqS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121957675,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7w1i5e9yF1iOJYqS"
+}

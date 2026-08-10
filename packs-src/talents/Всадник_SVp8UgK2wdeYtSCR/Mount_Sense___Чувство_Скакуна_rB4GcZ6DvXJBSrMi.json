@@ -1,0 +1,55 @@
+{
+  "name": "Mount Sense / Чувство Скакуна",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "SVp8UgK2wdeYtSCR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Приспособившись к ходу скакуна, оба действуют в Инициативу персонажа, а не наименьшую. Скакун получает бонус на тесты Трудного Ландшафта, равный уровню продвижения Survival персонажа.",
+    "tier": 2,
+    "requirement": "Survival+10",
+    "aptitudes": [
+      "per",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "rB4GcZ6DvXJBSrMi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122004008,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!rB4GcZ6DvXJBSrMi"
+}

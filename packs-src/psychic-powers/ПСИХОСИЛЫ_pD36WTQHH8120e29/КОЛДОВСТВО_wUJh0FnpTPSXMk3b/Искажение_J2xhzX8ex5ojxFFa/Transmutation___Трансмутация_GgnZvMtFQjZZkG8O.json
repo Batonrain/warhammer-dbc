@@ -1,0 +1,75 @@
+{
+  "name": "Transmutation / Трансмутация",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-distortion.svg",
+  "folder": "J2xhzX8ex5ojxFFa",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 100,
+    "discipline": "sorcery",
+    "subtype": "Искажение",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 20,
+    "action": "half",
+    "range": "PR×1м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение · Длительное (PR часов). Цель Размером ≤1 (≤2 на PR 4+, ≤3 на PR 8+, ≤4 на PR 12+), один эффект: перекрас/текстура одного снаряжения (рушит/восстанавливает Рунические Вязи); убрать внешние следы повреждений; слегка нагреть/охладить снаряжение; счистить грязь (тушит Горение).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "GgnZvMtFQjZZkG8O",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122027656,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!GgnZvMtFQjZZkG8O"
+}

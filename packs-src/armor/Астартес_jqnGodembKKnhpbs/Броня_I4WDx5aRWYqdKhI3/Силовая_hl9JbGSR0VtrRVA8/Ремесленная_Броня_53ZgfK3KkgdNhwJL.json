@@ -1,0 +1,47 @@
+{
+  "name": "Ремесленная Броня",
+  "type": "armor",
+  "folder": "hl9JbGSR0VtrRVA8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 12,
+    "body": 12,
+    "leftArm": 12,
+    "rightArm": 12,
+    "leftLeg": 12,
+    "rightLeg": 12,
+    "quality": "common",
+    "availability": 5,
+    "weight": 160,
+    "properties": [],
+    "strengthBonus": 20,
+    "wpBonus": 0,
+    "special": "Несёт особые свойства Mk IV, Mk VI и Mk VIII одновременно. Линзы и сочленения имеют AP 8."
+  },
+  "_id": "53ZgfK3KkgdNhwJL",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!53ZgfK3KkgdNhwJL"
+}

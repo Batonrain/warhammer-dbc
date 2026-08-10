@@ -1,0 +1,53 @@
+{
+  "name": "Стабилизатор Анвилус",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "GarS9rGiqsJL0CSe",
+  "system": {
+    "description": "Широкие стабилизаторы с ускорителями: Flyer от Thrusters → 4 (с 2); прижимает к земле — ходьба/бег в невесомости и микрогравитации как при обычной гравитации, игнор слабой гравитации. Только для обычной силовой брони.",
+    "notes": "",
+    "category": "powerSystem",
+    "modGroup": "backpack",
+    "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": 0,
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    }
+  },
+  "_id": "HTBlJNFzDqGaCpgR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782145401867,
+    "modifiedTime": 1782752981512,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!HTBlJNFzDqGaCpgR"
+}

@@ -1,0 +1,53 @@
+{
+  "name": "Opal Bracelets / Опаловые Браслеты",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Пара золотых браслетов с белым камнем для ношения на лодыжках.",
+    "notes": "",
+    "quantity": 2,
+    "weight": 2,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Лодыжки (пара)",
+    "effect": "На голую кожу: касанием ноги к ритуальному кругу (I+0) скопировать его на панель браслета (до 3). За полное ментальное действие спрессовать участок земли в ½ I м и спроецировать копию круга (работает как оригинал). Убрать проекцию — свободное ментальное действие (авто на расстоянии > I м).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Хранит только 1 круг.",
+      "good": "До 5 кругов; один сохранённый работает даже при разрушенном оригинале.",
+      "best": "Как Good.Q; прессовка и проецирование — полудействие вместо полного."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "dV22QJ4rpBKKP5Hu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!dV22QJ4rpBKKP5Hu"
+}

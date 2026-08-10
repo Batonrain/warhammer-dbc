@@ -1,0 +1,67 @@
+{
+  "folder": "ai5XtC0QXBo34wg9",
+  "name": "Катушка Инферния",
+  "type": "implant",
+  "_id": "j8q25lFR0zRD7DmQ",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "Модифицированная Катушка Потенции, в которую ритуалами Кузнецов Войны вселен демон, имплантируется рядом с обычной и связывается с ней руническими шунтами, позволяя извлекать энергию из страданий заключенного демона.",
+    "notes": "",
+    "category": "mechanicus",
+    "quality": "common",
+    "effect": "Когда персонаж совершает тест Компенсатора, он может включить эту катушку, получив +10 к тесту, но также –5 к Пределу Критического Провала этого теста (обычно до 91+), и при Критическом Провале вызывает Феномен.",
+    "installed": "Катушка Потнеции",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "vdXN09JQBTra7ZZY": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781793281520,
+    "modifiedTime": 1786122016039,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!j8q25lFR0zRD7DmQ"
+}

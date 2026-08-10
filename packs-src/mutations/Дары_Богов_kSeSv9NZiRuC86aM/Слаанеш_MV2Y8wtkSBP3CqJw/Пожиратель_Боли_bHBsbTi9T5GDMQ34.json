@@ -1,0 +1,49 @@
+{
+  "name": "Пожиратель Боли",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Боль и страдание других питают тело и душу персонажа, наполняя его силой. Каждый раз, когда любое разумное существо, обладающее душой, в пределах Cor.b м от него получает Критический Эффект, персонаж может бросить 1d10+1 — если результат ниже Критического Эффекта, он может выбрать снять с себя 1d5 Усталости, исцелить 1d5 Ран, или восстановить 1d10 урона в Характеристики. Успешно проведя Пытку против другого разумного существа, персонаж получает указанные выше преимущества за каждый Успех на тесте.",
+    "source": "Дары Слаанеш, d100 70…73",
+    "roll": "70…73",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "bHBsbTi9T5GDMQ34",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020734,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!bHBsbTi9T5GDMQ34"
+}

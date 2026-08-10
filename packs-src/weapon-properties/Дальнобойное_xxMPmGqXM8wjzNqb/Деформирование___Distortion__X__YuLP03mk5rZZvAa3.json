@@ -1,0 +1,35 @@
+{
+  "name": "Деформирование / Distortion (X)",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Вортекс-оружие эльдар. Игнорирует AP, Поглощение и любые силовые/пустотные щиты цели. Цель проходит T−15×X, иначе получает X+Провалы непоглощаемого X урона (для техники T = Структура+(Size×10)). Игнорирует Stuff of Nightmares и Undying. Всегда имеет: Grav, Graviton, Haywire (3), Inaccurate, Imprecise, Rad (2d10). Не установленное на технику — стрелять не может. Выжившие после прямого попадания бросают по таблице Деформирования (см. справочник).",
+    "reminder": "🕳️ Деформирование (X): игнор брони/щитов; T−15×X или непоглощ. урон + таблица",
+    "category": "ranged",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "distortion",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "YuLP03mk5rZZvAa3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!YuLP03mk5rZZvAa3"
+}

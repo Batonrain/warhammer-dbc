@@ -1,0 +1,67 @@
+{
+  "name": "Memory Leech / Паразит Памяти",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Червь в гиппокампе.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Червь в гиппокампе: впущенный в обездвиженную жертву, пожирает её последние 6d5 минут памяти (жертва забывает) и передаёт носителю (смотреть во сне; хранит 3 комплекта, от одной жертвы можно копить). Дефект (до Best.Q): каждое использование −5 I и P на 1 час (до 3 раз).\nPoor.Q: крадёт 3d5 минут; −10 I/P (до 5 раз).\nGood.Q: крадёт 10d5 минут (или оговорённый промежуток).\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Глубокая кража (конкретное воспоминание); 2) Хранилище памяти (хранит неделю, смотреть в любой момент); 3) Передача памяти (другому согласному через касание глаз); 4) Боевой червь (в бою: попасть в Голову и пробить AP — жертва −10 всем, −30 I/W, пока червь не вернётся).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "1klilopUyy7dIsEP",
+  "_id": "L7gyWu6JQQSRsgKN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122013493,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!L7gyWu6JQQSRsgKN"
+}

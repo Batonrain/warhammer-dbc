@@ -1,0 +1,59 @@
+{
+  "name": "Мк I Сатурнин",
+  "type": "armor",
+  "folder": "od7g4AunuERomXc7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 25,
+    "equipped": false,
+    "head": 16,
+    "body": 20,
+    "leftArm": 18,
+    "rightArm": 18,
+    "leftLeg": 18,
+    "rightLeg": 18,
+    "quality": "common",
+    "availability": 5,
+    "weight": 1600,
+    "properties": [
+      "gorget"
+    ],
+    "strengthBonus": 40,
+    "wpBonus": 0,
+    "special": "Сверхброня. Второй профиль AP: 4/6/5/5. +15 аблативных Ран. Штраф −30 к Ловкости. Экспериментальная: нельзя Бежать, поворот ≤90°/ход, скорость Натиска вдвое, обзор 90°. На спину — тяжёлое/длинное оружие (Shoulder Mount).",
+    "propRatings": {
+      "gorget": 4
+    },
+    "apSecond": {
+      "head": 4,
+      "body": 6,
+      "arms": 5,
+      "legs": 5,
+      "kind": "super"
+    }
+  },
+  "_id": "Vc9Z3nBpXbNfshzZ",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!Vc9Z3nBpXbNfshzZ"
+}

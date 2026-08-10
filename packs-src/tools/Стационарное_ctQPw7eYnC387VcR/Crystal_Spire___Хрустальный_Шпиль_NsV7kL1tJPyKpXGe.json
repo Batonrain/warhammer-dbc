@@ -1,0 +1,44 @@
+{
+  "name": "Crystal Spire / Хрустальный Шпиль",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Кристалл ~1м на рунной подставке — мощный фокус ритуалов и психосил.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "Аура r20м: психосилы/ритуалы/Феномены +20. Прорыв/Отвращение Варпа → шпиль уничтожается: 1d10+5 E, Pen 5, Concussive(2), Blast(10). Эффект складывается (доп. шпили +10; при взрыве увеличивают радиус +5 и урон +1d10 за каждый другой участвовавший шпиль).",
+    "reminder": "Качество не варьируется.",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": "Хрустальный Шпиль (разрушение)"
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "NsV7kL1tJPyKpXGe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!NsV7kL1tJPyKpXGe"
+}

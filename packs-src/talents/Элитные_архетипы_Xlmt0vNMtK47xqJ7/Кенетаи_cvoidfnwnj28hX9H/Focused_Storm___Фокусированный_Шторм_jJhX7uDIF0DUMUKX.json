@@ -1,0 +1,52 @@
+{
+  "name": "Focused Storm / Фокусированный Шторм",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "cvoidfnwnj28hX9H",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Заклинания с лезвия Оккультного Клинка фокусируют мощь в точку. При использовании Оккультного Клинка для манифестации Психического Шторма или Психического Обстрела психосила получает +2 Pen за каждое доп. попадание, что нанесла бы при обычной манифестации. При манифестации Психического Взрыва или Психического Дыхания — +1 Dmg за каждые 2м радиуса взрыва или за каждые 5м дальности каплевидного шаблона.",
+    "tier": 2,
+    "requirement": "Тзинч",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Кенетаи",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "jJhX7uDIF0DUMUKX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121997528,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!jJhX7uDIF0DUMUKX"
+}

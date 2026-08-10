@@ -1,0 +1,58 @@
+{
+  "name": "Фарос",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "KnUk2d8QYuaqbcC2",
+  "system": {
+    "description": "Пуля из праха псайкеров, пожертвованных Астрономикону. Даёт +1 кубик урона, +30 на атаку и свойство Sanctified против псайкеров и демонов, но ярко светится для пси-чутья и Варп-зрения, засекаясь ими автоматически.",
+    "notes": "",
+    "weaponTypes": [
+      "solid"
+    ],
+    "ammoCategory": "bullets",
+    "rarity": 4,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 4,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageDiceMod": 1,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "+1 кубик урона, +30 атака и Sanctified против псайкеров и демонов; ярко светит для пси-чутья",
+    "properties": [],
+    "condMods": [
+      {
+        "label": "Цель — псайкер или демон",
+        "atk": 30,
+        "dmg": 0,
+        "wp": [
+          "sanctified"
+        ],
+        "note": ""
+      }
+    ]
+  },
+  "_id": "j2N1QkIQzutPnRpK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1785149961121,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!j2N1QkIQzutPnRpK"
+}

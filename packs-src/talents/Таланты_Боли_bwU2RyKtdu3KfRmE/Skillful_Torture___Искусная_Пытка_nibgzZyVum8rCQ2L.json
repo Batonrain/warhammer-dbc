@@ -1,0 +1,55 @@
+{
+  "name": "Skillful Torture / Искусная Пытка",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "bwU2RyKtdu3KfRmE",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Пытая Беспомощного врага 5 минут и успешно пройдя Interrogate−20(I) vs W+0, все друкхари, что могли насыщаться с жертвы, получают 2 Боли и восстанавливают 1d5 урона во все Характеристики. За каждые 3 Успеха восстанавливается ещё 1d5 Характеристики и +1 Боли. Каждый друкхари получает пользу не более W.b раз в сутки (включая усиления за доп. успехи в одной проверке).",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [
+      "per",
+      "wp"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "nibgzZyVum8rCQ2L",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594705868,
+    "modifiedTime": 1786122000463,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!nibgzZyVum8rCQ2L"
+}

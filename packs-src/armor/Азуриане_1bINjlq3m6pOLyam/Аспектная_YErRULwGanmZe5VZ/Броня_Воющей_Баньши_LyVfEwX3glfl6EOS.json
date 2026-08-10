@@ -1,0 +1,56 @@
+{
+  "name": "Броня Воющей Баньши",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Яркая белая и легкая броня, которая часто контрастирует с ярко–оранжевыми или красными волосами их носителей. Главной особенностью и преимуществом данной брони является встроенный Шлем Баньши, который становится единым целым со своим владельцем из–за особенностей брони. Пока персонаж использует шлем баньши что встроен в эту броню – он снижает стоимость активации шлема с полудействия до свободного действия.\n",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 6,
+    "body": 7,
+    "leftArm": 6,
+    "rightArm": 6,
+    "leftLeg": 6,
+    "rightLeg": 6,
+    "quality": "common",
+    "availability": 4,
+    "weight": 5,
+    "properties": [
+      "aspect",
+      "protective",
+      "sealed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Воющие Баньши). Встроенный Шлем Баньши (активация — свободное действие).",
+    "propRatings": {
+      "protective": 5
+    }
+  },
+  "_id": "LyVfEwX3glfl6EOS",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!LyVfEwX3glfl6EOS"
+}

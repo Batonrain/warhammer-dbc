@@ -1,0 +1,44 @@
+{
+  "name": "Force Rod / Психосиловой Жезл",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Психический инструмент, задерживающий сформированную психоэнергию.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 5,
+    "quality": "common",
+    "toolCategory": "mystic",
+    "effect": "Псайкер при манифестации заключает силу в жезл (бросок и Феномены проводятся сразу, записываются Успехи и эPR; сама сила хранится). 1 сила одновременно. Полудействие — разрядить (активировать как только что манифестированную); свободное — спустить заряд (безвредные эффекты). Чужой псайкер может только спустить; заполненный жезл = личный фокус зарядившего. Как оружие — психосиловой посох (одноручный хват). Качество как рукопашного оружия.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Хранит только силы с эPR ≤5.",
+      "good": "Может заключить поддерживаемую психосилу (временно развеяв её).",
+      "best": "Как Good.Q; хранит до двух разных психосил."
+    },
+    "bonuses": [],
+    "linkedWeapon": "Психосиловой Жезл"
+  },
+  "folder": "RpwK7hjZB6380LhD",
+  "_id": "YHIo3rFNybClTeAK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!YHIo3rFNybClTeAK"
+}

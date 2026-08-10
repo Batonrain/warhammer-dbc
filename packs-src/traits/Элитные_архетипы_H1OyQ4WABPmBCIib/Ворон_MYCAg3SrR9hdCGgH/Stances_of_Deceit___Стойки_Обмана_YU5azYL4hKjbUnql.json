@@ -1,0 +1,51 @@
+{
+  "name": "Stances of Deceit / Стойки Обмана",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "MYCAg3SrR9hdCGgH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Принимая определённые стойки, формирует работающий мистический узор из фрагментов, вживлённых под кожу и выгравированных на костях. Доступные Стойки: Замешательства (раз в Ход Финт свободным действием, в т.ч. посреди Натиска); Превосходства (+2d10 Dmg рукопашными по лежащим целям; когда цель в рукопашной с ним Встаёт — свободная атака по ней); Вора (успешно обезоружив цель, автоматически хватает выбитое оружие в свободную руку, складывает на разгрузку или отбивает на до S.b×2м; Избегая атаки в ближнем бою на 5+ Успехов, немедленно проводит Обезоруживание против атакующего); Преследователя (побеждая в Давлении и преследуя цель, немедленно проводит по ней одну рукопашную атаку за свободное действие, не имеющую типа «атака»); Двойника (считается как ½(WS.b+1) (окр.▼) персонажей в расчёте численного превосходства в рукопашной).",
+    "source": "Элитный архетип: Ворон",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "YU5azYL4hKjbUnql",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121960063,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!YU5azYL4hKjbUnql"
+}

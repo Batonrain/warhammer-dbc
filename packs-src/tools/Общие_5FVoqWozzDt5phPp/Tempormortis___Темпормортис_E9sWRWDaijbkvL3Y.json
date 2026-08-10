@@ -1,0 +1,44 @@
+{
+  "name": "Tempormortis / Темпормортис",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Археотеховые песочные часы. 3 заряда, +1/час.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 12,
+    "availability": 3,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "В руке при атаке в рукопашной (в т.ч. выстреле): 1 заряд → замедлить атакующего (атака и действия откладываются до конца след. Хода пользователя). Атакующий: Инициатива 1, действует последним, −10 на Избегания, нет свободных атак. Прекращается при разрыве базового контакта / выпуске часов / поле Haywire.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "1 заряд.",
+      "good": "5 зарядов.",
+      "best": "7 зарядов."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "E9sWRWDaijbkvL3Y",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!E9sWRWDaijbkvL3Y"
+}

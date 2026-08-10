@@ -1,0 +1,53 @@
+{
+  "name": "Skull Totem / Тотем Черепов",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Связка из 8 черепов на бронзовой цепи — награда Кровавых Игрищ Кхорна.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Шея/Трофейная Стойка",
+    "effect": "С Покровительством Кхорна: +W.b м к дистанции Натиска, +10 на атаки с Натиска, впадать в Ярость несколько раз за бой. При смерти/добровольной передаче/краже носителя один череп рассыпается — тотем не работает, пока не заменить череп достойного противника из честного боя.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Если выйти из Ярости, никого не убив за её время — один череп раскалывается.",
+      "good": "Натиск на псайкера даёт Талант Preternatural Speed.",
+      "best": "В Ярости в конце Натиска встречный W+0 vs W+0: при успехе оба в карман-измерение 8×8×8 м; при поражении/выходе из Ярости возвращаются."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "MDqoiR2jU35izdTT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!MDqoiR2jU35izdTT"
+}

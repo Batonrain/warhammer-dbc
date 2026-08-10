@@ -1,0 +1,44 @@
+{
+  "name": "Glowstick / Светопалочка",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Упаковка 10 пластековых палочек: при переламывании светятся 4 часа. Альтернатива светосферам на мирах с аномалиями.",
+    "notes": "",
+    "quantity": 10,
+    "weight": 0,
+    "availability": -3,
+    "quality": "common",
+    "toolCategory": "consumable",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "50gewTwUAjnZwIc7",
+  "_id": "XVlzSTwA6hYEUVx9",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!XVlzSTwA6hYEUVx9"
+}

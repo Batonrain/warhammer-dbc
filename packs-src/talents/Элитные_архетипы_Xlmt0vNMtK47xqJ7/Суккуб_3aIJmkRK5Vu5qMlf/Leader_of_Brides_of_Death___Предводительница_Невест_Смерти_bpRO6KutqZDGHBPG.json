@@ -1,0 +1,52 @@
+{
+  "name": "Leader of Brides of Death / Предводительница Невест Смерти",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "3aIJmkRK5Vu5qMlf",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Все ведьмы Культа под его командованием получают +20 на атаки по Сочленениям и дополнительный +20 на атаки по сочленениям тех, кого персонаж атаковал в прошлом раунде рукопашным оружием. Если персонаж имеет Show-Off и успешно его использовал, все подчинённые из Культа получают +Inf.b к тесту атаки против целей, провал��вших тест против Show-Off.",
+    "tier": 3,
+    "requirement": "Blood Dancer, Superagility",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Суккуб",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "bpRO6KutqZDGHBPG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121990593,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!bpRO6KutqZDGHBPG"
+}

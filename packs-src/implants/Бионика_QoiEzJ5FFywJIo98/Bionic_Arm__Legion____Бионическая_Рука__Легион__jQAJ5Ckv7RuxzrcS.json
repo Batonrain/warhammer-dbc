@@ -1,0 +1,114 @@
+{
+  "name": "Bionic Arm (Legion) / Бионическая Рука (Легион)",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:2. Вариант руки.",
+    "notes": "",
+    "category": "bionic",
+    "quality": "common",
+    "effect": "Рука десантника: Unnatural S (4) для этой руки; крупная и тяжёлая, не для людей.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "s",
+      "charBonusValue": 4,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "QoiEzJ5FFywJIo98",
+  "_id": "jQAJ5Ckv7RuxzrcS",
+  "effects": [
+    {
+      "name": "Bionic Arm (Legion) / Бионическая Рука (Легион) (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.s.bonus",
+            "type": "add",
+            "value": 4,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "2mUCqWogerjft3qC",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122016052,
+        "modifiedTime": 1786122016052,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!jQAJ5Ckv7RuxzrcS.2mUCqWogerjft3qC"
+    }
+  ],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781726577228,
+    "modifiedTime": 1786122016069,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!jQAJ5Ckv7RuxzrcS"
+}

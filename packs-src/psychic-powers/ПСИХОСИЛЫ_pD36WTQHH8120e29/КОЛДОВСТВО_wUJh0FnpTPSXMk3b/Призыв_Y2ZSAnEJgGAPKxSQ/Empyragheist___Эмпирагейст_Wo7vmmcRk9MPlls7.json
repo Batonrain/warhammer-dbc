@@ -1,0 +1,75 @@
+{
+  "name": "Empyragheist / Эмпирагейст",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-summon.svg",
+  "folder": "Y2ZSAnEJgGAPKxSQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "sorcery",
+    "subtype": "Призыв",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "20м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d5+PR",
+    "damageType": "rending",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Психическое Дыхание · Стрельба. Треб.: For.Lore(Daemons)+20. Профиль: 20м, 1d5+PR R, Pen 0, Concussive (−1), Spray, Warp Weapon. Спрей бьёт по очереди; за каждую цель с непоглощ. уроном — складывающийся +1 Dmg и −5 на А-Избегание следующих. Убийство/изгнание: бонус Dmg растёт с +1 до +1d5, штраф до −10 (2 Магнитуды Орды = убийство). При убийстве/Оглушении хотя бы одной — в конце след. Хода повторная волна от конца к началу со всеми бонусами (может вызывать новые волны).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Wo7vmmcRk9MPlls7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122032417,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Wo7vmmcRk9MPlls7"
+}

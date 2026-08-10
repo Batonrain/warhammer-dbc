@@ -1,0 +1,51 @@
+{
+  "name": "Rite of Fleshmolding / Ритуал Лепки Плоти",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "kN1FxL9gqnXHwWkU",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Имея доступ к операционной, освящённой как храм Слаанеш, к одному подопытному и хотя бы одному донору (разумные существа), может потратить 6 часов на ритуал Лепки Плоти и тест Medicae−10. При Успехе перманентно даёт подопытному Трейты (Amphibious, Burrower(1), Crawler, Deadly Natural Weapons(1), Flyer(1), Multiple Arms(+1), Natural Armour(1), Quadruped(1), Sturdy, Unnatural Characteristic(1) или Unnatural Senses(1)) — по 1 Успеху на каждый, или увеличивает рейтинг Трейта на 1. При Провале подопытный получает 1d10−2+Провалы как R Критический Эффект в торс. Все доноры погибают; за каждого (до 6) даёт 1d5 доп. Успехов. Подопытный в сознании и не доброволец — бонус +20; близкий друг/дорогой человек среди доноров — +10 за каждого. Повторный ритуал позволяет перераспределить Трейты и увеличить Успехи; при Провале пациент теряет ранее полученные Трейты.",
+    "source": "Элитный архетип: Скульптор Плоти",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Zx620MlxKms4aJYf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121960261,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Zx620MlxKms4aJYf"
+}

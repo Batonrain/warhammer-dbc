@@ -1,0 +1,52 @@
+{
+  "name": "Металлоломная Броня",
+  "type": "armor",
+  "folder": "3McgPlLCvgsBJmpX",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "carapace",
+    "stacks": false,
+    "maxAgility": 25,
+    "equipped": false,
+    "head": 4,
+    "body": 5,
+    "leftArm": 4,
+    "rightArm": 4,
+    "leftLeg": 4,
+    "rightLeg": 4,
+    "quality": "common",
+    "availability": 0,
+    "weight": 30,
+    "properties": [
+      "conductive",
+      "hard",
+      "heavy",
+      "primitive"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": ""
+  },
+  "_id": "rvUDDwqLQTz7Dun2",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!rvUDDwqLQTz7Dun2"
+}

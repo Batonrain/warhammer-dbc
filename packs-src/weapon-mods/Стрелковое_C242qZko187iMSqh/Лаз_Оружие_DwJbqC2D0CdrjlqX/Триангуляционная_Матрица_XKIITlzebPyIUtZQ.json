@@ -1,0 +1,58 @@
+{
+  "name": "Триангуляционная Матрица",
+  "type": "weaponMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/weaponmod.svg",
+  "folder": "DwJbqC2D0CdrjlqX",
+  "system": {
+    "description": "+10 на попадание, если не было Движений (вкл. Уклонений) с начала Хода (+20 — с начала прошлого Хода).",
+    "notes": "",
+    "category": "ranged",
+    "modGroup": "las",
+    "requirement": "Las оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "effects": {
+      "attackMod": 0,
+      "damageMod": 0,
+      "penMod": 0,
+      "rangeMod": 0,
+      "rangeMult": 1,
+      "clipMod": 0,
+      "clipMult": 1,
+      "rofSemiMod": 0,
+      "rofFullMod": 0,
+      "reliabilityMod": 0,
+      "balanceMod": 0,
+      "weightPct": 0,
+      "addProps": [],
+      "removeProps": []
+    },
+    "drukhari": false
+  },
+  "_id": "XKIITlzebPyIUtZQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452555,
+    "modifiedTime": 1786122047248,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!XKIITlzebPyIUtZQ"
+}

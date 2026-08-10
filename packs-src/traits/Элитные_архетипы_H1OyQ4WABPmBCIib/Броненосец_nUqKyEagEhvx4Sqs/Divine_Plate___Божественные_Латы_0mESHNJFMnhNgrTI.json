@@ -1,0 +1,51 @@
+{
+  "name": "Divine Plate / Божественные Латы",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "nUqKyEagEhvx4Sqs",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Носит несъёмную тяжёлую броню AP 8/10/8/8, которая ведёт себя как Трейт Natural Armour. Не нуждается в еде, воде и воздухе (но способен при желании есть, пить и дышать), не стареет и не спит. Иммунен к эффектам низкого и высокого давления, включая вакуум. Броня не нуждается в ремонте и обслуживании и способна изменять свой дизайн со временем, самостоятельно перенимая цвета и геральдику банды, к которой он присоединился; орнаментация отмечает божественную лояльность Броненосца, а общий дизайн отображает характер и личность носителя.",
+    "source": "Элитный архетип: Броненосец",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "0mESHNJFMnhNgrTI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121957021,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0mESHNJFMnhNgrTI"
+}

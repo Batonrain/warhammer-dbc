@@ -1,0 +1,52 @@
+{
+  "name": "Inner Eye / Внутренний Глаз",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "yOlSG5xLBd4fo0gI",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Эмпирейный взор фокусируется, не упуская ни одно заклинание. После успешного теста на Пси-Чутьё, может потратить Очко Бесчестия, чтобы все последующие тесты на Пси-Чутьё до конца боя/сцены были автоматически успешны с тем же числом Успехов. Если у последующих тестов есть отличные бонусы/штрафы (кроме бонусов от Очков Бесчестия), уменьшает/увеличивает число Успехов на 1 за каждые полные −10 штрафа или +10 бонуса.",
+    "tier": 1,
+    "requirement": "Тзинч, Warp Sense",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Архимаг",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "JcBRILgAI5a1hW9J",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121977448,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JcBRILgAI5a1hW9J"
+}

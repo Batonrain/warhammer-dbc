@@ -1,0 +1,35 @@
+{
+  "name": "Перемены / Change (X)",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "U5s2o5cGaKlCslI9",
+  "system": {
+    "description": "Разноцветное пламя Тзинча хаотично трансмутирует материю (Тзинч). +X Pen против бездушных существ и техники; уменьшает AP Укрытий на X до поглощения. ГМ может менять Критические Эффекты на сравнимые (трансмутации плоти/снаряжения).",
+    "reminder": "🔀 Перемены (X): +X Pen против бездушных/техники; −X AP Укрытий",
+    "category": "both",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "change",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "czoqLjSuDoiDEW8Y",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353823,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!czoqLjSuDoiDEW8Y"
+}

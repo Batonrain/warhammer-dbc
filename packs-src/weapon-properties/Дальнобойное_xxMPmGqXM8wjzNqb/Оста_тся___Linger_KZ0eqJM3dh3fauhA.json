@@ -1,0 +1,35 @@
+{
+  "name": "Остаётся / Linger",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Шаблоны взрыва/спрея остаются на поле боя на X раундов. Персонаж, впервые за ход входящий в шаблон или начинающий в нём ход, получает попадание.",
+    "reminder": "☁️ Остаётся (X): облако держится X раундов",
+    "category": "ranged",
+    "hasRating": true,
+    "hasRating2": true,
+    "autoKey": "linger",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "KZ0eqJM3dh3fauhA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353820,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!KZ0eqJM3dh3fauhA"
+}

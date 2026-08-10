@@ -1,0 +1,54 @@
+{
+  "name": "Укрепление Плотеметаллом",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "O6B4w1qFjZnPFssq",
+  "system": {
+    "description": "Металлическая плоть Облитератора: броня не нуждается в обслуживании/ремонте, за минуты после боя восстанавливает AP/Качество; +1 аблативная Рана/час и Ablative-броня +1/час (не ломается при 0). Псайкер-Биомант может коснуться (Избирательная −40, торс) для Контакта Плоти. Работает, пока жив давший плоть Облитератор.",
+    "notes": "",
+    "category": "powerSystem",
+    "modGroup": "torso",
+    "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": "4",
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    },
+    "drukhari": false
+  },
+  "_id": "2WwTsyJZqPMR3Nfd",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782145401867,
+    "modifiedTime": 1785527417182,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!2WwTsyJZqPMR3Nfd"
+}

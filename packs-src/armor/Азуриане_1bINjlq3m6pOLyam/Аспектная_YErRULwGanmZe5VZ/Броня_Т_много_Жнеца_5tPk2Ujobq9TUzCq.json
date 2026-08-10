@@ -1,0 +1,58 @@
+{
+  "name": "Броня Тёмного Жнеца",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Окрашенная в броню полуночи и имеющая маску в форме черепа, броня темных жнецов редко спутывается с какой–либо еще броней. На фоне остальной аспектной брони данная броня имеет большую бронированность. Также, броня имеет укрепленную опору, что позволяет носителю брони стрелять из тяжелого оружия без необходимости закреплять его. Если персонаж с прошлого раунда не совершал движение, он получает трейты Auto–Stabilized и Sturdy и теряет их при совершении любого движения, включая уклонение. Для закрепления эффекта у брони есть стабилизаторы и зажимы, позволяющие зацепиться за поверхность. Броня имеет встроенный дальномер темных жнецов.\n",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 45,
+    "equipped": false,
+    "head": 8,
+    "body": 8,
+    "leftArm": 8,
+    "rightArm": 8,
+    "leftLeg": 8,
+    "rightLeg": 8,
+    "quality": "common",
+    "availability": 4,
+    "weight": 25,
+    "properties": [
+      "aspect",
+      "hard",
+      "protective",
+      "sealed",
+      "stealthed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 10,
+    "special": "Aspect (Тёмные Жнецы). Без движения: Auto-Stabilized и Sturdy; дальномер тёмных жнецов.",
+    "propRatings": {
+      "protective": 8
+    }
+  },
+  "_id": "5tPk2Ujobq9TUzCq",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!5tPk2Ujobq9TUzCq"
+}

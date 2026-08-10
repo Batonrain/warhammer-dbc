@@ -1,0 +1,52 @@
+{
+  "name": "For He Cares Not / Ему Не Важно",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "8SlJTJ2G7mk6CBdm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Кхорн награждает дарящих кровью — как врагов, так и последователей. Когда Берсерк страдает от Кровотечения, получает +20 на Полные Атаки и одну дополнительную Реакцию, которую можно потратить только на дополнительную атаку от Таланта Furious Assault.",
+    "tier": 1,
+    "requirement": "Кхорн, Furious Assault",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Берсерк Кхорна",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "wlETrJdL11jm8Oe9",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122007935,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wlETrJdL11jm8Oe9"
+}

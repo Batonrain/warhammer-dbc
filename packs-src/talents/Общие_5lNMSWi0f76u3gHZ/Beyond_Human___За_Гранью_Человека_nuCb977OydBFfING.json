@@ -1,0 +1,54 @@
+{
+  "name": "Beyond Human / За Гранью Человека",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "5lNMSWi0f76u3gHZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж превзошёл пределы человеческих возможностей. Он получает Трейт Unnatural Characteristic (+1) для соответствующей Характеристики и при перебросе тестов на эту Характеристику может выбрать оставить первый результат вместо второго (восстанавливая потраченное Очко Бесчестия, если переброс был от его траты).\n\nСКЛОННОСТИ: «как у Характеристики» — талант наследует обе склонности выбранной Характеристики, поэтому его цена зависит от выбора (стр. 62). Привязку спрашивает пикер при покупке.",
+    "tier": 3,
+    "requirement": "Характеристика 70",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "—",
+    "specialization": "WS, BS, S, T, A, I, P, W, F",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 1,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "nuCb977OydBFfING",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122000545,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!nuCb977OydBFfING"
+}

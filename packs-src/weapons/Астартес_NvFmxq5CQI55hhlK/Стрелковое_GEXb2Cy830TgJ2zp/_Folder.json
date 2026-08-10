@@ -1,0 +1,21 @@
+{
+  "name": "Стрелковое",
+  "type": "Item",
+  "folder": "NvFmxq5CQI55hhlK",
+  "sorting": "m",
+  "_id": "GEXb2Cy830TgJ2zp",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!GEXb2Cy830TgJ2zp"
+}

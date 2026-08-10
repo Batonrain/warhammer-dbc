@@ -1,0 +1,52 @@
+{
+  "name": "Klaivex / Клэйвекс",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "TLVBElwm1LbBYjPw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может использовать WS в тестах командования остальными Инкубами и помогать в обучении искусству Инкубов, снижая цену архетипа Инкуб вдвое. Именно к Клэйвексу обращаются за услугами Инкубов, что может повысить популярность персонажа. Пока вооружён Клэйвом, его Unnatural WS увеличивается до +6; с Полуклэйвом (одним или двумя) — до +8. Сражаясь двумя полуклэйвами и совершив хотя бы одну атаку каждым, получает +WS.b AP в каждую часть тела против рукопашных атак и +½ (окр. вверх) WS.b против стрелковых.",
+    "tier": 3,
+    "requirement": "Disciple Tormentor, победить своего Клэйвекса",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Инкуб",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "lbgTtCeU7rVTHpeX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121999188,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lbgTtCeU7rVTHpeX"
+}

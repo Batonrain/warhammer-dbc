@@ -1,0 +1,55 @@
+{
+  "name": "Nimble Blade / Ловкий Клинок",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "tJcIaX3E6vF4BoMn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В тестах талантов Disarm и Blade Binding (при наличии) персонаж может использовать Acrobatics(A)+0 вместо WS и S соответственно.",
+    "tier": 1,
+    "requirement": "Disarm или Blade Binding, Acrobatics+10",
+    "aptitudes": [
+      "ws",
+      "ag"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "GvnrAniJjgvUHGbb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121975531,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!GvnrAniJjgvUHGbb"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Freeze the Blood / Заморозить Кровь",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kEOjSZaVHTSxYaIY",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получив попадание от рукопашной атаки персонажа, цель проходит тест T−20 (против холода) или получает на Провалы раундов следующие эффекты: не использует T.b против I и атак оружия из Мерцающей Стали; снижает вдвое (окр. вниз) своё AP против всех атак; получает 1 усталость в начале каждого хода, но заморозка не может дать последнюю усталость. После разморозки второй эффект остаётся, пока над бронёй не проведут 15-минутную работу тестом Tech-Use(I)+0.",
+    "tier": 3,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Ночной Демон",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "D5mwSdBReIvwz9an",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121972346,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!D5mwSdBReIvwz9an"
+}

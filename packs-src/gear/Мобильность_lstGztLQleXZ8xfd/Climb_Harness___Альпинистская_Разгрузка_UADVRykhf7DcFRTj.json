@@ -1,0 +1,53 @@
+{
+  "name": "Climb Harness / Альпинистская Разгрузка",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Разгрузка со скальными крюками, страховочным тросом, карабинами и магнитным пистолетом для костылей. 50 м троса + 100 костылей.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 4,
+    "availability": -1,
+    "quality": "common",
+    "gearCategory": "mobility",
+    "worn": "Торс/пояс",
+    "effect": "+30 на Карабканье; не может упасть > 1 м при провале. Может замедлить карабканье вдвое, прокладывая трос (+60 и страховка следующим). Тратит 2 костыля/м подъёма, 1 на линию спуска. Костыли: Редкость −4, пачки по 50.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Молоток вместо пистолета для костылей — карабканье вдвое медленнее.",
+      "good": "Бонус карабканья до +40.",
+      "best": "Как Good.Q; гравитационные якоря вместо костылей — липнут к поверхности, отключаются сигналом и втягиваются на верёвке (возврат якорей и верёвки)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "lstGztLQleXZ8xfd",
+  "_id": "UADVRykhf7DcFRTj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!UADVRykhf7DcFRTj"
+}

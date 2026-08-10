@@ -1,0 +1,52 @@
+{
+  "name": "Rider of Chaos / Всадник Хаоса",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "VtxB4oTCqDmAYaJ4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сила, дарованная Богами, вливается в его боевого зверя. Может потратить 8 часов, чтобы ритуально посвятить скакуна себе на службу — тот мутирует, увеличиваясь в размерах и силе, чтобы нести массивного Броненосца. Скакун получает Трейты Unnatural S (4) и Unnatural T (4) (если не имел их с более высокими рейтингами), а латы Броненосца вживаются в его плоть, обеспечивая Трейт Natural Armour (8) и +10 Ран. Скакун нуждается в контакте с Броненосцем хотя бы раз в неделю, иначе его мутации дестабилизируются, убивая его.",
+    "tier": 2,
+    "requirement": "Неделимый, Survival+0",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Броненосец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zYebKqHPFe8hZdfF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786122009999,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zYebKqHPFe8hZdfF"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Infectious Miasma / Заразные Миазмы",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "Z4NmJddqY7A3SO69",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз за бой может потратить Очко Бесчестия, выпустив облако демонических мух и трупных газов. В течение 1d5+1 Ходов все непосвящённые Нурглу в радиусе 7м получают попадание 1d10 C Dmg Toxic(0), игнорирующее не-герметичную броню. Пострадавшие и выжившие проходят тест T+0 или заражаются случайной болезнью Чумного Десантника.",
+    "source": "Элитный архетип: Чумной Десантник",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "0hnGMnw02nZSVeuv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121956961,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0hnGMnw02nZSVeuv"
+}

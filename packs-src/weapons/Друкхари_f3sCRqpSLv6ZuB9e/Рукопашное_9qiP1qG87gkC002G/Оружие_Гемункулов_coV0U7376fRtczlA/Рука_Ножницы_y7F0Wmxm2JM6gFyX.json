@@ -1,0 +1,96 @@
+{
+  "name": "Рука-Ножницы",
+  "type": "weapon",
+  "folder": "coV0U7376fRtczlA",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "exotic",
+    "range": 1,
+    "balance": 1,
+    "grips": "1р",
+    "profileLabel": "Когти.П",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10",
+    "damageType": "rending",
+    "penetration": 2,
+    "quality": "common",
+    "availability": 4,
+    "weight": 0.1,
+    "attackBonus": 0,
+    "special": "Когти.П; Хват 1р; Досягаемость 0–1. Toxic: 4, 3d10. Можно зарядить любой яд (Рана/Контакт). При провале W−30 — боль/паралич.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "eldarPrecise"
+      },
+      {
+        "key": "felling",
+        "rating": 4
+      },
+      {
+        "key": "toxic"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "y7F0Wmxm2JM6gFyX",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!y7F0Wmxm2JM6gFyX"
+}

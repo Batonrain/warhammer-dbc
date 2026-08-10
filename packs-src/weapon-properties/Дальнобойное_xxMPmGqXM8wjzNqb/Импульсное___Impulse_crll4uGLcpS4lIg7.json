@@ -1,0 +1,35 @@
+{
+  "name": "Импульсное / Impulse",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "+10 на короткие и длинные очереди (вдвое, если оружие не перемещали с прошлого раунда). Каждый 4-й натуральный выстрел в любой очереди попадает в сочленение (кроме Глаз — при стрельбе в голову засчитывается шея).",
+    "reminder": "💨 Импульсное: +10 к очередям (×2 без движения); каждый 4-й выстрел в сочленение",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "impulse",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "crll4uGLcpS4lIg7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!crll4uGLcpS4lIg7"
+}

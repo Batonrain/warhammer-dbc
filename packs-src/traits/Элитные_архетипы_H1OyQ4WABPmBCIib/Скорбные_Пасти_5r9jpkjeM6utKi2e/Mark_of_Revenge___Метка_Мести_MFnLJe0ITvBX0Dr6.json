@@ -1,0 +1,51 @@
+{
+  "name": "Mark of Revenge / Метка Мести",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "5r9jpkjeM6utKi2e",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Обладая именем, изображением, каплей крови, подписью или личным предметом существа, может объявить на него Метку Мести. Пока метка держится, персонаж ощущает местоположение цели в реальном времени, её состояние и наличие рядом участков тени. Получает +20 на тесты Проклятий против цели, и они считаются знающими друг друга. Раз в сутки при провале ритуала Проклятия может отменить последствия, но на 7 дней лишается возможности проводить ритуалы проклятия. Проводит все ритуалы Проклятия через Scholastic Lore (Occult), обращаясь к Элиндраху и Богу Тьмы, поэтому игнорирует иммунитет чистых и грязных душой. Где в ритуалах используется Cor.b/Inf.b цели, используется Daemonic персонажа; где Linguistics — Linguistics (Eldannar (Old)). Может держать лишь ⅓ (окр. вверх) Inf.b Меток одновременно (мин. 1). Метка снимается со смертью цели или когда заказчик удовлетворён её состоянием.",
+    "source": "Элитный архетип: Скорбные Пасти",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "MFnLJe0ITvBX0Dr6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121959154,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MFnLJe0ITvBX0Dr6"
+}

@@ -1,0 +1,55 @@
+{
+  "name": "Appeal to the Crew / Воззвание к экипажу",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "MYOD0OOi7KxbCTzK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При совершении Длительного Действия Навались персонаж получает +10 на этот тест.",
+    "tier": 1,
+    "requirement": "F 40, Trade (Voidfarer) или Forbidden Lore (Heresy) или Common Lore (Imperial Creed)",
+    "aptitudes": [
+      "fel",
+      "social"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "MbgOcYUY43sheVlq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160740113,
+    "modifiedTime": 1786121979763,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MbgOcYUY43sheVlq"
+}

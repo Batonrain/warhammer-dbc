@@ -1,0 +1,44 @@
+{
+  "name": "Double Throne / Двойной Трон",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Техноеретик: металлический ящик с двумя снопами электродов.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 3,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "Один набор — в череп пленного Навигатора, второй — к шлему псайкера/чернокнижника: видеть Варп сквозь третий глаз мутанта и вести корабль по Эмпиреям против его воли.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "lUDsP6wsopy2xjV2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!lUDsP6wsopy2xjV2"
+}

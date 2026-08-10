@@ -1,0 +1,67 @@
+{
+  "name": "Hallucinogen Worm / Паразит-Галлюцинатор",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Червь в спинномозговой жидкости.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Червь в спинномозговой жидкости: 1/сутки свободным действием вне лимита атак стрелковая 30 м, Hallucinogenic(1), Independent, Spray. Дефект (до Best.Q): после активации −5 P и I на 1 час.\nPoor.Q: Hallucinogenic(0); −15 P/I на 2 часа.\nGood.Q: Hallucinogenic(2); −5 на 30 мин.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Массовая галлюцинация (дальность 30+T.b×5 м); 2) Избирательный кошмар (одна цель, Hallucinogenic 3); 3) Воспроизводитель (до 2 атак/сутки); 4) Кольцевой выброс (Spray → Blast(T.b), стрельба навесом).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "1klilopUyy7dIsEP",
+  "_id": "lIeHVN7JMgoQazxN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122016298,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lIeHVN7JMgoQazxN"
+}

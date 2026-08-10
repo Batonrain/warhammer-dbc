@@ -1,0 +1,52 @@
+{
+  "name": "Magnetomorphosis / Магнитоморфоз",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "qhvK5rxnvncipumL",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Мастерство в манипуляции магнитными полями не знает равных. Активируя Ferric Commandment, вместо двух магнитных рук получает I.b баллов (результаты можно брать несколько раз): 2б — создать одну магнитную руку; 3б — кокон из металлических осколков (+1AP всем частям тела; на земле нейтрализует E(El) атаки и −2 к интенсивности Haywire); 2б — придать кокону форму чудовищ (рейтинг Страха 3); 4б — схватить и поднять в воздух персонажа или предмет весом до I.b×50 кг, если он наполовину металлический или носит тяжёлую металлическую броню, и левитировать его на I.b м.",
+    "tier": 3,
+    "requirement": "Неделимый, Ferric Commandment",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Малагра",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "2XfDOYg5bqBSOMDs",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121964647,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!2XfDOYg5bqBSOMDs"
+}

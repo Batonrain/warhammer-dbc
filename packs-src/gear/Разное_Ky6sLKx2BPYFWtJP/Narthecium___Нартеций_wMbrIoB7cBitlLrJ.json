@@ -1,0 +1,53 @@
+{
+  "name": "Narthecium / Нартеций",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Комбинированный мед-инструмент (пила-костерезка, инъекторы, сенсоры) на предплечье (занимает магнитный замок на наруче).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 5,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "misc",
+    "worn": "Предплечье / наруч силовой брони",
+    "effect": "+20 к тестам Medicae на лечение (не складывается с аптечкой). Удваивает I.b в расчёте Первой помощи. За полудействие авто-лечит Кровотечение. Рентген-фонарь для шлема Диагностор. 10 инъекторов (инъекции = рукопашные атаки, всегда попадают по дружественным; Натиск на дружественных). Оружие: Когти.П 0, 1d10+5 R, Pen 12, Tearing, Contained, Bl −1.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Не удваивает I.b в расчёте первой помощи.",
+      "good": "Встроенный Редуктор: за полудействие извлечь геносемя/органы (Medicae+30, сквозь броню); 10 крио-контейнеров.",
+      "best": "Преимущество на все связанные тесты Medicae."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": "Нартеций (рукопашный профиль)"
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "wMbrIoB7cBitlLrJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!wMbrIoB7cBitlLrJ"
+}

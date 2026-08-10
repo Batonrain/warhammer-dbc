@@ -1,0 +1,21 @@
+{
+  "name": "Плазменное",
+  "type": "Item",
+  "folder": "GEXb2Cy830TgJ2zp",
+  "sorting": "m",
+  "_id": "m5y1cFiuKx0k85wC",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!m5y1cFiuKx0k85wC"
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Эхо мутаций",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "s8lKzSrVLBSddHVo",
+  "system": {
+    "table": "history",
+    "rollMin": 9,
+    "rollMax": 9,
+    "description": "Некогда эту броню носил мутант, приспособивший её под себя. Броня помнит прежнего хозяина и желает носителя с подобными свойствами.",
+    "effect": "Выберите один Дар с одобрения ГМа. Следующий бросок владельца по таблице Даров Богов автоматически даёт этот результат.",
+    "hasChoice": true,
+    "choiceLabel": "Выбранный Дар",
+    "choicePlaceholder": "Название Дара",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "S43pZNmLz7CIe6k6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354160,
+    "modifiedTime": 1786229458935,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!S43pZNmLz7CIe6k6"
+}

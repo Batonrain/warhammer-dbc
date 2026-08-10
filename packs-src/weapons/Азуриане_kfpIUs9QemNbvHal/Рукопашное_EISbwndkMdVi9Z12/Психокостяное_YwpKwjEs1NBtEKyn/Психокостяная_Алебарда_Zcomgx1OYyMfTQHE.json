@@ -1,0 +1,138 @@
+{
+  "name": "Психокостяная Алебарда",
+  "type": "weapon",
+  "folder": "YwpKwjEs1NBtEKyn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "wraithbone",
+    "range": 5,
+    "balance": 2,
+    "grips": "2р (Бл)",
+    "profileLabel": "Глефа",
+    "profiles": [
+      {
+        "label": "Крюк",
+        "range": "",
+        "damage": "2d10+3",
+        "damageType": "rending",
+        "penetration": 6,
+        "weaponProps": [
+          {
+            "key": "force",
+            "rating": 0,
+            "rating2": 0
+          },
+          {
+            "key": "felling",
+            "rating": 4,
+            "rating2": 0
+          }
+        ]
+      },
+      {
+        "label": "Копьё",
+        "range": "5-6",
+        "damage": "1d10+3",
+        "damageType": "rending",
+        "penetration": 3,
+        "weaponProps": [
+          {
+            "key": "force",
+            "rating": 0,
+            "rating2": 0
+          }
+        ]
+      },
+      {
+        "label": "Посох",
+        "range": "2-4",
+        "damage": "1d10+1",
+        "damageType": "impact",
+        "penetration": 1,
+        "weaponProps": [
+          {
+            "key": "force",
+            "rating": 0,
+            "rating2": 0
+          }
+        ]
+      }
+    ],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "2d10+4",
+    "damageType": "rending",
+    "penetration": 5,
+    "quality": "common",
+    "availability": 3,
+    "weight": 1.5,
+    "attackBonus": 0,
+    "special": "Глефа; Хват 2р [Бл]; Досягаемость 4–5. Крюк: 2d10+3 R, Pen 6, Force, Felling (4); Копьё (5–6): 1d10+3 R, Pen 3, Force; Посох (2–4): 1d10+1 I(Cr), Pen 1, Force.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "force"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "Zcomgx1OYyMfTQHE",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true,
+      "profilesAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!Zcomgx1OYyMfTQHE"
+}

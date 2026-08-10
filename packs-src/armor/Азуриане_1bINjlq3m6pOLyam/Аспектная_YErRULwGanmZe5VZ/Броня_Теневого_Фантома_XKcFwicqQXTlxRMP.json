@@ -1,0 +1,58 @@
+{
+  "name": "Броня Теневого Фантома",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Окрашенная в небесные и зимние цвета, броня теневых фантомов объединяет в себе одновременно и легкость, и прочность. Имея бронированность как тяжелая аспектная броня, она пользуется ловкостью стандартной аспектной брони. Помимо этого, в нее встроены спектральные крылья и более усиленная модель голо–поля. В броню встроены спектральные крылья и голо–поле R3.",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 7,
+    "body": 8,
+    "leftArm": 7,
+    "rightArm": 7,
+    "leftLeg": 7,
+    "rightLeg": 7,
+    "quality": "common",
+    "availability": 5,
+    "weight": 10,
+    "properties": [
+      "aspect",
+      "hard",
+      "protective",
+      "sealed",
+      "stealthed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 5,
+    "special": "Aspect (Теневые Фантомы). Спектральные крылья и голо-поле R3.",
+    "propRatings": {
+      "protective": 7
+    }
+  },
+  "_id": "XKcFwicqQXTlxRMP",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!XKcFwicqQXTlxRMP"
+}

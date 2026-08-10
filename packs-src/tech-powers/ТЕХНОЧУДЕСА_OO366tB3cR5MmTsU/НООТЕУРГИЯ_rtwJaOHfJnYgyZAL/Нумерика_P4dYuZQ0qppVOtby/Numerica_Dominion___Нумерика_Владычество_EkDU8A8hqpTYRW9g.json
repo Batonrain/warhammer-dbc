@@ -1,0 +1,60 @@
+{
+  "name": "Numerica Dominion / Нумерика Владычество",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "P4dYuZQ0qppVOtby",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "nootheurgy",
+    "subtype": "Нумерика",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 5,
+    "energyCost": 0,
+    "sustainCost": 2,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -10,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Ноосфера",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Hasta Numerica · Цена: 5К · Процесс: 2 · Тип: —] Треб.: I 50, Tech-Use+20, Numerica Delving. vs цель. За Успех — перехват одного импланта бионики/кибернетики (вкл./выкл./как Железо). Раз в Ход цель своб. действием встречный, восстанавливая контроль за Успех.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "EkDU8A8hqpTYRW9g",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040858,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EkDU8A8hqpTYRW9g"
+}

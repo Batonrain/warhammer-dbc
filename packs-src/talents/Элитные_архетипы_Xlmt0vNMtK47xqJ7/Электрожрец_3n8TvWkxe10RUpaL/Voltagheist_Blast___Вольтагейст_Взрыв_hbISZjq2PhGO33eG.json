@@ -1,0 +1,52 @@
+{
+  "name": "Voltagheist Blast / Вольтагейст Взрыв",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "3n8TvWkxe10RUpaL",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Щит накапливает статическое электричество при движении и разряжается всплеском. Совершая Натиск с Voltagheist Shield в Процессах, может в конце своего Хода потратить 3 заряда, чтобы центрировать на себе шаблон взрыва (Dmg 1d10+W.b E(El), Pen 0, Blast(½W.b окр.▲), Shocking), не задевая себя и до W.b союзников по выбору. Цели могут потратить 2 оставшихся Успеха Уклонения на Отскок. Не работает в вакууме и в жидкостях.",
+    "tier": 1,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Электрожрец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "hbISZjq2PhGO33eG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121996359,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hbISZjq2PhGO33eG"
+}

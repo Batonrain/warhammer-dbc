@@ -1,0 +1,55 @@
+{
+  "name": "Ride the Waves / Оседлать Волны",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "LjsqJMH26Qgo0CQE",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При Длительном Действии Варп-наведение персонаж может отказаться от обычных эффектов и вместо этого модифицировать последующие броски на эффекты Движения/Поворота или Стрельбы на свой P.b в любую сторону (с Vectorization Master — для обоих действий).",
+    "tier": 2,
+    "requirement": "P 40, I 30, Navigation (Warp) +10, Forbidden Lore (Warp) +10",
+    "aptitudes": [
+      "per",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "RFouVoQ8lKM1yW9j",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160740113,
+    "modifiedTime": 1786121983156,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!RFouVoQ8lKM1yW9j"
+}

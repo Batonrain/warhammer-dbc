@@ -1,0 +1,49 @@
+{
+  "name": "Иллюзия Нормальности",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж не привлекает к себе внимания и выглядит в глазах других как человек или десантник, который никак не выделяется из нормы и всегда вписывается в обстановку. Любые внешние проявления мутаций игнорируются наблюдателями, его оружие и броня не привлекают внимания, даже если он пытается пройти сквозь пост охраны в полной силовой броне вооружённый до зубов, и это даже позволяет десантнику смешаться с толпой обычных людей, не привлекая внимания. Эта способность работает как активно поддерживаемая психосила и может быть замечена тестом Пси-чутья с бонусом +5 за каждую прочую мутацию персонажа. Псайкеры, что засекли действие этой мутации, могут пройти тест на W+0, чтобы увидеть сквозь иллюзию, но не более одной попытки за бой или сцену.",
+    "source": "Общие мутации, d100 41…42",
+    "roll": "41…42",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "1GO1WxLJ6dhOw8n1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122018217,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1GO1WxLJ6dhOw8n1"
+}

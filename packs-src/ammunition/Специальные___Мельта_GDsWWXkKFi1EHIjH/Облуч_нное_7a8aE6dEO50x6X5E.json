@@ -1,0 +1,46 @@
+{
+  "name": "Облучённое",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-fuel.svg",
+  "folder": "GDsWWXkKFi1EHIjH",
+  "system": {
+    "description": "Обогащённое дейтерием мельта-топливо, дающее более мощную реакцию, но больше радиации. Даёт свойства Proven (3) и Extreme (9/−1), но при выстреле стрелок получает 1d10 урона в Т от радиации.",
+    "notes": "",
+    "weaponTypes": [
+      "melta"
+    ],
+    "ammoCategory": "melta_fuel",
+    "rarity": 2,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 2,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Proven (3), Extreme (9/−1); стрелок получает 1d10 урона в Т (радиация)",
+    "properties": []
+  },
+  "_id": "7a8aE6dEO50x6X5E",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!7a8aE6dEO50x6X5E"
+}

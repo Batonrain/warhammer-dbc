@@ -1,0 +1,44 @@
+{
+  "name": "Purgery Kit / Комплект для Заметания Следов",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Химические разбрызгиватели: стирают отпечатки, нейтрализуют запах, устраняют чешуйки кожи/волосы (ДНК).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "kits",
+    "effect": "1 минута + Security(I)+20: −10 за каждый Успех на осмотр улик/выслеживание по запаху этого места.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Требует 10 минут вместо 1.",
+      "good": "Штраф −15 за Успех.",
+      "best": "Штраф −20 за Успех."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "7RcCrAuCY0AvI2aH",
+  "_id": "PNua5lrFjsjQlsbV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!PNua5lrFjsjQlsbV"
+}

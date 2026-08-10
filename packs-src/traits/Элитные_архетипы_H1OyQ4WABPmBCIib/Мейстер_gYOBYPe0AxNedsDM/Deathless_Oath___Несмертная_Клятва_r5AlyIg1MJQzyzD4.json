@@ -1,0 +1,51 @@
+{
+  "name": "Deathless Oath / Несмертная Клятва",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "gYOBYPe0AxNedsDM",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает неизлечимое ментальное расстройство «Сноб» на Тяжести 0 (не может опуститься ниже 0); с каждой следующей Стадией Пакта минимальная тяжесть поднимается на 1. Мейстером движет милосердие, точнее извращённое презрение к смерти как концепту. Кроме обычных эффектов расстройства, он должен пройти тест W+10 (с обычными модификаторами Тяжести), чтобы попытаться убить кого-то, кто не атакует его самого (атаки, что по его мнению не убьют цель, теста не требуют).",
+    "source": "Элитный архетип: Мейстер",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "r5AlyIg1MJQzyzD4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121961702,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!r5AlyIg1MJQzyzD4"
+}

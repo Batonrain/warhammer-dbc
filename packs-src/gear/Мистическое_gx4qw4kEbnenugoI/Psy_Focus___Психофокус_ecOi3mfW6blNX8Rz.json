@@ -1,0 +1,53 @@
+{
+  "name": "Psy Focus / Психофокус",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Фокус психической энергии (медальон/браслет/пирсинг) из психоактивных материалов.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 1,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "На теле / в ладони",
+    "effect": "Позволяет действие Психофокус — только если носится на голое тело или держится в ладони.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Из обычных материалов, ценных псайкеру; работает только в его руках.",
+      "good": "Резонирует с одной Дисциплиной: +5 к психофокусу для её психосил.",
+      "best": "Как Good.Q; игнорирует штрафы от Крит. Провала на психофокус."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "ecOi3mfW6blNX8Rz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!ecOi3mfW6blNX8Rz"
+}

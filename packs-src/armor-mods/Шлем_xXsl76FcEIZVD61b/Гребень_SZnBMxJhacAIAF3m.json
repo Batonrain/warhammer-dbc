@@ -1,0 +1,105 @@
+{
+  "name": "Гребень",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "xXsl76FcEIZVD61b",
+  "system": {
+    "description": "Металлический гребень: +1 AP шлема, но штраф на попадание в голову −5 (обычно до −15). Можно посвятить Богу: +10 на соц. с его последователями.",
+    "notes": "",
+    "category": "armor",
+    "modGroup": "helmet",
+    "requirement": "Жёсткий шлем. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 1,
+    "availability": 2,
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 1,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    },
+    "drukhari": false
+  },
+  "_id": "SZnBMxJhacAIAF3m",
+  "effects": [
+    {
+      "name": "Гребень (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.armour.head",
+            "type": "add",
+            "value": 1,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "1ZniGbs3uIaSUkmf",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122045234,
+        "modifiedTime": 1786122045234,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!SZnBMxJhacAIAF3m.1ZniGbs3uIaSUkmf"
+    }
+  ],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157649068,
+    "modifiedTime": 1786122045252,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SZnBMxJhacAIAF3m"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Pheromone Gland / Феромонная Железа",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Симбиотические железы у основания шеи.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Железы у основания шеи: при имплантации выбор типа — устрашающий (+20 Intimidate) или успокаивающий (+20 Charm/Commerce). Действует на всех в 20 м, кто чует запах без газовой защиты. Дефект (до Best.Q): −10 Stealth против нюхачей (−30 против Heightened Senses (Smell)).\nPoor.Q: бонус +10, радиус 10 м; штрафы −20/−40; при стрессе резкий выброс (привлекает всех нюхачей в 30 м).\nGood.Q: штрафы −5/−10.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Избирательное воздействие (1/день смена типа, только на 1 цель в 10 м); 2) Феромонная метка (касанием, отслеживание до 1 км, 24 ч); 3) Скрытый аромат (маскирует/копирует окружающие запахи); 4) Эмоциональный радар (+10 социальные в 10 м — чует настроение).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "hF2KKmwrKnsur7c8",
+  "_id": "6Xf9SV1mEZKrtHHL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122011334,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6Xf9SV1mEZKrtHHL"
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Каннибализированный",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "CrIUtdfNnQLWTUax",
+  "system": {
+    "table": "scars",
+    "rollMin": 9,
+    "rollMax": 9,
+    "description": "Броня изготовлена из частей множества источников и включает элементы более чем одной модели силовой брони, искусно подогнанные друг к другу.",
+    "effect": "Выберите две зоны и укажите, от какой модели силовой брони взят элемент в каждой.",
+    "hasChoice": true,
+    "choiceLabel": "Зоны и модели",
+    "choicePlaceholder": "Например: шлем — Mk VI, торс — Mk IV",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "vTKXsL53BWKNzXPV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354161,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!vTKXsL53BWKNzXPV"
+}

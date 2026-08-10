@@ -1,0 +1,93 @@
+{
+  "name": "Ручная Пушка (револьвер)",
+  "type": "weapon",
+  "folder": "k26nnNHjR0DQDnhj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "pistol",
+    "weaponType": "solid",
+    "range": 35,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "4",
+    "magazineCur": 5,
+    "magazineMax": 5,
+    "rof_single": 1,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10+5",
+    "damageType": "impact",
+    "penetration": 2,
+    "quality": "common",
+    "availability": 0,
+    "weight": 3,
+    "attackBonus": 0,
+    "special": "",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "recoil",
+        "rating": 4
+      },
+      {
+        "key": "reliable"
+      },
+      {
+        "key": "revolver"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    },
+    "rangeBands": []
+  },
+  "_id": "nPxs9PlZDlU5b0uC",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785247480179,
+    "modifiedTime": 1785247480179,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!nPxs9PlZDlU5b0uC"
+}

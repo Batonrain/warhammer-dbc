@@ -1,0 +1,55 @@
+{
+  "name": "Sprint / Спринт",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "NNVATg504ej7y2M6",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может совершать Полное Движение на дистанцию Натиска и Бег на двойную дистанцию Бега. Если он совершает удлинённый Бег два Хода подряд, он получает 1 Усталости в конце Хода. Талант не удваивает саму дистанцию Бега для других механик — только позволяет бежать на удвоенную дистанцию.",
+    "tier": 3,
+    "requirement": "Нет",
+    "aptitudes": [
+      "ag",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "hJFYGzxmhxwJ1Kx9",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121995914,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hJFYGzxmhxwJ1Kx9"
+}

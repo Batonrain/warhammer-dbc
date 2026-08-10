@@ -1,0 +1,21 @@
+{
+  "name": "Ковен Гемункулов",
+  "type": "Actor",
+  "sorting": "m",
+  "folder": "vpg9AFt2aAq7cmAJ",
+  "_id": "Vvdo9b7LNEPY87qv",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!Vvdo9b7LNEPY87qv"
+}

@@ -1,0 +1,46 @@
+{
+  "name": "Сдерживающая пена",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-fuel.svg",
+  "folder": "GvPR6KfGTgZfQUph",
+  "system": {
+    "description": "Быстро расширяющаяся липкая пена, твердеющая в упругую массу, в которой вязнут противники. Не наносит урон, получает свойство Snare (0) и убирает Flame.",
+    "notes": "",
+    "weaponTypes": [
+      "flame"
+    ],
+    "ammoCategory": "flame_fuel",
+    "rarity": 3,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 3,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Без урона; Snare (0); убирает Flame",
+    "properties": []
+  },
+  "_id": "4YcJx0c6aX7jM5rw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!4YcJx0c6aX7jM5rw"
+}

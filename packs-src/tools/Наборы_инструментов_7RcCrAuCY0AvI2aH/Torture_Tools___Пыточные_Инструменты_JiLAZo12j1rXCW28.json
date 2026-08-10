@@ -1,0 +1,44 @@
+{
+  "name": "Torture Tools / Пыточные Инструменты",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Лезвия, зажимы, тиски, электроды + мед-инструменты для поддержания жертвы живой.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "kits",
+    "effect": "Interrogate+0: +20 на пытки, урон от проваленного теста → 1d5−1.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Грубые инструменты: только +10, урон от провала не уменьшает.",
+      "good": "Средства изменения сознания: +1d5 Успехов при Успехе, −50 Deceive жертвы при выдумывании ответа.",
+      "best": "Как Good.Q; не более часа на каждый тест пыток."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "7RcCrAuCY0AvI2aH",
+  "_id": "JiLAZo12j1rXCW28",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!JiLAZo12j1rXCW28"
+}

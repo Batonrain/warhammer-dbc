@@ -1,0 +1,110 @@
+{
+  "name": "Палач",
+  "type": "weapon",
+  "folder": "qeNef9C2zvUaeA9b",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "power",
+    "range": 6,
+    "balance": 1,
+    "grips": "2р",
+    "profileLabel": "Глефа",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "2d10+10",
+    "damageType": "energy",
+    "penetration": 10,
+    "quality": "common",
+    "availability": 4,
+    "weight": 3,
+    "attackBonus": 0,
+    "special": "Глефа; Хват 2р; Досягаемость 4–6. Aspect: Воющие Баньши",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "aspect"
+      },
+      {
+        "key": "devastating",
+        "rating": 3
+      },
+      {
+        "key": "felling",
+        "rating": 6
+      },
+      {
+        "key": "powerField"
+      },
+      {
+        "key": "proven",
+        "rating": 3
+      },
+      {
+        "key": "reinforced"
+      },
+      {
+        "key": "stepByStep"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "2wfBnPN0ng8tFQZD",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!2wfBnPN0ng8tFQZD"
+}

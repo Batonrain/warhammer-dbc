@@ -1,0 +1,23 @@
+{
+  "name": "Легенда",
+  "type": "Item",
+  "sorting": "m",
+  "_id": "Ua4iXGozhJwKvPyH",
+  "description": "",
+  "folder": null,
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354122,
+    "modifiedTime": 1786224354122,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!folders!Ua4iXGozhJwKvPyH"
+}

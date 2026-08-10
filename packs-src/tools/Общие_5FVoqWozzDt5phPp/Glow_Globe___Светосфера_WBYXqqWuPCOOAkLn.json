@@ -1,0 +1,44 @@
+{
+  "name": "Glow-Globe / Светосфера",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Массовая всенаправленная лампа размером с яблоко (в руке/под потолком). Батарея 5 ч, работает и от сети. Запасная батарея ≈0 кг, R−5.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.5,
+    "availability": -4,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Нагревается до обжигающе горячей через 5 минут.",
+      "good": "Выпущенная из руки — зависает на репульсоре, дрифтует на ветру. Батарея 24 ч.",
+      "best": "Маневрирует над плечом владельца, следует за ним. Батарея 24 ч."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "WBYXqqWuPCOOAkLn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!WBYXqqWuPCOOAkLn"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Dark Surgery / Тёмная Хирургия",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "je3MhvyZAyIIhKqk",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Работает только с R уроном. При успешном попадании (после щитов) может тестом Medicae(I)−10 добавить успехи к наносимому урону. Если попадание не нанесло экстремальный урон — тестом Medicae(I)−20 увеличить значение одного кубика на успехи (а если кубик уже 10, то и другой), потенциально доведя до экстремального. Если не нанесло критический эффект, но нанесло экстремальный урон — тестом Medicae(I)−20 нанести критический эффект R 1d5+1. Если нанесло критический эффект — тестом Medicae(I)−30 увеличить его на свой Unnatural I, вплоть до 8 (7 для головы). Тесты можно проходить подряд на одно попадание, пока они успешны. После битвы проходит тест Medicae(I)−20: при успехе расчленяет самых здоровых противников, при провале — каждого.",
+    "source": "Элитный архетип: Избиратель Плоти",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "EQCp18vauj27zOTf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121958301,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EQCp18vauj27zOTf"
+}

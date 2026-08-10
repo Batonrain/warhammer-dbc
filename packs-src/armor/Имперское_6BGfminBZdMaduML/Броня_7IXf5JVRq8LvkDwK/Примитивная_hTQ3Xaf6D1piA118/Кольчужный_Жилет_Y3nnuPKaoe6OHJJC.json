@@ -1,0 +1,52 @@
+{
+  "name": "Кольчужный Жилет",
+  "type": "armor",
+  "folder": "hTQ3Xaf6D1piA118",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "simple",
+    "stacks": false,
+    "maxAgility": 45,
+    "equipped": false,
+    "head": 0,
+    "body": 4,
+    "leftArm": 0,
+    "rightArm": 0,
+    "leftLeg": 0,
+    "rightLeg": 0,
+    "quality": "common",
+    "availability": -1,
+    "weight": 4,
+    "properties": [
+      "conductive",
+      "primitive",
+      "soft",
+      "undersuit"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": ""
+  },
+  "_id": "Y3nnuPKaoe6OHJJC",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Y3nnuPKaoe6OHJJC"
+}

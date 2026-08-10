@@ -1,0 +1,55 @@
+{
+  "name": "Torturer / Мучитель",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "vcniIwxQKfIoAxOg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Проводя пытки или ассистируя в них, персонаж может пройти тест Medicae−10 и при Успехе дать жертве −3×Успехи на её встречные тесты; при неудачном тесте пыток он не наносит урон жертве и не делает её непригодной для дальнейших пыток.",
+    "tier": 2,
+    "requirement": "Medicae+20",
+    "aptitudes": [
+      "int",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "o5sQJQcQtciHPLfh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122000804,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!o5sQJQcQtciHPLfh"
+}

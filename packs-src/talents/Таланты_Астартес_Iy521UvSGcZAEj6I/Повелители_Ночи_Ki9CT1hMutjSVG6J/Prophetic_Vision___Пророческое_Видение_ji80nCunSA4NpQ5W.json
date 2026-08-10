@@ -1,0 +1,52 @@
+{
+  "name": "Prophetic Vision / Пророческое Видение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Ki9CT1hMutjSVG6J",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может раз в Раунд перебросить любой свой тест, но его тесты против Рока Ночного Призрака становятся W+0 вместо W+10. Этот Талант можно взять только при создании персонажа или как награду за выполнение задания Ритуала Петиции.",
+    "tier": 3,
+    "requirement": "Проклятье Повелителей Ночи",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ji80nCunSA4NpQ5W",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782159183773,
+    "modifiedTime": 1786121997826,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ji80nCunSA4NpQ5W"
+}

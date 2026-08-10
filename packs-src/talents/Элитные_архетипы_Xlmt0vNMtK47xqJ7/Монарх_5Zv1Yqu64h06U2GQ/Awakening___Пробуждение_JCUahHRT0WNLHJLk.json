@@ -1,0 +1,52 @@
+{
+  "name": "Awakening / Пробуждение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "5Zv1Yqu64h06U2GQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Электростимуляцией и ослаблением рунических цепей пробуждает вассала к полному бодрствованию. В начале своего Хода за свободное действие может пробудить одного активного вассала — тот восстанавливает 4 ОД вместо 1, но Монарх и псайкер проходят встречный тест W+0 vs W+0, и при провале псайкер контролирует действия Монарха до начала его следующего Хода включительно.",
+    "tier": 3,
+    "requirement": "Неделимый, I 50",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Монарх",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "JCUahHRT0WNLHJLk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121977189,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JCUahHRT0WNLHJLk"
+}

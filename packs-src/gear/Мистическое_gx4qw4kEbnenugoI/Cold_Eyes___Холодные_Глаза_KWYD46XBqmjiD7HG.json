@@ -1,0 +1,53 @@
+{
+  "name": "Cold Eyes / Холодные Глаза",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Кристаллизованные глаза Ассасина Виндикар для слепого персонажа.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.3,
+    "availability": 5,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Имплант глаз",
+    "effect": "Восстанавливают зрение сверх человеческого: +30 на все тесты зрения; нет штрафов дальней/экстремальной дистанции; Полу-Прицеливание за свободное действие, Полное — за полудействие. Качество не варьируется.",
+    "reminder": "Не встречается в разных Качествах.",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "KWYD46XBqmjiD7HG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!KWYD46XBqmjiD7HG"
+}

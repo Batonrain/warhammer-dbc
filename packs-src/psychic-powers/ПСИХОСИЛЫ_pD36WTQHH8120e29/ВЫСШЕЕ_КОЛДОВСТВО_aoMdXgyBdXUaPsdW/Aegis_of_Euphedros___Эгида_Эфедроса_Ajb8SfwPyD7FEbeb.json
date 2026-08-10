@@ -1,0 +1,75 @@
+{
+  "name": "Aegis of Euphedros / Эгида Эфедроса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-highSorcery.svg",
+  "folder": "aoMdXgyBdXUaPsdW",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 1000,
+    "discipline": "highSorcery",
+    "subtype": "",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание · Длительное (PR+1 Раундов). Треб.: Inf 70+, Child of the Warp, For.Lore(Warp)+30, Schol.Lore(Occult)+30. Не в безопасном режиме (как и др. силы, пока активна). Псайкер считается демоническим; Incorporeal, Hoverer (6), +20 на психотесты, воздействует психосилами на Реальность невзирая на Incorporeal (но и на него можно). Игнорирует модификаторы Феноменов, перебрасывая 75+ до результата <75; действия только на движение/манифестацию/активацию. Психотесты по псайкеру −10. Урон его психосил получает Warp Weapon и Tainted по желанию. Демоны не могут приближаться ближе 10 м. Феномены этой/др. сил при активной Эгиде перманентно привязываются к местности.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Ajb8SfwPyD7FEbeb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122025458,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Ajb8SfwPyD7FEbeb"
+}

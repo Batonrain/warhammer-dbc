@@ -1,0 +1,51 @@
+{
+  "name": "Occult Blade / Оккультный Клинок",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "KjH0bDmGPEnRe8dj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Способны формировать сложные психосилы на кромке клинка. Раз в Раунд после успешной рукопашной атаки Психосиловым оружием может за свободное действие применить психосилу, требующую полудействия, по цели атаки. Эта манифестация не может использовать Пути Силы, воздействует только на цель атаки и наносит только одно попадание, от которого нельзя Избегать, даже если психосила обычно бьёт по нескольким целям. Не может использовать этот Трейт и Выжигание Души в один Раунд.",
+    "source": "Элитный архетип: Кенетаи",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "BQydxfoG2wOTtxwA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121958076,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!BQydxfoG2wOTtxwA"
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Моносеть / Monofilament (X)",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Опутывает цель. При попадании цель проходит A−10×X или S−10×X, иначе связана и Беспомощна. После провала: (X×5)+Провалы R урона с X+Провалы Pen, −1 AP во всех частях за попадание. До урона ГМ бросает 1d5 — ≤X означает попадание в Сочленение (голова→шея). Связанная цель в начале хода получает попадание; за Полное действие может повторить тест на освобождение. Союзник в контакте за полудействие режет путы клинком Pen 4+ или с Power Field. Считается Snare. Экстремальный урон/крит. эффект +2.",
+    "reminder": "🕸️ Моносеть (X): A/S−10×X или Связана+Беспомощна; режется клинком Pen 4+",
+    "category": "ranged",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "monofilament",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "S4DLmXNO1f3EOgOR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!S4DLmXNO1f3EOgOR"
+}

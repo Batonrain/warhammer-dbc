@@ -1,0 +1,49 @@
+{
+  "name": "Бескостный",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Все кости персонажа замещаются хрящеватыми мышцами. Пока он в полном жёстком доспехе, его плоть может использовать его как внешний скелет для опоры, цепляясь к броне изнутри, как рак-отшельник. Без опоры он должен проходить тест на Athletics+0 просто чтобы устоять на ногах — в противном случае он получает Трейты Amorphous и Crawler и оседает на землю. В форме аморфной горы плоти персонаж получает −20 на все тесты S, уменьшает рейтинг своего Трейта Unnatural S (если он у него есть) на 2 и получает +30 на все тесты Карабканья (игнорируя штрафы к тестам S от этой мутации).\n\nПерсонаж получает +10 к A, уменьшает вдвое любой I(Cr) Dmg (окр.▲) до Поглощения и игнорирует все Критические Эффекты от переломов. Суставы персонажа могут двигаться в любом направлении, если его броня должным образом модифицирована. Если броня его торса модифицирована для большей гибкости хребта, при желании он может бегать на четвереньках, получая Трейт Quadruped (1).",
+    "source": "Общие мутации, d100 18",
+    "roll": "18",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "fNLAmI7mDoN2snia",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122021002,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!fNLAmI7mDoN2snia"
+}

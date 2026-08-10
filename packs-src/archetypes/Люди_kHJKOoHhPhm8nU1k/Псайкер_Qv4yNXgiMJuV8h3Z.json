@@ -1,0 +1,53 @@
+{
+  "name": "Псайкер",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "kHJKOoHhPhm8nU1k",
+  "system": {
+    "key": "renegadePsyker",
+    "race": "human",
+    "group": "",
+    "charBonus": {
+      "wp": 10,
+      "int": -3
+    },
+    "charChoice": "",
+    "skills": "Awareness, Psyniscience+10, Schol. Lore (Occult), For. Lore (Warp, Daemons and Psykers)+10, Dodge или Parry",
+    "talents": "Psy Rating (×2), 1000хр на Психосилы, Jaded, Warp Sense, Weapon Training (Primary), Resistance (Psychic Powers), Strong Minded или Warp Whisper",
+    "gear": "Force Staff, Knife (+Mono), Flak Uniform",
+    "wounds": "7+1d5",
+    "infRoll": "",
+    "requiredPath": "",
+    "isPsyker": true,
+    "isTechpriest": false,
+    "psykerClass": "bound",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Беглец, переживший ужасы Имперского Санкционирования, сохранив рассудок.",
+    "trait": {
+      "name": "Imperial Sanctioning / Имперское Санкционирование",
+      "benefit": "Получает Трейт Psyker с PR2 и +1 Cor. Считается Связанным. Тратит Очко Бесчестья для переброса Феномена, если он вызвал Прорыв. Начинает со случайным ментальным расстройством (тяжесть не ниже −2)."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "Qv4yNXgiMJuV8h3Z",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536190,
+    "modifiedTime": 1786285536194,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Qv4yNXgiMJuV8h3Z"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Ментальное оружие",
+  "type": "Item",
+  "folder": "1HmGD9UxgRSXXwOc",
+  "sorting": "m",
+  "_id": "yjDusz5KIcknoy6i",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!yjDusz5KIcknoy6i"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Paint It Red / Окрась Всё в Красный",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "8SlJTJ2G7mk6CBdm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Лезвия пропитаны жаждой крови. Рукопашное оружие R Dmg наносит Экстремальный Урон, если на любом кубике урона (даже отброшенном) выпало 8 в дополнение к обычному 10. Вызванные этим оружием Критические Эффекты всегда наносят Кровотечение.",
+    "tier": 2,
+    "requirement": "Кхорн, Cor 40",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Берсерк Кхорна",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "9B5Hq6g4z5KnMpl9",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121969837,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!9B5Hq6g4z5KnMpl9"
+}

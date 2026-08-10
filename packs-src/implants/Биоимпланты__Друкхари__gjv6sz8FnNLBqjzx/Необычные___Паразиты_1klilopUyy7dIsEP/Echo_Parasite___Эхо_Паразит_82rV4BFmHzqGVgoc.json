@@ -1,0 +1,67 @@
+{
+  "name": "Echo Parasite / Эхо-Паразит",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Червь в слуховом нерве.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Червь в слуховом нерве: запись до 1 мин звуков, воспроизведение свободным действием (слуховые иллюзии в 25 м). Дефект (до Best.Q): 1/день самопроизвольно включает последнюю запись на полную громкость (дезориентация, ситуативные штрафы).\nPoor.Q: память 30 с; спонтанное воспроизведение 3/день.\nGood.Q: память до 5 мин.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Звуковой архив (до 5 записей); 2) Громкоговоритель (бонусы Best.Q Loud Hailer); 3) Идеальная имитация (даже звуки иного диапазона); 4) Эхолокация (Трейт Sonar Senses).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "1klilopUyy7dIsEP",
+  "_id": "82rV4BFmHzqGVgoc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122011744,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!82rV4BFmHzqGVgoc"
+}

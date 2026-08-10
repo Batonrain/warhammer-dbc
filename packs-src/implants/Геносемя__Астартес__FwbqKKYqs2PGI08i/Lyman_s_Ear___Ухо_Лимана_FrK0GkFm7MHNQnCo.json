@@ -1,0 +1,68 @@
+{
+  "name": "Lyman's Ear / Ухо Лимана",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "Искусственно выращенное усовершенствованное правое внутреннее ухо, имплантируемое вместо естественного. Известно также как Страж.\n\nВозраст имплантации: 14-17 лет.",
+    "notes": "",
+    "category": "geneseed",
+    "quality": "common",
+    "effect": "Даёт Талант Heightened Senses (Hearing). Улучшенный вестибулярный аппарат даёт иммунитет к укачиванию и дезориентации от скорости и падения. Позволяет игнорировать штрафы на атаки при высадке на машинах с Трейтом Orbital Deployment.",
+    "installed": "череп",
+    "geneSeedOrder": 11,
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, VIII. ПРОЧЕЕ («Геносемя» / «Трансформация в Астартес», стр. 485-487)",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "FwbqKKYqs2PGI08i",
+  "_id": "FrK0GkFm7MHNQnCo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786046629033,
+    "modifiedTime": 1786287363635,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FrK0GkFm7MHNQnCo"
+}

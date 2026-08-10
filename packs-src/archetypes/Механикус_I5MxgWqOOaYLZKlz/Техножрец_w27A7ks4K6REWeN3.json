@@ -1,0 +1,53 @@
+{
+  "name": "Техножрец",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "I5MxgWqOOaYLZKlz",
+  "system": {
+    "key": "heretek",
+    "race": "mechanicus",
+    "group": "",
+    "charBonus": {
+      "int": 5,
+      "t": 2
+    },
+    "charChoice": "",
+    "skills": "Linguistics (Binary Cant), Logic, Tech-Use+10, Awareness или Medicae, Dodge или Parry, Commerce или Security, Com. Lore (Tech)+20, For. Lore (Mechanicum)+10, For. Lore (Archeotech/Xenos/Warp), Schol. Lore (Chymistry/Numerology), Trade (Armourer, Weaponsmith), Trade (Engineer/Chymist)",
+    "talents": "750хр на Техночудеса, Die Hard, Technical Knock, Weapon Training (любые 4), Exotic Weapon Training (любые 1), Mechadendrite Use (Weapon, Utility), Apocrypha Coil/Virtual Memory, Meditation/Total Recall, Armour-Monger/Weapon-Tech, Minion (Низший, Машина)/Cold Hearted",
+    "gear": "Hotshot Pistol (Good.Q)/Bolt Pistol/Phosphor Blast Pistol, Poleaxe (Best.Q +Mono)/Power Axe/Arc Maul, Enforcer Carapace + Vulcanized Cloak, 6 Бионики/Кибернетики (до R2 Good.Q или R1 Best.Q), 3 Кибернетики Механикум (до R2), 2 Мехадендрита (R3/R2 Good.Q/R1 Best.Q), Cogitator (Best.Q) + Retinal Display, Combi-Tool (Good.Q)",
+    "wounds": "12+1d5",
+    "infRoll": "",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": true,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": true,
+    "description": "Жрец Бога-Машины: предатель и беглец из Адептус Механикус, либо адепт Тёмных Механикус Хаоса.",
+    "trait": {
+      "name": "Master of Machines / Повелитель Машин",
+      "benefit": "Игнорирует требования по Inf для Миньонов-машин."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "w27A7ks4K6REWeN3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536190,
+    "modifiedTime": 1786285536194,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!w27A7ks4K6REWeN3"
+}

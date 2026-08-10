@@ -1,0 +1,55 @@
+{
+  "name": "Grenadier / Гренадер",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "eF2Ce51xYc7VK2yx",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если брошенная граната промахнулась, персонаж может уменьшить дистанцию смещения на BS.b. Если взрыв не задевает врагов или задевает союзников, он может перебросить направление смещения. Без штрафов на броски гранат рикошетом.",
+    "tier": "2",
+    "requirement": "BS 35",
+    "aptitudes": [
+      "bs",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "BfHakkx2QyNDmQLJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121971628,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!BfHakkx2QyNDmQLJ"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Valourous Accord / Соглашение Доблести",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "YfPKfaYgXD2igGwn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Связан жёстким кодексом чести — полагаться только на собственные силы. Если использует психосилы, психосиловое оружие, ритуалы (кроме призыва), оружие или броню, созданные не им лично и не захваченные у побеждённых в честном бою врагов — теряет все преимущества Талантов и Трейтов Архетипа на 8 дней или дольше. Если продолжает нарушать обеты, все демоны, подчинённые Кольцом Крови, немедленно освобождаются.",
+    "source": "Элитный архетип: Кузнец Крови",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "PafzsMgwgNwwvxec",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121959467,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!PafzsMgwgNwwvxec"
+}

@@ -1,0 +1,46 @@
+{
+  "name": "Мыслеплеть",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "ev14sDnVPb24ZUoV",
+  "system": {
+    "description": "Особо чувствительные кристаллы, создаваемые под какофонию боли и криков умирающего псайкера (особенно пленных эльдар), которые поражают душу и сознание цели. Дают Toxic (2). Псайкеры получают штраф −10−5×бPR к Избеганию, в том числе с помощью психосил. Если цель провалит тест против яда, то: Псайкер должен развеять психосилу, что требует PR выше его базового; Тираниды теряют синаптическую связь на 1 Ход (суммируется); Орки, эльдары и имперцы не могут применять Очки Судьбы на 1 Ход (суммируется); Друкхари не могут поглощать Боль на 1 Ход (суммируется).",
+    "notes": "",
+    "weaponTypes": [
+      "splinter"
+    ],
+    "ammoCategory": "splinter_crystals",
+    "rarity": 3,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 3,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Toxic (2); псайкерам −10−5×бPR к Избеганию; при провале против яда — тяжёлые эффекты",
+    "properties": []
+  },
+  "_id": "bhhMq85boPLVwZKN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783814777010,
+    "modifiedTime": 1783814777010,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!bhhMq85boPLVwZKN"
+}

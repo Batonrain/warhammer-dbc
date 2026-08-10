@@ -1,0 +1,75 @@
+{
+  "name": "Press / Пресс",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telekinesis.svg",
+  "folder": "2rqLgVJGpTG3PXSV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "telekinesis",
+    "subtype": "Сокрушение",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×2м / PR×15м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "PRd10",
+    "damageType": "impact",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Психический Снаряд · Стрельба. Поддержание: Полное действие. Треб.: Battering Ram. Профиль: PR×10м, PRd10 I(Cr), Pen 0, Snare (½PR окр.▲), Tearing. Избежав/пройдя первый Snare — сила не поддерживается; вырвавшись из Snare — развеивается. Пойманная цель в начале каждого Хода псайкера получает попадание +1d10 Dmg за каждый Раунд под Snare. По завершении псайкер 1 Усталости, с цели снимается Snare.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "bk2fl8CfHM3SR3v1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122033973,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!bk2fl8CfHM3SR3v1"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Tyranthikos / Тирантикос",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "yZG5ZRAC9obmDWOJ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Уменьшает штраф за стрельбу из любой пары стрелкового оружия на 10, в т.ч. двух тяжёлых. Если вооружён двумя тяжёлыми стрелковыми, стреляет из обоих в одну цель Размером 2+ и попадает из обоих — цель получает +2d10 Dmg от первого попадания второй атаки. Когда атаки повреждают Укрытия, те теряют 1d10 AP вместо 1.",
+    "tier": 3,
+    "requirement": "Неделимый, Storm of Lead, Two Weapon Wielder (Ranged)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Чемпион-Терминатор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "kHbWbNHvqWpYEf0j",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121998383,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!kHbWbNHvqWpYEf0j"
+}

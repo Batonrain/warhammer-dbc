@@ -1,0 +1,46 @@
+{
+  "name": "Лишь со смертью завершается служение",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "service",
+    "roll": "80-83",
+    "rollMin": 80,
+    "rollMax": 83,
+    "text": "Лишь со смертью завершается служение",
+    "effect": "Первый раз за игровую сессию, когда персонаж получает очки Усталости, уменьшите их количество на 1 (до минимума 0).",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": []
+    }
+  },
+  "_id": "3NAqoG87W47o3656",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": []
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786027360704,
+    "modifiedTime": 1786229468447,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!3NAqoG87W47o3656"
+}

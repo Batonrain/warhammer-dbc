@@ -1,0 +1,52 @@
+{
+  "name": "Shell Guard / Стражи Панциря",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ik64WMhypctA7jlU",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За три полных действия один из Роёв под прямым контролем поглощает от 200 кг плоти и окукливается (куколка беспомощна, теряет Трейт Swarm). Через 77 минут вылупляется Страж Панциря (генерируется как обычный Миньон-Зверь), контролируемый напрямую, уменьшающий лимит Роёв, не может быть Отпущен. Может иметь только три «шаблона» Стражей; для нового типа сначала нужно избавиться от всех Стражей одного из прежних типов.",
+    "tier": 3,
+    "requirement": "Нургл, Cor 60",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "Элитный архетип: Король Червей",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "gBthKRW52ni8Gd58",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121994456,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gBthKRW52ni8Gd58"
+}

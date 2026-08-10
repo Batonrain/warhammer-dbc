@@ -1,0 +1,44 @@
+{
+  "name": "Cartograph / Картограф",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Инфопланшет со сканнерами: карты, собственное положение, оптимальные маршруты. Формирует карту пройденного, обновляет устаревшие карты.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "+10 Navigation(Surface).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Бонус +5.",
+      "good": "Трёхмерные карты (ульи, корабли).",
+      "best": "Как Good.Q; бонус +20."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "6mtOOeIH1M13mXsR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!6mtOOeIH1M13mXsR"
+}

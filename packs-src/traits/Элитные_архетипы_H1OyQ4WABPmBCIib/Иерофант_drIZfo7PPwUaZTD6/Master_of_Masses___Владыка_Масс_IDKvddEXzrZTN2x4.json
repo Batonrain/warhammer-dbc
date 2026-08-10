@@ -1,0 +1,51 @@
+{
+  "name": "Master of Masses / Владыка Масс",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "drIZfo7PPwUaZTD6",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Глубокое понимание души толпы позволяет управлять ордами умело и точно, как опытный офицер дисциплинированными солдатами. Может командовать Ордами религиозных людей (созданных Великим Агитатором и обычных), используя Charm вместо Command (без бонусов за лояльность/славу, со штрафами за дурную репутацию). Для общения нужен усилитель голоса или психический ретранслятор. Орды под командованием получают преимущества Командования, как если бы каждая была одним персонажем. Орды в его Командном Присутствии вместо концентрированной атаки увеличивают Магнитуду в расчёте количества атак и урона на ½F (окр.▲), но не более текущей Магнитуды. Орда под детальной командой Храбрость уменьшает психологический урон в Магнитуду вдвое (окр.▲).",
+    "source": "Элитный архетип: Иерофант",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "IDKvddEXzrZTN2x4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121958621,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!IDKvddEXzrZTN2x4"
+}

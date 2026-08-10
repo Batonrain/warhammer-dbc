@@ -1,0 +1,55 @@
+{
+  "name": "Witchfinder / Ведьмоискатель",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "eI14Vbl1EBbwi5Rc",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может перебрасывать неудачные тесты Awareness на засекание проявления психосил и тесты Forbidden Lore (Psykers) для распознания психосилы. При Успехе последнего узнаёт детали силы в полной мере, как от Пси-Чутья.",
+    "tier": 2,
+    "requirement": "P 40, Forbidden Lore (Psykers)+20",
+    "aptitudes": [
+      "per",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "r890UQ3A3CFRI2hD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122003916,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!r890UQ3A3CFRI2hD"
+}

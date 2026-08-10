@@ -1,0 +1,35 @@
+{
+  "name": "Токсичное / Toxic",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "U5s2o5cGaKlCslI9",
+  "system": {
+    "description": "При непоглощённом уроне цель проходит тест T−10×X, иначе получает Отравление и 1d10 непоглощаемого урона (по правилам ядов).",
+    "reminder": "☠️ Токсичное (X): при непоглощ. уроне — тест T−10×X или Отравление + 1d10",
+    "category": "both",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "toxic",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "XNmTiD9K5HKjaane",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353821,
+    "modifiedTime": 1786224353826,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!XNmTiD9K5HKjaane"
+}

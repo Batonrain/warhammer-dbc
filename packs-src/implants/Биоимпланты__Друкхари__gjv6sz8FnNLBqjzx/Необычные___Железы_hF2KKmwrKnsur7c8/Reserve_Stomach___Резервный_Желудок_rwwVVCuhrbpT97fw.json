@@ -1,0 +1,67 @@
+{
+  "name": "Reserve Stomach / Резервный Желудок",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Дополнительный орган-хранилище.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Орган-хранилище: до 2 л жидкости или 1 кг пищи (или мелкий предмет — отрыгнуть полным действием); переваривает любую органику. Дефект (до Best.Q): жажда ×2, при Натиске/Беге тест T+20 или 1 усталость.\nPoor.Q: 1 л / 0.5 кг; острый/ядовитый предмет 50% протыкает/всасывает; при беге/падении может отрыгнуться (тест T+20).\nGood.Q: 4 л / 2 кг.\nBest.Q: дефект устранён, 6 л / 3 кг + 1 эффект (R +1 за каждый доп.): 1) Кислотный растворитель (за 24 ч растворить адамантовый предмет); 2) Био-сейф (предметы невидимы сканерам/варпу); 3) Передачка (перемещать между желудками; Реакцией изолировать проглоченный яд); 4) Паразитарная ферментация (отходы → спирт/топливо, выдавать касанием/поцелуем).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "hF2KKmwrKnsur7c8",
+  "_id": "rwwVVCuhrbpT97fw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122017116,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!rwwVVCuhrbpT97fw"
+}

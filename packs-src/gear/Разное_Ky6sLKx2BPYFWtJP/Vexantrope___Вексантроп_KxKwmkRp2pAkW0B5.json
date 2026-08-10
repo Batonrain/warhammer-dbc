@@ -1,0 +1,58 @@
+{
+  "name": "Vexantrope / Вексантроп",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Маска Раздражителя со встроенными голополями: создаёт отвлекающие голограммы и может принять облик самого важного для противника существа.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "маска",
+    "effect": "Противник получает −10 на все физические действия против носителя (включая избегание его атак и атаки по нему) из-за постоянно появляющихся правдоподобных голограмм.\nВ свой ход или Реакцией на чужую рукопашную атаку носитель может потратить полудействие и пройти Deceive (I/F)+20 vs Scrutiny (P)+0. При успехе он принимает облик самого важного для противника существа: тот впадает в Ступор на Провалы раундов и считает галлюцинацию правдой. Носитель может отдавать ему приказы, автоматически преуспевая с 5 успехами, либо провести одну рукопашную атаку типа Незримая — после чего враг немедленно выходит из ступора.\nПротив одного и того же противника тест применяется успешно лишь раз за бой.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Тест меняется на Deceive (I/F)−20 vs Scrutiny (P)+20.",
+      "good": "Тест можно применять 2 раза. Противник получает −20 на физические действия против носителя.",
+      "best": "Как Good.Q. Раз в битву носитель может автоматически преуспеть в соревновательном тесте шлема."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "KxKwmkRp2pAkW0B5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380043,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!KxKwmkRp2pAkW0B5"
+}

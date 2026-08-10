@@ -1,0 +1,35 @@
+{
+  "name": "Эльдарская Бритвенная Заточка / Eldar Razor Sharp",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "U5s2o5cGaKlCslI9",
+  "system": {
+    "description": "На 3+ СУ удваивает Pen; если попадание было в сочленение — можно перебросить все кубики урона и выбрать лучшее значение. Только одиночные атаки.",
+    "reminder": "🔪 Эльдарская Заточка: 3+ СУ — ×2 Пробитие; сочленение — переброс урона",
+    "category": "both",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "eldarRazorSharp",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "izT9SG3YCCF8871z",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!izT9SG3YCCF8871z"
+}

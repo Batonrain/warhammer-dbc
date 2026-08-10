@@ -1,0 +1,60 @@
+{
+  "name": "Shield of Elder Carolus / Щит Старца Каролуса",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "fvfKnxsWuCnMitLa",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Маглев",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 2,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -10,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Ferric Lure Implants · Цена: 3К+2Э · Процесс: 1 , 1 (У) · Тип: Компенсатор (1), Славословие (1)] Треб.: For.Lore (Mechanicum)+20. Магнитная линза-аура 3м. Снаружи не видят внутрь (обычное/тепловое зрение); изнутри не видят наружу. Стрельба снаружи (не по площади) проходит сквозь, не задевая внутренних; изнутри можно стрелять наружу при альт. засекании. Процесс +1 за каждый Раунд активности (кроме первого).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "KCrxDdAAr7CQ5qAH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041147,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KCrxDdAAr7CQ5qAH"
+}

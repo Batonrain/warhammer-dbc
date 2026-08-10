@@ -1,0 +1,52 @@
+{
+  "name": "True Prayer / Истинная Молитва",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "PSwZVHanAWF9Yjjy",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда произносит молитвы, по ту сторону Завесы их слышат. Может потратить полудействие, чтобы пройти тест For.Lore(Heresy)+0 и восстановить одно ранее потраченное Очко Бесчестия. Работает только в бою.",
+    "tier": 1,
+    "requirement": "Неделимый, Forbidden Lore (Heresy)+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Тёмный Апостол",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ycZ1I5WtPWl18PUA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122009192,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ycZ1I5WtPWl18PUA"
+}

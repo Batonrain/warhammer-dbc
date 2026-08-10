@@ -1,0 +1,34 @@
+{
+  "name": "Стойкость",
+  "type": "aspiration",
+  "img": "icons/svg/aura.svg",
+  "folder": "e2ebOseItYDN37He",
+  "system": {
+    "key": "pride:5",
+    "table": "pride",
+    "n": 5,
+    "mods": "+5 T, −3 I, −3 F",
+    "description": "Гордится стойкостью, но не очень быстр и находчив.",
+    "bookSource": "Black Crusade — Стремления (стр. 22)"
+  },
+  "_id": "Z0xivH1Sv34KI9ba",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285535466,
+    "modifiedTime": 1786285535470,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Z0xivH1Sv34KI9ba"
+}

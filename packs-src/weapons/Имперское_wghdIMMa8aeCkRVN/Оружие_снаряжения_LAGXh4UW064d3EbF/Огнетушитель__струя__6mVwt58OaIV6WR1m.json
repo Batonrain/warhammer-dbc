@@ -1,0 +1,86 @@
+{
+  "name": "Огнетушитель (струя)",
+  "type": "weapon",
+  "folder": "LAGXh4UW064d3EbF",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "basic",
+    "weaponType": "exotic",
+    "range": 5,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 10,
+    "magazineMax": 10,
+    "rof_single": 1,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "",
+    "damageType": "impact",
+    "penetration": 0,
+    "quality": "common",
+    "availability": -3,
+    "weight": 3,
+    "attackBonus": 0,
+    "special": "Полудействие двумя руками, 1 заряд. Всё «стандартное» пламя (1d10 урона) в шаблоне гаснет. За более мощное бросается его урон: 10 и ниже — гаснет, выше — теряет один кубик урона на 1 Раунд.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "spray"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    },
+    "rangeBands": []
+  },
+  "_id": "6mVwt58OaIV6WR1m",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785255155964,
+    "modifiedTime": 1785255155964,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!6mVwt58OaIV6WR1m"
+}

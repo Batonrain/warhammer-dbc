@@ -1,0 +1,49 @@
+{
+  "name": "Вор Судьбы",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Изменитель Путей даёт своему чемпиону чутьё вмешательства в судьбу и силу противостоять ему. Чемпион чувствует использование Очков Бесчестия и Очков Судьбы в радиусе Cor м. Он может за Реакцию пройти тест на Inf+0, чтобы при Успехе отменить эффект, вызванный засечённой им тратой Очков, и восстановить одно ранее потраченное им самим Очко Бесчестия. Если он проваливает этот тест, чемпион должен пройти тест на W+0, или потерять одно Очко Бесчестия.",
+    "source": "Дары Тзинч, d100 34…36",
+    "roll": "34…36",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Olxzbl4P59icsara",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019660,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Olxzbl4P59icsara"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Vengeful One / Мстительный",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "foutd4GzPCUo8Jyv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает неизлечимое ментальное расстройство «Ненависть» на Тяжести 0 (не может опуститься ниже 0); с каждой следующей Стадией Пакта минимальная тяжесть поднимается на 1. При взятии Пакта выбирает до 5 Заклятых Врагов из ненавидимой им организации, которые являются целями его мести. ГМ может после драматических событий добавить новых Заклятых Врагов, даже вне этой организации, особенно из бывших союзников, что предали Ревенанта (список никогда не становится больше 8 человек).",
+    "source": "Элитный архетип: Ревенант",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zaCpcGstAokLugzn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121962446,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zaCpcGstAokLugzn"
+}

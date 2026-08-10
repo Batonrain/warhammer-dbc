@@ -1,0 +1,52 @@
+{
+  "name": "Роба Чемпиона",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Иная вариация дополнительного снаряжения среди варлоков, которая может спасти их жизнь. Иногда варлоки выступают как отвлекающая боевая единица, в одиночку отправляющаяся громить противников, используя свои превосходящие психические способности и боевые навыки. И для гарантии своего выживания они могут использовать Робы Чемпиона, что ценою психических варлока укрепляют его против вражеских атак. Также это символ смелости и геройства, что дает некоторый престиж в войсках эльдар. Носитель Робы Чемпиона получает +10 на все тесты атаки и +20 на все тесты командования. В начале своего хода персонаж может разменивать 1 тPR на 2 аблативных AP, что выражается в лице психического щита. В начале каждого нового раунда данный щит становится слабее на 1d5+1 AP и теряет 1 AP после каждого попадания, независимо от того, сколько урона это попадание должно было нанести (по усмотрению ГМа более сильные атаки будут отнимать больше AP у щита).\n",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 0,
+    "body": 1,
+    "leftArm": 1,
+    "rightArm": 1,
+    "leftLeg": 1,
+    "rightLeg": 1,
+    "quality": "common",
+    "availability": 3,
+    "weight": 3,
+    "properties": [
+      "aspect",
+      "cloak",
+      "stealthed",
+      "undersuit"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Видящие). +10 атака, +20 командование. 1 тPR → 2 аблативных AP (психощит, слабеет 1d5+1/раунд)."
+  },
+  "_id": "DwHnuRmLUF8h2iTU",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!DwHnuRmLUF8h2iTU"
+}

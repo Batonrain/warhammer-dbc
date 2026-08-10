@@ -1,0 +1,67 @@
+{
+  "name": "Reinforced Skeleton / Усиленный Скелет",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Кости укреплены хитиновыми волокнами.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Кости укреплены хитином и кальцием: +1 к T.b всех частей тела, Таланты Bulging Biceps, Iron Jaw и Stonewall, вес +20%, игнор крит-эффектов «перелом/потеря конечности», безоружные атаки +2 Dmg. Дефект (до Best.Q): −1 SPD, −10 Acrobatics.\nPoor.Q: штрафы дефекта ×2; +1 к крит-эффектам I и X против персонажа.\nGood.Q: штраф SPD убран, −5 Acrobatics/плавание.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Мономолекулярные когти (Deadly Natural Weapons(3, Когти), Tearing; выдвиг свободным действием); 2) Усиленный каркас (+2 к T.b всех частей, выше/массивнее); 3) Регенерация костей (переломы срастаются за секунды/минуты/часы); 4) Костяной щит (полудействием вырастить из предплечья Круглый Щит без Primitive, Reinforced, T.b AP).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "LgfOMhOI1IHZXldl",
+  "_id": "gVv6CxvOUATC1Svq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122015698,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gVv6CxvOUATC1Svq"
+}

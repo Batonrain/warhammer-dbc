@@ -1,0 +1,39 @@
+{
+  "name": "Штамм Фидаэ",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "nurgle",
+    "contagion": "",
+    "incubation": "3/7 часов",
+    "symptoms": "Каждые 3 ч тест Т+0 или Провалы урона I (не лечится; −10 за каждый пункт истончения Завесы). I=0 → смерть и Зомби (как Чума Неверия, но без оружейных талантов, враждебен всем кроме демонов Нургла, не подчиняется). Зомби штамма имеют общее сознание/восприятие на планете и истончают Завесу.",
+    "vectors": "Споры из лёгких/кожи: вдох без респиратора Т+30; кожа-к-коже Т+0; жидкости Т−30. Прижигание 3 Хода/ампутация 1 мин предотвращает.",
+    "cure": "Касание истинно верующего + минута молитвы: Forbidden Lore (Heresy)(W)+0 или Scholastic Lore (Imperial Cult)(W)+0; не более 1 попытки/сутки. Медицина бесполезна.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "t1pSkG8nhsf3O1XF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!t1pSkG8nhsf3O1XF"
+}

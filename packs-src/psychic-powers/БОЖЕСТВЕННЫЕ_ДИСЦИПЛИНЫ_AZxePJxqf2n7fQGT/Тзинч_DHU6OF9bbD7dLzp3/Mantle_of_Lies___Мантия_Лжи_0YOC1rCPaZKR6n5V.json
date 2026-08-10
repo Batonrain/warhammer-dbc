@@ -1,0 +1,75 @@
+{
+  "name": "Mantle of Lies / Мантия Лжи",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-tzeentch.svg",
+  "folder": "DHU6OF9bbD7dLzp3",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "tzeentch",
+    "subtype": "",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×10м / ∞",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание · Изменение. Треб.: I 40+, F 40+. Колдун и цель меняются внешностью и голосом (и видом снаряжения). Иллюзия света/звука (обманывает роботов/пикт-фиды), но не касание. Свидетели — Awareness−5×PR. Несоответствие манерам — Scrutiny vs Deceive. Психобарьер развеивает.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "0YOC1rCPaZKR6n5V",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122022747,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0YOC1rCPaZKR6n5V"
+}

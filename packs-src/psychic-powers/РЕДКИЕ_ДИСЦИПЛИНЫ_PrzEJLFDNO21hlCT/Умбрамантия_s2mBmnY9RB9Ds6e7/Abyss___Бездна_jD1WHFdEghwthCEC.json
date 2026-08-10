@@ -1,0 +1,75 @@
+{
+  "name": "Abyss / Бездна",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-umbramancy.svg",
+  "folder": "s2mBmnY9RB9Ds6e7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "umbramancy",
+    "subtype": "",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×15м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2d10+PR",
+    "damageType": "rending",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Незримое · Психический Взрыв (PR) · Стрельба. Поддержание: Полудействие. Треб.: Umbral Tendrils. Профиль: PR×15м, 2d10+PR R, Pen PR, Blast (PR), Tearing. Полностью в шаблоне — проваливаются в измерение тьмы (нет света/звука/воздуха), в начале каждого Хода ещё попадание без Избегания. Полным действием — W+0 vs W+0 для выхода через тень.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "jD1WHFdEghwthCEC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122036142,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!jD1WHFdEghwthCEC"
+}

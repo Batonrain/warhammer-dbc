@@ -1,0 +1,55 @@
+{
+  "name": "Glorious Purpose / Славное Назначение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "nbyfPB9dD9cOjRiA",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При использовании демонического оружия персонаж может использовать свой Inf вместо W или F для всех тестов против демона.",
+    "tier": 1,
+    "requirement": "Inf 30",
+    "aptitudes": [
+      "offence",
+      "knowledge"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "bUvr7s8sAo9oGvIz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121990440,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!bUvr7s8sAo9oGvIz"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Witchslayer / Убийца Ведьм",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "uEhZDcVBKdRy5L2M",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Комбинируя полученную от Кхорна мудрость и свои знания о ведьмах, может направлять как свой клинок, так и чужие, чтобы обходить колдовские барьеры. Когда усиливает Трейтом War Seer свою рукопашную атаку или личную команду для атаки, может потратить Очко Бесчестия и дать этой атаке свойство Sanctified.",
+    "tier": 2,
+    "requirement": "Кхорн, Forbidden Lore (Psykers)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Виткис",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "LUCPs1RAjvjaM1cV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121978991,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LUCPs1RAjvjaM1cV"
+}

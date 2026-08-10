@@ -1,0 +1,52 @@
+{
+  "name": "Disciple of Yaelindra / Ученик Яэлиндры",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "u9K1MmnFpVzcYnHZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Перед боем может пройти тест I+10 и за каждый успех увеличить или дать одному союзнику свойства Felling и Toxic одного оружия на +1, вплоть до +2 до конца боя. Всё оружие со свойствами Felling, Toxic и Hallucinogenic в его руках получает +1. Все яды его работы дают штраф I.b×3 на любые тесты сопротивления, а яды Best.Q заставляют перебрасывать успешные тесты сопротивления. Попав любой атакой со свойством Toxic в сочленение, может начать соревновательный тест I+0 vs T+0 и при успехе (или если противник набрал лишь 1 успех) увеличить Toxic на +1.",
+    "tier": 3,
+    "requirement": "I 45, Poisoner",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Длань Архонта",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "DOl4rpGsrjEhSZal",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121972724,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!DOl4rpGsrjEhSZal"
+}

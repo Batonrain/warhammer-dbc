@@ -1,0 +1,46 @@
+{
+  "name": "Резонирующие",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "ev14sDnVPb24ZUoV",
+  "system": {
+    "description": "Кристаллы резонируют с биологическими, магнитными и духовными свойствами цели, взрываясь при ощущении тел. Дают Blast (1) и Toxic (1). Дают штраф −2×Скорострельность на Избегание.",
+    "notes": "",
+    "weaponTypes": [
+      "splinter"
+    ],
+    "ammoCategory": "splinter_crystals",
+    "rarity": 1,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 1,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Blast (1), Toxic (1); −2×Скорострельность на Избегание",
+    "properties": []
+  },
+  "_id": "G19uzgQ8XcJttrYn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783814777010,
+    "modifiedTime": 1783814777010,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!G19uzgQ8XcJttrYn"
+}

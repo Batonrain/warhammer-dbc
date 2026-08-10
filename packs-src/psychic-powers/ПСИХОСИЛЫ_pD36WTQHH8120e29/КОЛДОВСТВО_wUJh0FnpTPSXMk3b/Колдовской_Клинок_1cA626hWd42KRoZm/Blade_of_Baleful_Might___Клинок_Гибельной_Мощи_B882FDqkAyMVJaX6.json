@@ -1,0 +1,75 @@
+{
+  "name": "Blade of Baleful Might / Клинок Гибельной Мощи",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-blade.svg",
+  "folder": "1cA626hWd42KRoZm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 300,
+    "discipline": "sorcery",
+    "subtype": "Колдовской клинок",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "full",
+    "range": "Касание / PR×1м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Психический Клинок. Треб.: Inf 30+. Тратит Успехи на свойства психосилового оружия: 1У — Blinding(0), Flame, Power Field, Razor Sharp¹, Tainted, Tearing¹; 2У — Arc(6/2d10), Crippling(2)¹, Felling(2), Proven(3), Shocking, Toxic(1); 3У — Concussive(0/+1)², Extreme(9), Lance, Warp Weapon, Wrecker(2); 4У — Corrosive(3), Grav², Hallucinogenic(0), Haywire(0), Resonant; 5У — Flexible¹, Mighty². (¹R-профили; ²I(Cr)-профили; рейтинги ±1 за 1У.) +10 Запугивание. На 1 Раунд можно подавить свойства: атаки бьют на PR×5м (Rng 10, без штрафов тесноты).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "B882FDqkAyMVJaX6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122025500,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!B882FDqkAyMVJaX6"
+}

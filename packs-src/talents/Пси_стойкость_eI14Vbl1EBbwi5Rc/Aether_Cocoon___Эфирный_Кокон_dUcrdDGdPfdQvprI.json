@@ -1,0 +1,55 @@
+{
+  "name": "Aether Cocoon / Эфирный Кокон",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "eI14Vbl1EBbwi5Rc",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За каждую действующую на него психосилу (Вливания, Изменения, Ауры, Призывы с зонами влияния) персонаж уменьшает штраф к W от Daemonic Presence на 2, получает +2 на встречные тесты W против психосил (кроме непрямых), демонических даров и атак Одержимостью, и +1 АР против варп-оружия.",
+    "tier": 2,
+    "requirement": "For.Lore (Warp)+20",
+    "aptitudes": [
+      "psyker",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "dUcrdDGdPfdQvprI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121992048,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!dUcrdDGdPfdQvprI"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Secutorius / Секуторий",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "6zqwe7FwtprTdkL4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Полагается на свой щит, чтобы сблизиться с противником. Вооружённый щитом и рукопашным оружием с Rng не более 3, удваивает бонус Момента на парирование рукопашных атак и утраивает — на парирование атак метательным оружием, если парирует их щитом. Может потратить 3 Успеха на парирование оружия с дальностью 4 и выше или метательного, чтобы прижать оружие к земле щитом, лишаясь возможности использовать щит и лишая противника возможности использовать это оружие, пока Гладиатор его не отпустит.",
+    "tier": 2,
+    "requirement": "Неделимый, Parry+20, Deflect Shot",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Гладиатор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "oMNHDUkZRq2Q10ZI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786122000975,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!oMNHDUkZRq2Q10ZI"
+}

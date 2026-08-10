@@ -1,0 +1,49 @@
+{
+  "name": "Раковое Исцеление",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Дедушка дарует своему чемпиону целительное касание, заполняющее раны тех, на кого он накладывает своё благословение, стремительно разрастающимися опухолями. За полное действие персонаж может коснуться раненного персонажа (если тот не согласен — это может потребовать безоружной атаки) и влить в него частицу своей Порчи, затягивая его раны раковой тканью — цель исцеляется от Кровотечения и эффекта Crippling и получает количество аблативных Ран, равное количеству недостающих у неё Ран, но за каждую аблативную Рану её A и S уменьшаются на 2. Сумма аблативных Ран от Ракового Исцеления и собственных Ран персонажа не может превышать её максимум Ран и, если он восстанавливает Раны лечением, лишние аблативные Раны теряются.",
+    "source": "Дары Нургл, d100 22…25",
+    "roll": "22…25",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Qa1O4OJdRJQaAfOV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019812,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Qa1O4OJdRJQaAfOV"
+}

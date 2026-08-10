@@ -1,0 +1,60 @@
+{
+  "name": "Holographic Sacrament / Голографическое Таинство",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "8GjXrSY6ECJk7Qm5",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Голограф",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 5,
+    "energyCost": 0,
+    "sustainCost": 4,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -20,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Maglev Coils, Luminen Capacitors · Цена: 5К · Процесс: 4 · Тип: —] Треб.: P 50, Tech-Use+30, Holographic Host. Невидимость для обычного и теплового зрения. Засекается по следам/звуку Awareness+0 vs Stealth+0 (бой вслепую) или альт. чувством/Ноосферным Сканированием. Может скрывать и других персонажей в своём пространстве.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "9j8DHBwDDtateRJi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040604,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!9j8DHBwDDtateRJi"
+}

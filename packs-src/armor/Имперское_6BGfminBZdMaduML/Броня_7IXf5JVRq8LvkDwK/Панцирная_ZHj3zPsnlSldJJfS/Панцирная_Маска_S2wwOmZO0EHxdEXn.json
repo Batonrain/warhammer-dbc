@@ -1,0 +1,54 @@
+{
+  "name": "Панцирная Маска",
+  "type": "armor",
+  "folder": "ZHj3zPsnlSldJJfS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "carapace",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 6,
+    "body": 0,
+    "leftArm": 0,
+    "rightArm": 0,
+    "leftLeg": 0,
+    "rightLeg": 0,
+    "quality": "common",
+    "availability": 1,
+    "weight": 2,
+    "properties": [
+      "blinders",
+      "conductive",
+      "hard"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "",
+    "propRatings": {
+      "blinders": 180
+    }
+  },
+  "_id": "S2wwOmZO0EHxdEXn",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!S2wwOmZO0EHxdEXn"
+}

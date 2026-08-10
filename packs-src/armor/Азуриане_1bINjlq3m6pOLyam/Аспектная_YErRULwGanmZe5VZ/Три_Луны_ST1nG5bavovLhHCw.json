@@ -1,0 +1,58 @@
+{
+  "name": "Три Луны",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Три Луны были созданы на Ультве одним из многих ясновидящих этого мира–корабля. Тоскующий по трем лунам, что были в родной системе империи Эльдар, он добыл три камня душ что были с ними связаны и вставил в свою броню, получив невиданную мощь – но в один день камни душ и руны предсказали гибель этого ясновидца. Дабы его творение не потерялось, он создал несколько копий своей брони и оставил ее на Ультве, а сам отправился встречать свою смерть. Никто не знает чем окончилось путешествие этого ясновидца, но многие на Ультве считают его давно погибшим. В броню встроено три камня душ – синий, красный и зеленый. В начале каждого раунда персонаж должен совершить два броска d6 и выбрать любой бросок на свое усмотрение:\n",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 6,
+    "body": 7,
+    "leftArm": 6,
+    "rightArm": 6,
+    "leftLeg": 6,
+    "rightLeg": 6,
+    "quality": "common",
+    "availability": 5,
+    "weight": 4,
+    "properties": [
+      "aspect",
+      "protective",
+      "runesOfProtection",
+      "sealed",
+      "stealthed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Видящие). Как Рунная. В начале раунда — 2d6, выбор эффекта Трёх Лун (благословения/рок).",
+    "propRatings": {
+      "protective": 6
+    }
+  },
+  "_id": "ST1nG5bavovLhHCw",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!ST1nG5bavovLhHCw"
+}

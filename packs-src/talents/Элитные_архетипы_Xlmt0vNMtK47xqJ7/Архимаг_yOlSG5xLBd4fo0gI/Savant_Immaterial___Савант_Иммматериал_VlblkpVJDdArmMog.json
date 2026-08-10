@@ -1,0 +1,52 @@
+{
+  "name": "Savant Immaterial / Савант Иммматериал",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "yOlSG5xLBd4fo0gI",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Известен обширным арсеналом психосил и скоростью их освоения. Изучая любую психосилу, может сразу же без траты опыта изучить ещё одну психосилу, которая стоит в 2 раза меньше опыта или меньше.",
+    "tier": 3,
+    "requirement": "Тзинч, I 60, Total Recall",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Архимаг",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "VlblkpVJDdArmMog",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121985734,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VlblkpVJDdArmMog"
+}

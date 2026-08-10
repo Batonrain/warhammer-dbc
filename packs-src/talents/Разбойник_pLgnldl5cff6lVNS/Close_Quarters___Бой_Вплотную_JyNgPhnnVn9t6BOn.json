@@ -1,0 +1,55 @@
+{
+  "name": "Close Quarters / Бой Вплотную",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "pLgnldl5cff6lVNS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если персонаж вооружён ножом, кулаками, когтями и/или пистолетом, противники, начавшие Ход в рукопашной с ним, не получают по нему бонусов за более длинное оружие и получают −10 на попадание по нему любым оружием с Rng более 2.",
+    "tier": 1,
+    "requirement": "A 40",
+    "aptitudes": [
+      "ag",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "JyNgPhnnVn9t6BOn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121977775,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JyNgPhnnVn9t6BOn"
+}

@@ -1,0 +1,47 @@
+{
+  "name": "Мк III Железный",
+  "type": "armor",
+  "folder": "hl9JbGSR0VtrRVA8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 9,
+    "body": 12,
+    "leftArm": 9,
+    "rightArm": 9,
+    "leftLeg": 9,
+    "rightLeg": 9,
+    "quality": "common",
+    "availability": 3,
+    "weight": 300,
+    "properties": [],
+    "strengthBonus": 25,
+    "wpBonus": 0,
+    "special": "Тыл бронирован слабее: AP 9/7/6/6. Автоматика +5 вместо +10. Обзор 180°, угол 120°, штраф к Stealth до −20."
+  },
+  "_id": "wmuDbcWesZQ8g9NO",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785147451088,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!wmuDbcWesZQ8g9NO"
+}

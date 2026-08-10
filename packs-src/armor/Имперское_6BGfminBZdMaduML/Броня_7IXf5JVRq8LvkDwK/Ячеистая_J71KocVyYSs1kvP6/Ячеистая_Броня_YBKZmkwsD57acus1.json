@@ -1,0 +1,55 @@
+{
+  "name": "Ячеистая Броня",
+  "type": "armor",
+  "folder": "J71KocVyYSs1kvP6",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "mesh",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 4,
+    "body": 4,
+    "leftArm": 4,
+    "rightArm": 4,
+    "leftLeg": 4,
+    "rightLeg": 4,
+    "quality": "common",
+    "availability": 1,
+    "weight": 3,
+    "properties": [
+      "protective",
+      "open",
+      "stealthed",
+      "sealed"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "",
+    "propRatings": {
+      "protective": 2
+    }
+  },
+  "_id": "YBKZmkwsD57acus1",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!YBKZmkwsD57acus1"
+}

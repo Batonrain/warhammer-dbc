@@ -1,0 +1,49 @@
+{
+  "name": "Близнецы",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Боги дарят персонажу ещё одно тело для снаряжения и изменения. Раз в Раунд он может за свободное действие подёрнуться рябью искажённого пространства и сменить одно тело на другое. Второе тело при создании лишено всего снаряжения и бионики персонажа (включая Импланты Механикум, если они у персонажа были), не несёт следов травм и болезней (включая сверхъестественные, вроде вируса Облитератора) и лишено шрамов, татуировок и других модификаций, но в остальном идентично его основному телу, включая мутации. Оно имеет свои независимые Раны. При переключении между телами снаряжение и оружие отброшенного тела исчезает вместе с ним, заменяясь снаряжением и оружием нового.",
+    "source": "Общие мутации, d100 53",
+    "roll": "53",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "4ZbCZVle20Jt3HCG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122018522,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4ZbCZVle20Jt3HCG"
+}

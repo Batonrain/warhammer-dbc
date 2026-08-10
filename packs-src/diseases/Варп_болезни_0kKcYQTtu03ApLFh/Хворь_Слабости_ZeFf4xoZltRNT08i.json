@@ -1,0 +1,39 @@
+{
+  "name": "Хворь Слабости",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "nurgle",
+    "contagion": "",
+    "incubation": "10 часов (−1 ч за каждый Ход, в котором потрачены все ОД)",
+    "symptoms": "Использовал все очки действия за Ход → 1d5 урона А. Урон А восстанавливается раз в 3 часа (не раз в час); Медитация не помогает.",
+    "vectors": "Только через кровь (заражённый клинок/инъектор): непоглощённый урон или инъекция → Т−20 или заражение + немедленно 2d10 урона А.",
+    "cure": "Полное восстановление урона А.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "ZeFf4xoZltRNT08i",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!ZeFf4xoZltRNT08i"
+}

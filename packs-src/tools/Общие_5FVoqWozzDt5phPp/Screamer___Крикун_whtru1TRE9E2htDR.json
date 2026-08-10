@@ -1,0 +1,44 @@
+{
+  "name": "Screamer / Крикун",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Сигнализация с датчиком движения (периметр лагеря/проходы). Установка Tech-Use+0.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": -1,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Проходит Awareness на 1-75; засекая нарушителя в r30м — громкая тревога, слышна до 1 км.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Не различает своих/чужих — тревога на любом приближении.",
+      "good": "Безмолвная тревога по воксу.",
+      "best": "Как Good.Q; перебрасывает проваленные Awareness, замаскирован (−20 на его обнаружение)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "whtru1TRE9E2htDR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!whtru1TRE9E2htDR"
+}

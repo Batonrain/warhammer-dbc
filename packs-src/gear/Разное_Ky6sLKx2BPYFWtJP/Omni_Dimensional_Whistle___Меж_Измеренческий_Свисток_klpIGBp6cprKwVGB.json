@@ -1,0 +1,58 @@
+{
+  "name": "Omni-Dimensional Whistle / Меж-Измеренческий Свисток",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Спиральная ракушка из стекла, чей цвет выходит за пределы человеческого диапазона. Свисток слышен и в материальном мире, и в имматериуме.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.2,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "",
+    "effect": "Полудействие: свистнуть. Носитель получает 1 непоглощаемый R урон и не может говорить раунд, но свист слышен на 6 км в материальном мире и куда дальше в варпе. В 6 м от носителя материализуются низшие демоны и хищники варпа.\nЭто ОРДА, но считается одним персонажем: 2d10+F.b×6 ран, все характеристики F.b×6, F.b Поглощения, атака 2d10+F.b R/I/I(Cr)/E, Pen F.b, Warp Weapon.\nДемоны не нападают на владельца и его союзников. Возвращаются в варп после убийства всех врагов на поле боя либо через F.b часов. Свисток используется раз в шесть дней. Чрезмерное использование рано или поздно аукнется.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Раз в шесть НЕДЕЛЬ. После каждого использования — бросок на Варп-феномен с бонусом +30.",
+      "good": "Орда наносит псайкерам на бPR больше урона.",
+      "best": "Как Good.Q. Вместе с ордой приходит один из герольдов Богов Хаоса (точнее — отступник-ренегат), лояльный владельцу свистка."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "klpIGBp6cprKwVGB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!klpIGBp6cprKwVGB"
+}

@@ -1,0 +1,198 @@
+{
+  "name": "Мир-крепость",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "fortress",
+    "description": "Получите Hatred (выбрать), с которыми связан мир-крепость, и это работает также на стрелковых навыках.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Бесконечные враги",
+    "featureDesc": "Получите Hatred (выбрать), с которыми связан мир-крепость, и это работает также на стрелковых навыках.",
+    "charModLabel": "+3 BS, +3 W, −3 F",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "bs",
+          "value": 3
+        },
+        {
+          "stat": "wp",
+          "value": 3
+        },
+        {
+          "stat": "fel",
+          "value": -3
+        }
+      ]
+    }
+  },
+  "_id": "KhwUgeRFTAbDuFSY",
+  "effects": [
+    {
+      "name": "Мир-крепость (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.bs.total",
+            "type": "add",
+            "value": 3,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.wp.total",
+            "type": "add",
+            "value": 3,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.fel.total",
+            "type": "add",
+            "value": -3,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "1lQmzxVrzlQ76Q6b",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122043294,
+        "modifiedTime": 1786185863514,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!KhwUgeRFTAbDuFSY.1lQmzxVrzlQ76Q6b"
+    }
+  ],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 280469,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "8OtNFfZKokMmzNmi",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "7TqxA8DJTtrrReCh",
+              "kind": "characteristic",
+              "charKey": "bs",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "FTdbxKEvXHhcAJvr",
+              "kind": "characteristic",
+              "charKey": "wp",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "RkOSXluwk6nF05aJ",
+              "kind": "characteristic",
+              "charKey": "fel",
+              "field": "total",
+              "op": "add",
+              "value": -3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836767,
+    "modifiedTime": 1786224787854,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!KhwUgeRFTAbDuFSY"
+}

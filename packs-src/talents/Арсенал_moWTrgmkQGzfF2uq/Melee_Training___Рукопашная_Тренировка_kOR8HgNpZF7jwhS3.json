@@ -1,0 +1,55 @@
+{
+  "name": "Melee Training / Рукопашная Тренировка",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "moWTrgmkQGzfF2uq",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если персонаж не владеет этим Талантом для выбранного оружия, он может использовать только Обычную Атаку как приём, Стандартную Стойку и Базовый Хват с этим оружием. Булавы, Когти, Крюки, Кулаки и Щиты не нуждаются в этом Таланте.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [
+      "ws",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Глефа, Кистень, Кнут, Копьё, Меч, Молот, Нож, Посох, Топор, Штык",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "kOR8HgNpZF7jwhS3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121998437,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!kOR8HgNpZF7jwhS3"
+}

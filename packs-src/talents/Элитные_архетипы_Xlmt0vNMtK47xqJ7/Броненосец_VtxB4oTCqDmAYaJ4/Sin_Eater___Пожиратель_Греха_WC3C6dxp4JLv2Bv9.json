@@ -1,0 +1,52 @@
+{
+  "name": "Sin Eater / Пожиратель Греха",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "VtxB4oTCqDmAYaJ4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Могучие владыки Броненосцев черпают силу из душ тех, кого сразили на пути к славе. Когда Броненосец убивает другого чемпиона Хаоса, получает Трейт Unnatural Cor (+1), но только если Cor этого чемпиона был выше, чем текущее значение этого Трейта ×10.",
+    "tier": 3,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Броненосец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "WC3C6dxp4JLv2Bv9",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121985999,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WC3C6dxp4JLv2Bv9"
+}

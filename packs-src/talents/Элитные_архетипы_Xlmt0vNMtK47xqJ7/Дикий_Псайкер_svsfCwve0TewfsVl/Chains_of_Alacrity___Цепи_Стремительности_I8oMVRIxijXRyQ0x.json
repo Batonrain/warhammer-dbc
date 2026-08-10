@@ -1,0 +1,52 @@
+{
+  "name": "Chains of Alacrity / Цепи Стремительности",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "svsfCwve0TewfsVl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Фокусируя волю на движительных рунах Цепей, перемещается с пугающей скоростью. В начале своего Хода, сразу после регенерации Щита, может нанести в него тPR непоглощаемого урона, чтобы до начала своего следующего Хода удвоить рейтинг Трейта Hoverer и использовать W вместо A в тестах на Acrobatics и Dodge.",
+    "tier": 2,
+    "requirement": "Слаанеш, Cor 30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Дикий Псайкер",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "I8oMVRIxijXRyQ0x",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121976556,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!I8oMVRIxijXRyQ0x"
+}

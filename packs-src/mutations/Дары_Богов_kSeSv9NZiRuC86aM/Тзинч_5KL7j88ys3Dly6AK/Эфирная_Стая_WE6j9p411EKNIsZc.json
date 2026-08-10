@@ -1,0 +1,49 @@
+{
+  "name": "Эфирная Стая",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Душа каждого чемпиона привлекает стаи хищников Варпа, но чемпион Тзинча способен использовать их в свою пользу. За полное действие он может ослабить Завесу и проявить вокруг себя Inf.b нематериальных призрачных Крикунов, что кружатся вокруг него в течение Cor.b минут. Когда он получает попадание, после Избеганий, но до бросков на урон и щиты, он может пройти тест на Cor+0, чтобы влить частицу своей Порчи в одного из крикунов, придав ему реальность. В случае Успеха Крикун получает попадание вместо чемпиона и изгоняется в Варп. Это действие считается как реакция, но не тратит Реакций персонажа.",
+    "source": "Дары Тзинч, d100 55…58",
+    "roll": "55…58",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "WE6j9p411EKNIsZc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020209,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WE6j9p411EKNIsZc"
+}

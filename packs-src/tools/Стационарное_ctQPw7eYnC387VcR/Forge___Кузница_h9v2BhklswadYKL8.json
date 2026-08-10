@@ -1,0 +1,44 @@
+{
+  "name": "Forge / Кузница",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Индустриальные инструменты и верстаки для металлов/пластиков/электроники. Нужен для большинства тестов Крафта.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "Бонус по Редкости: R0 феодальная −10; R1 мануфакторум +0; R2 плазменная +10; R3 малый храм +20; R4 великий храм +30; R5 реликтовая +40.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "−10 на все тесты; ассистенты дают +5 вместо +10.",
+      "good": "+10 + один из: до 5 бригад одновременно / ×2 (или +2) макс. ассистентов / 5т, влезает в отсек техники (вместо 9 пассажиров).",
+      "best": "Вариант Good.Q + серво-ассистенты (работают как 1 ассистент и +1 к макс. ассистентов)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "h9v2BhklswadYKL8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!h9v2BhklswadYKL8"
+}

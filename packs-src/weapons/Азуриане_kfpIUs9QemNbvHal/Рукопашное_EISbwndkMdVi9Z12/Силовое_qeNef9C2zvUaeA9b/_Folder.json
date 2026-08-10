@@ -1,0 +1,21 @@
+{
+  "name": "Силовое",
+  "type": "Item",
+  "folder": "EISbwndkMdVi9Z12",
+  "sorting": "m",
+  "_id": "qeNef9C2zvUaeA9b",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!qeNef9C2zvUaeA9b"
+}

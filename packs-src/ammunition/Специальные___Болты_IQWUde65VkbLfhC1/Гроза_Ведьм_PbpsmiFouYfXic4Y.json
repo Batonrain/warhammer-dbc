@@ -1,0 +1,46 @@
+{
+  "name": "Гроза Ведьм",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-bolt.svg",
+  "folder": "IQWUde65VkbLfhC1",
+  "system": {
+    "description": "Ядро с нейроингибиторами и варп-поглощающими материалами. Если цель получила хотя бы 1 урона, она должна развеять одну психосилу (по выбору), понижает свой тPR на 1 на 1d10 Ходов и немедленно проходит тест на нестабильность при Трейте Warp Instability.",
+    "notes": "",
+    "weaponTypes": [
+      "bolt"
+    ],
+    "ammoCategory": "bolts",
+    "rarity": 3,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 3,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "При ≥1 урона: развеять психосилу, −1 тPR на 1d10 ходов, тест на нестабильность",
+    "properties": []
+  },
+  "_id": "PbpsmiFouYfXic4Y",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!PbpsmiFouYfXic4Y"
+}

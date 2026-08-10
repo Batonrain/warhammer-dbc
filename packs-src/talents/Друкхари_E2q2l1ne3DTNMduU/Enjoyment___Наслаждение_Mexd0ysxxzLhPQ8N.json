@@ -1,0 +1,55 @@
+{
+  "name": "Enjoyment / Наслаждение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "E2q2l1ne3DTNMduU",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получив выбранный эффект от противника (кроме Наркотика, который применяет сам персонаж), персонаж однократно за бой получает 1 Боли без траты Реакции.",
+    "tier": "2",
+    "requirement": "Нет",
+    "aptitudes": [
+      "t",
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Усталость, Отравление, Кровотечение, Оглушение, Наркотик, Непоглощённый Урон, Критический Эффект",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Mexd0ysxxzLhPQ8N",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121979801,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Mexd0ysxxzLhPQ8N"
+}

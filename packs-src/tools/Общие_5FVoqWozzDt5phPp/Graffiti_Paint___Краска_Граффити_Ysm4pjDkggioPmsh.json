@@ -1,0 +1,44 @@
+{
+  "name": "Graffiti Paint / Краска Граффити",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Аэрозольная краска в баллончике-распылителе: искусство, метки для идущих следом, ритуальные круги.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.1,
+    "availability": -4,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "В ближнем бою −20 (забрызгать визор — Избирательно по глазам; замазать колдовской узор на броне, нарушив работу).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Токсична: вдох без респиратора действует как Hallucinogenic(−2).",
+      "good": "Светится в темноте.",
+      "best": "Видна только при ультрафиолетовом фонаре."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "Ysm4pjDkggioPmsh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!Ysm4pjDkggioPmsh"
+}

@@ -1,0 +1,41 @@
+{
+  "name": "Штурмавыи лодки",
+  "type": "smallCraft",
+  "img": "systems/warhammer-dbc/assets/item-icons/small-craft.svg",
+  "folder": "vDlXcVIngmxbLKhX",
+  "system": {
+    "description": "",
+    "notes": "",
+    "craftKind": "assaultBoat",
+    "faction": "Орки",
+    "cr": 8,
+    "crAlt": 0,
+    "spd": 10,
+    "squadronSize": 15,
+    "props": "Нет",
+    "rarity": 0,
+    "qty": 1,
+    "state": "stored",
+    "strength": "full"
+  },
+  "_id": "cNoBkYNUDRRVTuRm",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783249735219,
+    "modifiedTime": 1783249735219,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!cNoBkYNUDRRVTuRm"
+}

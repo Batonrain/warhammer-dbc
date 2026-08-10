@@ -1,0 +1,52 @@
+{
+  "name": "Herald of Darkness / Герольд Тьмы",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "bVdkbbmtp2ey1CBH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может получать очки для Губительных способностей даже от противников, убитых губительными способностями. Все атаки усиливаются: Doomfire (50 м, S/3/6, 1d10+11 E, Pen 6, Corrosive (6), Crippling (6)), Doomshock (50 м, S/5/10, 1d10+4 E, Pen 4), Doomstorm (150 м, 1d10+8 E, Pen 8, Blast (12), Corrosive (4)), Doomwave (20 м, 1d10+Daemonic E, Pen 4, Corrosive, Crippling (3), Spray). Губительный Щит усиливается (Ослепительный Свет 3 → Яркий 2 → Слабый 1 → Тьма 0; в обратную сторону Тьма 5 → Слабый 4 → Яркий 3 → Ослепительный 2). Добавляется Губительное Исцеление: за Полудействие излечивает себе или союзнику Daemonic ран, но сам может лечиться так лишь раз в три раунда.",
+    "tier": 3,
+    "requirement": "Hungry Darkness, Doom Runes",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Житель Бездны",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "KI1fxpqwMwB3IOVc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121978017,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KI1fxpqwMwB3IOVc"
+}

@@ -1,0 +1,60 @@
+{
+  "name": "Might of Elder Jacob / Мощь Старца Иакова",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "QU1EHlGpa6Y3D7Fs",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "ЭФМ",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 2,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 10,
+    "action": "reaction",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: EFM Circuits, Maglev Coils · Цена: 3К+2Э · Процесс: Нет · Тип: Избегание, Компенсатор (1), Славословие (1), Реакция] Треб.: For.Lore (Mechanicum)+30. Парирует любую рукопашную атаку и все её попадания (игнор разницы Размеров/Flexible/эффектов, игнорирующих Парирование). Tech-Use(I)+10 vs S+0; при победе перекидывает атакующего на ½I.b(окр.▲) м (урон как от падения с этой высоты).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "pjwDLU5ORx8OqehM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042549,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pjwDLU5ORx8OqehM"
+}

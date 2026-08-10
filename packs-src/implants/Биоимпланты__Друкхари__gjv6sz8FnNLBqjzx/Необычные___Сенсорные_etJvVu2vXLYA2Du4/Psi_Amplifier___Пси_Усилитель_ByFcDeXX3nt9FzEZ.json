@@ -1,0 +1,67 @@
+{
+  "name": "Psi-Amplifier / Пси-Усилитель",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 3. Резонирующий с варпом орган в мозге.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Резонирующий с варпом орган: +1 эPR. Дефект (до Best.Q): +15 к варп-феноменам, +5 к варп-прорывам.\nPoor.Q: без бонуса эPR; +20 феномены / +10 прорывы.\nGood.Q: +10 феномены, +5 прорывы нивелируется.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Чистый канал (+2 эPR); 2) Пси-фильтр (+20 на свои феномены/прорывы); 3) Успокаивающий резонанс (−10 феномены/прорывы); 4) Скрытый резонанс (перед манифестацией W−30 — скрыть следы психосилы).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "etJvVu2vXLYA2Du4",
+  "_id": "ByFcDeXX3nt9FzEZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122012113,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ByFcDeXX3nt9FzEZ"
+}

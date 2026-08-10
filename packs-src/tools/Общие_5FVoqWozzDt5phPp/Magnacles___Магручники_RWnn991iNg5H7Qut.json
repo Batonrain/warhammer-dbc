@@ -1,0 +1,44 @@
+{
+  "name": "Magnacles / Магручники",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Как наручники, но сковывают одну конечность электромагнитом к магнитной поверхности.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.5,
+    "availability": -1,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Прикованная цель не может двигаться. Ключ → трос до 5м (движение в пределах, конечность −30). Цифровой замок — не взломать отмычкой. Все руки прикованы без тросов = Беспомощен. Качество как у наручников.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Взлом +10/5У; Сломать 8AP/3Стр; Вырваться Пор50/3У.",
+      "good": "Взлом −20/20У; Сломать 16AP/10Стр; Вырваться Пор80/7У.",
+      "best": "Взлом −30/30У; Сломать 20AP/13Стр; Вырваться Пор100/9У."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "RWnn991iNg5H7Qut",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!RWnn991iNg5H7Qut"
+}

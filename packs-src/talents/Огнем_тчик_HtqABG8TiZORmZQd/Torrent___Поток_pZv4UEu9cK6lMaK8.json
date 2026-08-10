@@ -1,0 +1,55 @@
+{
+  "name": "Torrent / Поток",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "HtqABG8TiZORmZQd",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Стреляя из огнемёта, над которым работал хотя бы 1 смену, персонаж может удвоить расход боеприпасов, чтобы вместо каплевидного шаблона поместить шаблон Blast(Rng/5+1) в пределах удвоенной обычной дальности и прямой видимости. Наносит попадание по правилам Spray.",
+    "tier": 3,
+    "requirement": "Tech-Use, Weapon Training (Flame)",
+    "aptitudes": [
+      "offence",
+      "tech"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "pZv4UEu9cK6lMaK8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122002399,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pZv4UEu9cK6lMaK8"
+}

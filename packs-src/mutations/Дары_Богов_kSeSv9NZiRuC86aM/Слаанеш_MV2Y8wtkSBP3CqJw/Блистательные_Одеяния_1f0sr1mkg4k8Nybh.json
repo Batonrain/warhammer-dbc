@@ -1,0 +1,49 @@
+{
+  "name": "Блистательные Одеяния",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Что бы чемпион ни надел, на нём это выглядит изысканно и стильно. Его одежда, броня и снаряжение трансформируются, выглядя как Best.Q. Это не иллюзия — предметы физически преображаются, касаясь персонажа. Раз за бой или сцену, потратив Очко Бесчестия, он может приковать к величию своего одеяния всех вокруг: все, кто его видят, кроме тех, кого он осознанно исключил из эффекта, должны пройти тест на W−30 (считается как против психосилы), или до начала следующего Хода персонажа способны видеть только его, считая всех остальных невидимыми.",
+    "source": "Дары Слаанеш, d100 92…94",
+    "roll": "92…94",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "1f0sr1mkg4k8Nybh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122018315,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1f0sr1mkg4k8Nybh"
+}

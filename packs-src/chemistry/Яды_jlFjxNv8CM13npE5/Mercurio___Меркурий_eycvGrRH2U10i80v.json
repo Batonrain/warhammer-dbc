@@ -1,0 +1,126 @@
+{
+  "name": "Mercurio / Меркурий",
+  "type": "drug",
+  "img": "systems/warhammer-dbc/assets/item-icons/drug-poison.svg",
+  "system": {
+    "description": "Мощное седативное, усыпляющее цель.",
+    "notes": "",
+    "drugCategory": "poison",
+    "deliveryMethod": "injection",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "duration": "",
+    "effect": "Тест T−70.",
+    "afterEffect": "",
+    "afterEffectDice": "",
+    "afterEffectCharDamage": {
+      "stat": "",
+      "formula": ""
+    },
+    "hasAfterEffect": false,
+    "addiction": {
+      "hasAddiction": false,
+      "isAddicted": false,
+      "minDose": 0,
+      "testChar": "t",
+      "testMod": 0,
+      "frequency": "",
+      "penalty": ""
+    },
+    "statMods": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0
+    },
+    "afterEffectStatMods": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0
+    },
+    "specialEffects": {
+      "removesBleedingLevels": 0,
+      "removesHaemorrhagingLevels": 0,
+      "removesFatigueLevels": 0,
+      "removesWounds": 0,
+      "healFormula": "",
+      "healsWoundsPerRound": "",
+      "woundDamage": "",
+      "grantsFatigue": 0,
+      "woundsToToughness": false,
+      "removesCondition": "",
+      "removesConditionLevel": 0,
+      "grantsCondition": "",
+      "grantsConditionLevel": 1,
+      "immuneToPoisons": false,
+      "counteractsDrugs": false,
+      "removesRadiation": false,
+      "bonusVsPoisons": 0,
+      "reduceDamageOnHit": 0,
+      "noSleepNeeded": false,
+      "noFatigueFromMarch": false,
+      "customEffect": ""
+    },
+    "afterEffectSpecial": {
+      "removesBleedingLevels": 0,
+      "removesHaemorrhagingLevels": 0,
+      "removesFatigueLevels": 0,
+      "removesWounds": 0,
+      "healFormula": "",
+      "woundDamage": "",
+      "grantsFatigue": 0,
+      "grantsCondition": "",
+      "grantsConditionLevel": 1,
+      "customEffect": ""
+    },
+    "poisonVector": [
+      "injection"
+    ],
+    "poisonEffect": "Провал → в конце Хода засыпает на 1 час; накапливающийся штраф −5 на повторный тест.",
+    "poisonTestChar": "t",
+    "poisonTestMod": -70,
+    "activeEffect": {
+      "isActive": false,
+      "isAfterEffect": false,
+      "appliedAt": null,
+      "expiresAt": null,
+      "roundsRemaining": 0,
+      "charDamageStat": "",
+      "charDamageAmount": 0
+    }
+  },
+  "folder": "jlFjxNv8CM13npE5",
+  "_id": "eycvGrRH2U10i80v",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781650101934,
+    "modifiedTime": 1782752980922,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!eycvGrRH2U10i80v"
+}

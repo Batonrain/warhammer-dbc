@@ -1,0 +1,44 @@
+{
+  "name": "Ghillie Kit / Гиль Комплект",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Сетки, разгрузки, обрывки ткани и мази для маскировки под дикую местность.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 0,
+    "quality": "common",
+    "toolCategory": "consumable",
+    "effect": "Потратив набор и час работы — эффект Best.Q хамелеолинового плаща для этой местности на 1 день (или пока не снять костюм). Через день камуфляж вянет — собирать заново.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "50gewTwUAjnZwIc7",
+  "_id": "2Sy4eh0gY9nAFIzE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!2Sy4eh0gY9nAFIzE"
+}

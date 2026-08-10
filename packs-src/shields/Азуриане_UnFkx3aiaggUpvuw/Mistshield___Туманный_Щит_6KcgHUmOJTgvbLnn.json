@@ -1,0 +1,42 @@
+{
+  "name": "Mistshield / Туманный Щит",
+  "type": "forcefield",
+  "folder": "UnFkx3aiaggUpvuw",
+  "system": {
+    "description": "Личный щит корсаров. Пока активен — испускает туман, считающийся укрытием 8 AP от E(Ls). Перегрузка: яркая вспышка создаёт область 10 м на 1d10 раундов, укрытие 12 AP против E(Ls).",
+    "notes": "",
+    "shieldNature": "technological",
+    "shieldType": "dome",
+    "ratingMin": 1,
+    "ratingMax": 50,
+    "overloadThreshold": 10,
+    "currentRating": 0,
+    "isSpecialRating": false,
+    "equipped": false,
+    "status": "inactive",
+    "quality": "common",
+    "availability": 2,
+    "weight": 4
+  },
+  "_id": "6KcgHUmOJTgvbLnn",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805492,
+    "modifiedTime": 1782752979845,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!6KcgHUmOJTgvbLnn"
+}

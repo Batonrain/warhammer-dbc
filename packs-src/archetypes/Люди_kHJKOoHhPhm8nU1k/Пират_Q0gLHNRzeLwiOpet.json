@@ -1,0 +1,53 @@
+{
+  "name": "Пират",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "kHJKOoHhPhm8nU1k",
+  "system": {
+    "key": "pirate",
+    "race": "human",
+    "group": "",
+    "charBonus": {
+      "ws": 5,
+      "bs": 2
+    },
+    "charChoice": "",
+    "skills": "Acrobatics, Awareness, Dodge+10, Parry, Stealth, Common Lore (Imperial Fleet, Tech), Operate (Aeronautica), Commerce или Intimidate, Interrogate или Security, Trade (Technomat, Voidfarer), Awareness+10 или Parry+10",
+    "talents": "Ambidextrous, Jaded, Quick Draw, Two Weapon Wielder (Melee, Ranged), Melee Training (любые 3), Weapon Training (любые 4), Lightning Reflexes/Drop and Roll, Catfall/Pirouette, Blind Fighting/Steady Footwork/Street Fighting, Double Team/Disarm/Takedown, Close Quarters/Plasma Expertise/Wallop, Gun Guard/Sideblade/Knife Fighter",
+    "gear": "Vox-Бусина (+Fist Grip)/Bolt Revolver/Plasma Pistol, Chain Weapon (до R1, Good.Q)/Power Weapon (до R2), Shock Weapon (до R1)/Snare Gun (Good.Q)/Webber, 6 модификаций для оружия (до R2), Xeno Mesh (+Void)/Void Suit Helmet, 3 модификации для брони (до R2), Recoil Glove (Best.Q)/Mag-Boots (Good.Q)/Gravchute, Rebreather (Best.Q)/Photo-Visor (Best.Q)/Chem Injector (Good.Q)",
+    "wounds": "10+1d5",
+    "infRoll": "",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Заработал навыки и славу на борту корабля — Имперский Флот, Вольный Торговец или банда Хаоса.",
+    "trait": {
+      "name": "Take Everything / Забирай Всё",
+      "benefit": "Преимущество на все тесты поиска/оценки трофеев. Несёт предметы до своего веса Ношения независимо от разгрузки (всё считается на удобных разгрузках)."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "Q0gLHNRzeLwiOpet",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536189,
+    "modifiedTime": 1786285536193,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Q0gLHNRzeLwiOpet"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Shield of Chains / Щит Цепей",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "zT2Ovr1Nc79zbuTy",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Защищён мощным психическим щитом из Порванных Цепей. Полученное попадание наносится по Щиту (бPR×3 Ран, бPR AP, поглощает через W.b вместо T.b). В начале каждого Хода Щит восстанавливает тPR Ран. Когда Щит теряет все Раны, он отключается, но весь «лишний» урон игнорируется; пока отключён, Псайкер получает урон как без Трейта. Щит включается обратно, только когда регенерирует все Раны. Игнорируется атаками, которые игнорировали бы чародейский щит-купол. При отрицательном истончении Завесы (Имперские храмы) не регенерирует Раны; при истончении Завесы 3+ (демонический мир) регенерирует бPR Ран вместо тPR.",
+    "source": "Элитный архетип: Дикий Псайкер",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "MlgZ7fPRNiHqF5pz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121959251,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MlgZ7fPRNiHqF5pz"
+}

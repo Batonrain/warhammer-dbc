@@ -1,0 +1,52 @@
+{
+  "name": "Chosen Flame / Избранное Пламя",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "VtxB4oTCqDmAYaJ4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Мощь Богов вливается в оружие Броненосца, манифестируясь на кромках лезвий как призрачное пламя. Может за свободное действие потратить Очко Бесчестия, чтобы до конца боя или сцены дать всему своему рукопашному оружию +½Cor.b (окр.▲) к Dmg и Pen и убрать свойство Primitive. Это оружие игнорирует Трейты Daemonic и Stuff of Nightmares.",
+    "tier": 3,
+    "requirement": "Неделимый, Inf 50, Cor 50",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Броненосец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "aoUvldl2fk680JXX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121990113,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aoUvldl2fk680JXX"
+}

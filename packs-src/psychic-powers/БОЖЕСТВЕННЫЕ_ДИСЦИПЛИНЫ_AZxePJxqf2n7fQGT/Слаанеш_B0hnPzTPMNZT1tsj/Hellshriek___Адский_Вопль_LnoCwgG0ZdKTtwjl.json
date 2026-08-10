@@ -1,0 +1,75 @@
+{
+  "name": "Hellshriek / Адский Вопль",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-slaanesh.svg",
+  "folder": "B0hnPzTPMNZT1tsj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "slaanesh",
+    "subtype": "",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "cor",
+    "testMod": 0,
+    "action": "free",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2d10+PR",
+    "damageType": "rending",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Психический Взрыв (3×PR) · Стрельба. Психотест Cor+0. Треб.: Метка Слаанеш, T 40+. Взрыв на псайкере, попадания в голову. Профиль: 2d10+PR R, Pen 0, Blast (3×PR), Concussive (1), Warp Weapon. Покровительство Слаанеш/лишённые слуха игнорируют.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "LnoCwgG0ZdKTtwjl",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122029604,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LnoCwgG0ZdKTtwjl"
+}

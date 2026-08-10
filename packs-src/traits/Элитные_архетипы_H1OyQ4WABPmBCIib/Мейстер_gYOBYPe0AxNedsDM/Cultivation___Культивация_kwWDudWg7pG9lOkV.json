@@ -1,0 +1,51 @@
+{
+  "name": "Cultivation / Культивация",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "gYOBYPe0AxNedsDM",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Вирус Жизни в теле пациента собирает его страдания и боль, накапливая их для сбора Мейстером. Каждый раз, когда пациент теряет Аблативные Раны от Вируса Жизни от урона или истечения времени (но не от потери эффекта из-за инъекции другому пациенту), он получает 1 Культивации (максимум 3). Если пациент не страдал от болезней и не получал урона за время действия вируса, Культивации нет. За полное действие Мейстер может собрать всю Культивацию с пациента, символически осматривая его и беря образцы крови или плоти. Может накапливать до 3 Культивации (больше на дальнейших Стадиях) и тратить на эффекты: при Провале любого теста Medicae заменить его 1 Успехом; при Провале теста T для Regeneration заменить его 1 Успехом; дать пациенту при инъекции возможность 1 раз до конца действия вируса заменить 1 Успехом Провал теста против болезни или для снятия Зависимости от наркотиков. Несобранная в течение 7 часов Культивация теряется, и пациент проходит тест T+0 или заражается случайной болезнью по выбору ГМа (чем больше помощи он получил за жизнь и чем значимее как личность, тем опаснее болезнь).",
+    "source": "Элитный архетип: Мейстер",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "kwWDudWg7pG9lOkV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121961237,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!kwWDudWg7pG9lOkV"
+}

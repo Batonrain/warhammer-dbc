@@ -1,0 +1,53 @@
+{
+  "name": "Pacifier Helm / Шлем Усмиритель",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Комплекс визоров и когитаторов, «затирающий» изображения запрограммированных союзников и подсвечивающий врагов. Является визором; интегрируется только в закрытый шлем.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "head",
+    "worn": "Голова (И, визор)",
+    "effect": "В Ярости персонаж не нападает на союзников (и не видит/слышит их); +10 на Awareness для обнаружения врагов.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Не заменяет союзников предметами, а стирает из зрения (можно натыкаться в бою).",
+      "good": "Автоматически включается при впадении в Ярость и выключается при выходе.",
+      "best": "Как Good.Q; +1 раз за бой/сцену впадать в Ярость и Талант Fire in Blood, если нет."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "UiZz594A4rVxruoa",
+  "_id": "T4oGaDg9RuxAiKCk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!T4oGaDg9RuxAiKCk"
+}

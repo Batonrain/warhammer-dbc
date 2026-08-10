@@ -1,0 +1,55 @@
+{
+  "name": "Meltdown / Расплавление",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "HfTlTkQPDwQ9Yqqn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Имея лаз-оружие с улучшением Power Setting и металлический нож, за полудействие персонаж проходит Tech-Use+10. При Провале ломает оружие (починка — смена работы); при Успехе оружие через 1d5 Раундов взрывается шаблоном 3d10+10 Dmg, Pen 14, Blast(3), уничтожая батарею, оружие и нож. На 1–4 Успеха ГМ бросает время до взрыва тайно, на 5+ — игрок сам. При Крит-Провале взрывается немедленно в руках. Плавящееся оружие можно лепить на магнитные поверхности как гранату.",
+    "tier": 1,
+    "requirement": "Tech-Use, Weapon Training (Las)",
+    "aptitudes": [
+      "offence",
+      "tech"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "aTz9wiVLNysEv5BA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121989723,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aTz9wiVLNysEv5BA"
+}

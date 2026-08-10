@@ -1,0 +1,33 @@
+{
+  "name": "Бульдозерный Отвал / Dozer Blade",
+  "type": "vehicleGear",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Тяжёлый отвал прикрывает ходовую с фронта и расчищает путь через трудный ландшафт. Уменьшает штраф Трудного Ландшафта на 10. Когда машина получает попадание в Шасси со Лба, бросьте 1d10 — на 5+ это попадание в корпус.",
+    "notes": "",
+    "availability": 1,
+    "quality": "common",
+    "active": true
+  },
+  "_id": "di2UYE5Nm4zSxHb2",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783179040775,
+    "modifiedTime": 1783179040775,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!di2UYE5Nm4zSxHb2"
+}

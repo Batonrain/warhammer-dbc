@@ -1,0 +1,51 @@
+{
+  "name": "Paradox Veil / Вуаль Парадокса",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "4F6ZUgR7hVW6YdHR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Наполовину технологическое, наполовину демоническое устройство стирает его с восприятия любых технологических сенсоров и Ноосферы: микрофоны не слышат, пикт-фидеры и визоры не видят, ауспексы не засекают. Для полностью кибернетических Механикум невидим, неслышим и неощутим. Генераторы Вуали защищены колдовскими печатями и неуязвимы к Пси-Чутью. Раз в Ход может включить/выключить Вуаль полностью или частично (оставшись невидимым для визуальных сенсоров, но став слышимым или засекаемым тепловидением).",
+    "source": "Элитный архетип: Тех-Ассасин",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "b5a19yLTSOdwMUcx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121960388,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!b5a19yLTSOdwMUcx"
+}

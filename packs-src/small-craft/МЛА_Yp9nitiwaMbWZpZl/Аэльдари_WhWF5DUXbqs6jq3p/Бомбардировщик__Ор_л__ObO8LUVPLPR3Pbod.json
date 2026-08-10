@@ -1,0 +1,41 @@
+{
+  "name": "Бомбардировщик «Орёл»",
+  "type": "smallCraft",
+  "img": "systems/warhammer-dbc/assets/item-icons/small-craft.svg",
+  "folder": "WhWF5DUXbqs6jq3p",
+  "system": {
+    "description": "",
+    "notes": "",
+    "craftKind": "bomber",
+    "faction": "Аэльдари",
+    "cr": 6,
+    "crAlt": 0,
+    "spd": 9,
+    "squadronSize": 6,
+    "props": "Excellent Pilots",
+    "rarity": 0,
+    "qty": 1,
+    "state": "stored",
+    "strength": "full"
+  },
+  "_id": "ObO8LUVPLPR3Pbod",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783249735219,
+    "modifiedTime": 1783249735219,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!ObO8LUVPLPR3Pbod"
+}

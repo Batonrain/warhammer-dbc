@@ -1,0 +1,51 @@
+{
+  "name": "Regeneration / Регенерация (X)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Тело залечивает раны на глазах. В начале каждого Хода тест T+0; при успехе восстанавливает X Ран (раундовый авто-тик пока не автоматизирован — отслеживайте вручную).",
+    "notes": "",
+    "benefit": "В начале Хода тест T+0 → +X Ран.",
+    "source": "биология/Варп",
+    "hasRating": true,
+    "rating": 3,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "6cf11ucGdzYt6ndt",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781652069530,
+    "modifiedTime": 1786121957425,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6cf11ucGdzYt6ndt"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Old Feelings / Старые Ощущения",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "DoDmUjNRjDaA9i7t",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Больше не получает Очки Боли от обычных условий — только от смерти тысячи рабов в агонии, разрушения чьего-то мира и иных невероятно глубоких ощущений. Взамен удваивает лимит Очков Боли и при начале любой битвы автоматически получает максимум, который сгорает после боя. Получает искажение лица (выглядит старше на десятилетия или столетия): +20 на Запугивание и Допрос (включая Пытки), но −20 на все остальные социальные тесты, кроме Командования. Надев маску, убирает и бонус, и штраф.",
+    "source": "Элитный архетип: Архонт",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "OnFRVVj8O0mhuClc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121959439,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!OnFRVVj8O0mhuClc"
+}

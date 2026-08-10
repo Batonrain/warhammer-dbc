@@ -1,0 +1,53 @@
+{
+  "name": "Nightmarescope / Кошмароскоп",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Закрытый серебряный визор, показывающий за спиной каждого разумного его худшие страхи.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.1,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Глаза (визор)",
+    "effect": "За полудействие Scrutiny(P)+0: при Успехе жертва −3×Успехи на все тесты сопротивления социальным взаимодействиям и психосилам разума от персонажа.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "При Провале Scrutiny+0 персонаж считает цель имеющей Страх 2 до начала след. Раунда.",
+      "good": "Активация Scrutiny(P)+5.",
+      "best": "Активация Scrutiny(P)+10."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "AoMhLrZd89OFl3Ua",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!AoMhLrZd89OFl3Ua"
+}

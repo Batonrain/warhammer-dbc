@@ -1,0 +1,55 @@
+{
+  "name": "Guiding Hand / Направляющая рука",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "MYOD0OOi7KxbCTzK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Проводя как минимум Смену работы в день, пока он на борту, CR растёт на 5 при Trade (Voidfarer) +10, на 10 — при +20 и на +15 при +30.",
+    "tier": 1,
+    "requirement": "Trade (Voidfarer) +10, Trade (Instructor)",
+    "aptitudes": [
+      "fel",
+      "social"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zg5Ul1GuQWo8Ze4p",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160740113,
+    "modifiedTime": 1786122010233,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zg5Ul1GuQWo8Ze4p"
+}

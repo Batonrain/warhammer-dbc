@@ -1,0 +1,53 @@
+{
+  "name": "Respirator / Респиратор",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Дыхательная маска, фильтрующая вдыхаемые газы.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.1,
+    "availability": -1,
+    "quality": "common",
+    "gearCategory": "head",
+    "worn": "Голова (И)",
+    "effect": "+30 на тесты T против вдыхаемых газов. Замена фильтров через 1 час/после сцены. 5 запасных фильтров (R−3, 50 г, 5 = 1 магазин). Надеть за Реакцию/свободное действие (нужна свободная рука).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Бонус +20.",
+      "good": "Бонус +40.",
+      "best": "Бонус +40, не требует замены фильтров."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "UiZz594A4rVxruoa",
+  "_id": "GfZO3KqGHbEBRWfK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!GfZO3KqGHbEBRWfK"
+}

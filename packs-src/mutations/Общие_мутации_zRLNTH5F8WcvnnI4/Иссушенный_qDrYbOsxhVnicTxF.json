@@ -1,0 +1,49 @@
+{
+  "name": "Иссушенный",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Тело персонажа худеет, пока не остаётся только обтянутый кожей скелет. Он страдает от постоянного голода, который невозможно утолить, так как любая крупица еды, попадая в его глотку, исчезает в Варп. Он чудесным образом сохраняет свою силу, невзирая на потерю мышечной массы, и не может умереть от голода, питаемый силой Богов. Персонаж получает штраф −10 на все социальные взаимодействия и −5 на все ментальные действия в присутствии еды, т.к. его внимание приковано к яствам, пусть они и неспособны утолить его голод.\n\nУсталость накладывает на персонажа штраф −20 вместо обычного −10.",
+    "source": "Общие мутации, d100 25",
+    "roll": "25",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "qDrYbOsxhVnicTxF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122021823,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qDrYbOsxhVnicTxF"
+}

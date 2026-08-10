@@ -1,0 +1,51 @@
+{
+  "name": "Vengeful Spirit / Мстительный Дух",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "foutd4GzPCUo8Jyv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Демон-покровитель при заключении Пакта отрывает от себя крохотную частичку своей сущности, формируя из неё мелкого демона, привязанного к душе смертного. Дух имеет 30 WS, BS, I, P, W и F (больше на дальнейших Стадиях), Навыки Awareness, Charm, Intimidate, Security, Stealth и 5 Знаний на выбор ГМа, Трейты Incorporeal и Warp Sight; не может покидать пространства персонажа и двигается вместе с ним. Действует как советник и наставник (может обучать своим Навыкам) и подсказывает пределы справедливого возмездия с точки зрения кредо Кхорна. Дух служит проводником благословений Пакта и имеет 3 Очка Мести (больше на дальнейших Стадиях), восстанавливающихся в начале каждого боя или сцены. Ревенант тратит их на эффекты, но окончательное решение о трате за Духом (ГМом), который может не разрешить трату или потратить Очко без желания Ревенанта: при Провале любой атаки по Ненавистной цели или Заклятому Врагу заменить его 1 Успехом; при проигрыше в тесте Stealth vs Awareness (пробраться мимо охраны такого врага) или Awareness vs Stealth (выследить его) вместо этого победить; как трата Очка Бесчестия на атаку (Усиление, Переброс, Успех, Атака Ненависти, активация Талантов вроде Killing Strike, Eye of Vengeance или Sure Shot); при атаке по такому врагу сделать так, что попадания нельзя перенести на другую цель (Талантом Unholy Devotion, Трейтом Fanatic или механиками Орды); сделать своё оружие или пару одноручных Оружием Наследия до конца боя (автоматически имеет Наследие Гнева и получает 1 Мутацию на выбор Ревенанта; стоит 2 Очка Мести, если это не Оружие Возмездия).",
+    "source": "Элитный архетип: Ревенант",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "38NaM578jhH6ijzj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121957224,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!38NaM578jhH6ijzj"
+}

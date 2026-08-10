@@ -1,0 +1,51 @@
+{
+  "name": "Fevered Speed / Горячечная Скорость",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "mp80UDDbesh2I1kr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Энергия жизни, расходящаяся от вздутого паразитами живота, придаёт ему неестественную дёрганую скорость. Может уменьшать рейтинг Трейта Unnatural T, чтобы получать преимущества (в т.ч. несколько раз за Раунд): 1Un.T — Трейт Unnatural A (+2) на 1 Раунд; 1Un.T — +1 Реакция на 1 Раунд (в т.ч. вне своего Хода); 2Un.T — безоружная атака за свободное действие, но не более ½ A.b (окр.▼) раз в Ход; 2Un.T — полудвижение за свободное действие; 2Un.T — покрыть оружие ядом за свободное действие. Потраченные рейтинги Unnatural T восстанавливаются только пожиранием трупов.",
+    "source": "Элитный архетип: Чумной Монах",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "e2zBRsO7b9mPaoGj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121960706,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!e2zBRsO7b9mPaoGj"
+}

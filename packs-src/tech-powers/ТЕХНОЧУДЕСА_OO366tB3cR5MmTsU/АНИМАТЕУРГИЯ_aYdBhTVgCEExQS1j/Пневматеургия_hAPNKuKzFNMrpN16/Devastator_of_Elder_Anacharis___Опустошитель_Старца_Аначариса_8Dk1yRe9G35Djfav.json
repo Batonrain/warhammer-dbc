@@ -1,0 +1,60 @@
+{
+  "name": "Devastator of Elder Anacharis / Опустошитель Старца Аначариса",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "hAPNKuKzFNMrpN16",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "animatheurgy",
+    "subtype": "Пневматеургия",
+    "miracleType": "anima",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "full",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×2м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Noospheric Uplink · Цена: 3К · Процесс: Нет · Тип: Анима, Славословие (2)] Треб.: Cor 30, For.Lore (Mechanicum)+30. Шаблон I.b м. Все техно-щиты в области перегружаются (отключаются на 1 Раунд), всё высокотехнологичное оружие отключается на 1 Раунд. Пустотные щиты — один обрушивается (не восстанавливается 1 Раунд).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "8Dk1yRe9G35Djfav",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040493,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!8Dk1yRe9G35Djfav"
+}

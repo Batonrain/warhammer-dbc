@@ -1,0 +1,56 @@
+{
+  "name": "Латный Доспех",
+  "type": "armor",
+  "folder": "hTQ3Xaf6D1piA118",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "simple",
+    "stacks": false,
+    "maxAgility": 40,
+    "equipped": false,
+    "head": 6,
+    "body": 6,
+    "leftArm": 5,
+    "rightArm": 5,
+    "leftLeg": 5,
+    "rightLeg": 5,
+    "quality": "common",
+    "availability": 1,
+    "weight": 20,
+    "properties": [
+      "conductive",
+      "gorget",
+      "hard",
+      "heavy",
+      "primitive"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "",
+    "propRatings": {
+      "gorget": 8
+    }
+  },
+  "_id": "jeoC1yS5wl5ogFXm",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!jeoC1yS5wl5ogFXm"
+}

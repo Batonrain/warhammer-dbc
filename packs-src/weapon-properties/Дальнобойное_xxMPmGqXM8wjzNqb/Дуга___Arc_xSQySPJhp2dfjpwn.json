@@ -1,0 +1,35 @@
+{
+  "name": "Дуга / Arc",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Накопленное электричество выпускает дугу: при попадании Y(El) Dmg, Pen Y по ближайшей к цели персонажу/союзнику в 5м, исключая уже получивших попадание этой атакой.",
+    "reminder": "⚡ Дуга: эл. разряд по ближайшей второй цели в 5м",
+    "category": "ranged",
+    "hasRating": true,
+    "hasRating2": true,
+    "autoKey": "arc",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "xSQySPJhp2dfjpwn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353818,
+    "modifiedTime": 1786224353823,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!xSQySPJhp2dfjpwn"
+}

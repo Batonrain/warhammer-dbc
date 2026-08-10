@@ -1,0 +1,67 @@
+{
+  "name": "Modified Muscles / Модифицированные Мышцы",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 1. Мышечные волокна и впрыскиватели адреналина в торсе.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "ОСНОВНОЙ ИМПЛАНТ (Тело). Перестроенная мускулатура компенсирует полые кости.\n• Снимает лимит продвижения T (лимит прокачки остаётся, но поднимается до 60).\n• +10 S.\n• Снижает увеличение критических эффектов и экстремального урона от Полых Костей на −2 (то есть до +1).\n• В полёте: бонус A.b×5 к тестам Operate (Aeronautica) и трейт Nimble (20).\n• Unnatural A (+2) в воздухе — при наличии Полых Костей.\n\nНАРКОЖЕЛЕЗА В МЫШЦАХ: выберите один наркотик — Стимм, Шпора, Френзон, Гиперексия, Потрошитель, Тиск, Стимул, Тиресий. Нужно сырьё (химические реагенты) — принимается как пища или вливается через внешние разъёмы. Синтез: 5 алхимических реагентов, полудействие, R×3+3−T.b Очков Боли. Алхимические стимуляторы друкхари синтезировать нельзя.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "EbInDEyHcj2PGS9I",
+  "_id": "pd9lJQ9zKO5wDwh7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330254774,
+    "modifiedTime": 1786122016804,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pd9lJQ9zKO5wDwh7"
+}

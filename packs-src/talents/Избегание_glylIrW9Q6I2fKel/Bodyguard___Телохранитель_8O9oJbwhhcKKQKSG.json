@@ -1,0 +1,55 @@
+{
+  "name": "Bodyguard / Телохранитель",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "glylIrW9Q6I2fKel",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может парировать атаки по союзнику, если атакующий на расстоянии удара от персонажа. При наличии Талантов на парирование стрелковых атак он также может парировать стрелковые атаки по союзнику, проходящие на расстоянии удара от него.",
+    "tier": 1,
+    "requirement": "WS 40",
+    "aptitudes": [
+      "ws",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "8O9oJbwhhcKKQKSG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121969323,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!8O9oJbwhhcKKQKSG"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Примитивная",
+  "type": "Item",
+  "folder": "7IXf5JVRq8LvkDwK",
+  "sorting": "m",
+  "_id": "hTQ3Xaf6D1piA118",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!hTQ3Xaf6D1piA118"
+}

@@ -1,0 +1,50 @@
+{
+  "name": "Нумен",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "kHJKOoHhPhm8nU1k",
+  "system": {
+    "key": "numen",
+    "race": "human",
+    "group": "",
+    "charBonus": {},
+    "charChoice": "+5 к одной Характеристике и +2 к другой (по выбору)",
+    "skills": "Awareness, Dodge, Parry, Common Lore (любые 2), Schol. Lore (любые 2), For. Lore (любые 2), Acrobatics или Athletics, Charm или Intimidate, Medicae или Tech-Use, Stealth или Security",
+    "talents": "Jaded, 12 Талантов 1 уровня, 2 Таланта 2 уровня",
+    "gear": "2 любых рукопашных оружия R0(Best.Q)/R1(Good.Q)/R2, 1 любое стрелковое R0(Best.Q)/R1(Good.Q)/R2, Полный комплект брони R0(Best.Q)/R1(Good.Q)/R2, 6 модификаций для оружия (до R2), 3 модификации для брони (до R2)",
+    "wounds": "10+1d5",
+    "infRoll": "",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "У Богов на вас большие планы — и они не спрашивают согласия.",
+    "trait": {
+      "name": "Divinely Gifted / Божественно Одарённый",
+      "benefit": "Выбирает 1 дополнительную мутацию/субмутацию (кроме Доспеха Богов и Знания Веков). На покровительстве Бога может вместо этого выбрать 1 Дар. + Fated Path: берёт Элитный Архетип по базовой цене, не повышая цену других Элитных."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "UPSBhx7xqNQM2g9W",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536190,
+    "modifiedTime": 1786285536194,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!UPSBhx7xqNQM2g9W"
+}

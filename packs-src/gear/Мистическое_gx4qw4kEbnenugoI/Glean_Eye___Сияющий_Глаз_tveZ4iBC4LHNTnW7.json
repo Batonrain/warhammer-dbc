@@ -1,0 +1,53 @@
+{
+  "name": "Glean Eye / Сияющий Глаз",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Самоцвет из кристаллизованного глаза демона, встроенный во внутреннюю сторону перчатки.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Ладонь латной рукавицы",
+    "effect": "Когда рука без предметов — +10 на все тесты Избегания. Работает только на естественной/мутационной руке (не бионика/лепка/психосила). Бонусы разных Глаз складываются.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "+5 вместо +10.",
+      "good": "Раз в Ход за каждый Глаз: при провале Избегания восстанавливает потраченную Реакцию.",
+      "best": "Как Good.Q; можно установить на лицевую пластину шлема/обруч (не более одного)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "tveZ4iBC4LHNTnW7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!tveZ4iBC4LHNTnW7"
+}

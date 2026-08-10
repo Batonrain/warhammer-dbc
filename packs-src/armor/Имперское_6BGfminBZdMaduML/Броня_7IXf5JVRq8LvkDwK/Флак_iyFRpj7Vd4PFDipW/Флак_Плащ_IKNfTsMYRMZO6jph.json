@@ -1,0 +1,52 @@
+{
+  "name": "Флак Плащ",
+  "type": "armor",
+  "folder": "iyFRpj7Vd4PFDipW",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "flak",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 3,
+    "body": 3,
+    "leftArm": 3,
+    "rightArm": 3,
+    "leftLeg": 3,
+    "rightLeg": 3,
+    "quality": "common",
+    "availability": -1,
+    "weight": 1,
+    "properties": [
+      "cloak",
+      "flak",
+      "open",
+      "soft"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": ""
+  },
+  "_id": "IKNfTsMYRMZO6jph",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!IKNfTsMYRMZO6jph"
+}

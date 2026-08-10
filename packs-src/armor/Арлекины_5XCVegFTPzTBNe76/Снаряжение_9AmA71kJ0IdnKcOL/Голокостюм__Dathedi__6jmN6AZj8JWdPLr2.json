@@ -1,0 +1,51 @@
+{
+  "name": "Голокостюм (Dathedi)",
+  "type": "armor",
+  "folder": "9AmA71kJ0IdnKcOL",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "mesh",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 0,
+    "body": 3,
+    "leftArm": 3,
+    "rightArm": 3,
+    "leftLeg": 3,
+    "rightLeg": 3,
+    "quality": "common",
+    "availability": 4,
+    "weight": 0.1,
+    "properties": [
+      "protective",
+      "stealthed",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Protective (A.b). Все атаки по носителю −3×A.b. Встроенное голо-поле R2. Переброс с +25 на встречные тесты против психосил/демонических даров/Одержимости. Против Варп-Оружия AP = A.b. С Ложным Лицом получает Sealed и Void. Не работает вместе с другой бронёй."
+  },
+  "_id": "6jmN6AZj8JWdPLr2",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782054428033,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!6jmN6AZj8JWdPLr2"
+}

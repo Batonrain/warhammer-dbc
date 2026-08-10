@@ -1,0 +1,55 @@
+{
+  "name": "Running Throw / Бросок на Бегу",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "eF2Ce51xYc7VK2yx",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в Ход, совершая любое Движение, персонаж может пройти Acrobatics−10, чтобы совершить дополнительную атаку метательным оружием или гранатой (но не бомбой) как свободное действие. Уменьшает Rng оружия до S.b×2м и не считается атакой.",
+    "tier": 3,
+    "requirement": "A 40, Acrobatics+20",
+    "aptitudes": [
+      "ag",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "qiUvybWEQNUjrCXL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122003591,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qiUvybWEQNUjrCXL"
+}

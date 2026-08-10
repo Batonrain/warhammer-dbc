@@ -1,0 +1,56 @@
+{
+  "name": "Броня Пикирующего Ястреба",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Окрашенная в цвета неба, вроде бледно–голубого или серого, броня пикирующего ястреба обладает меньшей бронированностью чем иная аспектная броня, но это с лихвой компенсируется наличием встроенных спектральных крыльев, которые наделяют своего владельца невероятной скоростью передвижения и ловкостью. Броня имеет встроенные спектральные крылья.",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 5,
+    "body": 6,
+    "leftArm": 5,
+    "rightArm": 5,
+    "leftLeg": 5,
+    "rightLeg": 5,
+    "quality": "common",
+    "availability": 4,
+    "weight": 5,
+    "properties": [
+      "aspect",
+      "protective",
+      "sealed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Пикирующие Ястребы). Встроенные спектральные крылья.",
+    "propRatings": {
+      "protective": 5
+    }
+  },
+  "_id": "8ZsVxsJq8UJIAeBZ",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!8ZsVxsJq8UJIAeBZ"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Terrifying Presence / Ужасающее Присутствие",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "oAhMRYFpOmBlnqTp",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Все подчинённые Архонта, включая его самого, получают +½ Inf (окр. вверх) Архонта на все соревновательные тесты против психосил, влияющих на разум и восприятие. Не распространяется на психосилы демонов Слаанеш. Все командиры под его руководством получают преимущество на все социальные тесты при Командовании подчинёнными.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Архонт",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "TQ2rYqiymtu4Amjh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121984472,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!TQ2rYqiymtu4Amjh"
+}

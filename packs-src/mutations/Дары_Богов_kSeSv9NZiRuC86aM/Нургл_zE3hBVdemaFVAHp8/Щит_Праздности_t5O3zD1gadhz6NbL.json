@@ -1,0 +1,49 @@
+{
+  "name": "Щит Праздности",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Владыка неизменности награждает неспешность своего чемпиона. Если персонаж заканчивает свой Ход с хотя бы одним непотраченным полудействием, он получает не перегружающийся щит-дефлектор 1-77 до начала своего следующего Хода. Если он заканчивает свой Ход, не потратив своих действий вовсе, рейтинг щита увеличивается до 1-99.",
+    "source": "Дары Нургл, d100 44…47",
+    "roll": "44…47",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "t5O3zD1gadhz6NbL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122022133,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!t5O3zD1gadhz6NbL"
+}

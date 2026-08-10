@@ -1,0 +1,53 @@
+{
+  "name": "Дуэлянт",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "ATdGrQfJBDNPQRAU",
+  "system": {
+    "key": "drDuelist",
+    "race": "drukhari",
+    "group": "Друкхари",
+    "charBonus": {
+      "ws": 3,
+      "ag": 3
+    },
+    "charChoice": "",
+    "skills": "Athletics+10, Awareness+10, Common Lore (War)+10, Dodge+10, Parry+10, Command+10 или Intimidate+10, Dodge+20 или Parry+20, Survival+10 или Stealth+10",
+    "talents": "Bodyguard, Blade Binding, Disarm, Leap Up, Quick Draw, Reaper, Steady Footwork, Sure Strike, Blade Reader или Deflect Shot",
+    "gear": "Monomolecular Blade (Best.Q); 3 модификации для оружия (до R3)",
+    "wounds": "10+1d5",
+    "infRoll": "3d5+12",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Мастер клинка с очень дорогим оружием.",
+    "trait": {
+      "name": "Sophisticated Combat / Утончённый Бой",
+      "benefit": "+1 успех на WS/A при числ. превосходстве врага; переброс WS/A в бою 1-на-1. Если WS противника ниже — Unnatural WS (+1)."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "gvSIb3GUTQ9Fo40y",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536191,
+    "modifiedTime": 1786285536196,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!gvSIb3GUTQ9Fo40y"
+}

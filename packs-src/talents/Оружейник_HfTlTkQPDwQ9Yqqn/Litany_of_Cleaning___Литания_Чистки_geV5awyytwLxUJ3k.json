@@ -1,0 +1,55 @@
+{
+  "name": "Litany of Cleaning / Литания Чистки",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "HfTlTkQPDwQ9Yqqn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Тратя хотя бы 30 минут в сутки на тщательную чистку и смазывание оружия выбранного типа, это оружие получает +1 к Надёжности в руках персонажа.",
+    "tier": 1,
+    "requirement": "Tech-Use",
+    "aptitudes": [
+      "int",
+      "tech"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Bolt, Flame, Grav, Las, Launcher, Melta, Solid Projectile, Exotic (1 любой)",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "geV5awyytwLxUJ3k",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121994773,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!geV5awyytwLxUJ3k"
+}

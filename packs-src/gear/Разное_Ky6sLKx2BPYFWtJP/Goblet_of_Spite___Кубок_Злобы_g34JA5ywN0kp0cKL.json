@@ -1,0 +1,58 @@
+{
+  "name": "Goblet of Spite / Кубок Злобы",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Кубок Гекатрийцев, излучающий ауру ненависти, безумия и страха.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "",
+    "effect": "Активация — Полное действие. Следующие три раунда в радиусе 18 м генерируется аура злобы. Противники носителя в ауре проходят W+20; провал — садистическая злоба на 3 раунда: жертва нападает на ближайшего СОЮЗНИКА, бьёт сильнейшими атаками и стремится убить его жестоко.\nВ этом безумии жертва иммунна к Страху, Панике, Подавлению, Оглушению, Усталости и потере сознания, но до откровенно самоубийственных поступков не доходит. Выведя цель из строя, но не убив, тратит остаток действия, чтобы подобраться и начать пытать её — пока не получит урон. Союзников носителя кубка игнорирует, если те её не атакуют.\nДля повторной работы кубок заряжается 15 Очками Боли.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Кубок не делит своих и чужих, воздействуя на всех, кроме владельца.",
+      "good": "Аура 36 м, тест усложняется до −10, длительность ярости +1.",
+      "best": "Аура 54 м, тест усложняется до −30, длительность ярости +3."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "g34JA5ywN0kp0cKL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!g34JA5ywN0kp0cKL"
+}

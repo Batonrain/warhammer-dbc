@@ -1,0 +1,51 @@
+{
+  "name": "Electropriest Coils / Катушки Электрожреца",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "HZOs0A2dUajZ5ewU",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сеть накопителей и эмиттеров расходится через тело от блока священных машин на спине; оснащён Люминен Конденсаторами и Ферромагнитными Имплантами Best.Q. Может накапливать заряд Катушки Потенции до W.b и за свободное действие нанести себе 1d5 урона в T, чтобы восстановить 1 заряд. Сила перманентно выжигает глаза и глазные нервы, повреждает затылочную долю мозга — не может исправить слепоту бионикой, кибернетикой или механодендритами. Если не носит на голове, торсе и руках брони и одежды, закрывающей более 20% кожи, получает: +заряд к SPD; +заряд×2 к тестам Уклонения; +W.b к Инициативе; +3×W.b на Компенсатор Мотивотеургии; +½W.b (окр.▲) к Dmg и Pen всех Люминен Техночудес; при Voltagheist Shield — за 1 заряд +2×W.b Аблативных Ран (как щит-купол), и за 1 заряд уменьшение непоглощённого урона на W.b на 1; Electroepithany +W×1м дальности электрочутья и +3×W.b на Awareness; Трейт Brutal Charge (½W.b, окр.▲) для рукопашного оружия E(El) Dmg.",
+    "source": "Элитный архетип: Электрожрец",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "V8sPcH1gKLhn35KE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121959887,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!V8sPcH1gKLhn35KE"
+}

@@ -1,0 +1,53 @@
+{
+  "name": "Алхимик",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "ATdGrQfJBDNPQRAU",
+  "system": {
+    "key": "drAlchemist",
+    "race": "drukhari",
+    "group": "Друкхари",
+    "charBonus": {
+      "int": 3,
+      "t": 3
+    },
+    "charChoice": "",
+    "skills": "Tech-Use+10, Medicae+10, Scholastic Lore (Chymistry)+10, Tech-Use+20 или Medicae+20, Trade (Weaponsmith) или Trade (Armourer), Trade (Chymist)+10 или Trade (Stylist)+10, 1 Scholastic Lore на выбор",
+    "talents": "But a Scratch, Degustator, Fast Stitches, Restitching, Snake Eater, Deadeye Shot или Sure Strike",
+    "gear": "Drukhari Pistol Needler (Good.Q) или Drukhari Autogun (Best.Q); Surgical Kit (Best.Q) или Chemical Laboratory (Best.Q) или Chemistry Analyzer (Best.Q); 20 доз друкхарийской химии до R1; 10 единиц химических реагентов; 3 рецепта Алхимии R1 и 1 рецепт R2, или 3 генетических шаблона R1 и 1 генетический шаблон R2; 4 биоимпланта (до R2 Good.Q или до R1 Best.Q) или Enzyme Vat (Good.Q, 2-й эффект)",
+    "wounds": "9+1d5",
+    "infRoll": "3d5+13",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Хирург и мастер алхимических таинств Комморага.",
+    "trait": {
+      "name": "It Won't Hurt… / Будет Не Больно…",
+      "benefit": "Первая Помощь без анестезии: цель получает 1d5 Усталости, но восстанавливает столько же Ран; Алхимик получает 1 Очко Боли. Имея друкхарийскую аптечку или лучшие инструменты, может тестом Medicae(I)−20−5×Отрицательные Раны воскресить только что аккуратно убитое тело. Жертва получает 3d10 урона во все характеристики и даёт Алхимику 2 Очка Боли +1 за каждую характеристику, упавшую до 0. Если T жертвы упало до 0, она не погибает, а входит в агонизирующее состояние: нескончаемая боль во всём теле без потери сознания."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "I3HjMpK0VpnYvTkZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536191,
+    "modifiedTime": 1786285536196,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!I3HjMpK0VpnYvTkZ"
+}

@@ -1,0 +1,114 @@
+{
+  "name": "Изгой",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "LrQ76WufqFAvFdDy",
+  "system": {
+    "key": "outcast",
+    "race": "astartes",
+    "group": "",
+    "charBonus": {
+      "ws": null,
+      "bs": null,
+      "s": null,
+      "t": null,
+      "ag": null,
+      "int": null,
+      "per": null,
+      "wp": null,
+      "fel": null
+    },
+    "charChoice": "",
+    "skills": "Survival +10, Acrobatics или Stealth, Commerce или Security",
+    "talents": "Blind Fighting или Wallop, Catfall или Iron Jaw, Combat Master или Hunker Down, Breacher или Hip Shooting",
+    "gear": "L. Chain Weapon (до R1) или L. Shotgun, 8 L. Гранат или Бомб до R2, Chameleoline Cloak (Good.Q) или L. Boarding Shield (Good.Q)",
+    "wounds": "17+1d5",
+    "infRoll": "",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Одинокий волк без банды и дома.",
+    "trait": {
+      "name": "Scrounge / Наскрести",
+      "benefit": "Тратит смену работы и Очко Бесчестья, чтобы добыть расходники/находку до 2d10 Редкости (R1)."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)",
+    "notes": ""
+  },
+  "_id": "H14kRN6ZR4IuFqF5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "T3c0u85gRiztl6VS",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "B0Jkv7EXkuHcP37n",
+              "kind": "wounds",
+              "corruptionValue": "1",
+              "woundsValue": "1d5+",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536188,
+    "modifiedTime": 1786286861140,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!H14kRN6ZR4IuFqF5"
+}

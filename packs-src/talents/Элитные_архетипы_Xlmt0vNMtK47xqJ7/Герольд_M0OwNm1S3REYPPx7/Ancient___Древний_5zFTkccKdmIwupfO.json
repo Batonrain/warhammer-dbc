@@ -1,0 +1,52 @@
+{
+  "name": "Ancient / Древний",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "M0OwNm1S3REYPPx7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Удостаивается чести нести в бой знамя или икону банды. Знамя должно включать геральдику банды, икона — религиозную иконографию. Знамя/икона занимают одну руку и не могут использоваться как оружие. Пока держит знамя/икону, может использовать Трейт Живой Стяг (даже если броня испачкана, но не сам стяг) и после использования Трейта пройти тест W+0, чтобы восстановить потраченное Очко Бесчестия. Если уронит знамя/икону или их отнимет противник — теряет все не потраченные Очки Бесчестия и штраф −10 на все действия до конца боя/сцены, а все соратники, видевшие осквернение — тоже штраф −10 до конца боя/сцены.",
+    "tier": 1,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Герольд",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "5zFTkccKdmIwupfO",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121967337,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!5zFTkccKdmIwupfO"
+}

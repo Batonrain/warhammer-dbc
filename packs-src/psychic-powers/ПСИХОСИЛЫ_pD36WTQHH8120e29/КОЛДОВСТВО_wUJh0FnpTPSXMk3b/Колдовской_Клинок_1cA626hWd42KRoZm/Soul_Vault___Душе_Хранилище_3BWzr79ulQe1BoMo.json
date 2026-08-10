@@ -1,0 +1,75 @@
+{
+  "name": "Soul-Vault / Душе-Хранилище",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-blade.svg",
+  "folder": "1cA626hWd42KRoZm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 250,
+    "discipline": "sorcery",
+    "subtype": "Колдовской клинок",
+    "powerType": "duration",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "half",
+    "range": "Касание",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Длительное (1 Раунд). Треб.: Inf 20+. Коснувшись психосиловым оружием существа с душой (можно себя), открывает на его груди портал в хранилище W.b(цели)×0,3м по каждому измерению. Со свободной рукой кладёт/вынимает предмет. У каждой души своё хранилище; открыть может любой знающий силу. Смерть/потеря души рушит хранилище (предметы выпадают).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "3BWzr79ulQe1BoMo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122023354,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!3BWzr79ulQe1BoMo"
+}

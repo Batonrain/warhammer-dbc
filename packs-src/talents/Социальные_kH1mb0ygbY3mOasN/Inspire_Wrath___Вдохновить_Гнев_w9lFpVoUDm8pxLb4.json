@@ -1,0 +1,55 @@
+{
+  "name": "Inspire Wrath / Вдохновить Гнев",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kH1mb0ygbY3mOasN",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За Полное Действие персонаж может пройти Charm+0, чтобы дать аудитории Талант Hatred против определённой группы. Воздействует на до F.b×10 персонажей (F.b×100 с Demagogue). Толпа не всегда поддаётся контролю.",
+    "tier": 2,
+    "requirement": "Air of Authority",
+    "aptitudes": [
+      "offence",
+      "social"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "w9lFpVoUDm8pxLb4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122007461,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!w9lFpVoUDm8pxLb4"
+}

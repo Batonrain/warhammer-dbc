@@ -1,0 +1,58 @@
+{
+  "name": "Camping Crystallizer / Походный Кристаллизатор",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Установка-шкафчик для восполнения осколочных боеприпасов в затянувшемся налёте. Требует друкхарийский Tech-Use+10.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 6,
+    "availability": 1,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "",
+    "effect": "Раз в час создаёт магазин (до R0) для осколочных винтовок и пистолетов, либо вдвое медленнее для иного оружия. Нужен источник энергии и химические реагенты.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Требует стационарный источник энергии — только в зданиях или на кораблях.",
+      "good": "Размер 4×4, либо создаёт боеприпасы до R1.",
+      "best": "Создаёт боеприпасы на 1 редкость выше, либо носится как ранец и подключается к нетяжёлому оружию для постоянного восполнения. Плюс одно свойство Good.Q на выбор."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Инструменты"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "ny6In0IlXl8YE3dZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ny6In0IlXl8YE3dZ"
+}

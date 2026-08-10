@@ -1,0 +1,52 @@
+{
+  "name": "Solarite / Соларит",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "0KmC9rgHcemwiHdz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Пока персонаж в воздухе на крыльях от архетипа Бичеватель, получает Nimble (+10) и может перебрасывать проваленные тесты на избегание атаки. Получает бонус к трейту Flyer, равный Nimble/5.",
+    "tier": 3,
+    "requirement": "Элитный архетип Бичеватель",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Сибарит",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ji48HYTAsh6bxvar",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121997782,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ji48HYTAsh6bxvar"
+}

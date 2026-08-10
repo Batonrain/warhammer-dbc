@@ -1,0 +1,49 @@
+{
+  "name": "Кровавая Купель",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Кровь, пролитая в гневе, служит дверью в царство Кхорна, и его чемпион одарён ключами к ней. Находясь в луже или пятне крови, достаточно большом, чтобы уместиться в нём, чемпион может за полное действие потратить Очко Бесчестия и нырнуть в неё, вынырнув из любой другой лужи крови в пределах его видимости. Если он выныривает в контакте с противником, это считается как Натиск. Только кровь, пролитая в бою, пригодна для этого дара.",
+    "source": "Дары Кхорн, d100 74…77",
+    "roll": "74…77",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "sOvci5GhSNtsnzkN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122022007,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!sOvci5GhSNtsnzkN"
+}

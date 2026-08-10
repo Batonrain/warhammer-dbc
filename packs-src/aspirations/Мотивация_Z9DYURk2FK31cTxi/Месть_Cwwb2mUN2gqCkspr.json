@@ -1,0 +1,34 @@
+{
+  "name": "Месть",
+  "type": "aspiration",
+  "img": "icons/svg/aura.svg",
+  "folder": "Z9DYURk2FK31cTxi",
+  "system": {
+    "key": "motivation:9",
+    "table": "motivation",
+    "n": 9,
+    "mods": "+3 WS, +3 BS, −5 P",
+    "description": "Был жертвой; намерен поквитаться с обидчиками любой ценой.",
+    "bookSource": "Black Crusade — Стремления (стр. 22)"
+  },
+  "_id": "Cwwb2mUN2gqCkspr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285535468,
+    "modifiedTime": 1786285535472,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Cwwb2mUN2gqCkspr"
+}

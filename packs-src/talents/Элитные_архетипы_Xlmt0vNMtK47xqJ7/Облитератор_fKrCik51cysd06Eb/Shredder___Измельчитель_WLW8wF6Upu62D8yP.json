@@ -1,0 +1,52 @@
+{
+  "name": "Shredder / Измельчитель",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "fKrCik51cysd06Eb",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сконцентрировавшись, способен ощетиниться десятками или сотнями небольших стволов, палящих во все стороны. За полное действие может отрастить ранее ассимилированные пистолеты по всему телу и нанести 1 попадание по каждому персонажу в радиусе 3м, в т.ч. по союзным. Орды получают 1 попадание за каждые полные 5 Магнитуды.",
+    "tier": 2,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Облитератор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "WLW8wF6Upu62D8yP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121986117,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WLW8wF6Upu62D8yP"
+}
