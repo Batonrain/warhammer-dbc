@@ -4,6 +4,9 @@
 // bonusPoints/charShift — для распределения при создании (справочно). traits —
 // расовые Черты (создаются как предметы с авто-эффектами). talents/skills/gear —
 // пока строки/имена (заглушки; таланты и снаряжение прописываем позже).
+// rules — машинная часть Черт (module/rules/library/, docs/rules-format.md).
+
+import { ASTARTES_RULES } from "../rules/library/astartes.mjs";
 
 export const RACES = {
   human: {
@@ -48,6 +51,8 @@ export const RACES = {
       { name: "Unnatural Toughness (4) / Сверхъестественная Стойкость (4)", benefit: "+4 к Бонусу Стойкости.", rating: 4, hasRating: true, effects: { charBonusStat: "t", charBonusValue: 4 } },
       { name: "Gene-Seed / Геносемя", benefit: "Открывает все преимущества имплантов Геносемени (см. гайд на вкладке СПОСОБНОСТИ).", effects: {} }
     ],
+    // Машинная часть Черт — module/rules/library/astartes.mjs.
+    rules: ASTARTES_RULES,
     archetypes: ["Все Архетипы Космодесантников"],
     desc: "Космодесантник Хаоса — генетически улучшенный воин, намного превосходящий смертных."
   },

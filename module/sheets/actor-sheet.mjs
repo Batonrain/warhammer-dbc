@@ -63,6 +63,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { beginTargeting } from "../combat/aim.mjs";
 import { HOMEWORLD_BY_KEY, homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
 import { specOptions, matchSpec, specDef } from "../constants/skill-specializations.mjs";
 import { ASTARTES_IMPLANTS, ASTARTES_RACE,
@@ -2678,8 +2679,11 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       const has = this.actor.items.some(i => i.type === "trait" && i.name === "Mechanicum Implants / Импланты Механикум");
       return has ? null : "Нужна Черта Mechanicum Implants / Импланты Механикум";
     }
+    // Возможность, а не раса: доступ открывает правило «astartes.geneseed»
+    // (module/rules/library/astartes.mjs). Любая другая раса с Геносеменем
+    // получит ту же папку из своих данных, без правки этой строки.
     if (!parent && folderName === "Геносемя") {
-      return sys.race === "astartes" ? null : "Нужна раса Астартес";
+      return hasRuleFlag(this.actor, "talents.geneSeed") ? null : "Нужно Геносемя (раса Астартес)";
     }
     return null;
   }
@@ -4868,8 +4872,8 @@ html.find(".addiction-remove-btn").click(async ev => {
     const allRolls = [roll];
     let unarmedDmgSection = "";
     if (hit && techDef.damage) {
-      const isAstartes = this.actor.system.race === "astartes";
-      const dmgSrc = (isAstartes && techDef.damageAstartes) ? techDef.damageAstartes : techDef.damage;
+      const astartesProfile = hasRuleFlag(this.actor, "unarmed.astartesProfile");
+      const dmgSrc = (astartesProfile && techDef.damageAstartes) ? techDef.damageAstartes : techDef.damage;
       const dmgFormula = _resolveCharFormula(dmgSrc, this.actor.system.characteristics, this.actor.system.corruptionBonus ?? 0);
       try {
         const dmgRoll = await new Roll(dmgFormula).evaluate();
@@ -4877,7 +4881,7 @@ html.find(".addiction-remove-btn").click(async ev => {
         const dtLabel = DAMAGE_TYPES[techDef.damageType] || techDef.damageType || "Ударный";
         unarmedDmgSection = `
           <div class="roll-damage-section">
-            <div class="roll-damage-label">Урон (${dtLabel}, Проб. ${techDef.pen || 0})${isAstartes ? " · профиль Астартес" : ""}: <b>${dmgRoll.total}</b>${techDef.props ? ` · ${techDef.props}` : ""}</div>
+            <div class="roll-damage-label">Урон (${dtLabel}, Проб. ${techDef.pen || 0})${astartesProfile ? " · профиль Астартес" : ""}: <b>${dmgRoll.total}</b>${techDef.props ? ` · ${techDef.props}` : ""}</div>
             <button class="wh-apply-dmg-btn" type="button"
               data-damage="${dmgRoll.total}" data-penetration="${techDef.pen || 0}"
               data-damage-type="${techDef.damageType || "impact"}" data-hit-location="Торс"
@@ -5353,7 +5357,7 @@ html.find(".addiction-remove-btn").click(async ev => {
         `<b>Пациент:</b> ${patient.name}`,
         `<b>Уровень ранения:</b> ${lvl.label} (потеряно ${lvl.lost}${lvl.crit ? `, крит ${lvl.crit}` : ""}, T.b ${lvl.tb})`
       ];
-      if (patient.system.race === "astartes") parts.push(`<i>Физиология Астартес: всегда считается отдыхающим.</i>`);
+      if (hasRuleFlag(patient, "healing.astartes")) parts.push(`<i>Физиология Астартес: всегда считается отдыхающим.</i>`);
       if (patient.system.wounds?.firstAidUsed) parts.push(`<span style="color:#a33;">⚠ Первая Помощь уже оказана (нужен новый урон).</span>`);
       html.find("#heal-note").html(parts.join("<br/>"));
     };
@@ -5387,7 +5391,9 @@ html.find(".addiction-remove-btn").click(async ev => {
     const medic = this.actor;
     const lvl   = _woundLevel(patient.system);
     const tb    = lvl.tb;
-    const isAstartes = patient.system.race === "astartes";
+    // Физиология Астартес — возможность от правил, а не раса пациента:
+    // «лечится как космодесантник» книга пишет и про другие расы.
+    const isAstartes = hasRuleFlag(patient, "healing.astartes");
     const rolls = [];
     const lines = [];
     let heal = 0;
