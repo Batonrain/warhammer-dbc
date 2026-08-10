@@ -7,5 +7,3 @@
 *.md    text eol=lf
 *.yml   text eol=lf
 
-# Компендиумы LevelDB — только двоичное сравнение, без конвертации
-packs/** binary
