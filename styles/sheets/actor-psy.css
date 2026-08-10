@@ -1,0 +1,191 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка ПСИ (психосилы).
+   Тема адаптируется под Природу Дара (класс псайкера):
+   --pc  = основной цвет, --pc2 = акцент, --pc-soft = мягкий фон.
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .psy-tab {
+  --pc: #b477ff; --pc2: #e85ad6; --pc-soft: rgba(180,119,255,0.14);
+  position: relative; padding: 4px 2px 10px;
+}
+/* палитры по Природе Дара */
+.warhammer-dbc .psy-theme-bound    { --pc: #4aa3e0; --pc2: #e8c860; --pc-soft: rgba(74,163,224,0.14); }
+.warhammer-dbc .psy-theme-unbound  { --pc: #b477ff; --pc2: #e85ad6; --pc-soft: rgba(180,119,255,0.15); }
+.warhammer-dbc .psy-theme-daemonic { --pc: #e0202e; --pc2: #ff8a3a; --pc-soft: rgba(224,32,46,0.15); }
+.warhammer-dbc .psy-theme-eldar    { --pc: #33d0c0; --pc2: #a6f0dc; --pc-soft: rgba(51,208,192,0.15); }
+
+/* ── Анимированный варп-фон ─────────────────────────────── */
+.warhammer-dbc .psy-veil-bg { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; opacity: 0.55; }
+.warhammer-dbc .psy-veil-bg span {
+  position: absolute; border-radius: 50%; filter: blur(38px);
+  background: radial-gradient(circle, var(--pc), transparent 70%);
+}
+.warhammer-dbc .psy-veil-bg span:nth-child(1) { width: 260px; height: 260px; top: -60px; left: -40px; animation: psyDrift1 18s ease-in-out infinite; }
+.warhammer-dbc .psy-veil-bg span:nth-child(2) { width: 200px; height: 200px; top: 40%; right: -60px; background: radial-gradient(circle, var(--pc2), transparent 70%); animation: psyDrift2 22s ease-in-out infinite; }
+.warhammer-dbc .psy-veil-bg span:nth-child(3) { width: 180px; height: 180px; bottom: -50px; left: 35%; animation: psyDrift3 26s ease-in-out infinite; }
+@keyframes psyDrift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,30px) scale(1.15); } }
+@keyframes psyDrift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-36px,-24px) scale(1.2); } }
+@keyframes psyDrift3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px,-30px) scale(0.9); } }
+
+/* ── Панели ─────────────────────────────────────────────── */
+.warhammer-dbc .psy-panel {
+  position: relative; z-index: 1; margin-bottom: 9px; border-radius: 8px; padding: 0 0 8px;
+  background: linear-gradient(180deg, rgba(14,18,26,0.86), rgba(9,12,18,0.92));
+  border: 1px solid color-mix(in srgb, var(--pc) 26%, #1f2733);
+  border-left: 3px solid var(--pc);
+  box-shadow: inset 0 0 26px rgba(0,0,0,0.45), 0 0 18px -10px var(--pc);
+}
+.warhammer-dbc .psy-panel-title {
+  display: flex; align-items: center; gap: 8px; padding: 7px 12px; margin: 0;
+  font-size: 0.86em; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: #e6eefc; text-shadow: 0 0 10px color-mix(in srgb, var(--pc) 60%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--pc) 22%, transparent);
+  background: linear-gradient(180deg, var(--pc-soft), transparent);
+}
+.warhammer-dbc .psy-nature-tag {
+  margin-left: auto; font-size: 0.78em; font-weight: 700; letter-spacing: 0.02em; text-transform: none;
+  color: var(--pc2); padding: 1px 10px; border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--pc2) 45%, transparent); background: rgba(0,0,0,0.28);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--pc2) 50%, transparent);
+}
+
+/* ── Проводник Варпа ────────────────────────────────────── */
+.warhammer-dbc .psy-hero { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; padding: 12px; }
+.warhammer-dbc .psy-conduit { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.warhammer-dbc .psy-orb {
+  position: relative; width: 74px; height: 74px; flex: 0 0 auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--pc) 55%, #05070c), #05070c 72%);
+  box-shadow: inset 0 0 18px rgba(0,0,0,0.7), 0 0 22px -4px var(--pc);
+  animation: psyOrbPulse 3.4s ease-in-out infinite;
+}
+@keyframes psyOrbPulse { 0%,100% { box-shadow: inset 0 0 18px rgba(0,0,0,0.7), 0 0 18px -6px var(--pc); } 50% { box-shadow: inset 0 0 18px rgba(0,0,0,0.7), 0 0 30px 0 var(--pc); } }
+.warhammer-dbc .psy-orb-ring {
+  position: absolute; inset: -5px; border-radius: 50%;
+  border: 1.5px solid transparent; border-top-color: var(--pc); border-right-color: color-mix(in srgb, var(--pc2) 70%, transparent);
+  animation: psyOrbSpin 5.5s linear infinite;
+}
+@keyframes psyOrbSpin { to { transform: rotate(360deg); } }
+.warhammer-dbc .psy-orb-num { font-size: 1.8em; font-weight: 900; color: #fff; line-height: 1; text-shadow: 0 0 12px var(--pc); }
+.warhammer-dbc .psy-orb-cap { font-size: 0.6em; letter-spacing: 0.14em; color: color-mix(in srgb, var(--pc) 70%, #9fb0c4); text-transform: uppercase; margin-top: 1px; }
+.warhammer-dbc .psy-conduit.overload .psy-orb { animation: psyOrbAlarm 0.9s ease-in-out infinite; }
+@keyframes psyOrbAlarm { 0%,100% { box-shadow: inset 0 0 18px rgba(0,0,0,0.7), 0 0 16px -4px #e0202e; } 50% { box-shadow: inset 0 0 18px rgba(0,0,0,0.7), 0 0 34px 2px #e0202e; } }
+
+.warhammer-dbc .psy-flow { flex: 1; min-width: 0; position: relative; }
+.warhammer-dbc .psy-flow-track {
+  height: 4px; border-radius: 3px; margin-bottom: 8px; overflow: hidden;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--pc) 55%, transparent), var(--pc2), color-mix(in srgb, var(--pc) 55%, transparent), transparent);
+  background-size: 220% 100%;
+  box-shadow: 0 0 10px -2px var(--pc);
+  animation: psyFlow 2.6s linear infinite;
+}
+@keyframes psyFlow { from { background-position: 220% 0; } to { background-position: -220% 0; } }
+.warhammer-dbc .psy-pips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 7px; }
+.warhammer-dbc .psy-pip {
+  width: 20px; height: 11px; border-radius: 2px; background: rgba(255,255,255,0.06);
+  border: 1px solid color-mix(in srgb, var(--pc) 30%, #2a3340);
+}
+.warhammer-dbc .psy-pip.on {
+  background: var(--pc); border-color: var(--pc);
+  box-shadow: 0 0 10px -1px var(--pc); animation: psyPip 2.2s ease-in-out infinite;
+}
+@keyframes psyPip { 0%,100% { opacity: 0.82; } 50% { opacity: 1; } }
+.warhammer-dbc .psy-pips-empty { font-size: 0.78em; font-style: italic; color: #7d8798; }
+.warhammer-dbc .psy-flow-legend { display: flex; gap: 14px; font-size: 0.74em; }
+.warhammer-dbc .psy-leg { color: #9fb0c4; letter-spacing: 0.02em; }
+.warhammer-dbc .psy-leg.on b { color: var(--pc); text-shadow: 0 0 8px color-mix(in srgb, var(--pc) 55%, transparent); }
+.warhammer-dbc .psy-leg.off b { color: var(--pc2); }
+
+/* ── Поля ввода (руны) ──────────────────────────────────── */
+.warhammer-dbc .psy-hero-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.warhammer-dbc .psy-rune-field {
+  display: flex; flex-direction: column; gap: 3px; padding: 6px 9px; border-radius: 6px;
+  background: rgba(0,0,0,0.32); border: 1px solid color-mix(in srgb, var(--pc) 22%, #232c38);
+}
+.warhammer-dbc .psy-rune-field.readonly { border-style: dashed; }
+.warhammer-dbc .psy-rf-lbl { font-size: 0.66em; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: color-mix(in srgb, var(--pc) 55%, #93a2b6); }
+.warhammer-dbc .psy-rune-field select,
+.warhammer-dbc .psy-rune-field input {
+  background: rgba(0,0,0,0.4); border: 1px solid color-mix(in srgb, var(--pc) 26%, #2a3340);
+  color: #e7eefb; border-radius: 4px; padding: 3px 6px; font-size: 1em;
+}
+.warhammer-dbc .psy-rune-field select:focus,
+.warhammer-dbc .psy-rune-field input:focus { outline: none; border-color: var(--pc); box-shadow: 0 0 7px -1px var(--pc); }
+.warhammer-dbc .psy-rf-val { font-size: 1.5em; font-weight: 800; color: var(--pc); text-shadow: 0 0 10px color-mix(in srgb, var(--pc) 50%, transparent); line-height: 1; }
+.warhammer-dbc .psy-rf-static { font-size: 1em; font-weight: 700; color: var(--pc2); padding: 3px 2px; }
+
+/* ── Подсказки ──────────────────────────────────────────── */
+.warhammer-dbc .psy-hint { position: relative; z-index: 1; font-size: 0.8em; line-height: 1.55; color: #aab6c8; padding: 6px 12px 2px; }
+.warhammer-dbc .psy-hint b { color: color-mix(in srgb, var(--pc) 60%, #d6e2f2); }
+.warhammer-dbc .psy-hint-eldar { border-top: 1px dashed color-mix(in srgb, var(--pc) 22%, transparent); margin-top: 4px; padding-top: 6px; }
+.warhammer-dbc .psy-hint-eldar ul { margin: 3px 0 0; padding-left: 16px; }
+.warhammer-dbc .psy-hint-eldar li { margin-bottom: 3px; }
+
+/* ── Таблица психосил ───────────────────────────────────── */
+.warhammer-dbc .psy-powers-table { position: relative; z-index: 1; width: 100%; border-collapse: collapse; }
+.warhammer-dbc .psy-powers-table thead th {
+  font-size: 0.72em; letter-spacing: 0.04em; text-transform: uppercase; color: #9fb0c4;
+  padding: 6px 6px; border-bottom: 1px solid color-mix(in srgb, var(--pc) 30%, #232c38);
+  background: linear-gradient(180deg, var(--pc-soft), transparent);
+}
+.warhammer-dbc .psy-powers-table .col-narrow { width: 48px; text-align: center; }
+.warhammer-dbc .psy-powers-table tbody .item-row { transition: background 0.14s, box-shadow 0.14s; }
+.warhammer-dbc .psy-powers-table tbody .item-row td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,0.045); }
+.warhammer-dbc .psy-powers-table tbody .item-row:hover {
+  background: var(--pc-soft) !important;
+  box-shadow: inset 3px 0 0 var(--pc);
+}
+.warhammer-dbc .psy-power-name { font-weight: 600; color: #e7eefb; }
+.warhammer-dbc .psy-discipline-sub { font-size: 0.72em; color: color-mix(in srgb, var(--pc) 55%, #8a97ab); margin-top: 1px; }
+.warhammer-dbc .psy-type-chip {
+  display: inline-block; font-size: 0.72em; padding: 1px 8px; border-radius: 10px; white-space: nowrap;
+  color: color-mix(in srgb, var(--pc) 70%, #cfe); background: rgba(0,0,0,0.3);
+  border: 1px solid color-mix(in srgb, var(--pc) 35%, transparent);
+}
+.warhammer-dbc .psy-pr-cell, .warhammer-dbc .psy-sustain-cell { text-align: center; }
+.warhammer-dbc .psy-row-sustained {
+  background: color-mix(in srgb, var(--pc) 14%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--pc2);
+}
+.warhammer-dbc .psy-row-sustained .psy-power-name::before {
+  content: "◈"; color: var(--pc2); margin-right: 5px; font-size: 0.85em;
+  animation: psyPip 1.8s ease-in-out infinite;
+}
+.warhammer-dbc .psy-cost-input {
+  width: 46px; text-align: center; background: rgba(0,0,0,0.4);
+  border: 1px solid color-mix(in srgb, var(--pc) 24%, #2a3340); color: #e7eefb; border-radius: 3px; padding: 1px 3px;
+}
+.warhammer-dbc .psy-add-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; padding: 0;
+  background: color-mix(in srgb, var(--pc) 24%, transparent); border: 1px solid var(--pc);
+  border-radius: 3px; cursor: pointer; font-size: 0.95em; line-height: 1; color: #eef4ff; flex-shrink: 0; transition: all 0.13s;
+}
+.warhammer-dbc .psy-add-btn:hover { background: color-mix(in srgb, var(--pc) 42%, transparent); box-shadow: 0 0 10px -2px var(--pc); }
+.warhammer-dbc .psy-manifest-btn {
+  width: auto; padding: 3px 11px; border-radius: 4px; cursor: pointer; font-family: inherit;
+  font-size: 0.82em; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; transition: all 0.14s;
+  color: #f2f6ff; background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 46%, #10141c), color-mix(in srgb, var(--pc) 26%, #0b0e14));
+  border: 1px solid var(--pc); box-shadow: 0 0 12px -5px var(--pc);
+}
+.warhammer-dbc .psy-manifest-btn:hover { box-shadow: 0 0 16px -2px var(--pc); transform: translateY(-1px); }
+.warhammer-dbc .psy-empty { text-align: center; }
+.warhammer-dbc .psy-empty td { padding: 16px 8px !important; color: #8a97ab; font-style: italic; }
+.warhammer-dbc .psy-empty-sigil { color: var(--pc); font-style: normal; margin-right: 4px; animation: psyPip 2.4s ease-in-out infinite; }
+
+/* ── Прочие психические действия ────────────────────────── */
+.warhammer-dbc .psy-other-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+.warhammer-dbc .psy-action-btn {
+  display: inline-flex; align-items: center; gap: 7px; width: auto; padding: 6px 13px; border-radius: 6px; cursor: pointer;
+  font-family: inherit; font-size: 0.84em; font-weight: 600; color: #dfe8f6; transition: all 0.14s;
+  background: linear-gradient(180deg, rgba(20,26,36,0.9), rgba(10,13,20,0.95));
+  border: 1px solid color-mix(in srgb, var(--pc) 40%, #2a3340);
+}
+.warhammer-dbc .psy-action-btn:hover {
+  color: #fff; border-color: var(--pc);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 24%, #141a24), rgba(10,13,20,0.95));
+  box-shadow: 0 0 14px -4px var(--pc);
+}
+.warhammer-dbc .psy-ab-ico { font-size: 1.1em; color: var(--pc); text-shadow: 0 0 8px color-mix(in srgb, var(--pc) 55%, transparent); }
+.warhammer-dbc .psy-action-btn:hover .psy-ab-ico { color: var(--pc2); }

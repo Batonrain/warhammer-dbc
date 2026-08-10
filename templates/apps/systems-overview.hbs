@@ -1,0 +1,277 @@
+<div class="wh-so">
+  <nav class="wh-so-tabs tabs">
+    <a class="item" data-tab="systems">СИСТЕМЫ</a>
+    <a class="item" data-tab="protectorate">ПРОТЕКТОРАТ</a>
+    {{#if isGM}}<a class="item" data-tab="dynasties">НАСТРОЙКИ</a>{{/if}}
+    <a class="item" data-tab="help">СПРАВКА</a>
+  </nav>
+
+  <div class="wh-so-body">
+
+    {{!-- ── СИСТЕМЫ ── --}}
+    <div class="tab" data-tab="systems">
+      {{#if hasSystems}}
+      <table class="wh-so-table">
+        <thead><tr><th>Система</th><th>Сектор</th><th class="wh-so-c">Статус</th><th class="wh-so-c">Действия</th></tr></thead>
+        <tbody>
+          {{#each regionGroups as |rg|}}
+          <tr class="wh-so-region-head"><th colspan="4" style="text-align:left; background: rgba(0, 255, 100, 0.1); padding: 4px 8px; font-weight: bold; font-family: 'Oswald', sans-serif;">{{rg.regionName}}</th></tr>
+          {{#each rg.systems as |s|}}
+          <tr>
+            <td class="wh-so-name"><a data-open-system="{{s.id}}"><img src="{{s.img}}" class="wh-so-ico"/> {{s.name}}</a></td>
+            <td>{{s.sector}}</td>
+            <td class="wh-so-c">
+              {{#if s.discovered}}<span class="wh-so-badge wh-so-known">Открыта</span>{{else}}<span class="wh-so-badge wh-so-unknown">Скрыта</span>{{/if}}
+              {{#if s.inProt}}<span class="wh-so-badge wh-so-prot">Протекторат</span>{{/if}}
+            </td>
+            <td class="wh-so-c wh-so-actions">
+              <button type="button" data-open-system="{{s.id}}">Открыть</button>
+              {{#if @root.isGM}}<button type="button" data-toggle-disc="{{s.id}}">{{#if s.discovered}}Скрыть{{else}}Открыть игрокам{{/if}}</button>{{/if}}
+            </td>
+          </tr>
+          {{/each}}
+          {{/each}}
+        </tbody>
+      </table>
+      {{else}}<div class="wh-so-empty">Известных систем нет.</div>{{/if}}
+    </div>
+
+    {{!-- ── ПРОТЕКТОРАТ ── --}}
+    <div class="tab" data-tab="protectorate">
+
+      {{!-- Династия --}}
+      <div class="wh-so-panel wh-so-dyn-panel">
+        <div class="wh-so-crest-box">
+          {{#if dynCrest}}<img class="wh-so-crest" src="{{dynCrest}}"/>{{else}}<div class="wh-so-crest wh-so-crest-empty">герб</div>{{/if}}
+        </div>
+        <div class="wh-so-dyn-fields">
+          {{#if isGM}}
+          <div class="wh-so-dyn-row"><input type="text" class="wh-so-dyn-input" value="{{dynName}}" placeholder="Название династии"/></div>
+          <div class="wh-so-dyn-row"><input type="text" class="wh-so-motto-input" value="{{dynMotto}}" placeholder="Девиз династии"/></div>
+          <div class="wh-so-dyn-row">
+            <button type="button" class="wh-so-add-btn wh-so-crest-pick">Герб…</button>
+            {{#if dynCrest}}<button type="button" class="wh-so-add-btn wh-so-crest-clear">Убрать герб</button>{{/if}}
+            <button type="button" class="wh-so-add-btn wh-so-dyn-save">Сохранить</button>
+          </div>
+          {{else}}
+          <div class="wh-so-dyn-name-disp">{{#if dynName}}⚜ {{dynName}}{{else}}— династия не задана —{{/if}}</div>
+          {{#if dynMotto}}<div class="wh-so-dyn-motto-disp">«{{dynMotto}}»</div>{{/if}}
+          {{/if}}
+        </div>
+      </div>
+
+      {{#if isGM}}
+      <div class="wh-so-panel wh-so-add">
+        <label>Добавить систему в протекторат:</label>
+        {{#if hasCandidates}}
+        <select class="wh-so-add-select">{{#each candidates as |c|}}<option value="{{c.id}}">{{c.name}}</option>{{/each}}</select>
+        <button type="button" class="wh-so-add-btn wh-so-addsys-btn">Добавить</button>
+        {{else}}<span class="wh-so-dim">— нет доступных систем —</span>{{/if}}
+      </div>
+      {{/if}}
+
+      <div class="wh-so-panel">
+        <div class="wh-so-panel-title">СИСТЕМЫ ПРОТЕКТОРАТА <span class="wh-so-dim">— ПКМ по планете: Экстракциум · Построить улучшение · Столица</span></div>
+        {{#if hasProt}}
+        {{#each protList as |p|}}
+        <div class="wh-so-sys">
+          <div class="wh-so-sys-head">
+            <a class="wh-so-sys-name" data-open-system="{{p.id}}">{{p.name}}</a>
+            <span class="wh-so-dim">{{p.sector}}</span>
+            {{#if @root.isGM}}<span class="wh-so-sys-actions"><button type="button" class="wh-so-danger" data-prot-remove="{{p.id}}" title="Убрать из протектората">✕</button></span>{{/if}}
+          </div>
+          {{#if p.hasPlanets}}
+          <div class="wh-so-planets">
+            {{#each p.planets as |pl|}}
+            <div class="wh-so-planet {{#if pl.isCapital}}wh-so-planet-capital{{/if}}{{#unless pl.scouted}} wh-so-planet-dim{{/unless}}" data-planet="{{pl.itemId}}" data-actor="{{p.id}}" title="ПКМ — действия">
+              <span class="wh-so-planet-name">{{#if pl.isCapital}}<span class="wh-so-capital-mark" title="Столица">★</span> {{/if}}{{pl.name}}</span>
+              {{#if pl.populated}}<span class="wh-so-pop" title="Заселена">Заселена</span>{{else}}<span class="wh-so-unpop" title="Необитаема">Необитаема</span>{{/if}}
+              {{#if pl.scouted}}
+              <span class="wh-so-extr-chips">
+                {{#each pl.raws as |r|}}
+                <span class="wh-so-extr{{#if r.installed}} on{{/if}}" title="{{r.label}} ({{r.value}}){{#if r.installed}} — экстракциум{{/if}}"><img src="{{r.icon}}"/>{{r.value}}</span>
+                {{/each}}
+              </span>
+              {{#if pl.hasImps}}<span class="wh-so-imp-tags">{{#each pl.imps as |im|}}<span class="wh-so-imp-tag" data-cat="{{im.cat}}" data-tooltip="{{im.tip}}" data-tooltip-direction="UP">{{#if im.catSvg}}<img class="wh-so-imp-ico" src="{{im.catSvg}}" alt="{{im.catLabel}}"/>{{/if}}{{im.name}}</span>{{/each}}</span>{{/if}}
+              {{else}}<span class="wh-so-unscouted">не разведана — ресурсы скрыты</span>{{/if}}
+            </div>
+            {{/each}}
+          </div>
+          {{else}}<div class="wh-so-dim wh-so-noplanets">Нет планет с ресурсами.</div>{{/if}}
+        </div>
+        {{/each}}
+        {{else}}<div class="wh-so-empty">В протекторате пока нет систем.</div>{{/if}}
+      </div>
+
+      <div class="wh-so-panel">
+        <div class="wh-so-panel-title">БАЛАНС РЕСУРСОВ <span class="wh-so-dim">— доход (экстракциумы/улучшения/население) минус расход (содержание + десятина + прочее)</span></div>
+        {{#if hasBal}}
+        <table class="wh-so-bal">
+          <thead><tr><th>Ресурс</th><th class="wh-so-c">Доход</th><th class="wh-so-c">Расход</th><th class="wh-so-c">Баланс</th></tr></thead>
+          <tbody>
+            {{#each balGroups as |g|}}
+            <tr class="wh-so-bal-cat"><th colspan="4">{{g.title}}</th></tr>
+            {{#each g.rows as |r|}}
+            <tr>
+              <td class="wh-so-bal-name"><img src="{{r.icon}}"/> {{r.label}}</td>
+              <td class="wh-so-c wh-so-inc" title="{{r.incTooltip}}">+{{r.income}}</td>
+              <td class="wh-so-c wh-so-exp" title="{{r.expTooltip}}">−{{r.expend}}</td>
+              <td class="wh-so-c wh-so-balv {{#if r.neg}}wh-so-neg{{else}}wh-so-pos{{/if}}">{{r.balance}}</td>
+            </tr>
+            {{/each}}
+            {{/each}}
+          </tbody>
+        </table>
+        {{else}}<div class="wh-so-empty">Нет данных. Установите Экстракциумы и стройте улучшения.</div>{{/if}}
+      </div>
+
+      {{#if isGM}}
+      <div class="wh-so-panel">
+        <div class="wh-so-panel-title">ДРУГИЕ ТРАТЫ <span class="wh-so-dim">— ручной расход ресурсов кампании (в минус к балансу)</span></div>
+        <div class="wh-so-other-grid">
+          {{#each otherList as |o|}}
+          <label class="wh-so-other-cell" title="{{o.label}}"><img src="{{o.icon}}"/><input type="number" class="wh-so-other-input" data-res="{{o.key}}" value="{{o.value}}" min="0"/></label>
+          {{/each}}
+        </div>
+        <button type="button" class="wh-so-add-btn wh-so-other-save" style="margin-top:6px;">Сохранить траты</button>
+      </div>
+
+      <div class="wh-so-panel">
+        <div class="wh-so-panel-title">КОНТРАКТЫ <span class="wh-so-dim">— торговые соглашения: цена в ресурсах уходит в расход, взамен — услуги/договорённости</span></div>
+        {{#if hasContracts}}
+        <div class="wh-so-contracts">
+          {{#each contracts as |c|}}
+          <div class="wh-so-contract" data-contract="{{c.id}}">
+            <div class="wh-so-contract-head">
+              <span class="wh-so-contract-name">{{c.name}}</span>
+              <span class="wh-so-contract-tools">
+                <button type="button" class="wh-so-contract-edit" title="Изменить">✎</button>
+                <button type="button" class="wh-so-contract-del" title="Удалить">✕</button>
+              </span>
+            </div>
+            {{#if c.costChips.length}}<div class="wh-so-contract-cost">{{#each c.costChips as |r|}}<span class="wh-so-contract-chip cost" title="Отдаёшь: {{r.label}}"><img src="{{r.icon}}"/>−{{r.value}}</span>{{/each}}</div>{{/if}}
+            {{#if c.incomeChips.length}}<div class="wh-so-contract-cost">{{#each c.incomeChips as |r|}}<span class="wh-so-contract-chip gain" title="Получаешь: {{r.label}}"><img src="{{r.icon}}"/>+{{r.value}}</span>{{/each}}</div>{{/if}}
+            {{#if c.gain}}<div class="wh-so-contract-gain">↝ {{c.gain}}</div>{{/if}}
+          </div>
+          {{/each}}
+        </div>
+        {{else}}<div class="wh-so-empty">Контрактов пока нет.</div>{{/if}}
+        <button type="button" class="wh-so-add-btn wh-so-contract-add" style="margin-top:6px;">＋ Новый контракт</button>
+      </div>
+      {{/if}}
+
+    </div>
+
+    {{!-- ── НАСТРОЙКИ ── --}}
+    {{#if isGM}}
+    <div class="tab" data-tab="dynasties">
+      <div class="wh-so-panel">
+        <div class="wh-so-panel-title">СЕКТОР ПО УМОЛЧАНИЮ <span class="wh-so-dim">— будет подставляться в новые системы</span></div>
+        <div class="wh-so-add">
+          <input type="text" class="wh-so-sect-input" placeholder="Название сектора" value="{{defSector}}"/>
+          <button type="button" class="wh-so-add-btn wh-so-sect-save">Сохранить</button>
+        </div>
+      </div>
+
+      <div class="wh-so-panel">
+        <div class="wh-so-panel-title">СПИСОК РЕГИОНОВ <span class="wh-so-dim">— для группировки систем (субсектора, скопления)</span></div>
+        <div class="wh-so-add">
+          <input type="text" class="wh-so-reglist-input" placeholder="название региона"/>
+          <button type="button" class="wh-so-add-btn wh-so-reglist-add">Добавить</button>
+        </div>
+        {{#if hasRegions}}
+        <div class="wh-so-chips">{{#each regions as |r|}}<span class="wh-so-chip">{{r}} <a data-reg-remove="{{r}}" title="Удалить">✕</a></span>{{/each}}</div>
+        {{else}}<div class="wh-so-dim" style="margin-top:6px;">Список регионов пуст.</div>{{/if}}
+      </div>
+
+      <div class="wh-so-panel">
+        <div class="wh-so-panel-title">СПИСОК ДИНАСТИЙ <span class="wh-so-dim">— для выбора при заселении/генерации систем</span></div>
+        <div class="wh-so-add">
+          <input type="text" class="wh-so-dynlist-input" placeholder="название династии"/>
+          <button type="button" class="wh-so-add-btn wh-so-dynlist-add">Добавить</button>
+        </div>
+        {{#if hasDynasties}}
+        <div class="wh-so-chips">{{#each dynasties as |d|}}<span class="wh-so-chip">{{d}} <a data-dyn-remove="{{d}}" title="Удалить">✕</a></span>{{/each}}</div>
+        {{else}}<div class="wh-so-dim" style="margin-top:6px;">Список пуст.</div>{{/if}}
+      </div>
+    </div>
+    {{/if}}
+
+    {{!-- ── СПРАВКА ── --}}
+    <div class="tab" data-tab="help">
+      <div class="wh-so-panel wh-so-help">
+        <div class="wh-so-panel-title">КАК РАБОТАЕТ ПРОТЕКТОРАТ</div>
+        <p>Протекторат — владение Вольного Торговца. Каждая <b>разведанная</b> планета/станция протектората даёт ресурсы в общий котёл. На вкладке «Протекторат» считается <b>БАЛАНС</b>: по каждому ресурсу <span class="wh-help-inc">доход</span> минус <span class="wh-help-exp">расход</span>, сгруппировано по продукции / сырью / прочему.</p>
+        <p class="wh-help-note">Неразведанные тела в экономике не участвуют. Управление — ПКМ по строке планеты: экстракциумы, постройка улучшения, десятина, назначение столицы.</p>
+      </div>
+
+      <div class="wh-so-panel wh-so-help">
+        <div class="wh-so-panel-title">ИЗОБИЛИЕ И РЕСУРСЫ ПЛАНЕТЫ</div>
+        <p>Богатство тела измеряется в <b>Изобилии</b> (усл. рейтинг): 0 нет · 25 скудно · 50 умеренно · 75 богато · 90+ колоссально.</p>
+        <ul>
+          <li>Строка планеты в обзорщике показывает <b>только собственное</b> сырьё тела (базу), без учёта улучшений.</li>
+          <li>В <b>Баланс</b> идёт полное производство: база (через экстракциум) <b>плюс</b> продукция улучшений — отдельными строками.</li>
+        </ul>
+      </div>
+
+      <div class="wh-so-panel wh-so-help">
+        <div class="wh-so-panel-title">ЭКСТРАКЦИУМЫ</div>
+        <p>Экстракциум добывает <b>собственное сырьё планеты</b> (её базовое Изобилие) в доход. Ставится только на сырьё, которое есть у самой планеты.</p>
+        <div class="wh-help-formula">Доход = базовое Изобилие ресурса</div>
+        <div class="wh-help-formula wh-help-exp">Содержание = −5 Людского ресурса за каждый экстракциум</div>
+      </div>
+
+      <div class="wh-so-panel wh-so-help">
+        <div class="wh-so-panel-title">НАСЕЛЕНИЕ</div>
+        <p>Заселённый мир даёт Людской ресурс и требует провизию на содержание. Провизия кормит <b>весь доход</b> людского ресурса мира (население + улучшения-поставщики людей), независимо от того, сколько людей занято на производстве.</p>
+        <div class="wh-help-formula wh-help-inc">Доход = базовый Людской ресурс + люди от улучшений</div>
+        <div class="wh-help-formula wh-help-exp">Содержание = −⌈доход Людского ресурса ÷ 2⌉ провизии</div>
+      </div>
+
+      <div class="wh-so-panel wh-so-help">
+        <div class="wh-so-panel-title">УЛУЧШЕНИЯ — ПРОИЗВОДСТВО</div>
+        <p>Улучшение производит свои ресурсы <b>напрямую</b> в доход (в т.ч. сырьё — экстракциум для этого не нужен). Наведи на улучшение — увидишь, что оно <span class="wh-help-inc">даёт</span> и <span class="wh-help-exp">тратит</span>.</p>
+      </div>
+
+      <div class="wh-so-panel wh-so-help">
+        <div class="wh-so-panel-title">УЛУЧШЕНИЯ — ЗАТРАТЫ (ФОРМУЛЫ)</div>
+        <p><b>1. Производственные цепочки</b> — на единицу продукции нужно сырьё/полуфабрикат:</p>
+        <div class="wh-help-chains">
+          {{#each prodChains as |c|}}<div class="wh-help-formula">1 {{c.out}} ⟵ {{c.inputs}}</div>{{/each}}
+        </div>
+        <p><b>2. Рабочая сила</b> — тратится по объёму <b>продукции</b> (оружие/техника/пласталь/провизия):</p>
+        <div class="wh-help-formula wh-help-exp">Людской ресурс = max(4; продукция × 0.5)</div>
+        <p><b>3. Военные улучшения</b> (казармы, гарнизоны, бастионы) оружие <b>не производят</b>, а <b>тратят</b> — на вооружение войск и укреплений (куют оружие мануфакторумы):</p>
+        <div class="wh-help-formula wh-help-exp">Оружие = ⌈(войска + огневая мощь) × 0.5⌉</div>
+        <ul>
+          <li>Добыча сырья рабочую силу почти не тратит (её ведёт само население) — масштаб считается только по продукции.</li>
+          <li>Улучшение, которое <b>даёт</b> Людской ресурс, его не потребляет.</li>
+          <li>Чисто нарративное улучшение всё равно требует минимум <b>4</b> Людского ресурса на штат.</li>
+          <li><b>Своё улучшение:</b> вручную заданная цена (поле «Тратит») <b>заменяет</b> формулы.</li>
+          <li><b>Нетто:</b> собственное производство гасит собственный расход того же ресурса. Если завод делает 15 пластали, но на технику нужно 30 — в подсказке будет «тратит пласталь 15» (нетто), а не «даёт 15 / тратит 30».</li>
+        </ul>
+      </div>
+
+      <div class="wh-so-panel wh-so-help">
+        <div class="wh-so-panel-title">ИМПЕРСКАЯ ДЕСЯТИНА</div>
+        <p>Уровень десятины мира изымает долю его <b>валовой продукции</b> (добыча + производство) в пользу Империума — как расход. Задаётся в ПКМ → «Десятина». Можно освободить <b>отдельные ресурсы</b>, не трогая другие.</p>
+        <div class="wh-help-formula wh-help-exp">Десятина по ресурсу = ⌈производство × ставка уровня⌉</div>
+        <table class="wh-help-tithe">
+          <thead><tr><th>Уровень</th><th>Изъятие</th></tr></thead>
+          <tbody>
+            {{#each titheHelp as |t|}}<tr><td>{{t.label}}</td><td>{{t.pct}}%</td></tr>{{/each}}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="wh-so-panel wh-so-help">
+        <div class="wh-so-panel-title">КОНТРАКТЫ И ДРУГИЕ ТРАТЫ</div>
+        <ul>
+          <li><b>Контракт:</b> «Отдаёшь» — ресурсы в <span class="wh-help-exp">расход</span>, «Получаешь» — ресурсы в <span class="wh-help-inc">доход</span> плюс услуги/договорённости (свободный текст).</li>
+          <li><b>Другие траты:</b> ручной постоянный расход ресурсов кампании (в минус к балансу).</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>

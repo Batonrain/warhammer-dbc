@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Завеса и Мистика: Таро (перенос) + Осквернение
+   (крафт демонического оружия). Цвет бога — --gc.
+═══════════════════════════════════════════════════════ */
+
+/* ── Таро внутри окна Завесы: наследуем «золотую» тему ── */
+.wv-tarot {
+  --tr-gold: #d9b869; --tr-gold-dim: #8a7440; --tr-text: #e8e0d0;
+  --tr-line: rgba(217,184,105,0.3); --tr-rev: #c98bd8; --tr-panel: #17122099;
+  color: var(--tr-text); font-family: "Georgia", "Times New Roman", serif;
+}
+.wv-tarot input[type=text], .wv-tarot select {
+  background: rgba(0,0,0,0.4); border: 1px solid var(--tr-line); border-radius: 4px;
+  color: var(--tr-text); padding: 4px 7px; font-family: inherit; font-size: 0.95em;
+}
+.wv-tarot input[type=text]:focus, .wv-tarot select:focus { outline: none; border-color: var(--tr-gold); box-shadow: 0 0 6px rgba(217,184,105,0.4); }
+.wv-tarot .tr-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.wv-tarot .tr-tab {
+  flex: 1; padding: 7px; border: 1px solid var(--tr-gold-dim); border-radius: 6px; cursor: pointer;
+  background: linear-gradient(180deg, #1c1428, #120c1c); color: var(--tr-gold-dim);
+  font-family: "Georgia", serif; font-size: 0.92em; letter-spacing: 0.03em;
+}
+.wv-tarot .tr-tab.active { color: var(--tr-gold); border-color: var(--tr-gold); box-shadow: inset 0 0 14px rgba(217,184,105,0.14); text-shadow: 0 0 8px rgba(217,184,105,0.4); }
+.wv-tarot .tr-footer { margin-top: 12px; text-align: center; }
+
+/* ══════════════════ ОСКВЕРНЕНИЕ ══════════════════ */
+.wv-defile {
+  --gc: #b477ff;
+  color: #d8cde8; font-size: 15px;
+  position: relative;
+  padding: 4px 4px 12px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.wv-defile .dfl-intro {
+  font-size: 0.85em; color: #a89bc8; line-height: 1.55;
+  padding: 8px 11px; border-radius: 6px; border-left: 3px solid var(--gc);
+  background: color-mix(in srgb, var(--gc) 10%, rgba(0,0,0,0.35));
+}
+.wv-defile .dfl-top { display: grid; grid-template-columns: 1fr 1.05fr; gap: 12px; align-items: stretch; }
+.wv-defile .dfl-demon { min-width: 0; }
+.wv-defile .dfl-res-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 14px; align-items: start; }
+.wv-defile .dfl-iconwork { margin-top: 10px; }
+.wv-defile .dfl-ritgrid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 12px; }
+.wv-defile .dfl-drop-ico { font-size: 1.6em; }
+.wv-defile .dfl-drop-sub { font-size: 0.82em; color: #6f6592; }
+
+.wv-defile .dfl-panel {
+  border-radius: 8px; padding: 9px 11px;
+  background: linear-gradient(180deg, rgba(20,11,34,0.82), rgba(10,7,20,0.9));
+  border: 1px solid color-mix(in srgb, var(--gc) 28%, #241634); border-left: 3px solid var(--gc);
+  box-shadow: inset 0 0 24px rgba(0,0,0,0.5);
+}
+.wv-defile .dfl-panel-h {
+  font-size: 0.84em; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+  color: #cbbde8; margin-bottom: 9px; display: flex; align-items: center; gap: 8px;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--gc) 55%, transparent);
+}
+
+/* дроп-зона оружия */
+.wv-defile .dfl-drop {
+  border: 2px dashed color-mix(in srgb, var(--gc) 45%, #33244d); border-radius: 8px;
+  min-height: 92px; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.25); transition: all 0.15s; padding: 8px;
+}
+.wv-defile .dfl-drop.dragover { border-color: var(--gc); background: color-mix(in srgb, var(--gc) 16%, rgba(0,0,0,0.25)); box-shadow: 0 0 20px -4px var(--gc); }
+.wv-defile .dfl-drop.has { border-style: solid; }
+.wv-defile .dfl-drop-hint { text-align: center; font-size: 0.9em; color: #7d719f; line-height: 1.7; }
+.wv-defile .dfl-weapon { display: flex; align-items: center; gap: 10px; width: 100%; }
+.wv-defile .dfl-wimg { width: 46px; height: 46px; border-radius: 5px; border: 1px solid var(--gc); object-fit: cover; box-shadow: 0 0 10px -3px var(--gc); }
+.wv-defile .dfl-wmeta { flex: 1; min-width: 0; }
+.wv-defile .dfl-wname { font-weight: 700; color: #efe4ff; font-size: 1em; }
+.wv-defile .dfl-wline { font-size: 0.76em; color: #9a8fc0; }
+.wv-defile .dfl-wclear { background: none; border: none; color: #9a8fc0; cursor: pointer; font-size: 1.1em; }
+.wv-defile .dfl-wclear:hover { color: #e0202e; }
+.wv-defile .dfl-warn { width: 100%; margin-top: 6px; color: #e8b84a; font-size: 0.78em; }
+
+/* боги */
+.wv-defile .dfl-gods { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 9px; }
+.wv-defile .dfl-god {
+  display: flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 14px; cursor: pointer;
+  background: rgba(0,0,0,0.35); border: 1px solid #2c1f46; color: #c3b6e0; font-size: 0.78em;
+}
+.wv-defile .dfl-god.on { border-color: var(--c); color: #fff; box-shadow: 0 0 10px -3px var(--c); background: color-mix(in srgb, var(--c) 18%, rgba(0,0,0,0.35)); }
+.wv-defile .dfl-god-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+.wv-defile .dfl-lbl { display: flex; flex-direction: column; gap: 3px; font-size: 0.8em; color: #9184b4; margin-bottom: 7px; }
+.wv-defile .dfl-lbl input, .wv-defile .dfl-lbl select {
+  background: rgba(0,0,0,0.4); border: 1px solid color-mix(in srgb, var(--gc) 26%, #2a1e44);
+  color: #e2d8f4; border-radius: 4px; padding: 4px 6px; font-size: 1.15em;
+}
+.wv-defile .dfl-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+.wv-defile .dfl-note { font-size: 0.84em; color: #9a8fc0; margin-top: 4px; }
+.wv-defile .dfl-note b { color: var(--gc); }
+
+/* резонанс */
+.wv-defile .dfl-res-total { margin-left: auto; padding: 1px 9px; border-radius: 10px; border: 1px solid #2c1f46; background: rgba(0,0,0,0.3); color: #8a7fb0; font-weight: 700; }
+.wv-defile .dfl-res-total.on { color: var(--gc); border-color: var(--gc); }
+.wv-defile .dfl-res-group { margin-bottom: 8px; }
+.wv-defile .dfl-res-gh { font-size: 0.78em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gc); opacity: 0.85; margin-bottom: 3px; }
+.wv-defile .dfl-res { display: flex; align-items: center; gap: 7px; padding: 3px 4px; border-radius: 4px; cursor: pointer; font-size: 0.86em; color: #b7abd8; }
+.wv-defile .dfl-res:hover { background: rgba(255,255,255,0.03); }
+.wv-defile .dfl-res.on { color: #efe4ff; }
+.wv-defile .dfl-res input { accent-color: var(--gc); }
+.wv-defile .dfl-res-v { min-width: 30px; font-weight: 700; text-align: right; }
+.wv-defile .dfl-res-v.pos { color: #8fbf3a; } .wv-defile .dfl-res-v.neg { color: #e07a5a; }
+
+/* ритуал */
+.wv-defile .dfl-checks { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.wv-defile .dfl-check { font-size: 0.86em; color: #c3b6e0; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.wv-defile .dfl-check input { accent-color: var(--gc); }
+.wv-defile .dfl-rows { margin: 8px 0; border-top: 1px solid #241634; padding-top: 6px; }
+.wv-defile .dfl-trow { display: flex; justify-content: space-between; font-size: 0.88em; color: #9a8fc0; padding: 2px 0; }
+.wv-defile .dfl-trow.primary { color: #d8cde8; }
+.wv-defile .dfl-trow-v { font-weight: 700; color: #cbbde8; }
+.wv-defile .dfl-trow.total { border-top: 1px solid #2c1f46; margin-top: 4px; padding-top: 5px; font-size: 0.94em; color: var(--gc); }
+.wv-defile .dfl-trow.total .dfl-trow-v { color: var(--gc); text-shadow: 0 0 8px color-mix(in srgb, var(--gc) 60%, transparent); }
+.wv-defile .dfl-actions { display: flex; gap: 8px; margin-top: 8px; }
+.wv-defile .dfl-btn {
+  flex: 1; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.9em; font-weight: 700;
+  background: color-mix(in srgb, var(--gc) 18%, #140b22); color: #e6dbff;
+  border: 1px solid color-mix(in srgb, var(--gc) 45%, #2c1f46); transition: all 0.15s;
+}
+.wv-defile .dfl-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--gc) 34%, #140b22); box-shadow: 0 0 14px -4px var(--gc); }
+.wv-defile .dfl-btn.primary { border-color: var(--gc); text-transform: uppercase; letter-spacing: 0.04em; }
+.wv-defile .dfl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.wv-defile .dfl-common { margin-top: 9px; font-size: 0.82em; color: #8a7fb0; line-height: 1.5; }
+.wv-defile .dfl-common b { color: var(--gc); }
+
+@media (max-width: 720px) { .wv-defile .dfl-grid { grid-template-columns: 1fr; } }
+
+/* ── Чат-карточка осквернения ── */
+.wv-defile-card { --gc:#b477ff; border:1px solid var(--gc); border-left:4px solid var(--gc); border-radius:6px; padding:7px 10px; background:linear-gradient(180deg,#140b22,#0a0714); color:#d8cde8; }
+.wv-defile-card .roll-header { font-weight:800; color:#efe4ff; text-shadow:0 0 8px var(--gc); }
+.wv-defile-card .dc-line, .wv-defile-card .dc-foot { font-size:0.82em; color:#a89bc8; margin-top:4px; line-height:1.45; }
+.wv-defile-card .dc-foot { color:#8a7fb0; font-style:italic; }
+.wv-defile-card .dc-props { margin-top:6px; display:flex; flex-direction:column; gap:4px; }
+.wv-defile-card .dc-prop { font-size:0.82em; color:#c3b6e0; line-height:1.4; }
+.wv-defile-card .dc-prop-god { font-weight:700; font-size:0.86em; }
+
+/* ── Лист оружия: панель Наследия/Осквернения ── */
+.weapon-mystic-section { margin: 8px 0; padding: 7px 9px; border-radius: 6px; border: 1px solid #2a2338; background: rgba(0,0,0,0.2); }
+.weapon-mystic-section.is-daemon { --gc: #b477ff; border-color: color-mix(in srgb, var(--gc) 40%, #2a2338); border-left: 3px solid var(--gc); }
+.wms-checks { display: flex; flex-wrap: wrap; gap: 14px; }
+.wms-check { font-size: 0.82em; color: #c9bfe0; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.wms-daemon { margin-top: 9px; padding-top: 8px; border-top: 1px dashed color-mix(in srgb, var(--gc) 30%, #2a2338); }
+.wms-daemon-head { display: flex; align-items: center; gap: 8px; }
+.wms-daemon-sigil { width: 10px; height: 10px; border-radius: 50%; background: var(--gc); box-shadow: 0 0 8px var(--gc); }
+.wms-daemon-title { font-weight: 800; font-size: 0.82em; letter-spacing: 0.06em; color: var(--gc); text-shadow: 0 0 8px color-mix(in srgb, var(--gc) 55%, transparent); }
+.wms-daemon-god { margin-left: auto; font-size: 0.78em; color: #b7abd8; }
+.wms-daemon-meta { display: flex; flex-wrap: wrap; gap: 12px; margin: 7px 0; font-size: 0.78em; color: #9a8fc0; }
+.wms-daemon-meta b { color: #efe4ff; }
+.wms-subdue { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.wms-daemon-props { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.wms-dp { display: flex; justify-content: space-between; gap: 8px; padding: 3px 7px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid #2c1f46; cursor: help; }
+.wms-dp-name { font-size: 0.82em; color: #ded2f2; font-weight: 600; }
+.wms-dp-god { font-size: 0.72em; color: #8a7fb0; }
+.wms-release { padding: 4px 10px; border-radius: 5px; cursor: pointer; font-size: 0.76em; background: rgba(224,32,46,0.14); color: #f0b7b7; border: 1px solid rgba(224,32,46,0.4); }
+.wms-release:hover { background: rgba(224,32,46,0.24); }

@@ -1,0 +1,202 @@
+/* ═══════════════════════════════════════════════════════
+   Нексус Сцен — когитаторное окно (галерея сцен + переходы).
+   Фосфорная зелень, как у Обзора систем / листов персонажей.
+   Акцент группы — через --gc (цвет группы).
+═══════════════════════════════════════════════════════ */
+
+.wh-scene-nexus .window-content { background: #06120c; color: #c6ffe0; padding: 0; }
+.wh-nx { display: flex; flex-direction: column; height: 100%; font-family: "Oswald", "Roboto Condensed", sans-serif; }
+
+/* ── Статус-строка ── */
+.wh-nx-status {
+  display: flex; align-items: center; gap: 14px; flex: 0 0 auto;
+  padding: 8px 12px; border-bottom: 1px solid #2f9e6a; background: rgba(15,58,38,0.4);
+}
+.wh-nx-here { display: flex; flex-direction: column; line-height: 1.15; }
+.wh-nx-here-lbl { font-size: 0.64em; letter-spacing: 0.14em; color: #6fbf95; }
+.wh-nx-here-name { font-size: 1.02em; font-weight: 700; color: #d8ffe8; text-shadow: 0 0 7px rgba(77,255,166,0.4); }
+.wh-nx-sel {
+  flex: 1; font-size: 0.82em; color: #7f9a8c; letter-spacing: 0.02em;
+  padding: 4px 10px; border: 1px dashed rgba(47,158,106,0.35); border-radius: 5px; background: rgba(0,0,0,0.25);
+}
+.wh-nx-sel.on { color: #bdffdd; border-style: solid; border-color: #2f9e6a; box-shadow: inset 0 0 14px -6px #4dffa6; }
+.wh-nx-sel-ic { color: #4dffa6; }
+.wh-nx-sel-names { color: #7fe0a8; }
+.wh-nx-btn {
+  width: auto; flex: 0 0 auto; background: #0e2a1c; color: #d8ffe8; border: 1px solid #2f9e6a;
+  border-radius: 3px; padding: 4px 12px; cursor: pointer; font-weight: 700; font-size: 0.84em; letter-spacing: 0.04em;
+}
+.wh-nx-btn:hover { background: #15492f; box-shadow: 0 0 8px rgba(77,255,166,0.4); }
+
+/* ── Тело со скроллом ── */
+.wh-nx-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 14px; }
+
+/* ── Панель группы ── */
+.wh-nx-group {
+  border: 1px solid color-mix(in srgb, var(--gc, #2f9e6a) 55%, #0a1c12);
+  border-left: 3px solid var(--gc, #2f9e6a);
+  border-radius: 6px; background: rgba(0,0,0,0.28);
+  box-shadow: inset 0 0 22px -10px var(--gc, #4dffa6);
+}
+.wh-nx-ghead {
+  display: flex; align-items: center; gap: 9px; padding: 7px 10px;
+  border-bottom: 1px solid rgba(47,158,106,0.28); flex-wrap: wrap;
+}
+.wh-nx-group.collapsed .wh-nx-ghead { border-bottom: none; }
+.wh-nx-caret {
+  width: 20px; height: 20px; padding: 0; flex: 0 0 auto; cursor: pointer; line-height: 1;
+  background: none; border: none; color: var(--gc, #4dffa6); font-size: 0.9em;
+}
+.wh-nx-caret:hover { text-shadow: 0 0 8px var(--gc, #4dffa6); }
+.wh-nx-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gc, #4dffa6); box-shadow: 0 0 8px var(--gc, #4dffa6); flex: 0 0 auto; }
+.wh-nx-gname { font-weight: 800; letter-spacing: 0.05em; color: #eafff4; text-shadow: 0 0 7px color-mix(in srgb, var(--gc, #4dffa6) 60%, transparent); }
+.wh-nx-gcount {
+  font-size: 0.72em; color: #04100a; background: var(--gc, #4dffa6); border-radius: 9px;
+  padding: 0 7px; font-weight: 800; min-width: 16px; text-align: center;
+}
+.wh-nx-veil {
+  margin-left: 6px; font-size: 0.74em; letter-spacing: 0.02em; padding: 1px 8px; border-radius: 9px;
+  border: 1px solid rgba(120,90,160,0.5); color: #c9b6e6; background: rgba(60,30,80,0.25);
+}
+.wh-nx-veil.tier-sacred { border-color: #6fbf95; color: #bdffdd; background: rgba(47,158,106,0.18); }
+.wh-nx-veil.tier-dense  { border-color: #5aa0c0; color: #bfe6ff; background: rgba(40,90,140,0.2); }
+.wh-nx-veil.tier-thin,
+.wh-nx-veil.tier-torn,
+.wh-nx-veil.tier-infernal { border-color: #c0506a; color: #ffc0cc; background: rgba(140,40,60,0.24); animation: nxVeilPulse 2.6s ease-in-out infinite; }
+@keyframes nxVeilPulse { 0%,100% { box-shadow: 0 0 0 rgba(224,32,46,0); } 50% { box-shadow: 0 0 10px -2px rgba(224,32,46,0.7); } }
+
+.wh-nx-gtools { margin-left: auto; display: flex; align-items: center; gap: 3px; }
+.wh-nx-gtools button {
+  width: 24px; height: 22px; padding: 0; flex: 0 0 auto; cursor: pointer; font-size: 0.82em;
+  background: #0e2a1c; color: #cdeede; border: 1px solid #2f6f4a; border-radius: 3px; line-height: 1;
+}
+.wh-nx-gtools button:hover { background: #15492f; box-shadow: 0 0 6px rgba(77,255,166,0.4); }
+.wh-nx-gtools .wh-nx-gdel:hover { background: #4a1414; border-color: #b8453a; color: #ff9a9a; }
+.wh-nx-gcolor { width: 26px; height: 22px; padding: 0; border: 1px solid #2f6f4a; border-radius: 3px; background: none; cursor: pointer; flex: 0 0 auto; }
+
+/* ── Сетка карточек сцен ── */
+.wh-nx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; padding: 10px; }
+.wh-nx-card {
+  position: relative; border: 1px solid #22503a; border-radius: 5px; overflow: hidden;
+  background: #0a1c12; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.wh-nx-card:hover { border-color: var(--gc, #4dffa6); box-shadow: 0 0 12px -3px var(--gc, #4dffa6); transform: translateY(-2px); }
+.wh-nx-card.here { border-color: #ffd98a; box-shadow: 0 0 12px -3px rgba(255,217,138,0.6); }
+.wh-nx-card.locked { opacity: 0.85; }
+.wh-nx-card.locked .wh-nx-thumb { filter: grayscale(0.4) brightness(0.82); }
+
+.wh-nx-thumb {
+  position: relative; height: 104px; background-size: cover; background-position: center;
+  background-color: #05100a; display: flex; align-items: center; justify-content: center;
+}
+.wh-nx-noimg { font-size: 0.7em; letter-spacing: 0.12em; color: #3f6a54; }
+.wh-nx-badges { position: absolute; top: 4px; left: 4px; right: 4px; display: flex; flex-wrap: wrap; gap: 3px; }
+.wh-nx-b {
+  font-size: 0.64em; letter-spacing: 0.03em; padding: 1px 6px; border-radius: 7px; font-weight: 700;
+  background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15); color: #d8ffe8;
+}
+.wh-nx-b.act   { color: #04100a; background: #4dffa6; border-color: #4dffa6; }
+.wh-nx-b.cur   { color: #1a1000; background: #ffd98a; border-color: #ffd98a; }
+.wh-nx-b.open  { color: #bdffdd; border-color: #2f9e6a; }
+.wh-nx-b.shut  { color: #ff9a9a; border-color: #b8453a; }
+.wh-nx-b.entry { color: #ffd98a; border-color: #b8932e; }
+
+/* Присутствие игроков на сцене (кто где) */
+.wh-nx-players { position: absolute; left: 4px; bottom: 4px; display: flex; gap: 3px; flex-wrap: wrap; max-width: 80%; z-index: 2; }
+.wh-nx-pc {
+  width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 0.6em; font-weight: 800; letter-spacing: -0.02em; color: #0a0a0a;
+  background: var(--pc, #ccc); border: 1px solid rgba(0,0,0,0.5);
+  box-shadow: 0 0 6px -1px var(--pc, #ccc), 0 1px 2px rgba(0,0,0,0.6);
+}
+
+/* Кнопка «смотреть сцену» (без перемещения токена) */
+.wh-nx-peek {
+  position: absolute; bottom: 4px; right: 4px; z-index: 3;
+  width: 25px; height: 25px; padding: 0; cursor: pointer; line-height: 1; flex: 0 0 auto;
+  border-radius: 50%; border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.55); color: #d8ffe8; font-size: 0.9em;
+  opacity: 0.72; transition: opacity 0.13s, background 0.13s, box-shadow 0.13s;
+}
+.wh-nx-peek:hover { opacity: 1; background: rgba(0,0,0,0.82); box-shadow: 0 0 9px -1px var(--gc, #4dffa6); }
+
+.wh-nx-go {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; letter-spacing: 0.1em; color: #04100a; background: color-mix(in srgb, var(--gc, #4dffa6) 78%, transparent);
+  opacity: 0; transition: opacity 0.14s; text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.wh-nx-card:hover .wh-nx-go { opacity: 1; }
+.wh-nx-card.locked:hover .wh-nx-go { background: rgba(184,69,58,0.8); color: #fff; }
+
+.wh-nx-cname {
+  padding: 5px 8px; font-size: 0.82em; font-weight: 600; color: #d8ffe8;
+  border-top: 1px solid rgba(47,158,106,0.2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Инструменты карточки (ГМ) */
+.wh-nx-ctools {
+  display: flex; gap: 2px; padding: 4px 5px; border-top: 1px solid rgba(47,158,106,0.2); background: rgba(0,0,0,0.35);
+}
+.wh-nx-ctools button {
+  flex: 1; height: 22px; padding: 0; cursor: pointer; font-size: 0.8em; line-height: 1;
+  background: #0e2a1c; color: #cdeede; border: 1px solid #2f6f4a; border-radius: 3px;
+}
+.wh-nx-ctools button:hover { background: #15492f; box-shadow: 0 0 6px rgba(77,255,166,0.4); }
+
+/* ── Добавление сцены / пустые состояния ── */
+.wh-nx-add { padding: 0 10px 10px; }
+.wh-nx-add select {
+  width: 100%; background: #0a1c12; color: #bdffdd; border: 1px solid #2f6f4a; border-radius: 3px;
+  padding: 4px 8px; font-size: 0.82em; cursor: pointer;
+}
+.wh-nx-empty { padding: 12px; text-align: center; color: #5f7a6c; font-size: 0.84em; font-style: italic; }
+
+/* ── Подсказка ГМа: токены на сцене (когитаторный стиль, не «белый прямоугольник») ── */
+#tooltip.wh-nx-tip-tt {
+  background: #06120c; border: 1px solid #2f9e6a; border-radius: 6px; color: #c6ffe0;
+  padding: 0; max-width: 360px; text-align: left; white-space: normal;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.65), 0 0 14px -5px #2f9e6a;
+}
+.wh-nx-tip { font-family: "Oswald", "Roboto Condensed", sans-serif; }
+.wh-nx-tip-head {
+  font-size: 0.68em; letter-spacing: 0.12em; text-transform: uppercase; color: #9af2c4;
+  padding: 5px 10px; border-bottom: 1px solid rgba(47,158,106,0.4);
+  background: rgba(15,58,38,0.55); text-shadow: 0 0 6px rgba(77,255,166,0.4);
+}
+.wh-nx-tip-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px 10px; padding: 7px 10px; max-height: 300px; overflow: hidden;
+}
+.wh-nx-tip-tok { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.wh-nx-tip-tok img {
+  width: 22px; height: 22px; border-radius: 3px; border: 1px solid #2f6f4a;
+  background: #0a1c12; object-fit: cover; flex: 0 0 auto;
+}
+.wh-nx-tip-noimg {
+  width: 22px; height: 22px; border-radius: 3px; border: 1px solid #2f6f4a; background: #0a1c12;
+  display: flex; align-items: center; justify-content: center; color: #3f6a54; font-size: 0.8em; flex: 0 0 auto;
+}
+.wh-nx-tip-nm { font-size: 0.8em; color: #d8ffe8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wh-nx-tip-tok.hidden { opacity: 0.5; }
+.wh-nx-tip-tok.hidden .wh-nx-tip-nm::after { content: " (скрыт)"; color: #7f9a8c; font-size: 0.9em; }
+.wh-nx-tip-more { grid-column: 1 / -1; font-size: 0.76em; color: #7fbf9c; font-style: italic; padding-top: 3px; }
+.wh-nx-tip-empty { padding: 9px 11px; font-size: 0.82em; color: #5f7a6c; font-style: italic; }
+.wh-nx-empty-big { margin: auto; max-width: 460px; text-align: center; color: #6fbf95; font-size: 0.94em; line-height: 1.5; padding: 30px; }
+
+/* ── Подгруппы внутри группы ── */
+.wh-nx-sub { margin: 6px 10px 2px; border: 1px solid rgba(47,158,106,0.28); border-left: 2px solid color-mix(in srgb, var(--gc, #4dffa6) 60%, transparent); border-radius: 5px; background: rgba(0,0,0,0.18); }
+.wh-nx-subhead { display: flex; align-items: center; gap: 8px; padding: 5px 8px; }
+.wh-nx-sub.collapsed .wh-nx-subhead { border-bottom: none; }
+.wh-nx-subname { font-weight: 700; font-size: 0.9em; letter-spacing: 0.03em; color: #d8ffe8; }
+.wh-nx-subcount { font-size: 0.68em; color: #04100a; background: color-mix(in srgb, var(--gc, #4dffa6) 80%, #7fe0a8); border-radius: 8px; padding: 0 6px; font-weight: 800; }
+.wh-nx-subtools { margin-left: auto; display: flex; gap: 3px; }
+.wh-nx-subtools button { width: 22px; height: 20px; padding: 0; cursor: pointer; font-size: 0.78em; background: #0e2a1c; color: #cdeede; border: 1px solid #2f6f4a; border-radius: 3px; }
+.wh-nx-subtools button:hover { background: #15492f; box-shadow: 0 0 6px rgba(77,255,166,0.4); }
+.wh-nx-subtools .wh-nx-gdel:hover { background: #4a1414; border-color: #b8453a; color: #ff9a9a; }
+.wh-nx-sub .wh-nx-grid { padding: 8px; }
+.wh-nx-sub .wh-nx-add { padding: 0 8px 8px; }
+
+/* Ряд «добавить сцену + подгруппа» */
+.wh-nx-add-row { display: flex; align-items: center; gap: 8px; }
+.wh-nx-add-row select { flex: 1; }
+.wh-nx-subadd { white-space: nowrap; }

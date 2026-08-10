@@ -1,0 +1,124 @@
+{{#if missing}}
+<div class="cog-screen"><pre class="cog-body">Журнал когитатора не найден.</pre></div>
+{{else}}
+{{#if edit}}
+
+{{!-- ── Режим правки (ГМ) ── --}}
+<div class="wh-cog-builder">
+  <div class="cog-b-scroll">
+  <div class="cog-b-top">
+    <label class="cog-b-titlelbl">Название когитатора<input type="text" name="cog-title" value="{{title}}"/></label>
+    <div class="cog-b-theme">
+      <label>Текст<input type="color" name="theme-fg" value="{{theme.fg}}"/></label>
+      <label>Фон<input type="color" name="theme-bg" value="{{theme.bg}}"/></label>
+      <label>Акцент<input type="color" name="theme-accent" value="{{theme.accent}}"/></label>
+      <label class="cog-b-crt"><input type="checkbox" name="theme-crt" {{#if theme.crt}}checked{{/if}}/> CRT-эффект</label>
+      <label>Стартовая
+        <select name="start-page">{{#each pageOptions as |o|}}<option value="{{o.id}}" {{#if (eq o.id ../startPage)}}selected{{/if}}>{{o.name}}</option>{{/each}}</select>
+      </label>
+    </div>
+    <div class="cog-b-access">
+      <label class="cog-b-crt"><input type="checkbox" name="clickable-tokens" {{#if clickableTokens}}checked{{/if}}/> Кликабельные токены (иначе только ввод команд)</label>
+    </div>
+    <div class="cog-b-access">
+      <span class="cog-b-access-lbl">Двоичный код (текст «техножрец») читают:</span>
+      <label class="cog-b-crt"><input type="checkbox" name="bin-techpriest" {{#if binTechpriest}}checked{{/if}}/> техножрецы</label>
+      {{#each players as |p|}}<label class="cog-b-crt"><input type="checkbox" data-binuser="{{p.id}}" {{#if p.allowed}}checked{{/if}}/> {{p.name}}</label>{{/each}}
+    </div>
+  </div>
+
+  <div class="cog-b-main">
+    <div class="cog-b-pages">
+      <div class="cog-b-pages-head">СТРАНИЦЫ</div>
+      <input type="text" class="cog-b-pagefilter" placeholder="🔍 Поиск страницы…" spellcheck="false"/>
+      {{#each pages as |p|}}
+      <div class="cog-b-pagerow" data-pagerow="{{p.id}}">
+        <button type="button" data-selpage="{{p.id}}" class="cog-b-pagebtn {{#if p.selected}}active{{/if}}">{{p.name}}</button>
+        <button type="button" class="cog-b-pmove" data-moveup="{{p.id}}" title="Выше" {{#if p.isFirst}}disabled{{/if}}>▲</button>
+        <button type="button" class="cog-b-pmove" data-movedown="{{p.id}}" title="Ниже" {{#if p.isLast}}disabled{{/if}}>▼</button>
+      </div>
+      {{/each}}
+      <button type="button" data-act="addpage" class="cog-b-add">＋ Страница</button>
+    </div>
+
+    <div class="cog-b-page">
+      {{#if page}}
+      <div class="cog-b-row">
+        <label>Имя (в списке)<input type="text" name="page-name" value="{{page.name}}"/></label>
+        <label>Заголовок (шапка)<input type="text" name="page-title" value="{{page.title}}"/></label>
+      </div>
+      <label class="cog-b-promptlbl">Приглашение ввода (строка перед курсором)<input type="text" name="page-prompt" value="{{page.prompt}}" placeholder="ВВЕДИТЕ КОМАНДУ:"/></label>
+      <label class="cog-b-bodylbl">Текст страницы (моноширинный, ASCII-рамки сохраняются)
+        <textarea name="page-body" class="cog-b-body" spellcheck="false">{{page.body}}</textarea>
+      </label>
+      <div class="cog-b-rmbhint">💡 Выделите текст и нажмите <b>ПКМ</b>: сделать ссылкой · пароль/скрытая команда · «требует техножреца» (двоичный код) · <b>☠ скрапкод</b> · <b>🔒 заблокировано</b> ([ЗАБЛОКИРОВАНО] для игроков) · тумблер кликабельных токенов.</div>
+      <div class="cog-b-row cog-b-row-color">
+        <label>Цвет страницы<input type="color" name="page-color" value="{{#if page.color}}{{page.color}}{{else}}#33ff66{{/if}}"/></label>
+        <button type="button" name="page-color-clear" class="cog-b-small">Сброс (тема)</button>
+        <button type="button" data-act="delpage" class="cog-b-small del">Удалить страницу</button>
+      </div>
+      <div class="cog-b-row">
+        <label>Изображение (эффект когитатора применяется в консоли)<input type="text" name="page-image" value="{{page.image}}" placeholder="путь/ссылка на картинку"/></label>
+        <button type="button" data-act="pickimg" class="cog-b-small">📁 Выбрать</button>
+        <button type="button" data-act="clearimg" class="cog-b-small">Убрать</button>
+      </div>
+      <div class="cog-b-access">
+        <label class="cog-b-crt"><input type="checkbox" name="page-input" {{#if page.input}}checked{{/if}}/> Страница-дневник (игроки вводят текст прямо в консоли)</label>
+        <label class="cog-b-crt"><input type="checkbox" name="page-input-shared" {{#if page.inputShared}}checked{{/if}}/> Общий текст (все пишут в одну запись; иначе — личная у каждого)</label>
+      </div>
+      <details class="cog-b-links-details">
+      <summary class="cog-b-links-summary">Команды / пароли — список (доп. к ПКМ)</summary>
+      <div class="cog-b-links">
+        <div class="cog-b-links-head">КОМАНДЫ <button type="button" data-act="addlink" class="cog-b-small">＋ Команда</button></div>
+        <div class="cog-b-links-hint">Токен — кликабельный текст (если токены включены). Команда — что вводит игрок (пусто = из токена). Пароль — токен пустой + команда.</div>
+        <div class="cog-b-link cog-b-link-head"><span class="cog-b-token">Токен</span><span class="cog-b-cmd">Команда/пароль</span><span class="cog-b-arrow"></span><span>Переход на</span><span></span></div>
+        {{#each page.links as |lk|}}
+        <div class="cog-b-link">
+          <input type="text" data-linktoken="{{lk.idx}}" value="{{lk.token}}" placeholder="[1]" class="cog-b-token"/>
+          <input type="text" data-linkcmd="{{lk.idx}}" value="{{lk.command}}" placeholder="авто" class="cog-b-cmd"/>
+          <span class="cog-b-arrow">→</span>
+          <select data-linktarget="{{lk.idx}}">{{#each ../page.pageOptions as |o|}}<option value="{{o.id}}" {{#if (eq o.id lk.target)}}selected{{/if}}>{{o.name}}</option>{{/each}}</select>
+          <button type="button" data-linkdel="{{lk.idx}}" class="cog-b-small del">✕</button>
+        </div>
+        {{/each}}
+      </div>
+      </details>
+      {{/if}}
+    </div>
+  </div>
+  </div>{{!-- /cog-b-scroll --}}
+
+  <div class="cog-b-actions">
+    <button type="button" data-act="save" class="cog-b-btn primary">💾 Сохранить</button>
+    <button type="button" data-act="cancel" class="cog-b-btn">Отмена</button>
+  </div>
+</div>
+
+{{else}}
+
+{{!-- ── Режим консоли (просмотр) ── --}}
+<div class="cog-screen {{#if crt}}cog-crt{{/if}}" style="{{style}}">
+  {{#if asPlayer}}<div class="cog-asplayer">◉ ПРЕДПРОСМОТР ГЛАЗАМИ ИГРОКА</div>{{/if}}
+  {{#if imageUrl}}<div class="cog-image-frame"><img class="cog-image" src="{{imageUrl}}" alt=""/></div>{{/if}}
+  <pre class="cog-body">{{{bodyHtml}}}</pre>
+  {{#if inputPage}}
+  <div class="cog-diary">
+    <div class="cog-diary-head">&gt; {{#if inputShared}}ОБЩИЙ ТЕРМИНАЛ ВВОДА{{else}}ЛИЧНАЯ ЗАПИСЬ{{/if}} <span class="cog-diary-hint">// печатайте ниже — сохраняется автоматически (Ctrl+Enter)</span></div>
+    <textarea class="cog-input" spellcheck="false" placeholder="_">{{inputValue}}</textarea>
+    {{#if diaryEntries.length}}
+    <div class="cog-diary-all">
+      <div class="cog-diary-all-h">&gt;&gt; АРХИВ ЗАПИСЕЙ</div>
+      {{#each diaryEntries}}<div class="cog-diary-entry"><span class="cog-diary-who">{{this.name}}:</span> {{this.text}}</div>{{/each}}
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+  {{#if cmdMsg}}<div class="cog-error">{{cmdMsg}}</div>{{/if}}
+  <div class="cog-cmdline" title="Введите команду и нажмите Enter">
+    <span class="cog-prompt">{{prompt}}&nbsp;</span><span class="cog-echo"></span><span class="cog-cursor">_</span>
+    <input class="cog-hidden-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"/>
+  </div>
+</div>
+
+{{/if}}
+{{/if}}

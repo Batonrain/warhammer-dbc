@@ -1,0 +1,198 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка ТЕХ (Техночудеса).
+   Тема Adeptus Mechanicus: гунметалл, латунь, культовый красный,
+   ноосферная зелень данных. Сигил — assets/mechanicus.png (маска).
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .tech-tab {
+  --mc: #c0392b;         /* культовый красный */
+  --mc2: #cba24a;        /* латунь */
+  --mc-steel: #7c8896;   /* сталь */
+  --mc-data: #3fd07a;    /* ноосферная зелень (Когниция) */
+  --mc-en: #e0a83a;      /* янтарь (Энергия/Катушка) */
+  --mc-plate: linear-gradient(180deg, #171b20, #0e1116);
+  position: relative; padding: 0 2px 10px;
+}
+
+/* ── Бегущий машинный код ───────────────────────────────── */
+.warhammer-dbc .tech-tab .tech-binary {
+  position: relative; overflow: hidden; white-space: nowrap; height: 15px; margin-bottom: 6px;
+  opacity: 0.32; color: var(--mc-data); font-family: "Consolas","Courier New",monospace; font-size: 10px; letter-spacing: 2px;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.warhammer-dbc .tech-tab .tech-binary span { display: inline-block; padding-right: 24px; animation: techBin 34s linear infinite; }
+@keyframes techBin { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
+/* ── Панели ─────────────────────────────────────────────── */
+.warhammer-dbc .tech-tab .tech-panel {
+  position: relative; z-index: 1; margin-bottom: 9px; border-radius: 6px; overflow: hidden;
+  background: var(--mc-plate);
+  border: 1px solid #2a3038; border-left: 3px solid var(--mc);
+  box-shadow: inset 0 0 26px rgba(0,0,0,0.5), 0 0 16px -10px var(--mc);
+}
+.warhammer-dbc .tech-tab .tech-panel-title {
+  display: flex; align-items: center; gap: 8px; padding: 6px 12px; margin: 0;
+  font-size: 0.85em; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #e7d9b8;
+  border-bottom: 1px solid rgba(203,162,74,0.28);
+  background: linear-gradient(180deg, rgba(203,162,74,0.12), transparent);
+  text-shadow: 0 0 8px rgba(192,57,43,0.5);
+}
+.warhammer-dbc .tech-tab .tech-panel-body { padding: 9px 12px; }
+.warhammer-dbc .tech-tab .tech-creed { margin-left: auto; font-size: 0.72em; letter-spacing: 0.16em; color: var(--mc2); opacity: 0.8; font-weight: 700; }
+/* мини-шестерёнка в заголовке */
+.warhammer-dbc .tech-tab .tech-cog-mini {
+  width: 13px; height: 13px; flex: 0 0 auto; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, var(--mc2) 0 22deg, transparent 22deg 45deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 40%, #000 44%);
+          mask: radial-gradient(closest-side, transparent 40%, #000 44%);
+  animation: techCog 9s linear infinite; opacity: 0.85;
+}
+@keyframes techCog { to { transform: rotate(360deg); } }
+
+/* ── Консоль Кузницы ────────────────────────────────────── */
+.warhammer-dbc .tech-tab .tech-hero { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; padding: 12px; }
+
+/* сигил Механикум */
+.warhammer-dbc .tech-tab .tech-sigil { position: relative; width: 88px; height: 88px; flex: 0 0 auto; }
+.warhammer-dbc .tech-tab .tech-sigil-cog {
+  position: absolute; inset: -2px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--mc2) 65%, transparent) 0 4deg, transparent 4deg 13deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 60%, #000 64%, #000 90%, transparent 94%);
+          mask: radial-gradient(closest-side, transparent 60%, #000 64%, #000 90%, transparent 94%);
+  animation: techCog 16s linear infinite; opacity: 0.7;
+}
+.warhammer-dbc .tech-tab .tech-sigil-mask {
+  position: absolute; inset: 12px; background: linear-gradient(155deg, var(--mc2) 5%, var(--mc) 85%);
+  -webkit-mask: url("../../assets/mechanicus.png") center/contain no-repeat;
+          mask: url("../../assets/mechanicus.png") center/contain no-repeat;
+  filter: drop-shadow(0 0 6px var(--mc));
+  animation: techSigil 4.4s ease-in-out infinite;
+}
+@keyframes techSigil { 0%,100% { filter: drop-shadow(0 0 5px var(--mc)); } 50% { filter: drop-shadow(0 0 13px var(--mc2)); } }
+
+/* датчики Когниции/Энергии */
+.warhammer-dbc .tech-tab .tech-gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 0; }
+@media (max-width: 640px) { .warhammer-dbc .tech-tab .tech-gauges { grid-template-columns: 1fr; } }
+.warhammer-dbc .tech-tab .tech-gauge {
+  border-radius: 6px; padding: 8px 10px; background: rgba(0,0,0,0.32);
+  border: 1px solid #2a3038; border-top: 2px solid var(--mc-data);
+}
+.warhammer-dbc .tech-tab .tech-gauge-en { border-top-color: var(--mc-en); }
+.warhammer-dbc .tech-tab .tg-head { display: flex; align-items: center; gap: 6px; font-size: 0.68em; font-weight: 800; letter-spacing: 0.06em; color: #b9c4d2; text-transform: uppercase; margin-bottom: 6px; }
+.warhammer-dbc .tech-tab .tg-head .wh-ico { width: 1.05em; height: 1.05em; }
+.warhammer-dbc .tech-tab .tg-lbl { white-space: nowrap; }
+.warhammer-dbc .tech-tab .cognition-rest-btn {
+  margin-left: auto; padding: 2px 8px; font-size: 0.92em; border-radius: 4px; cursor: pointer; white-space: nowrap;
+  background: color-mix(in srgb, var(--mc-data) 20%, #10141a); color: #dff7e8;
+  border: 1px solid color-mix(in srgb, var(--mc-data) 55%, transparent); transition: all 0.13s;
+}
+.warhammer-dbc .tech-tab .cognition-rest-btn:hover { background: color-mix(in srgb, var(--mc-data) 34%, #10141a); box-shadow: 0 0 10px -3px var(--mc-data); }
+.warhammer-dbc .tech-tab .tg-bonus { margin-left: auto; font-size: 0.9em; color: var(--mc-en); }
+.warhammer-dbc .tech-tab .tg-readout { display: flex; align-items: baseline; gap: 5px; margin-bottom: 7px; }
+.warhammer-dbc .tech-tab .tg-readout input {
+  width: 48px; text-align: center; font-size: 1.35em; font-weight: 800;
+  background: rgba(0,0,0,0.45); border: 1px solid #333b45; border-radius: 4px; color: #fff; padding: 1px 3px;
+}
+.warhammer-dbc .tech-tab .tech-gauge-cog .tg-readout input { color: var(--mc-data); text-shadow: 0 0 10px color-mix(in srgb, var(--mc-data) 45%, transparent); }
+.warhammer-dbc .tech-tab .tech-gauge-en  .tg-readout input { color: var(--mc-en); }
+.warhammer-dbc .tech-tab .tg-readout input:focus { outline: none; border-color: var(--mc2); box-shadow: 0 0 7px -1px var(--mc2); }
+.warhammer-dbc .tech-tab .tg-slash { color: #6b7583; }
+.warhammer-dbc .tech-tab .tg-max { font-size: 1.25em; font-weight: 700; color: #9fb0c4; }
+.warhammer-dbc .tech-tab .tg-maxinput { font-size: 1em !important; width: 42px !important; color: #9fb0c4 !important; }
+.warhammer-dbc .tech-tab .tg-empty { font-size: 0.78em; font-style: italic; color: #6b7583; }
+
+/* пипсы данных / ячейки катушки */
+.warhammer-dbc .tech-tab .tg-pips, .warhammer-dbc .tech-tab .tg-coil { display: flex; flex-wrap: wrap; gap: 4px; }
+.warhammer-dbc .tech-tab .tg-pip {
+  width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.05);
+  border: 1px solid color-mix(in srgb, var(--mc-data) 28%, #2a3038);
+}
+.warhammer-dbc .tech-tab .tg-pip.on { background: var(--mc-data); border-color: var(--mc-data); box-shadow: 0 0 8px -1px var(--mc-data); animation: techBlink 2s ease-in-out infinite; }
+@keyframes techBlink { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
+.warhammer-dbc .tech-tab .tg-cell {
+  width: 12px; height: 16px; border-radius: 2px; background: rgba(255,255,255,0.05);
+  border: 1px solid color-mix(in srgb, var(--mc-en) 28%, #2a3038);
+}
+.warhammer-dbc .tech-tab .tg-cell.on {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mc-en) 90%, #fff), var(--mc-en));
+  border-color: var(--mc-en); box-shadow: 0 0 8px -1px var(--mc-en);
+}
+
+.warhammer-dbc .tech-tab .tech-hint { font-size: 0.8em; line-height: 1.5; color: #a4b0c0; padding: 4px 12px 8px; }
+.warhammer-dbc .tech-tab .tech-hint b { color: var(--mc2); }
+
+/* ── Энергосистемы и фокусы ─────────────────────────────── */
+.warhammer-dbc .tech-tab .tech-gen-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.warhammer-dbc .tech-tab .tech-gen-btn {
+  padding: 4px 11px; border-radius: 5px; cursor: pointer; font-size: 0.82em; font-weight: 600; color: #f2e6c8;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mc2) 22%, #141920), #0e1218);
+  border: 1px solid color-mix(in srgb, var(--mc2) 48%, #2a3038); transition: all 0.13s;
+}
+.warhammer-dbc .tech-tab .tech-gen-btn:hover { border-color: var(--mc2); box-shadow: 0 0 12px -3px var(--mc2); }
+.warhammer-dbc .tech-tab .tech-toggle-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.warhammer-dbc .tech-tab .tech-toggle {
+  display: flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;
+  background: rgba(0,0,0,0.3); border: 1px solid #2a3038; color: #b9c4d2;
+}
+.warhammer-dbc .tech-tab .tech-toggle.is-active { border-color: var(--mc-en); color: #f6ead0; box-shadow: inset 0 0 10px -3px var(--mc-en); }
+.warhammer-dbc .tech-tab .tech-toggle input { accent-color: var(--mc-en); }
+.warhammer-dbc .tech-tab .tech-toggle-src { font-size: 0.82em; color: #6b7583; }
+.warhammer-dbc .tech-tab .tech-focus-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.warhammer-dbc .tech-tab .tech-focus-lbl { font-size: 0.78em; color: var(--mc-steel); }
+.warhammer-dbc .tech-tab .tech-focus-chip {
+  font-size: 0.76em; padding: 2px 9px; border-radius: 10px; color: #e7d9b8;
+  background: rgba(0,0,0,0.3); border: 1px solid color-mix(in srgb, var(--mc2) 40%, #2a3038);
+}
+.warhammer-dbc .tech-tab .tech-focus-chip b { color: var(--mc2); }
+
+/* ── Таблица Техночудес ─────────────────────────────────── */
+.warhammer-dbc .tech-tab .tech-powers-table { width: 100%; border-collapse: collapse; }
+.warhammer-dbc .tech-tab .tech-powers-table thead th {
+  font-size: 0.72em; letter-spacing: 0.04em; text-transform: uppercase; color: #a4b0c0; padding: 6px 6px;
+  border-bottom: 1px solid rgba(203,162,74,0.3); background: linear-gradient(180deg, rgba(203,162,74,0.1), transparent);
+}
+.warhammer-dbc .tech-tab .tech-powers-table thead th .wh-ico { width: 1.1em; height: 1.1em; }
+.warhammer-dbc .tech-tab .tech-powers-table .col-narrow { width: 46px; text-align: center; }
+.warhammer-dbc .tech-tab .tech-powers-table tbody .item-row { transition: background 0.14s, box-shadow 0.14s; }
+.warhammer-dbc .tech-tab .tech-powers-table tbody .item-row td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,0.045); }
+.warhammer-dbc .tech-tab .tech-powers-table tbody .item-row:hover { background: rgba(203,162,74,0.1) !important; box-shadow: inset 3px 0 0 var(--mc2); }
+.warhammer-dbc .tech-tab .tech-power-name { font-weight: 600; color: #ece0c6; }
+.warhammer-dbc .tech-tab .tech-discipline-sub { font-size: 0.72em; color: var(--mc-steel); margin-top: 1px; }
+.warhammer-dbc .tech-tab .tech-type-chip {
+  display: inline-block; font-size: 0.72em; padding: 1px 8px; border-radius: 10px; white-space: nowrap; color: #e7d9b8;
+  background: rgba(0,0,0,0.3); border: 1px solid color-mix(in srgb, var(--mc2) 35%, transparent);
+}
+.warhammer-dbc .tech-tab .tech-num-cell { text-align: center; }
+.warhammer-dbc .tech-tab .tech-num-cog { color: var(--mc-data); font-weight: 700; }
+.warhammer-dbc .tech-tab .tech-num-en { color: var(--mc-en); font-weight: 700; }
+.warhammer-dbc .tech-tab .tech-sust { color: var(--mc-en); font-size: 0.9em; }
+.warhammer-dbc .tech-tab .tech-row-sustained { background: color-mix(in srgb, var(--mc-en) 12%, transparent) !important; box-shadow: inset 3px 0 0 var(--mc-en); }
+.warhammer-dbc .tech-tab .tech-add-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; padding: 0; margin-left: 6px;
+  background: color-mix(in srgb, var(--mc) 24%, transparent); border: 1px solid var(--mc);
+  border-radius: 3px; cursor: pointer; font-size: 0.95em; line-height: 1; color: #ffe9e4; flex-shrink: 0; transition: all 0.13s;
+}
+.warhammer-dbc .tech-tab .tech-add-btn:hover { background: color-mix(in srgb, var(--mc) 42%, transparent); box-shadow: 0 0 10px -2px var(--mc); }
+.warhammer-dbc .tech-tab .tech-activate-btn {
+  width: auto; padding: 3px 11px; border-radius: 4px; cursor: pointer; font-family: inherit;
+  font-size: 0.82em; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; color: #ffe9e4; transition: all 0.14s;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mc) 52%, #12131a), color-mix(in srgb, var(--mc) 30%, #0c0d12));
+  border: 1px solid var(--mc); box-shadow: 0 0 12px -5px var(--mc);
+}
+.warhammer-dbc .tech-tab .tech-activate-btn:hover { box-shadow: 0 0 16px -2px var(--mc); transform: translateY(-1px); }
+.warhammer-dbc .tech-tab .tech-empty td { padding: 16px 8px !important; color: #6b7583; font-style: italic; text-align: center; }
+.warhammer-dbc .tech-tab .tech-empty-cog { color: var(--mc2); font-style: normal; margin-right: 4px; display: inline-block; animation: techCog 6s linear infinite; }
+
+/* ── Ноосферные действия ────────────────────────────────── */
+.warhammer-dbc .tech-tab .noosphere-list { display: flex; flex-direction: column; gap: 5px; }
+.warhammer-dbc .tech-tab .noosphere-action { display: flex; gap: 8px; align-items: baseline; font-size: 0.82em; }
+.warhammer-dbc .tech-tab .noosphere-name { font-weight: 700; color: var(--mc-data); white-space: nowrap; }
+.warhammer-dbc .tech-tab .noosphere-desc { color: #a4b0c0; }
+.warhammer-dbc .tech-tab .tech-scan-btn {
+  align-self: flex-start; margin-top: 4px; display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 13px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.84em; font-weight: 600; color: #dff7e8; transition: all 0.14s;
+  background: linear-gradient(180deg, rgba(20,26,32,0.9), rgba(10,13,18,0.95)); border: 1px solid color-mix(in srgb, var(--mc-data) 45%, #2a3038);
+}
+.warhammer-dbc .tech-tab .tech-scan-btn:hover { border-color: var(--mc-data); box-shadow: 0 0 14px -4px var(--mc-data); }
+.warhammer-dbc .tech-tab .tech-ab-ico { color: var(--mc-data); font-size: 1.05em; text-shadow: 0 0 8px color-mix(in srgb, var(--mc-data) 55%, transparent); }

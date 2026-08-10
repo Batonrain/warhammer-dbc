@@ -1,0 +1,37 @@
+/* ══════════════════ СЕССИЯ/СЦЕНА ══════════════════
+   Кнопки 🎬/⏻ теперь встроены в виджет «Летоисчисление» (см. ui/imperial-calendar.css,
+   .wh-cal-w-session-btn) — здесь остаётся только чат-карточка объявления и
+   3-секундный экранный баннер, тёплая золотая гамма — тема Судьбы. */
+
+.wh-sess-chat-card {
+  padding: 7px 10px; border-radius: 5px;
+  background:
+    radial-gradient(130% 130% at 0% 0%, rgba(230,175,90,0.22), transparent 60%),
+    linear-gradient(180deg, #1c1406, #0e0a04);
+  border: 1px solid rgba(255,210,120,0.4); border-left: 3px solid #ffd27a;
+  color: #f3e4c4;
+}
+.wh-sess-chat-title { font-weight: 800; letter-spacing: 0.04em; color: #ffe3a8; margin-bottom: 3px; }
+.wh-sess-chat-text { font-size: 0.95em; font-style: italic; opacity: 0.92; }
+
+/* ── Экранный баннер (3 секунды, у всех клиентов) ── */
+.wh-sess-banner {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
+}
+.wh-sess-banner-text {
+  font-family: "Oswald", "Roboto Condensed", sans-serif; font-size: 2.6em; font-weight: 800;
+  letter-spacing: 0.08em; text-transform: uppercase; color: #ffe3a8;
+  text-shadow: 0 0 18px rgba(255,210,120,0.9), 0 0 40px rgba(255,210,120,0.5), 0 2px 6px rgba(0,0,0,0.8);
+  padding: 0.3em 0.8em; border-top: 1px solid rgba(255,210,120,0.5); border-bottom: 1px solid rgba(255,210,120,0.5);
+  animation: whSessBannerFade 3s ease forwards;
+}
+@keyframes whSessBannerFade {
+  0%   { opacity: 0; transform: scale(0.85); }
+  10%  { opacity: 1; transform: scale(1); }
+  82%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wh-sess-banner-text { animation: none !important; }
+}

@@ -1,0 +1,377 @@
+<form class="warhammer-dbc vehicle-sheet" autocomplete="off">
+
+  <header class="veh-header">
+    <div class="veh-portrait-frame">
+      <img class="veh-portrait" src="{{actor.img}}" data-edit="img" title="Изображение техники"/>
+    </div>
+    <div class="veh-head-fields">
+      <input class="veh-name" type="text" name="name" value="{{actor.name}}" placeholder="Название машины"/>
+      <div class="veh-head-row">
+        <label>Шасси <input type="text" name="system.vehicleClass" value="{{system.vehicleClass}}" placeholder="напр. Химера"/></label>
+        <label>Тип
+          <select name="system.vehicleType">
+            {{#each vehicleTypes as |l k|}}<option value="{{k}}" {{#if (eq @root.system.vehicleType k)}}selected{{/if}}>{{l}}</option>{{/each}}
+          </select>
+        </label>
+      </div>
+      <div class="veh-head-row">
+        <label>Командир <input type="text" name="system.commander" value="{{system.commander}}"/></label>
+        <label>Происхождение <input type="text" name="system.origin" value="{{system.origin}}"/></label>
+      </div>
+    </div>
+    <div class="veh-structure-box veh-gauge sl-{{structLevel}}{{#if derived.halfWrecked}} veh-wrecked{{/if}}">
+      <div class="veh-struct-label">СТРУКТУРА</div>
+      <div class="veh-struct-vals">
+        <input type="number" name="system.structure.value" value="{{system.structure.value}}"/>
+        <span>/</span>
+        <input type="number" name="system.structure.max" value="{{system.structure.max}}"/>
+      </div>
+      <div class="veh-struct-bar"><div class="veh-struct-fill" style="width:{{structPct}}%"></div></div>
+      <div class="veh-struct-foot">
+        <span class="veh-struct-status">{{structStatus}}</span>
+        <span class="veh-struct-crit">крит. <input type="number" name="system.structure.critical" value="{{system.structure.critical}}"/></span>
+      </div>
+      {{#if deflector}}<div class="veh-deflector{{#if deflectorDaemonic}} veh-deflector-daemon{{/if}}" title="{{#if deflectorDaemonic}}Колдовской{{else}}Технологический{{/if}} щит-дефлектор — попадание отражается на броске 1d100 ≤ {{deflector}}">🛡 Дефлектор 1–{{deflector}}</div>{{/if}}
+      {{#if flickerfield}}<div class="veh-flicker" title="Мерцающие Поля: стрелковые атаки по машине дальше «в упор» получают −20; Size машины для попаданий по ней −2">✦ Мерцающие Поля −20</div>{{/if}}
+      {{#if derived.halfWrecked}}<div class="veh-wrecked-tag">ПОЛУРАЗРУШЕНА</div>{{/if}}
+    </div>
+  </header>
+
+  <nav class="sheet-tabs veh-tabs tabs" data-group="primary">
+    <a class="item" data-tab="overview"><i class="fas fa-gauge-high"></i> Обзор</a>
+    <a class="item" data-tab="crew"><i class="fas fa-users"></i> Экипаж</a>
+    <a class="item" data-tab="combat"><i class="fas fa-crosshairs"></i> Бой</a>
+    <a class="item" data-tab="damage"><i class="fas fa-car-burst"></i> Повреждения</a>
+    <a class="item" data-tab="notes"><i class="fas fa-file-lines"></i> Записи</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    {{!-- ───────────── ОБЗОР ───────────── --}}
+    <div class="tab veh-tab" data-tab="overview" data-group="primary">
+      <div class="veh-overview-grid">
+
+        <div class="veh-panel veh-col-full veh-states-panel">
+          <div class="veh-section-head">
+            <span>СОСТОЯНИЕ МАШИНЫ</span>
+            <span class="veh-state-add-bar">
+              <select class="veh-state-select">
+                <option value="">— поломка / эффект —</option>
+                {{#each stateOptions as |o|}}<option value="{{o.value}}">{{o.label}}</option>{{/each}}
+              </select>
+              <a class="veh-state-add" title="Отметить состояние"><i class="fas fa-plus"></i></a>
+            </span>
+          </div>
+          <div class="veh-states-list">
+            {{#each damageStates as |s|}}
+            <span class="veh-state-chip veh-state-{{s.kind}}" data-state-id="{{s.id}}" title="{{s.note}}">
+              {{s.label}}<a class="veh-state-del" title="Снять"><i class="fas fa-times"></i></a>
+            </span>
+            {{else}}
+            <span class="veh-states-none">Повреждений нет — машина в строю.</span>
+            {{/each}}
+          </div>
+        </div>
+
+        <div class="veh-panel">
+          <div class="veh-panel-title">БРОНЯ (AP)</div>
+          <div class="veh-armour-grid">
+            <div class="veh-armour"><div class="veh-armour-k">Лобовая</div><input type="number" name="system.armour.front" value="{{system.armour.front}}"/></div>
+            <div class="veh-armour"><div class="veh-armour-k">Бортовая</div><input type="number" name="system.armour.side" value="{{system.armour.side}}"/></div>
+            <div class="veh-armour"><div class="veh-armour-k">Кормовая</div><input type="number" name="system.armour.rear" value="{{system.armour.rear}}"/></div>
+          </div>
+          <div class="veh-hint">Крыша = Бортовая AR, днище = Кормовая AR. Избирательные в др. сторону −10; в Ходовую/Башню −15.</div>
+        </div>
+
+        <div class="veh-panel">
+          <div class="veh-panel-title">ХОДОВАЯ И МАНЁВР</div>
+          <div class="veh-two-col">
+            <label>Тип Ходовой
+              <select name="system.chassis.type">
+                {{#each chassisTypes as |l k|}}<option value="{{k}}" {{#if (eq @root.system.chassis.type k)}}selected{{/if}}>{{l}}</option>{{/each}}
+              </select>
+            </label>
+            <label>SPD <input type="number" name="system.chassis.spd" value="{{system.chassis.spd}}"/></label>
+            <label>Маневренность <input type="number" name="system.manoeuvrability" value="{{system.manoeuvrability}}"/></label>
+            <label>Размер <input type="number" name="system.size" value="{{system.size}}"/></label>
+            <label>Operate мехвода <input type="number" name="system.operate" value="{{system.operate}}"/></label>
+            <label>Повреждения Ходовой (−SPD) <input type="number" name="system.chassis.spdDamage" value="{{system.chassis.spdDamage}}"/></label>
+          </div>
+          {{#if isWalker}}
+          <div class="veh-two-col">
+            <label>S (Шагоход) <input type="number" name="system.chassis.strength" value="{{system.chassis.strength}}"/></label>
+            <label>Un.S <input type="number" name="system.chassis.unnaturalS" value="{{system.chassis.unnaturalS}}"/></label>
+          </div>
+          {{/if}}
+          <div class="veh-derived-row">
+            <span>Эфф. SPD <b>{{derived.effSpd}}</b></span>
+            <span>Малый ход <b>{{derived.movement.smallMove}}м</b></span>
+            <span>Полный ход <b>{{derived.movement.fullMove}}м</b></span>
+            <span>Мод. Маневрирования <b>{{signedNum derived.manoeuvreMod}}</b></span>
+            <span>Вираж-мод <b>{{signedNum derived.swerveMod}}</b></span>
+            {{#if isWalker}}<span>S.b <b>{{derived.strengthBonus}}</b></span>{{/if}}
+          </div>
+          {{#if autonomous}}<div class="veh-autopilot" title="Автопилот заменяет экипаж: стреляет своим BS, водит с Пределом Operate, замечает с Awareness">
+            🤖 Автопилот — BS <b>{{autonomous.bs}}</b> · Operate <b>{{autonomous.operate}}</b> · Awareness <b>{{autonomous.aware}}</b></div>{{/if}}
+          <div class="veh-hint">{{chassisNote}}</div>
+        </div>
+
+        <div class="veh-panel">
+          <div class="veh-section-head">
+            <span>ЧЕРТЫ</span>
+            <a class="veh-create-trait" title="Добавить черту"><i class="fas fa-plus"></i> черта</a>
+          </div>
+          <div class="veh-trait-list">
+            {{#each vehTraits as |t|}}
+            <div class="veh-trait-row" data-item-id="{{t.id}}">
+              <div class="veh-trait-name veh-trait-open" title="{{t.description}}">{{t.name}}{{#if t.rating}} <span class="veh-trait-rating">{{t.rating}}</span>{{/if}}</div>
+              {{#if t.benefit}}<div class="veh-trait-benefit">{{t.benefit}}</div>{{/if}}
+              <a class="veh-trait-del" title="Удалить"><i class="fas fa-times"></i></a>
+            </div>
+            {{else}}
+            <div class="veh-empty">Нет черт. Перетащите из компендиума «Черты техники» или нажмите «+ черта».</div>
+            {{/each}}
+          </div>
+        </div>
+
+        <div class="veh-panel">
+          <div class="veh-panel-title">ОГОНЬ — ОРУДИЯ</div>
+          <div class="veh-firebar">
+            {{#each weapons as |w|}}
+            <div class="veh-fire-item" data-item-id="{{w.id}}">
+              <button type="button" class="veh-fire-weapon" title="Открыть окно стрельбы"><i class="fas fa-crosshairs"></i> {{w.name}}</button>
+              {{#unless w.isMelee}}<a class="veh-reload-weapon" title="Перезарядка из боекомплекта"><i class="fas fa-redo"></i></a>
+              <span class="veh-fire-mag" title="Магазин · Боекомплект">{{w.mag}} · БК {{w.reloads}}</span>{{/unless}}
+            </div>
+            {{else}}
+            <div class="veh-empty">Нет орудий. Добавьте их на вкладке «Бой».</div>
+            {{/each}}
+          </div>
+          <div class="veh-hint">Отметьте (target) токен цели, затем жмите орудие — откроется окно стрельбы с выбором стороны брони и части машины.</div>
+        </div>
+
+      </div>
+    </div>
+
+    {{!-- ───────────── ЭКИПАЖ ───────────── --}}
+    <div class="tab veh-tab" data-tab="crew" data-group="primary">
+      <div class="veh-crew-help">Сначала создайте <b>места</b> в машине (роль + количество), затем перетащите персонажа на нужное место. Орудие привязывается к месту на вкладке «Бой». Персонаж на месте оператора даёт своё BS при стрельбе.</div>
+
+      <div class="veh-add-bar">
+        <select class="veh-add-role">
+          {{#each crewRoles as |l k|}}<option value="{{k}}" {{#if (eq k "gunner")}}selected{{/if}}>{{l}}</option>{{/each}}
+        </select>
+        <input class="veh-add-count" type="number" min="1" max="20" value="1" title="Сколько мест"/>
+        <button type="button" class="veh-add-stations"><i class="fas fa-plus"></i> Добавить места</button>
+      </div>
+
+      <div class="veh-crew-list">
+        {{#each stations as |s|}}
+        <div class="veh-station-row{{#if s.occupied}} veh-station-filled{{/if}}{{#if s.missing}} veh-crew-missing{{/if}}" data-station-id="{{s.id}}" data-uuid="{{s.uuid}}">
+          <div class="veh-station-label">{{s.label}}</div>
+          {{#if s.occupied}}
+            <img class="veh-crew-img veh-station-open" src="{{s.img}}" title="Открыть лист"/>
+            <div class="veh-crew-name veh-station-open">{{s.name}}{{#if s.bs}} <span class="veh-crew-bs">BS {{s.bs}}</span>{{/if}}</div>
+            <a class="veh-station-clear" title="Высадить"><i class="fas fa-user-minus"></i></a>
+          {{else}}
+            <div class="veh-station-empty">— перетащите персонажа сюда —</div>
+          {{/if}}
+          <a class="veh-station-remove" title="Удалить место"><i class="fas fa-times"></i></a>
+        </div>
+        {{else}}
+        <div class="veh-empty">Мест нет. Добавьте места выше, затем перетащите на них персонажей.</div>
+        {{/each}}
+      </div>
+    </div>
+
+    {{!-- ───────────── БОЙ (Оснащение + Действия) ───────────── --}}
+    <div class="tab veh-tab" data-tab="combat" data-group="primary">
+
+      <div class="veh-panel">
+        <div class="veh-panel-title">БОЕВЫЕ ДЕЙСТВИЯ</div>
+        <div class="veh-action-btns">
+          <button type="button" class="veh-ram"><i class="fas fa-truck-monster"></i> Таран</button>
+          <button type="button" class="veh-terrain"><i class="fas fa-mountain"></i> Трудный Ландшафт</button>
+          <button type="button" class="veh-repair"><i class="fas fa-wrench"></i> Ремонт</button>
+        </div>
+        <div class="veh-hint">
+          <b>Место попадания</b> считается автоматически: отметьте (target) токен машины перед выстрелом — реверс броска даёт часть по таблице, а Избирательный прицел бьёт в выбранную часть. Урон применяется по стороне брони в Структуру.<br>
+          <b>Вираж</b> — реакция: кнопка появляется на карточке атаки по машине (выберите токен машины).
+        </div>
+      </div>
+
+      <div class="veh-panel">
+        <div class="veh-section-head">
+          <span>ОРУДИЯ</span>
+          <a class="veh-create-weapon" title="Добавить орудие"><i class="fas fa-plus"></i> орудие</a>
+        </div>
+        <div class="veh-weapons">
+          {{#each weapons as |w|}}
+          <div class="veh-weapon-row{{#if w.standard}} veh-weapon-standard{{/if}}" data-item-id="{{w.id}}">
+            <div class="veh-weapon-main">
+              <img class="veh-weapon-img veh-weapon-open" src="{{w.img}}"/>
+              <div class="veh-weapon-title veh-weapon-open">{{w.name}}</div>
+              <div class="veh-weapon-stats">
+                <span title="Урон">{{w.damage}}</span>
+                <span title="Пробитие">Пр {{w.pen}}</span>
+                {{#unless w.isMelee}}<span title="Дальность">{{w.range}}м</span>
+                <span title="Магазин">{{w.mag}}</span>
+                <span title="Скорострельность">RoF {{w.rof}}</span>{{/unless}}
+              </div>
+              <div class="veh-weapon-btns">
+                <a class="veh-fire-weapon" title="Огонь"><i class="fas fa-crosshairs"></i></a>
+                {{#unless w.isMelee}}<a class="veh-reload-weapon" title="Перезарядка"><i class="fas fa-redo"></i></a>{{/unless}}
+              </div>
+            </div>
+            <div class="veh-weapon-mount">
+              {{#if w.hasOptions}}<label class="veh-weapon-swap-label">Вариант орудия
+                <select class="veh-weapon-swap">
+                  {{#each w.options as |o|}}<option value="{{o.name}}" {{#if o.sel}}selected{{/if}}>{{o.name}}</option>{{/each}}
+                </select>
+              </label>{{/if}}
+              <label>Место (оператор)
+                <select class="veh-mount-field" data-field="stationId">
+                  <option value="" {{#unless w.stationId}}selected{{/unless}}>— не привязано —</option>
+                  {{#each @root.weaponStations as |st|}}<option value="{{st.id}}" {{#if (eq w.stationId st.id)}}selected{{/if}}>{{st.label}}</option>{{/each}}
+                </select>
+              </label>
+              <label>Установка
+                <select class="veh-mount-field" data-field="mount">
+                  {{#each @root.mountTypes as |l k|}}<option value="{{k}}" {{#if (eq w.mount k)}}selected{{/if}}>{{l}}</option>{{/each}}
+                </select>
+              </label>
+              <label>ГН <input class="veh-mount-field" data-field="hArc" type="text" value="{{w.hArc}}" placeholder="напр. 360°"/></label>
+              <label>ВН <input class="veh-mount-field" data-field="vArc" type="text" value="{{w.vArc}}" placeholder="напр. −10°/+20°"/></label>
+              {{#unless w.isMelee}}<label title="Сколько перезарядок хранится на машине (обычно 10)">Боекомплект <input class="veh-mount-field" data-field="reloads" type="number" min="0" value="{{w.reloads}}"/></label>{{/unless}}
+              <label class="veh-check-inline"><input class="veh-mount-field" data-field="standard" type="checkbox" {{#if w.standard}}checked{{/if}}/> Станд. комплектация</label>
+            </div>
+            {{#if w.mountNote}}<div class="veh-mount-note">{{w.mountLabel}}: {{w.mountNote}}</div>{{/if}}
+          </div>
+          {{else}}
+          <div class="veh-empty">Нет орудий. Перетащите оружие из компендиума или нажмите «+ орудие».</div>
+          {{/each}}
+        </div>
+      </div>
+
+      <div class="veh-panel">
+        <div class="veh-section-head">
+          <span>СНАРЯЖЕНИЕ</span>
+          <a class="veh-create-gear" title="Добавить снаряжение"><i class="fas fa-plus"></i> снаряжение</a>
+        </div>
+        <div class="veh-gear-list">
+          {{#each equipment as |g|}}
+          <div class="veh-gear-row{{#unless g.active}} veh-gear-off{{/unless}}" data-item-id="{{g.id}}">
+            <img class="veh-gear-img veh-gear-open" src="{{g.img}}"/>
+            <div class="veh-gear-main">
+              <div class="veh-gear-title veh-gear-open">{{g.name}} <span class="veh-gear-rarity" title="{{g.rarityLabel}}">{{g.rarity}}</span></div>
+              <div class="veh-gear-desc">{{g.description}}</div>
+            </div>
+            <label class="veh-gear-active" title="Установлено / активно"><input class="veh-gear-toggle" type="checkbox" {{#if g.active}}checked{{/if}}/></label>
+            <a class="veh-gear-del" title="Удалить"><i class="fas fa-times"></i></a>
+          </div>
+          {{else}}
+          <div class="veh-empty">Нет снаряжения. Перетащите из компендиума «Снаряжение техники» или нажмите «+ снаряжение».</div>
+          {{/each}}
+        </div>
+      </div>
+
+      <div class="veh-panel">
+        <div class="veh-panel-title">ТАБЛИЦА МЕСТА ПОПАДАНИЯ</div>
+        <table class="veh-hit-table">
+          <thead><tr><th>Бросок (реверс)</th><th>Часть</th></tr></thead>
+          <tbody>
+            {{#each hitLocations as |l|}}<tr><td>{{l.min}}–{{l.max}}</td><td>{{l.label}}</td></tr>{{/each}}
+          </tbody>
+        </table>
+        <div class="veh-hint">Неприцельные атаки бьют в броню той стороны, откуда идёт линия к атакующему. Множественные: 1-е и 2-е в часть, остальные в Корпус; по площади — всегда Корпус.</div>
+      </div>
+
+    </div>
+
+    {{!-- ───────────── ПОВРЕЖДЕНИЯ (Криты + Справка действий) ───────────── --}}
+    <div class="tab veh-tab" data-tab="damage" data-group="primary">
+      <div class="veh-hint" style="margin-bottom:8px;">Критический Эффект применяется автоматически при отрицательной Структуре (в карточке урона). Уровень = глубина отрицательной Структуры (10+ = 10), часть — по месту попадания.</div>
+
+      {{#each critTables as |t|}}
+      <details class="veh-crit-block"{{#if (eq t.key "track")}} open{{/if}}>
+        <summary class="veh-crit-summary">Криты: {{t.label}}</summary>
+        <table class="veh-crit-table">
+          {{#each t.rows as |r|}}
+          <tr><td class="veh-crit-lvl">{{r.level}}{{#if r.isMax}}+{{/if}}</td><td class="veh-crit-text">{{r.text}}</td></tr>
+          {{/each}}
+        </table>
+      </details>
+      {{/each}}
+
+      <details class="veh-crit-block">
+        <summary class="veh-crit-summary">Поломки (ремонт)</summary>
+        <div class="veh-ref-list">
+          {{#each breakages as |b|}}
+          <div class="veh-ref-item"><div class="veh-ref-head"><span class="veh-ref-name">{{b.name}}</span></div><div class="veh-ref-desc">{{b.text}}</div></div>
+          {{/each}}
+        </div>
+      </details>
+
+      <details class="veh-crit-block">
+        <summary class="veh-crit-summary">Особые эффекты (Пожар, Потеря Управления, Опрокидывание, Крушение, Штопор)</summary>
+        <div class="veh-ref-list">
+          {{#each statusEffects as |s|}}
+          <div class="veh-ref-item"><div class="veh-ref-head"><span class="veh-ref-name">{{s.name}}</span></div><div class="veh-ref-desc">{{s.text}}</div></div>
+          {{/each}}
+        </div>
+      </details>
+
+      <details class="veh-crit-block">
+        <summary class="veh-crit-summary">Действия экипажа (справка)</summary>
+        <div class="veh-ref-list">
+          {{#each crewActions as |a|}}
+          <div class="veh-ref-item">
+            <div class="veh-ref-head"><span class="veh-ref-name">{{a.name}}</span><span class="veh-ref-action">{{a.action}}</span></div>
+            <div class="veh-ref-type">{{a.type}}</div>
+            <div class="veh-ref-desc">{{a.desc}}</div>
+          </div>
+          {{/each}}
+        </div>
+      </details>
+
+      <details class="veh-crit-block">
+        <summary class="veh-crit-summary">Ремонт: условия (мод. к тесту)</summary>
+        <table class="veh-crit-table">
+          {{#each repairConditions as |c|}}
+          <tr><td class="veh-crit-lvl">{{signedNum c.mod}}</td><td class="veh-crit-text">{{c.label}}</td></tr>
+          {{/each}}
+        </table>
+        <div class="veh-hint">Ремонт наспех: время ×½, все тесты −30. Тщательный: время ×2, +30. За каждый Успех поверх первого время −5%. Кнопка «Ремонт» — на вкладке «Бой».</div>
+      </details>
+
+      <details class="veh-crit-block">
+        <summary class="veh-crit-summary">Ремонт: доп. требования к Навыкам</summary>
+        <div class="veh-ref-list">
+          {{#each repairRequirements as |r|}}
+          <div class="veh-ref-item"><div class="veh-ref-head"><span class="veh-ref-name">{{r.name}}</span></div><div class="veh-ref-desc">{{r.text}}</div></div>
+          {{/each}}
+        </div>
+      </details>
+
+      <details class="veh-crit-block">
+        <summary class="veh-crit-summary">Реквизиция и обслуживание</summary>
+        <div class="veh-ref-list">
+          {{#each requisitionNotes as |n|}}
+          <div class="veh-ref-item"><div class="veh-ref-head"><span class="veh-ref-name">{{n.name}}</span></div><div class="veh-ref-desc">{{n.text}}</div></div>
+          {{/each}}
+        </div>
+      </details>
+    </div>
+
+    {{!-- ───────────── ЗАПИСИ ───────────── --}}
+    <div class="tab veh-tab" data-tab="notes" data-group="primary">
+      <label class="veh-full-label">Заметки
+        <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
+      </label>
+      <label class="veh-full-label">Заметки ГМа
+        <textarea name="system.gmNotes" rows="5">{{system.gmNotes}}</textarea>
+      </label>
+    </div>
+
+  </section>
+</form>

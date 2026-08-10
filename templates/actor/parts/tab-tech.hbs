@@ -1,0 +1,133 @@
+<div class="tab tech-tab" data-tab="tech" data-group="primary">
+
+  {{!-- бегущий машинный код (ноосфера) --}}
+  <div class="tech-binary" aria-hidden="true"><span>01001101 01000101 01000011 01001000 00101111 11000010 10101111 01000001 01010110 01000101 00100000 01001111 01001101 01001110 01001001 01010011 01010011 01001001 01000001 01001000</span><span>01001101 01000101 01000011 01001000 00101111 11000010 10101111 01000001 01010110 01000101 00100000 01001111 01001101 01001110 01001001 01010011 01010011 01001001 01000001 01001000</span></div>
+
+  {{!-- ── ТЕХНОЖРЕЦ: консоль Кузницы ───────────────────────────────────────── --}}
+  <div class="tech-panel tech-hero-panel">
+    <div class="tech-panel-title"><span class="tech-cog-mini"></span>ТЕХНОЖРЕЦ <span class="tech-creed">// OMNISSIAH</span></div>
+
+    <div class="tech-hero">
+      {{!-- сигил Механикум (масштаб/вращение) --}}
+      <div class="tech-sigil" title="Adeptus Mechanicus">
+        <div class="tech-sigil-cog"></div>
+        <div class="tech-sigil-mask"></div>
+      </div>
+
+      {{!-- две консоли: Когниция (данные) и Энергия (Катушка Потенции) --}}
+      <div class="tech-gauges">
+        <div class="tech-gauge tech-gauge-cog">
+          <div class="tg-head">{{{techIcon "cognition"}}} <span class="tg-lbl">КОГНИЦИЯ</span> <button type="button" class="cognition-rest-btn" title="Начало Хода: +½ Int.b Когниции">↻ +{{system.cognition.regen}}</button></div>
+          <div class="tg-body">
+            <div class="tg-readout"><input type="number" class="cognition-input" value="{{system.cognition.value}}" min="0"/><span class="tg-slash">/</span><span class="tg-max" title="Пул = Int.b">{{system.cognition.max}}</span></div>
+            <div class="tg-pips">{{#each cognition.pips as |p|}}<i class="tg-pip cog {{#if p.on}}on{{/if}}"></i>{{/each}}{{#unless cognition.pips.length}}<span class="tg-empty">— пул 0 —</span>{{/unless}}</div>
+          </div>
+        </div>
+
+        <div class="tech-gauge tech-gauge-en">
+          <div class="tg-head">{{{techIcon "energy"}}} <span class="tg-lbl">КАТУШКА ПОТЕНЦИИ</span>{{#if system.energy.bonusMax}}<span class="tg-bonus" title="Бонус от имплантов (Мотивные Банки и т.п.)">+{{system.energy.bonusMax}} = <b>{{system.energy.maxTotal}}</b></span>{{/if}}</div>
+          <div class="tg-body">
+            <div class="tg-readout"><input type="number" class="energy-input" value="{{system.energy.value}}" min="0"/><span class="tg-slash">/</span><input type="number" class="energy-max-input tg-maxinput" value="{{system.energy.max}}" min="0" title="База максимума Катушки Потенции"/></div>
+            <div class="tg-coil">{{#each energy.pips as |p|}}<i class="tg-cell {{#if p.on}}on{{/if}}"></i>{{/each}}{{#unless energy.pips.length}}<span class="tg-empty">— катушка не установлена —</span>{{/unless}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tech-hint">Техночудеса активируются тестом <b>Tech-Use</b> (Ментальное) и тратят <b>Когницию</b> (пул = Int.b, в начале Хода +½ Int.b). Мощные чудеса тратят <b>Энергию</b> из Катушки Потенции.</div>
+  </div>
+
+  {{!-- ── ЭНЕРГОСИСТЕМЫ И ФОКУСЫ (импланты Кибернетики Механикум) ───────────── --}}
+  {{#if (or techGenActions.length techToggles.length techFocusList.length)}}
+  <div class="tech-panel">
+    <div class="tech-panel-title"><span class="tech-cog-mini"></span>ЭНЕРГОСИСТЕМЫ И ФОКУСЫ</div>
+    <div class="tech-panel-body">
+      {{#if techGenActions.length}}
+      <div class="tech-gen-row">
+        {{#each techGenActions as |g|}}
+        <button type="button" class="tech-gen-btn" data-item-id="{{g.itemId}}" data-gen-idx="{{g.genIdx}}"
+                data-res="{{g.res}}" data-amount="{{g.amount}}" data-from-cog="{{g.fromCognition}}"
+                title="{{g.implant}}: {{g.label}}">{{g.label}}</button>
+        {{/each}}
+      </div>
+      {{/if}}
+      {{#if techToggles.length}}
+      <div class="tech-toggle-list">
+        {{#each techToggles as |t|}}
+        <label class="tech-toggle {{#if t.active}}is-active{{/if}}" title="{{t.note}}">
+          <input type="checkbox" class="tech-toggle-cb" data-item-id="{{t.itemId}}" {{#if t.active}}checked{{/if}}/>
+          <span class="tech-toggle-name">{{t.label}}</span>
+          <span class="tech-toggle-src">{{t.implant}}</span>
+        </label>
+        {{/each}}
+      </div>
+      {{/if}}
+      {{#if techFocusList.length}}
+      <div class="tech-focus-list">
+        <span class="tech-focus-lbl" title="Технофокусы служат «Железом» для Техночудес. Качество даёт модификатор к связанным тестам.">Железо (Технофокусы):</span>
+        {{#each techFocusList as |f|}}
+        <span class="tech-focus-chip q-{{f.quality}}">{{f.implant}} <b>{{f.mod}}</b></span>
+        {{/each}}
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+
+  {{!-- ── ТЕХНОЧУДЕСА ──────────────────────────────────────────────────────── --}}
+  <div class="tech-panel">
+    <div class="tech-panel-title"><span class="tech-cog-mini"></span>ТЕХНОЧУДЕСА
+      <button type="button" class="tech-add-btn" title="Добавить Техночудо">＋</button>
+    </div>
+    <table class="items-table tech-powers-table">
+      <thead><tr>
+        <th class="ability-toggle-col"></th>
+        <th class="col-wide">Название</th>
+        <th>Тип</th>
+        <th class="col-narrow" title="Когниция">{{{techIcon "cognition"}}}</th>
+        <th class="col-narrow" title="Энергия (Катушка Потенции)">{{{techIcon "energy"}}}</th>
+        <th>Действие</th>
+        <th>Дальн.</th>
+        <th class="col-narrow">Подд.</th>
+        <th class="col-narrow" title="Цена изучения в Опыте">XP</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        {{#if techMiracles.length}}
+          {{#each techMiracles as |m|}}
+          <tr class="item-row {{#if m.sustained}}tech-row-sustained{{/if}}" data-item-id="{{m.id}}">
+            <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button></td>
+            <td class="item-name-cell"><span class="tech-power-name">{{m.name}}</span>
+              {{#if m.disciplineLabel}}<div class="tech-discipline-sub">{{m.disciplineLabel}}{{#if m.subtype}} · {{m.subtype}}{{/if}}</div>{{/if}}
+            </td>
+            <td><span class="tech-type-chip">{{m.typeLabel}}</span></td>
+            <td class="tech-num-cell tech-num-cog">{{m.cognitionCost}}</td>
+            <td class="tech-num-cell tech-num-en">{{#if m.energyCost}}{{m.energyCost}}{{else}}—{{/if}}</td>
+            <td>{{m.actionLabel}}</td>
+            <td>{{m.range}}</td>
+            <td class="tech-num-cell">{{#if m.sustained}}<span class="tech-sust" title="Поддержание: {{m.sustainCost}} Когн./Ход">✓ {{m.sustainCost}}</span>{{else}}—{{/if}}</td>
+            <td class="psy-cost-cell"><input type="number" class="tech-cost-input" data-item-id="{{m.id}}" value="{{m.cost}}" min="0" title="Цена в опыте (идёт в «Потрачено на Психосилы/Техно»)"/></td>
+            <td class="psy-actions-cell"><button type="button" class="tech-activate-btn" data-item-id="{{m.id}}" title="Активировать (тест Tech-Use)">Активировать</button></td>
+          </tr>
+          <tr class="ability-detail-row" data-item-id="{{m.id}}" style="display:none;"><td colspan="10"><div class="ability-detail-text">{{#if m.effect}}{{m.effect}}{{else}}—{{/if}}</div></td></tr>
+          {{/each}}
+        {{else}}
+          <tr class="items-empty tech-empty"><td colspan="10"><span class="tech-empty-cog">⚙</span> <em>Нет Техночудес — добавьте ＋</em></td></tr>
+        {{/if}}
+      </tbody>
+    </table>
+  </div>
+
+  {{!-- ── НООСФЕРНЫЕ ДЕЙСТВИЯ ──────────────────────────────────────────────── --}}
+  <div class="tech-panel">
+    <div class="tech-panel-title"><span class="tech-cog-mini"></span>НООСФЕРНЫЕ ДЕЙСТВИЯ</div>
+    <div class="tech-panel-body">
+      <div class="noosphere-list">
+        {{#each noosphereActions as |a|}}
+        <div class="noosphere-action"><span class="noosphere-name">{{a.label}}</span> <span class="noosphere-desc">{{a.desc}}</span></div>
+        {{/each}}
+        <button type="button" class="tech-scan-btn" title="Ноосферное Сканирование (Tech-Use+0)"><span class="tech-ab-ico">⊹</span>Сканирование (Tech-Use)</button>
+      </div>
+    </div>
+  </div>
+</div>{{!-- /tab tech --}}

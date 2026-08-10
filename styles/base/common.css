@@ -1,0 +1,174 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — общие элементы
+   Контейнер, панели, таблицы, скроллбар
+═══════════════════════════════════════════════════════ */
+
+/* ── Контейнер ── */
+.warhammer-dbc.sheet {
+  font-family: "Book Antiqua", Palatino, Georgia, serif;
+  /* Базовый размер увеличен для читаемости; почти всё внутри — в em и масштабируется */
+  font-size: 14.5px;
+  color: var(--wh-text);
+  background: var(--wh-bg);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ── Тело листа ── */
+.warhammer-dbc .sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  background: var(--wh-parchment);
+}
+
+.warhammer-dbc .tab { display: none; }
+.warhammer-dbc .tab.active { display: block; }
+
+/* ── Панели (универсальные) ── */
+.warhammer-dbc .stat-panel {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.warhammer-dbc .panel-title {
+  background: var(--wh-panel-dark);
+  color: var(--wh-text-light);
+  font-weight: bold;
+  font-size: 0.88em;
+  letter-spacing: 0.07em;
+  text-align: center;
+  padding: 4px 8px;
+}
+
+.warhammer-dbc .panel-body { padding: 6px 8px; }
+
+/* ── Таблицы предметов ── */
+.warhammer-dbc .items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88em;
+}
+
+.warhammer-dbc .items-table th {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  padding: 3px 5px;
+  text-align: center;
+  border: 1px solid var(--wh-panel-dark);
+}
+
+.warhammer-dbc .items-table td {
+  padding: 2px 5px;
+  border: 1px solid var(--wh-border-light);
+  background: var(--wh-parchment2);
+  text-align: center;
+}
+
+.warhammer-dbc .items-table .col-wide { text-align: left; width: 40%; }
+
+.warhammer-dbc .items-empty td {
+  text-align: center;
+  color: #4a3a26;
+  font-style: italic;
+  padding: 8px;
+}
+
+.item-name-cell { font-weight: 500; }
+
+/* ── Скроллбар ── */
+.warhammer-dbc .sheet-body::-webkit-scrollbar,
+.warhammer-dbc .skills-advance-scroll::-webkit-scrollbar { width: 6px; }
+
+.warhammer-dbc .sheet-body::-webkit-scrollbar-track,
+.warhammer-dbc .skills-advance-scroll::-webkit-scrollbar-track {
+  background: var(--wh-parchment2);
+}
+
+.warhammer-dbc .sheet-body::-webkit-scrollbar-thumb,
+.warhammer-dbc .skills-advance-scroll::-webkit-scrollbar-thumb {
+  background: var(--wh-red);
+  border-radius: 3px;
+}
+/* ═══════════════════════════════════════════════════════
+   Тёмная тема Друкхари — читаемость полей и выпадающих списков
+═══════════════════════════════════════════════════════ */
+.warhammer-dbc.wh-race-drukhari select,
+.warhammer-dbc.wh-race-drukhari input,
+.warhammer-dbc.wh-race-drukhari textarea {
+  background-color: var(--wh-input-bg);
+  color: var(--wh-text);
+  border-color: var(--wh-border);
+}
+/* Сам выпадающий список (option/optgroup) — браузер берёт системные цвета, задаём явно */
+.warhammer-dbc.wh-race-drukhari option,
+.warhammer-dbc.wh-race-drukhari optgroup {
+  background-color: #18302b;
+  color: #e2efe9;
+}
+.warhammer-dbc.wh-race-drukhari optgroup { font-weight: bold; }
+/* Чуть ярче рамки панелей/таблиц, чтобы не «сливалось» */
+.warhammer-dbc.wh-race-drukhari .stat-panel,
+.warhammer-dbc.wh-race-drukhari .ability-section-panel,
+.warhammer-dbc.wh-race-drukhari .combat-section-panel,
+.warhammer-dbc.wh-race-drukhari .gear-section-panel,
+.warhammer-dbc.wh-race-drukhari .notes-section-panel {
+  border-color: var(--wh-border-light);
+}
+
+/* Друкхари: осветляем захардкоженные тёмные акценты на тёмном фоне */
+.warhammer-dbc.wh-race-drukhari .noosphere-name,
+.warhammer-dbc.wh-race-drukhari .weapon-mod-badge { color: #6fd4e4; }
+.warhammer-dbc.wh-race-drukhari .gene-organ-name,
+.warhammer-dbc.wh-race-drukhari .size-trait-badge,
+.warhammer-dbc.wh-race-drukhari .size-total-value,
+.warhammer-dbc.wh-race-drukhari .trait-fx-cell,
+.warhammer-dbc.wh-race-drukhari .effect-stat-mods { color: #8fd86a; }
+.warhammer-dbc.wh-race-drukhari .rwc-ammo-stock { color: #a6d8be; }
+.warhammer-dbc.wh-race-drukhari .items-empty td { color: #9fb8b0; }
+
+/* Друкхари: остальные тёмные тексты → светлые (вкл. блок Брони/Силового поля) */
+.warhammer-dbc.wh-race-drukhari .conditions-empty,
+.warhammer-dbc.wh-race-drukhari .effects-empty { color: #9fb0aa; }
+.warhammer-dbc.wh-race-drukhari .effect-state-badge { color: #8fd86a; }
+.warhammer-dbc.wh-race-drukhari .afl-ap,
+.warhammer-dbc.wh-race-drukhari .armor-ap-gear { color: #79c0e0; }
+.warhammer-dbc.wh-race-drukhari .afl-tb,
+.warhammer-dbc.wh-race-drukhari .armor-tb-val { color: #b8d68a; }
+.warhammer-dbc.wh-race-drukhari .shield-bar-stat-value,
+.warhammer-dbc.wh-race-drukhari .armor-absorption-total,
+.warhammer-dbc.wh-race-drukhari .armor-loc-label { color: var(--wh-text); }
+.warhammer-dbc.wh-race-drukhari .fatigue-btn-sleep { color: #6fd86a; }
+
+/* Друкхари: подписи (label) без собственного цвета берут тёмный цвет из ядра
+   Foundry (рассчитан на светлый пергамент) — на тёмной теме нечитаемы.
+   Принудительно светлые: РАНЫ (Всего/Текущие/Крит/Реакции), ДВИЖЕНИЕ и пр. */
+.warhammer-dbc.wh-race-drukhari label { color: var(--wh-text); }
+
+/* Друкхари: значения и текст ячеек без собственного цвета (наследуют тёмный
+   цвет ядра Foundry) — делаем светлыми. Развитие: Итого/Всего/названия навыков;
+   Способности: названия/уровень/склонности талантов и черт, «Преимущество». */
+.warhammer-dbc.wh-race-drukhari .char-total-disp,
+.warhammer-dbc.wh-race-drukhari .char-total-edit,
+.warhammer-dbc.wh-race-drukhari .sa-total-cell,
+.warhammer-dbc.wh-race-drukhari .sa-name-cell,
+.warhammer-dbc.wh-race-drukhari .group-entry-name,
+.warhammer-dbc.wh-race-drukhari .item-name-cell,
+.warhammer-dbc.wh-race-drukhari .talent-tier-cell,
+.warhammer-dbc.wh-race-drukhari .talent-apt-cell,
+.warhammer-dbc.wh-race-drukhari .ability-benefit-cell,
+.warhammer-dbc.wh-race-drukhari .char-input,
+.warhammer-dbc.wh-race-drukhari .skill-cost-input { color: var(--wh-text); }
+
+/* Друкхари: колонка «Х-ка» (была var(--wh-panel-mid) — тёмная) и плейсхолдеры */
+.warhammer-dbc.wh-race-drukhari .sa-char-cell { color: #7fd0c2; }
+.warhammer-dbc.wh-race-drukhari input::placeholder,
+.warhammer-dbc.wh-race-drukhari textarea::placeholder {
+  color: #8fb0a8;
+  opacity: 1;
+}

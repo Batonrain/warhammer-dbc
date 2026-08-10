@@ -1,0 +1,226 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Показатели: характеристики и навыки
+═══════════════════════════════════════════════════════ */
+
+/* ── Layout показателей ── */
+.warhammer-dbc .stats-layout {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.warhammer-dbc .panel-side { display: flex; flex-direction: column; }
+
+/* ── Боковые панели (Безумие / Порча) ── */
+.warhammer-dbc .side-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 6px !important;
+}
+
+.warhammer-dbc .side-main-val input {
+  width: 58px;
+  text-align: center;
+  font-size: 1.6em;
+  font-weight: bold;
+  background: var(--wh-input-bg);
+  border: 2px solid var(--wh-border);
+  color: var(--wh-text);
+}
+
+.warhammer-dbc .side-sub-val input {
+  width: 48px;
+  text-align: center;
+  background: var(--wh-input-dark);
+  border: 1px solid var(--wh-border);
+  font-size: 0.95em;
+}
+
+.warhammer-dbc .side-bonus-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  margin-top: 2px;
+}
+
+.warhammer-dbc .side-bonus-label {
+  font-size: 0.72em;
+  color: #6a5a48;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.warhammer-dbc .side-bonus-val {
+  font-size: 1.15em;
+  font-weight: bold;
+  color: var(--wh-red);
+  min-width: 28px;
+  text-align: center;
+}
+
+.warhammer-dbc .side-roll-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 4px 6px;
+  background: var(--wh-panel-dark);
+  color: var(--wh-text-light);
+  border: none;
+  border-radius: 3px;
+  font-family: "Book Antiqua", Palatino, serif;
+  font-size: 0.78em;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.warhammer-dbc .side-roll-btn:hover { background: var(--wh-red); }
+
+/* ── Таблица характеристик (только чтение) ── */
+.warhammer-dbc .char-table-display {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.warhammer-dbc .char-table-display th {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  padding: 4px 6px;
+  font-size: 0.82em;
+  text-align: center;
+  border: 1px solid var(--wh-panel-dark);
+}
+
+.warhammer-dbc .char-table-display td {
+  padding: 3px 5px;
+  border: 1px solid var(--wh-border-light);
+  text-align: center;
+  background: var(--wh-parchment2);
+}
+
+.warhammer-dbc .char-table-display tr:nth-child(even) td { background: var(--wh-parchment3); }
+.warhammer-dbc .char-table-display tr:hover td { background: var(--wh-input-bg); }
+
+.warhammer-dbc .char-name-cell {
+  text-align: left !important;
+  padding-left: 8px !important;
+}
+
+.warhammer-dbc .char-roll {
+  color: var(--wh-link);
+  text-decoration: none;
+  font-size: 0.88em;
+  cursor: pointer;
+}
+
+.warhammer-dbc .char-roll:hover { color: var(--wh-link-hover); text-decoration: underline; }
+.warhammer-dbc .char-total-disp { font-weight: bold; }
+.warhammer-dbc .char-bonus-disp { font-weight: bold; color: var(--wh-red); }
+
+/* ── Навыки (показатели) ── */
+.warhammer-dbc .skills-panel {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.warhammer-dbc .skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+}
+
+.warhammer-dbc .skills-column {
+  border-right: 1px solid var(--wh-border-light);
+  padding: 2px 0;
+}
+
+.warhammer-dbc .skills-column:last-child { border-right: none; }
+
+.warhammer-dbc .skill-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 8px;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  min-height: 24px;
+}
+
+.warhammer-dbc .skill-row:last-child { border-bottom: none; }
+.warhammer-dbc .skill-row:nth-child(even) { background: rgba(0,0,0,0.04); }
+.warhammer-dbc .skill-row:hover { background: var(--wh-input-bg); }
+
+.warhammer-dbc .skill-name {
+  font-size: 0.84em;
+  color: var(--wh-link);
+  text-decoration: none;
+  cursor: pointer;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 6px;
+}
+
+.warhammer-dbc .skill-name:hover { color: var(--wh-link-hover); text-decoration: underline; }
+
+.warhammer-dbc .skill-total {
+  font-weight: bold;
+  font-size: 0.88em;
+  min-width: 34px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.warhammer-dbc .skill-neg { color: var(--wh-red); }
+.warhammer-dbc .skill-pos { color: var(--wh-xp-current); }
+
+/* ── Групповые навыки — заголовок группы ── */
+.warhammer-dbc .skill-group-header {
+  font-size: 0.78em;
+  font-weight: bold;
+  color: var(--wh-text-light);
+  background: var(--wh-panel-mid);
+  padding: 2px 6px;
+  margin: 4px 0 1px;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Первый заголовок без отступа сверху */
+.warhammer-dbc .skills-column-groups
+  .skill-group-header:first-child {
+  margin-top: 0;
+}
+
+/* Специализация — чуть меньше и с отступом */
+.warhammer-dbc .skill-row-grouped {
+  padding-left: 8px;
+}
+
+.warhammer-dbc .skill-name-specialty {
+  font-style: italic;
+  font-size: 0.9em;
+}
+/* ── Дебафф характеристики (урон в характеристику, редактируемый) ─────────── */
+.warhammer-dbc .char-debuff-cell { text-align: center; }
+.warhammer-dbc .char-debuff-input {
+  width: 38px;
+  text-align: center;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  color: var(--wh-red);
+  font-size: 0.9em;
+  padding: 1px 2px;
+}
+.warhammer-dbc .char-total-debuffed { color: var(--wh-red); font-weight: bold; }

@@ -1,0 +1,48 @@
+{{#if (eq item.type "disease")}}
+<div class="item-section">
+  <div class="item-section-title">БОЛЕЗНЬ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Тип</label>
+    <select name="system.diseaseType" class="wr-select-sm">
+      <option value="warp"   {{#if (eq system.diseaseType "warp")}}selected{{/if}}>Варп-болезнь</option>
+      <option value="common" {{#if (eq system.diseaseType "common")}}selected{{/if}}>Обычная</option>
+    </select>
+    <label class="wr-label">Степень</label>
+    <select name="system.severity" class="wr-select-sm">
+      <option value=""       {{#if (eq system.severity "")}}selected{{/if}}>—</option>
+      <option value="light"  {{#if (eq system.severity "light")}}selected{{/if}}>Лёгкая</option>
+      <option value="severe" {{#if (eq system.severity "severe")}}selected{{/if}}>Тяжёлая</option>
+      <option value="deadly" {{#if (eq system.severity "deadly")}}selected{{/if}}>Смертельная</option>
+    </select>
+    <label class="wr-label">Бог</label>
+    <select name="system.god" class="wr-select-sm">
+      {{#each diseaseGodOptions as |label key|}}
+      <option value="{{key}}" {{#if (eq @root.system.god key)}}selected{{/if}}>{{label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.active" {{#if system.active}}checked{{/if}}/>
+      Активна (поражает носителя)
+    </label>
+    <label class="wr-label">Инкубация</label>
+    <input type="text" name="system.incubation" value="{{system.incubation}}" class="wr-input-md" placeholder="напр. 3/7 часов / нет"/>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">СИМПТОМЫ</div>
+  <textarea name="system.symptoms" class="item-textarea" placeholder="Эффекты болезни на носителя...">{{system.symptoms}}</textarea>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ВЕКТОРЫ ЗАРАЖЕНИЯ</div>
+  <textarea name="system.vectors" class="item-textarea" placeholder="Как передаётся, тест заражения...">{{system.vectors}}</textarea>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ИЗЛЕЧЕНИЕ</div>
+  <textarea name="system.cure" class="item-textarea" placeholder="Как лечится...">{{system.cure}}</textarea>
+</div>
+{{/if}}

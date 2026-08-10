@@ -1,0 +1,32 @@
+{{!-- Карточка сцены Нексуса. Контекст = объект карточки (id, name, thumb, open,
+     isCurrent, isActive, hasEntry, hasPlayers, players, groupId, subId). --}}
+<div class="wh-nx-card {{#if isCurrent}}here{{/if}} {{#unless open}}locked{{/unless}}" data-jump="{{id}}" title="Переместить выбранные токены сюда">
+  <div class="wh-nx-thumb" style="background-image:url('{{thumb}}')">
+    {{#unless thumb}}<span class="wh-nx-noimg">НЕТ ПРЕВЬЮ</span>{{/unless}}
+    <div class="wh-nx-badges">
+      {{#if isActive}}<span class="wh-nx-b act">● активна</span>{{/if}}
+      {{#if isCurrent}}<span class="wh-nx-b cur">вы здесь</span>{{/if}}
+      {{#if open}}<span class="wh-nx-b open">переход</span>{{else}}<span class="wh-nx-b shut">закрыт</span>{{/if}}
+      {{#if hasEntry}}<span class="wh-nx-b entry" title="Задана точка входа">⚑</span>{{/if}}
+    </div>
+    {{#if hasPlayers}}
+    <div class="wh-nx-players" title="Игроки на этой сцене">
+      {{#each players as |p|}}<span class="wh-nx-pc" style="--pc:{{p.color}}" title="{{p.name}}">{{p.initials}}</span>{{/each}}
+    </div>
+    {{/if}}
+    <div class="wh-nx-go">▶ ПРЫЖОК</div>
+    <button type="button" class="wh-nx-peek" data-peek="{{id}}" data-card-tool title="Смотреть эту сцену (без перемещения токена)">👁</button>
+  </div>
+  <div class="wh-nx-cname">{{name}}</div>
+
+  {{#if @root.isGM}}
+  <div class="wh-nx-ctools" data-card-tool>
+    <button type="button" data-toggleopen="{{id}}" title="Открыть/закрыть переход для игроков">{{#if open}}🔓{{else}}🔒{{/if}}</button>
+    <button type="button" data-view="{{id}}" title="Открыть сцену (просмотр ГМ)">👁</button>
+    <button type="button" data-activate="{{id}}" title="Активировать сцену">⚡</button>
+    <button type="button" data-setentry="{{id}}" title="Точка входа = выбранный токен (на этой сцене)">⚑</button>
+    {{#if subId}}<button type="button" data-unassign="{{id}}" data-group="{{groupId}}" title="Убрать из подгруппы (вернуть в общий список группы)">⤴</button>{{/if}}
+    <button type="button" data-remove="{{id}}" data-group="{{groupId}}" title="Убрать из группы">✕</button>
+  </div>
+  {{/if}}
+</div>

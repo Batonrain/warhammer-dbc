@@ -1,0 +1,447 @@
+{{!-- Оружие --}}
+{{#if (eq item.type "weapon")}}
+<div class="item-section">
+  <div class="item-section-title">СТАТЫ</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Класс</label>
+    <select name="system.weaponClass" class="wr-select">
+      <option value="melee"      {{#if (eq system.weaponClass "melee")}}selected{{/if}}>Рукопашное</option>
+      <option value="thrown"     {{#if (eq system.weaponClass "thrown")}}selected{{/if}}>Метательное</option>
+      <option value="pistol"     {{#if (eq system.weaponClass "pistol")}}selected{{/if}}>Пистолет</option>
+      <option value="basic"      {{#if (eq system.weaponClass "basic")}}selected{{/if}}>Ручное</option>
+      <option value="heavy"      {{#if (eq system.weaponClass "heavy")}}selected{{/if}}>Тяжёлое</option>
+      <option value="launcher"   {{#if (eq system.weaponClass "launcher")}}selected{{/if}}>Пусковое</option>
+      <option value="stationary" {{#if (eq system.weaponClass "stationary")}}selected{{/if}}>Стационарное</option>
+    </select>
+    <select name="system.weaponType" class="wr-select">
+      <option value="laser"    {{#if (eq system.weaponType "laser")}}selected{{/if}}>Лазерное</option>
+      <option value="solid"    {{#if (eq system.weaponType "solid")}}selected{{/if}}>Твердотельное</option>
+      <option value="bolt"     {{#if (eq system.weaponType "bolt")}}selected{{/if}}>Болтерное</option>
+      <option value="melta"    {{#if (eq system.weaponType "melta")}}selected{{/if}}>Мельта</option>
+      <option value="plasma"   {{#if (eq system.weaponType "plasma")}}selected{{/if}}>Плазма</option>
+      <option value="flame"    {{#if (eq system.weaponType "flame")}}selected{{/if}}>Зажигательное</option>
+      <option value="lowtech"  {{#if (eq system.weaponType "lowtech")}}selected{{/if}}>Низкотехнологичное</option>
+      <option value="launcher" {{#if (eq system.weaponType "launcher")}}selected{{/if}}>Пусковое</option>
+      <option value="explosive"{{#if (eq system.weaponType "explosive")}}selected{{/if}}>Взрывчатка</option>
+      <option value="exotic"   {{#if (eq system.weaponType "exotic")}}selected{{/if}}>Экзотическое</option>
+      <option value="chain"    {{#if (eq system.weaponType "chain")}}selected{{/if}}>Цепное</option>
+      <option value="power"    {{#if (eq system.weaponType "power")}}selected{{/if}}>Силовое</option>
+      <option value="shock"    {{#if (eq system.weaponType "shock")}}selected{{/if}}>Шоковое</option>
+      <option value="psychic"  {{#if (eq system.weaponType "psychic")}}selected{{/if}}>Психосиловое</option>
+      <option value="splinter"   {{#if (eq system.weaponType "splinter")}}selected{{/if}}>Осколочное</option>
+      <option value="darklight"  {{#if (eq system.weaponType "darklight")}}selected{{/if}}>Тёмносветовое</option>
+      <option value="shuriken"   {{#if (eq system.weaponType "shuriken")}}selected{{/if}}>Сюрикеновое</option>
+      <option value="wraithbone" {{#if (eq system.weaponType "wraithbone")}}selected{{/if}}>Психокостяное</option>
+      <option value="fusion"      {{#if (eq system.weaponType "fusion")}}selected{{/if}}>Фузионное</option>
+      <option value="prisma"      {{#if (eq system.weaponType "prisma")}}selected{{/if}}>Призменное</option>
+      <option value="rocket"      {{#if (eq system.weaponType "rocket")}}selected{{/if}}>Ракетное</option>
+      <option value="grenade"     {{#if (eq system.weaponType "grenade")}}selected{{/if}}>Гранатное</option>
+      <option value="primitive"   {{#if (eq system.weaponType "primitive")}}selected{{/if}}>Примитивное</option>
+      <option value="acid"        {{#if (eq system.weaponType "acid")}}selected{{/if}}>Кислотное</option>
+      <option value="monofilament"{{#if (eq system.weaponType "monofilament")}}selected{{/if}}>Мономолекулярное</option>
+      <option value="needler"     {{#if (eq system.weaponType "needler")}}selected{{/if}}>Игольное</option>
+    </select>
+    <label class="wr-label">Прзр</label>
+    <input type="text" name="system.reload" value="{{system.reload}}" class="wr-input-xs"/>
+    <label class="wr-label">Маг.</label>
+    <input type="number" name="system.magazineCur" value="{{system.magazineCur}}" min="0" class="wr-input-xs"/>
+    <span class="wr-sep">/</span>
+    <input type="number" name="system.magazineMax" value="{{system.magazineMax}}" min="0" class="wr-input-xs"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Урон</label>
+    <input type="text" name="system.damage" value="{{system.damage}}" class="wr-input-md"/>
+    <select name="system.damageType" class="wr-select-sm">
+      <option value="energy"   {{#if (eq system.damageType "energy")}}selected{{/if}}>Энергетический</option>
+      <option value="impact"   {{#if (eq system.damageType "impact")}}selected{{/if}}>Ударный</option>
+      <option value="rending"  {{#if (eq system.damageType "rending")}}selected{{/if}}>Режущий</option>
+      <option value="blast"    {{#if (eq system.damageType "blast")}}selected{{/if}}>Взрывной</option>
+      <option value="chemical" {{#if (eq system.damageType "chemical")}}selected{{/if}}>Химический</option>
+    </select>
+    <label class="wr-label">Проб.</label>
+    <input type="number" name="system.penetration" value="{{system.penetration}}" class="wr-input-xs"/>
+    <label class="wr-label">СКС</label>
+    <input type="number" name="system.rof_single" value="{{system.rof_single}}" min="0" class="wr-input-xs" title="Одиночный"/>
+    <span class="wr-sep">/</span>
+    <input type="number" name="system.rof_semi" value="{{system.rof_semi}}" min="0" class="wr-input-xs" title="Полуавтомат"/>
+    <span class="wr-sep">/</span>
+    <input type="number" name="system.rof_full" value="{{system.rof_full}}" min="0" class="wr-input-xs" title="Автоматический"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Дальн. (Rng)</label>
+    <input type="number" name="system.range" value="{{system.range}}" min="0" class="wr-input-sm"/>
+    <span class="wr-label" style="margin-left:8px;">м</span>
+    <label class="wr-label" style="margin-left:12px;">Баланс (Bl)</label>
+    <select class="balance-select wr-select-sm">
+      <option value="-2" {{#if (eq system.balanceStr "-2")}}selected{{/if}}>−2 Нельзя</option>
+      <option value="-1" {{#if (eq system.balanceStr "-1")}}selected{{/if}}>−1 −10</option>
+      <option value="0"  {{#if (eq system.balanceStr "0")}}selected{{/if}}>0 ±0</option>
+      <option value="1"  {{#if (eq system.balanceStr "1")}}selected{{/if}}>+1 +10</option>
+      <option value="2"  {{#if (eq system.balanceStr "2")}}selected{{/if}}>+2 +15</option>
+    </select>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label" title="Доступные хваты через запятую/скобки, как в таблицах: напр. 2р (1р), Об, Бл. �">Хваты (Grip)</label>
+    <input type="text" name="system.grips" value="{{system.grips}}" class="wr-input" placeholder="напр. 2р (1р), Об"/>
+  </div>
+
+  <div class="weapon-profiles">
+    <div class="wprofiles-head">
+      <span class="wprofiles-title" title="Профили ББ (Крюк/Посох и т.п.). Профиль №1 — это статы выше; ниже — альтернативные. В HUD переключаются на лету.">
+        <i class="fas fa-layer-group"></i> ПРОФИЛИ БЛИЖНЕГО БОЯ
+      </span>
+      <a class="wprofile-add" title="Добавить альтернативный профиль"><i class="fas fa-plus"></i> профиль</a>
+    </div>
+
+    {{!-- Профиль №1 — основной (статы выше); здесь только его имя --}}
+    <div class="wprofile-card is-primary">
+      <div class="wprofile-card-head">
+        <span class="wprofile-badge">№1</span>
+        <input type="text" name="system.profileLabel" value="{{system.profileLabel}}" class="wprofile-name" placeholder="Имя осн. профиля (напр. Крюк)"/>
+        <span class="wprofile-stats-ro">{{system.damage}}{{#if system.penetration}} · Пробой {{system.penetration}}{{/if}}</span>
+      </div>
+    </div>
+
+    {{#each weaponProfiles as |prof|}}
+    <div class="wprofile-card" data-idx="{{prof.idx}}">
+      <div class="wprofile-card-head">
+        <span class="wprofile-badge">№{{prof.num}}</span>
+        <input type="text" class="wprofile-name wprofile-field" data-field="label" value="{{prof.label}}" placeholder="Имя (Посох)"/>
+        <a class="wprofile-del" title="Удалить профиль"><i class="fas fa-trash"></i></a>
+      </div>
+      <div class="wprofile-grid">
+        <label>Урон<input type="text" class="wprofile-field" data-field="damage" value="{{prof.damage}}" placeholder="1d10-2"/></label>
+        <label>Тип
+          <select class="wprofile-field" data-field="damageType">
+            <option value="rending"  {{#if (eq prof.damageType "rending")}}selected{{/if}}>Режущий</option>
+            <option value="impact"   {{#if (eq prof.damageType "impact")}}selected{{/if}}>Ударный</option>
+            <option value="energy"   {{#if (eq prof.damageType "energy")}}selected{{/if}}>Энергет.</option>
+            <option value="blast"    {{#if (eq prof.damageType "blast")}}selected{{/if}}>Взрывной</option>
+            <option value="chemical" {{#if (eq prof.damageType "chemical")}}selected{{/if}}>Химич.</option>
+          </select>
+        </label>
+        <label>Пробой<input type="number" class="wprofile-field" data-field="penetration" value="{{prof.penetration}}"/></label>
+        <label>Rng<input type="text" class="wprofile-field" data-field="range" value="{{prof.range}}" placeholder="2-4"/></label>
+      </div>
+      <div class="wprofile-props">
+        <select class="wprofile-prop-add wr-select-sm">
+          <option value="">＋ свойство профиля…</option>
+          {{#each prof.propsAvailable as |d|}}
+          <option value="{{d.key}}">{{d.label}} ({{d.en}})</option>
+          {{/each}}
+        </select>
+        <div class="wprofile-prop-list">
+          {{#each prof.propsActive as |p|}}
+          <span class="wprop-chip" title="{{p.def.desc}}">
+            <span class="wprop-name">{{p.def.label}}</span>
+            {{#if p.def.rating}}
+            <input type="{{#if p.def.ratingDice}}text{{else}}number{{/if}}" class="wprofile-prop-rating" data-key="{{p.key}}" data-field="rating" value="{{p.rating}}" title="Рейтинг X" style="width:44px;"/>
+            {{/if}}
+            {{#if p.def.rating2}}
+            <span class="wprop-slash">/</span>
+            <input type="{{#if p.def.rating2Dice}}text{{else}}number{{/if}}" class="wprofile-prop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y" style="width:44px;"/>
+            {{/if}}
+            <button type="button" class="wprofile-prop-remove" data-key="{{p.key}}" title="Удалить">✕</button>
+          </span>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Лучшее</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+    <label class="wr-label">Доступность</label>
+    <select class="wr-select-avail availability-select">
+  <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+  <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распространено</option>
+  <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+  <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+  <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+  <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+  <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+  <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+  <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезвычайно редко</option>
+  <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
+  <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+</select>
+    <label class="wr-label">Вес</label>
+    <input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.1" class="wr-input-xs"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Особое</label>
+    <input type="text" name="system.special" value="{{system.special}}" class="wr-input-special"/>
+    <label class="wr-label">Атака</label>
+    <input type="number" name="system.attackBonus" value="{{system.attackBonus}}" class="wr-input-xs"/>
+  </div>
+
+  {{!-- ── Особые свойства оружия ──────────────────────────────────────────── --}}
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Особые свойства</label>
+      <select class="wprop-add-select">
+        <option value="">＋ добавить свойство…</option>
+        {{#each weaponPropsAvailable as |d|}}
+        <option value="{{d.key}}">{{d.label}} ({{d.en}})</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if weaponPropsActive.length}}
+    <div class="weapon-props-list">
+      {{#each weaponPropsActive as |p|}}
+      <div class="wprop-chip" title="{{p.def.desc}}">
+        <span class="wprop-name">{{p.def.label}}</span>
+        {{#if p.def.rating}}
+        {{#if p.def.ratingDice}}
+        <input type="text" class="wprop-rating-dice" data-key="{{p.key}}" data-field="rating"
+               value="{{p.rating}}" title="Формула (напр. 1d10)" placeholder="1d10"/>
+        {{else}}
+        <input type="number" class="wprop-rating" data-key="{{p.key}}" data-field="rating"
+               value="{{p.rating}}" title="Рейтинг X"/>
+        {{/if}}
+        {{/if}}
+        {{#if p.def.rating2}}
+        <span class="wprop-slash">/</span>
+        {{#if p.def.rating2Dice}}
+        <input type="text" class="wprop-rating-dice" data-key="{{p.key}}" data-field="rating2"
+               value="{{p.rating2}}" title="Бросок Y (напр. 2d10)" placeholder="2d10"/>
+        {{else}}
+        <input type="number" class="wprop-rating" data-key="{{p.key}}" data-field="rating2"
+               value="{{p.rating2}}" title="Рейтинг Y"/>
+        {{/if}}
+        {{/if}}
+        <button type="button" class="wprop-remove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+
+  {{!-- ── Мистика оружия: Наследие / Осквернение ─────────────────────────── --}}
+  <div class="weapon-mystic-section {{#if system.daemonWeapon.bound}}is-daemon{{/if}}">
+    <div class="wms-checks">
+      <label class="wms-check" title="Оружие Наследия: +½Inf.b к Dmg/Pen, Reinforced, теряет Primitive, +1 Качество. Мощный сосуд для осквернения (+30 резонанса).">
+        <input type="checkbox" name="system.legacyWeapon" {{#if system.legacyWeapon}}checked{{/if}}/> ⚜ Оружие Наследия
+      </label>
+      <label class="wms-check" title="Священное Оружие: при осквернении даёт +30 резонанса сосуда.">
+        <input type="checkbox" name="system.sacred" {{#if system.sacred}}checked{{/if}}/> ✚ Священное Оружие
+      </label>
+    </div>
+    {{#if system.daemonWeapon.bound}}
+    <div class="wms-daemon" style="--gc:{{daemonWeaponColor}};">
+      <div class="wms-daemon-head">
+        <span class="wms-daemon-sigil"></span>
+        <span class="wms-daemon-title">{{#if system.daemonWeapon.runic}}РУНИЧЕСКОЕ ОРУЖИЕ{{else}}ДЕМОНИЧЕСКОЕ ОРУЖИЕ{{/if}}</span>
+        <span class="wms-daemon-god">{{daemonWeaponGodLabel}}{{#if system.daemonWeapon.demonName}} · {{system.daemonWeapon.demonName}}{{/if}}</span>
+      </div>
+      <div class="wms-daemon-meta">
+        <span title="Связывание: демон получает −5×Связывание на встречные тесты против владельца">Связывание <b>{{system.daemonWeapon.binding}}</b></span>
+        <span title="Бонус Стойкости демона: +W.b к Dmg/Pen, число свойств">W.b демона <b>{{system.daemonWeapon.demonWb}}</b></span>
+        <span>Inf демона <b>{{system.daemonWeapon.demonInf}}</b></span>
+        <label class="wms-subdue" title="Подчинён ли демон воле владельца (Демоническое Владычество)"><input type="checkbox" name="system.daemonWeapon.subdued" {{#if system.daemonWeapon.subdued}}checked{{/if}}/> Подчинён</label>
+      </div>
+      {{#if system.daemonWeapon.properties.length}}
+      <div class="wms-daemon-props">
+        {{#each system.daemonWeapon.properties as |dp|}}
+        <div class="wms-dp" title="{{dp.text}}"><span class="wms-dp-name">{{dp.name}}</span><span class="wms-dp-god">{{dp.godLabel}}</span></div>
+        {{/each}}
+      </div>
+      {{/if}}
+      <button type="button" class="wms-release" title="Освободить демона из оружия (снять осквернение)">✖ Освободить демона</button>
+    </div>
+    {{/if}}
+  </div>
+
+  {{#if system.range}}
+<div class="weapon-range-table">
+  <div class="wrt-title">📏 Дистанции стрельбы (Rng = {{system.range}}м)</div>
+  <div class="wrt-row wrt-pointblank">
+    <span class="wrt-name">В упор</span>
+    <span class="wrt-range">0,5–3м</span>
+    <span class="wrt-mod">+30</span>
+  </div>
+  <div class="wrt-row wrt-short">
+    <span class="wrt-name">Короткая</span>
+    <span class="wrt-range">3–{{divCeil system.range 2}}м</span>
+    <span class="wrt-mod">+10</span>
+  </div>
+  <div class="wrt-row wrt-combat">
+    <span class="wrt-name">Боевая</span>
+    <span class="wrt-range">{{divCeil system.range 2}}–{{system.range}}м</span>
+    <span class="wrt-mod">±0</span>
+  </div>
+  <div class="wrt-row wrt-long">
+    <span class="wrt-name">Дальняя</span>
+    <span class="wrt-range">{{system.range}}–{{multiply system.range 2}}м</span>
+    <span class="wrt-mod">−10</span>
+  </div>
+  <div class="wrt-row wrt-extreme">
+    <span class="wrt-name">Экстремальная</span>
+    <span class="wrt-range">{{multiply system.range 2}}–{{multiply system.range 3}}м</span>
+    <span class="wrt-mod">−30</span>
+  </div>
+</div>
+{{/if}}
+
+</div>
+{{/if}}
+
+{{!-- Модификация оружия --}}
+{{#if (eq item.type "weaponMod")}}
+<div class="item-section">
+  <div class="item-section-title">КЛАССИФИКАЦИЯ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Тип оружия</label>
+    <select name="system.category" class="wr-select-sm">
+      <option value="ranged" {{#if (eq system.category "ranged")}}selected{{/if}}>Стрелковое</option>
+      <option value="melee"  {{#if (eq system.category "melee")}}selected{{/if}}>Ближнего боя</option>
+      <option value="shield" {{#if (eq system.category "shield")}}selected{{/if}}>Щит</option>
+    </select>
+    <label class="wr-label">Группа</label>
+    <select name="system.modGroup" class="wr-select">
+      {{#each modGroupOptions as |g|}}
+      <option value="{{g.key}}" {{#if (eq @root.system.modGroup g.key)}}selected{{/if}}>{{g.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Лучшее</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+    <label class="wr-label">Доступность (R)</label>
+    <select name="system.availability" class="wr-select-avail">
+      <option value="-5" {{#if (eqLoose system.availability -5)}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eqLoose system.availability -4)}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eqLoose system.availability -3)}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eqLoose system.availability -2)}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eqLoose system.availability -1)}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eqLoose system.availability 0)}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eqLoose system.availability 1)}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eqLoose system.availability 2)}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eqLoose system.availability 3)}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eqLoose system.availability 4)}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eqLoose system.availability 5)}}selected{{/if}}>+5 Уникально</option>
+    </select>
+    <label class="wr-label">Вес</label>
+    <input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.1" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Требование</label>
+    <input type="text" name="system.requirement" value="{{system.requirement}}" class="wr-input-special"
+           placeholder="напр. Винтовка; не пистолет"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Установлено на</label>
+    <select name="system.installedOn" class="wr-select">
+      <option value="" {{#if (eq system.installedOn "")}}selected{{/if}}>— не установлено —</option>
+      {{#each modInstallTargets as |w|}}
+      <option value="{{w.id}}" {{#if (eq @root.system.installedOn w.id)}}selected{{/if}}>{{w.name}}{{#if w.equipped}} ✓{{/if}}</option>
+      {{/each}}
+    </select>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЭФФЕКТЫ (автоматизация)</div>
+  <div class="weapon-row">
+    <label class="wr-label" title="Модификатор к попаданию">Атака</label>
+    <input type="number" name="system.effects.attackMod" value="{{system.effects.attackMod}}" class="wr-input-xs"/>
+    <label class="wr-label">Урон</label>
+    <input type="number" name="system.effects.damageMod" value="{{system.effects.damageMod}}" class="wr-input-xs"/>
+    <label class="wr-label">Пробитие</label>
+    <input type="number" name="system.effects.penMod" value="{{system.effects.penMod}}" class="wr-input-xs"/>
+    <label class="wr-label">Баланс</label>
+    <input type="number" name="system.effects.balanceMod" value="{{system.effects.balanceMod}}" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label" title="Множитель дальности (напр. 0.5)">Дальн. ×</label>
+    <input type="number" name="system.effects.rangeMult" value="{{system.effects.rangeMult}}" step="0.1" class="wr-input-xs"/>
+    <label class="wr-label">Дальн. +</label>
+    <input type="number" name="system.effects.rangeMod" value="{{system.effects.rangeMod}}" class="wr-input-xs"/>
+    <label class="wr-label" title="Множитель магазина">Маг. ×</label>
+    <input type="number" name="system.effects.clipMult" value="{{system.effects.clipMult}}" step="0.1" class="wr-input-xs"/>
+    <label class="wr-label">Маг. +</label>
+    <input type="number" name="system.effects.clipMod" value="{{system.effects.clipMod}}" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label" title="Изменение СКС короткой очереди">RoF корот. +</label>
+    <input type="number" name="system.effects.rofSemiMod" value="{{system.effects.rofSemiMod}}" class="wr-input-xs"/>
+    <label class="wr-label" title="Изменение СКС длинной очереди">RoF длин. +</label>
+    <input type="number" name="system.effects.rofFullMod" value="{{system.effects.rofFullMod}}" class="wr-input-xs"/>
+    <label class="wr-label" title="Изменение Надёжности (+/−)">Надёжн. +</label>
+    <input type="number" name="system.effects.reliabilityMod" value="{{system.effects.reliabilityMod}}" class="wr-input-xs"/>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ДАРУЕМЫЕ СВОЙСТВА</div>
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Добавить</label>
+      <select class="modprop-add">
+        <option value="">＋ свойство…</option>
+        {{#each modAddPropsAvailable as |d|}}
+        <option value="{{d.key}}">{{d.label}} ({{d.en}})</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if modAddPropsActive.length}}
+    <div class="weapon-props-list">
+      {{#each modAddPropsActive as |p|}}
+      <div class="wprop-chip" title="{{p.def.desc}}">
+        <span class="wprop-name">{{p.def.label}}</span>
+        {{#if p.def.rating}}
+        <input type="number" class="modprop-rating" data-key="{{p.key}}" data-field="rating" value="{{p.rating}}" title="Рейтинг X"/>
+        {{/if}}
+        {{#if p.def.rating2}}
+        <span class="wprop-slash">/</span>
+        <input type="number" class="modprop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
+        {{/if}}
+        <button type="button" class="wprop-remove modprop-remove" data-key="{{p.key}}" title="Убрать">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="weapon-props-section" style="margin-top:6px;">
+    <div class="weapon-props-head">
+      <label class="wr-label">Убрать свойство</label>
+      <select class="modrem-add">
+        <option value="">＋ убрать…</option>
+        {{#each modRemovePropsAvailable as |d|}}
+        <option value="{{d.key}}">{{d.label}} ({{d.en}})</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if modRemovePropsActive.length}}
+    <div class="weapon-props-list">
+      {{#each modRemovePropsActive as |p|}}
+      <div class="wprop-chip" title="Это свойство будет убрано у оружия">
+        <span class="wprop-name">− {{p.def.label}}</span>
+        <button type="button" class="wprop-remove modrem-remove" data-key="{{p.key}}" title="Не убирать">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+</div>
+{{/if}}

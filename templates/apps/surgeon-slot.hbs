@@ -1,0 +1,20 @@
+<div class="wh-surg-slot" data-system="{{id}}"> <div class="wh-surg-slot-head"> <span class="wh-surg-slot-icon">{{{icon}}}</span> <span class="wh-surg-slot-name">{{label}}</span> <span class="wh-surg-slot-count">{{count}}</span> </div>
+
+  {{#if installed.length}}
+  <div class="wh-surg-inst-list"> {{#each installed as |imp|}}
+    <div class="wh-surg-inst" style="--imp-col:{{imp.catColor}};"> <span class="wh-surg-inst-dot"></span> <span class="wh-surg-inst-name" data-open="{{imp.id}}" title="Открыть лист импланта">{{imp.name}}</span> {{#if imp.quality}}<span class="wh-surg-inst-q">{{imp.quality}}</span>{{/if}}
+      {{#if ../sideable}}
+      <span class="wh-surg-side"> <button type="button" class="wh-surg-side-btn {{#if (eq imp.side "left")}}is-on{{/if}}" data-item="{{imp.id}}" data-side-btn="left" title="Слева">Л</button> <button type="button" class="wh-surg-side-btn {{#if (eq imp.side "right")}}is-on{{/if}}" data-item="{{imp.id}}" data-side-btn="right" title="Справа">П</button> </span> {{/if}}
+      <button type="button" class="wh-surg-remove" data-remove="{{imp.id}}" title="Извлечь имплант">✕</button> </div> {{/each}}
+  </div> {{else}}
+  <div class="wh-surg-empty">— слот свободен —</div> {{/if}}
+
+  {{#if available.has}}
+  <select class="wh-surg-install" data-install="{{id}}"> <option value="">＋ имплантировать…</option> {{#if available.owned.length}}
+    <optgroup label="Со склада"> {{#each available.owned as |a|}}<option value="own:{{a.id}}">{{a.name}}</option>{{/each}}
+    </optgroup> {{/if}}
+    {{#each available.groups as |grp|}}
+    <optgroup label="{{grp.label}}"> {{#each grp.items as |a|}}<option value="lib:{{a.uuid}}">{{a.name}}</option>{{/each}}
+    </optgroup> {{/each}}
+  </select> {{/if}}
+</div>

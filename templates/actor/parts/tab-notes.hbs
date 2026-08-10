@@ -1,0 +1,124 @@
+<div class="tab notes-cog" data-tab="notes" data-group="primary">
+
+  {{!-- Телосложение задаёт набор PNG-масок фигуры на вкладке «ТЕЛО». --}}
+  <div class="notes-section-panel body-type-panel">
+    <div class="panel-title">ТЕЛОСЛОЖЕНИЕ</div>
+    <div class="body-type-grid">
+      {{#each bodyTypes as |b|}}
+      <label class="body-type-opt {{#if b.selected}}sel{{/if}}">
+        <input type="radio" name="system.bodyType" value="{{b.key}}" {{#if b.selected}}checked{{/if}}/>
+        <span class="body-type-name">{{b.label}}</span>
+      </label>
+      {{/each}}
+    </div>
+    <div class="body-type-note">Определяет силуэт на вкладке «ТЕЛО» и в Хирургиконе. «Другое» использует
+      нейтральный набор — отдельной графики под него нет.</div>
+  </div>
+  {{#if showPatronPicker}}
+  <div class="notes-section-panel chaos-patron-panel">
+    <div class="panel-title">ПОКРОВИТЕЛЬ ХАОСА</div>
+    <div class="chaos-patron-grid">
+      {{#each chaosPatrons as |p|}}
+      <label class="chaos-patron-opt {{#if p.selected}}sel{{/if}}" title="{{p.label}}" style="--pg:{{p.color}};--pgs:{{p.gc2}};--pgl:{{p.glow}}">
+        <input type="radio" name="system.patronGod" value="{{p.key}}" {{#if p.selected}}checked{{/if}}/>
+        <span class="chaos-patron-sigil" style="-webkit-mask:url('{{p.sigil}}') center/contain no-repeat;mask:url('{{p.sigil}}') center/contain no-repeat"></span>
+        <span class="chaos-patron-name">{{p.label}}</span>
+        <span class="chaos-patron-favor">
+          <span class="chaos-patron-favor-val" title="Благосклонность — {{p.label}}">{{p.favor}}</span>
+          <button type="button" class="stat-add-btn patron-favor-add" data-stat="patronFavor" data-god="{{p.key}}" title="Добавить Благосклонность — {{p.label}}">＋</button>
+        </span>
+      </label>
+      {{/each}}
+    </div>
+    <div class="chaos-patron-note">Выбор Бога окрашивает лист и определяет преимущество/недостаток Очков Бесчестия (корбук 438).</div>
+  </div>
+  {{/if}}
+  {{#if isAstartes}}
+  <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">ПРОИСХОЖДЕНИЕ И ЛЕГИОН (АСТАРТЕС)</div>
+    <div class="origin-grid">
+      <div class="origin-row"> <label class="origin-label">Легион (геносемя)</label> <select name="system.geneSeed.legion" class="origin-select">{{{legionOptions}}}</select> </div>
+      <div class="origin-row"> <label class="origin-label">Орден / Банда</label> <select name="system.geneSeed.chapter" class="origin-select">{{{chapterOptions}}}</select> </div>
+      <div class="origin-row"> <label class="origin-label" title="Геносемя ты сохраняешь, а культуру можно перенять у другого легиона (напр. Повелитель Ночи в Чёрном Легионе). �.">Культура (легион)</label> <select name="system.geneSeed.cultureLegion" class="origin-select">{{{cultureLegionOptions}}}</select> </div>
+      {{#if hasCultureOverride}}<div class="origin-row"> <label class="origin-label">Культура (орден)</label> <select name="system.geneSeed.cultureChapter" class="origin-select">{{{cultureChapterOptions}}}</select> </div>{{/if}}
+      {{#if selectedLegion}}<div class="origin-row"> <button type="button" class="legion-apply-btn" title="Создать Черты «Геносемя/Культура/Проклятье» легиона (с авто-эффектами, где есть числовые бонусы)">Применить легион/орден</button> </div>{{/if}}
+      {{#if selectedLegion}}
+      <div class="origin-info legion-info">
+        <div class="legion-info-title">{{selectedLegion.num}} — {{selectedLegion.name}}{{#if selectedChapter}} · {{selectedChapter.name}}{{/if}}</div>
+        {{#if selectedChapter}}
+        <div class="legion-block"><span class="legion-block-key">Геносемя:</span> {{selectedChapter.geneseed}}</div>
+        {{#if resolvedCulture}}<div class="legion-block"><span class="legion-block-key">Культура ({{resolvedCulture.name}}):</span> {{resolvedCulture.culture}}</div>{{else}}<div class="legion-block"><span class="legion-block-key">Культура:</span> {{selectedChapter.culture}}</div>{{/if}}
+        <div class="legion-block legion-curse"><span class="legion-block-key">Проклятье:</span> {{selectedChapter.curse}}</div>
+        <div class="legion-block legion-parent"><span class="legion-block-key">Легион-основатель ({{selectedLegion.name}}):</span> Геносемя — {{selectedLegion.geneseed}} Культура — {{selectedLegion.culture}} Проклятье — {{selectedLegion.curse}}</div>
+        {{else}}
+        <div class="legion-block"><span class="legion-block-key">Геносемя:</span> {{selectedLegion.geneseed}}</div>
+        {{#if resolvedCulture}}<div class="legion-block"><span class="legion-block-key">Культура ({{resolvedCulture.name}}):</span> {{resolvedCulture.culture}}</div>{{else}}<div class="legion-block"><span class="legion-block-key">Культура:</span> {{selectedLegion.culture}}</div>{{/if}}
+        <div class="legion-block legion-curse"><span class="legion-block-key">Проклятье:</span> {{selectedLegion.curse}}</div>
+        {{/if}}
+      </div>
+      {{/if}}
+    </div>
+    <div class="gene-seed-hint">Выберите Легион — его мутации Геносемени, Культура и Проклятье показываются как справка (применяйте эффекты вручную/через Черты). Орден/Банда могут отличаться от легиона геносемени. Числовые бонусы расы применяются кнопкой «Применить расовые бонусы» на вкладке СПОСОБНОСТИ.</div>
+  </div> {{/if}}
+  {{#if showWorldOrigin}}
+  <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">ПРОИСХОЖДЕНИЕ (АЭЛЬДАРИ)</div>
+    <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Мир-Корабль</label> <select name="system.world" class="origin-select">{{{worldOptions}}}</select> </div>
+      {{#if selectedWorld}}<div class="origin-info"> <div class="origin-chars">{{selectedWorld.chars}}</div> <div class="origin-special">{{selectedWorld.special}}</div> </div>{{/if}}
+      <div class="origin-row"> <label class="origin-label">Корсарская Банда</label> <select name="system.band" class="origin-select">{{{bandOptions}}}</select> </div>
+      {{#if selectedBand}}<div class="origin-info"> <div class="origin-chars">{{selectedBand.chars}}</div> <div class="origin-special">{{selectedBand.special}}</div> </div>{{/if}}
+    </div>
+    <div class="gene-seed-hint">Модификаторы характеристик применяются в Базу при создании персонажа (вручную). Особенность — справка для отыгрыша.</div>
+  </div> {{/if}}
+  {{#if isDrukhari}}
+  <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">ПРОИСХОЖДЕНИЕ (ДРУКХАРИ)</div>
+    <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Кабал / Культ / Ковен</label> <select name="system.drukhariFaction" class="origin-select">{{{drukhariFactionOptions}}}</select> </div>
+      {{#if selectedDrukhariFaction}}<div class="origin-info"> <div class="origin-chars">{{selectedDrukhariFaction.chars}}</div> <div class="origin-special">{{selectedDrukhariFaction.special}}</div> </div>{{/if}}
+      <div class="origin-row"> <label class="origin-label">Район Комморага</label> <select name="system.drukhariDistrict" class="origin-select">{{{drukhariDistrictOptions}}}</select> </div>
+      {{#if selectedDrukhariDistrict}}<div class="origin-info"> <div class="origin-chars">{{selectedDrukhariDistrict.chars}}</div> <div class="origin-special">{{selectedDrukhariDistrict.special}}</div> </div>{{/if}}
+    </div>
+    <div class="gene-seed-hint">Выберите ОДНО из: Кабал, Культ Ведьм или Ковен Гемункулов — и отдельно Район Комморага (берётся вместе с фракцией). Модификаторы характеристик применяются в Базу при создании (вручную); особенность — справка.</div>
+  </div> {{/if}}
+  {{#if isHarlequin}}
+  <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">МАСКА (АРЛЕКИН)</div>
+    <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Маска (труппа)</label> <select name="system.harlequinMasque" class="origin-select">{{{masqueOptions}}}</select> </div>
+      {{#if selectedMasque}}<div class="origin-info"> <div class="origin-chars">{{selectedMasque.chars}}</div> <div class="origin-special">{{selectedMasque.special}}</div> </div>{{/if}}
+    </div>
+    <div class="gene-seed-hint">Маска (труппа) определяет бонусы характеристик и особый эффект. Бонусы характеристик применяются в Базу вручную при создании; особенность — справка. Это не то же, что Мириада Масок (Света/Сумерек/Ночи) из Черты «Myriad Masks».</div>
+  </div> {{/if}}
+
+  <div class="notes-section-panel"> <div class="panel-title">БИОГРАФИЯ</div> <div class="bio-grid"> <label>Пол<input type="text" name="system.bio.gender" value="{{system.bio.gender}}"/></label> <label>Возраст<input type="number" name="system.bio.age" value="{{system.bio.age}}"/></label> <label>Рост<input type="text" name="system.bio.height" value="{{system.bio.height}}"/></label> <label>Сложение<input type="text" name="system.bio.build" value="{{system.bio.build}}"/></label> <label>Волосы<input type="text" name="system.bio.hair" value="{{system.bio.hair}}"/></label> </div> </div> <div class="notes-section-panel"> <div class="panel-title">СТРЕМЛЕНИЯ <span class="aspir-hint">// по одному из Гордости, Позора и Мотивации — видны также в шапке листа</span> </div>
+    <table class="items-table aspir-table"> <tbody>
+      {{#each aspirationSlots as |a|}}
+      <tr class="aspir-row" data-index="{{a.idx}}">
+        <td class="aspir-label-cell">{{a.label}}</td>
+        <td class="aspir-sel-cell">
+          {{#if a.custom}}
+          <div class="aspir-custom"><input type="text" class="aspir-custom-name" data-index="{{a.idx}}" value="{{a.name}}" placeholder="Своё стремление"/><input type="text" class="aspir-custom-mods" data-index="{{a.idx}}" value="{{a.mods}}" placeholder="Модификаторы (+5 F, −5 W…)"/></div>
+          {{else}}
+          <select class="aspir-select" data-index="{{a.idx}}"> <option value="">— выбрать —</option>
+            {{#each a.options as |e|}}<option value="{{e.id}}" {{#if (eq e.id a.id)}}selected{{/if}}>{{e.name}} ({{e.mods}})</option>{{/each}}
+            <option value="__custom__" {{#if a.custom}}selected{{/if}}>Своё…</option>
+          </select>
+          {{/if}}
+        </td>
+        <td class="aspir-mods-cell">{{a.mods}}</td>
+        <td class="aspir-del-cell"><button type="button" class="aspir-remove" data-index="{{a.idx}}" title="Очистить">✕</button></td>
+      </tr>
+      {{/each}}
+    </tbody> </table>
+    <div class="gene-seed-hint" style="padding:3px 4px 0;">Модификаторы — справка (к Базе вручную; часто «или»/«по выбору»). «Своё…» — свой вариант.</div>
+  </div><div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <textarea name="system.notes" class="notes-textarea" placeholder="Записи...">{{system.notes}}</textarea> </div>
+  <div class="notes-section-panel"> <div class="panel-title">СТАТУС</div>
+    <div class="status-checks">
+      <label class="checkbox-label"> <input type="checkbox" name="system.isPsyker" {{#if system.isPsyker}}checked{{/if}}/> <span>Пси-Пробуждение</span> </label>
+      <label class="checkbox-label"> <input type="checkbox" name="system.craftAvailable" {{#if system.craftAvailable}}checked{{/if}}/> <span>Доступен для крафта</span> </label>
+      {{#unless isAeldari}}
+      <label class="checkbox-label"> <input type="checkbox" name="system.isTechpriest" {{#if system.isTechpriest}}checked{{/if}}/> <span>Техножрец</span> </label>
+      <label class="checkbox-label"> <input type="checkbox" name="system.isRogueTrader" {{#if system.isRogueTrader}}checked{{/if}}/> <span>Вольный торговец</span> </label>
+      {{/unless}}
+      {{#if isHeretic}}
+      <label class="checkbox-label checkbox-possessed" title="Двойной Дух: в теле еретика живёт низший демон. Открывает вкладку ОДЕРЖИМОСТЬ."> <input type="checkbox" name="system.possessed" {{#if system.possessed}}checked{{/if}}/> <span>Одержимый</span> </label>
+      {{/if}}
+    </div>
+    {{#if isHeretic}}<div class="gene-seed-hint">«Одержимый» — архетип Двойного Духа (Cor→демоническая сила): открывает вкладку ОДЕРЖИМОСТЬ рядом с ТЕЛО.</div>{{/if}}
+    {{#unless isAeldari}}<div class="gene-seed-hint">«Вольный торговец» добавляет характеристику «Фактор Прибыли» (под Влиянием на вкладке ПОКАЗАТЕЛИ).</div>{{/unless}}
+  </div> </div>{{!-- /tab notes --}}

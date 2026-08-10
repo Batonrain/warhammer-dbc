@@ -1,0 +1,181 @@
+{{!-- Снаряжение --}}
+{{#if (eq item.type "gear")}}
+<div class="item-section">
+  <div class="item-section-title">СТАТЫ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Категория</label>
+    <select name="system.gearCategory" class="wr-select-sm">
+      {{#each gearCategories as |lbl key|}}
+      <option value="{{key}}" {{#if (eq ../system.gearCategory key)}}selected{{/if}}>{{lbl}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Носится</label>
+    <input type="text" name="system.worn" value="{{system.worn}}" class="wr-input-md" placeholder="напр. Спина / Голова (И,П)"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Кол-во</label>
+    <input type="number" name="system.quantity" value="{{system.quantity}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label">Вес/ед.</label>
+    <input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.1" class="wr-input-xs"/>
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Высшее</option>
+    </select>
+    <label class="wr-label">Доступность</label>
+    <select class="wr-select-avail availability-select">
+      <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+    </select>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЭФФЕКТ</div>
+  <textarea name="system.effect" rows="3" class="item-textarea" placeholder="Механическая сводка эффекта">{{system.effect}}</textarea>
+</div>
+
+{{!-- Разгрузка --}}
+<div class="item-section">
+  <div class="weapon-row">
+    <label class="wr-label"><input type="checkbox" name="system.isRig" {{#if system.isRig}}checked{{/if}}/> Разгрузка</label>
+    <label class="wr-label">Удобство</label>
+    <select name="system.rig.comfort" class="wr-select-sm">
+      {{#each rigComfort as |lbl key|}}
+      <option value="{{key}}" {{#if (eq ../system.rig.comfort key)}}selected{{/if}}>{{lbl}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label"><input type="checkbox" name="system.rig.backSlot" {{#if system.rig.backSlot}}checked{{/if}}/> Занимает спину</label>
+    <label class="wr-label">Свой размер</label>
+    <input type="text" name="system.itemSize" value="{{system.itemSize}}" class="wr-input-xs" placeholder="напр. 4x3"/>
+  </div>
+  {{#if system.rig.slots.length}}
+  <div class="wprop-hint">Слоты: {{#each system.rig.slots}}<span class="roll-wprop">{{this.size}}×{{this.count}}{{#if this.note}} ({{this.note}}){{/if}}</span> {{/each}}</div>
+  {{/if}}
+  {{#if system.rig.magLocks.length}}
+  <div class="wprop-hint">Магнитные замки: {{#each system.rig.magLocks}}<span class="roll-wprop">{{this.size}}×{{this.count}}{{#if this.note}} ({{this.note}}){{/if}}</span> {{/each}}</div>
+  {{/if}}
+</div>
+
+{{!-- Эффекты качества --}}
+<div class="item-section">
+  <div class="item-section-title">КАЧЕСТВО ПРЕДМЕТА</div>
+  {{#if qualityReminders.length}}
+  <div class="wprop-hint">Типовой эффект ({{qualityInfo.abbr}}): {{#each qualityReminders}}<span class="roll-wprop">{{this}}</span> {{/each}}</div>
+  {{/if}}
+  <div class="weapon-row"><label class="wr-label">Poor.Q</label>
+    <textarea name="system.qualityEffects.poor" rows="2" class="item-textarea">{{system.qualityEffects.poor}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Good.Q</label>
+    <textarea name="system.qualityEffects.good" rows="2" class="item-textarea">{{system.qualityEffects.good}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Best.Q</label>
+    <textarea name="system.qualityEffects.best" rows="2" class="item-textarea">{{system.qualityEffects.best}}</textarea></div>
+</div>
+{{/if}}
+
+{{!-- Инструменты --}}
+{{#if (eq item.type "tool")}}
+<div class="item-section">
+  <div class="item-section-title">СТАТЫ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Категория</label>
+    <select name="system.toolCategory" class="wr-select-sm">
+      {{#each toolCategories as |lbl key|}}
+      <option value="{{key}}" {{#if (eq ../system.toolCategory key)}}selected{{/if}}>{{lbl}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Кол-во</label>
+    <input type="number" name="system.quantity" value="{{system.quantity}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label">Вес</label>
+    <input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.1" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Высшее</option>
+    </select>
+    <label class="wr-label">Доступность</label>
+    <select class="wr-select-avail availability-select">
+      <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+    </select>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЭФФЕКТ</div>
+  <textarea name="system.effect" rows="3" class="item-textarea" placeholder="Механическая сводка эффекта">{{system.effect}}</textarea>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">КАЧЕСТВО ПРЕДМЕТА</div>
+  {{#if qualityReminders.length}}
+  <div class="wprop-hint">Типовой эффект ({{qualityInfo.abbr}}): {{#each qualityReminders}}<span class="roll-wprop">{{this}}</span> {{/each}}</div>
+  {{/if}}
+  <div class="weapon-row"><label class="wr-label">Poor.Q</label>
+    <textarea name="system.qualityEffects.poor" rows="2" class="item-textarea">{{system.qualityEffects.poor}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Good.Q</label>
+    <textarea name="system.qualityEffects.good" rows="2" class="item-textarea">{{system.qualityEffects.good}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Best.Q</label>
+    <textarea name="system.qualityEffects.best" rows="2" class="item-textarea">{{system.qualityEffects.best}}</textarea></div>
+</div>
+{{/if}}
+
+{{!-- Кибернетика --}}
+{{#if (eq item.type "cybernetic")}}
+<div class="item-section">
+  <div class="item-section-title">СТАТЫ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Установлено</label>
+    <input type="text" name="system.installed" value="{{system.installed}}" class="wr-input-md"/>
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Лучшее</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Доступность</label>
+    <select class="wr-select-avail availability-select">
+      <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+    </select>
+    <label class="wr-label">Вес</label>
+    <input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.1" class="wr-input-xs"/>
+  </div>
+</div>
+{{/if}}

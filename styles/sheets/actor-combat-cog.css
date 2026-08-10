@@ -1,0 +1,132 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка БОЙ в стиле когитатора (терминал).
+   Фосфорная зелень системы + сворачиваемые Стойки/Приёмы.
+   Scoped .combat-cog — переопределяет базовые combat-стили.
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .combat-cog {
+  --cg: #4dffa6; --cg-dim: #2f9e6a; --cg-line: #1f6f4a;
+  --cg-fire: #ffb84d; --cg-red: #ff6b6b;
+  position: relative; font-family: "Consolas","Lucida Console","Courier New",monospace;
+}
+/* лёгкие CRT-строки */
+.warhammer-dbc .combat-cog::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5; opacity: 0.5;
+  background: repeating-linear-gradient(0deg, rgba(77,255,166,0.035) 0 1px, transparent 1px 3px);
+}
+
+/* ── Панели-терминалы ───────────────────────────────────── */
+.warhammer-dbc .combat-cog .stat-panel,
+.warhammer-dbc .combat-cog .combat-section-panel {
+  position: relative; background: linear-gradient(180deg, #0a1c12, #06120c) !important;
+  border: 1px solid var(--cg-line) !important; border-radius: 4px;
+  box-shadow: inset 0 0 22px rgba(0,50,25,0.45), 0 0 14px -9px var(--cg);
+}
+/* угловые скобки-рамки */
+.warhammer-dbc .combat-cog .combat-section-panel::before,
+.warhammer-dbc .combat-cog .combat-section-panel::after {
+  content: ""; position: absolute; width: 9px; height: 9px; pointer-events: none; opacity: 0.7;
+  border-color: var(--cg-dim); border-style: solid;
+}
+.warhammer-dbc .combat-cog .combat-section-panel::before { top: 3px; left: 3px; border-width: 1px 0 0 1px; }
+.warhammer-dbc .combat-cog .combat-section-panel::after  { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
+
+.warhammer-dbc .combat-cog .panel-title {
+  font-family: inherit; letter-spacing: 0.13em; text-transform: uppercase;
+  color: #b6ffd8; text-shadow: 0 0 6px rgba(77,255,166,0.6);
+  border-bottom: 1px solid rgba(77,255,166,0.28);
+  background: linear-gradient(180deg, rgba(77,255,166,0.09), transparent);
+}
+.warhammer-dbc .combat-cog .panel-title::first-letter { color: var(--cg); }
+
+/* значения-показания (Раны/Движение/Поглощение) — фосфор */
+.warhammer-dbc .combat-cog .movement-val,
+.warhammer-dbc .combat-cog .armor-absorption-total,
+.warhammer-dbc .combat-cog .initiative-base { color: var(--cg); text-shadow: 0 0 7px rgba(77,255,166,0.45); }
+.warhammer-dbc .combat-cog .armor-ap-gear { color: #9fe0c0; }
+.warhammer-dbc .combat-cog .armor-tb-val { color: var(--cg-fire); }
+.warhammer-dbc .combat-cog input[type="number"],
+.warhammer-dbc .combat-cog input[type="text"] {
+  background: #08160e; border: 1px solid var(--cg-line); color: #d8ffe8;
+  font-family: inherit; text-shadow: 0 0 4px rgba(77,255,166,0.35);
+}
+.warhammer-dbc .combat-cog input:focus { outline: none; border-color: var(--cg); box-shadow: 0 0 7px -1px var(--cg); }
+
+/* ── Сворачиваемые Стойки/Приёмы ────────────────────────── */
+.warhammer-dbc .combat-cog .combat-collapse-head { display: flex; align-items: center; gap: 7px; cursor: pointer; user-select: none; transition: background 0.13s; }
+.warhammer-dbc .combat-cog .combat-collapse-head:hover { background: linear-gradient(180deg, rgba(77,255,166,0.16), transparent); }
+.warhammer-dbc .combat-cog .cc-caret { display: inline-block; font-size: 0.8em; color: var(--cg); transition: transform 0.16s; text-shadow: 0 0 6px var(--cg); }
+.warhammer-dbc .combat-cog .combat-collapsible.collapsed .cc-caret { transform: rotate(-90deg); }
+.warhammer-dbc .combat-cog .combat-collapsible.collapsed .combat-collapse-body { display: none; }
+.warhammer-dbc .combat-cog .cc-badge {
+  margin-left: auto; font-size: 0.78em; letter-spacing: 0.02em; text-transform: none;
+  color: #05120c; background: var(--cg-fire); padding: 1px 9px; border-radius: 9px; font-weight: 700;
+  text-shadow: none; box-shadow: 0 0 8px -1px var(--cg-fire);
+}
+
+/* стойки — терминальные карточки */
+.warhammer-dbc .combat-cog .stance-label {
+  border: 1px solid var(--cg-line) !important; background: rgba(6,24,14,0.55) !important; border-radius: 3px; transition: all 0.13s;
+}
+.warhammer-dbc .combat-cog .stance-label:hover { border-color: var(--cg-dim) !important; box-shadow: inset 0 0 14px rgba(77,255,166,0.1); }
+.warhammer-dbc .combat-cog .stance-label.stance-active {
+  border-color: var(--cg) !important; background: rgba(77,255,166,0.08) !important;
+  box-shadow: 0 0 12px -3px var(--cg), inset 0 0 14px rgba(77,255,166,0.12);
+}
+.warhammer-dbc .combat-cog .stance-name { color: #daffe8; text-shadow: 0 0 5px rgba(77,255,166,0.45); }
+.warhammer-dbc .combat-cog .stance-active .stance-name { color: var(--cg); }
+.warhammer-dbc .combat-cog .stance-desc { color: #86c4a4; }
+.warhammer-dbc .combat-cog .stance-radio { accent-color: var(--cg); }
+
+/* приёмы — терминальные клавиши */
+.warhammer-dbc .combat-cog .technique-btn {
+  background: linear-gradient(180deg, #0c2418, #071510) !important; border: 1px solid var(--cg-line) !important;
+  color: #c8ffe4 !important; font-family: inherit; border-radius: 3px; transition: all 0.12s;
+}
+.warhammer-dbc .combat-cog .technique-btn:hover { border-color: var(--cg) !important; box-shadow: 0 0 12px -4px var(--cg); color: #eafff4 !important; transform: translateY(-1px); }
+.warhammer-dbc .combat-cog .technique-btn:active { background: rgba(77,255,166,0.14) !important; transform: none; }
+.warhammer-dbc .combat-cog .tech-name { text-shadow: 0 0 4px rgba(77,255,166,0.4); }
+.warhammer-dbc .combat-cog .tech-action { color: #7fbf9c; }
+.warhammer-dbc .combat-cog .tech-mod { color: var(--cg-fire); text-shadow: 0 0 5px rgba(255,184,77,0.4); }
+
+/* ── Таблицы оружия / карточки ──────────────────────────── */
+.warhammer-dbc .combat-cog .combat-weapons-table thead th,
+.warhammer-dbc .combat-cog .psy-powers-table thead th {
+  color: #8fe0b4; letter-spacing: 0.04em; border-bottom: 1px solid rgba(77,255,166,0.28) !important;
+  background: linear-gradient(180deg, rgba(77,255,166,0.08), transparent);
+}
+.warhammer-dbc .combat-cog .combat-weapons-table tbody .item-row { transition: background 0.13s, box-shadow 0.13s; }
+.warhammer-dbc .combat-cog .combat-weapons-table tbody .item-row:hover,
+.warhammer-dbc .combat-cog .ranged-weapon-card:hover {
+  background: rgba(77,255,166,0.06) !important; box-shadow: inset 3px 0 0 var(--cg);
+}
+.warhammer-dbc .combat-cog .item-name-cell,
+.warhammer-dbc .combat-cog .rwc-name { color: #daffe8; }
+.warhammer-dbc .combat-cog .combat-special-cell { color: var(--cg-fire); }
+.warhammer-dbc .combat-cog .ranged-weapon-card {
+  background: rgba(8,22,14,0.6) !important; border: 1px solid var(--cg-line) !important; border-radius: 4px; transition: all 0.13s;
+}
+.warhammer-dbc .combat-cog .rwc-threshold-badge,
+.warhammer-dbc .combat-cog .combat-weapons-table b { color: var(--cg); text-shadow: 0 0 6px rgba(77,255,166,0.4); }
+
+/* атака / перезарядка — акцентные терминальные кнопки */
+.warhammer-dbc .combat-cog .combat-atk-btn,
+.warhammer-dbc .combat-cog .rwc-atk-btn {
+  font-family: inherit; font-weight: 700; letter-spacing: 0.03em; border-radius: 3px; transition: all 0.13s;
+  color: #150a00; background: linear-gradient(180deg, #ffcf6e, var(--cg-fire));
+  border: 1px solid var(--cg-fire); text-shadow: none; box-shadow: 0 0 10px -3px var(--cg-fire);
+}
+.warhammer-dbc .combat-cog .combat-atk-btn:hover,
+.warhammer-dbc .combat-cog .rwc-atk-btn:hover:not(:disabled) { box-shadow: 0 0 15px -2px var(--cg-fire); transform: translateY(-1px); }
+.warhammer-dbc .combat-cog .rwc-atk-btn:disabled { opacity: 0.4; }
+.warhammer-dbc .combat-cog .weapon-reload-btn,
+.warhammer-dbc .combat-cog .wounds-heal-btn {
+  font-family: inherit; color: #c8ffe4; background: #0c2418; border: 1px solid var(--cg-line); border-radius: 3px; transition: all 0.13s;
+}
+.warhammer-dbc .combat-cog .weapon-reload-btn:hover,
+.warhammer-dbc .combat-cog .wounds-heal-btn:hover { border-color: var(--cg); box-shadow: 0 0 10px -3px var(--cg); }
+.warhammer-dbc .combat-cog .rwc-mag-cur { color: var(--cg); }
+.warhammer-dbc .combat-cog .rwc-mag-empty .rwc-mag-cur { color: var(--cg-red); text-shadow: 0 0 6px var(--cg-red); }
+
+/* добавление силы/приёма и + кнопки в таблицах остаются функциональны */
+.warhammer-dbc .combat-cog .items-empty td { color: #6f9a84; font-style: italic; }

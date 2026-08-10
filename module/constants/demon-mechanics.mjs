@@ -1,0 +1,108 @@
+// module/constants/demon-mechanics.mjs
+// ════════════════════════════════════════════════════════════════════════
+//  Механики демонов (Книга Хаоса). Соединяет с уже существующими системами:
+//  боги/сигилы — из веили ([[veil-mysticism]]), Формы призыва — из [[rituals]].
+//  Здесь: пантеон демона (сигил+цвет+божественный трейт), ранги + формулы
+//  Бесчестия, формы манифестации, особые свойства демонического оружия,
+//  и справочник ключевых демонических Трейтов.
+// ════════════════════════════════════════════════════════════════════════
+
+import { WARP_GODS_MAP } from "./veil.mjs";
+
+const ASSET = (n) => `systems/warhammer-dbc/assets/${n}.png`;
+
+// Пантеон демона: мета (цвет/сигил) из WARP_GODS + божественный Трейт.
+export const DEMON_ALLEGIANCES = [
+  { key: "undivided", label: "Неделимый", divineTrait: "",
+    note: "Демоны Неделимого не имеют узкого божественного Трейта, но универсальны." },
+  { key: "khorne", label: "Кхорн", divineTrait: "Blood for the Blood God",
+    note: "Кровь Богу Крови: убив живого или изгнав демона — +2 к рукопашному урону (склад. до +8) до конца боя; кровь/трупы — не трудный ландшафт." },
+  { key: "nurgle", label: "Нургл", divineTrait: "Mockery of Life",
+    note: "Насмешка Над Жизнью: раз в Раунд при падении ниже 0 Ран — тест Т+10, при Успехе остаться с 0 Ран (не против свящ. оружия/Нестабильности). Иммунитет ко всем ядам." },
+  { key: "tzeentch", label: "Тзинч", divineTrait: "Sorcerous Barrier",
+    note: "Чародейский Барьер: не перегружающийся колдовской щит-купол 1-35, вкл/выкл свободным действием." },
+  { key: "slaanesh", label: "Слаанеш", divineTrait: "Alluring Presence",
+    note: "Чарующее Присутствие: все враги −10 на Избегания против атак демона." }
+];
+export const DEMON_ALLEGIANCES_MAP = Object.fromEntries(DEMON_ALLEGIANCES.map(a => [a.key, a]));
+
+// Вторичный цвет и сдвиг тона темы по Богу (совпадают с листом Демон-Принца,
+// чтобы лист демона красился так же цельно — зелёный терминал → цвет Бога).
+const DEMON_GC2 = { undivided: "#5c2d91", khorne: "#8a5a1e", nurgle: "#4a5a20", tzeentch: "#7a4bd6", slaanesh: "#42c7c4" };
+const DEMON_HUE = { undivided: "113deg", khorne: "200deg", nurgle: "-74deg", tzeentch: "51deg", slaanesh: "155deg" };
+
+export function allegianceMeta(key) {
+  const k = DEMON_ALLEGIANCES_MAP[key] ? key : "undivided";
+  const a = DEMON_ALLEGIANCES_MAP[k];
+  const g = WARP_GODS_MAP[k];
+  return {
+    ...a, key: k,
+    color: g?.color || "#b477ff",
+    glow:  g?.glow  || "rgba(180,119,255,0.9)",
+    gc2:   DEMON_GC2[k] || "#5c2d91",
+    hue:   DEMON_HUE[k] || "113deg",
+    sigil: ASSET(g?.sigil || "Chaos")
+  };
+}
+
+// Ранги демонов + формулы генерации Бесчестия (Inf).
+export const DEMON_RANKS = [
+  { key: "minor",       label: "Мелкий демон",           infamy: "0",       infamyRange: "0",
+    note: "Ничтожнейшие; без демонического бессмертия. Обычно как Орда." },
+  { key: "lesserNoPatron", label: "Низший без патрона",  infamy: "2d5+1",   infamyRange: "3–11",
+    note: "Фурии и прочие низшие демоны без покровителя, демонические твари." },
+  { key: "lesser",      label: "Низший демон Богов",     infamy: "3d10+5",  infamyRange: "8–35",
+    note: "Демонетки, Чумоносы, Кровопускатели, Ужасы." },
+  { key: "beast",       label: "Низший демонический зверь", infamy: "2d10+2", infamyRange: "4–22",
+    note: "Скакуны, Трутни, Гончие Плоти, Крикуны." },
+  { key: "exalted",     label: "Возвышенный демон",      infamy: "4d10+15", infamyRange: "19–55",
+    note: "Отмеченные вниманием Бога; возглавляют отряды. 10% шанс при призыве низшего." },
+  { key: "greaterBeast",label: "Высший демонический зверь", infamy: "4d10+5", infamyRange: "9–45",
+    note: "Изверги, Твари Нургла, Джаггернауты, Огневики." },
+  { key: "herald",      label: "Демонический герольд",   infamy: "6d10+35", infamyRange: "41–95",
+    note: "Полевые командиры легионов; почти полноценные личности." },
+  { key: "greater",     label: "Высший демон",           infamy: "7d10+35", infamyRange: "42–105",
+    note: "Воплощают мощь Бога, повелевают легионами." },
+  { key: "prince",      label: "Демон-Принц",            infamy: "11d10",   infamyRange: "11–110",
+    note: "Возвысившиеся смертные; собираются как ИП через Возвышение." },
+  { key: "lord",        label: "Лорд Демонов",           infamy: "",        infamyRange: "—",
+    note: "Заседают в советах Бога; почти никогда не покидают Варп." }
+];
+export const DEMON_RANKS_MAP = Object.fromEntries(DEMON_RANKS.map(r => [r.key, r]));
+
+// Формы манифестации (длительность до дестабилизации; +1 уровень Завесы — на ступень дольше).
+export const DEMON_FORMS = [
+  { key: "trueForm", label: "Истинная Форма", dur: "1d10+2×W.b−Inf.b (мин. 2) Раундов",
+    note: "Нестабильна; чародейский сквозной щит 1-10. Ступени: Раунды>Минуты>Часы>Дни>Месяцы>∞." },
+  { key: "vessel",   label: "Вселение (труп)", dur: "1d5+2×W.b−Inf.b (мин. 2) Дней",
+    note: "Начинает с Ранами трупа; поглощает трупы касанием для лечения. Плоть разрушается со временем." },
+  { key: "host",     label: "Хост (живой)",   dur: "долговременно",
+    note: "Требует атаки Одержимости. Если W демона < W хоста — выброс через 1d10+2×W.b−Inf.b Раундов (Incorporeal 10−W.b мин)." }
+];
+export const DEMON_FORMS_MAP = Object.fromEntries(DEMON_FORMS.map(f => [f.key, f]));
+
+// Особые свойства демонического оружия (справочник — рейтинг X в скобках).
+export const DEMON_WEAPON_PROPS = [
+  { key: "dreaming",  label: "Dreaming (X) / Сновидение", god: "slaanesh",
+    text: "При пробитии брони — тест W−10×X или Ступор (сон желаний); в конце Хода повтор теста для выхода." },
+  { key: "bane",      label: "Bane (X) / Погибель", god: "nurgle",
+    text: "При пробитии брони — тест Т−10×X или Провалы непоглощаемого C-урона (даже иммунным к ядам). Техника: X непоглощаемого урона." },
+  { key: "challenge", label: "Challenge (X) / Вызов", god: "khorne",
+    text: "При попадании/парировании — тест W−10×X или до конца следующего Хода нельзя выйти из рукопашной (кроме уклонения от атаки по площади)." },
+  { key: "change",    label: "Change (X) / Перемены", god: "tzeentch",
+    text: "+X Pen против бездушных/техники; −X AP Укрытий до поглощения. ГМ меняет Крит-эффекты на сравнимые (трансмутации)." }
+];
+
+// Ключевые демонические Трейты (справочник для листа/бестиария).
+export const DEMON_KEY_TRAITS = [
+  { key: "daemonic",     label: "Daemonic (X)",       text: "×X к T.b в Поглощении. Против экзотического незнакомого оружия ГМ может утроить бонус (Концептуальный Урон)." },
+  { key: "warpInstab",   label: "Warp Instability",   text: "При отрицательном Истончении — тесты Нестабильности при любом действии; иначе — при уроне. Провал → урон/изгнание." },
+  { key: "fromBeyond",   label: "From Beyond",        text: "Не дышит, не ест, не спит; иммунен к ядам/болезням/удушью/вакууму (если нет обратного)." },
+  { key: "stuffOfNight", label: "Stuff of Nightmares", text: "Иммунитет к Страху/Запугиванию/Оглушению/Крит-эффектам разума; не Оглушается/Обездвиживается обычным." },
+  { key: "warpSight",    label: "Warp Sight",         text: "Видит в Варпе и сквозь Завесу; засекает души и психическую активность." },
+  { key: "incorporeal",  label: "Incorporeal",        text: "Бесплотен: игнорирует обычную материю/броню; поражается только силовым/варп/психическим." },
+  { key: "possession",   label: "Possession",         text: "Может проводить Атаку Одержимости для вселения в живой хост." }
+];
+
+// Формула длительности изгнания текущей формы (для показа на листе).
+export function formDuration(formKey) { return DEMON_FORMS_MAP[formKey]?.dur || ""; }

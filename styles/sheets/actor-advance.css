@@ -1,0 +1,612 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка Развитие
+   Опыт, характеристики, навыки, психосилы
+═══════════════════════════════════════════════════════ */
+
+/* ── Верхний ряд ── */
+.warhammer-dbc .advance-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Панели верхнего ряда — ФИКСИРОВАННАЯ высота со своей прокруткой, чтобы
+   длинный список талантов не растягивал всю вкладку (шапка панели остаётся
+   на месте, скроллится только тело таблицы). */
+.warhammer-dbc .advance-top > .stat-panel {
+  display: flex;
+  flex-direction: column;
+  height: 340px;
+  min-height: 340px;
+  overflow: hidden;
+}
+
+.warhammer-dbc .advance-top .panel-scroll {
+  flex: 1 1 auto;
+  min-height: 0;             /* обязательно, иначе flex-элемент не сжимается */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Шапка таблицы «Название / Цена» липнет к верху при прокрутке. */
+.warhammer-dbc .advance-top .panel-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--wh-panel-head, #0d2018);
+}
+
+/* Тонкий скроллбар в тему когитатора. */
+.warhammer-dbc .advance-top .panel-scroll::-webkit-scrollbar { width: 8px; }
+.warhammer-dbc .advance-top .panel-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, .25);
+  border-radius: 4px;
+}
+.warhammer-dbc .advance-top .panel-scroll::-webkit-scrollbar-thumb {
+  background: rgba(77, 255, 166, .35);
+  border-radius: 4px;
+}
+.warhammer-dbc .advance-top .panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(77, 255, 166, .6);
+}
+
+/* Панель Опыта не прокручивается — содержимое фиксированной длины. */
+.warhammer-dbc .advance-xp { overflow-y: auto; }
+
+/* ── Опыт ── */
+.warhammer-dbc .xp-table { padding: 2px 8px 6px; }
+
+.warhammer-dbc .xp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--wh-border-light);
+  font-size: 0.8em;
+  gap: 4px;
+}
+
+.warhammer-dbc .xp-row label { font-weight: bold; flex: 1; color: var(--wh-text); }
+
+.warhammer-dbc .xp-row input {
+  width: 56px;
+  text-align: right;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  padding: 1px 4px;
+}
+
+.warhammer-dbc .xp-auto {
+  font-weight: bold;
+  color: var(--wh-red);
+  min-width: 56px;
+  text-align: right;
+}
+
+.warhammer-dbc .xp-row-result span {
+  font-weight: bold;
+  color: var(--wh-xp-spent);
+  font-size: 1.05em;
+  min-width: 56px;
+  text-align: right;
+}
+
+.warhammer-dbc .xp-row-current span {
+  font-weight: bold;
+  color: var(--wh-xp-current);
+  font-size: 1.05em;
+  min-width: 56px;
+  text-align: right;
+}
+
+/* ── Нижний ряд ── */
+.warhammer-dbc .advance-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* ── Таблица характеристик (редактирование) ── */
+.warhammer-dbc .advance-chars-edit { overflow: hidden; }
+
+.warhammer-dbc .char-table-edit {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.warhammer-dbc .char-table-edit th {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  padding: 5px 2px;
+  text-align: center;
+  border: 1px solid var(--wh-panel-dark);
+  font-size: 0.86em;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.warhammer-dbc .char-table-edit th.cte-name { width: 8%; text-align: center; padding-left: 3px; }
+.warhammer-dbc .char-table-edit th.cte-imp  { width: 22%; }
+.warhammer-dbc .char-table-edit th.cte-num  { width: 8%; }
+.warhammer-dbc .char-table-edit th.cte-cost { width: 22%; }
+.warhammer-dbc .char-table-edit .cte-imp-cell select { width: 100%; box-sizing: border-box; font-size: 0.82em; }
+.warhammer-dbc .char-table-edit td { height: 30px; vertical-align: middle; }
+
+.warhammer-dbc .char-table-edit td {
+  padding: 3px 2px;
+  border: 1px solid var(--wh-border-light);
+  text-align: center;
+  background: var(--wh-parchment2);
+  overflow: hidden;
+}
+
+.warhammer-dbc .char-table-edit tr:nth-child(even) td { background: var(--wh-parchment3); }
+.warhammer-dbc .char-table-edit tr:hover td { background: var(--wh-input-bg); }
+
+.warhammer-dbc .char-edit-name {
+  text-align: center !important;
+  padding-left: 3px !important;
+  font-size: 0.95em;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--wh-red);
+}
+
+.warhammer-dbc .char-total-edit { font-weight: bold; font-size: 0.93em; }
+.warhammer-dbc .char-bonus-edit { font-weight: bold; font-size: 0.93em; color: var(--wh-red); }
+
+.warhammer-dbc .cte-imp-cell { padding: 2px 2px !important; }
+
+.warhammer-dbc .char-improvement-select {
+  width: 100%;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  font-size: 0.86em;
+  color: var(--wh-text);
+  padding: 2px 1px;
+  cursor: pointer;
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+
+.warhammer-dbc .char-input {
+  width: 100%;
+  text-align: center;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  font-size: 0.9em;
+  font-weight: bold;
+  padding: 2px 0;
+  box-sizing: border-box;
+}
+
+/* ── Таблица навыков (редактирование) ── */
+.warhammer-dbc .skills-advance-scroll {
+  overflow-y: auto;
+  max-height: 340px;
+}
+
+.warhammer-dbc .skills-advance-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.warhammer-dbc .skills-advance-table th {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  padding: 5px 4px;
+  text-align: center;
+  border: 1px solid var(--wh-panel-dark);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: 0.86em;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* В «Цену» помещаются бейдж Д/Н/В + поле + кнопка ★ — колонка шире остальных. */
+.warhammer-dbc .skills-advance-table .sa-name  { width: 28%; text-align: left; padding-left: 6px; }
+.warhammer-dbc .skills-advance-table .sa-char  { width: 12%; }
+.warhammer-dbc .skills-advance-table .sa-rank  { width: 21%; }
+.warhammer-dbc .skills-advance-table .sa-total { width: 10%; }
+.warhammer-dbc .skills-advance-table .sa-cost  { width: 29%; }
+/* Селект характеристики у Ремесла — на всю ячейку, без «съезда». */
+.warhammer-dbc .sa-char-cell { padding: 2px 3px !important; }
+.warhammer-dbc .sa-char-cell select { width: 100%; box-sizing: border-box; font-size: 0.8em; padding: 1px 2px; }
+
+.warhammer-dbc .skills-advance-table td {
+  padding: 3px 3px;
+  border: 1px solid var(--wh-border-light);
+  text-align: center;
+  background: var(--wh-parchment2);
+}
+
+.warhammer-dbc .skills-advance-table tr:nth-child(even) td { background: var(--wh-parchment3); }
+.warhammer-dbc .skills-advance-table tr:hover td { background: var(--wh-input-bg); }
+
+.warhammer-dbc .sa-name-cell {
+  text-align: left !important;
+  padding-left: 6px !important;
+  font-size: 0.82em;
+  font-weight: bold;
+  white-space: normal !important;
+  word-break: break-word;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  line-height: 1.15;
+}
+/* Ровная высота строк навыков (без «прыгающих» строк из-за переносов). */
+.warhammer-dbc .skills-advance-table td { height: 30px; vertical-align: middle; }
+.warhammer-dbc .skills-advance-table .sa-rank-cell select,
+.warhammer-dbc .skills-advance-table .group-skill-rank-select { width: 100%; box-sizing: border-box; font-size: 0.82em; }
+
+.warhammer-dbc .sa-char-cell { font-size: 0.9em; font-weight: bold; color: var(--wh-panel-mid); }
+.warhammer-dbc .sa-total-cell { font-weight: bold; font-size: 0.93em; }
+
+.warhammer-dbc .skill-cost-input,
+.warhammer-dbc .group-skill-cost-input {
+  width: 100%;
+  text-align: center;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  font-size: 0.9em;
+  font-weight: bold;
+  padding: 2px 0;
+  box-sizing: border-box;
+}
+
+.warhammer-dbc .skill-rank-select,
+.warhammer-dbc .group-skill-rank-select {
+  width: 100%;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  font-size: 0.86em;
+  color: var(--wh-text);
+  padding: 2px 1px;
+  cursor: pointer;
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+
+.warhammer-dbc .group-skill-char-select {
+  width: 100%;
+  min-width: 46px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  font-size: 0.82em;
+  font-weight: bold;
+  color: var(--wh-panel-mid);
+  padding: 1px 2px;
+  cursor: pointer;
+  box-sizing: border-box;
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+/* В ячейке с выбором характеристики даём селекту место под стрелку */
+.warhammer-dbc .sa-char-cell { min-width: 50px; }
+
+/* ── Групповые навыки ── */
+.warhammer-dbc .group-skill-header-row td {
+  background: var(--wh-panel-mid) !important;
+  color: var(--wh-text-light) !important;
+  font-weight: bold;
+  font-size: 0.9em;
+  padding: 5px 6px;
+}
+
+.warhammer-dbc .group-skill-header-name { text-align: left !important; }
+
+.warhammer-dbc .group-skill-header-name em {
+  font-weight: normal;
+  color: #c0b8a0;
+  font-style: normal;
+  font-size: 0.88em;
+}
+
+.warhammer-dbc .group-skill-header-add { text-align: center !important; }
+
+.warhammer-dbc .group-skill-entry-row td { background: var(--wh-parchment2) !important; }
+.warhammer-dbc .group-skill-entry-row:nth-child(even) td { background: var(--wh-parchment3) !important; }
+.warhammer-dbc .group-skill-entry-row:hover td {
+  background: var(--wh-input-bg) !important;
+  cursor: context-menu;
+}
+
+.warhammer-dbc .group-entry-name {
+  text-align: left !important;
+  padding-left: 14px !important;
+  font-style: normal !important;
+  font-size: 0.93em !important;
+  font-weight: bold;
+  white-space: normal !important;
+  word-break: break-word;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  line-height: 1.4;
+}
+
+.warhammer-dbc .btn-add-small {
+  background: var(--wh-panel-dark);
+  color: var(--wh-text-light);
+  border: none;
+  border-radius: 2px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+.warhammer-dbc .btn-add-small:hover { background: var(--wh-red); }
+
+/* ── Психосилы в развитии ── */
+.warhammer-dbc .psy-header-small {
+  display: flex;
+  gap: 12px;
+  padding: 4px 8px;
+  font-size: 0.82em;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.warhammer-dbc .psy-header-small label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: bold;
+}
+
+.warhammer-dbc .psy-header-small select,
+.warhammer-dbc .psy-header-small input {
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  font-family: inherit;
+  padding: 1px 3px;
+}
+
+/* ── Колонка Цена в характеристиках ── */
+
+.warhammer-dbc .cte-cost-cell { padding: 2px 2px !important; }
+
+.warhammer-dbc .char-cost-input {
+  width: 100%;
+  text-align: center;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  font-size: 0.9em;
+  font-weight: bold;
+  padding: 2px 0;
+  box-sizing: border-box;
+  color: var(--wh-red);
+}
+/* ── Склонности персонажа (Развитие) ───────────────────────── */
+.warhammer-dbc .apt-char-add-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-left: 8px; padding: 0;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer; font-size: 0.9em; line-height: 1;
+  color: var(--wh-text-light); flex-shrink: 0; transition: background 0.12s;
+}
+.warhammer-dbc .apt-char-add-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .apt-char-input {
+  width: 100%; background: var(--wh-input-bg); border: 1px solid var(--wh-border);
+  color: var(--wh-text); font-family: inherit; font-size: 0.88em; padding: 1px 4px;
+}
+.warhammer-dbc .apt-char-del-cell { width: 24px; text-align: center; }
+.warhammer-dbc .apt-char-remove {
+  width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--wh-red); color: #fff; border: none; border-radius: 50%;
+  cursor: pointer; font-size: 0.75em; line-height: 1; padding: 0;
+}
+.warhammer-dbc .apt-char-remove:hover { background: #b02020; }
+
+/* ── Таланты в Развитии (название + цена) ───────────────────── */
+.warhammer-dbc .advtal-add-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-left: 8px; padding: 0;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer; font-size: 0.9em; line-height: 1;
+  color: var(--wh-text-light); flex-shrink: 0; transition: background 0.12s;
+}
+.warhammer-dbc .advtal-add-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .advtal-input {
+  width: 100%; background: var(--wh-input-bg); border: 1px solid var(--wh-border);
+  color: var(--wh-text); font-family: inherit; font-size: 0.88em; padding: 1px 4px;
+}
+.warhammer-dbc .advtal-cost-cell { width: 56px; }
+.warhammer-dbc .advtal-cost-cell .advtal-input { text-align: center; }
+.warhammer-dbc .advtal-remove {
+  width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--wh-red); color: #fff; border: none; border-radius: 50%;
+  cursor: pointer; font-size: 0.75em; line-height: 1; padding: 0;
+}
+.warhammer-dbc .advtal-remove:hover { background: #b02020; }
+
+/* ── Пути Аэльдари ──────────────────────────────────────────── */
+.warhammer-dbc .path-add-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-left: 8px; padding: 0;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer; font-size: 0.9em; line-height: 1;
+  color: var(--wh-text-light); flex-shrink: 0; transition: background 0.12s;
+}
+.warhammer-dbc .path-add-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .path-sel, .warhammer-dbc .path-level {
+  width: 100%; background: var(--wh-input-bg); border: 1px solid var(--wh-border);
+  color: var(--wh-text); font-family: inherit; font-size: 0.88em; padding: 1px 4px;
+}
+.warhammer-dbc .path-level-cell { width: 64px; }
+.warhammer-dbc .path-level { text-align: center; }
+.warhammer-dbc .path-remove {
+  width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--wh-red); color: #fff; border: none; border-radius: 50%;
+  cursor: pointer; font-size: 0.75em; line-height: 1; padding: 0;
+}
+.warhammer-dbc .path-remove:hover { background: #b02020; }
+
+/* ── Карточки Путей Аэльдари (вкладка «Способности») ────────────────── */
+.warhammer-dbc .paths-collapse.collapsed { display: none; }
+.warhammer-dbc .aeldari-paths-panel .panel-title { padding-right: 6px; }
+.warhammer-dbc .paths-title-btns { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.warhammer-dbc .paths-title-btns .path-add-btn { margin-left: 0; }
+.warhammer-dbc .paths-toggle-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 8px; padding: 1px 8px; background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.30); border-radius: 2px; cursor: pointer;
+  font-family: inherit; font-size: 0.82em; font-weight: 600;
+  color: var(--wh-text-light); line-height: 1.4;
+}
+.warhammer-dbc .paths-toggle-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .aeldari-paths-panel .paths-list {
+  padding: 6px 8px; display: flex; flex-direction: column; gap: 8px;
+}
+.warhammer-dbc .path-card {
+  border: 1px solid var(--wh-border-light); border-radius: 3px;
+  background: var(--wh-parchment2); padding: 6px 8px;
+}
+.warhammer-dbc .path-card-header { display: flex; align-items: center; gap: 6px; }
+.warhammer-dbc .path-card-header .path-sel { flex: 1 1 auto; }
+.warhammer-dbc .path-card-header .path-grade {
+  flex: 0 0 132px; width: 132px; background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border); color: var(--wh-text);
+  font-family: inherit; font-size: 0.88em; padding: 1px 4px;
+}
+.warhammer-dbc .path-auto {
+  margin-top: 5px; font-size: 0.82em; font-weight: 700; color: var(--wh-xp-current);
+}
+.warhammer-dbc .path-desc {
+  margin-top: 5px; font-size: 0.88em; line-height: 1.45;
+  white-space: pre-line; color: var(--wh-text);
+}
+.warhammer-dbc .path-desc-empty { color: var(--wh-text-mid); }
+.warhammer-dbc .path-grade-block { margin-top: 6px; }
+.warhammer-dbc .path-grade-block .path-desc { margin-top: 2px; }
+.warhammer-dbc .path-grade-name {
+  font-size: 0.8em; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--wh-link);
+  border-bottom: 1px solid var(--wh-border-light); padding-bottom: 1px;
+}
+
+/* Категория цены по склонностям (стр. 24): Д/Н/В.
+   Ячейка остаётся table-cell (тянется на высоту строки), содержимое — по центру. */
+.warhammer-dbc .cte-cost-cell,
+.warhammer-dbc .sa-cost-cell {
+  vertical-align: middle !important; text-align: center; white-space: nowrap; padding: 2px 4px !important;
+}
+.warhammer-dbc .adv-cat {
+  display: inline-block; vertical-align: middle; width: 15px; height: 15px; line-height: 15px; text-align: center;
+  font-size: 0.64em; font-weight: 700; border-radius: 3px; cursor: help; margin-right: 3px;
+}
+.warhammer-dbc .adv-cat-ally    { background: rgba(77,255,166,.22);  color: #7fffba; }
+.warhammer-dbc .adv-cat-neutral { background: rgba(200,200,120,.2);  color: #dcd88a; }
+.warhammer-dbc .adv-cat-enemy   { background: rgba(255,110,110,.2);  color: #ff9a9a; }
+.warhammer-dbc .cte-cost-cell input,
+.warhammer-dbc .sa-cost-cell input {
+  display: inline-block; vertical-align: middle; width: 42px; min-width: 38px; max-width: 46px; box-sizing: border-box;
+  font-size: 0.92em; text-align: center; padding: 2px 2px;
+}
+
+/* ── Стремления (стр. 22) ── */
+.warhammer-dbc .aspir-hint { opacity: .5; font-size: .78em; font-weight: 400; margin-left: 6px; }
+.warhammer-dbc .aspir-add-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-left: 8px; padding: 0; flex-shrink: 0;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer; font-size: 0.9em; line-height: 1; color: var(--wh-text-light);
+}
+.warhammer-dbc .aspir-add-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .aspir-table td { padding: 3px 5px; border: 1px solid var(--wh-border-light); vertical-align: middle; }
+.warhammer-dbc .aspir-sel-cell { width: 42%; }
+.warhammer-dbc .aspir-select { width: 100%; box-sizing: border-box; font-size: .84em; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); color: var(--wh-text); padding: 2px 3px; }
+.warhammer-dbc .aspir-custom { display: flex; gap: 4px; }
+.warhammer-dbc .aspir-custom input { flex: 1 1 auto; min-width: 0; box-sizing: border-box; font-size: .82em; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); color: var(--wh-text); padding: 2px 4px; }
+.warhammer-dbc .aspir-mods-cell { font-size: .82em; color: var(--wh-xp-current); font-weight: 600; }
+.warhammer-dbc .aspir-del-cell { width: 26px; text-align: center; }
+.warhammer-dbc .aspir-remove { cursor: pointer; background: none; border: none; color: var(--wh-red); font-weight: bold; }
+
+/* Купленные через пикер Таланты-предметы в списке «Развитие» (только чтение) */
+.advtal-bought .advtal-bought-name {
+  display: block;
+  padding: 2px 4px;
+  font-size: 12px;
+  color: var(--wh-mint, #b8ffd8);
+}
+.advtal-bought .advtal-bought-name::before {
+  content: "◆ ";
+  color: var(--wh-accent, #4dffa6);
+  opacity: .8;
+}
+.advtal-bought .advtal-bought-cost {
+  display: block;
+  padding: 2px 4px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--wh-accent, #4dffa6);
+}
+.advtal-bought { background: rgba(77, 255, 166, .05); }
+
+/* Кнопка ★ — «уровень выдан архетипом/расой» (бесплатный, стр. 5-21).
+   Мастер ставит это сам, кнопка нужна для вписанного руками. */
+.warhammer-dbc .grant-toggle {
+  flex: 0 0 auto;
+  width: 18px; height: 18px;
+  margin-left: 3px; padding: 0;
+  line-height: 16px; font-size: 11px; text-align: center;
+  color: #4a6b58; background: transparent;
+  border: 1px solid var(--wh-border-light, #23483a); border-radius: 3px;
+  cursor: pointer;
+}
+.warhammer-dbc .grant-toggle:hover {
+  color: #b8ffd8;
+  border-color: var(--wh-accent, #4dffa6);
+}
+.warhammer-dbc .grant-toggle.is-on {
+  color: #ffd97a;
+  border-color: rgba(255, 217, 122, .6);
+  background: rgba(255, 217, 122, .12);
+  text-shadow: 0 0 6px rgba(255, 217, 122, .55);
+}
+
+/* Талант, помеченный ★ как выданный архетипом — приглушаем цену (она 0). */
+.warhammer-dbc .advtal-bought.is-granted .advtal-bought-cost { color: #4a6b58; }
+.warhammer-dbc .advtal-bought.is-granted .advtal-bought-name::before { color: #ffd97a; }
+/* Две кнопки в служебной ячейке — компактный ряд. У .advtal-item-remove не было
+   своих стилей, поэтому Foundry растягивал её на всю ширину и строка раздувалась. */
+.warhammer-dbc .advtal-bought .apt-char-del-cell {
+  white-space: nowrap; text-align: right;
+  padding: 2px 3px !important;
+  width: 46px;
+}
+.warhammer-dbc .advtal-bought .apt-char-del-cell .grant-toggle,
+.warhammer-dbc .advtal-item-remove {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 17px; height: 17px; min-width: 17px; max-width: 17px;
+  margin: 0 0 0 2px; padding: 0;
+  font-size: 10px; line-height: 1; vertical-align: middle;
+  border-radius: 3px; cursor: pointer;
+}
+.warhammer-dbc .advtal-item-remove {
+  color: #ff9a9a; background: transparent;
+  border: 1px solid rgba(255, 110, 110, .4);
+}
+.warhammer-dbc .advtal-item-remove:hover {
+  color: #0b1a12; background: #ff6b6b; border-color: #ff6b6b;
+}
+/* Ровные компактные строки списка талантов. */
+.warhammer-dbc .advtal-bought td { height: 24px; padding: 2px 4px; vertical-align: middle; }
+.warhammer-dbc .advtal-bought .advtal-bought-name { font-size: 11px; line-height: 1.2; }

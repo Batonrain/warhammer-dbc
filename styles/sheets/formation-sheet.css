@@ -1,0 +1,367 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Лист Формирования («Книга Битв»)
+   Шапка, вкладки и панели наследуются от листа персонажа.
+   Здесь — своё: показатели войск, приказы, истощение, события.
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc.formation-sheet {
+  --fm-ok:   #4dffa6;
+  --fm-warn: #ffc878;
+  --fm-bad:  #ff8a8a;
+}
+
+.warhammer-dbc .formation-sheet-form { display: flex; flex-direction: column; height: 100%; }
+
+/* ══════════════ ШАПКА ══════════════ */
+
+.warhammer-dbc .fm-res-cell { grid-column: 3; }
+.warhammer-dbc .fm-res-cell .fate-values input { width: 44px; }
+
+.warhammer-dbc .fm-bar {
+  width: 118px; height: 6px; margin-top: 2px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border);
+  border-radius: 3px; overflow: hidden;
+}
+.warhammer-dbc .fm-bar-fill { height: 100%; transition: width 0.2s; }
+.warhammer-dbc .fm-bar-num  { background: var(--fm-ok); }
+.warhammer-dbc .fm-bar-mor  { background: color-mix(in srgb, var(--fm-ok) 75%, var(--wh-panel-mid)); }
+.warhammer-dbc .fm-bar-warn { background: var(--fm-warn); }
+.warhammer-dbc .fm-bar-crit { background: var(--fm-bad); }
+
+.warhammer-dbc .fm-mor-input.fm-warn { color: var(--fm-warn); }
+.warhammer-dbc .fm-mor-input.fm-crit { color: var(--fm-bad); }
+
+.warhammer-dbc .fm-dmg-display {
+  padding: 2px 9px; font-weight: bold; font-size: 0.95em; letter-spacing: 0.02em;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  border-radius: 3px; color: var(--fm-ok); white-space: nowrap;
+}
+
+.warhammer-dbc .fm-header-checks { justify-content: space-between; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.warhammer-dbc .fm-stat-strip { display: flex; flex-wrap: wrap; gap: 4px; }
+.warhammer-dbc .fm-stat {
+  font-size: 0.74em; padding: 2px 8px; border-radius: 3px; white-space: nowrap;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid);
+}
+.warhammer-dbc .fm-stat b { color: var(--wh-text-dark); font-size: 1.1em; }
+
+.warhammer-dbc .fm-header-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.warhammer-dbc .fm-chip {
+  font-size: 0.72em; padding: 2px 7px; border-radius: 9px; white-space: nowrap;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text);
+}
+.warhammer-dbc .fm-chip-on   { border-color: var(--fm-ok);   color: var(--fm-ok);   box-shadow: 0 0 7px -2px var(--fm-ok); }
+.warhammer-dbc .fm-chip-warn { border-color: var(--fm-warn); color: var(--fm-warn); }
+.warhammer-dbc .fm-chip-bad  { border-color: var(--fm-bad);  color: var(--fm-bad);  box-shadow: 0 0 7px -2px var(--fm-bad); }
+
+/* ══════════════ ОБЩЕЕ ══════════════ */
+
+.warhammer-dbc .fm-panel-on  { border-color: var(--fm-ok); box-shadow: inset 0 0 14px -8px var(--fm-ok); }
+.warhammer-dbc .fm-panel-bad { border-color: var(--fm-bad); }
+.warhammer-dbc .fm-panel-gm .panel-title { background: var(--wh-red); }
+
+.warhammer-dbc .fm-hint {
+  font-size: 0.8em; font-style: italic; line-height: 1.45;
+  color: var(--wh-text-mid); margin-top: 7px;
+}
+.warhammer-dbc .fm-panel .panel-body > .fm-hint:first-child { margin-top: 0; margin-bottom: 7px; }
+.warhammer-dbc .fm-note {
+  font-size: 0.8em; line-height: 1.45; margin-top: 7px; padding: 5px 8px;
+  background: color-mix(in srgb, var(--wh-accent) 8%, transparent);
+  border-left: 3px solid var(--wh-accent); border-radius: 0 3px 3px 0;
+}
+.warhammer-dbc .fm-warn {
+  font-size: 0.82em; line-height: 1.45; margin: 7px 0; padding: 5px 8px;
+  background: color-mix(in srgb, var(--fm-warn) 12%, transparent);
+  border-left: 3px solid var(--fm-warn); border-radius: 0 3px 3px 0; color: var(--wh-text);
+}
+/* Подсистема выключена в настройках — лист работает, но создание закрыто */
+.warhammer-dbc .fm-feature-off {
+  font-size: 0.82em; line-height: 1.45; margin-bottom: 8px; padding: 6px 9px;
+  background: color-mix(in srgb, var(--fm-bad) 10%, transparent);
+  border: 1px solid var(--fm-bad); border-left-width: 3px; border-radius: 0 3px 3px 0;
+  color: var(--wh-text);
+}
+
+.warhammer-dbc .fm-empty {
+  padding: 14px; text-align: center; font-style: italic; font-size: 0.85em;
+  color: var(--wh-text-mid); opacity: 0.8;
+}
+.warhammer-dbc .fm-subtitle {
+  margin: 11px 0 5px; font-size: 0.76em; font-weight: bold; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--wh-text-mid);
+  border-bottom: 1px solid var(--wh-border-light); padding-bottom: 3px;
+}
+
+.warhammer-dbc .fm-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.warhammer-dbc .fm-actions-wide .fm-btn { flex: 1 1 190px; }
+.warhammer-dbc .fm-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: auto; flex: 0 0 auto; padding: 4px 11px;
+  background: var(--wh-panel-dark); color: var(--wh-text-light);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+  font-family: inherit; font-size: 0.82em; font-weight: 600; cursor: pointer;
+  transition: background 0.12s, border-color 0.12s; white-space: nowrap;
+}
+.warhammer-dbc .fm-btn:hover { background: var(--wh-panel-mid); border-color: var(--wh-accent); }
+.warhammer-dbc .fm-btn-roll { border-color: var(--wh-accent); }
+.warhammer-dbc .fm-btn-roll:hover { box-shadow: 0 0 9px -3px var(--wh-accent); }
+.warhammer-dbc .fm-btn i { color: var(--wh-accent); }
+
+.warhammer-dbc .fm-row { display: flex; align-items: center; gap: 7px; margin-top: 6px; }
+.warhammer-dbc .fm-row > label { font-size: 0.8em; font-weight: bold; color: var(--wh-text-mid); min-width: 80px; }
+.warhammer-dbc .fm-row input[type="text"] {
+  flex: 1; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 2px 5px; font-family: inherit; font-size: 0.85em; color: var(--wh-text);
+}
+
+.warhammer-dbc .fm-grid { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 9px; }
+.warhammer-dbc .fm-grid-calc { margin-top: 9px; }
+.warhammer-dbc .fm-field { display: flex; flex-direction: column; gap: 2px; }
+.warhammer-dbc .fm-field label { font-size: 0.74em; font-weight: bold; color: var(--wh-text-mid); white-space: nowrap; }
+.warhammer-dbc .fm-field input {
+  width: 118px; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 2px 5px; font-family: inherit; font-size: 0.85em; color: var(--wh-text);
+}
+.warhammer-dbc .fm-field input[type="number"] { width: 82px; text-align: center; font-weight: bold; }
+.warhammer-dbc .fm-readonly {
+  width: 82px; text-align: center; font-weight: bold; padding: 2px 5px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.warhammer-dbc .fm-readonly-total { color: var(--fm-ok); }
+.warhammer-dbc .fm-check { display: flex; align-items: center; gap: 5px; font-size: 0.8em; cursor: pointer; white-space: nowrap; }
+
+/* ══════════════ КОМАНДОВАНИЕ ══════════════ */
+
+.warhammer-dbc .fm-command-row { display: flex; gap: 9px; align-items: stretch; flex-wrap: wrap; }
+.warhammer-dbc .fm-commander {
+  flex: 1 1 260px; display: flex; flex-direction: column; gap: 5px; padding: 6px 8px;
+  background: var(--wh-parchment3); border: 1px dashed var(--wh-border); border-radius: 4px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.warhammer-dbc .fm-commander-filled { border-style: solid; border-left: 3px solid var(--wh-accent); }
+.warhammer-dbc .fm-missing { opacity: 0.6; }
+.warhammer-dbc .fm-commander.fm-drop-hover,
+.warhammer-dbc .fm-attached-dropzone.fm-drop-hover {
+  border-color: var(--wh-accent); box-shadow: inset 0 0 18px -6px var(--wh-accent);
+}
+
+.warhammer-dbc .fm-slot-head {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.76em; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--wh-text-mid); border-bottom: 1px solid var(--wh-border-light); padding-bottom: 3px;
+}
+.warhammer-dbc .fm-slot-head i { color: var(--wh-accent); }
+.warhammer-dbc .fm-commander-clear { margin-left: auto; cursor: pointer; padding: 0 3px; color: var(--wh-text-mid); }
+.warhammer-dbc .fm-commander-clear:hover { color: #fff; background: var(--wh-red); border-radius: 3px; }
+
+.warhammer-dbc .fm-slot-body { display: flex; align-items: center; gap: 7px; }
+.warhammer-dbc .fm-slot-img {
+  width: 40px; height: 40px; flex: 0 0 auto; object-fit: cover;
+  border: 1px solid var(--wh-border); border-radius: 3px; cursor: pointer;
+}
+.warhammer-dbc .fm-slot-info { min-width: 0; flex: 1; }
+.warhammer-dbc .fm-slot-name {
+  font-weight: bold; font-size: 0.92em; cursor: pointer; color: var(--wh-text-dark);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.warhammer-dbc .fm-slot-name:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .fm-slot-stats { display: flex; flex-wrap: wrap; gap: 7px; font-size: 0.72em; color: var(--wh-text-mid); }
+.warhammer-dbc .fm-slot-empty {
+  padding: 13px 4px; text-align: center; font-size: 0.78em; font-style: italic;
+  color: var(--wh-text-mid); opacity: 0.75;
+}
+
+.warhammer-dbc .fm-command-info {
+  flex: 1 1 260px; display: flex; flex-direction: column; gap: 3px; padding: 6px 8px;
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border-light); border-radius: 4px;
+}
+.warhammer-dbc .fm-info-row {
+  display: flex; justify-content: space-between; gap: 10px; font-size: 0.8em;
+  padding-bottom: 2px; border-bottom: 1px dotted var(--wh-border-light);
+}
+.warhammer-dbc .fm-info-row b { color: var(--fm-ok); }
+.warhammer-dbc .fm-info-note { font-size: 0.72em; font-style: italic; line-height: 1.4; color: var(--wh-text-mid); margin-top: 3px; }
+
+.warhammer-dbc .fm-attached-dropzone {
+  display: flex; flex-direction: column; gap: 4px; min-height: 52px;
+  padding: 4px; border: 1px dashed var(--wh-border); border-radius: 4px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.warhammer-dbc .fm-attached {
+  display: flex; align-items: center; gap: 8px; padding: 4px 6px;
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border-light); border-radius: 3px;
+}
+.warhammer-dbc .fm-attached-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.warhammer-dbc .fm-attached-note {
+  width: 100%; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 1px 5px; font-family: inherit; font-size: 0.78em; color: var(--wh-text);
+}
+.warhammer-dbc .fm-event-count, .warhammer-dbc .fm-attached-remove {
+  flex: 0 0 auto; cursor: pointer; padding: 3px 5px; border-radius: 3px; color: var(--wh-text-mid);
+}
+.warhammer-dbc .fm-event-count:hover { background: var(--wh-panel-mid); color: var(--wh-text-light); }
+.warhammer-dbc .fm-attached-remove:hover { background: var(--wh-red); color: #fff; }
+.warhammer-dbc .fm-event-pips { font-size: 0.74em; font-weight: bold; }
+.warhammer-dbc .fm-events-2 { color: var(--fm-bad); }
+.warhammer-dbc .fm-events-1 { color: var(--fm-warn); }
+
+.warhammer-dbc .fm-troop-card {
+  margin-top: 9px; padding: 6px 9px;
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border-light);
+  border-left: 3px solid var(--wh-accent); border-radius: 3px;
+}
+.warhammer-dbc .fm-troop-name { font-weight: bold; font-size: 0.9em; color: var(--wh-text-dark); }
+.warhammer-dbc .fm-troop-r {
+  margin-left: 6px; padding: 0 6px; border-radius: 8px; font-size: 0.78em; font-weight: normal;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid); cursor: help;
+}
+.warhammer-dbc .fm-troop-examples { font-size: 0.76em; line-height: 1.4; color: var(--wh-text-mid); margin-top: 2px; }
+.warhammer-dbc .fm-troop-note { font-size: 0.76em; color: var(--fm-ok); margin-top: 3px; }
+
+/* ══════════════ ПРИКАЗЫ ══════════════ */
+
+.warhammer-dbc .fm-order-list { display: flex; flex-direction: column; gap: 5px; }
+.warhammer-dbc .fm-order-card {
+  padding: 6px 9px; background: var(--wh-parchment3);
+  border: 1px solid var(--wh-border-light); border-left: 3px solid transparent; border-radius: 3px;
+}
+.warhammer-dbc .fm-order-current { border-left-color: var(--fm-ok); background: var(--wh-parchment2); }
+.warhammer-dbc .fm-order-off { opacity: 0.45; }
+
+.warhammer-dbc .fm-order-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.warhammer-dbc .fm-order-name { font-weight: bold; font-size: 0.9em; color: var(--wh-text-dark); }
+.warhammer-dbc .fm-order-en { font-size: 0.74em; font-style: italic; color: var(--wh-text-mid); opacity: 0.8; }
+.warhammer-dbc .fm-order-test {
+  margin-left: auto; font-size: 0.74em; padding: 1px 7px; border-radius: 8px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid); white-space: nowrap;
+}
+.warhammer-dbc .fm-order-block { margin-left: auto; font-size: 0.74em; font-style: italic; color: var(--fm-warn); }
+.warhammer-dbc .fm-order-desc { font-size: 0.78em; line-height: 1.45; color: var(--wh-text-mid); margin-top: 3px; }
+
+/* ══════════════ БОЙ ══════════════ */
+
+.warhammer-dbc .fm-attrition { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+@media (max-width: 720px) { .warhammer-dbc .fm-attrition { grid-template-columns: repeat(2, 1fr); } }
+.warhammer-dbc .fm-attr-cell {
+  padding: 6px 8px; text-align: center;
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border-light); border-radius: 3px;
+}
+.warhammer-dbc .fm-attr-warn { border-color: var(--fm-warn); }
+.warhammer-dbc .fm-attr-bad  { border-color: var(--fm-bad); }
+.warhammer-dbc .fm-attr-label { font-size: 0.72em; font-weight: bold; letter-spacing: 0.04em; color: var(--wh-text-mid); }
+.warhammer-dbc .fm-attr-value { font-size: 1.35em; font-weight: bold; color: var(--wh-text-dark); line-height: 1.3; }
+.warhammer-dbc .fm-attr-bad .fm-attr-value  { color: var(--fm-bad); }
+.warhammer-dbc .fm-attr-warn .fm-attr-value { color: var(--fm-warn); }
+.warhammer-dbc .fm-attr-note { font-size: 0.66em; line-height: 1.35; color: var(--wh-text-mid); opacity: 0.9; }
+
+.warhammer-dbc .fm-flags { display: flex; flex-wrap: wrap; gap: 5px; }
+.warhammer-dbc .fm-flag {
+  width: auto; flex: 0 0 auto; padding: 3px 10px;
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border); border-radius: 12px;
+  font-family: inherit; font-size: 0.78em; color: var(--wh-text-mid); cursor: pointer;
+}
+.warhammer-dbc .fm-flag:hover { border-color: var(--wh-accent); }
+.warhammer-dbc .fm-flag-on {
+  background: color-mix(in srgb, var(--fm-bad) 14%, transparent);
+  border-color: var(--fm-bad); color: var(--fm-bad); font-weight: bold;
+}
+
+.warhammer-dbc .fm-timed { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
+.warhammer-dbc .fm-timed-row {
+  display: flex; align-items: center; gap: 8px; padding: 3px 7px;
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border-light);
+  border-left: 3px solid transparent; border-radius: 3px;
+}
+.warhammer-dbc .fm-timed-on { border-left-color: var(--fm-ok); }
+.warhammer-dbc .fm-timed-label { flex: 1; font-size: 0.8em; color: var(--wh-text); }
+.warhammer-dbc .fm-timed-input {
+  width: 56px; text-align: center; font-weight: bold;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 1px 3px; font-family: inherit; color: var(--wh-text);
+}
+
+/* ══════════════ КЛЮЧЕВЫЕ СОБЫТИЯ ══════════════ */
+
+.warhammer-dbc .fm-rules { margin: 8px 0 0; padding-left: 18px; font-size: 0.78em; line-height: 1.5; color: var(--wh-text-mid); }
+.warhammer-dbc .fm-rules li { margin-bottom: 3px; }
+
+.warhammer-dbc .fm-tiers { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
+.warhammer-dbc .fm-tier { display: flex; gap: 8px; font-size: 0.76em; line-height: 1.4; }
+.warhammer-dbc .fm-tier-name { flex: 0 0 74px; font-weight: bold; color: var(--wh-text-dark); }
+.warhammer-dbc .fm-tier-desc { flex: 1; color: var(--wh-text-mid); }
+
+.warhammer-dbc .fm-event-list { display: flex; flex-direction: column; gap: 5px; }
+.warhammer-dbc .fm-event {
+  padding: 6px 9px; background: var(--wh-parchment3);
+  border: 1px solid var(--wh-border-light); border-left: 3px solid var(--wh-border); border-radius: 3px;
+}
+.warhammer-dbc .fm-event-simple  { border-left-color: var(--fm-ok); }
+.warhammer-dbc .fm-event-medium  { border-left-color: var(--fm-warn); }
+.warhammer-dbc .fm-event-complex { border-left-color: var(--fm-bad); }
+
+.warhammer-dbc .fm-event-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.warhammer-dbc .fm-event-name { font-weight: bold; font-size: 0.9em; color: var(--wh-text-dark); }
+.warhammer-dbc .fm-event-tier {
+  font-size: 0.7em; padding: 1px 7px; border-radius: 8px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid);
+}
+.warhammer-dbc .fm-event-test { margin-left: auto; font-size: 0.74em; color: var(--wh-text-mid); white-space: nowrap; }
+.warhammer-dbc .fm-event-desc { font-size: 0.78em; line-height: 1.45; color: var(--wh-text-mid); margin-top: 3px; }
+
+/* ══════════════ СПРАВОЧНИК ══════════════ */
+
+.warhammer-dbc .fm-table-scroll { overflow-x: auto; }
+.warhammer-dbc .fm-table-gap { margin-top: 11px; }
+.warhammer-dbc .fm-troop-table td { text-align: center; }
+.warhammer-dbc .fm-troop-table td.col-wide { text-align: left; width: 46%; }
+.warhammer-dbc .fm-row-examples { font-size: 0.82em; font-weight: normal; line-height: 1.35; color: var(--wh-text-mid); opacity: 0.9; }
+.warhammer-dbc .fm-row-current td {
+  background: color-mix(in srgb, var(--wh-accent) 14%, var(--wh-parchment2));
+}
+
+.warhammer-dbc .fm-ref-list { display: flex; flex-direction: column; gap: 6px; }
+.warhammer-dbc .fm-ref {
+  padding: 6px 9px; background: var(--wh-parchment3);
+  border: 1px solid var(--wh-border-light); border-left: 3px solid var(--wh-accent); border-radius: 3px;
+}
+.warhammer-dbc .fm-ref-alt { border-left-color: var(--wh-border); }
+.warhammer-dbc .fm-ref-head { font-weight: bold; font-size: 0.86em; letter-spacing: 0.04em; color: var(--wh-text-dark); margin-bottom: 3px; }
+.warhammer-dbc .fm-ref-desc { font-size: 0.78em; line-height: 1.5; color: var(--wh-text-mid); }
+
+/* ══════════════ ЗАПИСИ ══════════════ */
+
+.warhammer-dbc .fm-textarea {
+  width: 100%; min-height: 180px; resize: vertical;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 6px 8px; font-family: inherit; font-size: 0.86em; line-height: 1.5; color: var(--wh-text);
+}
+
+/* ══════════════ ДИАЛОГИ ══════════════ */
+
+.fm-dialog .fm-dlg-hint {
+  font-size: 0.8em; font-style: italic; line-height: 1.45;
+  color: #9af2c4; margin-bottom: 7px;
+}
+.fm-dialog .fm-dlg-src {
+  margin-top: 7px; padding: 4px 7px; font-size: 0.78em;
+  background: rgba(77,255,166,0.07); border-left: 3px solid #2f9e6a; border-radius: 0 3px 3px 0;
+}
+.fm-dialog .fm-dlg-formula { font-weight: bold; color: #4dffa6; }
+.fm-dialog .fm-dlg-pen { font-weight: bold; color: #ff8a8a; }
+.fm-dialog .fm-dlg-none { font-size: 0.82em; font-style: italic; color: #8fe8b0; }
+.fm-dialog .fm-dlg-air { margin-top: 6px; }
+
+/* ══════════════ ЧАТ-КАРТОЧКИ ══════════════ */
+
+.wh-roll-result.fm-chat .fm-chat-effect {
+  margin-top: 6px; padding: 5px 8px; font-size: 0.9em; line-height: 1.5;
+  background: rgba(77,255,166,0.07); border-left: 3px solid #2f9e6a; border-radius: 0 3px 3px 0;
+}
+.wh-roll-result.fm-chat .fm-chat-applied {
+  margin-top: 5px; padding: 4px 8px; font-size: 0.92em;
+  background: rgba(0,0,0,0.25); border-radius: 3px;
+}
+.wh-roll-result.fm-chat .fm-chat-note {
+  margin-top: 5px; font-size: 0.84em; font-style: italic; color: #ffc878;
+}

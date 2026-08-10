@@ -1,0 +1,111 @@
+<form class="warhammer-dbc daemon-sheet daemon-god-{{daemon.alg.key}}" autocomplete="off" style="--gc:{{daemon.alg.color}}; --gc2:{{daemon.alg.gc2}}; --glow:{{daemon.alg.glow}}; --dp-hue:{{daemon.alg.hue}};">
+  {{!-- ── ДЕМОНИЧЕСКАЯ ШАПКА ──────────────────────────────────────────────── --}}
+  <header class="daemon-header">
+    <div class="daemon-warp-layer"></div><div class="daemon-warp-layer daemon-warp-b"></div>
+    <div class="daemon-sigil" title="{{daemon.alg.label}} — клик, чтобы сменить аватар (ПКМ — вернуть сигил)">
+      {{#if daemon.customImg}}
+      <img class="daemon-avatar" src="{{daemon.img}}" alt=""/>
+      {{else}}
+      <div class="daemon-sigil-mask" style="-webkit-mask:url('{{daemon.alg.sigil}}') center/contain no-repeat; mask:url('{{daemon.alg.sigil}}') center/contain no-repeat;"></div>
+      {{/if}}
+    </div>
+    <div class="daemon-id">
+      <input type="text" class="daemon-name" name="name" value="{{actor.name}}" placeholder="Имя демона"/>
+      <div class="daemon-sub">
+        <input type="text" name="system.portfolio" value="{{daemon.portfolio}}" class="daemon-portfolio" placeholder="эмоция / концепт (портфолио)"/>
+      </div>
+      <div class="daemon-selrow">
+        <label>Патрон
+          <select name="system.allegiance">{{#each daemon.allegianceOptions as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}</select>
+        </label>
+        <label>Ранг
+          <select name="system.rank">{{#each daemon.rankOptions as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}</select>
+        </label>
+        <label>Форма
+          <select name="system.form">{{#each daemon.formOptions as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}</select>
+        </label>
+        <label class="daemon-inst" title="Рейтинг Warp Instability">Нестабильн.
+          <input type="number" name="system.instabilityRating" value="{{daemon.instability}}" min="0"/>
+        </label>
+      </div>
+    </div>
+    <div class="daemon-vitals">
+      <div class="daemon-vrow"><span>Раны</span><b>{{system.wounds.value}}/{{system.wounds.max}}</b></div>
+      <div class="daemon-vrow"><span>Размер</span><b>{{system.size}}</b></div>
+      <div class="daemon-vrow"><span>T.b</span><b>{{system.characteristics.t.bonus}}</b></div>
+      <div class="daemon-vrow small" title="Длительность до изгнания">{{daemon.formDur}}</div>
+      <div class="daemon-btns">
+        <button type="button" class="daemon-instability-btn" title="Тест Варп-Нестабильности (W)">Нестабильность</button>
+        <button type="button" class="daemon-infamy-btn" title="Сгенерировать Бесчестие по рангу">Бесчестие</button>
+      </div>
+    </div>
+  </header>
+
+  {{!-- Истинное Имя + божественный трейт --}}
+  <div class="daemon-strip">
+    <label class="daemon-truename" title="Истинное Имя даёт власть над демоном (+30 W/F, Команды)">
+      Истинное Имя
+      <input type="text" name="system.trueName" value="{{daemon.trueName}}" placeholder="— неизвестно —"/>
+      <span class="daemon-tn-cb"><input type="checkbox" name="system.trueNameKnown" {{#if daemon.trueNameKnown}}checked{{/if}}/> раскрыто</span>
+    </label>
+    {{#if daemon.canPsyker}}
+    <label class="daemon-psy-cb" title="Пси-пробуждение: демон использует Психосилы (появится вкладка ПСИ)">
+      <input type="checkbox" name="system.isPsyker" {{#if daemon.isPsykerRaw}}checked{{/if}}/> Псайкер
+    </label>
+    {{/if}}
+    {{#if daemon.alg.divineTrait}}
+    <div class="daemon-divine"><b>{{daemon.alg.divineTrait}}:</b> {{daemon.alg.note}}</div>
+    {{/if}}
+  </div>
+
+  {{!-- ── ВКЛАДКИ (переиспользуют части листа персонажа) ──────────────────── --}}
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="stats">ПОКАЗАТЕЛИ</a>
+    <a class="item" data-tab="combat">БОЙ</a>
+    <a class="item" data-tab="abilities">СПОСОБНОСТИ</a>
+    {{#if daemon.showPsy}}<a class="item" data-tab="psy">ПСИ</a>{{/if}}
+    <a class="item" data-tab="gear">СНАРЯЖЕНИЕ</a>
+    <a class="item" data-tab="advance">РАЗВИТИЕ</a>
+    <a class="item" data-tab="daemonlore">ДЕМОНОЛОГИЯ</a>
+    <a class="item" data-tab="notes">ЗАПИСИ</a>
+  </nav>
+  <div class="sheet-body">
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs"}}
+    {{#if daemon.showPsy}}{{> "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs"}}{{/if}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}
+
+    {{!-- Вкладка Демонология: справочник механик --}}
+    <div class="tab daemon-lore-tab" data-tab="daemonlore" data-group="primary">
+      <div class="stat-panel">
+        <div class="panel-title">ФОРМА МАНИФЕСТАЦИИ — {{daemon.formMeta.label}}</div>
+        <div class="daemon-note">Изгнание через {{daemon.formDur}}. {{daemon.formMeta.note}}</div>
+        <div class="daemon-note">Лечение: Истончение Завесы +2 считается отдыхом, +4 — постельным режимом. Первая помощь лечит W.b медика Ран (тест через W).</div>
+      </div>
+      <div class="stat-panel" style="margin-top:8px;">
+        <div class="panel-title">РАНГ — {{daemon.rankMeta.label}} <span class="daemon-inf-range">Inf {{daemon.rankMeta.infamyRange}}</span></div>
+        <div class="daemon-note">{{daemon.rankMeta.note}}</div>
+      </div>
+      <div class="stat-panel" style="margin-top:8px;">
+        <div class="panel-title">КЛЮЧЕВЫЕ ДЕМОНИЧЕСКИЕ ТРЕЙТЫ</div>
+        <div class="daemon-reflist">
+          {{#each daemon.keyTraits as |t|}}
+          <div class="daemon-ref"><b>{{t.label}}</b> — {{t.text}}</div>
+          {{/each}}
+        </div>
+      </div>
+      <div class="stat-panel" style="margin-top:8px;">
+        <div class="panel-title">СВОЙСТВА ДЕМОНИЧЕСКОГО ОРУЖИЯ</div>
+        <div class="daemon-reflist">
+          {{#each daemon.weaponProps as |w|}}
+          <div class="daemon-ref"><b>{{w.label}}</b> — {{w.text}}</div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
+  </div>
+</form>

@@ -1,0 +1,97 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Лист Хаосита: тема Бога-покровителя.
+   Форма несёт класс .chaos-heretic .chaos-god-<key> и переменные
+   --gc/--gc2/--glow/--dp-hue/--dp-sat/--dp-bright (из CHAOS_PATRONS).
+   Данные-вкладки (когитаторная зелень) перекрашиваются одним
+   hue-rotate в цвет Бога; Неделимый — тёмная бронза/коричневый мрак.
+═══════════════════════════════════════════════════════ */
+
+/* ── Единая перекраска в цвет Бога: ВСЯ шапка + все данные-вкладки ──
+   Источник — когитаторная зелень; один hue-rotate двигает её в цвет Бога
+   (шапка, поля ввода, панели, ТЕЛО, ЗАПИСИ). Портрет и карточки Богов
+   контр-развёрнуты, чтобы сохранить истинные цвета. ПСИ/ТЕХ/НАВ/
+   ОДЕРЖИМОСТЬ не трогаем (свои темы); полоса Очков и навигация красятся
+   напрямую через --gc (см. ниже). */
+.warhammer-dbc .chaos-heretic .sheet-header,
+.warhammer-dbc .chaos-heretic .stats-cog,
+.warhammer-dbc .chaos-heretic .combat-cog,
+.warhammer-dbc .chaos-heretic .abil-cog,
+.warhammer-dbc .chaos-heretic .gear-cog,
+.warhammer-dbc .chaos-heretic .advance-cog,
+.warhammer-dbc .chaos-heretic .body-tab,
+.warhammer-dbc .chaos-heretic .notes-cog .notes-section-panel {
+  filter: hue-rotate(var(--dp-hue)) saturate(var(--dp-sat, 1)) brightness(var(--dp-bright, 1));
+}
+/* Контр-разворот: истинные цвета портрета и карточек Богов-покровителей.
+   Двойной фильтр (родитель ↻ + потомок ↺) взаимно гасится. */
+.warhammer-dbc .chaos-heretic .profile-img,
+.warhammer-dbc .chaos-heretic .chaos-patron-opt {
+  filter: brightness(calc(1 / var(--dp-bright, 1))) saturate(calc(1 / var(--dp-sat, 1))) hue-rotate(calc(-1 * var(--dp-hue, 0deg)));
+}
+
+/* ── Полоса Очков и навигация — прямой цвет Бога (не ротируются) ── */
+.warhammer-dbc .chaos-heretic .sheet-tabs .item.active {
+  color: #fff; box-shadow: inset 0 -2px 0 var(--gc), inset 0 0 22px -9px var(--glow);
+  text-shadow: 0 0 8px var(--glow);
+}
+.warhammer-dbc .chaos-heretic .sheet-tabs .item:hover { text-shadow: 0 0 8px var(--glow); }
+
+/* ── Полоса Очков Бесчестия у Хаосита: скрытый счётчик ──── */
+.warhammer-dbc .chaos-heretic .dp-ip-strip { font-family: "Consolas","Lucida Console","Courier New",monospace; }
+.warhammer-dbc .chaos-heretic .dp-ip-bound {
+  font-size: 0.72em; color: color-mix(in srgb, var(--gc) 70%, #b8a99a); font-style: italic; opacity: 0.85;
+}
+
+/* ── Селектор Бога-покровителя (вкладка ЗАПИСИ) ─────────── */
+.warhammer-dbc .chaos-patron-panel .chaos-patron-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 9px; padding: 4px 2px 2px;
+}
+.warhammer-dbc .chaos-patron-opt {
+  --pg: #b5905a;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 11px 6px;
+  border-radius: 9px; cursor: pointer; position: relative;
+  border: 1px solid color-mix(in srgb, var(--pg) 30%, #2a2018);
+  background: radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--pg) 12%, transparent), transparent 65%), rgba(0,0,0,0.3);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.warhammer-dbc .chaos-patron-opt input { display: none; }
+.warhammer-dbc .chaos-patron-sigil {
+  width: 46px; height: 46px; background: var(--pg);
+  filter: drop-shadow(0 0 5px var(--pgl, rgba(180,144,90,0.6)));
+  transition: transform 0.2s;
+}
+.warhammer-dbc .chaos-patron-name {
+  font-size: 0.78em; font-weight: 800; letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--pg) 75%, #e8ddd2);
+}
+.warhammer-dbc .chaos-patron-favor {
+  display: flex; align-items: center; gap: 5px; margin-top: 1px;
+}
+.warhammer-dbc .chaos-patron-favor-val {
+  min-width: 1.4em; text-align: center; font-size: 0.86em; font-weight: 800;
+  color: color-mix(in srgb, var(--pg) 80%, #e8ddd2);
+}
+.warhammer-dbc .chaos-patron-favor .stat-add-btn {
+  width: 20px; height: 20px; font-size: 0.85em;
+}
+.warhammer-dbc .chaos-patron-opt:hover {
+  border-color: color-mix(in srgb, var(--pg) 70%, transparent); transform: translateY(-2px);
+}
+.warhammer-dbc .chaos-patron-opt:hover .chaos-patron-sigil { transform: scale(1.08); }
+.warhammer-dbc .chaos-patron-opt.sel {
+  border-color: var(--pg);
+  box-shadow: inset 0 0 20px -6px var(--pg), 0 0 14px -4px var(--pgl, rgba(180,144,90,0.6));
+  background: radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--pg) 24%, transparent), transparent 68%), rgba(0,0,0,0.32);
+}
+.warhammer-dbc .chaos-patron-opt.sel .chaos-patron-sigil { animation: chaosPatronPulse 3s ease-in-out infinite; }
+@keyframes chaosPatronPulse {
+  0%, 100% { filter: drop-shadow(0 0 5px var(--pgl, rgba(180,144,90,0.6))); }
+  50%      { filter: drop-shadow(0 0 13px var(--pgl, rgba(180,144,90,0.6))); }
+}
+.warhammer-dbc .chaos-patron-note { margin-top: 8px; font-size: 0.78em; color: #9a8f80; font-style: italic; }
+
+/* Усталость: на тёмном фоне листа хаосита значение и лейбл должны быть яркими
+   (базовый var(--wh-red) может унаследоваться тёмным от пергаментной темы). */
+.warhammer-dbc .chaos-heretic .fatigue-value-input.fatigue-nonzero { color: #ff5a5a !important; }
+.warhammer-dbc .chaos-heretic .fatigue-cell > label,
+.warhammer-dbc .chaos-heretic .fatigue-label { color: #ff6b6b; }

@@ -1,0 +1,424 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Шапка и вкладки персонажа
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .sheet-header {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--wh-red);
+  flex-shrink: 0;
+  background: var(--wh-parchment);
+}
+
+/* ── Темизация по мировоззрению (акцент + баннер) ───────────── */
+.warhammer-dbc.wh-align-loyalist .sheet-header { border-left: 5px solid #b8932e; }
+.warhammer-dbc.wh-align-renegade .sheet-header { border-left: 5px solid #6f6f6f; }
+.warhammer-dbc.wh-align-heretic  .sheet-header { border-left: 5px solid #8b1a1a; }
+
+.warhammer-dbc.wh-align-heretic .sheet-header { background: linear-gradient(90deg, rgba(139,26,26,0.10), var(--wh-parchment) 60%); }
+.warhammer-dbc.wh-align-renegade .sheet-header { background: linear-gradient(90deg, rgba(90,90,90,0.10), var(--wh-parchment) 60%); }
+
+/* ── Эмблема мировоззрения на заднем плане шапки ────────────── */
+.warhammer-dbc .sheet-header.chaos-aligned,
+.warhammer-dbc .sheet-header.loyalist-aligned,
+.warhammer-dbc .sheet-header.renegade-aligned { position: relative; overflow: hidden; }
+.warhammer-dbc .sheet-header.chaos-aligned::before,
+.warhammer-dbc .sheet-header.loyalist-aligned::before,
+.warhammer-dbc .sheet-header.renegade-aligned::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  opacity: 0.1;
+}
+.warhammer-dbc .sheet-header.chaos-aligned > *,
+.warhammer-dbc .sheet-header.loyalist-aligned > *,
+.warhammer-dbc .sheet-header.renegade-aligned > * { position: relative; z-index: 1; }
+
+/* Хаосит — сигил Бога-покровителя (меняется в Записях; Неделимый — звезда
+   Хаоса). Сигил, базовый цвет и размер приходят из CHAOS_PATRONS через
+   --patron-sigil / --patron-star / --patron-sigil-size.
+   ВАЖНО: вся шапка крутится hue-rotate'ом (chaos-heretic.css) — зелень
+   когитатора → цвет Бога. Знак — потомок шапки, поэтому его НЕ красят в
+   готовый цвет и НЕ контр-разворачивают (это давало клиппинг и мельтешение).
+   Его красят в «когитаторную зелень» (--patron-star), а фильтр шапки САМ
+   доводит её до цвета Бога — ровно как остальную зелень. Дыхание/свечение —
+   через decorSigilBreath (actor-decor.css). */
+.warhammer-dbc .sheet-header.chaos-aligned::before {
+  background-color: var(--patron-star, #4dffa6);
+  color: var(--patron-star, #4dffa6); /* currentColor для свечения из decorSigilBreath */
+  -webkit-mask: var(--patron-sigil, url("/systems/warhammer-dbc/assets/Chaos.png")) right center / auto var(--patron-sigil-size, 150%) no-repeat;
+  mask: var(--patron-sigil, url("/systems/warhammer-dbc/assets/Chaos.png")) right center / auto var(--patron-sigil-size, 150%) no-repeat;
+}
+/* Лоялист — золотая аквила (симметричный водяной знак по центру) */
+.warhammer-dbc .sheet-header.loyalist-aligned::before {
+  background-color: #e8c14a;
+  -webkit-mask: url("/systems/warhammer-dbc/assets/aquila-white.png") center / auto 92% no-repeat;
+  mask: url("/systems/warhammer-dbc/assets/aquila-white.png") center / auto 92% no-repeat;
+  opacity: 0.08;
+}
+/* Ренегат — череп (приглушённый серый) */
+.warhammer-dbc .sheet-header.renegade-aligned::before {
+  background-color: #b0b0b0;
+  -webkit-mask: url("/systems/warhammer-dbc/assets/renegade.png") right center / auto 155% no-repeat;
+  mask: url("/systems/warhammer-dbc/assets/renegade.png") right center / auto 155% no-repeat;
+}
+
+/* Бейдж-полоска мировоззрения */
+.warhammer-dbc .align-label { display: flex; flex-direction: column; gap: 2px; }
+.warhammer-dbc .alignment-select { font-family: inherit; }
+/* Имя и метка «Имя» у Хаосита: шапка hue-rotate'ится в цвет Бога, поэтому
+   красим их в когитаторную зелень — фильтр сам доводит до читаемого цвета
+   Бога (иначе фикс. красный проворачивался в грязно-фиолетовый). */
+.warhammer-dbc.wh-align-heretic .character-sheet .actor-name,
+.warhammer-dbc.wh-align-heretic .character-sheet .header-name-row .header-label {
+  color: #4dffa6;
+}
+
+/* Кнопка Мастера создания — компактная, прижата вправо */
+.warhammer-dbc .char-wizard-btn {
+  width: auto;
+  flex: 0 0 auto;
+  margin-left: auto;
+  align-self: center;
+  padding: 2px 9px;
+  background: var(--wh-panel-dark, #2a1c10);
+  color: var(--wh-text-light, #e8d5a3);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8em;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.warhammer-dbc .char-wizard-btn:hover { background: #5a2a0e; }
+
+/* Мировоззрение в шапке — компактнее */
+.warhammer-dbc .align-label { font-size: 0.82em; gap: 3px; }
+.warhammer-dbc .alignment-select { font-size: 0.95em; padding: 1px 3px; }
+
+.warhammer-dbc .portrait-block { flex-shrink: 0; }
+
+.warhammer-dbc .profile-img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border: 2px solid var(--wh-red);
+  cursor: pointer;
+  background: #3a3a3a;
+  display: block;
+}
+
+.warhammer-dbc .header-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.warhammer-dbc .header-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.warhammer-dbc .header-label {
+  font-weight: bold;
+  font-size: 0.85em;
+  color: var(--wh-red);
+  white-space: nowrap;
+}
+
+.warhammer-dbc .actor-name {
+  flex: 1;
+  font-size: 1.4em;
+  font-weight: bold;
+  border: none;
+  border-bottom: 1px solid var(--wh-red);
+  background: transparent;
+  color: var(--wh-text);
+  padding: 2px 4px;
+}
+
+/* Раньше .header-grid был единым CSS-гридом (3 колонки, dense-упаковка), и
+   4 фиксированные строки слева делили ОБЩИЕ строчные треки с ячейками-
+   ресурсами справа (Очки Бесчестия/Усталость). Трек подстраивался под самый
+   высокий элемент в нём — высокая «Усталость» (лейбл+значения+полоска+4
+   кнопки, ~74px) растягивала всю строку своего соседа слева (напр.
+   «Архетип»), тот прилипал к верху (align-items:start), а под ним оставалась
+   пустота до следующей строки. Теперь это просто ДВЕ независимые колонки
+   (flex row) — левая (.header-rows, свой стек строк) и правая
+   (.header-resources) больше не делят треки по высоте вообще. */
+.warhammer-dbc .header-grid {
+  display: flex;
+  gap: 4px 12px;
+  align-items: flex-start;
+}
+
+.warhammer-dbc .header-rows {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.warhammer-dbc .header-resources {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+/* Фиксированные строки шапки (Раса/Субраса/Геносемя/Культура, Архетипы,
+   Происхождение/Предсказание, Стремления) — каждая на всю ширину колонки
+   .header-rows. */
+.warhammer-dbc .header-row-fixed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.warhammer-dbc .header-row-fixed .header-cell { flex: 1 1 140px; min-width: 0; }
+
+/* Компактное read-only поле (Геносемя/Культура/Стремления) — то же место, что
+   и у select/input, но просто текст: сами дроплисты живут на «Заметках». */
+.warhammer-dbc .header-cell-readonly .header-readonly-val {
+  flex: 1;
+  font-size: 0.85em;
+  color: var(--wh-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.warhammer-dbc .header-cell-elite .elite-stack {
+  flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;
+}
+.warhammer-dbc .elite-add-btn, .warhammer-dbc .elite-extra-remove, .warhammer-dbc .elite-extra-pick-btn {
+  flex: 0 0 auto; width: 22px; height: 22px; padding: 0; line-height: 1; cursor: pointer;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px; font-size: 0.8em;
+}
+.warhammer-dbc .elite-add-btn:hover,
+.warhammer-dbc .elite-extra-pick-btn:hover { background: var(--wh-accent); color: #04100a; border-color: var(--wh-accent); }
+.warhammer-dbc .elite-extra-remove:hover { background: #7a2e2e; color: #ffb0b0; border-color: #7a2e2e; }
+
+.warhammer-dbc .header-cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Субраса: контролы (select + Дом/Происхождение) стопкой под лейблом */
+.warhammer-dbc .header-cell-subrace { align-items: flex-start; }
+.warhammer-dbc .subrace-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.warhammer-dbc .subrace-controls select,
+.warhammer-dbc .subrace-controls input[type="text"] {
+  width: 100%;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  padding: 2px 5px;
+  font-family: inherit;
+  font-size: 0.85em;
+  color: var(--wh-text);
+}
+
+.warhammer-dbc .header-cell > label {
+  font-size: 0.82em;
+  font-weight: bold;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+  min-width: 58px;
+}
+
+.warhammer-dbc .header-cell input[type="text"],
+.warhammer-dbc .header-cell select {
+  flex: 1;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  padding: 2px 5px;
+  font-family: inherit;
+  font-size: 0.85em;
+  color: var(--wh-text);
+}
+
+/* ── Ячейка судьбы / усталости ── */
+.warhammer-dbc .fate-cell {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.warhammer-dbc .fate-cell > label {
+  min-width: unset;
+  font-size: 0.78em;
+  color: var(--wh-red);
+  font-weight: bold;
+}
+
+.warhammer-dbc .fate-values {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.warhammer-dbc .fate-values input {
+  width: 36px;
+  text-align: center;
+  font-weight: bold;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  padding: 2px;
+}
+
+.warhammer-dbc .header-checks {
+  display: flex;
+  gap: 16px;
+  margin-top: 2px;
+  align-items: center;
+}
+
+.warhammer-dbc .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.88em;
+  cursor: pointer;
+}
+
+/* ── Вкладки ── */
+.warhammer-dbc .sheet-tabs {
+  display: flex;
+  background: var(--wh-red-tab);
+  flex-shrink: 0;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.warhammer-dbc .sheet-tabs .item {
+  flex: 1;
+  text-align: center;
+  padding: 7px 4px;
+  font-size: 0.76em;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  color: #e0d0c0;
+  cursor: pointer;
+  border-right: 1px solid #5a0e0e;
+  border-bottom: none;
+  transition: background 0.15s;
+}
+
+.warhammer-dbc .sheet-tabs .item:last-child { border-right: none; }
+.warhammer-dbc .sheet-tabs .item:hover { background: var(--wh-red); color: #fff; }
+.warhammer-dbc .sheet-tabs .item.active {
+  background: var(--wh-panel-dark);
+  color: var(--wh-text-light);
+}
+
+/* ══════════════════════════════════════════════════════
+   Усталость в шапке — компактный блок
+══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .fatigue-cell {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+/* Лейбл: "Усталость" + бейдж штрафа */
+.warhammer-dbc .fatigue-cell > label,
+.warhammer-dbc .fatigue-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: unset;
+  font-size: 0.78em;
+  color: var(--wh-red);
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* Бейдж «−10» — появляется при усталости ≥ 1 */
+.warhammer-dbc .fatigue-penalty-badge {
+  display: inline-block;
+  background: #8b0000;
+  color: #fff;
+  font-size: 0.68em;
+  font-weight: bold;
+  padding: 0 3px;
+  border-radius: 2px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+/* Поле значения — красное при > 0. Цвет тема-зависимый (var(--wh-red)):
+   тёмно-красный на пергаменте, яркий на когитаторе — иначе на тёмных темах
+   (зелёный когитатор, лист хаосита) число нечитаемо. */
+.warhammer-dbc .fatigue-value-input.fatigue-nonzero {
+  color: var(--wh-red) !important;
+  font-weight: bold;
+}
+
+/* Ряд кнопок: компактные квадратики */
+.warhammer-dbc .fatigue-btns {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+  justify-content: flex-end;
+}
+
+.warhammer-dbc .fatigue-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wh-parchment);
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.68em;
+  font-family: inherit;
+  font-weight: bold;
+  padding: 0 5px;
+  height: 18px;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  line-height: 1;
+}
+
+.warhammer-dbc .fatigue-btn:hover {
+  background: rgba(139, 0, 0, 0.10);
+  color: var(--wh-red);
+  border-color: var(--wh-red);
+}
+
+/* +1 / −1 — ещё компактнее, чисто квадрат */
+.warhammer-dbc .fatigue-add-btn,
+.warhammer-dbc .fatigue-remove-btn {
+  width: 18px;
+  padding: 0;
+  font-size: 0.9em;
+}
+
+/* Кнопка «Сон» — зелёный акцент */
+.warhammer-dbc .fatigue-btn-sleep {
+  border-color: #388e3c;
+  color: #2e7d32;
+}
+.warhammer-dbc .fatigue-btn-sleep:hover {
+  background: rgba(56, 142, 60, 0.12);
+  color: #1b5e20;
+  border-color: #2e7d32;
+}

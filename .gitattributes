@@ -1,0 +1,11 @@
+# Нормализация переводов строк в исходниках
+*.mjs   text eol=lf
+*.js    text eol=lf
+*.json  text eol=lf
+*.hbs   text eol=lf
+*.css   text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+
+# Компендиумы LevelDB — только двоичное сравнение, без конвертации
+packs/** binary

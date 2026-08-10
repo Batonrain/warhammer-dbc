@@ -1,0 +1,75 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Контекстное меню
+═══════════════════════════════════════════════════════ */
+
+.wh-context-menu {
+  position: fixed;
+  z-index: 10000;
+  background: #0a1c12;
+  border: 1px solid #2f9e6a;
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 8px rgba(77,255,166,0.2);
+  min-width: 180px;
+  overflow: hidden;
+}
+
+.wh-ctx-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #c6ffe0;
+  border-bottom: 1px solid rgba(47,158,106,0.35);
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+
+.wh-ctx-item:last-child { border-bottom: none; }
+.wh-ctx-item:hover { background: #15492f; color: #eafff4; }
+.wh-ctx-sep { height: 1px; background: rgba(47,158,106,0.4); margin: 2px 0; padding: 0; }
+.wh-ctx-rename:hover { color: #6fe6ff; }
+.wh-ctx-delete:hover { background: #3a1414; color: #ff8a8a; }
+
+/* ── Контекстные меню ядра Foundry — тоже под когитатор ── */
+#context-menu, .context-menu, nav#context-menu, menu#context-menu {
+  background: #0a1c12 !important;
+  border: 1px solid #2f9e6a !important;
+  color: #c6ffe0 !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6) !important;
+}
+#context-menu .context-item, .context-menu .context-item,
+#context-menu li, .context-menu li,
+#context-menu .context-menu-item, .context-menu .context-menu-item {
+  color: #c6ffe0 !important;
+}
+#context-menu .context-item:hover, .context-menu .context-item:hover,
+#context-menu li:hover, .context-menu li:hover,
+#context-menu .context-menu-item:hover, .context-menu .context-menu-item:hover {
+  background: #15492f !important; color: #eafff4 !important;
+}
+#context-menu i, .context-menu i { color: #4dffa6 !important; }
+
+/* ── Диалог переименования ── */
+.wh-rename-dialog .dialog-buttons { display: flex; gap: 8px; margin-top: 8px; }
+
+.wh-rename-dialog .dialog-button {
+  flex: 1;
+  padding: 5px;
+  font-family: "Book Antiqua", Palatino, serif;
+  font-size: 0.9em;
+  cursor: pointer;
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  color: var(--wh-text);
+  transition: background 0.15s;
+}
+
+.wh-rename-dialog .dialog-button:hover { background: var(--wh-input-bg); }
+
+.wh-rename-dialog .dialog-button[data-button="ok"] {
+  background: var(--wh-panel-dark);
+  color: var(--wh-text-light);
+  border-color: var(--wh-panel-dark);
+}
+
+.wh-rename-dialog .dialog-button[data-button="ok"]:hover { background: var(--wh-red); }

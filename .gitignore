@@ -1,0 +1,24 @@
+# PDF правил — не публикуются
+books/*.pdf
+
+# Рантайм-файлы LevelDB (создаются Foundry при запуске)
+packs/*/LOCK
+packs/*/LOG
+packs/*/LOG.old
+
+# Рабочие файлы
+_tmp_*.txt
+reqs.txt
+0
+
+# Локальные настройки инструментов
+.claude/settings.local.json
+
+# Системный мусор
+.DS_Store
+Thumbs.db
+*.swp
+
+# Артефакты сборки релиза
+system.zip
+node_modules/

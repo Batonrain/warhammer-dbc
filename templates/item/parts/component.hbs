@@ -1,0 +1,215 @@
+<div class="item-section">
+  <div class="item-section-title">УЗЕЛ КОРАБЛЯ</div>
+  <div class="comp-row">
+    <label class="wr-label">Тип узла</label>
+    <select name="system.kind" class="wr-select">
+      <option value="hull"         {{#if (eq system.kind "hull")}}selected{{/if}}>Корпус</option>
+      <option value="drive"        {{#if (eq system.kind "drive")}}selected{{/if}}>Плазменный двигатель</option>
+      <option value="warp"         {{#if (eq system.kind "warp")}}selected{{/if}}>Варп-двигатель</option>
+      <option value="gellar"       {{#if (eq system.kind "gellar")}}selected{{/if}}>Поле Геллера</option>
+      <option value="voidShield"   {{#if (eq system.kind "voidShield")}}selected{{/if}}>Пустотные щиты</option>
+      <option value="bridge"       {{#if (eq system.kind "bridge")}}selected{{/if}}>Мостик</option>
+      <option value="lifeSustainer"{{#if (eq system.kind "lifeSustainer")}}selected{{/if}}>Жизнеобеспечение</option>
+      <option value="quarters"     {{#if (eq system.kind "quarters")}}selected{{/if}}>Жилые отсеки</option>
+      <option value="augur"        {{#if (eq system.kind "augur")}}selected{{/if}}>Ауспики / Авгуры</option>
+      <option value="weapon"       {{#if (eq system.kind "weapon")}}selected{{/if}}>Орудие</option>
+      <option value="hold"         {{#if (eq system.kind "hold")}}selected{{/if}}>Грузовой трюм / Отсек</option>
+      <option value="supplemental" {{#if (eq system.kind "supplemental")}}selected{{/if}}>Улучшение</option>
+      <option value="other"        {{#if (eq system.kind "other")}}selected{{/if}}>Прочее</option>
+    </select>
+    <label class="wr-label">Кач-во</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Poor.Q</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Comm.Q</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Good.Q</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Best.Q</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+  </div>
+
+  {{!-- Качество: цена в SP меняется всегда, остальное — выбор из списка. --}}
+  {{#if quality.show}}
+  <div class="comp-quality {{#if quality.need}}incomplete{{/if}}">
+    <div class="comp-quality-head">
+      <span>КАЧЕСТВО: {{quality.label}}</span>
+      <span class="cq-sp">SP {{#if (gt quality.sp 0)}}+{{/if}}{{quality.sp}}</span>
+      {{#if quality.need}}<span class="cq-need">выберите ещё {{quality.need}}</span>{{/if}}
+    </div>
+
+    {{#if quality.custom}}
+      <div class="cq-note">У узла свои зависимости от качества — они заменяют общие. Меняется только цена в SP.</div>
+    {{else}}
+      {{#if quality.fixed.length}}
+      <div class="cq-fixed">Всегда: {{#each quality.fixed}}{{this.label}}{{#unless @last}}, {{/unless}}{{/each}}</div>
+      {{/if}}
+      {{#if quality.options.length}}
+      <div class="cq-opts">
+        {{#each quality.options as |o|}}
+        <label class="cq-opt {{#if o.on}}on{{/if}}">
+          <input type="checkbox" class="comp-quality-pick" data-key="{{o.key}}" {{#if o.on}}checked{{/if}}/>
+          {{o.label}}
+        </label>
+        {{/each}}
+      </div>
+      {{/if}}
+      <div class="cq-result">
+        Итог: P {{quality.effPower}} · SPC {{quality.effSpace}} · SP {{quality.effSp}}
+        {{#if quality.isWeapon}} · S {{quality.effS}} · {{quality.effDmg}} · крит {{quality.effCrit}} · дальн. {{quality.effRng}}{{/if}}
+      </div>
+    {{/if}}
+
+    <label class="cq-custom">
+      <input type="checkbox" name="system.qualityCustom" {{#if system.qualityCustom}}checked{{/if}}/>
+      У узла свои зависимости от качества
+    </label>
+  </div>
+  {{/if}}
+
+  {{#unless (eq system.kind "hull")}}
+  <div class="comp-row">
+    <label class="wr-label" title="Энергия: >0 потребляет, <0 вырабатывает">P (Энергия)</label>
+    <input type="number" name="system.power" value="{{system.power}}" class="wr-input-xs"/>
+    <label class="wr-label">SPC</label>
+    <input type="number" name="system.space" value="{{system.space}}" class="wr-input-xs"/>
+    <label class="wr-label">SP</label>
+    <input type="number" name="system.sp" value="{{system.sp}}" class="wr-input-xs"/>
+    <label class="wr-label">R</label>
+    <input type="number" name="system.rarity" value="{{system.rarity}}" class="wr-input-xs"/>
+  </div>
+  {{else}}
+  <div class="comp-row">
+    <label class="wr-label">SP корпуса</label>
+    <input type="number" name="system.sp" value="{{system.sp}}" class="wr-input-xs"/>
+    <label class="wr-label">R</label>
+    <input type="number" name="system.rarity" value="{{system.rarity}}" class="wr-input-xs"/>
+  </div>
+  {{/unless}}
+
+  {{#unless (eq system.kind "hull")}}
+  <div class="comp-row" title="Грузоподъёмность (LC) и Пассажировместимость (PC), которые узел добавляет кораблю">
+    <label class="wr-label">+LC (грузы)</label>
+    <input type="number" name="system.lcBonus" value="{{system.lcBonus}}" class="wr-input-xs" min="0"/>
+    <label class="wr-label">+PC (пассажиры)</label>
+    <input type="number" name="system.pcBonus" value="{{system.pcBonus}}" class="wr-input-xs" min="0"/>
+  </div>
+  {{/unless}}
+
+  <div class="comp-row">
+    <label class="wr-label">Корпуса (Hulls)</label>
+    <input type="text" name="system.hulls" value="{{system.hulls}}" class="wr-input-lg" placeholder="на какие корпуса ставится…"/>
+  </div>
+</div>
+
+{{!-- ───────── Корпус ───────── --}}
+{{#if (eq system.kind "hull")}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ КОРПУСА</div>
+  <div class="comp-row">
+    <label class="wr-label">SPC (Пространство)</label>
+    <input type="number" name="system.hull.spaceMax" value="{{system.hull.spaceMax}}" class="wr-input-xs"/>
+    <label class="wr-label">P.Gen (Выработка)</label>
+    <input type="number" name="system.hull.powerGen" value="{{system.hull.powerGen}}" class="wr-input-xs"/>
+    <label class="wr-label">HI (Прочность)</label>
+    <input type="number" name="system.hull.hullIntegrity" value="{{system.hull.hullIntegrity}}" class="wr-input-xs"/>
+  </div>
+  <div class="comp-row">
+    <label class="wr-label">Поворот (T)</label>
+    <input type="text" name="system.hull.turnArc" value="{{system.hull.turnArc}}" class="wr-input-sm"/>
+    <label class="wr-label">Орудийная оснащённость (WC)</label>
+    <input type="text" name="system.hull.weaponCapacity" value="{{system.hull.weaponCapacity}}" class="wr-input-lg" placeholder="Н1, ПБ1, ЛБ1"/>
+  </div>
+  <div class="comp-row comp-chars">
+    <label class="wr-label">SPD</label><input type="number" name="system.chars.speed" value="{{system.chars.speed}}" class="wr-input-xs"/>
+    <label class="wr-label">MN</label><input type="number" name="system.chars.manoeuvrability" value="{{system.chars.manoeuvrability}}" class="wr-input-xs"/>
+    <label class="wr-label">DT</label><input type="number" name="system.chars.detection" value="{{system.chars.detection}}" class="wr-input-xs"/>
+    <label class="wr-label">VS</label><input type="number" name="system.chars.voidShields" value="{{system.chars.voidShields}}" class="wr-input-xs"/>
+    <label class="wr-label">ARM</label><input type="number" name="system.chars.armour" value="{{system.chars.armour}}" class="wr-input-xs"/>
+    <label class="wr-label">TR</label><input type="number" name="system.chars.turretRating" value="{{system.chars.turretRating}}" class="wr-input-xs"/>
+  </div>
+</div>
+{{/if}}
+
+{{!-- ───────── Орудие (лэнс/макробатарея) ───────── --}}
+{{#if (eq system.kind "weapon")}}
+<div class="item-section">
+  <div class="item-section-title">ОРУДИЕ</div>
+  <div class="comp-row">
+    <label class="wr-label">Тип</label>
+    <select name="system.weapon.wType" class="wr-select-sm">
+      <option value="macrobattery" {{#if (eq system.weapon.wType "macrobattery")}}selected{{/if}}>Макробатарея</option>
+      <option value="lance"        {{#if (eq system.weapon.wType "lance")}}selected{{/if}}>Лэнс</option>
+      <option value="nova"         {{#if (eq system.weapon.wType "nova")}}selected{{/if}}>Нова-орудие</option>
+      <option value="torpedo"      {{#if (eq system.weapon.wType "torpedo")}}selected{{/if}}>Торпеды</option>
+      <option value="bay"          {{#if (eq system.weapon.wType "bay")}}selected{{/if}}>Ангар</option>
+      <option value="other"        {{#if (eq system.weapon.wType "other")}}selected{{/if}}>Прочее</option>
+    </select>
+    <label class="wr-label">Дуга</label>
+    <input type="text" name="system.weapon.arc" value="{{system.weapon.arc}}" class="wr-input-sm" placeholder="ЛБ/ПБ/НП/Н/К"/>
+  </div>
+  {{#if (eq system.weapon.wType "torpedo")}}
+  <div class="comp-row">
+    <label class="wr-label">Сила (S)</label><input type="number" name="system.weapon.strength" value="{{system.weapon.strength}}" class="wr-input-xs"/>
+    <label class="wr-label">Дальн.</label><input type="number" name="system.weapon.range" value="{{system.weapon.range}}" class="wr-input-xs"/>
+  </div>
+  <div class="drug-stat-hint">Сила (S) — число пусковых труб (макс. торпед в залпе). Урон, Крит, Дальность и Terminal Penetration берутся от боеголовки торпеды; у самого аппарата урона нет.</div>
+  {{else}}
+  <div class="comp-row">
+    <label class="wr-label">Сила (S)</label><input type="number" name="system.weapon.strength" value="{{system.weapon.strength}}" class="wr-input-xs"/>
+    <label class="wr-label">Урон</label><input type="text" name="system.weapon.damage" value="{{system.weapon.damage}}" class="wr-input-sm"/>
+    <label class="wr-label">Крит</label><input type="number" name="system.weapon.crit" value="{{system.weapon.crit}}" class="wr-input-xs"/>
+    <label class="wr-label">Дальн.</label><input type="number" name="system.weapon.range" value="{{system.weapon.range}}" class="wr-input-xs"/>
+  </div>
+  {{/if}}
+</div>
+{{/if}}
+
+{{!-- ───────── Свойства узла (Aspects) — автоматизированные ───────── --}}
+<div class="item-section">
+  <div class="item-section-title">СВОЙСТВА (ASPECTS)</div>
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Добавить свойство</label>
+      <select class="shipprop-add-select">
+        <option value="">＋ свойство узла…</option>
+        {{#each shipPropsAvailable as |d|}}
+        <option value="{{d.key}}">{{d.label}} ({{d.en}})</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if shipPropsActive.length}}
+    <div class="weapon-props-list">
+      {{#each shipPropsActive as |p|}}
+      <div class="wprop-chip" title="{{p.def.desc}}">
+        <span class="wprop-name">{{p.def.label}}</span>
+        {{#if p.def.rating}}
+        <input type="number" class="shipprop-rating" data-key="{{p.key}}" data-field="rating" value="{{p.rating}}" title="Рейтинг X"/>
+        {{/if}}
+        {{#if p.def.rating2}}
+        <span class="wprop-slash">/</span>
+        <input type="number" class="shipprop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
+        {{/if}}
+        <button type="button" class="shipprop-remove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  <textarea name="system.aspects" class="item-textarea" style="margin-top:6px;" placeholder="Доп. заметки по свойствам узла…">{{system.aspects}}</textarea>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">СОСТОЯНИЕ</div>
+  <div class="comp-row">
+    <label class="wr-label"><input type="checkbox" name="system.essential" {{#if system.essential}}checked{{/if}}/> Необходимый</label>
+    <label class="wr-label"><input type="checkbox" name="system.external" {{#if system.external}}checked{{/if}}/> Внешний</label>
+    <label class="wr-label">Состояние
+      <select name="system.status" class="wr-select-md">
+        <option value="intact"    {{#if (eq system.status "intact")}}selected{{/if}}>Невредим</option>
+        <option value="unpowered" {{#if (eq system.status "unpowered")}}selected{{/if}}>Обесточен</option>
+        <option value="damaged"   {{#if (eq system.status "damaged")}}selected{{/if}}>Повреждён</option>
+        <option value="destroyed" {{#if (eq system.status "destroyed")}}selected{{/if}}>Уничтожен</option>
+      </select>
+    </label>
+  </div>
+  <div class="drug-stat-hint" style="font-size:0.82em;">Невредимый узел работает; Обесточен/Повреждён — не работает, но чинится; Уничтожен — не работает. Неисправный узел не даёт бонусов и не потребляет/вырабатывает энергию.</div>
+</div>

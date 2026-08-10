@@ -1,0 +1,321 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — CSS переменные
+═══════════════════════════════════════════════════════ */
+
+:root {
+  --wh-bg:           #d0c8b8;
+  --wh-parchment:    #d0c8b8;
+  --wh-parchment2:   #c0b8a8;
+  --wh-parchment3:   #b0a898;
+  --wh-panel-dark:   #2c1a0e;
+  --wh-panel-mid:    #4a2e18;
+  --wh-red:          #8b1a1a;
+  --wh-red-tab:      #6b1212;
+  --wh-text:         #1a0e06;
+  --wh-text-dark:    #0e0804;
+  --wh-text-mid:     #2c1a0e;
+  --wh-text-light:   #e8e0d0;
+  --wh-link:         #1a1a6e;
+  --wh-link-hover:   #8b1a1a;
+  --wh-border:       #7a5c2e;
+  --wh-border-light: #9a7c4e;
+  --wh-input-bg:     #ccc8bc;
+  --wh-input-dark:   #b8b2a4;
+  --wh-xp-spent:     #cc2200;
+  --wh-xp-current:   #1a7a1a;
+  --wh-accent:       #8b1a1a;
+  --wh-panel-bg:     #d6c9a8;
+}
+/* ── Когитатор-тема (зелёный терминал) — система целиком ──
+   Двойной .wh-holo поднимает приоритет над расовыми палитрами. */
+.warhammer-dbc.wh-holo.wh-holo {
+  --wh-bg:           #06120c;
+  --wh-parchment:    #08160e;
+  --wh-parchment2:   #0c2016;
+  --wh-parchment3:   #103022;
+  --wh-panel-dark:   #04100a;
+  --wh-panel-mid:    #2f8f5e;
+  --wh-red:          #ff6b6b;
+  --wh-red-tab:      #04100a;
+  --wh-text:         #b8ffd8;
+  --wh-text-dark:    #d8ffe8;
+  --wh-text-mid:     #7fe0a8;
+  --wh-text-light:   #d8ffe8;
+  --wh-link:         #6fe6ff;
+  --wh-link-hover:   #a8f4ff;
+  --wh-border:       #1f6f4a;
+  --wh-border-light: #2f9e6a;
+  --wh-input-bg:     #0c2418;
+  --wh-input-dark:   #081a10;
+  --wh-xp-spent:     #ff6b6b;
+  --wh-xp-current:   #4dffa6;
+  --wh-accent:       #4dffa6;
+  --wh-panel-bg:     #0c2016;
+  color: var(--wh-text);
+}
+.warhammer-dbc.wh-holo .window-content { background: #06120c; color: var(--wh-text); }
+.warhammer-dbc.wh-holo input,
+.warhammer-dbc.wh-holo select,
+.warhammer-dbc.wh-holo textarea { color: var(--wh-text); accent-color: #4dffa6; }
+.warhammer-dbc.wh-holo input::placeholder,
+.warhammer-dbc.wh-holo textarea::placeholder { color: #5aa37e; }
+/* Выпадающие списки <select> — пункты тоже под когитатор */
+.warhammer-dbc.wh-holo select { background: var(--wh-input-bg); }
+.warhammer-dbc.wh-holo option { background: #0c2418; color: #c6ffe0; }
+.warhammer-dbc.wh-holo option:checked,
+.warhammer-dbc.wh-holo option:hover { background: #15492f; color: #eafff4; }
+.warhammer-dbc.wh-holo optgroup { background: #081a10; color: #4dffa6; font-weight: bold; }
+.warhammer-dbc.wh-holo option:disabled { color: #5a7a68; }
+
+/* Дистанции стрельбы в листе оружия — тёмные читаемые варианты вместо светлых */
+.warhammer-dbc.wh-holo .weapon-range-table { border-color: #1f6f4a; }
+.warhammer-dbc.wh-holo .wrt-row { color: #e8fff2; border-bottom-color: rgba(47,158,106,0.3); }
+.warhammer-dbc.wh-holo .wrt-name { color: #e8fff2; }
+.warhammer-dbc.wh-holo .wrt-range { color: #8fe8b0; }
+.warhammer-dbc.wh-holo .wrt-pointblank { background: #0f3a20; }
+.warhammer-dbc.wh-holo .wrt-pointblank .wrt-mod { color: #6dffb0; }
+.warhammer-dbc.wh-holo .wrt-short { background: #1a3a16; }
+.warhammer-dbc.wh-holo .wrt-short .wrt-mod { color: #b6f77a; }
+.warhammer-dbc.wh-holo .wrt-combat { background: #232a16; }
+.warhammer-dbc.wh-holo .wrt-combat .wrt-mod { color: #dde8a0; }
+.warhammer-dbc.wh-holo .wrt-long { background: #3a2611; }
+.warhammer-dbc.wh-holo .wrt-long .wrt-mod { color: #ffc878; }
+.warhammer-dbc.wh-holo .wrt-extreme { background: #3a1515; }
+.warhammer-dbc.wh-holo .wrt-extreme .wrt-mod { color: #ff8a8a; }
+
+/* Плашка «Развитие» — приглушённая, чтобы не сливалась с зелёными чипами */
+.warhammer-dbc.wh-holo .ss-imp-tag { background: #0f3a24; color: #7fe0a8; border: 1px solid #2f8f5e; }
+
+/* ═══════════════ Тотальная ревизия контраста (тёмный/слабочитаемый текст) ═══════════════ */
+/* Плейсхолдеры: браузер делает их полупрозрачными → форсируем непрозрачность и зелёный. */
+.warhammer-dbc input::placeholder, .warhammer-dbc textarea::placeholder,
+.wh-attack-dialog input::placeholder, .wh-attack-dialog textarea::placeholder,
+.wh-rename-dialog input::placeholder, .wh-rename-dialog textarea::placeholder,
+.wh-roll-dialog-window input::placeholder, .wh-roll-dialog-window textarea::placeholder,
+.wh-ammo-dialog input::placeholder {
+  color: #5fb88a !important; opacity: 1 !important;
+}
+/* Приглушённые/пустые подписи с тёмными хардкод-цветами → читаемый зелёный. */
+.warhammer-dbc.wh-holo [class$="-empty"],
+.warhammer-dbc.wh-holo [class*="-empty"] td,
+.warhammer-dbc.wh-holo [class*="-empty"] em,
+.warhammer-dbc.wh-holo [class$="-hint"],
+.warhammer-dbc.wh-holo [class$="-note"],
+.warhammer-dbc.wh-holo .conditions-empty,
+.warhammer-dbc.wh-holo .shield-bar-empty-text,
+.warhammer-dbc.wh-holo .noosphere-name,
+.warhammer-dbc.wh-holo .path-desc-empty,
+.warhammer-dbc.wh-holo .drug-stat-hint,
+.warhammer-dbc.wh-holo .stat-hint,
+.warhammer-dbc.wh-holo .panel-hint { color: #8fe8b0 !important; opacity: 1 !important; }
+.warhammer-dbc.wh-holo .noosphere-action { background: rgba(77,255,166,0.07) !important; border-left-color: #2f9e6a !important; }
+/* Серый «отключённый/неактивный» текст — приглушённо-зелёный вместо тёмно-серого. */
+.warhammer-dbc.wh-holo [class*="-off"],
+.warhammer-dbc.wh-holo [class*="-inactive"],
+.warhammer-dbc.wh-holo [class*="-disabled"] { color: #6aa888; }
+/* Контраст: метки/вторичный текст были тёмно-зелёными (--wh-panel-mid) и сливались с фоном. */
+.warhammer-dbc.wh-holo .ship-head-row label,
+.warhammer-dbc.wh-holo .ship-two-col label,
+.warhammer-dbc.wh-holo .ship-hull-grid label,
+.warhammer-dbc.wh-holo .ship-char-abbr,
+.warhammer-dbc.wh-holo .ship-char-label,
+.warhammer-dbc.wh-holo .ship-char-extra-k,
+.warhammer-dbc.wh-holo .ship-hint,
+.warhammer-dbc.wh-holo .ship-budget span,
+.warhammer-dbc.wh-holo .cargo-field,
+.warhammer-dbc.wh-holo .cargo-group-name,
+.warhammer-dbc.wh-holo .cargo-group-meta,
+.warhammer-dbc.wh-holo .cargo-row-tags,
+.warhammer-dbc.wh-holo .cargo-ref-hint,
+.warhammer-dbc.wh-holo .ship-ref-name,
+.warhammer-dbc.wh-holo .ship-ref-test,
+.warhammer-dbc.wh-holo .ship-ref-desc,
+.warhammer-dbc.wh-holo .ship-distort-meta,
+.warhammer-dbc.wh-holo .ship-spmax-field,
+.warhammer-dbc.wh-holo .crew-fx-head,
+.warhammer-dbc.wh-holo .crew-fx-t,
+.warhammer-dbc.wh-holo .ss-summary,
+.warhammer-dbc.wh-holo .ss-feature,
+.warhammer-dbc.wh-holo .ss-body-type,
+.warhammer-dbc.wh-holo .ss-zone-title,
+.warhammer-dbc.wh-holo .ss-star-note,
+.warhammer-dbc.wh-holo .ss-res-legend,
+.warhammer-dbc.wh-holo .ss-reveal-toggle,
+.warhammer-dbc.wh-holo .ss-dossier-desc { color: #9af2c4 !important; opacity: 1 !important; }
+.warhammer-dbc.wh-holo .ship-char-val,
+.warhammer-dbc.wh-holo .ship-char-extra b,
+.warhammer-dbc.wh-holo .ship-budget b,
+.warhammer-dbc.wh-holo .ss-body-name,
+.warhammer-dbc.wh-holo .ss-summary b,
+.warhammer-dbc.wh-holo .cargo-group-name,
+.warhammer-dbc.wh-holo .cargo-row-name { color: #e8fff2 !important; }
+/* Поля характеристик/бюджетов — поднять контраст подложек */
+.warhammer-dbc.wh-holo .ship-char,
+.warhammer-dbc.wh-holo .ship-budget,
+.warhammer-dbc.wh-holo .ship-char-extra { background: #0e2a1c; }
+/* Красный «секретный» текст — ярче на тёмном фоне */
+.warhammer-dbc.wh-holo .ss-dossier-lore,
+.warhammer-dbc.wh-holo .ss-imp-flag-tag,
+.warhammer-dbc.wh-holo .ss-secret .item-section-title { color: #ff9a9a !important; }
+.warhammer-dbc.wh-holo .ss-secret { border-color: #ff6b6b; background: rgba(255,107,107,0.08); }
+
+/* Плашка-предупреждение «Нет узла Корпус» — тёмно-зелёная вместо кремовой */
+.warhammer-dbc.wh-holo .ship-warn { background: #14331f; border-color: #2f9e6a !important; color: #ffd98a; }
+
+/* Чип имперской десятины — читаемый на тёмном фоне */
+.warhammer-dbc.wh-holo .ss-tithe { color: #d8f2c8; background: #14331f; border-color: #2f9e6a; }
+
+/* Диалоги в голо-стиле (генератор системы, развитие колонии, заселение, добавить тело) */
+.warhammer-dbc.wh-holo .ss-gen-field,
+.warhammer-dbc.wh-holo .ss-gen-hint,
+.warhammer-dbc.wh-holo .ss-imp-empty,
+.warhammer-dbc.wh-holo .ss-imp-chk,
+.warhammer-dbc.wh-holo .ss-imp-desc,
+.warhammer-dbc.wh-holo .ss-imp-read-desc,
+.warhammer-dbc.wh-holo .atk-dlg-row label,
+.warhammer-dbc.wh-holo .wh-wizard-form label { color: #9af2c4 !important; opacity: 1 !important; }
+.warhammer-dbc.wh-holo .ss-imp-row,
+.warhammer-dbc.wh-holo .ss-imp-read { background: rgba(120,255,180,0.06); }
+.warhammer-dbc.wh-holo .ss-gen-hint,
+.warhammer-dbc.wh-holo .ss-imp-form { background: rgba(120,255,180,0.05); }
+/* Кнопки в подвале диалога (Сгенерировать / Отмена и т.п.) */
+.warhammer-dbc.wh-holo .dialog-buttons button,
+.warhammer-dbc.wh-holo button.dialog-button {
+  background: #0e2a1c; color: #d8ffe8; border: 1px solid #2f9e6a; box-shadow: none; text-shadow: none;
+}
+.warhammer-dbc.wh-holo .dialog-buttons button:hover,
+.warhammer-dbc.wh-holo button.dialog-button:hover {
+  background: #15492f; border-color: #4dffa6; color: #eafff4; box-shadow: 0 0 7px rgba(77,255,166,0.45);
+}
+.warhammer-dbc.wh-holo .dialog-buttons button i,
+.warhammer-dbc.wh-holo button.dialog-button i { color: #4dffa6; }
+/* Имперская аквила — водяной знак в шапке окна */
+.warhammer-dbc.wh-holo .window-header { position: relative; }
+.warhammer-dbc.wh-holo .window-header::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-color: #4dffa6;
+  -webkit-mask: url("/systems/warhammer-dbc/assets/aquila-white.png") center/auto 80% no-repeat;
+  mask: url("/systems/warhammer-dbc/assets/aquila-white.png") center/auto 80% no-repeat;
+  opacity: 0.15;
+}
+.warhammer-dbc.wh-holo .window-header > * { position: relative; z-index: 1; }
+/* Лёгкое свечение рамок окна — терминальный вид */
+.warhammer-dbc.wh-holo .window-content { box-shadow: inset 0 0 0 1px rgba(47,158,106,0.25); }
+
+/* ── Палитра Азуриан (мягкая бело-красная, приглушённая) ───── */
+.warhammer-dbc.wh-race-azuriane {
+  --wh-bg:           #e6dede;
+  --wh-parchment:    #e9e2e2;
+  --wh-parchment2:   #ddd2d2;
+  --wh-parchment3:   #cfc0c0;
+  --wh-panel-dark:   #6e2222;
+  --wh-panel-mid:    #8a3838;
+  --wh-border:       #b09494;
+  --wh-border-light: #c6acac;
+  --wh-input-bg:     #f1ebeb;
+  --wh-input-dark:   #e2d6d6;
+  --wh-red-tab:      #7a2424;
+  --wh-panel-bg:     #ddd2d2;
+}
+
+/* ── Палитра Друкхари (тёмная сине-зелёная) ───────────────── */
+.warhammer-dbc.wh-race-drukhari {
+  --wh-bg:           #12211e;
+  --wh-parchment:    #18302b;
+  --wh-parchment2:   #21413a;
+  --wh-parchment3:   #2c534a;
+  --wh-panel-dark:   #0d1f1b;
+  --wh-panel-mid:    #265249;
+  --wh-border:       #3d6b60;
+  --wh-border-light: #538a7c;
+  --wh-input-bg:     #234740;
+  --wh-input-dark:   #1a352f;
+  --wh-text:         #e2efe9;
+  --wh-text-dark:    #f2faf6;
+  --wh-text-mid:     #bcd6cd;
+  --wh-text-light:   #eef7f2;
+  --wh-red:          #e07a6e;
+  --wh-accent:       #4fc2ac;
+  --wh-link:         #5fcfe0;
+  --wh-link-hover:   #8fe6f4;
+  --wh-xp-current:   #7fd86a;
+  --wh-xp-spent:     #e88a7e;
+  --wh-red-tab:      #0d1f1b;
+  --wh-panel-bg:     #21413a;
+}
+
+/* ── Палитра Иннари (бирюзовая) ───────────────────────────── */
+.warhammer-dbc.wh-race-ynnari {
+  --wh-bg:           #d6ebe9;
+  --wh-parchment:    #def1ee;
+  --wh-parchment2:   #c9e5e1;
+  --wh-parchment3:   #b3d8d2;
+  --wh-panel-dark:   #134a52;
+  --wh-panel-mid:    #226b72;
+  --wh-border:       #6fb6b4;
+  --wh-border-light: #93cccb;
+  --wh-input-bg:     #ecf7f6;
+  --wh-input-dark:   #d8eceb;
+  --wh-red:          #1f6e74;
+  --wh-accent:       #1f8a90;
+  --wh-red-tab:      #134a52;
+  --wh-panel-bg:     #c9e5e1;
+}
+
+/* ── Палитра Экзодитов (природная красно-зелёная) ─────────── */
+.warhammer-dbc.wh-race-exodite {
+  --wh-bg:           #dde4cf;
+  --wh-parchment:    #e3e9d4;
+  --wh-parchment2:   #d4dec1;
+  --wh-parchment3:   #c2d2a8;
+  --wh-panel-dark:   #2e4a22;
+  --wh-panel-mid:    #45602f;
+  --wh-border:       #88a268;
+  --wh-border-light: #a2ba84;
+  --wh-input-bg:     #eef3e2;
+  --wh-input-dark:   #dfe7cc;
+  --wh-red:          #9a2a1a;
+  --wh-accent:       #4a6a2a;
+  --wh-red-tab:      #2e4a22;
+  --wh-panel-bg:     #d4dec1;
+}
+
+/* ── Палитра Арлекинов (фиолетовая) ───────────────────────── */
+.warhammer-dbc.wh-race-harlequin {
+  --wh-bg:           #e7e0ef;
+  --wh-parchment:    #ece5f3;
+  --wh-parchment2:   #ddd1ea;
+  --wh-parchment3:   #ccbcdd;
+  --wh-panel-dark:   #2c1742;
+  --wh-panel-mid:    #5a2e86;
+  --wh-border:       #a98cc4;
+  --wh-border-light: #c2a9d8;
+  --wh-input-bg:     #f3eef8;
+  --wh-input-dark:   #e4d9ee;
+  --wh-text:         #20102e;
+  --wh-text-mid:     #3a2150;
+  --wh-text-light:   #f0e8f8;
+  --wh-red:          #8a2bbf;
+  --wh-accent:       #8a3fc4;
+  --wh-link:         #5a2e86;
+  --wh-link-hover:   #8a3fc4;
+  --wh-red-tab:      #2c1742;
+  --wh-panel-bg:     #ddd1ea;
+}
+
+/* ── Палитра Полуэльдар (смесь людей и Азуриан) ───────────── */
+.warhammer-dbc.wh-race-halfEldar {
+  --wh-bg:           #ddd2c6;
+  --wh-parchment:    #e2d7ca;
+  --wh-parchment2:   #d3c6b5;
+  --wh-parchment3:   #c4b5a0;
+  --wh-panel-dark:   #4a2820;
+  --wh-panel-mid:    #6a3a2e;
+  --wh-border:       #9c7e64;
+  --wh-border-light: #b89a7c;
+  --wh-input-bg:     #efe7da;
+  --wh-input-dark:   #e0d4c4;
+  --wh-red:          #8b2420;
+  --wh-red-tab:      #4a2820;
+  --wh-panel-bg:     #d3c6b5;
+}

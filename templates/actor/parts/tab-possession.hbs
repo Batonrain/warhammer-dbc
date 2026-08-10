@@ -1,0 +1,177 @@
+{{!-- ═══════════ ВКЛАДКА «ОДЕРЖИМОСТЬ» — Двойной Дух (DoomBC 129-132) ═══════════ --}}
+<div class="tab possession-tab" data-tab="possession" data-group="primary"
+     style="--gc:{{possession.meta.color}}; --glow:{{possession.meta.glow}};">
+
+  {{!-- Бегущие руны True Tongue (фон-полоса вверху) --}}
+  <div class="poss-runeband" aria-hidden="true">
+    <svg viewBox="0 0 384 28" preserveAspectRatio="xMinYMid slice">
+      <defs>
+        <g id="tt-r1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M5 3 L5 25 M5 14 L15 8 M5 14 L15 20"/></g>
+        <g id="tt-r2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M10 3 L4 25 L16 25 Z M10 10 L10 25"/></g>
+        <g id="tt-r3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M5 5 C15 5 15 23 5 23 M5 14 L16 14"/></g>
+        <g id="tt-r4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 4 L16 4 M10 4 L10 24 M4 24 L16 24"/></g>
+        <g id="tt-r5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="10" cy="14" r="7"/><path d="M10 5 L10 23"/></g>
+        <g id="tt-r6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M5 3 L11 14 L5 25 M11 14 L17 9 M11 14 L17 19"/></g>
+        <g id="tt-r7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M5 3 L5 25 M5 3 L14 3 L14 12 L5 12 M14 12 L17 25"/></g>
+        <g id="tt-r8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 25 L10 3 L16 25 M6 18 L14 18"/></g>
+        <g id="tt-r9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 5 L16 5 L9 14 L16 23 L4 23 M9 14 L4 14"/></g>
+        <g id="tt-r10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 3 L15 7 L4 14 L15 18 L4 24"/></g>
+      </defs>
+      <g class="poss-runeband-scroll">
+        <g>
+          <use href="#tt-r1"  x="0"/>   <use href="#tt-r6"  x="24"/>  <use href="#tt-r3"  x="48"/>  <use href="#tt-r9"  x="72"/>
+          <use href="#tt-r2"  x="96"/>  <use href="#tt-r7"  x="120"/> <use href="#tt-r10" x="144"/> <use href="#tt-r5"  x="168"/>
+          <use href="#tt-r4"  x="192"/> <use href="#tt-r8"  x="216"/> <use href="#tt-r6"  x="240"/> <use href="#tt-r1"  x="264"/>
+          <use href="#tt-r9"  x="288"/> <use href="#tt-r3"  x="312"/> <use href="#tt-r7"  x="336"/> <use href="#tt-r10" x="360"/>
+        </g>
+        <g transform="translate(384,0)">
+          <use href="#tt-r1"  x="0"/>   <use href="#tt-r6"  x="24"/>  <use href="#tt-r3"  x="48"/>  <use href="#tt-r9"  x="72"/>
+          <use href="#tt-r2"  x="96"/>  <use href="#tt-r7"  x="120"/> <use href="#tt-r10" x="144"/> <use href="#tt-r5"  x="168"/>
+          <use href="#tt-r4"  x="192"/> <use href="#tt-r8"  x="216"/> <use href="#tt-r6"  x="240"/> <use href="#tt-r1"  x="264"/>
+          <use href="#tt-r9"  x="288"/> <use href="#tt-r3"  x="312"/> <use href="#tt-r7"  x="336"/> <use href="#tt-r10" x="360"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  {{!-- Шапка: сигил бога + кольцо рун, личность демона --}}
+  <header class="poss-header">
+    <div class="poss-sigil" title="{{possession.meta.godLabel}}">
+      <svg class="poss-rune-ring" viewBox="0 0 100 100" aria-hidden="true">
+        <g class="poss-rune-ring-spin">
+          <use href="#tt-r1"  transform="translate(46,2)  scale(0.5)"/>
+          <use href="#tt-r6"  transform="rotate(45 50 50)  translate(46,2) scale(0.5)"/>
+          <use href="#tt-r3"  transform="rotate(90 50 50)  translate(46,2) scale(0.5)"/>
+          <use href="#tt-r9"  transform="rotate(135 50 50) translate(46,2) scale(0.5)"/>
+          <use href="#tt-r2"  transform="rotate(180 50 50) translate(46,2) scale(0.5)"/>
+          <use href="#tt-r7"  transform="rotate(225 50 50) translate(46,2) scale(0.5)"/>
+          <use href="#tt-r5"  transform="rotate(270 50 50) translate(46,2) scale(0.5)"/>
+          <use href="#tt-r8"  transform="rotate(315 50 50) translate(46,2) scale(0.5)"/>
+        </g>
+      </svg>
+      <div class="poss-sigil-mask"
+           style="-webkit-mask:url('{{possession.meta.sigil}}') center/contain no-repeat; mask:url('{{possession.meta.sigil}}') center/contain no-repeat;"></div>
+    </div>
+    <div class="poss-id">
+      <input type="text" class="poss-demon-name" name="system.possession.demonName" value="{{possession.p.demonName}}" placeholder="Истинное имя демона внутри…"/>
+      <div class="poss-sub">Двойной Дух · <b>{{possession.meta.label}}</b> · <span class="poss-god">{{possession.meta.godLabel}}</span></div>
+      <div class="poss-selrow">
+        <label>Демон (Двойной Дух)
+          <select name="system.possession.demon">{{#each possession.demonOptions as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}} — {{o.godLabel}}</option>{{/each}}</select>
+        </label>
+        <label>Симбиоз
+          <select name="system.possession.symbiosis">{{#each possession.symOptions as |o|}}<option value="{{o.n}}" {{#if o.selected}}selected{{/if}}>{{o.n}}</option>{{/each}}</select>
+        </label>
+        <label class="poss-gp" title="Демон возвысился в Герольда (Талант «Высший Одержимый»)">
+          <input type="checkbox" name="system.possession.greaterPossessed" {{#if possession.greaterPossessed}}checked{{/if}}/> Высший
+        </label>
+      </div>
+    </div>
+    <div class="poss-vitals {{#if possession.p.manifested}}is-manifested{{/if}}">
+      <div class="poss-state">{{#if possession.p.manifested}}⛧ ПРОЯВЛЕН{{else}}смертная форма{{/if}}</div>
+      <button type="button" class="poss-manifest-btn" title="Проявить/заключить демона (полудействие). При Проявлении — тест Cor+20, при Провале +1 Порчи.">
+        {{#if possession.p.manifested}}Заключить{{else}}Проявить{{/if}}
+      </button>
+      <div class="poss-dw" title="Раны духа демона (лечатся отдыхом; W.b демона — поглощение варп-урона)">
+        <span>Раны демона</span>
+        <input type="number" name="system.possession.demonWounds.value" value="{{possession.p.demonWounds.value}}"/>
+        <b>/</b>
+        <input type="number" name="system.possession.demonWounds.max" value="{{possession.p.demonWounds.max}}"/>
+      </div>
+    </div>
+  </header>
+
+  {{!-- ПРОЯВЛЕНИЕ: таблица по Cor --}}
+  <section class="poss-panel poss-manifest">
+    <div class="poss-panel-title">ПРОЯВЛЕНИЕ <span class="poss-band">{{possession.prof.band}}</span> <span class="poss-cor">Cor {{possession.cor}}</span></div>
+    <div class="poss-manifest-grid">
+      <div class="poss-mcell"><span>Daemonic</span><b>{{possession.prof.daemonic}}</b></div>
+      <div class="poss-mcell"><span>Смерт. оружие (когти)</span><b>{{possession.prof.claws}}</b></div>
+      <div class="poss-mcell"><span>Fear</span><b>{{possession.prof.fear}}</b></div>
+      <div class="poss-mcell"><span>Unnatural S</span><b>+{{possession.prof.unnaturalS}}</b></div>
+      <div class="poss-mcell"><span>Dark Sight</span><b>{{#if possession.prof.darkSight}}да{{else}}нет{{/if}}</b></div>
+      <div class="poss-mcell"><span>Замена Хар-к</span><b>{{possession.prof.charSwaps}}</b></div>
+      <div class="poss-mcell poss-mcell-hl"><span>Активных Даров</span><b>{{possession.prof.gifts}}</b></div>
+    </div>
+    {{#if possession.manifested}}
+    <div class="poss-applied">
+      <span class="poss-applied-tag">⛧ ПРОЯВЛЕН — авто-бонусы применены к листу:</span>
+      {{#each possession.applied as |a|}}<span class="poss-applied-chip">{{a}}</span>{{/each}}
+    </div>
+    {{else}}
+    <div class="poss-note poss-dormant">Демон спит. Нажми «Проявить» — профиль (Unnatural S, Daemonic→T.b, Fear) и числовые Дары применятся к характеристикам и Поглощению автоматически.</div>
+    {{/if}}
+    <div class="poss-note">
+      Броня/одежда сплавляются с формой (те же эффекты, но часть тела). Можно заменить {{possession.prof.charSwaps}} Хар-ку
+      (кроме I, P, W, F) на демоническую. При каждом Проявлении — тест Cor+20, Провал → +1 Порчи.
+    </div>
+    <div class="poss-swaprow">
+      <label title="Демон при контроле может выбирать WS любого из двоих"><input type="checkbox" name="system.possession.swapWs" {{#if possession.p.swapWs}}checked{{/if}}/> замена WS на демоническое</label>
+      <label title="Демон при контроле может выбирать BS любого из двоих"><input type="checkbox" name="system.possession.swapBs" {{#if possession.p.swapBs}}checked{{/if}}/> замена BS на демоническое</label>
+    </div>
+  </section>
+
+  {{!-- СИМБИОЗ --}}
+  <section class="poss-panel poss-symbiosis">
+    <div class="poss-panel-title">СИМБИОЗ <span class="poss-band">предел {{possession.symLimit}}</span></div>
+    <div class="poss-pips">
+      {{#each possession.symPips as |pip|}}<span class="poss-pip {{#if pip.on}}on{{/if}} {{#if pip.over}}over{{/if}}"></span>{{/each}}
+    </div>
+    <div class="poss-syms">
+      <div><span>Соц. бонус хост↔демон</span><b>+{{possession.socialBonus}}</b></div>
+      <div><span>W хоста против перехвата</span><b>+{{possession.hostWBonus}}</b></div>
+      <div><span>Макс. контроль демона</span><b>{{possession.controlHours}} ч</b></div>
+    </div>
+    <div class="poss-note">
+      Растёт за 250xp на важных событиях (макс. 5, не выше min(Inf/15, Cor/15)). Демон у руля: использует S/T/A хоста, свои I/P/W/F,
+      WS/BS любого. Перехват — тест W против W хоста (при первом Проявлении в сутки). С Симбиоза 2 — только против природы хоста; с 4 — цели сливаются.
+    </div>
+  </section>
+
+  {{!-- НАСЛОЕНИЕ — божественный оверлей + защита демона --}}
+  <section class="poss-panel poss-divine">
+    <div class="poss-panel-title">НАСЛОЕНИЕ · {{possession.meta.godLabel}}</div>
+    <div class="poss-divine-body">
+      <p><b>Дар «Наслоение» (750xp, Симбиоз 4):</b> Daemonic Presence (10/10) и — {{possession.meta.naslo}}</p>
+      <p class="poss-note">Повреждения демона: варп-урон и Выжигание Души демон может принять на себя (свои Раны, W.b — поглощение). Раны демона &lt;0 → выход из Проявления,
+        нельзя войти, пока не восстановит 1 Рану. Если Выжигание убивает демона / его изгоняют — персонаж перестаёт быть Одержимым.</p>
+    </div>
+  </section>
+
+  {{!-- ДАРЫ — каталог --}}
+  <section class="poss-panel poss-gifts">
+    <div class="poss-panel-title">ДАРЫ ОДЕРЖИМОГО
+      <span class="poss-band {{#if possession.giftsOver}}poss-over{{/if}}">активно {{possession.activeGiftCount}} / {{possession.giftLimit}}</span>
+      <span class="poss-cor">каталог · перетащи из «Таланты одержимых»</span>
+    </div>
+    {{#if possession.giftsOver}}<div class="poss-note poss-warn">⚠ Активных Даров больше, чем даёт профиль ({{possession.giftLimit}}). При Проявлении можно держать только {{possession.giftLimit}}.</div>{{/if}}
+    {{#each possession.giftGroups as |grp|}}
+    <div class="poss-gift-group">
+      <div class="poss-gift-group-title">{{grp.group}}</div>
+      <div class="poss-gift-list">
+        {{#each grp.gifts as |g|}}
+        <div class="poss-gift {{#if g.active}}is-active{{/if}}" title="{{g.text}}">
+          {{#if g.active}}<span class="poss-gift-dot">⛧</span>{{/if}}
+          <span class="poss-gift-name">{{g.name}}</span>
+          <span class="poss-gift-cost">{{g.cost}}{{#if g.sym}} · С{{g.sym}}{{/if}}</span>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+    {{/each}}
+  </section>
+
+  {{!-- ТАЛАНТЫ АРХЕТИПА --}}
+  <section class="poss-panel poss-talents">
+    <div class="poss-panel-title">ТАЛАНТЫ АРХЕТИПА</div>
+    <div class="poss-talent-list">
+      {{#each possession.talents as |t|}}
+      <div class="poss-talent">
+        <div class="poss-talent-head"><span class="poss-talent-name">{{t.name}}</span><span class="poss-talent-meta">Ур.{{t.level}} · {{t.god}}{{#if t.req}} · {{t.req}}{{/if}}</span></div>
+        <div class="poss-talent-text">{{t.text}}</div>
+      </div>
+      {{/each}}
+    </div>
+  </section>
+
+</div>{{!-- /tab possession --}}

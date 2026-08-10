@@ -1,0 +1,587 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  ПРЕПАРАТЫ / ХИМИЯ                                                    --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "drug")}}
+
+{{!-- ── ОСНОВНЫЕ ХАРАКТЕРИСТИКИ ─────────────────────────────────────────── --}}
+<div class="item-section">
+  <div class="item-section-title">ХАРАКТЕРИСТИКИ ПРЕПАРАТА</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Категория</label>
+    <select name="system.drugCategory" class="wr-select">
+      <option value="medicine" {{#if (eq system.drugCategory "medicine")}}selected{{/if}}>💊 Медицина</option>
+      <option value="narcotic" {{#if (eq system.drugCategory "narcotic")}}selected{{/if}}>💉 Наркотики</option>
+      <option value="poison"   {{#if (eq system.drugCategory "poison")}}selected{{/if}}>☠️ Яды</option>
+      <option value="elixir"   {{#if (eq system.drugCategory "elixir")}}selected{{/if}}>⚗️ Эликсиры</option>
+    </select>
+    <label class="wr-label">Приём</label>
+    <select name="system.deliveryMethod" class="wr-select-sm">
+      <option value="injection"   {{#if (eq system.deliveryMethod "injection")}}selected{{/if}}>Инъекция</option>
+      <option value="gas"         {{#if (eq system.deliveryMethod "gas")}}selected{{/if}}>Газ/Аэрозоль</option>
+      <option value="liquid"      {{#if (eq system.deliveryMethod "liquid")}}selected{{/if}}>Жидкость</option>
+      <option value="smoke"       {{#if (eq system.deliveryMethod "smoke")}}selected{{/if}}>Курение</option>
+      <option value="patch"       {{#if (eq system.deliveryMethod "patch")}}selected{{/if}}>Припарка</option>
+      <option value="pill"        {{#if (eq system.deliveryMethod "pill")}}selected{{/if}}>Таблетка</option>
+      <option value="food"        {{#if (eq system.deliveryMethod "food")}}selected{{/if}}>Еда (яд)</option>
+      <option value="wound"       {{#if (eq system.deliveryMethod "wound")}}selected{{/if}}>Рана (яд)</option>
+      <option value="contact"     {{#if (eq system.deliveryMethod "contact")}}selected{{/if}}>Контакт (яд)</option>
+      <option value="gas_contact" {{#if (eq system.deliveryMethod "gas_contact")}}selected{{/if}}>Газ-Контакт</option>
+      <option value="gas_eye"     {{#if (eq system.deliveryMethod "gas_eye")}}selected{{/if}}>Газ-Глаза</option>
+    </select>
+    <label class="wr-label">Кол-во</label>
+    <input type="number" name="system.quantity" value="{{system.quantity}}"
+           min="0" class="wr-input-xs"/>
+    <label class="wr-label">Вес</label>
+    <input type="number" name="system.weight" value="{{system.weight}}"
+           min="0" step="0.1" class="wr-input-xs"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Доступность</label>
+    <select name="system.availability" class="wr-select-sm">
+      <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распростр.</option>
+      <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезв. редко</option>
+      <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникум</option>
+      <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+    </select>
+    <label class="wr-label">Длительность</label>
+    <input type="text" name="system.duration" value="{{system.duration}}"
+           class="wr-input-md" placeholder="напр. 1d5+T.b"/>
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое (Poor.Q)</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное (Comm.Q)</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее (Good.Q)</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Высшее (Best.Q)</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+  </div>
+</div>
+
+{{!-- ── ЭФФЕКТЫ ──────────────────────────────────────────────────────────── --}}
+<div class="item-section">
+  <div class="item-section-title">ЭФФЕКТЫ</div>
+
+  {{!-- Основной эффект --}}
+  <div class="drug-effect-row">
+    <label class="drug-effect-label">⚡ Эффект</label>
+    <textarea name="system.effect" class="drug-textarea-sm"
+              placeholder="Основной эффект...">{{system.effect}}</textarea>
+  </div>
+
+  {{!-- Галочка пост-эффекта --}}
+  <div class="drug-aftereffect-toggle-row">
+    <label class="drug-fx-cb-label drug-aftereffect-toggle-label">
+      <input type="checkbox"
+             name="system.hasAfterEffect"
+             class="drug-aftereffect-cb"
+             {{#if system.hasAfterEffect}}checked{{/if}}/>
+      🔻 Имеет пост-эффект
+    </label>
+  </div>
+
+  {{!-- Блок пост-эффекта (виден только если галочка стоит) --}}
+  {{#if system.hasAfterEffect}}
+  <div class="drug-aftereffect-block">
+
+    <div class="drug-aftereffect-header">🔻 ПОСТ-ЭФФЕКТ</div>
+
+    {{!-- Текстовое описание пост-эффекта --}}
+    <div class="drug-effect-row">
+      <label class="drug-effect-label">Описание</label>
+      <textarea name="system.afterEffect" class="drug-textarea-sm"
+                placeholder="Что происходит после окончания действия...">{{system.afterEffect}}</textarea>
+    </div>
+
+    {{!-- Формула дайсов пост-эффекта (урон в Раны / прочее, информационно) --}}
+    <div class="drug-effect-row">
+      <label class="drug-effect-label">🎲 Формула урона</label>
+      <input type="text"
+             name="system.afterEffectDice"
+             value="{{system.afterEffectDice}}"
+             class="drug-fx-wide"
+             placeholder="напр. 1d10, 2d5+3, 1d5-1 урон F"/>
+    </div>
+
+    {{!-- Урон в характеристику: бросается при запуске пост-эффекта,
+          держится пока он активен, автоматически снижает характеристику --}}
+    <div class="drug-effect-row">
+      <label class="drug-effect-label">💢 Урон в характеристику</label>
+      <select name="system.afterEffectCharDamage.stat" class="drug-fx-select">
+        <option value=""    {{#if (eq system.afterEffectCharDamage.stat "")}}selected{{/if}}>— нет —</option>
+        <option value="ws"  {{#if (eq system.afterEffectCharDamage.stat "ws")}}selected{{/if}}>WS</option>
+        <option value="bs"  {{#if (eq system.afterEffectCharDamage.stat "bs")}}selected{{/if}}>BS</option>
+        <option value="s"   {{#if (eq system.afterEffectCharDamage.stat "s")}}selected{{/if}}>S</option>
+        <option value="t"   {{#if (eq system.afterEffectCharDamage.stat "t")}}selected{{/if}}>T</option>
+        <option value="ag"  {{#if (eq system.afterEffectCharDamage.stat "ag")}}selected{{/if}}>Ag (A)</option>
+        <option value="int" {{#if (eq system.afterEffectCharDamage.stat "int")}}selected{{/if}}>Int (I)</option>
+        <option value="per" {{#if (eq system.afterEffectCharDamage.stat "per")}}selected{{/if}}>Per (P)</option>
+        <option value="wp"  {{#if (eq system.afterEffectCharDamage.stat "wp")}}selected{{/if}}>WP (W)</option>
+        <option value="fel" {{#if (eq system.afterEffectCharDamage.stat "fel")}}selected{{/if}}>Fel (F)</option>
+      </select>
+      <input type="text"
+             name="system.afterEffectCharDamage.formula"
+             value="{{system.afterEffectCharDamage.formula}}"
+             class="drug-fx-text"
+             placeholder="напр. 3d10"/>
+    </div>
+    <div class="drug-stat-hint">Бросается один раз при запуске пост-эффекта; снижает характеристику, пока он активен.</div>
+
+    {{!-- Модификаторы характеристик пост-эффекта --}}
+    <div class="drug-aftereffect-submods-title">Модификаторы характеристик (пост-эффект):</div>
+    <div class="drug-stat-mods-row">
+      <div class="drug-stat-cell">
+        <label class="drug-stat-lbl">WS</label>
+        <input type="number" name="system.afterEffectStatMods.ws"
+               value="{{system.afterEffectStatMods.ws}}" class="drug-stat-inp"/>
+      </div>
+      <div class="drug-stat-cell">
+        <label class="drug-stat-lbl">BS</label>
+        <input type="number" name="system.afterEffectStatMods.bs"
+               value="{{system.afterEffectStatMods.bs}}" class="drug-stat-inp"/>
+      </div>
+      <div class="drug-stat-cell">
+        <label class="drug-stat-lbl">S</label>
+        <input type="number" name="system.afterEffectStatMods.s"
+               value="{{system.afterEffectStatMods.s}}" class="drug-stat-inp"/>
+      </div>
+      <div class="drug-stat-cell">
+        <label class="drug-stat-lbl">T</label>
+        <input type="number" name="system.afterEffectStatMods.t"
+               value="{{system.afterEffectStatMods.t}}" class="drug-stat-inp"/>
+      </div>
+      <div class="drug-stat-cell">
+        <label class="drug-stat-lbl">Ag</label>
+        <input type="number" name="system.afterEffectStatMods.ag"
+               value="{{system.afterEffectStatMods.ag}}" class="drug-stat-inp"/>
+      </div>
+      <div class="drug-stat-cell">
+        <label class="drug-stat-lbl">Int</label>
+        <input type="number" name="system.afterEffectStatMods.int"
+               value="{{system.afterEffectStatMods.int}}" class="drug-stat-inp"/>
+      </div>
+      <div class="drug-stat-cell">
+        <label class="drug-stat-lbl">Per</label>
+        <input type="number" name="system.afterEffectStatMods.per"
+               value="{{system.afterEffectStatMods.per}}" class="drug-stat-inp"/>
+      </div>
+      <div class="drug-stat-cell">
+        <label class="drug-stat-lbl">WP</label>
+        <input type="number" name="system.afterEffectStatMods.wp"
+               value="{{system.afterEffectStatMods.wp}}" class="drug-stat-inp"/>
+      </div>
+      <div class="drug-stat-cell">
+        <label class="drug-stat-lbl">Fel</label>
+        <input type="number" name="system.afterEffectStatMods.fel"
+               value="{{system.afterEffectStatMods.fel}}" class="drug-stat-inp"/>
+      </div>
+    </div>
+    <div class="drug-stat-hint">+ бонус / − штраф во время пост-эффекта</div>
+
+    {{!-- Специальные эффекты пост-эффекта --}}
+    <div class="drug-aftereffect-submods-title">Специальные эффекты (пост-эффект):</div>
+    <div class="drug-fx-grid">
+      <div class="drug-fx-row">
+        <span class="drug-fx-lbl">🩸 Снять Кровотечений</span>
+        <input type="number" name="system.afterEffectSpecial.removesBleedingLevels"
+               value="{{system.afterEffectSpecial.removesBleedingLevels}}"
+               min="0" class="drug-fx-num"/>
+        <span class="drug-fx-lbl">😓 Снять Усталости</span>
+        <input type="number" name="system.afterEffectSpecial.removesFatigueLevels"
+               value="{{system.afterEffectSpecial.removesFatigueLevels}}"
+               min="0" class="drug-fx-num"/>
+      </div>
+      <div class="drug-fx-row">
+        <span class="drug-fx-lbl">💔 Снять Обескровливание</span>
+        <input type="number" name="system.afterEffectSpecial.removesHaemorrhagingLevels"
+               value="{{system.afterEffectSpecial.removesHaemorrhagingLevels}}"
+               min="0" class="drug-fx-num"/>
+        <span class="drug-fx-lbl">😓 Добавить Усталость</span>
+        <input type="number" name="system.afterEffectSpecial.grantsFatigue"
+               value="{{system.afterEffectSpecial.grantsFatigue}}"
+               min="0" class="drug-fx-num"/>
+      </div>
+      <div class="drug-fx-row">
+        <span class="drug-fx-lbl">💥 Урон в Раны (формула)</span>
+        <input type="text" name="system.afterEffectSpecial.woundDamage"
+               value="{{system.afterEffectSpecial.woundDamage}}"
+               class="drug-fx-text" placeholder="непогл., напр. 1d5"/>
+        <span class="drug-fx-lbl">❤️ Восстановить Ран (число)</span>
+        <input type="number" name="system.afterEffectSpecial.removesWounds"
+               value="{{system.afterEffectSpecial.removesWounds}}"
+               min="0" class="drug-fx-num"/>
+      </div>
+      <div class="drug-fx-row">
+        <span class="drug-fx-lbl">🔴 Наложить состояние</span>
+        <select name="system.afterEffectSpecial.grantsCondition" class="drug-fx-select">
+          <option value=""               {{#if (eq system.afterEffectSpecial.grantsCondition "")}}selected{{/if}}>— нет —</option>
+          <option value="stunned"        {{#if (eq system.afterEffectSpecial.grantsCondition "stunned")}}selected{{/if}}>Оглушение</option>
+          <option value="unconscious"    {{#if (eq system.afterEffectSpecial.grantsCondition "unconscious")}}selected{{/if}}>Без сознания</option>
+          <option value="prone"          {{#if (eq system.afterEffectSpecial.grantsCondition "prone")}}selected{{/if}}>Повален</option>
+          <option value="fatigued"       {{#if (eq system.afterEffectSpecial.grantsCondition "fatigued")}}selected{{/if}}>Усталость</option>
+          <option value="blinded"        {{#if (eq system.afterEffectSpecial.grantsCondition "blinded")}}selected{{/if}}>Ослеплён</option>
+          <option value="hallucinogenic" {{#if (eq system.afterEffectSpecial.grantsCondition "hallucinogenic")}}selected{{/if}}>Галлюцинации</option>
+          <option value="poisoned"       {{#if (eq system.afterEffectSpecial.grantsCondition "poisoned")}}selected{{/if}}>Отравление</option>
+          <option value="addicted"       {{#if (eq system.afterEffectSpecial.grantsCondition "addicted")}}selected{{/if}}>Зависимость</option>
+          <option value="bleeding"       {{#if (eq system.afterEffectSpecial.grantsCondition "bleeding")}}selected{{/if}}>Кровотечение</option>
+          <option value="burning"        {{#if (eq system.afterEffectSpecial.grantsCondition "burning")}}selected{{/if}}>Горение</option>
+          <option value="radiation"      {{#if (eq system.afterEffectSpecial.grantsCondition "radiation")}}selected{{/if}}>Радиация</option>
+          <option value="pinned"         {{#if (eq system.afterEffectSpecial.grantsCondition "pinned")}}selected{{/if}}>Подавление</option>
+        </select>
+        {{#if system.afterEffectSpecial.grantsCondition}}
+        <span class="drug-fx-lbl" style="margin-left:4px;">Ур.</span>
+        <input type="number" name="system.afterEffectSpecial.grantsConditionLevel"
+               value="{{system.afterEffectSpecial.grantsConditionLevel}}"
+               min="1" class="drug-fx-num"/>
+        {{/if}}
+      </div>
+      <div class="drug-fx-row">
+        <span class="drug-fx-lbl">📌 Особый эффект</span>
+        <input type="text" name="system.afterEffectSpecial.customEffect"
+               value="{{system.afterEffectSpecial.customEffect}}"
+               class="drug-fx-wide" placeholder="Произвольный пост-эффект..."/>
+      </div>
+    </div>
+
+  </div>{{!-- /drug-aftereffect-block --}}
+  {{/if}}
+
+</div>
+
+{{!-- ── МОДИФИКАТОРЫ ХАРАКТЕРИСТИК (основной эффект) ──────────────────── --}}
+<div class="item-section">
+  <div class="item-section-title">МОДИФИКАТОРЫ ХАРАКТЕРИСТИК</div>
+  <div class="drug-stat-mods-row">
+    <div class="drug-stat-cell">
+      <label class="drug-stat-lbl">WS</label>
+      <input type="number" name="system.statMods.ws" value="{{system.statMods.ws}}" class="drug-stat-inp"/>
+    </div>
+    <div class="drug-stat-cell">
+      <label class="drug-stat-lbl">BS</label>
+      <input type="number" name="system.statMods.bs" value="{{system.statMods.bs}}" class="drug-stat-inp"/>
+    </div>
+    <div class="drug-stat-cell">
+      <label class="drug-stat-lbl">S</label>
+      <input type="number" name="system.statMods.s" value="{{system.statMods.s}}" class="drug-stat-inp"/>
+    </div>
+    <div class="drug-stat-cell">
+      <label class="drug-stat-lbl">T</label>
+      <input type="number" name="system.statMods.t" value="{{system.statMods.t}}" class="drug-stat-inp"/>
+    </div>
+    <div class="drug-stat-cell">
+      <label class="drug-stat-lbl">Ag</label>
+      <input type="number" name="system.statMods.ag" value="{{system.statMods.ag}}" class="drug-stat-inp"/>
+    </div>
+    <div class="drug-stat-cell">
+      <label class="drug-stat-lbl">Int</label>
+      <input type="number" name="system.statMods.int" value="{{system.statMods.int}}" class="drug-stat-inp"/>
+    </div>
+    <div class="drug-stat-cell">
+      <label class="drug-stat-lbl">Per</label>
+      <input type="number" name="system.statMods.per" value="{{system.statMods.per}}" class="drug-stat-inp"/>
+    </div>
+    <div class="drug-stat-cell">
+      <label class="drug-stat-lbl">WP</label>
+      <input type="number" name="system.statMods.wp" value="{{system.statMods.wp}}" class="drug-stat-inp"/>
+    </div>
+    <div class="drug-stat-cell">
+      <label class="drug-stat-lbl">Fel</label>
+      <input type="number" name="system.statMods.fel" value="{{system.statMods.fel}}" class="drug-stat-inp"/>
+    </div>
+  </div>
+  <div class="drug-stat-hint">+ бонус / − штраф во время действия</div>
+</div>
+
+{{!-- ── СПЕЦИАЛЬНЫЕ ЭФФЕКТЫ ────────────────────────────────────────────── --}}
+<div class="item-section">
+  <div class="item-section-title">СПЕЦИАЛЬНЫЕ ЭФФЕКТЫ</div>
+  <div class="drug-fx-grid">
+
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">🩸 Снять Кровотечений</span>
+      <input type="number" name="system.specialEffects.removesBleedingLevels"
+             value="{{system.specialEffects.removesBleedingLevels}}" min="0" class="drug-fx-num"/>
+      <span class="drug-fx-lbl">😓 Снять Усталости</span>
+      <input type="number" name="system.specialEffects.removesFatigueLevels"
+             value="{{system.specialEffects.removesFatigueLevels}}" min="0" class="drug-fx-num"/>
+    </div>
+
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">❤️ Восстановить Ран (число)</span>
+      <input type="number" name="system.specialEffects.removesWounds"
+             value="{{system.specialEffects.removesWounds}}" min="0" class="drug-fx-num"/>
+      <span class="drug-fx-lbl">❤️ Лечение (формула)</span>
+      <input type="text" name="system.specialEffects.healFormula"
+             value="{{system.specialEffects.healFormula}}"
+             class="drug-fx-text" placeholder="напр. 1d5+T.b"/>
+    </div>
+
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">💔 Снять Обескровливание</span>
+      <input type="number" name="system.specialEffects.removesHaemorrhagingLevels"
+             value="{{system.specialEffects.removesHaemorrhagingLevels}}" min="0" class="drug-fx-num"/>
+      <span class="drug-fx-lbl">😓 Добавить Усталость</span>
+      <input type="number" name="system.specialEffects.grantsFatigue"
+             value="{{system.specialEffects.grantsFatigue}}" min="0" class="drug-fx-num"/>
+    </div>
+
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">💥 Урон в Раны (формула)</span>
+      <input type="text" name="system.specialEffects.woundDamage"
+             value="{{system.specialEffects.woundDamage}}"
+             class="drug-fx-text" placeholder="непогл., напр. 1d5"/>
+      <span class="drug-fx-lbl">💚 Лечить Ран/раунд</span>
+      <input type="text" name="system.specialEffects.healsWoundsPerRound"
+             value="{{system.specialEffects.healsWoundsPerRound}}"
+             class="drug-fx-text" placeholder="напр. 1d5 (по раундам)"/>
+    </div>
+
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">🛡️ Бонус vs яды</span>
+      <input type="number" name="system.specialEffects.bonusVsPoisons"
+             value="{{system.specialEffects.bonusVsPoisons}}" class="drug-fx-num"/>
+      <span class="drug-fx-lbl">⬇️ Уменьш. урон</span>
+      <input type="number" name="system.specialEffects.reduceDamageOnHit"
+             value="{{system.specialEffects.reduceDamageOnHit}}" class="drug-fx-num"/>
+    </div>
+
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">✅ Снять состояние</span>
+      <select name="system.specialEffects.removesCondition" class="drug-fx-select">
+        <option value=""              {{#if (eq system.specialEffects.removesCondition "")}}selected{{/if}}>— нет —</option>
+        <option value="bleeding"      {{#if (eq system.specialEffects.removesCondition "bleeding")}}selected{{/if}}>Кровотечение</option>
+        <option value="haemorrhaging" {{#if (eq system.specialEffects.removesCondition "haemorrhaging")}}selected{{/if}}>Обескровл.</option>
+        <option value="stunned"       {{#if (eq system.specialEffects.removesCondition "stunned")}}selected{{/if}}>Оглушение</option>
+        <option value="unconscious"   {{#if (eq system.specialEffects.removesCondition "unconscious")}}selected{{/if}}>Без сознания</option>
+        <option value="fatigued"      {{#if (eq system.specialEffects.removesCondition "fatigued")}}selected{{/if}}>Усталость</option>
+        <option value="crippling"     {{#if (eq system.specialEffects.removesCondition "crippling")}}selected{{/if}}>Калечение</option>
+        <option value="poisoned"      {{#if (eq system.specialEffects.removesCondition "poisoned")}}selected{{/if}}>Отравление</option>
+        <option value="radiation"     {{#if (eq system.specialEffects.removesCondition "radiation")}}selected{{/if}}>Радиация</option>
+        <option value="burning"       {{#if (eq system.specialEffects.removesCondition "burning")}}selected{{/if}}>Горение</option>
+        <option value="blinded"       {{#if (eq system.specialEffects.removesCondition "blinded")}}selected{{/if}}>Ослеплён</option>
+        <option value="prone"         {{#if (eq system.specialEffects.removesCondition "prone")}}selected{{/if}}>Повален</option>
+        <option value="pinned"        {{#if (eq system.specialEffects.removesCondition "pinned")}}selected{{/if}}>Подавление</option>
+        <option value="hallucinogenic"{{#if (eq system.specialEffects.removesCondition "hallucinogenic")}}selected{{/if}}>Галлюцинации</option>
+        <option value="addicted"      {{#if (eq system.specialEffects.removesCondition "addicted")}}selected{{/if}}>Зависимость</option>
+      </select>
+      {{#if system.specialEffects.removesCondition}}
+      <span class="drug-fx-lbl" style="margin-left:4px;" title="0 = снять полностью">Ур.</span>
+      <input type="number" name="system.specialEffects.removesConditionLevel"
+             value="{{system.specialEffects.removesConditionLevel}}"
+             min="0" class="drug-fx-num"/>
+      {{/if}}
+    </div>
+
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">🔴 Наложить состояние</span>
+      <select name="system.specialEffects.grantsCondition" class="drug-fx-select">
+        <option value=""               {{#if (eq system.specialEffects.grantsCondition "")}}selected{{/if}}>— нет —</option>
+        <option value="stunned"        {{#if (eq system.specialEffects.grantsCondition "stunned")}}selected{{/if}}>Оглушение</option>
+        <option value="unconscious"    {{#if (eq system.specialEffects.grantsCondition "unconscious")}}selected{{/if}}>Без сознания</option>
+        <option value="prone"          {{#if (eq system.specialEffects.grantsCondition "prone")}}selected{{/if}}>Повален</option>
+        <option value="fatigued"       {{#if (eq system.specialEffects.grantsCondition "fatigued")}}selected{{/if}}>Усталость</option>
+        <option value="blinded"        {{#if (eq system.specialEffects.grantsCondition "blinded")}}selected{{/if}}>Ослеплён</option>
+        <option value="hallucinogenic" {{#if (eq system.specialEffects.grantsCondition "hallucinogenic")}}selected{{/if}}>Галлюцинации</option>
+        <option value="poisoned"       {{#if (eq system.specialEffects.grantsCondition "poisoned")}}selected{{/if}}>Отравление</option>
+        <option value="addicted"       {{#if (eq system.specialEffects.grantsCondition "addicted")}}selected{{/if}}>Зависимость</option>
+        <option value="bleeding"       {{#if (eq system.specialEffects.grantsCondition "bleeding")}}selected{{/if}}>Кровотечение</option>
+        <option value="burning"        {{#if (eq system.specialEffects.grantsCondition "burning")}}selected{{/if}}>Горение</option>
+        <option value="radiation"      {{#if (eq system.specialEffects.grantsCondition "radiation")}}selected{{/if}}>Радиация</option>
+        <option value="pinned"         {{#if (eq system.specialEffects.grantsCondition "pinned")}}selected{{/if}}>Подавление</option>
+      </select>
+      {{#if system.specialEffects.grantsCondition}}
+      <span class="drug-fx-lbl" style="margin-left:4px;">Ур.</span>
+      <input type="number" name="system.specialEffects.grantsConditionLevel"
+             value="{{system.specialEffects.grantsConditionLevel}}"
+             min="1" class="drug-fx-num"/>
+      {{/if}}
+    </div>
+
+    <div class="drug-fx-checks">
+      <label class="drug-fx-cb-label">
+        <input type="checkbox" name="system.specialEffects.woundsToToughness"
+               {{#if system.specialEffects.woundsToToughness}}checked{{/if}}/>
+        💪 Урон → T (Stim)
+      </label>
+      <label class="drug-fx-cb-label">
+        <input type="checkbox" name="system.specialEffects.immuneToPoisons"
+               {{#if system.specialEffects.immuneToPoisons}}checked{{/if}}/>
+        🛡️ Иммунитет к ядам
+      </label>
+      <label class="drug-fx-cb-label">
+        <input type="checkbox" name="system.specialEffects.counteractsDrugs"
+               {{#if system.specialEffects.counteractsDrugs}}checked{{/if}}/>
+        🔄 Нейтрализует препараты
+      </label>
+      <label class="drug-fx-cb-label">
+        <input type="checkbox" name="system.specialEffects.removesRadiation"
+               {{#if system.specialEffects.removesRadiation}}checked{{/if}}/>
+        ☢️ Лечит радиацию
+      </label>
+      <label class="drug-fx-cb-label">
+        <input type="checkbox" name="system.specialEffects.noSleepNeeded"
+               {{#if system.specialEffects.noSleepNeeded}}checked{{/if}}/>
+        🌙 Не нужен сон
+      </label>
+      <label class="drug-fx-cb-label">
+        <input type="checkbox" name="system.specialEffects.noFatigueFromMarch"
+               {{#if system.specialEffects.noFatigueFromMarch}}checked{{/if}}/>
+        🏃 Нет Усталости от марша
+      </label>
+    </div>
+
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">📌 Особый эффект</span>
+      <input type="text" name="system.specialEffects.customEffect"
+             value="{{system.specialEffects.customEffect}}"
+             class="drug-fx-wide" placeholder="Произвольный эффект..."/>
+    </div>
+
+  </div>
+</div>
+
+{{!-- ── ЯД: ПАРАМЕТРЫ ───────────────────────────────────────────────────── --}}
+{{#if (eq system.drugCategory "poison")}}
+<div class="item-section">
+  <div class="item-section-title">☠️ ПАРАМЕТРЫ ЯДА</div>
+
+  <div class="drug-poison-vectors">
+    <span class="drug-fx-lbl">Вектор:</span>
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" class="poison-vector-cb" data-vector="food"
+             {{#if (poisonHasVector system.poisonVector "food")}}checked{{/if}}/>
+      🍖 Еда
+    </label>
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" class="poison-vector-cb" data-vector="wound"
+             {{#if (poisonHasVector system.poisonVector "wound")}}checked{{/if}}/>
+      🩸 Рана
+    </label>
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" class="poison-vector-cb" data-vector="injection"
+             {{#if (poisonHasVector system.poisonVector "injection")}}checked{{/if}}/>
+      💉 Инъекция
+    </label>
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" class="poison-vector-cb" data-vector="contact"
+             {{#if (poisonHasVector system.poisonVector "contact")}}checked{{/if}}/>
+      🖐️ Контакт
+    </label>
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" class="poison-vector-cb" data-vector="gas_contact"
+             {{#if (poisonHasVector system.poisonVector "gas_contact")}}checked{{/if}}/>
+      💨 Газ-К.
+    </label>
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" class="poison-vector-cb" data-vector="gas_eye"
+             {{#if (poisonHasVector system.poisonVector "gas_eye")}}checked{{/if}}/>
+      👁️ Газ-Гл.
+    </label>
+  </div>
+
+  <div class="weapon-row" style="margin-top:4px;">
+    <label class="wr-label">Тест</label>
+    <select name="system.poisonTestChar" class="wr-select-sm">
+      <option value="t"   {{#if (eq system.poisonTestChar "t")}}selected{{/if}}>T</option>
+      <option value="ws"  {{#if (eq system.poisonTestChar "ws")}}selected{{/if}}>WS</option>
+      <option value="bs"  {{#if (eq system.poisonTestChar "bs")}}selected{{/if}}>BS</option>
+      <option value="s"   {{#if (eq system.poisonTestChar "s")}}selected{{/if}}>S</option>
+      <option value="ag"  {{#if (eq system.poisonTestChar "ag")}}selected{{/if}}>Ag</option>
+      <option value="int" {{#if (eq system.poisonTestChar "int")}}selected{{/if}}>Int</option>
+      <option value="per" {{#if (eq system.poisonTestChar "per")}}selected{{/if}}>Per</option>
+      <option value="wp"  {{#if (eq system.poisonTestChar "wp")}}selected{{/if}}>WP</option>
+      <option value="fel" {{#if (eq system.poisonTestChar "fel")}}selected{{/if}}>Fel</option>
+    </select>
+    <label class="wr-label">Мод.</label>
+    <input type="number" name="system.poisonTestMod"
+           value="{{system.poisonTestMod}}" class="wr-input-xs"/>
+    <span class="drug-quality-hint">
+      {{#if (eq system.quality "poor")}}Poor.Q <b>+10</b>{{/if}}
+      {{#if (eq system.quality "common")}}Comm.Q <b>±0</b>{{/if}}
+      {{#if (eq system.quality "good")}}Good.Q <b>−10</b>{{/if}}
+      {{#if (eq system.quality "best")}}Best.Q <b>−20</b>{{/if}}
+    </span>
+  </div>
+
+  <div class="drug-effect-row" style="margin-top:4px;">
+    <label class="drug-effect-label">Эффект яда</label>
+    <textarea name="system.poisonEffect" class="drug-textarea-sm"
+              placeholder="Что происходит при провале...">{{system.poisonEffect}}</textarea>
+  </div>
+</div>
+{{/if}}
+
+{{!-- ── ЗАВИСИМОСТЬ ─────────────────────────────────────────────────────── --}}
+<div class="item-section">
+  <div class="item-section-title">ЗАВИСИМОСТЬ</div>
+  <div class="drug-fx-row">
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.addiction.hasAddiction"
+             {{#if system.addiction.hasAddiction}}checked{{/if}}
+             class="drug-addiction-toggle"/>
+      Вызывает зависимость
+    </label>
+  </div>
+
+  {{#if system.addiction.hasAddiction}}
+  <div class="weapon-row" style="margin-top:4px;">
+    <label class="wr-label">Мин. доз/нед.</label>
+    <input type="number" name="system.addiction.minDose"
+           value="{{system.addiction.minDose}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label">Тест</label>
+    <select name="system.addiction.testChar" class="wr-select-sm">
+      <option value="t"  {{#if (eq system.addiction.testChar "t")}}selected{{/if}}>T</option>
+      <option value="wp" {{#if (eq system.addiction.testChar "wp")}}selected{{/if}}>WP</option>
+      <option value="s"  {{#if (eq system.addiction.testChar "s")}}selected{{/if}}>S</option>
+      <option value="ag" {{#if (eq system.addiction.testChar "ag")}}selected{{/if}}>Ag</option>
+    </select>
+    <label class="wr-label">Мод.</label>
+    <input type="number" name="system.addiction.testMod"
+           value="{{system.addiction.testMod}}" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Частота</label>
+    <input type="text" name="system.addiction.frequency"
+           value="{{system.addiction.frequency}}"
+           class="wr-input-md" placeholder="напр. 1 раз в неделю"/>
+    <label class="wr-label">Штраф</label>
+    <input type="text" name="system.addiction.penalty"
+           value="{{system.addiction.penalty}}"
+           class="wr-input-md" placeholder="напр. 1d5-1 Р урона"/>
+  </div>
+  {{/if}}
+</div>
+
+{{!-- ── СТАТУС ────────────────────────────────────────────────────────────── --}}
+{{#if system.activeEffect.isActive}}
+<div class="item-section drug-active-section">
+  <div class="item-section-title drug-active-title">
+    {{#if system.activeEffect.isAfterEffect}}
+      🔻 ПОСТ-ЭФФЕКТ АКТИВЕН
+    {{else}}
+      ⚡ ДЕЙСТВУЕТ
+    {{/if}}
+  </div>
+  <div class="drug-active-row">
+    <span class="drug-active-badge {{#if system.activeEffect.isAfterEffect}}drug-active-badge-after{{/if}}">
+      {{#if system.activeEffect.isAfterEffect}}Пост-эффект{{else}}Активен{{/if}}
+    </span>
+    {{#if system.activeEffect.roundsRemaining}}
+    <span class="drug-active-rounds">Осталось раундов: <b>{{system.activeEffect.roundsRemaining}}</b></span>
+    {{/if}}
+    {{#if statModsDisplay}}
+    <span class="drug-active-mods">📊 {{statModsDisplay}}</span>
+    {{/if}}
+  </div>
+</div>
+{{/if}}
+
+{{/if}}{{!-- /drug --}}

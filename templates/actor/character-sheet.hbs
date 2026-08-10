@@ -1,0 +1,29 @@
+<form class="warhammer-dbc character-sheet{{#if isHeretic}} chaos-heretic chaos-god-{{chaosPatron.key}}{{/if}}" autocomplete="off"{{#if isHeretic}} style="--gc:{{chaosPatron.color}};--gc2:{{chaosPatron.gc2}};--glow:{{chaosPatron.glow}};--dp-hue:{{chaosPatron.hue}};--dp-sat:{{chaosPatron.sat}};--dp-bright:{{chaosPatron.bright}};--patron-star:{{chaosPatron.star}};--patron-sigil:url('/{{chaosPatron.sigil}}');--patron-sigil-size:{{chaosPatron.sigilSize}}"{{/if}}> {{> "systems/warhammer-dbc/templates/actor/parts/header.hbs"}}
+
+  {{#if infamy}}{{> "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs" infamy}}{{/if}}
+
+  <nav class="sheet-tabs tabs" data-group="primary"> <a class="item" data-tab="stats">ПОКАЗАТЕЛИ</a> <a class="item" data-tab="combat">БОЙ</a> <a class="item" data-tab="effects">ТЕЛО</a> {{#if possessed}}<a class="item tab-possession-link" data-tab="possession" style="--gc:{{possession.meta.color}}">ОДЕРЖИМОСТЬ</a>{{/if}} {{#if isHaemonculus}}<a class="item tab-haem-link" data-tab="haemonculus">ГЕМУНКУЛ</a>{{/if}} <a class="item" data-tab="abilities">СПОСОБНОСТИ</a> {{#if system.isPsyker}}
+    <a class="item" data-tab="psy">ПСИ</a> {{/if}}
+    {{#if system.isTechpriest}}
+    <a class="item" data-tab="tech">ТЕХ</a> {{/if}}
+    {{#if (eq system.subrace "navigator")}}
+    <a class="item" data-tab="nav">НАВ</a> {{/if}}
+    <a class="item" data-tab="gear">СНАРЯЖЕНИЕ</a> <a class="item" data-tab="advance">РАЗВИТИЕ</a> <a class="item" data-tab="notes">ЗАПИСИ</a> </nav> <div class="sheet-body"> {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs"}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs"}}
+{{#if system.isPsyker}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs"}}
+{{/if}}
+{{#if system.isTechpriest}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-tech.hbs"}}
+{{/if}}
+{{#if (eq system.subrace "navigator")}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-nav.hbs"}}
+{{/if}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs"}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs"}}
+{{#if possessed}}{{> "systems/warhammer-dbc/templates/actor/parts/tab-possession.hbs"}}{{/if}}
+{{#if isHaemonculus}}{{> "systems/warhammer-dbc/templates/actor/parts/tab-haemonculus.hbs"}}{{/if}}
+  </div> </form>

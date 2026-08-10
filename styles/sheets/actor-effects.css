@@ -1,0 +1,1008 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка Эффекты
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .effects-section-panel {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.warhammer-dbc .effects-subsection {
+  margin-bottom: 0;
+}
+
+/* ── Заголовок панели с кнопкой + ───────────────────────── */
+.warhammer-dbc .conditions-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Кнопка «＋» — маленький квадрат */
+.warhammer-dbc .conditions-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.9em;
+  line-height: 1;
+  padding: 0;
+  color: var(--wh-text-light);
+  margin-right: 8px;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+.warhammer-dbc .conditions-add-btn:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+/* ── Техночудеса ───────────────────────────────────────────── */
+/* Иконки Когниции (⚙ зелёная) и Энергии (⚡ жёлтая) — {{{techIcon}}} */
+.warhammer-dbc .wh-ico {
+  width: 1em; height: 1em; vertical-align: -0.14em;
+  flex-shrink: 0; display: inline-block;
+}
+.warhammer-dbc .wh-ico-cog { color: #4caf6d; }
+.warhammer-dbc .wh-ico-en  { color: #e8c33a; }
+/* В заголовках таблицы иконка чуть крупнее для читаемости */
+.warhammer-dbc .psy-powers-table th .wh-ico { width: 1.15em; height: 1.15em; }
+
+.warhammer-dbc .cognition-values { display: flex; align-items: center; gap: 4px; }
+.warhammer-dbc .cognition-input { width: 50px; }
+.warhammer-dbc .energy-bonus { font-size: 0.82em; color: var(--wh-text-mid, #5a4a30); white-space: nowrap; }
+
+/* ── Энергосистемы и Фокусы (импланты Кибернетики Механикум) ── */
+.warhammer-dbc .tech-gen-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 8px; }
+.warhammer-dbc .tech-gen-btn {
+  width: auto; padding: 3px 10px; background: #234a52; color: #d0ece8;
+  border: 1px solid #3a7a8a; border-radius: 3px; cursor: pointer;
+  font-family: inherit; font-size: 0.82em; font-weight: 600; white-space: nowrap; transition: background 0.12s;
+}
+.warhammer-dbc .tech-gen-btn:hover { background: #2f6676; }
+.warhammer-dbc .tech-toggle-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 8px 6px; }
+.warhammer-dbc .tech-toggle {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 3px; cursor: pointer; font-size: 0.82em;
+}
+.warhammer-dbc .tech-toggle.is-active { background: rgba(58,122,138,0.20); border-color: #3a7a8a; }
+.warhammer-dbc .tech-toggle-name { font-weight: 600; }
+.warhammer-dbc .tech-toggle-src { font-size: 0.85em; color: var(--wh-text-mid, #5a4a30); }
+.warhammer-dbc .tech-focus-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 8px 8px; }
+.warhammer-dbc .tech-focus-lbl { font-size: 0.82em; font-weight: 700; color: var(--wh-text-mid, #5a4a30); }
+.warhammer-dbc .tech-focus-chip {
+  padding: 2px 7px; border-radius: 3px; font-size: 0.8em;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--wh-border, #7a5c2e);
+}
+.warhammer-dbc .tech-focus-chip.q-poor  { border-color: #a34; color: #c66; }
+.warhammer-dbc .tech-focus-chip.q-good  { border-color: #4a7; color: #6b9; }
+.warhammer-dbc .tech-focus-chip.q-best  { border-color: #c93; color: #db6; }
+.warhammer-dbc .tech-add-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-left: 8px; padding: 0;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer; font-size: 0.9em; line-height: 1;
+  color: var(--wh-text-light); flex-shrink: 0; transition: background 0.12s;
+}
+.warhammer-dbc .tech-add-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .tech-activate-btn {
+  width: auto; flex: 0 0 auto; padding: 2px 9px;
+  background: #234a52; color: #d0ece8; border: 1px solid #3a7a8a;
+  border-radius: 3px; cursor: pointer; font-family: inherit;
+  font-size: 0.82em; font-weight: 600; white-space: nowrap; transition: background 0.12s;
+}
+.warhammer-dbc .tech-activate-btn:hover { background: #2f6676; }
+.warhammer-dbc .cognition-rest-btn, .warhammer-dbc .tech-scan-btn {
+  width: auto; padding: 3px 10px; background: var(--wh-panel-dark); color: var(--wh-text-light);
+  border: 1px solid var(--wh-border); border-radius: 2px; cursor: pointer;
+  font-family: inherit; font-size: 0.84em; font-weight: 600; transition: background 0.12s;
+}
+.warhammer-dbc .cognition-rest-btn:hover, .warhammer-dbc .tech-scan-btn:hover { background: #5a2a0e; }
+.warhammer-dbc .noosphere-list { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; }
+.warhammer-dbc .noosphere-action { padding: 4px 6px; background: rgba(58,106,138,0.08); border-left: 3px solid #3a7a8a; border-radius: 2px; }
+.warhammer-dbc .noosphere-name { display: block; font-weight: 700; color: #234a52; font-size: 0.9em; }
+.warhammer-dbc .noosphere-desc { display: block; font-size: 0.88em; color: var(--wh-text); }
+
+/* ── Геносемя (Астартес) ───────────────────────────────────── */
+.warhammer-dbc .gene-seed-panel { border: 1px solid #4a6a3a; }
+.warhammer-dbc .gene-seed-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px;
+}
+.warhammer-dbc .gene-origin-label { display: flex; flex-direction: column; gap: 2px; font-size: 0.82em; font-weight: 700; color: var(--wh-text-mid, #5a4a30); flex: 1 1 220px; }
+.warhammer-dbc .gene-origin-input { width: 100%; }
+.warhammer-dbc .gene-apply-btn {
+  width: auto; flex: 0 0 auto; padding: 4px 12px;
+  background: #2e4a22; color: #d8e8c0; border: 1px solid #4a6a3a; border-radius: 3px;
+  cursor: pointer; font-family: inherit; font-size: 0.85em; font-weight: 600; transition: background 0.12s;
+}
+.warhammer-dbc .gene-apply-btn:hover { background: #3e5e2e; }
+.warhammer-dbc .gene-seed-hint { font-size: 0.82em; font-style: italic; color: var(--wh-text-mid, #5a4a30); padding: 0 10px 6px; }
+.warhammer-dbc .gene-toggle-btn {
+  width: auto; flex: 0 0 auto; margin-left: 8px; padding: 1px 8px;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer; font-size: 0.78em; line-height: 1.3;
+  color: var(--wh-text-light); transition: background 0.12s;
+}
+.warhammer-dbc .gene-toggle-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .gene-organs.collapsed { display: none; }
+.warhammer-dbc .gene-organs { padding: 2px 10px 10px; display: flex; flex-direction: column; gap: 4px; }
+.warhammer-dbc .gene-organ { padding: 4px 6px; background: rgba(74,106,58,0.08); border-left: 3px solid #4a6a3a; border-radius: 2px; }
+.warhammer-dbc .gene-organ-name { display: block; font-weight: 700; color: #2e4a22; font-size: 0.9em; }
+.warhammer-dbc .gene-organ-effect { display: block; font-size: 0.88em; color: var(--wh-text, #1a1208); }
+.warhammer-dbc .size-trait-badge { font-size: 0.78em; color: #3a5a1a; font-weight: 600; }
+.warhammer-dbc .size-total-value { margin-left: 6px; font-weight: 700; color: #3a5a1a; }
+
+/* ── Псайкана ──────────────────────────────────────────────── */
+.warhammer-dbc .psy-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+  padding: 8px 10px;
+}
+.warhammer-dbc .psy-field { display: flex; flex-direction: column; gap: 2px; }
+.warhammer-dbc .psy-field label { font-size: 0.8em; font-weight: 700; color: var(--wh-text-mid, #5a4a30); }
+.warhammer-dbc .psy-field select,
+.warhammer-dbc .psy-field input { min-width: 90px; }
+.warhammer-dbc .psy-stat-value {
+  font-size: 1.2em; font-weight: 700; color: var(--wh-red, #8b1a1a);
+  min-width: 40px; text-align: center;
+}
+.warhammer-dbc .psy-hint {
+  font-size: 0.82em; font-style: italic; color: var(--wh-text-mid, #5a4a30);
+  padding: 0 10px 8px;
+}
+.warhammer-dbc .psy-add-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-left: 8px; padding: 0;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer; font-size: 0.9em; line-height: 1;
+  color: var(--wh-text-light); flex-shrink: 0; transition: background 0.12s;
+}
+.warhammer-dbc .psy-add-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .psy-powers-table .col-narrow { width: 48px; text-align: center; }
+.warhammer-dbc .psy-pr-cell, .warhammer-dbc .psy-sustain-cell { text-align: center; }
+.warhammer-dbc .psy-row-sustained { background: rgba(90,90,200,0.10) !important; }
+.warhammer-dbc .psy-manifest-btn {
+  width: auto; flex: 0 0 auto; padding: 2px 9px;
+  background: #3a2352; color: #e8d5f0; border: 1px solid #7a5aa0;
+  border-radius: 3px; cursor: pointer; font-family: inherit;
+  font-size: 0.82em; font-weight: 600; white-space: nowrap; transition: background 0.12s;
+}
+.warhammer-dbc .psy-manifest-btn:hover { background: #5a3a82; }
+.warhammer-dbc .psy-other-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
+.warhammer-dbc .psy-action-btn {
+  flex: 0 0 auto; width: auto; padding: 3px 10px;
+  background: var(--wh-panel-dark); color: var(--wh-text-light);
+  border: 1px solid var(--wh-border); border-radius: 2px; cursor: pointer;
+  font-family: inherit; font-size: 0.84em; font-weight: 600; transition: background 0.12s;
+}
+.warhammer-dbc .psy-action-btn:hover { background: #5a2a0e; }
+
+/* ── Черты (трейты) ───────────────────────────────────────── */
+.warhammer-dbc .trait-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.9em;
+  line-height: 1;
+  padding: 0;
+  color: var(--wh-text-light);
+  margin-left: 8px;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+.warhammer-dbc .trait-add-btn:hover { background: rgba(255,255,255,0.22); }
+
+.warhammer-dbc .traits-table .col-narrow { width: 64px; text-align: center; }
+.warhammer-dbc .trait-rating-cell { text-align: center; font-weight: 700; color: var(--wh-red, #8b1a1a); white-space: nowrap; }
+.warhammer-dbc .trait-fx-cell { font-size: 0.92em; color: #3a5a1a; }
+.warhammer-dbc .trait-fx-hint {
+  font-size: 0.82em;
+  font-style: italic;
+  color: var(--wh-text-mid, #5a4a30);
+  margin: 2px 0 6px;
+}
+
+/* ── Активные состояния: теги ────────────────────────────── */
+.warhammer-dbc .conditions-active-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 5px;
+  padding: 7px 10px 9px;
+  background: var(--wh-parchment2);
+  min-height: 36px;
+}
+
+.warhammer-dbc .conditions-empty {
+  text-align: center;
+  font-style: italic;
+  color: #4a3828;
+  padding: 7px 10px;
+  font-size: 0.86em;
+}
+
+/* ── Тег состояния ───────────────────────────────────────── */
+.warhammer-dbc .condition-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px 2px 7px;
+  border-radius: 10px;
+  border: 1px solid var(--wh-border);
+  background: var(--wh-parchment);
+  font-size: 0.84em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Цветовые акценты */
+.warhammer-dbc .condition-tag.cond-bleeding      { border-color:#c0392b; background:rgba(192,57,43,0.10); }
+.warhammer-dbc .condition-tag.cond-haemorrhaging { border-color:#8b0000; background:rgba(139,0,0,0.13); }
+.warhammer-dbc .condition-tag.cond-stunned       { border-color:#8e44ad; background:rgba(142,68,173,0.10); }
+.warhammer-dbc .condition-tag.cond-fatigued      { border-color:#c0801a; background:rgba(192,128,26,0.10); }
+.warhammer-dbc .condition-tag.cond-poisoned      { border-color:#27ae60; background:rgba(39,174,96,0.10); }
+.warhammer-dbc .condition-tag.cond-prone         { border-color:#7f8c8d; background:rgba(127,140,141,0.10); }
+.warhammer-dbc .condition-tag.cond-unconscious   { border-color:#2c3e50; background:rgba(44,62,80,0.12); }
+.warhammer-dbc .condition-tag.cond-blinded       { border-color:#5d4037; background:rgba(93,64,55,0.10); }
+.warhammer-dbc .condition-tag.cond-deafened      { border-color:#546e7a; background:rgba(84,110,122,0.10); }
+.warhammer-dbc .condition-tag.cond-burning       { border-color:#e67e22; background:rgba(230,126,34,0.12); }
+.warhammer-dbc .condition-tag.cond-radiation     { border-color:#2ecc71; background:rgba(46,204,113,0.10); }
+.warhammer-dbc .condition-tag.cond-hallucinogenic{ border-color:#9b59b6; background:rgba(155,89,182,0.10); }
+.warhammer-dbc .condition-tag.cond-pinned        { border-color:#e74c3c; background:rgba(231,76,60,0.10); }
+.warhammer-dbc .condition-tag.cond-crippling     { border-color:#795548; background:rgba(121,85,72,0.10); }
+.warhammer-dbc .condition-tag.cond-addicted      { border-color:#f39c12; background:rgba(243,156,18,0.10); }
+
+.warhammer-dbc .condition-tag-icon { font-size: 1em; flex-shrink: 0; }
+
+.warhammer-dbc .condition-tag-name {
+  color: var(--wh-text-dark);
+  font-weight: 700;
+  font-size: 1em;
+}
+
+/* Поле уровня внутри тега */
+.warhammer-dbc .condition-tag-level-wrap {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 1px;
+}
+
+.warhammer-dbc .condition-level-input {
+  width: 30px;
+  padding: 0 2px;
+  text-align: center;
+  font-size: 0.9em;
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(0,0,0,0.20);
+  border-radius: 6px;
+  color: var(--wh-text-dark);
+  height: 16px;
+}
+
+/* Кнопка ✕ снять состояние */
+.warhammer-dbc .condition-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75em;
+  padding: 0;
+  color: rgba(0,0,0,0.40);
+  margin-left: 1px;
+  border-radius: 50%;
+  line-height: 1;
+  transition: color 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+.warhammer-dbc .condition-remove-btn:hover {
+  color: #8b0000;
+  background: rgba(139,0,0,0.12);
+}
+
+/* ── Диалог добавления состояния (когитатор) ─────────────── */
+.wh-add-condition-dialog .add-cond-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.wh-add-condition-dialog .add-cond-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border: 1px solid rgba(47,158,106,0.4);
+  border-left: 3px solid var(--cond-color, #4dffa6);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.86em;
+  color: #d8ffe8;
+  background: rgba(15,58,38,0.45);
+  transition: background 0.12s, box-shadow 0.12s;
+  user-select: none;
+}
+.wh-add-condition-dialog .add-cond-label:hover {
+  background: rgba(77,255,166,0.12);
+  box-shadow: 0 0 7px rgba(77,255,166,0.3);
+}
+.wh-add-condition-dialog .add-cond-label input[type="checkbox"] {
+  accent-color: var(--cond-color, #4dffa6);
+  width: 13px; height: 13px; flex: 0 0 auto;
+}
+.wh-add-condition-dialog .add-cond-name { color: #eafff4; }
+.wh-add-condition-dialog .add-cond-icon { display: inline-flex; flex: 0 0 auto; }
+
+/* Обёртка inline-svg иконок состояний — выравнивание глифа */
+.wh-cond-ico { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; line-height: 0; }
+.wh-cond-ico svg { display: block; }
+
+/* ── Активные препараты ──────────────────────────────────── */
+.warhammer-dbc .effect-card {
+  border: 1px solid var(--wh-border);
+  border-left: 3px solid var(--wh-red, #8b0000);
+  border-radius: 3px;
+  background: var(--wh-parchment);
+  margin: 5px 8px;
+  padding: 6px 8px;
+  font-size: 0.88em;
+}
+
+.warhammer-dbc .effect-card-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.warhammer-dbc .effect-icon { font-size: 1.05em; flex-shrink: 0; }
+
+.warhammer-dbc .effect-name {
+  font-weight: 700;
+  color: var(--wh-text-dark);
+  font-size: 1em;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.warhammer-dbc .effect-category {
+  color: var(--wh-text-mid);
+  font-size: 0.85em;
+  font-style: italic;
+  flex-shrink: 0;
+}
+
+.warhammer-dbc .effect-delivery {
+  color: var(--wh-text-mid);
+  font-size: 0.83em;
+  font-style: italic;
+  flex-shrink: 0;
+}
+
+.warhammer-dbc .effect-duration,
+.warhammer-dbc .effect-rounds {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--wh-accent, #8b0000);
+  margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Кнопка ✕ деактивировать — маленький квадрат */
+.warhammer-dbc .effect-deactivate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: none;
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.75em;
+  padding: 0;
+  color: var(--wh-text-mid);
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+.warhammer-dbc .effect-deactivate-btn:hover {
+  background: rgba(139,0,0,0.12);
+  color: var(--wh-red);
+  border-color: var(--wh-red);
+}
+
+.warhammer-dbc .effect-stat-mods {
+  margin-top: 3px;
+  font-size: 0.86em;
+  color: #3a5a1a;
+  font-weight: 700;
+}
+
+.warhammer-dbc .effect-char-damage {
+  margin-top: 3px;
+  font-size: 0.86em;
+  color: #8b0000;
+  font-weight: 700;
+}
+
+.warhammer-dbc .effect-desc {
+  margin-top: 3px;
+  color: var(--wh-text);
+  font-size: 0.88em;
+  line-height: 1.4;
+}
+
+.warhammer-dbc .effect-special-list { margin-top: 3px; }
+
+.warhammer-dbc .effect-special-line {
+  font-size: 0.84em;
+  color: var(--wh-text-mid);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.warhammer-dbc .effect-after {
+  margin-top: 3px;
+  color: #7a3010;
+  font-size: 0.85em;
+  font-weight: 600;
+  font-style: italic;
+  border-top: 1px dashed var(--wh-border-light);
+  padding-top: 3px;
+}
+
+/* ── Таблица применения препаратов ───────────────────────── */
+.warhammer-dbc .effects-drug-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86em;
+}
+
+.warhammer-dbc .effects-drug-table thead tr {
+  background: var(--wh-panel-mid, #3a2a1a);
+}
+
+.warhammer-dbc .effects-drug-table thead th {
+  color: var(--wh-text-light);
+  padding: 4px 6px;
+  text-align: left;
+  font-weight: bold;
+  font-size: 0.86em;
+  letter-spacing: 0.04em;
+}
+
+.warhammer-dbc .effects-drug-table tbody tr {
+  border-bottom: 1px solid var(--wh-border-light);
+}
+
+.warhammer-dbc .effects-drug-table tbody tr:hover {
+  background: rgba(200,164,90,0.10);
+}
+
+.warhammer-dbc .effects-drug-table tbody td {
+  padding: 4px 6px;
+  color: var(--wh-text);
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.warhammer-dbc .drug-name-cell { white-space: nowrap; }
+
+.warhammer-dbc .drug-name-link {
+  cursor: pointer;
+  color: var(--wh-text-dark);
+  font-weight: 600;
+  text-decoration: underline dotted;
+  transition: color 0.12s;
+}
+.warhammer-dbc .drug-name-link:hover { color: var(--wh-red, #8b0000); }
+
+/* Колонка длительности — не переносить */
+.warhammer-dbc .drug-duration-cell {
+  white-space: nowrap;
+  text-align: center;
+  padding: 4px 6px;
+}
+
+.warhammer-dbc .drug-qty-cell {
+  text-align: center;
+  font-weight: 600;
+}
+
+.warhammer-dbc .drug-row-active { background: rgba(76,175,80,0.07) !important; }
+
+.warhammer-dbc .drug-active-dot {
+  color: #4caf50;
+  font-size: 0.75em;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+
+/* Кнопки применения препарата */
+.warhammer-dbc .drug-apply-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Маленькая иконка теста зависимости рядом с названием препарата */
+.warhammer-dbc .drug-name-test-btn {
+  padding: 0 5px;
+  font-size: 0.72em;
+  line-height: 1.4;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.warhammer-dbc .drug-apply-btn,
+.warhammer-dbc .drug-apply-other-btn {
+  background: var(--wh-panel-dark);
+  color: var(--wh-text-light);
+  border: 1px solid var(--wh-border);
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.84em;
+  font-weight: 600;
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.warhammer-dbc .drug-apply-btn:hover:not(:disabled),
+.warhammer-dbc .drug-apply-other-btn:hover:not(:disabled) { background: #5a2a0e; }
+.warhammer-dbc .drug-apply-btn:disabled,
+.warhammer-dbc .drug-apply-other-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* «На другом» — отличаем синеватым акцентом */
+.warhammer-dbc .drug-apply-other-btn {
+  background: #1f3a52;
+  border-color: #2f5a7a;
+}
+.warhammer-dbc .drug-apply-other-btn:hover:not(:disabled) { background: #2f5a7a; }
+
+.warhammer-dbc .effects-empty {
+  text-align: center;
+  font-style: italic;
+  color: #4a3828;
+  padding: 8px;
+  font-size: 0.88em;
+}
+
+/* ── Пост-эффект карточки ────────────────────────────────────────────────── */
+
+/* Карточка в режиме пост-эффекта — тёмно-бордовая левая полоса */
+.warhammer-dbc .effect-card-aftereffect {
+  border-left-color: #5a1a8b;
+  background: rgba(90, 26, 139, 0.04);
+}
+
+/* Бейдж «🔻 ПОСТ» в шапке */
+.warhammer-dbc .effect-aftereffect-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  background: #5a1a8b;
+  color: #f0e8ff;
+  font-size: 0.75em;
+  font-weight: 700;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* Кнопка «🔻 Конец действия» */
+.warhammer-dbc .effect-trigger-after-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  padding: 2px 8px;
+  background: #3a1060;
+  color: #e8d8ff;
+  border: 1px solid #6a3a9a;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.80em;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+.warhammer-dbc .effect-trigger-after-btn:hover {
+  background: #5a1a8b;
+  border-color: #9a5acb;
+}
+
+/* Текст описания в режиме пост-эффекта */
+.warhammer-dbc .effect-desc-after {
+  color: #5a1a8b;
+  font-weight: 600;
+}
+
+/* Карточка активного препарата в режиме пост-эффекта */
+.warhammer-dbc .effect-card-after {
+  border-left-color: #5a1a8b;
+  background: rgba(90, 26, 139, 0.05);
+}
+
+/* Бейдж состояния в шапке карточки (активен / пост-эффект) */
+.warhammer-dbc .effect-state-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  background: rgba(76, 175, 80, 0.18);
+  border: 1px solid rgba(58, 122, 26, 0.45);
+  color: #2f6a14;
+  font-size: 0.74em;
+  font-weight: 700;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.warhammer-dbc .effect-state-badge.effect-state-after {
+  background: rgba(90, 26, 139, 0.14);
+  border-color: #6a3a9a;
+  color: #5a1a8b;
+}
+
+/* Блок с кнопкой действия под карточкой */
+.warhammer-dbc .effect-card-actions {
+  margin-top: 5px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Подсветка строки «пост-эффект активен» */
+.warhammer-dbc .effect-after-running {
+  color: #5a1a8b;
+  border-top-color: #9a6acb;
+}
+
+/* Формула дайсов пост-эффекта */
+.warhammer-dbc .effect-after-dice {
+  margin-top: 3px;
+  font-size: 0.88em;
+  font-weight: 700;
+  color: #8b0000;
+}
+
+/* ── Зависимости ─────────────────────────────────────────────────────────── */
+
+.warhammer-dbc .panel-title-addiction {
+  background: #5a2a00;
+}
+
+.warhammer-dbc .addictions-list {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.warhammer-dbc .addiction-entry {
+  border: 1px solid #c07000;
+  border-left: 3px solid #e08000;
+  border-radius: 3px;
+  background: rgba(200, 120, 0, 0.06);
+  padding: 5px 8px;
+  font-size: 0.88em;
+}
+
+.warhammer-dbc .addiction-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.warhammer-dbc .addiction-icon { font-size: 1em; flex-shrink: 0; }
+
+.warhammer-dbc .addiction-name {
+  font-weight: 700;
+  color: var(--wh-text-dark);
+  flex-shrink: 0;
+}
+
+.warhammer-dbc .addiction-test {
+  font-size: 0.88em;
+  color: var(--wh-text-mid);
+  font-weight: 600;
+}
+
+.warhammer-dbc .addiction-freq {
+  font-size: 0.85em;
+  color: var(--wh-text-mid);
+  font-style: italic;
+  margin-left: auto;
+}
+
+.warhammer-dbc .addiction-status-on {
+  font-size: 0.8em;
+  font-weight: 700;
+  color: #c0392b;
+}
+
+.warhammer-dbc .addiction-test-btn {
+  flex: 0 0 auto;
+  width: auto;
+  margin-left: 6px;
+  padding: 1px 7px;
+  background: #5a2a00;
+  color: #f0e0c0;
+  border: 1px solid #c07000;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.warhammer-dbc .addiction-test-btn:hover { background: #7a3a00; }
+
+/* ✕ снять зависимость — маленький квадрат */
+.warhammer-dbc .addiction-remove-btn {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.72em;
+  line-height: 1;
+  color: var(--wh-text-mid);
+  transition: color 0.12s, background 0.12s;
+}
+.warhammer-dbc .addiction-remove-btn:hover {
+  color: #8b0000;
+  background: rgba(139,0,0,0.12);
+  border-color: #8b0000;
+}
+
+.warhammer-dbc .addiction-penalty {
+  margin-top: 3px;
+  font-size: 0.86em;
+  font-weight: 700;
+  color: #8b0000;
+}
+
+.warhammer-dbc .addiction-dose {
+  margin-top: 2px;
+  font-size: 0.84em;
+  color: var(--wh-text-mid);
+}
+
+/* ── Листе препарата — блок пост-эффекта ─────────────────────────────────── */
+
+.drug-aftereffect-toggle-row {
+  padding: 4px 0 2px;
+  border-top: 1px dashed var(--wh-border-light, #9a7c4e);
+  margin-top: 4px;
+}
+
+.drug-aftereffect-toggle-label {
+  font-weight: 600;
+  color: #5a1a8b;
+}
+
+.drug-aftereffect-block {
+  margin-top: 6px;
+  border: 1px solid #9a6acb;
+  border-left: 3px solid #5a1a8b;
+  border-radius: 3px;
+  background: rgba(90, 26, 139, 0.04);
+  padding: 6px 8px;
+}
+
+.drug-aftereffect-header {
+  font-weight: 700;
+  font-size: 0.88em;
+  color: #5a1a8b;
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.drug-aftereffect-submods-title {
+  font-size: 0.83em;
+  font-weight: 600;
+  color: var(--wh-text-mid);
+  margin: 6px 0 3px;
+  border-top: 1px dashed var(--wh-border-light);
+  padding-top: 4px;
+}
+
+/* Значок активного пост-эффекта в таблице */
+.warhammer-dbc .drug-after-dot {
+  color: #5a1a8b;
+  font-size: 0.85em;
+  margin-left: 2px;
+}
+
+/* Бейдж «Пост-эффект» в статусе листа предмета */
+.drug-active-badge-after {
+  background: #5a1a8b !important;
+  color: #f0e8ff !important;
+}
+/* ── Подзаголовок дисциплины/подтипа психосил и техночудес ───────────── */
+.warhammer-dbc .psy-discipline-sub {
+  font-size: 0.85em;
+  color: var(--wh-red);
+  opacity: 1;
+  font-style: italic;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ── Таланты ───────────────────────────────────────────────── */
+.warhammer-dbc .talent-add-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-left: 8px; padding: 0;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer; font-size: 0.9em; line-height: 1;
+  color: var(--wh-text-light); flex-shrink: 0; transition: background 0.12s;
+}
+.warhammer-dbc .talent-add-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .talents-table .col-narrow { width: 36px; text-align: center; }
+.warhammer-dbc .talent-tier-cell { text-align: center; font-weight: 700; }
+.warhammer-dbc .talent-apt-cell,
+.warhammer-dbc .talent-req-cell { font-size: 0.88em; color: var(--wh-text-mid); }
+
+/* ── Мутации и Дары Богов (стр. 440-460) ───────────────────── */
+/* Заголовок раздела — flex-ряд, иначе Foundry растягивает кнопки на всю
+   ширину и они вылезают из плашки (было: 🎲 во всю строку). */
+.warhammer-dbc .effects-subsection > .panel-title {
+  display: flex; align-items: center; gap: 6px;
+}
+.warhammer-dbc .mutgift-add-btn,
+.warhammer-dbc .mutgift-roll-btn {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; min-width: 20px; max-width: 20px;
+  margin: 0; padding: 0;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 3px; cursor: pointer; font-size: 11px; line-height: 1;
+  color: var(--wh-text-light); transition: background 0.12s;
+}
+/* Кнопка броска прижата к правому краю заголовка. */
+.warhammer-dbc .mutgift-roll-btn { margin-left: auto; }
+.warhammer-dbc .mutgift-add-btn:hover,
+.warhammer-dbc .mutgift-roll-btn:hover { background: rgba(255,255,255,0.22); }
+/* Колонка типа/бога в общем пуле Мутаций и Даров. */
+.warhammer-dbc .godgift-god {
+  font-size: 0.8em; text-align: center; color: var(--wh-accent, #4dffa6); white-space: nowrap;
+}
+
+/* ── Навигатор ─────────────────────────────────────────────── */
+.warhammer-dbc .nav-add-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-left: 8px; padding: 0;
+  background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer; font-size: 0.9em; line-height: 1;
+  color: var(--wh-text-light); flex-shrink: 0; transition: background 0.12s;
+}
+.warhammer-dbc .nav-add-btn:hover { background: rgba(255,255,255,0.22); }
+.warhammer-dbc .nav-activate-btn {
+  width: auto; flex: 0 0 auto; padding: 2px 9px;
+  background: #1a3a52; color: #cfe6f0; border: 1px solid #4a7aa0;
+  border-radius: 3px; cursor: pointer; font-family: inherit;
+  font-size: 0.82em; font-weight: 600; white-space: nowrap; transition: background 0.12s;
+}
+.warhammer-dbc .nav-activate-btn:hover { background: #2a5a82; }
+.warhammer-dbc .navigator-house-input { margin-top: 3px; width: 100%; font-size: 0.9em; }
+
+/* ── Ментальные расстройства — компактные кнопки ───────────── */
+.warhammer-dbc .disorder-test-btn {
+  flex: 0 0 auto; width: auto; margin-left: auto; padding: 2px 9px;
+  background: #3a2352; color: #e8d5f0; border: 1px solid #7a5aa0;
+  border-radius: 3px; cursor: pointer; font-family: inherit;
+  font-size: 0.8em; font-weight: 600; white-space: nowrap; transition: background 0.12s;
+}
+.warhammer-dbc .disorder-test-btn:hover { background: #5a3a82; }
+.warhammer-dbc .disorder-remove-btn {
+  flex: 0 0 auto; width: 18px; height: 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--wh-red); color: #fff; border: none; border-radius: 50%;
+  cursor: pointer; font-size: 0.78em; line-height: 1; padding: 0;
+}
+.warhammer-dbc .disorder-remove-btn:hover { background: #b02020; }
+.warhammer-dbc .disorders-list .effect-card-header { gap: 8px; align-items: center; }
+
+/* ── Болезни ─────────────────────────────────────────────── */
+.warhammer-dbc .diseases-list { display: flex; flex-direction: column; gap: 6px; }
+.warhammer-dbc .effect-card-disease { border-left: 4px solid #5a8a3a; }
+.warhammer-dbc .effect-card-disease.effect-card-disease-active { border-left-color: #7ab33a; box-shadow: 0 0 0 1px #6a9a3a inset; }
+.warhammer-dbc .effect-state-disease { background: #4a7a2a; color: #eef7e0; }
+.warhammer-dbc .disease-god { background: #3a5a2a; color: #dfeccb; }
+.warhammer-dbc .effect-card-disease .effect-icon { color: #6aaa3a; font-size: 1.1em; }
+.warhammer-dbc .disease-line { font-size: 0.86em; color: var(--wh-text); opacity: 0.92; margin-top: 3px; line-height: 1.35; }
+.warhammer-dbc .disease-line.disease-cure { color: #2a6a2a; }
+.warhammer-dbc .effect-disease-toggle,
+.warhammer-dbc .disease-remove-btn {
+  flex: 0 0 auto; width: auto; cursor: pointer; border: 1px solid var(--wh-border-light);
+  background: var(--wh-input-bg); border-radius: 3px; padding: 0 8px; font-weight: bold; line-height: 1.5;
+}
+.warhammer-dbc .effect-disease-toggle:hover { background: var(--wh-parchment3); }
+.warhammer-dbc .disease-remove-btn { color: #a33; }
+.warhammer-dbc .disease-remove-btn:hover { background: #b02020; color: #fff; }
+.warhammer-dbc .effect-card-disease .effect-card-header { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.warhammer-dbc .effect-card-disease .effect-name { flex: 1 1 auto; }
+
+/* ── Описание таланта/черты/мутации в выпадающей строке ── */
+.warhammer-dbc .ability-toggle-col { width: 26px; }
+.warhammer-dbc .ability-toggle-cell { text-align: center; padding: 0 !important; }
+.warhammer-dbc .ability-detail-toggle {
+  width: 20px; height: 20px; padding: 0; cursor: pointer; line-height: 1;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  border-radius: 3px; color: var(--wh-text); font-size: 0.8em;
+}
+.warhammer-dbc .ability-detail-toggle:hover { background: var(--wh-parchment3); }
+.warhammer-dbc tr.ability-row-open > td { border-bottom: none; }
+.warhammer-dbc tr.ability-row-open .ability-detail-toggle { background: var(--wh-panel-mid); color: var(--wh-text-light); }
+.warhammer-dbc .ability-detail-row > td {
+  background: var(--wh-parchment3); padding: 6px 12px 8px 30px !important;
+  border-top: none;
+}
+.warhammer-dbc .ability-detail-text { font-size: 1em; line-height: 1.5; color: var(--wh-text); white-space: pre-wrap; }
+
+/* Вкладка ПСИ: превью порога теста + урон под названием силы */
+.warhammer-dbc .psy-thr-cell { text-align: center; white-space: nowrap; }
+.warhammer-dbc .psy-thr { font-size: 0.86em; font-weight: bold; color: #c49ae0; }
+.warhammer-dbc .psy-thr-na { color: #6a5a7a; }
+.warhammer-dbc .psy-dmg-sub { color: #d88a8a; }
+
+/* Мини-кнопки в заголовках панелей (расстройства: d100 и ＋).
+   Отдельный класс, а не .conditions-add-btn: тот вешает обработчик добавления
+   СОСТОЯНИЯ, из-за чего по клику открывались сразу два окна. */
+.warhammer-dbc .panel-mini-btn {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 18px; min-width: 18px; padding: 0 5px; margin: 0;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 2px; cursor: pointer;
+  font-size: 0.78em; line-height: 1; white-space: nowrap;
+  color: var(--wh-text-light); transition: background 0.12s;
+}
+.warhammer-dbc .panel-mini-btn:hover { background: rgba(255,255,255,0.22); }
+/* Группа кнопок в правом углу заголовка: без отступа справа последняя кнопка
+   упиралась в край панели и обрезалась. */
+.warhammer-dbc .panel-btn-group {
+  display: flex; align-items: center; gap: 4px;
+  flex: 0 0 auto; margin-right: 8px;
+}

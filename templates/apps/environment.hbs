@@ -1,0 +1,120 @@
+<div class="wh-env">
+  <div class="wh-env-topbar">
+    <div class="wh-env-scene"><span class="wh-env-scene-lbl">СЦЕНА</span> <span class="wh-env-scene-name">{{sceneName}}</span></div>
+    {{#if isGM}}
+      {{#if inGroup}}
+      <div class="wh-env-target" title="Куда применять окружение">
+        <button type="button" class="wh-env-tgt {{#if isTargetGroup}}on{{/if}}" data-target="group" title="Общее окружение группы «{{groupName}}»">⛬ Группа</button>
+        <button type="button" class="wh-env-tgt {{#if isTargetScene}}on{{/if}}" data-target="scene" title="Только эта сцена (перекрывает группу)">◈ Сцена</button>
+      </div>
+      {{#if hasOverride}}<button type="button" class="wh-env-clearov" data-act="clearOverride" title="Убрать переопределение сцены — вернуть окружение группы">✕ override</button>{{/if}}
+      {{/if}}
+      <button type="button" class="wh-env-reset" data-act="reset" title="Сбросить {{#if isTargetScene}}эту сцену{{else}}группу{{/if}} к норме">↺ Сброс</button>
+    {{/if}}
+  </div>
+  {{#if isGM}}{{#if inGroup}}
+  <div class="wh-env-scope-note {{#if isTargetScene}}scene{{/if}}">
+    {{#if isTargetGroup}}Правится общее окружение группы «{{groupName}}» — применится ко всем её сценам.
+    {{else}}Правится ТОЛЬКО эта сцена — переопределяет окружение группы «{{groupName}}».{{/if}}
+  </div>
+  {{/if}}{{/if}}
+
+  <div class="wh-env-split">
+    {{!-- ── Левое меню категорий ── --}}
+    <nav class="wh-env-nav">
+      {{#each cats as |c|}}
+      <button type="button" class="wh-env-navitem {{#if c.active}}active{{/if}}" data-cat="{{c.key}}">
+        <span class="wh-env-navic">{{c.icon}}</span><span class="wh-env-navlbl">{{c.label}}</span>
+      </button>
+      {{/each}}
+      {{#if isGM}}
+      <label class="wh-env-note-field">
+        <span>Заметка игрокам</span>
+        <textarea name="note" rows="3" placeholder="Короткая приписка в виджете…">{{note}}</textarea>
+      </label>
+      {{/if}}
+    </nav>
+
+    {{!-- ── Редактор выбранной категории ── --}}
+    <section class="wh-env-main">
+
+      {{#if isWeather}}
+      <h3 class="wh-env-h">🌤 Обстановка</h3>
+      <p class="wh-env-hint">Погода планеты или позиция корабля/пустоты (Материум, Варп-переход, в Варпе…). Флавор сцены; в виджете подпись меняется на «Погода» или «Локация».</p>
+      {{#each weatherGroups as |grp|}}
+      <div class="wh-env-weather-caption">{{grp.label}}</div>
+      <div class="wh-env-weather-grid">
+        {{#each grp.items as |w|}}
+        <button type="button" class="wh-env-weather {{#if w.selected}}sel{{/if}}" data-weather="{{w.key}}" style="--c:{{w.tone}}">
+          <span class="wh-env-weather-ic">{{w.icon}}</span><span class="wh-env-weather-lbl">{{w.label}}</span>
+        </button>
+        {{/each}}
+      </div>
+      {{/each}}
+      {{#if isGM}}
+      <label class="wh-env-custom"><span>Своя погода (перекрывает выбор)</span>
+        <input type="text" name="weatherText" value="{{weatherCustom}}" placeholder="напр. «Ливень битого стекла»"/></label>
+      {{/if}}
+      {{/if}}
+
+      {{#if isTemp}}
+      <h3 class="wh-env-h">🌡 Температура <span class="wh-env-h-val" style="color:{{env.temp.tone}}">{{env.temp.value}}°C</span></h3>
+      {{#if isGM}}
+      <div class="wh-env-temp-ctl">
+        <button type="button" data-tempstep="-5">−5</button>
+        <input type="number" name="temp" value="{{env.temp.value}}" step="1"/>
+        <button type="button" data-tempstep="5">+5</button>
+        <input type="range" name="tempRange" min="-50" max="70" step="1" value="{{env.temp.value}}"/>
+      </div>
+      {{/if}}
+      <div class="wh-env-fx" style="--c:{{env.temp.tone}}">
+        {{#if env.temp.active}}
+          <div class="wh-env-fx-zone">{{env.temp.label}}</div>
+          <div class="wh-env-fx-mech">Тест <b>Стойкости {{env.temp.testSigned}}</b> · {{env.temp.freq}}</div>
+          <div class="wh-env-fx-note">При провале — 1 Усталость (жара) или урон/Усталость (холод); при потере сознания — 1d5 урона. Тёплая одежда/броня могут поднять ощущаемый уровень.</div>
+        {{else}}
+          <div class="wh-env-fx-zone ok">Комфортная зона — тесты не нужны.</div>
+        {{/if}}
+      </div>
+      {{/if}}
+
+      {{#if isGravity}}
+      <h3 class="wh-env-h">🪐 Гравитация <span class="wh-env-h-val" style="color:{{env.gravity.tone}}">{{#if (eq env.gravity.kind "zero")}}0G{{else}}{{env.gravity.value}}G{{/if}}</span></h3>
+      {{#if isGM}}
+      <div class="wh-env-grav-ctl">
+        {{#each gravPresets as |p|}}<button type="button" class="{{#if p.selected}}sel{{/if}}" data-grav="{{p.g}}">{{p.g}}G</button>{{/each}}
+        <label>Точно: <input type="number" name="gravity" value="{{env.gravity.value}}" min="0" step="0.1"/></label>
+      </div>
+      {{/if}}
+      <div class="wh-env-fx" style="--c:{{env.gravity.tone}}">
+        <div class="wh-env-fx-zone">{{env.gravity.label}}</div>
+        <div class="wh-env-fx-note">{{env.gravity.note}}</div>
+      </div>
+      {{/if}}
+
+      {{#if isRad}}
+      <h3 class="wh-env-h">☢ Радиация <span class="wh-env-h-val" style="color:{{env.rad.tone}}">{{#if env.rad.active}}уровень {{env.rad.value}}{{else}}норма{{/if}}</span></h3>
+      {{#if isGM}}
+      <div class="wh-env-rad-ctl">
+        {{#each radLevels as |r|}}<button type="button" class="{{#if r.selected}}sel{{/if}}" data-rad="{{r.l}}">{{r.l}}</button>{{/each}}
+      </div>
+      {{/if}}
+      <div class="wh-env-fx" style="--c:{{env.rad.tone}}">
+        {{#if env.rad.active}}
+          <div class="wh-env-fx-zone">{{env.rad.label}}</div>
+          <div class="wh-env-fx-mech">1 урон в Стойкость · тест <b>T+0</b> против лучевой болезни · {{env.rad.freq}}</div>
+        {{else}}
+          <div class="wh-env-fx-zone ok">Радиационный фон в норме.</div>
+        {{/if}}
+      </div>
+      <details class="wh-env-radref">
+        <summary>Защита от радиации (эффекты складываются)</summary>
+        <div class="wh-env-radprot">
+          {{#each radProtection as |p|}}<div class="wh-env-radprot-row"><span>{{p.label}}</span><b>{{p.val}}</b></div>{{/each}}
+        </div>
+      </details>
+      {{/if}}
+
+    </section>
+  </div>
+</div>

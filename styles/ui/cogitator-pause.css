@@ -1,0 +1,55 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — экран паузы: имперская аквила вместо часов
+═══════════════════════════════════════════════════════ */
+
+/* Глушим дефолтную пульсацию-зум Foundry (она масштабировала всё содержимое). */
+#pause { animation: none !important; transform: none !important; }
+#pause figure, #pause img { animation: none !important; transform: none !important; }
+#pause img { display: none !important; }
+
+/* Аквила (белый силуэт → зелёная заливка через маску), на месте, только мерцает. */
+#pause::before {
+  content: "";
+  display: block;
+  width: 300px;
+  height: 165px;
+  margin: 0 auto 6px;
+  background-color: #4dffa6;
+  -webkit-mask: url("/systems/warhammer-dbc/assets/aquila-white.png") center / contain no-repeat;
+  mask: url("/systems/warhammer-dbc/assets/aquila-white.png") center / contain no-repeat;
+  animation: wh-aquila-flicker 2.4s ease-in-out infinite;
+}
+
+@keyframes wh-aquila-flicker {
+  0%   { opacity: 0.85; filter: drop-shadow(0 0 6px rgba(77,255,166,0.45)); }
+  42%  { opacity: 0.85; filter: drop-shadow(0 0 6px rgba(77,255,166,0.45)); }
+  46%  { opacity: 0.30; filter: drop-shadow(0 0 2px rgba(77,255,166,0.15)); }
+  50%  { opacity: 1.00; filter: drop-shadow(0 0 20px rgba(120,255,190,0.95)); }
+  54%  { opacity: 0.45; filter: drop-shadow(0 0 4px rgba(77,255,166,0.25)); }
+  58%  { opacity: 0.95; filter: drop-shadow(0 0 12px rgba(77,255,166,0.7)); }
+  72%  { opacity: 0.55; }
+  100% { opacity: 0.85; filter: drop-shadow(0 0 6px rgba(77,255,166,0.45)); }
+}
+
+/* Подменяем подпись на «Нет места отдыху» (на случай, если локализация не подхватилась). */
+#pause h1, #pause h2, #pause h3,
+#pause figcaption, #pause .pause-text { font-size: 0 !important; animation: none !important; }
+
+#pause h1::after, #pause h2::after, #pause h3::after,
+#pause figcaption::after, #pause .pause-text::after {
+  content: "Нет места отдыху";
+  display: block;
+  font-size: 30px;
+  color: #6dffb0;
+  text-shadow: 0 0 10px rgba(77,255,166,0.7), 0 0 2px rgba(0,0,0,0.85);
+  letter-spacing: 0.22em;
+  font-weight: bold;
+  white-space: nowrap;
+  animation: wh-pause-text 2.4s ease-in-out infinite;
+}
+
+@keyframes wh-pause-text {
+  0%, 44%, 100% { opacity: 0.9; }
+  48% { opacity: 0.4; }
+  52% { opacity: 1; }
+}

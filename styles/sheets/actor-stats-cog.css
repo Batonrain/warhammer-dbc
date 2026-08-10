@@ -1,0 +1,118 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладки ПОКАЗАТЕЛИ и СПОСОБНОСТИ
+   в когитаторном стиле (фосфорная зелень). Палитра --cg*
+   наследуется от .character-sheet (actor-cog.css).
+═══════════════════════════════════════════════════════ */
+
+/* ═══════════════ ПОКАЗАТЕЛИ ═══════════════ */
+.warhammer-dbc .stats-cog { font-family: "Consolas","Lucida Console","Courier New",monospace; }
+.warhammer-dbc .stats-cog .panel-title { text-transform: uppercase; }
+.warhammer-dbc .stats-cog .side-code { margin-left: auto; font-size: 0.66em; letter-spacing: 0.1em; color: var(--cg-dim); opacity: 0.8; }
+
+.warhammer-dbc .stats-cog .side-body { padding: 8px 10px; }
+.warhammer-dbc .stats-cog .side-main-val { display: flex; align-items: center; gap: 5px; }
+.warhammer-dbc .stats-cog .side-main-val input {
+  flex: 1; min-width: 0; text-align: center; font-size: 1.9em; font-weight: 800;
+  background: rgba(0,0,0,0.45) !important; border: 1px solid var(--cg-line) !important; color: var(--cg) !important;
+  border-radius: 4px; text-shadow: 0 0 10px rgba(77,255,166,0.4); padding: 2px;
+}
+.warhammer-dbc .stats-cog .side-main-val input:focus { outline: none; border-color: var(--cg) !important; box-shadow: 0 0 8px -1px var(--cg); }
+.warhammer-dbc .stats-cog .side-bar { position: relative; height: 8px; border: 1px solid var(--cg-line); border-radius: 3px; background: rgba(0,0,0,0.45); margin: 6px 0; overflow: hidden; }
+.warhammer-dbc .stats-cog .side-fill { height: 100%; transition: width 0.35s ease; }
+.warhammer-dbc .stats-cog .side-fill.load-ok    { background: linear-gradient(90deg, var(--cg-dim), var(--cg)); box-shadow: 0 0 8px var(--cg); }
+.warhammer-dbc .stats-cog .side-fill.load-heavy { background: linear-gradient(90deg, #c8892a, var(--cg-fire)); box-shadow: 0 0 8px var(--cg-fire); }
+.warhammer-dbc .stats-cog .side-fill.load-over  { background: linear-gradient(90deg, #a01810, var(--cg-red)); box-shadow: 0 0 8px var(--cg-red); }
+.warhammer-dbc .stats-cog .side-pct { position: absolute; right: 5px; top: -1px; line-height: 8px; font-size: 0.62em; color: #eafff4; text-shadow: 0 0 3px #000; }
+.warhammer-dbc .stats-cog .side-bonus-row { display: flex; justify-content: space-between; font-size: 0.8em; color: #8fbf9c; padding: 1px 0; }
+.warhammer-dbc .stats-cog .side-bonus-val { color: var(--cg); font-weight: 700; text-shadow: 0 0 6px rgba(77,255,166,0.35); }
+.warhammer-dbc .stats-cog .side-roll-btn {
+  width: 100%; margin-top: 5px; font-family: inherit; font-size: 0.82em; letter-spacing: 0.02em; border-radius: 3px; cursor: pointer; transition: all 0.13s;
+  background: linear-gradient(180deg, #0e2a1a, #08160e); border: 1px solid var(--cg-line); color: #c8ffe4;
+}
+.warhammer-dbc .stats-cog .side-roll-btn:hover { border-color: var(--cg); box-shadow: 0 0 12px -4px var(--cg); color: #eafff4; }
+.warhammer-dbc .stats-cog .corruption-roll:hover { border-color: var(--cg-red); box-shadow: 0 0 12px -4px var(--cg-red); color: #ffd8d8; }
+
+.warhammer-dbc .stats-cog .char-table-display { width: 100%; border-collapse: collapse; }
+.warhammer-dbc .stats-cog .char-table-display thead th {
+  font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.05em; color: #8fe0b4; padding: 5px 6px;
+  border-bottom: 1px solid rgba(77,255,166,0.3); background: linear-gradient(180deg, rgba(77,255,166,0.1), transparent); text-align: left;
+}
+.warhammer-dbc .stats-cog .char-table-display tbody tr { transition: background 0.12s, box-shadow 0.12s; }
+.warhammer-dbc .stats-cog .char-table-display tbody tr:hover { background: rgba(77,255,166,0.06); box-shadow: inset 3px 0 0 var(--cg); }
+.warhammer-dbc .stats-cog .char-table-display td { padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,0.045); }
+.warhammer-dbc .stats-cog .char-roll { color: #d8ffe8; text-decoration: none; cursor: pointer; transition: text-shadow 0.12s, color 0.12s; }
+.warhammer-dbc .stats-cog .char-roll:hover { color: var(--cg); text-shadow: 0 0 8px var(--cg); }
+.warhammer-dbc .stats-cog .char-roll b { color: var(--cg-fire); }
+.warhammer-dbc .stats-cog .char-total-disp { text-align: center; color: #e6ffee; font-weight: 700; }
+.warhammer-dbc .stats-cog .char-total-debuffed { color: var(--cg-red); }
+.warhammer-dbc .stats-cog .char-bonus-disp { text-align: center; font-size: 1.15em; font-weight: 800; color: var(--cg); text-shadow: 0 0 8px rgba(77,255,166,0.4); }
+.warhammer-dbc .stats-cog .char-debuff-input { width: 44px; text-align: center; background: #08160e; border: 1px solid var(--cg-line); color: #ffd8a8; border-radius: 3px; }
+
+.warhammer-dbc .stats-cog .skill-row { border-bottom: 1px solid rgba(255,255,255,0.04); padding: 2px 4px; transition: background 0.1s; }
+.warhammer-dbc .stats-cog .skill-row:hover { background: rgba(77,255,166,0.06); }
+.warhammer-dbc .stats-cog .skill-roll { color: #cfeee0; text-decoration: none; cursor: pointer; transition: color 0.1s, text-shadow 0.1s; }
+.warhammer-dbc .stats-cog .skill-roll:hover { color: var(--cg); text-shadow: 0 0 7px var(--cg); }
+.warhammer-dbc .stats-cog .skill-total { font-weight: 700; }
+.warhammer-dbc .stats-cog .skill-pos { color: var(--cg); text-shadow: 0 0 6px rgba(77,255,166,0.3); }
+.warhammer-dbc .stats-cog .skill-neg { color: #b86a6a; }
+.warhammer-dbc .stats-cog .skill-group-header {
+  font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cg-fire); opacity: 0.9;
+  border-bottom: 1px solid rgba(255,184,77,0.25); margin: 5px 0 2px; padding-bottom: 1px;
+}
+.warhammer-dbc .stats-cog .skills-panel {
+  position: relative; margin-top: 8px; border-radius: 6px; overflow: hidden;
+  border: 1px solid var(--cg-line); background: linear-gradient(180deg, #0a1c12, #06120c);
+  box-shadow: inset 0 0 20px rgba(0,50,25,0.4), 0 0 12px -9px var(--cg);
+}
+.warhammer-dbc .stats-cog .skills-grid { padding: 6px 8px; }
+.warhammer-dbc .stats-cog .skills-column-groups { border-left: 1px solid rgba(77,255,166,0.12); padding-left: 8px; }
+
+/* ═══════════════ СПОСОБНОСТИ ═══════════════ */
+.warhammer-dbc .abil-cog { font-family: "Consolas","Lucida Console","Courier New",monospace; }
+.warhammer-dbc .abil-cog .ability-section-panel {
+  position: relative; margin-bottom: 9px; border-radius: 6px;
+  background: linear-gradient(180deg, #0a1c12, #06120c) !important; border: 1px solid var(--cg-line) !important;
+  box-shadow: inset 0 0 20px rgba(0,50,25,0.4), 0 0 12px -9px var(--cg);
+}
+.warhammer-dbc .abil-cog .ability-section-panel::before,
+.warhammer-dbc .abil-cog .ability-section-panel::after {
+  content: ""; position: absolute; width: 8px; height: 8px; pointer-events: none; opacity: 0.6; border-color: var(--cg-dim); border-style: solid;
+}
+.warhammer-dbc .abil-cog .ability-section-panel::before { top: 3px; left: 3px; border-width: 1px 0 0 1px; }
+.warhammer-dbc .abil-cog .ability-section-panel::after  { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
+.warhammer-dbc .abil-cog .panel-title { text-transform: uppercase; letter-spacing: 0.09em; }
+
+.warhammer-dbc .abil-cog .items-table { width: 100%; border-collapse: collapse; }
+.warhammer-dbc .abil-cog .items-table thead th {
+  font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.04em; color: #8fe0b4; padding: 5px 7px;
+  border-bottom: 1px solid rgba(77,255,166,0.3); background: linear-gradient(180deg, rgba(77,255,166,0.1), transparent); text-align: left;
+}
+.warhammer-dbc .abil-cog .items-table tbody .item-row { transition: background 0.12s, box-shadow 0.12s; }
+.warhammer-dbc .abil-cog .items-table tbody .item-row td { padding: 5px 7px; border-bottom: 1px solid rgba(255,255,255,0.045); }
+.warhammer-dbc .abil-cog .items-table tbody .item-row:hover { background: rgba(77,255,166,0.09) !important; box-shadow: inset 3px 0 0 var(--cg); }
+.warhammer-dbc .abil-cog .item-name-cell { color: #e6ffee; font-weight: 600; }
+.warhammer-dbc .abil-cog .talent-tier-cell, .warhammer-dbc .abil-cog .trait-rating-cell { text-align: center; color: var(--cg); font-weight: 700; text-shadow: 0 0 6px rgba(77,255,166,0.35); }
+.warhammer-dbc .abil-cog .talent-apt-cell, .warhammer-dbc .abil-cog .talent-req-cell, .warhammer-dbc .abil-cog .trait-fx-cell { color: #8fbf9c; font-size: 0.9em; }
+.warhammer-dbc .abil-cog .ability-detail-toggle {
+  background: transparent; border: 1px solid var(--cg-line); color: var(--cg); border-radius: 3px; cursor: pointer; transition: all 0.12s; line-height: 1;
+}
+.warhammer-dbc .abil-cog .ability-detail-toggle:hover { border-color: var(--cg); box-shadow: 0 0 8px -2px var(--cg); }
+.warhammer-dbc .abil-cog .ability-detail-row td { background: rgba(0,0,0,0.35); padding: 0 !important; }
+.warhammer-dbc .abil-cog .ability-detail-text { color: #b8e6cc; font-size: 0.86em; line-height: 1.5; padding: 7px 10px; border-left: 2px solid var(--cg); }
+.warhammer-dbc .abil-cog .ability-detail-text b { color: var(--cg-fire); }
+.warhammer-dbc .abil-cog .items-empty td { color: #6f9a84; font-style: italic; text-align: center; padding: 10px 8px; }
+.warhammer-dbc .abil-cog .talent-add-btn, .warhammer-dbc .abil-cog .trait-add-btn, .warhammer-dbc .abil-cog .mutation-add-btn,
+.warhammer-dbc .abil-cog .path-add-btn, .warhammer-dbc .abil-cog .gene-toggle-btn, .warhammer-dbc .abil-cog .paths-toggle-btn {
+  font-family: inherit; color: #d8ffe8; background: color-mix(in srgb, var(--cg) 20%, transparent); border: 1px solid var(--cg-line); border-radius: 3px; cursor: pointer; transition: all 0.13s;
+}
+.warhammer-dbc .abil-cog .talent-add-btn:hover, .warhammer-dbc .abil-cog .trait-add-btn:hover, .warhammer-dbc .abil-cog .mutation-add-btn:hover,
+.warhammer-dbc .abil-cog .path-add-btn:hover, .warhammer-dbc .abil-cog .gene-toggle-btn:hover, .warhammer-dbc .abil-cog .paths-toggle-btn:hover { border-color: var(--cg); box-shadow: 0 0 10px -3px var(--cg); }
+.warhammer-dbc .abil-cog .gene-apply-btn, .warhammer-dbc .abil-cog .ynnari-apply-btn, .warhammer-dbc .abil-cog .harlequin-apply-btn {
+  font-family: inherit; color: #150a00; background: linear-gradient(180deg, #ffcf6e, var(--cg-fire)); border: 1px solid var(--cg-fire); border-radius: 3px; cursor: pointer; font-weight: 700; transition: all 0.13s;
+}
+.warhammer-dbc .abil-cog .gene-apply-btn:hover, .warhammer-dbc .abil-cog .ynnari-apply-btn:hover, .warhammer-dbc .abil-cog .harlequin-apply-btn:hover { box-shadow: 0 0 12px -3px var(--cg-fire); }
+.warhammer-dbc .abil-cog .gene-seed-hint { color: #7fae95; font-style: italic; }
+.warhammer-dbc .abil-cog .path-card { background: rgba(8,22,14,0.5); border: 1px solid var(--cg-line); border-radius: 4px; }
+.warhammer-dbc .abil-cog .path-grade-name, .warhammer-dbc .abil-cog .path-auto { color: var(--cg-fire); }
+.warhammer-dbc .abil-cog select { background: #08160e; border: 1px solid var(--cg-line); color: #d8ffe8; font-family: inherit; }
+.warhammer-dbc .abil-cog .gene-organ-name { color: var(--cg); }

@@ -1,0 +1,585 @@
+<div class="wh-veil-app wv-tier-{{tier}}">
+
+  {{!-- ── Шапка + вкладки ─────────────────────────────────────────────── --}}
+  <div class="wv-header">
+    <div class="wv-title">
+      <span class="wv-title-main">ЗАВЕСА&nbsp;И&nbsp;МИСТИКА</span>
+      <span class="wv-title-scene">◈ {{sceneName}}</span>
+    </div>
+    <nav class="wv-tabs">
+      <button type="button" class="wv-tab {{#if isVeil}}on{{/if}}" data-tab="veil">Завеса</button>
+      <button type="button" class="wv-tab {{#if isRituals}}on{{/if}}" data-tab="rituals">Ритуалы</button>
+      <button type="button" class="wv-tab {{#if isNav}}on{{/if}}" data-tab="nav">Навигация</button>
+      <button type="button" class="wv-tab {{#if isTarot}}on{{/if}}" data-tab="tarot">Таро Императора</button>
+      <button type="button" class="wv-tab wv-tab-defile {{#if isDefile}}on{{/if}}" data-tab="defile">Осквернение</button>
+    </nav>
+  </div>
+
+  <div class="wh-veil-scroll">
+
+  {{!-- ═══════════════════ ВКЛАДКА: ЗАВЕСА ═══════════════════ --}}
+  {{#if isVeil}}
+  <div class="wv-grid">
+
+    {{!-- Левая колонка: живой индикатор плотности --}}
+    <div class="wv-meter-panel">
+      <div class="wv-meter {{#if god}}has-god{{/if}}" data-total="{{total}}" style="{{#if godColor}}--god:{{godColor}};{{/if}}">
+        <div class="wv-pole wv-pole-warp">ВАРП</div>
+        <div class="wv-membrane" style="top:{{gauge}}%;">
+          <span class="wv-mem-line"></span>
+          <span class="wv-mem-line"></span>
+          <span class="wv-mem-line"></span>
+        </div>
+        {{!-- Око Варпа: сам анимированный шар — кликом (ГМ) выбирается прорыв Бога --}}
+        <div class="wv-rift {{#if god}}has-god{{/if}}"></div>
+        <button type="button" class="wv-eye" data-act="godpick"
+                title="{{#if godMeta}}Прорыв: {{godMeta.label}} — сменить{{else}}Выбрать прорыв Бога{{/if}}" {{#unless isGM}}disabled{{/unless}}></button>
+        {{#if godPickerOpen}}
+        <div class="wv-godpicker">
+          <button type="button" class="wv-god-opt {{#unless god}}on{{/unless}}" data-setgod="">✦ Смешанный</button>
+          {{#each gods as |g|}}
+          <button type="button" class="wv-god-opt {{#if g.selected}}on{{/if}}" data-setgod="{{g.key}}">
+            <span class="wv-god-dot" style="background:{{g.color}};box-shadow:0 0 8px {{g.color}}"></span>{{g.label}}
+          </button>
+          {{/each}}
+        </div>
+        {{/if}}
+        <div class="wv-pole wv-pole-mat">МАТЕРИУМ</div>
+        <div class="wv-readout">
+          <div class="wv-readout-num">{{totalSigned}}</div>
+          <div class="wv-readout-lbl">{{levelLabel}}</div>
+          {{#if godMeta}}<div class="wv-readout-god" style="color:{{godColor}}">Прорыв: {{godMeta.label}}</div>{{/if}}
+        </div>
+      </div>
+      <div class="wv-consequence">{{consequence}}</div>
+    </div>
+
+    {{!-- Правая колонка: факторы, контролы, события, журнал --}}
+    <div class="wv-controls">
+      <div class="wv-block">
+        <div class="wv-block-title">ФАКТОРЫ ИСТОНЧЕНИЯ</div>
+        <div class="wv-factors">
+          {{#each factors as |f|}}
+          <label class="wv-factor {{#if f.active}}on{{/if}} {{#if f.pos}}pos{{/if}} {{#if f.neg}}neg{{/if}}">
+            <input type="checkbox" data-factor="{{f.key}}" data-group="{{f.group}}" {{#if f.active}}checked{{/if}} {{#unless @root.isGM}}disabled{{/unless}}/>
+            <span class="wv-factor-val">{{f.signed}}</span>
+            <span class="wv-factor-lbl">{{f.label}}</span>
+          </label>
+          {{/each}}
+        </div>
+      </div>
+
+      {{#if isGM}}
+      <div class="wv-block">
+        <div class="wv-block-title">РУЧНАЯ НАСТРОЙКА</div>
+        <div class="wv-nudge-row">
+          <label class="wv-mini">База<input type="number" name="base" value="{{base}}"/></label>
+          <label class="wv-mini">Сдвиг<input type="number" name="manual" value="{{manual}}"/></label>
+          <div class="wv-nudge-btns">
+            <button type="button" data-nudge="-1">−1</button>
+            <button type="button" data-nudge="1">+1</button>
+          </div>
+        </div>
+        <div class="wv-events">
+          {{#each events as |e|}}
+          <button type="button" class="wv-event {{#if (gt e.delta 0)}}pos{{else}}neg{{/if}}" data-event="{{e.key}}"
+                  title="{{e.label}} ({{#if (gt e.delta 0)}}+{{/if}}{{e.delta}})">
+            <span class="wv-event-ico">{{e.icon}}</span>{{e.label}}
+            <b>{{#if (gt e.delta 0)}}+{{/if}}{{e.delta}}</b>
+          </button>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
+      <div class="wv-block">
+        <div class="wv-block-title">ЖУРНАЛ ВАРП-СОБЫТИЙ
+          {{#if isGM}}<span class="wv-block-actions">
+            <button type="button" class="wv-link" data-act="clearlog">очистить</button>
+            <button type="button" class="wv-link" data-act="reset">сброс</button>
+          </span>{{/if}}
+        </div>
+        {{#if log.length}}
+        <ul class="wv-log">
+          {{#each log as |l|}}
+          <li><span class="wv-log-d {{#if l.pos}}pos{{/if}} {{#if l.neg}}neg{{/if}}">{{l.signed}}</span>
+              <span class="wv-log-note">{{l.note}}</span>
+              <span class="wv-log-time">{{l.when}}</span></li>
+          {{/each}}
+        </ul>
+        {{else}}<div class="wv-empty">— событий нет —</div>{{/if}}
+      </div>
+
+      {{#if isGM}}
+      <div class="wv-block">
+        <div class="wv-block-title">РИТУАЛЫ, ВЛИЯЮЩИЕ НА ЗАВЕСУ
+          <span class="wv-block-actions"><button type="button" class="wv-link" data-act="ritualAdd">＋ добавить</button></span>
+        </div>
+        {{#if rituals.length}}
+        <div class="wv-ritual-list">
+          {{#each rituals as |r|}}
+          <div class="wv-ritual {{#if r.active}}on{{/if}}">
+            <label class="wv-ritual-cb"><input type="checkbox" data-ritual-active="{{r.idx}}" {{#if r.active}}checked{{/if}}/></label>
+            <input type="text"   class="wv-ritual-name"  data-ritual-name="{{r.idx}}"  value="{{r.name}}"/>
+            <input type="number" class="wv-ritual-delta" data-ritual-delta="{{r.idx}}" value="{{r.delta}}"/>
+            <button type="button" class="wv-ritual-del" data-ritual-del="{{r.idx}}" title="Удалить">✕</button>
+          </div>
+          {{/each}}
+        </div>
+        {{else}}<div class="wv-empty">— нет активных ритуалов Завесы —</div>{{/if}}
+      </div>
+      <button type="button" class="wv-announce" data-act="announce">{{{veilIcon "announce"}}}Огласить завесу в чат</button>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+
+  {{!-- ═══════════════════ ВКЛАДКА: РИТУАЛЫ ═══════════════════ --}}
+  {{#if isRituals}}
+  {{#with ritual}}
+  <div class="wv-ritual-tab">
+    {{#if actors.length}}
+    <div class="wv-rit-grid">
+      {{!-- Левая колонка: настройка ритуала --}}
+      <div class="wv-rit-form">
+        <div class="wv-block">
+          <div class="wv-block-title">АНАТОМИЯ РИТУАЛА</div>
+          <div class="wv-rit-row">
+            <label class="wv-rit-lbl" title="Автозаполнить название, тип, сложность и навык под выбранного Ритуалиста">Пресет</label>
+            <select name="ritPreset" class="wv-rit-wide">
+              <option value="">— выбрать ритуал… —</option>
+              {{#each presetGroups as |g|}}
+              <optgroup label="{{g.cat}}">
+                {{#each g.items as |p|}}<option value="{{p.idx}}">{{p.label}}</option>{{/each}}
+              </optgroup>
+              {{/each}}
+            </select>
+          </div>
+          <div class="wv-rit-row">
+            <label class="wv-rit-lbl">Ритуалист</label>
+            <select name="ritActor" class="wv-rit-wide">
+              {{#each actors as |a|}}<option value="{{a.id}}" {{#if (eq a.id @root.ritual.ritualistId)}}selected{{/if}}>{{a.name}}</option>{{/each}}
+            </select>
+          </div>
+          <div class="wv-rit-row">
+            <label class="wv-rit-lbl">Название</label>
+            <input type="text" name="ritName" class="wv-rit-wide" value="{{name}}" placeholder="напр. Призыв Низшего Демона"/>
+          </div>
+          <div class="wv-rit-row">
+            <label class="wv-rit-lbl">Тип</label>
+            <select name="ritType" class="wv-rit-wide">
+              {{#each types as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}
+            </select>
+          </div>
+          <div class="wv-rit-row">
+            <label class="wv-rit-lbl">Навык</label>
+            <select name="ritSkill" class="wv-rit-wide">
+              {{#each skills as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}
+            </select>
+          </div>
+          <div class="wv-rit-row">
+            <label class="wv-rit-lbl">Тест через</label>
+            <select name="ritChar" class="wv-rit-sm">
+              {{#each testChars as |c|}}<option value="{{c.key}}" {{#if c.selected}}selected{{/if}}>{{c.abbr}} — {{c.label}}</option>{{/each}}
+            </select>
+            <label class="wv-rit-lbl">Сложность</label>
+            <input type="number" name="ritGmMod" class="wv-rit-xs" value="{{gmMod}}"/>
+          </div>
+          <div class="wv-rit-row">
+            <label class="wv-rit-lbl">Ассистенты</label>
+            <input type="number" name="ritAssist" class="wv-rit-xs" value="{{assistants}}" min="0"/>
+            <label class="wv-rit-lbl">× бонус</label>
+            <input type="number" name="ritAssistB" class="wv-rit-xs" value="{{assistBonus}}"/>
+            <label class="wv-rit-cb" title="Псайкер-Ритуалист: +2×PR к тесту, но такой же бонус к броскам провала.">
+              <input type="checkbox" name="ritPsyker" {{#if psyker}}checked{{/if}}/> Псайкер
+            </label>
+            {{#if psyker}}<input type="number" name="ritPsykerB" class="wv-rit-xs" value="{{psykerBonus}}" min="0" max="{{prMax}}" title="До +2×PR = +{{prMax}}"/>{{/if}}
+          </div>
+        </div>
+
+        {{#if isSummonLike}}
+        <div class="wv-block">
+          <div class="wv-block-title">МОДИФИКАТОРЫ ПРИЗЫВА</div>
+          <div class="wv-rit-mods">
+            {{#each summonMods as |m|}}
+            <label class="wv-rit-mod {{#if m.active}}on{{/if}} {{#if m.pos}}pos{{else}}neg{{/if}}">
+              <input type="checkbox" data-summon="{{m.key}}" {{#if m.active}}checked{{/if}}/>
+              <span class="wv-rit-modv">{{m.signed}}</span><span>{{m.label}}</span>
+            </label>
+            {{/each}}
+          </div>
+        </div>
+        {{/if}}
+
+        {{#if isCurse}}
+        <div class="wv-block">
+          <div class="wv-block-title">ПРОКЛЯТЬЕ — ЗНАКОМСТВО И СИМПАТИЯ</div>
+          <div class="wv-rit-row">
+            <label class="wv-rit-lbl">Знакомство</label>
+            <select name="ritCurseFam" class="wv-rit-wide">
+              {{#each famOptions as |f|}}<option value="{{f.key}}" {{#if f.selected}}selected{{/if}}>{{f.signed}} · {{f.label}}</option>{{/each}}
+            </select>
+          </div>
+          <div class="wv-rit-mods">
+            {{#each sympMods as |m|}}
+            <label class="wv-rit-mod {{#if m.active}}on{{/if}} pos">
+              <input type="checkbox" data-symp="{{m.key}}" {{#if m.active}}checked{{/if}}/>
+              <span class="wv-rit-modv">{{m.signed}}</span><span>{{m.label}}</span>
+            </label>
+            {{/each}}
+          </div>
+        </div>
+        {{/if}}
+
+      </div>
+
+      {{!-- Правая колонка: итог + бросок + нумерология --}}
+      <div class="wv-rit-side">
+        <div class="wv-block wv-rit-summary">
+          <div class="wv-block-title">ТЕСТ РИТУАЛА</div>
+          <div class="wv-rit-break">
+            {{#each rows as |r|}}
+            <div class="wv-rit-brow {{#if r.primary}}primary{{/if}}"><span>{{r.label}}</span><b>{{r.signed}}</b></div>
+            {{/each}}
+          </div>
+          <div class="wv-rit-threshold">Порог: <b>{{thresholdSigned}}</b></div>
+          <button type="button" class="wv-rit-cast" data-act="castRitual">{{{veilIcon "ritual"}}}Провести ритуал</button>
+          <div class="wv-rit-perfail">
+            <label class="wv-rit-lbl" title="Отвращение Варпа/Феномен: +X за каждый Провал после первого">Цена ошибки: +</label>
+            <input type="number" name="ritPerFail" class="wv-rit-xs" value="{{aversionPerFail}}"/><span class="wv-rit-lbl">/Провал</span>
+          </div>
+        </div>
+        <div class="wv-block">
+          <div class="wv-block-title">НУМЕРОЛОГИЯ (сочетаемо)</div>
+          <div class="wv-rit-mods">
+            {{#each numerology as |n|}}
+            <label class="wv-rit-mod {{#if n.active}}on{{/if}} pos" title="{{n.note}}">
+              <input type="checkbox" data-num="{{n.key}}" {{#if n.active}}checked{{/if}}/>
+              <span class="wv-rit-modv">◆</span><span>{{n.label}}</span>
+            </label>
+            {{/each}}
+          </div>
+          <div class="wv-rit-row" style="margin-top:6px;">
+            <label class="wv-rit-lbl" title="Суммарный ручной бонус Темпоральной/Геомантической синергии (дата/место)">Бонус дат/мест</label>
+            <input type="number" name="ritNumMod" class="wv-rit-xs" value="{{numMod}}"/>
+          </div>
+          {{#each numerology as |n|}}{{#if n.active}}<div class="wv-hint">◆ {{n.note}}</div>{{/if}}{{/each}}
+        </div>
+        <div class="wv-block wv-lore">
+          <div class="wv-block-title">ФОРМЫ ПРИЗЫВА</div>
+          {{#each summonForms as |f|}}
+          <div class="wv-form"><b>{{f.label}}</b> — {{f.dur}}<div class="wv-form-note">{{f.note}}</div></div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+    {{else}}
+    <div class="wv-block"><div class="wv-empty">Нет доступных Ритуалистов (персонажей).</div></div>
+    {{/if}}
+
+    <div class="wv-block wv-lore">
+      <div class="wv-block-title">О РИТУАЛАХ И НЕСТАБИЛЬНОСТИ</div>
+      <p>Ритуал: выберите Ритуалиста и Навык, задайте сложность и модификаторы, затем «Провести ритуал». При провале движок бросит <b>Отвращение Варпа</b> (призыв/владычество), Феномен или Прорыв — с учётом типа ритуала и +цены ошибки за каждый Провал после первого. Псайкер-бонус добавляется и к тесту, и к броску провала.</p>
+      <p>Если истончение отрицательное, демоны проходят тесты на <b>Нестабильность</b> при любом действии; Истинная Форма не может войти и мгновенно изгоняется.</p>
+    </div>
+  </div>
+  {{/with}}
+  {{/if}}
+
+  {{!-- ═══════════════════ ВКЛАДКА: НАВИГАЦИЯ ═══════════════════ --}}
+  {{#if isNav}}
+  <div class="wv-nav-tab">
+    <div class="wv-block">
+      <div class="wv-block-title">НАВИГАТОР В ВАРПЕ</div>
+      {{#if navigators.length}}
+      <div class="wv-nav-head">
+        <select name="navPick" class="wv-nav-select">
+          {{#each navigators as |n|}}
+          <option value="{{n.id}}" {{#if n.selected}}selected{{/if}}>{{n.name}}</option>
+          {{/each}}
+        </select>
+        {{#if navHouse}}<span class="wv-nav-house">Дом {{navHouse}}</span>{{/if}}
+      </div>
+      {{#if hasNav}}
+      <div class="wv-nav-roll">
+        <div class="wv-nav-stat">
+          <span>Навигация: <b>{{#if navSkillTotal}}{{navSkillTotal}}{{else}}—{{/if}}</b></span>
+          <span class="wv-nav-turb">Турбулентность завесы: <b>{{#if (gt navMod 0)}}+{{/if}}{{navMod}}</b> ({{levelLabel}})</span>
+        </div>
+        <button type="button" class="wv-nav-btn" data-act="navRoll">{{{veilIcon "compass"}}}Проложить курс сквозь Варп</button>
+      </div>
+      {{/if}}
+      {{else}}
+      <div class="wv-empty">Нет навигаторов (персонаж с субрасой «Навигатор») на сцене или в мире.</div>
+      {{/if}}
+    </div>
+
+    {{#if hasNav}}
+    <div class="wv-block">
+      <div class="wv-block-title">СИЛЫ НАВИГАТОРА <span class="wv-count">{{navPowerCount}}</span></div>
+      {{#if navPowers.length}}
+      <div class="wv-navpowers">
+        {{#each navPowers as |p|}}
+        <div class="wv-navpower" data-navpower="{{p.id}}" title="Огласить в чат">
+          <div class="wv-np-head"><span class="wv-np-name">{{p.name}}</span>
+            {{#if p.sustainable}}<span class="wv-np-sus">поддерж.</span>{{/if}}</div>
+          <div class="wv-np-meta">{{#if p.action}}{{p.action}}{{/if}}{{#if p.range}} · {{p.range}}{{/if}}</div>
+          {{#if p.effect}}<div class="wv-np-fx">{{p.effect}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{else}}<div class="wv-empty">У навигатора нет добавленных сил.</div>{{/if}}
+    </div>
+    {{/if}}
+
+    {{#with journey}}
+    <div class="wv-block wv-journey">
+      <div class="wv-block-title">ВАРП-ПУТЕШЕСТВИЕ
+        <span class="wv-block-actions"><button type="button" class="wv-link" data-act="jReset">сброс</button></span>
+      </div>
+      {{!-- Корабль и состояние --}}
+      <div class="wv-jrow">
+        <label class="wv-rit-lbl">Корабль</label>
+        <select name="jShip" class="wv-rit-wide">
+          {{#each ships as |s|}}<option value="{{s.id}}" {{#if (eq s.id @root.journey.shipId)}}selected{{/if}}>{{s.name}}</option>{{/each}}
+        </select>
+      </div>
+      <div class="wv-jrow">
+        <label class="wv-rit-lbl">Поле Геллера</label>
+        <select name="jGellar" class="wv-rit-sm">
+          <option value="ok" {{#if (eq gellar "ok")}}selected{{/if}}>Работает</option>
+          <option value="damaged" {{#if (eq gellar "damaged")}}selected{{/if}}>Повреждено</option>
+          <option value="off" {{#if (eq gellar "off")}}selected{{/if}}>Не работает</option>
+        </select>
+        <label class="wv-rit-lbl">Оккулум</label>
+        <select name="jOcculum" class="wv-rit-sm">
+          <option value="ok" {{#if (eq occulum "ok")}}selected{{/if}}>Цел</option>
+          <option value="damaged" {{#if (eq occulum "damaged")}}selected{{/if}}>Повреждён (−20)</option>
+          <option value="destroyed" {{#if (eq occulum "destroyed")}}selected{{/if}}>Уничтожен (−40)</option>
+        </select>
+      </div>
+      <div class="wv-jrow">
+        <label class="wv-rit-cb"><input type="checkbox" name="jEngine" {{#if warpEngineDmg}}checked{{/if}}/> Варп-двигатель повреждён (×2)</label>
+        <label class="wv-rit-cb"><input type="checkbox" name="jEmergency" {{#if emergency}}checked{{/if}}/> Экстренный вход (−20)</label>
+      </div>
+      {{!-- Навыки Проводника (выбираются вручную — не фиксированы в системе) --}}
+      <div class="wv-jrow">
+        <label class="wv-rit-lbl" title="Тест Чтения знамений и Поиска маяка (обычно Psyniscience)">Чутьё</label>
+        <select name="jSense" class="wv-jsel">{{#each senseSkills as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}</select>
+        <label class="wv-rit-lbl" title="Тест Направления и Выхода (обычно Navigation (Warp))">Навигация</label>
+        <select name="jNav" class="wv-jsel">{{#each navSkills as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}</select>
+        <label class="wv-rit-lbl" title="Тест Входа в варп (обычно Operate (Voidship) рулевого)">Руление</label>
+        <select name="jHelm" class="wv-jsel">{{#each helmSkills as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}</select>
+      </div>
+      {{!-- Индикаторы состояния --}}
+      <div class="wv-jstate">
+        <span>Маршрут: <b>{{#if stability}}{{stability}} (×{{stabilityMult}}){{else}}—{{/if}}</b></span>
+        <span>Исходная длит.: <b>{{#if baseDuration}}{{baseDuration}} дн.{{else}}—{{/if}}</b></span>
+        <span>Мод. навигации: <b>{{navModSigned}}</b></span>
+      </div>
+
+      {{!-- Шаги --}}
+      <div class="wv-jsteps">
+        <div class="wv-jstep"><span class="wv-jnum">0</span>
+          <button type="button" class="wv-jbtn" data-act="jStability">{{{veilIcon "die"}}}Стабильность</button>
+          <button type="button" class="wv-jbtn" data-act="jDuration">{{{veilIcon "hourglass"}}}Длительность</button>
+        </div>
+        <div class="wv-jstep"><span class="wv-jnum">1</span>
+          <button type="button" class="wv-jbtn" data-act="jOmens">{{{veilIcon "eye"}}}Чтение знамений</button>
+        </div>
+        <div class="wv-jstep"><span class="wv-jnum">2</span>
+          <select name="jEntry" class="wv-rit-sm">
+            {{#each entryLocations as |l|}}<option value="{{l.key}}" {{#if l.selected}}selected{{/if}}>{{l.label}}</option>{{/each}}
+          </select>
+          <button type="button" class="wv-jbtn" data-act="jEnter">{{{veilIcon "spiral"}}}Вход в варп</button>
+        </div>
+        <div class="wv-jstep"><span class="wv-jnum">3</span>
+          <button type="button" class="wv-jbtn" data-act="jBeacon">{{{veilIcon "star"}}}Поиск Астрономикона</button>
+        </div>
+        <div class="wv-jstep"><span class="wv-jnum">4</span>
+          <button type="button" class="wv-jbtn" data-act="jDirect">{{{veilIcon "compass"}}}Направление</button>
+          <button type="button" class="wv-jbtn warn" data-act="jEncounter">{{{veilIcon "warning"}}}Столкновение</button>
+          <button type="button" class="wv-jbtn danger" data-act="jInvasion">{{{veilIcon "demon"}}}Вторжение</button>
+        </div>
+        <div class="wv-jstep"><span class="wv-jnum">5</span>
+          <button type="button" class="wv-jbtn" data-act="jExit">{{{veilIcon "door"}}}Выход из варпа</button>
+          <button type="button" class="wv-jbtn danger" data-act="jStorm">{{{veilIcon "storm"}}}Варп-шторм</button>
+        </div>
+      </div>
+      <div class="wv-hint">МИ ведёт корабль по шагам: определите стабильность и длительность (Шаг 0), затем каждый шаг бросает нужный тест по реальным Навыкам Проводника (Psyniscience/Navigation), а варп-столкновения — каждые 5 дней. Варп-шторм истончает Завесу сцены.</div>
+    </div>
+    {{/with}}
+  </div>
+  {{/if}}
+
+  {{!-- ═══════════════════ ВКЛАДКА: ТАРО ИМПЕРАТОРА ═══════════════════ --}}
+  {{#if isTarot}}{{#with tarot}}
+  <div class="wv-tarot">
+    <div class="tr-tabs">
+      <button type="button" data-ttab="reading" class="tr-tab {{#if isReading}}active{{/if}}">✦ Гадание</button>
+      <button type="button" data-ttab="guide" class="tr-tab {{#if isGuide}}active{{/if}}">📖 Гайд по картам</button>
+    </div>
+
+    {{#if isReading}}
+      {{#unless @root.isGM}}<div class="tr-playerhint">🎲 Вы можете бросить случайные карты. Ручной выбор карты — только у Мастера.</div>{{/unless}}
+      <div class="tr-top">
+        <div class="tr-row">
+          <label class="tr-lbl">Расклад
+            <select name="tspread">{{#each spreads as |sp|}}<option value="{{sp.key}}" {{#if sp.selected}}selected{{/if}}>{{sp.label}}</option>{{/each}}</select>
+          </label>
+          <div class="tr-actions">
+            <button type="button" data-act="trandomall" class="tr-btn">🎲 Случайный расклад</button>
+            <button type="button" data-act="tclear" class="tr-btn">Очистить</button>
+          </div>
+        </div>
+        <div class="tr-note">{{spreadNote}}</div>
+        <label class="tr-lbl tr-q">Вопрос (сформулируйте точно и детально)
+          <input type="text" name="tquestion" value="{{question}}" placeholder="напр. Что мы найдём в сердце еретического храма под шпилем Альфа?"/>
+        </label>
+        <div class="tr-row">
+          <div class="tr-lbl">Теомант (гадающий)
+            <div class="tr-pickrow"><input type="text" name="tteomant" value="{{teomant}}" placeholder="имя"/>
+              <select data-tpick="teomant" class="tr-pick"><option value="">🎭 токен…</option>{{#each tokens as |t|}}<option value="{{t}}">{{t}}</option>{{/each}}</select></div>
+          </div>
+          <div class="tr-lbl">Квирит (вопрошающий)
+            <div class="tr-pickrow"><input type="text" name="tquirit" value="{{quirit}}" placeholder="имя"/>
+              <select data-tpick="quirit" class="tr-pick"><option value="">🎭 токен…</option>{{#each tokens as |t|}}<option value="{{t}}">{{t}}</option>{{/each}}</select></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tr-slots">
+        {{#each slots as |sl|}}
+        <div class="tr-slot {{#if sl.signal}}signal{{/if}} {{#if sl.reversed}}reversed{{/if}}">
+          <div class="tr-slot-head"><span class="tr-slot-name">{{sl.name}}</span>{{#if sl.signal}}<span class="tr-slot-sig">знаковая</span>{{/if}}</div>
+          <div class="tr-slot-ctl {{#unless @root.isGM}}ro{{/unless}}">
+            {{#if @root.isGM}}
+            <select data-tcardsel="{{sl.i}}" class="tr-cardsel"><option value="">— выбрать карту —</option>
+              {{#each ../suitGroups as |g|}}<optgroup label="{{g.label}}">{{#each g.cards as |c|}}<option value="{{c.n}}" {{#if (eq c.n sl.cardN)}}selected{{/if}}>{{c.label}}</option>{{/each}}</optgroup>{{/each}}
+            </select>
+            <select data-torient="{{sl.i}}" class="tr-orient"><option value="up" {{#unless sl.reversed}}selected{{/unless}}>⭯ Прямая</option><option value="rev" {{#if sl.reversed}}selected{{/if}}>⭮ Перевёрнутая</option></select>
+            {{else}}<div class="tr-cardro">{{#if sl.card}}{{sl.card.title}}{{else}}— бросьте кубик 🎲 —{{/if}}</div>{{/if}}
+            <button type="button" data-trollslot="{{sl.i}}" class="tr-roll" title="Случайная карта в этот слот">🎲</button>
+          </div>
+          {{#if sl.card}}
+          <div class="tr-preview">
+            {{#if sl.card.img}}<div class="tr-pv-frame"><img class="tr-pv-art {{#if sl.reversed}}rev{{/if}}" src="{{sl.card.img}}" data-title="{{sl.card.title}}" alt="" title="Открыть карту"/></div>{{/if}}
+            <div class="tr-pv-txt"><div class="tr-pv-name">{{sl.card.title}} <span class="tr-pv-suit">({{sl.card.suitLine}})</span> <span class="tr-pv-or">{{#if sl.reversed}}⭮ Перевёрнутая{{else}}⭯ Прямая{{/if}}</span></div><div class="tr-pv-mean">{{sl.card.meaning}}</div></div>
+          </div>
+          {{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{#if readHint}}<div class="tr-hintbox"><b>Толкование:</b> {{readHint}}</div>{{/if}}
+      <div class="tr-footer"><button type="button" data-act="tpost" class="tr-btn primary">✦ Огласить пророчество (в чат) ✦</button></div>
+    {{/if}}
+
+    {{#if isGuide}}
+    <div class="tr-guide">
+      <div class="tr-guide-sec"><div class="tr-guide-h">Принципы трактовки</div>{{#each guide as |g|}}<div class="tr-guide-p"><b>{{g.h}}.</b> {{g.p}}</div>{{/each}}</div>
+      {{#each guideSuits as |suit|}}
+      <div class="tr-guide-sec"><div class="tr-guide-h">{{suit.label}} <span class="tr-guide-hint">— {{suit.hint}}</span></div>
+        {{#each suit.cards as |c|}}
+        <details class="tr-gcard"><summary><span class="tr-gc-n">{{c.n}}.</span> {{c.title}}</summary>
+          <div class="tr-gc-body">{{#if c.img}}<div class="tr-gc-frame"><img class="tr-gc-art" src="{{c.img}}" data-title="{{c.title}}" alt="" title="Открыть карту"/></div>{{/if}}
+            <div class="tr-gc-text"><div class="tr-gc-line"><span class="tr-gc-lbl up">Прямое:</span> {{c.up}}</div><div class="tr-gc-line"><span class="tr-gc-lbl rev">Перевёрнутое:</span> {{c.rev}}</div><div class="tr-gc-line"><span class="tr-gc-lbl ch">Изменения:</span> {{c.ch}}</div></div>
+          </div>
+        </details>
+        {{/each}}
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  {{/with}}{{/if}}
+
+  {{!-- ═══════════════════ ВКЛАДКА: ОСКВЕРНЕНИЕ ═══════════════════ --}}
+  {{#if isDefile}}{{#with defile}}
+  <div class="wv-defile" style="--gc:{{godMeta.color}};">
+    <div class="dfl-intro">Ритуал Создания Демонического Оружия — заключение духа Нерождённого в оружие-сосуд (корбук 429-432). Перетащите оружие из вкладки СНАРЯЖЕНИЕ листа, выберите демона и ритуалиста, соберите резонанс и оскверните.</div>
+
+    {{!-- Ряд 1: сосуд (широкий) + демон --}}
+    <div class="dfl-top">
+      <div class="dfl-drop {{#if hasWeapon}}has{{/if}}" data-defiledrop>
+        {{#if hasWeapon}}
+        <div class="dfl-weapon">
+          <img class="dfl-wimg" src="{{weaponImg}}" alt=""/>
+          <div class="dfl-wmeta"><div class="dfl-wname">{{weaponName}}</div><div class="dfl-wline">{{weaponLine}}</div></div>
+          <button type="button" class="dfl-wclear" data-act="defileClear" title="Убрать">✕</button>
+        </div>
+        {{#if alreadyDaemon}}<div class="dfl-warn">⚠ Это оружие уже демоническое.</div>{{/if}}
+        {{else}}
+        <div class="dfl-drop-hint"><span class="dfl-drop-ico">⚒</span> Перетащите сюда оружие-сосуд<br/><span class="dfl-drop-sub">из вкладки СНАРЯЖЕНИЕ листа персонажа</span></div>
+        {{/if}}
+      </div>
+
+      <div class="dfl-panel dfl-demon">
+        <div class="dfl-panel-h">ДЕМОН-НЕРОЖДЁННЫЙ</div>
+        <div class="dfl-gods">
+          {{#each gods as |g|}}<button type="button" class="dfl-god {{#if g.selected}}on{{/if}}" data-defgod="{{g.key}}" style="--c:{{g.color}}"><span class="dfl-god-dot" style="background:{{g.color}}"></span>{{g.label}}</button>{{/each}}
+        </div>
+        <label class="dfl-lbl">Тип демона (Бесчестие)
+          <select name="defFormula">{{#each formulas as |f|}}<option value="{{f.key}}" {{#if f.selected}}selected{{/if}}>{{f.label}} · {{f.inf}}</option>{{/each}}</select>
+        </label>
+        <label class="dfl-lbl">Имя демона<input type="text" name="defDemonName" value="{{demonName}}" placeholder="— опционально —"/></label>
+        <div class="dfl-row3">
+          <label class="dfl-lbl">W.b демона<input type="number" name="defWb" value="{{demonWb}}" min="1"/></label>
+          <label class="dfl-lbl">Inf демона<input type="number" name="defInf" value="{{demonInf}}" min="0"/></label>
+          <label class="dfl-lbl">Связывание<input type="number" name="defBinding" value="{{binding}}" min="0"/></label>
+        </div>
+        <div class="dfl-note">Демонических свойств при осквернении: <b>{{propCount}}</b> (W.b − Связывание, мин. 1).</div>
+      </div>
+    </div>
+
+    {{!-- Ряд 2: резонанс (широкий, 3 колонки) --}}
+    <div class="dfl-panel">
+      <div class="dfl-panel-h">РЕЗОНАНС СОСУДА <span class="dfl-res-total {{#if resonanceTotal}}on{{/if}}">{{resonanceSigned}}</span></div>
+      <div class="dfl-res-cols">
+        {{#each resGroups as |grp|}}
+        <div class="dfl-res-group"><div class="dfl-res-gh">{{grp.group}}</div>
+          {{#each grp.mods as |m|}}
+          <label class="dfl-res {{#if m.active}}on{{/if}}"><input type="checkbox" data-defres="{{m.key}}" {{#if m.active}}checked{{/if}}/><span class="dfl-res-v {{#if m.pos}}pos{{else}}neg{{/if}}">{{m.signed}}</span><span class="dfl-res-l">{{m.label}}</span></label>
+          {{/each}}
+        </div>
+        {{/each}}
+      </div>
+      <label class="dfl-lbl dfl-iconwork">Доп. иконография/вязи (штраф к крафту → бонус резонанса, 0–30)
+        <input type="number" name="defIronwork" value="{{ironwork}}" min="0" max="30"/>
+      </label>
+    </div>
+
+    {{!-- Ряд 3: ритуал заключения --}}
+    <div class="dfl-panel">
+      <div class="dfl-panel-h">РИТУАЛ ЗАКЛЮЧЕНИЯ</div>
+      {{#if noActors}}<div class="dfl-warn">На сцене нет персонажей-ритуалистов (нужны токены).</div>{{/if}}
+      <div class="dfl-ritgrid">
+        <label class="dfl-lbl">Ритуалист (со сцены)
+          <select name="defRitualist">{{#each actors as |a|}}<option value="{{a.id}}" {{#if a.selected}}selected{{/if}}>{{a.name}}</option>{{/each}}</select>
+        </label>
+        <label class="dfl-lbl">Навык теста (FL Демоны/Варп/Ересь — поиск по названию)
+          <select name="defSkill">{{#each skills as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}</select>
+        </label>
+      </div>
+      <div class="dfl-row3">
+        <label class="dfl-lbl">Жертвы-ассистенты (+10 каждый)<input type="number" name="defSacrifice" value="{{sacrificedAssist}}" min="0"/></label>
+        <label class="dfl-lbl">ГМ-мод<input type="number" name="defGmMod" value="{{gmMod}}"/></label>
+        <div class="dfl-checks">
+          <label class="dfl-check"><input type="checkbox" name="defTrueName" {{#if trueNameKnown}}checked{{/if}}/> Истинное Имя (+20)</label>
+          <label class="dfl-check"><input type="checkbox" name="defWilling" {{#if demonWilling}}checked{{/if}}/> Демон желает (+10)</label>
+        </div>
+      </div>
+      <div class="dfl-rows">
+        {{#each rows as |r|}}<div class="dfl-trow {{#if r.primary}}primary{{/if}}"><span>{{r.label}}</span><span class="dfl-trow-v">{{r.signed}}</span></div>{{/each}}
+        <div class="dfl-trow total"><span>Порог ритуала</span><span class="dfl-trow-v">{{thresholdSigned}}</span></div>
+      </div>
+      <div class="dfl-actions">
+        <button type="button" class="dfl-btn" data-act="defileRitual" {{#unless hasWeapon}}disabled{{/unless}}>🎲 Провести ритуал (тест)</button>
+        <button type="button" class="dfl-btn primary" data-act="defileApply" {{#unless hasWeapon}}disabled{{/unless}}>⛧ Осквернить оружие</button>
+      </div>
+      <div class="dfl-common"><b>Общие свойства демон-оружия:</b> {{#each common as |c|}}{{c}} {{/each}}</div>
+    </div>
+  </div>
+  {{/with}}{{/if}}
+
+  </div>{{!-- /scroll --}}
+</div>

@@ -1,0 +1,431 @@
+<form class="warhammer-dbc squad-sheet-form" autocomplete="off">
+
+  {{!-- ═══════════════ ШАПКА (по образцу листа персонажа) ═══════════════ --}}
+  <header class="sheet-header sq-header">
+    <div class="portrait-block">
+      <img class="profile-img sq-portrait" src="{{actor.img}}" title="{{actor.name}}"/>
+    </div>
+    <div class="header-main">
+      <div class="header-name-row">
+        <label class="header-label">Отряд</label>
+        <input class="actor-name" name="name" type="text" value="{{actor.name}}" placeholder="Название отряда"/>
+      </div>
+      <div class="header-grid">
+        <div class="header-cell">
+          <label>Подразделение</label>
+          <input type="text" name="system.designation" value="{{system.designation}}" placeholder="Полк / рота / банда"/>
+        </div>
+        <div class="header-cell">
+          <label>Фракция</label>
+          <input type="text" name="system.faction" value="{{system.faction}}" placeholder="Кому служит"/>
+        </div>
+
+        {{!-- Слаженность — главный ресурс отряда, справа как Судьба у персонажа --}}
+        <div class="header-cell fate-cell sq-coh-cell">
+          <label title="Модификатор на все тесты Команд">Слаженность</label>
+          <div class="fate-values sq-coh-values">
+            <button type="button" class="sq-coh-btn sq-coh-down" title="−5 (Shift/Ctrl — −10)">−</button>
+            {{!-- Без name: канонический инпут Слаженности живёт во вкладке «Отряд»,
+                  дубль имени в одной форме ломает сбор данных. Пишем через listener. --}}
+            <input type="number" value="{{system.cohesion.value}}" class="sq-coh-input sq-coh-live sq-coh-txt-{{derived.cohesionBand}}"
+                   min="-{{cohesionLimit}}" max="{{cohesionLimit}}" title="Текущая Слаженность"/>
+            <button type="button" class="sq-coh-btn sq-coh-up" title="+5 (Shift/Ctrl — +10)">+</button>
+          </div>
+          <div class="sq-coh-bar" title="{{derived.cohesionLabel}}">
+            <div class="sq-coh-zero"></div>
+            <div class="sq-coh-fill sq-coh-band-{{derived.cohesionBand}}" style="width:{{derived.cohesionPct}}%;"></div>
+          </div>
+          <div class="sq-coh-state sq-coh-band-{{derived.cohesionBand}}" title="{{derived.cohesionHint}}">{{derived.cohesionLabel}}</div>
+        </div>
+
+        <div class="header-cell">
+          <label>Миссия</label>
+          <input type="text" name="system.mission" value="{{system.mission}}" placeholder="Текущая задача"/>
+        </div>
+        <div class="header-cell">
+          <label>Развёртывание</label>
+          <input type="text" name="system.deployment" value="{{system.deployment}}" placeholder="Где действует"/>
+        </div>
+
+        <div class="header-cell fate-cell sq-risk-cell">
+          <label title="Чем меньше Командир разделяет риск, тем ниже потолок Успехов">Риск</label>
+          <select name="system.risk" class="sq-risk-select">
+            {{#each riskLevels as |r|}}
+            <option value="{{r.level}}" {{#if r.selected}}selected{{/if}} title="{{r.label}}">{{r.level}} · Max.У {{r.capLabel}}</option>
+            {{/each}}
+          </select>
+          <div class="sq-risk-hint">{{derived.riskLabel}}</div>
+          {{#if effRisk.bonus}}<div class="sq-risk-bonus" title="Командующий снял шлем силовой брони: Риск +1 (немодифицированный Риск 2+)">Риск {{effRisk.value}} — шлем снят{{#if effRisk.who}} ({{effRisk.who}}){{/if}}</div>{{/if}}
+        </div>
+      </div>
+
+      <div class="header-checks sq-header-checks">
+        <label class="checkbox-label sq-delegate" title="Командир отдаёт приказы делегированным авторитетом Лидера: провал Морали Лидера бьёт и по Командам Командира">
+          <input type="checkbox" name="system.delegated" {{checked system.delegated}}/>
+          <span>Делегированный авторитет Лидера</span>
+        </label>
+        <div class="sq-header-chips">
+          <span class="sq-chip {{#if capacityOver}}sq-chip-warn{{/if}}" title="Command воздействует одновременно не более чем на F.b × 2 подчинённых">
+            Под Командованием: <b>{{memberCount}}</b>{{#if capacity}} / {{capacity}}{{/if}}
+          </span>
+          {{#if presenceActive}}<span class="sq-chip sq-chip-on" title="Командное Присутствие активно">Присутствие</span>{{/if}}
+          {{#if shortActive}}<span class="sq-chip sq-chip-on" title="{{shortLabel}}: +{{shortBonus}}">Кор. Команда +{{shortBonus}}</span>{{/if}}
+          {{#if derived.broken}}<span class="sq-chip sq-chip-bad" title="Отрицательная Слаженность — члены отряда проходят тесты Сломленного Отряда">Сломленный Отряд</span>{{/if}}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {{!-- ═══════════════ ВКЛАДКИ ═══════════════ --}}
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="roster">ОТРЯД</a>
+    <a class="item" data-tab="commands">КОМАНДЫ</a>
+    <a class="item" data-tab="morale">МОРАЛЬ</a>
+    <a class="item" data-tab="reference">СПРАВОЧНИК</a>
+    <a class="item" data-tab="notes">ЗАПИСИ</a>
+  </nav>
+
+  <div class="sheet-body">
+
+    {{!-- ───────────────── ОТРЯД ───────────────── --}}
+    <div class="tab sq-tab" data-tab="roster" data-group="primary">
+
+      <div class="stat-panel sq-panel">
+        <div class="panel-title">КОМАНДНАЯ ВЕРТИКАЛЬ</div>
+        <div class="panel-body">
+          <div class="sq-hint">Перетащите актора (или его токен) на нужный пост. Постами могут быть только: {{leadTypesLabel}}.</div>
+          <div class="sq-posts">
+            {{#each posts as |p|}}
+            <div class="sq-post sq-post-{{p.key}}{{#if p.filled}} sq-post-filled{{/if}}{{#if p.missing}} sq-post-missing{{/if}}"
+                 data-post-slot="{{p.key}}" data-uuid="{{p.uuid}}">
+              <div class="sq-post-head">
+                <i class="fas {{p.icon}}"></i><span class="sq-post-title">{{p.label}}</span>
+                {{#if p.filled}}<a class="sq-post-clear" title="Снять с поста"><i class="fas fa-user-minus"></i></a>{{/if}}
+              </div>
+              {{#if p.filled}}
+              <div class="sq-post-body">
+                <img class="sq-post-img sq-open" src="{{p.img}}" title="Открыть лист"/>
+                <div class="sq-post-info">
+                  <div class="sq-post-name sq-open">{{p.name}}</div>
+                  <div class="sq-post-stats">
+                    <span title="Товарищество">F {{#if p.fel}}{{p.fel}}{{else}}—{{/if}}</span>
+                    <span title="Командование">Cmd {{#if p.command}}{{p.command}}{{else}}—{{/if}}</span>
+                    <span title="Воля">W {{#if p.wp}}{{p.wp}}{{else}}—{{/if}}</span>
+                    <span class="sq-post-cap" title="Максимум подчинённых под одновременным Командованием: F.b × 2">≤{{p.capacity}}</span>
+                    {{#if p.helmetOff}}<span class="sq-post-helmet" title="Шлем силовой брони снят: Риск +1, если немодифицированный Риск 2+">без шлема</span>{{/if}}
+                  </div>
+                </div>
+              </div>
+              {{else}}
+              <div class="sq-post-empty">— перетащите сюда —</div>
+              {{/if}}
+              <div class="sq-post-hint">{{p.hint}}</div>
+            </div>
+            {{/each}}
+          </div>
+          {{#if capacityOver}}
+          <div class="sq-warn">Участников больше, чем {{capacity}} — Командир выбирает, кто получает преимущества его Командования, а кто нет.</div>
+          {{/if}}
+          {{#if delegated}}
+          <div class="sq-note">Командир пользуется делегированным авторитетом Лидера: провал теста Морали Лидером снимает преимущества Командования так же, как провал самого Командира.</div>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="stat-panel sq-panel">
+        <div class="panel-title">СОСТАВ ОТРЯДА</div>
+        <div class="panel-body">
+          <div class="sq-members-bar">
+            <div class="sq-hint">Участниками могут быть: {{memberTypesLabel}}.</div>
+            <button type="button" class="sq-btn sq-morale-reset" title="Снять отметки потери Командования со всех">
+              <i class="fas fa-rotate-left"></i> Сбросить отметки
+            </button>
+          </div>
+
+          <div class="sq-member-dropzone">
+            {{#each members as |m|}}
+            <div class="sq-member{{#if m.moraleLost}} sq-member-lost{{/if}}{{#if m.missing}} sq-member-missing{{/if}}"
+                 data-member-id="{{m.id}}" data-uuid="{{m.uuid}}">
+              <img class="sq-member-img sq-open" src="{{m.img}}" title="Открыть лист"/>
+              <div class="sq-member-main">
+                <div class="sq-member-line">
+                  <span class="sq-member-name sq-open">{{m.name}}</span>
+                  <span class="sq-member-type sq-type-{{m.type}}">{{m.typeLabel}}</span>
+                  {{#if m.moraleLost}}<span class="sq-member-badge" title="Потерял преимущества Командования">Мораль</span>{{/if}}
+                </div>
+                <div class="sq-member-stats">
+                  {{#if m.hp}}<span>{{m.hp}}</span>{{/if}}
+                  {{#if m.wp}}<span title="Воля — тесты Морали и Сломленного Отряда">W {{m.wp}}</span>{{/if}}
+                  {{#if m.multiCap}}<span title="Может слушать не более ½ P.b (окр.▼) командиров одновременно">≤{{m.multiCap}} ком.</span>{{/if}}
+                </div>
+                <input type="text" class="sq-member-note" value="{{m.note}}" placeholder="Заметка (роль, оружие, приказ…)"/>
+              </div>
+              <div class="sq-member-acts">
+                <a class="sq-member-morale" title="Тест Морали (W+0)"><i class="fas fa-heart-pulse"></i></a>
+                <a class="sq-member-broken{{#unless @root.derived.broken}} sq-act-off{{/unless}}" title="Тест Сломленного Отряда (W+0 со Слаженностью)"><i class="fas fa-person-running"></i></a>
+                <a class="sq-member-flag" title="Отметить потерю Командования"><i class="fas fa-flag"></i></a>
+                <a class="sq-member-remove" title="Вывести из отряда"><i class="fas fa-times"></i></a>
+              </div>
+            </div>
+            {{else}}
+            <div class="sq-empty">Состав пуст. Перетащите сюда персонажей, демонов, орды или технику.</div>
+            {{/each}}
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-panel sq-panel">
+        <div class="panel-title">СЛАЖЕННОСТЬ</div>
+        <div class="panel-body">
+          <div class="sq-coh-grid">
+            <div class="sq-coh-field">
+              <label title="Постоянная Слаженность отряда: ГМ меняет её между миссиями (±30)">Базовая</label>
+              <input type="number" name="system.cohesion.base" value="{{system.cohesion.base}}" min="-{{cohesionStartCap}}" max="{{cohesionStartCap}}"/>
+            </div>
+            <div class="sq-coh-field">
+              <label title="Слаженность на начало текущей миссии — от неё считается Детальная Команда «Сплочение»">На миссию</label>
+              <input type="number" name="system.cohesion.start" value="{{system.cohesion.start}}" min="-{{cohesionStartCap}}" max="{{cohesionStartCap}}"/>
+            </div>
+            <div class="sq-coh-field">
+              <label>Текущая</label>
+              <input type="number" name="system.cohesion.value" value="{{system.cohesion.value}}" min="-{{cohesionLimit}}" max="{{cohesionLimit}}"/>
+            </div>
+            <button type="button" class="sq-btn sq-coh-mission" title="Приравнять текущую и стартовую Слаженность к базовой и снять отметки Морали">
+              <i class="fas fa-flag-checkered"></i> Начало миссии
+            </button>
+          </div>
+
+          <div class="sq-coh-mods">
+            <div class="sq-coh-mod">Команды Командира / Лидера: <b>{{signedNum derived.cohesionCmd}}</b></div>
+            <div class="sq-coh-mod">Команды Координатора: <b>{{signedNum derived.cohesionCoord}}</b>
+              <span class="sq-coh-mod-note">половинный бонус (окр.▲) или удвоенный штраф</span></div>
+          </div>
+
+          <div class="sq-events-title">События миссии</div>
+          <div class="sq-events">
+            {{#each cohesionEvents as |e|}}
+            <button type="button" class="sq-event sq-event-{{e.sign}}" data-delta="{{e.delta}}" data-label="{{e.label}}">
+              <span class="sq-event-delta">{{signedNum e.delta}}</span>{{e.label}}
+            </button>
+            {{/each}}
+          </div>
+          <div class="sq-hint">Обычное событие двигает Слаженность на ±5 (предел ±40), особо впечатляющее — на ±10. После миссии ГМ может изменить базовую Слаженность.</div>
+        </div>
+      </div>
+    </div>
+
+    {{!-- ───────────────── КОМАНДЫ ───────────────── --}}
+    <div class="tab sq-tab" data-tab="commands" data-group="primary">
+
+      {{#unless activeCommander}}
+      <div class="sq-warn">Ни Командир, ни Лидер не назначены — Команды отдавать некому. Перетащите актора на пост во вкладке «Отряд».</div>
+      {{/unless}}
+
+      <div class="stat-panel sq-panel sq-panel-presence{{#if presenceActive}} sq-panel-on{{/if}}">
+        <div class="panel-title">КОМАНДНОЕ ПРИСУТСТВИЕ{{#if presenceActive}} — АКТИВНО{{/if}}</div>
+        <div class="panel-body">
+          <div class="sq-hint">Свободное действие в начале Хода, тест Command(F)+0. Действует до конца боя или до потери Командования. Координатор Присутствие не раздаёт.</div>
+          {{#if presenceBlocked}}
+          <div class="sq-warn">В отряде только Координатор — Командное Присутствие он не раздаёт. Назначьте Командира или Лидера.</div>
+          {{/if}}
+          <div class="sq-presence-list">
+            {{#each presenceBenefits as |b|}}
+            <label class="sq-radio{{#if b.selected}} sq-radio-on{{/if}}">
+              <input type="radio" name="system.presence.benefit" value="{{b.key}}" {{#if b.selected}}checked{{/if}}/>
+              <span class="sq-radio-label">{{b.label}}</span>
+              <span class="sq-radio-desc">{{b.desc}}</span>
+            </label>
+            {{/each}}
+          </div>
+          <div class="sq-actions">
+            <button type="button" class="sq-btn sq-btn-roll sq-presence-roll"><i class="fas fa-dice-d10"></i> Активировать (Command)</button>
+            {{#if presenceActive}}<button type="button" class="sq-btn sq-presence-off"><i class="fas fa-power-off"></i> Снять Присутствие</button>{{/if}}
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-panel sq-panel{{#if shortActive}} sq-panel-on{{/if}}">
+        <div class="panel-title">КОРОТКАЯ КОМАНДА — ПОЛУДЕЙСТВИЕ{{#if shortActive}} · +{{shortBonus}}{{/if}}</div>
+        <div class="panel-body">
+          <div class="sq-hint">Тест Command(F)+0. Даёт все преимущества Командного Присутствия и один эффект до начала следующего Хода Командира.</div>
+          <div class="sq-cmd-list">
+            {{#each shortCommands as |c|}}
+            <label class="sq-radio{{#if c.selected}} sq-radio-on{{/if}}">
+              <input type="radio" name="system.shortCommand.key" value="{{c.key}}" {{#if c.selected}}checked{{/if}}/>
+              <span class="sq-radio-label">{{c.label}} <span class="sq-mult">Успехи×{{c.mult}}</span>
+                {{#if c.bonus}}<span class="sq-bonus">+{{c.bonus}}</span>{{/if}}</span>
+              <span class="sq-radio-desc">{{c.desc}}</span>
+            </label>
+            {{/each}}
+          </div>
+          <div class="sq-row">
+            <label>Уточнение</label>
+            <input type="text" name="system.shortCommand.note" value="{{shortNote}}" placeholder="Вид тестов / получатель Личной Команды"/>
+          </div>
+          <div class="sq-actions">
+            <button type="button" class="sq-btn sq-btn-roll sq-short-roll"><i class="fas fa-dice-d10"></i> Отдать Короткую Команду</button>
+            {{#if shortActive}}<button type="button" class="sq-btn sq-short-off"><i class="fas fa-power-off"></i> Снять</button>{{/if}}
+          </div>
+          <ul class="sq-limits">
+            {{#each shortLimits as |l|}}<li>{{l}}</li>{{/each}}
+          </ul>
+        </div>
+      </div>
+
+      <div class="stat-panel sq-panel{{#if detailActive}} sq-panel-on{{/if}}">
+        <div class="panel-title">ДЕТАЛЬНАЯ КОМАНДА — ПОЛНОЕ ДЕЙСТВИЕ{{#if detailActive}} · Успехов {{detailLeft}} / {{detailSux}}{{/if}}</div>
+        <div class="panel-body">
+          <div class="sq-hint">Тест Command(F)+0. Даёт все преимущества Командного Присутствия; Успехи тратятся на эффекты до начала следующего Хода Командира.</div>
+          <div class="sq-detail-list">
+            {{#each detailCommands as |c|}}
+            <div class="sq-detail{{#if c.picked}} sq-detail-on{{/if}}{{#if c.disabled}} sq-detail-off{{/if}}">
+              <button type="button" class="sq-detail-pick{{#unless c.affordable}} sq-detail-poor{{/unless}}" data-key="{{c.key}}"
+                      title="{{#if c.picked}}Отменить{{else}}Потратить {{c.cost}} Успех(ов){{/if}}">
+                <span class="sq-detail-cost">{{c.cost}}</span>
+              </button>
+              <div class="sq-detail-body">
+                <div class="sq-detail-name">{{c.label}}{{#if c.disabled}} <span class="sq-detail-block">— Слаженность не ниже стартовой</span>{{/if}}</div>
+                <div class="sq-detail-desc">{{c.desc}}</div>
+                {{#if (eq c.key "tactics")}}
+                <div class="sq-tactics">{{#each @root.tacticsTalents as |t|}}<span class="sq-tactic">{{t}}</span>{{/each}}</div>
+                {{/if}}
+              </div>
+            </div>
+            {{/each}}
+          </div>
+          <div class="sq-actions">
+            <button type="button" class="sq-btn sq-btn-roll sq-detail-roll"><i class="fas fa-dice-d10"></i> Отдать Детальную Команду</button>
+            {{#if detailActive}}<button type="button" class="sq-btn sq-detail-off"><i class="fas fa-power-off"></i> Снять</button>{{/if}}
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-panel sq-panel">
+        <div class="panel-title">ПРИКАЗЫ, БРИФИНГ, ГЕРОИЧЕСКИЙ КОНЕЦ</div>
+        <div class="panel-body">
+          <div class="sq-actions sq-actions-wide">
+            <button type="button" class="sq-btn sq-btn-roll sq-order-roll" title="Command(F)+0 vs W+0 подчинённого — свободное действие">
+              <i class="fas fa-bullhorn"></i> Приказ подчинённому
+            </button>
+            <button type="button" class="sq-btn sq-btn-roll sq-briefing-roll" title="Комбинированный тест Command(I)−10 и Logic(I)−10">
+              <i class="fas fa-map"></i> Предбоевой брифинг
+            </button>
+            <button type="button" class="sq-btn sq-btn-roll sq-heroic-roll" title="Command(W)+0 vs Intimidate(W)+0 того, кто вывел командира из боя">
+              <i class="fas fa-skull"></i> Героический Конец
+            </button>
+          </div>
+          {{#if briefingSux}}
+          <div class="sq-note">Брифинг: подчинённым доступно <b>{{briefingSux}}</b> Ход(ов) с преимуществами Короткой Команды силой
+            {{#if briefingPower}}<b>{{briefingPower}}</b>{{else}}½ I.b{{/if}} Успехов (по выбору их Лидера).
+            <input type="number" name="system.briefing.successes" value="{{briefingSux}}" min="0" class="sq-inline-num" title="Осталось Ходов"/>
+          </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    {{!-- ───────────────── МОРАЛЬ ───────────────── --}}
+    <div class="tab sq-tab" data-tab="morale" data-group="primary">
+
+      <div class="stat-panel sq-panel">
+        <div class="panel-title">МОРАЛЬ И ПОТЕРЯ КОМАНДОВАНИЯ</div>
+        <div class="panel-body">
+          <ul class="sq-rules">
+            {{#each moraleRules as |r|}}<li>{{r}}</li>{{/each}}
+          </ul>
+        </div>
+      </div>
+
+      <div class="stat-panel sq-panel{{#if derived.broken}} sq-panel-bad{{/if}}">
+        <div class="panel-title">СЛОМЛЕННЫЙ ОТРЯД{{#if derived.broken}} — АКТИВЕН{{/if}}</div>
+        <div class="panel-body">
+          <div class="sq-rule-text">{{brokenSquadRule}}</div>
+          {{#unless derived.broken}}
+          <div class="sq-note">Слаженность отряда неотрицательна ({{signedNum derived.cohesion}}) — эти тесты не проводятся.</div>
+          {{/unless}}
+        </div>
+      </div>
+
+      <div class="stat-panel sq-panel">
+        <div class="panel-title">СОСТОЯНИЕ ОТРЯДА</div>
+        <div class="panel-body">
+          <div class="sq-morale-list">
+            {{#each members as |m|}}
+            <div class="sq-morale-row{{#if m.moraleLost}} sq-member-lost{{/if}}" data-member-id="{{m.id}}" data-uuid="{{m.uuid}}">
+              <img class="sq-member-img sq-open" src="{{m.img}}" title="Открыть лист"/>
+              <span class="sq-member-name sq-open">{{m.name}}</span>
+              <span class="sq-morale-wp">W {{#if m.wp}}{{m.wp}}{{else}}—{{/if}}</span>
+              <span class="sq-morale-state">{{#if m.moraleLost}}Командование потеряно{{else}}Под Командованием{{/if}}</span>
+              <a class="sq-member-morale" title="Тест Морали (W+0)"><i class="fas fa-heart-pulse"></i></a>
+              <a class="sq-member-broken{{#unless @root.derived.broken}} sq-act-off{{/unless}}" title="Тест Сломленного Отряда"><i class="fas fa-person-running"></i></a>
+              <a class="sq-member-flag" title="Переключить отметку"><i class="fas fa-flag"></i></a>
+            </div>
+            {{else}}
+            <div class="sq-empty">В отряде нет участников.</div>
+            {{/each}}
+          </div>
+          <div class="sq-actions">
+            <button type="button" class="sq-btn sq-morale-reset"><i class="fas fa-rotate-left"></i> Сбросить отметки</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{!-- ───────────────── СПРАВОЧНИК ───────────────── --}}
+    <div class="tab sq-tab" data-tab="reference" data-group="primary">
+
+      <div class="stat-panel sq-panel">
+        <div class="panel-title">РИСК КОМАНДИРА</div>
+        <div class="panel-body">
+          <div class="sq-hint">Есть предел тому, насколько командир может вдохновить соратников, которые видят, как он отсиживается в тылу. Уровень Риска определяет ГМ.</div>
+          <table class="items-table sq-risk-table">
+            <thead><tr><th style="width:52px">Риск</th><th class="col-wide">Положение командира</th><th style="width:74px">Max. У</th></tr></thead>
+            <tbody>
+              {{#each riskLevels as |r|}}
+              <tr class="{{#if r.selected}}sq-risk-current{{/if}}">
+                <td><b>{{r.level}}</b></td>
+                <td class="col-wide">{{r.label}}</td>
+                <td>{{r.capLabel}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+          <div class="sq-note">Потолок Успехов не действует на Координатора — он не вдохновляет личным примером, а лишь советует.</div>
+        </div>
+      </div>
+
+      <div class="stat-panel sq-panel">
+        <div class="panel-title">ПРОЧИЕ МЕХАНИКИ КОМАНДОВАНИЯ</div>
+        <div class="panel-body">
+          <div class="sq-ref-list">
+            {{#each commandReference as |r|}}
+            <div class="sq-ref">
+              <div class="sq-ref-head"><i class="fas {{r.icon}}"></i>{{r.label}}</div>
+              <div class="sq-ref-desc">{{r.desc}}</div>
+            </div>
+            {{/each}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{!-- ───────────────── ЗАПИСИ ───────────────── --}}
+    <div class="tab sq-tab" data-tab="notes" data-group="primary">
+      <div class="stat-panel sq-panel">
+        <div class="panel-title">ЗАПИСИ ОБ ОТРЯДЕ</div>
+        <div class="panel-body">
+          <textarea name="system.notes" class="sq-textarea" placeholder="История отряда, отношения внутри, боевой путь…">{{system.notes}}</textarea>
+        </div>
+      </div>
+      {{#if isGM}}
+      <div class="stat-panel sq-panel sq-panel-gm">
+        <div class="panel-title">ЗАМЕТКИ ГМА</div>
+        <div class="panel-body">
+          <textarea name="system.gmNotes" class="sq-textarea" placeholder="Скрытые мотивы, планы предательств, реальная Слаженность…">{{system.gmNotes}}</textarea>
+        </div>
+      </div>
+      {{/if}}
+    </div>
+
+  </div>
+</form>

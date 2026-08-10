@@ -1,0 +1,244 @@
+{{#if (eq item.type "celestialBody")}}
+{{#if cbScouted}}
+
+<div class="item-section">
+  <div class="item-section-title">НЕБЕСНОЕ ТЕЛО</div>
+  <div class="weapon-row">
+    <label class="wr-label">Тип</label>
+    <select name="system.bodyType" class="wr-select">
+      {{#each cbBodyTypes as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.bodyType o.key)}}selected{{/if}}>{{o.icon}} {{o.label}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Зона</label>
+    <select name="system.zone" class="wr-select-sm">
+      <option value="" {{#if (eq system.zone "")}}selected{{/if}}>—</option>
+      {{#each cbZones as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.zone o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Орбита (вокруг)</label>
+    <select name="system.parentId" class="wr-select">
+      <option value="" {{#if (eq system.parentId "")}}selected{{/if}}>— звезда / система —</option>
+      {{#each cbParents as |p|}}
+      <option value="{{p.id}}" {{#if (eq @root.system.parentId p.id)}}selected{{/if}}>{{p.name}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Принадлежность</label>
+    <select name="system.allegiance" class="wr-select-sm">
+      <option value="" {{#if (eq system.allegiance "")}}selected{{/if}}>—</option>
+      {{#each cbAllegiance as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.allegiance o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Вид ксеносов</label>
+    <select name="system.xenosSpecies" class="wr-select-sm">
+      <option value="" {{#if (eq system.xenosSpecies "")}}selected{{/if}}>—</option>
+      {{#each cbXenos as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.xenosSpecies o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  {{#if (eq system.xenosSpecies "other")}}
+  <div class="weapon-row">
+    <label class="wr-label">Свои ксеносы</label>
+    <input type="text" name="system.xenosCustom" value="{{system.xenosCustom}}" class="wr-input-lg" placeholder="название вида…"/>
+  </div>
+  {{/if}}
+  <div class="weapon-row">
+    <label class="wr-label">Присутствие</label>
+    <input type="text" name="system.presence" value="{{system.presence}}" class="wr-input-lg" placeholder="напр. колония, лагерь, верфь, космопорт, руины…"/>
+  </div>
+
+  {{#if (eq system.bodyType "star")}}
+  <div class="weapon-row">
+    <label class="wr-label">Класс звезды</label>
+    <select name="system.starClass" class="wr-select">
+      <option value="" {{#if (eq system.starClass "")}}selected{{/if}}>—</option>
+      {{#each cbStarClasses as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.starClass o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  {{/if}}
+
+  {{#if (or (eq system.bodyType "planet") (or (eq system.bodyType "gasGiant") (eq system.bodyType "moon")))}}
+  <div class="weapon-row">
+    <label class="wr-label">Размер</label>
+    <select name="system.bodySize" class="wr-select-sm">
+      <option value="" {{#if (eq system.bodySize "")}}selected{{/if}}>—</option>
+      {{#each cbBodySizes as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.bodySize o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Гравитация</label>
+    <select name="system.gravity" class="wr-select-sm">
+      <option value="" {{#if (eq system.gravity "")}}selected{{/if}}>—</option>
+      {{#each cbGravity as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.gravity o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Атмосфера</label>
+    <select name="system.atmospherePresence" class="wr-select-sm">
+      <option value="" {{#if (eq system.atmospherePresence "")}}selected{{/if}}>—</option>
+      {{#each cbAtmPres as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.atmospherePresence o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Состав</label>
+    <select name="system.atmosphereType" class="wr-select-sm">
+      <option value="" {{#if (eq system.atmosphereType "")}}selected{{/if}}>—</option>
+      {{#each cbAtmType as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.atmosphereType o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Климат</label>
+    <select name="system.climate" class="wr-select-sm">
+      <option value="" {{#if (eq system.climate "")}}selected{{/if}}>—</option>
+      {{#each cbClimate as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.climate o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Обитаемость</label>
+    <select name="system.habitability" class="wr-select-sm">
+      <option value="" {{#if (eq system.habitability "")}}selected{{/if}}>—</option>
+      {{#each cbHabit as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.habitability o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Класс мира</label>
+    <select name="system.worldClass" class="wr-select-sm">
+      <option value="" {{#if (eq system.worldClass "")}}selected{{/if}}>—</option>
+      {{#each cbWorldClasses as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.worldClass o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Среда</label>
+    <select name="system.worldEnv" class="wr-select-sm">
+      <option value="" {{#if (eq system.worldEnv "")}}selected{{/if}}>—</option>
+      {{#each cbWorldEnv as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.worldEnv o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Имперская десятина</label>
+    <select name="system.tithe" class="wr-select">
+      <option value="" {{#if (eq system.tithe "")}}selected{{/if}}>— (Aptus Non)</option>
+      {{#each cbTithe as |o|}}
+      <option value="{{o.key}}" {{#if (eq @root.system.tithe o.key)}}selected{{/if}}>{{o.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Орбитальные особенности</label>
+    <input type="text" name="system.orbitalFeatures" value="{{system.orbitalFeatures}}" class="wr-input-lg" placeholder="луны, кольца, станции…"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Ландшафт / территории</label>
+    <input type="text" name="system.territories" value="{{system.territories}}" class="wr-input-lg" placeholder="напр. пустыни, океаны, ульи…"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Население (вид)</label>
+    <input type="text" name="system.population.species" value="{{system.population.species}}" class="wr-input-md" placeholder="люди / ксеносы / нет"/>
+    <label class="wr-label">Числ.</label>
+    <input type="text" name="system.population.size" value="{{system.population.size}}" class="wr-input-sm" placeholder="напр. 2 млрд"/>
+    <label class="wr-label">Власть</label>
+    <input type="text" name="system.government" value="{{system.government}}" class="wr-input-md" placeholder="напр. Имперский протекторат"/>
+  </div>
+  {{/if}}
+
+  {{#if (or (eq system.bodyType "station") (eq system.bodyType "derelict"))}}
+  <div class="weapon-row">
+    <label class="wr-label">Тип станции/объекта</label>
+    <input type="text" name="system.stationType" value="{{system.stationType}}" class="wr-input-md" placeholder="напр. орбитальный док"/>
+    <label class="wr-label">Власть</label>
+    <input type="text" name="system.government" value="{{system.government}}" class="wr-input-md" placeholder="кто контролирует"/>
+  </div>
+  {{/if}}
+
+  <div class="weapon-row">
+    <label class="wr-label">Угроза / опасность</label>
+    <input type="text" name="system.threat" value="{{system.threat}}" class="wr-input-lg" placeholder="напр. радиация, ксено-флора, пираты…"/>
+  </div>
+</div>
+
+{{#unless (or (eq system.bodyType "star") (eq system.bodyType "anomaly"))}}
+<div class="item-section">
+  <div class="item-section-title">РЕСУРСЫ · изобилие</div>
+  <div class="ss-res-grid">
+    {{#each cbResources as |o|}}
+    <label class="ss-res" title="{{o.cat}} · база + бонус улучшений"><span>{{#if o.icon}}<img class="ss-res-ico" src="{{o.icon}}"/>{{/if}}{{o.label}}{{#if o.bonus}} <em class="ss-res-bonus">+{{o.bonus}}</em>{{/if}}</span>
+      <input type="number" name="system.resources.{{o.key}}" value="{{lookup @root.system.resources o.key}}" min="0" class="wr-input-xs"/></label>
+    {{/each}}
+  </div>
+  <div class="ss-res-legend">Изобилие — усл. рейтинг богатства (RT): 0 нет · 25 скудно · 50 умеренно · 75 богато · 90+ колоссально. <em>+N — бонус от улучшений колонии (поверх базы).</em></div>
+  <div class="weapon-row">
+    <input type="text" name="system.resources.notes" value="{{system.resources.notes}}" class="wr-input-lg" placeholder="заметки о ресурсах…"/>
+  </div>
+</div>
+
+{{#if cbImprovements.length}}
+<div class="item-section">
+  <div class="item-section-title">РАЗВИТИЕ КОЛОНИИ</div>
+  <div class="ss-imp-readlist">
+    {{#each cbImprovements as |im|}}
+    <div class="ss-imp-read{{#if im.dim}} ss-pl-dim{{/if}}">
+      <div class="ss-imp-read-name">{{im.name}}{{#if im.flag}} <span class="ss-imp-flag-tag">🔒 {{im.flag}}</span>{{/if}}{{#if im.bonus}} <span class="ss-imp-read-bonus">{{im.bonus}}</span>{{/if}}</div>
+      {{#if im.desc}}<div class="ss-imp-read-desc">{{im.desc}}</div>{{/if}}
+    </div>
+    {{/each}}
+  </div>
+  <div class="ss-res-legend">Управление улучшениями — ПКМ по телу на листе системы → «Развитие колонии».</div>
+</div>
+{{/if}}
+{{/unless}}
+
+{{#if cbShowSecret}}
+<div class="item-section ss-secret">
+  <div class="item-section-title">{{#if cbIsGM}}🔒 ТОЛЬКО ГМ · {{/if}}СЕКРЕТНЫЕ ДАННЫЕ</div>
+  {{#if cbIsGM}}
+  <label class="ss-reveal-toggle"><input type="checkbox" name="system.revealed" {{#if system.revealed}}checked{{/if}}/> Показать эти данные игрокам (по мере разведки)</label>
+  {{/if}}
+  <div class="weapon-row"><label class="wr-label">Истинная природа / тайна</label></div>
+  <textarea name="system.gmNotes" class="item-textarea" placeholder="что здесь на самом деле, подвох, зацепки…">{{system.gmNotes}}</textarea>
+
+  <div class="item-section-title" style="margin-top:8px;">ОБОРОНА</div>
+  <div class="weapon-row">
+    <label class="wr-label">Сила обороны</label>
+    <input type="text" name="system.defense.strength" value="{{system.defense.strength}}" class="wr-input-md" placeholder="напр. Умеренная"/>
+    <label class="wr-label">Патрули (корабли)</label>
+    <input type="text" name="system.defense.patrols" value="{{system.defense.patrols}}" class="wr-input-md" placeholder="напр. 2 эскортника"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Вооружение</label>
+    <input type="text" name="system.defense.weapons" value="{{system.defense.weapons}}" class="wr-input-lg" placeholder="орудия, турели, щиты, мины…"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Гарнизон / охрана</label>
+    <input type="text" name="system.defense.garrison" value="{{system.defense.garrison}}" class="wr-input-lg" placeholder="численность и тип войск…"/>
+  </div>
+  <div class="weapon-row">
+    <input type="text" name="system.defense.notes" value="{{system.defense.notes}}" class="wr-input-lg" placeholder="прочее об обороне…"/>
+  </div>
+</div>
+{{/if}}
+
+{{else}}
+<div class="item-section ss-unscouted-card">
+  <div class="item-section-title">❔ ОБЪЕКТ НЕ РАЗВЕДАН</div>
+  <p>Этот объект ещё не разведан. Данные о нём недоступны.</p>
+</div>
+{{/if}}
+
+{{/if}}

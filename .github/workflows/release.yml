@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Определить версию из тега
+        id: meta
+        run: |
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Подставить ссылки в system.json
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          jq --arg version "$VERSION" \
+             --arg url "https://github.com/$REPO" \
+             --arg manifest "https://github.com/$REPO/releases/latest/download/system.json" \
+             --arg download "https://github.com/$REPO/releases/download/$TAG/system.zip" \
+             '.version = $version | .url = $url | .manifest = $manifest | .download = $download' \
+             system.json > system.json.tmp
+          mv system.json.tmp system.json
+          cat system.json | head -20
+
+      - name: Собрать архив системы
+        run: |
+          zip -r system.zip \
+            system.json \
+            template.json \
+            warhammer-dbc.mjs \
+            critical-tables.mjs \
+            module \
+            styles \
+            templates \
+            lang \
+            assets \
+            packs \
+            LICENSE \
+            README.md \
+            -x "packs/*/LOCK" "packs/*/LOG" "packs/*/LOG.old"
+
+      - name: Опубликовать релиз
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          files: |
+            system.json
+            system.zip

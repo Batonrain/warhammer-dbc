@@ -1,0 +1,26 @@
+<div class="wh-surgeon-window"> {{#if missing}}
+  <div class="wh-surg-missing">Актор не найден.</div> {{else}}
+  <div class="wh-surg-head"> <span class="wh-surg-title">◄ ХИРУРГЕОН · ИМПЛАНТАЦИЯ ►</span> <span class="wh-surg-sub">SUBJECT // {{actorName}} · аугметика: {{implantTotal}}</span> </div>
+
+  <div class="wh-surg-body">
+    {{!-- ── ЛЕВАЯ КОЛОНКА СИСТЕМ ─────────────────────────────── --}}
+    <div class="wh-surg-col wh-surg-col-l"> {{#each systemsL as |sys|}}
+      {{> "systems/warhammer-dbc/templates/apps/surgeon-slot.hbs"}}
+    {{/each}}
+    </div>
+
+    {{!-- ── ФИГУРА ПО ЦЕНТРУ ─────────────────────────────────── --}}
+    <div class="wh-surg-figure"> <div class="body-photo"> {{{implantsBack}}}
+        {{#each layers as |L|}}
+        <div class="bp {{#if L.aug}}is-aug{{/if}} {{#if L.organ}}bp-organ{{/if}} {{#if L.beat}}bp-beat{{/if}}" data-part="{{L.key}}" style="--bp-col:{{L.color}}; -webkit-mask-image:url('{{L.mask}}'); mask-image:url('{{L.mask}}');"></div> {{/each}}
+        {{{implantsFront}}}
+        <div class="body-photo-scan"></div> </div> </div>
+
+    {{!-- ── ПРАВАЯ КОЛОНКА СИСТЕМ ────────────────────────────── --}}
+    <div class="wh-surg-col wh-surg-col-r"> {{#each systemsR as |sys|}}
+      {{> "systems/warhammer-dbc/templates/apps/surgeon-slot.hbs"}}
+    {{/each}}
+    </div>
+  </div>
+  {{/if}}
+</div>

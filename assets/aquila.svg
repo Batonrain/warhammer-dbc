@@ -1,0 +1,19 @@
+<svg width="220" height="120" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <g id="aq-half" fill="none" stroke="#4dffa6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M108 52 C 80 44, 42 47, 16 64"/>
+      <path d="M108 60 C 82 55, 50 59, 26 76"/>
+      <path d="M108 68 C 84 65, 58 71, 38 86"/>
+      <path d="M105 58 C 96 52, 86 49, 78 50 C 82 53, 84 57, 89 58"/>
+      <path d="M78 50 L70 47 L75 52"/>
+    </g>
+  </defs>
+  <g fill="none" stroke="#4dffa6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#aq-half"/>
+    <use href="#aq-half" transform="matrix(-1 0 0 1 220 0)"/>
+    <path d="M110 48 L110 94"/>
+    <path d="M101 56 L119 56 L115 86 L110 94 L105 86 Z"/>
+    <path d="M110 70 L106 70 M110 76 L106 76 M110 70 L114 70 M110 76 L114 76"/>
+    <path d="M104 90 L100 104 M110 92 L110 108 M116 90 L120 104"/>
+  </g>
+</svg>

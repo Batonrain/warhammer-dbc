@@ -1,0 +1,180 @@
+<div class="tab haem-tab" data-tab="haemonculus" data-group="primary">
+
+  {{!-- ── ШАПКА: путь возвышения ────────────────────────────────────────── --}}
+  <div class="haem-panel haem-hero">
+    <div class="haem-hero-mark" aria-hidden="true">
+      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="haemCore" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="#e8d5ff"/>
+            <stop offset="35%"  stop-color="#a06bd4"/>
+            <stop offset="70%"  stop-color="#3d1a52"/>
+            <stop offset="100%" stop-color="#0d0510"/>
+          </radialGradient>
+        </defs>
+        <circle class="haem-mark-ring" cx="60" cy="60" r="52"/>
+        <circle class="haem-mark-ring haem-mark-ring2" cx="60" cy="60" r="42"/>
+        {{!-- крючья ковена --}}
+        <g class="haem-hooks">
+          <path d="M60 12 C 74 26, 74 40, 60 48 C 46 40, 46 26, 60 12 Z"/>
+          <path d="M60 108 C 46 94, 46 80, 60 72 C 74 80, 74 94, 60 108 Z"/>
+          <path d="M12 60 C 26 46, 40 46, 48 60 C 40 74, 26 74, 12 60 Z"/>
+          <path d="M108 60 C 94 74, 80 74, 72 60 C 80 46, 94 46, 108 60 Z"/>
+        </g>
+        <circle class="haem-mark-core" cx="60" cy="60" r="14" fill="url(#haemCore)"/>
+      </svg>
+    </div>
+
+    <div class="haem-hero-info">
+      <div class="haem-title">ВЛАДЫКА ПЛОТИ</div>
+      <div class="haem-stage-name">Стадия {{haem.stage}} — {{haem.current.name}}</div>
+      <div class="haem-hint">
+        Путь Гемункула идёт от низов Комморага до его верхушки. <b>Стадия 0</b> — архетип взят,
+        работают только его базовые преимущества; таблицы трейтов ещё закрыты.
+        Каждая следующая ступень требует уникального образца, Влияния и опыта.
+      </div>
+      <div class="haem-track" title="Пройдено ступеней: {{haem.stage}} из 5">
+        {{#each haem.ladder as |s|}}<span class="haem-pip {{#if s.open}}on{{/if}} {{#if s.isCurrent}}cur{{/if}}">{{s.stage}}</span>{{/each}}
+      </div>
+
+      <div class="haem-totals">
+        <span class="haem-chip"><i>Un. I</i><b>+{{haem.unnaturalI}}</b></span>
+        <span class="haem-chip"><i>Fear</i><b>{{haem.fear}}</b></span>
+        <span class="haem-chip {{#unless haem.woundBonus}}off{{/unless}}"><i>Раны</i><b>+{{haem.woundBonus}}</b></span>
+        <span class="haem-chip {{#unless haem.regen}}off{{/unless}}"><i>Регенерация</i><b>{{haem.regen}}</b></span>
+        <span class="haem-chip haem-chip-xp"><i>Опыт за ступени</i><b>{{haem.xpSpent}}</b></span>
+      </div>
+    </div>
+  </div>
+
+  {{!-- ── ЛЕСТНИЦА СТУПЕНЕЙ ─────────────────────────────────────────────── --}}
+  <div class="haem-panel">
+    <div class="haem-panel-title">ВОЗВЫШЕНИЕ</div>
+
+    <div class="haem-ladder">
+      {{#each haem.ladder as |s|}}
+      <div class="haem-step {{#if s.open}}is-open{{/if}} {{#if s.isCurrent}}is-current{{/if}}">
+        <button type="button" class="haem-step-head" data-stage="{{s.stage}}">
+          <span class="haem-step-num">{{s.stage}}</span>
+          <span class="haem-step-name">{{s.name}}<em class="haem-step-gain">{{s.gain}}</em></span>
+          {{#if s.cost}}<span class="haem-step-cost">{{s.cost}} xp</span>{{/if}}
+          {{#if s.inf}}<span class="haem-step-inf">Inf {{s.inf}}</span>{{/if}}
+          <span class="haem-step-arrow">▸</span>
+        </button>
+
+        <div class="haem-step-body" style="display:none;">
+          {{#if s.req}}<div class="haem-req"><b>Требования.</b> {{s.req}}</div>{{/if}}
+          {{#if s.sample}}<div class="haem-sample"><b>Образец.</b> {{s.sample}}</div>{{/if}}
+          <ul class="haem-benefits">
+            {{#each s.benefits as |b|}}<li>{{{b}}}</li>{{/each}}
+          </ul>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+
+    <div class="haem-ladder-actions">
+      {{#if haem.next}}
+        <button type="button" class="haem-advance-btn">
+          <span class="haem-advance-lbl">Взойти на Стадию {{haem.next.stage}} · {{haem.next.name}}</span>
+          <span class="haem-advance-cost">{{haem.next.cost}} xp{{#if haem.next.inf}} · Inf {{haem.next.inf}}{{/if}}</span>
+        </button>
+      {{else}}
+        <div class="haem-apex">◈ Идеал Верховенства достигнут. Доступно возвышение до Малой Тёмной Музы: Сын Шаимеш и Вечный Идеал.</div>
+      {{/if}}
+      {{#if haem.stage}}<button type="button" class="haem-descend-btn" title="Откатить ступень">Откатить</button>{{/if}}
+    </div>
+  </div>
+
+  {{!-- ── ОЧКИ ТРЕЙТОВ ──────────────────────────────────────────────────── --}}
+  {{#if haem.anyTable}}
+  <div class="haem-panel">
+    <div class="haem-panel-title">ОЧКИ ПЕРЕСТРОЙКИ
+      <label class="haem-split">
+        <input type="checkbox" name="system.haemonculus.splitPools" {{#if haem.split}}checked{{/if}}/>
+        раздельные пулы
+      </label>
+    </div>
+
+    <div class="haem-budgets">
+      {{#each haem.budgets as |b|}}
+      <div class="haem-budget {{#if b.over}}is-over{{/if}}">
+        <div class="haem-budget-label">{{b.label}}</div>
+        <div class="haem-budget-bar"><span style="width:{{b.pct}}%"></span></div>
+        <div class="haem-budget-num">{{b.spent}} / {{b.cap}}{{#if b.over}} — перерасход!{{/if}}</div>
+      </div>
+      {{/each}}
+    </div>
+    <div class="haem-budget-hint">
+      Бюджет равен <b>I.b</b> и меняется между сессиями. Трейт без рейтинга стоит цену взятия;
+      каждый рейтинг сверх первого стоит цену прокачки.
+    </div>
+  </div>
+  {{/if}}
+
+  {{!-- ── ТАБЛИЦЫ ТРЕЙТОВ ───────────────────────────────────────────────── --}}
+  {{#each haem.tables as |t|}}
+  <div class="haem-panel haem-table-panel {{#unless t.open}}is-locked{{/unless}}">
+    <div class="haem-panel-title">
+      {{t.title}}
+      {{#unless t.open}}<span class="haem-lock">закрыто до Стадии {{t.needStage}}</span>{{/unless}}
+      {{#if t.corNote}}<span class="haem-cor-note">Порча за сессию: <b>{{t.cor}}</b></span>{{/if}}
+    </div>
+
+    <table class="items-table haem-traits">
+      <thead><tr>
+        <th class="col-wide">Трейт</th>
+        <th class="col-narrow">Взятие</th>
+        <th class="col-narrow">Прокачка</th>
+        <th class="col-narrow">Рейтингов</th>
+        <th class="col-narrow">Итого</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        {{#each t.rows as |r|}}
+        <tr class="haem-trait-row {{#if r.taken}}is-taken{{/if}}">
+          <td class="item-name-cell">
+            <span class="haem-trait-name">{{r.name}}</span>
+            {{#if r.note}}<div class="haem-trait-note">{{r.note}}</div>{{/if}}
+            {{#if r.noCor}}<div class="haem-trait-note haem-nocor">Порчу не приносит</div>{{/if}}
+          </td>
+          <td class="haem-num">{{r.take}}</td>
+          <td class="haem-num">{{#if r.up}}+{{r.up}}{{else}}—{{/if}}</td>
+          <td class="haem-num">
+            {{#if r.taken}}
+              <div class="haem-rank-ctl">
+                <button type="button" class="haem-rank-btn" data-kind="{{t.kind}}" data-key="{{r.key}}" data-delta="-1" {{#unless r.up}}disabled{{/unless}}>−</button>
+                <span class="haem-rank-val">{{r.ranks}}</span>
+                <button type="button" class="haem-rank-btn" data-kind="{{t.kind}}" data-key="{{r.key}}" data-delta="1" {{#unless r.up}}disabled{{/unless}}>+</button>
+              </div>
+            {{else}}—{{/if}}
+          </td>
+          <td class="haem-num haem-total">{{#if r.taken}}{{r.cost}}{{else}}—{{/if}}</td>
+          <td class="psy-actions-cell">
+            <button type="button" class="haem-toggle-btn {{#if r.taken}}is-on{{/if}}"
+                    data-kind="{{t.kind}}" data-key="{{r.key}}" {{#unless t.open}}disabled{{/unless}}>
+              {{#if r.taken}}Убрать{{else}}Взять{{/if}}
+            </button>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    {{#if t.corNote}}
+    <div class="haem-budget-hint">
+      В конце каждой сессии: +1 Порчи за факт наличия трейта и +1 за каждый рейтинг поверх первого
+      (у Daemonic Presence — поверх пятого). Blunted, Hoverer и Phase Порчу не приносят.
+    </div>
+    {{/if}}
+  </div>
+  {{/each}}
+
+  {{!-- ── ЗАМЕТКИ ───────────────────────────────────────────────────────── --}}
+  <div class="haem-panel">
+    <div class="haem-panel-title">ЛАБОРАТОРНЫЙ ЖУРНАЛ</div>
+    <textarea name="system.haemonculus.notes" class="haem-notes"
+              placeholder="Образцы, ковен, специализация (Мастер Плоти / Технологий / Души), сингулярности…">{{system.haemonculus.notes}}</textarea>
+  </div>
+
+</div>{{!-- /tab haemonculus --}}

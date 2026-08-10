@@ -1,0 +1,1120 @@
+// ════════════════════════════════════════════════════════════════════════
+//  Завеса и Мистика — глобальное окно (Warhammer DBC).
+//  • Отдельное окно (как Таро/Мастерская), кнопка в панели контролей.
+//  • Состояние ЗАВЕСЫ проецируется на СЦЕНУ (scene.flags), общее для всех.
+//  • Три вкладки: «Завеса» (плотность/факторы/события), «Ритуалы»
+//    (ритуалы, манипулирующие завесой), «Навигация» (навигаторы в Варпе).
+//  Редактирование — только ГМ; игроки видят актуальное состояние сцены.
+// ════════════════════════════════════════════════════════════════════════
+
+import { VEIL_FACTORS, VEIL_EVENTS, WARP_GODS, warpGod, defaultVeil, veilTotal, veilLevelInfo, veilNavMod }
+  from "../constants/veil.mjs";
+import { RITUAL_TYPES, RITUAL_TYPES_MAP, TEST_CHARS, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY,
+         CURSE_SYMPATHY, NUMEROLOGY, WARP_AVERSION, lookupAversion, SUMMON_FORMS,
+         buildRitualSkills, ritualSkillOption, ritualDegrees, charAbbr } from "../constants/rituals.mjs";
+import { getPhenomenon, getPeril } from "../constants/psyker-tables.mjs";
+import { ritualPresetGroups, applyRitualPreset } from "../constants/ritual-presets.mjs";
+import { TAROT_DECK, SUITS, SUIT_HINTS, TAROT_SPREADS, TAROT_GUIDE,
+         cardByN, cardTitle, cardSuitLine, cardImgSrc } from "../constants/tarot.mjs";
+import { DW_GODS, DW_GODS_MAP, DEMON_INF_FORMULAS, VESSEL_RESONANCE, VESSEL_RESONANCE_GROUPS,
+         DEMON_WEAPON_COMMON, rollDemonProperty, propsFromRow } from "../constants/demon-weapon.mjs";
+import { ROUTE_STABILITY, JOURNEY_DURATION, GUIDE_ESTIMATE, ENTRY_LOCATIONS, jumpDurationMult,
+         WARP_ENCOUNTERS, WARP_INVASIONS, INACCURATE_EXIT, WARP_STORMS, lookupTable, degWord }
+  from "../constants/warp-travel.mjs";
+import { veilIcon } from "../constants/veil-icons.mjs";
+import { refreshVeilOverlay } from "./veil-overlay.mjs";
+import { resolveVeilContainer } from "../constants/scene-nexus.mjs";
+
+function _newJourney() {
+  return {
+    shipId: "", gellar: "ok", occulum: "ok", warpEngineDmg: false, emergency: false,
+    entryLoc: "mandeville", stability: "", stabilityMult: 1, psyMod: 0, beaconHidden: false,
+    baseDuration: null, beaconMod: 0, days: 0,
+    senseSkill: "", navSkill: "", helmSkill: ""   // Навыки Проводника (Psyniscience/Navigation/Operate)
+  };
+}
+
+function _newRitual() {
+  return {
+    ritualistId: "", name: "", type: "summon",
+    skillValue: "", testChar: "", gmMod: -20,
+    assistants: 0, assistBonus: 10,
+    summon: {}, curseFam: "close", curseSymp: {},
+    numerology: {}, numMod: 0, psyker: false, psykerBonus: 0,
+    aversionPerFail: 5
+  };
+}
+
+// ── Таро: пустые слоты по спреду ──────────────────────────────────────────
+function _tarotSlots(spreadKey) {
+  return (TAROT_SPREADS[spreadKey]?.positions || []).map(() => ({ cardN: null, reversed: false }));
+}
+
+// Прибавить плоский бонус к строке урона: "1d10+4" → +N к хвостовому «+K», иначе допишет.
+function _addFlatDamage(dmg, n) {
+  const s = String(dmg || "").trim();
+  if (!n) return s;
+  const m = s.match(/^(.*?)([+-]\s*\d+)\s*$/);
+  if (m) {
+    const base = m[1].trim();
+    const cur = parseInt(m[2].replace(/\s+/g, ""), 10) || 0;
+    const nv = cur + n;
+    return nv === 0 ? base : `${base}${nv > 0 ? "+" : ""}${nv}`;
+  }
+  return s ? `${s}+${n}` : `+${n}`;
+}
+
+// ── Осквернение (крафт демон-оружия): исходное состояние ──────────────────
+function _newDefile() {
+  return {
+    weaponUuid: "", god: "undivided", demonName: "",
+    demonFormula: "lesser", demonWb: 4, demonInf: 8, binding: 3,
+    resonance: {}, ironwork: 0, gmMod: 0,
+    ritualistId: "", skillValue: "",   // ритуалист со сцены + его Навык (FL Демоны/Варп/Ересь)
+    trueNameKnown: false, demonWilling: false, sacrificedAssist: 0
+  };
+}
+
+const { Application } = foundry.appv1.api;
+const FLAG_SCOPE = "warhammer-dbc";
+const FLAG_KEY   = "veil";
+const escHtml = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// ── Доступ к состоянию завесы текущей сцены ───────────────────────────────
+function currentScene() { return canvas?.scene ?? game.scenes?.current ?? null; }
+
+// Завеса резолвится через Нексус: если сцена входит в группу — источник группа
+// (общая Завеса), иначе — легаси-флаг самой сцены. См. constants/scene-nexus.mjs.
+function readVeil(scene) { return resolveVeilContainer(scene).read(); }
+
+async function writeVeil(scene, veil) {
+  if (!scene) { ui.notifications?.warn("Завеса: нет активной сцены."); return; }
+  if (!game.user.isGM) return;
+  await resolveVeilContainer(scene).write(veil);
+}
+
+// Подпись контейнера Завесы (имя группы или сцены) — для шапки окна.
+function veilContainerLabel(scene) {
+  const c = resolveVeilContainer(scene);
+  return c.kind === "group" ? `Группа: ${c.label}` : (scene?.name || "— нет сцены —");
+}
+
+// Публичный помощник: сдвинуть завесу текущей сцены (для феноменов/ритуалов).
+export async function veilShift(delta, note = "") {
+  const scene = currentScene();
+  if (!scene || !game.user.isGM) return;
+  const v = readVeil(scene);
+  v.manual = (Number(v.manual) || 0) + Number(delta || 0);
+  v.log = [{ delta: Number(delta || 0), note: String(note || "Сдвиг завесы"), time: Date.now() }, ...(v.log || [])].slice(0, 30);
+  await writeVeil(scene, v);
+}
+
+export class VeilMystic extends Application {
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      id: "wh-veil",
+      classes: ["warhammer-dbc", "wh-holo", "wh-veil"],
+      title: "Завеса и Мистика",
+      template: "systems/warhammer-dbc/templates/apps/veil.hbs",
+      width: 960, height: 800, resizable: true,
+      scrollY: [".wh-veil-scroll"]
+    });
+  }
+
+  constructor(...args) {
+    super(...args);
+    this.state = { tab: "veil", navId: "", godPicker: false };
+    this.ritual = _newRitual();
+    this.journey = _newJourney();
+    this.tarot = { subtab: "reading", spread: "cross", question: "", teomant: "", quirit: "", slots: _tarotSlots("cross") };
+    this.defile = _newDefile();
+  }
+
+  // ── Списки навигаторов сцены/мира ───────────────────────────────────────
+  _navigators() {
+    const fromTokens = (canvas?.tokens?.placeables || [])
+      .map(t => t.actor).filter(a => a?.type === "character" && a.system?.subrace === "navigator");
+    const all = game.actors.filter(a => a.type === "character" && a.system?.subrace === "navigator");
+    const map = new Map();
+    for (const a of [...fromTokens, ...all]) if (a && !map.has(a.id)) map.set(a.id, a);
+    return [...map.values()];
+  }
+
+  // ── Данные движка ритуалов ──────────────────────────────────────────────
+  _ritualActors() {
+    // Только персонажи, чьи токены присутствуют на текущей сцене.
+    const ids = new Set((canvas?.tokens?.placeables || []).map(t => t.actor?.id).filter(Boolean));
+    return game.actors.filter(a => a.type === "character" && ids.has(a.id) && (game.user.isGM || a.isOwner))
+      .map(a => ({ id: a.id, name: a.name }))
+      .sort((x, y) => x.name.localeCompare(y.name, "ru"));
+  }
+  _ritualData() {
+    const R = this.ritual;
+    const actors = this._ritualActors();
+    if (!actors.find(a => a.id === R.ritualistId)) R.ritualistId = actors[0]?.id || "";
+    const actor = game.actors.get(R.ritualistId) || null;
+    const chars = actor?.system?.characteristics || {};
+
+    const skills = actor ? buildRitualSkills(actor) : [];
+    if (!skills.find(s => s.value === R.skillValue)) R.skillValue = skills[0]?.value || "";
+    const skillOpt = ritualSkillOption(skills, R.skillValue);
+    if (!R.testChar) R.testChar = skillOpt?.char || "int";
+
+    const charAdj = (skillOpt && R.testChar !== skillOpt.char)
+      ? ((chars[R.testChar]?.total ?? 0) - (chars[skillOpt.char]?.total ?? 0)) : 0;
+    const baseVal = skillOpt ? skillOpt.total + charAdj : -20;
+
+    const isCurse = R.type === "curse";
+    const assistTotal = (R.assistants || 0) * (R.assistBonus || 0);
+    const summonTotal = RITUAL_SUMMON_MODS.reduce((s, m) => s + (R.summon[m.key] ? m.value : 0), 0);
+    const famVal = isCurse ? (CURSE_FAMILIARITY.find(f => f.key === R.curseFam)?.value || 0) : 0;
+    const sympTotal = isCurse ? CURSE_SYMPATHY.reduce((s, m) => s + (R.curseSymp[m.key] ? m.value : 0), 0) : 0;
+    const prMax = actor?.system?.psyker ? 2 * (actor.system.psyker.rating || 0) : 0;
+    const prBonus = R.psyker ? Math.min(R.psykerBonus || 0, prMax) : 0;
+    const numMod = R.numMod || 0;
+
+    const threshold = baseVal + (R.gmMod || 0) + assistTotal + summonTotal + famVal + sympTotal + prBonus + numMod;
+
+    const sgn = (n) => (n >= 0 ? "+" : "") + n;
+    const rows = [
+      { label: skillOpt ? `${skillOpt.label} (${charAbbr(R.testChar)})` : "— навык —", val: baseVal, primary: true },
+      { label: "Сложность ритуала", val: R.gmMod || 0 },
+      ...(assistTotal ? [{ label: `Ассистенты ×${R.assistants}`, val: assistTotal }] : []),
+      ...(summonTotal ? [{ label: "Модификаторы призыва", val: summonTotal }] : []),
+      ...(isCurse && famVal ? [{ label: "Знакомство с целью", val: famVal }] : []),
+      ...(isCurse && sympTotal ? [{ label: "Симпатия", val: sympTotal }] : []),
+      ...(prBonus ? [{ label: `Псайкер (+2×PR)`, val: prBonus }] : []),
+      ...(numMod ? [{ label: "Нумерология", val: numMod }] : [])
+    ].map(r => ({ ...r, signed: sgn(r.val) }));
+
+    return {
+      actors, hasActor: !!actor, ritualistName: actor?.name || "",
+      types: RITUAL_TYPES.map(t => ({ ...t, selected: t.key === R.type })),
+      isCurse, isSummonLike: ["summon", "dominion", "binding", "gate"].includes(R.type),
+      name: R.name, gmMod: R.gmMod, assistants: R.assistants, assistBonus: R.assistBonus,
+      skills: skills.map(s => ({ value: s.value, label: s.label, selected: s.value === R.skillValue })),
+      testChars: TEST_CHARS.map(c => ({ ...c, selected: c.key === R.testChar })),
+      summonMods: RITUAL_SUMMON_MODS.map(m => ({ ...m, signed: sgn(m.value), pos: m.value > 0, active: !!R.summon[m.key] })),
+      famOptions: CURSE_FAMILIARITY.map(f => ({ ...f, signed: sgn(f.value), selected: f.key === R.curseFam })),
+      sympMods: CURSE_SYMPATHY.map(m => ({ ...m, signed: sgn(m.value), active: !!R.curseSymp[m.key] })),
+      numerology: NUMEROLOGY.map(n => ({ ...n, active: !!R.numerology[n.key] })),
+      numMod, psyker: R.psyker, psykerBonus: R.psykerBonus, prMax,
+      summonForms: SUMMON_FORMS,
+      presetGroups: ritualPresetGroups(),
+      rows, threshold, thresholdSigned: sgn(threshold),
+      aversionPerFail: R.aversionPerFail
+    };
+  }
+
+  // ── Данные варп-путешествия ─────────────────────────────────────────────
+  _jSkillTotal(actor, value) {
+    if (!actor || !value) return null;
+    return buildRitualSkills(actor).find(s => s.value === value)?.total ?? null;
+  }
+  _journeyData() {
+    const J = this.journey;
+    const ships = game.actors.filter(a => a.type === "ship" && (game.user.isGM || a.isOwner))
+      .map(a => ({ id: a.id, name: a.name })).sort((x, y) => x.name.localeCompare(y.name, "ru"));
+    if (!ships.find(s => s.id === J.shipId)) J.shipId = ships[0]?.id || "";
+    const ship = game.actors.get(J.shipId) || null;
+    const occMod = J.occulum === "damaged" ? -20 : (J.occulum === "destroyed" ? -40 : 0);
+    const navMod = occMod + (J.emergency ? -20 : 0) + (J.beaconMod || 0);
+
+    // Навыки Проводника выбираются вручную (знания/навигация — не фиксированы).
+    const nav = this._journeyNav();
+    const skills = nav ? buildRitualSkills(nav) : [];
+    const pick = (cur, hints) => {
+      if (skills.find(s => s.value === cur)) return cur;
+      const m = skills.find(s => hints.some(h => s.label.toLowerCase().includes(h)));
+      return (m || skills[0])?.value || "";
+    };
+    J.senseSkill = pick(J.senseSkill, ["psynisc", "псио", "психонаук", "чуть"]);
+    J.navSkill   = pick(J.navSkill,   ["navig", "навиг"]);
+    J.helmSkill  = pick(J.helmSkill,  ["operate", "управл", "void", "пуст", "кораб"]);
+    const opts = (cur) => skills.map(s => ({ value: s.value, label: s.label, selected: s.value === cur }));
+
+    return {
+      ships, shipName: ship?.name || "", hasNav: !!nav,
+      gellar: J.gellar, occulum: J.occulum, warpEngineDmg: J.warpEngineDmg, emergency: J.emergency,
+      entryLoc: J.entryLoc, entryLocations: ENTRY_LOCATIONS.map(l => ({ ...l, selected: l.key === J.entryLoc })),
+      stability: J.stability, stabilityMult: J.stabilityMult,
+      baseDuration: J.baseDuration, beaconMod: J.beaconMod, days: J.days,
+      senseSkills: opts(J.senseSkill), navSkills: opts(J.navSkill), helmSkills: opts(J.helmSkill),
+      occMod, navMod, occModSigned: (occMod >= 0 ? "+" : "") + occMod, navModSigned: (navMod >= 0 ? "+" : "") + navMod
+    };
+  }
+
+  getData() {
+    const scene = currentScene();
+    const v = readVeil(scene);
+    const total = veilTotal(v);
+    const info = veilLevelInfo(total);
+    const isGM = game.user.isGM;
+
+    // Активный ключ группы «демонический мир» (для радио-поведения)
+    const factors = VEIL_FACTORS.map(f => ({
+      key: f.key, label: f.label, value: f.value,
+      signed: (f.value > 0 ? "+" : "") + f.value,
+      pos: f.value > 0, neg: f.value < 0,
+      group: f.group || "",
+      active: !!v.factors[f.key]
+    }));
+
+    const rituals = (v.rituals || []).map((r, i) => ({
+      idx: i, name: r.name || "Ритуал", delta: Number(r.delta) || 0,
+      signed: ((Number(r.delta) || 0) > 0 ? "+" : "") + (Number(r.delta) || 0),
+      active: !!r.active
+    }));
+
+    const log = (v.log || []).slice(0, 12).map(e => ({
+      signed: ((Number(e.delta) || 0) > 0 ? "+" : "") + (Number(e.delta) || 0),
+      pos: (Number(e.delta) || 0) > 0, neg: (Number(e.delta) || 0) < 0,
+      note: e.note || "", when: e.time ? new Date(e.time).toLocaleTimeString("ru") : ""
+    }));
+
+    // Навигация
+    const navs = this._navigators();
+    let navId = this.state.navId;
+    if (!navs.find(a => a.id === navId)) navId = navs[0]?.id || "";
+    const navActor = navs.find(a => a.id === navId) || null;
+    const journeyData = this._journeyData(); // сначала — чтобы навык навигации выбрался
+    const navSkillTot = this._jSkillTotal(navActor, this.journey.navSkill);
+    const navPowers = navActor
+      ? navActor.items.filter(i => i.type === "navigatorPower").map(i => ({
+          id: i.id, name: i.name,
+          testChar: i.system.testChar || "", testMod: i.system.testMod || 0,
+          action: i.system.action || "", range: i.system.range || "",
+          sustainable: !!i.system.sustainable,
+          effect: i.system.effect || i.system.description || ""
+        }))
+      : [];
+
+    // Гейдж завесы: позиция мембраны 0..100 (0 = у Материума/плотно, 100 = у Варпа)
+    const gauge = Math.max(0, Math.min(100, 50 + total * 9));
+
+    // Доминирующий Бог (прорыв) — цвет ока Варпа и набор наваждений.
+    const godMeta  = warpGod(v.god);
+    const godColor = godMeta?.color || "";
+    const gods     = WARP_GODS.map(g => ({ key: g.key, label: g.label, color: g.color, selected: g.key === v.god }));
+
+    return {
+      isGM,
+      tab: this.state.tab,
+      isVeil: this.state.tab === "veil",
+      isRituals: this.state.tab === "rituals",
+      isNav: this.state.tab === "nav",
+      isTarot: this.state.tab === "tarot",
+      isDefile: this.state.tab === "defile",
+      tarot: this.state.tab === "tarot" ? this._tarotData() : null,
+      defile: this.state.tab === "defile" ? this._defileData() : null,
+      sceneName: veilContainerLabel(scene),
+      base: v.base, manual: v.manual,
+      total, totalSigned: (total > 0 ? "+" : "") + total,
+      tier: info.tier, levelLabel: info.label, consequence: info.consequence,
+      gauge,
+      god: v.god, godMeta, godColor, gods, godPickerOpen: this.state.godPicker,
+      ritual: this._ritualData(),
+      journey: journeyData,
+      factors, rituals, log,
+      events: VEIL_EVENTS,
+      // Навигация
+      navigators: navs.map(a => ({ id: a.id, name: a.name, selected: a.id === navId })),
+      hasNav: !!navActor,
+      navName: navActor?.name || "",
+      navHouse: navActor?.system?.navigatorHouse || "",
+      navSkillTotal: navSkillTot,
+      navMod: veilNavMod(total),
+      navPowers,
+      navPowerCount: navPowers.length
+    };
+  }
+
+  // ═══════════════════ ТАРО ИМПЕРАТОРА ═══════════════════════════════════════
+  _tarotUsedN(except = -1) {
+    return new Set(this.tarot.slots.map((x, i) => (i === except ? null : x.cardN)).filter(Boolean));
+  }
+  _tarotRollSlot(i) {
+    const used = this._tarotUsedN(i);
+    const avail = TAROT_DECK.filter(c => !used.has(c.n));
+    if (!avail.length) return;
+    const card = avail[Math.floor(Math.random() * avail.length)];
+    this.tarot.slots[i] = { cardN: card.n, reversed: Math.floor(Math.random() * 10) >= 5 };
+  }
+  _tarotRandomAll() { for (let i = 0; i < this.tarot.slots.length; i++) this._tarotRollSlot(i); }
+  _tarotHint() {
+    const drawn = this.tarot.slots.map(x => (x.cardN ? cardByN(x.cardN) : null)).filter(Boolean);
+    if (!drawn.length) return "";
+    const majors = drawn.filter(c => c.suit === "major");
+    const counts = {};
+    for (const c of drawn) if (c.suit !== "major") counts[c.suit] = (counts[c.suit] || 0) + 1;
+    let dom = null, dn = 0;
+    for (const k in counts) if (counts[k] > dn) { dn = counts[k]; dom = k; }
+    const majTxt = majors.length
+      ? `Тему задаёт Старшая Аркана: ${majors.map(m => m.name).join(", ")}.`
+      : "Нет Старших Арканов — дело касается смертных.";
+    const domTxt = dom ? ` Доминирует ${SUITS[dom]}: ${SUIT_HINTS[dom]}` : "";
+    return majTxt + domTxt;
+  }
+  _tarotData() {
+    const s = this.tarot;
+    const sp = TAROT_SPREADS[s.spread];
+    const tokens = (() => {
+      const toks = canvas?.tokens?.placeables || [];
+      let names = [...new Set(toks.map(t => t.name).filter(Boolean))];
+      if (!names.length) names = game.actors.filter(a => a.type === "character").map(a => a.name);
+      return names.sort((x, y) => x.localeCompare(y, "ru"));
+    })();
+    const suitGroups = Object.keys(SUITS).map(k => ({
+      key: k, label: SUITS[k],
+      cards: TAROT_DECK.filter(c => c.suit === k).map(c => ({ n: c.n, label: `${c.n}. ${cardTitle(c)}` }))
+    }));
+    const slots = sp.positions.map((pos, i) => {
+      const sl = s.slots[i];
+      const card = sl.cardN ? cardByN(sl.cardN) : null;
+      return { i, name: pos.name, signal: !!pos.signal, cardN: sl.cardN || "", reversed: !!sl.reversed,
+        card: card ? { title: cardTitle(card), suitLine: cardSuitLine(card), img: cardImgSrc(card),
+          meaning: sl.reversed ? card.rev : card.up } : null };
+    });
+    const guideSuits = Object.keys(SUITS).map(k => ({
+      key: k, label: SUITS[k], hint: SUIT_HINTS[k],
+      cards: TAROT_DECK.filter(c => c.suit === k).map(c => ({ n: c.n, title: cardTitle(c), img: cardImgSrc(c), up: c.up, rev: c.rev, ch: c.ch }))
+    }));
+    return {
+      isReading: s.subtab === "reading", isGuide: s.subtab === "guide",
+      spreadKey: s.spread, spreadNote: sp.note,
+      spreads: Object.entries(TAROT_SPREADS).map(([k, v]) => ({ key: k, label: v.label, selected: k === s.spread })),
+      question: s.question, teomant: s.teomant, quirit: s.quirit,
+      tokens, suitGroups, slots, readHint: this._tarotHint(),
+      guide: TAROT_GUIDE, guideSuits
+    };
+  }
+  _tarotPost() {
+    const s = this.tarot;
+    const sp = TAROT_SPREADS[s.spread];
+    if (!s.slots.some(x => x.cardN)) { ui.notifications?.warn("Таро: ни одна карта не выбрана."); return; }
+    const rows = sp.positions.map((pos, i) => {
+      const sl = s.slots[i];
+      const sig = pos.signal ? ` <span class="tc-sig">знаковая</span>` : "";
+      if (!sl.cardN) return `<div class="wh-tarot-card empty"><div class="tc-pos">${escHtml(pos.name)}${sig}</div><div class="tc-empty">— не вытянута —</div></div>`;
+      const c = cardByN(sl.cardN), rev = sl.reversed, img = cardImgSrc(c);
+      const imgHtml = img ? `<div class="tc-frame"><img class="tc-art" src="${img}" data-title="${escHtml(cardTitle(c))}" alt="" title="Открыть карту"/></div>` : "";
+      return `<div class="wh-tarot-card${rev ? " reversed" : ""}"><div class="tc-pos">${escHtml(pos.name)}${sig}</div>${imgHtml}<div class="tc-text"><div class="tc-name">${c.n}. ${escHtml(cardTitle(c))} <span class="tc-suit">(${escHtml(cardSuitLine(c))})</span></div><div class="tc-orient">${rev ? "⭮ Перевёрнутая" : "⭯ Прямая"}</div><div class="tc-mean">${escHtml(rev ? c.rev : c.up)}</div><div class="tc-change">${escHtml(c.ch)}</div></div></div>`;
+    }).join("");
+    const meta = [];
+    if (s.teomant) meta.push(`<span class="tr-meta-i"><b>Теомант:</b> ${escHtml(s.teomant)}</span>`);
+    if (s.quirit)  meta.push(`<span class="tr-meta-i"><b>Квирит:</b> ${escHtml(s.quirit)}</span>`);
+    const metaHtml = meta.length ? `<div class="tr-meta">${meta.join("")}</div>` : "";
+    const qHtml = s.question ? `<div class="tr-question">«${escHtml(s.question)}»</div>` : "";
+    const hint = this._tarotHint();
+    const hintHtml = hint ? `<div class="tr-hint">${escHtml(hint)}</div>` : "";
+    ChatMessage.create({
+      speaker: { alias: s.teomant ? `Теомант — ${s.teomant}` : "Таро Императора" },
+      content: `<div class="wh-tarot-reading"><div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${escHtml(sp.label)} ✦</div>${qHtml}${metaHtml}<div class="tr-cards">${rows}</div>${hintHtml}</div>`
+    });
+  }
+
+  // ═══════════════════ ОСКВЕРНЕНИЕ (крафт демон-оружия) ══════════════════════
+  _defileWeapon() {
+    const uuid = this.defile.weaponUuid;
+    if (!uuid) return null;
+    try { return fromUuidSync(uuid); } catch (e) { return null; }
+  }
+  _defileData() {
+    const D = this.defile;
+    const item = this._defileWeapon();
+    const wSys = item?.system || null;
+    const godMeta = DW_GODS_MAP[D.god] || DW_GODS_MAP.undivided;
+
+    // Резонанс сосуда: авто-детект из оружия + ручные чекбоксы.
+    const auto = {};
+    if (wSys) {
+      if (wSys.legacyWeapon) auto.legacyFriend = true;   // Оружие Наследия (по умолчанию — дружественного)
+      if (wSys.sacred)       auto.sacredDefile = true;
+      if (wSys.quality === "best")   auto.qbest = true;
+      if (wSys.quality === "common") auto.qcommon = true;
+      if (wSys.quality === "poor")   auto.qpoor = true;
+      if (wSys.weaponClass === "melee") auto.melee = true;
+      const props = new Set((wSys.weaponProps || []).map(p => p.key));
+      if (props.has("primitive")) auto.primitive = true;
+      if (props.has("powerField") || /plasma|melta|плазм|мельт/i.test(wSys.weaponType || "")) auto.hitech = true;
+    }
+    const resGroups = VESSEL_RESONANCE_GROUPS.map(grp => ({
+      group: grp,
+      mods: VESSEL_RESONANCE.filter(m => m.group === grp).map(m => ({
+        key: m.key, label: m.label, value: m.value, signed: (m.value > 0 ? "+" : "") + m.value,
+        pos: m.value > 0, active: !!(D.resonance[m.key] ?? auto[m.key])
+      }))
+    }));
+    let resonanceTotal = 0;
+    for (const m of VESSEL_RESONANCE) {
+      const on = (D.resonance[m.key] ?? auto[m.key]);
+      if (on) resonanceTotal += m.value;
+    }
+    resonanceTotal += Number(D.ironwork || 0);  // −5..−30 доп. иконография → +резонанс
+
+    // Ритуалист со сцены + его Навык (динамические знания: FL Демоны/Варп/Ересь).
+    const actors = this._ritualActors();
+    if (!actors.find(a => a.id === D.ritualistId)) D.ritualistId = actors[0]?.id || "";
+    const actor = game.actors.get(D.ritualistId) || null;
+    const available = actor ? buildRitualSkills(actor) : [];
+    if (!available.find(o => o.value === D.skillValue)) {
+      const pref = available.find(o => /демон|варп|ерес|forbidden|daemon|warp|heres/i.test(o.label));
+      D.skillValue = pref?.value || available[0]?.value || "";
+    }
+    const skillOpt = available.find(o => o.value === D.skillValue) || null;
+    const skillTotal = skillOpt ? skillOpt.total : -20;
+    const lore = /ерес|heres/i.test(skillOpt?.label || "") ? "heresy"
+               : /варп|warp/i.test(skillOpt?.label || "") ? "warp" : "daemons";
+    const baseDiff = lore === "daemons" ? -50 : -60;
+
+    // Порог ритуала: Навык(FL) − базовая сложность + модификаторы.
+    const sgn = (n) => (n >= 0 ? "+" : "") + n;
+    const infHalf = -Math.ceil((Number(D.demonInf) || 0) / 2);
+    const rows = [
+      { label: skillOpt ? `Навык: ${skillOpt.label}` : "— выберите навык —", val: skillTotal, primary: true },
+      { label: `Базовая сложность (${lore === "daemons" ? "Демоны" : lore === "heresy" ? "Ересь" : "Варп"})`, val: baseDiff },
+      ...(D.trueNameKnown ? [{ label: "Известно Истинное Имя", val: 20 }] : []),
+      ...(D.demonWilling ? [{ label: "Демон желает заключения", val: 10 }] : []),
+      { label: "½ Inf демона", val: infHalf },
+      { label: "Резонанс сосуда", val: resonanceTotal },
+      ...(D.sacrificedAssist ? [{ label: `Жертвы-ассистенты ×${D.sacrificedAssist}`, val: D.sacrificedAssist * 10 }] : []),
+      ...(D.gmMod ? [{ label: "ГМ-модификатор", val: Number(D.gmMod) }] : [])
+    ].map(r => ({ ...r, signed: sgn(r.val) }));
+    const threshold = rows.reduce((s, r) => s + r.val, 0);
+
+    const propCount = Math.max(1, (Number(D.demonWb) || 1) - (Number(D.binding) || 0));
+
+    return {
+      hasWeapon: !!item,
+      weaponName: item?.name || "",
+      weaponImg: item?.img || "",
+      weaponLine: wSys ? `${wSys.damage || "—"} · Pen ${wSys.penetration || 0} · ${wSys.quality || "common"}` : "",
+      alreadyDaemon: !!wSys?.daemonWeapon?.bound,
+      gods: DW_GODS.map(g => ({ key: g.key, label: g.label, color: g.color, selected: g.key === D.god })),
+      godMeta,
+      formulas: DEMON_INF_FORMULAS.map(f => ({ ...f, selected: f.key === D.demonFormula })),
+      demonName: D.demonName, demonWb: D.demonWb, demonInf: D.demonInf, binding: D.binding,
+      ironwork: D.ironwork, gmMod: D.gmMod,
+      actors: actors.map(a => ({ id: a.id, name: a.name, selected: a.id === D.ritualistId })),
+      hasActor: !!actor, noActors: actors.length === 0,
+      skills: available.map(o => ({ value: o.value, label: o.label, selected: o.value === D.skillValue })),
+      skillTotal, skillTotalSigned: sgn(skillTotal),
+      trueNameKnown: D.trueNameKnown, demonWilling: D.demonWilling, sacrificedAssist: D.sacrificedAssist,
+      resGroups, resonanceTotal, resonanceSigned: sgn(resonanceTotal),
+      rows, threshold, thresholdSigned: sgn(threshold),
+      propCount, common: DEMON_WEAPON_COMMON
+    };
+  }
+  async _defileRitual() {
+    const D = this.defile;
+    const item = this._defileWeapon();
+    if (!item) { ui.notifications?.warn("Осквернение: перетащите оружие-сосуд."); return; }
+    if (item.system?.daemonWeapon?.bound) { ui.notifications?.warn("Это оружие уже демоническое."); return; }
+    const data = this._defileData();
+    const roll = await new Roll("1d100").evaluate();
+    const rv = roll.total;
+    const success = rv <= data.threshold;
+    const dos = success ? (1 + Math.floor((data.threshold - rv) / 10)) : 0;
+    const godMeta = data.godMeta;
+
+    let body = `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
+      <div class="roll-header">⚒ Ритуал Создания Демонического Оружия — ${escHtml(item.name)}</div>
+      <div class="roll-outcome"><b>${rv}</b> vs Порог <b>${data.thresholdSigned}</b> → ${success
+        ? `<span class="roll-success">Успех (${dos} ст.)</span>` : `<span class="roll-fail">Провал</span>`}</div>`;
+    if (success) {
+      body += `<div class="dc-line">Демон вселён в оружие. Связывание установлено до <b>${Math.min(dos, Number(D.binding) || 0) || dos}</b> (≤ успехов).</div>
+        <div class="dc-line">Нажмите «Осквернить» на панели, чтобы применить свойства к оружию.</div>`;
+    } else {
+      body += `<div class="dc-line">Демон вырывается: Сосуд уничтожен, +5 ко всем Хар-кам демона и +2 Раны за каждый Провал Часов. Отвращение Варпа. Участники с Cor&lt;75 получают +1d5+1 Порчи.</div>`;
+    }
+    body += `<div class="dc-foot">Цена: Ритуалист и ассистенты — 2d10 урона во все Характеристики; Феномен.</div></div>`;
+    ChatMessage.create({ content: body, speaker: { alias: "Кузница Душ" } });
+    this._defileLastSuccess = success ? { dos } : null;
+    this.render(false);
+  }
+  async _defileApply() {
+    const D = this.defile;
+    const item = this._defileWeapon();
+    if (!item) { ui.notifications?.warn("Осквернение: перетащите оружие-сосуд."); return; }
+    if (item.system?.daemonWeapon?.bound) { ui.notifications?.warn("Это оружие уже демоническое."); return; }
+    const wb = Math.max(1, Number(D.demonWb) || 1);
+    const binding = Math.max(0, Number(D.binding) || 0);
+    const count = Math.max(1, wb - binding);
+    const godMeta = DW_GODS_MAP[D.god] || DW_GODS_MAP.undivided;
+
+    // Генерация N свойств: минимум одно по таблице бога (если не Неделимый), остальные — Неделимый/бог.
+    const generated = [];
+    const usedNames = new Set();
+    for (let n = 0; n < count; n++) {
+      const useGod = (D.god !== "undivided") && (n === 0 || Math.random() < 0.5) ? D.god : "undivided";
+      let r, guard = 0;
+      do { r = rollDemonProperty(useGod); guard++; } while (usedNames.has(r.name) && guard < 12);
+      usedNames.add(r.name);
+      generated.push(r);
+    }
+
+    // Снимок исходного состояния — для корректного возврата при освобождении демона.
+    const preProps  = foundry.utils.deepClone(item.system.weaponProps || []);
+    const preDamage = item.system.damage || "";
+    const prePen    = Number(item.system.penetration) || 0;
+    const preKeys   = new Set(preProps.map(p => p.key));
+
+    // Свойства оружия: базовые демон-свойства + сгенерированные prop'ы (авто).
+    let props = foundry.utils.deepClone(preProps);
+    const addProp = (p) => { if (!p?.key) return; const ex = props.find(x => x.key === p.key); if (ex) { if (p.rating != null) ex.rating = Math.max(ex.rating || 0, p.rating); } else props.push(p); };
+    props = props.filter(p => p.key !== "primitive" && p.key !== "sanctified"); // теряет Primitive/Sanctified
+    addProp({ key: "reinforced" });
+    for (const g of generated) for (const p of propsFromRow(g.prop, wb)) addProp(p);
+
+    // +W.b к Dmg и Pen (Dmg — правим строку, Pen — число).
+    const newDamage = _addFlatDamage(preDamage, wb);
+    const newPen    = prePen + wb;
+
+    const propertiesStore = generated.map(g => ({ god: g.god, godLabel: (DW_GODS_MAP[g.god]?.label || "Неделимый"), name: g.name, text: g.text, roll: g.total }));
+
+    await item.update({
+      "system.weaponProps": props,
+      "system.damage": newDamage,
+      "system.penetration": newPen,
+      "system.daemonWeapon": {
+        bound: true, god: D.god, demonName: D.demonName || "",
+        binding, demonWb: wb, demonInf: Number(D.demonInf) || 0,
+        subdued: !!D.demonWilling, runic: false, properties: propertiesStore,
+        preProps, preDamage, prePen
+      }
+    });
+
+    const propHtml = generated.map(g => `<div class="dc-prop"><span class="dc-prop-god" style="color:${(DW_GODS_MAP[g.god]?.color)||'#b477ff'}">${(DW_GODS_MAP[g.god]?.label)||'Неделимый'}</span> <b>${escHtml(g.name)}</b> — ${escHtml(g.text)}</div>`).join("");
+    ChatMessage.create({
+      speaker: { alias: "Кузница Душ" },
+      content: `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
+        <div class="roll-header">⛧ ${escHtml(item.name)} осквернено — Демоническое Оружие</div>
+        <div class="dc-line">Связывание ${binding} · W.b демона ${wb} · +${wb} к Dmg/Pen · Reinforced · теряет Primitive/Sanctified.</div>
+        <div class="dc-props">${propHtml}</div>
+        <div class="dc-foot">Игнорирует T.b и иммунитеты Daemonic/Stuff of Nightmares; не тратит боеприпасы; игнорирует Haywire.</div>
+      </div>`
+    });
+    this._defileLastSuccess = null;
+    this.render(false);
+  }
+
+  activateListeners(html) {
+    super.activateListeners(html);
+    const el = html[0] ?? html;
+    const rr = () => this.render(false);
+    const isGM = game.user.isGM;
+
+    // Вкладки
+    el.querySelectorAll("[data-tab]").forEach(b =>
+      b.addEventListener("click", () => { this.state.tab = b.dataset.tab; rr(); }));
+
+    // ── Таро Императора (подвкладки, расклад) ─────────────────────────────
+    if (this.state.tab === "tarot") {
+      const S = this.tarot;
+      el.querySelectorAll("[data-ttab]").forEach(b => b.addEventListener("click", () => { S.subtab = b.dataset.ttab; rr(); }));
+      el.querySelector("[name=tspread]")?.addEventListener("change", e => { S.spread = e.target.value; S.slots = _tarotSlots(S.spread); rr(); });
+      el.querySelector("[name=tquestion]")?.addEventListener("change", e => { S.question = e.target.value; });
+      el.querySelector("[name=tteomant]")?.addEventListener("change", e => { S.teomant = e.target.value; });
+      el.querySelector("[name=tquirit]")?.addEventListener("change", e => { S.quirit = e.target.value; });
+      el.querySelectorAll("[data-tpick]").forEach(sel => sel.addEventListener("change", e => { if (!e.target.value) return; S[sel.dataset.tpick] = e.target.value; rr(); }));
+      el.querySelectorAll("[data-tcardsel]").forEach(sel => sel.addEventListener("change", e => { const i = Number(sel.dataset.tcardsel); S.slots[i].cardN = e.target.value ? Number(e.target.value) : null; rr(); }));
+      el.querySelectorAll("[data-torient]").forEach(sel => sel.addEventListener("change", e => { const i = Number(sel.dataset.torient); S.slots[i].reversed = e.target.value === "rev"; rr(); }));
+      el.querySelectorAll("[data-trollslot]").forEach(b => b.addEventListener("click", () => { this._tarotRollSlot(Number(b.dataset.trollslot)); rr(); }));
+      el.querySelector("[data-act=trandomall]")?.addEventListener("click", () => { this._tarotRandomAll(); rr(); });
+      el.querySelector("[data-act=tclear]")?.addEventListener("click", () => { S.slots = _tarotSlots(S.spread); rr(); });
+      el.querySelector("[data-act=tpost]")?.addEventListener("click", () => this._tarotPost());
+    }
+
+    // ── Осквернение (крафт демон-оружия) ──────────────────────────────────
+    if (this.state.tab === "defile") {
+      const D = this.defile;
+      const num = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
+      const dz = el.querySelector("[data-defiledrop]");
+      if (dz) {
+        dz.addEventListener("dragover", ev => { ev.preventDefault(); dz.classList.add("dragover"); });
+        dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
+        dz.addEventListener("drop", async ev => {
+          ev.preventDefault(); dz.classList.remove("dragover");
+          try {
+            const data = JSON.parse(ev.dataTransfer.getData("text/plain"));
+            let item = null;
+            if (data?.uuid) item = await fromUuid(data.uuid);
+            if (item?.documentName === "Item" && item.type === "weapon") { D.weaponUuid = item.uuid; rr(); }
+            else ui.notifications?.warn("Перетащите предмет типа «оружие».");
+          } catch (e) { ui.notifications?.warn("Не удалось прочитать перетащенный объект."); }
+        });
+      }
+      el.querySelector("[data-act=defileClear]")?.addEventListener("click", () => { D.weaponUuid = ""; rr(); });
+      el.querySelectorAll("[data-defgod]").forEach(b => b.addEventListener("click", () => { D.god = b.dataset.defgod; rr(); }));
+      el.querySelector("[name=defFormula]")?.addEventListener("change", e => {
+        D.demonFormula = e.target.value;
+        const f = DEMON_INF_FORMULAS.find(x => x.key === e.target.value);
+        if (f) { D.demonWb = f.wb; } rr();
+      });
+      el.querySelector("[name=defDemonName]")?.addEventListener("change", e => { D.demonName = e.target.value; });
+      el.querySelector("[name=defWb]")?.addEventListener("change", e => { D.demonWb = Math.max(1, num(e.target.value, 1)); rr(); });
+      el.querySelector("[name=defInf]")?.addEventListener("change", e => { D.demonInf = Math.max(0, num(e.target.value)); rr(); });
+      el.querySelector("[name=defBinding]")?.addEventListener("change", e => { D.binding = Math.max(0, num(e.target.value)); rr(); });
+      el.querySelector("[name=defRitualist]")?.addEventListener("change", e => { D.ritualistId = e.target.value; D.skillValue = ""; rr(); });
+      el.querySelector("[name=defSkill]")?.addEventListener("change", e => { D.skillValue = e.target.value; rr(); });
+      el.querySelector("[name=defIronwork]")?.addEventListener("change", e => { D.ironwork = Math.max(0, Math.min(30, num(e.target.value))); rr(); });
+      el.querySelector("[name=defGmMod]")?.addEventListener("change", e => { D.gmMod = num(e.target.value); rr(); });
+      el.querySelector("[name=defSacrifice]")?.addEventListener("change", e => { D.sacrificedAssist = Math.max(0, num(e.target.value)); rr(); });
+      el.querySelector("[name=defTrueName]")?.addEventListener("change", e => { D.trueNameKnown = e.target.checked; rr(); });
+      el.querySelector("[name=defWilling]")?.addEventListener("change", e => { D.demonWilling = e.target.checked; rr(); });
+      el.querySelectorAll("[data-defres]").forEach(cb => cb.addEventListener("change", e => { D.resonance[cb.dataset.defres] = e.target.checked; rr(); }));
+      el.querySelector("[data-act=defileRitual]")?.addEventListener("click", () => this._defileRitual());
+      el.querySelector("[data-act=defileApply]")?.addEventListener("click", () => this._defileApply());
+    }
+
+    // ── Навигация: выбор навигатора / бросок ──────────────────────────────
+    el.querySelector("[name=navPick]")?.addEventListener("change", e => { this.state.navId = e.target.value; rr(); });
+    el.querySelector("[data-act=navRoll]")?.addEventListener("click", () => this._rollNavigation());
+    el.querySelectorAll("[data-navpower]").forEach(row =>
+      row.addEventListener("click", () => this._postNavPower(row.dataset.navpower)));
+
+    // ── Варп-путешествие ──────────────────────────────────────────────────
+    const J = this.journey;
+    const rrJ = () => this.render(false);
+    el.querySelector("[name=jShip]")?.addEventListener("change", e => { J.shipId = e.target.value; rrJ(); });
+    el.querySelector("[name=jSense]")?.addEventListener("change", e => { J.senseSkill = e.target.value; rrJ(); });
+    el.querySelector("[name=jNav]")?.addEventListener("change", e => { J.navSkill = e.target.value; rrJ(); });
+    el.querySelector("[name=jHelm]")?.addEventListener("change", e => { J.helmSkill = e.target.value; rrJ(); });
+    el.querySelector("[name=jGellar]")?.addEventListener("change", e => { J.gellar = e.target.value; rrJ(); });
+    el.querySelector("[name=jOcculum]")?.addEventListener("change", e => { J.occulum = e.target.value; rrJ(); });
+    el.querySelector("[name=jEntry]")?.addEventListener("change", e => { J.entryLoc = e.target.value; rrJ(); });
+    el.querySelector("[name=jEngine]")?.addEventListener("change", e => { J.warpEngineDmg = e.target.checked; rrJ(); });
+    el.querySelector("[name=jEmergency]")?.addEventListener("change", e => { J.emergency = e.target.checked; rrJ(); });
+    el.querySelector("[name=jDays]")?.addEventListener("change", e => { J.days = parseInt(e.target.value) || 0; });
+    const jMap = {
+      jStability: "_rollStability", jDuration: "_rollDuration", jOmens: "_readOmens",
+      jEnter: "_enterWarp", jBeacon: "_findBeacon", jDirect: "_directShip",
+      jEncounter: "_warpEncounter", jInvasion: "_warpInvasion", jExit: "_exitWarp", jStorm: "_warpStorm"
+    };
+    for (const [act, fn] of Object.entries(jMap))
+      el.querySelector(`[data-act=${act}]`)?.addEventListener("click", () => this[fn]());
+    el.querySelector("[data-act=jReset]")?.addEventListener("click", () => { this.journey = _newJourney(); rrJ(); });
+
+    // ── Движок ритуалов (доступен ГМу и владельцам актёров) ───────────────
+    const R = this.ritual;
+    const rr2 = () => this.render(false);
+    const bindR = (name, key, num = false) =>
+      el.querySelector(`[name=${name}]`)?.addEventListener("change", e => {
+        R[key] = num ? (parseInt(e.target.value) || 0) : e.target.value; rr2();
+      });
+    bindR("ritActor", "ritualistId"); bindR("ritType", "type"); bindR("ritSkill", "skillValue");
+    bindR("ritChar", "testChar");
+    bindR("ritGmMod", "gmMod", true); bindR("ritAssist", "assistants", true);
+    bindR("ritAssistB", "assistBonus", true); bindR("ritNumMod", "numMod", true);
+    bindR("ritPerFail", "aversionPerFail", true); bindR("ritCurseFam", "curseFam");
+    el.querySelectorAll("[data-num]").forEach(cb => cb.addEventListener("change", e => {
+      R.numerology[cb.dataset.num] = e.target.checked; rr2();
+    }));
+    el.querySelector("[name=ritPreset]")?.addEventListener("change", e => this._applyPreset(e.target.value));
+    el.querySelector("[name=ritName]")?.addEventListener("change", e => { R.name = e.target.value; });
+    el.querySelector("[name=ritPsyker]")?.addEventListener("change", e => { R.psyker = e.target.checked; rr2(); });
+    el.querySelector("[name=ritPsykerB]")?.addEventListener("change", e => { R.psykerBonus = parseInt(e.target.value) || 0; rr2(); });
+    el.querySelectorAll("[data-summon]").forEach(cb => cb.addEventListener("change", e => {
+      R.summon[cb.dataset.summon] = e.target.checked; rr2();
+    }));
+    el.querySelectorAll("[data-symp]").forEach(cb => cb.addEventListener("change", e => {
+      R.curseSymp[cb.dataset.symp] = e.target.checked; rr2();
+    }));
+    el.querySelector("[data-act=castRitual]")?.addEventListener("click", () => this._castRitual());
+
+    if (!isGM) return; // Дальше — только редактирование ГМ (Завеса/Ритуалы сцены)
+
+    const scene = currentScene();
+
+    // Око Варпа — выбор прорыва конкретного Бога
+    el.querySelector("[data-act=godpick]")?.addEventListener("click", () => {
+      this.state.godPicker = !this.state.godPicker; rr();
+    });
+    el.querySelectorAll("[data-setgod]").forEach(b => b.addEventListener("click", async () => {
+      this.state.godPicker = false;
+      const v = readVeil(scene); v.god = b.dataset.setgod || ""; await writeVeil(scene, v);
+    }));
+
+    // Факторы (чекбоксы; демонический мир — взаимоисключающе)
+    el.querySelectorAll("[data-factor]").forEach(cb => cb.addEventListener("change", async e => {
+      const key = cb.dataset.factor;
+      const grp = cb.dataset.group || "";
+      const v = readVeil(scene);
+      v.factors[key] = e.target.checked;
+      if (grp && e.target.checked) {
+        for (const f of VEIL_FACTORS) if (f.group === grp && f.key !== key) v.factors[f.key] = false;
+      }
+      await writeVeil(scene, v);
+    }));
+
+    // База / ручной сдвиг
+    el.querySelector("[name=base]")?.addEventListener("change", async e => {
+      const v = readVeil(scene); v.base = parseInt(e.target.value) || 0; await writeVeil(scene, v);
+    });
+    el.querySelector("[name=manual]")?.addEventListener("change", async e => {
+      const v = readVeil(scene); v.manual = parseInt(e.target.value) || 0; await writeVeil(scene, v);
+    });
+    el.querySelectorAll("[data-nudge]").forEach(b => b.addEventListener("click", async () => {
+      const v = readVeil(scene); v.manual = (v.manual || 0) + Number(b.dataset.nudge); await writeVeil(scene, v);
+    }));
+
+    // Быстрые события Варпа
+    el.querySelectorAll("[data-event]").forEach(b => b.addEventListener("click", async () => {
+      const ev = VEIL_EVENTS.find(x => x.key === b.dataset.event);
+      if (!ev) return;
+      const v = readVeil(scene);
+      v.manual = (v.manual || 0) + ev.delta;
+      v.log = [{ delta: ev.delta, note: ev.label, time: Date.now() }, ...(v.log || [])].slice(0, 30);
+      await writeVeil(scene, v);
+    }));
+
+    el.querySelector("[data-act=clearlog]")?.addEventListener("click", async () => {
+      const v = readVeil(scene); v.log = []; await writeVeil(scene, v);
+    });
+    el.querySelector("[data-act=reset]")?.addEventListener("click", async () => {
+      await writeVeil(scene, defaultVeil());
+    });
+    el.querySelector("[data-act=announce]")?.addEventListener("click", () => this._announce());
+
+    // ── Ритуалы ───────────────────────────────────────────────────────────
+    el.querySelector("[data-act=ritualAdd]")?.addEventListener("click", async () => {
+      const v = readVeil(scene);
+      v.rituals = [...(v.rituals || []), { name: "Новый ритуал", delta: -1, active: true }];
+      await writeVeil(scene, v);
+    });
+    el.querySelectorAll("[data-ritual-name]").forEach(inp => inp.addEventListener("change", async e => {
+      const i = Number(inp.dataset.ritualName); const v = readVeil(scene);
+      if (v.rituals[i]) { v.rituals[i].name = e.target.value; await writeVeil(scene, v); }
+    }));
+    el.querySelectorAll("[data-ritual-delta]").forEach(inp => inp.addEventListener("change", async e => {
+      const i = Number(inp.dataset.ritualDelta); const v = readVeil(scene);
+      if (v.rituals[i]) { v.rituals[i].delta = parseInt(e.target.value) || 0; await writeVeil(scene, v); }
+    }));
+    el.querySelectorAll("[data-ritual-active]").forEach(cb => cb.addEventListener("change", async e => {
+      const i = Number(cb.dataset.ritualActive); const v = readVeil(scene);
+      if (v.rituals[i]) { v.rituals[i].active = e.target.checked; await writeVeil(scene, v); }
+    }));
+    el.querySelectorAll("[data-ritual-del]").forEach(b => b.addEventListener("click", async () => {
+      const i = Number(b.dataset.ritualDel); const v = readVeil(scene);
+      v.rituals.splice(i, 1); await writeVeil(scene, v);
+    }));
+  }
+
+  async _rollNavigation() {
+    const navs = this._navigators();
+    const actor = navs.find(a => a.id === (this.state.navId || navs[0]?.id));
+    if (!actor) { ui.notifications?.warn("Навигация: выберите навигатора."); return; }
+    const base = this._jSkillTotal(actor, this.journey.navSkill) ?? -20;
+    const total = veilTotal(readVeil(currentScene()));
+    const mod = veilNavMod(total);
+    const eff = base + mod;
+    const roll = await new Roll("1d100").evaluate();
+    const rv = roll.total;
+    const success = rv <= eff;
+    const deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
+    const info = veilLevelInfo(total);
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `
+        <div class="wh-roll-result">
+          <div class="roll-header">${veilIcon("compass")} Навигация в Варпе — ${escHtml(actor.name)}</div>
+          <div class="roll-threshold">Навигация: <b>${base}</b> ${mod >= 0 ? "+" : ""}${mod} (завеса ${info.label}) → Порог: <b>${eff}</b></div>
+          <div class="roll-dice">Бросок: <b>${rv}</b></div>
+          <div class="roll-outcome">${success
+            ? `<span class="roll-success">Курс проложен — ${deg} ${deg === 1 ? "ст." : "ст."}</span>`
+            : `<span class="roll-failure">Сбился с курса — ${deg} ст. (риск варп-инцидента)</span>`}</div>
+        </div>`,
+      rolls: [roll], sound: CONFIG.sounds.dice
+    }, game.settings.get("core", "rollMode")));
+  }
+
+  _postNavPower(id) {
+    const navs = this._navigators();
+    const actor = navs.find(a => a.id === (this.state.navId || navs[0]?.id));
+    const item = actor?.items.get(id);
+    if (!item) return;
+    const s = item.system;
+    ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${veilIcon("eye")} Сила Навигатора: ${escHtml(item.name)}</div>
+        ${s.action ? `<div class="roll-threshold">Действие: <b>${escHtml(s.action)}</b>${s.range ? ` · Дальность: ${escHtml(s.range)}` : ""}</div>` : ""}
+        ${s.effect ? `<div class="roll-threshold">${escHtml(s.effect)}</div>` : ""}
+      </div>`
+    }, game.settings.get("core", "rollMode")));
+  }
+
+  // ── Варп-путешествие: шаги ──────────────────────────────────────────────
+  _journeyNav() {
+    const navs = this._navigators();
+    return navs.find(a => a.id === (this.state.navId || navs[0]?.id)) || null;
+  }
+  _occNavMod() {
+    const J = this.journey;
+    return (J.occulum === "damaged" ? -20 : J.occulum === "destroyed" ? -40 : 0)
+      + (J.emergency ? -20 : 0) + (J.beaconMod || 0);
+  }
+  _groupTotal(actor, gkey, hints) {
+    const arr = actor?.system?.groupSkills?.[gkey] || [];
+    const hit = arr.find(e => hints.some(h => (e.specialty || e.name || "").toLowerCase().includes(h)));
+    return hit?.total ?? null;
+  }
+  async _roll(eff) {
+    const roll = await new Roll("1d100").evaluate();
+    const rv = roll.total;
+    const deg = rv <= eff ? 1 + Math.floor((eff - rv) / 10) : -(1 + Math.floor((rv - eff) / 10));
+    return { roll, rv, eff, deg, success: deg > 0 };
+  }
+  async _jPost(title, tier, body, rolls = []) {
+    const rollMode = game.settings.get("core", "rollMode");
+    const dice = rolls.length
+      ? `<details class="roll-dice-details"><summary>📊 Кубы</summary>${(await Promise.all(rolls.map(r => r.render()))).join("")}</details>` : "";
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: { alias: "Варп-Навигация" },
+      content: `<div class="wh-roll-result wh-warp-card wv-tier-${tier}"><div class="roll-header">${title}</div>${body}${dice}</div>`,
+      rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined
+    }, rollMode));
+  }
+
+  async _rollStability() {
+    const r = await new Roll("1d10").evaluate();
+    const row = lookupTable(ROUTE_STABILITY, r.total);
+    Object.assign(this.journey, { stability: row.name, stabilityMult: row.durMult, psyMod: row.psyMod || 0, beaconHidden: !!row.beaconHidden });
+    this.render(false);
+    await this._jPost(`${veilIcon("die")} Стабильность маршрута — ${escHtml(row.name)}`, "stable",
+      `<div class="roll-dice">1d10: <b>${r.total}</b> → длительность ×${row.durMult}</div><div class="roll-threshold">${escHtml(row.effect)}</div>`, [r]);
+  }
+  async _rollDuration() {
+    const r = await new Roll("1d10").evaluate();
+    const row = lookupTable(JOURNEY_DURATION, r.total);
+    const dRoll = await new Roll(row.formula).evaluate();
+    const mult = this.journey.stabilityMult || 1;
+    const base = dRoll.total * mult;
+    this.journey.baseDuration = base;
+    this.render(false);
+    await this._jPost(`${veilIcon("hourglass")} Длительность странствия`, "stable",
+      `<div class="roll-dice">1d10: <b>${r.total}</b> — ${escHtml(row.ex)}</div><div class="roll-threshold">${row.formula} = ${dRoll.total}${mult > 1 ? ` × ${mult}` : ""} = <b>${base}</b> дн. (исходное)</div><div class="roll-threshold" style="font-size:0.8em;opacity:0.8;">МИ не оглашает игрокам.</div>`, [r, dRoll]);
+  }
+  async _readOmens() {
+    const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника на сцене."); return; }
+    const base = this._jSkillTotal(a, this.journey.senseSkill) ?? -20;
+    const mod = this.journey.psyMod || 0;
+    const res = await this._roll(base + mod);
+    let body = `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Знамения ясны — ${res.deg} ${degWord(res.deg)}. Судно готово ко входу.</span></div>`;
+    else { const g = GUIDE_ESTIMATE[Math.floor(Math.random() * 5)]; body += `<div class="roll-outcome"><span class="roll-failure">Знамения смутны.</span></div><div class="roll-threshold">Оценка Проводника: длительность ${g.mult}, Астрономикон: ${escHtml(g.astro)}</div>`; }
+    await this._jPost(`${veilIcon("eye")} Чтение знамений — ${escHtml(a.name)}`, "stable", body, [res.roll]);
+  }
+  async _enterWarp() {
+    const loc = ENTRY_LOCATIONS.find(l => l.key === this.journey.entryLoc) || ENTRY_LOCATIONS[5];
+    if (loc.key === "mandeville") { await this._jPost(`${veilIcon("spiral")} Вход в варп — ${escHtml(loc.label)}`, "stable", `<div class="roll-outcome"><span class="roll-success">${escHtml(loc.success)}</span></div>`); return; }
+    if (loc.mod === null) { await this._jPost(`${veilIcon("spiral")} Вход в варп — ${escHtml(loc.label)}`, "torn", `<div class="roll-outcome"><span class="roll-failure">Авто-провал.</span></div><div class="roll-threshold">${escHtml(loc.fail)}</div>`); return; }
+    const a = this._journeyNav();
+    const base = this._jSkillTotal(a, this.journey.helmSkill) ?? 30;
+    const res = await this._roll(base + loc.mod);
+    let body = `<div class="roll-threshold">Operate (Voidship): ${base} ${loc.mod} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    if (res.success) body += `<div class="roll-outcome"><span class="roll-success">${escHtml(loc.success)}</span></div>`;
+    else { this.journey.emergency = true; this.render(false); body += `<div class="roll-outcome"><span class="roll-failure">${escHtml(loc.fail)}</span></div>`; }
+    await this._jPost(`${veilIcon("spiral")} Вход в варп — ${escHtml(loc.label)}`, res.success ? "stable" : "torn", body, [res.roll]);
+  }
+  async _findBeacon() {
+    const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
+    const base = this._jSkillTotal(a, this.journey.senseSkill) ?? -20;
+    let mod = /Стабильн/.test(this.journey.stability) ? 20 : 0;
+    if (this.journey.beaconHidden) mod -= 20;
+    const res = await this._roll(base + mod);
+    const bm = (res.success ? 1 : -1) * Math.floor(Math.abs(res.deg) / 2) * 10;
+    this.journey.beaconMod = bm; this.render(false);
+    await this._jPost(`${veilIcon("star")} Поиск Астрономикона — ${escHtml(a.name)}`, "stable",
+      `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div><div class="roll-outcome">${res.success ? `<span class="roll-success">Маяк найден — ${res.deg} ${degWord(res.deg)}` : `<span class="roll-failure">Маяк тускл — ${Math.abs(res.deg)} ${degWord(res.deg)}`} → мод. навигации <b>${bm >= 0 ? "+" : ""}${bm}</b></span></div>`, [res.roll]);
+  }
+  async _directShip() {
+    const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
+    const base = this._jSkillTotal(a, this.journey.navSkill) ?? -20;
+    const mod = this._occNavMod();
+    const res = await this._roll(base + mod);
+    const mult = jumpDurationMult(res.deg);
+    const real = this.journey.baseDuration != null ? `≈ ${Math.ceil(this.journey.baseDuration * ({ "×1/4": .25, "×1/2": .5, "×3/4": .75, "×1": 1, "×2": 2, "×3": 3, "×4": 4 }[mult] || 1))} дн.` : "";
+    await this._jPost(`${veilIcon("compass")} Направление корабля — ${escHtml(a.name)}`, "stable",
+      `<div class="roll-threshold">Navigation (Warp): ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b> → ${res.deg > 0 ? res.deg + " СУ" : Math.abs(res.deg) + " СП"}</div><div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка: <b>${mult}</b> ${real}</span></div>`, [res.roll]);
+  }
+  async _warpEncounter() {
+    const r = await new Roll("1d100").evaluate();
+    const row = lookupTable(WARP_ENCOUNTERS, r.total);
+    const tier = r.total <= 20 ? "stable" : (r.total >= 71 ? "torn" : "thin");
+    await this._jPost(`${veilIcon("warning")} Варп-столкновение — ${escHtml(row.name)}`, tier,
+      `<div class="roll-dice">1d100: <b>${r.total}</b></div><div class="roll-threshold">${escHtml(row.text)}</div>`, [r]);
+  }
+  async _warpInvasion() {
+    const g = this.journey.gellar;
+    const mod = g === "ok" ? -30 : (g === "off" ? 30 : 0);
+    const r = await new Roll("1d100").evaluate();
+    const total = Math.max(1, Math.min(100, r.total + mod));
+    const row = lookupTable(WARP_INVASIONS, total);
+    await this._jPost(`${veilIcon("demon")} Варп-вторжение — ${escHtml(row.name)}`, "torn",
+      `<div class="roll-dice">1d100: <b>${r.total}</b>${mod ? ` ${mod >= 0 ? "+" : ""}${mod} (Геллер) = ${total}` : ""}</div><div class="roll-threshold">${escHtml(row.text)}</div>`, [r]);
+  }
+  async _exitWarp() {
+    const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
+    const base = this._jSkillTotal(a, this.journey.navSkill) ?? -20;
+    const mod = this._occNavMod() - 20;
+    const res = await this._roll(base + mod);
+    let body = `<div class="roll-threshold">Navigation (Warp) −20: ${base} ${mod >= 0 ? "+" : ""}${mod} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Точный выход — ${res.deg} ${degWord(res.deg)}.</span></div>`;
+    else { const er = await new Roll("1d100").evaluate(); const row = lookupTable(INACCURATE_EXIT, er.total); body += `<div class="roll-outcome"><span class="roll-failure">Отклонение от курса.</span></div><div class="roll-threshold">Неаккуратный выход (1d100: ${er.total}): ${escHtml(row.text)}</div>`; await this._jPost(`${veilIcon("door")} Выход из варпа — ${escHtml(a.name)}`, "torn", body, [res.roll, er]); return; }
+    await this._jPost(`${veilIcon("door")} Выход из варпа — ${escHtml(a.name)}`, "stable", body, [res.roll]);
+  }
+  async _warpStorm() {
+    const r = await new Roll("1d5").evaluate();
+    const row = WARP_STORMS[r.total - 1] || WARP_STORMS[0];
+    if (game.user.isGM) veilShift(row.veil, `Варп-шторм (сила ${row.s})`);
+    await this._jPost(`${veilIcon("storm")} Варп-шторм — сила ${row.s}`, "infernal",
+      `<div class="roll-dice">1d5: <b>${r.total}</b></div><div class="roll-threshold"><b>Астропатия:</b> ${escHtml(row.astro)}</div><div class="roll-threshold"><b>Путешествия:</b> ${escHtml(row.travel)}</div><div class="rf-veil">Завеса истончается на +${row.veil}.</div>`, [r]);
+  }
+
+  // Применить пресет ритуала к текущему Ритуалисту.
+  _applyPreset(idxStr) {
+    if (idxStr === "" || idxStr == null) return;
+    const actor = game.actors.get(this.ritual.ritualistId);
+    if (!actor) { ui.notifications?.warn("Ритуал: выберите Ритуалиста."); this.render(false); return; }
+    const applied = applyRitualPreset(actor, Number(idxStr), buildRitualSkills);
+    if (applied) Object.assign(this.ritual, applied);
+    this.render(false);
+  }
+
+  // ── Проведение ритуала ──────────────────────────────────────────────────
+  async _castRitual() {
+    const R = this.ritual;
+    const actor = game.actors.get(R.ritualistId);
+    if (!actor) { ui.notifications?.warn("Ритуал: выберите Ритуалиста."); return; }
+    const d = this._ritualData();
+    const threshold = d.threshold;
+    const roll = await new Roll("1d100").evaluate();
+    const rv = roll.total;
+    const deg = ritualDegrees(rv, threshold);
+    const success = deg > 0;
+    const allRolls = [roll];
+    const typeLabel = RITUAL_TYPES_MAP[R.type]?.label || R.type;
+    const breakdown = d.rows.map(r => `${r.label}: ${r.signed}`).join(" · ");
+
+    const failHtml = success ? "" : await this._ritualFailure(R, Math.abs(deg), d.prMax, allRolls);
+
+    const rollMode = game.settings.get("core", "rollMode");
+    const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result wh-ritual-card">
+        <div class="roll-header">${veilIcon("ritual")} Ритуал: ${escHtml(R.name || typeLabel)}</div>
+        <div class="roll-threshold">${escHtml(actor.name)} · ${escHtml(typeLabel)} → Порог: <b>${threshold}</b></div>
+        <div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${escHtml(breakdown)}</div>
+        <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        <div class="roll-outcome">${success
+          ? `<span class="roll-success">Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}</span>`
+          : `<span class="roll-failure">Ритуал провален — ${Math.abs(deg)} Провал(ов)</span>`}</div>
+        ${failHtml}
+        <details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>
+      </div>`,
+      rolls: allRolls, sound: CONFIG.sounds.dice
+    }, rollMode));
+  }
+
+  async _ritualFailure(R, failures, prMax, allRolls) {
+    const kind = RITUAL_TYPES_MAP[R.type]?.failure || "phenomenon";
+    if (kind === "none") return "";
+    const prBonus = R.psyker ? Math.min(R.psykerBonus || 0, prMax) : 0;
+    const extra = Math.max(0, failures - 1) * (R.aversionPerFail || 5) + prBonus;
+    const extraTxt = extra ? ` +${extra}` : "";
+
+    if (kind === "aversion") {
+      const aRoll = await new Roll("1d100").evaluate(); allRolls.push(aRoll);
+      const total = aRoll.total + extra;
+      const a = lookupAversion(total);
+      if (a.veil && game.user.isGM) veilShift(a.veil, `Отвращение Варпа: ${a.name}`);
+      return `<div class="wh-ritual-fail wv-tier-torn">
+        <div class="rf-title">${veilIcon("spiral")} Отвращение Варпа: ${aRoll.total}${extraTxt} = <b>${total}</b> → ${escHtml(a.name)}</div>
+        <div class="rf-text">${escHtml(a.text)}</div>
+        ${a.veil ? `<div class="rf-veil">Завеса истончается на +${a.veil}.</div>` : ""}</div>`;
+    }
+    if (kind === "curse") {
+      return `<div class="wh-ritual-fail wv-tier-torn">
+        <div class="rf-title">${veilIcon("demon")} «Что Посеешь…»</div>
+        <div class="rf-text">Вырвавшиеся энергии проклинают самого Ритуалиста. При наличии ассистентов проклятье падает на главного Ритуалиста, но он может пройти Scholastic Lore (Occult) −20, чтобы перенаправить его на ассистента.</div></div>`;
+    }
+    // phenomenon / breach
+    const fRoll = await new Roll("1d100").evaluate(); allRolls.push(fRoll);
+    const total = fRoll.total + extra;
+    const asBreach = kind === "breach" || total >= 75;
+    const obj = asBreach ? getPeril(total) : getPhenomenon(total);
+    const nm = obj.label || obj.name || (asBreach ? "Варп-Прорыв" : "Феномен");
+    const tx = obj.text || obj.effect || obj.desc || "";
+    const failLabel = asBreach ? `${veilIcon("storm")} Варп-Прорыв` : `${veilIcon("star")} Психический Феномен`;
+    return `<div class="wh-ritual-fail wv-tier-thin">
+      <div class="rf-title">${failLabel}: ${fRoll.total}${extraTxt} = <b>${total}</b> → ${escHtml(nm)}</div>
+      ${tx ? `<div class="rf-text">${escHtml(tx)}</div>` : ""}</div>`;
+  }
+
+  _announce() {
+    const scene = currentScene();
+    const v = readVeil(scene);
+    const total = veilTotal(v);
+    const info = veilLevelInfo(total);
+    const active = VEIL_FACTORS.filter(f => v.factors[f.key])
+      .map(f => `${f.label} (${f.value > 0 ? "+" : ""}${f.value})`);
+    const rituals = (v.rituals || []).filter(r => r.active)
+      .map(r => `${escHtml(r.name)} (${(Number(r.delta) || 0) > 0 ? "+" : ""}${Number(r.delta) || 0})`);
+    const factorsHtml = active.length ? `<div class="wv-chat-factors">${active.map(escHtml).join(" · ")}</div>` : "";
+    const ritualsHtml = rituals.length ? `<div class="wv-chat-factors">Ритуалы: ${rituals.join(" · ")}</div>` : "";
+    ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: { alias: "Завеса" },
+      content: `<div class="wh-veil-chat wv-tier-${info.tier}">
+        <div class="wv-chat-head">◈ ИСТОНЧЕНИЕ ЗАВЕСЫ ◈</div>
+        <div class="wv-chat-scene">${escHtml(scene?.name || "")}</div>
+        <div class="wv-chat-total">${total > 0 ? "+" : ""}${total}</div>
+        <div class="wv-chat-label">${escHtml(info.label)}</div>
+        ${factorsHtml}${ritualsHtml}
+        <div class="wv-chat-cons">${escHtml(info.consequence)}</div>
+      </div>`
+    }, game.settings.get("core", "rollMode")));
+  }
+}
+
+// ── Открытие / авто-обновление ────────────────────────────────────────────
+let _veil = null;
+export function openVeilMystic(tab = null) {
+  if (!_veil) _veil = new VeilMystic();
+  if (tab) _veil.state.tab = tab;
+  _veil.render(true);
+  return _veil;
+}
+// Открыть окно Завесы сразу на вкладке «Таро Императора» (замена старого окна).
+export function openTarotReader() { return openVeilMystic("tarot"); }
+
+// Перерисовать открытое окно Завесы (напр. при смене общей Завесы группы Нексуса).
+export function refreshVeilWindow() { if (_veil?.rendered) _veil.render(false); }
+
+// Полноразмерный просмотр карты Таро по клику (окно/чат).
+export function openCardImage(src, title = "Карта") {
+  if (!src) return;
+  try { if (globalThis.ImagePopout) { new globalThis.ImagePopout(src, { title, shareable: true }).render(true); return; } } catch (e) {}
+  try { const V2 = foundry.applications?.apps?.ImagePopout; if (V2) { new V2({ src, window: { title } }).render(true); return; } } catch (e) { console.warn("Warhammer DBC | ImagePopout:", e); }
+}
+Hooks.once("ready", () => {
+  document.addEventListener("click", (ev) => {
+    const img = ev.target?.closest?.("img.tr-pv-art, img.tr-gc-art, img.tc-art");
+    if (!img) return;
+    openCardImage(img.getAttribute("src"), img.dataset.title || "Карта");
+  });
+});
+
+// Перерисовка открытого окна + варп-оверлей сцены при смене сцены/флагов.
+Hooks.on("updateScene", (scene) => {
+  if (scene?.id === currentScene()?.id) {
+    if (_veil?.rendered) _veil.render(false);
+    refreshVeilOverlay();
+  }
+});
+Hooks.on("canvasReady", () => {
+  if (_veil?.rendered) _veil.render(false);
+  refreshVeilOverlay();
+});
+Hooks.once("ready", () => refreshVeilOverlay());

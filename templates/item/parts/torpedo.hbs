@@ -1,0 +1,49 @@
+{{#if (eq item.type "torpedo")}}
+<div class="item-section">
+  <div class="item-section-title">ТОРПЕДА (БОЕГОЛОВКА + НАВЕДЕНИЕ)</div>
+  <div class="weapon-row">
+    <label class="wr-label">Боеголовка</label>
+    <select name="system.warhead" class="wr-select">{{{torpedoWarheadOptions}}}</select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Система наведения</label>
+    <select name="system.navSystem" class="wr-select">{{{torpedoNavOptions}}}</select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Количество (боезапас)</label>
+    <input type="number" name="system.quantity" value="{{system.quantity}}" min="0" class="wr-input-xs"/>
+  </div>
+
+  {{#if torpedoProfile}}
+  <div class="cargo-ref">
+    <div class="cargo-ref-row"><span class="cargo-ref-key">Профиль:</span> {{torpedoProfile.label}}</div>
+    <div class="cargo-ref-row"><span class="cargo-ref-key">Урон:</span> {{torpedoProfile.dmg}}{{#if torpedoProfile.crit}} · Крит {{torpedoProfile.crit}}+{{/if}} · Дальн. {{torpedoProfile.rng}} · SPD {{torpedoProfile.spd}}</div>
+    <div class="cargo-ref-row"><span class="cargo-ref-key">Наведение (к BS):</span> +{{torpedoProfile.navTR}}{{#if torpedoProfile.tp}} · Terminal Penetration {{torpedoProfile.tp}}{{/if}}{{#if torpedoProfile.ignoreArmour}} · игнор брони{{/if}}</div>
+    {{#if torpedoProfile.special}}<div class="cargo-ref-hint">{{torpedoProfile.special}}</div>{{/if}}
+  </div>
+  {{/if}}
+  <div class="drug-stat-hint">Торпеда = боеголовка (урон/крит/дальность/Terminal Penetration) + система наведения (рейтинг к BS, скорость). Торпедные аппараты расходуют эти торпеды как боезапас при стрельбе.</div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">СБОРКА ИЗ ГРУЗОВ</div>
+  {{#if torpedoStock.onShip}}
+  <div class="cargo-ref">
+    <div class="cargo-ref-row"><span class="cargo-ref-key">{{torpedoStock.whName}}:</span> {{#if torpedoStock.whHas}}{{torpedoStock.whQty}} шт. в грузах{{else}}нет в грузах{{/if}}</div>
+    {{#if torpedoStock.navNeeded}}
+    <div class="cargo-ref-row"><span class="cargo-ref-key">{{torpedoStock.navName}}:</span> {{#if torpedoStock.navHas}}{{torpedoStock.navQty}} шт. в грузах{{else}}нет в грузах{{/if}}</div>
+    {{else}}
+    <div class="cargo-ref-row">Стандартное наведение — идёт в комплекте с боеголовкой (не тратится отдельно).</div>
+    {{/if}}
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Собрать (шт.)</label>
+    <input type="number" class="torpedo-assemble-n wr-input-xs" value="1" min="1"/>
+    <button type="button" class="torpedo-assemble-btn">Собрать из грузов</button>
+  </div>
+  <div class="drug-stat-hint">Сборка спишет боеголовку{{#if torpedoStock.navNeeded}} и систему наведения{{/if}} из грузов корабля (×N) и добавит N к количеству торпед. Нужны грузы с именами «{{torpedoStock.whName}}»{{#if torpedoStock.navNeeded}} и «{{torpedoStock.navName}}»{{/if}} (как в библиотеке «Снаряжение»).</div>
+  {{else}}
+  <div class="drug-stat-hint">Сборка из грузов доступна, когда торпеда находится на корабле (в его инвентаре).</div>
+  {{/if}}
+</div>
+{{/if}}

@@ -1,0 +1,125 @@
+{{!-- HUD корабля — нижняя панель для акторов типа "ship". --}}
+<div class="wh-hud-bar wh-ship-hud">
+
+  {{!-- Судно: портрет, имя, прочность корпуса --}}
+  <div class="wh-hud-cell wh-ship-ident">
+    <img class="wh-ship-img" src="{{img}}" data-ship-open title="Открыть лист корабля"/>
+    <div class="wh-ship-idbox">
+      <div class="wh-ship-name" data-ship-open title="Открыть лист корабля">{{name}}</div>
+      {{#if shipClass}}<div class="wh-ship-class">{{shipClass}}</div>{{/if}}
+      <div class="wh-ship-hi {{#if hi.crippled}}crippled{{/if}}" data-ship-hi
+           data-tooltip="Прочность корпуса. Колесо мыши — изменить на 1.">
+        <span class="wh-ship-hi-lbl">HI</span>
+        <span class="wh-ship-hi-val" style="color:{{hi.color}}">{{hi.value}}<span class="wh-ship-hi-max">/{{hi.max}}</span></span>
+        <span class="wh-ship-bar"><span class="wh-ship-fill" style="width:{{hi.pct}}%; background:{{hi.color}}"></span></span>
+      </div>
+      {{#if hi.crippled}}<div class="wh-ship-flag crit">ПОЛУРАЗРУШЕН</div>{{/if}}
+    </div>
+  </div>
+
+  {{!-- Защита: щиты «лампочками», броня, турели --}}
+  <div class="wh-hud-cell wh-ship-def">
+    <div class="wh-ship-shields {{#if vsDown}}down{{/if}}" data-ship-shields
+         data-tooltip="Пустотные щиты {{vsNow}}/{{vsBase}}. Клик — схлопнуть или восстановить.">
+      <span class="wh-ship-k">VS</span>
+      {{#if shields.length}}
+        <span class="wh-ship-pips">
+          {{#each shields as |s|}}<i class="wh-ship-pip {{#if s.on}}on{{/if}}"></i>{{/each}}
+        </span>
+      {{else}}<span class="wh-ship-none">нет</span>{{/if}}
+    </div>
+    <div class="wh-ship-defrow">
+      <span class="wh-ship-chip" data-tooltip="Броня"><b>{{chars.armour}}</b> ARM</span>
+      <span class="wh-ship-chip" data-tooltip="Класс турелей"><b>{{chars.turretRating}}</b> TR</span>
+    </div>
+    <div class="wh-ship-defrow">
+      <span class="wh-ship-chip" data-tooltip="Скорость"><b>{{chars.speed}}</b> SPD</span>
+      <span class="wh-ship-chip" data-tooltip="Манёвренность"><b>{{chars.manoeuvrability}}</b> MN</span>
+      <span class="wh-ship-chip" data-tooltip="Обнаружение"><b>{{chars.detection}}</b> DT</span>
+      <span class="wh-ship-chip" data-tooltip="Поворот">{{turnArc}}</span>
+    </div>
+  </div>
+
+  {{!-- Орудия: кнопка со сводкой по дугам, список — в панели над полосой --}}
+  <div class="wh-hud-cell wh-ship-guns">
+    <button type="button" class="wh-ship-gunsbtn" data-guns-toggle
+            data-tooltip="Открыть список орудий">
+      <span class="wh-ship-gunsbtn-lbl">ОРУДИЯ</span>
+      <b>{{guns.length}}</b>
+      {{#if gunsDown}}<span class="wh-ship-gunsbtn-down" data-tooltip="Не работают">−{{gunsDown}}</span>{{/if}}
+    </button>
+    <div class="wh-ship-arcpips">
+      {{#each arcSummary as |a|}}
+      <span class="wh-ship-arcpip {{#if a.loose}}loose{{/if}}" data-tooltip="{{a.label}}: {{a.n}}">
+        {{a.abbr}}<b>{{a.n}}</b>
+      </span>
+      {{/each}}
+    </div>
+  </div>
+
+  {{!-- Экипаж --}}
+  <div class="wh-hud-cell wh-ship-crew">
+    <div class="wh-ship-crewbar" data-tooltip="Численность экипажа (% от полного)">
+      <span class="wh-ship-k">CP</span>
+      <span class="wh-ship-bar"><span class="wh-ship-fill" style="width:{{crew.cpPct}}%; background:{{crew.cpColor}}"></span></span>
+      <span class="wh-ship-crewval" style="color:{{crew.cpColor}}">{{crew.cp}}</span>
+    </div>
+    <div class="wh-ship-crewbar" data-tooltip="Мораль экипажа">
+      <span class="wh-ship-k">CM</span>
+      <span class="wh-ship-bar"><span class="wh-ship-fill" style="width:{{crew.cmPct}}%; background:{{crew.cmColor}}"></span></span>
+      <span class="wh-ship-crewval" style="color:{{crew.cmColor}}">{{crew.cm}}</span>
+    </div>
+    {{#if crew.mutiny}}<div class="wh-ship-flag crit" data-tooltip="Мораль упала до порога бунта">БУНТ</div>{{/if}}
+    {{#if crew.penalties.length}}
+    <div class="wh-ship-pen" data-tooltip="{{#each crew.penalties}}• {{this}}&#10;{{/each}}">
+      штрафов: {{crew.penalties.length}}
+    </div>
+    {{/if}}
+  </div>
+
+  {{!-- Действия и метки состояния --}}
+  <div class="wh-hud-cell wh-ship-acts">
+    <button type="button" class="wh-ship-act" data-ship-act="salvo"  data-tooltip="Залп макробатарей">ЗАЛП</button>
+    <button type="button" class="wh-ship-act" data-ship-act="ram"    data-tooltip="Таран">ТАРАН</button>
+    <button type="button" class="wh-ship-act" data-ship-act="board"  data-tooltip="Абордаж">АБОРДАЖ</button>
+    <button type="button" class="wh-ship-act" data-ship-act="turret" data-tooltip="Турели — защита от торпед и малых судов">ТУРЕЛИ</button>
+    <button type="button" class="wh-ship-act" data-ship-act="crit"   data-tooltip="Бросок по таблице критических попаданий">КРИТ</button>
+    <div class="wh-ship-flags">
+      {{#if defilement.value}}
+      <span class="wh-ship-flag dp {{#if defilement.isDaemon}}crit{{/if}}"
+            data-tooltip="Очки Осквернения{{#if defilement.isDaemon}} — ДЕМОНИЧЕСКИЙ КОРАБЛЬ{{/if}}">{{defilement.value}} DP</span>
+      {{/if}}
+      {{#if supplies}}
+      <span class="wh-ship-flag {{#if supplies.empty}}crit{{else if supplies.low}}warn{{/if}}"
+            data-tooltip="Запасы путешествия">{{supplies.value}} мес.</span>
+      {{/if}}
+      {{#if lc.over}}<span class="wh-ship-flag warn" data-tooltip="Трюм перегружен">ТРЮМ</span>{{/if}}
+      {{#if overBudget}}<span class="wh-ship-flag crit" data-tooltip="Не сходится энергия, пространство или очки корабля">БЮДЖЕТ</span>{{/if}}
+    </div>
+  </div>
+
+  {{!-- Раскрывающаяся панель орудий: в полосе им не хватает ширины --}}
+  <div class="wh-ship-gunpanel">
+    {{#if gunGroups.length}}
+      {{#each gunGroups as |g|}}
+      <div class="gp-arc">
+        <div class="gp-arc-lbl {{#if g.loose}}loose{{/if}}">{{g.label}} <span>{{g.n}}</span></div>
+        <div class="gp-arc-guns">
+          {{#each g.weapons as |w|}}
+          <button type="button" class="wh-ship-gun {{#if w.down}}down{{/if}}" data-fire-id="{{w.id}}"
+                  data-tooltip="{{w.name}} — S {{w.strength}}, урон {{w.damage}}, крит {{w.crit}}, дальность {{w.range}} ПЕ{{#if w.down}} · УЗЕЛ НЕ РАБОТАЕТ{{/if}}">
+            <span class="wh-ship-gun-arc">{{w.arcAbbr}}</span>
+            <span class="wh-ship-gun-body">
+              <span class="wh-ship-gun-name">{{w.name}}</span>
+              <span class="wh-ship-gun-meta">S{{w.strength}} · {{w.damage}} · крит {{w.crit}} · {{w.range}} ПЕ</span>
+            </span>
+          </button>
+          {{/each}}
+        </div>
+      </div>
+      {{/each}}
+    {{else}}
+      <div class="wh-ship-empty">Орудий нет. Добавьте узел типа «Орудие» и задайте ему дугу.</div>
+    {{/if}}
+  </div>
+</div>

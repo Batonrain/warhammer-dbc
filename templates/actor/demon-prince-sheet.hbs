@@ -1,0 +1,260 @@
+<form class="warhammer-dbc demon-prince-sheet dp-god-{{dp.godKey}}" autocomplete="off" style="--gc:{{dp.god.color}}; --gc2:{{dp.god.gc2}}; --glow:{{dp.god.glow}};">
+
+  {{!-- ── ШАПКА-АПОФЕОЗ: чистый Варп ────────────────────────────────────── --}}
+  <header class="dp-header">
+    <div class="dp-warp-layer dp-warp-a"></div>
+    <div class="dp-warp-layer dp-warp-b"></div>
+    <div class="dp-warp-veins"></div>
+    <div class="dp-header-content">
+      <div class="dp-sigil" title="{{dp.god.label}} — {{dp.god.epithet}} · клик, чтобы сменить аватар (ПКМ — вернуть сигил)">
+        <div class="dp-sigil-ring"></div>
+        <div class="dp-sigil-ring dp-sigil-ring2"></div>
+        {{#if dp.customImg}}
+        <img class="dp-avatar" src="{{dp.img}}" alt=""/>
+        {{else}}
+        <div class="dp-sigil-mask" style="-webkit-mask:url('{{dp.god.sigil}}') center/contain no-repeat; mask:url('{{dp.god.sigil}}') center/contain no-repeat;"></div>
+        {{/if}}
+      </div>
+
+      <div class="dp-id">
+        <input type="text" class="dp-name" name="name" value="{{actor.name}}" placeholder="Имя Демон-Принца"/>
+        <div class="dp-epithet">{{dp.god.epithet}}</div>
+        <div class="dp-selrow">
+          <label>Патрон
+            <select name="system.allegiance">{{#each dp.godOptions as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}</select>
+          </label>
+          {{#if divination}}<label class="dp-homeworld" title="Предсказание судьбы">Предсказание
+            <select class="dv-select"><option value="">— не выбрано —</option><option value="random">🎲 Бросить к100</option>{{#each divination.options as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option>{{/each}}</select>
+          </label>{{/if}}
+          {{#if homeworld}}<label class="dp-homeworld" title="Родной мир: три модификатора Характеристик и Особенность">Происхождение
+            <select class="hw-select"><option value="">— не выбрано —</option><option value="random">🎲 Выбрать случайно</option>{{#each homeworld.options as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}} ({{o.chars}})</option>{{/each}}</select>
+          </label>{{/if}}
+          <label title="Имя в смертной жизни">Смертное имя
+            <input type="text" name="system.dp.mortalName" value="{{dp.mortalName}}" placeholder="— забыто —"/>
+          </label>
+          <label class="dp-inst" title="Рейтинг Warp Instability">Нестабильн.
+            <input type="number" name="system.instabilityRating" value="{{dp.instability}}" min="0"/>
+          </label>
+          <label class="dp-psy-cb" title="Демонический Псайкер — вкладка ПСИ">
+            <input type="checkbox" name="system.isPsyker" {{#if dp.showPsy}}checked{{/if}}/> Псайкер
+          </label>
+        </div>
+      </div>
+
+      <div class="dp-vitals">
+        <div class="dp-favor" title="Фавор — милость патрона. Тратится на Демонические Дары.">
+          <span class="dp-favor-label">ФАВОР</span>
+          <button type="button" class="dp-favor-minus" title="−1 Фавор">−</button>
+          <span class="dp-favor-value">{{dp.favor}}</span>
+          <button type="button" class="dp-favor-plus" title="+1 Фавор">+</button>
+        </div>
+        <div class="dp-favor-pips">
+          {{#each dp.favorPips as |on|}}<span class="dp-pip {{#if on}}on{{/if}}"></span>{{/each}}
+        </div>
+        <div class="dp-vrow"><span>Раны</span><b>{{system.wounds.value}}/{{system.wounds.max}}</b></div>
+        <div class="dp-vrow"><span>Размер</span><b>{{system.size}}</b></div>
+        <div class="dp-btns">
+          <button type="button" class="dp-instability-btn" title="Тест Варп-Нестабильности (W)">Нестабильность</button>
+          <button type="button" class="dp-favor-escape-btn" title="1 Фавор: избежать изгнания в Варп">Спасение</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {{!-- Истинное Имя: слоги-руны бегут цветом бога --}}
+  <div class="dp-truename-strip">
+    <label class="dp-truename" title="Истинное Имя даёт власть над демоном. Слоги: 5 или 1 за каждые 20 Inf при Возвышении.">
+      ИСТИННОЕ ИМЯ
+      <input type="text" name="system.trueName" value="{{dp.trueName}}" placeholder="— непроизносимо —"/>
+    </label>
+    <div class="dp-syllables" title="Слоги Истинного Имени">
+      {{#each dp.sylRunes as |r|}}<span class="dp-rune" style="animation-delay:{{@index}}00ms">{{r}}</span>{{/each}}
+      <input type="number" name="system.dp.syllables" value="{{dp.syllables}}" min="0" title="Число слогов"/>
+    </div>
+    <span class="dp-tn-cb"><input type="checkbox" name="system.trueNameKnown" {{#if dp.trueNameKnown}}checked{{/if}}/> раскрыто смертным</span>
+  </div>
+
+  {{!-- ── ОЧКИ БЕСЧЕСТИЯ (корбук 438): общий партиал, тема Бога --}}
+  {{> "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs" dp.infamy}}
+
+  {{!-- ── ВКЛАДКИ ─────────────────────────────────────────────────────────── --}}
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="stats">ПОКАЗАТЕЛИ</a>
+    <a class="item" data-tab="combat">БОЙ</a>
+    <a class="item" data-tab="abilities">СПОСОБНОСТИ</a>
+    {{#if dp.showPsy}}<a class="item" data-tab="psy">ПСИ</a>{{/if}}
+    <a class="item" data-tab="gear">СНАРЯЖЕНИЕ</a>
+    <a class="item" data-tab="advance">РАЗВИТИЕ</a>
+    <a class="item dp-tab-apotheosis" data-tab="apotheosis">АПОФЕОЗ</a>
+    <a class="item" data-tab="notes">ЗАПИСИ</a>
+  </nav>
+
+  <div class="sheet-body">
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs"}}
+    {{#if dp.showPsy}}{{> "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs"}}{{/if}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}
+
+    {{!-- ── АПОФЕОЗ: Фавор, Дары, Возвышение ──────────────────────────────── --}}
+    <div class="tab dp-apotheosis" data-tab="apotheosis" data-group="primary">
+
+      {{!-- Божественная пара трейтов --}}
+      <div class="dp-panel dp-panel-god">
+        <div class="dp-panel-title"><span class="dp-panel-sigil" style="-webkit-mask:url('{{dp.god.sigil}}') center/contain no-repeat; mask:url('{{dp.god.sigil}}') center/contain no-repeat;"></span>ОДЕСНУЮ БОГА — {{dp.god.label}}</div>
+        {{#if dp.god.divine}}
+          <div class="dp-ref dp-ref-divine"><b>{{dp.god.divine.label}}</b> — {{dp.god.divine.note}}</div>
+        {{/if}}
+        {{#if dp.god.traits.length}}
+          {{#each dp.god.traits as |t|}}
+          <div class="dp-ref"><b>{{t.label}}</b> — {{t.text}}</div>
+          {{/each}}
+        {{/if}}
+        <div class="dp-note dp-note-flavor">{{dp.god.note}}</div>
+      </div>
+
+      {{!-- Возвышение: авто-применение Мощи и Природы --}}
+      <div class="dp-panel dp-panel-ascend">
+        <div class="dp-panel-title">ВОЗВЫШЕНИЕ В ДЕМОНИЧЕСТВО
+          {{#unless dp.ascended}}<button type="button" class="dp-ascend-btn" title="Применить Демоническую Мощь (+10 S/T, +20 Ран, +10 союзной) и Трейты Демонической Природы (Daemonic +4, Unnatural S/T +3, Size 2, Fear 3, …) — предметами, движок посчитает Поглощение сам.">⛧ Провести Возвышение</button>
+          {{else}}<span class="dp-ascended-badge">✦ Возвышён</span><button type="button" class="dp-unascend-btn" title="Удалить авто-Трейты Возвышения и вернуть −20 Ран.">Откатить</button>{{/unless}}
+        </div>
+        <div class="dp-note">Кнопка автоматически создаёт Трейты Мощи и Природы (видны на вкладке СПОСОБНОСТИ) и +20 к максимуму Ран. Поглощение (Daemonic→T.b), Unnatural S/T, Размер и Страх применяются движком.</div>
+        <div class="dp-reflist" style="margin-top:6px;">
+          {{#each dp.ascension as |t|}}
+          <div class="dp-ref"><b>{{t.label}}</b> — {{t.text}}</div>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- Проявление: форма и длительность --}}
+      <div class="dp-panel dp-panel-manifest">
+        <div class="dp-panel-title">ПРОЯВЛЕНИЕ В МАТЕРИУМЕ
+          <button type="button" class="dp-manifest-btn" title="Бросок длительности пребывания в текущей форме (с учётом Истончения Завесы и Якорей).">🌀 Проявиться</button>
+        </div>
+        <div class="dp-manifest-row">
+          <label class="dp-form-sel">Форма
+            <select name="system.form">{{#each dp.forms as |f|}}<option value="{{f.key}}" {{#if f.selected}}selected{{/if}}>{{f.label}}</option>{{/each}}</select>
+          </label>
+          {{#if dp.manifest}}
+          <div class="dp-manifest-info">
+            <span class="dp-manifest-formula">{{dp.manifest.formulaText}}</span>
+            <span class="dp-manifest-unit">{{dp.manifest.unit}}</span>
+          </div>
+          {{else}}
+          <div class="dp-manifest-info"><span class="dp-manifest-unit">Хост — долговременно (пока W ≥ W хоста)</span></div>
+          {{/if}}
+        </div>
+        {{#if dp.formMeta}}<div class="dp-note dp-note-small">{{dp.formMeta.note}}</div>{{/if}}
+        {{#if dp.manifest}}<div class="dp-note dp-note-flavor">{{dp.manifest.note}}</div>{{/if}}
+      </div>
+
+      {{!-- Фавор --}}
+      <div class="dp-panel">
+        <div class="dp-panel-title">ФАВОР <button type="button" class="dp-ascend-favor-btn" title="Рассчитать стартовый Фавор: 1 за каждые полные 20 Бесчестия">⛧ Вознесение</button>
+          <button type="button" class="dp-favor-infamy-btn" title="1 Фавор → +10 Бесчестия (до 60)">Фавор → Бесчестие</button>
+        </div>
+        {{#each dp.favorRules as |r|}}<div class="dp-note">• {{r}}</div>{{/each}}
+      </div>
+
+      {{!-- Обретённые дары --}}
+      <div class="dp-panel">
+        <div class="dp-panel-title">ОБРЕТЁННЫЕ ДАРЫ <span class="dp-count">{{dp.gifts.length}}</span></div>
+        {{#if dp.gifts.length}}
+        <div class="dp-gift-owned-list">
+          {{#each dp.gifts as |g|}}
+          <div class="dp-gift-owned" data-gift-id="{{g.id}}">
+            <span class="dp-gift-owned-name">{{g.name}}{{g.xLabel}}</span>
+            <span class="dp-gift-owned-cost" title="Потрачено Фавора">{{g.paid}}◆</span>
+            {{#unless g.noSacrifice}}<button type="button" class="dp-gift-sacrifice" title="Пожертвовать даром: вернуть половину Фавора (окр.▼, не выше 5)">🕯</button>{{/unless}}
+          </div>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="dp-note dp-note-flavor">Дух Принца ещё не сливался с патроном. Дары ждут.</div>
+        {{/if}}
+        <div class="dp-note dp-note-small">{{dp.giftNote}}</div>
+      </div>
+
+      {{!-- Реестр даров: общие --}}
+      <div class="dp-panel">
+        <div class="dp-panel-title">ОБЩИЕ ДЕМОНИЧЕСКИЕ ДАРЫ</div>
+        <div class="dp-gift-list">
+          {{#each dp.giftsCommon as |g|}}
+          <div class="dp-gift {{#if g.owned}}owned{{/if}}" data-gift="{{g.key}}">
+            <div class="dp-gift-head">
+              <span class="dp-gift-cost {{#unless g.affordable}}poor{{/unless}}"><span>{{g.costLabel}}</span></span>
+              <span class="dp-gift-name">{{g.label}}{{#if g.auto}} <span class="dp-gift-auto" title="Автоматизирован: применяется движком при взятии">⚙</span>{{/if}}</span>
+              {{#if g.owned}}<span class="dp-gift-badge">×{{g.owned}}</span>{{/if}}
+              <button type="button" class="dp-gift-buy" title="Взять дар за {{g.costLabel}} Фавора">Взять</button>
+            </div>
+            <div class="dp-gift-text">{{g.text}}</div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- Реестр даров бога --}}
+      {{#if dp.giftsGod.length}}
+      <div class="dp-panel">
+        <div class="dp-panel-title">ДАРЫ {{dp.god.gen}}</div>
+        <div class="dp-gift-list">
+          {{#each dp.giftsGod as |g|}}
+          <div class="dp-gift dp-gift-god {{#if g.owned}}owned{{/if}}" data-gift="{{g.key}}">
+            <div class="dp-gift-head">
+              <span class="dp-gift-cost {{#unless g.affordable}}poor{{/unless}}"><span>{{g.costLabel}}</span></span>
+              <span class="dp-gift-name">{{g.label}}{{#if g.auto}} <span class="dp-gift-auto" title="Автоматизирован: применяется движком при взятии">⚙</span>{{/if}}</span>
+              {{#if g.owned}}<span class="dp-gift-badge">×{{g.owned}}</span>{{/if}}
+              <button type="button" class="dp-gift-buy" title="Взять дар за {{g.costLabel}} Фавора">Взять</button>
+            </div>
+            <div class="dp-gift-text">{{g.text}}</div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
+      {{!-- Ключевые демонические Трейты (Книга Хаоса) --}}
+      <div class="dp-panel">
+        <div class="dp-panel-title">КЛЮЧЕВЫЕ ДЕМОНИЧЕСКИЕ ТРЕЙТЫ</div>
+        <div class="dp-reflist">
+          {{#each dp.keyTraits as |t|}}
+          <div class="dp-ref"><b>{{t.label}}</b> — {{t.text}}</div>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- Свойства демонического оружия (Книга Хаоса) --}}
+      <div class="dp-panel">
+        <div class="dp-panel-title">СВОЙСТВА ДЕМОНИЧЕСКОГО ОРУЖИЯ</div>
+        <div class="dp-reflist">
+          {{#each dp.weaponProps as |w|}}
+          <div class="dp-ref dp-gift-god"><b>{{w.label}}</b> — {{w.text}}</div>
+          {{/each}}
+        </div>
+      </div>
+
+      <div class="dp-panel">
+        <div class="dp-panel-title">ИСТИННОЕ БЕССМЕРТИЕ</div>
+        <div class="dp-note">{{dp.immortality}}</div>
+      </div>
+
+      <div class="dp-panel">
+        <div class="dp-panel-title">ДЕМОНИЧЕСКАЯ СВИТА</div>
+        <div class="dp-note">{{dp.retinue}}</div>
+        <textarea name="system.dp.retinueNotes" class="dp-textarea" placeholder="Миньоны, фамильяр-Герольд, легионы...">{{dp.retinueNotes}}</textarea>
+      </div>
+
+      <div class="dp-panel">
+        <div class="dp-panel-title">ИСТИННАЯ ФОРМА</div>
+        <textarea name="system.dp.trueFormDesc" class="dp-textarea" placeholder="Облик, выбранный волей Принца при Возвышении...">{{dp.trueFormDesc}}</textarea>
+        <label class="dp-anointed-label">Помазанники
+          <input type="text" name="system.dp.anointed" value="{{dp.anointed}}" placeholder="— нет —"/>
+        </label>
+      </div>
+    </div>
+
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
+  </div>
+</form>

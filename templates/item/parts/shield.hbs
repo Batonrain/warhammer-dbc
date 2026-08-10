@@ -1,0 +1,117 @@
+{{!-- Шаблон предмета: Силовое поле (forcefield) --}}
+
+{{!-- Готовые щиты — в компендиуме «Силовые щиты — Библиотека (DBC)»
+     (папки Технологичные / Чародейские / Азуриане). Перетащите оттуда. --}}
+
+{{!-- Статус --}}
+<div class="item-section">
+  <div class="item-section-title">СТАТУС</div>
+  <div class="shield-status-row">
+    <span class="shield-status-badge shield-status-{{system.status}}">
+      {{statusInfo.icon}} {{statusInfo.label}}
+    </span>
+    {{#if system.equipped}}
+      <span class="shield-rating-badge">
+        Активный рейтинг: <b>{{system.currentRating}}</b>
+      </span>
+    {{/if}}
+  </div>
+</div>
+
+{{!-- Параметры --}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ ЩИТА</div>
+  <div class="shield-params-grid">
+
+    <div class="shield-param-row">
+      <label class="shield-param-label">Природа</label>
+      <select class="shield-nature-select">
+        {{#each shieldNatures as |n|}}
+          <option value="{{n.key}}"
+            {{#if (eq ../system.shieldNature n.key)}}selected{{/if}}>
+            {{n.label}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="shield-param-row">
+      <label class="shield-param-label">Тип</label>
+      <select class="shield-type-select">
+        {{#each shieldTypes as |t|}}
+          <option value="{{t.key}}"
+            {{#if (eq ../system.shieldType t.key)}}selected{{/if}}>
+            {{t.label}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="shield-param-row">
+      <label class="shield-param-label">Особый рейтинг</label>
+      <input type="checkbox" class="shield-special-rating-cb"
+             {{#if system.isSpecialRating}}checked{{/if}}/>
+    </div>
+
+    {{#unless system.isSpecialRating}}
+    <div class="shield-param-row">
+      <label class="shield-param-label">Рейтинг минимум</label>
+      <input type="number" name="system.ratingMin"
+             value="{{system.ratingMin}}" min="0" max="99"/>
+    </div>
+    <div class="shield-param-row">
+      <label class="shield-param-label">Рейтинг максимум</label>
+      <input type="number" name="system.ratingMax"
+             value="{{system.ratingMax}}" min="0" max="99"/>
+    </div>
+    <div class="shield-param-row">
+      <label class="shield-param-label">Порог перегрузки</label>
+      <input type="number" name="system.overloadThreshold"
+             value="{{system.overloadThreshold}}" min="0" max="99"
+             title="0 = нет перегрузки (−)"/>
+    </div>
+    {{/unless}}
+
+    {{#if system.isSpecialRating}}
+    <div class="shield-param-row">
+      <label class="shield-param-label">Текущий рейтинг</label>
+      <input type="number" name="system.currentRating"
+             value="{{system.currentRating}}" min="0" max="99"/>
+    </div>
+    {{/if}}
+
+    <div class="shield-param-row">
+      <label class="shield-param-label">Вес (кг)</label>
+      <input type="number" name="system.weight"
+             value="{{system.weight}}" min="0" step="0.5"/>
+    </div>
+
+  </div>
+</div>
+
+{{!-- Сводка --}}
+<div class="item-section">
+  <div class="shield-rating-summary">
+    <span class="srs-label">Рейтинг:</span>
+    <span class="srs-value">{{ratingDisplay}}</span>
+    <span class="srs-sep">|</span>
+    <span class="srs-label">Природа:</span>
+    <span class="srs-value">
+      {{#if (eq system.shieldNature "technological")}}⚙️ Технологический{{/if}}
+      {{#if (eq system.shieldNature "warp")}}✨ Чародейский{{/if}}
+    </span>
+    <span class="srs-sep">|</span>
+    <span class="srs-label">Тип:</span>
+    <span class="srs-value">
+      {{#if (eq system.shieldType "dome")}}
+        <span class="shield-type-badge shield-type-dome">🔵 Купол</span>
+      {{/if}}
+      {{#if (eq system.shieldType "deflector")}}
+        <span class="shield-type-badge shield-type-deflector">🟠 Дефлектор</span>
+      {{/if}}
+      {{#if (eq system.shieldType "penetrating")}}
+        <span class="shield-type-badge shield-type-penetrating">🟣 Сквозной</span>
+      {{/if}}
+    </span>
+  </div>
+</div>

@@ -1,0 +1,688 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка ТЕЛО (медицинский когитатор)
+   Панели-«мониторы» всегда тёмные, независимо от темы листа.
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .body-tab {
+  --bc-scr:      #041109;   /* фон экрана */
+  --bc-scr2:     #061a10;
+  --bc-line:     #123324;   /* сетка/рамки */
+  --bc-teal:     #4dffb0;   /* основной холо-зелёный */
+  --bc-teal-dim: #2c9c6e;
+  --bc-flesh:    #3f9c74;   /* плоть */
+  --bc-aug:      #58d8ff;   /* аугментация (холодный кибер) */
+  --bc-bionic:   #ff9a3c;   /* бионика (янтарь — «установлено») */
+  --bc-red:      #ff5a5a;
+  --bc-amber:    #ffd24d;
+  --bc-violet:   #c06fff;
+  color: var(--bc-teal);
+}
+
+/* ── Общий каркас ──────────────────────────────────────── */
+.warhammer-dbc .body-cogitator { display: flex; flex-direction: column; gap: 8px; }
+.warhammer-dbc .bc-hero {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(220px, 1.15fr);
+  gap: 8px;
+}
+@media (max-width: 640px) { .warhammer-dbc .bc-hero { grid-template-columns: 1fr; } }
+
+/* Общий стиль монитор-панели */
+.warhammer-dbc .bc-figure-panel,
+.warhammer-dbc .bc-ecg,
+.warhammer-dbc .bc-implants,
+.warhammer-dbc .bc-vitals,
+.warhammer-dbc .bc-panels .effects-section-panel {
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(77,255,176,0.06), transparent 60%),
+    linear-gradient(180deg, var(--bc-scr2), var(--bc-scr));
+  border: 1px solid var(--bc-line);
+  border-radius: 4px;
+  box-shadow: inset 0 0 22px rgba(0,0,0,0.55), 0 0 0 1px rgba(77,255,176,0.05);
+}
+
+/* ═══════════════ ГОЛО-СКАН ФИГУРЫ ═══════════════ */
+.warhammer-dbc .bc-figure-panel { position: relative; overflow: hidden; padding: 4px 4px 6px; }
+/* Метка Механикум (Кибер-Мантия) — в углу биосканера, не на теле */
+.warhammer-dbc .bc-mechanicus-mark {
+  position: absolute; right: 8px; bottom: 30px; width: 46px; height: 46px; z-index: 6;
+  object-fit: contain; opacity: 0.85; pointer-events: none;
+  border: 0; background: none; box-shadow: none; border-radius: 0;
+  filter: drop-shadow(0 0 6px rgba(255,154,60,0.7)) brightness(1.1);
+  animation: bcMechMark 3.4s ease-in-out infinite;
+}
+@keyframes bcMechMark { 0%,100% { opacity: 0.7; } 50% { opacity: 0.95; } }
+/* Всплывающая подсказка импланта (когитатор-стиль, с анимацией) */
+.warhammer-dbc .bc-imp-tip {
+  position: absolute; z-index: 20; pointer-events: none; max-width: 200px;
+  padding: 4px 9px; font-size: 0.74em; letter-spacing: 0.3px; line-height: 1.3;
+  color: #eafff4; background: linear-gradient(180deg, #0e2a1c, #061a10);
+  border: 1px solid var(--bc-teal); border-radius: 3px;
+  box-shadow: 0 0 12px -2px var(--bc-teal), inset 0 0 10px rgba(77,255,176,0.08);
+  opacity: 0; transform: translateY(4px) scale(0.96); transform-origin: left top;
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+.warhammer-dbc .bc-imp-tip::before {
+  content: "◄ АУГМЕТИКА ►"; display: block; font-size: 0.78em; letter-spacing: 1px;
+  color: var(--bc-teal-dim); margin-bottom: 2px;
+}
+.warhammer-dbc .bc-imp-tip.show { opacity: 1; transform: translateY(0) scale(1); }
+.warhammer-dbc .bc-figure-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 3px 6px; font-size: 0.66em; letter-spacing: 1px;
+  color: var(--bc-teal-dim); border-bottom: 1px solid var(--bc-line);
+}
+.warhammer-dbc .bc-figure-title { color: var(--bc-teal); text-shadow: 0 0 6px rgba(77,255,176,0.6); }
+.warhammer-dbc .bc-figure-serial { opacity: 0.75; font-family: monospace; }
+/* Кнопка-панель хирургикона (на месте бывшего реестра, тянется вниз) */
+.warhammer-dbc .bc-surgeon-btn {
+  flex: 1 1 auto; min-height: 90px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(77,255,176,0.08), transparent 65%),
+    linear-gradient(180deg, #0c2016, #061a10);
+  border: 1px solid var(--bc-line); border-radius: 4px; cursor: pointer;
+  color: var(--bc-teal-dim); transition: all 0.15s;
+}
+.warhammer-dbc .bc-surgeon-ic {
+  width: 40px; height: 40px; object-fit: contain;
+  border: 0; background: none; box-shadow: none; border-radius: 0;
+  filter: drop-shadow(0 0 6px rgba(77,255,176,0.55));
+}
+.warhammer-dbc .bc-surgeon-btn-label { color: var(--bc-teal); font-size: 0.92em; letter-spacing: 2px; text-shadow: 0 0 6px rgba(77,255,176,0.5); }
+.warhammer-dbc .bc-surgeon-btn-sub { font-size: 0.64em; letter-spacing: 0.5px; text-transform: uppercase; color: var(--bc-teal-dim); }
+.warhammer-dbc .bc-surgeon-btn:hover {
+  border-color: var(--bc-teal); box-shadow: 0 0 14px -3px var(--bc-teal), inset 0 0 20px rgba(77,255,176,0.06);
+}
+.warhammer-dbc .bc-surgeon-btn:hover .bc-surgeon-ic { animation: bcSurgSpin 2.4s linear infinite; }
+@keyframes bcSurgSpin { to { transform: rotate(360deg); } }
+.warhammer-dbc .bc-sex-toggle {
+  width: 18px; height: 18px; margin-left: 8px; padding: 0; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(77,255,176,0.08); border: 1px solid var(--bc-line);
+  border-radius: 3px; color: var(--bc-teal); cursor: pointer; font-size: 1em;
+  transition: all 0.12s;
+}
+.warhammer-dbc .bc-sex-toggle:hover { border-color: var(--bc-teal); box-shadow: 0 0 6px -1px var(--bc-teal); color: #eafff4; }
+
+.warhammer-dbc .bc-figure-stage { position: relative; padding: 6px 0; min-height: 300px; }
+
+/* ── Фигура из PNG-деталей (маска по alpha → окраска частей) ─────────── */
+.warhammer-dbc .body-photo { position: relative; width: 100%; max-width: 340px; aspect-ratio: 5 / 8; margin: 0 auto; z-index: 1; overflow: hidden; }
+.warhammer-dbc .body-photo .bp {
+  position: absolute; inset: 0; pointer-events: none;
+  background: var(--bp-col, var(--bc-flesh));
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  -webkit-mask-mode: alpha; mask-mode: alpha;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 1.5px var(--bp-col));
+}
+/* Аугментированная часть — ярче, со свечением категории */
+.warhammer-dbc .body-photo .bp.is-aug {
+  opacity: 1;
+  filter: drop-shadow(0 0 3px var(--bp-col)) drop-shadow(0 0 7px var(--bp-col));
+  animation: bpPulse 2.6s ease-in-out infinite;
+}
+@keyframes bpPulse { 0%,100% { opacity: 0.92; } 50% { opacity: 1; } }
+/* Органы (сердце/лёгкие/мозг) — приглушены, если без импланта */
+.warhammer-dbc .body-photo .bp-organ { opacity: 0.55; }
+.warhammer-dbc .body-photo .bp-organ.is-aug { opacity: 1; }
+/* Сердце «бьётся» лёгкой пульсацией */
+.warhammer-dbc .body-photo .bp-beat { animation: bpHeart 1s ease-in-out infinite; transform-origin: 50% 28%; }
+.warhammer-dbc .body-photo .bp-beat.is-aug { animation: bpHeart 1s ease-in-out infinite, bpPulseGlow 1s ease-in-out infinite; }
+@keyframes bpHeart { 0%,100% { transform: scale(0.985); } 15% { transform: scale(1.02); } 35% { transform: scale(0.995); } }
+@keyframes bpPulseGlow { 0%,100% { filter: drop-shadow(0 0 2px var(--bp-col)); } 15% { filter: drop-shadow(0 0 8px var(--bp-col)); } }
+
+/* ── Кожа: свечение-обводка ТОЛЬКО контура тела (части, не органы/импланты) ── */
+.warhammer-dbc .body-photo.has-skin .bp:not(.bp-organ) {
+  filter: drop-shadow(0 0 1.5px var(--bp-col)) drop-shadow(0 0 4px var(--skin)) drop-shadow(0 0 2px var(--skin));
+}
+
+/* ── Визуал имплантов (SVG-оверлей поверх/за PNG-телом) ─────────────── */
+.warhammer-dbc .body-photo .body-implants { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: visible; }
+/* Слой ЗА телом (механодендриты из-за спины) — DOM-первый, ниже тела, приглушён/размыт как «за спиной» */
+.warhammer-dbc .body-photo .body-implants-back { z-index: 0; opacity: 0.62; filter: blur(0.7px) brightness(0.9); }
+/* Тултип-зоны глифов — включаем наведение */
+.warhammer-dbc .body-implants .imp-tipwrap { pointer-events: auto; cursor: help; }
+/* Кости (скелетные импланты) */
+.warhammer-dbc .body-implants .imp-bone { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: 0.9; filter: drop-shadow(0 0 3px currentColor); }
+.warhammer-dbc .body-implants .imp-bonejoint { fill: currentColor; filter: drop-shadow(0 0 3px currentColor); }
+/* Сосуды (кровеносные импланты) */
+.warhammer-dbc .body-implants .imp-vein { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.75; filter: drop-shadow(0 0 2px currentColor); }
+.warhammer-dbc .body-implants .imp-vein-fine { fill: none; stroke: currentColor; stroke-width: 0.6; opacity: 0.55; }
+.warhammer-dbc .body-implants .imp-spine { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; filter: drop-shadow(0 0 3px currentColor); }
+.warhammer-dbc .body-implants .imp-ring  { fill: none; stroke: currentColor; stroke-width: 1.6; filter: drop-shadow(0 0 3px currentColor); }
+.warhammer-dbc .body-implants .imp-core  { fill: currentColor; filter: drop-shadow(0 0 4px currentColor); }
+.warhammer-dbc .body-implants .imp-hex   { fill: none; stroke: currentColor; stroke-width: 1.6; filter: drop-shadow(0 0 4px currentColor); }
+.warhammer-dbc .body-implants .imp-tick  { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; opacity: 0.85; }
+.warhammer-dbc .body-implants .imp-ringpulse { fill: none; stroke: currentColor; stroke-width: 1.6; transform-box: fill-box; transform-origin: center; animation: impRingPulse 1.4s ease-out infinite; }
+/* Механодендриты — толще и ярче */
+/* ── Механодендриты: трос, бронесегменты, приводные кольца, наконечник ── */
+.warhammer-dbc .body-implants .imp-mech-cable {
+  fill: none; stroke: currentColor; stroke-width: 2.6;
+  stroke-linecap: round; opacity: 0.55;
+}
+/* Сегменты залиты — щупальце читается объёмом, а не ниткой с бусинами. */
+.warhammer-dbc .body-implants .imp-mech-plate {
+  fill: color-mix(in srgb, currentColor 30%, #1a0d04);
+  stroke: currentColor; stroke-width: 0.9; stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.warhammer-dbc .body-implants .imp-mech-ring {
+  fill: none; stroke: currentColor; stroke-width: 1.1; opacity: 0.85;
+}
+.warhammer-dbc .body-implants .imp-mech-claw {
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.warhammer-dbc .body-implants .imp-mech-knuckle {
+  fill: color-mix(in srgb, currentColor 45%, #1a0d04);
+  stroke: currentColor; stroke-width: 1;
+}
+.warhammer-dbc .body-implants .imp-mech-thread { fill: none; stroke: currentColor; stroke-width: 0.9; opacity: 0.8; }
+.warhammer-dbc .body-implants .imp-mech-core {
+  fill: #ffcf8a; filter: drop-shadow(0 0 4px currentColor);
+  animation: impPulse 1.8s ease-in-out infinite;
+}
+
+/* ── Бионические конечности: протез внутри обведённого силуэта ── */
+/* Главное правило здесь — КОНТРАСТ, а не свечение. У слоя имплантов свечение
+   висит почти на каждом классе, и залитые детали сливались в светящееся пятно.
+   Поэтому пластины тёмные с тонкой яркой кромкой, а drop-shadow оставлен только
+   кромке силуэта, приводам и пальцам. */
+.warhammer-dbc .body-implants .imp-limb { animation: none; }   /* без пульсации: она размывала механику */
+
+.warhammer-dbc .body-implants .imp-limb-fill {
+  fill: color-mix(in srgb, currentColor 10%, transparent); stroke: none;
+}
+.warhammer-dbc .body-implants .imp-limb-edge {
+  fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+/* Полосы брони: обрезаются силуэтом, поэтому точно повторяют сечение
+   конечности. Две группы чередуются по яркости — соседние читаются раздельно. */
+.warhammer-dbc .body-implants .imp-limb-band {
+  fill: color-mix(in srgb, currentColor 30%, #04140c);
+  stroke: currentColor; stroke-width: 1.1; stroke-linejoin: round;
+  filter: none;
+}
+.warhammer-dbc .body-implants .imp-limb-band.alt {
+  fill: color-mix(in srgb, currentColor 52%, #04140c);
+}
+/* Гидравлика поверх пластин — светлее их, но без ореола. */
+.warhammer-dbc .body-implants .imp-limb-cyl {
+  fill: color-mix(in srgb, currentColor 62%, #04140c);
+  stroke: currentColor; stroke-width: 0.9; filter: none;
+}
+.warhammer-dbc .body-implants .imp-limb-rod {
+  fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.95; filter: none;
+}
+.warhammer-dbc .body-implants .imp-limb-cable {
+  fill: none; stroke: currentColor; stroke-width: 0.8;
+  stroke-linecap: round; opacity: 0.38; filter: none;
+}
+/* Привод — самый яркий узел конечности, он и держит взгляд. */
+.warhammer-dbc .body-implants .imp-limb-actuator {
+  fill: #04140c; fill-opacity: 0.9;
+  stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+.warhammer-dbc .body-implants .imp-limb-bolt { fill: currentColor; opacity: 0.9; filter: none; }
+.warhammer-dbc .body-implants .imp-limb-digit {
+  fill: none; stroke: currentColor; stroke-width: 1.9;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+/* Привод на суставе: корпус, кольцо оси и светящееся ядро. */
+.warhammer-dbc .body-implants .imp-joint {
+  fill: color-mix(in srgb, currentColor 35%, #06120c);
+  stroke: currentColor; stroke-width: 1.2;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.warhammer-dbc .body-implants .imp-joint-ring {
+  fill: none; stroke: currentColor; stroke-width: 0.9;
+  stroke-dasharray: 3 3; opacity: 0.6;
+  transform-box: fill-box; transform-origin: center;
+  animation: impJoint 7s linear infinite;
+}
+.warhammer-dbc .body-implants .imp-joint-core { fill: currentColor; filter: drop-shadow(0 0 3px currentColor); }
+@keyframes impJoint { to { transform: rotate(360deg); } }
+/* Адд-оны (лезвия/оружие) */
+.warhammer-dbc .body-implants .imp-blade { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; filter: drop-shadow(0 0 3px currentColor); }
+
+.warhammer-dbc .body-implants .imp-pulse { animation: impPulse 2.1s ease-in-out infinite; }
+@keyframes impPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+.warhammer-dbc .body-implants .imp-beat { transform-box: fill-box; transform-origin: center; animation: impBeat 1s ease-in-out infinite; }
+@keyframes impBeat { 0%,100% { transform: scale(0.94); } 15% { transform: scale(1.14); } 40% { transform: scale(0.98); } }
+@keyframes impRingPulse { 0% { transform: scale(0.5); opacity: 0.9; } 100% { transform: scale(1.7); opacity: 0; } }
+.warhammer-dbc .body-implants .imp-mech-arm {
+  transform-box: view-box;
+  animation: impSway 5.5s ease-in-out infinite;
+  animation-delay: var(--mech-delay, 0s);
+}
+@keyframes impSway { 0%,100% { transform: rotate(calc(var(--sway) * -2deg)); } 50% { transform: rotate(calc(var(--sway) * 2.5deg)); } }
+
+/* Сканирующая полоса поверх фигуры */
+.warhammer-dbc .body-photo .body-photo-scan {
+  position: absolute; left: 0; right: 0; height: 26%; z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(120,255,200,0.14) 60%, rgba(160,255,220,0.28));
+  border-bottom: 1px solid rgba(160,255,220,0.4);
+  animation: bpScan 4.2s ease-in-out infinite;
+}
+@keyframes bpScan { 0% { top: -26%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+/* Голо-сетка на фоне фигуры */
+.warhammer-dbc .bc-figure-grid {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(77,255,176,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77,255,176,0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(circle at 50% 45%, #000 55%, transparent 85%);
+}
+.warhammer-dbc .body-figure { position: relative; display: block; width: 100%; height: auto; max-height: 480px; z-index: 1; }
+
+/* Линия «скан» проходит сверху вниз */
+.warhammer-dbc .body-scan line { stroke: rgba(120,255,200,0.5); stroke-width: 2; filter: blur(1px); }
+.warhammer-dbc .body-scan { animation: bcScan 4.5s linear infinite; transform-box: fill-box; }
+@keyframes bcScan { 0% { transform: translateY(20px); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(600px); opacity: 0; } }
+
+/* Базовые регионы (плоть) — силуэт с холо-контуром и лёгкой заливкой */
+.warhammer-dbc .body-figure .brg path {
+  fill: rgba(63,156,116,0.16); stroke: var(--bc-flesh); stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+/* Контурные линии анатомии (ключицы, грудь, талия, ось) */
+.warhammer-dbc .body-figure .br-detail { fill: none; }
+.warhammer-dbc .body-figure .br-detail path { stroke: rgba(120,255,200,0.3); stroke-width: 0.9; fill: none; stroke-linecap: round; }
+.warhammer-dbc .body-figure .br-eye { fill: var(--bc-flesh); stroke: none; opacity: 0.8; }
+
+/* Аугментация — цвет категории импланта задаётся inline через --reg-col */
+.warhammer-dbc .body-figure .brg.is-aug path {
+  stroke: var(--reg-col, var(--bc-aug));
+  fill: var(--reg-col, var(--bc-aug)); fill-opacity: 0.2;
+  filter: url(#bfGlow);
+  animation: bcPulseStroke 2.4s ease-in-out infinite;
+}
+@keyframes bcPulseStroke { 0%,100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.6; } }
+
+/* Детали/швы аугментаций — видимы для аугментированных регионов */
+.warhammer-dbc .body-figure .brd { display: none; fill: none; }
+.warhammer-dbc .body-figure .brd.is-aug { display: block; }
+.warhammer-dbc .body-figure .brd .brd-seam { stroke: var(--reg-col, var(--bc-aug)); stroke-width: 1.1; stroke-linecap: round; opacity: 0.9; }
+.warhammer-dbc .body-figure .brd .brd-rivet { fill: var(--reg-col, var(--bc-aug)); }
+.warhammer-dbc .body-figure .brd .brd-core {
+  fill: var(--reg-col, var(--bc-aug)); stroke: none; filter: url(#bfGlow);
+  animation: bcCore 1.8s ease-in-out infinite;
+}
+@keyframes bcCore { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+/* ── Механодендриты ──────────────────────────────────────── */
+.warhammer-dbc .body-figure .brm { fill: none; }
+.warhammer-dbc .body-figure .brm-arm { transform-origin: 150px 138px; animation: bcMechSway 5.5s ease-in-out infinite; animation-delay: var(--brm-delay, 0s); }
+.warhammer-dbc .body-figure .brm-spine { stroke: var(--bc-bionic); stroke-width: 3.4; stroke-linecap: round; filter: url(#bfGlow); }
+.warhammer-dbc .body-figure .brm-bead { fill: #ffcf8a; stroke: var(--bc-bionic); stroke-width: 0.6; }
+.warhammer-dbc .body-figure .brm-tip { stroke: var(--bc-bionic); stroke-width: 2.4; stroke-linecap: round; }
+.warhammer-dbc .body-figure .brm-tip circle { fill: rgba(255,154,60,0.35); }
+.warhammer-dbc .body-figure .brm-tip .brm-tip-core { fill: #fff2d8; stroke: none; }
+@keyframes bcMechSway { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2.5deg); } }
+
+/* ── Оверлеи органов (передний план, светятся) ──────────── */
+.warhammer-dbc .body-figure .bro { filter: url(#bfGlow); }
+
+/* Общая палитра глифов: заливка органа, обводка сосудов, тонкие борозды.
+   Правила адресные — прежние красили любой path внутри группы, из-за чего
+   сосуды и спицы ротора заливались как ткань. */
+.warhammer-dbc .body-figure .bro .bro-organ { stroke-width: 0.9; }
+.warhammer-dbc .body-figure .bro .bro-vessel { fill: none; stroke-width: 1.1; stroke-linecap: round; }
+.warhammer-dbc .body-figure .bro .bro-fissure,
+.warhammer-dbc .body-figure .bro .bro-sulcus { fill: none; stroke-width: 0.6; opacity: 0.65; }
+
+/* ── Рёберный каркас: подложка под грудные импланты ── */
+.warhammer-dbc .body-figure .bro--ribs { filter: none; opacity: 0.45; }
+.warhammer-dbc .body-figure .bro--ribs path { fill: none; stroke: var(--bc-flesh, #7fe0a8); stroke-width: 0.9; stroke-linecap: round; }
+.warhammer-dbc .body-figure .bro--ribs .bro-sternum { stroke-width: 1.6; }
+.warhammer-dbc .body-figure .bro--ribs .bro-clav { stroke-width: 1.4; }
+
+/* ── Сердце-насос ── */
+.warhammer-dbc .body-figure .bro--heart .bro-organ {
+  fill: var(--bc-red); stroke: #ffb0b0;
+  transform-box: fill-box; transform-origin: center;
+  animation: bcHeart 1s ease-in-out infinite;
+}
+.warhammer-dbc .body-figure .bro--heart .bro-vessel { stroke: #ffb0b0; opacity: 0.85; }
+.warhammer-dbc .body-figure .bro--heart .bro-rotor { fill: none; stroke: #ffdcdc; stroke-width: 1; opacity: 0.9; }
+.warhammer-dbc .body-figure .bro--heart .bro-rotor-core { fill: #ffdcdc; }
+/* Спицы ротора вращаются — насос работает. */
+.warhammer-dbc .body-figure .bro--heart .bro-spoke {
+  stroke: #ffdcdc; stroke-width: 0.9; opacity: 0.75;
+  transform-box: fill-box; transform-origin: center;
+}
+.warhammer-dbc .body-figure .bro--heart g,
+.warhammer-dbc .body-figure .bro--heart .bro-rotor,
+.warhammer-dbc .body-figure .bro--heart .bro-rotor-core { transform-box: fill-box; transform-origin: center; }
+@keyframes bcHeart { 0%,100% { transform: scale(0.94); opacity: 0.88; } 18% { transform: scale(1.1); opacity: 1; } 40% { transform: scale(0.97); } }
+
+/* ── Лёгкие ── */
+.warhammer-dbc .body-figure .bro--lungs .bro-organ {
+  fill: rgba(88,216,255,0.32); stroke: var(--bc-aug);
+  transform-box: fill-box; transform-origin: center;
+  animation: bcLungs 3.4s ease-in-out infinite;
+}
+.warhammer-dbc .body-figure .bro--lungs .bro-fissure { stroke: var(--bc-aug); }
+.warhammer-dbc .body-figure .bro--lungs .bro-vessel { stroke: var(--bc-aug); opacity: 0.8; }
+@keyframes bcLungs { 0%,100% { transform: scale(0.95); } 50% { transform: scale(1.05); } }
+
+/* ── Позвоночник ── */
+.warhammer-dbc .body-figure .bro--spine .bro-vert { fill: var(--bc-violet); stroke: none; }
+.warhammer-dbc .body-figure .bro--spine .bro-proc { stroke: var(--bc-violet); stroke-width: 1.4; stroke-linecap: round; opacity: 0.8; }
+.warhammer-dbc .body-figure .bro--spine .bro-disc { stroke: var(--bc-violet); stroke-width: 1.6; opacity: 0.4; }
+
+/* ── Черепные импланты ── */
+.warhammer-dbc .body-figure .bro--cranial .bro-organ { fill: rgba(88,216,255,0.16); stroke: var(--bc-aug); }
+.warhammer-dbc .body-figure .bro--cranial .bro-vessel { stroke: var(--bc-aug); }
+.warhammer-dbc .body-figure .bro--cranial .bro-fissure,
+.warhammer-dbc .body-figure .bro--cranial .bro-sulcus { stroke: var(--bc-aug); }
+.warhammer-dbc .body-figure .bro--cranial .bro-port { fill: var(--bc-aug); animation: bcCore 1.6s ease-in-out infinite; }
+
+/* ── Аугметические линзы ── */
+.warhammer-dbc .body-figure .bro--eyes .bro-lens { fill: none; stroke: var(--bc-red); stroke-width: 0.9; }
+.warhammer-dbc .body-figure .bro--eyes .bro-lens-iris { fill: none; stroke: #ffdcdc; stroke-width: 0.7; opacity: 0.85; }
+.warhammer-dbc .body-figure .bro--eyes .bro-lens-core { fill: var(--bc-red); animation: bcEye 2.2s steps(1) infinite; }
+.warhammer-dbc .body-figure .bro--eyes .bro-eye-hud { fill: none; stroke: var(--bc-red); stroke-width: 0.7; opacity: 0.7; }
+@keyframes bcEye { 0%,90%,100% { opacity: 1; } 94% { opacity: 0.3; } }
+
+/* ── Кости бионических конечностей ── */
+.warhammer-dbc .body-figure .brd .brd-bone {
+  fill: color-mix(in srgb, var(--reg-col, var(--bc-aug)) 22%, transparent);
+  stroke: var(--reg-col, var(--bc-aug)); stroke-width: 0.9;
+}
+.warhammer-dbc .body-figure .brd .brd-joint { fill: var(--reg-col, var(--bc-aug)); opacity: 0.9; }
+/* Кольцо сервопривода на суставе медленно пульсирует. */
+.warhammer-dbc .body-figure .brd .brd-servo {
+  fill: none; stroke: var(--reg-col, var(--bc-aug)); stroke-width: 0.8;
+  stroke-dasharray: 3 4; opacity: 0.55;
+  transform-box: fill-box; transform-origin: center;
+  animation: bcServo 4s linear infinite;
+}
+@keyframes bcServo { to { transform: rotate(360deg); } }
+
+/* Легенда */
+.warhammer-dbc .bc-figure-legend {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; justify-content: center;
+  padding: 4px 6px 2px; font-size: 0.64em; letter-spacing: 0.3px;
+  border-top: 1px solid var(--bc-line);
+}
+.warhammer-dbc .bc-leg-flesh  { color: var(--bc-flesh); }
+.warhammer-dbc .bc-leg-aug    { color: var(--bc-aug); }
+.warhammer-dbc .bc-leg-bionic { color: var(--bc-bionic); }
+.warhammer-dbc .bc-leg-mech   { color: #ffcf8a; text-shadow: 0 0 6px rgba(255,154,60,0.5); }
+
+/* ═══════════════ ПРАВАЯ КОЛОНКА ═══════════════ */
+.warhammer-dbc .bc-side { display: flex; flex-direction: column; gap: 8px; }
+
+/* ── Кардиомонитор ─────────────────────────────────────── */
+.warhammer-dbc .bc-ecg { padding: 5px 7px 7px; }
+.warhammer-dbc .bc-ecg-head { display: flex; align-items: center; gap: 10px; font-size: 0.66em; letter-spacing: 1px; margin-bottom: 4px; }
+.warhammer-dbc .bc-ecg-title { flex: 1 1 auto; }
+.warhammer-dbc .bc-ecg-title { color: var(--bc-teal-dim); }
+.warhammer-dbc .bc-ecg-status { flex: 0 0 auto; white-space: nowrap; font-weight: bold; padding: 1px 6px; border-radius: 2px; border: 1px solid currentColor; }
+.warhammer-dbc .bc-ecg-screen {
+  position: relative; height: 76px; overflow: hidden; border-radius: 3px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 11px, rgba(77,255,176,0.05) 11px 12px),
+    repeating-linear-gradient(90deg, transparent 0 11px, rgba(77,255,176,0.05) 11px 12px),
+    #030c07;
+  box-shadow: inset 0 0 16px rgba(0,0,0,0.7);
+}
+/* Кардиомонитор со «свипом»: тусклая база + яркий след, проявляемый бегущей
+   маской-градиентом (бьёт → плавно угасает → снова бьёт) + светящийся бар.
+   Сердце не останавливается — только цвет/темп переключаются по состоянию. */
+.warhammer-dbc .bc-ecg-wave  { display: block; width: 100%; height: 100%; --ecg-col: var(--bc-teal); --ecg-dur: 3.4s; }
+.warhammer-dbc .bc-ecg-base  { fill: none; stroke: var(--ecg-col); stroke-width: 1.3; opacity: 0.22; stroke-linejoin: round; stroke-linecap: round; }
+.warhammer-dbc .bc-ecg-lead  { fill: none; stroke: var(--ecg-col); stroke-width: 1.9; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 4px var(--ecg-col)); }
+.warhammer-dbc .bc-ecg-bar   { fill: var(--ecg-col); opacity: 0.5; filter: blur(1.2px) drop-shadow(0 0 4px var(--ecg-col)); }
+.warhammer-dbc .bc-ecg-sweep, .warhammer-dbc .bc-ecg-bar { animation: bcSweep var(--ecg-dur) linear infinite; }
+@keyframes bcSweep { from { transform: translateX(0); } to { transform: translateX(300px); } }
+
+/* Состояния ЭКГ: цвет + скорость свипа */
+.warhammer-dbc .bc-ecg.ecg--healthy  .bc-ecg-wave   { --ecg-col: var(--bc-teal);  --ecg-dur: 3.4s; }
+.warhammer-dbc .bc-ecg.ecg--healthy  .bc-ecg-status { color: var(--bc-teal); }
+.warhammer-dbc .bc-ecg.ecg--wounded  .bc-ecg-wave   { --ecg-col: var(--bc-amber); --ecg-dur: 2.4s; }
+.warhammer-dbc .bc-ecg.ecg--wounded  .bc-ecg-status,
+.warhammer-dbc .bc-ecg.ecg--wounded  .bc-ecg-bpm    { color: var(--bc-amber); }
+.warhammer-dbc .bc-ecg.ecg--nearcrit .bc-ecg-wave   { --ecg-col: #ff7a3c; --ecg-dur: 1.7s; }
+.warhammer-dbc .bc-ecg.ecg--nearcrit .bc-ecg-status,
+.warhammer-dbc .bc-ecg.ecg--nearcrit .bc-ecg-bpm    { color: #ff7a3c; }
+.warhammer-dbc .bc-ecg.ecg--critical .bc-ecg-wave   { --ecg-col: var(--bc-red);   --ecg-dur: 1.3s; }
+.warhammer-dbc .bc-ecg.ecg--critical .bc-ecg-status { color: var(--bc-red); animation: bcBlink 0.7s steps(1) infinite; }
+.warhammer-dbc .bc-ecg.ecg--critical .bc-ecg-bpm    { color: var(--bc-red); }
+/* Констатация смерти — плоская линия, свип остановлен */
+.warhammer-dbc .bc-ecg.ecg--dead .bc-ecg-wave   { --ecg-col: #8a3030; }
+.warhammer-dbc .bc-ecg.ecg--dead .bc-ecg-base   { opacity: 0.85; }
+.warhammer-dbc .bc-ecg.ecg--dead .bc-ecg-lead   { display: none; }
+.warhammer-dbc .bc-ecg.ecg--dead .bc-ecg-sweep,
+.warhammer-dbc .bc-ecg.ecg--dead .bc-ecg-bar    { animation: none; display: none; }
+.warhammer-dbc .bc-ecg.ecg--dead .bc-ecg-status { color: #ff6b6b; }
+@keyframes bcBlink { 0%,60%,100% { opacity: 1; } 61%,99% { opacity: 0.25; } }
+
+/* Чекбокс «смерть» */
+.warhammer-dbc .bc-ecg-death { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; font-size: 0.82em; letter-spacing: 0.5px; color: #9af2c4; cursor: pointer; white-space: nowrap; }
+.warhammer-dbc .bc-ecg-death:hover { color: #ff8a8a; }
+.warhammer-dbc .bc-ecg-death input { width: 12px; height: 12px; margin: 0; cursor: pointer; accent-color: #ff6b6b; }
+.warhammer-dbc .bc-ecg.ecg--dead .bc-ecg-death { color: #ff8a8a; }
+
+.warhammer-dbc .bc-ecg-read { display: flex; align-items: baseline; gap: 8px; margin-top: 5px; font-size: 0.72em; }
+.warhammer-dbc .bc-ecg-hp b { font-size: 1.25em; color: var(--bc-teal); }
+.warhammer-dbc .bc-ecg-pct { color: var(--bc-teal-dim); }
+.warhammer-dbc .bc-ecg-crit { color: var(--bc-red); font-weight: bold; }
+.warhammer-dbc .bc-ecg-bpm { margin-left: auto; font-family: monospace; color: var(--bc-teal); }
+.warhammer-dbc .bc-ecg-bpm small { opacity: 0.6; }
+.warhammer-dbc .bc-ecg.ecg--critical .bc-ecg-bpm { color: var(--bc-red); }
+.warhammer-dbc .bc-ecg.ecg--wounded  .bc-ecg-bpm { color: var(--bc-amber); }
+
+/* ── Витальные счётчики ────────────────────────────────── */
+.warhammer-dbc .bc-vitals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 5px; }
+.warhammer-dbc .bc-vital {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 5px 2px; border-radius: 3px; border: 1px solid var(--bc-line);
+  background: rgba(0,0,0,0.25); --vc: var(--bc-teal-dim);
+}
+.warhammer-dbc .bc-vital .bc-vital-n { font-size: 1.3em; font-weight: bold; line-height: 1; color: var(--vc); }
+.warhammer-dbc .bc-vital .bc-vital-l { font-size: 0.56em; letter-spacing: 0.5px; color: var(--bc-teal-dim); text-transform: uppercase; }
+.warhammer-dbc .bc-vital-dis  { --vc: #9bd85a; }
+.warhammer-dbc .bc-vital-psy  { --vc: var(--bc-violet); }
+.warhammer-dbc .bc-vital-drug { --vc: var(--bc-aug); }
+/* Тревога — светится, когда счётчик > 0 */
+.warhammer-dbc .bc-vital.is-alert {
+  border-color: var(--vc);
+  box-shadow: 0 0 8px -1px var(--vc), inset 0 0 8px -3px var(--vc);
+  animation: bcVitalGlow 2s ease-in-out infinite;
+}
+.warhammer-dbc .bc-vital.is-alert .bc-vital-n { text-shadow: 0 0 8px var(--vc); }
+@keyframes bcVitalGlow { 0%,100% { box-shadow: 0 0 6px -2px var(--vc), inset 0 0 8px -3px var(--vc); } 50% { box-shadow: 0 0 12px 0 var(--vc), inset 0 0 10px -2px var(--vc); } }
+
+/* ── Реестр аугметики (тянется на всю высоту колонки) ──── */
+.warhammer-dbc .bc-implants { padding: 6px 8px 8px; flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.warhammer-dbc .bc-implants-head { display: flex; justify-content: space-between; font-size: 0.72em; letter-spacing: 1px; color: var(--bc-teal); margin-bottom: 5px; border-bottom: 1px solid var(--bc-line); padding-bottom: 4px; }
+.warhammer-dbc .bc-implants-count { color: var(--bc-bionic); font-family: monospace; }
+.warhammer-dbc .bc-implants-list { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; min-height: 120px; max-height: 340px; overflow-y: auto; }
+.warhammer-dbc .bc-impl {
+  display: flex; align-items: center; gap: 7px; padding: 5px 8px;
+  font-size: 0.84em; border-radius: 3px; border-left: 3px solid var(--imp-col, var(--bc-teal-dim));
+  background: rgba(255,255,255,0.03);
+}
+.warhammer-dbc .bc-impl-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--imp-col); flex: 0 0 auto; box-shadow: 0 0 6px var(--imp-col); }
+.warhammer-dbc .bc-impl-name { flex: 1 1 auto; color: #e8fff2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.warhammer-dbc .bc-impl-locus { font-size: 0.85em; color: var(--imp-col); border: 1px solid var(--imp-col); border-radius: 2px; padding: 0 5px; flex: 0 0 auto; }
+.warhammer-dbc .bc-impl-cat { font-size: 0.82em; color: #8fe8b0; flex: 0 0 auto; }
+/* Выбор стороны Л/П для конечностей и глаз */
+.warhammer-dbc .bc-impl-side { display: inline-flex; gap: 2px; flex: 0 0 auto; }
+.warhammer-dbc .bc-side-btn {
+  width: 18px; height: 17px; padding: 0; line-height: 1; font-size: 0.78em; font-weight: bold;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.3); border: 1px solid var(--bc-line); border-radius: 2px;
+  color: var(--bc-teal-dim); cursor: pointer; transition: all 0.1s;
+}
+.warhammer-dbc .bc-side-btn:hover { border-color: var(--imp-col); color: #eafff4; }
+.warhammer-dbc .bc-side-btn.is-on { background: var(--imp-col); border-color: var(--imp-col); color: #06140d; box-shadow: 0 0 5px -1px var(--imp-col); }
+/* «Установленный» (локализованный на фигуре) — ярче, со свечением */
+.warhammer-dbc .bc-impl.is-placed { background: rgba(255,255,255,0.04); box-shadow: inset 0 0 0 1px var(--imp-col); }
+.warhammer-dbc .bc-impl.is-placed .bc-impl-name { color: #fff; text-shadow: 0 0 6px var(--imp-col); }
+.warhammer-dbc .bc-implants-empty { font-size: 0.72em; color: var(--bc-teal-dim); text-align: center; padding: 8px 0; opacity: 0.8; }
+
+/* ═══════════════ НИЖНИЕ МЕХАНИЧЕСКИЕ ПАНЕЛИ ═══════════════ */
+/* Панели переопределены под тёмный монитор; логика/классы прежние. */
+.warhammer-dbc .bc-panels .effects-section-panel { padding: 2px; margin-bottom: 0; }
+.warhammer-dbc .bc-panels .panel-title {
+  background: linear-gradient(90deg, rgba(77,255,176,0.12), transparent);
+  color: var(--bc-teal); letter-spacing: 1px; border-left: 3px solid var(--bc-teal-dim);
+}
+.warhammer-dbc .bc-panels .conditions-empty,
+.warhammer-dbc .bc-panels .effects-empty { color: var(--bc-teal-dim); }
+.warhammer-dbc .bc-panels .effect-card {
+  background: rgba(0,0,0,0.28); border: 1px solid var(--bc-line);
+}
+.warhammer-dbc .bc-panels .effect-name { color: #d6f5e6; }
+.warhammer-dbc .bc-panels .effect-card-disease-active { border-color: #9bd85a; box-shadow: 0 0 7px -2px #9bd85a; }
+/* Состояния — светящиеся чипы */
+.warhammer-dbc .bc-panels .condition-tag {
+  border-color: var(--cond-color);
+  box-shadow: 0 0 8px -3px var(--cond-color), inset 0 0 6px -3px var(--cond-color);
+}
+.warhammer-dbc .bc-panels .condition-tag .condition-tag-icon { filter: drop-shadow(0 0 4px var(--cond-color)); }
+.warhammer-dbc .bc-panels .condition-tag-name { color: #e8fff2; }
+/* Компактная таблица «Применить препарат» (кнопки в ряд, меньше отступов) */
+.warhammer-dbc .bc-panels .effects-drug-table thead th { padding: 3px 6px; }
+.warhammer-dbc .bc-panels .effects-drug-table tbody td,
+.warhammer-dbc .bc-panels .effects-drug-table .drug-duration-cell { padding: 2px 6px; }
+.warhammer-dbc .bc-panels .drug-apply-actions { flex-wrap: nowrap; gap: 3px; }
+.warhammer-dbc .bc-panels .drug-apply-btn,
+.warhammer-dbc .bc-panels .drug-apply-other-btn { padding: 2px 7px; font-size: 0.72em; line-height: 1.35; font-weight: 500; }
+
+/* ═══════════ Жизнеобеспечение: Голод / Жажда / Сон (корбук 483) ═══════════ */
+.warhammer-dbc .bc-life {
+  display: flex; flex-direction: column; gap: 5px; padding: 6px;
+  border: 1px solid var(--bc-line); border-radius: 4px;
+  background: linear-gradient(180deg, rgba(12,32,22,0.55), rgba(6,20,14,0.55));
+}
+.warhammer-dbc .bc-life-cap { font-size: 0.56em; letter-spacing: 2px; color: var(--bc-teal-dim); text-transform: uppercase; text-align: center; }
+.warhammer-dbc .bc-life-row {
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 7px;
+  padding: 4px 6px; border-radius: 4px; border-left: 2px solid var(--vc);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--vc) 13%, transparent), transparent 72%);
+}
+.warhammer-dbc .bc-life-row.is-alert { box-shadow: inset 0 0 12px -6px var(--vc); }
+.warhammer-dbc .bc-life-row.is-crit { animation: bcLifeCrit 1.7s ease-in-out infinite; }
+@keyframes bcLifeCrit { 0%,100% { box-shadow: inset 0 0 0 transparent; } 50% { box-shadow: inset 0 0 16px -5px var(--vc); } }
+.warhammer-dbc .bc-life-ic { font-size: 1.02em; text-align: center; filter: drop-shadow(0 0 4px var(--vc)); }
+.warhammer-dbc .bc-life-mid { min-width: 0; }
+.warhammer-dbc .bc-life-top { display: flex; align-items: baseline; gap: 6px; }
+.warhammer-dbc .bc-life-lbl { font-size: 0.76em; font-weight: 700; color: #d8ffe8; flex: 0 0 auto; }
+.warhammer-dbc .bc-life-stage { font-size: 0.82em; font-weight: 700; color: color-mix(in srgb, var(--vc) 42%, #f2fff8); text-shadow: 0 0 5px color-mix(in srgb, var(--vc) 55%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.warhammer-dbc .bc-life-pen { margin-left: auto; font-size: 0.6em; font-weight: 800; color: #06140d; background: var(--vc); border-radius: 6px; padding: 0 5px; flex: 0 0 auto; }
+.warhammer-dbc .bc-life-pips { display: flex; gap: 3px; margin-top: 3px; }
+.warhammer-dbc .bc-life-pip { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.09); }
+.warhammer-dbc .bc-life-pip.on { background: var(--vc); box-shadow: 0 0 5px var(--vc); }
+.warhammer-dbc .bc-life-ctl { display: flex; gap: 3px; flex: 0 0 auto; }
+.warhammer-dbc .bc-life-btn {
+  width: 20px; height: 20px; padding: 0; line-height: 1; cursor: pointer; font-size: 0.82em; font-weight: 700;
+  background: #0c2016; color: var(--bc-teal-dim); border: 1px solid var(--bc-line); border-radius: 3px;
+}
+.warhammer-dbc .bc-life-btn:hover { color: var(--bc-teal); border-color: var(--bc-teal); box-shadow: 0 0 5px -1px var(--bc-teal); }
+.warhammer-dbc .bc-life-ok:hover { color: #7bffb0; border-color: #4dffb0; }
+
+/* Компактная кнопка Хирургеона (уступила место жизнеобеспечению) */
+.warhammer-dbc .bc-surgeon-btn--sm { min-height: 0; flex: 0 0 auto; flex-direction: row; gap: 10px; padding: 8px 12px; }
+.warhammer-dbc .bc-surgeon-btn--sm .bc-surgeon-ic { width: 26px; height: 26px; }
+.warhammer-dbc .bc-surgeon-btn--sm .bc-surgeon-btn-label { font-size: 0.84em; letter-spacing: 1.5px; }
+.warhammer-dbc .bc-surgeon-btn--sm .bc-surgeon-btn-sub { display: none; }
+
+/* Спицы ротора аугметического сердца — медленное вращение под пульс корпуса. */
+.warhammer-dbc .body-implants .imp-rotor {
+  transform-box: fill-box; transform-origin: center;
+  animation: impRotor 6s linear infinite;
+  opacity: 0.8;
+}
+@keyframes impRotor { to { transform: rotate(360deg); } }
+
+/* ═════════ Телосложение (вкладка «ЗАПИСИ») ═════════ */
+.warhammer-dbc .body-type-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+.warhammer-dbc .body-type-opt {
+  flex: 1 1 90px; display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 4px 10px; cursor: pointer; border-radius: 4px;
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border);
+  color: var(--wh-text); font-size: 0.9em;
+}
+.warhammer-dbc .body-type-opt:hover { border-color: var(--wh-border-light); }
+.warhammer-dbc .body-type-opt.sel {
+  border-color: var(--wh-accent); background: rgba(77,255,166,0.12);
+  color: var(--wh-text-dark); font-weight: bold;
+}
+.warhammer-dbc .body-type-opt input { margin: 0; }
+.warhammer-dbc .body-type-note {
+  margin-top: 5px; font-size: 0.78em; font-style: italic;
+  color: var(--wh-panel-mid); line-height: 1.4;
+}
+
+/* Опорная плита кисти/стопы — та же пластика, что у полос брони. */
+.warhammer-dbc .body-implants .imp-limb-plate {
+  fill: color-mix(in srgb, currentColor 52%, #04140c);
+  stroke: currentColor; stroke-width: 1.1; stroke-linejoin: round; filter: none;
+}
+
+/* ── Скелетный имплант: кости, а не решётка ── */
+/* Залитые кости (череп, позвонки, таз, лопатки) — плотные, полые (глазницы,
+   носовое отверстие) — вырезаны фоном. */
+.warhammer-dbc .body-implants .imp-bone-f {
+  fill: color-mix(in srgb, currentColor 42%, #04140c);
+  stroke: currentColor; stroke-width: 1; stroke-linejoin: round;
+}
+.warhammer-dbc .body-implants .imp-bone-void {
+  fill: #04140c; stroke: currentColor; stroke-width: 0.9;
+}
+/* Длинные кости толще рёбер — иначе грудная клетка перевешивала конечности. */
+.warhammer-dbc .body-implants .imp-bone-th {
+  fill: none; stroke: currentColor; stroke-width: 4;
+  stroke-linecap: round; opacity: 0.95;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+/* Скелет полупрозрачен: поверх него ложатся другие импланты, и непрозрачные
+   кости перекрывали бы их. */
+.warhammer-dbc .body-implants .imp-skel { opacity: 0.55; }
+.warhammer-dbc .body-implants .imp-skel .imp-bone-th { stroke-width: 3.2; filter: none; }
+/* Фаланги тоньше длинных костей — иначе кисть выглядела щёткой. */
+.warhammer-dbc .body-implants .imp-bone-d {
+  fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round;
+}
+.warhammer-dbc .body-implants .imp-bone-j { fill: currentColor; opacity: 0.8; }
+
+/* ═══════════════ РЕЕСТР ОРГАНОВ ГЕНОСЕМЕНИ ═══════════════ */
+/* Цвет строк совпадает с цветом категории "geneseed" на био-скане (#e04a4a),
+   чтобы реестр и фигура читались как одно целое. */
+.warhammer-dbc .geneseed-subsection { --gs-col: #e04a4a; }
+.warhammer-dbc .geneseed-subsection .panel-title { color: var(--gs-col); }
+.warhammer-dbc .geneseed-count {
+  margin-left: 8px; font-size: 0.78em; letter-spacing: 0.5px; opacity: 0.75;
+  padding: 0 5px; border: 1px solid currentColor; border-radius: 2px;
+}
+.warhammer-dbc .geneseed-name-link { cursor: pointer; }
+.warhammer-dbc .geneseed-name-link:hover { color: var(--gs-col); }
+.warhammer-dbc .geneseed-where { white-space: nowrap; opacity: 0.75; font-size: 0.9em; }
+.warhammer-dbc .geneseed-weapon { color: var(--bc-amber); margin-left: 4px; }
+.warhammer-dbc .geneseed-weapon-note { margin-top: 4px; color: var(--bc-amber); font-size: 0.92em; }
+/* Ручной статус органа: не вживлён (тускло), вживлён (как обычно),
+   не работает — орган на месте, но неисправен (янтарный акцент, как и
+   прочие "требует внимания" индикаторы на этой вкладке). */
+.warhammer-dbc .geneseed-row-off { opacity: 0.55; }
+.warhammer-dbc .geneseed-row-disabled .item-name-cell { color: var(--bc-amber); }
+.warhammer-dbc .geneseed-state-select {
+  font-size: 0.85em; background: var(--wh-panel-mid); color: inherit;
+  border: 1px solid var(--bc-line); border-radius: 2px; padding: 1px 3px;
+}
+.warhammer-dbc .geneseed-row-off .geneseed-state-select { color: var(--bc-flesh); }
+.warhammer-dbc .geneseed-row-disabled .geneseed-state-select { color: var(--bc-amber); border-color: var(--bc-amber); }

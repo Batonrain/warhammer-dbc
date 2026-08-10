@@ -1,0 +1,231 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка «Одержимость» (Двойной Дух)
+   Цвет бога — переменная --gc (задаётся инлайн по демону).
+   Жуткая хаоситская тема + бегущие руны True Tongue.
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .possession-tab {
+  --gc: #b477ff; --glow: rgba(180,119,255,0.9);
+  position: relative; overflow: hidden auto;
+  font-size: 14.5px; line-height: 1.4;
+  padding: 26px 10px 12px; color: #d8cde8;
+  background:
+    radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--gc) 22%, transparent), transparent 55%),
+    radial-gradient(90% 60% at 100% 110%, color-mix(in srgb, var(--gc) 14%, transparent), transparent 60%),
+    repeating-linear-gradient(115deg, rgba(0,0,0,0.16) 0 2px, transparent 2px 26px),
+    linear-gradient(180deg, #0c0713, #08060f 60%, #0a0510);
+}
+/* пульсация «дыхания» варпа по краю вкладки */
+.warhammer-dbc .possession-tab::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 60px -10px color-mix(in srgb, var(--gc) 60%, transparent);
+  animation: possBreath 6s ease-in-out infinite;
+}
+@keyframes possBreath { 0%,100% { opacity: 0.35; } 50% { opacity: 0.85; } }
+
+/* ── Бегущие руны True Tongue ─────────────────────────── */
+.warhammer-dbc .poss-runeband {
+  position: absolute; top: 0; left: 0; right: 0; height: 26px;
+  color: var(--gc); opacity: 0.5; pointer-events: none;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+          mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  filter: drop-shadow(0 0 4px var(--glow));
+}
+.warhammer-dbc .poss-runeband svg { width: 200%; height: 100%; display: block; }
+.warhammer-dbc .poss-runeband-scroll { animation: possRuneScroll 26s linear infinite; }
+@keyframes possRuneScroll { from { transform: translateX(0); } to { transform: translateX(-384px); } }
+
+/* ── Шапка ────────────────────────────────────────────── */
+.warhammer-dbc .poss-header {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 92px 1fr auto; gap: 12px; align-items: center;
+  padding: 10px 12px; border-radius: 8px; margin-bottom: 10px;
+  background: linear-gradient(180deg, rgba(20,11,34,0.86), rgba(10,7,20,0.92));
+  border: 1px solid color-mix(in srgb, var(--gc) 34%, #241634);
+  border-left: 4px solid var(--gc);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 0 22px -10px var(--gc);
+}
+.warhammer-dbc .poss-sigil { position: relative; width: 88px; height: 88px; }
+.warhammer-dbc .poss-rune-ring {
+  position: absolute; inset: -2px; color: var(--gc); opacity: 0.65;
+  filter: drop-shadow(0 0 3px var(--glow));
+}
+.warhammer-dbc .poss-rune-ring-spin { transform-origin: 50px 50px; animation: possRingSpin 34s linear infinite; }
+@keyframes possRingSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+.warhammer-dbc .poss-sigil-mask {
+  position: absolute; inset: 14px; background: var(--gc);
+  filter: drop-shadow(0 0 6px var(--gc));
+  animation: possSigil 4.5s ease-in-out infinite;
+}
+@keyframes possSigil {
+  0%,100% { filter: drop-shadow(0 0 5px var(--gc)); opacity: 0.9; }
+  50%     { filter: drop-shadow(0 0 14px var(--gc)); opacity: 1; }
+}
+
+.warhammer-dbc .poss-id { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.warhammer-dbc .poss-demon-name {
+  font-size: 1.25em; font-weight: 800; letter-spacing: 0.02em; color: #efe4ff;
+  background: transparent; border: none; border-bottom: 1px solid transparent; padding: 1px 2px;
+}
+.warhammer-dbc .poss-demon-name:focus { outline: none; border-bottom-color: var(--gc); }
+.warhammer-dbc .poss-sub { font-size: 0.9em; color: #a89bc8; letter-spacing: 0.03em; }
+.warhammer-dbc .poss-sub b { color: #efe4ff; }
+.warhammer-dbc .poss-god {
+  color: var(--gc); font-weight: 700; text-shadow: 0 0 8px var(--glow);
+}
+.warhammer-dbc .poss-selrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.warhammer-dbc .poss-selrow label {
+  display: flex; flex-direction: column; gap: 2px;
+  font-size: 0.76em; text-transform: uppercase; letter-spacing: 0.05em; color: #8a7fb0;
+}
+.warhammer-dbc .poss-selrow select {
+  background: rgba(0,0,0,0.45); border: 1px solid color-mix(in srgb, var(--gc) 30%, #2a1e44);
+  color: #d9cff0; border-radius: 4px; padding: 3px 6px; font-size: 1.35em;
+}
+.warhammer-dbc .poss-gp { flex-direction: row !important; align-items: center; gap: 5px !important;
+  font-size: 0.84em !important; color: #b7abd8; text-transform: none !important; }
+
+.warhammer-dbc .poss-vitals { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; min-width: 128px; }
+.warhammer-dbc .poss-state {
+  font-size: 0.84em; letter-spacing: 0.08em; text-transform: uppercase; color: #8a7fb0;
+}
+.warhammer-dbc .poss-vitals.is-manifested .poss-state {
+  color: var(--gc); font-weight: 800; text-shadow: 0 0 10px var(--glow);
+  animation: possBreath 2.4s ease-in-out infinite;
+}
+.warhammer-dbc .poss-manifest-btn {
+  padding: 5px 14px; font-size: 0.9em; font-weight: 700; cursor: pointer; border-radius: 5px;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  background: color-mix(in srgb, var(--gc) 28%, #140b22); color: #f4ecff;
+  border: 1px solid var(--gc); box-shadow: 0 0 14px -4px var(--gc); transition: all 0.15s;
+}
+.warhammer-dbc .poss-manifest-btn:hover { background: color-mix(in srgb, var(--gc) 46%, #140b22); box-shadow: 0 0 18px -2px var(--gc); }
+.warhammer-dbc .poss-dw { display: flex; align-items: center; gap: 4px; font-size: 0.7em; color: #9a8fc0; }
+.warhammer-dbc .poss-dw input {
+  width: 40px; text-align: center; background: rgba(0,0,0,0.4);
+  border: 1px solid color-mix(in srgb, var(--gc) 26%, #2a1e44); color: #e2d8f4; border-radius: 4px; padding: 1px 2px;
+}
+.warhammer-dbc .poss-dw span { width: 100%; text-align: right; }
+
+/* ── Панели ───────────────────────────────────────────── */
+.warhammer-dbc .poss-panel {
+  position: relative; z-index: 1; margin-bottom: 10px; padding: 8px 10px 10px; border-radius: 7px;
+  background: linear-gradient(180deg, rgba(16,10,26,0.72), rgba(10,7,18,0.82));
+  border: 1px solid #241634; border-left: 3px solid color-mix(in srgb, var(--gc) 55%, #241634);
+  box-shadow: inset 0 0 24px rgba(0,0,0,0.4);
+}
+.warhammer-dbc .poss-panel-title {
+  font-size: 0.86em; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: #cbbde8; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--gc) 55%, transparent);
+}
+.warhammer-dbc .poss-band {
+  font-size: 0.92em; font-weight: 600; letter-spacing: 0.02em; text-transform: none;
+  color: #8a7fb0; padding: 1px 7px; border-radius: 10px; border: 1px solid #2c1f46; background: rgba(0,0,0,0.3);
+}
+.warhammer-dbc .poss-cor { margin-left: auto; color: var(--gc); font-weight: 700; }
+
+/* профиль Проявления */
+.warhammer-dbc .poss-manifest-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+}
+.warhammer-dbc .poss-mcell {
+  display: flex; flex-direction: column; gap: 1px; align-items: center; padding: 6px 4px; border-radius: 5px;
+  background: rgba(0,0,0,0.3); border: 1px solid #241634;
+}
+.warhammer-dbc .poss-mcell span { font-size: 0.76em; color: #9184b4; text-align: center; letter-spacing: 0.02em; }
+.warhammer-dbc .poss-mcell b { font-size: 1.25em; color: #efe4ff; }
+.warhammer-dbc .poss-mcell-hl {
+  border-color: var(--gc); background: color-mix(in srgb, var(--gc) 14%, rgba(0,0,0,0.3));
+  box-shadow: 0 0 12px -5px var(--gc);
+}
+.warhammer-dbc .poss-mcell-hl b { color: var(--gc); text-shadow: 0 0 8px var(--glow); }
+.warhammer-dbc .poss-note { font-size: 0.84em; color: #9184b4; line-height: 1.5; margin-top: 8px; }
+.warhammer-dbc .poss-swaprow { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+.warhammer-dbc .poss-swaprow label { font-size: 0.84em; color: #b7abd8; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+
+/* симбиоз */
+.warhammer-dbc .poss-pips { display: flex; gap: 8px; margin-bottom: 8px; }
+.warhammer-dbc .poss-pip {
+  width: 26px; height: 10px; border-radius: 3px; background: rgba(0,0,0,0.4);
+  border: 1px solid #2c1f46; position: relative;
+}
+.warhammer-dbc .poss-pip.on { background: var(--gc); border-color: var(--gc); box-shadow: 0 0 10px -1px var(--glow); }
+.warhammer-dbc .poss-pip.over { border-style: dashed; opacity: 0.45; }
+.warhammer-dbc .poss-syms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.warhammer-dbc .poss-syms > div {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; border-radius: 5px;
+  background: rgba(0,0,0,0.28); border: 1px solid #241634;
+}
+.warhammer-dbc .poss-syms span { font-size: 0.76em; color: #9184b4; text-align: center; }
+.warhammer-dbc .poss-syms b { font-size: 1.15em; color: var(--gc); text-shadow: 0 0 8px var(--glow); }
+
+/* наслоение */
+.warhammer-dbc .poss-divine-body p { font-size: 0.9em; color: #c3b6e0; line-height: 1.55; margin: 0 0 6px; }
+.warhammer-dbc .poss-divine-body b { color: var(--gc); }
+
+/* дары */
+.warhammer-dbc .poss-gift-group { margin-bottom: 8px; }
+.warhammer-dbc .poss-gift-group-title {
+  font-size: 0.68em; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--gc); margin-bottom: 4px; opacity: 0.9;
+}
+.warhammer-dbc .poss-gift-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.warhammer-dbc .poss-gift {
+  display: flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 12px; cursor: help;
+  background: rgba(0,0,0,0.32); border: 1px solid #2c1f46; transition: all 0.12s;
+}
+.warhammer-dbc .poss-gift:hover {
+  border-color: var(--gc); background: color-mix(in srgb, var(--gc) 16%, rgba(0,0,0,0.32));
+  box-shadow: 0 0 10px -4px var(--gc);
+}
+.warhammer-dbc .poss-gift-name { font-size: 0.86em; color: #ded2f2; }
+.warhammer-dbc .poss-gift-cost { font-size: 0.76em; color: #8a7fb0; }
+
+/* таланты */
+.warhammer-dbc .poss-talent-list { display: flex; flex-direction: column; gap: 6px; }
+.warhammer-dbc .poss-talent { padding: 6px 8px; border-radius: 5px; background: rgba(0,0,0,0.28); border: 1px solid #241634; border-left: 2px solid color-mix(in srgb, var(--gc) 50%, #241634); }
+.warhammer-dbc .poss-talent-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.warhammer-dbc .poss-talent-name { font-size: 0.92em; font-weight: 700; color: #efe4ff; }
+.warhammer-dbc .poss-talent-meta { font-size: 0.76em; color: #8a7fb0; white-space: nowrap; }
+.warhammer-dbc .poss-talent-text { font-size: 0.84em; color: #a89bc8; line-height: 1.45; margin-top: 3px; }
+
+/* нав-ссылка вкладки подсвечена цветом бога */
+.warhammer-dbc .sheet-tabs .tab-possession-link.active,
+.warhammer-dbc .sheet-tabs .tab-possession-link:hover {
+  color: var(--gc); text-shadow: 0 0 8px var(--gc);
+}
+
+/* ── Чат-карточка Проявления (вне .warhammer-dbc scope) ─────────────────── */
+.wh-poss-card { --gc:#b477ff; border:1px solid var(--gc); border-left:4px solid var(--gc);
+  border-radius:6px; padding:6px 9px; background:linear-gradient(180deg,#140b22,#0a0714); color:#d8cde8; }
+.wh-poss-card-h { font-weight:800; letter-spacing:0.04em; color:#efe4ff; text-shadow:0 0 8px var(--gc); font-size:0.92em; }
+.wh-poss-card-r { font-size:0.86em; margin-top:4px; }
+.wh-poss-card-r .ok { color:#8fbf3a; font-weight:700; }
+.wh-poss-card-r .bad { color:#e0202e; font-weight:700; }
+.wh-poss-card-n { font-size:0.76em; color:#9184b4; margin-top:4px; line-height:1.4; }
+
+/* ── Авто-бонусы Проявления ────────────────────────────── */
+.warhammer-dbc .poss-applied {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px;
+  padding: 7px 9px; border-radius: 6px;
+  background: color-mix(in srgb, var(--gc) 14%, rgba(0,0,0,0.35));
+  border: 1px solid var(--gc); box-shadow: 0 0 16px -6px var(--gc);
+}
+.warhammer-dbc .poss-applied-tag { font-size: 0.84em; font-weight: 800; color: var(--gc); text-shadow: 0 0 8px var(--glow); letter-spacing: 0.03em; }
+.warhammer-dbc .poss-applied-chip {
+  font-size: 0.7em; color: #efe4ff; padding: 2px 8px; border-radius: 10px;
+  background: rgba(0,0,0,0.4); border: 1px solid color-mix(in srgb, var(--gc) 45%, #2c1f46);
+}
+.warhammer-dbc .poss-dormant { font-style: italic; opacity: 0.85; }
+.warhammer-dbc .poss-warn { color: #e8b84a; border-left: 2px solid #e8b84a; padding-left: 8px; }
+.warhammer-dbc .poss-band.poss-over { color: #e8b84a; border-color: #e8b84a; }
+
+/* активный Дар (надет на актора) */
+.warhammer-dbc .poss-gift.is-active {
+  border-color: var(--gc);
+  background: color-mix(in srgb, var(--gc) 20%, rgba(0,0,0,0.32));
+  box-shadow: 0 0 10px -3px var(--gc);
+}
+.warhammer-dbc .poss-gift.is-active .poss-gift-name { color: #fff; font-weight: 600; }
+.warhammer-dbc .poss-gift-dot { color: var(--gc); font-size: 0.84em; text-shadow: 0 0 6px var(--glow); }

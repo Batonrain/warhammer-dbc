@@ -1,0 +1,48 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  СВОЙСТВО ОРУЖИЯ (справочная запись, не влияет на расчёт сама по себе) --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "weaponProperty")}}
+
+<div class="item-section">
+  <div class="item-section-title">СВОЙСТВО ОРУЖИЯ</div>
+  <div class="trait-fx-hint">Справочная запись библиотеки «Свойства оружия». Сам расчёт (модификаторы атаки/урона и т.п.) читается движком по ключу <code>autoKey</code> прямо из кода — перетаскивание этого предмета на оружие ничего не активирует. Чтобы включить свойство на конкретном оружии, добавьте его через штатный список свойств на листе оружия.</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Источник</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Core, стр. 166"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Применимо</label>
+    <select name="system.category" class="wr-select-sm">
+      <option value="ranged" {{#if (eq system.category "ranged")}}selected{{/if}}>Дальнобойное</option>
+      <option value="melee"  {{#if (eq system.category "melee")}}selected{{/if}}>Рукопашное</option>
+      <option value="both"   {{#if (eq system.category "both")}}selected{{/if}}>Любое</option>
+    </select>
+  </div>
+
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.hasRating" {{#if system.hasRating}}checked{{/if}}/>
+      Принимает рейтинг (X)
+    </label>
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.hasRating2" {{#if system.hasRating2}}checked{{/if}}/>
+      Принимает второй рейтинг (X/Y)
+    </label>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label" title="Ключ в system.weaponProps[].key на оружии и в combat/weapon-properties.mjs — только для справки, не редактируется здесь">Ключ движка</label>
+    <input type="text" value="{{system.autoKey}}" class="wr-input-md" readonly/>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">НАПОМИНАНИЕ В ЧАТ</div>
+  <textarea name="system.reminder" class="item-textarea"
+            placeholder="Короткая подсказка, выводимая при броске (если есть)...">{{system.reminder}}</textarea>
+</div>
+
+{{/if}}

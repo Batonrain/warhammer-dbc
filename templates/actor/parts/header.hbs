@@ -1,0 +1,60 @@
+<header class="sheet-header{{#if (eq system.alignment "heretic")}} chaos-aligned{{/if}}{{#if (eq system.alignment "loyalist")}} loyalist-aligned{{/if}}{{#if (eq system.alignment "renegade")}} renegade-aligned{{/if}}"> <div class="portrait-block"> <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/> </div> <div class="header-main"> <div class="header-name-row"> <label class="header-label">Имя</label> <input class="actor-name" name="name" type="text" value="{{actor.name}}" placeholder="Имя персонажа"/> </div> <div class="header-grid"> <div class="header-rows">
+    <div class="header-row-fixed header-row-race"> <div class="header-cell"> <label>Раса</label> <select name="system.race" class="race-select"> <option value="">— выберите —</option> {{#each raceGroups as |g|}}
+          <optgroup label="{{g.label}}"> {{#each g.races as |r|}}
+            <option value="{{r.key}}" {{#if (eq @root.system.race r.key)}}selected{{/if}}>{{r.label}}</option> {{/each}}
+          </optgroup> {{/each}}
+        </select> </div> <div class="header-cell header-cell-subrace"> <label>Субраса</label> <div class="subrace-controls"> {{#if hasSubraces}}
+            <select name="system.subrace"> <option value="">— выберите —</option> {{#each availableSubraces as |sub|}}
+                <option value="{{sub.key}}" {{#if (eq @root.system.subrace sub.key)}}selected{{/if}}> {{sub.label}}
+                </option> {{/each}}
+            </select> {{else}}
+            <input type="text" name="system.subrace" value="{{system.subrace}}" placeholder="—"/> {{/if}}
+          {{#if (eq system.subrace "navigator")}}
+          <input type="text" name="system.navigatorHouse" value="{{system.navigatorHouse}}" placeholder="Дом Навигатора" title="Название дома Навис Нобилитэ"/> {{/if}}
+          {{#if isYnnari}}
+          <select name="system.ynnariPast" class="ynnari-past-select" title="Прошлое — бывшая раса (её бонусы наследуются)"> <option value="">— Прошлое —</option> {{#each ynnariPastOptions as |p|}}
+            <option value="{{p.key}}" {{#if (eq @root.system.ynnariPast p.key)}}selected{{/if}}>{{p.label}}</option> {{/each}}
+          </select> {{/if}}
+          {{#if isHarlequin}}
+          <select name="system.harlequinPast" class="ynnari-past-select" title="Прошлое — изначальная раса (её бонусы наследуются)"> <option value="">— Прошлое —</option> {{#each harlequinPastOptions as |p|}}
+            <option value="{{p.key}}" {{#if (eq @root.system.harlequinPast p.key)}}selected{{/if}}>{{p.label}}</option> {{/each}}
+          </select> {{/if}}
+          {{#if isAeldari}}
+          <input type="text" name="system.lineageOrigin" value="{{system.lineageOrigin}}" placeholder="Происхождение" title="Мир-корабль / Кабал / линия происхождения"/> {{/if}}
+        </div> </div> {{#if isAstartes}}
+      <div class="header-cell header-cell-readonly" title="Геносемя — редактируется на вкладке «Заметки» (Происхождение и легион)"> <label>Геносемя</label> <div class="header-readonly-val">{{#if headerGeneSeedName}}{{headerGeneSeedName}}{{else}}—{{/if}}</div> </div>
+      <div class="header-cell header-cell-readonly" title="Культура — редактируется на вкладке «Заметки» (Происхождение и легион)"> <label>Культура</label> <div class="header-readonly-val">{{#if headerCultureName}}{{headerCultureName}}{{else}}—{{/if}}</div> </div>
+      {{/if}}</div>
+    <div class="header-row-fixed header-row-archetype"> <div class="header-cell"> <label>Архетип</label> <select class="arch-select"> <option value="">— не выбран —</option> {{#each archetype.groups as |grp|}}
+          {{#if grp.label}}
+          <optgroup label="{{grp.label}}"> {{#each grp.opts as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option>{{/each}}
+          </optgroup> {{else}}
+          {{#each grp.opts as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option>{{/each}}
+          {{/if}} {{/each}}
+      </select> </div> <div class="header-cell header-cell-elite"> <label>Элитный архетип</label> <div class="elite-stack"> <div class="elite-pick-row"><input type="text" name="system.eliteArchetype" value="{{system.eliteArchetype}}" placeholder="Элитный архетип"/><button type="button" class="elite-pick-btn" title="Выбрать из списка (по расе)"><i class="fas fa-list"></i></button><button type="button" class="elite-add-btn" title="Добавить ещё один элитный архетип">+</button></div> {{#each eliteArchetypesExtra as |ea|}}
+        <div class="elite-pick-row elite-pick-extra"><input type="text" class="elite-extra-input" data-index="{{ea.idx}}" value="{{ea.value}}" placeholder="Ещё элитный архетип"/><button type="button" class="elite-extra-pick-btn" data-index="{{ea.idx}}" title="Выбрать из списка (по расе)"><i class="fas fa-list"></i></button><button type="button" class="elite-extra-remove" data-index="{{ea.idx}}" title="Удалить">✕</button></div> {{/each}}
+      </div> </div> </div>
+    <div class="header-row-fixed header-row-origin"> {{#if homeworld}}
+      <div class="header-cell header-cell-homeworld"> <label title="Родной мир персонажа: три модификатора Характеристик и Особенность">Происхождение</label> <div class="hw-controls"> <select class="hw-select"> <option value="">— не выбрано —</option> <option value="random">🎲 Выбрать случайно</option> {{#each homeworld.options as |o|}}
+          <option value="{{o.key}}" {{#if o.selected}}selected{{/if}} title="{{o.chars}}">{{o.label}}</option> {{/each}}
+        </select> </div> </div> {{/if}} {{#if divination}}
+      <div class="header-cell header-cell-homeworld"> <label title="Предсказание судьбы: эффект по таблице к100">Предсказание</label> <div class="hw-controls"> <select class="dv-select"> <option value="">— не выбрано —</option> <option value="random">🎲 Бросить к100</option> {{#each divination.options as |o|}}
+          <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option> {{/each}}
+        </select> </div> </div> {{/if}} </div>
+    <div class="header-row-fixed header-row-aspir"> {{#each aspirationSlots as |a|}}
+      <div class="header-cell header-cell-readonly" title="{{#if a.mods}}{{a.mods}}{{else}}Редактируется на вкладке «Заметки»{{/if}}"> <label>{{a.label}}</label> <div class="header-readonly-val">{{#if a.name}}{{a.name}}{{else}}—{{/if}}</div> </div>
+      {{/each}} </div>
+    </div>
+    <div class="header-resources">
+    <div class="header-cell fate-cell"> <label>{{fateLabel}}</label> <div class="fate-values"> <input type="number" name="system.fate.value" value="{{system.fate.value}}" min="0" {{#if system.fateMaxAuto}}max="{{system.fate.max}}"{{/if}}/> <span>/</span> {{#if system.fateMaxAuto}}<input type="number" value="{{system.fate.max}}" readonly title="Авторасчёт: W.b × (1 + «Бездонная Душа»)"/>{{else}}<input type="number" name="system.fate.max" value="{{system.fate.max}}" min="0"/>{{/if}} </div> {{#if fatePips.length}}<div class="fate-pips" title="Очки Судьбы">{{#each fatePips as |p|}}<i class="fate-pip {{#if p.on}}on{{/if}}"></i>{{/each}}</div>{{/if}} </div> {{#if isYnnari}}
+      <div class="header-cell fate-cell"> <label title="Максимум = W.b × 3 (авторасчёт)">Мёртвое Могущество</label> <div class="fate-values"> <input type="number" name="system.deadMight.value" value="{{system.deadMight.value}}" min="0" max="{{system.deadMight.max}}"/> <span>/</span> <input type="number" value="{{system.deadMight.max}}" readonly title="W.b × 3"/> </div> </div> {{/if}}
+    {{!-- ── Усталость ─────────────────────────────────────────────────── --}}
+      <div class="header-cell fate-cell fatigue-cell"> <label class="fatigue-label"> Усталость
+          {{#if system.fatigue.value}}
+          <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cog)">−10</span> {{/if}}
+        </label> <div class="fate-values fatigue-values"> <input type="number" name="system.fatigue.value" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input
+                   {{#if system.fatigue.value}}fatigue-nonzero{{/if}}"/> <span>/</span> <input type="number" name="system.fatigue.max" value="{{system.fatigue.max}}" min="0" title="Порог (= T.b + W.b)"/> </div> <div class="fatigue-bar" title="Усталость {{fatiguePct}}%"><div class="fatigue-fill load-{{fatigueLevel}}" style="width:{{fatiguePct}}%;"></div></div> <div class="fatigue-btns"> <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button> <button type="button" class="fatigue-btn fatigue-remove-btn" title="Снять 1 Усталость">−1</button> <button type="button" class="fatigue-btn fatigue-rest-btn" title="Час отдыха (−1 Усталость)">Отдых</button> <button type="button" class="fatigue-btn fatigue-btn-sleep fatigue-sleep-btn" title="Полноценный сон (снять всю Усталость)">Сон</button> </div> </div>
+    </div>
+  </div> <div class="header-checks"> {{#unless isAeldari}}
+      <label class="checkbox-label align-label"> <span>Мировоззрение</span> <select name="system.alignment" class="alignment-select"> <option value="loyalist" {{#if (eq system.alignment "loyalist")}}selected{{/if}}>Лоялист</option> <option value="renegade" {{#if (eq system.alignment "renegade")}}selected{{/if}}>Ренегат</option> <option value="heretic" {{#if (eq system.alignment "heretic")}}selected{{/if}}>Хаосит</option> </select> </label> {{/unless}}
+      <button type="button" class="char-wizard-btn" title="Мастер создания персонажа">Мастер</button> </div> </div> </header>

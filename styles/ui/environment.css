@@ -1,0 +1,194 @@
+/* ═══════════════════════════════════════════════════════
+   Окружающая Среда — окно ГМа + экранный виджет.
+   Когитаторная фосфорная зелень; акцент параметра — через --c.
+═══════════════════════════════════════════════════════ */
+
+/* ══════════════════════ ОКНО ══════════════════════ */
+.wh-environment .window-content { background: #06120c; color: #c6ffe0; padding: 0; }
+.wh-env { display: flex; flex-direction: column; height: 100%; font-family: "Oswald", "Roboto Condensed", sans-serif; }
+
+.wh-env-topbar {
+  display: flex; align-items: center; gap: 12px; padding: 8px 12px; flex: 0 0 auto;
+  border-bottom: 1px solid #2f9e6a; background: rgba(15,58,38,0.4);
+}
+.wh-env-scene-lbl { font-size: 0.64em; letter-spacing: 0.16em; color: #6fbf95; }
+.wh-env-scene-name { font-size: 1.02em; font-weight: 700; color: #d8ffe8; text-shadow: 0 0 7px rgba(77,255,166,0.4); }
+.wh-env-reset {
+  width: auto; flex: 0 0 auto; margin-left: auto; background: #0e2a1c; color: #cdeede;
+  border: 1px solid #2f6f4a; border-radius: 3px; padding: 3px 12px; cursor: pointer; font-size: 0.82em; font-weight: 700;
+}
+.wh-env-reset:hover { background: #4a1414; border-color: #b8453a; color: #ff9a9a; }
+
+/* Область правки: Группа / Сцена */
+.wh-env-target { margin-left: auto; display: inline-flex; border: 1px solid #2f6f4a; border-radius: 5px; overflow: hidden; }
+.wh-env-tgt {
+  width: auto; flex: 0 0 auto; background: #0a1c12; color: #8fbfa8; border: none; border-radius: 0;
+  padding: 4px 12px; cursor: pointer; font-size: 0.82em; font-weight: 700; letter-spacing: 0.02em;
+}
+.wh-env-tgt + .wh-env-tgt { border-left: 1px solid #2f6f4a; }
+.wh-env-tgt:hover { background: #10301f; color: #d8ffe8; }
+.wh-env-tgt.on { background: linear-gradient(180deg, #17532f, #0e3a20); color: #eafff4; box-shadow: inset 0 0 14px -6px #4dffa6; text-shadow: 0 0 6px rgba(77,255,166,0.5); }
+.wh-env-clearov {
+  width: auto; flex: 0 0 auto; background: #2a1414; color: #ff9a9a; border: 1px solid #7a3030;
+  border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 0.78em; font-weight: 700;
+}
+.wh-env-clearov:hover { background: #4a1414; border-color: #b8453a; }
+.wh-env-scope-note {
+  padding: 5px 12px; font-size: 0.76em; font-style: italic; color: #7fbf9c; line-height: 1.35;
+  border-bottom: 1px solid rgba(47,158,106,0.22); background: rgba(15,58,38,0.22);
+}
+.wh-env-scope-note.scene { color: #ffd98a; background: rgba(80,60,20,0.25); border-bottom-color: rgba(184,147,46,0.35); }
+
+.wh-env-split { flex: 1; display: flex; min-height: 0; }
+
+/* ── Левое меню ── */
+.wh-env-nav {
+  flex: 0 0 172px; display: flex; flex-direction: column; gap: 4px; padding: 10px;
+  border-right: 1px solid rgba(47,158,106,0.3); background: rgba(0,0,0,0.22);
+}
+.wh-env-navitem {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; cursor: pointer;
+  background: #0a1c12; color: #a8d8c0; border: 1px solid #1f4f38; border-left: 3px solid transparent;
+  border-radius: 4px; padding: 8px 10px; font-size: 0.9em; font-weight: 600; letter-spacing: 0.02em;
+  transition: all 0.13s;
+}
+.wh-env-navitem:hover { background: #10301f; color: #d8ffe8; }
+.wh-env-navitem.active {
+  color: #eafff4; border-color: #2f9e6a; border-left-color: #4dffa6;
+  background: linear-gradient(90deg, rgba(77,255,166,0.14), rgba(10,28,18,0.5));
+  box-shadow: inset 0 0 16px -8px #4dffa6;
+}
+.wh-env-navic { font-size: 1.15em; filter: drop-shadow(0 0 4px rgba(77,255,166,0.4)); }
+.wh-env-note-field { margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
+.wh-env-note-field > span { font-size: 0.66em; letter-spacing: 0.1em; color: #6fbf95; text-transform: uppercase; }
+.wh-env-note-field textarea {
+  background: #0a1c12; color: #d8ffe8; border: 1px solid #2f6f4a; border-radius: 4px;
+  padding: 5px 7px; font-size: 0.82em; resize: vertical; font-family: inherit;
+}
+
+/* ── Правая панель ── */
+.wh-env-main { flex: 1; padding: 14px 16px; overflow-y: auto; min-width: 0; }
+.wh-env-h { margin: 0 0 4px; font-size: 1.1em; font-weight: 800; letter-spacing: 0.04em; color: #eafff4; display: flex; align-items: baseline; gap: 10px; }
+.wh-env-h-val { margin-left: auto; font-size: 1.1em; font-weight: 800; text-shadow: 0 0 10px currentColor; }
+.wh-env-hint { margin: 0 0 12px; font-size: 0.82em; color: #7fbf9c; font-style: italic; line-height: 1.4; }
+
+/* Живой предпросмотр механики */
+.wh-env-fx {
+  margin-top: 14px; border: 1px solid color-mix(in srgb, var(--c, #4dffa6) 55%, #123); border-left: 3px solid var(--c, #4dffa6);
+  border-radius: 6px; padding: 10px 13px; background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--c, #4dffa6) 12%, transparent), transparent 60%), rgba(0,0,0,0.28);
+  box-shadow: inset 0 0 26px -14px var(--c, #4dffa6);
+}
+.wh-env-fx-zone { font-size: 1.02em; font-weight: 800; color: var(--c, #eafff4); text-shadow: 0 0 8px color-mix(in srgb, var(--c) 60%, transparent); }
+.wh-env-fx-zone.ok { color: #8fe0b0; text-shadow: none; }
+.wh-env-fx-mech { margin-top: 5px; font-size: 0.9em; color: #d8ffe8; }
+.wh-env-fx-mech b { color: var(--c, #4dffa6); }
+.wh-env-fx-note { margin-top: 6px; font-size: 0.8em; color: #9fc4b2; line-height: 1.45; }
+
+/* Погода — сетка пресетов */
+.wh-env-weather-caption {
+  font-size: 0.66em; letter-spacing: 0.12em; text-transform: uppercase; color: #6fbf95;
+  margin: 12px 0 6px; padding-bottom: 3px; border-bottom: 1px solid rgba(47,158,106,0.28);
+}
+.wh-env-weather-caption:first-of-type { margin-top: 2px; }
+.wh-env-weather-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.wh-env-weather {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; padding: 9px 5px;
+  background: rgba(0,0,0,0.3); border: 1px solid #22503a; border-radius: 7px; transition: all 0.14s;
+}
+.wh-env-weather:hover { border-color: var(--c); transform: translateY(-2px); box-shadow: 0 0 12px -4px var(--c); }
+.wh-env-weather.sel { border-color: var(--c); box-shadow: inset 0 0 18px -6px var(--c), 0 0 12px -4px var(--c); background: color-mix(in srgb, var(--c) 12%, rgba(0,0,0,0.3)); }
+.wh-env-weather-ic { font-size: 1.7em; filter: drop-shadow(0 0 6px var(--c)); }
+.wh-env-weather-lbl { font-size: 0.76em; font-weight: 600; color: #d8ffe8; text-align: center; line-height: 1.15; }
+.wh-env-custom { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; }
+.wh-env-custom > span { font-size: 0.68em; letter-spacing: 0.08em; color: #6fbf95; text-transform: uppercase; }
+.wh-env-custom input, .wh-env-temp-ctl input[type=number], .wh-env-grav-ctl input {
+  background: #0a1c12; color: #d8ffe8; border: 1px solid #2f6f4a; border-radius: 4px; padding: 5px 8px; font-family: inherit;
+}
+
+/* Температура */
+.wh-env-temp-ctl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wh-env-temp-ctl input[type=number] { width: 74px; text-align: center; font-size: 1.05em; font-weight: 700; }
+.wh-env-temp-ctl input[type=range] { flex: 1 1 100%; accent-color: #4dffa6; margin-top: 4px; }
+.wh-env-temp-ctl button, .wh-env-grav-ctl button, .wh-env-rad-ctl button {
+  background: #0e2a1c; color: #cdeede; border: 1px solid #2f6f4a; border-radius: 4px;
+  padding: 5px 10px; cursor: pointer; font-weight: 700; font-size: 0.86em; flex: 0 0 auto;
+}
+.wh-env-temp-ctl button:hover, .wh-env-grav-ctl button:hover, .wh-env-rad-ctl button:hover { background: #15492f; box-shadow: 0 0 7px rgba(77,255,166,0.4); }
+
+/* Гравитация */
+.wh-env-grav-ctl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.wh-env-grav-ctl button.sel, .wh-env-rad-ctl button.sel {
+  background: #15492f; border-color: #4dffa6; color: #eafff4; box-shadow: inset 0 0 12px -4px #4dffa6;
+}
+.wh-env-grav-ctl label { font-size: 0.84em; color: #9fc4b2; display: inline-flex; align-items: center; gap: 6px; }
+.wh-env-grav-ctl input { width: 66px; text-align: center; }
+
+/* Радиация */
+.wh-env-rad-ctl { display: flex; gap: 5px; flex-wrap: wrap; }
+.wh-env-rad-ctl button { width: 34px; text-align: center; }
+.wh-env-radref { margin-top: 14px; font-size: 0.84em; }
+.wh-env-radref summary { cursor: pointer; color: #7fe0a8; font-weight: 600; letter-spacing: 0.02em; }
+.wh-env-radprot { margin-top: 8px; border: 1px solid rgba(47,158,106,0.3); border-radius: 5px; overflow: hidden; }
+.wh-env-radprot-row { display: flex; justify-content: space-between; gap: 10px; padding: 4px 9px; font-size: 0.86em; }
+.wh-env-radprot-row:nth-child(odd) { background: rgba(15,58,38,0.28); }
+.wh-env-radprot-row b { color: #ffd23a; flex: 0 0 auto; }
+
+/* ══════════════════════ ЭКРАННЫЙ ВИДЖЕТ ══════════════════════ */
+#wh-env-widget {
+  /* Позицию задаёт JS (перетаскивается, сохраняется); дефолт — правее списка игроков. */
+  position: fixed; z-index: 57; width: 208px;
+  font-family: "Oswald", "Roboto Condensed", sans-serif; pointer-events: auto;
+  border: 1px solid rgba(47,158,106,0.4); border-radius: 8px; overflow: hidden;
+  /* Полупрозрачный, чтобы не спорить с HUD. */
+  background: linear-gradient(160deg, rgba(8,22,14,0.62), rgba(4,14,9,0.66));
+  box-shadow: 0 6px 22px rgba(0,0,0,0.4), inset 0 0 30px -18px #4dffa6;
+  backdrop-filter: blur(4px); user-select: none; opacity: 0.9; transition: opacity 0.15s;
+}
+#wh-env-widget:hover { opacity: 1; border-color: #4dffa6; }
+#wh-env-widget.dragging { opacity: 1; box-shadow: 0 8px 26px rgba(0,0,0,0.6), 0 0 18px -4px rgba(77,255,166,0.6); }
+/* Свёрнутый — только шапка. */
+#wh-env-widget.collapsed .wh-env-w-body,
+#wh-env-widget.collapsed .wh-env-w-note { display: none; }
+#wh-env-widget.collapsed .wh-env-w-head { border-bottom: none; }
+#wh-env-widget.collapsed .wh-env-w-collapse { transform: rotate(-90deg); }
+/* Шапка — ручка перетаскивания. */
+.wh-env-w-head { cursor: grab; }
+#wh-env-widget.dragging .wh-env-w-head { cursor: grabbing; }
+.wh-env-w-title { flex: 1; }
+.wh-env-w-collapse { cursor: pointer; font-size: 1.1em; line-height: 1; opacity: 0.7; transition: transform 0.15s, opacity 0.15s; }
+.wh-env-w-collapse:hover { opacity: 1; color: #4dffa6; }
+.wh-env-w-body { cursor: pointer; }
+#wh-env-widget::after {  /* тонкие скан-линии поверх */
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.35;
+  background: repeating-linear-gradient(0deg, rgba(77,255,166,0.04) 0 1px, transparent 1px 3px);
+}
+.wh-env-w-head {
+  display: flex; align-items: center; gap: 7px; padding: 5px 10px;
+  font-size: 0.66em; letter-spacing: 0.2em; font-weight: 800; color: #9af2c4;
+  background: rgba(15,58,38,0.6); border-bottom: 1px solid rgba(47,158,106,0.45); text-shadow: 0 0 6px rgba(77,255,166,0.5);
+}
+.wh-env-w-led { width: 7px; height: 7px; border-radius: 50%; background: #4dffa6; box-shadow: 0 0 8px #4dffa6; animation: whEnvLed 2.4s ease-in-out infinite; }
+@keyframes whEnvLed { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.wh-env-w-body { padding: 6px 4px; display: flex; flex-direction: column; }
+.wh-env-w-row {
+  display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 7px;
+  padding: 4px 8px; border-left: 2px solid var(--c, #4dffa6); margin: 1px 4px; border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c, #4dffa6) 10%, transparent), transparent 70%);
+}
+.wh-env-w-ic { font-size: 1.05em; text-align: center; filter: drop-shadow(0 0 5px var(--c, #4dffa6)); }
+.wh-env-w-k { font-size: 0.72em; letter-spacing: 0.05em; color: #9fc4b2; text-transform: uppercase; }
+.wh-env-w-v { font-size: 0.86em; font-weight: 700; color: #eafff4; text-align: right; white-space: nowrap; }
+.wh-env-w-v .wh-env-w-t { color: var(--c, #4dffa6); font-size: 0.86em; margin-left: 3px; }
+.wh-env-w-row.danger { animation: whEnvRad 1.6s ease-in-out infinite; }
+@keyframes whEnvRad {
+  0%,100% { box-shadow: none; }
+  50% { box-shadow: inset 0 0 16px -5px var(--c, #ff3a3a); }
+}
+.wh-env-w-note {
+  padding: 5px 10px 7px; font-size: 0.74em; font-style: italic; color: #bfe0d0; line-height: 1.35;
+  border-top: 1px dashed rgba(47,158,106,0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wh-env-w-led, .wh-env-w-row.danger { animation: none !important; }
+}

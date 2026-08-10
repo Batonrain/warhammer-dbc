@@ -1,0 +1,96 @@
+{{#if (eq item.type "implant")}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ ИМПЛАНТА</div>
+  <div class="weapon-row">
+    <label class="wr-label">Категория</label>
+    <select name="system.category" class="wr-select-sm">
+      <option value="mechanicus"   {{#if (eq system.category "mechanicus")}}selected{{/if}}>Механикус</option>
+      <option value="mechEnergy"   {{#if (eq system.category "mechEnergy")}}selected{{/if}}>Механикум: Энергосистема</option>
+      <option value="mechFocus"    {{#if (eq system.category "mechFocus")}}selected{{/if}}>Механикум: Технофокус</option>
+      <option value="mechOther"    {{#if (eq system.category "mechOther")}}selected{{/if}}>Механикум: Прочее</option>
+      <option value="mechadendrite" {{#if (eq system.category "mechadendrite")}}selected{{/if}}>Мехадендрит</option>
+      <option value="skitarii"     {{#if (eq system.category "skitarii")}}selected{{/if}}>Скитарии</option>
+      <option value="cybernetic"   {{#if (eq system.category "cybernetic")}}selected{{/if}}>Кибернетика</option>
+      <option value="bionic"       {{#if (eq system.category "bionic")}}selected{{/if}}>Бионика</option>
+      <option value="psybernetic"  {{#if (eq system.category "psybernetic")}}selected{{/if}}>Псибернетика</option>
+      <option value="archeotech"   {{#if (eq system.category "archeotech")}}selected{{/if}}>Археотех</option>
+      <option value="bioimplant"   {{#if (eq system.category "bioimplant")}}selected{{/if}}>Биоимплант (Друкхари)</option>
+      <option value="geneseed"     {{#if (eq system.category "geneseed")}}selected{{/if}}>Геносемя (Астартес)</option>
+    </select>
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое (Poor.Q)</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное (Comm.Q)</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее (Good.Q)</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Высшее (Best.Q)</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+    <label class="wr-label">Установлен</label>
+    <input type="text" name="system.installed" value="{{system.installed}}" class="wr-input-md" placeholder="часть тела"/>
+  </div>
+</div>
+<div class="item-section">
+  <div class="item-section-title">ЭФФЕКТ</div>
+  <textarea name="system.effect" class="item-textarea" placeholder="Что даёт имплант...">{{system.effect}}</textarea>
+</div>
+
+{{#if implantMech.any}}
+<div class="item-section implant-mech">
+  <div class="item-section-title">МЕХАНИКА <span class="implant-mech-tag">роспись</span></div>
+  {{#if implantMech.auto.length}}
+  <div class="implant-mech-auto"> <span class="implant-mech-lbl">Авто:</span> {{#each implantMech.auto as |a|}}<span class="implant-mech-chip">{{a}}</span>{{/each}}
+  </div> {{/if}}
+  {{#if implantMech.traits.length}}
+  <div class="implant-mech-row"> <span class="implant-mech-lbl">Трейты:</span> {{#each implantMech.traits as |t|}}<span class="implant-mech-chip is-trait">{{t}}</span>{{/each}}
+  </div> {{/if}}
+  {{#if implantMech.skills.length}}
+  <div class="implant-mech-row"> <span class="implant-mech-lbl">Навыки:</span> {{#each implantMech.skills as |s|}}<span class="implant-mech-chip is-skill">{{s}}</span>{{/each}}
+  </div> {{/if}}
+  {{#if implantMech.note}}<div class="implant-mech-note">{{implantMech.note}}</div>{{/if}}
+  {{#if implantMech.q}}
+  <div class="implant-mech-q"> {{#if implantMech.q.poor}}<div class="implant-mech-qrow"><b class="q-poor">Poor.Q</b> {{implantMech.q.poor}}</div>{{/if}}
+    {{#if implantMech.q.good}}<div class="implant-mech-qrow"><b class="q-good">Good.Q</b> {{implantMech.q.good}}</div>{{/if}}
+    {{#if implantMech.q.best}}<div class="implant-mech-qrow"><b class="q-best">Best.Q</b> {{implantMech.q.best}}</div>{{/if}}
+  </div> {{/if}}
+</div> {{/if}}
+
+<div class="item-section">
+  <div class="item-section-title">АВТО-ЭФФЕКТЫ</div>
+  <div class="trait-fx-hint">Числовые авто-эффекты (бонус характеристики, AP по локациям, Рейтинг Страха, Размер, Инициатива, Скорость) переехали на вкладку «Эффекты» — добавьте их там как Active Effect. Старые значения этого предмета уже перенесены автоматически.</div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ВСТРОЕННЫЙ ЩИТ / ДЕФЛЕКТОР</div>
+  <div class="trait-fx-hint">Даёт импланту силовое поле (напр. Атомантическое Укрепление Боевых Лат Скитарии). При включении появляется в списке щитов на вкладке СНАРЯЖЕНИЕ и бросается по обычным правилам щитов.</div>
+  <div class="weapon-row">
+    <label class="wr-label">
+      <input type="checkbox" name="system.shield.enabled" {{#if system.shield.enabled}}checked{{/if}}/>
+      Есть щит
+    </label>
+    <label class="wr-label">Тип</label>
+    <select name="system.shield.shieldType" class="wr-select-sm">
+      <option value="deflector"   {{#if (eq system.shield.shieldType "deflector")}}selected{{/if}}>Дефлектор</option>
+      <option value="dome"        {{#if (eq system.shield.shieldType "dome")}}selected{{/if}}>Купол</option>
+      <option value="penetrating" {{#if (eq system.shield.shieldType "penetrating")}}selected{{/if}}>Сквозной</option>
+    </select>
+    <label class="wr-label">Природа</label>
+    <select name="system.shield.shieldNature" class="wr-select-sm">
+      <option value="technological" {{#if (eq system.shield.shieldNature "technological")}}selected{{/if}}>Технологический</option>
+      <option value="warp"          {{#if (eq system.shield.shieldNature "warp")}}selected{{/if}}>Чародейский</option>
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label" title="Минимальный рейтинг при активации">Рейтинг мин</label>
+    <input type="number" name="system.shield.ratingMin" value="{{system.shield.ratingMin}}" min="1" class="drug-fx-num"/>
+    <label class="wr-label" title="Максимальный рейтинг при активации">Рейтинг макс</label>
+    <input type="number" name="system.shield.ratingMax" value="{{system.shield.ratingMax}}" min="1" class="drug-fx-num"/>
+    <label class="wr-label" title="0 = не перегружается (как дефлектор Боевых Лат)">Порог перегрузки</label>
+    <input type="number" name="system.shield.overloadThreshold" value="{{system.shield.overloadThreshold}}" min="0" class="drug-fx-num"/>
+    <label class="wr-label">
+      <input type="checkbox" name="system.shield.isSpecialRating" {{#if system.shield.isSpecialRating}}checked{{/if}}/>
+      Особый рейтинг
+    </label>
+  </div>
+  <div class="trait-fx-hint">Статус: <b>{{system.shield.status}}</b>, текущий рейтинг: <b>{{system.shield.currentRating}}</b> (управляется со вкладки СНАРЯЖЕНИЕ).</div>
+</div>
+{{/if}}

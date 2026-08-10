@@ -1,0 +1,1022 @@
+// module/sheets/sheet-helpers.mjs
+
+import { CHARACTERISTICS, SKILL_RANKS, APTITUDES }   from "../constants/characteristics.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
+import { WEAPON_CLASSES, DAMAGE_TYPES, ITEM_TYPES,
+         DRUG_CATEGORIES, DRUG_DELIVERY,
+         DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
+         ARMOR_MOD_GROUPS }                          from "../constants/items.mjs";
+import { MELEE_STANCES }                             from "../constants/combat.mjs";
+import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
+import { AELDARI_RACES }                             from "../constants/races.mjs";
+import { GENE_SEED_ORGANS }                          from "../constants/gene-seed.mjs";
+import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
+import { buildLegionOptions, getLegion,
+         buildChapterOptions, getChapter,
+         buildCultureLegionOptions, resolveCulture }  from "../constants/legions.mjs";
+import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
+import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/disciplines.mjs";
+import { implantMech }                               from "../constants/implant-mechanics.mjs";
+import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
+import { aptitudeCat, charAptitudeSet }             from "../constants/advancement.mjs";
+import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
+import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
+
+// Карта «полное имя таланта → тип (папка корбука)» + порядок типов — строится один
+// раз. Используется для группировки талантов на листе по типам (стр. 62-105).
+const TALENT_TYPE = (() => {
+  const byName = new Map(); const order = new Map(); let i = 0;
+  for (const t of TALENT_LIBRARY) {
+    const folder = t.folder || "Прочие";
+    if (!order.has(folder)) order.set(folder, i++);
+    byName.set(t.name, folder);
+  }
+  return { byName, order };
+})();
+import { getModEffects }                             from "../combat/weapon-mods.mjs";
+import { qualityEffects }                            from "../constants/quality.mjs";
+import { _buildAmmoModString }                       from "../helpers/utils.mjs";
+import { SHIELD_STATUS }                             from "../constants/shields.mjs";
+import { condIconHTML, CONDITION_ICONS }            from "../constants/condition-icons.mjs";
+import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
+         implantCatColor, classifyImplant }         from "../constants/body-map.mjs";
+import { VITALS, VITAL_MAX_STAGE }                   from "../constants/vitals.mjs";
+
+// ── Определение всех состояний ────────────────────────────────────────────────
+export const CONDITIONS_DEF = {
+  bleeding:      { label: "Кровотечение",    icon: "🩸", hasLevel: true,  levelField: "bleedingLevel",      css: "cond-bleeding"      },
+  haemorrhaging: { label: "Обескровливание", icon: "💔", hasLevel: true,  levelField: "haemorrhagingLevel", css: "cond-haemorrhaging"  },
+  stunned:       { label: "Оглушение",       icon: "💫", hasLevel: true,  levelField: "stunnedRounds",      css: "cond-stunned"        },
+  fatigued:      { label: "Усталость",       icon: "😓", hasLevel: true,  levelField: "fatiguedLevel",      css: "cond-fatigued"       },
+  poisoned:      { label: "Отравление",      icon: "☠️", hasLevel: false, levelField: null,                 css: "cond-poisoned"       },
+  prone:         { label: "Повален",         icon: "🧎", hasLevel: false, levelField: null,                 css: "cond-prone"          },
+  unconscious:   { label: "Без сознания",    icon: "😵", hasLevel: false, levelField: null,                 css: "cond-unconscious"    },
+  blinded:       { label: "Ослеплён",        icon: "🙈", hasLevel: true,  levelField: "blindedRounds",      css: "cond-blinded"        },
+  deafened:      { label: "Оглох",           icon: "🔇", hasLevel: false, levelField: null,                 css: "cond-deafened"       },
+  burning:       { label: "Горение",         icon: "🔥", hasLevel: true,  levelField: "burningLevel",       css: "cond-burning"        },
+  radiation:     { label: "Радиация",        icon: "☢️", hasLevel: true,  levelField: "radiationLevel",     css: "cond-radiation"      },
+  hallucinogenic:{ label: "Галлюцинации",    icon: "🌀", hasLevel: false, levelField: null,                 css: "cond-hallucinogenic" },
+  pinned:        { label: "Подавление",      icon: "📌", hasLevel: false, levelField: null,                 css: "cond-pinned"         },
+  crippling:     { label: "Калечение",       icon: "🦯", hasLevel: false, levelField: null,                 css: "cond-crippling"      },
+  addicted:      { label: "Зависимость",     icon: "💊", hasLevel: false, levelField: null,                 css: "cond-addicted"       }
+};
+// Прикрепляем SVG-глиф и цвет к каждому состоянию (замена эмодзи).
+for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
+  def.svg   = condIconHTML(key);
+  def.color = CONDITION_ICONS[key]?.color || "#8fe8b0";
+}
+
+// ── Навык ─────────────────────────────────────────────────────────────────────
+
+export function buildSkillDisplay(key, system) {
+  const def = SKILLS_DEF[key];
+  const sk  = system.skills?.[key] || {};
+  return { key, label: def.label, total: sk.total ?? -20, rank: sk.rank ?? "untrained" };
+}
+
+// ── Данные щитов ──────────────────────────────────────────────────────────────
+
+export function buildShieldData(actor) {
+  // Собираем щиты из двух источников: предметы forcefield (state в system.*) и
+  // импланты со встроенным дефлектором (state в system.shield.*, напр. Боевые Латы).
+  const sources = [];
+  for (const i of actor.items.contents) {
+    if (i.type === "forcefield") sources.push({ item: i, s: i.system });
+    else if (i.type === "implant" && i.system.shield?.enabled)
+      sources.push({ item: i, s: i.system.shield });
+  }
+  const allShields = sources.map(({ item: i, s }) => {
+    const status = SHIELD_STATUS[s.status] || SHIELD_STATUS.inactive;
+    return {
+      id:                i.id,
+      name:              i.name,
+      shieldNature:      s.shieldNature       || "technological",
+      shieldType:        s.shieldType         || "dome",
+      ratingMin:         s.ratingMin          ?? 0,
+      ratingMax:         s.ratingMax          ?? 0,
+      overloadThreshold: s.overloadThreshold  ?? 0,
+      isSpecialRating:   s.isSpecialRating    || false,
+      currentRating:     s.currentRating      ?? 0,
+      equipped:          s.equipped           || false,
+      status:            s.status             || "inactive",
+      statusKey:         s.status             || "inactive",
+      statusLabel:       status.label,
+      statusIcon:        status.icon,
+      statusCss:         status.css,
+      needsRepair:       (s.status === "overloaded" || s.status === "damaged"),
+      weight:            s.weight             ?? (i.system.weight ?? 0),
+      quality:           s.quality            || i.system.quality || "common"
+    };
+  });
+
+  const activeRaw    = allShields.find(s => s.equipped && s.status === "active");
+  const activeShield = activeRaw
+    ? { ...activeRaw, overloadMax: activeRaw.currentRating + activeRaw.overloadThreshold }
+    : null;
+
+  const inactiveShields = allShields.filter(s => s.status === "inactive");
+
+  return { gearForcefields: allShields, activeShield, inactiveShields };
+}
+
+// ── Сводка специальных эффектов препарата ─────────────────────────────────────
+
+function _buildSpecialSummary(sys) {
+  const fx    = sys.specialEffects || {};
+  const lines = [];
+
+  if (fx.removesBleedingLevels > 0)
+    lines.push(`🩸 Снимает ${fx.removesBleedingLevels} ур. Кровотечения`);
+  if (fx.removesFatigueLevels > 0)
+    lines.push(`😓 Снимает ${fx.removesFatigueLevels} ур. Усталости`);
+  if (fx.removesWounds > 0)
+    lines.push(`❤️ Снимает ${fx.removesWounds} Ран`);
+  if (fx.healsWoundsPerRound)
+    lines.push(`❤️ Лечит ${fx.healsWoundsPerRound} Ран/раунд`);
+  if (fx.removesCondition)
+    lines.push(`Снимает: ${fx.removesCondition}`);
+  if (fx.grantsCondition)
+    lines.push(`🔴 Накладывает: ${fx.grantsCondition}`);
+  if (fx.immuneToPoisons)
+    lines.push(`🛡️ Иммунитет к ядам`);
+  if (fx.bonusVsPoisons && fx.bonusVsPoisons !== 0)
+    lines.push(`🛡️ Бонус против ядов: +${fx.bonusVsPoisons}`);
+  if (fx.counteractsDrugs)
+    lines.push(`🔄 Нейтрализует активные препараты`);
+  if (fx.removesRadiation)
+    lines.push(`☢️ Снимает радиацию`);
+  if (fx.reduceDamageOnHit && fx.reduceDamageOnHit !== 0)
+    lines.push(`🛡️ Уменьш. урон: −${fx.reduceDamageOnHit}`);
+  if (fx.noSleepNeeded)
+    lines.push(`💡 Не нужен сон`);
+  if (fx.noFatigueFromMarch)
+    lines.push(`🥾 Нет Усталости от марша`);
+  if (fx.customEffect)
+    lines.push(`📌 ${fx.customEffect}`);
+
+  return lines;
+}
+
+// ── Сводка специальных эффектов ПОСТ-эффекта ─────────────────────────────────
+
+function _buildAfterSpecialSummary(sys) {
+  const fx    = sys.afterEffectSpecial || {};
+  const lines = [];
+
+  if (fx.removesBleedingLevels > 0)
+    lines.push(`🩸 Снимает ${fx.removesBleedingLevels} ур. Кровотечения`);
+  if (fx.removesFatigueLevels > 0)
+    lines.push(`😓 Снимает ${fx.removesFatigueLevels} ур. Усталости`);
+  if (fx.removesWounds > 0)
+    lines.push(`❤️ Снимает ${fx.removesWounds} Ран`);
+  if (fx.grantsCondition) {
+    const lvl = fx.grantsConditionLevel ?? 1;
+    lines.push(`🔴 Накладывает${lvl > 1 ? ` ${lvl} ур.` : ""}: ${fx.grantsCondition}`);
+  }
+  if (fx.customEffect)
+    lines.push(`📌 ${fx.customEffect}`);
+
+  return lines;
+}
+
+// ── Строка модификаторов характеристик ───────────────────────────────────────
+
+function _buildStatModsDisplay(statMods) {
+  const parts = [];
+  for (const [k, v] of Object.entries(statMods || {})) {
+    if (v && v !== 0) {
+      parts.push(`${DRUG_CHAR_KEYS[k] ?? k} ${v > 0 ? "+" : ""}${v}`);
+    }
+  }
+  return parts.join(", ");
+}
+
+// ── Данные одного препарата ───────────────────────────────────────────────────
+
+function _buildDrugData(item) {
+  const s = item.system;
+
+  const isAfterEffect = (s.activeEffect?.isActive && s.activeEffect?.isAfterEffect) || false;
+
+  // Модификаторы для текущего режима (основной или пост)
+  const currentStatMods = isAfterEffect
+    ? (s.afterEffectStatMods || {})
+    : (s.statMods || {});
+
+  return {
+    id:              item.id,
+    name:            item.name,
+    drugCategory:    s.drugCategory     || "medicine",
+    categoryLabel:   DRUG_CATEGORIES[s.drugCategory] ?? s.drugCategory,
+    deliveryMethod:  s.deliveryMethod   || "injection",
+    deliveryLabel:   DRUG_DELIVERY[s.deliveryMethod] ?? s.deliveryMethod,
+    quantity:        s.quantity         ?? 0,
+    weight:          s.weight           ?? 0,
+    totalWeight:     Math.round((s.weight || 0) * (s.quantity || 0) * 100) / 100,
+    duration:        s.duration         || "",
+    // Основной эффект
+    effect:          s.effect           || "",
+    statMods:        s.statMods         || {},
+    statModsDisplay: _buildStatModsDisplay(currentStatMods),
+    specialEffects:  s.specialEffects   || {},
+    specialSummary:  isAfterEffect
+      ? _buildAfterSpecialSummary(s)
+      : _buildSpecialSummary(s),
+    // Пост-эффект
+    hasAfterEffect:         s.hasAfterEffect           || false,
+    afterEffect:            s.afterEffect              || "",
+    afterEffectDice:        s.afterEffectDice          || "",
+    afterEffectStatMods:    s.afterEffectStatMods      || {},
+    afterEffectSpecial:     s.afterEffectSpecial       || {},
+    // Состояние активности
+    isActive:        s.activeEffect?.isActive          || false,
+    isAfterEffect:   isAfterEffect,
+    isAfterActive:   isAfterEffect,
+    roundsRemaining: s.activeEffect?.roundsRemaining   || 0,
+    // Активный урон в характеристику (во время пост-эффекта)
+    charDamageDisplay: (isAfterEffect && s.activeEffect?.charDamageStat && (s.activeEffect?.charDamageAmount || 0) > 0)
+      ? `${CHARACTERISTICS[s.activeEffect.charDamageStat]?.abbr ?? s.activeEffect.charDamageStat.toUpperCase()} −${s.activeEffect.charDamageAmount}`
+      : "",
+    // Зависимость
+    addiction:           s.addiction                       || {},
+    hasAddiction:        s.addiction?.hasAddiction         || false,
+    isAddicted:          s.addiction?.isAddicted           || false,
+    addictionTestChar:   (s.addiction?.testChar || "t").toLowerCase(),
+    addictionTestMod:    s.addiction?.testMod ?? 0,
+    // Яды
+    poisonVector:    s.poisonVector     || [],
+    poisonTestChar:  s.poisonTestChar   || "t",
+    poisonTestMod:   s.poisonTestMod    || 0,
+    poisonEffect:    s.poisonEffect     || ""
+  };
+}
+
+// ── Активные состояния для отображения ───────────────────────────────────────
+
+function _buildActiveConditions(system) {
+  const conds  = system.conditions || {};
+  const result = [];
+
+  for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
+    if (!conds[key]) continue;
+    result.push({
+      key,
+      label:    def.label,
+      icon:     def.icon,
+      svg:      def.svg,
+      color:    def.color,
+      css:      def.css,
+      hasLevel: def.hasLevel,
+      level:    def.hasLevel && def.levelField ? (conds[def.levelField] ?? 0) : null
+    });
+  }
+
+  return result;
+}
+
+// ── Зависимости: собираем список препаратов с зависимостью ───────────────────
+// Показываем только те, у которых hasAddiction === true
+// (независимо от того, активен ли сейчас препарат)
+
+function _buildAddictions(allItems) {
+  const result = [];
+
+  for (const item of allItems) {
+    if (item.type !== "drug") continue;
+    const s   = item.system;
+    const add = s.addiction || {};
+    // В панель «Зависимости» попадают только ФАКТИЧЕСКИЕ зависимости персонажа
+    if (!add.hasAddiction || !add.isAddicted) continue;
+
+    const testCharKey   = (add.testChar || "t").toLowerCase();
+    const testCharUpper = testCharKey.toUpperCase();
+    const testMod       = add.testMod ?? 0;
+
+    result.push({
+      id:           item.id,
+      name:         item.name,
+      drugCategory: s.drugCategory || "medicine",
+      testCharKey:  testCharKey,
+      testChar:     testCharUpper,
+      testMod:      testMod,
+      frequency:    add.frequency || "",
+      penalty:      add.penalty   || "",
+      minDose:      add.minDose   || 0,
+      isAddicted:   add.isAddicted || false
+    });
+  }
+
+  return result;
+}
+
+// ── Основные данные листа персонажа ──────────────────────────────────────────
+
+export function buildGetData(actor) {
+  const system   = actor.system;
+  const allItems = actor.items.contents;
+
+  const context = {};
+  context.system          = system;
+  context.characteristics = CHARACTERISTICS;
+
+  // ── Навыки ────────────────────────────────────────────────────────────────
+  const skillKeys = Object.keys(SKILLS_DEF);
+  const half      = Math.ceil(skillKeys.length / 2);
+  context.skillsCol1 = skillKeys.slice(0, half).map(k => buildSkillDisplay(k, system));
+  context.skillsCol2 = skillKeys.slice(half).map(k  => buildSkillDisplay(k, system));
+
+  context.groupSkillsDisplay = [];
+  for (const [groupKey, entries] of Object.entries(system.groupSkills || {})) {
+    const def = GROUP_SKILLS_DEF[groupKey];
+    if (!def || !Array.isArray(entries) || entries.length === 0) continue;
+    entries.forEach((entry, idx) => {
+      context.groupSkillsDisplay.push({
+        groupKey,
+        entryIndex:     idx,
+        specialty:      entry.specialty,
+        label:          `${def.label}: ${entry.specialty}`,
+        groupLabel:     def.label,
+        isFirstInGroup: idx === 0,
+        rank:           entry.rank,
+        total:          entry.total ?? -20
+      });
+    });
+  }
+
+  const _skApts = charAptitudeSet(system.aptitudes);
+  context.skillsAdvance = Object.entries(SKILLS_DEF).map(([key, def]) => {
+    const sk = system.skills?.[key] || {};
+    return {
+      key, label: def.label,
+      char:  CHARACTERISTICS[def.char]?.abbr ?? def.char,
+      rank:  sk.rank  ?? "untrained",
+      grantedRank: sk.grantedRank ?? "untrained",
+      // Помечен ли текущий уровень как выданный архетипом/расой (кнопка ★).
+      isGranted: (sk.grantedRank ?? "untrained") !== "untrained",
+      total: sk.total ?? -20,
+      cost:  sk.cost  ?? 0,
+      aptCat: aptitudeCat(_skApts, [def.char, def.apt2])
+    };
+  });
+
+  const GS_CHAR_KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
+  context.groupSkillsAdvance = Object.entries(GROUP_SKILLS_DEF).map(([groupKey, def]) => {
+    const entries = system.groupSkills?.[groupKey] ?? [];
+    // Только Ремесло (trade) позволяет выбирать базовую характеристику у каждого спец-навыка.
+    const selectable = groupKey === "trade";
+    return {
+      groupKey, label: def.label, selectable,
+      char: CHARACTERISTICS[def.char]?.abbr ?? def.char,
+      // Отношение группы к склонностям (стр. 24) — по [char группы, apt2].
+      // Общие знания и Ремесло всегда Дружественные (стр. 58, 61).
+      alwaysAlly: !!def.alwaysAlly,
+      aptCat: def.alwaysAlly ? "ally" : aptitudeCat(_skApts, [def.char, def.apt2]),
+      entries: entries.map((e, i) => {
+        const charKey = e.char || def.char;
+        return {
+          ...e, index: i, groupKey,
+          charAbbr: CHARACTERISTICS[charKey]?.abbr ?? charKey,
+          grantedRank: e.grantedRank ?? "untrained",
+          isGranted: (e.grantedRank ?? "untrained") !== "untrained",
+          aptCat: def.alwaysAlly ? "ally" : aptitudeCat(_skApts, [charKey, def.apt2]),
+          charOptions: GS_CHAR_KEYS.map(k => ({
+            key: k, abbr: CHARACTERISTICS[k]?.abbr ?? k.toUpperCase(), selected: k === charKey
+          }))
+        };
+      })
+    };
+  });
+
+  // ── Боевые оружия ─────────────────────────────────────────────────────────
+  const equippedWeapons = allItems.filter(i => i.type === "weapon" && i.system.equipped);
+
+  const makeCombatWeapon = (i) => {
+    const s     = i.system;
+    const melee = s.weaponClass === "melee" || s.weaponClass === "thrown";
+    const ck    = melee ? "ws" : "bs";
+    const stance = system.meleeStance || "standard";
+    const stBon  = melee ? (MELEE_STANCES[stance]?.wsBonus ?? 0) : 0;
+
+    const compatAmmo = melee ? [] : allItems
+      .filter(item =>
+        item.type === "ammo" &&
+        (item.system.weaponTypes || []).some(t =>
+          t === s.weaponType || t === s.weaponClass || t === "any"
+        )
+      )
+      .map(item => ({
+        id:       item.id,
+        name:     item.name,
+        quantity: item.system.quantity || 0,
+        loaded:   item.id === s.loadedAmmoId,
+        modStr:   _buildAmmoModString(item.system)
+      }));
+
+    // ── Эффекты установленных модификаций ──────────────────────────────────
+    const modFx     = getModEffects(actor, i);
+    const hasMods   = modFx.names.length > 0;
+    const effRange  = Math.round((s.range || 0) * (modFx.rangeMult || 1)) + (modFx.rangeMod || 0);
+    const effClipMax = Math.round((s.magazineMax || 0) * (modFx.clipMult || 1)) + (modFx.clipMod || 0);
+    const effPen    = (s.penetration || 0) + (modFx.penMod || 0);
+    // Качество: рукопашное Best — +1 урон; рукопашное — мод теста (Poor −10/Good +5/Best +10)
+    const qAuto     = qualityEffects(i).auto;
+    const qDmgMod   = melee ? (qAuto.damageMod || 0) : 0;
+    const qTestMod  = melee ? (qAuto.testMod   || 0) : 0;
+    const totalDmgMod = (modFx.damageMod || 0) + qDmgMod;
+    const dmgSuffix = totalDmgMod ? ` ${totalDmgMod > 0 ? "+" : ""}${totalDmgMod}` : "";
+
+    const magLow   = !melee && (s.magazineCur || 0) > 0
+                     && (s.magazineCur || 0) <= Math.ceil((effClipMax || 1) * 0.25);
+    const magEmpty = !melee && (s.magazineCur || 0) === 0 && (effClipMax || 0) > 0;
+
+    return {
+      id: i.id, name: i.name,
+      weaponClass:     WEAPON_CLASSES[s.weaponClass] ?? s.weaponClass,
+      weaponType:      s.weaponType,
+      range:           effRange,
+      balance:         (s.balance || 0) + (modFx.balanceMod || 0),
+      damage:          (s.damage || "") + dmgSuffix,
+      damageType:      DAMAGE_TYPES[s.damageType] ?? s.damageType,
+      penetration:     effPen,
+      rof:             `${s.rof_single}/${s.rof_semi + (modFx.rofSemiMod || 0)}/${s.rof_full + (modFx.rofFullMod || 0)}`,
+      magazineCur:     s.magazineCur || 0,
+      magazineMax:     effClipMax || 0,
+      special:         s.special,
+      // Ручной щит (стр. 215): AP, прикрываемые зоны и состояние «поднят».
+      isShield:        s.shieldAP != null,
+      shieldAP:        s.shieldAP ?? 0,
+      shieldHand:      i.getFlag?.("warhammer-dbc", "shieldHand") || "left",
+      shieldRaised:    !!i.getFlag?.("warhammer-dbc", "shieldRaised"),
+      shieldCoverage:  s.shieldAP != null ? shieldCoverageLabel(i) : "",
+      hasMods,
+      modNames:        modFx.names.join(", "),
+      attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + stBon + (modFx.attackMod || 0) + qTestMod,
+      compatAmmo, magLow, magEmpty
+    };
+  };
+
+  context.combatMeleeWeapons  = equippedWeapons
+    .filter(i => i.system.weaponClass === "melee" || i.system.weaponClass === "thrown")
+    .map(makeCombatWeapon);
+  context.combatRangedWeapons = equippedWeapons
+    .filter(i => i.system.weaponClass !== "melee" && i.system.weaponClass !== "thrown")
+    .map(makeCombatWeapon);
+
+  // ── Снаряжение ────────────────────────────────────────────────────────────
+  // Моды показываются вложенно под носителем (оружием/бронёй), на который они
+  // установлены (installedOn); не установленные — в отдельном «свободном» списке
+  // с выпадашкой целей для инлайн-установки прямо из окна снаряжения.
+  const weaponItems = allItems.filter(i => i.type === "weapon");
+  const armorItems  = allItems.filter(i => i.type === "armor");
+  const weaponIds   = new Set(weaponItems.map(w => w.id));
+  const armorIds    = new Set(armorItems.map(a => a.id));
+
+  const weaponModView = (i) => {
+    const cat = i.system.category || "ranged";
+    return {
+      id: i.id, name: i.name,
+      groupLabel:  WEAPON_MOD_GROUPS[cat]?.[i.system.modGroup] ?? "",
+      weight:      i.system.weight ?? 0,
+      quality:     i.system.quality || "common",
+      benefit:     i.system.description || "",
+      installedOn: i.system.installedOn || ""
+    };
+  };
+  const armorModView = (i) => {
+    const cat = i.system.category || "armor";
+    return {
+      id: i.id, name: i.name,
+      groupLabel:  ARMOR_MOD_GROUPS[cat]?.[i.system.modGroup] ?? "",
+      weight:      i.system.weight ?? 0,
+      powerSystem: cat === "powerSystem",
+      activatable: !!i.system.activatable,
+      active:      !!i.system.active,
+      benefit:     i.system.description || "",
+      installedOn: i.system.installedOn || ""
+    };
+  };
+
+  const allWeaponMods = allItems.filter(i => i.type === "weaponMod");
+  const allArmorMods  = allItems.filter(i => i.type === "armorMod");
+
+  // Цели установки (мемоизируем один раз): моды оружия → любое оружие;
+  // моды брони → любая броня, а системы силовой брони — только «Силовая».
+  const weaponTargets = weaponItems.map(w => ({ id: w.id, name: w.name, equipped: w.system.equipped ?? false }));
+  const armorTargetsAll   = armorItems.map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
+  const armorTargetsPower = armorItems.filter(a => a.system.armorType === "power")
+    .map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
+
+  context.gearWeapons = weaponItems.map(i => ({
+    id: i.id, name: i.name, equipped: i.system.equipped ?? false,
+    weaponClass: WEAPON_CLASSES[i.system.weaponClass] ?? i.system.weaponClass,
+    weaponType:  i.system.weaponType,
+    damage:      i.system.damage,
+    damageType:  DAMAGE_TYPES[i.system.damageType] ?? i.system.damageType,
+    magazineCur: i.system.magazineCur,
+    magazineMax: i.system.magazineMax,
+    weight:      i.system.weight,
+    mods:        allWeaponMods.filter(m => m.system.installedOn === i.id).map(weaponModView)
+  }));
+
+  // Свободные моды оружия (не установлены или носитель удалён)
+  context.gearWeaponModsFree = allWeaponMods
+    .filter(m => !weaponIds.has(m.system.installedOn))
+    .map(m => ({ ...weaponModView(m), targets: weaponTargets, noTargets: weaponTargets.length === 0 }));
+
+  context.gearAmmo = allItems.filter(i => i.type === "ammo").map(i => ({
+    id: i.id, name: i.name,
+    weaponTypes: (i.system.weaponTypes || []).join(", "),
+    quantity:    i.system.quantity,
+    weight:      i.system.weight,
+    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100
+  }));
+
+  context.gearArmor = armorItems.map(i => ({
+    id:        i.id,
+    name:      i.name,
+    equipped:  i.system.equipped   ?? false,
+    armorType: i.system.armorType  ?? "simple",
+    isPower:   ["power", "aspect"].includes(i.system.armorType),
+    head:      i.system.head       ?? 0,
+    body:      i.system.body       ?? 0,
+    leftArm:   i.system.leftArm    ?? 0,
+    rightArm:  i.system.rightArm   ?? 0,
+    leftLeg:   i.system.leftLeg    ?? 0,
+    rightLeg:  i.system.rightLeg   ?? 0,
+    weight:    i.system.weight     ?? 0,
+    stacks:    i.system.stacks     ?? false,
+    mods:      allArmorMods.filter(m => m.system.installedOn === i.id).map(armorModView)
+  }));
+
+  // Свободные моды/системы брони (не установлены или носитель удалён).
+  // Системам силовой брони предлагаются только цели «Силовая»; если таких нет —
+  // noTargets, и в шаблоне выводится подсказка.
+  context.gearArmorModsFree = allArmorMods
+    .filter(m => !armorIds.has(m.system.installedOn))
+    .map(m => {
+      const v = armorModView(m);
+      const targets = v.powerSystem ? armorTargetsPower : armorTargetsAll;
+      return { ...v, targets, noTargets: targets.length === 0 };
+    });
+
+  // ── Силовые поля ──────────────────────────────────────────────────────────
+  const shieldData = buildShieldData(actor);
+  context.gearForcefields = shieldData.gearForcefields;
+  context.activeShield    = shieldData.activeShield;
+  context.inactiveShields = shieldData.inactiveShields;
+
+  // ── Препараты ─────────────────────────────────────────────────────────────
+  const allDrugs         = allItems.filter(i => i.type === "drug").map(_buildDrugData);
+  context.gearDrugs      = allDrugs;
+  context.activeDrugs    = allDrugs.filter(d => d.isActive);
+
+  // ── Зависимости ───────────────────────────────────────────────────────────
+  // Все препараты у которых hasAddiction === true — всегда показываем в блоке
+  context.addictions = _buildAddictions(allItems);
+
+  // ── Ментальные расстройства ─────────────────────────────────────────────────
+  context.mentalDisorders = allItems.filter(i => i.type === "mentalDisorder").map(i => {
+    const abbr = CHARACTERISTICS[i.system.testChar]?.abbr ?? "W";
+    const mod  = i.system.testMod || 0;
+    return {
+      id: i.id, name: i.name,
+      desc: i.system.description || "",
+      testLabel: `${abbr}${mod >= 0 ? "+" : ""}${mod}`,
+      testCharKey: i.system.testChar || "wp",
+      testMod: mod
+    };
+  });
+
+  // ── Болезни ─────────────────────────────────────────────────────────────────
+  const DIS_GODS = { "": "", nurgle: "Нургл", tzeentch: "Тзинч", slaanesh: "Слаанеш", khorne: "Кхорн", other: "Иное" };
+  const DIS_SEV  = { light: "Лёгкая", severe: "Тяжёлая", deadly: "Смертельная" };
+  context.diseases = allItems.filter(i => i.type === "disease").map(i => {
+    const s = i.system;
+    return {
+      id: i.id, name: i.name,
+      isWarp: s.diseaseType === "warp",
+      typeLabel: s.diseaseType === "warp" ? "Варп" : "Обычная",
+      severityLabel: DIS_SEV[s.severity] || "",
+      godLabel: DIS_GODS[s.god] || "",
+      symptoms: s.symptoms || "", vectors: s.vectors || "",
+      incubation: s.incubation || "", cure: s.cure || "",
+      active: !!s.active
+    };
+  });
+
+  // ── Состояния ─────────────────────────────────────────────────────────────
+  context.activeConditions = _buildActiveConditions(system);
+  context.conditionsDef    = CONDITIONS_DEF;
+
+  // ── Прочее снаряжение ─────────────────────────────────────────────────────
+  context.gearGear = allItems.filter(i => i.type === "gear").map(i => ({
+    id: i.id, name: i.name,
+    quantity:    i.system.quantity,
+    weight:      i.system.weight,
+    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100
+  }));
+
+  context.gearTools = allItems.filter(i => i.type === "tool").map(i => ({
+    id: i.id, name: i.name,
+    quantity: i.system.quantity,
+    weight:   i.system.weight
+  }));
+
+  context.gearCybernetics = allItems.filter(i => i.type === "cybernetic").map(i => ({
+    id: i.id, name: i.name,
+    installed: i.system.installed,
+    quality:   i.system.quality,
+    weight:    i.system.weight
+  }));
+
+  // ── Импланты (Механикус/Бионика/Кибернетика) ────────────────────────────────
+  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", geneseed: "Геносемя" };
+  const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
+  context.gearImplants = allItems.filter(i => i.type === "implant").map(i => ({
+    id: i.id, name: i.name,
+    category:  IMPL_CAT[i.system.category] ?? i.system.category ?? "",
+    quality:   QUAL[i.system.quality] ?? i.system.quality ?? "",
+    installed: i.system.installed || "",
+    effect:    i.system.effect || ""
+  }));
+
+  // ── ТЕЛО (медицинский когитатор) ────────────────────────────────────────────
+  {
+    // На фигуре показываем ТОЛЬКО хирургически установленные импланты (флаг),
+    // а не всё, что лежит в снаряжении. Установка — через окно хирургикона.
+    const implItems = allItems.filter(i => i.type === "implant" && i.getFlag?.("warhammer-dbc", "installed"));
+    const rawImplants = implItems.map(i => {
+      const side = i.getFlag?.("warhammer-dbc", "bodySide");
+      return {
+        name: i.name, category: i.system.category || "cybernetic",
+        installed: i.system.installed || "",
+        side: side === "left" || side === "right" ? side : undefined
+      };
+    });
+    const bodyState = buildBodyState(rawImplants);
+    const legend = bodyState.cats.map(c => ({ label: IMPL_CAT[c] ?? c, color: implantCatColor(c) }));
+    const deceased = !!actor.getFlag?.("warhammer-dbc", "deceased");
+    const impl = buildImplantsSvg(bodyState, system.bodyType || "male");
+
+    context.body = {
+      layers:        buildBodyLayers(bodyState, system.bodyType || "male"),
+      implantsBack:  impl.back,
+      implantsFront: impl.front,
+      skinColor:     bodyState.overlays.skin ? implantCatColor(bodyState.overlays.skin) : "",
+      mechMark:      rawImplants.some(i => /cyber-?mantle|кибер-?мантия/i.test(i.name)),
+      ecg:      buildEcg(system, deceased),
+      legend,
+      mechCount:    bodyState.mechadendrites,
+      conditionCount: context.activeConditions.length,
+      diseaseCount:   context.diseases.length,
+      disorderCount:  context.mentalDisorders.length,
+      drugCount:      context.activeDrugs.length,
+      // Жизненные потребности (корбук 483): Голод/Жажда/Сон
+      life: VITALS.map(v => {
+        const val = Math.max(0, Math.min(VITAL_MAX_STAGE, Math.round(Number(system.vitals?.[v.key]) || 0)));
+        const st  = v.stages[val];
+        return {
+          key: v.key, label: v.label, icon: v.icon, tone: v.tone, action: v.action,
+          stage: val, max: VITAL_MAX_STAGE, stageLabel: st.label, fx: st.fx,
+          pen: st.pen, scope: v.scope,
+          pips: [1, 2, 3].map(n => ({ on: n <= val })),
+          alert: val > 0, crit: val >= VITAL_MAX_STAGE
+        };
+      })
+    };
+  }
+
+  // ── Способности / Таланты ─────────────────────────────────────────────────
+  context.abilityTalents = allItems.filter(i => i.type === "talent").map(i => {
+    const e  = i.system.effects || {};
+    const fx = [];
+    if (e.charBonusStat && (e.charBonusValue || 0) !== 0)
+      fx.push(`💪 ${e.charBonusValue > 0 ? "+" : ""}${e.charBonusValue} к ${(CHARACTERISTICS[e.charBonusStat]?.abbr ?? e.charBonusStat)}`);
+    if (e.initMod)    fx.push(`⚡ ${e.initMod > 0 ? "+" : ""}${e.initMod} Иниц.`);
+    if (e.fearRating) fx.push(`😱 Страх ${e.fearRating}`);
+    return {
+      id:             i.id,
+      name:           i.name,
+      tier:           i.system.tier || 1,
+      god:            i.system.god || "",
+      specialization: i.system.specialization || "",
+      requirement:    i.system.requirement || "",
+      aptitudes:      (i.system.aptitudes || []).map(k => APTITUDES[k] ?? k).join(", "),
+      effectSummary:  fx.join(" · "),
+      benefit:        i.system.benefit || i.system.description || "",
+      typeGroup:      TALENT_TYPE.byName.get(i.name) || "Прочие"
+    };
+  });
+  // Группировка талантов по типам корбука (стр. 62-105) для читаемого списка.
+  {
+    const gm = new Map();
+    for (const t of context.abilityTalents) {
+      if (!gm.has(t.typeGroup)) gm.set(t.typeGroup, []);
+      gm.get(t.typeGroup).push(t);
+    }
+    context.abilityTalentGroups = [...gm.entries()]
+      .sort((a, b) => (TALENT_TYPE.order.get(a[0]) ?? 999) - (TALENT_TYPE.order.get(b[0]) ?? 999))
+      .map(([label, items]) => ({ label, items: items.sort((x, y) => (x.tier - y.tier) || x.name.localeCompare(y.name, "ru")) }));
+  }
+
+  // Купленные за опыт Таланты-предметы (пикер «＋» на вкладке Способности) —
+  // показываем их в «Развитии» рядом с ручным списком, чтобы трата опыта была
+  // видна там же, где она считается (спис. цены суммирует actor.mjs).
+  // Показываем ВСЕ таланты-предметы, а не только купленные: выданные при
+  // генерации тоже должны быть видны, чтобы их можно было пометить/снять ★.
+  context.purchasedTalents = actor.items
+    .filter(i => i.type === "talent")
+    .map(i => {
+      const cost = parseInt(i.system?.cost) || 0;
+      return {
+        id:   i.id,
+        name: i.name,
+        cost,
+        tier: i.system?.tier || 1,
+        // ★ — «выдан архетипом/расой, опыт не тратится»
+        isGranted: !!i.system?.granted || (cost === 0 && !i.system?.purchased)
+      };
+    })
+    .sort((a, b) => (a.tier - b.tier) || a.name.localeCompare(b.name, "ru"));
+
+  // Готовый список склонностей для выбора в «Развитии» (без «Общей» — она у всех).
+  context.aptitudeChoices = Object.entries(APTITUDES)
+    .filter(([k]) => k !== "general")
+    .map(([key, label]) => ({ key, label }));
+
+  // Стремления (стр. 22): ЖЁСТКО фиксированные 3 слота, по одному на таблицу
+  // (Гордыня/Позор/Мотивация) — раньше был свободный список до 3 из любой
+  // таблицы, но по месту решили закрепить по смыслу. system.aspirations
+  // остаётся МАССИВОМ (как и был), просто позиция теперь = категория:
+  // [0]=pride, [1]=disgrace, [2]=motivation.
+  const aspirRaw = Array.isArray(system.aspirations) ? system.aspirations : [];
+  context.aspirationSlots = ASPIRATION_TABLES.map((t, idx) => {
+    const a = aspirRaw[idx];
+    const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));
+    if (a && a.custom) return { idx, table: t.key, label: t.label, options, custom: true, id: "", name: a.name || "", mods: a.mods || "", desc: a.desc || "" };
+    const e = aspirationByKey(a?.id || a);
+    return { idx, table: t.key, label: t.label, options, custom: false, id: a?.id || a || "", name: e?.name || "", mods: e?.mods || "", desc: e?.desc || "" };
+  });
+
+  // Доп. элитные архетипы (кнопка «+» в шапке, поверх основного eliteArchetype).
+  context.eliteArchetypesExtra = (Array.isArray(system.eliteArchetypesExtra) ? system.eliteArchetypesExtra : [])
+    .map((value, idx) => ({ idx, value }));
+
+  context.abilityAbilities = allItems.filter(i => i.type === "ability").map(i => ({
+    id:      i.id,
+    name:    i.name,
+    benefit: i.system.benefit || ""
+  }));
+
+  // ── Черты (трейты) ──────────────────────────────────────────────────────
+  context.traits = allItems.filter(i => i.type === "trait").map(i => {
+    const s  = i.system;
+    const e  = s.effects || {};
+    const fx = [];
+    if (e.charBonusStat && (e.charBonusValue || 0) !== 0)
+      fx.push(`💪 ${e.charBonusValue > 0 ? "+" : ""}${e.charBonusValue} к ${(CHARACTERISTICS[e.charBonusStat]?.abbr ?? e.charBonusStat)}`);
+    if (e.armourAll)  fx.push(`🛡️ +${e.armourAll} AP`);
+    if (e.fearRating) fx.push(`😱 Страх ${e.fearRating}`);
+    if (e.sizeMod)    fx.push(`📏 Размер ${e.sizeMod > 0 ? "+" : ""}${e.sizeMod}`);
+
+    let ratingStr = "";
+    if (s.hasRating)  ratingStr += `(${s.rating}`;
+    if (s.hasRating2) ratingStr += `${s.hasRating ? "/" : "("}${s.rating2}`;
+    if (ratingStr)    ratingStr += ")";
+
+    return {
+      id:            i.id,
+      name:          i.name,
+      ratingDisplay: ratingStr,
+      effectSummary: fx.join(" · "),
+      benefit:       s.benefit || ""
+    };
+  });
+
+  // Мутации и Дары Богов — один тип предмета, разделяются по полю system.god
+  // (стр. 440 — общая таблица; стр. 453-460 — таблицы Даров четырёх Богов).
+  // Один общий пул на листе (не два раздельных подраздела) — см. mutgift-*.
+  const GOD_LABEL = { khorne: "Кхорн", slaanesh: "Слаанеш", nurgle: "Нургл", tzeentch: "Тзинч" };
+  const allMut = allItems.filter(i => i.type === "mutation");
+  context.mutationsAndGifts = allMut.map(i => ({
+    id:       i.id,
+    name:     i.name,
+    godLabel: i.system.god ? (GOD_LABEL[i.system.god] || i.system.god) : "",
+    benefit:  i.system.benefit || i.system.description || ""
+  }));
+
+  // ── Органы Геносемени (Астартес) ────────────────────────────────────────
+  // Каждый орган — отдельный предмет-имплант категории "geneseed". На вкладке
+  // ТЕЛО показываем их реестром в каноническом порядке. Состояние органа —
+  // ручной тумблер поверх флагов "installed"/"disabled":
+  //   off      — не вживлён: на карте тела нет, эффектов нет;
+  //   on       — вживлён: на карте тела есть, эффекты считаются;
+  //   disabled — не работает: на карте тела есть (орган на месте), но
+  //              эффекты не считаются (см. gate в actor.mjs).
+  context.geneSeedOrgans = allItems
+    .filter(i => i.type === "implant" && i.system.category === "geneseed")
+    .map(i => {
+      const inBody = !!i.getFlag?.("warhammer-dbc", "installed");
+      const state = !inBody ? "off" : (i.getFlag?.("warhammer-dbc", "disabled") ? "disabled" : "on");
+      return {
+        id:        i.id,
+        name:      i.name,
+        order:     Number(i.system.geneSeedOrder) || 99,
+        installed: i.system.installed || "",
+        inBody, state,
+        weapon:    i.system.linkedWeapon || "",
+        effect:    i.system.effect || i.system.description || ""
+      };
+    })
+    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ru"));
+
+  context.abilityPsychicPowers = allItems.filter(i => i.type === "psychicPower").map(i => ({
+    id:   i.id,
+    name: i.name,
+    cost: i.system.cost || 0
+  }));
+
+  // ── Психосилы (для вкладки ПСИ) ─────────────────────────────────────────────
+  // Превью порога психотеста: charVal + 5×тПР + мод (при эPR = тПР по умолчанию).
+  const _psyTpr   = Number(actor.system.psyker?.currentRating) || 0;
+  const _psyChars = actor.system.characteristics ?? {};
+  const _psyAbbr  = { wp: "WP", int: "Int", per: "Per", fel: "Fel", cor: "Cor", psyniscience: "Псин" };
+  context.psyPowers = allItems.filter(i => i.type === "psychicPower").map(i => {
+    const s = i.system;
+    // Порог считаем только для тестов по характеристике (не Порча/Псинаука-навык).
+    const stdChar = (s.testChar && s.testChar !== "cor" && s.testChar !== "psyniscience") ? s.testChar : null;
+    const charVal = stdChar && _psyChars[stdChar] ? (_psyChars[stdChar].total || 0) : 0;
+    const threshold = stdChar ? (charVal + 5 * _psyTpr + (Number(s.testMod) || 0)) : null;
+    return {
+      id:           i.id,
+      name:         i.name,
+      typeLabel:    PSY_POWER_TYPES[s.powerType] ?? s.powerType ?? "",
+      testAbbr:     _psyAbbr[s.testChar] ?? (s.testChar || "").toUpperCase(),
+      threshold,
+      prRequired:   s.prRequired ?? 0,
+      cost:         s.cost ?? 0,
+      disciplineLabel: PSY_DISCIPLINES[s.discipline]?.label ?? "",
+      subtype:      s.subtype || "",
+      actionLabel:  PSY_ACTIONS[s.action] ?? s.action ?? "",
+      range:        s.range || "—",
+      sustainable:  s.sustainable || false,
+      isSustained:  s.isSustained || false,
+      sustainCost:  s.sustainCost ?? 1,
+      sustainActionLabel: PSY_ACTIONS[s.sustainAction] ?? s.sustainAction ?? "Свободное",
+      damage:       s.damage || "",
+      damageType:   DAMAGE_TYPES[s.damageType] ?? s.damageType ?? "",
+      penetration:  s.penetration ?? 0,
+      effect:       s.effect || s.description || ""
+    };
+  });
+
+  // ── Силы навигатора (вкладка НАВ) ───────────────────────────────────────────
+  context.navigatorPowers = allItems.filter(i => i.type === "navigatorPower").map(i => {
+    const s = i.system;
+    const abbr = CHARACTERISTICS[s.testChar]?.abbr ?? s.testChar ?? "";
+    const mod  = s.testMod || 0;
+    return {
+      id: i.id, name: i.name,
+      testLabel:   `${abbr}${mod >= 0 ? "+" : ""}${mod}${s.opposed ? " встр." : ""}`,
+      actionLabel: PSY_ACTIONS[s.action] ?? s.action ?? "",
+      range:       s.range || "—",
+      requirement: s.requirement || "",
+      powerKind:   s.powerKind || "",
+      sustainable: s.sustainable || false,
+      isSustained: s.isSustained || false,
+      effect:      s.effect || s.description || ""
+    };
+  });
+
+  // ── Геносемя (для Астартес) ─────────────────────────────────────────────────
+  context.isAstartes      = system.race === "astartes";
+  context.geneSeedOrgans  = GENE_SEED_ORGANS;
+  context.geneSeedOrigin  = system.geneSeed?.origin || "";
+  context.legionOptions   = buildLegionOptions(system.geneSeed?.legion || "");
+  context.selectedLegion  = getLegion(system.geneSeed?.legion || "");
+  context.chapterOptions  = buildChapterOptions(system.geneSeed?.legion || "", system.geneSeed?.chapter || "");
+  context.selectedChapter = getChapter(system.geneSeed?.legion || "", system.geneSeed?.chapter || "");
+  // Культура — независимый выбор (можно перенять у другого легиона, стр. 489-506)
+  context.cultureLegionOptions  = buildCultureLegionOptions(system.geneSeed?.cultureLegion || "");
+  context.cultureChapterOptions = buildChapterOptions(system.geneSeed?.cultureLegion || "", system.geneSeed?.cultureChapter || "");
+  context.hasCultureOverride    = !!system.geneSeed?.cultureLegion;
+  context.resolvedCulture       = system.geneSeed?.cultureLegion
+    ? resolveCulture(system.geneSeed.cultureLegion, system.geneSeed?.cultureChapter) : null;
+  // Применены ли уже расовые Черты (для подсказки кнопки)
+  context.hasGeneSeedTrait = allItems.some(i => i.type === "trait" && /Gene-Seed|Геносемя/i.test(i.name));
+
+  // Имя источника Геносемя/Культуры для шапки — ЧИСТОЕ имя легиона/варбанды
+  // (без номера легиона, который несёт resolvedCulture.name/legion-info-title
+  // на «Заметках» — там уместен, в компактной шапке нет).
+  context.headerGeneSeedName = context.selectedChapter?.name || context.selectedLegion?.name || "";
+  if (context.hasCultureOverride) {
+    const cultureLegion  = getLegion(system.geneSeed.cultureLegion);
+    const cultureChapter = getChapter(system.geneSeed.cultureLegion, system.geneSeed?.cultureChapter || "");
+    context.headerCultureName = cultureChapter?.name || cultureLegion?.name || "";
+  } else {
+    context.headerCultureName = context.headerGeneSeedName;
+  }
+
+  // ── Псайкер (сводка для вкладки) ────────────────────────────────────────────
+  const isEldarPsyker = AELDARI_RACES.includes(system.race);
+  const psyBPR = system.psyker?.rating ?? 0;
+  const psyTPR = system.psyker?.currentRating ?? 0;
+  context.psyker = {
+    class:         system.psyker?.class || "bound",
+    isEldar:       isEldarPsyker,
+    themeKey:      isEldarPsyker ? "eldar" : (system.psyker?.class || "bound"),
+    natureLabel:   isEldarPsyker ? "Древнее Мастерство"
+                                 : (PSY_NATURES[system.psyker?.class]?.label ?? "Связанный"),
+    rating:        psyBPR,
+    currentRating: psyTPR,
+    sustain:       system.psyker?.sustain ?? 0,
+    // Проводник Варпа: пипсы 1..бPR — заряжённые (доступны, ≤тPR) / истощённые (на поддержание).
+    prPips:        Array.from({ length: Math.min(12, Math.max(0, psyBPR)) },
+                     (_, i) => ({ charged: (i + 1) <= psyTPR })),
+    overload:      psyTPR < 0
+  };
+
+  context.abilityTechPowers = allItems.filter(i => i.type === "techPower").map(i => ({
+    id:   i.id,
+    name: i.name
+  }));
+
+  // ── Техночудеса (для вкладки ТЕХ) ───────────────────────────────────────────
+  context.techMiracles = allItems.filter(i => i.type === "techPower").map(i => {
+    const s = i.system;
+    return {
+      id:            i.id,
+      name:          i.name,
+      typeLabel:     TECH_MIRACLE_TYPES[s.miracleType]?.label ?? s.miracleType ?? "",
+      disciplineLabel: TECH_DISCIPLINES[s.discipline]?.label ?? "",
+      subtype:       s.subtype || "",
+      rating:        s.rating ?? 0,
+      cognitionCost: s.cognitionCost ?? 0,
+      energyCost:    s.energyCost ?? 0,
+      cost:          s.cost ?? 0,
+      sustainCost:   s.sustainCost ?? 0,
+      sustainActionLabel: TECH_ACTIONS[s.sustainAction] ?? s.sustainAction ?? "Свободное",
+      actionLabel:   TECH_ACTIONS[s.action] ?? s.action ?? "",
+      range:         s.range || "—",
+      damage:        s.damage || "",
+      damageType:    DAMAGE_TYPES[s.damageType] ?? s.damageType ?? "",
+      penetration:   s.penetration ?? 0,
+      sustained:     s.sustained || false,
+      effect:        s.effect || s.description || ""
+    };
+  });
+  const cogVal = system.cognition?.value ?? 0, cogMax = system.cognition?.max ?? 0;
+  context.cognition = {
+    value: cogVal, max: cogMax, regen: system.cognition?.regen ?? 0,
+    pips: Array.from({ length: Math.min(14, Math.max(0, cogMax)) }, (_, i) => ({ on: (i + 1) <= cogVal }))
+  };
+  const enVal = system.energy?.value ?? 0;
+  const enMaxTotal = system.energy?.maxTotal ?? (system.energy?.max ?? 0);
+  context.energy = {
+    value:    enVal,
+    max:      system.energy?.max ?? 0,
+    bonusMax: system.energy?.bonusMax ?? 0,
+    maxTotal: enMaxTotal,
+    pips: Array.from({ length: Math.min(16, Math.max(0, enMaxTotal)) }, (_, i) => ({ on: (i + 1) <= enVal }))
+  };
+  context.noosphereActions = NOOSPHERE_ACTIONS;
+
+  // ── Кибернетика Механикум: кнопки генерации ⚙/⚡ и тумблеры от имплантов ──────
+  // Только установленные (флаг) импланты с директивами gen/toggle в IMPLANT_MECH.
+  const RES_LABEL = { cognition: "Когниция", energy: "Энергия" };
+  const techGen = [], techToggles = [], techFocusList = [];
+  for (const it of allItems) {
+    if (it.type !== "implant" || !it.getFlag?.("warhammer-dbc", "installed")) continue;
+    const mech = implantMech(it.name);
+    if (!mech) continue;
+    const q = it.system.quality || "common";
+    if (Array.isArray(mech.gen)) {
+      mech.gen.forEach((g, gi) => {
+        techGen.push({
+          itemId: it.id, genIdx: gi,
+          implant: it.name.split("/")[0].trim(),
+          res: g.res, resLabel: RES_LABEL[g.res] || g.res,
+          amount: g.amount, label: g.label,
+          fromCognition: g.fromCognition ?? 0
+        });
+      });
+    }
+    if (mech.toggle) {
+      techToggles.push({
+        itemId: it.id,
+        implant: it.name.split("/")[0].trim(),
+        label: mech.toggle.label, note: mech.toggle.note || "",
+        active: !!it.getFlag?.("warhammer-dbc", "techActive")
+      });
+    }
+    if (mech.ironFocus) {
+      const IRON = { poor: "−10", common: "0", good: "+5", best: "+10" };
+      techFocusList.push({ implant: it.name.split("/")[0].trim(), quality: q, mod: IRON[q] ?? "0" });
+    }
+  }
+  context.techGenActions = techGen;
+  context.techToggles    = techToggles;
+  context.techFocusList  = techFocusList;
+
+  return context;
+}

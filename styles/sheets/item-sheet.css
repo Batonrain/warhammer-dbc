@@ -1,0 +1,1350 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Лист предмета
+═══════════════════════════════════════════════════════ */
+
+/* ── Шапка ── */
+.item-sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--wh-red, #6b1a1a);
+  background: var(--wh-panel-dark, #2a1a0e);
+}
+
+.item-sheet-header .item-img {
+  width: 60px;
+  height: 60px;
+  border: 2px solid var(--wh-red, #6b1a1a);
+  cursor: pointer;
+  object-fit: cover;
+}
+
+.item-header-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.item-name-label {
+  color: var(--wh-text-light, #e8e0d0);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.item-name-input {
+  flex: 1;
+  font-size: 1.1em;
+  font-weight: bold;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  padding: 3px 6px;
+  font-family: inherit;
+  color: var(--wh-text, #1a1008);
+}
+
+/* ── Секции ── */
+.item-section {
+  margin: 6px 6px 0;
+  border: 1px solid var(--wh-border, #7a5c2e);
+}
+
+.item-section-title {
+  background: var(--wh-panel-mid, #4a2e18);
+  color: var(--wh-text-light, #e8e0d0);
+  font-weight: bold;
+  font-size: 0.82em;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+/* ── Строки полей ── */
+.weapon-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--wh-border-light, #b8a882);
+  flex-wrap: nowrap;
+}
+
+.weapon-row:last-child { border-bottom: none; }
+
+.wr-label {
+  font-size: 0.8em;
+  color: var(--wh-text-mid, #5a4a30);
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.wr-sep {
+  color: var(--wh-text-mid, #5a4a30);
+  font-weight: bold;
+  padding: 0 1px;
+}
+
+/* ── Поля ввода ── */
+.wr-input-xs {
+  width: 40px;
+  text-align: center;
+  padding: 2px 3px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-sm {
+  width: 55px;
+  text-align: center;
+  padding: 2px 3px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-md {
+  width: 100px;
+  padding: 2px 4px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-special {
+  flex: 1;
+  padding: 2px 4px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+/* ── Селекты ── */
+.wr-select {
+  padding: 2px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  max-width: 90px;
+}
+
+.wr-select-sm {
+  padding: 2px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  max-width: 80px;
+}
+
+.wr-select-avail {
+  padding: 2px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  max-width: 150px;
+}
+
+/* ── Textarea ── */
+.item-textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: none;
+  font-family: inherit;
+  font-size: 0.88em;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  color: var(--wh-text, #1a1008);
+  display: block;
+}
+
+.item-textarea-tall { min-height: 200px; }
+
+/* ── Таблица дистанций ── */
+.weapon-range-table {
+  margin: 4px 8px 6px;
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.wrt-title {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  font-size: 0.78em;
+  font-weight: bold;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+.wrt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wh-border-light);
+  font-size: 0.83em;
+}
+
+.wrt-row:last-child { border-bottom: none; }
+.wrt-name  { font-weight: bold; min-width: 100px; }
+.wrt-range { flex: 1; color: var(--wh-text-mid); }
+.wrt-mod   { font-weight: bold; min-width: 36px; text-align: right; }
+
+.wrt-pointblank { background: #e8ffe8; }
+.wrt-pointblank .wrt-mod { color: #1a7a1a; }
+.wrt-short { background: #f4ffe8; }
+.wrt-short .wrt-mod { color: #4a7a1a; }
+.wrt-combat { background: #f8f8f0; }
+.wrt-combat .wrt-mod { color: #5a5a3a; }
+.wrt-long { background: #fff4e8; }
+.wrt-long .wrt-mod { color: #8a4a00; }
+.wrt-extreme { background: #ffe8e8; }
+.wrt-extreme .wrt-mod { color: #8a0000; }
+
+/* ── Боеприпасы: модификаторы ── */
+.ammo-mods-section {
+  margin: 4px 0;
+  border-top: 1px solid var(--wh-border-light);
+}
+
+.ammo-mods-title {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  font-size: 0.78em;
+  font-weight: bold;
+  padding: 2px 8px;
+  letter-spacing: 0.05em;
+}
+
+.ammo-mods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 5px 8px;
+  background: var(--wh-bg);
+}
+
+.ammo-mod-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ammo-mod-cell label {
+  font-size: 0.78em;
+  font-weight: bold;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+  min-width: 55px;
+}
+
+.ammo-mod-wide { grid-column: span 2; }
+.ammo-mod-wide label { min-width: 90px; }
+
+/* ── Чекбоксы типов оружия ── */
+.ammo-weapon-types-row {
+  align-items: flex-start !important;
+  padding: 6px 8px !important;
+}
+
+.ammo-types-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  flex: 1;
+}
+
+.ammo-type-cb-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82em;
+  color: var(--wh-text);
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: background 0.1s;
+}
+
+.ammo-type-cb-label:hover { background: var(--wh-input-bg); }
+
+.ammo-type-cb-label input[type="checkbox"] {
+  accent-color: var(--wh-red);
+  margin: 0;
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+}
+
+/* ─── Сетка AP по частям тела ─── */
+.armor-location-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px 8px;
+  padding: 6px;
+  margin: 4px 0;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+}
+
+.alg-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.alg-cell label {
+  font-size: 0.82em;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.alg-spacer {
+  /* пустая ячейка для выравнивания */
+  display: block;
+}
+
+/* ─── Особенности брони ─── */
+.armor-properties-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 4px 0;
+}
+
+.armor-prop-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82em;
+  cursor: pointer;
+  color: var(--wh-text-mid);
+}
+
+.armor-prop-label:hover {
+  color: var(--wh-text-dark);
+}
+
+.armor-prop-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* ─── Силовая броня ─── */
+.armor-power-block {
+  margin: 6px 0;
+  padding: 6px 8px;
+  background: rgba(60,20,20,0.08);
+  border-left: 3px solid #8b3a3a;
+  border-radius: 2px;
+}
+
+.armor-power-title {
+  font-weight: bold;
+  font-size: 0.88em;
+  color: #6b1a1a;
+  margin-bottom: 4px;
+}
+
+.armor-power-note {
+  font-size: 0.8em;
+  color: var(--wh-text-mid);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Лист предмета
+═══════════════════════════════════════════════════════ */
+
+/* ── Шапка ── */
+.item-sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--wh-red, #6b1a1a);
+  background: var(--wh-panel-dark, #2a1a0e);
+}
+
+.item-sheet-header .item-img {
+  width: 60px;
+  height: 60px;
+  border: 2px solid var(--wh-red, #6b1a1a);
+  cursor: pointer;
+  object-fit: cover;
+}
+
+.item-header-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.item-name-label {
+  color: var(--wh-text-light, #e8e0d0);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.item-name-input {
+  flex: 1;
+  font-size: 1.1em;
+  font-weight: bold;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  padding: 3px 6px;
+  font-family: inherit;
+  color: var(--wh-text, #1a1008);
+}
+
+/* ── Секции ── */
+.item-section {
+  margin: 6px 6px 0;
+  border: 1px solid var(--wh-border, #7a5c2e);
+}
+
+.item-section-title {
+  background: var(--wh-panel-mid, #4a2e18);
+  color: var(--wh-text-light, #e8e0d0);
+  font-weight: bold;
+  font-size: 0.82em;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+/* ── Строки полей ── */
+.weapon-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--wh-border-light, #b8a882);
+  flex-wrap: nowrap;
+}
+
+.weapon-row:last-child { border-bottom: none; }
+
+.wr-label {
+  font-size: 0.8em;
+  color: var(--wh-text-mid, #5a4a30);
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.wr-sep {
+  color: var(--wh-text-mid, #5a4a30);
+  font-weight: bold;
+  padding: 0 1px;
+}
+
+/* ── Поля ввода ── */
+.wr-input-xs {
+  width: 40px;
+  text-align: center;
+  padding: 2px 3px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-sm {
+  width: 55px;
+  text-align: center;
+  padding: 2px 3px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-md {
+  width: 100px;
+  padding: 2px 4px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-wide {
+  flex: 1;
+  min-width: 80px;
+  padding: 2px 4px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-special {
+  flex: 1;
+  padding: 2px 4px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+/* ── Селекты ── */
+.wr-select {
+  padding: 2px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  max-width: 120px;
+}
+
+.wr-select-sm {
+  padding: 2px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  max-width: 110px;
+}
+
+.wr-select-avail {
+  padding: 2px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  max-width: 150px;
+}
+
+/* ── Textarea ── */
+.item-textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: none;
+  font-family: inherit;
+  font-size: 0.88em;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  color: var(--wh-text, #1a1008);
+  display: block;
+}
+
+.item-textarea-tall { min-height: 200px; }
+
+/* ── Таблица дистанций ── */
+.weapon-range-table {
+  margin: 4px 8px 6px;
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.wrt-title {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  font-size: 0.78em;
+  font-weight: bold;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+.wrt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wh-border-light);
+  font-size: 0.83em;
+}
+
+.wrt-row:last-child { border-bottom: none; }
+.wrt-name  { font-weight: bold; min-width: 100px; }
+.wrt-range { flex: 1; color: var(--wh-text-mid); }
+.wrt-mod   { font-weight: bold; min-width: 36px; text-align: right; }
+
+.wrt-pointblank { background: #e8ffe8; }
+.wrt-pointblank .wrt-mod { color: #1a7a1a; }
+.wrt-short { background: #f4ffe8; }
+.wrt-short .wrt-mod { color: #4a7a1a; }
+.wrt-combat { background: #f8f8f0; }
+.wrt-combat .wrt-mod { color: #5a5a3a; }
+.wrt-long { background: #fff4e8; }
+.wrt-long .wrt-mod { color: #8a4a00; }
+.wrt-extreme { background: #ffe8e8; }
+.wrt-extreme .wrt-mod { color: #8a0000; }
+
+/* ── Боеприпасы: модификаторы ── */
+.ammo-mods-section {
+  margin: 4px 0;
+  border-top: 1px solid var(--wh-border-light);
+}
+
+.ammo-mods-title {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  font-size: 0.78em;
+  font-weight: bold;
+  padding: 2px 8px;
+  letter-spacing: 0.05em;
+}
+
+.ammo-mods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 5px 8px;
+  background: var(--wh-bg);
+}
+
+.ammo-mod-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ammo-mod-cell label {
+  font-size: 0.78em;
+  font-weight: bold;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+  min-width: 55px;
+}
+
+.ammo-mod-wide { grid-column: span 2; }
+.ammo-mod-wide label { min-width: 90px; }
+
+/* ── Чекбоксы типов оружия ── */
+.ammo-weapon-types-row {
+  align-items: flex-start !important;
+  padding: 6px 8px !important;
+}
+
+.ammo-types-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  flex: 1;
+}
+
+.ammo-type-cb-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82em;
+  color: var(--wh-text);
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: background 0.1s;
+}
+
+.ammo-type-cb-label:hover { background: var(--wh-input-bg); }
+
+.ammo-type-cb-label input[type="checkbox"] {
+  accent-color: var(--wh-red);
+  margin: 0;
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+}
+
+/* ─── Сетка AP по частям тела ─── */
+.armor-location-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px 8px;
+  padding: 6px;
+  margin: 4px 0;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+}
+
+.alg-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.alg-cell label {
+  font-size: 0.82em;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.alg-spacer {
+  display: block;
+}
+
+/* ─── Особенности брони ─── */
+.armor-properties-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 4px 0;
+}
+
+.armor-prop-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82em;
+  cursor: pointer;
+  color: var(--wh-text-mid);
+}
+
+.armor-prop-label:hover {
+  color: var(--wh-text-dark);
+}
+
+.armor-prop-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* ─── Силовая броня ─── */
+.armor-power-block {
+  margin: 6px 0;
+  padding: 6px 8px;
+  background: rgba(60,20,20,0.08);
+  border-left: 3px solid #8b3a3a;
+  border-radius: 2px;
+}
+
+.armor-power-title {
+  font-weight: bold;
+  font-size: 0.88em;
+  color: #6b1a1a;
+  margin-bottom: 4px;
+}
+
+.armor-power-note {
+  font-size: 0.8em;
+  color: var(--wh-text-mid);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ПРЕПАРАТЫ / ХИМИЯ — лист предмета
+═══════════════════════════════════════════════════════ */
+
+/* ── Текстовые поля эффектов (компактные) ── */
+.warhammer-dbc .drug-effect-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--wh-border-light, #b8a882);
+}
+
+.warhammer-dbc .drug-effect-row:last-child {
+  border-bottom: none;
+}
+
+.warhammer-dbc .drug-effect-label {
+  font-size: 0.8em;
+  font-weight: bold;
+  color: var(--wh-text-mid, #5a4a30);
+  white-space: nowrap;
+  min-width: 80px;
+  padding-top: 3px;
+}
+
+.warhammer-dbc .drug-textarea-sm {
+  flex: 1;
+  min-height: 44px;
+  max-height: 72px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.84em;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 2px;
+  color: var(--wh-text, #1a1008);
+  padding: 3px 5px;
+  box-sizing: border-box;
+}
+
+/* ── Модификаторы характеристик — горизонтальная строка ── */
+.warhammer-dbc .drug-stat-mods-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 6px 10px;
+  align-items: flex-end;
+}
+
+.warhammer-dbc .drug-stat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.warhammer-dbc .drug-stat-lbl {
+  font-size: 0.72em;
+  font-weight: bold;
+  color: var(--wh-text-mid, #5a4a30);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.warhammer-dbc .drug-stat-inp {
+  width: 42px;
+  text-align: center;
+  font-size: 0.9em;
+  font-weight: bold;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 2px;
+  color: var(--wh-text, #1a1008);
+  padding: 2px 0;
+}
+
+.warhammer-dbc .drug-stat-hint {
+  font-size: 0.74em;
+  color: var(--wh-text-mid, #5a4a30);
+  padding: 0 10px 5px;
+  font-style: italic;
+}
+
+/* ── Специальные эффекты ── */
+.warhammer-dbc .drug-fx-grid {
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.warhammer-dbc .drug-fx-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 24px;
+}
+
+.warhammer-dbc .drug-fx-lbl {
+  font-size: 0.8em;
+  color: var(--wh-text, #1a1008);
+  white-space: nowrap;
+  font-weight: bold;
+  min-width: max-content;
+}
+
+.warhammer-dbc .drug-fx-num {
+  width: 50px;
+  text-align: center;
+  font-size: 0.88em;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 2px;
+  color: var(--wh-text, #1a1008);
+  padding: 2px 3px;
+}
+
+.warhammer-dbc .drug-fx-text {
+  width: 80px;
+  font-size: 0.85em;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 2px;
+  color: var(--wh-text, #1a1008);
+  padding: 2px 4px;
+  font-family: inherit;
+}
+
+.warhammer-dbc .drug-fx-select {
+  font-size: 0.8em;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 2px;
+  color: var(--wh-text, #1a1008);
+  padding: 2px 4px;
+  font-family: inherit;
+  max-width: 130px;
+}
+
+.warhammer-dbc .drug-fx-wide {
+  flex: 1;
+  min-width: 120px;
+  font-size: 0.85em;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 2px;
+  color: var(--wh-text, #1a1008);
+  padding: 2px 4px;
+  font-family: inherit;
+}
+
+/* ── Чекбоксы компактные ── */
+.warhammer-dbc .drug-fx-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 4px 0;
+  border-top: 1px solid var(--wh-border-light, #b8a882);
+  border-bottom: 1px solid var(--wh-border-light, #b8a882);
+}
+
+.warhammer-dbc .drug-fx-cb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 1px 0;
+}
+
+.warhammer-dbc .drug-fx-cb-label input[type="checkbox"] {
+  accent-color: var(--wh-red, #8b0000);
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Яд: вектор доставки ── */
+.warhammer-dbc .drug-poison-vectors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--wh-border-light, #b8a882);
+}
+
+/* ── Качество яда ── */
+.warhammer-dbc .drug-quality-note {
+  font-size: 0.76em;
+  color: var(--wh-text-mid, #5a4a30);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* ── Статус активного препарата ── */
+.warhammer-dbc .drug-active-section {
+  border-left: 3px solid #4caf50 !important;
+}
+
+.warhammer-dbc .drug-active-title {
+  background: rgba(76,175,80,0.15) !important;
+  color: #2a6a2a !important;
+}
+
+.warhammer-dbc .drug-active-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  flex-wrap: wrap;
+}
+
+.warhammer-dbc .drug-active-badge {
+  display: inline-block;
+  background: rgba(76,175,80,0.15);
+  border: 1px solid #4caf50;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 0.82em;
+  font-weight: bold;
+  color: #2a6a2a;
+}
+
+.warhammer-dbc .drug-active-rounds,
+.warhammer-dbc .drug-active-mods {
+  font-size: 0.82em;
+  color: var(--wh-text-mid, #5a4a30);
+}
+
+/* ── Качество препарата / подсказка яда ── */
+.warhammer-dbc .drug-quality-select {
+  min-width: 130px;
+}
+
+.warhammer-dbc .drug-quality-hint {
+  font-size: 0.78em;
+  color: var(--wh-text-mid);
+  margin-left: 8px;
+  white-space: nowrap;
+  font-style: italic;
+}
+
+.warhammer-dbc .drug-quality-hint b {
+  color: var(--wh-red);
+  font-style: normal;
+}
+/* ── Особые свойства оружия ──────────────────────────────── */
+.warhammer-dbc .weapon-props-section {
+  margin: 6px 8px 2px;
+  padding: 6px 8px;
+  border: 1px dashed var(--wh-border);
+  background: rgba(0,0,0,0.04);
+}
+.warhammer-dbc .weapon-props-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.warhammer-dbc .wprop-add-select {
+  flex: 1;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  color: var(--wh-text);
+  font-family: inherit;
+  font-size: 0.84em;
+  padding: 2px 4px;
+}
+.warhammer-dbc .weapon-props-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+.warhammer-dbc .wprop-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  border: 1px solid var(--wh-border);
+  border-radius: 10px;
+  font-size: 0.8em;
+  cursor: help;
+}
+.warhammer-dbc .wprop-chip .wprop-name { font-weight: 600; }
+.warhammer-dbc .wprop-chip .wprop-slash { opacity: 0.7; }
+.warhammer-dbc .wprop-rating,
+.warhammer-dbc .shipprop-rating {
+  width: 34px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  color: var(--wh-text);
+  font-size: 0.95em;
+  text-align: center;
+  padding: 0 2px;
+}
+.warhammer-dbc .wprop-remove,
+.warhammer-dbc .shipprop-remove,
+.warhammer-dbc .aprop-remove {
+  width: 16px; height: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--wh-red);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.8em;
+  line-height: 1;
+  padding: 0;
+}
+.warhammer-dbc .wprop-remove:hover,
+.warhammer-dbc .shipprop-remove:hover,
+.warhammer-dbc .aprop-remove:hover { background: #b02020; }
+
+/* Заголовок секции с кнопкой (＋ профиль / ＋ вариация и т.п.):
+   кнопка компактная и прижата вправо, а не растянута на всю ширину. */
+.warhammer-dbc .item-section-title:has(button) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+.warhammer-dbc .item-section-title button {
+  flex: 0 0 auto;
+  width: auto;
+  margin-left: auto;
+  font-size: 0.85em;
+  padding: 1px 10px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* ── Снаряжение/Инструменты: подсказка качества и слотов разгрузки ── */
+.wprop-hint {
+  font-size: 0.82em;
+  opacity: 0.9;
+  margin: 4px 0;
+  line-height: 1.8;
+}
+.wprop-hint .roll-wprop {
+  display: inline-block;
+  background: var(--wh-input-bg, #ccc8bc);
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin: 1px 2px;
+  color: var(--wh-text, #1a1008);
+}
+
+/* ── Роспись механик импланта ─────────────────────────────────── */
+.warhammer-dbc .implant-mech { border-top: 1px dashed var(--wh-border); padding-top: 4px; }
+.warhammer-dbc .implant-mech-tag { font-size: 0.68em; font-weight: normal; opacity: 0.7; letter-spacing: 0.5px; }
+.warhammer-dbc .implant-mech-auto,
+.warhammer-dbc .implant-mech-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 3px 0; }
+.warhammer-dbc .implant-mech-lbl { font-weight: bold; font-size: 0.82em; opacity: 0.8; }
+.warhammer-dbc .implant-mech-chip {
+  padding: 1px 6px; border-radius: 3px; font-size: 0.82em;
+  background: rgba(0,0,0,0.12); border: 1px solid var(--wh-border);
+}
+.warhammer-dbc .implant-mech-chip.is-trait { border-color: #7a9a4a; }
+.warhammer-dbc .implant-mech-chip.is-skill { border-color: #4a7a9a; }
+.warhammer-dbc .implant-mech-note { font-size: 0.85em; margin: 4px 0; font-style: italic; opacity: 0.92; }
+.warhammer-dbc .implant-mech-q { margin-top: 4px; padding-top: 3px; border-top: 1px dotted var(--wh-border); }
+.warhammer-dbc .implant-mech-qrow { font-size: 0.82em; margin: 2px 0; line-height: 1.35; }
+.warhammer-dbc .implant-mech-qrow b { display: inline-block; min-width: 46px; }
+.warhammer-dbc .implant-mech .q-poor { color: #b05a3a; }
+.warhammer-dbc .implant-mech .q-good { color: #4a9a4a; }
+.warhammer-dbc .implant-mech .q-best { color: #c89020; }
+.warhammer-dbc.wh-holo .implant-mech .q-poor { color: #ff9a6a; }
+.warhammer-dbc.wh-holo .implant-mech .q-good { color: #7fe0a8; }
+.warhammer-dbc.wh-holo .implant-mech .q-best { color: #ffd24d; }
+
+/* ── Оружие: хваты и доп. профили (стр. 39, 207-221) ───────────────────────── */
+.weapon-profiles {
+  margin-top: 4px;
+  padding: 4px 6px;
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 3px;
+  background: rgba(0,0,0,0.04);
+}
+.weapon-profiles .wprofile-row {
+  gap: 4px;
+  align-items: center;
+}
+.wr-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 3px;
+  color: var(--wh-text, #1a1008);
+  flex: 0 0 auto;
+}
+.wr-icon-btn:hover { background: rgba(0,0,0,0.08); }
+.wprofile-del:hover { color: #b03030; border-color: #b03030; }
+
+/* Заголовок блока профилей + кнопка добавления */
+.wprofiles-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.wprofiles-title { font-size: 0.82em; font-weight: 700; letter-spacing: .04em; opacity: .9; }
+.wprofiles-title i { margin-right: 4px; opacity: .8; }
+.wprofile-add {
+  display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+  padding: 2px 9px; font-size: 0.78em; border-radius: 3px;
+  border: 1px solid var(--wh-border, #7a5c2e); color: var(--wh-text, #1a1008);
+}
+.wprofile-add:hover { background: rgba(0,0,0,0.08); }
+
+/* Карточка профиля */
+.wprofile-card {
+  margin-top: 5px; padding: 5px 7px 6px; border-radius: 4px;
+  border: 1px solid var(--wh-border, #7a5c2e); background: rgba(0,0,0,0.05);
+}
+.wprofile-card.is-primary { background: rgba(0,0,0,0.02); border-style: dashed; }
+.wprofile-card-head { display: flex; align-items: center; gap: 6px; }
+.wprofile-badge {
+  flex: 0 0 auto; font-size: 0.72em; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+  background: var(--wh-border, #7a5c2e); color: #fff;
+}
+.wprofile-name { flex: 1 1 auto; min-width: 60px; padding: 2px 5px; font-weight: 600;
+  background: var(--wh-input-bg, #ccc8bc); border: 1px solid var(--wh-border, #7a5c2e);
+  color: var(--wh-text, #1a1008); font-family: inherit; }
+.wprofile-stats-ro { flex: 0 0 auto; font-size: 0.78em; opacity: .7; }
+.wprofile-del { flex: 0 0 auto; cursor: pointer; padding: 2px 6px; opacity: .75; }
+.wprofile-del:hover { color: #b03030; opacity: 1; }
+
+/* Сетка статов профиля с подписями */
+.wprofile-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+.wprofile-grid > label {
+  display: flex; flex-direction: column; gap: 2px;
+  font-size: 0.68em; letter-spacing: .03em; opacity: .8; text-transform: uppercase;
+}
+.wprofile-grid > label:first-child { flex: 1 1 90px; }
+.wprofile-grid input, .wprofile-grid select {
+  padding: 2px 4px; font-size: 1.15em; font-family: inherit;
+  background: var(--wh-input-bg, #ccc8bc); border: 1px solid var(--wh-border, #7a5c2e);
+  color: var(--wh-text, #1a1008);
+}
+.wprofile-grid input[type="number"] { width: 52px; }
+
+.wprofile-props { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px;
+  padding-top: 5px; border-top: 1px dashed var(--wh-border, #7a5c2e); }
+.wprofile-prop-add { max-width: 200px; }
+.wprofile-prop-list { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.warhammer-dbc.wh-holo .weapon-profiles {
+  border-color: rgba(77,255,166,0.35);
+  background: rgba(6,32,22,0.35);
+}
+.warhammer-dbc.wh-holo .wr-icon-btn { border-color: rgba(77,255,166,0.4); color: #b8ffd8; }
+.warhammer-dbc.wh-holo .wr-icon-btn:hover { background: rgba(77,255,166,0.12); }
+.warhammer-dbc.wh-holo .wprofile-add { border-color: rgba(77,255,166,0.4); color: #b8ffd8; }
+.warhammer-dbc.wh-holo .wprofile-add:hover { background: rgba(77,255,166,0.12); }
+.warhammer-dbc.wh-holo .wprofile-card { border-color: rgba(77,255,166,0.3); background: rgba(6,32,22,0.4); }
+.warhammer-dbc.wh-holo .wprofile-badge { background: rgba(77,255,166,0.25); color: #d6ffe9; }
+.warhammer-dbc.wh-holo .wprofile-props { border-top-color: rgba(77,255,166,0.25); }
+
+
+/* ── Режимы защитного поля друкхарийской брони ─────────────────────────── */
+.wr-field-modes { align-items: flex-start; }
+.wr-field-list  { display: flex; flex-wrap: wrap; gap: 5px; flex: 1 1 auto; }
+.wr-field-mode {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 4px 9px; cursor: pointer; font-size: 11px; line-height: 1.25;
+  background: rgba(160, 107, 212, .08);
+  border: 1px solid rgba(160, 107, 212, .3); border-radius: 3px;
+  color: inherit; transition: background .15s, border-color .15s;
+}
+.wr-field-mode:hover:not(:disabled) { background: rgba(160, 107, 212, .2); border-color: #a06bd4; }
+.wr-field-mode.is-on {
+  background: rgba(160, 107, 212, .3); border-color: #a06bd4; color: #e8d5ff;
+  box-shadow: 0 0 8px rgba(160, 107, 212, .35);
+}
+.wr-field-mode.is-locked, .wr-field-mode:disabled { opacity: .4; cursor: default; }
+.wr-field-need { font-size: 9px; opacity: .75; letter-spacing: .03em; }
+.wr-field-off  { opacity: .6; }
+.wr-field-off:hover { opacity: 1; }
+
+/* ═══════════════ ВКЛАДКА «ЭФФЕКТЫ» (общая для всех типов) ═══════════════ */
+.warhammer-dbc .effects-tab-count {
+  margin-left: 6px; font-size: 0.78em; opacity: 0.75;
+  padding: 0 5px; border: 1px solid currentColor; border-radius: 2px;
+}
+.warhammer-dbc .effects-tab-actions {
+  display: flex; gap: 6px; margin-left: auto;
+}
+.warhammer-dbc .item-section-title .effects-tab-actions button { margin-left: 0; }
+.warhammer-dbc .effects-table .effect-toggle-cell { width: 2em; text-align: center; }
+.warhammer-dbc .effect-row-off { opacity: 0.5; }
+.warhammer-dbc .effect-changes-cell { font-size: 0.88em; opacity: 0.9; }
+.warhammer-dbc .effect-phase-cell { width: 5.5em; }
+.warhammer-dbc .effect-phase-warn {
+  color: var(--wh-red); font-size: 0.78em; white-space: nowrap;
+  cursor: help;
+}
+.warhammer-dbc .effect-row-actions { white-space: nowrap; text-align: right; }
+.warhammer-dbc .effect-row-actions button {
+  width: auto; padding: 1px 6px; font-size: 0.85em; margin-left: 2px;
+}
+.warhammer-dbc .effects-drop-target { min-height: 2em; }
+
+/* ═══════════════ ВКЛАДКА «МЕХАНИКА» (единый Конструктор, общая для всех типов) ═══════════════ */
+/* Кнопки «➕ И-группа»/«➕ ИЛИ-группа» — под блоком подсказки, не в заголовке. */
+.warhammer-dbc .mech-group-add-row { display: flex; gap: 6px; margin: 2px 0 10px; }
+.warhammer-dbc .mech-group-add-row button { width: auto; flex: 0 0 auto; }
+.warhammer-dbc .grant-group {
+  border: 1px solid var(--wh-border, #444); border-radius: 4px;
+  padding: 6px; margin-bottom: 10px;
+}
+/* Вложенная подгруппа (kind:"group") — визуально врезана внутрь записи-контейнера. */
+.warhammer-dbc .grant-entry-group { border-left: 2px solid rgba(255,200,90,.5); }
+.warhammer-dbc .grant-group-nested {
+  margin: 6px 0 0; border-style: dashed; background: rgba(255,200,90,.04);
+}
+.warhammer-dbc .grant-group-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.warhammer-dbc .grant-op-badge {
+  flex: 0 0 auto; font-size: .78em; font-weight: 700; padding: 1px 8px; border-radius: 8px;
+}
+.warhammer-dbc .grant-op-badge.grant-op-AND { background: rgba(77,255,166,.18); color: #7fffba; }
+.warhammer-dbc .grant-op-badge.grant-op-OR  { background: rgba(255,200,90,.18); color: #ffd98a; }
+.warhammer-dbc .grant-op-hint { flex: 1 1 auto; font-size: .78em; opacity: .7; }
+.warhammer-dbc .grant-group-head button { width: auto; flex: 0 0 auto; padding: 1px 8px; font-size: .85em; }
+.warhammer-dbc .grant-entries { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+.warhammer-dbc .grant-entry {
+  border: 1px solid rgba(77,255,166,.15); border-radius: 4px; padding: 5px; background: rgba(0,0,0,.15);
+}
+.warhammer-dbc .grant-entry-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.warhammer-dbc .grant-entry-row select, .warhammer-dbc .grant-entry-row input {
+  width: auto; flex: 1 1 130px; font-size: .82em;
+}
+.warhammer-dbc .grant-entry-kind { flex: 0 0 90px; }
+.warhammer-dbc .grant-entry-remove {
+  width: auto; flex: 0 0 auto; padding: 1px 8px; font-size: .85em;
+  border: 1px solid #7a2e2e; background: rgba(255,110,110,.12); color: #ffb0b0;
+}
+.warhammer-dbc .grant-entry-remove:hover { background: #ff6e6e; color: #2a0505; }
+.warhammer-dbc .grant-drop-zone {
+  flex: 1 1 180px; display: flex; align-items: center; gap: 5px; min-height: 26px;
+  padding: 2px 6px; border: 1px dashed var(--wh-border, #1f6f4a); border-radius: 4px; font-size: .82em;
+}
+.warhammer-dbc .grant-drop-placeholder { opacity: .6; }
+.warhammer-dbc .grant-drop-img { width: 20px; height: 20px; border: none; border-radius: 2px; }
+.warhammer-dbc .grant-drop-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.warhammer-dbc .grant-drop-clear, .warhammer-dbc .wprop-drop-clear {
+  width: auto; flex: 0 0 auto; padding: 0 5px; font-size: .8em; background: none; border: none; color: #ffb0b0;
+}
+.warhammer-dbc .grant-entry-preview { margin-top: 3px; font-size: .78em; color: #7fffba; opacity: .85; }
+.warhammer-dbc .grant-empty-hint { font-size: .82em; opacity: .7; padding: 2px 0; }
+.warhammer-dbc .grant-entry-add {
+  width: auto; padding: 2px 10px; font-size: .85em;
+  border: 1px solid #2f9e6a; background: rgba(77,255,166,.1); color: #d6ffe9;
+}
+.warhammer-dbc .grant-entry-add:hover { background: #4dffa6; color: #04120b; }
+
+/* «По выбору при получении» (skill/rollmod, specKey:"__choice__") — список
+   чекбоксов-кандидатов; актор потом выбирает один диалогом. */
+.warhammer-dbc .grant-spec-choice-list {
+  flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 3px 12px;
+  max-height: 110px; overflow-y: auto; padding: 4px 6px;
+  border: 1px dashed var(--wh-border, #1f6f4a); border-radius: 4px; background: rgba(0,0,0,.15);
+}
+.warhammer-dbc .grant-spec-choice-row {
+  display: flex; align-items: center; gap: 4px; font-size: .8em; white-space: nowrap; cursor: pointer;
+}
+.warhammer-dbc .grant-spec-choice-row input { flex: 0 0 auto; }
+
+/* Записи kind:"characteristic" — 4 узких поля в ряд */
+.warhammer-dbc .mech-char-key    { flex: 1 1 150px; }
+.warhammer-dbc .mech-char-field  { flex: 1 1 140px; }
+.warhammer-dbc .mech-char-op     { flex: 1 1 140px; }
+.warhammer-dbc .mech-char-value  { flex: 0 1 70px; }
+
+/* Записи kind:"script" — своя строка на всю ширину под код */
+.warhammer-dbc .grant-entry-script .grant-entry-row { align-items: flex-start; }
+.warhammer-dbc .mech-script-label { flex: 1 1 100%; order: 2; }
+.warhammer-dbc .mech-script-code {
+  flex: 1 1 100%; order: 3; min-height: 90px;
+  font-family: var(--font-mono, "Courier New", monospace); font-size: .82em; white-space: pre;
+}
+.warhammer-dbc .mech-script-code:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.wh-grant-choice .grant-choice-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: .9em; }

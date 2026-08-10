@@ -1,0 +1,59 @@
+<div class="tab abil-cog" data-tab="abilities" data-group="primary"> {{#if isAstartes}}
+  <div class="ability-section-panel gene-seed-panel"> <div class="panel-title"> ГЕНОСЕМЯ
+      <button type="button" class="gene-toggle-btn" title="Свернуть/развернуть импланты">▸ Импланты</button> </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> <button type="button" class="gene-apply-btn" title="Создать расовые Черты Астартес (Unnatural S/T, Size, Nimble, Amphibious, Gene-Seed) и базовые характеристики"> {{#if hasGeneSeedTrait}}↻ Обновить расовые бонусы{{else}}Применить расовые бонусы{{/if}}
+      </button> </div> <div class="gene-seed-hint">Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты — памятка (сворачивается).</div> <div class="gene-organs collapsed"> {{#each geneSeedOrgans as |o|}}
+      <div class="gene-organ"> <span class="gene-organ-name">{{o.name}}</span> <span class="gene-organ-effect">{{o.effect}}</span> </div> {{/each}}
+    </div> </div> {{/if}}
+
+  {{#if isYnnari}}
+  <div class="ability-section-panel ynnari-panel"> <div class="panel-title"> ИННАРИ — ПЕРЕРОЖДЁННЫЕ </div>
+    <div class="gene-seed-head"> <span class="gene-origin-label">Прошлое: <b>{{#if ynnariPastLabel}}{{ynnariPastLabel}}{{else}}— не выбрано (в шапке листа) —{{/if}}</b></span>
+      <button type="button" class="ynnari-apply-btn" title="Применить бонусы Прошлого (характеристики в пустые поля + расовые Черты) и Черты Иннари">{{#if ynnariPastLabel}}Применить бонусы ({{ynnariPastLabel}}) + Иннари{{else}}Применить Черты Иннари{{/if}}</button> </div>
+    <div class="gene-seed-hint">Прошлое (бывшая раса) выбирается в шапке листа или в Мастере создания. Иннари получает все бонусы изначальной расы + Черты «Перерождённые» и «Сила Душ». Мёртвое Могущество — на вкладке Показатели. Бонусы применяются в пустые поля характеристик и как Черты — повторное нажатие безопасно.</div>
+  </div> {{/if}}
+
+  {{#if isHarlequin}}
+  <div class="ability-section-panel ynnari-panel"> <div class="panel-title"> АРЛЕКИН — СЛУГИ ЦЕГОРАХА </div>
+    <div class="gene-seed-head"> <span class="gene-origin-label">Прошлое: <b>{{#if harlequinPastLabel}}{{harlequinPastLabel}}{{else}}— не выбрано (в шапке листа) —{{/if}}</b></span>
+      <button type="button" class="harlequin-apply-btn" title="Применить бонусы Прошлого (характеристики в пустые поля + расовые Черты) и Черты Арлекина">{{#if harlequinPastLabel}}Применить бонусы ({{harlequinPastLabel}}) + Арлекин{{else}}Применить Черты Арлекина{{/if}}</button> </div>
+    <div class="gene-seed-hint">Прошлое (изначальная раса: Азуриане/Друкхари/Экзодит) выбирается в шапке листа или в Мастере создания. Арлекин получает все бонусы изначальной расы + Черты Арлекина (Дары Цегораха, Акробатическое Мастерство, Искажённое Тело, Неприкосновенные, Воля Цегораха) и выбор Маски (Мириада Масок). Бонусы применяются в пустые поля характеристик и как Черты — повторное нажатие безопасно.</div>
+  </div> {{/if}}
+
+  {{#if isAeldari}}
+  <div class="ability-section-panel aeldari-paths-panel"> <div class="panel-title conditions-panel-title"> ПУТИ (АЭЛЬДАРИ)
+      <span class="paths-title-btns"> <button type="button" class="paths-toggle-btn" title="Свернуть/развернуть Пути">▾ Пути</button> <button type="button" class="path-add-btn" title="Добавить Путь">＋</button> </span> </div>
+    <div class="paths-collapse">
+    {{#if charPaths.length}}
+    <div class="paths-list"> {{#each charPaths as |p|}}
+      <div class="path-card"> <div class="path-card-header"> <select class="path-sel" data-index="{{p.idx}}">{{{p.pathOptions}}}</select> <select class="path-grade" data-index="{{p.idx}}">{{{p.gradeOptions}}}</select> <button type="button" class="path-remove" data-index="{{p.idx}}" title="Удалить Путь">✕</button> </div>
+        {{#if p.autoLabel}}<div class="path-auto">Авто: {{p.autoLabel}}</div>{{/if}}
+        {{#if p.gradesShown.length}}
+          {{#each p.gradesShown as |gr|}}
+          <div class="path-grade-block"> <div class="path-grade-name">{{gr.gradeLabel}}</div> <div class="path-desc">{{gr.desc}}</div> </div> {{/each}}
+        {{else}}
+          <div class="path-desc path-desc-empty"><em>Выберите Путь и градацию</em></div> {{/if}}
+      </div> {{/each}}
+    </div> {{else}}
+    <div class="conditions-empty">Нет Путей</div> {{/if}}
+    <div class="gene-seed-hint">Пути заменяют Мировоззрение. Градации: Новичок → Следующий → Мастер → Заблудившийся. Постоянные пассивки (Unnatural, лимит Порчи) учитываются автоматически; ситуативные боевые эффекты — справка для отыгрыша.</div>
+    </div>{{!-- /paths-collapse --}}
+  </div> {{/if}}
+
+  <div class="ability-section-panel"> <div class="panel-title"> ТАЛАНТЫ
+      <button type="button" class="talent-add-btn" title="Добавить талант из списка (по типам). ПКМ — создать пустой">＋</button> </div> <table class="items-table talents-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th class="col-wide">Название</th> <th class="col-narrow">Ур.</th> <th>Склонности</th> <th>Требование</th> </tr> </thead> <tbody> {{#if abilityTalentGroups.length}}
+          {{#each abilityTalentGroups as |g|}}
+          <tr class="talent-group-row"><td colspan="5" class="talent-group-cell">{{g.label}} <span class="talent-group-count">{{g.items.length}}</span></td></tr>
+          {{#each g.items as |t|}}
+          <tr class="item-row" data-item-id="{{t.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{t.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{t.name}}</td> <td class="talent-tier-cell">{{t.tier}}</td> <td class="talent-apt-cell">{{t.aptitudes}}</td> <td class="talent-req-cell">{{t.requirement}}</td> </tr>
+          <tr class="ability-detail-row" data-item-id="{{t.id}}" style="display:none;"> <td colspan="5"><div class="ability-detail-text">{{#if t.god}}<b>Бог:</b> {{t.god}}{{/if}}{{#if t.specialization}} · <b>Специализации:</b> {{t.specialization}}{{/if}}{{#if t.effectSummary}} · {{t.effectSummary}}{{/if}}{{#if (or t.god t.specialization t.effectSummary)}}<br/>{{/if}}{{#if t.benefit}}{{t.benefit}}{{else}}—{{/if}}</div></td> </tr> {{/each}}
+          {{/each}}
+        {{else}}
+          <tr class="items-empty"> <td colspan="5"><em>Нет талантов</em></td> </tr> {{/if}}
+      </tbody> </table> </div> <div class="ability-section-panel"> <div class="panel-title"> ЧЕРТЫ
+      <button type="button" class="trait-add-btn" title="Добавить черту из списка (по типам). ПКМ — создать пустую">＋</button> </div> <table class="items-table traits-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th class="col-wide">Название</th> <th class="col-narrow">Рейтинг</th> <th>Авто-эффекты</th> </tr> </thead> <tbody> {{#if traits.length}}
+          {{#each traits as |tr|}}
+          <tr class="item-row" data-item-id="{{tr.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{tr.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{tr.name}}</td> <td class="trait-rating-cell">{{tr.ratingDisplay}}</td> <td class="trait-fx-cell">{{tr.effectSummary}}</td> </tr>
+          <tr class="ability-detail-row" data-item-id="{{tr.id}}" style="display:none;"> <td colspan="4"><div class="ability-detail-text">{{#if tr.benefit}}{{tr.benefit}}{{else}}—{{/if}}</div></td> </tr> {{/each}}
+        {{else}}
+          <tr class="items-empty"> <td colspan="4"><em>Нет черт</em></td> </tr> {{/if}}
+      </tbody> </table> </div> </div>{{!-- /tab abilities --}}

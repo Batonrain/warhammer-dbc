@@ -1,0 +1,35 @@
+{{!-- Общая полоса Очков Бесчестия (корбук 438). Контекст = infamyContext(). --}}
+<div class="dp-ip-strip">
+  <div class="dp-ip-main">
+    <span class="dp-ip-label">⚜ ОЧКИ БЕСЧЕСТИЯ</span>
+    {{#if showCounter}}
+    <div class="dp-ip-center">
+      <div class="dp-ip-counter">
+        <button type="button" class="dp-ip-minus" title="−1">−</button>
+        <span class="dp-ip-value">{{ip}}<span class="dp-ip-max">/{{ipMax}}</span></span>
+        <button type="button" class="dp-ip-plus" title="+1">+</button>
+      </div>
+      <div class="dp-ip-pips">{{#each ipPips as |on|}}<span class="dp-ip-pip {{#if on}}on{{/if}}"></span>{{/each}}</div>
+    </div>
+    <button type="button" class="dp-ip-restore" title="Восстановить до максимума (конец сессии)">↻</button>
+    {{else}}
+    <span class="dp-ip-bound" title="Тратится из пула «Очки Бесчестья» в шапке (над Усталостью)">пул в шапке ↑</span>
+    {{/if}}
+  </div>
+
+  <div class="dp-ip-actions">
+    {{#each ipAbilities as |a|}}
+    <button type="button" class="dp-ip-spend {{#unless a.available}}dis{{/unless}}" data-ability="{{a.key}}" title="{{a.desc}}{{#unless a.available}} — {{a.reason}}{{/unless}}" {{#unless a.available}}disabled{{/unless}}><span class="dp-ip-ic">{{a.icon}}</span>{{a.label}}</button>
+    {{/each}}
+    {{#if patronAbility}}
+    <button type="button" class="dp-ip-spend dp-ip-patron" data-ability="{{patronAbility.key}}" title="{{patronAbility.desc}}"><span class="dp-ip-ic">{{patronAbility.icon}}</span>{{patronAbility.label}}</button>
+    {{/if}}
+  </div>
+
+  {{#if patronage.adv}}
+  <div class="dp-ip-patronage">
+    <span class="dp-ip-adv">＋ {{patronage.adv}}</span>
+    {{#if patronage.dis}}<span class="dp-ip-dis">－ {{patronage.dis}}</span>{{/if}}
+  </div>
+  {{/if}}
+</div>

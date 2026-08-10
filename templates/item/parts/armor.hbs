@@ -1,0 +1,410 @@
+{{!-- ══ БРОНЯ ══ --}}
+{{#if (eq item.type "armor")}}
+<div class="item-section">
+  <div class="item-section-title">СТАТЫ</div>
+
+  {{!-- Строка 1: Тип, Складывается, Макс. Ловкость --}}
+  <div class="weapon-row">
+    <label class="wr-label">Тип</label>
+    <select class="armor-type-select wr-select-sm">
+      <option value="simple"  {{#if (eq system.armorType "simple")}}selected{{/if}}>Простая</option>
+      <option value="flak"    {{#if (eq system.armorType "flak")}}selected{{/if}}>Флак</option>
+      <option value="mesh"    {{#if (eq system.armorType "mesh")}}selected{{/if}}>Ячеистая</option>
+      <option value="carapace"{{#if (eq system.armorType "carapace")}}selected{{/if}}>Панцирная</option>
+      <option value="power"   {{#if (eq system.armorType "power")}}selected{{/if}}>Силовая</option>
+      <option value="aspect"  {{#if (eq system.armorType "aspect")}}selected{{/if}}>Аспектная</option>
+    </select>
+
+
+  {{#if fieldSuit}}
+  {{!-- Встроенный генератор поля: одновременно активен ровно один режим --}}
+  <div class="wr-row wr-field-modes">
+    <label class="wr-label">Поле брони</label>
+    <div class="wr-field-list">
+      {{#each fieldModes as |m|}}
+      <button type="button" class="wr-field-mode{{#if m.active}} is-on{{/if}}{{#if m.locked}} is-locked{{/if}}"
+              data-field-mode="{{m.key}}" title="{{m.text}}" {{#if m.locked}}disabled{{/if}}>
+        <span class="wr-field-name">{{m.label}}</span>
+        {{#if m.locked}}<span class="wr-field-need">нужно {{m.need}}.Q</span>{{/if}}
+      </button>
+      {{/each}}
+      <button type="button" class="wr-field-mode wr-field-off" data-field-mode="">Выключить</button>
+    </div>
+  </div>
+  {{/if}}
+    <label class="wr-label" style="margin-left:10px;">
+      Складывается с другой бронёй
+    </label>
+    <input type="checkbox" name="system.stacks"
+           {{#if system.stacks}}checked{{/if}}
+           style="margin:0 6px;"/>
+
+    <label class="wr-label" style="margin-left:10px;">Макс. Ловкость</label>
+    <input type="number" name="system.maxAgility"
+           value="{{system.maxAgility}}" min="0" class="wr-input-xs"/>
+  </div>
+
+  {{!-- Строка 2: AP по частям тела --}}
+  <div class="armor-location-grid">
+    <div class="alg-spacer"></div>
+    <div class="alg-cell">
+      <label>Голова</label>
+      <input type="number" name="system.head"
+             value="{{system.head}}" min="0" class="wr-input-xs"/>
+    </div>
+    <div class="alg-spacer"></div>
+
+    <div class="alg-cell">
+      <label>Левая рука</label>
+      <input type="number" name="system.leftArm"
+             value="{{system.leftArm}}" min="0" class="wr-input-xs"/>
+    </div>
+    <div class="alg-cell">
+      <label>Корпус</label>
+      <input type="number" name="system.body"
+             value="{{system.body}}" min="0" class="wr-input-xs"/>
+    </div>
+    <div class="alg-cell">
+      <label>Правая рука</label>
+      <input type="number" name="system.rightArm"
+             value="{{system.rightArm}}" min="0" class="wr-input-xs"/>
+    </div>
+
+    <div class="alg-cell">
+      <label>Левая нога</label>
+      <input type="number" name="system.leftLeg"
+             value="{{system.leftLeg}}" min="0" class="wr-input-xs"/>
+    </div>
+    <div class="alg-spacer"></div>
+    <div class="alg-cell">
+      <label>Правая нога</label>
+      <input type="number" name="system.rightLeg"
+             value="{{system.rightLeg}}" min="0" class="wr-input-xs"/>
+    </div>
+  </div>
+
+  {{!-- Строка 3: Особенности брони (как у оружия — добавлением) --}}
+  <div class="weapon-props-section" style="margin-top:6px;">
+    <div class="weapon-props-head">
+      <label class="wr-label">Особенности</label>
+      <select class="aprop-add-select">
+        <option value="">＋ добавить свойство…</option>
+        {{#each armorPropsAvailable as |d|}}
+        <option value="{{d.key}}">{{d.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if armorPropsActive.length}}
+    <div class="weapon-props-list">
+      {{#each armorPropsActive as |p|}}
+      <div class="wprop-chip" title="{{p.def.desc}}">
+        <span class="wprop-name">{{p.def.label}}</span>
+        <button type="button" class="aprop-remove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+
+  {{!-- Силовая броня — доп. блок --}}
+  {{#if (eq system.armorType "power")}}
+  <div class="armor-power-block">
+    <div class="armor-power-title">⚙️ Силовая броня</div>
+    <div class="armor-power-note">
+      Имеет свойства <b>Hard</b>, <b>Heavy</b> и <b>Sealed</b>.
+      Не имеет Max.A (встроенные приводы). Бонус S по профилю брони.
+      Не учитывается в весе переносимого. Размер +1 (мин. 4).
+      Штраф −10 на тонкие манипуляции.
+    </div>
+    <div class="weapon-row">
+      <label class="wr-label">Бонус S</label>
+      <input type="number" name="system.strengthBonus"
+             value="{{system.strengthBonus}}" min="0" class="wr-input-xs"/>
+    </div>
+  </div>
+  {{/if}}
+
+  {{!-- Аспектная броня Аэльдари — доп. блок --}}
+  {{#if (eq system.armorType "aspect")}}
+  <div class="armor-power-block">
+    <div class="armor-power-title">Аспектная броня (Аэльдари)</div>
+    <div class="armor-power-note">
+      Механика силовой брони. Даёт бонус к <b>Силе (S)</b> и <b>Силе Воли (W)</b> по профилю
+      (применяется к характеристикам, пока надета). Встроены: голо-поле R2, охотничий визор,
+      ретинальный дисплей, Best.Q когитатор; модификации Thermal, Cooler, Cosmetic (Аспект),
+      Osmotic Life Sustainer, Bio-Monitor; лёгкий ранец (Light Backpack Feed для эльдарского
+      стрелкового оружия). Полный иммунитет к радиации и экстремальному давлению.
+    </div>
+    <div class="weapon-row">
+      <label class="wr-label">Бонус S</label>
+      <input type="number" name="system.strengthBonus"
+             value="{{system.strengthBonus}}" min="0" class="wr-input-xs"/>
+      <label class="wr-label" style="margin-left:10px;">Бонус W</label>
+      <input type="number" name="system.wpBonus"
+             value="{{system.wpBonus}}" min="0" class="wr-input-xs"/>
+    </div>
+  </div>
+  {{/if}}
+
+  {{!-- Строка 4: Качество, Доступность, Вес --}}
+  <div class="weapon-row" style="margin-top:6px;">
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Лучшее</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+
+    <label class="wr-label">Доступность</label>
+    <select class="wr-select-avail availability-select">
+      <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+    </select>
+
+    <label class="wr-label">Вес</label>
+    <input type="number" name="system.weight"
+           value="{{system.weight}}" min="0" step="0.1" class="wr-input-xs"/>
+  </div>
+
+</div>
+{{/if}}
+
+{{!-- ══ МОДИФИКАЦИЯ БРОНИ ══ --}}
+{{#if (eq item.type "armorMod")}}
+<div class="item-section">
+  <div class="item-section-title">КЛАССИФИКАЦИЯ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Категория</label>
+    <select name="system.category" class="wr-select-sm">
+      <option value="armor"       {{#if (eq system.category "armor")}}selected{{/if}}>Модификация брони</option>
+      <option value="powerSystem" {{#if (eq system.category "powerSystem")}}selected{{/if}}>Система силовой брони</option>
+    </select>
+    <label class="wr-label">Группа</label>
+    <select name="system.modGroup" class="wr-select">
+      {{#each armorModGroupOptions as |g|}}
+      <option value="{{g.key}}" {{#if (eq @root.system.modGroup g.key)}}selected{{/if}}>{{g.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  {{#if armorModIsPower}}
+  <div class="armor-power-note">⚡ Система силовой брони — работает только с бронёй типа «Силовая».</div>
+  {{/if}}
+  <div class="weapon-row">
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Лучшее</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+    <label class="wr-label">Доступность (R)</label>
+    <select name="system.availability" class="wr-select-avail">
+      <option value="-5" {{#if (eqLoose system.availability -5)}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eqLoose system.availability -4)}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eqLoose system.availability -3)}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eqLoose system.availability -2)}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eqLoose system.availability -1)}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eqLoose system.availability 0)}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eqLoose system.availability 1)}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eqLoose system.availability 2)}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eqLoose system.availability 3)}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eqLoose system.availability 4)}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eqLoose system.availability 5)}}selected{{/if}}>+5 Уникально</option>
+    </select>
+    <label class="wr-label">Вес</label>
+    <input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.1" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Требование</label>
+    <input type="text" name="system.requirement" value="{{system.requirement}}" class="wr-input-special"
+           placeholder="напр. Жёсткая броня; полный комплект"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Установлено на</label>
+    <select name="system.installedOn" class="wr-select">
+      <option value="" {{#if (eq system.installedOn "")}}selected{{/if}}>— не установлено —</option>
+      {{#each armorInstallTargets as |a|}}
+      <option value="{{a.id}}" {{#if (eq @root.system.installedOn a.id)}}selected{{/if}}>{{a.name}}{{#if a.equipped}} ✓{{/if}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label" title="Если включаемая — бонусы учитываются только когда система включена (тумблер на листе персонажа)">
+      <input type="checkbox" name="system.activatable" {{#if system.activatable}}checked{{/if}}/>
+      Включаемая система
+    </label>
+    {{#if system.activatable}}
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.active" {{#if system.active}}checked{{/if}}/>
+      Включена сейчас
+    </label>
+    {{/if}}
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЭФФЕКТЫ AP</div>
+  <div class="weapon-row">
+    <label class="wr-label" title="AP ко всем локациям">AP везде</label>
+    <input type="number" name="system.effects.apAll" value="{{system.effects.apAll}}" class="wr-input-xs"/>
+    <label class="wr-label">Голова</label>
+    <input type="number" name="system.effects.apHead" value="{{system.effects.apHead}}" class="wr-input-xs"/>
+    <label class="wr-label">Торс</label>
+    <input type="number" name="system.effects.apBody" value="{{system.effects.apBody}}" class="wr-input-xs"/>
+    <label class="wr-label">Руки</label>
+    <input type="number" name="system.effects.apArms" value="{{system.effects.apArms}}" class="wr-input-xs"/>
+    <label class="wr-label">Ноги</label>
+    <input type="number" name="system.effects.apLegs" value="{{system.effects.apLegs}}" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label" title="Доп. AP против Энергетического">vs Энерг.</label>
+    <input type="number" name="system.effects.apVsEnergy" value="{{system.effects.apVsEnergy}}" class="wr-input-xs"/>
+    <label class="wr-label" title="против Ударного">vs Удар.</label>
+    <input type="number" name="system.effects.apVsImpact" value="{{system.effects.apVsImpact}}" class="wr-input-xs"/>
+    <label class="wr-label" title="против Режущего">vs Реж.</label>
+    <input type="number" name="system.effects.apVsRending" value="{{system.effects.apVsRending}}" class="wr-input-xs"/>
+    <label class="wr-label" title="против Взрывного">vs Взрыв.</label>
+    <input type="number" name="system.effects.apVsBlast" value="{{system.effects.apVsBlast}}" class="wr-input-xs"/>
+    <label class="wr-label" title="Изменение Макс. Ловкости">Макс.A</label>
+    <input type="number" name="system.effects.maxAgilityMod" value="{{system.effects.maxAgilityMod}}" class="wr-input-xs"/>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">БОНУСЫ ХАРАКТЕРИСТИК (пока броня надета)</div>
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Добавить</label>
+      <select class="cbonus-add">
+        <option value="">＋ характеристика…</option>
+        {{#each charBonusOptions as |c|}}
+        <option value="{{c.key}}">{{c.abbr}} — {{c.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if charBonusesActive.length}}
+    <div class="weapon-props-list">
+      {{#each charBonusesActive as |cb|}}
+      <div class="wprop-chip">
+        <span class="wprop-name">{{cb.abbr}}</span>
+        <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}"/>
+        <button type="button" class="wprop-remove cbonus-remove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ДАРУЕМЫЕ СВОЙСТВА БРОНИ</div>
+  <div class="weapon-row" style="margin-top:4px;">
+    <div class="armor-properties-grid">
+      {{#each armorModProps as |prop|}}
+      <label class="armor-prop-label">
+        <input type="checkbox" class="armormod-prop-cb" data-prop="{{prop.key}}" {{#if prop.active}}checked{{/if}}/>
+        <span title="{{prop.desc}}">{{prop.label}}</span>
+      </label>
+      {{/each}}
+    </div>
+  </div>
+</div>
+{{/if}}
+
+{{!-- ══ СИЛОВОЕ ПОЛЕ ══ --}}
+{{#if (eq item.type "forcefield")}}
+<div class="item-section">
+  <div class="item-section-title">СТАТЫ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Лучшее</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+    <label class="wr-label">Доступность</label>
+    <select class="wr-select-avail availability-select">
+      <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+    </select>
+    <label class="wr-label">Вес</label>
+    <input type="number" name="system.weight"
+           value="{{system.weight}}" min="0" step="0.1" class="wr-input-xs"/>
+  </div>
+</div>
+{{/if}}
+{{#if armourHistory}}
+<div class="item-section pa-history">
+  <div class="item-section-title">ОСОБЕННОСТЬ КОМПЛЕКТА</div>
+  <div class="pa-hist-bar">
+    <select class="pa-table-select" title="Таблица особенностей">
+      <option value="">— таблица —</option>
+      {{#each armourHistory.tables as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}
+    </select>
+    <select class="pa-entry-select" title="Выбрать особенность вручную">
+      <option value="">— особенность —</option>
+      {{#each armourHistory.tables as |t|}}{{#if t.selected}}{{#each t.entries as |e|}}<option value="{{e.key}}" {{#if e.selected}}selected{{/if}}>{{e.label}}</option>{{/each}}{{/if}}{{/each}}
+    </select>
+    <button type="button" class="pa-btn pa-roll-table" title="1к5 — какая таблица используется"><i class="fas fa-dice-d6"></i> к5 таблица</button>
+    <button type="button" class="pa-btn pa-roll-entry" title="1к10 по выбранной таблице"><i class="fas fa-dice-d10"></i> к10 особенность</button>
+    {{#if armourHistory.name}}<button type="button" class="pa-btn pa-clear" title="Снять особенность"><i class="fas fa-times"></i></button>{{/if}}
+  </div>
+
+  {{#if armourHistory.name}}
+  <div class="pa-hist-card">
+    <div class="pa-hist-name">{{armourHistory.name}}{{#if armourHistory.roll}} <span class="pa-hist-roll">к10 = {{armourHistory.roll}}</span>{{/if}}</div>
+    <div class="pa-hist-desc">{{armourHistory.desc}}</div>
+    <div class="pa-hist-effect">{{armourHistory.effect}}</div>
+    {{#if armourHistory.needsChoice}}
+    <div class="pa-hist-choice">
+      <label>{{armourHistory.choiceLabel}}</label>
+      <input type="text" name="system.history.choice" value="{{armourHistory.choice}}" placeholder="{{armourHistory.choicePlaceholder}}"/>
+    </div>
+    {{/if}}
+    {{#if armourHistory.zoneRoll}}
+    <div class="pa-hist-zones">
+      <button type="button" class="pa-btn pa-roll-zones"><i class="fas fa-dice-d10"></i> Бросить к10 по зонам</button>
+      {{#if armourHistory.hasZones}}
+      <div class="pa-zone-list">
+        {{#each armourHistory.zones as |z|}}<span class="pa-zone{{#if z.value}} pa-zone-set{{/if}}">{{z.label}}: {{#if z.value}}{{signedNum z.value}}{{else}}0{{/if}}</span>{{/each}}
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  {{#if armourHistory.second}}
+  <div class="pa-hist-card pa-hist-second">
+    <div class="pa-hist-name">{{armourHistory.second.tableLabel}}: {{armourHistory.second.name}}</div>
+    <div class="pa-hist-desc">{{armourHistory.second.desc}}</div>
+    <div class="pa-hist-effect">{{armourHistory.second.effect}}</div>
+  </div>
+  {{/if}}
+
+  <div class="pa-hist-rule">{{armourHistory.shiftRule}}</div>
+</div>
+{{/if}}

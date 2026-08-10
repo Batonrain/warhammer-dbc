@@ -1,0 +1,121 @@
+{{!-- Талант --}}
+{{#if (eq item.type "talent")}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ ТАЛАНТА</div>
+  <div class="weapon-row">
+    <label class="wr-label">Источник</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Core, стр. 24"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Уровень</label>
+    <select name="system.tier" class="wr-select-sm">
+      <option value="1" {{#if (eqLoose system.tier 1)}}selected{{/if}}>1</option>
+      <option value="2" {{#if (eqLoose system.tier 2)}}selected{{/if}}>2</option>
+      <option value="3" {{#if (eqLoose system.tier 3)}}selected{{/if}}>3</option>
+    </select>
+    <label class="wr-label">Бог</label>
+    <select name="system.god" class="wr-select-sm">
+      <option value=""          {{#if (eq system.god "")}}selected{{/if}}>—</option>
+      <option value="Неделимый" {{#if (eq system.god "Неделимый")}}selected{{/if}}>Неделимый</option>
+      <option value="Кхорн"     {{#if (eq system.god "Кхорн")}}selected{{/if}}>Кхорн</option>
+      <option value="Тзинч"     {{#if (eq system.god "Тзинч")}}selected{{/if}}>Тзинч</option>
+      <option value="Нургл"     {{#if (eq system.god "Нургл")}}selected{{/if}}>Нургл</option>
+      <option value="Слаанеш"   {{#if (eq system.god "Слаанеш")}}selected{{/if}}>Слаанеш</option>
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Требование</label>
+    <input type="text" name="system.requirement" value="{{system.requirement}}" class="wr-input-special"
+           placeholder="напр. T 40, Навык Awareness"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Специализации</label>
+    <input type="text" name="system.specialization" value="{{system.specialization}}" class="wr-input-special"
+           placeholder="напр. WS, BS, S… (для специализированных Талантов)"/>
+  </div>
+
+  {{!-- Склонности по характеристикам --}}
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Склонности</label>
+      <select class="apt-add">
+        <option value="">＋ добавить склонность…</option>
+        {{#each aptitudesAvailable as |a|}}
+        <option value="{{a.key}}">{{a.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if aptitudesActive.length}}
+    <div class="weapon-props-list">
+      {{#each aptitudesActive as |a|}}
+      <div class="wprop-chip">
+        <span class="wprop-name">{{a.label}}</span>
+        <button type="button" class="wprop-remove apt-remove" data-key="{{a.key}}" title="Убрать">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">АВТО-ЭФФЕКТЫ</div>
+  <div class="trait-fx-hint">Числовые авто-эффекты (бонус характеристики, Инициатива, Рейтинг Страха) переехали на вкладку «Эффекты» — добавьте их там как Active Effect. Старые значения этого предмета уже перенесены автоматически.</div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЧТО ДАЁТ (преимущество)</div>
+  <textarea name="system.benefit" class="item-textarea"
+            placeholder="Что даёт талант...">{{system.benefit}}</textarea>
+</div>
+{{/if}}
+
+{{!-- Способность --}}
+{{#if (eq item.type "ability")}}
+<div class="item-section">
+  <div class="item-section-title">ПРЕИМУЩЕСТВО</div>
+  <textarea name="system.benefit" class="item-textarea"
+            placeholder="Что даёт способность...">{{system.benefit}}</textarea>
+</div>
+{{/if}}
+
+{{!-- Мутация --}}
+{{#if (eq item.type "mutation")}}
+<div class="item-section">
+  <div class="item-section-title">ЧТО ДАЁТ (описание)</div>
+  <textarea name="system.benefit" class="item-textarea"
+            placeholder="Что даёт мутация...">{{system.benefit}}</textarea>
+</div>
+{{/if}}
+
+{{!-- Ментальное расстройство --}}
+{{#if (eq item.type "mentalDisorder")}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ РАССТРОЙСТВА</div>
+  <div class="weapon-row">
+    <label class="wr-label">Тест</label>
+    <select name="system.testChar" class="wr-select-sm">
+      <option value="wp"  {{#if (eq system.testChar "wp")}}selected{{/if}}>W (Воля)</option>
+      <option value="int" {{#if (eq system.testChar "int")}}selected{{/if}}>I (Интеллект)</option>
+      <option value="per" {{#if (eq system.testChar "per")}}selected{{/if}}>P (Восприятие)</option>
+      <option value="fel" {{#if (eq system.testChar "fel")}}selected{{/if}}>F (Товарищество)</option>
+    </select>
+    <label class="wr-label">Тест-мод</label>
+    <input type="number" name="system.testMod" value="{{system.testMod}}" class="wr-input-xs"
+           title="Модификатор к тесту расстройства (напр. +0, +10, −20)"/>
+  </div>
+  <div class="drug-stat-hint">Описание расстройства — в поле «Описание» ниже. Кнопка теста — на вкладке «Эффекты».</div>
+</div>
+{{/if}}
+
+{{!-- Психосила --}}
+{{#if (eq item.type "psychicPower")}}
+<div class="item-section">
+  <div class="item-section-title">СТАТЫ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Цена</label>
+    <input type="number" name="system.cost" value="{{system.cost}}" min="0" class="wr-input-xs"/>
+  </div>
+</div>
+{{/if}}

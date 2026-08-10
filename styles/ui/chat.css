@@ -1,0 +1,691 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Результаты бросков в чате
+═══════════════════════════════════════════════════════ */
+
+/* ── SVG-иконки окна Завесы в чат-карточках ── */
+.wh-roll-result .wv-ico, .wh-veil-chat .wv-ico { width: 1.05em; height: 1.05em; vertical-align: -0.16em; }
+
+/* ── Иконки Когниции/Энергии Техночудес в чате ── */
+.wh-roll-result .wh-ico {
+  width: 1em; height: 1em; vertical-align: -0.14em; display: inline-block;
+}
+.wh-roll-result .wh-ico-cog { color: #3f9960; }
+.wh-roll-result .wh-ico-en  { color: #d4ab1f; }
+
+/* ── Психические Феномены / Варп-Прорывы ── */
+.wh-roll-result .psy-phenomenon {
+  margin-top: 6px;
+  padding: 5px 7px;
+  background: rgba(90, 60, 130, 0.14);
+  border-left: 3px solid #6a4a9a;
+  border-radius: 2px;
+}
+.wh-roll-result .psy-phen-header { font-weight: bold; color: #5a3a8a; font-size: 0.9em; }
+.wh-roll-result .psy-phen-name   { font-weight: bold; margin: 2px 0; }
+.wh-roll-result .psy-phen-text   { font-size: 0.9em; }
+
+.wh-roll-result .psy-peril {
+  margin-top: 6px;
+  padding: 5px 7px;
+  background: rgba(139, 0, 0, 0.14);
+  border-left: 3px solid #8b0000;
+  border-radius: 2px;
+}
+.wh-roll-result .psy-peril-header { font-weight: bold; color: #8b0000; font-size: 0.9em; }
+.wh-roll-result .psy-peril-name   { font-weight: bold; margin: 2px 0; }
+.wh-roll-result .psy-peril-text   { font-size: 0.9em; }
+
+.wh-roll-result .psy-warpshock {
+  margin-top: 6px;
+  padding: 4px 7px;
+  background: rgba(90, 60, 130, 0.10);
+  border: 1px dashed #6a4a9a;
+  border-radius: 2px;
+  font-size: 0.88em;
+  color: #5a3a8a;
+}
+
+/* ── Результат броска ── */
+.wh-roll-result {
+  font-family: "Book Antiqua", Palatino, serif;
+  padding: 6px 9px;
+  background: #ece4d4;
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  font-size: 1.02em;
+  color: #1a0e06;
+  line-height: 1.4;
+}
+
+.wh-roll-result .roll-header {
+  font-weight: bold;
+  color: var(--wh-red);
+  margin-bottom: 4px;
+  font-size: 1.08em;
+}
+
+.wh-roll-result .roll-threshold,
+.wh-roll-result .roll-dice { margin-bottom: 3px; font-size: 0.96em; }
+
+.wh-roll-result .roll-dice b,
+.wh-roll-result .roll-threshold b { color: #2a1606; }
+
+.wh-roll-result .roll-outcome { margin-top: 5px; font-size: 1.02em; }
+.wh-roll-result .roll-success { color: #166316; font-weight: bold; }
+.wh-roll-result .roll-failure { color: #9a0000; font-weight: bold; }
+
+/* Затемняем «приглушённые» подписи-заметки для читаемости */
+.wh-roll-result [style*="5a4a30"] { color: #4a3320 !important; }
+
+/* ── Попадания ── */
+.roll-hit-line { font-size: 0.95em; padding: 2px 0; color: var(--wh-text); }
+
+.roll-damage-section {
+  margin-top: 5px;
+  padding-top: 4px;
+  border-top: 1px solid var(--wh-border-light);
+}
+
+.roll-damage-label { font-size: 0.9em; color: #3a2a14; margin-bottom: 2px; font-weight: 600; }
+
+/* ── Экстремальный урон ── */
+.roll-extreme-block {
+  margin-top: 5px;
+  margin-bottom: 2px;
+  padding: 6px 9px;
+  background: rgba(100, 0, 0, 0.12);
+  border-left: 3px solid #8b0000;
+  font-size: 1em;
+  color: #3a0000;
+}
+
+.roll-extreme-block b { font-size: 1.05em; color: #8b0000; }
+
+.roll-crit-effect {
+  margin-top: 5px;
+  padding: 4px 0 2px 4px;
+  font-size: 1em;
+  font-weight: bold;
+  color: var(--wh-text);
+  line-height: 1.5;
+  border-top: 1px dashed rgba(100, 0, 0, 0.35);
+}
+
+/* ── Подавление / Атака всем телом ── */
+.roll-suppression {
+  margin-top: 4px;
+  padding: 4px 6px;
+  background: rgba(139, 0, 0, 0.1);
+  border: 1px solid var(--wh-red);
+  font-size: 0.85em;
+  color: var(--wh-text);
+  border-radius: 2px;
+}
+
+.roll-allout-note {
+  margin-top: 4px;
+  padding: 3px 6px;
+  background: rgba(139, 69, 0, 0.12);
+  border: 1px solid #8b4500;
+  font-size: 0.82em;
+  color: #5a2a00;
+  border-radius: 2px;
+}
+
+/* ── Боеприпасы в чате ── */
+.roll-ammo-block {
+  margin-top: 4px;
+  padding: 3px 7px;
+  background: rgba(30, 60, 100, 0.07);
+  border-left: 3px solid #4a7acc;
+  font-size: 0.85em;
+  color: var(--wh-text);
+  border-radius: 0 2px 2px 0;
+}
+
+.roll-ammo-none {
+  border-left-color: var(--wh-border-light);
+  background: rgba(0,0,0,0.04);
+}
+
+.roll-ammo-mods { color: #3a6a3a; font-size: 0.9em; margin-left: 4px; }
+.roll-ammo-spent { color: #8a4a00; font-size: 0.85em; margin-left: 4px; }
+
+.roll-ammo-special {
+  font-size: 0.82em;
+  color: var(--wh-red);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.roll-ammo-low {
+  margin-top: 3px;
+  padding: 2px 6px;
+  background: rgba(200, 100, 0, 0.1);
+  border: 1px solid #cc6600;
+  font-size: 0.82em;
+  color: #5a2a00;
+  border-radius: 2px;
+}
+
+/* ── Приём в чате ── */
+.roll-technique-block {
+  margin-bottom: 5px;
+  padding: 4px 8px;
+  background: rgba(58, 26, 14, 0.08);
+  border-left: 3px solid var(--wh-red);
+  font-size: 0.88em;
+  color: var(--wh-text);
+  border-radius: 0 2px 2px 0;
+}
+
+.roll-technique-note {
+  margin-top: 2px;
+  font-size: 0.88em;
+  color: var(--wh-red);
+  font-weight: bold;
+}
+
+.roll-aiming-note {
+  font-size: 0.85em;
+  color: var(--wh-xp-current);
+  font-weight: bold;
+  margin-bottom: 3px;
+}
+
+.roll-aim-note { font-size: 0.85em; color: #5a4a30; margin-top: 2px; }
+
+/* ── Кнопки защиты ── */
+.roll-defense-section {
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: rgba(58, 26, 14, 0.06);
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+}
+
+.roll-defense-title {
+  font-size: 0.82em;
+  font-weight: bold;
+  color: var(--wh-text-mid);
+  margin-bottom: 5px;
+}
+
+.roll-defense-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.roll-defense-note {
+  font-size: 0.78em;
+  color: var(--wh-text-mid);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.wh-dodge-btn,
+.wh-parry-btn {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  font-family: "Book Antiqua", Palatino, serif;
+  font-size: 0.85em;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.15s;
+  min-width: 100px;
+  text-align: center;
+}
+
+.wh-dodge-btn { background: #e8f4ff; color: #1a3a6e; border-color: #4a7acc; }
+.wh-dodge-btn:hover { background: #c8deff; }
+
+/* Сдвиг места попадания (kind:"script" — Талант/Черта, ±A.b) — узкие кнопки
+   в ряд, отдельная от Уклонения/Парирования акцентная расцветка. */
+.roll-loc-shift .roll-defense-btns { gap: 4px; }
+.wh-locshift-btn {
+  flex: 0 0 auto;
+  min-width: 34px;
+  padding: 3px 6px;
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  font-family: "Book Antiqua", Palatino, serif;
+  font-size: 0.85em;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  background: #fff3d9;
+  color: #6e4a1a;
+  transition: background 0.15s;
+}
+.wh-locshift-btn:hover:not(:disabled) { background: #ffe2a8; }
+.wh-locshift-btn:disabled { opacity: 0.5; cursor: default; }
+.wh-parry-btn { background: #f4e8ff; color: #3a1a6e; border-color: #7a4acc; }
+.wh-parry-btn:hover { background: #ddc8ff; }
+
+.wh-dodge-disabled {
+  background: #f0f0f0 !important;
+  color: #999 !important;
+  border-color: #ccc !important;
+  cursor: not-allowed !important;
+  font-style: italic;
+}
+/* ── Особые свойства оружия (чат) ──────────────────────────── */
+.roll-wprops-block {
+  margin: 4px 0;
+  padding: 4px 6px;
+  background: rgba(122,92,46,0.12);
+  border-left: 3px solid var(--wh-border);
+  border-radius: 2px;
+}
+.roll-wprops-title {
+  font-size: 0.74em;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  color: var(--wh-text-mid);
+  margin-bottom: 2px;
+}
+.roll-wprop {
+  font-size: 0.8em;
+  color: var(--wh-text);
+  line-height: 1.35;
+}
+.roll-bonus-dice { font-size: 0.82em; color: #1a7a1a; }
+.roll-hit-pen { font-size: 0.82em; color: #b0301f; }
+
+.roll-wprop-effects {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px dashed var(--wh-border);
+}
+.roll-wprop-note {
+  font-size: 0.8em;
+  color: var(--wh-text-mid);
+  font-style: italic;
+  margin: 2px 0;
+}
+.wh-wprop-apply-btn {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: #fff0e0;
+  color: #7a3a0e;
+  border: 1px solid #c07a3a;
+  border-radius: 3px;
+  font-family: "Book Antiqua", Palatino, serif;
+  font-size: 0.84em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.wh-wprop-apply-btn:hover { background: #ffe0c0; }
+
+/* ── Просмотр кубов (разворачиваемый блок) ─────────────────── */
+.roll-dice-details {
+  margin: 5px 0;
+  font-size: 0.85em;
+}
+.roll-dice-details > summary {
+  cursor: pointer;
+  color: var(--wh-text-mid);
+  font-weight: bold;
+  padding: 2px 0;
+  list-style: revert;
+}
+.roll-dice-details > summary:hover { color: var(--wh-red); }
+.roll-dice-details .dice-roll { margin-top: 4px; }
+
+/* ── Кнопка Выжигания Души ─────────────────────────────────── */
+.wh-soulburn-btn {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 5px 8px;
+  background: linear-gradient(180deg, #6b1212, #3a0a0a);
+  color: #ffd9a0;
+  border: 1px solid #c07a3a;
+  border-radius: 3px;
+  font-family: "Book Antiqua", Palatino, serif;
+  font-size: 0.86em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.wh-soulburn-btn:hover { filter: brightness(1.25); }
+
+/* ═══════════════ Когитатор-стиль чата ═══════════════ */
+/* Переопределяем переменные в области чата → все var(--wh-*) внутри становятся зелёными. */
+#chat-log .message,
+#chat .message,
+.chat-popout .message,
+.wh-roll-result {
+  --wh-text: #c6ffe0; --wh-text-mid: #8fe8b0; --wh-text-dark: #e8fff2; --wh-text-light: #eafff4;
+  --wh-border: #1f6f4a; --wh-border-light: #2f9e6a; --wh-red: #ff8a8a;
+  --wh-accent: #4dffa6; --wh-xp-current: #4dffa6; --wh-xp-spent: #ff7a7a;
+}
+#chat-log .message,
+#chat .message,
+.chat-popout .message {
+  background: #08160e !important;
+  color: #c6ffe0;
+  border: 1px solid #1f6f4a !important;
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.4);
+}
+#chat-log .message .message-header,
+.chat-popout .message .message-header { color: #8fe8b0; border-bottom: 1px solid rgba(47,158,106,0.4); }
+/* Текст сообщения и имя отправителя — светлые (а не тёмные/чёрные). */
+#chat-log .message .message-content,
+#chat-log .message .message-content p,
+#chat-log .message .message-content span,
+#chat-notifications .message .message-content,
+.chat-popout .message .message-content { color: #d8ffe8 !important; }
+#chat-log .message .message-sender,
+#chat-log .message h4.message-sender,
+#chat-notifications .message .message-sender { color: #b8ffd8 !important; }
+#chat-log .message .message-metadata,
+#chat-log .message .whisper-to { color: #5fb588; }
+#chat-log .message a.content-link,
+#chat-log .message a.inline-roll {
+  background: #0e3a26; color: #cfffe6; border: 1px solid #2f9e6a;
+}
+#chat-log .message a.content-link i,
+#chat-log .message a.inline-roll i { color: #4dffa6; }
+#chat-log .message .dice-roll .dice-total {
+  background: #0e3a26; color: #e8fff2; border: 1px solid #2f9e6a;
+}
+#chat-log .message .dice-formula,
+#chat-log .message .dice-tooltip,
+#chat-log .message .dice-tooltip .dice { background: #0c2418; color: #b8ffd8; border-color: #1f6f4a; }
+
+/* Широкая сеть: текст любых элементов броска в чате (в т.ч. блайнд «???/?»),
+   без привязки к классу-предку — разметка v13 могла отличаться. */
+#chat-log .dice-formula, #chat-log .dice-total, #chat-log .dice-result,
+#chat-log .part-formula, #chat-log .part-total, #chat-log .dice-tooltip,
+#chat-log .dice-tooltip .dice, #chat-log .dice-tooltip .roll,
+#chat-notifications .dice-formula, #chat-notifications .dice-total,
+.chat-popout .dice-formula, .chat-popout .dice-total {
+  color: #eafff4 !important;
+}
+#chat-log .dice-formula, #chat-log .dice-total,
+#chat-notifications .dice-formula, #chat-notifications .dice-total,
+.chat-popout .dice-formula, .chat-popout .dice-total {
+  background: #0e2a1c !important; border: 1px solid #2f9e6a !important;
+}
+/* Катч-олл: любой текст внутри блока броска — светлый. */
+#chat-log .dice-roll, #chat-log .dice-roll *,
+#chat-notifications .dice-roll, #chat-notifications .dice-roll * {
+  color: #eafff4 !important;
+}
+/* Шёпот/блайнд-сообщения Foundry приглушает прозрачностью — возвращаем полную. */
+#chat-log .chat-message.whisper, #chat-log .message.whisper,
+#chat-log .chat-message.whisper *, #chat-log .message.whisper *,
+#chat-log .chat-message.blind, #chat-log .message.blind,
+#chat-log .chat-message.blind *, #chat-log .message.blind * {
+  opacity: 1 !important;
+}
+#chat-log .chat-message.whisper .dice-formula, #chat-log .message.whisper .dice-formula,
+#chat-log .chat-message.whisper .dice-total,   #chat-log .message.whisper .dice-total,
+#chat-log .chat-message.blind .dice-formula,   #chat-log .message.blind .dice-formula,
+#chat-log .chat-message.blind .dice-total,     #chat-log .message.blind .dice-total {
+  color: #eafff4 !important; background: #0e2a1c !important; border: 1px solid #2f9e6a !important;
+}
+
+/* ── Различие режимов броска по цвету ──────────────────────────
+   Якорь — .chat-message/.message БЕЗ #chat-log (в этой сборке #chat-log
+   не совпадает). Публичный — зелёный; шёпот ведущему/себе — фиолетовый;
+   слепой — янтарный. */
+.chat-message.whisper, .message.whisper {
+  border-left: 4px solid #9a6fff !important;
+  box-shadow: 0 0 7px rgba(154,111,255,0.28) !important;
+}
+.chat-message.whisper .wh-roll-result,
+.message.whisper .wh-roll-result { border-color: #6f4ab8 !important; }
+.chat-message.whisper .wh-roll-result .roll-header,
+.message.whisper .wh-roll-result .roll-header { border-left-color: #b591ff !important; }
+.chat-message.whisper .message-sender,
+.message.whisper .message-sender { color: #c9b3ff !important; }
+.chat-message.whisper .message-header::after,
+.message.whisper .message-header::after {
+  content: "ПРИВАТНО"; float: right; font-size: 0.72em; font-weight: bold; color: #b591ff; letter-spacing: 0.1em;
+}
+
+/* Слепой бросок — янтарный (перебивает фиолетовый шёпота) */
+.chat-message.blind, .message.blind {
+  border-left: 4px solid #ffae42 !important;
+  box-shadow: 0 0 7px rgba(255,174,66,0.28) !important;
+}
+.chat-message.blind .wh-roll-result,
+.message.blind .wh-roll-result { border-color: #b8821f !important; }
+.chat-message.blind .wh-roll-result .roll-header,
+.message.blind .wh-roll-result .roll-header { border-left-color: #ffc878 !important; }
+.chat-message.blind .message-header::after,
+.message.blind .message-header::after {
+  content: "СЛЕПОЙ"; float: right; font-size: 0.72em; font-weight: bold; color: #ffc878; letter-spacing: 0.1em;
+}
+
+/* Системная карта броска */
+.wh-roll-result {
+  font-family: inherit !important;
+  background: #0a1c12 !important;
+  color: #c6ffe0 !important;
+  border-color: #1f6f4a !important;
+  position: relative;
+}
+.wh-roll-result::before {
+  content: ""; position: absolute; top: 5px; right: 7px; width: 52px; height: 26px;
+  background-color: #4dffa6;
+  -webkit-mask: url("/systems/warhammer-dbc/assets/aquila-white.png") center/contain no-repeat;
+  mask: url("/systems/warhammer-dbc/assets/aquila-white.png") center/contain no-repeat;
+  opacity: 0.18; pointer-events: none;
+}
+.wh-roll-result .roll-header { color: #ff8a8a !important; }
+.wh-roll-result .roll-dice b,
+.wh-roll-result .roll-threshold b { color: #e8fff2 !important; }
+.wh-roll-result .roll-success { color: #4dffa6 !important; }
+.wh-roll-result .roll-failure { color: #ff7a7a !important; }
+/* Иконки исхода броска: зелёная галочка / ярко-красный крест (вместо ✅/❌) */
+.wh-roll-result .roll-outcome .roll-success::before,
+.wh-roll-result .roll-outcome .roll-failure::before {
+  content: ""; display: inline-block; width: 1em; height: 1em;
+  vertical-align: -0.14em; margin-right: 6px;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-size: contain; mask-size: contain;
+}
+.wh-roll-result .roll-outcome .roll-success::before {
+  background-color: #4dffa6;
+  -webkit-mask-image: url("/systems/warhammer-dbc/assets/ui-icons/check.svg");
+  mask-image: url("/systems/warhammer-dbc/assets/ui-icons/check.svg");
+}
+.wh-roll-result .roll-outcome .roll-failure::before {
+  background-color: #ff4040;
+  -webkit-mask-image: url("/systems/warhammer-dbc/assets/ui-icons/cross.svg");
+  mask-image: url("/systems/warhammer-dbc/assets/ui-icons/cross.svg");
+}
+.wh-roll-result [style*="5a4a30"] { color: #8fe8b0 !important; }
+.roll-damage-label,
+.roll-aim-note { color: #8fe8b0 !important; }
+.roll-extreme-block,
+.roll-extreme-block b { color: #ff9a9a !important; }
+
+/* ── Терминальная иерархия карточки ───────────────────────── */
+.wh-roll-result .roll-header {
+  font-size: 1.12em; letter-spacing: 0.05em;
+  padding-left: 9px; border-left: 3px solid #4dffa6; margin-bottom: 6px;
+  text-shadow: 0 0 6px rgba(255,138,138,0.35);
+}
+/* Статлайн: Порог / Режим / Бросок */
+.wh-roll-result .roll-statline { display: flex; gap: 6px; margin: 6px 0; }
+.wh-roll-result .roll-stat {
+  flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  padding: 4px 6px; background: rgba(15,58,38,0.5);
+  border: 1px solid #1f6f4a; border-radius: 3px;
+}
+.wh-roll-result .roll-stat label {
+  font-size: 0.62em; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #7fe0a8 !important; margin-bottom: 2px;
+}
+.wh-roll-result .roll-stat b {
+  font-size: 1.08em; line-height: 1.1; color: #eafff4 !important;
+  white-space: nowrap; word-break: normal !important;
+  overflow-wrap: normal !important; hyphens: none !important;
+}
+/* Заголовки секций (Урон, Защита цели, Свойства оружия…) */
+.wh-roll-result .roll-section-head, .roll-section-head {
+  font-size: 0.72em; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #7fe0a8 !important; font-weight: bold;
+  margin: 7px 0 3px; padding-bottom: 2px;
+  border-bottom: 1px solid rgba(47,158,106,0.35);
+}
+.roll-head-hint {
+  font-weight: normal; letter-spacing: 0.02em; text-transform: none;
+  color: #5fb588 !important; font-size: 0.92em;
+}
+.wh-roll-result .roll-damage-meta, .roll-damage-meta {
+  font-size: 0.84em; color: #9fe8c0 !important; margin: 2px 0 4px;
+}
+.wh-roll-result .roll-damage-meta b, .roll-damage-meta b { color: #d8ffe8 !important; }
+/* Блок урона — выделенная панель */
+.wh-roll-result .roll-damage-section {
+  margin-top: 6px; padding: 6px 9px;
+  background: rgba(20,60,40,0.4);
+  border: 1px solid #2f9e6a; border-left: 3px solid #4dffa6;
+  border-radius: 3px;
+}
+/* Строка попадания: подпись | КРУПНОЕ число | локация */
+.wh-roll-result .roll-hit-line {
+  display: flex; align-items: center; gap: 8px;
+  padding: 3px 0; color: #c6ffe0;
+}
+.wh-roll-result .roll-hit-idx { font-size: 0.84em; color: #9fe8c0; }
+.wh-roll-result .roll-hit-dmg {
+  font-size: 1.6em; font-weight: bold; line-height: 1;
+  color: #eafff4 !important; text-shadow: 0 0 9px rgba(77,255,166,0.55);
+  min-width: 1.3em; text-align: center;
+}
+.wh-roll-result .roll-hit-dmg-bad { color: #ffd2d2 !important; text-shadow: 0 0 9px rgba(255,90,90,0.55); }
+.wh-roll-result .roll-hit-loc { font-size: 0.92em; color: #b8ffd8; }
+.wh-roll-result .roll-hit-extra { font-size: 0.78em; color: #7fe0a8; margin-left: auto; }
+.wh-roll-result .roll-outcome { font-size: 1.05em; margin: 5px 0; }
+.wh-roll-result .roll-location { font-size: 0.92em; color: #c6ffe0; margin: 2px 0; }
+
+/* Кнопки в чате — зелёный терминал */
+.wh-dodge-btn,
+.wh-parry-btn,
+.wh-wprop-apply-btn,
+.roll-defense-btns button {
+  background: #0e2a1c !important; color: #d8ffe8 !important; border: 1px solid #2f9e6a !important; font-family: inherit !important;
+}
+.wh-dodge-btn:hover,
+.wh-parry-btn:hover,
+.wh-wprop-apply-btn:hover,
+.roll-defense-btns button:hover { background: #15492f !important; box-shadow: 0 0 7px rgba(77,255,166,0.4); }
+.wh-dodge-disabled { background: #14241c !important; color: #5a7a68 !important; border-color: #2a4a3a !important; }
+
+/* Поле ввода сообщения */
+#chat-message {
+  background: #0c2418; color: #c6ffe0; border: 1px solid #1f6f4a;
+}
+#chat-message::placeholder { color: #5aa37e; }
+
+/* ── Инлайн-SVG иконки бросков (замена эмодзи) ─────────────────────────── */
+.wh-ri { display: inline-block; vertical-align: -0.14em; margin-right: 3px; filter: drop-shadow(0 0 3px currentColor); }
+.roll-header .wh-ri, .shield-msg-header .wh-ri { vertical-align: -0.12em; margin-right: 5px; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ЕДИНАЯ ПОЛИРОВКА ЧАТ-КАРТОЧЕК (читаемость + иерархия, тёмный когитатор)
+   Применяется ко всем .wh-roll-result — правит плотность, отбивку секций,
+   яркость варп-секций (Феномен/Прорыв/Шок были под светлую тему).
+   ═══════════════════════════════════════════════════════════════════════ */
+.wh-roll-result { padding: 8px 11px !important; line-height: 1.45; }
+
+/* Основные строки-факты — ровный ритм */
+.wh-roll-result .roll-threshold { margin: 3px 0; font-size: 0.95em; }
+/* Мелкие «заметки» (инлайн 0.82–0.85em) — приглушённые, курсив, читаемый цвет */
+.wh-roll-result .roll-threshold[style*="0.82em"],
+.wh-roll-result .roll-threshold[style*="0.85em"],
+.wh-roll-result .roll-technique-note {
+  opacity: 0.9; font-style: italic; color: #7fc4a0 !important;
+}
+/* Приём/техника — тонкая рамка-акцент */
+.wh-roll-result .roll-technique-block {
+  padding: 4px 8px; margin-bottom: 6px; border-left: 3px solid #2f9e6a;
+  background: rgba(15,58,38,0.4); border-radius: 0 3px 3px 0;
+}
+
+/* Секции урона/защиты/свойств — чёткая отбивка сверху */
+.wh-roll-result .roll-damage-section,
+.wh-roll-result .roll-defense-section,
+.wh-roll-result .roll-wprops-block,
+.wh-roll-result .roll-wprop-effects,
+.wh-roll-result .roll-apply-dmg-section {
+  margin-top: 8px; padding-top: 6px; border-top: 1px solid #1f6f4a;
+}
+/* Строка попадания — компактный ряд */
+.wh-roll-result .roll-hit-line {
+  display: flex; align-items: baseline; gap: 8px; padding: 2px 0;
+}
+.wh-roll-result .roll-hit-idx { color: #7fe0a8; min-width: 92px; }
+.wh-roll-result .roll-hit-dmg { font-weight: 700; color: #e8fff2; font-size: 1.05em; }
+.wh-roll-result .roll-hit-loc { color: #8fe8b0; }
+
+/* Кнопки защиты/эффектов — ровные и заметные */
+.wh-roll-result .roll-defense-btns button,
+.wh-roll-result .roll-wprop-effects button,
+.wh-roll-result .wh-apply-dmg-btn {
+  background: #0e3a26; color: #d8ffe8; border: 1px solid #2f9e6a;
+  border-radius: 3px; padding: 3px 10px; cursor: pointer; font-size: 0.9em; margin: 2px 3px 0 0;
+}
+.wh-roll-result .roll-defense-btns button:hover,
+.wh-roll-result .wh-apply-dmg-btn:hover { background: #14512f; border-color: #4dffa6; }
+
+/* ── Варп: Феномен / Прорыв / Шок — яркие алерт-карточки ── */
+.wh-roll-result .psy-phenomenon {
+  background: rgba(176,108,217,0.15) !important; border-left: 3px solid #b06cd9 !important;
+  padding: 6px 9px !important; margin-top: 8px !important; border-radius: 3px !important;
+}
+.wh-roll-result .psy-phen-header { color: #d0b0f0 !important; font-size: 0.92em !important; }
+.wh-roll-result .psy-peril {
+  background: rgba(255,80,80,0.16) !important; border-left: 3px solid #ff5a5a !important;
+  padding: 6px 9px !important; margin-top: 8px !important; border-radius: 3px !important;
+}
+.wh-roll-result .psy-peril-header { color: #ff8a8a !important; font-size: 0.92em !important; }
+.wh-roll-result .psy-warpshock {
+  background: rgba(111,180,232,0.13) !important; border: 1px solid #4a7aa0 !important;
+  color: #a8d4f0 !important; padding: 6px 9px !important; margin-top: 8px !important; border-radius: 3px !important;
+}
+.wh-roll-result .psy-phen-name,
+.wh-roll-result .psy-peril-name { color: #e8fff2 !important; font-size: 0.98em; }
+.wh-roll-result .psy-phen-text,
+.wh-roll-result .psy-peril-text { color: #d0e8d8 !important; }
+
+/* ── Сворачиваемые блоки чат-карточек ─────────────────────────────────────
+   Карточка боя длинная и не влезает в окно чата, поэтому справочные блоки
+   (свойства оружия, качество, памятка хвата) свёрнуты по умолчанию: видно
+   только заголовок, разворачивается кликом. Интерактивные блоки (Урон,
+   Защита цели, Применить к цели) не сворачиваются — они нужны сразу. */
+.roll-collapsible { margin: 3px 0; }
+.roll-collapsible > summary {
+  cursor: pointer; user-select: none;
+  list-style: none; display: flex; align-items: baseline; gap: 6px;
+  /* Заголовок не должен переноситься по буквам: у .roll-section-head узкая
+     колонка в чате, поэтому фиксируем название и жмём только подпись-сводку. */
+  white-space: nowrap;
+}
+.roll-collapsible > summary .roll-sum-title { flex: 0 0 auto; }
+.roll-collapsible > summary::-webkit-details-marker { display: none; }
+.roll-collapsible > summary::before { content: "▸ "; opacity: .75; }
+.roll-collapsible[open] > summary::before { content: "▾ "; }
+.roll-collapsible > summary:hover { filter: brightness(1.25); }
+/* Перечень свойств одной строкой рядом с заголовком (виден в свёрнутом виде) */
+.roll-sum-hint {
+  flex: 1 1 auto; min-width: 0;
+  font-weight: 400; font-size: .9em; opacity: .8;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Отметка учтённых условных эффектов боеприпаса в карточке броска */
+.wh-roll-result .roll-ammo-cond {
+  margin-top: 2px; font-size: .8em; color: #8fd0ff;
+}

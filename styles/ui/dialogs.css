@@ -1,0 +1,1177 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Диалоги (атака, навыки, боеприпасы)
+═══════════════════════════════════════════════════════ */
+
+/* ── Диалог броска ── */
+.wh-roll-dialog-window .window-content,
+.wh-rename-dialog .window-content {
+  background: var(--wh-parchment);
+  padding: 8px;
+}
+
+.wh-skill-roll-form { padding: 2px; }
+
+.wh-skill-roll-form .roll-dlg-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--wh-panel-dark);
+  color: var(--wh-text-light);
+  padding: 6px 10px;
+  border-radius: 3px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 1em;
+  text-align: center;
+}
+
+.wh-skill-roll-form .roll-dlg-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.wh-skill-roll-form .roll-dlg-row label {
+  font-weight: bold;
+  white-space: nowrap;
+  min-width: 90px;
+  font-size: 0.9em;
+  color: var(--wh-text);
+}
+
+.wh-skill-roll-form .roll-dlg-row select {
+  flex: 1;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  font-family: inherit;
+  padding: 3px 4px;
+  font-size: 0.88em;
+  color: var(--wh-text);
+}
+
+.wh-skill-roll-form .roll-dlg-row input[type="number"] {
+  width: 80px;
+  text-align: center;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  font-family: inherit;
+  font-size: 1em;
+  padding: 3px 4px;
+}
+
+/* ── Диалог «+» к показателю (Безумие/Порча/Опыт/Благосклонность) ── */
+.wh-statlog-form { display: flex; flex-direction: column; gap: 9px; padding: 4px 2px; }
+.wh-statlog-form label { display: flex; flex-direction: column; gap: 3px; font-weight: bold; font-size: 0.92em; }
+.wh-statlog-form label small { font-weight: normal; opacity: 0.7; margin-left: 4px; }
+.wh-statlog-form input[type="text"] { font-family: inherit; padding: 4px 6px; }
+
+/* ── Диалог атаки ── */
+.wh-attack-form {
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 0.95em;
+}
+
+.atk-dlg-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--wh-border);
+}
+
+.atk-weapon-name { font-weight: bold; font-size: 1em; color: var(--wh-text); }
+.atk-weapon-class { font-size: 0.82em; color: #5a4a30; }
+
+.atk-dlg-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.atk-dlg-row label {
+  font-size: 0.92em;
+  color: #5a4a30;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+/* Лёгкий подзаголовок-разделитель внутри формы диалога (напр. блок «Свойства»
+   у чекбоксов теста Страха) — не такой тяжёлый, как atk-dlg-header. */
+.atk-dlg-section {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #5a4a30;
+  margin: 8px 0 3px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--wh-border);
+}
+
+.atk-dlg-row select,
+.atk-dlg-row input[type="number"] {
+  flex: 1;
+  padding: 3px 5px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  font-family: inherit;
+  font-size: 0.92em;
+}
+
+/* ── Модификаторы ── */
+.atk-dlg-modifiers {
+  margin: 6px 0;
+  border: 1px solid var(--wh-border);
+}
+
+.atk-mods-title {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  font-size: 0.8em;
+  font-weight: bold;
+  padding: 3px 8px;
+  letter-spacing: 0.05em;
+}
+
+.atk-mods-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 8px;
+  padding: 6px 8px;
+  background: var(--wh-bg);
+}
+
+.atk-mods-col1 { grid-template-columns: 1fr !important; }
+
+.attack-mod-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 0.88em;
+  color: var(--wh-text);
+  cursor: pointer;
+  padding: 2px 0;
+  line-height: 1.3;
+}
+
+.attack-mod-check input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--wh-red);
+}
+
+/* ── Итоговый порог ── */
+.atk-total-row {
+  border-top: 1px solid var(--wh-border);
+  padding-top: 5px;
+  margin-top: 4px;
+}
+
+.atk-total-row label { font-weight: bold; color: var(--wh-text) !important; }
+
+#atk-total-display {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: var(--wh-red);
+  min-width: 40px;
+}
+
+/* ── Режим огня ── */
+.atk-rof-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 8px;
+  background: var(--wh-bg);
+}
+
+.atk-rof-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92em;
+  color: var(--wh-text);
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.atk-rof-label input[type="radio"] { accent-color: var(--wh-red); margin: 0; }
+
+/* ── Прицеливание ── */
+.atk-aiming-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 8px;
+  background: var(--wh-bg);
+}
+
+.atk-aiming-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.9em;
+  color: var(--wh-text);
+  cursor: pointer;
+  padding: 2px 0;
+  line-height: 1.3;
+}
+
+.atk-aiming-label input[type="radio"] {
+  accent-color: var(--wh-red);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.atk-aiming-badge {
+  font-size: 0.82em;
+  color: var(--wh-xp-current);
+  font-weight: bold;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.atk-stance-badge { font-size: 0.82em; color: var(--wh-red); font-weight: bold; }
+.atk-ammo-badge   { font-size: 0.82em; color: #3a6a3a; font-weight: bold; }
+
+/* ── Прицельная атака ── */
+#atk-aim {
+  flex: 1;
+  padding: 3px 5px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  font-family: inherit;
+  font-size: 0.85em;
+}
+
+/* ── Дистанции ── */
+.atk-range-info {
+  margin: 4px 0;
+  border: 1px solid var(--wh-border);
+  background: var(--wh-bg);
+}
+
+.atk-range-title {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  font-size: 0.8em;
+  font-weight: bold;
+  padding: 3px 8px;
+}
+
+.atk-range-grid { display: flex; flex-wrap: wrap; gap: 3px; padding: 5px 8px; }
+
+.atr-zone {
+  font-size: 0.82em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.atr-pb  { background: #e8ffe8; border-color: #4a9a4a; color: #1a5a1a; }
+.atr-sh  { background: #f0ffe0; border-color: #7aaa4a; color: #2a5a00; }
+.atr-cb  { background: #f8f8f0; border-color: #9a9a6a; color: #3a3a1a; }
+.atr-lg  { background: #fff4e8; border-color: #cc8844; color: #5a2a00; }
+.atr-ex  { background: #ffe8e8; border-color: #cc4444; color: #5a0000; }
+
+/* ── Заметка о приёме ── */
+.atk-technique-note {
+  margin-bottom: 7px;
+  padding: 5px 8px;
+  background: rgba(58, 26, 14, 0.08);
+  border-left: 3px solid var(--wh-red);
+  font-size: 0.88em;
+  color: var(--wh-text);
+  border-radius: 0 2px 2px 0;
+}
+
+.atk-technique-desc {
+  margin-top: 3px;
+  font-size: 0.88em;
+  color: var(--wh-text-mid);
+  font-style: italic;
+}
+
+.atk-technique-chatnote {
+  font-size: 0.85em;
+  color: var(--wh-red);
+  font-weight: bold;
+  margin-top: 3px;
+}
+
+/* ── Диалог выбора боеприпасов ── */
+.wh-ammo-dialog .ammo-select-label {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: var(--wh-text-mid);
+  margin-bottom: 5px;
+}
+/* ── Свойства оружия в диалоге атаки ───────────────────────── */
+.wh-attack-dialog .atk-wprops-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 0;
+}
+.wh-attack-dialog .atk-wprop-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  border-radius: 9px;
+  font-size: 0.76em;
+  cursor: help;
+}
+.wh-attack-dialog .atk-recharge-warn {
+  margin: 4px 0;
+  padding: 3px 6px;
+  background: #fff0d0;
+  border-left: 3px solid #c07000;
+  color: #7a4a00;
+  font-size: 0.82em;
+}
+
+/* ═══════════════ Когитатор-стиль диалогов (атака, навыки, мастер, боеприпасы) ═══════════════ */
+.wh-attack-dialog, .wh-roll-dialog-window, .wh-rename-dialog, .wh-ammo-dialog {
+  --wh-bg: #06120c; --wh-parchment: #08160e; --wh-parchment2: #0c2016; --wh-parchment3: #103022;
+  --wh-panel-dark: #04100a; --wh-panel-mid: #2f8f5e;
+  --wh-text: #c6ffe0; --wh-text-mid: #8fe8b0; --wh-text-dark: #e8fff2; --wh-text-light: #eafff4;
+  --wh-border: #1f6f4a; --wh-border-light: #2f9e6a; --wh-input-bg: #0c2418; --wh-red: #ff8a8a;
+  --wh-accent: #4dffa6; --wh-xp-current: #4dffa6;
+}
+.wh-attack-dialog .window-content,
+.wh-roll-dialog-window .window-content,
+.wh-rename-dialog .window-content,
+.wh-ammo-dialog .window-content { background: #06120c; color: #c6ffe0; }
+/* Светло-коричневый хардкод-текст → читаемый зелёный */
+.wh-attack-dialog [style*="5a4a30"],
+.wh-attack-dialog .atk-weapon-class,
+.wh-attack-dialog .atk-dlg-row label { color: #8fe8b0 !important; }
+.wh-attack-dialog .atk-aiming-badge,
+.wh-attack-dialog .atk-ammo-badge { color: #4dffa6 !important; }
+.wh-attack-dialog .atk-stance-badge { color: #ff8a8a !important; }
+/* Зоны дистанций — тёмные варианты */
+.wh-attack-dialog .atr-pb { background: #0e3a1e; border-color: #3aa86a; color: #bff7cf; }
+.wh-attack-dialog .atr-sh { background: #1a3a14; border-color: #6aaa4a; color: #d8f7b8; }
+.wh-attack-dialog .atr-cb { background: #2a2a14; border-color: #9a9a6a; color: #e8e8c8; }
+.wh-attack-dialog .atr-lg { background: #3a2410; border-color: #cc8844; color: #ffd9a8; }
+.wh-attack-dialog .atr-ex { background: #3a1414; border-color: #cc5a5a; color: #ffb8b8; }
+.wh-attack-dialog .atk-recharge-warn { background: #3a2a10; border-color: #cc8a00; color: #ffd98a; }
+/* Чекбоксы/радио — зелёный акцент */
+.wh-attack-dialog input[type="checkbox"],
+.wh-attack-dialog input[type="radio"] { accent-color: #4dffa6 !important; }
+/* Кнопки и выпадашки */
+.wh-attack-dialog .dialog-buttons button,
+.wh-rename-dialog .dialog-button {
+  background: #0e2a1c !important; color: #d8ffe8 !important; border: 1px solid #2f9e6a !important;
+}
+.wh-attack-dialog .dialog-buttons button:hover,
+.wh-rename-dialog .dialog-button:hover { background: #15492f !important; box-shadow: 0 0 7px rgba(77,255,166,0.4); }
+.wh-attack-dialog option,
+.wh-roll-dialog-window option,
+.wh-rename-dialog option,
+.wh-ammo-dialog option { background: #0c2418; color: #c6ffe0; }
+.wh-attack-dialog optgroup { background: #081a10; color: #4dffa6; font-weight: bold; }
+
+/* ── Мастер создания: сетка бросков характеристик (база + 2d10) ── */
+/* ══ Мастер: Генерация характеристик (наборы + раскладка перетаскиванием) ══ */
+.wh-wizard-form .wiz-gen { margin-top: 6px; }
+.wh-wizard-form .wiz-gen-lbl {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 0.8em; font-weight: 600; margin: 8px 0 4px; opacity: .9;
+}
+.wh-wizard-form .wiz-mini-btn {
+  width: auto; flex: 0 0 auto; padding: 1px 8px; font-size: .82em; cursor: pointer;
+  border: 1px solid var(--wh-border, #1f6f4a); border-radius: 3px;
+  background: rgba(0,0,0,.25); color: var(--wh-text, #b8ffd8);
+}
+.wh-wizard-form .wiz-mini-btn:hover { border-color: #4dffa6; color: #4dffa6; }
+
+/* Два набора бросков */
+.wh-wizard-form .wiz-sets { display: flex; gap: 8px; }
+.wh-wizard-form .wiz-set {
+  flex: 1 1 0; cursor: pointer; padding: 5px 7px; border-radius: 4px;
+  border: 1px solid var(--wh-border, #1f6f4a); background: rgba(0,0,0,.2); transition: all .1s;
+}
+.wh-wizard-form .wiz-set:hover { border-color: #4dffa6; }
+.wh-wizard-form .wiz-set.active {
+  border-color: #4dffa6; background: rgba(77,255,166,.1);
+  box-shadow: 0 0 8px rgba(77,255,166,.3) inset;
+}
+.wh-wizard-form .wiz-set-head { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.wh-wizard-form .wiz-set-name { font-size: .78em; font-weight: 700; }
+.wh-wizard-form .wiz-set-sum { font-size: .74em; opacity: .7; margin-left: auto; }
+.wh-wizard-form .wiz-set-reroll {
+  cursor: pointer; font-size: .9em; padding: 0 5px; border-radius: 3px;
+  border: 1px solid var(--wh-border, #1f6f4a); color: #7fe0a8;
+}
+.wh-wizard-form .wiz-set-reroll:hover { color: #4dffa6; border-color: #4dffa6; }
+.wh-wizard-form .wiz-set-vals { display: flex; flex-wrap: wrap; gap: 3px 6px; }
+.wh-wizard-form .wiz-set-vals span { font-size: .92em; font-weight: 600; color: #b8ffd8; }
+.wh-wizard-form .wiz-set:not(.active) .wiz-set-vals span { opacity: .55; }
+
+/* Пул фишек-значений */
+.wh-wizard-form .wiz-chips {
+  display: flex; flex-wrap: wrap; gap: 5px; min-height: 30px; padding: 5px 6px;
+  border: 1px dashed var(--wh-border, #1f6f4a); border-radius: 4px; background: rgba(0,0,0,.12);
+}
+.wh-wizard-form .wiz-chip {
+  cursor: grab; user-select: none; min-width: 26px; text-align: center;
+  padding: 3px 8px; font-size: 1em; font-weight: 700; border-radius: 4px;
+  border: 1px solid #2f9e6a; background: rgba(77,255,166,.12); color: #d6ffe9;
+}
+.wh-wizard-form .wiz-chip:hover { border-color: #4dffa6; }
+.wh-wizard-form .wiz-chip.armed {
+  background: #4dffa6; color: #04120b; box-shadow: 0 0 8px rgba(77,255,166,.6);
+}
+.wh-wizard-form .wiz-chips-empty { font-size: .8em; opacity: .5; font-style: italic; align-self: center; }
+
+/* Слоты характеристик */
+.wh-wizard-form .wiz-slots {
+  display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 8px;
+}
+.wh-wizard-form .wiz-slot {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 4px 1px 3px; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--wh-border, #1f6f4a); background: rgba(0,0,0,.18);
+}
+.wh-wizard-form .wiz-slot.empty { border-style: dashed; }
+.wh-wizard-form .wiz-slot.filled { background: rgba(77,255,166,.06); }
+.wh-wizard-form .wiz-slot .ws-abbr { font-size: .62em; letter-spacing: .02em; opacity: .8; text-transform: uppercase; }
+.wh-wizard-form .wiz-slot .ws-chip {
+  min-width: 24px; text-align: center; padding: 1px 4px; font-size: 1em; font-weight: 700;
+  border-radius: 3px; color: #d6ffe9;
+}
+.wh-wizard-form .wiz-slot.filled .ws-chip { cursor: grab; background: rgba(77,255,166,.18); border: 1px solid #2f9e6a; }
+.wh-wizard-form .wiz-slot.empty .ws-chip { opacity: .35; }
+.wh-wizard-form .wiz-slot .ws-total { font-size: 1.1em; font-weight: 700; color: #4dffa6; line-height: 1.1; }
+.wh-wizard-form .wiz-slot .ws-base { font-size: .58em; opacity: .55; }
+
+/* ══ Прицеливание по клику (стрельба по токену) ══════════════════════════ */
+/* Перекрестие вместо курсора над канвасом. Одной строкой намеренно: перенос
+   внутри url() утащил бы отступы в саму картинку. «16 16» — остриё по центру. */
+body.wh-aiming #board, body.wh-aiming canvas {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><circle cx='16' cy='16' r='9' fill='none' stroke='%234dffa6' stroke-width='2'/><circle cx='16' cy='16' r='1.5' fill='%234dffa6'/><path d='M16 0v7M16 25v7M0 16h7M25 16h7' stroke='%234dffa6' stroke-width='2'/></svg>") 16 16, crosshair !important;
+}
+
+#wh-aim-hint {
+  position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 200;
+  pointer-events: none;
+  padding: 6px 16px; font-size: 12px; letter-spacing: 0.02em;
+  color: #e8d9b5; background: rgba(12, 10, 6, 0.92);
+  border: 1px solid #4dffa6; border-radius: 3px;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.7), 0 0 10px rgba(77, 255, 166, 0.25);
+  animation: wh-aim-pulse 1.6s infinite;
+}
+#wh-aim-hint b { color: #ffd97a; }
+#wh-aim-hint span { color: #9a8a6a; }
+/* Кнопка «Без цели»: сам хинт сквозной (pointer-events:none), поэтому клики
+   возвращаем только ей, иначе кнопку не нажать. */
+#wh-aim-notarget {
+  pointer-events: auto;
+  display: inline-block; width: auto;
+  margin: 0 2px; padding: 1px 8px;
+  font-size: 11px; line-height: 1.5;
+  color: #cfe9d8; background: rgba(77, 255, 166, 0.12);
+  border: 1px solid rgba(77, 255, 166, 0.5); border-radius: 3px;
+  cursor: pointer;
+}
+#wh-aim-notarget:hover {
+  color: #0b1a12; background: #4dffa6; border-color: #4dffa6;
+}
+@keyframes wh-aim-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Окно манифестации психосилы (wh-psy-dialog) — зелёный когитатор + варп-акцент
+   ═══════════════════════════════════════════════════════════════════════ */
+.wh-psy-dialog .window-content { padding: 0; }
+.wh-psy-manifest { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+
+/* Шапка */
+.wh-psy-manifest .pm-header { display: flex; align-items: center; gap: 9px; }
+.wh-psy-manifest .pm-sigil { font-size: 20px; filter: drop-shadow(0 0 6px rgba(176,108,217,.6)); }
+.wh-psy-manifest .pm-titles { flex: 1; min-width: 0; }
+.wh-psy-manifest .pm-name { font-size: 1.05em; font-weight: 700; color: #e8d9ff; letter-spacing: .3px; }
+.wh-psy-manifest .pm-sub { font-size: .78em; color: #9a8ac0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wh-psy-manifest .pm-nature {
+  font-size: .74em; font-weight: 700; padding: 2px 9px; border-radius: 10px;
+  color: #d0b8e8; background: rgba(64,40,112,.35); border: 1px solid #4a2870; white-space: nowrap;
+}
+
+/* Живой предпросмотр */
+.wh-psy-manifest .pm-preview {
+  display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+  border: 1px solid #4a2870; border-radius: 5px;
+  background: linear-gradient(180deg, rgba(64,40,112,.28), rgba(20,12,32,.4));
+  box-shadow: inset 0 0 14px rgba(176,108,217,.14);
+}
+.wh-psy-manifest .pm-prev-thr-wrap { flex: 1; min-width: 0; }
+.wh-psy-manifest .pm-prev-lbl { font-size: .72em; letter-spacing: .04em; color: #9a8ac0; text-transform: uppercase; }
+.wh-psy-manifest .pm-prev-thr {
+  font-size: 2.3em; font-weight: 700; line-height: 1; color: #d0b0f0;
+  text-shadow: 0 0 12px rgba(176,108,217,.5);
+}
+.wh-psy-manifest .pm-prev-meta { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.wh-psy-manifest .pm-prev-chip {
+  font-size: .82em; padding: 2px 9px; border-radius: 9px; white-space: nowrap;
+  color: #c8b8e0; background: rgba(0,0,0,.28); border: 1px solid #3a2a5a;
+}
+.wh-psy-manifest .pm-prev-chip b { color: #e8d9ff; }
+.wh-psy-manifest .pm-prev-phen.safe   { color: #7fe0a8; border-color: #1f6f4a; background: rgba(31,111,74,.22); }
+.wh-psy-manifest .pm-prev-phen.danger { color: #ffb0b0; border-color: #7a2a2a; background: rgba(122,42,42,.24); }
+
+/* Режимы — пилюли */
+.wh-psy-manifest .pm-modes { display: flex; gap: 5px; }
+.wh-psy-manifest .pm-mode {
+  flex: 1; cursor: pointer; font-size: .82em; font-weight: 700; padding: 5px 4px;
+  border: 1px solid #3a2a5a; border-radius: 4px; letter-spacing: .02em;
+  background: rgba(40,26,64,.4); color: #b8a8d8; transition: all .12s;
+}
+.wh-psy-manifest .pm-mode:hover { border-color: #b06cd9; color: #e8d9ff; }
+.wh-psy-manifest .pm-mode.is-on {
+  background: linear-gradient(180deg, #6a3aa0, #4a2870); color: #f4e8ff;
+  border-color: #b06cd9; box-shadow: 0 0 10px rgba(176,108,217,.45);
+}
+
+/* Строки контролов */
+.wh-psy-manifest .pm-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wh-psy-manifest .pm-row > label { font-size: .84em; color: #b8a8d8; min-width: 92px; flex: none; }
+.wh-psy-manifest .pm-row > label.pm-push-lbl { min-width: unset; }
+.wh-psy-manifest .pm-input {
+  background: #140c20; border: 1px solid #3a2a5a; color: #e0d0f0;
+  border-radius: 3px; padding: 3px 6px; font-size: .88em;
+}
+.wh-psy-manifest .pm-input:focus { border-color: #b06cd9; outline: none; box-shadow: 0 0 6px rgba(176,108,217,.4); }
+.wh-psy-manifest .pm-input.pm-wide { flex: 1; min-width: 0; }
+.wh-psy-manifest .pm-input.pm-num { width: 62px; flex: none; text-align: center; }
+.wh-psy-manifest select.pm-input option { background: #140c20; color: #e0d0f0; }
+
+/* Дополнительно (сворачиваемое) */
+.wh-psy-manifest .pm-adv { border-top: 1px dashed #3a2a5a; padding-top: 5px; }
+.wh-psy-manifest .pm-adv > summary {
+  cursor: pointer; font-size: .82em; font-weight: 700; color: #9a8ac0;
+  letter-spacing: .03em; list-style: none; user-select: none; padding: 2px 0;
+}
+.wh-psy-manifest .pm-adv > summary::before { content: "▸ "; }
+.wh-psy-manifest .pm-adv[open] > summary::before { content: "▾ "; }
+.wh-psy-manifest .pm-adv[open] { padding-bottom: 4px; }
+.wh-psy-manifest .pm-adv .pm-row { margin-top: 5px; }
+
+/* Кнопки диалога — варп-акцент на «Психотест!» */
+.wh-psy-dialog .dialog-buttons .cast, .wh-psy-dialog .dialog-button.cast {
+  background: linear-gradient(180deg, #6a3aa0, #4a2870); color: #f4e8ff; border: 1px solid #b06cd9;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Переработанное окно атаки (wh-atk-dialog / wh-atk-v2) — зелёный когитатор
+   ═══════════════════════════════════════════════════════════════════════ */
+.wh-atk-dialog .window-content { padding: 0; }
+.wh-atk-v2 { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; }
+
+.wh-atk-v2 .av-header { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.wh-atk-v2 .av-name { font-size: 1.05em; font-weight: 700; color: #d8ffe8; }
+.wh-atk-v2 .av-class { font-size: .78em; color: #5aa37e; }
+.wh-atk-v2 .av-badges { display: inline-flex; gap: 5px; margin-left: auto; }
+
+/* Крупный предпросмотр итогового порога */
+.wh-atk-v2 .av-preview {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 6px 12px; border: 1px solid #1f6f4a; border-radius: 5px;
+  background: linear-gradient(180deg, rgba(31,111,74,.22), rgba(4,16,10,.5));
+  box-shadow: inset 0 0 14px rgba(77,255,166,.1);
+}
+.wh-atk-v2 .av-prev-lbl { font-size: .72em; letter-spacing: .04em; color: #7fe0a8; text-transform: uppercase; }
+.wh-atk-v2 .av-prev-total {
+  font-size: 2.3em; font-weight: 700; line-height: 1; color: #4dffa6;
+  text-shadow: 0 0 12px rgba(77,255,166,.5);
+}
+
+.wh-atk-v2 .av-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wh-atk-v2 .av-row > label { font-size: .84em; color: #7fe0a8; min-width: 92px; flex: none; }
+.wh-atk-v2 .av-input {
+  background: #0c2418; border: 1px solid #1f6f4a; color: #d8ffe8;
+  border-radius: 3px; padding: 3px 6px; font-size: .88em;
+}
+.wh-atk-v2 .av-input:focus { border-color: #4dffa6; outline: none; box-shadow: 0 0 6px rgba(77,255,166,.4); }
+.wh-atk-v2 .av-input.av-wide { flex: 1; min-width: 0; }
+.wh-atk-v2 .av-input.av-num { width: 62px; flex: none; text-align: center; }
+.wh-atk-v2 select.av-input option { background: #0c2418; color: #d8ffe8; }
+
+.wh-atk-v2 .av-section { display: flex; flex-direction: column; gap: 3px; }
+.wh-atk-v2 .av-sec-lbl { font-size: .72em; letter-spacing: .04em; color: #5aa37e; text-transform: uppercase; }
+
+/* Сводка выбранного хвата/профиля (read-only; выбор — в HUD) */
+.wh-atk-v2 .av-gripnote {
+  font-size: .82em; line-height: 1.4; color: #b8ffd8;
+  padding: 5px 8px; border-radius: 4px;
+  border: 1px solid rgba(111,230,255,.25); background: rgba(111,230,255,.06);
+}
+.wh-atk-v2 .av-gripnote .wh-ri { margin-right: 5px; vertical-align: -1px; }
+
+/* Пилюли режима/прицеливания (радио спрятан, подсветка активного) */
+.wh-atk-v2 .av-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+.wh-atk-v2 .av-pill { cursor: pointer; }
+.wh-atk-v2 .av-pill input { position: absolute; opacity: 0; width: 0; height: 0; }
+.wh-atk-v2 .av-pill span {
+  display: inline-block; font-size: .8em; font-weight: 600; padding: 3px 10px;
+  border: 1px solid #1f6f4a; border-radius: 12px; color: #b8ffd8;
+  background: rgba(31,111,74,.18); transition: all .12s;
+}
+.wh-atk-v2 .av-pill:hover span { border-color: #4dffa6; color: #d8ffe8; }
+.wh-atk-v2 .av-pill:has(input:checked) span {
+  background: linear-gradient(180deg, #4dffa6, #2f9e6a); color: #04100a;
+  border-color: #4dffa6; box-shadow: 0 0 8px rgba(77,255,166,.4);
+}
+
+/* Ситуативные модификаторы — сворачиваемо */
+.wh-atk-v2 .av-adv { border-top: 1px dashed #1f6f4a; padding-top: 4px; }
+.wh-atk-v2 .av-adv > summary {
+  cursor: pointer; font-size: .82em; font-weight: 700; color: #7fe0a8;
+  letter-spacing: .03em; list-style: none; user-select: none; padding: 2px 0;
+}
+.wh-atk-v2 .av-adv > summary::before { content: "▾ "; }
+.wh-atk-v2 .av-adv:not([open]) > summary::before { content: "▸ "; }
+/* Сводка активных модификаторов в заголовке (блок свёрнут по умолчанию). */
+.wh-atk-v2 .av-adv-hint {
+  margin-left: 6px; font-weight: 400; font-size: .92em;
+  color: #5aa37e; opacity: .85;
+}
+.wh-atk-v2 .av-adv-hint.is-active { color: #ffd97a; opacity: 1; }
+.wh-atk-v2 .av-mod-block { margin-top: 5px; }
+.wh-atk-v2 .av-mod-head {
+  font-size: .72em; letter-spacing: .04em; color: #5aa37e; text-transform: uppercase; margin-bottom: 2px;
+}
+.wh-atk-v2 .av-mod-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 10px; }
+.wh-atk-v2 .av-mod-col { display: flex; flex-direction: column; gap: 1px; }
+.wh-atk-v2 .attack-mod-check { display: flex; align-items: flex-start; gap: 5px; font-size: .82em; color: #b8ffd8; cursor: pointer; padding: 1px 0; line-height: 1.3; }
+.wh-atk-v2 .attack-mod-check input { accent-color: #4dffa6; margin-top: 2px; }
+.wh-atk-v2 .atk-mod-auto span { color: #ffb84d; }
+
+/* Кнопка «Бросок!» — зелёный акцент */
+.wh-atk-dialog .dialog-buttons .roll, .wh-atk-dialog .dialog-button.roll {
+  background: linear-gradient(180deg, #4dffa6, #2f9e6a); color: #04100a; border: 1px solid #1f6f4a; font-weight: 700;
+}
+
+/* ══ Диалог выбора стартовых талантов ════════════════════════════════════ */
+.wh-talent-choices { padding: 6px 8px; display: flex; flex-direction: column; gap: 5px; }
+.wh-talent-choices .wtc-hint { margin: 0 0 4px; font-size: .84em; opacity: .8; }
+.wh-talent-choices .wtc-row {
+  display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px;
+  background: rgba(0,0,0,.18); border: 1px solid rgba(77,255,166,.18);
+}
+.wh-talent-choices .wtc-lbl { flex: 0 0 auto; min-width: 96px; font-size: .84em; font-weight: 600; color: #b8ffd8; }
+.wh-talent-choices .wtc-x { opacity: .6; font-weight: 400; }
+.wh-talent-choices .wtc-sel, .wh-talent-choices .wtc-inp {
+  flex: 1 1 auto; min-width: 0; padding: 3px 6px; font-size: .88em; font-family: inherit;
+  background: var(--wh-input-bg, #0c2418); border: 1px solid var(--wh-border, #1f6f4a);
+  color: var(--wh-text, #b8ffd8); border-radius: 3px;
+}
+.wh-talent-choices .wtc-inputs { flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 4px; }
+.wh-talent-choices .wtc-mini { flex: 1 1 40%; }
+
+/* ══ Мастер: блок легиона Астартес (геносемя + отдельная культура) ═══════ */
+.wh-wizard-form .wiz-legion {
+  margin: 6px 0; padding: 6px 8px; border-radius: 5px;
+  border: 1px solid rgba(184,120,60,.4); background: rgba(60,30,10,.18);
+}
+.warhammer-dbc.wh-holo .wh-wizard-form .wiz-legion {
+  border-color: rgba(77,255,166,.3); background: rgba(6,32,22,.35);
+}
+.wh-wizard-form .wiz-legion .atk-dlg-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.wh-wizard-form .wiz-legion label { flex: 0 0 auto; min-width: 118px; font-size: .82em; }
+.wh-wizard-form .wiz-legion select { flex: 1 1 auto; min-width: 0; }
+
+/* ══ Пикер добавления Талантов/Черт (группировка по типам корбука) ═══════ */
+.wh-item-picker-dialog .window-content { padding: 0; }
+.wh-item-picker { display: block; }
+/* Поиск прилипает к верху окна при прокрутке (window-content — контейнер скролла) */
+.wh-item-picker .pick-search {
+  position: sticky; top: 0; z-index: 5; box-sizing: border-box;
+  display: block; width: 100%; margin: 0; padding: 7px 10px; font-size: .95em; font-family: inherit;
+  background: #06120c; border: none; border-bottom: 1px solid var(--wh-border, #1f6f4a);
+  color: var(--wh-text, #b8ffd8);
+}
+.wh-item-picker .pick-list { padding: 0 6px 6px; }
+.wh-item-picker .pick-group { margin-bottom: 6px; }
+.wh-item-picker .pick-group-head {
+  position: sticky; top: 32px; z-index: 2;   /* ниже прилипшего поиска */
+  font-size: .82em; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+  padding: 4px 8px; color: #04120b; border-radius: 3px;
+  background: linear-gradient(180deg, #4dffa6, #2f9e6a);
+}
+.wh-item-picker .pick-count { opacity: .7; font-weight: 400; margin-left: 4px; }
+.wh-item-picker .pick-group-body { padding: 2px 0; }
+.wh-item-picker .pick-row { border-bottom: 1px solid rgba(77,255,166,.12); }
+.wh-item-picker .pick-row:hover { background: rgba(77,255,166,.06); }
+.wh-item-picker .pick-row.just-added { background: rgba(77,255,166,.16); }
+/* Шапка строки — в одну линию без переноса: «＋» никогда не съезжает */
+.wh-item-picker .pick-head { display: flex; align-items: center; flex-wrap: nowrap; gap: 5px; padding: 3px 6px; }
+.wh-item-picker .pick-exp {
+  flex: 0 0 auto; width: 18px; height: 18px; padding: 0; cursor: pointer; line-height: 1;
+  background: none; border: none; color: #6fe6ff; font-size: .9em;
+}
+.wh-item-picker .pick-name { flex: 1 1 auto; min-width: 0; cursor: pointer; font-size: .9em; color: #d8ffe8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wh-item-picker .pick-name:hover { color: #4dffa6; }
+.wh-item-picker .pick-tier { flex: 0 0 auto; font-size: .72em; padding: 1px 6px; border-radius: 8px; background: rgba(111,230,255,.18); color: #9fd8ff; white-space: nowrap; }
+.wh-item-picker .pick-req  { flex: 0 1 auto; min-width: 0; font-size: .72em; opacity: .6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wh-item-picker .pick-add {
+  flex: 0 0 auto; width: 22px; height: 22px; padding: 0; cursor: pointer; font-size: 1em; line-height: 1;
+  border: 1px solid #2f9e6a; border-radius: 3px; background: rgba(77,255,166,.12); color: #d6ffe9;
+}
+.wh-item-picker .pick-add:hover { background: #4dffa6; color: #04120b; }
+.wh-item-picker .pick-desc {
+  margin: 0 6px 4px 26px; padding: 5px 8px; font-size: .82em; line-height: 1.4;
+  color: #b8ffd8; border-left: 2px solid rgba(77,255,166,.3); background: rgba(0,0,0,.2); border-radius: 0 3px 3px 0;
+}
+.wh-item-picker .pick-hidden { display: none; }
+
+/* Пикер: верхняя строка (поиск + «Своё») и цена таланта */
+.wh-item-picker .pick-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 6px; padding: 7px 8px; background: #06120c; border-bottom: 1px solid var(--wh-border, #1f6f4a); }
+.wh-item-picker .pick-top .pick-search { position: static; flex: 1 1 auto; width: auto; min-width: 0; margin: 0; padding: 5px 9px; border: 1px solid var(--wh-border, #1f6f4a); border-radius: 4px; }
+.wh-item-picker .pick-custom {
+  flex: 0 0 auto; width: auto; display: inline-flex; align-items: center; white-space: nowrap;
+  cursor: pointer; padding: 4px 12px; font-size: .85em; line-height: 1.3; border-radius: 4px;
+  border: 1px solid #7a5c2e; background: rgba(90,60,20,.35); color: #e8d9b5;
+}
+.wh-item-picker .pick-custom:hover { border-color: #c8a45a; color: #ffe9b0; }
+.wh-item-picker .pick-group-head { top: 34px; }
+.wh-item-picker .pick-cost { flex: 0 0 auto; font-size: .74em; font-weight: 700; padding: 1px 7px; border-radius: 8px; white-space: nowrap; }
+.wh-item-picker .pick-cost.cost-ally    { background: rgba(77,255,166,.2); color: #7fffba; }
+.wh-item-picker .pick-cost.cost-neutral { background: rgba(200,200,120,.18); color: #dcd88a; }
+.wh-item-picker .pick-cost.cost-enemy   { background: rgba(255,110,110,.18); color: #ff9a9a; }
+
+/* Конструктор эффектов (effect-builder.mjs) — сборка ActiveEffect дроплистами */
+.wh-effect-builder-dialog .window-content { padding: 8px; }
+.wh-effect-builder .eb-name-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.wh-effect-builder .eb-name-row label { flex: 0 0 auto; font-size: .85em; opacity: .8; }
+.wh-effect-builder .eb-name-row input { flex: 1 1 auto; }
+.wh-effect-builder .eb-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.wh-effect-builder .eb-row {
+  display: grid; grid-template-columns: 1.1fr 1.1fr 1fr 1.3fr .7fr auto; grid-template-rows: auto auto;
+  gap: 4px 5px; align-items: center; padding: 6px; border: 1px solid var(--wh-border, #1f6f4a); border-radius: 4px;
+  background: rgba(0,0,0,.15);
+}
+.wh-effect-builder .eb-row select, .wh-effect-builder .eb-row input[type="number"] { font-size: .82em; }
+.wh-effect-builder .eb-row-remove {
+  width: auto; padding: 2px 8px; font-size: .85em; border: 1px solid #7a2e2e;
+  background: rgba(255,110,110,.12); color: #ffb0b0;
+}
+.wh-effect-builder .eb-row-remove:hover { background: #ff6e6e; color: #2a0505; }
+.wh-effect-builder .eb-row-preview {
+  grid-column: 1 / -1; font-size: .78em; color: #7fffba; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wh-effect-builder .eb-add-row {
+  width: auto; padding: 3px 12px; font-size: .85em; margin-bottom: 6px;
+  border: 1px solid #2f9e6a; background: rgba(77,255,166,.1); color: #d6ffe9;
+}
+.wh-effect-builder .eb-add-row:hover { background: #4dffa6; color: #04120b; }
+
+/* Развитие: строка «Общая» склонность */
+.warhammer-dbc .apt-general-row td { padding: 3px 6px; }
+.warhammer-dbc .apt-general { font-weight: 700; color: #7fe0a8; }
+.warhammer-dbc .apt-general-note { font-size: .82em; opacity: .55; }
+.warhammer-dbc .apt-char-select { width: 100%; }
+
+/* Манифестация: подсказка/предупреждение по тPR (стр. 289) */
+.wh-holo .pm-note,
+.wh-holo .pm-warn {
+  margin: 2px 0 6px;
+  padding: 4px 8px;
+  border-left: 2px solid var(--wh-accent, #4dffa6);
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 1.35;
+  background: rgba(77, 255, 166, .07);
+  color: var(--wh-mint, #b8ffd8);
+}
+.wh-holo .pm-warn {
+  border-left-color: #ff6b6b;
+  background: rgba(255, 107, 107, .1);
+  color: #ffb3b3;
+}
+
+/* Привязка Mastery / Beyond Human к Характеристике или Навыку (стр. 62) */
+.wh-holo .wh-dyn-apt { padding: 6px; }
+.wh-holo .dyn-hint {
+  margin: 0 0 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--wh-mint, #b8ffd8);
+  opacity: .85;
+}
+.wh-holo .dyn-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  background: rgba(77, 255, 166, .07);
+}
+.wh-holo .dyn-apts {
+  font-size: 11px;
+  color: var(--wh-cyan, #6fe6ff);
+}
+/* Бейдж «цена зависит от выбора» в пикере */
+.wh-item-picker .pick-cost.cost-dyn {
+  color: var(--wh-cyan, #6fe6ff);
+  border-color: rgba(111, 230, 255, .45);
+}
+
+/* Условные модификаторы боеприпаса в окне атаки (стр. 203) — на видном месте,
+   не прячем в свёрнутый блок «Ситуативные». */
+.wh-atk-v2 .av-ammo-cond {
+  margin: 6px 0 2px; padding: 5px 8px;
+  background: rgba(143, 208, 255, .08);
+  border: 1px solid rgba(143, 208, 255, .35);
+  border-left-width: 3px; border-radius: 3px;
+}
+.wh-atk-v2 .av-ammo-cond .av-sec-lbl { color: #8fd0ff; margin-bottom: 3px; }
+.wh-atk-v2 .avc-row {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 2px 0; font-size: .82em; cursor: pointer;
+}
+.wh-atk-v2 .avc-row input { margin: 0; flex: 0 0 auto; }
+.wh-atk-v2 .avc-lbl { color: #cfe9d8; }
+.wh-atk-v2 .avc-val { color: #8fd0ff; font-weight: 700; white-space: nowrap; }
+.wh-atk-v2 .avc-note { color: #5aa37e; font-size: .92em; }
+.wh-atk-v2 .avc-row-note { cursor: default; color: #7fa8bd; font-style: italic; }
+
+/* Пикер расстройств: пометка уже имеющихся на листе. */
+.wh-item-picker .pick-owned {
+  flex: 0 0 auto;
+  padding: 0 5px; border-radius: 8px;
+  font-size: .72em; color: #ffd97a;
+  background: rgba(255, 217, 122, .14);
+  border: 1px solid rgba(255, 217, 122, .35);
+}
+.wh-item-picker .pick-row-owned .pick-name { color: #8fb8a2; }
+
+/* Библиотека снаряжения: вкладки по компендиумам (оружие/броня/щиты/…). */
+.wh-gear-picker .gp-tabs {
+  display: flex; flex-wrap: wrap; gap: 3px;
+  padding: 4px 8px 6px; border-bottom: 1px solid rgba(47,158,106,.35);
+  /* Вкладки категорий держатся под строкой поиска при прокрутке списка. */
+  position: sticky; top: var(--pick-top-h, 40px); z-index: 4;
+  background: #06120c;
+}
+/* Заголовки папок прилипают уже под вкладками, а не под одним поиском. */
+.wh-gear-picker .pick-group-head { top: var(--gp-tabs-h, 74px); }
+.wh-gear-picker .gp-tab {
+  flex: 0 0 auto; width: auto;
+  padding: 2px 10px; font-size: .8em; line-height: 1.6;
+  color: #9fd8bb; background: rgba(77,255,166,.06);
+  border: 1px solid rgba(77,255,166,.25); border-radius: 3px;
+  cursor: pointer;
+}
+.wh-gear-picker .gp-tab:hover { color: #d8ffe9; border-color: rgba(77,255,166,.6); }
+.wh-gear-picker .gp-tab.is-on {
+  color: #0b1a12; background: var(--wh-accent, #4dffa6);
+  border-color: var(--wh-accent, #4dffa6); font-weight: 700;
+}
+
+/* Полосы дальности в окне атаки: выпадашка вместо галочки — у оружия свои
+   бонусы урона/пробития по дистанции (Излучатели, импульсное Тау и т.п.). */
+.attack-mod-check.attack-mod-select {
+  align-items: center;
+  gap: 6px;
+}
+.attack-mod-check.attack-mod-select select {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: rgba(10, 30, 22, .75);
+  border: 1px solid rgba(77, 255, 166, .35);
+  border-radius: 3px;
+  color: #b8ffd8;
+  font-size: .95em;
+  padding: 1px 4px;
+}
+
+/* ═════════════ Варианты облика токена ═════════════ */
+
+/* Кнопка в меню токена: счётчик показывает, сколько обликов доступно. */
+.wh-token-variant-btn { position: relative; }
+.wh-token-variant-btn .wh-tv-count {
+  position: absolute; right: 1px; bottom: 1px;
+  font-size: 9px; font-weight: bold; line-height: 1;
+  padding: 1px 3px; border-radius: 6px;
+  background: #4dffa6; color: #04100a;
+}
+
+/* ═════════════ Трудный ландшафт (меню токена) ═════════════ */
+
+.wh-terrain-btn { position: relative; }
+.wh-terrain-btn .wh-terrain-mod {
+  position: absolute; right: 1px; bottom: 1px;
+  font-size: 9px; font-weight: bold; line-height: 1;
+  padding: 1px 3px; border-radius: 6px;
+  background: #ffb84d; color: #2a1a04;
+}
+
+/* Палитра выбора */
+.wh-token-variants { padding: 8px; }
+.wh-token-variants .tv-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 7px; margin-bottom: 8px;
+}
+.wh-token-variants .tv-card {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 5px; cursor: pointer; width: 100%; height: auto; line-height: 1.3;
+  background: var(--wh-parchment2); border: 2px solid var(--wh-border); border-radius: 5px;
+  color: var(--wh-text);
+}
+.wh-token-variants .tv-card:hover { border-color: var(--wh-accent); box-shadow: 0 0 9px rgba(77,255,166,.35); }
+/* Текущий облик обведён — видно, что уже надето. */
+.wh-token-variants .tv-card.on { border-color: var(--wh-accent); background: rgba(77,255,166,.12); }
+.wh-token-variants .tv-card img {
+  width: 74px; height: 74px; object-fit: cover; border: none;
+  border-radius: 50%; background: #000;
+}
+.wh-token-variants .tv-card-lbl {
+  font-size: .76em; text-align: center; line-height: 1.25;
+  color: var(--wh-text-dark); word-break: break-word;
+}
+.wh-token-variants .tv-proto {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  font-size: .8em; color: var(--wh-text-mid); margin-bottom: 6px;
+}
+.wh-token-variants .tv-manage {
+  width: auto; height: auto; padding: 3px 12px; font-size: .8em; cursor: pointer; line-height: 1.5;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.wh-token-variants .tv-manage:hover { background: var(--wh-accent); color: #04100a; border-color: var(--wh-accent); }
+
+/* Управление набором (ГМ) */
+.wh-token-variants-mgr { padding: 8px; }
+.wh-token-variants-mgr .tvm-hint {
+  font-size: .8em; font-style: italic; color: var(--wh-panel-mid);
+  margin-bottom: 8px; line-height: 1.45;
+}
+.wh-token-variants-mgr .tvm-list { max-height: 340px; overflow-y: auto; margin-bottom: 8px; }
+.wh-token-variants-mgr .tvm-row {
+  display: flex; align-items: center; gap: 7px; padding: 4px 5px;
+  border-bottom: 1px solid rgba(47,158,106,.2);
+}
+.wh-token-variants-mgr .tvm-row img {
+  width: 38px; height: 38px; flex: 0 0 38px; object-fit: cover;
+  border: 1px solid var(--wh-border); border-radius: 4px; background: #000;
+}
+.wh-token-variants-mgr .tvm-label { flex: 1 1 auto; min-width: 0; }
+.wh-token-variants-mgr .tvm-path {
+  flex: 0 1 auto; max-width: 150px; font-size: .74em; color: var(--wh-panel-mid);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wh-token-variants-mgr .tvm-del {
+  flex: 0 0 auto; width: 22px; height: 22px; padding: 0; line-height: 1; cursor: pointer;
+  background: transparent; color: var(--wh-panel-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.wh-token-variants-mgr .tvm-del:hover { color: var(--wh-red); border-color: var(--wh-red); }
+.wh-token-variants-mgr .tvm-empty {
+  padding: 16px; text-align: center; font-style: italic; color: var(--wh-panel-mid);
+  border: 1px dashed var(--wh-border); border-radius: 4px;
+}
+.wh-token-variants-mgr .tvm-acts { display: flex; flex-wrap: wrap; gap: 5px; }
+.wh-token-variants-mgr .tvm-acts button {
+  flex: 0 0 auto; width: auto; height: auto; padding: 3px 12px; line-height: 1.5;
+  font-size: .82em; cursor: pointer; white-space: nowrap;
+  background: linear-gradient(180deg, var(--wh-parchment3), var(--wh-parchment2));
+  color: var(--wh-text); border: 1px solid var(--wh-border-light); border-radius: 3px;
+}
+.wh-token-variants-mgr .tvm-acts button:hover { background: var(--wh-accent); color: #04100a; border-color: var(--wh-accent); }
+
+/* ═════════════ Выбор Элитного архетипа ═════════════ */
+.warhammer-dbc .elite-pick-row { display: flex; gap: 3px; align-items: center; }
+.warhammer-dbc .elite-pick-row input { flex: 1 1 auto; min-width: 0; }
+.warhammer-dbc .elite-pick-btn {
+  flex: 0 0 auto; width: 22px; height: 22px; padding: 0; line-height: 1; cursor: pointer;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px; font-size: 0.8em;
+}
+.warhammer-dbc .elite-pick-btn:hover { background: var(--wh-accent); color: #04100a; border-color: var(--wh-accent); }
+
+.wh-elite-picker { padding: 8px; }
+.wh-elite-picker .ep-search { width: 100%; margin-bottom: 8px; }
+.wh-elite-picker .ep-sec {
+  font-size: .78em; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--wh-panel-mid); margin-bottom: 3px;
+}
+.wh-elite-picker .ep-list { display: flex; flex-direction: column; }
+.wh-elite-picker .ep-item {
+  display: grid; grid-template-columns: 1fr auto; gap: 1px 8px;
+  width: 100%; height: auto; margin: 0; padding: 4px 8px; cursor: pointer; text-align: left;
+  background: transparent; border: none; border-radius: 0; color: var(--wh-text);
+  border-bottom: 1px solid rgba(47,158,106,.18);
+}
+.wh-elite-picker .ep-item:hover { background: rgba(77,255,166,.1); }
+/* Текущий выбор обведён, недоступные расе — приглушены. */
+.wh-elite-picker .ep-item.on { background: rgba(77,255,166,.14); border-left: 2px solid var(--wh-accent); }
+.wh-elite-picker .ep-item.dim { opacity: .5; }
+.wh-elite-picker .ep-item.ep-hidden { display: none; }
+.wh-elite-picker .ep-name { font-weight: bold; color: var(--wh-text-dark); font-size: .94em; }
+.wh-elite-picker .ep-meta { font-size: .76em; color: var(--wh-panel-mid); white-space: nowrap; }
+.wh-elite-picker .ep-req {
+  grid-column: 1 / -1; font-size: .76em; color: var(--wh-text-mid); line-height: 1.35;
+}
+.wh-elite-picker .ep-none {
+  padding: 10px; font-style: italic; color: var(--wh-panel-mid);
+  border: 1px dashed var(--wh-border); border-radius: 4px;
+}
+.wh-elite-picker .ep-rest { margin-top: 7px; }
+.wh-elite-picker .ep-rest > summary { cursor: pointer; font-size: .8em; color: var(--wh-panel-mid); }
+.wh-elite-picker .ep-custom {
+  display: flex; align-items: center; gap: 5px; margin-top: 9px; padding-top: 7px;
+  border-top: 1px solid var(--wh-border); font-size: .84em;
+}
+.wh-elite-picker .ep-own { flex: 1 1 auto; min-width: 0; }
+.wh-elite-picker .ep-own-set {
+  flex: 0 0 auto; width: auto; height: auto; padding: 2px 12px; line-height: 1.5; cursor: pointer;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border-light); border-radius: 3px;
+}
+.wh-elite-picker .ep-own-set:hover { background: var(--wh-accent); color: #04100a; border-color: var(--wh-accent); }
+
+/* ═══════════ Пикер: сворачиваемые категории и требования ═══════════ */
+
+/* Заголовок категории — кликабельный переключатель. */
+.wh-item-picker .pick-group-head { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
+.wh-item-picker .pick-group-head:hover { filter: brightness(1.25); }
+.wh-item-picker .pick-caret { flex: 0 0 auto; font-size: .8em; opacity: .8; }
+.wh-item-picker .pick-group.pick-collapsed .pick-group-body { display: none; }
+
+/* Счётчик талантов с невыполненными требованиями. */
+.wh-item-picker .pick-count-unmet {
+  margin-left: 2px; padding: 0 6px; border-radius: 8px; opacity: 1;
+  background: rgba(255,107,107,.15); border: 1px solid #ff6b6b; color: #ff8a8a;
+}
+.wh-item-picker .pick-count-unmet::before { content: "✕ "; }
+
+/* Требования: невыполненные — красным, непроверяемые — приглушённо. */
+.wh-item-picker .pick-req-fail {
+  opacity: 1; color: #ff8a8a; font-weight: 600;
+  border-bottom: 1px dotted #ff6b6b; cursor: help;
+}
+.wh-item-picker .pick-req-unknown { opacity: .55; cursor: help; }
+.wh-item-picker .pick-req-ok { opacity: .6; }
+
+/* Строка таланта, требования которого не выполнены. */
+.wh-item-picker .pick-row.pick-unmet { background: rgba(255,107,107,.07); }
+.wh-item-picker .pick-row.pick-unmet .pick-name { color: #ff9a9a; }
+.wh-item-picker .pick-row.pick-unmet .pick-add {
+  border-color: #ff6b6b; color: #ff8a8a;
+}
+.wh-item-picker .pick-row.pick-unmet .pick-add:hover { background: rgba(255,107,107,.2); }
+
+/* Группа целиком недоступна по условию листа (Ген-навигатора, Архетип и т.п.) — */
+/* золотистый акцент, отдельно от красного «требование не выполнено» у отдельного таланта. */
+.wh-item-picker .pick-count-locked {
+  margin-left: 2px; padding: 0 6px; border-radius: 8px; opacity: 1;
+  background: rgba(255,196,77,.15); border: 1px solid #ffc44d; color: #ffd98a;
+  font-size: .82em;
+}
+.wh-item-picker .pick-group.pick-group-locked .pick-group-head { opacity: .75; }
+/* .55 «съедало» контраст ВТОРОЙ раз поверх собственной opacity дочерних
+   .pick-req-unknown/.pick-req-ok/.pick-count (opacity компонуется у вложенных
+   элементов) — реальный текст выходил ~2.5:1 против фона, ниже порога чтения.
+   Держим только ОДНУ точку затемнения: строка — до .7 (всё ещё заметно тусклее
+   обычной), а дочерние элементы внутри неё возвращаем к полной непрозрачности. */
+.wh-item-picker .pick-row.pick-row-locked { opacity: .7; }
+.wh-item-picker .pick-row.pick-row-locked .pick-name { color: var(--wh-text-mid); }
+.wh-item-picker .pick-row.pick-row-locked .pick-req,
+.wh-item-picker .pick-row.pick-row-locked .pick-count,
+.wh-item-picker .pick-row.pick-row-locked .pick-tier,
+.wh-item-picker .pick-row.pick-row-locked .pick-cost { opacity: 1; }
+.wh-item-picker .pick-row.pick-row-locked .pick-add {
+  cursor: not-allowed; border-color: #ffc44d; color: #ffd98a; opacity: 1;
+}
+.wh-item-picker .pick-row.pick-row-locked .pick-add:hover { background: none; }
+/* Разрешить покупку при несоответствии — кнопка разблокирована, курсор/hover обычные. */
+.wh-item-picker .pick-row.pick-row-locked .pick-add:not(:disabled) { cursor: pointer; opacity: 1; }
+.wh-item-picker .pick-row.pick-row-locked .pick-add:not(:disabled):hover { background: rgba(255,196,77,.2); }
+
+/* Вторая строка шапки пикера Талантов: скрыть недоступное / разрешить вопреки условию. */
+.wh-item-picker .pick-top-gate { position: sticky; top: 34px; z-index: 4; flex-wrap: wrap; row-gap: 6px; }
+.wh-item-picker:has(.pick-top-gate) .pick-group-head { top: 68px; }
+.wh-item-picker .pick-hide-locked-label {
+  display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+  font-size: .82em; color: var(--wh-text-mid); white-space: nowrap;
+}
+.wh-item-picker .pick-hide-locked-label input { cursor: pointer; }
+.wh-item-picker .pick-force-unlock {
+  flex: 0 0 auto; width: auto; display: inline-flex; align-items: center; white-space: nowrap;
+  cursor: pointer; padding: 4px 10px; font-size: .8em; line-height: 1.3; border-radius: 4px;
+  border: 1px solid #ffc44d; background: rgba(255,196,77,.12); color: #ffd98a; margin-left: auto;
+}
+.wh-item-picker .pick-force-unlock:hover { border-color: #ffe0a0; color: #fff0cf; }
+.wh-item-picker .pick-force-unlock.on {
+  background: rgba(255,196,77,.4); border-color: #ffe0a0; color: #1a1204; font-weight: 600;
+}
+
+/* ═══════════ Выбор специализации Группы Навыков ═══════════ */
+.wh-spec-dialog .wh-spec-picker .spec-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 7px;
+}
+.wh-spec-dialog .wh-spec-picker .spec-row > label {
+  flex: 0 0 78px; font-size: .85em; font-weight: 600; opacity: .85;
+}
+.wh-spec-dialog .wh-spec-picker select,
+.wh-spec-dialog .wh-spec-picker input[type="text"] { flex: 1; min-width: 0; }
+.wh-spec-dialog .spec-hint {
+  font-size: .78em; font-style: italic; line-height: 1.4; opacity: .8; min-height: 1.2em;
+}
+
+/* ═══════════ Обозреватель компендиумов ═══════════ */
+/* Переиспользует .wh-item-picker/.pick-group/.pick-count/.pick-caret/.pick-hidden
+   (см. выше) — категория = .pick-group, папки внутри = .cbrowse-folder (не
+   sticky, в отличие от заголовка категории — иначе на глубокой вложенности
+   стопка липких шапок захватила бы половину окна). */
+.wh-item-picker.cbrowse .pick-list { padding-bottom: 12px; }
+.wh-item-picker .cbrowse-refresh {
+  flex: 0 0 auto; width: auto; padding: 4px 10px; cursor: pointer; font-size: 1em; line-height: 1;
+  border: 1px solid var(--wh-border, #1f6f4a); border-radius: 4px; background: rgba(77,255,166,.08); color: #d6ffe9;
+}
+.wh-item-picker .cbrowse-refresh:hover { background: #4dffa6; color: #04120b; }
+.wh-item-picker .cbrowse-folder { margin: 2px 0 2px 14px; }
+.wh-item-picker .cbrowse-folder-head {
+  display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+  padding: 3px 6px; font-size: .85em; color: #9fe6c8; border-bottom: 1px solid rgba(77,255,166,.1);
+}
+.wh-item-picker .cbrowse-folder-head:hover { color: #4dffa6; }
+.wh-item-picker .cbrowse-folder.pick-collapsed .cbrowse-folder-body { display: none; }
+.wh-item-picker .cbrowse-folder-body { padding: 0 0 0 4px; }
+.wh-item-picker .cbrowse-item {
+  display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 20px; cursor: pointer;
+  border-bottom: 1px solid rgba(77,255,166,.08); font-size: .88em; color: #d8ffe8;
+}
+.wh-item-picker .cbrowse-item:hover { background: rgba(77,255,166,.08); color: #4dffa6; }
+/* Специфичность .cbrowse-item{display:flex} равна .pick-hidden{display:none} и идёт
+   позже по файлу — без класса-компаньона тут скрытие поиском не сработало бы. */
+.wh-item-picker .cbrowse-item.pick-hidden { display: none; }
+.wh-item-picker .cbrowse-item-img { flex: 0 0 auto; width: 18px; height: 18px; border: none; border-radius: 2px; }
+.wh-item-picker .cbrowse-item-name { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Панель вкладок (Все/Способности/Мистика/Арсенал/Машины/Пустолёты) — вторая
+   липкая строка под поиском, как у .pick-top-gate; сдвигает липкие заголовки
+   категорий ниже, чтобы не перекрывались. */
+.wh-item-picker .cbrowse-tabs {
+  position: sticky; top: 34px; z-index: 4; display: flex; flex-wrap: wrap; gap: 5px;
+  padding: 6px 8px; background: #06120c; border-bottom: 1px solid var(--wh-border, #1f6f4a);
+}
+.wh-item-picker:has(.cbrowse-tabs) .pick-group-head { top: 68px; }
+.wh-item-picker .cbrowse-tab {
+  flex: 0 0 auto; width: auto; padding: 3px 11px; cursor: pointer; font-size: .82em; line-height: 1.4;
+  border: 1px solid var(--wh-border, #1f6f4a); border-radius: 12px; background: rgba(77,255,166,.06); color: #d6ffe9;
+}
+.wh-item-picker .cbrowse-tab:hover { border-color: #4dffa6; color: #4dffa6; }
+.wh-item-picker .cbrowse-tab.active {
+  background: linear-gradient(180deg, #4dffa6, #2f9e6a); color: #04120b; font-weight: 700; border-color: transparent;
+}
+
+/* Кнопка в шапке вкладки компендиумов (Hooks.on("renderCompendiumDirectory")). */
+.wh-compendium-browser-btn {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}

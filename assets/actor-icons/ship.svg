@@ -1,0 +1,28 @@
+<svg width="128" height="128" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g fill="none" stroke="#4dffa6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" filter="url(#glow)">
+    <!-- Готический крейсер: длинный корпус с острым тараном -->
+    <path d="M32 4
+             L37 20 L37 40
+             L46 52 L40 50
+             L38 58 L26 58 L24 50 L18 52
+             L27 40 L27 20 Z"/>
+    <!-- Надстройка-мостик -->
+    <path d="M27 28 L37 28 L35 36 L29 36 Z"/>
+    <!-- Боковые «соборные» крылья -->
+    <line x1="27" y1="24" x2="20" y2="30"/>
+    <line x1="37" y1="24" x2="44" y2="30"/>
+  </g>
+  <!-- Двигательные сопла — светящиеся -->
+  <g filter="url(#glow)">
+    <circle cx="29" cy="55" r="2.2" fill="#bdffdd"/>
+    <circle cx="35" cy="55" r="2.2" fill="#bdffdd"/>
+    <!-- Носовой огонь -->
+    <circle cx="32" cy="11" r="2" fill="#bdffdd"/>
+  </g>
+</svg>

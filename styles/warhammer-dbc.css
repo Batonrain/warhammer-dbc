@@ -1,0 +1,56 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — точка входа стилей
+   Все стили подключаются через @import
+═══════════════════════════════════════════════════════ */
+
+@import url("base/variables.css");
+@import url("base/common.css");
+
+@import url("sheets/actor-header.css");
+@import url("sheets/actor-stats.css");
+@import url("sheets/actor-combat.css");
+@import url("sheets/actor-combat-cog.css");
+@import url("sheets/actor-cog.css");
+@import url("sheets/actor-stats-cog.css");
+@import url("sheets/actor-advance-cog.css");
+@import url("sheets/actor-decor.css");
+@import url("sheets/actor-gear.css");
+@import url("sheets/actor-advance.css");
+@import url("sheets/actor-notes.css");
+@import url("sheets/actor-effects.css");
+@import url("sheets/actor-psy.css");
+@import url("sheets/actor-tech.css");
+@import url("sheets/actor-nav.css");
+@import url("sheets/actor-body.css");
+@import url("sheets/daemon-sheet.css");
+@import url("sheets/demon-prince-sheet.css");
+@import url("sheets/chaos-heretic.css");
+@import url("sheets/possession.css");
+@import url("sheets/ship-sheet.css");
+@import url("sheets/vehicle-sheet.css");
+@import url("sheets/horde-sheet.css");
+@import url("sheets/squad-sheet.css");
+@import url("sheets/formation-sheet.css");
+@import url("sheets/homeworlds.css");
+@import url("sheets/haemonculus.css");
+@import url("sheets/item-sheet.css");
+
+@import url("ui/chat.css");
+@import url("ui/dialogs.css");
+@import url("ui/context-menu.css");
+@import url("ui/cogitator-pause.css");
+@import url("ui/systems-overview.css");
+@import url("ui/craft-workshop.css");
+@import url("ui/cogitator.css");
+@import url("ui/cogitator-global.css");
+@import url("ui/tarot.css");
+@import url("ui/rig-manager.css");
+@import url("ui/surgeon.css");
+@import url("ui/veil.css");
+@import url("ui/veil-defile.css");
+@import url("ui/scene-nexus.css");
+@import url("ui/environment.css");
+@import url("ui/hud.css");
+@import url("ui/active-effect-config.css");
+@import url("ui/imperial-calendar.css");
+@import url("ui/game-session.css");

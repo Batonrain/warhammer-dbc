@@ -1,0 +1,149 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка Записи
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .notes-section-panel {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+/* ── Происхождение Аэльдари (Мир-Корабль / Корсарская Банда) ── */
+.warhammer-dbc .aeldari-origin-panel .origin-grid { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.warhammer-dbc .origin-row { display: flex; align-items: center; gap: 8px; }
+.warhammer-dbc .origin-label { flex: 0 0 130px; font-weight: bold; font-size: 0.88em; color: var(--wh-text); }
+.warhammer-dbc .origin-select {
+  flex: 1 1 auto; background: var(--wh-input-bg); border: 1px solid var(--wh-border);
+  color: var(--wh-text); font-family: inherit; font-size: 0.9em; padding: 2px 4px;
+}
+.warhammer-dbc .origin-info {
+  margin: 0 0 6px 0; padding: 5px 8px; border-left: 3px solid var(--wh-border-light);
+  background: var(--wh-parchment3); border-radius: 2px;
+}
+.warhammer-dbc .origin-chars { font-weight: 700; font-size: 0.86em; color: var(--wh-xp-current); margin-bottom: 3px; }
+.warhammer-dbc .origin-special { font-size: 0.88em; line-height: 1.45; color: var(--wh-text); }
+
+.warhammer-dbc .bio-grid {
+  display: flex;
+  gap: 8px;
+  padding: 6px 8px;
+  flex-wrap: wrap;
+}
+
+.warhammer-dbc .bio-grid label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8em;
+  font-weight: bold;
+  gap: 2px;
+}
+
+.warhammer-dbc .bio-grid input {
+  width: 90px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  padding: 2px 4px;
+}
+
+.warhammer-dbc .bio-fields {
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.warhammer-dbc .bio-fields label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84em;
+  font-weight: bold;
+}
+
+.warhammer-dbc .bio-fields input {
+  flex: 1;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  padding: 2px 4px;
+}
+
+.warhammer-dbc .aspiration-grid {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.warhammer-dbc .aspiration-grid label {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-weight: bold;
+  font-size: 0.85em;
+}
+
+.warhammer-dbc .aspiration-grid textarea {
+  flex: 1;
+  min-height: 40px;
+  resize: vertical;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  padding: 2px 4px;
+}
+
+.warhammer-dbc .aspiration-grid input[type="number"] {
+  width: 80px;
+  text-align: center;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+}
+
+.warhammer-dbc .notes-textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  background: var(--wh-input-bg);
+  border: none;
+  border-top: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  padding: 6px 8px;
+  box-sizing: border-box;
+}
+/* ── Легион / орден Астартес (вкладка Записи) ── */
+.warhammer-dbc .legion-info { display: flex; flex-direction: column; gap: 5px; padding: 7px 9px; }
+.warhammer-dbc .legion-info-title { font-weight: bold; font-size: 0.95em; color: var(--wh-text-dark, #2a1a0a); border-bottom: 1px solid var(--wh-border-light); padding-bottom: 3px; }
+.warhammer-dbc .legion-block { font-size: 0.86em; line-height: 1.4; color: var(--wh-text); }
+.warhammer-dbc .legion-block-key { font-weight: bold; color: var(--wh-panel-mid); }
+.warhammer-dbc .legion-block.legion-curse .legion-block-key { color: #8a2bbf; }
+.warhammer-dbc .legion-block.legion-parent { font-size: 0.8em; opacity: 0.82; border-top: 1px dashed var(--wh-border-light); padding-top: 4px; margin-top: 2px; }
+
+/* Кнопка «Применить легион/орден» */
+.warhammer-dbc .legion-apply-btn {
+  width: auto; cursor: pointer; padding: 4px 12px; margin-top: 2px;
+  background: #2e4a22; color: #d8e8c0; border: 1px solid #4a6a3a; border-radius: 3px;
+  font-family: inherit; font-size: 0.85em; font-weight: 600;
+}
+.warhammer-dbc .legion-apply-btn:hover { background: #3e5e2e; }
+
+/* ── Блок СТАТУС (галочки под Записями) ── */
+.warhammer-dbc .status-checks {
+  display: flex; flex-wrap: wrap; gap: 16px; padding: 6px 4px 2px;
+}
+.warhammer-dbc .status-checks .checkbox-label {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font-size: 0.9em; user-select: none;
+}
+.warhammer-dbc .status-checks input[type="checkbox"] { width: 14px; height: 14px; }
+
+/* ── Строка «Фактор Прибыли» в таблице характеристик ── */
+.warhammer-dbc .char-pf-row .char-pf-dash { text-align: center; opacity: 0.6; }
+.warhammer-dbc .char-pf-input {
+  width: 52px; text-align: center; font-weight: bold;
+  background: var(--wh-input-bg, #0c2418); color: #eafff4;
+  border: 1px solid var(--wh-border-light, #2f9e6a); border-radius: 3px; padding: 2px 0;
+}

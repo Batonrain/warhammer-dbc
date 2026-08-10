@@ -1,0 +1,34 @@
+{{!-- Малое судно (МЛА) --}}
+{{#if (eq item.type "smallCraft")}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ ЭСКАДРИЛЬИ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Тип</label>
+    <select name="system.craftKind" class="wr-select-md">
+      <option value="fighter"       {{#if (eq system.craftKind "fighter")}}selected{{/if}}>Истребитель</option>
+      <option value="bomber"        {{#if (eq system.craftKind "bomber")}}selected{{/if}}>Бомбардировщик</option>
+      <option value="assaultBoat"   {{#if (eq system.craftKind "assaultBoat")}}selected{{/if}}>Штурмовая лодка</option>
+      <option value="torpedoBomber" {{#if (eq system.craftKind "torpedoBomber")}}selected{{/if}}>Торпедоносец</option>
+      <option value="support"       {{#if (eq system.craftKind "support")}}selected{{/if}}>Судно поддержки</option>
+      <option value="aeronautica"   {{#if (eq system.craftKind "aeronautica")}}selected{{/if}}>Аэронавтика</option>
+      <option value="multipurpose"  {{#if (eq system.craftKind "multipurpose")}}selected{{/if}}>Многоцелевой</option>
+    </select>
+    <label class="wr-label">Фракция</label>
+    <input type="text" name="system.faction" value="{{system.faction}}" class="wr-input-md"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label" title="Craft Rating — бонус к тестам атаки">CR</label>
+    <input type="number" name="system.cr" value="{{system.cr}}" class="wr-input-xs"/>
+    <label class="wr-label" title="Альт. CR (в скобках)">CR альт.</label>
+    <input type="number" name="system.crAlt" value="{{system.crAlt}}" class="wr-input-xs"/>
+    <label class="wr-label">SPD</label>
+    <input type="number" name="system.spd" value="{{system.spd}}" class="wr-input-xs"/>
+    <label class="wr-label" title="Размер эскадрильи — число судов">Размер</label>
+    <input type="number" name="system.squadronSize" value="{{system.squadronSize}}" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Свойства</label>
+    <input type="text" name="system.props" value="{{system.props}}" class="wr-input-lg" placeholder="напр. Robust Craft, Excellent Pilots…"/>
+  </div>
+</div>
+{{/if}}

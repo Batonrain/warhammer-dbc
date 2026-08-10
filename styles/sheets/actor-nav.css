@@ -1,0 +1,115 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка НАВ (Силы Навигатора).
+   Тема Навис Нобилитэ: бездна Имматериума, Третий Глаз,
+   золото Астрономикона. Глаз следит за курсором (JS).
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .nav-tab {
+  --nv: #8b78ff;          /* варп-фиолет (радужка) */
+  --nv-deep: #2a1a6a;     /* глубина */
+  --nv2: #e8c860;         /* золото Астрономикона */
+  --nv-soft: rgba(139,120,255,0.14);
+  position: relative; padding: 0 2px 10px; color: #cdc6e6;
+}
+
+/* ── Звёздное поле / варп-течения ───────────────────────── */
+.warhammer-dbc .nav-tab .nav-starfield { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; opacity: 0.5; }
+.warhammer-dbc .nav-tab .nav-starfield span { position: absolute; border-radius: 50%; filter: blur(42px); background: radial-gradient(circle, var(--nv), transparent 70%); }
+.warhammer-dbc .nav-tab .nav-starfield span:nth-child(1) { width: 280px; height: 280px; top: -70px; left: -50px; animation: navDrift1 20s ease-in-out infinite; }
+.warhammer-dbc .nav-tab .nav-starfield span:nth-child(2) { width: 200px; height: 200px; top: 44%; right: -70px; background: radial-gradient(circle, var(--nv2), transparent 72%); opacity: 0.5; animation: navDrift2 26s ease-in-out infinite; }
+.warhammer-dbc .nav-tab .nav-starfield span:nth-child(3) { width: 200px; height: 200px; bottom: -60px; left: 40%; animation: navDrift3 30s ease-in-out infinite; }
+@keyframes navDrift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(44px,30px) scale(1.15); } }
+@keyframes navDrift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-40px,-26px) scale(1.2); } }
+@keyframes navDrift3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(24px,-30px) scale(0.9); } }
+
+/* ── Панели ─────────────────────────────────────────────── */
+.warhammer-dbc .nav-tab .nav-panel {
+  position: relative; z-index: 1; margin-bottom: 9px; border-radius: 8px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(15,12,28,0.9), rgba(9,7,18,0.94));
+  border: 1px solid color-mix(in srgb, var(--nv) 26%, #241d3a); border-left: 3px solid var(--nv);
+  box-shadow: inset 0 0 28px rgba(0,0,0,0.5), 0 0 18px -10px var(--nv);
+}
+.warhammer-dbc .nav-tab .nav-panel-title {
+  display: flex; align-items: center; gap: 8px; padding: 7px 12px; margin: 0;
+  font-size: 0.85em; font-weight: 800; letter-spacing: 0.11em; text-transform: uppercase; color: #ece6ff;
+  border-bottom: 1px solid color-mix(in srgb, var(--nv) 22%, transparent);
+  background: linear-gradient(180deg, var(--nv-soft), transparent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--nv) 60%, transparent);
+}
+.warhammer-dbc .nav-tab .nav-eye-mini {
+  width: 14px; height: 10px; flex: 0 0 auto; border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #000 34%, var(--nv) 38%, var(--nv-deep) 70%, transparent 74%);
+  box-shadow: 0 0 8px var(--nv); animation: navBlink 5s ease-in-out infinite;
+}
+@keyframes navBlink { 0%,92%,100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+
+/* ── Третий Глаз ────────────────────────────────────────── */
+.warhammer-dbc .nav-tab .nav-hero { display: grid; grid-template-columns: 200px 1fr; gap: 18px; align-items: center; padding: 14px; }
+@media (max-width: 620px) { .warhammer-dbc .nav-tab .nav-hero { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+.warhammer-dbc .nav-tab .nav-eye-stage { position: relative; width: 200px; height: 130px; display: flex; align-items: center; justify-content: center; }
+
+/* варп-течения за глазом */
+.warhammer-dbc .nav-tab .nav-warp-swirl {
+  position: absolute; width: 190px; height: 190px; border-radius: 50%; z-index: 0;
+  background: conic-gradient(from 0deg, transparent, color-mix(in srgb, var(--nv) 40%, transparent), transparent 30%, color-mix(in srgb, var(--nv2) 30%, transparent), transparent 55%, color-mix(in srgb, var(--nv) 45%, transparent), transparent 82%);
+  -webkit-mask: radial-gradient(circle, #000 24%, rgba(0,0,0,0.5) 45%, transparent 68%);
+          mask: radial-gradient(circle, #000 24%, rgba(0,0,0,0.5) 45%, transparent 68%);
+  filter: blur(2px); opacity: 0.7; animation: navSwirl 24s linear infinite;
+}
+@keyframes navSwirl { to { transform: rotate(360deg); } }
+
+.warhammer-dbc .nav-tab .nav-eye { position: relative; z-index: 1; width: 190px; height: auto; overflow: visible; filter: drop-shadow(0 0 12px color-mix(in srgb, var(--nv) 45%, transparent)); }
+.warhammer-dbc .nav-tab .nav-eye-sclera { fill: #0c0a1a; }
+.warhammer-dbc .nav-tab .nav-eye-bg { fill: #0e0b1e; }
+.warhammer-dbc .nav-tab .nav-eye-ring { fill: none; stroke: var(--nv2); stroke-width: 1.4; opacity: 0.75; }
+.warhammer-dbc .nav-tab .nav-eye-pupil { fill: #000208; }
+.warhammer-dbc .nav-tab .nav-eye-glint { fill: #f4f0ff; opacity: 0.9; }
+.warhammer-dbc .nav-tab .nav-eye-outline { fill: none; stroke: var(--nv); stroke-width: 1.8; filter: drop-shadow(0 0 5px var(--nv)); }
+.warhammer-dbc .nav-tab .nav-eye-lid { fill: none; stroke: color-mix(in srgb, var(--nv2) 70%, transparent); stroke-width: 1.2; opacity: 0.6; }
+.warhammer-dbc .nav-tab .nav-eye-iris { animation: navIrisPulse 4s ease-in-out infinite; }
+@keyframes navIrisPulse { 0%,100% { opacity: 0.94; } 50% { opacity: 1; filter: brightness(1.15); } }
+/* плавное следование зрачка (JS ставит style.transform в user-units) */
+.warhammer-dbc .nav-tab .nav-eye-move { transition: transform 0.18s cubic-bezier(.2,.8,.3,1); }
+/* моргание всего глаза */
+.warhammer-dbc .nav-tab .nav-eye { animation: navEyeBlink 7s ease-in-out infinite; transform-origin: center; }
+@keyframes navEyeBlink { 0%,94%,100% { transform: scaleY(1); } 97% { transform: scaleY(0.08); } }
+
+.warhammer-dbc .nav-tab .nav-hero-info { min-width: 0; }
+.warhammer-dbc .nav-tab .nav-house { font-size: 1.2em; font-weight: 900; letter-spacing: 0.05em; color: #f2ecff; text-shadow: 0 0 12px color-mix(in srgb, var(--nv) 55%, transparent); }
+.warhammer-dbc .nav-tab .nav-tagline { font-size: 0.82em; color: var(--nv2); letter-spacing: 0.03em; margin: 2px 0 8px; text-shadow: 0 0 8px color-mix(in srgb, var(--nv2) 45%, transparent); }
+.warhammer-dbc .nav-tab .nav-hint { font-size: 0.8em; line-height: 1.55; color: #b7afd2; margin-bottom: 6px; }
+.warhammer-dbc .nav-tab .nav-hint b { color: color-mix(in srgb, var(--nv) 55%, #e0d8f6); }
+.warhammer-dbc .nav-tab .nav-hint-sub { font-size: 0.76em; color: #948cb8; border-left: 2px solid color-mix(in srgb, var(--nv) 40%, transparent); padding-left: 8px; }
+
+/* ── Таблица Сил ────────────────────────────────────────── */
+.warhammer-dbc .nav-tab .nav-powers-table { width: 100%; border-collapse: collapse; }
+.warhammer-dbc .nav-tab .nav-powers-table thead th {
+  font-size: 0.72em; letter-spacing: 0.04em; text-transform: uppercase; color: #a89fca; padding: 6px 6px;
+  border-bottom: 1px solid color-mix(in srgb, var(--nv) 28%, #241d3a); background: linear-gradient(180deg, var(--nv-soft), transparent);
+}
+.warhammer-dbc .nav-tab .nav-powers-table .col-narrow { width: 48px; text-align: center; }
+.warhammer-dbc .nav-tab .nav-powers-table tbody .item-row { transition: background 0.14s, box-shadow 0.14s; }
+.warhammer-dbc .nav-tab .nav-powers-table tbody .item-row td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,0.045); }
+.warhammer-dbc .nav-tab .nav-powers-table tbody .item-row:hover { background: var(--nv-soft) !important; box-shadow: inset 3px 0 0 var(--nv); }
+.warhammer-dbc .nav-tab .nav-power-name { font-weight: 600; color: #e6e0fb; }
+.warhammer-dbc .nav-tab .nav-power-kind { font-size: 0.72em; color: color-mix(in srgb, var(--nv) 55%, #948cb8); margin-top: 1px; }
+.warhammer-dbc .nav-tab .nav-test-cell { text-align: center; color: var(--nv2); font-weight: 700; }
+.warhammer-dbc .nav-tab .nav-sustain-cell { text-align: center; }
+.warhammer-dbc .nav-tab .nav-row-sustained { background: color-mix(in srgb, var(--nv) 14%, transparent) !important; box-shadow: inset 3px 0 0 var(--nv2); }
+.warhammer-dbc .nav-tab .nav-row-sustained .nav-power-name::before { content: "◉"; color: var(--nv2); margin-right: 5px; font-size: 0.85em; }
+.warhammer-dbc .nav-tab .nav-sustain-cb { accent-color: var(--nv); }
+.warhammer-dbc .nav-tab .nav-add-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; padding: 0; margin-left: 6px;
+  background: color-mix(in srgb, var(--nv) 24%, transparent); border: 1px solid var(--nv);
+  border-radius: 3px; cursor: pointer; font-size: 0.95em; line-height: 1; color: #f0ecff; flex-shrink: 0; transition: all 0.13s;
+}
+.warhammer-dbc .nav-tab .nav-add-btn:hover { background: color-mix(in srgb, var(--nv) 42%, transparent); box-shadow: 0 0 10px -2px var(--nv); }
+.warhammer-dbc .nav-tab .nav-activate-btn {
+  width: auto; padding: 3px 11px; border-radius: 4px; cursor: pointer; font-family: inherit;
+  font-size: 0.82em; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; color: #f2ecff; transition: all 0.14s;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--nv) 46%, #120f22), color-mix(in srgb, var(--nv) 26%, #0b0916));
+  border: 1px solid var(--nv); box-shadow: 0 0 12px -5px var(--nv);
+}
+.warhammer-dbc .nav-tab .nav-activate-btn:hover { box-shadow: 0 0 16px -2px var(--nv); transform: translateY(-1px); }
+.warhammer-dbc .nav-tab .nav-empty td { padding: 16px 8px !important; color: #948cb8; font-style: italic; text-align: center; }
+.warhammer-dbc .nav-tab .nav-empty-eye { color: var(--nv); font-style: normal; margin-right: 4px; animation: navIrisPulse 3s ease-in-out infinite; }

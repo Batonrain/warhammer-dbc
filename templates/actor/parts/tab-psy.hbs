@@ -1,0 +1,128 @@
+<div class="tab psy-tab psy-theme-{{psyker.themeKey}}" data-tab="psy" data-group="primary">
+
+  {{!-- анимированный варп-фон вкладки --}}
+  <div class="psy-veil-bg" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  {{!-- ── ПСАЙКЕР: шапка с проводником Варпа ──────────────────────────────── --}}
+  <div class="psy-panel psy-hero-panel">
+    <div class="psy-panel-title">ПСАЙКЕР <span class="psy-nature-tag">{{psyker.natureLabel}}</span></div>
+
+    <div class="psy-hero">
+      {{!-- проводник Варпа (визуализация PR) --}}
+      <div class="psy-conduit {{#if psyker.overload}}overload{{/if}}">
+        <div class="psy-orb">
+          <span class="psy-orb-ring"></span>
+          <span class="psy-orb-num">{{system.psyker.rating}}</span>
+          <span class="psy-orb-cap">бPR</span>
+        </div>
+        <div class="psy-flow">
+          <div class="psy-flow-track"></div>
+          <div class="psy-pips">
+            {{#each psyker.prPips as |p|}}<i class="psy-pip {{#if p.charged}}on{{/if}}"></i>{{/each}}
+            {{#unless psyker.prPips.length}}<span class="psy-pips-empty">— нет Psy Rating —</span>{{/unless}}
+          </div>
+          <div class="psy-flow-legend">
+            <span class="psy-leg on">тPR <b>{{system.psyker.currentRating}}</b></span>
+            <span class="psy-leg off">Поддерж. <b>{{system.psyker.sustain}}</b></span>
+          </div>
+        </div>
+      </div>
+
+      {{!-- поля ввода (сохранены) --}}
+      <div class="psy-hero-fields">
+        <label class="psy-rune-field">
+          <span class="psy-rf-lbl">Природа Дара</span>
+          {{#if psyker.isEldar}}<span class="psy-rf-static" title="Аэльдари: фиксированная Природа Дара">Древнее Мастерство</span>
+          {{else}}<select class="psy-class-select">
+            <option value="bound" {{#if (eq system.psyker.class "bound")}}selected{{/if}}>Связанный</option>
+            <option value="unbound" {{#if (eq system.psyker.class "unbound")}}selected{{/if}}>Несвязанный</option>
+            <option value="daemonic" {{#if (eq system.psyker.class "daemonic")}}selected{{/if}}>Демонический</option>
+          </select>{{/if}}
+        </label>
+        <label class="psy-rune-field">
+          <span class="psy-rf-lbl">Базовый PR</span>
+          <input type="number" class="psy-rating-input" value="{{system.psyker.rating}}" min="0" title="Равен уровню Таланта Psy Rating"/>
+        </label>
+        <div class="psy-rune-field readonly" title="бPR − 1 за каждую поддерживаемую силу. При тPR 0 новые силы манифестировать нельзя.">
+          <span class="psy-rf-lbl">Текущий тPR</span>
+          <span class="psy-rf-val">{{system.psyker.currentRating}}</span>
+        </div>
+        <div class="psy-rune-field readonly" title="Сумма цен поддержания активных сил">
+          <span class="psy-rf-lbl">Поддерживается</span>
+          <span class="psy-rf-val">{{system.psyker.sustain}}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="psy-hint">
+      <b>бPR</b> = уровень Таланта Psy Rating. <b>тPR</b> = бPR − поддерживаемые силы (при 0 нельзя манифестировать новые). <b>эPR</b> — эффективный PR силы при манифестации (по умолчанию = тPR; его можно снизить независимо для психотеста, урона и дальности, минимум 1 — задаётся в окне манифестации). Психотест: <b>+5×эPR</b> по дару <b>{{psyker.natureLabel}}</b>. Режим и Путь Силы выбираются при манифестации.
+    </div>
+    {{#if psyker.isEldar}}
+    <div class="psy-hint psy-hint-eldar"> <b>Псайкана Аэльдари:</b>
+      <ul>
+        <li>Режимы: <b>Безопасный</b> (эPR=½тPR ▲, авто-успех, успехи=тPR, без Феноменов); <b>Обычный</b> (эPR=тPR, Феномен лишь при крит. провале или дубле 66 на успехе); <b>Усиленный</b> (эPR=тPR+1..4, +15 к Феномену за пункт; Феномен при провале или дубле).</li>
+        <li>Может поддерживать до <b>W.b</b> психосил (вместо I.b) через тип <b>Цикл</b>.</li>
+        <li>Если чистый W.b выше W.b Парии/Источника Тени-в-Варпе — вычитает (W.b+3) из своего эPR и манифестирует, игнорируя рассеивание.</li>
+        <li>При тPR ниже 0 не развеивает силы против воли (1 непоглощаемый E урон/ход; при 0 ран — насильно развеивает).</li>
+        <li>Не-Видящий и не-Риоссаибх при манифестации силы с бPR 3+ всегда вызывает Феномен <b>+30</b>; Прорыв не выше 60. Обходится двумя из: F.L (Warp/Daemons)+20, F.L (Psykers)+30, S.L (Occult)+20, I 50, W 60.</li>
+        <li>Изначальный фокус <b>Тауматургии</b>; «чистые» версии Колдовства (без Cor); недоступна <b>Астропатия</b>.</li>
+      </ul>
+    </div> {{/if}}
+  </div>
+
+  {{!-- ── ПСИХОСИЛЫ ────────────────────────────────────────────────────────── --}}
+  <div class="psy-panel psy-powers-panel">
+    <div class="psy-panel-title">ПСИХОСИЛЫ
+      <button type="button" class="psy-add-btn" title="Добавить психосилу">＋</button>
+    </div>
+    <table class="items-table psy-powers-table">
+      <thead><tr>
+        <th class="ability-toggle-col"></th>
+        <th class="col-wide">Название</th>
+        <th>Тип</th>
+        <th class="col-narrow">PR</th>
+        <th class="col-narrow" title="Порог психотеста при эPR = текущий тПР (charVal + 5×эPR + мод)">Тест</th>
+        <th>Действие</th>
+        <th>Дальность</th>
+        <th class="col-narrow">Подд.</th>
+        <th class="col-narrow">Цена</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        {{#if psyPowers.length}}
+          {{#each psyPowers as |p|}}
+          <tr class="item-row {{#if p.isSustained}}psy-row-sustained{{/if}}" data-item-id="{{p.id}}">
+            <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{p.id}}" title="Показать/скрыть описание">▸</button></td>
+            <td class="item-name-cell"><span class="psy-power-name">{{p.name}}</span>
+              {{#if p.disciplineLabel}}<div class="psy-discipline-sub">{{p.disciplineLabel}}{{#if p.subtype}} · {{p.subtype}}{{/if}}{{#if p.damage}} · <span class="psy-dmg-sub">урон {{p.damage}}</span>{{/if}}</div>{{else}}{{#if p.damage}}<div class="psy-discipline-sub"><span class="psy-dmg-sub">урон {{p.damage}}</span></div>{{/if}}{{/if}}
+            </td>
+            <td><span class="psy-type-chip">{{p.typeLabel}}</span></td>
+            <td class="psy-pr-cell">{{p.prRequired}}</td>
+            <td class="psy-thr-cell">{{#if p.threshold}}<span class="psy-thr" title="Порог при эPR = тПР">{{p.testAbbr}} ≤{{p.threshold}}</span>{{else}}<span class="psy-thr-na">—</span>{{/if}}</td>
+            <td>{{p.actionLabel}}</td>
+            <td>{{p.range}}</td>
+            <td class="psy-sustain-cell">
+              {{#if p.sustainable}}<input type="checkbox" class="psy-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (−1 к текущему PR)"/>{{else}}—{{/if}}
+            </td>
+            <td class="psy-cost-cell"><input type="number" class="psy-cost-input" data-item-id="{{p.id}}" value="{{p.cost}}" min="0" title="Цена в опыте (идёт в «Потрачено на Психосилы»)"/></td>
+            <td class="psy-actions-cell"><button type="button" class="psy-manifest-btn" data-item-id="{{p.id}}" title="Манифестировать (психотест)">Манифест</button></td>
+          </tr>
+          <tr class="ability-detail-row" data-item-id="{{p.id}}" style="display:none;"><td colspan="10"><div class="ability-detail-text">{{#if p.effect}}{{p.effect}}{{else}}—{{/if}}</div></td></tr>
+          {{/each}}
+        {{else}}
+          <tr class="items-empty psy-empty"><td colspan="10"><span class="psy-empty-sigil">✧</span> <em>Нет психосил — добавьте ＋ или перетащите из библиотеки</em></td></tr>
+        {{/if}}
+      </tbody>
+    </table>
+  </div>
+
+  {{!-- ── ПРОЧИЕ ПСИХИЧЕСКИЕ ДЕЙСТВИЯ ──────────────────────────────────────── --}}
+  <div class="psy-panel">
+    <div class="psy-panel-title">ПРОЧИЕ ПСИХИЧЕСКИЕ ДЕЙСТВИЯ</div>
+    <div class="psy-other-actions">
+      <button type="button" class="psy-action-btn psy-sense-btn" title="Пси-чутьё (Psyniscience), полудействие, Ментальное"><span class="psy-ab-ico">◉</span>Пси-чутьё</button>
+      <button type="button" class="psy-action-btn psy-hood-btn" title="Пси-капюшон (Реакция): встречный тест W+PR×5, чтобы погасить вражескую психосилу"><span class="psy-ab-ico">⛨</span>Пси-капюшон</button>
+      <button type="button" class="psy-action-btn psy-soulburn-btn" title="Выжигание Души (свободное действие): после попадания Force-оружием — тест W+PR×5, урон в характеристику"><span class="psy-ab-ico">✷</span>Выжигание Души</button>
+    </div>
+  </div>
+</div>{{!-- /tab psy --}}

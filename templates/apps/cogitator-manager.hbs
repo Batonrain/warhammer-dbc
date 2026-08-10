@@ -1,0 +1,36 @@
+<div class="wh-cog-mgr">
+  {{#if isGM}}
+  <div class="wh-cog-mgr-head">
+    <button type="button" class="wh-cog-mgr-create" data-act="create">＋ Создать когитатор</button>
+    <button type="button" class="wh-cog-mgr-folder" data-act="createfolder">📁 Создать папку</button>
+  </div>
+  {{/if}}
+  <div class="wh-cog-mgr-list">
+    {{#each groups as |g|}}
+    <details class="wh-cog-folder" open data-dropfolder="{{g.id}}">
+      <summary class="wh-cog-folder-head">
+        <span class="wh-cog-folder-name">📁 {{g.name}} <span class="wh-cog-dim">({{g.rows.length}})</span></span>
+        {{#if (and ../isGM g.deletable)}}<button type="button" class="wh-cog-folderdel" data-delfolder="{{g.id}}" title="Удалить папку (когитаторы в корень)">✕</button>{{/if}}
+      </summary>
+      {{#each g.rows as |c|}}
+      <div class="wh-cog-mgr-row">
+        {{#if ../../isGM}}<span class="wh-cog-drag" draggable="true" data-cogid="{{c.id}}" title="Перетащите в папку">⠿</span>{{/if}}
+        <div class="wh-cog-mgr-name">▚ {{c.title}} <span class="wh-cog-dim">({{c.pages}} стр.)</span></div>
+        <div class="wh-cog-mgr-actions">
+          <button type="button" data-open="{{c.id}}" title="Открыть консоль">Открыть</button>
+          {{#if ../../isGM}}
+          <button type="button" data-edit="{{c.id}}" title="Редактировать">Правка</button>
+          <button type="button" data-access="{{c.id}}" class="{{#if c.playerAccess}}on{{/if}}" title="Доступ игрокам">{{#if c.playerAccess}}◉ Игроки{{else}}◯ ГМ{{/if}}</button>
+          <button type="button" data-del="{{c.id}}" class="del" title="Удалить">✕</button>
+          {{/if}}
+        </div>
+      </div>
+      {{else}}
+      <div class="wh-cog-empty-folder">— пусто, перетащите когитатор сюда —</div>
+      {{/each}}
+    </details>
+    {{else}}
+    <div class="wh-cog-empty">Когитаторов нет.{{#if isGM}} Создайте первый кнопкой выше.{{/if}}</div>
+    {{/each}}
+  </div>
+</div>

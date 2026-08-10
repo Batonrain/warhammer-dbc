@@ -1,0 +1,201 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Родные миры
+   Дропдаун «Происхождение» в шапке, диалог выборов,
+   галочки Особенности в окнах бросков, карточка в чат.
+═══════════════════════════════════════════════════════ */
+
+/* ── Подраздел в окне Настроек Игры ────────────────────── */
+#settings-config .wh-settings-section {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-light-tertiary, rgba(150,150,150,0.4));
+}
+#settings-config .wh-settings-subhead {
+  margin: 0 0 2px;
+  font-size: 1.05em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: none;
+}
+#settings-config .wh-settings-subhint {
+  margin: 0 0 8px;
+  font-size: 0.85em;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+/* ── Шапка листа персонажа ─────────────────────────────── */
+.warhammer-dbc .header-cell-homeworld { align-items: flex-start; }
+.warhammer-dbc .hw-controls {
+  flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0;
+}
+.warhammer-dbc .hw-controls .hw-select {
+  width: 100%;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 2px 5px; font-family: inherit; font-size: 0.85em; color: var(--wh-text);
+}
+.warhammer-dbc .hw-feature {
+  font-size: 0.74em; font-style: italic; line-height: 1.3; color: var(--wh-accent);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: help;
+}
+
+/* ── Шапка Демон-Принца ────────────────────────────────── */
+.warhammer-dbc.demon-prince-sheet .dp-homeworld select { max-width: 200px; }
+
+/* ── Диалог выборов при выборе мира ────────────────────── */
+.hw-choice-dialog .hw-choice-head {
+  font-size: 1.05em; font-weight: bold; letter-spacing: 0.03em; color: #4dffa6;
+}
+.hw-choice-dialog .hw-choice-desc {
+  font-size: 0.85em; line-height: 1.5; margin: 4px 0 10px; color: #b8ffd8;
+}
+.hw-choice-dialog .hw-choice {
+  margin-bottom: 10px; padding: 7px 9px;
+  background: rgba(77,255,166,0.06); border-left: 3px solid #2f9e6a; border-radius: 0 3px 3px 0;
+}
+.hw-choice-dialog .hw-choice-label { font-weight: bold; font-size: 0.9em; color: #d8ffe8; }
+.hw-choice-dialog .hw-choice-hint {
+  font-size: 0.78em; font-style: italic; line-height: 1.4; margin: 2px 0 5px; color: #8fe8b0;
+}
+.hw-choice-dialog .hw-choice select,
+.hw-choice-dialog .hw-choice input[type="text"] {
+  width: 100%; background: #0c2418; border: 1px solid #2f9e6a;
+  padding: 3px 6px; font-family: inherit; font-size: 0.86em; color: #d8ffe8;
+}
+.hw-choice-dialog .hw-many-group { margin-top: 5px; font-size: 0.82em; }
+.hw-choice-dialog .hw-many-group b { display: block; margin-bottom: 2px; color: #9af2c4; }
+.hw-choice-dialog .hw-choice-count {
+  margin-top: 5px; font-size: 0.8em; font-weight: bold; color: #8fe8b0;
+}
+.hw-choice-dialog .hw-choice-count.hw-over { color: #ff8a8a; }
+
+/* ── Галочки Особенности в окнах бросков ───────────────── */
+.hw-mods .atk-mods-title { color: #4dffa6; }
+.hw-roll-mod span b { color: #4dffa6; }
+
+/* ── Карточка в чате ───────────────────────────────────── */
+.wh-roll-result.hw-chat .hw-chat-world {
+  font-size: 1.1em; font-weight: bold; letter-spacing: 0.03em; color: #4dffa6; margin-bottom: 4px;
+}
+.wh-roll-result.hw-chat .hw-chat-feature {
+  padding: 5px 8px; font-size: 0.9em; line-height: 1.5;
+  background: rgba(77,255,166,0.07); border-left: 3px solid #2f9e6a; border-radius: 0 3px 3px 0;
+}
+.wh-roll-result.hw-chat .hw-chat-grants {
+  margin-top: 6px; padding: 5px 8px; font-size: 0.86em; line-height: 1.6;
+  background: rgba(0,0,0,0.25); border-radius: 3px;
+}
+
+/* ═══════════════ Силовая броня: шлем и особенности ═══════════════ */
+
+/* ── Снятый шлем (вкладка БОЙ) ── */
+.warhammer-dbc .helmet-panel.helmet-off { border-color: var(--wh-red); }
+.warhammer-dbc .helmet-body { padding: 6px 8px; }
+.warhammer-dbc .helmet-toggle {
+  display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9em;
+}
+.warhammer-dbc .helmet-toggle-label { font-weight: bold; }
+.warhammer-dbc .helmet-ap {
+  margin-left: auto; font-size: 0.78em; padding: 1px 7px; border-radius: 8px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid);
+}
+.warhammer-dbc .helmet-off .helmet-ap { border-color: var(--wh-red); color: var(--wh-red); }
+.warhammer-dbc .helmet-effects {
+  margin: 7px 0 0; padding-left: 18px; font-size: 0.78em; line-height: 1.5; color: var(--wh-text-mid);
+}
+.warhammer-dbc .helmet-effects li { margin-bottom: 2px; }
+.warhammer-dbc .helmet-action, .warhammer-dbc .helmet-hint {
+  margin-top: 6px; font-size: 0.76em; font-style: italic; line-height: 1.45; color: var(--wh-text-mid);
+}
+.warhammer-dbc .helmet-action {
+  padding: 4px 7px; background: color-mix(in srgb, var(--wh-accent) 8%, transparent);
+  border-left: 3px solid var(--wh-accent); border-radius: 0 3px 3px 0; font-style: normal;
+}
+
+/* ── Особенность комплекта (лист брони) ── */
+.warhammer-dbc .pa-hist-bar { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.warhammer-dbc .pa-hist-bar select {
+  flex: 1 1 150px; min-width: 120px;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 2px 5px; font-family: inherit; font-size: 0.84em; color: var(--wh-text);
+}
+.warhammer-dbc .pa-btn {
+  display: inline-flex; align-items: center; gap: 5px; width: auto; flex: 0 0 auto; padding: 3px 9px;
+  background: var(--wh-panel-dark); color: var(--wh-text-light);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+  font-family: inherit; font-size: 0.8em; cursor: pointer; white-space: nowrap;
+}
+.warhammer-dbc .pa-btn:hover { background: var(--wh-panel-mid); border-color: var(--wh-accent); }
+.warhammer-dbc .pa-btn i { color: var(--wh-accent); }
+
+.warhammer-dbc .pa-hist-card {
+  margin-top: 7px; padding: 6px 9px;
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border-light);
+  border-left: 3px solid var(--wh-accent); border-radius: 3px;
+}
+.warhammer-dbc .pa-hist-second { border-left-color: var(--wh-border); }
+.warhammer-dbc .pa-hist-name { font-weight: bold; font-size: 0.92em; color: var(--wh-text-dark); }
+.warhammer-dbc .pa-hist-roll {
+  font-size: 0.78em; font-weight: normal; padding: 0 6px; border-radius: 8px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid);
+}
+.warhammer-dbc .pa-hist-desc { font-size: 0.78em; line-height: 1.45; color: var(--wh-text-mid); margin-top: 3px; }
+.warhammer-dbc .pa-hist-effect {
+  margin-top: 5px; padding: 4px 7px; font-size: 0.82em; line-height: 1.45;
+  background: color-mix(in srgb, var(--wh-accent) 8%, transparent);
+  border-left: 3px solid var(--wh-accent); border-radius: 0 3px 3px 0;
+}
+.warhammer-dbc .pa-hist-choice { display: flex; align-items: center; gap: 7px; margin-top: 6px; }
+.warhammer-dbc .pa-hist-choice label { font-size: 0.8em; font-weight: bold; color: var(--wh-text-mid); white-space: nowrap; }
+.warhammer-dbc .pa-hist-choice input {
+  flex: 1; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 2px 5px; font-family: inherit; font-size: 0.84em; color: var(--wh-text);
+}
+.warhammer-dbc .pa-hist-zones { margin-top: 7px; }
+.warhammer-dbc .pa-zone-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.warhammer-dbc .pa-zone {
+  font-size: 0.74em; padding: 1px 7px; border-radius: 8px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid);
+}
+.warhammer-dbc .pa-zone-set { border-color: var(--wh-accent); color: var(--wh-accent); }
+.warhammer-dbc .pa-hist-rule {
+  margin-top: 7px; font-size: 0.74em; font-style: italic; line-height: 1.4;
+  color: var(--wh-text-mid); opacity: 0.9;
+}
+
+/* ── Чат ── */
+.wh-roll-result.pa-chat .pa-chat-pick { font-weight: bold; color: #4dffa6; margin-top: 3px; }
+.wh-roll-result.pa-chat .pa-chat-entry { margin-top: 6px; }
+.wh-roll-result.pa-chat .pa-chat-desc { font-size: 0.88em; line-height: 1.45; opacity: 0.9; }
+.wh-roll-result.pa-chat .pa-chat-effect {
+  margin-top: 4px; padding: 4px 7px; font-size: 0.9em; line-height: 1.45;
+  background: rgba(77,255,166,0.07); border-left: 3px solid #2f9e6a; border-radius: 0 3px 3px 0;
+}
+.wh-roll-result.pa-chat .pa-chat-note,
+.wh-roll-result.pa-chat .pa-chat-two { margin-top: 5px; font-size: 0.85em; font-style: italic; }
+.wh-roll-result.pa-chat .pa-chat-zones { margin-top: 5px; font-size: 0.86em; line-height: 1.6; }
+
+/* ── Снятый шлем: что отключилось / что осталось ── */
+.warhammer-dbc .helmet-disabled, .warhammer-dbc .helmet-kept {
+  margin-top: 6px; font-size: 0.76em; line-height: 1.6;
+}
+.warhammer-dbc .helmet-disabled-head { font-weight: bold; color: var(--wh-red); }
+.warhammer-dbc .helmet-kept-head { font-weight: bold; color: var(--wh-accent); }
+.warhammer-dbc .helmet-disabled-item, .warhammer-dbc .helmet-kept-item {
+  display: inline-block; margin: 2px 3px 0 0; padding: 1px 7px; border-radius: 8px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border);
+}
+.warhammer-dbc .helmet-disabled-item { border-color: var(--wh-red); color: var(--wh-red); text-decoration: line-through; }
+.warhammer-dbc .helmet-kept-item { border-color: var(--wh-accent); color: var(--wh-accent); }
+.warhammer-dbc .helmet-kept-note { font-style: italic; opacity: 0.85; }
+
+/* ── Отряд: Риск с учётом снятого шлема ── */
+.warhammer-dbc .sq-risk-bonus {
+  font-size: 0.7em; font-weight: bold; text-align: right; line-height: 1.3;
+  color: var(--wh-accent); max-width: 150px;
+}
+.warhammer-dbc .sq-post-helmet {
+  padding: 0 6px; border-radius: 8px; font-size: 0.92em;
+  background: color-mix(in srgb, var(--wh-accent) 14%, transparent);
+  border: 1px solid var(--wh-accent); color: var(--wh-accent);
+}

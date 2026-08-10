@@ -1,0 +1,72 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Когитаторные украшения и анимации листа.
+   CRT-развёртка, мерцание, дыхание сигила, шиммер сенсоров,
+   пульс заголовков/пипсов/вкладок. Только CSS (GPU-friendly).
+═══════════════════════════════════════════════════════ */
+
+/* ── Дыхание сигила мировоззрения в шапке (аквила/звезда/череп) ── */
+.warhammer-dbc .sheet-header.loyalist-aligned::before,
+.warhammer-dbc .sheet-header.chaos-aligned::before,
+.warhammer-dbc .sheet-header.renegade-aligned::before {
+  animation: decorSigilBreath 8s ease-in-out infinite;
+}
+@keyframes decorSigilBreath { 0%,100% { opacity: 0.06; filter: none; } 50% { opacity: 0.14; filter: drop-shadow(0 0 8px currentColor); } }
+
+/* ── Редкое мерцание экрана (интерференция) на слое scanlines ── */
+.warhammer-dbc .character-sheet .sheet-body::after { animation: decorFlicker 12s ease-in-out infinite; }
+@keyframes decorFlicker {
+  0%, 96%, 100% { opacity: 0.4; }
+  96.6% { opacity: 0.14; } 97.2% { opacity: 0.55; } 97.8% { opacity: 0.22; } 98.4% { opacity: 0.45; }
+}
+
+/* ── Пульс свечения заголовков панелей (терминал «дышит») ── */
+.warhammer-dbc .character-sheet .panel-title { animation: decorTitleGlow 6s ease-in-out infinite; }
+@keyframes decorTitleGlow {
+  0%,100% { text-shadow: 0 0 5px rgba(77,255,166,0.4); }
+  50%     { text-shadow: 0 0 10px rgba(77,255,166,0.75); }
+}
+
+/* ── Мигающий «индикатор питания» перед заголовками панелей ── */
+.warhammer-dbc .character-sheet .stat-panel > .panel-title::before,
+.warhammer-dbc .character-sheet .gear-section-panel > .panel-title::before,
+.warhammer-dbc .character-sheet .ability-section-panel > .panel-title::before,
+.warhammer-dbc .character-sheet .notes-section-panel > .panel-title::before {
+  content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto;
+  background: var(--cg); box-shadow: 0 0 7px var(--cg); animation: decorOnline 2.4s ease-in-out infinite;
+}
+@keyframes decorOnline { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* ── Шиммер по сенсорным шкалам ── */
+.warhammer-dbc .gl-fill, .warhammer-dbc .xp-fill,
+.warhammer-dbc .side-fill, .warhammer-dbc .fatigue-fill { position: relative; overflow: hidden; }
+.warhammer-dbc .gl-fill::after, .warhammer-dbc .xp-fill::after,
+.warhammer-dbc .side-fill::after, .warhammer-dbc .fatigue-fill::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: decorShimmer 2.6s ease-in-out infinite;
+}
+@keyframes decorShimmer { 0% { left: -45%; } 55%, 100% { left: 115%; } }
+
+/* ── Пульс Очков Судьбы (пипсы) ── */
+.warhammer-dbc .character-sheet .fate-pip.on { animation: decorPip 2.8s ease-in-out infinite; }
+@keyframes decorPip { 0%,100% { box-shadow: 0 0 4px -1px var(--cg-fire); } 50% { box-shadow: 0 0 10px 0 var(--cg-fire); } }
+
+/* ── Активная вкладка слегка «горит» ── */
+.warhammer-dbc .character-sheet .sheet-tabs .item.active { animation: decorTabGlow 4.5s ease-in-out infinite; }
+@keyframes decorTabGlow { 0%,100% { text-shadow: 0 0 6px var(--cg); } 50% { text-shadow: 0 0 13px var(--cg); } }
+
+/* ── Пульс диода при перегрузке Усталости ── */
+.warhammer-dbc .character-sheet .fatigue-fill.load-over { animation: decorAlert 0.9s steps(2) infinite; }
+@keyframes decorAlert { 50% { opacity: 0.45; } }
+
+/* Уважение к prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .warhammer-dbc .character-sheet .sheet-body::after,
+  .warhammer-dbc .character-sheet .panel-title,
+  .warhammer-dbc .gl-fill::after, .warhammer-dbc .xp-fill::after,
+  .warhammer-dbc .side-fill::after, .warhammer-dbc .fatigue-fill::after,
+  .warhammer-dbc .character-sheet .fate-pip.on,
+  .warhammer-dbc .character-sheet .sheet-tabs .item.active,
+  .warhammer-dbc .character-sheet .stat-panel > .panel-title::before,
+  .warhammer-dbc .sheet-header.loyalist-aligned::before { animation: none !important; }
+}

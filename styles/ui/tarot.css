@@ -1,0 +1,151 @@
+/* ══ Таро Императора — окно гадания и карточка в чат ═══════════════════════ */
+
+.wh-tarot .window-content { padding: 0; }
+.wh-tarot-app {
+  --tr-bg: #0d0a14; --tr-panel: #17122099; --tr-gold: #d9b869; --tr-gold-dim: #8a7440;
+  --tr-text: #e8e0d0; --tr-line: rgba(217,184,105,0.3); --tr-rev: #c98bd8;
+  height: 100%; display: flex; flex-direction: column;
+  background:
+    radial-gradient(ellipse at top, rgba(60,40,90,0.35), transparent 60%),
+    linear-gradient(180deg, #120e1c, #0a0810);
+  color: var(--tr-text); font-family: "Georgia", "Times New Roman", serif;
+}
+.wh-tarot-scroll { flex: 1; overflow-y: auto; padding: 14px; }
+
+/* ── Верхняя панель ── */
+.tr-top {
+  border: 1px solid var(--tr-line); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;
+  background: var(--tr-panel);
+}
+.tr-row { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+.tr-lbl { display: flex; flex-direction: column; gap: 4px; font-size: 0.8em; color: var(--tr-gold); flex: 1 1 auto; }
+.tr-q { margin-top: 8px; }
+.wh-tarot-app input[type=text], .wh-tarot-app select {
+  background: rgba(0,0,0,0.4); border: 1px solid var(--tr-line); border-radius: 4px;
+  color: var(--tr-text); padding: 4px 7px; font-family: inherit; font-size: 0.95em;
+}
+.wh-tarot-app input[type=text]:focus, .wh-tarot-app select:focus { outline: none; border-color: var(--tr-gold); box-shadow: 0 0 6px rgba(217,184,105,0.4); }
+.tr-note { font-size: 0.76em; font-style: italic; color: #a99; margin: 6px 0; }
+.tr-actions { display: flex; gap: 6px; }
+.tr-playerhint { margin-bottom: 10px; padding: 6px 11px; border: 1px dashed var(--tr-line); border-radius: 6px; background: var(--tr-panel); font-size: 0.85em; color: var(--tr-gold); }
+.tr-pv-or { font-size: 0.8em; color: var(--tr-gold-dim); }
+
+.tr-btn {
+  background: linear-gradient(180deg, #241a34, #171022); border: 1px solid var(--tr-gold-dim);
+  color: var(--tr-gold); font-family: inherit; border-radius: 5px; padding: 5px 12px; cursor: pointer; font-size: 0.85em;
+}
+.tr-btn:hover { border-color: var(--tr-gold); color: #fff2cf; box-shadow: 0 0 8px rgba(217,184,105,0.3); }
+.tr-btn.primary { font-size: 1em; letter-spacing: 0.05em; padding: 8px 18px; text-shadow: 0 0 8px rgba(217,184,105,0.5); }
+
+/* ── Слоты расклада (компактно) ── */
+.tr-slots { display: flex; flex-direction: column; gap: 7px; }
+.tr-slot {
+  border: 1px solid var(--tr-line); border-radius: 5px; padding: 6px 9px; background: var(--tr-panel);
+  border-left: 3px solid var(--tr-gold-dim);
+}
+.tr-slot.signal { border-left-color: var(--tr-gold); box-shadow: inset 0 0 20px rgba(217,184,105,0.08); }
+.tr-slot.reversed { border-left-color: var(--tr-rev); }
+.tr-slot-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.tr-slot-name { font-weight: bold; font-size: 0.92em; color: var(--tr-gold); letter-spacing: 0.03em; }
+.tr-slot-sig { font-size: 0.66em; color: #0a0810; background: var(--tr-gold); border-radius: 3px; padding: 1px 6px; text-transform: uppercase; }
+/* Грид (а не флекс): стандартные кнопки Foundry иначе растягиваются. */
+.tr-slot-ctl { display: grid; grid-template-columns: minmax(0,1fr) 150px 34px; gap: 6px; align-items: stretch; }
+.tr-slot-ctl.ro { grid-template-columns: minmax(0,1fr) 34px; }  /* игрок: карта read-only + 🎲 */
+.tr-cardro {
+  min-width: 0; display: flex; align-items: center; padding: 3px 8px; font-size: 0.9em; color: #f0e4c4;
+  background: rgba(0,0,0,0.35); border: 1px solid var(--tr-line); border-radius: 4px;
+}
+.tr-cardsel { min-width: 0; width: 100%; }
+.tr-orient { min-width: 0; width: 100%; }
+.tr-roll {
+  min-width: 0; width: 100%; padding: 0; box-sizing: border-box;
+  background: rgba(0,0,0,0.4); border: 1px solid var(--tr-gold-dim); border-radius: 4px; color: var(--tr-gold); cursor: pointer; font-size: 0.95em;
+}
+.tr-roll:hover { border-color: var(--tr-gold); box-shadow: 0 0 8px rgba(217,184,105,0.35); }
+.tr-preview { margin-top: 6px; padding-top: 5px; border-top: 1px dotted var(--tr-line); display: flex; gap: 10px; align-items: flex-start; }
+.tr-pv-frame { flex: 0 0 auto; width: 74px; aspect-ratio: 1017 / 1500; border: 1px solid var(--tr-gold-dim); border-radius: 4px; overflow: hidden; box-shadow: 0 0 8px rgba(0,0,0,0.5); background: #000; }
+.tr-pv-frame, .tr-gc-frame, .wh-tarot-card .tc-frame { cursor: pointer; transition: box-shadow 0.12s, border-color 0.12s; }
+.tr-pv-frame:hover, .tr-gc-frame:hover, .wh-tarot-card .tc-frame:hover { border-color: var(--tr-gold); box-shadow: 0 0 12px rgba(217,184,105,0.55); }
+.tr-pv-art { width: 100%; height: 100%; object-fit: contain; display: block; }
+.tr-pv-art.rev { transform: rotate(180deg); }
+.tr-pv-txt { flex: 1 1 auto; min-width: 0; }
+.tr-pv-name { font-weight: bold; font-size: 0.92em; color: #f0e4c4; }
+.tr-slot.reversed .tr-pv-name { color: var(--tr-rev); }
+.tr-pv-suit { font-weight: normal; font-size: 0.8em; color: var(--tr-gold-dim); }
+.tr-pv-mean { font-size: 0.86em; color: var(--tr-text); opacity: 0.92; margin-top: 2px; }
+
+/* ── Заглушка для игрока (расклад — только ГМ) ── */
+.tr-locked {
+  text-align: center; color: var(--tr-gold); font-size: 1.05em; line-height: 1.7;
+  border: 1px dashed var(--tr-line); border-radius: 8px; padding: 40px 20px;
+  background: var(--tr-panel); text-shadow: 0 0 8px rgba(217,184,105,0.35);
+}
+
+/* ── Вкладки ── */
+.tr-tabs { flex: 0 0 auto; display: flex; gap: 4px; padding: 8px 10px 0; border-bottom: 1px solid var(--tr-line); }
+.tr-tab {
+  background: rgba(0,0,0,0.3); border: 1px solid var(--tr-line); border-bottom: none;
+  border-radius: 6px 6px 0 0; color: var(--tr-gold-dim); font-family: inherit; padding: 6px 16px; cursor: pointer; font-size: 0.9em;
+}
+.tr-tab:hover { color: var(--tr-gold); }
+.tr-tab.active { color: #fff2cf; border-color: var(--tr-gold); background: var(--tr-panel); box-shadow: 0 0 10px rgba(217,184,105,0.2); }
+
+/* ── Выбор Теоманта/Квирита из токенов ── */
+.tr-pickrow { display: grid; grid-template-columns: minmax(0,1fr) 110px; gap: 5px; }
+.tr-pickrow input { min-width: 0; }
+.tr-pick { min-width: 0; width: 100%; }
+
+/* ── Гайд ── */
+.tr-guide { display: flex; flex-direction: column; gap: 14px; }
+.tr-guide-sec { border: 1px solid var(--tr-line); border-radius: 6px; padding: 10px 12px; background: var(--tr-panel); }
+.tr-guide-h { font-weight: bold; color: var(--tr-gold); font-size: 1.05em; letter-spacing: 0.03em; margin-bottom: 8px; border-bottom: 1px solid var(--tr-line); padding-bottom: 5px; }
+.tr-guide-hint { font-weight: normal; font-size: 0.8em; font-style: italic; color: #a99; }
+.tr-guide-p { font-size: 0.88em; margin-bottom: 7px; line-height: 1.4; }
+.tr-gcard { border-bottom: 1px dotted var(--tr-line); }
+.tr-gcard > summary { cursor: pointer; padding: 5px 2px; font-size: 0.92em; color: #f0e4c4; list-style: none; }
+.tr-gcard > summary:hover { color: #fff2cf; }
+.tr-gcard > summary::-webkit-details-marker { display: none; }
+.tr-gcard[open] > summary { color: var(--tr-gold); font-weight: bold; }
+.tr-gc-n { color: var(--tr-gold-dim); }
+.tr-gc-body { padding: 2px 4px 9px 14px; display: flex; gap: 12px; align-items: flex-start; }
+.tr-gc-text { flex: 1 1 auto; min-width: 0; order: 1; }
+.tr-gc-frame { flex: 0 0 auto; order: 2; width: 120px; aspect-ratio: 1017 / 1500; border: 1px solid var(--tr-gold-dim); border-radius: 5px; overflow: hidden; box-shadow: 0 0 8px rgba(0,0,0,0.5); background: #000; }
+.tr-gc-art { width: 100%; height: 100%; object-fit: contain; display: block; }
+.tr-gc-line { font-size: 0.86em; margin-bottom: 4px; line-height: 1.4; }
+.tr-gc-lbl { font-weight: bold; }
+.tr-gc-lbl.up { color: #7fd88b; }
+.tr-gc-lbl.rev { color: var(--tr-rev); }
+.tr-gc-lbl.ch { color: #a99; font-style: italic; }
+
+.tr-hintbox { margin-top: 12px; border: 1px dashed var(--tr-line); border-radius: 6px; padding: 8px 11px; font-size: 0.86em; color: #cbb; font-style: italic; background: rgba(0,0,0,0.25); }
+
+.tr-footer { flex: 0 0 auto; padding: 10px 14px; border-top: 1px solid var(--tr-line); background: rgba(0,0,0,0.35); text-align: center; }
+
+/* ── Карточка расклада в чате ── */
+.wh-tarot-reading {
+  --tr-gold: #d9b869; --tr-rev: #c98bd8;
+  border: 1px solid rgba(217,184,105,0.4); border-radius: 6px; overflow: hidden;
+  background: linear-gradient(180deg, #140f1e, #0b0812); color: #e8e0d0;
+  font-family: "Georgia", "Times New Roman", serif;
+}
+.wh-tarot-reading .tr-head { text-align: center; font-weight: bold; letter-spacing: 0.06em; color: #0a0810; background: linear-gradient(90deg, #b8933f, #e6c877, #b8933f); padding: 6px; text-transform: uppercase; }
+.wh-tarot-reading .tr-question { text-align: center; font-style: italic; color: #f0e4c4; padding: 8px 10px 2px; }
+.wh-tarot-reading .tr-meta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; padding: 4px 10px; font-size: 0.85em; color: #cbb; }
+.wh-tarot-reading .tr-cards { display: flex; flex-direction: column; gap: 7px; padding: 8px 10px; }
+.wh-tarot-card { border: 1px solid rgba(217,184,105,0.25); border-left: 3px solid var(--tr-gold); border-radius: 5px; padding: 7px 9px; background: rgba(0,0,0,0.3); }
+.wh-tarot-card.reversed { border-left-color: var(--tr-rev); }
+.wh-tarot-card.empty { opacity: 0.55; }
+.wh-tarot-card .tc-frame { width: 150px; aspect-ratio: 1017 / 1500; margin: 6px auto 8px; border: 1px solid var(--tr-gold); border-radius: 5px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.6); background: #000; }
+.wh-tarot-card .tc-art { width: 100%; height: 100%; object-fit: contain; display: block; }
+.wh-tarot-card.reversed .tc-frame { border-color: var(--tr-rev); }
+.wh-tarot-card.reversed .tc-art { transform: rotate(180deg); }
+.wh-tarot-card .tc-text { min-width: 0; }
+.wh-tarot-card .tc-pos { font-size: 0.76em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--tr-gold); }
+.wh-tarot-card .tc-sig { font-size: 0.9em; color: #0a0810; background: var(--tr-gold); border-radius: 3px; padding: 0 5px; }
+.wh-tarot-card .tc-name { font-weight: bold; font-size: 1.05em; color: #f4e8c8; margin-top: 2px; }
+.wh-tarot-card.reversed .tc-name { color: var(--tr-rev); }
+.wh-tarot-card .tc-suit { font-weight: normal; font-size: 0.78em; color: #8a7440; }
+.wh-tarot-card .tc-orient { font-size: 0.8em; color: #b6a; margin: 1px 0 3px; }
+.wh-tarot-card .tc-mean { font-size: 0.95em; }
+.wh-tarot-card .tc-change { font-size: 0.82em; font-style: italic; color: #a99; margin-top: 4px; padding-top: 3px; border-top: 1px dotted rgba(217,184,105,0.2); }
+.wh-tarot-reading .tr-hint { font-size: 0.85em; font-style: italic; color: #cbb; padding: 6px 10px 10px; border-top: 1px dashed rgba(217,184,105,0.25); margin-top: 2px; }

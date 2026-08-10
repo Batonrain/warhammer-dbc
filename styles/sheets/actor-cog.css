@@ -1,0 +1,112 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Общий когитаторный лоск листа персонажа
+   (шапка, панели, вкладка Снаряжение). Фосфорная зелень.
+   Мистические вкладки (ПСИ/ТЕХ/НАВ) используют свои классы
+   и не затрагиваются.
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .character-sheet {
+  --cg: #4dffa6; --cg-dim: #2f9e6a; --cg-line: #1f6f4a; --cg-fire: #ffb84d; --cg-red: #ff6b6b;
+}
+/* CRT-строки поверх тела листа (не скроллятся — эффект экрана) */
+.warhammer-dbc .character-sheet .sheet-body::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3; opacity: 0.4;
+  background: repeating-linear-gradient(0deg, rgba(77,255,166,0.03) 0 1px, transparent 1px 3px);
+}
+
+/* ── Кнопка «+» показателей (Безумие/Порча/Опыт/Благосклонность) — общая для всех вкладок ── */
+.warhammer-dbc .character-sheet .stat-add-btn {
+  flex: none; width: 26px; height: 26px; line-height: 1; font-family: inherit; font-size: 1.05em; font-weight: 800;
+  border-radius: 4px; cursor: pointer; transition: all 0.13s;
+  background: color-mix(in srgb, var(--cg) 16%, transparent); border: 1px solid var(--cg-line); color: #d8ffe8;
+}
+.warhammer-dbc .character-sheet .stat-add-btn:hover {
+  border-color: var(--cg); box-shadow: 0 0 10px -3px var(--cg); color: #eafff4;
+}
+.warhammer-dbc .character-sheet .sheet-body { position: relative; }
+
+/* ── Панели-терминалы (кроме мистических — у них свои классы) ── */
+.warhammer-dbc .character-sheet .stat-panel,
+.warhammer-dbc .character-sheet .gear-section-panel {
+  position: relative;
+  box-shadow: inset 0 0 20px rgba(0,50,25,0.4), 0 0 12px -9px var(--cg);
+}
+.warhammer-dbc .character-sheet .gear-section-panel::before,
+.warhammer-dbc .character-sheet .gear-section-panel::after {
+  content: ""; position: absolute; width: 8px; height: 8px; pointer-events: none; opacity: 0.6; border-color: var(--cg-dim); border-style: solid;
+}
+.warhammer-dbc .character-sheet .gear-section-panel::before { top: 3px; left: 3px; border-width: 1px 0 0 1px; }
+.warhammer-dbc .character-sheet .gear-section-panel::after  { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
+.warhammer-dbc .character-sheet .panel-title {
+  letter-spacing: 0.11em; text-shadow: 0 0 6px rgba(77,255,166,0.5);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ── Шапка листа: рамка терминала ── */
+.warhammer-dbc .character-sheet .actor-name {
+  text-shadow: 0 0 8px rgba(77,255,166,0.5); letter-spacing: 0.02em;
+}
+.warhammer-dbc .character-sheet .sheet-tabs .item {
+  transition: text-shadow 0.13s, color 0.13s;
+}
+.warhammer-dbc .character-sheet .sheet-tabs .item.active,
+.warhammer-dbc .character-sheet .sheet-tabs .item:hover { text-shadow: 0 0 8px var(--cg); }
+
+/* ═══════════════ ВКЛАДКА СНАРЯЖЕНИЕ ═══════════════ */
+.warhammer-dbc .gear-cog { position: relative; font-family: "Consolas","Lucida Console","Courier New",monospace; }
+.warhammer-dbc .gear-cog .panel-title { text-transform: uppercase; }
+.warhammer-dbc .gear-cog .gl-code { margin-left: auto; font-size: 0.72em; letter-spacing: 0.1em; color: var(--cg-dim); opacity: 0.85; }
+
+/* сенсор нагрузки */
+.warhammer-dbc .gear-cog .gear-load { padding: 9px 12px; }
+.warhammer-dbc .gear-cog .gl-readout { display: flex; align-items: baseline; gap: 6px; }
+.warhammer-dbc .gear-cog .gl-cur { font-size: 1.7em; font-weight: 800; color: var(--cg); text-shadow: 0 0 10px rgba(77,255,166,0.45); line-height: 1; }
+.warhammer-dbc .gear-cog .gl-cur.load-heavy { color: var(--cg-fire); text-shadow: 0 0 10px rgba(255,184,77,0.45); }
+.warhammer-dbc .gear-cog .gl-cur.load-over  { color: var(--cg-red); text-shadow: 0 0 12px rgba(255,107,107,0.5); }
+.warhammer-dbc .gear-cog .gl-sep { color: #5f7a6c; } .warhammer-dbc .gear-cog .gl-max { font-size: 1.2em; color: #9fe0c0; }
+.warhammer-dbc .gear-cog .gl-unit { font-size: 0.78em; letter-spacing: 0.08em; color: #7fbf9c; }
+.warhammer-dbc .gear-cog .gl-gravity { margin-left: auto; font-size: 0.76em; letter-spacing: 0.04em; color: #b477ff; border: 1px solid rgba(180,119,255,0.4); border-radius: 4px; padding: 1px 5px; }
+.warhammer-dbc .gear-cog .gl-bar { position: relative; height: 15px; border: 1px solid var(--cg-line); border-radius: 3px; background: rgba(0,0,0,0.45); margin: 7px 0 5px; overflow: hidden; }
+.warhammer-dbc .gear-cog .gl-fill { height: 100%; background: linear-gradient(90deg, var(--cg-dim), var(--cg)); box-shadow: 0 0 12px var(--cg); transition: width 0.35s ease; }
+.warhammer-dbc .gear-cog .gl-fill.load-heavy { background: linear-gradient(90deg, #c8892a, var(--cg-fire)); box-shadow: 0 0 12px var(--cg-fire); }
+.warhammer-dbc .gear-cog .gl-fill.load-over  { background: linear-gradient(90deg, #a01810, var(--cg-red)); box-shadow: 0 0 12px var(--cg-red); }
+.warhammer-dbc .gear-cog .gl-pct { position: absolute; right: 7px; top: 0; line-height: 15px; font-size: 0.72em; color: #eafff4; text-shadow: 0 0 3px #000; }
+.warhammer-dbc .gear-cog .gl-status { font-size: 0.76em; letter-spacing: 0.09em; color: var(--cg); }
+.warhammer-dbc .gear-cog .gl-status.load-over { color: var(--cg-red); animation: cogStatusBlink 1s steps(2) infinite; }
+@keyframes cogStatusBlink { 50% { opacity: 0.4; } }
+.warhammer-dbc .gear-cog .gl-tiers {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-top: 3px;
+  font-size: 0.68em; opacity: 0.75; letter-spacing: 0.03em;
+}
+
+/* кнопки добавления/разгрузки */
+.warhammer-dbc .gear-cog .gear-add-btn {
+  font-family: inherit; color: #d8ffe8; letter-spacing: 0.02em; border-radius: 3px; transition: all 0.13s;
+  background: linear-gradient(180deg, #0e2a1a, #08160e) !important; border: 1px solid var(--cg-line) !important;
+}
+.warhammer-dbc .gear-cog .gear-add-btn:hover { border-color: var(--cg) !important; box-shadow: 0 0 12px -4px var(--cg); color: #eafff4; }
+
+/* таблицы снаряжения — читаемость */
+.warhammer-dbc .gear-cog .gear-table { border-collapse: collapse; width: 100%; font-size: 0.82em; }
+.warhammer-dbc .gear-cog .gear-table thead th {
+  background: linear-gradient(180deg, rgba(77,255,166,0.15), rgba(77,255,166,0.03));
+  color: #b6ffd8; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.82em; font-weight: 700;
+  padding: 5px 7px; border-bottom: 1px solid rgba(77,255,166,0.32); text-shadow: 0 0 5px rgba(77,255,166,0.35); text-align: left;
+}
+.warhammer-dbc .gear-cog .gear-table tbody td { padding: 5px 7px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+.warhammer-dbc .gear-cog .gear-table tbody tr:nth-child(even of .item-row) { background: rgba(77,255,166,0.035); }
+.warhammer-dbc .gear-cog .gear-table tbody .item-row { transition: background 0.12s, box-shadow 0.12s; }
+.warhammer-dbc .gear-cog .gear-table tbody .item-row:hover { background: rgba(77,255,166,0.1) !important; box-shadow: inset 3px 0 0 var(--cg); }
+.warhammer-dbc .gear-cog .item-name-cell { color: #e6ffee; font-weight: 600; }
+.warhammer-dbc .gear-cog .gear-table tbody td:last-child { color: #9fe0c0; text-align: right; }
+.warhammer-dbc .gear-cog .item-row-equipped { background: rgba(77,255,166,0.09) !important; box-shadow: inset 3px 0 0 var(--cg); }
+.warhammer-dbc .gear-cog .gear-equip-cell input { accent-color: var(--cg); }
+.warhammer-dbc .gear-cog .gear-ap-cell { text-align: center; color: #7fbf9c; }
+.warhammer-dbc .gear-cog .gear-ap-active { color: var(--cg); text-shadow: 0 0 7px rgba(77,255,166,0.45); font-weight: 700; }
+.warhammer-dbc .gear-cog .items-empty td { color: #6f9a84; font-style: italic; text-align: center; padding: 10px 8px; }
+.warhammer-dbc .gear-cog .weapon-mod-badge { color: var(--cg-fire); }
+.warhammer-dbc .gear-cog input[type="number"], .warhammer-dbc .gear-cog input[type="text"], .warhammer-dbc .gear-cog select {
+  background: #08160e; border: 1px solid var(--cg-line); color: #d8ffe8; font-family: inherit;
+}
+.warhammer-dbc .gear-cog input:focus, .warhammer-dbc .gear-cog select:focus { outline: none; border-color: var(--cg); box-shadow: 0 0 7px -1px var(--cg); }
+/* Очки Бесчестия Хаосита — тема Бога-покровителя: см. chaos-heretic.css. */

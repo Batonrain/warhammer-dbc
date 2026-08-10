@@ -1,0 +1,169 @@
+<div class="item-section">
+  <div class="item-section-title">СТАТЫ</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Категория</label>
+    <select name="system.ammoCategory" class="wr-select">
+      <option value="bullets"        {{#if (eq system.ammoCategory "bullets")}}selected{{/if}}>Пули</option>
+      <option value="shotgun_shells" {{#if (eq system.ammoCategory "shotgun_shells")}}selected{{/if}}>Патроны для Дробовика</option>
+      <option value="auto_shells"    {{#if (eq system.ammoCategory "auto_shells")}}selected{{/if}}>Снаряды для Автопушки</option>
+      <option value="batteries"      {{#if (eq system.ammoCategory "batteries")}}selected{{/if}}>Батареи</option>
+      <option value="bolts"          {{#if (eq system.ammoCategory "bolts")}}selected{{/if}}>Болты</option>
+      <option value="plasma_fuel"    {{#if (eq system.ammoCategory "plasma_fuel")}}selected{{/if}}>Плазменное топливо</option>
+      <option value="melta_fuel"     {{#if (eq system.ammoCategory "melta_fuel")}}selected{{/if}}>Мельта-топливо</option>
+      <option value="flame_fuel"     {{#if (eq system.ammoCategory "flame_fuel")}}selected{{/if}}>Огнемётное топливо</option>
+      <option value="arrows"         {{#if (eq system.ammoCategory "arrows")}}selected{{/if}}>Стрелы</option>
+      <option value="exotic"         {{#if (eq system.ammoCategory "exotic")}}selected{{/if}}>Экзотические</option>
+      <option value="mechanus"       {{#if (eq system.ammoCategory "mechanus")}}selected{{/if}}>Боеприпасы Механикум</option>
+    </select>
+    <label class="wr-label" title="1 единица = 1 полный магазин">Кол-во (маг.)</label>
+    <input type="number" name="system.quantity" value="{{system.quantity}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label">Вес/маг.</label>
+    <input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.01" class="wr-input-xs"/>
+  </div>
+
+  {{!-- Типы оружия — чекбоксы --}}
+  <div class="weapon-row ammo-weapon-types-row">
+    <label class="wr-label">Для типов оружия</label>
+    <div class="ammo-types-checkboxes">
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="laser"
+               {{#if (ammoHasType system.weaponTypes "laser")}}checked{{/if}}/>
+        <span>Лазерное</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="solid"
+               {{#if (ammoHasType system.weaponTypes "solid")}}checked{{/if}}/>
+        <span>Твердотельное</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="bolt"
+               {{#if (ammoHasType system.weaponTypes "bolt")}}checked{{/if}}/>
+        <span>Болтерное</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="melta"
+               {{#if (ammoHasType system.weaponTypes "melta")}}checked{{/if}}/>
+        <span>Мельта</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="plasma"
+               {{#if (ammoHasType system.weaponTypes "plasma")}}checked{{/if}}/>
+        <span>Плазма</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="flame"
+               {{#if (ammoHasType system.weaponTypes "flame")}}checked{{/if}}/>
+        <span>Зажигательное</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="lowtech"
+               {{#if (ammoHasType system.weaponTypes "lowtech")}}checked{{/if}}/>
+        <span>Низкотехнол.</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="launcher"
+               {{#if (ammoHasType system.weaponTypes "launcher")}}checked{{/if}}/>
+        <span>Пусковое</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="explosive"
+               {{#if (ammoHasType system.weaponTypes "explosive")}}checked{{/if}}/>
+        <span>Взрывчатка</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="exotic"
+               {{#if (ammoHasType system.weaponTypes "exotic")}}checked{{/if}}/>
+        <span>Экзотическое</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="chain"
+               {{#if (ammoHasType system.weaponTypes "chain")}}checked{{/if}}/>
+        <span>Цепное</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="power"
+               {{#if (ammoHasType system.weaponTypes "power")}}checked{{/if}}/>
+        <span>Силовое</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="shock"
+               {{#if (ammoHasType system.weaponTypes "shock")}}checked{{/if}}/>
+        <span>Шоковое</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="psychic"
+               {{#if (ammoHasType system.weaponTypes "psychic")}}checked{{/if}}/>
+        <span>Психосиловое</span>
+      </label>
+      <label class="ammo-type-cb-label">
+        <input type="checkbox" class="ammo-type-cb" data-type="splinter"
+               {{#if (ammoHasType system.weaponTypes "splinter")}}checked{{/if}}/>
+        <span>Осколочное</span>
+      </label>
+    </div>
+  </div>
+
+  {{!-- Модификаторы --}}
+  <div class="ammo-mods-section">
+    <div class="ammo-mods-title">МОДИФИКАТОРЫ</div>
+    <div class="ammo-mods-grid">
+      <div class="ammo-mod-cell">
+        <label>Атака</label>
+        <input type="number" name="system.attackMod" value="{{system.attackMod}}" class="wr-input-xs"/>
+      </div>
+      <div class="ammo-mod-cell">
+        <label>Урон</label>
+        <input type="number" name="system.damageMod" value="{{system.damageMod}}" class="wr-input-xs"/>
+      </div>
+      <div class="ammo-mod-cell">
+        <label>Пробитие</label>
+        <input type="number" name="system.penetrationMod" value="{{system.penetrationMod}}" class="wr-input-xs"/>
+      </div>
+      <div class="ammo-mod-cell">
+        <label>Дальность +м</label>
+        <input type="number" name="system.rangeMod" value="{{system.rangeMod}}" class="wr-input-xs"/>
+      </div>
+      <div class="ammo-mod-cell">
+        <label>Дальность ×</label>
+        <input type="number" name="system.rangeMultiplier" value="{{system.rangeMultiplier}}"
+               min="0.1" step="0.25" class="wr-input-xs"/>
+      </div>
+      <div class="ammo-mod-cell ammo-mod-wide">
+        <label>Тип урона (замена)</label>
+        <select name="system.damageTypeOverride" class="wr-select-sm">
+          <option value=""        {{#if (eq system.damageTypeOverride "")}}selected{{/if}}>— без замены —</option>
+          <option value="energy"  {{#if (eq system.damageTypeOverride "energy")}}selected{{/if}}>Энергетический</option>
+          <option value="impact"  {{#if (eq system.damageTypeOverride "impact")}}selected{{/if}}>Ударный</option>
+          <option value="rending" {{#if (eq system.damageTypeOverride "rending")}}selected{{/if}}>Режущий</option>
+          <option value="blast"   {{#if (eq system.damageTypeOverride "blast")}}selected{{/if}}>Взрывной</option>
+          <option value="chemical"{{#if (eq system.damageTypeOverride "chemical")}}selected{{/if}}>Химический</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Свойства</label>
+    <input type="text" name="system.special" value="{{system.special}}"
+           class="wr-input-special" placeholder="Flame, Toxic(2), Blast(3)..."/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Доступность</label>
+    <select class="wr-select-avail availability-select">
+  <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+  <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распространено</option>
+  <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+  <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+  <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+  <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+  <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+  <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+  <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезвычайно редко</option>
+  <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
+  <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+</select>
+  </div>
+
+</div>

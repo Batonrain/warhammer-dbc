@@ -1,0 +1,95 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладки РАЗВИТИЕ и ЗАПИСИ + сенсоры шапки
+   в когитаторном стиле. Палитра --cg* от .character-sheet.
+═══════════════════════════════════════════════════════ */
+
+/* ═══════════════ РАЗВИТИЕ ═══════════════ */
+.warhammer-dbc .advance-cog { font-family: "Consolas","Lucida Console","Courier New",monospace; }
+.warhammer-dbc .advance-cog .panel-title { text-transform: uppercase; letter-spacing: 0.09em; }
+.warhammer-dbc .advance-cog .xp-code { margin-left: auto; font-size: 0.66em; letter-spacing: 0.1em; color: var(--cg-dim); opacity: 0.8; }
+
+/* сенсор опыта */
+.warhammer-dbc .advance-cog .xp-sensor { padding: 6px 10px 2px; }
+.warhammer-dbc .advance-cog .xp-bar { position: relative; height: 13px; border: 1px solid var(--cg-line); border-radius: 3px; background: rgba(0,0,0,0.45); overflow: hidden; }
+.warhammer-dbc .advance-cog .xp-fill { height: 100%; background: linear-gradient(90deg, var(--cg-dim), var(--cg)); box-shadow: 0 0 10px var(--cg); transition: width 0.35s ease; }
+.warhammer-dbc .advance-cog .xp-bar-pct { position: absolute; right: 6px; top: 0; line-height: 13px; font-size: 0.68em; color: #eafff4; text-shadow: 0 0 3px #000; }
+.warhammer-dbc .advance-cog .xp-sensor-legend { display: flex; justify-content: space-between; font-size: 0.76em; color: #8fbf9c; margin-top: 3px; }
+.warhammer-dbc .advance-cog .xp-sensor-legend b { color: #d8ffe8; }
+.warhammer-dbc .advance-cog .xp-cur b { color: var(--cg); text-shadow: 0 0 6px rgba(77,255,166,0.35); }
+
+/* таблицы Развития */
+.warhammer-dbc .advance-cog .items-table thead th,
+.warhammer-dbc .advance-cog .char-table-edit thead th,
+.warhammer-dbc .advance-cog .skills-advance-table thead th {
+  font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.04em; color: #8fe0b4; padding: 5px 6px;
+  border-bottom: 1px solid rgba(77,255,166,0.3); background: linear-gradient(180deg, rgba(77,255,166,0.1), transparent); text-align: left;
+}
+.warhammer-dbc .advance-cog .char-table-edit tbody tr:hover,
+.warhammer-dbc .advance-cog .skills-advance-table tbody tr:not(.group-skill-header-row):hover,
+.warhammer-dbc .advance-cog .items-table tbody tr:hover { background: rgba(77,255,166,0.06); box-shadow: inset 3px 0 0 var(--cg); }
+.warhammer-dbc .advance-cog td { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.warhammer-dbc .advance-cog .char-roll { color: var(--cg-fire); text-decoration: none; font-weight: 700; }
+.warhammer-dbc .advance-cog .char-roll:hover { text-shadow: 0 0 8px var(--cg-fire); }
+.warhammer-dbc .advance-cog .char-total-edit { color: #e6ffee; font-weight: 700; text-align: center; }
+.warhammer-dbc .advance-cog .char-bonus-edit { color: var(--cg); font-weight: 800; text-align: center; text-shadow: 0 0 7px rgba(77,255,166,0.4); }
+.warhammer-dbc .advance-cog .sa-total-cell.skill-pos, .warhammer-dbc .advance-cog .skill-pos { color: var(--cg); }
+.warhammer-dbc .advance-cog .sa-total-cell.skill-neg, .warhammer-dbc .advance-cog .skill-neg { color: #b86a6a; }
+.warhammer-dbc .advance-cog .group-skill-header-name { color: var(--cg-fire); text-transform: none; font-size: 0.86em; }
+.warhammer-dbc .advance-cog .group-entry-name, .warhammer-dbc .advance-cog .sa-name-cell { color: #d8ffe8; }
+.warhammer-dbc .advance-cog .xp-auto { color: var(--cg); text-shadow: 0 0 6px rgba(77,255,166,0.3); font-weight: 700; }
+.warhammer-dbc .advance-cog .xp-row-current span, .warhammer-dbc .advance-cog .xp-row-result span { color: var(--cg-fire); font-weight: 800; }
+.warhammer-dbc .advance-cog input[type="number"], .warhammer-dbc .advance-cog input[type="text"], .warhammer-dbc .advance-cog select {
+  background: #08160e; border: 1px solid var(--cg-line); color: #d8ffe8; font-family: inherit;
+}
+.warhammer-dbc .advance-cog input:focus, .warhammer-dbc .advance-cog select:focus { outline: none; border-color: var(--cg); box-shadow: 0 0 7px -1px var(--cg); }
+.warhammer-dbc .advance-cog .apt-char-add-btn, .warhammer-dbc .advance-cog .advtal-add-btn {
+  font-family: inherit; color: #d8ffe8; background: color-mix(in srgb, var(--cg) 20%, transparent); border: 1px solid var(--cg-line); border-radius: 3px; cursor: pointer; transition: all 0.13s;
+}
+.warhammer-dbc .advance-cog .apt-char-add-btn:hover, .warhammer-dbc .advance-cog .advtal-add-btn:hover { border-color: var(--cg); box-shadow: 0 0 10px -3px var(--cg); }
+.warhammer-dbc .advance-cog .apt-char-remove, .warhammer-dbc .advance-cog .advtal-remove { color: var(--cg-red); background: transparent; border: none; cursor: pointer; }
+.warhammer-dbc .advance-cog .items-empty td { color: #6f9a84; font-style: italic; text-align: center; }
+
+/* ═══════════════ ЗАПИСИ ═══════════════ */
+.warhammer-dbc .notes-cog { font-family: "Consolas","Lucida Console","Courier New",monospace; }
+.warhammer-dbc .notes-cog .notes-section-panel {
+  position: relative; margin-bottom: 9px; border-radius: 6px;
+  background: linear-gradient(180deg, #0a1c12, #06120c) !important; border: 1px solid var(--cg-line) !important;
+  box-shadow: inset 0 0 20px rgba(0,50,25,0.4), 0 0 12px -9px var(--cg);
+}
+.warhammer-dbc .notes-cog .notes-section-panel::before,
+.warhammer-dbc .notes-cog .notes-section-panel::after {
+  content: ""; position: absolute; width: 8px; height: 8px; pointer-events: none; opacity: 0.6; border-color: var(--cg-dim); border-style: solid;
+}
+.warhammer-dbc .notes-cog .notes-section-panel::before { top: 3px; left: 3px; border-width: 1px 0 0 1px; }
+.warhammer-dbc .notes-cog .notes-section-panel::after  { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
+.warhammer-dbc .notes-cog .panel-title { text-transform: uppercase; letter-spacing: 0.09em; }
+.warhammer-dbc .notes-cog input[type="text"], .warhammer-dbc .notes-cog input[type="number"],
+.warhammer-dbc .notes-cog select, .warhammer-dbc .notes-cog textarea {
+  background: #08160e; border: 1px solid var(--cg-line); color: #d8ffe8; font-family: inherit;
+}
+.warhammer-dbc .notes-cog input:focus, .warhammer-dbc .notes-cog select:focus, .warhammer-dbc .notes-cog textarea:focus {
+  outline: none; border-color: var(--cg); box-shadow: 0 0 7px -1px var(--cg);
+}
+.warhammer-dbc .notes-cog .bio-grid label, .warhammer-dbc .notes-cog .aspiration-grid label, .warhammer-dbc .notes-cog .origin-label { color: #8fbf9c; }
+.warhammer-dbc .notes-cog .checkbox-label { color: #d8ffe8; }
+.warhammer-dbc .notes-cog .checkbox-label input { accent-color: var(--cg); }
+.warhammer-dbc .notes-cog .checkbox-possessed span { color: var(--cg-fire); }
+.warhammer-dbc .notes-cog .gene-seed-hint { color: #7fae95; font-style: italic; }
+.warhammer-dbc .notes-cog .legion-block-key { color: var(--cg); }
+.warhammer-dbc .notes-cog .legion-apply-btn {
+  font-family: inherit; color: #150a00; background: linear-gradient(180deg, #ffcf6e, var(--cg-fire)); border: 1px solid var(--cg-fire); border-radius: 3px; cursor: pointer; font-weight: 700;
+}
+.warhammer-dbc .notes-cog .origin-special { color: var(--cg-fire); }
+
+/* ═══════════════ СЕНСОРЫ ШАПКИ ═══════════════ */
+.warhammer-dbc .character-sheet .fate-pips { display: flex; gap: 3px; margin-top: 3px; justify-content: center; }
+.warhammer-dbc .character-sheet .fate-pip {
+  width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.06);
+  border: 1px solid color-mix(in srgb, var(--cg-fire) 40%, #2a3038);
+}
+.warhammer-dbc .character-sheet .fate-pip.on { background: var(--cg-fire); border-color: var(--cg-fire); box-shadow: 0 0 8px -1px var(--cg-fire); }
+.warhammer-dbc .character-sheet .fatigue-bar { height: 5px; margin-top: 4px; border-radius: 3px; background: rgba(0,0,0,0.4); border: 1px solid var(--cg-line); overflow: hidden; }
+.warhammer-dbc .character-sheet .fatigue-fill { height: 100%; transition: width 0.3s ease; }
+.warhammer-dbc .character-sheet .fatigue-fill.load-ok    { background: linear-gradient(90deg, var(--cg-dim), var(--cg)); box-shadow: 0 0 6px var(--cg); }
+.warhammer-dbc .character-sheet .fatigue-fill.load-heavy { background: linear-gradient(90deg, #c8892a, var(--cg-fire)); box-shadow: 0 0 6px var(--cg-fire); }
+.warhammer-dbc .character-sheet .fatigue-fill.load-over  { background: linear-gradient(90deg, #a01810, var(--cg-red)); box-shadow: 0 0 6px var(--cg-red); }

@@ -1,0 +1,2446 @@
+{
+  "Actor": {
+    "types": [
+      "character",
+      "ship",
+      "starSystem",
+      "horde",
+      "vehicle",
+      "daemon",
+      "demonPrince",
+      "squad",
+      "formation"
+    ],
+    "formation": {
+      "troopType": "mediumInfantry",
+      "size": "battalion",
+      "techLevel": "advanced",
+      "training": "tithe",
+      "gearQuality": "standard",
+      "terrain": "open",
+      "homeworld": "",
+      "allegiance": "",
+      "commanderName": "",
+      "headcount": 0,
+      "astartes": false,
+      "strengthMod": 0,
+      "strengthOverride": "",
+      "speedOverride": "",
+      "numbers": {
+        "value": 0,
+        "max": 0
+      },
+      "morale": {
+        "value": 0,
+        "max": 0,
+        "gearRoll": 0
+      },
+      "cover": {
+        "dugIn": 0,
+        "aa": 0,
+        "mod": 0
+      },
+      "order": {
+        "key": "",
+        "note": ""
+      },
+      "status": {
+        "surprised": false,
+        "engaged": false,
+        "fled": false,
+        "exhausted": false,
+        "disorder": 0,
+        "flankRounds": 0,
+        "feintRounds": 0,
+        "reconRounds": 0,
+        "keyEventBonus": false
+      },
+      "posts": {
+        "commander": {
+          "uuid": "",
+          "name": "",
+          "img": ""
+        }
+      },
+      "attached": [],
+      "initiativeMod": 0,
+      "notes": "",
+      "gmNotes": ""
+    },
+    "squad": {
+      "designation": "",
+      "faction": "",
+      "mission": "",
+      "deployment": "",
+      "delegated": false,
+      "risk": 3,
+      "cohesion": {
+        "base": 0,
+        "start": 0,
+        "value": 0
+      },
+      "posts": {
+        "leader": {
+          "uuid": "",
+          "name": "",
+          "img": ""
+        },
+        "commander": {
+          "uuid": "",
+          "name": "",
+          "img": ""
+        },
+        "coordinator": {
+          "uuid": "",
+          "name": "",
+          "img": ""
+        }
+      },
+      "members": [],
+      "presence": {
+        "active": false,
+        "benefit": "extreme"
+      },
+      "shortCommand": {
+        "active": false,
+        "key": "inspire",
+        "successes": 0,
+        "note": ""
+      },
+      "detailCommand": {
+        "active": false,
+        "successes": 0,
+        "picks": []
+      },
+      "briefing": {
+        "successes": 0
+      },
+      "notes": "",
+      "gmNotes": ""
+    },
+    "vehicle": {
+      "vehicleClass": "",
+      "vehicleType": "tank",
+      "origin": "",
+      "commander": "",
+      "manoeuvrability": 0,
+      "operate": 0,
+      "size": 4,
+      "chassis": {
+        "type": "tracked",
+        "spd": 4,
+        "spdDamage": 0,
+        "manoeuvreDamage": 0,
+        "strength": 0,
+        "unnaturalS": 0
+      },
+      "armour": {
+        "front": 0,
+        "side": 0,
+        "rear": 0
+      },
+      "structure": {
+        "value": 0,
+        "max": 0,
+        "critical": 0
+      },
+      "ammoReloads": 10,
+      "openTopped": false,
+      "traits": "",
+      "stations": [],
+      "damageStates": [],
+      "notes": "",
+      "gmNotes": ""
+    },
+    "horde": {
+      "speciesName": "",
+      "faction": "",
+      "descriptor": "",
+      "characteristics": {
+        "ws": {
+          "base": 0,
+          "advance": 0,
+          "total": 0,
+          "bonus": 0
+        },
+        "bs": {
+          "base": 0,
+          "advance": 0,
+          "total": 0,
+          "bonus": 0
+        },
+        "s": {
+          "base": 0,
+          "advance": 0,
+          "total": 0,
+          "bonus": 0
+        },
+        "t": {
+          "base": 0,
+          "advance": 0,
+          "total": 0,
+          "bonus": 0
+        },
+        "ag": {
+          "base": 0,
+          "advance": 0,
+          "total": 0,
+          "bonus": 0
+        },
+        "int": {
+          "base": 0,
+          "advance": 0,
+          "total": 0,
+          "bonus": 0
+        },
+        "per": {
+          "base": 0,
+          "advance": 0,
+          "total": 0,
+          "bonus": 0
+        },
+        "wp": {
+          "base": 0,
+          "advance": 0,
+          "total": 0,
+          "bonus": 0
+        },
+        "fel": {
+          "base": 0,
+          "advance": 0,
+          "total": 0,
+          "bonus": 0
+        }
+      },
+      "magnitude": {
+        "value": 0,
+        "start": 0
+      },
+      "psychDamage": 0,
+      "absorption": 0,
+      "sizeMod": 0,
+      "movement": {
+        "halfMove": 0,
+        "move": 0,
+        "charge": 0,
+        "run": 0
+      },
+      "enemiesInMelee": 0,
+      "immuneFear": false,
+      "traits": "",
+      "notes": "",
+      "gmNotes": ""
+    },
+    "starSystem": {
+      "description": "",
+      "sector": "",
+      "region": "",
+      "warpRoutes": "",
+      "dominantStar": "",
+      "starConfig": "",
+      "systemFeatures": [],
+      "inhabitants": [],
+      "xenosSpecies": "",
+      "gmNotes": "",
+      "journalUuid": "",
+      "discovered": false,
+      "inProtectorate": false,
+      "derived": {}
+    },
+    "ship": {
+      "shipClass": "",
+      "shipType": "transport",
+      "shipRelation": "neutral",
+      "voidShieldsDown": false,
+      "origin": "",
+      "captain": "",
+      "influence": 0,
+      "spMax": 0,
+      "passengersAboard": 0,
+      "supplies": {
+        "value": 6
+      },
+      "defilement": 0,
+      "crewIsChaos": false,
+      "distortions": [],
+      "hull": {
+        "spaceMax": 0,
+        "powerGen": 0,
+        "sp": 0,
+        "turnArc": "90°",
+        "weaponCapacity": ""
+      },
+      "chars": {
+        "speed": 0,
+        "manoeuvrability": 0,
+        "detection": 0,
+        "voidShields": 0,
+        "armour": 0,
+        "turretRating": 0
+      },
+      "hullIntegrity": {
+        "value": 0,
+        "max": 0
+      },
+      "crew": {
+        "population": 100,
+        "morale": 100,
+        "moraleMax": 100,
+        "rating": ""
+      },
+      "officers": [],
+      "notes": ""
+    },
+    "character": {
+      "bodyType": "male",
+      "race": "",
+      "subrace": "",
+      "ynnariPast": "",
+      "harlequinPast": "",
+      "harlequinMasque": "",
+      "navigatorHouse": "",
+      "lineageOrigin": "",
+      "archetype": "",
+      "eliteArchetype": "",
+      "eliteArchetypesExtra": [],
+      "alignment": "loyalist",
+      "patronGod": "undivided",
+      "patronFavor": {
+        "undivided": 0,
+        "khorne": 0,
+        "nurgle": 0,
+        "slaanesh": 0,
+        "tzeentch": 0
+      },
+      "isPsyker": false,
+      "isTechpriest": false,
+      "isRogueTrader": false,
+      "meleeStance": "standard",
+      "aiming": "none",
+      "initiativeMod": 0,
+      "aspirations": {
+        "pride": "",
+        "motivation": "",
+        "influence": "",
+        "profitFactor": 0
+      },
+      "experience": {
+        "total": 0,
+        "spent": 0,
+        "spentChar": 0,
+        "spentSkills": 0,
+        "spentTalents": 0,
+        "spentPsy": 0,
+        "spentOther": 0,
+        "current": 0
+      },
+      "wounds": {
+        "value": 0,
+        "max": 0,
+        "critical": 0,
+        "firstAidUsed": false
+      },
+      "fate": {
+        "value": 0,
+        "max": 0
+      },
+      "deadMight": {
+        "value": 0,
+        "max": 0
+      },
+      "fatigue": {
+        "value": 0,
+        "max": 0
+      },
+      "insanity": {
+        "value": 0,
+        "threshold": 0
+      },
+      "corruption": {
+        "value": 0,
+        "threshold": 0
+      },
+      "characteristics": {
+        "ws": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "bs": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "s": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "t": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "ag": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "int": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "per": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "wp": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "fel": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "inf": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "grantedImp": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        }
+      },
+      "charDamage": {
+        "ws": 0,
+        "bs": 0,
+        "s": 0,
+        "t": 0,
+        "ag": 0,
+        "int": 0,
+        "per": 0,
+        "wp": 0,
+        "fel": 0,
+        "inf": 0
+      },
+      "skills": {
+        "acrobatics": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "athletics": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "awareness": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "charm": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "command": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "commerce": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "deceive": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "dodge": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "inquiry": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "interrogate": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "intimidate": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "logic": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "medicae": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "parry": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "psyniscience": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "scrutiny": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "security": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "sleightOfHand": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "stealth": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "survival": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "techUse": {
+          "rank": "untrained",
+          "grantedRank": "untrained",
+          "cost": 0,
+          "total": -20
+        }
+      },
+      "groupSkills": {
+        "commonLore": [],
+        "forbiddenLore": [],
+        "scholasticLore": [],
+        "linguistics": [],
+        "navigation": [],
+        "operate": [],
+        "trade": []
+      },
+      "armor": {
+        "head": 0,
+        "leftArm": 0,
+        "rightArm": 0,
+        "body": 0,
+        "leftLeg": 0,
+        "rightLeg": 0
+      },
+      "movement": {
+        "halfMove": 0,
+        "move": 0,
+        "charge": 0,
+        "run": 0,
+        "spdBonus": 0
+      },
+      "initiative": 0,
+      "size": 0,
+      "encumbrance": {
+        "current": 0,
+        "effectiveCurrent": 0,
+        "gravity": 1,
+        "max": 0,
+        "carry": 0,
+        "lift": 0,
+        "push": 0,
+        "indexBonus": {
+          "all": 0,
+          "carry": 0,
+          "lift": 0,
+          "push": 0
+        }
+      },
+      "psyker": {
+        "class": "bound",
+        "rating": 0,
+        "sustain": 0,
+        "currentRating": 0
+      },
+      "cognition": {
+        "value": 0,
+        "max": 0,
+        "regen": 0
+      },
+      "energy": {
+        "value": 0,
+        "max": 0
+      },
+      "geneSeed": {
+        "origin": "",
+        "legion": "",
+        "chapter": "",
+        "cultureLegion": "",
+        "cultureChapter": ""
+      },
+      "bio": {
+        "gender": "",
+        "age": 0,
+        "height": "",
+        "build": "",
+        "hair": "",
+        "divination": "",
+        "features": "",
+        "prejudices": "",
+        "souvenir": ""
+      },
+      "notes": "",
+      "craftAvailable": false,
+      "possessed": false,
+      "haemonculus": {
+        "stage": 0,
+        "flesh": [],
+        "warp": [],
+        "splitPools": false,
+        "notes": ""
+      },
+      "possession": {
+        "demon": "katart",
+        "demonName": "",
+        "symbiosis": 0,
+        "manifested": false,
+        "greaterPossessed": false,
+        "demonWounds": {
+          "value": 0,
+          "max": 0
+        },
+        "swapWs": false,
+        "swapBs": false,
+        "notes": ""
+      },
+      "reactions": "",
+      "aptitudes": [],
+      "advanceTalents": [],
+      "paths": [],
+      "world": "",
+      "band": "",
+      "drukhariFaction": "",
+      "drukhariDistrict": "",
+      "insanityBonus": 0,
+      "corruptionBonus": 0,
+      "conditions": {
+        "bleeding": false,
+        "bleedingLevel": 0,
+        "haemorrhaging": false,
+        "haemorrhagingLevel": 0,
+        "stunned": false,
+        "stunnedRounds": 0,
+        "fatigued": false,
+        "fatiguedLevel": 0,
+        "poisoned": false,
+        "prone": false,
+        "unconscious": false,
+        "blinded": false,
+        "blindedRounds": 0,
+        "deafened": false,
+        "burning": false,
+        "burningLevel": 0,
+        "radiation": false,
+        "radiationLevel": 0,
+        "hallucinogenic": false,
+        "pinned": false,
+        "crippling": false,
+        "addicted": false
+      },
+      "vitals": {
+        "hunger": 0,
+        "thirst": 0,
+        "sleep": 0
+      },
+      "helmetOff": false
+    },
+    "daemon": {
+      "race": "",
+      "subrace": "",
+      "ynnariPast": "",
+      "harlequinPast": "",
+      "harlequinMasque": "",
+      "navigatorHouse": "",
+      "lineageOrigin": "",
+      "archetype": "",
+      "eliteArchetype": "",
+      "eliteArchetypesExtra": [],
+      "alignment": "heretic",
+      "isPsyker": false,
+      "isTechpriest": false,
+      "isRogueTrader": false,
+      "meleeStance": "standard",
+      "aiming": "none",
+      "initiativeMod": 0,
+      "aspirations": {
+        "pride": "",
+        "motivation": "",
+        "influence": "",
+        "profitFactor": 0
+      },
+      "experience": {
+        "total": 0,
+        "spent": 0,
+        "spentChar": 0,
+        "spentSkills": 0,
+        "spentTalents": 0,
+        "spentPsy": 0,
+        "spentOther": 0,
+        "current": 0
+      },
+      "wounds": {
+        "value": 0,
+        "max": 0,
+        "critical": 0,
+        "firstAidUsed": false
+      },
+      "fate": {
+        "value": 0,
+        "max": 0
+      },
+      "deadMight": {
+        "value": 0,
+        "max": 0
+      },
+      "fatigue": {
+        "value": 0,
+        "max": 0
+      },
+      "insanity": {
+        "value": 0,
+        "threshold": 0
+      },
+      "corruption": {
+        "value": 0,
+        "threshold": 0
+      },
+      "characteristics": {
+        "ws": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "bs": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "s": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "t": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "ag": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "int": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "per": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "wp": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "fel": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "inf": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        }
+      },
+      "charDamage": {
+        "ws": 0,
+        "bs": 0,
+        "s": 0,
+        "t": 0,
+        "ag": 0,
+        "int": 0,
+        "per": 0,
+        "wp": 0,
+        "fel": 0,
+        "inf": 0
+      },
+      "skills": {
+        "acrobatics": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "athletics": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "awareness": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "charm": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "command": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "commerce": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "deceive": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "dodge": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "inquiry": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "interrogate": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "intimidate": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "logic": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "medicae": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "parry": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "psyniscience": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "scrutiny": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "security": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "sleightOfHand": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "stealth": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "survival": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "techUse": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        }
+      },
+      "groupSkills": {
+        "commonLore": [],
+        "forbiddenLore": [],
+        "scholasticLore": [],
+        "linguistics": [],
+        "navigation": [],
+        "operate": [],
+        "trade": []
+      },
+      "armor": {
+        "head": 0,
+        "leftArm": 0,
+        "rightArm": 0,
+        "body": 0,
+        "leftLeg": 0,
+        "rightLeg": 0
+      },
+      "movement": {
+        "halfMove": 0,
+        "move": 0,
+        "charge": 0,
+        "run": 0,
+        "spdBonus": 0
+      },
+      "initiative": 0,
+      "size": 0,
+      "encumbrance": {
+        "current": 0,
+        "effectiveCurrent": 0,
+        "gravity": 1,
+        "max": 0,
+        "carry": 0,
+        "lift": 0,
+        "push": 0,
+        "indexBonus": {
+          "all": 0,
+          "carry": 0,
+          "lift": 0,
+          "push": 0
+        }
+      },
+      "psyker": {
+        "class": "bound",
+        "rating": 0,
+        "sustain": 0,
+        "currentRating": 0
+      },
+      "cognition": {
+        "value": 0,
+        "max": 0,
+        "regen": 0
+      },
+      "energy": {
+        "value": 0,
+        "max": 0
+      },
+      "geneSeed": {
+        "origin": "",
+        "legion": "",
+        "chapter": "",
+        "cultureLegion": "",
+        "cultureChapter": ""
+      },
+      "bio": {
+        "gender": "",
+        "age": 0,
+        "height": "",
+        "build": "",
+        "hair": "",
+        "divination": "",
+        "features": "",
+        "prejudices": "",
+        "souvenir": ""
+      },
+      "notes": "",
+      "craftAvailable": false,
+      "possessed": false,
+      "possession": {
+        "demon": "katart",
+        "demonName": "",
+        "symbiosis": 0,
+        "manifested": false,
+        "greaterPossessed": false,
+        "demonWounds": {
+          "value": 0,
+          "max": 0
+        },
+        "swapWs": false,
+        "swapBs": false,
+        "notes": ""
+      },
+      "reactions": "",
+      "aptitudes": [],
+      "advanceTalents": [],
+      "paths": [],
+      "world": "",
+      "band": "",
+      "drukhariFaction": "",
+      "drukhariDistrict": "",
+      "insanityBonus": 0,
+      "corruptionBonus": 0,
+      "conditions": {
+        "bleeding": false,
+        "bleedingLevel": 0,
+        "haemorrhaging": false,
+        "haemorrhagingLevel": 0,
+        "stunned": false,
+        "stunnedRounds": 0,
+        "fatigued": false,
+        "fatiguedLevel": 0,
+        "poisoned": false,
+        "prone": false,
+        "unconscious": false,
+        "blinded": false,
+        "blindedRounds": 0,
+        "deafened": false,
+        "burning": false,
+        "burningLevel": 0,
+        "radiation": false,
+        "radiationLevel": 0,
+        "hallucinogenic": false,
+        "pinned": false,
+        "crippling": false,
+        "addicted": false
+      },
+      "allegiance": "undivided",
+      "rank": "lesser",
+      "form": "trueForm",
+      "instabilityRating": 1,
+      "trueName": "",
+      "trueNameKnown": false,
+      "portfolio": "",
+      "isDaemon": true
+    },
+    "demonPrince": {
+      "race": "",
+      "subrace": "",
+      "ynnariPast": "",
+      "harlequinPast": "",
+      "harlequinMasque": "",
+      "navigatorHouse": "",
+      "lineageOrigin": "",
+      "archetype": "",
+      "eliteArchetype": "",
+      "eliteArchetypesExtra": [],
+      "alignment": "heretic",
+      "isPsyker": false,
+      "isTechpriest": false,
+      "isRogueTrader": false,
+      "meleeStance": "standard",
+      "aiming": "none",
+      "initiativeMod": 0,
+      "aspirations": {
+        "pride": "",
+        "motivation": "",
+        "influence": "",
+        "profitFactor": 0
+      },
+      "experience": {
+        "total": 0,
+        "spent": 0,
+        "spentChar": 0,
+        "spentSkills": 0,
+        "spentTalents": 0,
+        "spentPsy": 0,
+        "spentOther": 0,
+        "current": 0
+      },
+      "wounds": {
+        "value": 0,
+        "max": 0,
+        "critical": 0,
+        "firstAidUsed": false
+      },
+      "fate": {
+        "value": 0,
+        "max": 0
+      },
+      "deadMight": {
+        "value": 0,
+        "max": 0
+      },
+      "fatigue": {
+        "value": 0,
+        "max": 0
+      },
+      "insanity": {
+        "value": 0,
+        "threshold": 0
+      },
+      "corruption": {
+        "value": 0,
+        "threshold": 0
+      },
+      "characteristics": {
+        "ws": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "bs": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "s": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "t": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "ag": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "int": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "per": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "wp": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "fel": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        },
+        "inf": {
+          "base": 0,
+          "advance": 0,
+          "supernatural": 0,
+          "improvement": "none",
+          "total": 0,
+          "bonus": 0,
+          "cost": 0
+        }
+      },
+      "charDamage": {
+        "ws": 0,
+        "bs": 0,
+        "s": 0,
+        "t": 0,
+        "ag": 0,
+        "int": 0,
+        "per": 0,
+        "wp": 0,
+        "fel": 0,
+        "inf": 0
+      },
+      "skills": {
+        "acrobatics": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "athletics": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "awareness": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "charm": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "command": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "commerce": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "deceive": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "dodge": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "inquiry": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "interrogate": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "intimidate": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "logic": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "medicae": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "parry": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "psyniscience": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "scrutiny": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "security": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "sleightOfHand": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "stealth": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "survival": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        },
+        "techUse": {
+          "rank": "untrained",
+          "cost": 0,
+          "total": -20
+        }
+      },
+      "groupSkills": {
+        "commonLore": [],
+        "forbiddenLore": [],
+        "scholasticLore": [],
+        "linguistics": [],
+        "navigation": [],
+        "operate": [],
+        "trade": []
+      },
+      "armor": {
+        "head": 0,
+        "leftArm": 0,
+        "rightArm": 0,
+        "body": 0,
+        "leftLeg": 0,
+        "rightLeg": 0
+      },
+      "movement": {
+        "halfMove": 0,
+        "move": 0,
+        "charge": 0,
+        "run": 0,
+        "spdBonus": 0
+      },
+      "initiative": 0,
+      "size": 0,
+      "encumbrance": {
+        "current": 0,
+        "effectiveCurrent": 0,
+        "gravity": 1,
+        "max": 0,
+        "carry": 0,
+        "lift": 0,
+        "push": 0,
+        "indexBonus": {
+          "all": 0,
+          "carry": 0,
+          "lift": 0,
+          "push": 0
+        }
+      },
+      "psyker": {
+        "class": "bound",
+        "rating": 0,
+        "sustain": 0,
+        "currentRating": 0
+      },
+      "cognition": {
+        "value": 0,
+        "max": 0,
+        "regen": 0
+      },
+      "energy": {
+        "value": 0,
+        "max": 0
+      },
+      "geneSeed": {
+        "origin": "",
+        "legion": "",
+        "chapter": "",
+        "cultureLegion": "",
+        "cultureChapter": ""
+      },
+      "bio": {
+        "gender": "",
+        "age": 0,
+        "height": "",
+        "build": "",
+        "hair": "",
+        "divination": "",
+        "features": "",
+        "prejudices": "",
+        "souvenir": ""
+      },
+      "notes": "",
+      "craftAvailable": false,
+      "possessed": false,
+      "possession": {
+        "demon": "katart",
+        "demonName": "",
+        "symbiosis": 0,
+        "manifested": false,
+        "greaterPossessed": false,
+        "demonWounds": {
+          "value": 0,
+          "max": 0
+        },
+        "swapWs": false,
+        "swapBs": false,
+        "notes": ""
+      },
+      "reactions": "",
+      "aptitudes": [],
+      "advanceTalents": [],
+      "paths": [],
+      "world": "",
+      "band": "",
+      "drukhariFaction": "",
+      "drukhariDistrict": "",
+      "insanityBonus": 0,
+      "corruptionBonus": 0,
+      "conditions": {
+        "bleeding": false,
+        "bleedingLevel": 0,
+        "haemorrhaging": false,
+        "haemorrhagingLevel": 0,
+        "stunned": false,
+        "stunnedRounds": 0,
+        "fatigued": false,
+        "fatiguedLevel": 0,
+        "poisoned": false,
+        "prone": false,
+        "unconscious": false,
+        "blinded": false,
+        "blindedRounds": 0,
+        "deafened": false,
+        "burning": false,
+        "burningLevel": 0,
+        "radiation": false,
+        "radiationLevel": 0,
+        "hallucinogenic": false,
+        "pinned": false,
+        "crippling": false,
+        "addicted": false
+      },
+      "allegiance": "undivided",
+      "rank": "prince",
+      "form": "trueForm",
+      "instabilityRating": 1,
+      "trueName": "",
+      "trueNameKnown": false,
+      "portfolio": "",
+      "isDaemon": true,
+      "dp": {
+        "favor": 0,
+        "syllables": 5,
+        "gifts": [],
+        "banished": false,
+        "trueFormDesc": "",
+        "anointed": "",
+        "retinueNotes": "",
+        "mortalName": "",
+        "ascended": false,
+        "ip": 0
+      }
+    }
+  },
+  "Item": {
+    "types": [
+      "weapon",
+      "weaponMod",
+      "ammo",
+      "armor",
+      "armorMod",
+      "forcefield",
+      "gear",
+      "drug",
+      "tool",
+      "cybernetic",
+      "talent",
+      "ability",
+      "trait",
+      "psychicPower",
+      "techPower",
+      "implant",
+      "mutation",
+      "navigatorPower",
+      "mentalDisorder",
+      "component",
+      "cargo",
+      "torpedo",
+      "disease",
+      "celestialBody",
+      "vehicleGear",
+      "vehicleTrait",
+      "smallCraft",
+      "homeworld",
+      "divination",
+      "weaponProperty",
+      "armourHistoryEntry",
+      "aspiration",
+      "archetype"
+    ],
+    "smallCraft": {
+      "description": "",
+      "notes": "",
+      "craftKind": "fighter",
+      "faction": "",
+      "cr": 0,
+      "crAlt": 0,
+      "spd": 0,
+      "squadronSize": 0,
+      "props": "",
+      "rarity": 0,
+      "qty": 1,
+      "state": "stored",
+      "strength": "full",
+      "turnsOut": 0,
+      "role": "independent"
+    },
+    "vehicleGear": {
+      "description": "",
+      "notes": "",
+      "availability": 0,
+      "quality": "common",
+      "active": true
+    },
+    "vehicleTrait": {
+      "description": "",
+      "notes": "",
+      "benefit": "",
+      "availability": 0,
+      "hasRating": false,
+      "rating": 0,
+      "hasRating2": false,
+      "rating2": 0,
+      "hasRating3": false,
+      "rating3": 0,
+      "effects": {
+        "openTopped": false,
+        "manoeuvreMod": 0,
+        "spdMod": 0,
+        "spdDamageReduce": 0,
+        "noMove": false,
+        "swerveDisabled": false,
+        "fullMoveSpdMult": 0,
+        "smallMoveOnly": false,
+        "ignoreDifficultTerrain": false,
+        "critHalved": false,
+        "trackHitsToHull": false,
+        "siege": false,
+        "reloadRapid": false,
+        "commandBonus": 0,
+        "repairBonus": 0
+      }
+    },
+    "celestialBody": {
+      "description": "",
+      "notes": "",
+      "bodyType": "planet",
+      "zone": "",
+      "parentId": "",
+      "starClass": "",
+      "starGroup": 0,
+      "exotic": false,
+      "bodySize": "",
+      "gravity": "",
+      "atmospherePresence": "",
+      "atmosphereType": "",
+      "climate": "",
+      "habitability": "",
+      "worldClass": "",
+      "worldEnv": "",
+      "tithe": "",
+      "titheExempt": [],
+      "orbitalFeatures": "",
+      "territories": "",
+      "government": "",
+      "threat": "",
+      "stationType": "",
+      "presence": "",
+      "allegiance": "",
+      "xenosSpecies": "",
+      "xenosCustom": "",
+      "gmNotes": "",
+      "signal": false,
+      "scouted": false,
+      "revealed": false,
+      "dynasty": "",
+      "extractiums": [],
+      "defense": {
+        "weapons": "",
+        "garrison": "",
+        "patrols": "",
+        "strength": "",
+        "notes": ""
+      },
+      "population": {
+        "species": "",
+        "size": "",
+        "notes": ""
+      },
+      "improvements": [],
+      "resources": {
+        "ore": 0,
+        "promethium": 0,
+        "adamantium": 0,
+        "phlogiston": 0,
+        "organics": 0,
+        "plasteel": 0,
+        "weapons": 0,
+        "tech": 0,
+        "provisions": 0,
+        "manpower": 0,
+        "archeotech": 0,
+        "xenotech": 0,
+        "heretek": 0,
+        "notes": ""
+      }
+    },
+    "disease": {
+      "diseaseType": "warp",
+      "severity": "",
+      "god": "nurgle",
+      "contagion": "",
+      "incubation": "",
+      "symptoms": "",
+      "vectors": "",
+      "cure": "",
+      "active": false,
+      "description": "",
+      "notes": ""
+    },
+    "cargo": {
+      "cargoType": "minerals",
+      "lc": 1,
+      "quantity": 1,
+      "quality": "common",
+      "rarity": 0,
+      "baseRarity": "",
+      "shipSupply": false,
+      "rarityManual": false,
+      "xenos": false,
+      "astartes": false,
+      "inHold": false,
+      "price": 0,
+      "origin": "",
+      "consignee": "",
+      "description": ""
+    },
+    "torpedo": {
+      "warhead": "plasma",
+      "navSystem": "standard",
+      "quantity": 0,
+      "description": ""
+    },
+    "component": {
+      "kind": "supplemental",
+      "power": 0,
+      "space": 0,
+      "sp": 0,
+      "rarity": 0,
+      "quality": "common",
+      "qualityPicks": [],
+      "qualityCustom": false,
+      "hulls": "",
+      "aspects": "",
+      "description": "",
+      "notes": "",
+      "essential": false,
+      "external": false,
+      "damaged": false,
+      "status": "intact",
+      "lcBonus": 0,
+      "pcBonus": 0,
+      "modChar": "",
+      "modValue": 0,
+      "shipProps": [],
+      "hull": {
+        "spaceMax": 0,
+        "powerGen": 0,
+        "turnArc": "90°",
+        "weaponCapacity": "",
+        "hullIntegrity": 0
+      },
+      "chars": {
+        "speed": 0,
+        "manoeuvrability": 0,
+        "detection": 0,
+        "voidShields": 0,
+        "armour": 0,
+        "turretRating": 0
+      },
+      "weapon": {
+        "wType": "macrobattery",
+        "strength": 0,
+        "damage": "",
+        "crit": 0,
+        "range": 0,
+        "arc": ""
+      }
+    },
+    "weapon": {
+      "description": "",
+      "notes": "",
+      "rangeBands": [],
+      "offProfile": {},
+      "gripProps2h": [],
+      "corEffects": [],
+      "weaponClass": "melee",
+      "weaponType": "laser",
+      "range": 0,
+      "balance": 0,
+      "grips": "",
+      "profileLabel": "",
+      "profiles": [],
+      "reload": "1",
+      "magazineCur": 0,
+      "magazineMax": 0,
+      "rof_single": 0,
+      "rof_semi": 0,
+      "rof_full": 0,
+      "damage": "",
+      "damageType": "impact",
+      "penetration": 0,
+      "quality": "common",
+      "availability": 0,
+      "weight": 0,
+      "attackBonus": 0,
+      "special": "",
+      "equipped": false,
+      "loadedAmmoId": "",
+      "weaponProps": [],
+      "needsRecharge": false,
+      "legacyWeapon": false,
+      "sacred": false,
+      "daemonWeapon": {
+        "bound": false,
+        "god": "",
+        "demonName": "",
+        "binding": 0,
+        "demonWb": 0,
+        "demonInf": 0,
+        "subdued": false,
+        "runic": false,
+        "properties": [],
+        "preProps": [],
+        "preDamage": "",
+        "prePen": 0
+      },
+      "vehicleMount": {
+        "isMounted": false,
+        "operator": "gunner",
+        "stationId": "",
+        "mount": "turret",
+        "hArc": "360°",
+        "vArc": "",
+        "standard": false,
+        "reloads": 10
+      },
+      "drukhari": false
+    },
+    "weaponMod": {
+      "description": "",
+      "notes": "",
+      "category": "ranged",
+      "modGroup": "other",
+      "requirement": "",
+      "installedOn": "",
+      "weight": 0,
+      "availability": 0,
+      "quality": "common",
+      "effects": {
+        "attackMod": 0,
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "rangeMult": 1,
+        "clipMod": 0,
+        "clipMult": 1,
+        "rofSemiMod": 0,
+        "rofFullMod": 0,
+        "reliabilityMod": 0,
+        "balanceMod": 0,
+        "weightPct": 0,
+        "addProps": [],
+        "removeProps": [],
+        "mechAddProps": [],
+        "mechRemoveProps": []
+      },
+      "drukhari": false
+    },
+    "ammo": {
+      "description": "",
+      "notes": "",
+      "weaponTypes": [],
+      "ammoCategory": "bullets",
+      "rarity": 0,
+      "quantity": 0,
+      "weight": 0,
+      "availability": 0,
+      "attackMod": 0,
+      "damageMod": 0,
+      "damageDiceMod": 0,
+      "damageTypeOverride": "",
+      "penetrationMod": 0,
+      "rangeMod": 0,
+      "rangeMultiplier": 1.0,
+      "special": "",
+      "properties": [],
+      "condMods": [],
+      "drukhari": false
+    },
+    "armor": {
+      "description": "",
+      "notes": "",
+      "armorType": "simple",
+      "stacks": false,
+      "maxAgility": 100,
+      "propRatings": {},
+      "apSecond": {},
+      "equipped": false,
+      "head": 0,
+      "body": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "leftLeg": 0,
+      "rightLeg": 0,
+      "quality": "common",
+      "availability": 0,
+      "weight": 0,
+      "properties": [],
+      "strengthBonus": 0,
+      "wpBonus": 0,
+      "drukhari": false,
+      "fieldMode": "",
+      "history": {
+        "table": "",
+        "key": "",
+        "roll": 0,
+        "name": "",
+        "desc": "",
+        "effect": "",
+        "choice": "",
+        "zones": {},
+        "second": {
+          "table": "",
+          "key": "",
+          "roll": 0,
+          "name": "",
+          "desc": "",
+          "effect": "",
+          "choice": ""
+        }
+      }
+    },
+    "armorMod": {
+      "description": "",
+      "notes": "",
+      "category": "armor",
+      "modGroup": "general",
+      "requirement": "",
+      "installedOn": "",
+      "weight": 0,
+      "availability": 0,
+      "quality": "common",
+      "activatable": false,
+      "active": false,
+      "effects": {
+        "apAll": 0,
+        "apHead": 0,
+        "apBody": 0,
+        "apArms": 0,
+        "apLegs": 0,
+        "apVsEnergy": 0,
+        "apVsImpact": 0,
+        "apVsRending": 0,
+        "apVsBlast": 0,
+        "maxAgilityMod": 0,
+        "addProps": [],
+        "charBonuses": []
+      },
+      "drukhari": false
+    },
+    "forcefield": {
+      "description": "",
+      "notes": "",
+      "shieldNature": "technological",
+      "shieldType": "dome",
+      "ratingMin": 1,
+      "ratingMax": 35,
+      "overloadThreshold": 10,
+      "currentRating": 0,
+      "isSpecialRating": false,
+      "equipped": false,
+      "status": "inactive",
+      "quality": "common",
+      "availability": 2,
+      "weight": 0,
+      "drukhari": false
+    },
+    "gear": {
+      "description": "",
+      "notes": "",
+      "quantity": 1,
+      "weight": 0,
+      "availability": 0,
+      "quality": "common",
+      "gearCategory": "misc",
+      "linkedWeapon": "",
+      "worn": "",
+      "effect": "",
+      "reminder": "",
+      "qualityEffects": {
+        "poor": "",
+        "good": "",
+        "best": ""
+      },
+      "isRig": false,
+      "rig": {
+        "comfort": "normal",
+        "backSlot": false,
+        "slots": [],
+        "magLocks": []
+      },
+      "itemSize": "",
+      "bonuses": [],
+      "drukhari": false,
+      "bookSource": ""
+    },
+    "drug": {
+      "description": "",
+      "notes": "",
+      "drugCategory": "medicine",
+      "deliveryMethod": "injection",
+      "quantity": 1,
+      "weight": 0,
+      "availability": 0,
+      "quality": "common",
+      "duration": "",
+      "effect": "",
+      "afterEffect": "",
+      "afterEffectDice": "",
+      "afterEffectCharDamage": {
+        "stat": "",
+        "formula": ""
+      },
+      "hasAfterEffect": false,
+      "addiction": {
+        "hasAddiction": false,
+        "isAddicted": false,
+        "minDose": 0,
+        "testChar": "t",
+        "testMod": 0,
+        "frequency": "",
+        "penalty": ""
+      },
+      "statMods": {
+        "ws": 0,
+        "bs": 0,
+        "s": 0,
+        "t": 0,
+        "ag": 0,
+        "int": 0,
+        "per": 0,
+        "wp": 0,
+        "fel": 0
+      },
+      "afterEffectStatMods": {
+        "ws": 0,
+        "bs": 0,
+        "s": 0,
+        "t": 0,
+        "ag": 0,
+        "int": 0,
+        "per": 0,
+        "wp": 0,
+        "fel": 0
+      },
+      "specialEffects": {
+        "removesBleedingLevels": 0,
+        "removesHaemorrhagingLevels": 0,
+        "removesFatigueLevels": 0,
+        "removesWounds": 0,
+        "healFormula": "",
+        "healsWoundsPerRound": "",
+        "woundDamage": "",
+        "grantsFatigue": 0,
+        "woundsToToughness": false,
+        "removesCondition": "",
+        "removesConditionLevel": 0,
+        "grantsCondition": "",
+        "grantsConditionLevel": 1,
+        "immuneToPoisons": false,
+        "counteractsDrugs": false,
+        "removesRadiation": false,
+        "bonusVsPoisons": 0,
+        "reduceDamageOnHit": 0,
+        "noSleepNeeded": false,
+        "noFatigueFromMarch": false,
+        "customEffect": ""
+      },
+      "afterEffectSpecial": {
+        "removesBleedingLevels": 0,
+        "removesHaemorrhagingLevels": 0,
+        "removesFatigueLevels": 0,
+        "removesWounds": 0,
+        "healFormula": "",
+        "woundDamage": "",
+        "grantsFatigue": 0,
+        "grantsCondition": "",
+        "grantsConditionLevel": 1,
+        "customEffect": ""
+      },
+      "poisonVector": [],
+      "poisonEffect": "",
+      "poisonTestChar": "t",
+      "poisonTestMod": 0,
+      "activeEffect": {
+        "isActive": false,
+        "isAfterEffect": false,
+        "appliedAt": null,
+        "expiresAt": null,
+        "roundsRemaining": 0,
+        "charDamageStat": "",
+        "charDamageAmount": 0
+      }
+    },
+    "tool": {
+      "description": "",
+      "notes": "",
+      "quantity": 1,
+      "weight": 0,
+      "availability": 0,
+      "quality": "common",
+      "toolCategory": "general",
+      "linkedWeapon": "",
+      "effect": "",
+      "reminder": "",
+      "qualityEffects": {
+        "poor": "",
+        "good": "",
+        "best": ""
+      },
+      "bonuses": [],
+      "drukhari": false
+    },
+    "cybernetic": {
+      "description": "",
+      "notes": "",
+      "installed": "",
+      "linkedWeapon": "",
+      "quality": "common",
+      "availability": 0,
+      "weight": 0
+    },
+    "talent": {
+      "description": "",
+      "notes": "",
+      "benefit": "",
+      "bookSource": "",
+      "tier": 1,
+      "requirement": "",
+      "aptitudes": [],
+      "aptSource": "",
+      "aspirations": [],
+      "god": "",
+      "specialization": "",
+      "cost": 0,
+      "purchased": false,
+      "granted": false,
+      "effects": {
+        "charBonusStat": "",
+        "charBonusValue": 0,
+        "initMod": 0,
+        "fearRating": 0,
+        "speedMod": 0
+      }
+    },
+    "ability": {
+      "description": "",
+      "notes": "",
+      "benefit": ""
+    },
+    "mutation": {
+      "description": "",
+      "notes": "",
+      "benefit": "",
+      "source": "",
+      "bookSource": "",
+      "roll": "",
+      "god": "",
+      "effects": {
+        "charBonusStat": "",
+        "charBonusValue": 0,
+        "charBonuses": [],
+        "charValueBonuses": [],
+        "armourAll": 0,
+        "fearRating": 0,
+        "sizeMod": 0,
+        "initMod": 0,
+        "speedMod": 0
+      }
+    },
+    "mentalDisorder": {
+      "description": "",
+      "notes": "",
+      "testChar": "wp",
+      "testMod": 0
+    },
+    "navigatorPower": {
+      "description": "",
+      "notes": "",
+      "xpCost": 0,
+      "requirement": "",
+      "action": "half",
+      "sustainable": false,
+      "isSustained": false,
+      "testChar": "wp",
+      "testMod": 0,
+      "opposed": false,
+      "range": "",
+      "powerKind": "Концентрация, Ментальное",
+      "damage": "",
+      "damageType": "energy",
+      "penetration": 0,
+      "effect": ""
+    },
+    "trait": {
+      "description": "",
+      "notes": "",
+      "benefit": "",
+      "source": "",
+      "bookSource": "",
+      "hasRating": false,
+      "rating": 0,
+      "hasRating2": false,
+      "rating2": 0,
+      "effects": {
+        "charBonusStat": "",
+        "charBonusValue": 0,
+        "charBonuses": [],
+        "charValueBonuses": [],
+        "armourAll": 0,
+        "fearRating": 0,
+        "sizeMod": 0,
+        "initMod": 0,
+        "speedMod": 0
+      }
+    },
+    "implant": {
+      "description": "",
+      "notes": "",
+      "category": "mechanicus",
+      "quality": "common",
+      "effect": "",
+      "installed": "",
+      "geneSeedOrder": 0,
+      "linkedWeapon": "",
+      "bookSource": "",
+      "effects": {
+        "charBonusStat": "",
+        "charBonusValue": 0,
+        "charBonuses": [],
+        "charValueBonuses": [],
+        "armourAll": 0,
+        "apHead": 0,
+        "apBody": 0,
+        "apArms": 0,
+        "apLegs": 0,
+        "fearRating": 0,
+        "sizeMod": 0,
+        "initMod": 0,
+        "speedMod": 0
+      },
+      "shield": {
+        "enabled": false,
+        "shieldNature": "technological",
+        "shieldType": "deflector",
+        "ratingMin": 1,
+        "ratingMax": 10,
+        "overloadThreshold": 0,
+        "isSpecialRating": false,
+        "currentRating": 0,
+        "equipped": false,
+        "status": "inactive"
+      }
+    },
+    "psychicPower": {
+      "description": "",
+      "notes": "",
+      "cost": 0,
+      "discipline": "",
+      "subtype": "",
+      "powerType": "attack",
+      "extraTypes": [],
+      "shootSubtype": "",
+      "prRequired": 1,
+      "testChar": "wp",
+      "testMod": 0,
+      "action": "half",
+      "range": "",
+      "sustainable": false,
+      "sustainCost": 1,
+      "sustainAction": "free",
+      "damage": "",
+      "damageType": "energy",
+      "penetration": 0,
+      "weaponProps": [],
+      "charDamageStat": "",
+      "charDamageFormula": "",
+      "profiles": [],
+      "variants": [],
+      "effect": "",
+      "isSustained": false,
+      "effects": {
+        "charBonusStat": "",
+        "charBonusValue": 0,
+        "charBonuses": [],
+        "armourAll": 0,
+        "fearRating": 0,
+        "sizeMod": 0,
+        "grantedTraits": "",
+        "weaponBuff": {
+          "enabled": false,
+          "scope": "equipped",
+          "damageMod": 0,
+          "penMod": 0,
+          "rangeMod": 0,
+          "addProps": []
+        }
+      }
+    },
+    "techPower": {
+      "description": "",
+      "notes": "",
+      "discipline": "",
+      "subtype": "",
+      "miracleType": "imperative",
+      "extraTypes": [],
+      "iron": "",
+      "cost": 0,
+      "rating": 1,
+      "cognitionCost": 1,
+      "energyCost": 0,
+      "sustainCost": 0,
+      "sustainAction": "free",
+      "testSkill": "techUse",
+      "testMod": 0,
+      "action": "full",
+      "sustained": false,
+      "compiled": false,
+      "range": "",
+      "damage": "",
+      "damageType": "energy",
+      "penetration": 0,
+      "effect": "",
+      "effects": {
+        "charBonusStat": "",
+        "charBonusValue": 0,
+        "charBonuses": []
+      }
+    },
+    "homeworld": {
+      "key": "",
+      "description": "",
+      "source": "",
+      "bookSource": "",
+      "featureName": "",
+      "featureDesc": "",
+      "charModLabel": "",
+      "choices": {},
+      "friendlySpecs": [],
+      "effects": {
+        "charValueBonuses": []
+      }
+    },
+    "divination": {
+      "key": "",
+      "roll": "",
+      "rollMin": 0,
+      "rollMax": 0,
+      "text": "",
+      "effect": "",
+      "source": "",
+      "bookSource": "",
+      "charModLabel": "",
+      "choices": {},
+      "effects": {
+        "charValueBonuses": []
+      }
+    },
+    "weaponProperty": {
+      "description": "",
+      "reminder": "",
+      "category": "both",
+      "hasRating": false,
+      "hasRating2": false,
+      "autoKey": "",
+      "bookSource": ""
+    },
+    "armourHistoryEntry": {
+      "table": "",
+      "rollMin": 0,
+      "rollMax": 0,
+      "description": "",
+      "effect": "",
+      "hasChoice": false,
+      "choiceLabel": "",
+      "choicePlaceholder": "",
+      "zoneRoll": false,
+      "bookSource": ""
+    },
+    "aspiration": {
+      "key": "",
+      "table": "pride",
+      "n": 0,
+      "mods": "",
+      "description": "",
+      "bookSource": ""
+    },
+    "archetype": {
+      "key": "",
+      "race": "",
+      "group": "",
+      "charBonus": {},
+      "charChoice": "",
+      "skills": "",
+      "talents": "",
+      "gear": "",
+      "wounds": "",
+      "infRoll": "",
+      "requiredPath": "",
+      "isPsyker": false,
+      "isTechpriest": false,
+      "psykerClass": "",
+      "grantsWarPlate": false,
+      "grantsImplants": false,
+      "description": "",
+      "trait": {
+        "name": "",
+        "benefit": ""
+      },
+      "bookSource": ""
+    }
+  }
+}

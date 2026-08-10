@@ -1,0 +1,114 @@
+/* ══════════════════ ВИДЖЕТ «ИМПЕРСКАЯ ДАТА» ══════════════════
+   Тот же визуальный язык, что и у #wh-env-widget (styles/ui/environment.css) —
+   постоянная свёртываемая перетаскиваемая панель, видят все. */
+#wh-cal-widget {
+  position: fixed; z-index: 57; width: 208px;
+  font-family: "Oswald", "Roboto Condensed", sans-serif; pointer-events: auto;
+  border: 1px solid rgba(47,158,106,0.4); border-radius: 8px; overflow: hidden;
+  background: linear-gradient(160deg, rgba(8,22,14,0.62), rgba(4,14,9,0.66));
+  box-shadow: 0 6px 22px rgba(0,0,0,0.4), inset 0 0 30px -18px #4dffa6;
+  backdrop-filter: blur(4px); user-select: none; opacity: 0.9; transition: opacity 0.15s;
+}
+#wh-cal-widget:hover { opacity: 1; border-color: #4dffa6; }
+#wh-cal-widget.dragging { opacity: 1; box-shadow: 0 8px 26px rgba(0,0,0,0.6), 0 0 18px -4px rgba(77,255,166,0.6); }
+#wh-cal-widget.collapsed .wh-cal-w-body { display: none; }
+#wh-cal-widget.collapsed .wh-cal-w-head { border-bottom: none; }
+#wh-cal-widget.collapsed .wh-cal-w-collapse { transform: rotate(-90deg); }
+
+.wh-cal-w-head {
+  display: flex; align-items: center; gap: 7px; padding: 5px 10px; cursor: grab;
+  font-size: 0.66em; letter-spacing: 0.2em; font-weight: 800; color: #9af2c4;
+  background: rgba(15,58,38,0.6); border-bottom: 1px solid rgba(47,158,106,0.45);
+  text-shadow: 0 0 6px rgba(77,255,166,0.5);
+}
+#wh-cal-widget.dragging .wh-cal-w-head { cursor: grabbing; }
+.wh-cal-w-title { flex: 1; }
+.wh-cal-w-led { width: 7px; height: 7px; border-radius: 50%; background: #4dffa6; box-shadow: 0 0 8px #4dffa6; animation: whCalLed 2.4s ease-in-out infinite; }
+@keyframes whCalLed { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.wh-cal-w-settings, .wh-cal-w-collapse { cursor: pointer; font-size: 1.05em; line-height: 1; opacity: 0.7; transition: transform 0.15s, opacity 0.15s; }
+.wh-cal-w-settings:hover, .wh-cal-w-collapse:hover { opacity: 1; color: #4dffa6; }
+
+.wh-cal-w-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; }
+.wh-cal-w-date {
+  font-size: 1.05em; font-weight: 700; letter-spacing: 0.03em; color: #eafff4;
+  text-align: center; text-shadow: 0 0 8px rgba(77,255,166,0.35);
+}
+.wh-cal-w-watch {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 0.8em; color: #9fc4b2; flex-wrap: wrap;
+}
+.wh-cal-w-watch-ic { font-size: 1.1em; }
+.wh-cal-w-watch-primary { font-size: 0.85em; color: #cfe9dc; }
+.wh-cal-w-watch-secondary { font-size: 0.74em; opacity: 0.85; }
+
+.wh-cal-w-controls { display: flex; justify-content: space-between; gap: 4px; margin-top: 3px; }
+.wh-cal-w-controls-editable { margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(47,158,106,0.3); }
+.wh-cal-w-step { display: flex; align-items: center; gap: 3px; flex: 1; justify-content: center; }
+.wh-cal-w-step-lbl { font-size: 0.68em; color: #9fc4b2; min-width: 1.4em; text-align: center; }
+.wh-cal-w-step-input {
+  width: 2.6em; height: 1.4em; padding: 0 2px; font-size: 0.75em; text-align: center;
+  border-radius: 3px; border: 1px solid rgba(47,158,106,0.4); background: rgba(15,58,38,0.5); color: #eafff4;
+}
+.wh-cal-w-btn {
+  width: 1.4em; height: 1.4em; line-height: 1; padding: 0; border-radius: 3px;
+  border: 1px solid rgba(47,158,106,0.4); background: rgba(15,58,38,0.5); color: #9af2c4;
+  cursor: pointer; font-size: 0.8em;
+}
+.wh-cal-w-btn:hover { background: rgba(47,158,106,0.5); color: #eafff4; }
+
+/* ── Строка «Старт/Пауза» авто-течения времени — холодная синяя гамма ── */
+.wh-cal-w-flow-row { align-items: center; }
+.wh-cal-w-flow-btn {
+  flex: 1; height: 1.9em; line-height: 1; padding: 0 4px; border-radius: 4px;
+  border: 1px solid rgba(90,180,230,0.4); background: rgba(10,30,45,0.5); color: #a8dcff;
+  cursor: pointer; font-size: 0.78em; font-weight: 700; letter-spacing: 0.02em;
+}
+.wh-cal-w-flow-btn:hover { background: rgba(90,180,230,0.5); color: #eaf6ff; }
+.wh-cal-w-flow-btn.running { background: rgba(90,180,230,0.55); color: #eaf6ff; box-shadow: 0 0 8px rgba(90,180,230,0.5); }
+.wh-cal-w-flow-speed-lbl { font-size: 0.72em; color: #9fc4dc; }
+.wh-cal-w-flow-speed {
+  width: 3.2em; height: 1.9em; padding: 0 2px; font-size: 0.78em; text-align: center;
+  border-radius: 3px; border: 1px solid rgba(90,180,230,0.4); background: rgba(10,30,45,0.5); color: #eaf6ff;
+}
+
+/* ── Строка «Сессия/Сцена» — тёплая золотая гамма, тема Судьбы ── */
+.wh-cal-w-session-row { margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(230,175,90,0.35); }
+.wh-cal-w-session-btn {
+  flex: 1; height: 1.9em; line-height: 1; padding: 0 4px; border-radius: 4px;
+  border: 1px solid rgba(230,175,90,0.4); background: rgba(40,28,8,0.5); color: #ffe3a8;
+  cursor: pointer; font-size: 0.78em; font-weight: 700; letter-spacing: 0.02em;
+}
+.wh-cal-w-session-btn:hover { background: rgba(230,175,90,0.5); color: #fff6e0; }
+
+/* ══════════════════ ДИАЛОГ НАСТРОЕК ══════════════════ */
+.wh-cal-settings-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.wh-cal-settings-row label { font-size: 0.85em; opacity: 0.85; }
+.wh-cal-settings-row input[type="number"] { width: 4.5em; }
+.wh-cal-settings-hint { font-size: 0.78em; opacity: 0.75; margin: 4px 0 10px; font-style: italic; }
+.wh-cal-settings-subtitle { font-size: 0.85em; font-weight: 700; opacity: 0.9; margin-bottom: 4px; }
+.wh-cal-watch-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.wh-cal-watch-row { display: flex; gap: 6px; align-items: center; }
+.wh-cal-watch-icon { width: 3em; text-align: center; }
+.wh-cal-watch-label { flex: 1; }
+.wh-cal-watch-hours { width: 4.5em; text-align: center; }
+.wh-cal-watch-remove { width: auto; padding: 1px 8px; }
+.wh-cal-watch-add { margin-top: 4px; }
+
+.wh-cal-preset-checklist { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+.wh-cal-preset-row {
+  display: flex; align-items: center; gap: 6px; padding: 3px 5px; border-radius: 4px;
+  cursor: pointer; font-size: 0.85em;
+}
+.wh-cal-preset-row:hover { background: rgba(47,158,106,0.15); }
+.wh-cal-preset-row input[type="checkbox"] { margin: 0; }
+.wh-cal-preset-row-label { flex: 1; }
+.wh-cal-preset-delete { width: auto; padding: 0 6px; margin-left: auto; }
+.wh-cal-preset-add { margin-bottom: 8px; }
+.wh-cal-preset-creator {
+  margin-top: 6px; padding: 8px; border: 1px dashed rgba(47,158,106,0.4); border-radius: 6px;
+}
+.wh-cal-preset-name { flex: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wh-cal-w-led { animation: none !important; }
+}

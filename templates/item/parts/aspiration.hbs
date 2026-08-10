@@ -1,0 +1,38 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  СТРЕМЛЕНИЕ (Black Crusade, стр. 22) — библиотека, из которой берутся   --}}
+{{!--  варианты дропдауна «СТРЕМЛЕНИЯ» на вкладке ЗАПИСИ.                     --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "aspiration")}}
+
+<div class="item-section">
+  <div class="item-section-title">СТРЕМЛЕНИЕ</div>
+  <div class="trait-fx-hint">Справочная запись библиотеки «Стремления». Модификаторы — подсказка для игрока (применяются к Базе характеристик вручную при выборе на вкладке ЗАПИСИ), сам движок их не считает.</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Таблица</label>
+    <select name="system.table" class="wr-select-sm">
+      <option value="pride"      {{#if (eq system.table "pride")}}selected{{/if}}>Гордость</option>
+      <option value="motivation" {{#if (eq system.table "motivation")}}selected{{/if}}>Мотивация</option>
+      <option value="disgrace"   {{#if (eq system.table "disgrace")}}selected{{/if}}>Позор</option>
+    </select>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Модификаторы</label>
+    <input type="text" name="system.mods" value="{{system.mods}}"
+           class="wr-input-md" placeholder="напр. +5 Inf, +5 F, −5 W"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Источник</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Black Crusade, стр. 22"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label" title="table:n — только для справки, не редактируется здесь">Ключ</label>
+    <input type="text" value="{{system.key}}" class="wr-input-md" readonly/>
+  </div>
+</div>
+
+{{/if}}

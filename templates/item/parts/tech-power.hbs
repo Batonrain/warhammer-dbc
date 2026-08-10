@@ -1,0 +1,182 @@
+{{#if (eq item.type "techPower")}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ ТЕХНОЧУДА</div>
+  <div class="weapon-row">
+    <label class="wr-label">Тип</label>
+    <select name="system.miracleType" class="wr-select">
+      <option value="anima"       {{#if (eq system.miracleType "anima")}}selected{{/if}}>Анима</option>
+      <option value="doctrine"    {{#if (eq system.miracleType "doctrine")}}selected{{/if}}>Доктрина</option>
+      <option value="imperative"  {{#if (eq system.miracleType "imperative")}}selected{{/if}}>Императива (X)</option>
+      <option value="compensator" {{#if (eq system.miracleType "compensator")}}selected{{/if}}>Компенсатор (X)</option>
+      <option value="manipula"    {{#if (eq system.miracleType "manipula")}}selected{{/if}}>Манипула (X)</option>
+      <option value="passive"     {{#if (eq system.miracleType "passive")}}selected{{/if}}>Пассивное</option>
+      <option value="slavoslovie" {{#if (eq system.miracleType "slavoslovie")}}selected{{/if}}>Славословие (X×5 мин)</option>
+    </select>
+    {{#if (or (eq system.miracleType "imperative") (eq system.miracleType "compensator") (eq system.miracleType "manipula") (eq system.miracleType "slavoslovie"))}}
+    <label class="wr-label" title="Значение X в названии типа (целей/рук/минут и т.п.)">Значение X</label>
+    <input type="number" name="system.rating" value="{{system.rating}}" class="wr-input-xs"
+           title="X для типов с (X): число целей/рук/минут/множитель"/>
+    {{/if}}
+    {{#if (eq system.miracleType "slavoslovie")}}
+    <label class="drug-fx-cb-label" title="Отметьте после компиляции кода (X×5 мин). Расходуется при успешной активации.">
+      <input type="checkbox" name="system.compiled" {{#if system.compiled}}checked{{/if}}/>
+      Скомпилировано
+    </label>
+    {{/if}}
+  </div>
+
+  {{!-- Дисциплина и подтип --}}
+  <div class="weapon-row">
+    <label class="wr-label">Дисциплина</label>
+    <select name="system.discipline" class="wr-select">
+      <option value="" {{#if (eq system.discipline "")}}selected{{/if}}>— нет —</option>
+      {{#each disciplineGroups as |g|}}
+      <optgroup label="{{g.label}}">
+        {{#each g.items as |d|}}
+        <option value="{{d.key}}" {{#if (eq @root.system.discipline d.key)}}selected{{/if}}>{{d.label}}</option>
+        {{/each}}
+      </optgroup>
+      {{/each}}
+    </select>
+    {{#if disciplineSubtypes.length}}
+    <label class="wr-label">Подтип</label>
+    <select name="system.subtype" class="wr-select">
+      <option value="" {{#if (eq system.subtype "")}}selected{{/if}}>— нет —</option>
+      {{#each disciplineSubtypes as |st|}}
+      <option value="{{st}}" {{#if (eq @root.system.subtype st)}}selected{{/if}}>{{st}}</option>
+      {{/each}}
+    </select>
+    {{/if}}
+  </div>
+
+  {{!-- Доп. типы (с собственным X) --}}
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Доп. типы</label>
+      <select class="xtype-add-select">
+        <option value="">＋ добавить тип…</option>
+        {{#each extraTypesAvailable as |t|}}
+        <option value="{{t.key}}">{{t.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if extraTypesActive.length}}
+    <div class="weapon-props-list">
+      {{#each extraTypesActive as |t|}}
+      <div class="wprop-chip">
+        <span class="wprop-name">{{t.label}}</span>
+        <span class="wprop-slash">X:</span>
+        <input type="number" class="xtype-x" data-type="{{t.type}}" value="{{t.x}}" title="Значение X для этого типа"/>
+        <button type="button" class="wprop-remove xtype-remove" data-type="{{t.type}}" title="Убрать тип">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  {{!-- Железо: требуемые импланты-Технофокусы (Качество → мод. к тесту) --}}
+  <div class="weapon-row">
+    <label class="wr-label" title="Через запятую — имена (или части имён) имплантов-Технофокусов, необходимых как «Железо». При активации берётся наименее качественный из установленных: Poor −10 / Good +5 / Best +10 к тесту и к I.b в формулах. Если ни один не установлен — активация блокируется.">Железо (Технофокусы)</label>
+    <input type="text" name="system.iron" value="{{system.iron}}" class="wr-input-special"
+           placeholder="напр. Luminen Capacitors, Ferric Lure"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">{{{techIcon "cognition"}}} Когниция</label>
+    <input type="number" name="system.cognitionCost" value="{{system.cognitionCost}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label">{{{techIcon "energy"}}} Энергия</label>
+    <input type="number" name="system.energyCost" value="{{system.energyCost}}" min="0" class="wr-input-xs"
+           title="Заряды Катушки Потенции"/>
+    <label class="wr-label" title="Стоимость изучения в Опыте — суммируется в потраченный Опыт листа">Цена XP</label>
+    <input type="number" name="system.cost" value="{{system.cost}}" min="0" class="wr-input-xs"
+           title="Стоимость техночуда в Опыте"/>
+    <label class="wr-label">Действие</label>
+    <select name="system.action" class="wr-select-sm">
+      <option value="free"     {{#if (eq system.action "free")}}selected{{/if}}>Свободное</option>
+      <option value="reaction" {{#if (eq system.action "reaction")}}selected{{/if}}>Реакция</option>
+      <option value="half"     {{#if (eq system.action "half")}}selected{{/if}}>Полудействие</option>
+      <option value="full"     {{#if (eq system.action "full")}}selected{{/if}}>Полное</option>
+      <option value="extended" {{#if (eq system.action "extended")}}selected{{/if}}>Длительное</option>
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Навык теста</label>
+    <select name="system.testSkill" class="wr-select-sm" title="Навык для активации (не только Tech-Use)">
+      {{#each techSkillOptions as |s|}}
+      <option value="{{s.key}}" {{#if (eq ../system.testSkill s.key)}}selected{{/if}}>{{s.label}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Тест-мод</label>
+    <input type="number" name="system.testMod" value="{{system.testMod}}" class="wr-input-xs"
+           title="Модификатор к тесту активации"/>
+    <label class="wr-label">Дальность</label>
+    <input type="text" name="system.range" value="{{system.range}}" class="wr-input-md" placeholder="напр. 10 м"/>
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.sustained" {{#if system.sustained}}checked{{/if}}/>
+      Поддерживаемое
+    </label>
+    {{#if system.sustained}}
+    <label class="wr-label">Подд./Ход</label>
+    <input type="number" name="system.sustainCost" value="{{system.sustainCost}}" min="0" class="wr-input-xs"
+           title="Когниция за поддержание в Ход"/>
+    <label class="wr-label">Действие подд.</label>
+    <select name="system.sustainAction" class="wr-select-sm"
+            title="Какое действие требуется для поддержания">
+      <option value="free"     {{#if (eq system.sustainAction "free")}}selected{{/if}}>Свободное</option>
+      <option value="reaction" {{#if (eq system.sustainAction "reaction")}}selected{{/if}}>Реакция</option>
+      <option value="half"     {{#if (eq system.sustainAction "half")}}selected{{/if}}>Полудействие</option>
+      <option value="full"     {{#if (eq system.sustainAction "full")}}selected{{/if}}>Полное</option>
+    </select>
+    {{/if}}
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">УРОН (если есть)</div>
+  <div class="weapon-row">
+    <label class="wr-label">Урон</label>
+    <input type="text" name="system.damage" value="{{system.damage}}" class="wr-input-md" placeholder="напр. 1d10+I.b (X→рейтинг)"/>
+    <label class="wr-label">Тип</label>
+    <select name="system.damageType" class="wr-select-sm">
+      <option value="energy"   {{#if (eq system.damageType "energy")}}selected{{/if}}>Энергетический</option>
+      <option value="impact"   {{#if (eq system.damageType "impact")}}selected{{/if}}>Ударный</option>
+      <option value="rending"  {{#if (eq system.damageType "rending")}}selected{{/if}}>Режущий</option>
+      <option value="blast"    {{#if (eq system.damageType "blast")}}selected{{/if}}>Взрывной</option>
+      <option value="chemical" {{#if (eq system.damageType "chemical")}}selected{{/if}}>Химический</option>
+    </select>
+    <label class="wr-label">Проб.</label>
+    <input type="number" name="system.penetration" value="{{system.penetration}}" min="0" class="wr-input-xs"/>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">БОНУСЫ ХАРАКТЕРИСТИК (пока поддерживается/пассивно)</div>
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Добавить</label>
+      <select class="cbonus-add">
+        <option value="">＋ характеристика…</option>
+        {{#each charBonusOptions as |c|}}
+        <option value="{{c.key}}">{{c.abbr}} — {{c.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if charBonusesActive.length}}
+    <div class="weapon-props-list">
+      {{#each charBonusesActive as |cb|}}
+      <div class="wprop-chip">
+        <span class="wprop-name">{{cb.abbr}}</span>
+        <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}" title="Прибавка к бонусу характеристики"/>
+        <button type="button" class="wprop-remove cbonus-remove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  <div class="drug-stat-hint">Бонусы действуют, пока техночудо поддерживается (или для типа «Пассивное» — всегда).</div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЭФФЕКТ</div>
+  <textarea name="system.effect" class="item-textarea" placeholder="Что делает Техночудо...">{{system.effect}}</textarea>
+</div>
+{{/if}}

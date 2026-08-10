@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="256" height="256">
+  <!-- Значок Орды/Отряда: толпа силуэтов в медальоне. Тёмная заливка + зелёный
+       холо-контур, читается на светлых и на тёмных фонах токена. -->
+  <defs>
+    <radialGradient id="hordeGlow" cx="50%" cy="40%" r="65%">
+      <stop offset="0%"  stop-color="#10432f"/>
+      <stop offset="100%" stop-color="#06180f"/>
+    </radialGradient>
+    <clipPath id="hordeClip"><circle cx="64" cy="64" r="59"/></clipPath>
+  </defs>
+
+  <circle cx="64" cy="64" r="59" fill="url(#hordeGlow)"/>
+
+  <g clip-path="url(#hordeClip)" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Задний ряд (три бюста, приглушённые) -->
+    <g fill="#164c3b" stroke="#4a986f" stroke-width="2.5" opacity="0.9">
+      <path d="M22 96 A18 30 0 0 1 58 96 Z"/>
+      <circle cx="40" cy="54" r="11.5"/>
+      <path d="M70 96 A18 30 0 0 1 106 96 Z"/>
+      <circle cx="88" cy="54" r="11.5"/>
+      <path d="M45 94 A19 32 0 0 1 83 94 Z"/>
+      <circle cx="64" cy="50" r="12"/>
+    </g>
+
+    <!-- Передний ряд (два бюста, яркие) -->
+    <g fill="#0c3327" stroke="#78ffbe" stroke-width="3">
+      <path d="M16 124 A26 40 0 0 1 78 124 Z"/>
+      <circle cx="47" cy="74" r="15"/>
+      <path d="M50 124 A26 40 0 0 1 112 124 Z"/>
+      <circle cx="81" cy="74" r="15"/>
+    </g>
+  </g>
+
+  <circle cx="64" cy="64" r="59" fill="none" stroke="#7affbe" stroke-width="2.5" opacity="0.85"/>
+</svg>

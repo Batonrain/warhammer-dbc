@@ -1,0 +1,375 @@
+/* ═══════════════════════ Лист техники ═══════════════════════ */
+.warhammer-dbc.vehicle-sheet { display: flex; flex-direction: column; }
+
+/* ── Шапка ── */
+.warhammer-dbc .veh-header { display: flex; gap: 10px; align-items: stretch; padding: 6px 4px 8px; }
+.warhammer-dbc .veh-portrait { flex: 0 0 auto; width: 84px; height: 84px; object-fit: cover;
+  border: 2px solid var(--wh-border); border-radius: 4px; background: rgba(0,0,0,0.15); cursor: pointer; }
+.warhammer-dbc .veh-head-fields { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.warhammer-dbc .veh-name { font-size: 1.35em; font-weight: bold; background: transparent;
+  border: none; border-bottom: 1px solid var(--wh-border); color: var(--wh-text-dark); }
+.warhammer-dbc .veh-head-row { display: flex; gap: 8px; }
+.warhammer-dbc .veh-head-row label { flex: 1 1 0; display: flex; flex-direction: column; font-size: 0.78em;
+  color: var(--wh-panel-mid); gap: 2px; }
+
+/* ── Блок Структуры (аналог Ран) ── */
+.warhammer-dbc .veh-structure-box { flex: 0 0 auto; width: 132px; text-align: center; padding: 5px 6px;
+  border: 2px solid var(--wh-border); border-radius: 4px; background: var(--wh-panel-bg);
+  display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.warhammer-dbc .veh-struct-label { font-size: 0.72em; letter-spacing: 0.08em; color: var(--wh-panel-mid); font-weight: bold; }
+.warhammer-dbc .veh-struct-vals { display: flex; align-items: center; justify-content: center; gap: 3px; }
+.warhammer-dbc .veh-struct-vals input { width: 42px; text-align: center; font-size: 1.2em; font-weight: bold;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border); }
+.warhammer-dbc .veh-struct-crit { font-size: 0.72em; color: var(--wh-panel-mid); }
+.warhammer-dbc .veh-struct-crit input { width: 40px; text-align: center; background: var(--wh-input-bg); border: 1px solid var(--wh-border); }
+.warhammer-dbc .veh-structure-box.veh-wrecked { border-color: var(--wh-red); box-shadow: 0 0 8px rgba(139,26,26,0.5); }
+.warhammer-dbc .veh-wrecked-tag { font-size: 0.68em; font-weight: bold; color: #fff; background: var(--wh-red); border-radius: 8px; padding: 0 6px; }
+
+/* ── Вкладки ── */
+.warhammer-dbc .veh-tabs { display: flex; gap: 2px; border-bottom: 2px solid var(--wh-border); margin: 0 2px; }
+.warhammer-dbc .veh-tabs .item { padding: 4px 12px; font-weight: bold; font-size: 0.86em; cursor: pointer;
+  color: var(--wh-text-light); background: var(--wh-panel-mid); border-radius: 4px 4px 0 0; opacity: 0.75; }
+.warhammer-dbc .veh-tabs .item.active { opacity: 1; background: var(--wh-panel-dark); box-shadow: inset 0 -2px 0 var(--wh-accent); }
+.warhammer-dbc .veh-tab { padding: 8px 4px; }
+
+/* ── Панели ── */
+.warhammer-dbc .veh-overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.warhammer-dbc .veh-col-full { grid-column: 1 / -1; }
+.warhammer-dbc .veh-panel { border: 1px solid var(--wh-border); border-radius: 4px; background: var(--wh-panel-bg);
+  padding: 7px 9px; margin-bottom: 8px; }
+.warhammer-dbc .veh-panel-title { font-size: 0.8em; letter-spacing: 0.06em; font-weight: bold; color: var(--wh-panel-mid);
+  border-bottom: 1px solid var(--wh-border-light); padding-bottom: 3px; margin-bottom: 6px; }
+.warhammer-dbc .veh-hint { font-size: 0.78em; font-style: italic; color: var(--wh-panel-mid); line-height: 1.35; margin-top: 6px; }
+
+/* Броня */
+.warhammer-dbc .veh-armour-grid { display: flex; gap: 6px; }
+.warhammer-dbc .veh-armour { flex: 1 1 0; text-align: center; background: rgba(0,0,0,0.06); border: 1px solid var(--wh-border-light); border-radius: 4px; padding: 4px; }
+.warhammer-dbc .veh-armour-k { font-size: 0.74em; color: var(--wh-panel-mid); font-weight: bold; }
+.warhammer-dbc .veh-armour input { width: 100%; text-align: center; font-size: 1.35em; font-weight: bold; background: var(--wh-input-bg); border: 1px solid var(--wh-border); }
+
+/* Двухколоночные поля */
+.warhammer-dbc .veh-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; }
+.warhammer-dbc .veh-two-col label { display: flex; flex-direction: column; font-size: 0.78em; color: var(--wh-panel-mid); gap: 2px; }
+.warhammer-dbc .veh-two-col input, .warhammer-dbc .veh-two-col select { background: var(--wh-input-bg); border: 1px solid var(--wh-border); }
+.warhammer-dbc .veh-check-inline { flex-direction: row !important; align-items: center; gap: 5px; }
+.warhammer-dbc .veh-full-label { display: flex; flex-direction: column; font-size: 0.78em; color: var(--wh-panel-mid); gap: 2px; margin-top: 5px; }
+.warhammer-dbc .veh-full-label textarea { background: var(--wh-input-bg); border: 1px solid var(--wh-border); font-family: inherit; resize: vertical; }
+
+.warhammer-dbc .veh-derived-row { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 7px; font-size: 0.82em; }
+.warhammer-dbc .veh-derived-row span { white-space: nowrap; }
+.warhammer-dbc .veh-derived-row b { color: var(--wh-accent); }
+
+/* ── Экипаж (места) ── */
+.warhammer-dbc .veh-crew-help { font-size: 0.82em; font-style: italic; color: var(--wh-panel-mid); margin-bottom: 8px; line-height: 1.4; }
+.warhammer-dbc .veh-add-bar { display: flex; gap: 6px; align-items: center; margin-bottom: 8px;
+  padding: 6px; border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.04); }
+.warhammer-dbc .veh-add-bar .veh-add-role { flex: 1 1 auto; min-width: 0; background: var(--wh-input-bg); border: 1px solid var(--wh-border); }
+.warhammer-dbc .veh-add-bar .veh-add-count { flex: 0 0 56px; width: 56px; text-align: center; background: var(--wh-input-bg); border: 1px solid var(--wh-border); }
+.warhammer-dbc .veh-add-bar .veh-add-stations { flex: 0 0 auto !important; width: auto; white-space: nowrap;
+  cursor: pointer; font-weight: bold; font-size: 0.84em; padding: 4px 12px; line-height: 1.6;
+  background: linear-gradient(180deg, var(--wh-parchment2), var(--wh-parchment3)); border: 1px solid var(--wh-border-light);
+  border-radius: 3px; color: var(--wh-text-dark); }
+.warhammer-dbc .veh-add-bar .veh-add-stations:hover { background: linear-gradient(180deg, var(--wh-panel-mid), var(--wh-panel-dark)); color: var(--wh-text-light); }
+
+.warhammer-dbc .veh-crew-list { display: flex; flex-direction: column; gap: 4px; }
+.warhammer-dbc .veh-station-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px;
+  border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.04); }
+.warhammer-dbc .veh-station-row.veh-station-filled { border-left: 3px solid var(--wh-accent); }
+.warhammer-dbc .veh-station-row.veh-crew-missing { opacity: 0.6; border-style: dashed; }
+.warhammer-dbc .veh-station-label { flex: 0 0 108px; font-weight: bold; font-size: 0.85em; color: var(--wh-panel-mid);
+  letter-spacing: 0.02em; text-transform: uppercase; }
+.warhammer-dbc .veh-station-empty { flex: 1 1 auto; font-size: 0.82em; font-style: italic; color: var(--wh-panel-mid); opacity: 0.75; }
+.warhammer-dbc .veh-crew-img { width: 34px; height: 34px; object-fit: cover; border: 1px solid var(--wh-border); border-radius: 3px; cursor: pointer; flex: 0 0 auto; }
+.warhammer-dbc .veh-crew-name { flex: 1 1 auto; font-weight: bold; cursor: pointer; color: var(--wh-text-dark); }
+.warhammer-dbc .veh-crew-name:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .veh-crew-bs { font-size: 0.8em; font-weight: normal; color: var(--wh-panel-mid); }
+.warhammer-dbc .veh-station-clear, .warhammer-dbc .veh-station-remove { flex: 0 0 auto; cursor: pointer; padding: 0 5px; color: var(--wh-panel-mid); }
+.warhammer-dbc .veh-station-clear:hover { color: #fff; background: var(--wh-panel-mid); border-radius: 3px; }
+.warhammer-dbc .veh-station-remove:hover { color: #fff; background: var(--wh-red); border-radius: 3px; }
+
+/* ── Орудия ── */
+.warhammer-dbc .veh-section-head { display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.82em; font-weight: bold; letter-spacing: 0.05em; color: var(--wh-panel-mid);
+  border-bottom: 1px solid var(--wh-border); padding-bottom: 3px; margin-bottom: 6px; }
+.warhammer-dbc .veh-create-weapon { cursor: pointer; color: var(--wh-accent); font-weight: bold; }
+.warhammer-dbc .veh-create-weapon:hover { color: var(--wh-red); }
+.warhammer-dbc .veh-weapon-row { border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.04); padding: 6px 8px; margin-bottom: 6px; }
+.warhammer-dbc .veh-weapon-row.veh-weapon-standard { border-left: 3px solid var(--wh-red); }
+.warhammer-dbc .veh-weapon-main { display: flex; align-items: center; gap: 8px; }
+.warhammer-dbc .veh-weapon-img { width: 30px; height: 30px; object-fit: contain; cursor: pointer; flex: 0 0 auto; }
+.warhammer-dbc .veh-weapon-title { font-weight: bold; cursor: pointer; color: var(--wh-text-dark); flex: 0 0 auto; }
+.warhammer-dbc .veh-weapon-title:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .veh-weapon-stats { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.8em; color: var(--wh-panel-mid); flex: 1 1 auto; }
+.warhammer-dbc .veh-weapon-btns { display: flex; gap: 6px; flex: 0 0 auto; }
+.warhammer-dbc .veh-weapon-btns a { cursor: pointer; color: var(--wh-panel-mid); padding: 2px 5px; border: 1px solid var(--wh-border-light); border-radius: 3px; }
+.warhammer-dbc .veh-weapon-btns a:hover { color: #fff; background: var(--wh-panel-mid); }
+.warhammer-dbc .veh-weapon-mount { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; padding-top: 5px; border-top: 1px dashed var(--wh-border-light); }
+.warhammer-dbc .veh-weapon-mount label { display: flex; flex-direction: column; font-size: 0.72em; color: var(--wh-panel-mid); gap: 1px; }
+.warhammer-dbc .veh-weapon-mount select, .warhammer-dbc .veh-weapon-mount input[type=text] { background: var(--wh-input-bg); border: 1px solid var(--wh-border); font-size: 0.92em; }
+.warhammer-dbc .veh-weapon-mount input[type=text] { width: 84px; }
+.warhammer-dbc .veh-weapon-mount .veh-weapon-swap-label { flex: 1 1 100%; }
+.warhammer-dbc .veh-weapon-swap { width: 100%; max-width: 100%; font-size: 0.92em; }
+.warhammer-dbc.vehicle-sheet .veh-weapon-swap {
+  background: var(--wh-input-bg); border: 1px solid var(--cg); color: var(--wh-text-dark);
+  box-shadow: 0 0 8px -4px var(--cg);
+}
+.warhammer-dbc .veh-mount-note { font-size: 0.74em; font-style: italic; color: var(--wh-panel-mid); margin-top: 4px; line-height: 1.3; }
+
+/* Снаряжение техники */
+.warhammer-dbc .veh-create-gear { cursor: pointer; color: var(--wh-accent); font-weight: bold; }
+.warhammer-dbc .veh-create-gear:hover { color: var(--wh-red); }
+.warhammer-dbc .veh-gear-list { display: flex; flex-direction: column; gap: 5px; }
+.warhammer-dbc .veh-gear-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px;
+  border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.04); }
+.warhammer-dbc .veh-gear-row.veh-gear-off { opacity: 0.5; }
+.warhammer-dbc .veh-gear-img { width: 28px; height: 28px; object-fit: contain; cursor: pointer; flex: 0 0 auto; margin-top: 1px; }
+.warhammer-dbc .veh-gear-main { flex: 1 1 auto; min-width: 0; }
+.warhammer-dbc .veh-gear-title { font-weight: bold; cursor: pointer; color: var(--wh-text-dark); }
+.warhammer-dbc .veh-gear-title:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .veh-gear-rarity { font-size: 0.74em; font-weight: bold; color: var(--wh-accent); border: 1px solid var(--wh-border-light);
+  border-radius: 8px; padding: 0 6px; margin-left: 4px; white-space: nowrap; }
+.warhammer-dbc .veh-gear-desc { font-size: 0.8em; line-height: 1.35; color: var(--wh-text); margin-top: 2px; }
+.warhammer-dbc .veh-gear-active { flex: 0 0 auto; margin-top: 2px; }
+.warhammer-dbc .veh-gear-del { flex: 0 0 auto; cursor: pointer; color: var(--wh-red); padding: 0 4px; }
+.warhammer-dbc .veh-gear-del:hover { color: #fff; background: var(--wh-red); border-radius: 3px; }
+
+/* ── Черты техники (Обзор) ── */
+.warhammer-dbc .veh-create-trait { cursor: pointer; color: var(--wh-accent); font-weight: bold; }
+.warhammer-dbc .veh-create-trait:hover { color: var(--wh-red); }
+.warhammer-dbc .veh-trait-list { display: flex; flex-direction: column; gap: 3px; }
+.warhammer-dbc .veh-trait-row { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; align-items: baseline;
+  gap: 0 6px; padding: 3px 6px; border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.04); }
+.warhammer-dbc .veh-trait-name { grid-column: 1; font-weight: bold; cursor: pointer; color: var(--wh-text-dark); font-size: 0.9em; }
+.warhammer-dbc .veh-trait-name:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .veh-trait-rating { font-size: 0.85em; color: var(--wh-accent); font-weight: normal; }
+.warhammer-dbc .veh-trait-benefit { grid-column: 1; font-size: 0.76em; font-style: italic; color: var(--wh-panel-mid); line-height: 1.25; }
+.warhammer-dbc .veh-trait-del { grid-column: 2; grid-row: 1 / span 2; align-self: center; cursor: pointer; color: var(--wh-red); padding: 0 4px; }
+.warhammer-dbc .veh-trait-del:hover { color: #fff; background: var(--wh-red); border-radius: 3px; }
+
+/* ── Огонь (быстрые кнопки орудий на Обзоре) ── */
+.warhammer-dbc .veh-firebar { display: flex; flex-direction: column; gap: 4px; }
+.warhammer-dbc .veh-fire-item { display: flex; align-items: center; gap: 8px; }
+.warhammer-dbc .veh-fire-item .veh-fire-weapon { flex: 0 1 auto !important; width: auto; align-self: flex-start;
+  text-align: left; cursor: pointer; font-weight: bold; font-size: 0.82em; line-height: 1.4; padding: 2px 10px;
+  background: linear-gradient(180deg, var(--wh-parchment2), var(--wh-parchment3)); border: 1px solid var(--wh-border-light);
+  border-radius: 3px; color: var(--wh-text-dark); white-space: nowrap; }
+.warhammer-dbc .veh-fire-item .veh-fire-weapon:hover { background: linear-gradient(180deg, var(--wh-panel-mid), var(--wh-panel-dark)); color: var(--wh-text-light); }
+.warhammer-dbc .veh-fire-item .veh-reload-weapon { flex: 0 0 auto; cursor: pointer; color: var(--wh-panel-mid);
+  padding: 2px 6px; border: 1px solid var(--wh-border-light); border-radius: 3px; font-size: 0.82em; }
+.warhammer-dbc .veh-fire-item .veh-reload-weapon:hover { color: #fff; background: var(--wh-panel-mid); }
+.warhammer-dbc .veh-fire-mag { flex: 0 0 auto; font-size: 0.78em; color: var(--wh-panel-mid); }
+
+/* ── Действия ── */
+.warhammer-dbc .veh-action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.warhammer-dbc .veh-action-btns button { flex: 1 1 130px; padding: 5px 10px; font-weight: bold; font-size: 0.86em; cursor: pointer;
+  background: linear-gradient(180deg, var(--wh-parchment2), var(--wh-parchment3));
+  border: 1px solid var(--wh-border-light); border-radius: 3px; color: var(--wh-text-dark); }
+.warhammer-dbc .veh-action-btns button:hover { background: linear-gradient(180deg, var(--wh-panel-mid), var(--wh-panel-dark)); color: var(--wh-text-light); }
+.warhammer-dbc .veh-hit-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+.warhammer-dbc .veh-hit-table th, .warhammer-dbc .veh-hit-table td { border: 1px solid var(--wh-border-light); padding: 3px 8px; text-align: left; }
+.warhammer-dbc .veh-hit-table th { background: var(--wh-panel-mid); color: var(--wh-text-light); }
+
+/* ── Справка ── */
+.warhammer-dbc .veh-ref-list { display: flex; flex-direction: column; gap: 6px; }
+.warhammer-dbc .veh-ref-item { border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.04); padding: 5px 8px; }
+.warhammer-dbc .veh-ref-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.warhammer-dbc .veh-ref-name { font-weight: bold; color: var(--wh-text-dark); }
+.warhammer-dbc .veh-ref-action { font-size: 0.78em; color: var(--wh-accent); font-weight: bold; white-space: nowrap; }
+.warhammer-dbc .veh-ref-type { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.03em; color: var(--wh-panel-mid); opacity: 0.8; }
+.warhammer-dbc .veh-ref-desc { font-size: 0.85em; line-height: 1.4; margin-top: 2px; }
+
+/* ── Повреждения: крит-таблицы ── */
+.warhammer-dbc .veh-crit-block { border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.04); margin-bottom: 6px; }
+.warhammer-dbc .veh-crit-summary { cursor: pointer; padding: 5px 8px; font-weight: bold; font-size: 0.86em; color: var(--wh-panel-mid); list-style: none; }
+.warhammer-dbc .veh-crit-summary::-webkit-details-marker { display: none; }
+.warhammer-dbc .veh-crit-summary::before { content: "▸ "; color: var(--wh-accent); }
+.warhammer-dbc details[open] > .veh-crit-summary::before { content: "▾ "; }
+.warhammer-dbc .veh-crit-table { width: 100%; border-collapse: collapse; font-size: 0.83em; margin: 0 0 5px; }
+.warhammer-dbc .veh-crit-table td { border-top: 1px solid var(--wh-border-light); padding: 3px 8px; vertical-align: top; line-height: 1.35; }
+.warhammer-dbc .veh-crit-lvl { width: 32px; text-align: center; font-weight: bold; color: var(--wh-accent); }
+.warhammer-dbc .veh-crit-block .veh-ref-list { padding: 0 6px 6px; }
+
+.warhammer-dbc .veh-empty { padding: 14px; text-align: center; opacity: 0.7; font-size: 0.9em; font-style: italic; }
+
+/* Диалоги техники */
+.wh-vehicle-dialog .atk-dlg-sub { font-weight: bold; font-size: 0.82em; margin: 4px 0 2px; color: var(--wh-panel-mid); }
+.wh-vehicle-dialog .veh-rof { display: block; font-size: 0.86em; margin: 1px 0; }
+.wh-vehicle-dialog .veh-check { display: block; font-size: 0.84em; margin-top: 5px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   КОГИТАТОРНЫЙ ЛОСК — под стать листу персонажа (фосфорная зелень).
+   Палитра берётся из wh-holo (--wh-accent = #4dffa6). Здесь — только
+   «терминальные» эффекты: моноширинный шрифт, CRT-строки, уголки
+   панелей, свечение, шкала Структуры, стилизация вкладок/кнопок.
+═══════════════════════════════════════════════════════════════ */
+.warhammer-dbc.vehicle-sheet {
+  --cg: var(--wh-accent, #4dffa6); --cg-dim: var(--wh-border-light, #2f9e6a);
+  --cg-line: var(--wh-border, #1f6f4a); --cg-fire: #ffb84d; --cg-red: var(--wh-red, #ff6b6b);
+  font-family: "Consolas","Lucida Console","Courier New",monospace;
+}
+.warhammer-dbc.vehicle-sheet input,
+.warhammer-dbc.vehicle-sheet select,
+.warhammer-dbc.vehicle-sheet textarea,
+.warhammer-dbc.vehicle-sheet button { font-family: inherit; }
+
+/* CRT-строки поверх тела листа (эффект экрана, не скроллятся) */
+.warhammer-dbc.vehicle-sheet .sheet-body { position: relative; }
+.warhammer-dbc.vehicle-sheet .sheet-body::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3; opacity: 0.4;
+  background: repeating-linear-gradient(0deg, rgba(77,255,166,0.03) 0 1px, transparent 1px 3px);
+}
+
+/* ── Шапка: рамка портрета + свечение имени ── */
+.warhammer-dbc.vehicle-sheet .veh-portrait-frame {
+  position: relative; flex: 0 0 auto; padding: 3px;
+  border: 1px solid var(--cg-line); border-radius: 5px;
+  background: linear-gradient(180deg, #0e2a1a, #04100a);
+  box-shadow: inset 0 0 14px rgba(0,60,30,0.5);
+}
+.warhammer-dbc.vehicle-sheet .veh-portrait-frame::before,
+.warhammer-dbc.vehicle-sheet .veh-portrait-frame::after {
+  content: ""; position: absolute; width: 9px; height: 9px; border-color: var(--cg); border-style: solid; opacity: 0.75;
+}
+.warhammer-dbc.vehicle-sheet .veh-portrait-frame::before { top: 2px; left: 2px; border-width: 1px 0 0 1px; }
+.warhammer-dbc.vehicle-sheet .veh-portrait-frame::after  { bottom: 2px; right: 2px; border-width: 0 1px 1px 0; }
+.warhammer-dbc.vehicle-sheet .veh-portrait { border: none; border-radius: 3px; display: block; }
+.warhammer-dbc.vehicle-sheet .veh-name {
+  color: var(--wh-text-dark); text-shadow: 0 0 8px rgba(77,255,166,0.5); letter-spacing: 0.03em;
+  border-bottom-color: var(--cg-line);
+}
+
+/* ── Шкала Структуры (реакторный индикатор) ── */
+.warhammer-dbc.vehicle-sheet .veh-structure-box {
+  width: 150px; gap: 4px; border: 1px solid var(--cg-line);
+  background: linear-gradient(180deg, #0e2a1a, #04100a);
+  box-shadow: inset 0 0 16px rgba(0,60,30,0.45), 0 0 12px -8px var(--cg);
+}
+.warhammer-dbc.vehicle-sheet .veh-struct-label {
+  color: var(--cg); letter-spacing: 0.13em; text-shadow: 0 0 6px rgba(77,255,166,0.45);
+}
+.warhammer-dbc.vehicle-sheet .veh-struct-vals input {
+  background: rgba(0,0,0,0.4); border: 1px solid var(--cg-line); color: var(--wh-text-dark);
+  text-shadow: 0 0 6px rgba(77,255,166,0.4);
+}
+.warhammer-dbc.vehicle-sheet .veh-struct-bar {
+  height: 9px; border: 1px solid var(--cg-line); border-radius: 3px;
+  background: rgba(0,0,0,0.5); overflow: hidden;
+}
+.warhammer-dbc.vehicle-sheet .veh-struct-fill {
+  height: 100%; background: linear-gradient(90deg, var(--cg-dim), var(--cg));
+  box-shadow: 0 0 10px var(--cg); transition: width 0.35s ease;
+}
+.warhammer-dbc.vehicle-sheet .veh-struct-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+}
+.warhammer-dbc.vehicle-sheet .veh-struct-status {
+  font-size: 0.66em; letter-spacing: 0.08em; font-weight: bold; color: var(--cg);
+}
+.warhammer-dbc.vehicle-sheet .veh-struct-crit input {
+  background: rgba(0,0,0,0.4); border: 1px solid var(--cg-line); color: var(--wh-text-dark);
+}
+/* Уровни состояния: жёлтый → красный (пульс) */
+.warhammer-dbc.vehicle-sheet .veh-gauge.sl-warn .veh-struct-fill { background: linear-gradient(90deg, #c8892a, var(--cg-fire)); box-shadow: 0 0 10px var(--cg-fire); }
+.warhammer-dbc.vehicle-sheet .veh-gauge.sl-warn .veh-struct-status { color: var(--cg-fire); }
+.warhammer-dbc.vehicle-sheet .veh-gauge.sl-crit .veh-struct-fill,
+.warhammer-dbc.vehicle-sheet .veh-gauge.sl-dead .veh-struct-fill { background: linear-gradient(90deg, #a01810, var(--cg-red)); box-shadow: 0 0 12px var(--cg-red); }
+.warhammer-dbc.vehicle-sheet .veh-gauge.sl-crit .veh-struct-status,
+.warhammer-dbc.vehicle-sheet .veh-gauge.sl-dead .veh-struct-status { color: var(--cg-red); animation: vehStatBlink 1s steps(2) infinite; }
+.warhammer-dbc.vehicle-sheet .veh-gauge.sl-crit, .warhammer-dbc.vehicle-sheet .veh-gauge.sl-dead { border-color: var(--cg-red); box-shadow: inset 0 0 16px rgba(80,0,0,0.4), 0 0 14px -6px var(--cg-red); }
+@keyframes vehStatBlink { 50% { opacity: 0.35; } }
+.warhammer-dbc.vehicle-sheet .veh-wrecked-tag { background: var(--cg-red); box-shadow: 0 0 8px rgba(255,60,60,0.5); }
+.warhammer-dbc.vehicle-sheet .veh-deflector {
+  margin-top: 3px; font-size: 0.72em; font-weight: bold; letter-spacing: 0.04em; text-align: center;
+  color: #a8d8ff; border: 1px solid #2f6fa0; border-radius: 3px; padding: 1px 4px;
+  background: rgba(60,130,200,0.12); box-shadow: inset 0 0 8px rgba(60,130,200,0.15);
+}
+.warhammer-dbc.vehicle-sheet .veh-deflector-daemon {
+  color: #d8b0ff; border-color: #6a3ca0; background: rgba(140,60,200,0.14); box-shadow: inset 0 0 8px rgba(140,60,200,0.18);
+}
+.warhammer-dbc.vehicle-sheet .veh-autopilot {
+  margin-top: 6px; font-size: 0.82em; color: #b6ffd8; letter-spacing: 0.02em;
+  border: 1px dashed var(--cg-line); border-radius: 3px; padding: 2px 7px;
+  background: rgba(77,255,166,0.06);
+}
+.warhammer-dbc.vehicle-sheet .veh-autopilot b { color: var(--cg); text-shadow: 0 0 6px rgba(77,255,166,0.4); }
+.warhammer-dbc.vehicle-sheet .veh-flicker {
+  margin-top: 3px; font-size: 0.72em; font-weight: bold; letter-spacing: 0.04em; text-align: center;
+  color: #ffcdf0; border: 1px solid #a03c88; border-radius: 3px; padding: 1px 4px;
+  background: rgba(200,60,160,0.12); box-shadow: inset 0 0 8px rgba(200,60,160,0.15);
+}
+
+/* ── Вкладки: свечение активной, как в листе персонажа ── */
+.warhammer-dbc.vehicle-sheet .veh-tabs { gap: 3px; border-bottom: 1px solid var(--cg-line); }
+.warhammer-dbc.vehicle-sheet .veh-tabs .item {
+  background: linear-gradient(180deg, #0c2016, #04100a); color: #7fbf9c;
+  border: 1px solid var(--cg-line); border-bottom: none; opacity: 0.85;
+  letter-spacing: 0.04em; transition: color 0.13s, text-shadow 0.13s, box-shadow 0.13s;
+}
+.warhammer-dbc.vehicle-sheet .veh-tabs .item i { margin-right: 4px; opacity: 0.8; }
+.warhammer-dbc.vehicle-sheet .veh-tabs .item:hover { color: var(--wh-text-dark); text-shadow: 0 0 8px var(--cg); }
+.warhammer-dbc.vehicle-sheet .veh-tabs .item.active {
+  opacity: 1; color: var(--wh-text-dark); background: linear-gradient(180deg, #143a26, #0a2016);
+  text-shadow: 0 0 8px var(--cg); box-shadow: inset 0 -2px 0 var(--cg), 0 0 12px -6px var(--cg);
+}
+
+/* ── Панели-терминалы: уголки + внутреннее свечение ── */
+.warhammer-dbc.vehicle-sheet .veh-panel {
+  position: relative; border: 1px solid var(--cg-line);
+  background: linear-gradient(180deg, rgba(12,32,22,0.9), rgba(6,18,12,0.9));
+  box-shadow: inset 0 0 18px rgba(0,50,25,0.4), 0 0 10px -8px var(--cg);
+}
+.warhammer-dbc.vehicle-sheet .veh-panel::before,
+.warhammer-dbc.vehicle-sheet .veh-panel::after {
+  content: ""; position: absolute; width: 8px; height: 8px; pointer-events: none; opacity: 0.55; border-color: var(--cg-dim); border-style: solid;
+}
+.warhammer-dbc.vehicle-sheet .veh-panel::before { top: 3px; left: 3px; border-width: 1px 0 0 1px; }
+.warhammer-dbc.vehicle-sheet .veh-panel::after  { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
+.warhammer-dbc.vehicle-sheet .veh-panel-title,
+.warhammer-dbc.vehicle-sheet .veh-section-head {
+  text-transform: uppercase; color: var(--cg); letter-spacing: 0.1em;
+  text-shadow: 0 0 6px rgba(77,255,166,0.4); border-bottom-color: var(--cg-line);
+}
+
+/* ── Кнопки действий/огня — терминальный стиль ── */
+.warhammer-dbc.vehicle-sheet .veh-action-btns button,
+.warhammer-dbc.vehicle-sheet .veh-fire-item .veh-fire-weapon,
+.warhammer-dbc.vehicle-sheet .veh-add-bar .veh-add-stations {
+  background: linear-gradient(180deg, #0e2a1a, #08160e); border: 1px solid var(--cg-line);
+  color: var(--wh-text-dark); letter-spacing: 0.02em; transition: all 0.13s;
+}
+.warhammer-dbc.vehicle-sheet .veh-action-btns button:hover,
+.warhammer-dbc.vehicle-sheet .veh-fire-item .veh-fire-weapon:hover,
+.warhammer-dbc.vehicle-sheet .veh-add-bar .veh-add-stations:hover {
+  border-color: var(--cg); box-shadow: 0 0 12px -4px var(--cg); color: #eafff4; background: linear-gradient(180deg, #143a26, #0a2016);
+}
+
+/* Армор-ячейки и станции — лёгкое свечение активных значений */
+.warhammer-dbc.vehicle-sheet .veh-armour input { color: var(--wh-text-dark); text-shadow: 0 0 6px rgba(77,255,166,0.35); }
+.warhammer-dbc.vehicle-sheet .veh-derived-row b { text-shadow: 0 0 6px rgba(77,255,166,0.4); }
+.warhammer-dbc.vehicle-sheet .veh-station-row.veh-station-filled { border-left: 3px solid var(--cg); box-shadow: inset 3px 0 0 -1px var(--cg); }
+.warhammer-dbc.vehicle-sheet .veh-weapon-row.veh-weapon-standard { border-left: 3px solid var(--cg-fire); }
+
+/* ── Трекер состояний машины (поломки/эффекты) ── */
+.warhammer-dbc.vehicle-sheet .veh-state-add-bar { display: inline-flex; align-items: center; gap: 5px; }
+.warhammer-dbc.vehicle-sheet .veh-state-select { max-width: 220px; background: var(--wh-input-bg); border: 1px solid var(--cg-line); font-size: 0.82em; }
+.warhammer-dbc.vehicle-sheet .veh-state-add { cursor: pointer; color: var(--cg); border: 1px solid var(--cg-line); border-radius: 3px; padding: 1px 6px; }
+.warhammer-dbc.vehicle-sheet .veh-state-add:hover { color: #eafff4; box-shadow: 0 0 10px -3px var(--cg); }
+.warhammer-dbc.vehicle-sheet .veh-states-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.warhammer-dbc.vehicle-sheet .veh-states-none { font-size: 0.82em; font-style: italic; color: #7fbf9c; opacity: 0.8; }
+.warhammer-dbc.vehicle-sheet .veh-state-chip {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 0.8em; font-weight: bold;
+  padding: 2px 5px 2px 9px; border-radius: 10px; letter-spacing: 0.02em;
+  border: 1px solid var(--cg-fire); color: #ffe6b0; background: rgba(255,184,77,0.1);
+  box-shadow: inset 0 0 8px rgba(255,184,77,0.15);
+}
+.warhammer-dbc.vehicle-sheet .veh-state-chip.veh-state-effect {
+  border-color: var(--cg-red); color: #ffd0d0; background: rgba(255,107,107,0.12); box-shadow: inset 0 0 8px rgba(255,107,107,0.18);
+}
+.warhammer-dbc.vehicle-sheet .veh-state-del { cursor: pointer; opacity: 0.75; display: inline-flex; }
+.warhammer-dbc.vehicle-sheet .veh-state-del:hover { opacity: 1; color: #fff; }
+.warhammer-dbc.vehicle-sheet .veh-states-panel.veh-panel { box-shadow: inset 0 0 18px rgba(0,50,25,0.4), 0 0 10px -8px var(--cg-fire); }
+
+/* details-блоки повреждений — терминальные */
+.warhammer-dbc.vehicle-sheet .veh-crit-summary { color: var(--cg); text-transform: uppercase; letter-spacing: 0.05em; }
+.warhammer-dbc.vehicle-sheet .veh-crit-lvl { color: var(--cg); text-shadow: 0 0 5px rgba(77,255,166,0.4); }
+.warhammer-dbc.vehicle-sheet .veh-hit-table th { background: linear-gradient(180deg, rgba(77,255,166,0.15), rgba(77,255,166,0.03)); color: #b6ffd8; text-shadow: 0 0 5px rgba(77,255,166,0.35); }

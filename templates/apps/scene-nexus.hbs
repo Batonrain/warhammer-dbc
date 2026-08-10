@@ -1,0 +1,107 @@
+<div class="wh-nx">
+
+  {{!-- ── Статус-строка: текущая сцена, выбор, создание группы ── --}}
+  <div class="wh-nx-status">
+    <div class="wh-nx-here">
+      <span class="wh-nx-here-lbl">ТЕКУЩАЯ СЦЕНА</span>
+      <span class="wh-nx-here-name">{{curName}}</span>
+    </div>
+    <div class="wh-nx-sel {{#if hasSel}}on{{/if}}">
+      {{#if hasSel}}
+        <span class="wh-nx-sel-ic">◈</span> Выбрано: <b>{{selCount}}</b> <span class="wh-nx-sel-names">({{selText}})</span>
+      {{else}}
+        <span class="wh-nx-sel-ic">○</span> Выберите токен на сцене, затем нажмите на карту-переход
+      {{/if}}
+    </div>
+    {{#if isGM}}<button type="button" class="wh-nx-btn" data-act="addGroup">＋ Группа</button>{{/if}}
+  </div>
+
+  <div class="wh-nx-body">
+    {{#if hasGroups}}
+      {{#each groups as |g|}}
+      <section class="wh-nx-group {{#if g.collapsed}}collapsed{{/if}}" style="--gc:{{g.color}}">
+        <header class="wh-nx-ghead">
+          <button type="button" class="wh-nx-caret" data-gcollapse="{{g.id}}" title="Свернуть / развернуть">{{#if g.collapsed}}▸{{else}}▾{{/if}}</button>
+          <span class="wh-nx-dot"></span>
+          <span class="wh-nx-gname">{{g.name}}</span>
+          <span class="wh-nx-gcount">{{g.count}}</span>
+          {{#if @root.isGM}}
+          <span class="wh-nx-veil tier-{{g.veilTier}}" title="Общая Завеса группы: {{g.veilLabel}}">
+            🌀 Завеса {{g.veilSigned}} · {{g.veilLabel}}
+          </span>
+          {{/if}}
+          {{#if @root.isGM}}
+          <span class="wh-nx-gtools">
+            <input type="color" class="wh-nx-gcolor" value="{{g.color}}" data-gcolor="{{g.id}}" title="Цвет группы"/>
+            <button type="button" data-gveil="{{g.id}}" title="Открыть окно Завесы для этой группы">🌀</button>
+            <button type="button" data-genv="{{g.id}}" title="Открыть Окружающую Среду для этой группы">🌡</button>
+            <button type="button" data-grename="{{g.id}}" title="Переименовать">✎</button>
+            <button type="button" data-gup="{{g.id}}" title="Выше">▲</button>
+            <button type="button" data-gdown="{{g.id}}" title="Ниже">▼</button>
+            <button type="button" class="wh-nx-gdel" data-gdel="{{g.id}}" title="Удалить группу">✕</button>
+          </span>
+          {{/if}}
+        </header>
+
+        {{#unless g.collapsed}}
+
+        {{!-- Подгруппы --}}
+        {{#each g.subgroups as |sub|}}
+        <section class="wh-nx-sub {{#if sub.collapsed}}collapsed{{/if}}">
+          <header class="wh-nx-subhead">
+            <button type="button" class="wh-nx-caret" data-gcollapse="{{sub.key}}" title="Свернуть подгруппу">{{#if sub.collapsed}}▸{{else}}▾{{/if}}</button>
+            <span class="wh-nx-subname">{{sub.name}}</span>
+            <span class="wh-nx-subcount">{{sub.count}}</span>
+            {{#if @root.isGM}}
+            <span class="wh-nx-subtools">
+              <button type="button" data-subrename="{{g.id}}" data-sub="{{sub.id}}" title="Переименовать подгруппу">✎</button>
+              <button type="button" class="wh-nx-gdel" data-subdel="{{g.id}}" data-sub="{{sub.id}}" title="Удалить подгруппу (сцены вернутся в общий список группы)">✕</button>
+            </span>
+            {{/if}}
+          </header>
+          {{#unless sub.collapsed}}
+            {{#if sub.hasCards}}
+            <div class="wh-nx-grid">{{#each sub.cards as |c|}}{{> "systems/warhammer-dbc/templates/apps/nexus-card.hbs" c}}{{/each}}</div>
+            {{else}}<div class="wh-nx-empty">В подгруппе нет сцен.</div>{{/if}}
+            {{#if @root.isGM}}
+            <div class="wh-nx-add">
+              <select data-subaddscene="{{g.id}}" data-sub="{{sub.id}}">
+                <option value="">＋ Сцену в подгруппу…</option>
+                {{#each g.looseAddable as |s|}}<option value="{{s.id}}">{{s.name}}</option>{{/each}}
+              </select>
+            </div>
+            {{/if}}
+          {{/unless}}
+        </section>
+        {{/each}}
+
+        {{!-- Прочие сцены группы (не в подгруппах) --}}
+        {{#if g.hasLoose}}
+        <div class="wh-nx-grid">{{#each g.looseCards as |c|}}{{> "systems/warhammer-dbc/templates/apps/nexus-card.hbs" c}}{{/each}}</div>
+        {{/if}}
+        {{#unless g.count}}<div class="wh-nx-empty">В группе нет сцен.</div>{{/unless}}
+
+        {{#if @root.isGM}}
+        <div class="wh-nx-add wh-nx-add-row">
+          <select data-gaddscene="{{g.id}}">
+            <option value="">＋ Добавить сцену в группу…</option>
+            {{#each g.addable as |fld|}}
+            <optgroup label="{{fld.label}}">
+              {{#each fld.scenes as |s|}}<option value="{{s.id}}">{{s.name}}</option>{{/each}}
+            </optgroup>
+            {{/each}}
+          </select>
+          <button type="button" class="wh-nx-btn wh-nx-subadd" data-subcreate="{{g.id}}" title="Создать подгруппу внутри группы">＋ Подгруппа</button>
+        </div>
+        {{/if}}
+        {{/unless}}
+      </section>
+      {{/each}}
+    {{else}}
+      <div class="wh-nx-empty-big">
+        {{#if isGM}}Групп пока нет. Нажмите «＋ Группа», затем добавьте в неё сцены и откройте переходы.
+        {{else}}Мастер ещё не открыл ни одного перехода.{{/if}}
+      </div>
+    {{/if}}
+  </div>
+</div>

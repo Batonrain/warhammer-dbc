@@ -1,0 +1,391 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  ПСИХОСИЛА                                                              --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "psychicPower")}}
+
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ ПСИХОСИЛЫ</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Тип</label>
+    <select name="system.powerType" class="wr-select">
+      <option value="attack"       {{#if (eq system.powerType "attack")}}selected{{/if}}>Атака</option>
+      <option value="aura"         {{#if (eq system.powerType "aura")}}selected{{/if}}>Аура</option>
+      <option value="infusion"     {{#if (eq system.powerType "infusion")}}selected{{/if}}>Вливание</option>
+      <option value="duration"     {{#if (eq system.powerType "duration")}}selected{{/if}}>Длительная (X)</option>
+      <option value="change"       {{#if (eq system.powerType "change")}}selected{{/if}}>Изменение (X)</option>
+      <option value="touch"        {{#if (eq system.powerType "touch")}}selected{{/if}}>Касание</option>
+      <option value="indirect"     {{#if (eq system.powerType "indirect")}}selected{{/if}}>Непрямое</option>
+      <option value="summon"       {{#if (eq system.powerType "summon")}}selected{{/if}}>Призыв</option>
+      <option value="psychicBlade" {{#if (eq system.powerType "psychicBlade")}}selected{{/if}}>Психический Клинок</option>
+      <option value="psychicShoot" {{#if (eq system.powerType "psychicShoot")}}selected{{/if}}>Психострельба</option>
+      <option value="concentration"{{#if (eq system.powerType "concentration")}}selected{{/if}}>Концентрация</option>
+      <option value="cycle"        {{#if (eq system.powerType "cycle")}}selected{{/if}}>Цикл</option>
+      <option value="other"        {{#if (eq system.powerType "other")}}selected{{/if}}>Прочее</option>
+    </select>
+
+    {{#if (eq system.powerType "psychicShoot")}}
+    <label class="wr-label">Подтип</label>
+    <select name="system.shootSubtype" class="wr-select-sm">
+      <option value=""           {{#if (eq system.shootSubtype "")}}selected{{/if}}>—</option>
+      <option value="projectile" {{#if (eq system.shootSubtype "projectile")}}selected{{/if}}>Снаряд</option>
+      <option value="barrage"    {{#if (eq system.shootSubtype "barrage")}}selected{{/if}}>Обстрел</option>
+      <option value="storm"      {{#if (eq system.shootSubtype "storm")}}selected{{/if}}>Шторм</option>
+      <option value="blast"      {{#if (eq system.shootSubtype "blast")}}selected{{/if}}>Взрыв (X)</option>
+      <option value="breath"     {{#if (eq system.shootSubtype "breath")}}selected{{/if}}>Дыхание</option>
+    </select>
+    {{/if}}
+  </div>
+
+  {{!-- Дисциплина и подтип --}}
+  <div class="weapon-row">
+    <label class="wr-label">Дисциплина</label>
+    <select name="system.discipline" class="wr-select">
+      <option value="" {{#if (eq system.discipline "")}}selected{{/if}}>— нет —</option>
+      {{#each disciplineGroups as |g|}}
+      <optgroup label="{{g.label}}">
+        {{#each g.items as |d|}}
+        <option value="{{d.key}}" {{#if (eq @root.system.discipline d.key)}}selected{{/if}}>{{d.label}}</option>
+        {{/each}}
+      </optgroup>
+      {{/each}}
+    </select>
+    {{#if disciplineSubtypes.length}}
+    <label class="wr-label">Подтип</label>
+    <select name="system.subtype" class="wr-select">
+      <option value="" {{#if (eq system.subtype "")}}selected{{/if}}>— нет —</option>
+      {{#each disciplineSubtypes as |st|}}
+      <option value="{{st}}" {{#if (eq @root.system.subtype st)}}selected{{/if}}>{{st}}</option>
+      {{/each}}
+    </select>
+    {{/if}}
+  </div>
+
+  {{!-- Доп. типы (с собственным X) --}}
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Доп. типы</label>
+      <select class="xtype-add-select">
+        <option value="">＋ добавить тип…</option>
+        {{#each extraTypesAvailable as |t|}}
+        <option value="{{t.key}}">{{t.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if extraTypesActive.length}}
+    <div class="weapon-props-list">
+      {{#each extraTypesActive as |t|}}
+      <div class="wprop-chip">
+        <span class="wprop-name">{{t.label}}</span>
+        <span class="wprop-slash">X:</span>
+        <input type="number" class="xtype-x" data-type="{{t.type}}" value="{{t.x}}" title="Значение X для этого типа"/>
+        <button type="button" class="wprop-remove xtype-remove" data-type="{{t.type}}" title="Убрать тип">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Требование PR</label>
+    <input type="number" name="system.prRequired" value="{{system.prRequired}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label">Тест</label>
+    <select name="system.testChar" class="wr-select-sm">
+      <option value="wp"  {{#if (eq system.testChar "wp")}}selected{{/if}}>WP</option>
+      <option value="int" {{#if (eq system.testChar "int")}}selected{{/if}}>Int</option>
+      <option value="per" {{#if (eq system.testChar "per")}}selected{{/if}}>Per</option>
+      <option value="fel" {{#if (eq system.testChar "fel")}}selected{{/if}}>Fel</option>
+      <option value="cor" {{#if (eq system.testChar "cor")}}selected{{/if}}>Порча (Cor)</option>
+      <option value="psyniscience" {{#if (eq system.testChar "psyniscience")}}selected{{/if}}>Псинаука (навык)</option>
+    </select>
+    <label class="wr-label">Тест-мод</label>
+    <input type="number" name="system.testMod" value="{{system.testMod}}" class="wr-input-xs"
+           title="Модификатор к психотесту этой силы"/>
+    <label class="wr-label">Действие</label>
+    <select name="system.action" class="wr-select-sm">
+      <option value="free"     {{#if (eq system.action "free")}}selected{{/if}}>Свободное</option>
+      <option value="reaction" {{#if (eq system.action "reaction")}}selected{{/if}}>Реакция</option>
+      <option value="half"     {{#if (eq system.action "half")}}selected{{/if}}>Полудействие</option>
+      <option value="full"     {{#if (eq system.action "full")}}selected{{/if}}>Полное</option>
+      <option value="extended" {{#if (eq system.action "extended")}}selected{{/if}}>Длительное</option>
+    </select>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Дальность</label>
+    <input type="text" name="system.range" value="{{system.range}}"
+           class="wr-input-md" placeholder="напр. W.b ×10 м"/>
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.sustainable"
+             {{#if system.sustainable}}checked{{/if}}/>
+      Поддерживаемая
+    </label>
+    {{#if system.sustainable}}
+    <label class="wr-label">Подд. (PR)</label>
+    <input type="number" name="system.sustainCost" value="{{system.sustainCost}}" min="0" class="wr-input-xs"
+           title="Снижение текущего PR за поддержание (обычно 1)"/>
+    <label class="wr-label">Действие подд.</label>
+    <select name="system.sustainAction" class="wr-select-sm"
+            title="Какое действие требуется для поддержания силы">
+      <option value="free"     {{#if (eq system.sustainAction "free")}}selected{{/if}}>Свободное</option>
+      <option value="reaction" {{#if (eq system.sustainAction "reaction")}}selected{{/if}}>Реакция</option>
+      <option value="half"     {{#if (eq system.sustainAction "half")}}selected{{/if}}>Полудействие</option>
+      <option value="full"     {{#if (eq system.sustainAction "full")}}selected{{/if}}>Полное</option>
+    </select>
+    {{/if}}
+  </div>
+  <div class="drug-stat-hint">Поддерживаются обычно типы: Аура, Вливание, Длительная (X), Изменение (X), Концентрация, Цикл — отметьте «Поддерживаемая».</div>
+</div>
+
+{{!-- Урон (для атакующих/психострельбы) --}}
+{{#if (or (eq system.powerType "attack") (eq system.powerType "psychicShoot") (eq system.powerType "psychicBlade"))}}
+<div class="item-section">
+  <div class="item-section-title">УРОН (ОСНОВНОЙ ПРОФИЛЬ)</div>
+  <div class="weapon-row">
+    <label class="wr-label">Урон</label>
+    <input type="text" name="system.damage" value="{{system.damage}}"
+           class="wr-input-md" placeholder="напр. 1d10+PR или 1d10+W.b"/>
+    <label class="wr-label">Тип</label>
+    <select name="system.damageType" class="wr-select-sm">
+      <option value="energy"   {{#if (eq system.damageType "energy")}}selected{{/if}}>Энергетический</option>
+      <option value="impact"   {{#if (eq system.damageType "impact")}}selected{{/if}}>Ударный</option>
+      <option value="rending"  {{#if (eq system.damageType "rending")}}selected{{/if}}>Режущий</option>
+      <option value="blast"    {{#if (eq system.damageType "blast")}}selected{{/if}}>Взрывной</option>
+      <option value="chemical" {{#if (eq system.damageType "chemical")}}selected{{/if}}>Химический</option>
+    </select>
+    <label class="wr-label">Пробитие</label>
+    <input type="number" name="system.penetration" value="{{system.penetration}}" min="0" class="wr-input-xs"/>
+  </div>
+
+  {{!-- Урон в характеристику --}}
+  <div class="weapon-row">
+    <label class="wr-label" title="Если сила бьёт по характеристике, а не по Ранам">Урон в хар-ку</label>
+    <select name="system.charDamageStat" class="wr-select-sm">
+      <option value="" {{#if (eq system.charDamageStat "")}}selected{{/if}}>— нет —</option>
+      {{#each charBonusOptions as |c|}}
+      <option value="{{c.key}}" {{#if (eq @root.system.charDamageStat c.key)}}selected{{/if}}>{{c.abbr}}</option>
+      {{/each}}
+    </select>
+    <input type="text" name="system.charDamageFormula" value="{{system.charDamageFormula}}"
+           class="wr-input-md" placeholder="напр. 1d5 или PR"/>
+  </div>
+
+  {{!-- Особые свойства атаки психосилы (тот же список, что у оружия) --}}
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Свойства атаки</label>
+      <select class="wprop-add-select">
+        <option value="">＋ добавить свойство…</option>
+        {{#each weaponPropsAvailable as |d|}}
+        <option value="{{d.key}}">{{d.label}} ({{d.en}})</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if weaponPropsActive.length}}
+    <div class="weapon-props-list">
+      {{#each weaponPropsActive as |p|}}
+      <div class="wprop-chip" title="{{p.def.desc}}">
+        <span class="wprop-name">{{p.def.label}}</span>
+        {{#if p.def.rating}}
+        {{#if p.def.ratingDice}}
+        <input type="text" class="wprop-rating-dice" data-key="{{p.key}}" data-field="rating" value="{{p.rating}}" placeholder="1d10"/>
+        {{else}}
+        <input type="number" class="wprop-rating" data-key="{{p.key}}" data-field="rating" value="{{p.rating}}" title="Рейтинг X"/>
+        {{/if}}
+        {{/if}}
+        {{#if p.def.rating2}}
+        <span class="wprop-slash">/</span>
+        {{#if p.def.rating2Dice}}
+        <input type="text" class="wprop-rating-dice" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" placeholder="2d10"/>
+        {{else}}
+        <input type="number" class="wprop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
+        {{/if}}
+        {{/if}}
+        <button type="button" class="wprop-remove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+</div>
+
+{{!-- Доп. профили атаки --}}
+<div class="item-section">
+  <div class="item-section-title">ДОП. ПРОФИЛИ АТАКИ
+    <button type="button" class="psy-profile-add btn-add-small" title="Добавить профиль">＋ профиль</button>
+  </div>
+  {{#if psyProfiles.length}}
+  {{#each psyProfiles as |pf|}}
+  <div class="psy-profile-block">
+    <div class="weapon-row">
+      <input type="text" class="psy-profile-field wr-input-md" data-index="{{pf.idx}}" data-field="label" value="{{pf.label}}" placeholder="Название профиля"/>
+      <button type="button" class="psy-profile-remove wprop-remove" data-index="{{pf.idx}}" title="Удалить профиль">✕</button>
+    </div>
+    <div class="weapon-row">
+      <label class="wr-label">Урон</label>
+      <input type="text" class="psy-profile-field wr-input-md" data-index="{{pf.idx}}" data-field="damage" value="{{pf.damage}}" placeholder="1d10+PR"/>
+      <label class="wr-label">Тип</label>
+      <select class="psy-profile-field wr-select-sm" data-index="{{pf.idx}}" data-field="damageType">
+        {{#each @root.psyDamageTypeOptions as |lbl k|}}
+        <option value="{{k}}" {{#if (eq pf.damageType k)}}selected{{/if}}>{{lbl}}</option>
+        {{/each}}
+      </select>
+      <label class="wr-label">Проб.</label>
+      <input type="number" class="psy-profile-field wr-input-xs" data-index="{{pf.idx}}" data-field="penetration" value="{{pf.penetration}}"/>
+    </div>
+    <div class="weapon-row">
+      <label class="wr-label">Свойства</label>
+      <input type="text" class="psy-profile-field wr-input-lg" data-index="{{pf.idx}}" data-field="propsText" value="{{pf.propsText}}" placeholder="напр. Tearing, Felling (4), Toxic"/>
+    </div>
+    <div class="weapon-row">
+      <label class="wr-label">Урон в хар-ку</label>
+      <select class="psy-profile-field wr-select-sm" data-index="{{pf.idx}}" data-field="charDamageStat">
+        <option value="" {{#if (eq pf.charDamageStat "")}}selected{{/if}}>— нет —</option>
+        {{#each @root.charBonusOptions as |c|}}
+        <option value="{{c.key}}" {{#if (eq pf.charDamageStat c.key)}}selected{{/if}}>{{c.abbr}}</option>
+        {{/each}}
+      </select>
+      <input type="text" class="psy-profile-field wr-input-md" data-index="{{pf.idx}}" data-field="charDamageFormula" value="{{pf.charDamageFormula}}" placeholder="1d5"/>
+    </div>
+  </div>
+  {{/each}}
+  {{else}}
+  <div class="drug-stat-hint">Профилей нет. Один профиль уже задан выше («Основной»). Добавьте профиль для альтернативных режимов урона — при манифестации можно будет выбрать профиль.</div>
+  {{/if}}
+</div>
+{{/if}}
+
+{{!-- Вариации броска (разные модификаторы/цели) --}}
+<div class="item-section">
+  <div class="item-section-title">ВАРИАЦИИ БРОСКА
+    <button type="button" class="psy-variant-add btn-add-small" title="Добавить вариацию">＋ вариация</button>
+  </div>
+  {{#if psyVariants.length}}
+  {{#each psyVariants as |v|}}
+  <div class="weapon-row">
+    <input type="text" class="psy-variant-field wr-input-md" data-index="{{v.idx}}" data-field="label" value="{{v.label}}" placeholder="напр. На врага / На себя"/>
+    <label class="wr-label">Мод. теста</label>
+    <input type="number" class="psy-variant-field wr-input-xs" data-index="{{v.idx}}" data-field="testMod" value="{{v.testMod}}"/>
+    <input type="text" class="psy-variant-field wr-input-lg" data-index="{{v.idx}}" data-field="note" value="{{v.note}}" placeholder="памятка к вариации"/>
+    <button type="button" class="psy-variant-remove wprop-remove" data-index="{{v.idx}}" title="Удалить">✕</button>
+  </div>
+  {{/each}}
+  {{else}}
+  <div class="drug-stat-hint">Вариаций нет. Добавьте, если у силы разные модификаторы для разных целей/условий (на врага, на себя, на союзника и т.п.) — при манифестации можно будет выбрать вариацию.</div>
+  {{/if}}
+</div>
+
+{{!-- Бонус характеристики (действует, пока сила поддерживается) --}}
+<div class="item-section">
+  <div class="item-section-title">БОНУСЫ ХАРАКТЕРИСТИК (пока поддерживается)</div>
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Добавить</label>
+      <select class="cbonus-add">
+        <option value="">＋ характеристика…</option>
+        {{#each charBonusOptions as |c|}}
+        <option value="{{c.key}}">{{c.abbr}} — {{c.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if charBonusesActive.length}}
+    <div class="weapon-props-list">
+      {{#each charBonusesActive as |cb|}}
+      <div class="wprop-chip">
+        <span class="wprop-name">{{cb.abbr}}</span>
+        <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}" title="Прибавка к бонусу характеристики"/>
+        <button type="button" class="wprop-remove cbonus-remove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  <div class="drug-stat-hint">Бонусы применяются, пока психосила отмечена как поддерживаемая (галочка в бою/на вкладке ПСИ). Сверхъестественные характеристики задаются здесь как прибавка к бонусу (Unnatural).</div>
+</div>
+
+{{!-- Прочие черты от силы (пока поддерживается) --}}
+<div class="item-section">
+  <div class="item-section-title">ПРОЧИЕ ЧЕРТЫ ОТ СИЛЫ (пока поддерживается)</div>
+  <div class="weapon-row">
+    <label class="wr-label" title="Естественная броня: +AP на все зоны">Броня (+AP везде)</label>
+    <input type="number" name="system.effects.armourAll" value="{{system.effects.armourAll}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label" title="Рейтинг Страха, который вызывает носитель">Страх (рейтинг)</label>
+    <input type="number" name="system.effects.fearRating" value="{{system.effects.fearRating}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label" title="Модификатор Размера (число шагов)">Размер (±)</label>
+    <input type="number" name="system.effects.sizeMod" value="{{system.effects.sizeMod}}" class="wr-input-xs"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Прочие черты (справка)</label>
+    <input type="text" name="system.effects.grantedTraits" value="{{system.effects.grantedTraits}}"
+           class="wr-input-lg" placeholder="напр. Полёт, Несокрушимый, Ужас — текстовая памятка"/>
+  </div>
+  <div class="drug-stat-hint">Броня/Страх/Размер применяются автоматически, пока сила поддерживается (как у Черт). Прочие черты — текстовая памятка.</div>
+</div>
+
+{{!-- Усиление оружия (пока поддерживается) --}}
+<div class="item-section">
+  <div class="item-section-title">УСИЛЕНИЕ ОРУЖИЯ (пока поддерживается)</div>
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.effects.weaponBuff.enabled" {{#if system.effects.weaponBuff.enabled}}checked{{/if}}/>
+      Усиливать оружие
+    </label>
+    <label class="wr-label">Применять к</label>
+    <select name="system.effects.weaponBuff.scope" class="wr-select-sm">
+      <option value="equipped" {{#if (eq system.effects.weaponBuff.scope "equipped")}}selected{{/if}}>Снаряжённому</option>
+      <option value="all"      {{#if (eq system.effects.weaponBuff.scope "all")}}selected{{/if}}>Всему оружию</option>
+      <option value="force"    {{#if (eq system.effects.weaponBuff.scope "force")}}selected{{/if}}>Силовому (Force)</option>
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">+Урон</label>
+    <input type="number" name="system.effects.weaponBuff.damageMod" value="{{system.effects.weaponBuff.damageMod}}" class="wr-input-xs"/>
+    <label class="wr-label">+Пробитие</label>
+    <input type="number" name="system.effects.weaponBuff.penMod" value="{{system.effects.weaponBuff.penMod}}" class="wr-input-xs"/>
+    <label class="wr-label">+Дальность (м)</label>
+    <input type="number" name="system.effects.weaponBuff.rangeMod" value="{{system.effects.weaponBuff.rangeMod}}" class="wr-input-xs"/>
+  </div>
+
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Добавляемые свойства</label>
+      <select class="wbuff-add-select">
+        <option value="">＋ добавить свойство…</option>
+        {{#each weaponBuffPropsAvailable as |d|}}
+        <option value="{{d.key}}">{{d.label}} ({{d.en}})</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if weaponBuffPropsActive.length}}
+    <div class="weapon-props-list">
+      {{#each weaponBuffPropsActive as |p|}}
+      <div class="wprop-chip" title="{{p.def.desc}}">
+        <span class="wprop-name">{{p.def.label}}</span>
+        {{#if p.def.rating}}
+        <input type="number" class="wbuff-rating" data-key="{{p.key}}" data-field="rating" value="{{p.rating}}" title="Рейтинг X"/>
+        {{/if}}
+        {{#if p.def.rating2}}
+        <span class="wprop-slash">/</span>
+        {{#if p.def.rating2Dice}}
+        <input type="text" class="wbuff-rating-dice" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" placeholder="2d10"/>
+        {{else}}
+        <input type="number" class="wbuff-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
+        {{/if}}
+        {{/if}}
+        <button type="button" class="wbuff-remove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  <div class="drug-stat-hint">Пока сила поддерживается, её бонусы к урону/пробитию/дальности и добавленные свойства применяются к выбранному оружию (видно в карточке оружия и при атаке).</div>
+</div>
+
+{{!-- Эффект --}}
+<div class="item-section">
+  <div class="item-section-title">ЭФФЕКТ</div>
+  <textarea name="system.effect" class="item-textarea"
+            placeholder="Краткий эффект силы...">{{system.effect}}</textarea>
+</div>
+
+{{/if}}{{!-- /psychicPower --}}

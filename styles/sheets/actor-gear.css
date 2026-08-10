@@ -1,0 +1,463 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка Снаряжение
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc .ability-section-panel {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.warhammer-dbc .gear-section-panel {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.warhammer-dbc .weight-row {
+  display: flex;
+  gap: 24px;
+  padding: 6px 12px;
+  align-items: center;
+}
+
+.warhammer-dbc .weight-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.warhammer-dbc .weight-row input {
+  width: 68px;
+  text-align: center;
+  font-size: 1.1em;
+  font-weight: bold;
+  background: var(--wh-input-bg);
+  border: 2px solid var(--wh-border);
+}
+
+/* ── Кнопка добавления ── */
+.gear-add-row {
+  padding: 5px 6px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.gear-add-btn {
+  background: var(--wh-panel-dark);
+  color: var(--wh-text-light);
+  border: 1px solid var(--wh-border);
+  padding: 4px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85em;
+  letter-spacing: 0.04em;
+}
+
+.gear-add-btn:hover { background: #5a2a0e; }
+
+/* ── Таблица снаряжения ── */
+.gear-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82em;
+}
+
+.gear-table thead tr { background: var(--wh-panel-dark); }
+
+.gear-table thead th {
+  color: var(--wh-text-light);
+  padding: 3px 6px;
+  text-align: left;
+  font-weight: bold;
+  font-size: 0.82em;
+  letter-spacing: 0.04em;
+}
+
+.gear-table tbody tr {
+  border-bottom: 1px solid var(--wh-border-light);
+}
+
+.gear-table tbody tr:hover {
+  background: rgba(200, 164, 90, 0.1);
+  cursor: pointer;
+}
+
+.gear-table tbody td {
+  padding: 3px 6px;
+  color: var(--wh-text);
+}
+
+.gear-table .items-empty td {
+  text-align: center;
+  font-style: italic;
+  color: #6a5a48;
+  padding: 5px;
+}
+
+/* ── Чекбокс экипировки ── */
+.gear-equip-cell {
+  text-align: center;
+  width: 36px;
+}
+
+.gear-equip-cell input[type="checkbox"] {
+  accent-color: var(--wh-red);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+/* ─── Броня в снаряжении ─── */
+.gear-equip-th {
+  width: 40px;
+  text-align: center;
+}
+
+.gear-ap-cell {
+  text-align: center;
+  font-size: 0.9em;
+  color: var(--wh-text-mid);
+}
+
+.gear-ap-active {
+  color: var(--wh-text-dark);
+  font-weight: bold;
+}
+
+.gear-armor-type {
+  font-size: 0.82em;
+  color: var(--wh-text-mid);
+}
+
+/* Подсветка экипированной строки */
+.item-row-equipped {
+  background: rgba(100, 60, 20, 0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   СИЛОВЫЕ ПОЛЯ — вкладка Снаряжение
+   ═══════════════════════════════════════════════════════════════════ */
+
+.shield-gear-table th { text-align: center; }
+
+/* Ширина столбцов */
+.shield-th-status { width: 34px; }
+.shield-th-nature { width: 38px; }
+.shield-th-type   { width: 72px; }
+.shield-th-rating { width: 92px; }
+.shield-th-cur    { width: 42px; }
+.shield-th-weight { width: 42px; }
+.shield-th-action { width: 84px; }
+
+/* Строки по статусу */
+.shield-row-active     { background: rgba(76, 175, 80, 0.07); }
+.shield-row-overloaded { background: rgba(255, 160, 0, 0.09); }
+.shield-row-damaged    { background: rgba(229, 57, 53, 0.07); }
+.shield-row-inactive   { background: rgba(0, 0, 0, 0.07); }
+
+/* Статус-иконка */
+.shield-status-cell { text-align: center; }
+.shield-status-dot  { font-size: 1em; cursor: default; }
+.shield-dot-active     { color: #4caf50; }
+.shield-dot-overloaded { color: #ffa000; }
+.shield-dot-damaged    { color: #e53935; }
+.shield-dot-inactive   { color: #999;    }
+
+/* Природа */
+.shield-nature-cell { text-align: center; }
+.shield-nature-tech { color: #4fc3f7; font-size: 1.05em; }
+.shield-nature-warp { color: #ce93d8; font-size: 1.05em; }
+
+/* Тип — бейдж */
+.shield-type-cell { text-align: center; }
+.shield-type-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.72em;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.shield-type-dome {
+  background: #0d2a45;
+  color: #90caf9;
+  border: 1px solid #1565c0;
+}
+.shield-type-deflector {
+  background: #2e1500;
+  color: #ffcc80;
+  border: 1px solid #e65100;
+}
+.shield-type-penetrating {
+  background: #1e0a2e;
+  color: #ce93d8;
+  border: 1px solid #7b1fa2;
+}
+
+/* Рейтинг */
+.shield-rating-cell   { text-align: center; white-space: nowrap; }
+.shield-rating-range  { font-weight: bold; color: var(--wh-accent, #8b0000); }
+.shield-overload-sep  { color: #999; margin: 0 1px; }
+.shield-overload-val  { color: #ffa000; font-weight: bold; }
+.shield-overload-none { color: #888; }
+.shield-rating-special{ color: #ce93d8; font-style: italic; }
+
+/* Текущий рейтинг */
+.shield-cur-cell   { text-align: center; }
+.shield-cur-active {
+  font-weight: bold;
+  color: #4caf50;
+  font-size: 1.05em;
+}
+.shield-cur-off { color: #999; }
+
+/* Вес */
+.shield-weight-cell { text-align: center; }
+
+/* Кнопки действий */
+.shield-action-cell {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+}
+.shield-toggle-btn,
+.shield-roll-btn,
+.shield-repair-btn {
+  background: none;
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.95em;
+  padding: 1px 4px;
+  line-height: 1.5;
+  transition: background 0.15s, transform 0.1s;
+}
+.shield-toggle-btn:hover  { background: rgba(255,255,255,0.10); }
+.shield-roll-btn:hover    { background: rgba(76,200,100,0.14);  }
+.shield-repair-btn:hover  { background: rgba(255,180,0,0.14);   }
+.shield-toggle-btn:active,
+.shield-roll-btn:active,
+.shield-repair-btn:active { transform: scale(0.94); }
+/* ── Включаемые системы силовой брони ── */
+.warhammer-dbc .armormod-active-cell { text-align: center; }
+.warhammer-dbc .armormod-active-toggle {
+  width: auto; cursor: pointer; font-size: 0.72em; font-weight: bold; padding: 1px 8px;
+  border-radius: 3px; border: 1px solid var(--wh-border-light);
+  background: var(--wh-input-bg); color: var(--wh-text-mid, #5a4a30); letter-spacing: 0.04em;
+}
+.warhammer-dbc .armormod-active-toggle.is-on {
+  background: #2e6a2e; color: #eaf6e0; border-color: #1f4a1f;
+}
+.warhammer-dbc .armormod-active-toggle:hover { filter: brightness(1.1); }
+.warhammer-dbc .armormod-passive { opacity: 0.5; }
+.warhammer-dbc tr.armormod-off > td:not(.ability-toggle-cell):not(.armormod-active-cell) { opacity: 0.5; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   СВОРАЧИВАЕМЫЕ КАТЕГОРИИ + ВЛОЖЕННЫЕ МОДЫ (переработка окна снаряжения)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.warhammer-dbc .gear-cat {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+/* Заголовок категории — кликабелен для сворачивания */
+.warhammer-dbc .gear-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: var(--wh-panel-dark);
+  color: var(--wh-text-light);
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.05em;
+  font-size: 0.86em;
+  font-weight: bold;
+}
+.warhammer-dbc .gear-cat-head:hover { background: #5a2a0e; }
+
+.warhammer-dbc .gear-cat-chevron {
+  font-size: 0.8em;
+  transition: transform 0.15s ease;
+  opacity: 0.85;
+}
+.warhammer-dbc .gear-cat.collapsed .gear-cat-chevron { transform: rotate(-90deg); }
+
+.warhammer-dbc .gear-cat-title { flex: 1; }
+
+.warhammer-dbc .gear-cat-count {
+  min-width: 18px;
+  text-align: center;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--wh-border-light);
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+.warhammer-dbc .gear-cat-body { padding: 4px 6px 6px; }
+.warhammer-dbc .gear-cat.collapsed .gear-cat-body { display: none; }
+
+/* Носитель с установленными модами */
+.warhammer-dbc .gear-modcount {
+  font-size: 0.82em;
+  color: var(--wh-accent, #8b0000);
+  font-weight: bold;
+  margin-left: 3px;
+}
+
+/* ── Вложенные под-строки модов ── */
+.warhammer-dbc tr.gear-modsub-row {
+  background: rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--wh-border-light);
+}
+.warhammer-dbc tr.gear-modsub-row:hover { background: rgba(0, 0, 0, 0.09); cursor: default; }
+
+.warhammer-dbc .gear-modsub-arrow {
+  text-align: center;
+  color: var(--wh-text-mid, #6a5a48);
+  width: 36px;
+}
+.warhammer-dbc .gear-modsub-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+}
+.warhammer-dbc .gear-modsub-name { font-weight: bold; color: var(--wh-text-dark); }
+.warhammer-dbc .gear-modsub-group {
+  font-size: 0.85em;
+  color: var(--wh-text-mid, #6a5a48);
+  font-style: italic;
+}
+.warhammer-dbc .gear-modsub-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--wh-text-mid, #6a5a48);
+  font-size: 0.9em;
+  padding: 0 2px;
+  line-height: 1;
+}
+/* Выключенная включаемая система — приглушена */
+.warhammer-dbc tr.gear-modsub-off .gear-modsub-name,
+.warhammer-dbc tr.gear-modsub-off .gear-modsub-group { opacity: 0.5; }
+
+/* Кнопка «снять» (width:auto перебивает Foundry-шный button{width:100%}) */
+.warhammer-dbc .gear-mod-uninstall {
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: auto;
+  background: none;
+  border: 1px solid var(--wh-border-light);
+  border-radius: 3px;
+  color: var(--wh-red, #8b0000);
+  cursor: pointer;
+  font-size: 0.72em;
+  line-height: 1.4;
+  padding: 0 6px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.warhammer-dbc .gear-mod-uninstall:hover { background: rgba(139, 0, 0, 0.12); }
+
+/* Значок системы силовой брони */
+.warhammer-dbc .gear-sys-badge {
+  color: #ffb84d;
+  font-size: 0.9em;
+  filter: drop-shadow(0 0 1px rgba(255, 184, 77, 0.5));
+}
+
+/* Тумблер Вкл/Выкл внутри под-строки — наследует стиль armormod-active-toggle */
+.warhammer-dbc .gear-modsub-power { margin-left: 2px; }
+
+/* ── Блок «не установленные модификации» ── */
+.warhammer-dbc .gear-free-block {
+  margin-top: 6px;
+  border-top: 1px dashed var(--wh-border);
+  padding-top: 4px;
+}
+.warhammer-dbc .gear-free-title {
+  font-size: 0.78em;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  color: var(--wh-text-mid, #6a5a48);
+  text-transform: uppercase;
+  padding: 2px 6px;
+}
+.warhammer-dbc .gear-free-table tbody tr:hover { cursor: default; }
+.warhammer-dbc .gear-free-row { border-bottom: 1px solid var(--wh-border-light); }
+.warhammer-dbc .gear-free-group {
+  font-size: 0.85em;
+  color: var(--wh-text-mid, #6a5a48);
+  font-style: italic;
+}
+.warhammer-dbc .gear-free-install { text-align: right; }
+.warhammer-dbc .gear-mod-install {
+  font-size: 0.82em;
+  max-width: 220px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  color: var(--wh-text-dark);
+  padding: 1px 4px;
+  cursor: pointer;
+}
+.warhammer-dbc .gear-free-notarget {
+  font-size: 0.78em;
+  font-style: italic;
+  color: var(--wh-red, #8b0000);
+  opacity: 0.8;
+}
+.warhammer-dbc .gear-free-weight { text-align: center; width: 44px; }
+.warhammer-dbc .ability-toggle-cell { width: 24px; text-align: center; }
+
+/* ── Кнопка-переключатель «свернуть улучшения» у носителя ── */
+.warhammer-dbc .gear-mods-toggle {
+  width: auto;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+  padding: 0 5px;
+  border: 1px solid var(--wh-border-light);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--wh-accent, #8b0000);
+  font-size: 0.78em;
+  font-weight: bold;
+  line-height: 1.5;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.warhammer-dbc .gear-mods-toggle:hover { background: rgba(139, 0, 0, 0.14); }
+.warhammer-dbc .gear-mods-toggle .gmt-chevron {
+  font-size: 0.85em;
+  transition: transform 0.15s ease;
+  opacity: 0.85;
+}
+.warhammer-dbc .gear-mods-toggle.collapsed .gmt-chevron { transform: rotate(-90deg); }
+
+/* Заголовок группы талантов по типу (стр. 62-105) — сдержанный разделитель. */
+.warhammer-dbc .talent-group-row .talent-group-cell {
+  padding: 4px 10px; font-size: 0.76em; font-weight: 800; letter-spacing: 0.09em;
+  text-transform: uppercase; color: #6effb4;
+  background: rgba(77,255,166,0.07);
+  border-top: 1px solid rgba(77,255,166,0.35);
+  text-shadow: 0 0 6px rgba(77,255,166,0.4);
+}
+.warhammer-dbc .talent-group-count { opacity: 0.55; font-weight: 500; margin-left: 6px; }

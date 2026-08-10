@@ -1,0 +1,80 @@
+{{#if (eq item.type "navigatorPower")}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ СИЛЫ НАВИГАТОРА</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Цена (xp)</label>
+    <input type="number" name="system.xpCost" value="{{system.xpCost}}" min="0" class="wr-input-xs"/>
+    <label class="wr-label">Требование</label>
+    <input type="text" name="system.requirement" value="{{system.requirement}}" class="wr-input-md"
+           placeholder="напр. Psyniscience +10"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Тест</label>
+    <select name="system.testChar" class="wr-select-sm">
+      <option value="ws"  {{#if (eq system.testChar "ws")}}selected{{/if}}>WS</option>
+      <option value="bs"  {{#if (eq system.testChar "bs")}}selected{{/if}}>BS</option>
+      <option value="s"   {{#if (eq system.testChar "s")}}selected{{/if}}>S</option>
+      <option value="t"   {{#if (eq system.testChar "t")}}selected{{/if}}>T</option>
+      <option value="ag"  {{#if (eq system.testChar "ag")}}selected{{/if}}>A (Ловкость)</option>
+      <option value="int" {{#if (eq system.testChar "int")}}selected{{/if}}>I (Интеллект)</option>
+      <option value="per" {{#if (eq system.testChar "per")}}selected{{/if}}>P (Восприятие)</option>
+      <option value="wp"  {{#if (eq system.testChar "wp")}}selected{{/if}}>W (Воля)</option>
+      <option value="fel" {{#if (eq system.testChar "fel")}}selected{{/if}}>F (Товарищество)</option>
+    </select>
+    <label class="wr-label">Тест-мод</label>
+    <input type="number" name="system.testMod" value="{{system.testMod}}" class="wr-input-xs"/>
+    <label class="drug-fx-cb-label" title="Встречный тест против цели (W vs W и т.п.)">
+      <input type="checkbox" name="system.opposed" {{#if system.opposed}}checked{{/if}}/>
+      Встречный тест
+    </label>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Действие</label>
+    <select name="system.action" class="wr-select-sm">
+      <option value="free"     {{#if (eq system.action "free")}}selected{{/if}}>Свободное</option>
+      <option value="reaction" {{#if (eq system.action "reaction")}}selected{{/if}}>Реакция</option>
+      <option value="half"     {{#if (eq system.action "half")}}selected{{/if}}>Полудействие</option>
+      <option value="full"     {{#if (eq system.action "full")}}selected{{/if}}>Полное</option>
+      <option value="extended" {{#if (eq system.action "extended")}}selected{{/if}}>Длительное</option>
+    </select>
+    <label class="wr-label">Дальность</label>
+    <input type="text" name="system.range" value="{{system.range}}" class="wr-input-md"
+           placeholder="напр. 5x P.b. метров"/>
+    <label class="drug-fx-cb-label" title="Можно поддерживать (без броска; блокирует другие силы)">
+      <input type="checkbox" name="system.sustainable" {{#if system.sustainable}}checked{{/if}}/>
+      Поддерживаемая
+    </label>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Тип</label>
+    <input type="text" name="system.powerKind" value="{{system.powerKind}}" class="wr-input-special"
+           placeholder="напр. Концентрация, Ментальное"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Урон</label>
+    <input type="text" name="system.damage" value="{{system.damage}}" class="wr-input-md"
+           placeholder="напр. 1d10+P.b (пусто — без урона)"/>
+    <label class="wr-label">Тип</label>
+    <select name="system.damageType" class="wr-select-sm">
+      <option value="energy"   {{#if (eq system.damageType "energy")}}selected{{/if}}>Энергетический</option>
+      <option value="impact"   {{#if (eq system.damageType "impact")}}selected{{/if}}>Ударный</option>
+      <option value="rending"  {{#if (eq system.damageType "rending")}}selected{{/if}}>Режущий</option>
+      <option value="blast"    {{#if (eq system.damageType "blast")}}selected{{/if}}>Взрывной</option>
+      <option value="chemical" {{#if (eq system.damageType "chemical")}}selected{{/if}}>Химический</option>
+    </select>
+    <label class="wr-label">Пробитие</label>
+    <input type="number" name="system.penetration" value="{{system.penetration}}" min="0" class="wr-input-xs"/>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ОПИСАНИЕ / ЭФФЕКТ</div>
+  <textarea name="system.effect" class="item-textarea"
+            placeholder="Что делает сила...">{{system.effect}}</textarea>
+</div>
+{{/if}}

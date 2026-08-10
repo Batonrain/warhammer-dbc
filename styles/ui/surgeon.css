@@ -1,0 +1,92 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Хирургикон (окно имплантации, ripperdoc)
+═══════════════════════════════════════════════════════ */
+
+.wh-surgeon .window-content { padding: 0; background: #041109; }
+.warhammer-dbc.wh-surgeon {
+  --bc-teal: #4dffb0; --bc-teal-dim: #2c9c6e; --bc-line: #123324;
+}
+.wh-surgeon .wh-surgeon-window { display: flex; flex-direction: column; height: 100%; color: #b8ffd8; }
+
+.wh-surgeon .wh-surg-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 12px; border-bottom: 1px solid var(--bc-line);
+  background: linear-gradient(180deg, #0c2016, #061a10);
+}
+.wh-surgeon .wh-surg-title { color: var(--bc-teal); letter-spacing: 2px; font-size: 0.9em; text-shadow: 0 0 6px rgba(77,255,176,0.6); }
+.wh-surgeon .wh-surg-sub { color: var(--bc-teal-dim); font-family: monospace; font-size: 0.78em; }
+
+.wh-surgeon .wh-surg-body {
+  flex: 1 1 auto; min-height: 0;
+  display: grid; grid-template-columns: 1fr minmax(280px, 340px) 1fr; gap: 8px; padding: 10px;
+}
+.wh-surgeon .wh-surg-col { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+
+/* Центр — фигура на голо-сетке */
+.wh-surgeon .wh-surg-figure {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--bc-line); border-radius: 4px;
+  background:
+    linear-gradient(rgba(77,255,176,0.05) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, rgba(77,255,176,0.05) 1px, transparent 1px) 0 0 / 24px 24px,
+    radial-gradient(120% 90% at 50% 10%, rgba(77,255,176,0.06), transparent 60%),
+    #041109;
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+}
+.wh-surgeon .wh-surg-figure .body-photo { max-width: 320px; }
+
+/* Карточка системы-слота */
+.wh-surgeon .wh-surg-slot {
+  border: 1px solid var(--bc-line); border-radius: 4px;
+  background: linear-gradient(180deg, #0c2016, #061a10);
+  box-shadow: inset 0 0 16px rgba(0,0,0,0.4);
+  padding: 6px 8px;
+}
+.wh-surgeon .wh-surg-slot-head {
+  display: flex; align-items: center; gap: 7px; padding-bottom: 5px;
+  border-bottom: 1px solid var(--bc-line); margin-bottom: 5px;
+}
+.wh-surgeon .wh-surg-slot-icon { display: inline-flex; color: var(--bc-teal); filter: drop-shadow(0 0 3px rgba(77,255,176,0.5)); }
+.wh-surgeon .wh-surg-ic { display: block; }
+.wh-surgeon .wh-surg-slot-name { flex: 1 1 auto; color: var(--bc-teal); letter-spacing: 0.5px; font-size: 0.86em; text-transform: uppercase; }
+.wh-surgeon .wh-surg-slot-count {
+  min-width: 20px; text-align: center; font-family: monospace; font-weight: bold;
+  color: #04140d; background: var(--bc-teal-dim); border-radius: 3px; padding: 0 5px; font-size: 0.8em;
+}
+
+.wh-surgeon .wh-surg-inst-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 5px; }
+.wh-surgeon .wh-surg-inst {
+  display: flex; align-items: center; gap: 6px; padding: 4px 6px;
+  font-size: 0.82em; border-radius: 3px; border-left: 3px solid var(--imp-col);
+  background: rgba(255,255,255,0.03);
+}
+.wh-surgeon .wh-surg-inst-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--imp-col); box-shadow: 0 0 6px var(--imp-col); flex: 0 0 auto; }
+.wh-surgeon .wh-surg-inst-name { flex: 1 1 auto; color: #e8fff2; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wh-surgeon .wh-surg-inst-name:hover { text-shadow: 0 0 6px var(--imp-col); }
+.wh-surgeon .wh-surg-inst-q { font-size: 0.82em; color: var(--bc-teal-dim); font-family: monospace; flex: 0 0 auto; }
+
+.wh-surgeon .wh-surg-side { display: inline-flex; gap: 2px; flex: 0 0 auto; }
+.wh-surgeon .wh-surg-side-btn {
+  width: 17px; height: 16px; padding: 0; line-height: 1; font-size: 0.74em; font-weight: bold;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.3); border: 1px solid var(--bc-line); border-radius: 2px;
+  color: var(--bc-teal-dim); cursor: pointer;
+}
+.wh-surgeon .wh-surg-side-btn.is-on { background: var(--imp-col); border-color: var(--imp-col); color: #04140d; box-shadow: 0 0 5px -1px var(--imp-col); }
+.wh-surgeon .wh-surg-remove {
+  width: 17px; height: 17px; padding: 0; line-height: 1; flex: 0 0 auto;
+  background: rgba(255,90,90,0.1); border: 1px solid rgba(255,90,90,0.4); border-radius: 2px;
+  color: #ff8a8a; cursor: pointer;
+}
+.wh-surgeon .wh-surg-remove:hover { background: rgba(255,90,90,0.25); box-shadow: 0 0 6px -1px #ff6b6b; }
+
+.wh-surgeon .wh-surg-empty { font-size: 0.78em; color: var(--bc-teal-dim); text-align: center; padding: 3px 0 6px; opacity: 0.8; }
+
+.wh-surgeon .wh-surg-install {
+  width: 100%; background: #0c2418; color: #c6ffe0;
+  border: 1px solid var(--bc-line); border-radius: 3px; padding: 3px 5px; font-size: 0.82em; cursor: pointer;
+}
+.wh-surgeon .wh-surg-install:hover { border-color: var(--bc-teal-dim); }
+.wh-surgeon .wh-surg-install option { background: #0c2418; color: #c6ffe0; }
+
+.wh-surgeon .wh-surg-missing { padding: 40px; text-align: center; color: #ff8a8a; }

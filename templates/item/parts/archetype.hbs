@@ -1,0 +1,99 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  АРХЕТИП (библиотека Мастера создания персонажа) --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "archetype")}}
+
+<div class="item-section">
+  <div class="item-section-title">АРХЕТИП</div>
+  <div class="trait-fx-hint">Справочная запись библиотеки «Архетипы» — источник списков в Мастере создания персонажа и в селекторе «Архетип» в шапке листа. Навыки/Таланты/Снаряжение — текст (с выборами «или»), применяются Мастером; Черта архетипа создаётся отдельным предметом-Чертой.</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Раса/группа</label>
+    <select name="system.race" class="wr-select-sm">
+      <option value="human"      {{#if (eq system.race "human")}}selected{{/if}}>Человек</option>
+      <option value="astartes"   {{#if (eq system.race "astartes")}}selected{{/if}}>Астартес</option>
+      <option value="mechanicus" {{#if (eq system.race "mechanicus")}}selected{{/if}}>Механикус</option>
+      <option value="azuriane"   {{#if (eq system.race "azuriane")}}selected{{/if}}>Азуриане</option>
+      <option value="drukhari"   {{#if (eq system.race "drukhari")}}selected{{/if}}>Друкхари</option>
+      <option value="harlequin"  {{#if (eq system.race "harlequin")}}selected{{/if}}>Арлекин</option>
+    </select>
+    <input type="text" name="system.group" value="{{system.group}}" class="wr-input-md" placeholder="Подгруппа (напр. «Отступники») — необязательно"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Раны</label>
+    <input type="text" name="system.wounds" value="{{system.wounds}}" class="wr-input-md" placeholder="напр. 15+1d5"/>
+    <label class="wr-label">Влияние</label>
+    <input type="text" name="system.infRoll" value="{{system.infRoll}}" class="wr-input-md" placeholder="напр. 3d5+10"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Бонус характеристик</label>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label" style="min-width:auto;">WS</label><input type="number" name="system.charBonus.ws" value="{{system.charBonus.ws}}" class="wr-input-sm" style="width:44px;"/>
+    <label class="wr-label" style="min-width:auto;">BS</label><input type="number" name="system.charBonus.bs" value="{{system.charBonus.bs}}" class="wr-input-sm" style="width:44px;"/>
+    <label class="wr-label" style="min-width:auto;">S</label><input type="number" name="system.charBonus.s" value="{{system.charBonus.s}}" class="wr-input-sm" style="width:44px;"/>
+    <label class="wr-label" style="min-width:auto;">T</label><input type="number" name="system.charBonus.t" value="{{system.charBonus.t}}" class="wr-input-sm" style="width:44px;"/>
+    <label class="wr-label" style="min-width:auto;">Ag</label><input type="number" name="system.charBonus.ag" value="{{system.charBonus.ag}}" class="wr-input-sm" style="width:44px;"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label" style="min-width:auto;">Int</label><input type="number" name="system.charBonus.int" value="{{system.charBonus.int}}" class="wr-input-sm" style="width:44px;"/>
+    <label class="wr-label" style="min-width:auto;">Per</label><input type="number" name="system.charBonus.per" value="{{system.charBonus.per}}" class="wr-input-sm" style="width:44px;"/>
+    <label class="wr-label" style="min-width:auto;">WP</label><input type="number" name="system.charBonus.wp" value="{{system.charBonus.wp}}" class="wr-input-sm" style="width:44px;"/>
+    <label class="wr-label" style="min-width:auto;">Fel</label><input type="number" name="system.charBonus.fel" value="{{system.charBonus.fel}}" class="wr-input-sm" style="width:44px;"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Выбор</label>
+    <input type="text" name="system.charChoice" value="{{system.charChoice}}" class="wr-input-md" placeholder="напр. +5 к одной Характеристике на выбор"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label"><input type="checkbox" name="system.isPsyker" {{#if system.isPsyker}}checked{{/if}}/> Псайкер</label>
+    <label class="drug-fx-cb-label"><input type="checkbox" name="system.isTechpriest" {{#if system.isTechpriest}}checked{{/if}}/> Техножрец</label>
+    <input type="text" name="system.psykerClass" value="{{system.psykerClass}}" class="wr-input-md" placeholder="Природа Дара (bound/unbound/daemonic)"/>
+  </div>
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label"><input type="checkbox" name="system.grantsWarPlate" {{#if system.grantsWarPlate}}checked{{/if}}/> Даёт Боевые Латы Скитарии</label>
+    <label class="drug-fx-cb-label"><input type="checkbox" name="system.grantsImplants" {{#if system.grantsImplants}}checked{{/if}}/> Даёт импланты Механикум</label>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Требуемый Путь</label>
+    <input type="text" name="system.requiredPath" value="{{system.requiredPath}}" class="wr-input-md" placeholder="Азуриане — Путь Изгоя и т.п."/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Черта — название</label>
+    <input type="text" name="system.trait.name" value="{{system.trait.name}}" class="wr-input-md"/>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЧЕРТА АРХЕТИПА — ЭФФЕКТ</div>
+  <textarea name="system.trait.benefit" class="item-textarea" placeholder="Эффект черты...">{{system.trait.benefit}}</textarea>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">НАВЫКИ</div>
+  <textarea name="system.skills" class="item-textarea" placeholder="Список навыков (с «или»)...">{{system.skills}}</textarea>
+</div>
+<div class="item-section">
+  <div class="item-section-title">ТАЛАНТЫ</div>
+  <textarea name="system.talents" class="item-textarea" placeholder="Список талантов (с «или»)...">{{system.talents}}</textarea>
+</div>
+<div class="item-section">
+  <div class="item-section-title">СНАРЯЖЕНИЕ</div>
+  <textarea name="system.gear" class="item-textarea" placeholder="Стартовое снаряжение (с «или»)...">{{system.gear}}</textarea>
+</div>
+
+<div class="item-section">
+  <div class="weapon-row">
+    <label class="wr-label">Источник</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}" class="wr-input-md"/>
+    <label class="wr-label" title="ключ — только для справки, не редактируется здесь">Ключ</label>
+    <input type="text" value="{{system.key}}" class="wr-input-md" readonly/>
+  </div>
+</div>
+
+{{/if}}

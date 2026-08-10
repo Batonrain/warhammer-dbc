@@ -1,0 +1,143 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Лист демона (демоническая шапка)
+   Цвет бога задаётся переменной --gc на .daemon-header.
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc.daemon-sheet { --gc: #b477ff; --gc2: #5c2d91; --glow: rgba(180,119,255,0.9); --dp-hue: 113deg; }
+
+/* ── Единый сдвиг тона: зелёный терминал вкладок → цвет Бога (как у Принца) ── */
+.warhammer-dbc.daemon-sheet .stats-cog,
+.warhammer-dbc.daemon-sheet .combat-cog,
+.warhammer-dbc.daemon-sheet .abil-cog,
+.warhammer-dbc.daemon-sheet .gear-cog,
+.warhammer-dbc.daemon-sheet .advance-cog,
+.warhammer-dbc.daemon-sheet .notes-cog {
+  filter: hue-rotate(var(--dp-hue)) saturate(1.05);
+}
+/* Псайкер-вкладка красится в цвет Бога (демоничность = цвет покровителя) */
+.warhammer-dbc.daemon-sheet .psy-tab {
+  --pc: var(--gc); --pc2: var(--gc2, var(--gc));
+  --pc-soft: color-mix(in srgb, var(--gc) 15%, transparent);
+}
+
+/* ── Фон всего листа: глубина Имматериума в цвете Бога ── */
+.wh-daemon .window-content,
+.warhammer-dbc.daemon-sheet {
+  background:
+    radial-gradient(140% 90% at 85% -10%, color-mix(in srgb, var(--gc2) 26%, transparent), transparent 55%),
+    radial-gradient(120% 100% at -10% 110%, color-mix(in srgb, var(--gc) 14%, transparent), transparent 50%),
+    linear-gradient(165deg, #0d0714 0%, #070310 45%, #0a0516 100%);
+  color: #d9cff0;
+}
+
+/* ── Шапка ──────────────────────────────────────────── */
+.warhammer-dbc .daemon-header {
+  position: relative; overflow: hidden;
+  display: grid; grid-template-columns: 72px 1fr auto; gap: 12px; align-items: center;
+  padding: 10px 12px; border-radius: 8px; margin-bottom: 6px;
+  background: linear-gradient(180deg, #120a20, #080412);
+  border: 1px solid color-mix(in srgb, var(--gc) 45%, #1a1030); border-left: 4px solid var(--gc);
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 0 22px -6px var(--glow);
+}
+.warhammer-dbc .daemon-header > *:not(.daemon-warp-layer) { position: relative; z-index: 1; }
+/* Клубящийся варп за шапкой */
+.warhammer-dbc .daemon-warp-layer {
+  position: absolute; inset: -40%; pointer-events: none; opacity: 0.55; z-index: 0;
+  background:
+    radial-gradient(35% 45% at 30% 40%, color-mix(in srgb, var(--gc) 30%, transparent), transparent 70%),
+    radial-gradient(40% 40% at 75% 60%, color-mix(in srgb, var(--gc2) 38%, transparent), transparent 72%);
+  animation: daemonWarp 18s ease-in-out infinite;
+}
+.warhammer-dbc .daemon-warp-b {
+  animation-duration: 24s; animation-direction: reverse; opacity: 0.4;
+  background:
+    radial-gradient(30% 50% at 60% 30%, color-mix(in srgb, var(--gc2) 30%, transparent), transparent 70%),
+    radial-gradient(45% 35% at 20% 75%, color-mix(in srgb, var(--gc) 22%, transparent), transparent 75%);
+}
+@keyframes daemonWarp { 0%,100% { transform: rotate(0deg) scale(1); } 33% { transform: rotate(4deg) scale(1.12); } 66% { transform: rotate(-3deg) scale(1.05); } }
+
+.warhammer-dbc .daemon-sigil {
+  width: 66px; height: 66px; border-radius: 50%; cursor: pointer; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle, color-mix(in srgb, var(--gc) 16%, transparent), transparent 72%);
+  animation: daemonSigil 4s ease-in-out infinite;
+}
+@keyframes daemonSigil { 0%,100% { filter: drop-shadow(0 0 6px var(--gc)); } 50% { filter: drop-shadow(0 0 12px var(--gc)); } }
+/* Сигил — силуэт PNG, залитый цветом бога (без чёрной подложки/рамки) */
+.warhammer-dbc .daemon-sigil-mask {
+  width: 88%; height: 88%; background: var(--gc);
+  filter: drop-shadow(0 0 4px var(--gc));
+}
+/* Пользовательский аватар вместо сигила */
+.warhammer-dbc .daemon-avatar {
+  width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--gc) 60%, transparent);
+  box-shadow: 0 0 10px -2px var(--glow);
+}
+
+.warhammer-dbc .daemon-id { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.warhammer-dbc .daemon-name {
+  font-size: 1.35em; font-weight: 800; letter-spacing: 0.02em; color: #ece0ff;
+  background: transparent; border: none; border-bottom: 1px solid transparent; padding: 1px 2px;
+}
+.warhammer-dbc .daemon-name:focus { outline: none; border-bottom-color: var(--gc); }
+.warhammer-dbc .daemon-portfolio {
+  width: 100%; font-size: 0.85em; font-style: italic; color: #b7abd8;
+  background: transparent; border: none; padding: 0 2px;
+}
+.warhammer-dbc .daemon-portfolio:focus { outline: none; color: #e7ddff; }
+.warhammer-dbc .daemon-selrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.warhammer-dbc .daemon-selrow label {
+  display: flex; flex-direction: column; font-size: 0.66em; text-transform: uppercase;
+  letter-spacing: 0.05em; color: #8a7fb0; gap: 1px;
+}
+.warhammer-dbc .daemon-selrow select, .warhammer-dbc .daemon-inst input {
+  background: rgba(0,0,0,0.4); border: 1px solid #2a1e44; color: #d9cff0;
+  border-radius: 4px; padding: 2px 5px; font-size: 1.15em; min-width: 96px;
+}
+.warhammer-dbc .daemon-inst input { min-width: 52px; width: 52px; text-align: center; }
+
+.warhammer-dbc .daemon-vitals { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; min-width: 120px; }
+.warhammer-dbc .daemon-vrow { display: flex; gap: 6px; font-size: 0.82em; color: #9a8fc0; }
+.warhammer-dbc .daemon-vrow b { color: #ece0ff; }
+.warhammer-dbc .daemon-vrow.small { font-size: 0.72em; color: #7a6fa0; text-align: right; max-width: 150px; }
+.warhammer-dbc .daemon-btns { display: flex; gap: 4px; margin-top: 4px; }
+.warhammer-dbc .daemon-btns button {
+  padding: 3px 8px; font-size: 0.74em; font-weight: 600; cursor: pointer; border-radius: 4px;
+  background: color-mix(in srgb, var(--gc) 22%, #140b22); color: #f0e6ff;
+  border: 1px solid var(--gc); white-space: nowrap;
+}
+.warhammer-dbc .daemon-btns button:hover { filter: brightness(1.15); }
+
+/* ── Полоса: Истинное Имя + божественный трейт ──────── */
+.warhammer-dbc .daemon-strip {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;
+  padding: 6px 10px; background: rgba(0,0,0,0.22); border: 1px solid #2a1e44; border-radius: 5px;
+}
+.warhammer-dbc .daemon-truename {
+  display: flex; align-items: center; gap: 6px; font-size: 0.72em; text-transform: uppercase;
+  letter-spacing: 0.05em; color: #8a7fb0; flex-shrink: 0;
+}
+.warhammer-dbc .daemon-truename input[type=text] {
+  background: rgba(0,0,0,0.4); border: 1px solid #2a1e44; color: #ffd9a0;
+  border-radius: 4px; padding: 2px 6px; font-size: 1.25em; min-width: 150px; text-transform: none; letter-spacing: 0;
+}
+.warhammer-dbc .daemon-tn-cb { display: inline-flex; align-items: center; gap: 3px; }
+.warhammer-dbc .daemon-psy-cb { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78em; color: #b7abd8; flex-shrink: 0; }
+.warhammer-dbc .daemon-psy-cb input { accent-color: var(--gc); }
+.warhammer-dbc .daemon-divine { font-size: 0.82em; line-height: 1.4; color: #cfc3ea; flex: 1; min-width: 200px; }
+.warhammer-dbc .daemon-divine b { color: var(--gc); }
+
+/* ── Вкладка Демонология ────────────────────────────── */
+.warhammer-dbc .daemon-note { font-size: 0.86em; line-height: 1.5; color: #c9bfe4; margin: 2px 0; }
+.warhammer-dbc .daemon-inf-range { font-size: 0.72em; color: #8a7fb0; font-weight: 400; }
+.warhammer-dbc .daemon-reflist { display: flex; flex-direction: column; gap: 5px; }
+.warhammer-dbc .daemon-ref {
+  font-size: 0.84em; line-height: 1.45; padding: 4px 8px; border-radius: 4px;
+  background: rgba(180,119,255,0.06); border-left: 2px solid var(--gc, #6a5a9a);
+}
+.warhammer-dbc .daemon-ref b { color: #e7ddff; }
+.warhammer-dbc .daemon-lore-tab .daemon-ref { --gc: #6a5a9a; }
+
+/* Чат-карточка демона */
+.wh-daemon-card { border-left: 3px solid #b477ff; }

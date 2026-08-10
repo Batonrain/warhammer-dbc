@@ -1,0 +1,656 @@
+{
+  "id": "warhammer-dbc",
+  "title": "Warhammer DBC",
+  "description": "Система для Warhammer 40k — DBC (Doom BC). Объединяет Rogue Trader, Dark Heresy и другие линейки.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "Warhammer DBC Community"
+    }
+  ],
+  "url": "https://github.com/Batonrain/warhammer-dbc",
+  "manifest": "https://github.com/Batonrain/warhammer-dbc/releases/latest/download/system.json",
+  "download": "https://github.com/Batonrain/warhammer-dbc/releases/latest/download/system.zip",
+  "license": "LICENSE",
+  "readme": "README.md",
+  "bugs": "https://github.com/Batonrain/warhammer-dbc/issues",
+  "esmodules": [
+    "warhammer-dbc.mjs"
+  ],
+  "styles": [
+    "styles/warhammer-dbc.css"
+  ],
+  "languages": [
+    {
+      "lang": "ru",
+      "name": "Русский",
+      "path": "lang/ru.json"
+    }
+  ],
+  "packs": [
+    {
+      "name": "chemistry",
+      "label": "Химия — Библиотека (DBC)",
+      "path": "packs/chemistry",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "traits",
+      "label": "Черты — Библиотека (DBC)",
+      "path": "packs/traits",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "talents",
+      "label": "Таланты — Библиотека (DBC)",
+      "path": "packs/talents",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "implants",
+      "label": "Импланты — Библиотека (DBC)",
+      "path": "packs/implants",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "weapons",
+      "label": "Оружие — Библиотека (DBC)",
+      "path": "packs/weapons",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "weapon-properties",
+      "label": "Свойства оружия — Библиотека (DBC)",
+      "path": "packs/weapon-properties",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "armour-histories",
+      "label": "Истории силовой брони — Библиотека (DBC)",
+      "path": "packs/armour-histories",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "ammunition",
+      "label": "Боеприпасы — Библиотека (DBC)",
+      "path": "packs/ammunition",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "armor",
+      "label": "Броня — Библиотека (DBC)",
+      "path": "packs/armor",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "shields",
+      "label": "Силовые щиты — Библиотека (DBC)",
+      "path": "packs/shields",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "ship-components",
+      "label": "Корабельные узлы — Библиотека (DBC)",
+      "path": "packs/ship-components",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "vehicle-equipment",
+      "label": "Снаряжение техники — Библиотека (DBC)",
+      "path": "packs/vehicle-equipment",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "vehicle-traits",
+      "label": "Черты техники — Библиотека (DBC)",
+      "path": "packs/vehicle-traits",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "vehicle-weapons",
+      "label": "Орудия техники — Библиотека (DBC)",
+      "path": "packs/vehicle-weapons",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "vehicles",
+      "label": "Техника — Библиотека (DBC)",
+      "path": "packs/vehicles",
+      "type": "Actor",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "NONE",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "small-craft",
+      "label": "Малые суда (МЛА) — Библиотека (DBC)",
+      "path": "packs/small-craft",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "diseases",
+      "label": "Болезни — Библиотека (DBC)",
+      "path": "packs/diseases",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "armour-systems",
+      "label": "Системы силовой брони — Библиотека (DBC)",
+      "path": "packs/armour-systems",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "armor-mods",
+      "label": "Модификации брони — Библиотека (DBC)",
+      "path": "packs/armor-mods",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "weapon-mods",
+      "label": "Модификации оружия — Библиотека (DBC)",
+      "path": "packs/weapon-mods",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "psychic-powers",
+      "label": "Псайкана — Библиотека (DBC)",
+      "path": "packs/psychic-powers",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "tech-powers",
+      "label": "Техночудеса — Библиотека (DBC)",
+      "path": "packs/tech-powers",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "gear",
+      "label": "Снаряжение — Библиотека (DBC)",
+      "path": "packs/gear",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "tools",
+      "label": "Инструменты — Библиотека (DBC)",
+      "path": "packs/tools",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "bestiary",
+      "label": "Бестиарий — Библиотека (DBC)",
+      "path": "packs/bestiary",
+      "type": "Actor",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "NONE",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "mutations",
+      "label": "Мутации и Дары Богов",
+      "path": "packs/mutations",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "homeworlds",
+      "label": "Родные миры — Библиотека (DBC)",
+      "path": "packs/homeworlds",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "divinations",
+      "label": "Предсказания — Библиотека (DBC)",
+      "path": "packs/divinations",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "archetypes",
+      "label": "Архетипы — Библиотека (DBC)",
+      "path": "packs/archetypes",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "aspirations",
+      "label": "Стремления — Библиотека (DBC)",
+      "path": "packs/aspirations",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-core",
+      "label": "DoomBC — Основная книга",
+      "path": "packs/book-core",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-machines",
+      "label": "DoomBC — Машины",
+      "path": "packs/book-machines",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-chaos",
+      "label": "DoomBC — Хаос",
+      "path": "packs/book-chaos",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-void",
+      "label": "Книга Пустоты v.2",
+      "path": "packs/book-void",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-aeldari",
+      "label": "Книга Аэльдари",
+      "path": "packs/book-aeldari",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-aeldari-branches",
+      "label": "Книга Аэльдари: Ответвления",
+      "path": "packs/book-aeldari-branches",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-eldar-vehicles",
+      "label": "Книга Эльдар: Техника",
+      "path": "packs/book-eldar-vehicles",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-battles",
+      "label": "Книга Битв",
+      "path": "packs/book-battles",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-homeworlds",
+      "label": "Происхождения",
+      "path": "packs/book-origins",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-divinations",
+      "label": "Предсказания",
+      "path": "packs/book-divinations",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-power-armour",
+      "label": "Силовая броня: без шлема и особенности",
+      "path": "packs/book-power-armour",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "Doom Crusade",
+      "sorting": "m",
+      "packs": [],
+      "folders": [
+        {
+          "name": "Основная книга",
+          "sorting": "m",
+          "packs": [
+            "book-core"
+          ],
+          "folders": [
+            {
+              "name": "Арсенал",
+              "sorting": "m",
+              "packs": [
+                "weapons",
+                "ammunition",
+                "armor",
+                "shields",
+                "armour-systems",
+                "armor-mods",
+                "weapon-mods",
+                "gear",
+                "tools",
+                "chemistry",
+                "implants",
+                "weapon-properties"
+              ]
+            },
+            {
+              "name": "Продвижение",
+              "sorting": "m",
+              "packs": [
+                "traits",
+                "talents"
+              ]
+            },
+            {
+              "name": "Псайкана и Мистика",
+              "sorting": "m",
+              "packs": [
+                "psychic-powers",
+                "tech-powers"
+              ]
+            },
+            {
+              "name": "Порча и Хаос",
+              "sorting": "m",
+              "packs": [
+                "diseases",
+                "mutations"
+              ]
+            },
+            {
+              "name": "Архетипы",
+              "sorting": "m",
+              "packs": [
+                "archetypes"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Книга Машин",
+          "sorting": "m",
+          "packs": [
+            "book-machines",
+            "vehicle-equipment",
+            "vehicle-traits",
+            "vehicle-weapons",
+            "vehicles"
+          ]
+        },
+        {
+          "name": "Книга Пустоты",
+          "sorting": "m",
+          "packs": [
+            "book-void",
+            "ship-components",
+            "small-craft"
+          ]
+        },
+        {
+          "name": "Книга Хаоса",
+          "sorting": "m",
+          "packs": [
+            "book-chaos",
+            "bestiary"
+          ]
+        },
+        {
+          "name": "Книга Эльдар",
+          "sorting": "m",
+          "packs": [
+            "book-aeldari",
+            "book-aeldari-branches",
+            "book-eldar-vehicles"
+          ]
+        },
+        {
+          "name": "Книга Битв",
+          "sorting": "m",
+          "packs": [
+            "book-battles"
+          ]
+        },
+        {
+          "name": "Дополнительное",
+          "sorting": "m",
+          "packs": [
+            "homeworlds",
+            "divinations",
+            "aspirations",
+            "book-homeworlds",
+            "book-divinations",
+            "book-power-armour",
+            "armour-histories"
+          ]
+        }
+      ]
+    }
+  ],
+  "gridDistance": 1,
+  "gridUnits": "м",
+  "primaryTokenAttribute": "wounds.value",
+  "secondaryTokenAttribute": "fate.value"
+}

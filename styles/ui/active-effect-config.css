@@ -1,0 +1,13 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Редактор Active Effect (WarhammerActiveEffectConfig) — добавляет столбец
+   «Фаза» к штатной вкладке «Changes». Раскладка ядра (foundry2.css):
+   .active-effect-config .tab.changes header/ol { grid-template-columns: 12rem 7rem 7rem 4rem 1rem; }
+   Здесь — тот же грид + одна колонка под select фазы.
+   ═══════════════════════════════════════════════════════════════════════ */
+.wh-ae-config .tab.changes header,
+.wh-ae-config .tab.changes ol {
+  grid-template-columns: 10rem 6rem 6rem 9rem 4rem 1rem;
+}
+.wh-ae-config .tab.changes .wh-phase select {
+  width: 100%;
+}

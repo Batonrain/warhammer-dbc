@@ -1,0 +1,56 @@
+{{!-- Черта техники --}}
+{{#if (eq item.type "vehicleTrait")}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ ЧЕРТЫ</div>
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label"><input type="checkbox" name="system.hasRating" {{#if system.hasRating}}checked{{/if}}/> Рейтинг X</label>
+    {{#if system.hasRating}}<input type="number" name="system.rating" value="{{system.rating}}" class="wr-input-xs"/>{{/if}}
+    <label class="drug-fx-cb-label" style="margin-left:8px;"><input type="checkbox" name="system.hasRating2" {{#if system.hasRating2}}checked{{/if}}/> Y</label>
+    {{#if system.hasRating2}}<input type="number" name="system.rating2" value="{{system.rating2}}" class="wr-input-xs"/>{{/if}}
+    <label class="drug-fx-cb-label" style="margin-left:8px;"><input type="checkbox" name="system.hasRating3" {{#if system.hasRating3}}checked{{/if}}/> Z</label>
+    {{#if system.hasRating3}}<input type="number" name="system.rating3" value="{{system.rating3}}" class="wr-input-xs"/>{{/if}}
+  </div>
+  <div class="drug-effect-row">
+    <label class="drug-effect-label">Краткое преимущество</label>
+    <textarea name="system.benefit" class="drug-textarea-sm" placeholder="Короткая выжимка для листа...">{{system.benefit}}</textarea>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">АВТО-ЭФФЕКТЫ</div>
+  <div class="trait-fx-hint">Заполняйте только то, что применяется автоматически к листу техники. Остальные правила — в Описании.</div>
+  <div class="drug-fx-grid">
+    <div class="drug-fx-row">
+      <label class="drug-fx-cb-label"><input type="checkbox" name="system.effects.openTopped" {{#if system.effects.openTopped}}checked{{/if}}/> Open Topped (Налёт)</label>
+      <label class="drug-fx-cb-label"><input type="checkbox" name="system.effects.critHalved" {{#if system.effects.critHalved}}checked{{/if}}/> ½ негатив. Структуры для крита</label>
+      <label class="drug-fx-cb-label"><input type="checkbox" name="system.effects.reloadRapid" {{#if system.effects.reloadRapid}}checked{{/if}}/> Автозарядник (Rapid Reload)</label>
+    </div>
+    <div class="drug-fx-row">
+      <label class="drug-fx-cb-label"><input type="checkbox" name="system.effects.noMove" {{#if system.effects.noMove}}checked{{/if}}/> Неподвижна</label>
+      <label class="drug-fx-cb-label"><input type="checkbox" name="system.effects.swerveDisabled" {{#if system.effects.swerveDisabled}}checked{{/if}}/> Без Виража</label>
+      <label class="drug-fx-cb-label"><input type="checkbox" name="system.effects.trackHitsToHull" {{#if system.effects.trackHitsToHull}}checked{{/if}}/> Ходовая → Корпус</label>
+    </div>
+    <div class="drug-fx-row">
+      <label class="drug-fx-cb-label"><input type="checkbox" name="system.effects.smallMoveOnly" {{#if system.effects.smallMoveOnly}}checked{{/if}}/> Только Малый Ход</label>
+      <label class="drug-fx-cb-label"><input type="checkbox" name="system.effects.ignoreDifficultTerrain" {{#if system.effects.ignoreDifficultTerrain}}checked{{/if}}/> Игнор Трудного Ландшафта</label>
+      <label class="drug-fx-cb-label"><input type="checkbox" name="system.effects.siege" {{#if system.effects.siege}}checked{{/if}}/> Осадная (крыша/днище AR)</label>
+    </div>
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">Полный Ход ×SPD (0 = станд. ×2)</span>
+      <input type="number" name="system.effects.fullMoveSpdMult" value="{{system.effects.fullMoveSpdMult}}" min="0" class="drug-fx-num"/>
+      <span class="drug-fx-lbl">SPD ±</span>
+      <input type="number" name="system.effects.spdMod" value="{{system.effects.spdMod}}" class="drug-fx-num"/>
+      <span class="drug-fx-lbl">−Урон Ходовой (X)</span>
+      <input type="number" name="system.effects.spdDamageReduce" value="{{system.effects.spdDamageReduce}}" min="0" class="drug-fx-num"/>
+    </div>
+    <div class="drug-fx-row">
+      <span class="drug-fx-lbl">Мод. Маневрирования (±)</span>
+      <input type="number" name="system.effects.manoeuvreMod" value="{{system.effects.manoeuvreMod}}" class="drug-fx-num"/>
+      <span class="drug-fx-lbl">Командование (+)</span>
+      <input type="number" name="system.effects.commandBonus" value="{{system.effects.commandBonus}}" class="drug-fx-num"/>
+      <span class="drug-fx-lbl">Ремонт (+)</span>
+      <input type="number" name="system.effects.repairBonus" value="{{system.effects.repairBonus}}" class="drug-fx-num"/>
+    </div>
+  </div>
+</div>
+{{/if}}

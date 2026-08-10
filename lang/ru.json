@@ -1,0 +1,21 @@
+{
+  "GAME": {
+    "Paused": "Нет места отдыху"
+  },
+  "TYPES": {
+    "Actor": {
+      "character": "Персонаж",
+      "ship": "Корабль",
+      "starSystem": "Звёздная система",
+      "horde": "Орда",
+      "vehicle": "Техника",
+      "daemon": "Демон",
+      "demonPrince": "Демон-Принц",
+      "squad": "Отряд",
+      "formation": "Формирование"
+    },
+    "Item": {
+      "celestialBody": "Небесное тело"
+    }
+  }
+}

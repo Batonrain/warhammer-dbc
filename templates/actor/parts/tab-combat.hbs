@@ -1,0 +1,144 @@
+<div class="tab combat-cog" data-tab="combat" data-group="primary"> {{!-- Раны / Броня / Движение — три колонки --}}
+  <div class="combat-layout"> {{!-- РАНЫ --}}
+    <div class="stat-panel"> <div class="panel-title">РАНЫ</div> <div class="panel-body wounds-body"> <div class="wounds-row"> <label>Всего</label> <input type="number" name="system.wounds.max" value="{{system.wounds.max}}" min="0"/> </div> <div class="wounds-row"> <label>Текущие</label> <input type="number" name="system.wounds.value" value="{{system.wounds.value}}" min="0"/> </div> <div class="wounds-row"> <label>Критический урон</label> <input type="number" name="system.wounds.critical" value="{{system.wounds.critical}}" min="0"/> </div> <div class="wounds-row wounds-reactions-row"> <label title="Памятка: доступные реакции персонажа">Реакции</label> <input type="text" name="system.reactions" value="{{system.reactions}}" placeholder="напр. 1"/> </div> <div class="wounds-row wounds-heal-row"> <button type="button" class="wounds-heal-btn" title="Первая помощь / отдых / лечение — себя или выбранной цели (тест Медики)"><span class="wh-cond-ico" style="color:#ff8a8a;width:14px;height:14px;"><svg viewBox="0 0 16 16" width="14" height="14" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M8 14.2S1.8 10 1.8 5.7A3.4 3.4 0 0 1 8 3.9 3.4 3.4 0 0 1 14.2 5.7C14.2 10 8 14.2 8 14.2Z"/></svg></span> Лечение</button> </div> </div> </div> {{!-- БРОНЯ И ПОГЛОЩЕНИЕ --}}
+    <div class="stat-panel"> <div class="panel-title">БРОНЯ И ПОГЛОЩЕНИЕ</div> <div class="panel-body armor-body"> <div class="armor-formula-legend"> <span class="afl-ap">AP брони</span> <span class="afl-op">−&nbsp;Пробитие</span> <span class="afl-op">+</span> <span class="afl-tb">T.b&nbsp;{{system.absorption.toughnessBonus}}</span> <span class="afl-op">=</span> <span class="afl-total">Поглощение</span> </div> <div class="armor-tb-note"> T.b (Бонус Стойкости) <b>игнорируется</b> бронепробитием —
+          Pen уменьшает только AP брони
+        </div> <div class="armor-diagram"> <div class="armor-head"> <div class="armor-loc-label">Голова</div> <div class="armor-loc-vals"> <span class="armor-ap-gear" title="AP брони">{{system.absorption.armorOnly.head}}</span> <span class="armor-tb-val" title="Бонус Стойкости">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.head}}</div> </div> <div class="armor-arms-row"> <div class="armor-limb"> <div class="armor-loc-label">Л. Рука</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.leftArm}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.leftArm}}</div> </div> <div class="armor-limb"> <div class="armor-loc-label">Корпус</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.body}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.body}}</div> </div> <div class="armor-limb"> <div class="armor-loc-label">П. Рука</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.rightArm}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.rightArm}}</div> </div> </div> <div class="armor-legs-row"> <div class="armor-limb"> <div class="armor-loc-label">Л. Нога</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.leftLeg}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.leftLeg}}</div> </div> <div class="armor-limb"> <div class="armor-loc-label">П. Нога</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.rightLeg}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.rightLeg}}</div> </div> </div> </div> <div class="armor-legend-row"> <span class="armor-ap-gear">AP брони</span> <span class="armor-tb-val">+T.b</span> <span class="armor-eq">=</span> <span class="armor-total">Поглощение</span> </div> {{#if armorVsTypeStr}}
+        <div class="armor-tb-note" style="margin-top:4px;"> Доп. AP против типов: <b>{{armorVsTypeStr}}</b> (модификации брони)
+        </div> {{/if}}
+
+      </div> </div>{{!-- /броня --}}
+
+    {{#if helmetless}}
+    <div class="stat-panel helmet-panel{{#if helmetless.on}} helmet-off{{/if}}"> <div class="panel-title">ШЛЕМ СИЛОВОЙ БРОНИ</div> <div class="panel-body helmet-body"> <label class="helmet-toggle" title="{{helmetless.action}}"> <input type="checkbox" name="system.helmetOff" {{checked helmetless.on}}/> <span class="helmet-toggle-label">Шлем снят</span> <span class="helmet-ap" title="ОБ на голову от снаряжения">шлем даёт {{helmetless.headAP}} ОБ</span> </label> {{#if helmetless.on}}
+      <ul class="helmet-effects"> {{#each helmetless.effects as |e|}}<li>{{e.text}}</li>{{/each}}
+      </ul> {{#if helmetless.disabled.length}}
+      <div class="helmet-disabled"> <span class="helmet-disabled-head">Отключены системы шлема:</span> {{#each helmetless.disabled as |d|}}<span class="helmet-disabled-item">{{d}}</span>{{/each}}
+      </div> {{/if}}
+      {{#if helmetless.kept.length}}
+      <div class="helmet-kept"> <span class="helmet-kept-head">Продолжает работать:</span> {{#each helmetless.kept as |d|}}<span class="helmet-kept-item">{{d}}</span>{{/each}}
+        <span class="helmet-kept-note">— только передача звука через горжет</span> </div> {{/if}} <div class="helmet-action">{{helmetless.action}}</div> {{else}}
+      <div class="helmet-hint">Многие боевые братья снимают шлем, когда нет прямой угрозы: это стоит защиты головы и авточувств, но подкупает врагов и соратников.</div> {{/if}}
+    </div> </div> {{/if}}
+    {{!-- ДВИЖЕНИЕ --}}
+    <div class="stat-panel"> <div class="panel-title">ДВИЖЕНИЕ</div> <div class="panel-body movement-body"> <div class="movement-row"> <label>Полушаг</label> <span class="movement-val">{{system.movement.halfMove}}</span> </div> <div class="movement-row"> <label>Шаг</label> <span class="movement-val">{{system.movement.move}}</span> </div> <div class="movement-row"> <label>Натиск</label> <span class="movement-val">{{system.movement.charge}}</span> </div> <div class="movement-row"> <label>Бег</label> <span class="movement-val">{{system.movement.run}}</span> </div> </div> <div class="panel-title" style="margin-top:4px;">ПРОЧЕЕ</div> <div class="panel-body movement-body"> <div class="movement-row"> <label title="1d10 + Ag.Бонус + модификатор">Инициатива</label> <div class="initiative-controls"> <span class="movement-val initiative-base" title="Ag.Бонус (авторасчёт)">{{system.initiative}}</span> <span class="initiative-sep">+</span> <input type="number" class="initiative-mod-input" name="system.initiativeMod" value="{{system.initiativeMod}}" min="-99" max="99" title="Доп. модификатор к инициативе" placeholder="0"/> </div> </div> <div class="movement-row"> <label>Размер{{#if system.sizeMod}} <span class="size-trait-badge" title="Вклад Черт">(+{{system.sizeMod}} от Черт)</span>{{/if}}</label> <input type="number" name="system.size" value="{{system.size}}" min="-4" max="6" title="База. Итоговый размер с Чертами: {{system.sizeTotal}}"/> {{#if system.sizeMod}}
+          <span class="size-total-value" title="Итоговый Размер (база + Черты)">= {{system.sizeTotal}}</span> {{/if}}
+        </div> </div> </div>{{!-- /движение --}}
+
+  </div>{{!-- /combat-layout --}}
+
+  {{!-- ═══ ОЧКИ БОЛИ (Друкхари, талант «Через Боль») ═══ --}}
+  {{#if system.painActive}}
+  <div class="pain-panel">
+    <div class="pain-head">
+      <span class="pain-title">⚡ ОЧКИ БОЛИ</span>
+      <span class="pain-current"><b class="pain-value">{{system.fate.value}}</b> / {{system.fate.max}}</span>
+      <span class="pain-info" title="Максимум = W.b × (1 + «Бездонная Душа»). Тратится как Очки Бесчестья по X×строке таблицы (Cor 0 → 1 Боль, Cor 20 → 2 и т.д.). Работает в нуль-поле; нельзя на Усиление, Доп. Успехи и Переброс Длительных тестов. Вне Паутины — 1 Боль/день, иначе Порча от Голодной Суки.">ⓘ</span>
+    </div>
+    <div class="pain-actions">
+      <button type="button" class="pain-absorb-btn" title="Реакция: впитать страдания (+1 Боль; не более 1 с одной жертвы за Раунд)">＋ Впитать (Реакция)</button>
+      <button type="button" class="pain-spend-btn" title="Потратить 1 Очко Боли (как Очко Бесчестья)">− Потратить</button>
+      <button type="button" class="pain-soulburn-btn" title="Выжигание Души / Варп-урон: Боль выжигается первой — 3 урона за 1 Боль">🔥 Поглотить Выжигание</button>
+    </div>
+  </div>
+  {{/if}}
+
+  {{!-- ═══ СИЛОВОЕ ПОЛЕ — отдельная строка под основной сеткой ═══ --}}
+  {{#if activeShield}}
+  <div class="shield-combat-bar shield-bar-active"> <div class="shield-bar-left"> <span class="shield-bar-icon"> {{#if (eq activeShield.shieldNature "technological")}}{{else}}{{/if}}
+      </span> <span class="shield-bar-title">СИЛОВОЕ ПОЛЕ</span> <span class="shield-bar-name">{{activeShield.name}}</span> <span class="shield-bar-type shield-type-{{activeShield.shieldType}}"> {{#if (eq activeShield.shieldType "dome")}}Купол{{/if}}
+        {{#if (eq activeShield.shieldType "deflector")}}Дефлектор{{/if}}
+        {{#if (eq activeShield.shieldType "penetrating")}}Сквозной{{/if}}
+      </span> </div> <div class="shield-bar-stats"> <div class="shield-bar-stat"> <span class="shield-bar-stat-label">Рейтинг</span> <span class="shield-bar-stat-value shield-rating-glow">{{activeShield.currentRating}}</span> </div> <div class="shield-bar-stat"> <span class="shield-bar-stat-label">Перегрузка ≤</span> <span class="shield-bar-stat-value"> {{#if activeShield.overloadThreshold}}
+            {{activeShield.overloadMax}}
+          {{else}}—{{/if}}
+        </span> </div> <div class="shield-bar-stat"> <span class="shield-bar-stat-label">Статус</span> <span class="shield-bar-stat-value"> <span class="shield-status-badge shield-status-{{activeShield.statusKey}}"> {{activeShield.statusIcon}} {{activeShield.statusLabel}}
+          </span> </span> </div> </div> <div class="shield-bar-actions"> <button type="button" class="shield-roll-btn shield-bar-btn shield-bar-btn-roll" data-item-id="{{activeShield.id}}" title="Бросок d100 против рейтинга щита"> Бросок щита
+      </button> <button type="button" class="shield-toggle-btn shield-bar-btn shield-bar-btn-off" data-item-id="{{activeShield.id}}" title="Деактивировать щит"> Выключить
+      </button> </div> </div> {{else}}
+
+  {{!-- Нет активного щита --}}
+  <div class="shield-combat-bar shield-bar-inactive"> <div class="shield-bar-left"> <span class="shield-bar-icon shield-bar-icon-off"></span> <span class="shield-bar-title">СИЛОВОЕ ПОЛЕ</span> <span class="shield-bar-empty-text">Нет активного щита</span> </div> {{#if inactiveShields.length}}
+    <div class="shield-bar-inactive-list"> {{#each inactiveShields as |s|}}
+      <div class="shield-bar-inactive-item"> <span class="shield-bar-inactive-name"> {{#if (eq s.shieldNature "technological")}}{{else}}{{/if}}
+          {{s.name}}
+        </span> <button type="button" class="shield-toggle-btn shield-bar-btn shield-bar-btn-on" data-item-id="{{s.id}}" title="Активировать: {{s.name}}"> Активировать
+        </button> </div> {{/each}}
+    </div> {{/if}}
+  </div> {{/if}}
+  {{!-- /силовое поле --}}
+
+  {{!-- СТОЙКИ И ПРИЁМЫ --}}
+  <div class="combat-melee-layout"> <div class="combat-section-panel combat-collapsible {{#if combatStanceCollapsed}}collapsed{{/if}}"> <div class="panel-title combat-collapse-head" data-collapse="stance"><span class="cc-caret">▾</span> СТОЙКА <span class="cc-badge">{{combatStanceLabel}}</span></div> <div class="combat-collapse-body"><div class="stance-grid"> <label class="stance-label {{#if (eq system.meleeStance 'standard')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="standard" class="stance-radio" {{#if (eq system.meleeStance 'standard')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Стандартная</div> <div class="stance-desc">По умолчанию. Нет эффектов.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'aggressive')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="aggressive" class="stance-radio" {{#if (eq system.meleeStance 'aggressive')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Агрессивная</div> <div class="stance-desc">WS +10, Избегания −10, нет Реакции в конце хода.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'defensive')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="defensive" class="stance-radio" {{#if (eq system.meleeStance 'defensive')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Защитная</div> <div class="stance-desc">Нет атак. WS −20. +1 Реакция. Избегания +10 если оружие в руке.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'covering')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="covering" class="stance-radio" {{#if (eq system.meleeStance 'covering')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Прикрывающая</div> <div class="stance-desc">Все атаки по персонажу +20. Атаки по союзникам рядом −20.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'springing')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="springing" class="stance-radio" {{#if (eq system.meleeStance 'springing')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Пружинящая</div> <div class="stance-desc">SPD −2 для движения, +2 для отскока. Уклонение +10, S −10.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'rapidstrike')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="rapidstrike" class="stance-radio" {{#if (eq system.meleeStance 'rapidstrike')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Частокол</div> <div class="stance-desc">Свободная атака на атакующего с меньшим Rng оружием до его удара.</div> </div> </label> </div></div> </div> <div class="combat-section-panel combat-collapsible {{#if combatTechCollapsed}}collapsed{{/if}}"> <div class="panel-title combat-collapse-head" data-collapse="tech"><span class="cc-caret">▾</span> ПРИЁМЫ</div> <div class="combat-collapse-body"><div class="technique-grid"> <button type="button" class="technique-btn" data-technique="standard"> <span class="tech-name">Обычная Атака</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +0</span> </button> <button type="button" class="technique-btn" data-technique="sweep"> <span class="tech-name">Широкий Взмах</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +0</span> </button> <button type="button" class="technique-btn" data-technique="thrust"> <span class="tech-name">Выпад</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +0</span> </button> <button type="button" class="technique-btn" data-technique="saw"> <span class="tech-name">Пила</span> <span class="tech-action">Стандартная</span> <span class="tech-mod">WS −10</span> </button> <button type="button" class="technique-btn" data-technique="stun"> <span class="tech-name">Оглушить</span> <span class="tech-action">Стандартная</span> <span class="tech-mod">WS −20</span> </button> <button type="button" class="technique-btn" data-technique="knockdown"> <span class="tech-name">Повалить</span> <span class="tech-action">Натиск/Полная</span> <span class="tech-mod">Ath vs Ath</span> </button> <button type="button" class="technique-btn" data-technique="grapple"> <span class="tech-name">Захват</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +0</span> </button> <button type="button" class="technique-btn" data-technique="charge"> <span class="tech-name">Натиск</span> <span class="tech-action">Полное действие</span> <span class="tech-mod">WS +20</span> </button> <button type="button" class="technique-btn" data-technique="fullatk"> <span class="tech-name">Полная Атака</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +30</span> </button> <button type="button" class="technique-btn" data-technique="careful"> <span class="tech-name">Осторожная Атака</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS −10</span> </button> <button type="button" class="technique-btn" data-technique="feint"> <span class="tech-name">Финт</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS vs WS</span> </button> <button type="button" class="technique-btn" data-technique="press"> <span class="tech-name">Давление</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS vs WS</span> </button> </div></div> </div> </div>{{!-- /combat-melee-layout --}}
+
+  {{!-- БЛИЖНИЙ БОЙ --}}
+  <div class="combat-section-panel"> <div class="panel-title">БЛИЖНИЙ БОЙ</div> <table class="items-table combat-weapons-table"> <thead> <tr> <th>Название</th><th>Класс</th><th>Урон</th><th>Тип</th> <th>Проб.</th><th>Особое</th><th>Порог</th><th></th> </tr> </thead> <tbody> {{#if combatMeleeWeapons.length}}
+          {{#each combatMeleeWeapons as |w|}}
+          <tr class="item-row combat-weapon-row" data-item-id="{{w.id}}"> <td class="item-name-cell">{{w.name}}
+              {{#if w.hasMods}}<span class="weapon-mod-badge" title="Модификации: {{w.modNames}}">{{w.modNames}}</span>{{/if}}
+            </td> <td>{{w.weaponClass}}</td> <td>{{w.damage}}</td> <td>{{w.damageType}}</td> <td>{{w.penetration}}</td> <td class="combat-special-cell">{{w.special}}</td> <td><b>{{w.attackThreshold}}</b></td> <td> <button type="button" class="weapon-attack-roll combat-atk-btn" data-item-id="{{w.id}}" title="Атака: {{w.name}}">Атака</button> </td> </tr>
+          {{#if w.isShield}}
+          <tr class="shield-ctl-row" data-item-id="{{w.id}}"> <td colspan="8" class="shield-ctl-cell">
+            <span class="shield-ap-badge" title="Броня щита на прикрываемых зонах">AP {{w.shieldAP}}</span>
+            <span class="shield-cover" title="Что прикрывает щит">{{w.shieldCoverage}}</span>
+            <span class="shield-ctl-spacer"></span>
+            <button type="button" class="shield-hand-btn {{#if (eq w.shieldHand 'left')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="left" title="Щит в левой руке">Л</button>
+            <button type="button" class="shield-hand-btn {{#if (eq w.shieldHand 'right')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="right" title="Щит в правой руке">П</button>
+            <button type="button" class="shield-raise-btn {{#if w.shieldRaised}}is-on{{/if}}" data-item-id="{{w.id}}" title="Поднять щит: прикрывает зоны «в скобках» (пригнуться/закрыться), но это осознанное действие">{{#if w.shieldRaised}}Щит поднят{{else}}Поднять щит{{/if}}</button>
+          </td> </tr> {{/if}} {{/each}}
+        {{else}}
+          <tr class="items-empty"> <td colspan="8"><em>Нет рукопашного оружия (отметьте «Экипировано» в Снаряжении)</em></td> </tr> {{/if}}
+      </tbody> </table> </div> {{!-- ДАЛЬНИЙ БОЙ --}}
+  <div class="combat-section-panel"> <div class="panel-title">ДАЛЬНИЙ БОЙ</div> {{#if combatRangedWeapons.length}}
+      {{#each combatRangedWeapons as |w|}}
+      <div class="ranged-weapon-card" data-item-id="{{w.id}}"> <div class="rwc-main-row"> <span class="rwc-name">{{w.name}}{{#if w.hasMods}} <span class="weapon-mod-badge" title="Модификации: {{w.modNames}}"></span>{{/if}}</span> <span class="rwc-stat-inline" title="Класс">{{w.weaponClass}}</span> <span class="rwc-divider">·</span> <span class="rwc-stat-inline" title="Дальность">{{w.range}}м</span> <span class="rwc-divider">·</span> <span class="rwc-stat-inline" title="СКС">{{w.rof}}</span> <span class="rwc-divider">·</span> <span class="rwc-stat-inline" title="Урон">{{w.damage}}</span> <span class="rwc-stat-inline rwc-dmgtype" title="Тип урона">{{w.damageType}}</span> {{#if w.penetration}}
+          <span class="rwc-divider">·</span> <span class="rwc-stat-label-inline">Проб.</span> <span class="rwc-stat-inline">{{w.penetration}}</span> {{/if}}
+          <span class="rwc-spacer"></span> <span class="rwc-threshold-badge">{{w.attackThreshold}}</span> <button type="button" class="weapon-attack-roll rwc-atk-btn" data-item-id="{{w.id}}" title="Атака: {{w.name}}" {{#if w.magEmpty}}disabled{{/if}}>Атака</button> </div> <div class="rwc-ammo-row"> {{#if w.compatAmmo.length}}
+            <select class="weapon-ammo-select rwc-ammo-select" data-item-id="{{w.id}}"> <option value="">— стандартные —</option> {{#each w.compatAmmo as |ammo|}}
+              <option value="{{ammo.id}}" {{#if ammo.loaded}}selected{{/if}}
+                      {{#if (eq ammo.quantity 0)}}disabled{{/if}}> {{ammo.name}}{{#if ammo.modStr}} [{{ammo.modStr}}]{{/if}}
+              </option> {{/each}}
+            </select> {{else}}
+            <span class="rwc-no-ammo">Нет боеприпасов</span> {{/if}}
+          <div class="rwc-mag-block
+            {{#if w.magLow}}rwc-mag-low{{/if}}
+            {{#if w.magEmpty}}rwc-mag-empty{{/if}}"> <span class="rwc-mag-cur">{{w.magazineCur}}</span> <span class="rwc-mag-sep">/</span> <span class="rwc-mag-max">{{w.magazineMax}}</span> </div> <button type="button" class="weapon-reload-btn rwc-reload-btn" data-item-id="{{w.id}}" title="Перезарядить: {{w.name}}">Перезар.</button> {{#each w.compatAmmo as |ammo|}}
+            {{#if ammo.loaded}}
+            <span class="rwc-ammo-stock" title="В запасе: {{ammo.name}}"> {{ammo.quantity}}
+            </span> {{/if}}
+          {{/each}}
+        </div> </div> {{/each}}
+    {{else}}
+      <div class="rwc-empty"> <em>Нет дальнего оружия (отметьте «Экипировано» в Снаряжении)</em> </div> {{/if}}
+  </div> {{!-- ПСИХОСИЛЫ --}}
+  {{#if system.isPsyker}}
+  <div class="combat-section-panel"> <div class="panel-title">ПСИХОСИЛЫ</div> <div class="psy-combat-header"> <label>Класс:
+        <select name="system.psyker.class"> <option value="bound" {{#if (eq system.psyker.class "bound")}}selected{{/if}}>Связанный</option> <option value="unbound" {{#if (eq system.psyker.class "unbound")}}selected{{/if}}>Несвязанный</option> <option value="daemonic" {{#if (eq system.psyker.class "daemonic")}}selected{{/if}}>Демонический</option> </select> </label> <label>Пси-рейтинг:
+        <input type="number" name="system.psyker.rating" value="{{system.psyker.rating}}" min="0"/> </label> <label>Поддержание:
+        <input type="number" name="system.psyker.sustain" value="{{system.psyker.sustain}}" min="0"/> </label> </div> <table class="items-table psy-powers-table"> <thead> <tr> <th class="col-wide">Название</th><th>Тип</th><th class="col-narrow">PR</th> <th>Действие</th><th>Дальность</th><th>Урон</th> <th class="col-narrow">Подд.</th><th></th> </tr> </thead> <tbody> {{#if psyPowers.length}}
+          {{#each psyPowers as |p|}}
+          <tr class="item-row {{#if p.isSustained}}psy-row-sustained{{/if}}" data-item-id="{{p.id}}"> <td class="item-name-cell">{{p.name}}
+              {{#if p.disciplineLabel}}<div class="psy-discipline-sub">{{p.disciplineLabel}}{{#if p.subtype}} · {{p.subtype}}{{/if}}</div>{{/if}}
+            </td> <td>{{p.typeLabel}}</td> <td class="psy-pr-cell">{{p.prRequired}}</td> <td>{{p.actionLabel}}</td> <td>{{p.range}}</td> <td>{{#if p.damage}}{{p.damage}} {{p.damageType}}{{#if p.penetration}} (Пб {{p.penetration}}){{/if}}{{else}}—{{/if}}</td> <td class="psy-sustain-cell"> {{#if p.sustainable}}
+              <input type="checkbox" class="psy-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}}
+                     title="Поддерживать (−{{p.sustainCost}} PR, действие: {{p.sustainActionLabel}})"/> {{else}}—{{/if}}
+            </td> <td class="psy-actions-cell"> <button type="button" class="psy-manifest-btn" data-item-id="{{p.id}}" title="Манифестировать (психотест)">Манифест</button> </td> </tr> {{/each}}
+        {{else}}
+          <tr class="items-empty"><td colspan="8"><em>Нет психосил</em></td></tr> {{/if}}
+      </tbody> </table> </div> {{/if}}{{!-- /isPsyker --}}
+
+  {{!-- ТЕХНОЧУДЕСА --}}
+  {{#if system.isTechpriest}}
+  <div class="combat-section-panel"> <div class="panel-title">ТЕХНОЧУДЕСА</div> <table class="items-table psy-powers-table"> <thead> <tr> <th class="col-wide">Название</th><th>Тип</th> <th class="col-narrow">Ког.</th><th class="col-narrow">Эн.</th> <th>Действие</th><th>Урон</th><th class="col-narrow">Подд.</th><th></th> </tr> </thead> <tbody> {{#if techMiracles.length}}
+          {{#each techMiracles as |t|}}
+          <tr class="item-row {{#if t.sustained}}psy-row-sustained{{/if}}" data-item-id="{{t.id}}"> <td class="item-name-cell">{{t.name}}
+              {{#if t.disciplineLabel}}<div class="psy-discipline-sub">{{t.disciplineLabel}}{{#if t.subtype}} · {{t.subtype}}{{/if}}</div>{{/if}}
+            </td> <td>{{t.typeLabel}}</td> <td class="psy-pr-cell">{{t.cognitionCost}}</td> <td class="psy-pr-cell">{{t.energyCost}}</td> <td>{{t.actionLabel}}</td> <td>{{#if t.damage}}{{t.damage}} {{t.damageType}}{{#if t.penetration}} (Пб {{t.penetration}}){{/if}}{{else}}—{{/if}}</td> <td class="psy-sustain-cell"> {{#if t.sustainCost}}
+              <input type="checkbox" class="tech-sustain-cb" data-item-id="{{t.id}}" {{#if t.sustained}}checked{{/if}}
+                     title="Поддерживать (−{{t.sustainCost}} Ког./ход, действие: {{t.sustainActionLabel}})"/> {{else}}—{{/if}}
+            </td> <td class="psy-actions-cell"> <button type="button" class="tech-activate-btn" data-item-id="{{t.id}}" title="Активировать техночудо">Актив.</button> </td> </tr> {{/each}}
+        {{else}}
+          <tr class="items-empty"><td colspan="8"><em>Нет техночудес</em></td></tr> {{/if}}
+      </tbody> </table> </div> {{/if}}{{!-- /isTechpriest --}}
+
+</div>{{!-- /tab combat --}}

@@ -1,0 +1,43 @@
+<svg width="320" height="200" viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .hull{fill:#fff;fill-opacity:.16;stroke:#fff;stroke-width:2;stroke-linejoin:round}
+    .tower{fill:#fff;fill-opacity:.4;stroke:#fff;stroke-width:1.3;stroke-linejoin:round}
+    .deck{stroke:#fff;stroke-width:1;opacity:.55}
+    .port{fill:#fff;fill-opacity:.7;stroke:none}
+    .gun{stroke:#fff;stroke-width:1.2;stroke-linecap:round;opacity:.9}
+    .bell{fill:#fff;fill-opacity:.85;stroke:#fff;stroke-width:.9}
+    .lance{fill:#fff;fill-opacity:.9;stroke:#fff;stroke-width:.9}
+    .keel{stroke:#fff;stroke-width:1;opacity:.4}
+    .ram{stroke:#fff;stroke-width:3;stroke-linecap:round}
+  </style>
+  <g>
+    <path class="hull" d="M30.0 44.9 L30.0 44.9 L34.0 41.7 L52.0 41.5 L60.0 43.4 L96.0 43.5 L116.9 46.0 L122.0 48.0 L134.0 50.0 L134.0 50.0 L122.0 52.0 L116.9 54.0 L96.0 56.5 L60.0 56.6 L52.0 58.5 L34.0 58.3 L30.0 55.1 Z"/>
+    <path class="deck" d="M35.0 41.9 V58.1"/>
+    <path class="deck" d="M40.3 42.3 V57.7"/>
+    <path class="deck" d="M45.7 42.7 V57.3"/>
+    <path class="tower" d="M36.0 46.1 L54.0 47.1 L54.0 52.9 L36.0 53.9 Z"/>
+    <path class="port" d="M60.0 43.5 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M61.7 43.5 l0 -3.4"/>
+    <path class="port" d="M60.0 54.9 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M61.7 56.5 l0 3.4"/>
+    <path class="port" d="M68.5 43.5 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M70.2 43.5 l0 -3.4"/>
+    <path class="port" d="M68.5 54.9 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M70.2 56.5 l0 3.4"/>
+    <path class="port" d="M77.0 43.5 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M78.7 43.5 l0 -3.4"/>
+    <path class="port" d="M77.0 54.9 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M78.7 56.5 l0 3.4"/>
+    <path class="port" d="M85.5 43.5 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M87.2 43.5 l0 -3.4"/>
+    <path class="port" d="M85.5 54.9 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M87.2 56.5 l0 3.4"/>
+    <path class="bell" d="M30.0 45.6 l-5.4 -1.9 v3.8 Z"/>
+    <path class="bell" d="M30.0 50.0 l-5.4 -1.9 v3.8 Z"/>
+    <path class="bell" d="M30.0 54.4 l-5.4 -1.9 v3.8 Z"/>
+    <circle class="lance" cx="92.0" cy="50" r="2.3"/>
+    <circle class="lance" cx="77.0" cy="50" r="2.3"/>
+    <path class="keel" d="M56.0 50 H124.0"/>
+    <path class="ram" d="M120.0 50 L134.0 50"/>
+  </g>
+</svg>

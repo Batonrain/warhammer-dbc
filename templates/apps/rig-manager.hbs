@@ -1,0 +1,82 @@
+<div class="wh-rig-app">
+  {{#if missing}}
+  <div class="wr-empty">Актор не найден.</div>
+  {{else}}
+  <div class="wh-rig-scroll">
+
+    {{#unless hasRigs}}
+    <div class="wr-empty">Нет разгрузок. Добавьте предмет-разгрузку (Снаряжение → категория «Разгрузка») из библиотеки.</div>
+    {{/unless}}
+
+    {{#if backConflict}}
+    <div class="wr-warn">Внимание: несколько разгрузок занимают спину — обычно можно носить только одну заплечную разгрузку.</div>
+    {{/if}}
+
+    {{#each rigs as |rig|}}
+    <div class="wr-rig">
+      <div class="wr-rig-head">
+        <span class="wr-rig-name">{{rig.name}}</span>
+        {{#if rig.backSlot}}<span class="wr-badge">спина</span>{{/if}}
+        {{#if rig.container}}<span class="wr-badge bp">рюкзак</span>{{/if}}
+        <span class="wr-rig-meta">
+          {{#if rig.container}}{{rig.count}} предм.{{else}}{{rig.count}} / {{rig.total}}{{/if}}
+          · {{rig.weight}} кг
+          · {{#if rig.canQuickDraw}}<span class="wr-qd yes">Quick Draw ✓</span>{{else}}<span class="wr-qd no">без Quick Draw</span>{{/if}}
+        </span>
+      </div>
+      {{#if rig.comfortHint}}<div class="wr-hint">{{rig.comfortHint}}</div>{{/if}}
+
+      {{#if rig.container}}
+      {{!-- Рюкзак-контейнер --}}
+      <div class="wr-bp">
+        <div class="wr-bp-hint">Доставание из рюкзака — полное действие.</div>
+        {{#each rig.contents as |it|}}
+        <div class="wr-bp-item"><span class="wr-it-name">{{it.name}}</span> <span class="wr-it-size">{{it.size}}</span> <span class="wr-it-w">{{it.weight}} кг</span>
+          <button type="button" class="wr-x" data-item-clear="{{it.id}}" title="Достать">✕</button></div>
+        {{else}}
+        <div class="wr-bp-empty">Пусто</div>
+        {{/each}}
+        {{#if rig.addable.length}}
+        <select class="wr-add" data-bp-add="{{rig.id}}">
+          <option value="">+ положить в рюкзак…</option>
+          {{#each rig.addable as |o|}}<option value="{{o.id}}">{{o.name}} ({{o.size}})</option>{{/each}}
+        </select>
+        {{/if}}
+      </div>
+
+      {{else}}
+      {{!-- Слоты --}}
+      <div class="wr-slots">
+        {{#each rig.slots as |sl|}}
+        <div class="wr-slot {{#if sl.isMag}}mag{{/if}} {{#if sl.item}}filled{{/if}}">
+          <div class="wr-slot-top"><span class="wr-slot-size">{{sl.size}}</span>{{#if sl.isMag}}<span class="wr-badge mag">МАГ</span>{{/if}}</div>
+          {{#if sl.note}}<div class="wr-slot-note">{{sl.note}}</div>{{/if}}
+          {{#if sl.item}}
+          <div class="wr-slot-item"><span class="wr-it-name">{{sl.item.name}}</span>
+            <button type="button" class="wr-x" data-slot-clear="{{sl.id}}" title="Убрать">✕</button></div>
+          {{else}}
+          <select class="wr-add" data-slot-assign="{{sl.id}}">
+            <option value="">— пусто —</option>
+            {{#each sl.opts as |o|}}<option value="{{o.id}}">{{o.name}} ({{o.size}})</option>{{/each}}
+          </select>
+          {{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{#if rig.isMagAny}}<div class="wr-magnote">На магнитных замках предметы нельзя забрать в Борьбе/телекинезом; сорвать самому — полудействие, тест S−30.</div>{{/if}}
+      {{/if}}
+    </div>
+    {{/each}}
+
+    <div class="wr-unassigned">
+      <div class="wr-unassigned-h">Не размещено (в руках / вне разгрузок) · {{unassignedWeight}} кг</div>
+      {{#each unassigned as |it|}}
+      <div class="wr-un-item"><span class="wr-it-name">{{it.name}}</span> <span class="wr-it-type">{{it.type}}</span> <span class="wr-it-size">{{it.size}}</span> <span class="wr-it-w">{{it.weight}} кг</span></div>
+      {{else}}
+      <div class="wr-bp-empty">Всё размещено.</div>
+      {{/each}}
+    </div>
+
+  </div>
+  {{/if}}
+</div>

@@ -1,0 +1,94 @@
+<div class="tab nav-tab" data-tab="nav" data-group="primary">
+
+  {{!-- звёздное поле / варп-течения --}}
+  <div class="nav-starfield" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  {{!-- ── НАВИГАТОР: третий глаз ───────────────────────────────────────────── --}}
+  <div class="nav-panel nav-hero-panel">
+    <div class="nav-hero">
+      {{!-- Варп-Глаз (следит за курсором) --}}
+      <div class="nav-eye-stage">
+        <div class="nav-warp-swirl"></div>
+        <svg class="nav-eye" viewBox="0 0 140 90" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="navIris" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#000308"/>
+              <stop offset="42%" stop-color="#000308"/>
+              <stop offset="47%" stop-color="#b3a6ff"/>
+              <stop offset="62%" stop-color="#8b78ff"/>
+              <stop offset="82%" stop-color="#2a1a6a"/>
+              <stop offset="100%" stop-color="#05030f"/>
+            </radialGradient>
+            <clipPath id="navEyeClip"><path d="M6 45 C 40 6, 100 6, 134 45 C 100 84, 40 84, 6 45 Z"/></clipPath>
+          </defs>
+          {{!-- белок --}}
+          <path class="nav-eye-sclera" d="M6 45 C 40 6, 100 6, 134 45 C 100 84, 40 84, 6 45 Z"/>
+          <g clip-path="url(#navEyeClip)">
+            <rect x="0" y="0" width="140" height="90" class="nav-eye-bg"/>
+            {{!-- подвижный зрачок --}}
+            <g class="nav-eye-move">
+              <circle class="nav-eye-iris" cx="70" cy="45" r="23" fill="url(#navIris)"/>
+              <circle class="nav-eye-ring" cx="70" cy="45" r="23"/>
+              <circle class="nav-eye-pupil" cx="70" cy="45" r="9.5"/>
+              <circle class="nav-eye-glint" cx="62" cy="37" r="3.4"/>
+            </g>
+          </g>
+          {{!-- контур глаза + веко-блик --}}
+          <path class="nav-eye-outline" d="M6 45 C 40 6, 100 6, 134 45 C 100 84, 40 84, 6 45 Z"/>
+          <path class="nav-eye-lid" d="M6 45 C 40 6, 100 6, 134 45"/>
+        </svg>
+      </div>
+
+      <div class="nav-hero-info">
+        <div class="nav-house">{{#if system.navigatorHouse}}ДОМ {{system.navigatorHouse}}{{else}}НАВИС НОБИЛИТЭ{{/if}}</div>
+        <div class="nav-tagline">◈ Третий Глаз · Проводник сквозь Имматериум</div>
+        <div class="nav-hint">
+          Навигатор — мутант Навис Нобилитэ с третьим глазом. Считается псайкером для эффектов, нацеленных на псайкеров, но <b>не может психически пробудиться</b>. Силы навигатора активируются простым тестом характеристики — <b>без Феноменов и Прорывов Варпа</b>. Ген Навигатора: <b>не даёт Порчу от Варп-Шока</b>.
+        </div>
+        <div class="nav-hint nav-hint-sub">Одновременно можно поддерживать только одну Силу — поддержание не требует броска, но блокирует применение других Сил.</div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- ── СИЛЫ НАВИГАТОРА ──────────────────────────────────────────────────── --}}
+  <div class="nav-panel">
+    <div class="nav-panel-title"><span class="nav-eye-mini"></span>СИЛЫ НАВИГАТОРА
+      <button type="button" class="nav-add-btn" title="Добавить силу навигатора">＋</button>
+    </div>
+    <table class="items-table nav-powers-table">
+      <thead><tr>
+        <th class="ability-toggle-col"></th>
+        <th class="col-wide">Название</th>
+        <th>Тест</th>
+        <th>Действие</th>
+        <th>Дальность</th>
+        <th>Требование</th>
+        <th class="col-narrow">Подд.</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        {{#if navigatorPowers.length}}
+          {{#each navigatorPowers as |p|}}
+          <tr class="item-row {{#if p.isSustained}}nav-row-sustained{{/if}}" data-item-id="{{p.id}}">
+            <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{p.id}}" title="Показать/скрыть описание">▸</button></td>
+            <td class="item-name-cell"><span class="nav-power-name">{{p.name}}</span>
+              {{#if p.powerKind}}<div class="nav-power-kind">{{p.powerKind}}</div>{{/if}}
+            </td>
+            <td class="nav-test-cell">{{p.testLabel}}</td>
+            <td>{{p.actionLabel}}</td>
+            <td>{{p.range}}</td>
+            <td>{{p.requirement}}</td>
+            <td class="nav-sustain-cell">
+              {{#if p.sustainable}}<input type="checkbox" class="nav-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (без броска; блокирует другие Силы)"/>{{else}}—{{/if}}
+            </td>
+            <td class="psy-actions-cell"><button type="button" class="nav-activate-btn" data-item-id="{{p.id}}" title="Применить силу (тест характеристики)">Применить</button></td>
+          </tr>
+          <tr class="ability-detail-row" data-item-id="{{p.id}}" style="display:none;"><td colspan="8"><div class="ability-detail-text">{{#if p.effect}}{{p.effect}}{{else}}—{{/if}}</div></td></tr>
+          {{/each}}
+        {{else}}
+          <tr class="items-empty nav-empty"><td colspan="8"><span class="nav-empty-eye">◉</span> <em>Нет сил навигатора — добавьте ＋</em></td></tr>
+        {{/if}}
+      </tbody>
+    </table>
+  </div>
+</div>{{!-- /tab nav --}}

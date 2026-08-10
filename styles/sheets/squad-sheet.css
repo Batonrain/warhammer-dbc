@@ -1,0 +1,415 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Лист Отряда
+   Шапка, вкладки и панели наследуются от листа персонажа
+   (actor-header.css / common.css). Здесь — только своё:
+   командная вертикаль, состав, Слаженность, Команды.
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc.squad-sheet {
+  --sq-ok:     #4dffa6;   /* сработавшийся отряд */
+  --sq-warn:   #ffc878;   /* надлом */
+  --sq-bad:    #ff8a8a;   /* «выдохся» */
+  --sq-neutral: var(--wh-panel-mid);
+}
+
+.warhammer-dbc .squad-sheet-form { display: flex; flex-direction: column; height: 100%; }
+
+/* ══════════════ ШАПКА ══════════════ */
+
+/* Слаженность и Риск занимают правую колонку, как Судьба/Усталость у персонажа */
+.warhammer-dbc .sq-coh-cell,
+.warhammer-dbc .sq-risk-cell { grid-column: 3; }
+
+.warhammer-dbc .sq-coh-values { gap: 4px; }
+.warhammer-dbc .sq-coh-input { width: 52px; font-size: 1.05em; }
+.warhammer-dbc .sq-coh-btn {
+  width: 22px; height: 22px; flex: 0 0 auto; padding: 0; line-height: 1;
+  background: var(--wh-panel-dark); color: var(--wh-text-light);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+  font-family: inherit; font-weight: bold; cursor: pointer;
+}
+.warhammer-dbc .sq-coh-btn:hover { background: var(--wh-panel-mid); border-color: var(--wh-accent); }
+
+/* Шкала −40…+40 с отметкой нуля */
+.warhammer-dbc .sq-coh-bar {
+  position: relative; width: 118px; height: 6px; margin-top: 2px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); border-radius: 3px; overflow: hidden;
+}
+.warhammer-dbc .sq-coh-zero {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
+  background: var(--wh-border-light); z-index: 2;
+}
+.warhammer-dbc .sq-coh-fill { height: 100%; transition: width 0.2s; }
+.warhammer-dbc .sq-coh-band-veteran  { background: var(--sq-ok); }
+.warhammer-dbc .sq-coh-band-solid    { background: color-mix(in srgb, var(--sq-ok) 70%, var(--wh-panel-mid)); }
+.warhammer-dbc .sq-coh-band-fresh    { background: var(--wh-border-light); }
+.warhammer-dbc .sq-coh-band-strained { background: var(--sq-warn); }
+.warhammer-dbc .sq-coh-band-spent    { background: var(--sq-bad); }
+
+/* Цвет самой цифры Слаженности по полосе состояния */
+.warhammer-dbc .sq-coh-txt-veteran,
+.warhammer-dbc .sq-coh-txt-solid    { color: var(--sq-ok); }
+.warhammer-dbc .sq-coh-txt-fresh    { color: var(--wh-text); }
+.warhammer-dbc .sq-coh-txt-strained { color: var(--sq-warn); }
+.warhammer-dbc .sq-coh-txt-spent    { color: var(--sq-bad); }
+
+.warhammer-dbc .sq-coh-state {
+  font-size: 0.72em; font-weight: bold; letter-spacing: 0.03em; text-align: right;
+  max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.warhammer-dbc .sq-coh-state.sq-coh-band-veteran,
+.warhammer-dbc .sq-coh-state.sq-coh-band-solid    { background: none; color: var(--sq-ok); }
+.warhammer-dbc .sq-coh-state.sq-coh-band-fresh    { background: none; color: var(--wh-text-mid); }
+.warhammer-dbc .sq-coh-state.sq-coh-band-strained { background: none; color: var(--sq-warn); }
+.warhammer-dbc .sq-coh-state.sq-coh-band-spent    { background: none; color: var(--sq-bad); }
+
+.warhammer-dbc .sq-risk-select { width: 128px; font-size: 0.82em; padding: 1px 3px;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); color: var(--wh-text); }
+.warhammer-dbc .sq-risk-hint {
+  font-size: 0.68em; line-height: 1.25; text-align: right; max-width: 150px;
+  color: var(--wh-text-mid); opacity: 0.9;
+}
+
+.warhammer-dbc .sq-header-checks { justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.warhammer-dbc .sq-delegate { font-size: 0.8em; }
+.warhammer-dbc .sq-header-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.warhammer-dbc .sq-chip {
+  font-size: 0.72em; padding: 2px 7px; border-radius: 9px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text);
+}
+.warhammer-dbc .sq-chip-on   { border-color: var(--sq-ok);  color: var(--sq-ok);  box-shadow: 0 0 7px -2px var(--sq-ok); }
+.warhammer-dbc .sq-chip-warn { border-color: var(--sq-warn); color: var(--sq-warn); }
+.warhammer-dbc .sq-chip-bad  { border-color: var(--sq-bad);  color: var(--sq-bad); box-shadow: 0 0 7px -2px var(--sq-bad); }
+
+/* ══════════════ ОБЩЕЕ ДЛЯ ПАНЕЛЕЙ ══════════════ */
+
+.warhammer-dbc .sq-panel-on  { border-color: var(--sq-ok); box-shadow: inset 0 0 14px -8px var(--sq-ok); }
+.warhammer-dbc .sq-panel-bad { border-color: var(--sq-bad); }
+.warhammer-dbc .sq-panel-gm .panel-title { background: var(--wh-red); }
+
+.warhammer-dbc .sq-hint {
+  font-size: 0.8em; font-style: italic; line-height: 1.4;
+  color: var(--wh-text-mid); margin-bottom: 7px;
+}
+.warhammer-dbc .sq-note {
+  font-size: 0.8em; line-height: 1.45; margin-top: 7px; padding: 5px 8px;
+  background: color-mix(in srgb, var(--wh-accent) 8%, transparent);
+  border-left: 3px solid var(--wh-accent); border-radius: 0 3px 3px 0;
+}
+.warhammer-dbc .sq-warn {
+  font-size: 0.82em; line-height: 1.45; margin: 7px 0; padding: 5px 8px;
+  background: color-mix(in srgb, var(--sq-warn) 12%, transparent);
+  border-left: 3px solid var(--sq-warn); border-radius: 0 3px 3px 0; color: var(--wh-text);
+}
+
+.warhammer-dbc .sq-empty {
+  padding: 14px; text-align: center; font-style: italic; font-size: 0.85em;
+  color: var(--wh-text-mid); opacity: 0.8;
+}
+
+.warhammer-dbc .sq-row { display: flex; align-items: center; gap: 7px; margin-top: 6px; }
+.warhammer-dbc .sq-row > label { font-size: 0.8em; font-weight: bold; color: var(--wh-text-mid); min-width: 78px; }
+.warhammer-dbc .sq-row input[type="text"] {
+  flex: 1; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 2px 5px; font-family: inherit; font-size: 0.85em; color: var(--wh-text);
+}
+
+.warhammer-dbc .sq-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.warhammer-dbc .sq-actions-wide .sq-btn { flex: 1 1 180px; }
+.warhammer-dbc .sq-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: auto; flex: 0 0 auto; padding: 4px 11px;
+  background: var(--wh-panel-dark); color: var(--wh-text-light);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+  font-family: inherit; font-size: 0.82em; font-weight: 600; cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.warhammer-dbc .sq-btn:hover { background: var(--wh-panel-mid); border-color: var(--wh-accent); }
+.warhammer-dbc .sq-btn-roll { border-color: var(--wh-accent); }
+.warhammer-dbc .sq-btn-roll:hover { box-shadow: 0 0 9px -3px var(--wh-accent); }
+.warhammer-dbc .sq-btn i { color: var(--wh-accent); }
+
+.warhammer-dbc .sq-inline-num {
+  width: 46px; margin-left: 6px; text-align: center; font-weight: bold;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); color: var(--wh-text);
+}
+
+/* ══════════════ КОМАНДНАЯ ВЕРТИКАЛЬ ══════════════ */
+
+.warhammer-dbc .sq-posts {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px;
+}
+@media (max-width: 720px) { .warhammer-dbc .sq-posts { grid-template-columns: 1fr; } }
+
+.warhammer-dbc .sq-post {
+  display: flex; flex-direction: column; gap: 5px; padding: 6px 8px;
+  background: var(--wh-parchment3); border: 1px dashed var(--wh-border);
+  border-radius: 4px; transition: border-color 0.12s, box-shadow 0.12s;
+}
+.warhammer-dbc .sq-post-filled { border-style: solid; border-left: 3px solid var(--wh-accent); }
+.warhammer-dbc .sq-post-missing { opacity: 0.6; }
+.warhammer-dbc .sq-post.sq-drop-hover {
+  border-color: var(--wh-accent); box-shadow: inset 0 0 16px -6px var(--wh-accent);
+}
+
+.warhammer-dbc .sq-post-head {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.78em; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--wh-text-mid); border-bottom: 1px solid var(--wh-border-light); padding-bottom: 3px;
+}
+.warhammer-dbc .sq-post-head i { color: var(--wh-accent); }
+.warhammer-dbc .sq-post-title { flex: 1; }
+.warhammer-dbc .sq-post-clear { cursor: pointer; padding: 0 3px; color: var(--wh-text-mid); }
+.warhammer-dbc .sq-post-clear:hover { color: #fff; background: var(--wh-red); border-radius: 3px; }
+
+.warhammer-dbc .sq-post-body { display: flex; align-items: center; gap: 7px; }
+.warhammer-dbc .sq-post-img {
+  width: 42px; height: 42px; flex: 0 0 auto; object-fit: cover;
+  border: 1px solid var(--wh-border); border-radius: 3px; cursor: pointer;
+}
+.warhammer-dbc .sq-post-info { min-width: 0; flex: 1; }
+.warhammer-dbc .sq-post-name {
+  font-weight: bold; font-size: 0.92em; cursor: pointer; color: var(--wh-text-dark);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.warhammer-dbc .sq-post-name:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .sq-post-stats { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.72em; color: var(--wh-text-mid); }
+.warhammer-dbc .sq-post-cap { color: var(--wh-accent); font-weight: bold; }
+
+.warhammer-dbc .sq-post-empty {
+  padding: 12px 4px; text-align: center; font-size: 0.78em; font-style: italic;
+  color: var(--wh-text-mid); opacity: 0.75;
+}
+.warhammer-dbc .sq-post-hint { font-size: 0.68em; line-height: 1.35; color: var(--wh-text-mid); opacity: 0.85; }
+
+/* ══════════════ СОСТАВ ══════════════ */
+
+.warhammer-dbc .sq-members-bar { display: flex; align-items: flex-start; gap: 10px; }
+.warhammer-dbc .sq-members-bar .sq-hint { flex: 1; margin-bottom: 4px; }
+
+.warhammer-dbc .sq-member-dropzone {
+  display: flex; flex-direction: column; gap: 4px; min-height: 60px;
+  padding: 4px; border: 1px dashed var(--wh-border); border-radius: 4px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.warhammer-dbc .sq-member-dropzone.sq-drop-hover {
+  border-color: var(--wh-accent); box-shadow: inset 0 0 20px -8px var(--wh-accent);
+}
+
+.warhammer-dbc .sq-member {
+  display: flex; align-items: center; gap: 8px; padding: 4px 6px;
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border-light); border-radius: 3px;
+}
+.warhammer-dbc .sq-member-lost { border-left: 3px solid var(--sq-bad); background: color-mix(in srgb, var(--sq-bad) 8%, var(--wh-parchment2)); }
+.warhammer-dbc .sq-member-missing { opacity: 0.6; border-style: dashed; }
+
+.warhammer-dbc .sq-member-img {
+  width: 36px; height: 36px; flex: 0 0 auto; object-fit: cover;
+  border: 1px solid var(--wh-border); border-radius: 3px; cursor: pointer;
+}
+.warhammer-dbc .sq-member-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.warhammer-dbc .sq-member-line { display: flex; align-items: center; gap: 6px; }
+.warhammer-dbc .sq-member-name {
+  font-weight: bold; cursor: pointer; color: var(--wh-text-dark);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.warhammer-dbc .sq-member-name:hover { color: var(--wh-accent); text-decoration: underline; }
+
+.warhammer-dbc .sq-member-type {
+  font-size: 0.68em; padding: 1px 6px; border-radius: 8px; white-space: nowrap;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid);
+}
+.warhammer-dbc .sq-type-horde   { border-color: var(--sq-warn); color: var(--sq-warn); }
+.warhammer-dbc .sq-type-vehicle { border-color: var(--wh-link); color: var(--wh-link); }
+.warhammer-dbc .sq-type-daemon,
+.warhammer-dbc .sq-type-demonPrince { border-color: var(--wh-red); color: var(--wh-red); }
+
+.warhammer-dbc .sq-member-badge {
+  font-size: 0.66em; padding: 1px 6px; border-radius: 8px; white-space: nowrap;
+  background: color-mix(in srgb, var(--sq-bad) 18%, transparent);
+  border: 1px solid var(--sq-bad); color: var(--sq-bad);
+}
+.warhammer-dbc .sq-member-stats { display: flex; gap: 8px; font-size: 0.72em; color: var(--wh-text-mid); }
+.warhammer-dbc .sq-member-note {
+  width: 100%; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 1px 5px; font-family: inherit; font-size: 0.78em; color: var(--wh-text);
+}
+
+.warhammer-dbc .sq-member-acts { display: flex; gap: 3px; flex: 0 0 auto; }
+.warhammer-dbc .sq-member-acts a {
+  cursor: pointer; padding: 3px 5px; border-radius: 3px; color: var(--wh-text-mid);
+}
+.warhammer-dbc .sq-member-acts a:hover { background: var(--wh-panel-mid); color: var(--wh-text-light); }
+.warhammer-dbc .sq-member-remove:hover { background: var(--wh-red) !important; color: #fff !important; }
+.warhammer-dbc .sq-act-off { opacity: 0.35; }
+
+/* ══════════════ СЛАЖЕННОСТЬ (панель) ══════════════ */
+
+.warhammer-dbc .sq-coh-grid { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.warhammer-dbc .sq-coh-field { display: flex; flex-direction: column; gap: 2px; }
+.warhammer-dbc .sq-coh-field label { font-size: 0.75em; font-weight: bold; color: var(--wh-text-mid); }
+.warhammer-dbc .sq-coh-field input {
+  width: 68px; text-align: center; font-weight: bold;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 2px; font-family: inherit; color: var(--wh-text);
+}
+
+.warhammer-dbc .sq-coh-mods { display: flex; gap: 14px; flex-wrap: wrap; margin: 9px 0 3px; font-size: 0.8em; }
+.warhammer-dbc .sq-coh-mod b { color: var(--wh-accent); font-size: 1.08em; }
+.warhammer-dbc .sq-coh-mod-note { font-size: 0.85em; font-style: italic; color: var(--wh-text-mid); opacity: 0.85; }
+
+.warhammer-dbc .sq-events-title {
+  margin: 9px 0 5px; font-size: 0.76em; font-weight: bold; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--wh-text-mid);
+}
+.warhammer-dbc .sq-events { display: flex; flex-wrap: wrap; gap: 4px; }
+.warhammer-dbc .sq-event {
+  display: inline-flex; align-items: center; gap: 5px;
+  width: auto; flex: 0 0 auto; padding: 3px 9px;
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border); border-radius: 12px;
+  font-family: inherit; font-size: 0.76em; color: var(--wh-text); cursor: pointer;
+}
+.warhammer-dbc .sq-event:hover { border-color: var(--wh-accent); background: var(--wh-parchment2); }
+.warhammer-dbc .sq-event-delta { font-weight: bold; }
+.warhammer-dbc .sq-event-up   .sq-event-delta { color: var(--sq-ok); }
+.warhammer-dbc .sq-event-down .sq-event-delta { color: var(--sq-bad); }
+
+/* ══════════════ КОМАНДЫ ══════════════ */
+
+.warhammer-dbc .sq-presence-list,
+.warhammer-dbc .sq-cmd-list { display: flex; flex-direction: column; gap: 4px; }
+
+.warhammer-dbc .sq-radio {
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto;
+  gap: 2px 8px; align-items: center; padding: 5px 8px; cursor: pointer;
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border-light);
+  border-left: 3px solid transparent; border-radius: 3px;
+}
+.warhammer-dbc .sq-radio:hover { border-color: var(--wh-border); }
+.warhammer-dbc .sq-radio-on { border-left-color: var(--wh-accent); background: var(--wh-parchment2); }
+.warhammer-dbc .sq-radio input[type="radio"] { grid-row: 1 / span 2; margin: 0; }
+.warhammer-dbc .sq-radio-label { font-weight: bold; font-size: 0.88em; color: var(--wh-text-dark); }
+.warhammer-dbc .sq-radio-desc { grid-column: 2; font-size: 0.76em; line-height: 1.4; color: var(--wh-text-mid); }
+.warhammer-dbc .sq-mult { font-size: 0.8em; font-weight: normal; color: var(--wh-text-mid); }
+.warhammer-dbc .sq-bonus {
+  margin-left: 5px; padding: 0 6px; border-radius: 8px; font-size: 0.8em;
+  background: color-mix(in srgb, var(--sq-ok) 16%, transparent);
+  border: 1px solid var(--sq-ok); color: var(--sq-ok);
+}
+
+.warhammer-dbc .sq-limits, .warhammer-dbc .sq-rules {
+  margin: 8px 0 0; padding-left: 18px; font-size: 0.76em; line-height: 1.5; color: var(--wh-text-mid);
+}
+.warhammer-dbc .sq-limits li, .warhammer-dbc .sq-rules li { margin-bottom: 3px; }
+.warhammer-dbc .sq-rules { font-size: 0.82em; color: var(--wh-text); }
+.warhammer-dbc .sq-rule-text { font-size: 0.82em; line-height: 1.55; }
+
+/* Детальная Команда — плитки с ценой в Успехах */
+.warhammer-dbc .sq-detail-list { display: flex; flex-direction: column; gap: 4px; }
+.warhammer-dbc .sq-detail {
+  display: flex; gap: 8px; padding: 5px 8px;
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border-light);
+  border-left: 3px solid transparent; border-radius: 3px;
+}
+.warhammer-dbc .sq-detail-on { border-left-color: var(--sq-ok); background: var(--wh-parchment2); }
+.warhammer-dbc .sq-detail-off { opacity: 0.5; }
+
+.warhammer-dbc .sq-detail-pick {
+  width: 30px; height: 30px; flex: 0 0 auto; padding: 0; align-self: center;
+  background: var(--wh-panel-dark); border: 1px solid var(--wh-border); border-radius: 50%;
+  color: var(--wh-text-light); font-family: inherit; cursor: pointer;
+}
+.warhammer-dbc .sq-detail-pick:hover { border-color: var(--wh-accent); background: var(--wh-panel-mid); }
+.warhammer-dbc .sq-detail-poor { opacity: 0.45; }
+.warhammer-dbc .sq-detail-on .sq-detail-pick { border-color: var(--sq-ok); box-shadow: 0 0 8px -2px var(--sq-ok); }
+.warhammer-dbc .sq-detail-cost { font-weight: bold; font-size: 0.95em; }
+
+.warhammer-dbc .sq-detail-body { min-width: 0; }
+.warhammer-dbc .sq-detail-name { font-weight: bold; font-size: 0.88em; color: var(--wh-text-dark); }
+.warhammer-dbc .sq-detail-block { font-weight: normal; font-size: 0.85em; color: var(--sq-warn); }
+.warhammer-dbc .sq-detail-desc { font-size: 0.76em; line-height: 1.4; color: var(--wh-text-mid); }
+
+.warhammer-dbc .sq-tactics { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.warhammer-dbc .sq-tactic {
+  font-size: 0.68em; padding: 1px 6px; border-radius: 8px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid);
+}
+
+/* ══════════════ МОРАЛЬ ══════════════ */
+
+.warhammer-dbc .sq-morale-list { display: flex; flex-direction: column; gap: 3px; }
+.warhammer-dbc .sq-morale-row {
+  display: flex; align-items: center; gap: 8px; padding: 3px 6px;
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border-light); border-radius: 3px;
+}
+.warhammer-dbc .sq-morale-row .sq-member-name { flex: 1; }
+.warhammer-dbc .sq-morale-wp { font-size: 0.78em; color: var(--wh-text-mid); flex: 0 0 auto; }
+.warhammer-dbc .sq-morale-state { font-size: 0.74em; flex: 0 0 auto; color: var(--wh-text-mid); }
+.warhammer-dbc .sq-morale-row.sq-member-lost .sq-morale-state { color: var(--sq-bad); font-weight: bold; }
+.warhammer-dbc .sq-morale-row a { cursor: pointer; padding: 3px 5px; border-radius: 3px; color: var(--wh-text-mid); }
+.warhammer-dbc .sq-morale-row a:hover { background: var(--wh-panel-mid); color: var(--wh-text-light); }
+
+/* ══════════════ СПРАВОЧНИК ══════════════ */
+
+.warhammer-dbc .sq-risk-table td { text-align: left; }
+.warhammer-dbc .sq-risk-table td:first-child,
+.warhammer-dbc .sq-risk-table td:last-child { text-align: center; }
+.warhammer-dbc .sq-risk-current td {
+  background: color-mix(in srgb, var(--wh-accent) 14%, var(--wh-parchment2));
+  font-weight: bold;
+}
+
+.warhammer-dbc .sq-ref-list { display: flex; flex-direction: column; gap: 6px; }
+.warhammer-dbc .sq-ref {
+  padding: 6px 9px; background: var(--wh-parchment3);
+  border: 1px solid var(--wh-border-light); border-left: 3px solid var(--wh-accent); border-radius: 3px;
+}
+.warhammer-dbc .sq-ref-head {
+  display: flex; align-items: center; gap: 7px; margin-bottom: 3px;
+  font-weight: bold; font-size: 0.86em; letter-spacing: 0.04em; color: var(--wh-text-dark);
+}
+.warhammer-dbc .sq-ref-head i { color: var(--wh-accent); }
+.warhammer-dbc .sq-ref-desc { font-size: 0.78em; line-height: 1.5; color: var(--wh-text-mid); }
+
+/* ══════════════ ЗАПИСИ ══════════════ */
+
+.warhammer-dbc .sq-textarea {
+  width: 100%; min-height: 180px; resize: vertical;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  padding: 6px 8px; font-family: inherit; font-size: 0.86em; line-height: 1.5; color: var(--wh-text);
+}
+
+/* ══════════════ ДИАЛОГИ КОМАНД ══════════════ */
+
+.wh-holo .sq-cmd-form .sq-cmd-hint,
+.sq-cmd-dialog .sq-cmd-hint {
+  font-size: 0.8em; font-style: italic; line-height: 1.4;
+  color: #9af2c4; margin-bottom: 7px;
+}
+.sq-cmd-dialog .sq-cmd-coh { font-weight: bold; color: #4dffa6; }
+.sq-cmd-dialog .sq-cmd-risk {
+  margin-top: 7px; padding: 4px 7px; font-size: 0.8em;
+  background: rgba(77,255,166,0.07); border-left: 3px solid #2f9e6a; border-radius: 0 3px 3px 0;
+}
+
+/* ══════════════ ЧАТ-КАРТОЧКИ ══════════════ */
+
+.wh-roll-result.sq-chat .sq-chat-effect {
+  margin-top: 6px; padding: 5px 8px; font-size: 0.9em; line-height: 1.45;
+  background: rgba(77,255,166,0.07); border-left: 3px solid #2f9e6a; border-radius: 0 3px 3px 0;
+}
+.wh-roll-result.sq-chat .sq-chat-desc { margin-top: 3px; font-size: 0.88em; opacity: 0.9; }
+.wh-roll-result.sq-chat .sq-chat-note {
+  margin-top: 5px; font-size: 0.82em; font-style: italic; opacity: 0.85;
+}
+.wh-roll-result.sq-chat .sq-chat-big { font-size: 1.25em; color: #4dffa6; }
+.wh-roll-result.sq-chat .sq-chat-order {
+  margin: 4px 0; font-style: italic; font-size: 0.95em; color: #d8ffe8;
+}
+.wh-roll-result.sq-chat .sq-chat-details { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.wh-roll-result.sq-chat .sq-chat-detail {
+  display: inline-flex; align-items: center; gap: 5px; padding: 1px 7px; border-radius: 9px;
+  font-size: 0.82em; background: rgba(0,0,0,0.25); border: 1px solid #2f6f4a; opacity: 0.55;
+}
+.wh-roll-result.sq-chat .sq-chat-afford { opacity: 1; border-color: #4dffa6; }
+.wh-roll-result.sq-chat .sq-chat-cost { font-weight: bold; color: #4dffa6; }

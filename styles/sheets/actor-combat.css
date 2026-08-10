@@ -1,0 +1,1520 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Вкладка Бой
+   Раны, броня, движение, стойки, приёмы, дальний бой
+═══════════════════════════════════════════════════════ */
+
+/* ── Layout боя ── */
+.warhammer-dbc .combat-layout {
+  display: grid;
+  grid-template-columns: 150px 1fr 155px;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* ── Раны ── */
+.warhammer-dbc .wounds-body .wounds-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--wh-border-light);
+  font-size: 0.85em;
+}
+
+.warhammer-dbc .wounds-body .wounds-row:last-child { border-bottom: none; }
+.warhammer-dbc .wounds-body label { font-weight: bold; }
+
+.warhammer-dbc .wounds-body input {
+  width: 48px;
+  text-align: center;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+}
+
+.warhammer-dbc .wounds-heal-row { justify-content: center !important; padding-top: 6px !important; }
+.warhammer-dbc .wounds-heal-btn {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 0.85em;
+  font-weight: bold;
+  cursor: pointer;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  color: var(--wh-text, inherit);
+}
+.warhammer-dbc .wounds-heal-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
+
+/* ── Очки Боли (Друкхари) ── */
+.warhammer-dbc .pain-panel {
+  margin: 6px 0;
+  padding: 6px 8px;
+  border: 1px solid var(--wh-border);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(90,20,40,0.10), rgba(90,20,40,0.04));
+}
+.warhammer-dbc .pain-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.warhammer-dbc .pain-title { font-weight: bold; letter-spacing: 0.04em; }
+.warhammer-dbc .pain-current { font-size: 1.05em; }
+.warhammer-dbc .pain-current .pain-value { color: var(--wh-accent, #7a1f1f); }
+.warhammer-dbc .pain-info { cursor: help; opacity: 0.7; margin-left: auto; }
+.warhammer-dbc .pain-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.warhammer-dbc .pain-actions button {
+  flex: 1 1 auto;
+  padding: 3px 6px;
+  font-size: 0.82em;
+  font-weight: bold;
+  cursor: pointer;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  color: var(--wh-text, inherit);
+}
+.warhammer-dbc .pain-actions button:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
+
+/* ── Броня ── */
+.warhammer-dbc .armor-body { padding: 4px !important; }
+
+.warhammer-dbc .armor-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.warhammer-dbc .armor-head,
+.warhammer-dbc .armor-limb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.warhammer-dbc .armor-arms-row,
+.warhammer-dbc .armor-legs-row { display: flex; gap: 8px; }
+
+.warhammer-dbc .armor-diagram label {
+  font-size: 0.7em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.warhammer-dbc .armor-diagram input {
+  width: 42px;
+  text-align: center;
+  font-size: 1.1em;
+  font-weight: bold;
+  background: var(--wh-input-bg);
+  border: 2px solid var(--wh-border);
+}
+
+/* ── Движение ── */
+.warhammer-dbc .movement-body .movement-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--wh-border-light);
+  font-size: 0.85em;
+}
+
+.warhammer-dbc .movement-body label { font-weight: bold; }
+
+.warhammer-dbc .movement-body input {
+  width: 46px;
+  text-align: center;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+}
+
+/* ── Секция боя ── */
+.warhammer-dbc .combat-section-panel {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+/* ── Психосилы в бою ── */
+.warhammer-dbc .psy-combat-header {
+  display: flex;
+  gap: 16px;
+  padding: 4px 8px;
+  font-size: 0.84em;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.warhammer-dbc .psy-combat-header label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: bold;
+}
+
+.warhammer-dbc .psy-combat-header input,
+.warhammer-dbc .psy-combat-header select {
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  font-family: inherit;
+  padding: 1px 4px;
+}
+
+.warhammer-dbc .psy-combat-header input { width: 48px; text-align: center; }
+
+/* ── Стойки и приёмы ── */
+.combat-melee-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stance-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 6px;
+  background: var(--wh-parchment2);
+}
+
+.stance-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 5px 7px;
+  border: 1px solid var(--wh-border-light);
+  border-radius: 2px;
+  cursor: pointer;
+  background: var(--wh-parchment2);
+  transition: background 0.1s;
+}
+
+.stance-label:hover { background: var(--wh-input-bg); }
+
+.stance-label.stance-active {
+  background: rgba(139, 26, 26, 0.1);
+  border-color: var(--wh-red);
+}
+
+.stance-label input[type="radio"] {
+  margin-top: 3px;
+  accent-color: var(--wh-red);
+  flex-shrink: 0;
+}
+
+.stance-info { flex: 1; }
+
+.stance-name {
+  font-weight: bold;
+  font-size: 0.88em;
+  color: var(--wh-text);
+  line-height: 1.3;
+}
+
+.stance-desc {
+  font-size: 0.78em;
+  color: var(--wh-text-mid);
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+/* ── Приёмы ── */
+.technique-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 5px 6px;
+  background: var(--wh-parchment2);
+}
+
+.technique-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 5px 8px;
+  background: var(--wh-parchment2);
+  border: 1px solid var(--wh-border-light);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.technique-btn:hover {
+  background: var(--wh-input-bg);
+  border-color: var(--wh-red);
+}
+
+.technique-btn:active { background: rgba(139, 26, 26, 0.12); }
+
+.tech-name {
+  font-weight: bold;
+  font-size: 0.85em;
+  color: var(--wh-text);
+  line-height: 1.2;
+}
+
+.tech-action {
+  font-size: 0.72em;
+  color: var(--wh-text-mid);
+  line-height: 1.2;
+}
+
+.tech-mod {
+  font-size: 0.78em;
+  font-weight: bold;
+  color: var(--wh-red);
+  line-height: 1.2;
+}
+
+/* ── Таблица боевого оружия ── */
+.combat-weapons-table { font-size: 0.8em; }
+
+.combat-special-cell {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combat-atk-btn {
+  background: var(--wh-red);
+  color: #f0e8d0;
+  border: 1px solid #3a0a0a;
+  border-radius: 3px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  line-height: 1;
+}
+
+.combat-atk-btn:hover { background: #8b2a2a; }
+.combat-btns-cell { white-space: nowrap; }
+
+/* ── Карточки дальнего оружия ── */
+.ranged-weapon-card {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  margin: 4px 6px;
+  background: var(--wh-parchment2);
+  overflow: hidden;
+}
+
+.rwc-main-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--wh-panel-mid);
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.rwc-name {
+  font-weight: bold;
+  font-size: 0.88em;
+  color: var(--wh-text-light);
+  white-space: nowrap;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.rwc-stat-inline {
+  font-size: 0.8em;
+  color: #d0c0a0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rwc-stat-label-inline {
+  font-size: 0.72em;
+  color: #9a8a6a;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rwc-dmgtype { color: #b0c8e0; font-style: italic; }
+
+.rwc-divider {
+  color: #6a5a3a;
+  font-size: 0.75em;
+  flex-shrink: 0;
+}
+
+.rwc-spacer { flex: 1; }
+
+.rwc-threshold-badge {
+  font-weight: bold;
+  font-size: 0.88em;
+  color: #ffcc88;
+  flex-shrink: 0;
+  padding: 0 6px;
+}
+
+.rwc-atk-btn {
+  background: var(--wh-red);
+  color: #f0e8d0;
+  border: 1px solid #3a0a0a;
+  border-radius: 3px;
+  padding: 2px 10px;
+  cursor: pointer;
+  font-size: 0.82em;
+  font-family: inherit;
+  font-weight: bold;
+  transition: background 0.15s;
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: auto;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.rwc-atk-btn:hover:not(:disabled) { background: #a02a2a; }
+.rwc-atk-btn:disabled {
+  background: #5a5a5a;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.rwc-ammo-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: rgba(0,0,0,0.05);
+  border-top: 1px solid var(--wh-border-light);
+}
+
+.rwc-ammo-select {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78em;
+  padding: 2px 4px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  color: var(--wh-text);
+  cursor: pointer;
+  border-radius: 2px;
+  height: 22px;
+  width: auto;
+}
+
+.rwc-no-ammo {
+  flex: 1;
+  font-size: 0.75em;
+  color: #8a6a4a;
+  font-style: italic;
+}
+
+.rwc-mag-block {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 0.82em;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  white-space: nowrap;
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: auto;
+  min-width: 44px;
+  justify-content: center;
+  height: 22px;
+  box-sizing: border-box;
+}
+
+.rwc-mag-cur  { color: var(--wh-text); }
+.rwc-mag-sep  { color: var(--wh-text-mid); margin: 0 1px; }
+.rwc-mag-max  { color: var(--wh-text-mid); }
+
+.rwc-mag-low  { border-color: #cc6600 !important; background: #fff4e8 !important; }
+.rwc-mag-low .rwc-mag-cur   { color: #cc6600; }
+.rwc-mag-empty { border-color: #cc0000 !important; background: #ffe8e8 !important; }
+.rwc-mag-empty .rwc-mag-cur { color: #cc0000; }
+
+.rwc-reload-btn {
+  background: #1a4a1a;
+  color: #d0f0d0;
+  border: 1px solid #0a2a0a;
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 0.82em;
+  font-family: inherit;
+  transition: background 0.15s;
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: auto;
+  line-height: 1.4;
+  height: 22px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.rwc-reload-btn:hover { background: #2a6a2a; }
+
+.rwc-ammo-stock {
+  font-size: 0.75em;
+  color: #3a5a3a;
+  font-weight: bold;
+  padding: 2px 5px;
+  background: #e8f4e8;
+  border: 1px solid #4a8a4a;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: auto;
+}
+
+.rwc-empty {
+  padding: 8px;
+  text-align: center;
+  color: #6a5a48;
+  font-style: italic;
+  font-size: 0.82em;
+}
+
+/* ── Боеприпасы (старый стиль, совместимость) ── */
+.weapon-ammo-row { margin-top: 3px; }
+
+.weapon-ammo-select {
+  width: 100%;
+  font-size: 0.75em;
+  padding: 1px 3px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border-light);
+  font-family: inherit;
+  color: var(--wh-text);
+  cursor: pointer;
+}
+
+.combat-reload-btn {
+  background: #1a4a1a;
+  color: #d0f0d0;
+  border: 1px solid #0a2a0a;
+  border-radius: 3px;
+  padding: 2px 5px;
+  cursor: pointer;
+  font-size: 0.9em;
+  line-height: 1;
+  margin-left: 2px;
+}
+
+.combat-reload-btn:hover { background: #2a6a2a; }
+
+.ammo-low b  { color: #cc6600 !important; }
+.ammo-empty b { color: #cc0000 !important; }
+
+/* ─── Броня с T.b ─── */
+.armor-tb-note {
+  font-size: 0.85em;
+  color: var(--wh-text-mid);
+  padding: 3px 6px;
+  margin-bottom: 6px;
+  background: rgba(0,0,0,0.06);
+  border-left: 3px solid var(--wh-border);
+}
+
+.armor-cell-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.armor-total-badge {
+  font-size: 0.8em;
+  font-weight: bold;
+  color: var(--wh-accent, #7a2a2a);
+  white-space: nowrap;
+}
+
+.armor-legend {
+  display: flex;
+  gap: 12px;
+  font-size: 0.78em;
+  color: var(--wh-text-mid);
+  margin-top: 4px;
+  padding: 2px 4px;
+}
+
+/* ─── Применение урона в чате ─── */
+.roll-apply-dmg-section {
+  margin-top: 6px;
+  padding: 4px 6px;
+  background: rgba(139,0,0,0.08);
+  border-top: 1px solid var(--wh-border);
+}
+
+.wh-apply-dmg-btn {
+  display: block;
+  width: 100%;
+  margin: 3px 0;
+  padding: 4px 8px;
+  background: linear-gradient(180deg, #6b1a1a, #4a0f0f);
+  color: #e8d5a3;
+  border: 1px solid #8b3a3a;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85em;
+  text-align: left;
+}
+
+.wh-apply-dmg-btn:hover {
+  background: linear-gradient(180deg, #8b2020, #6b1515);
+}
+
+/* ─── Результат применения урона ─── */
+.dmg-absorption-detail {
+  font-size: 0.85em;
+  color: var(--wh-text-mid);
+  padding: 2px 4px;
+  margin: 2px 0;
+}
+
+.dmg-critical-block {
+  margin-top: 4px;
+  padding: 4px 6px;
+  background: rgba(139,0,0,0.15);
+  border-left: 3px solid #8b0000;
+  font-size: 0.88em;
+}
+
+/* ─── Легенда формулы ─── */
+.armor-formula-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8em;
+  padding: 3px 6px;
+  margin-bottom: 4px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 3px;
+}
+
+.afl-ap    { color: #4a6a8a; font-weight: bold; }
+.afl-tb    { color: #6a7a4a; font-weight: bold; }
+.afl-total { color: var(--wh-accent, #7a2a2a); font-weight: bold; }
+.afl-op    { color: var(--wh-text-mid); }
+
+/* ─── T.b note ─── */
+.armor-tb-note {
+  font-size: 0.78em;
+  color: var(--wh-text-mid);
+  padding: 2px 6px 4px;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
+/* ─── Значения AP в ячейках ─── */
+.armor-loc-vals {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 0.82em;
+  margin: 2px 0;
+}
+
+.armor-ap-gear {
+  color: #4a6a8a;
+  font-weight: bold;
+}
+
+.armor-tb-val {
+  color: #6a7a4a;
+  font-size: 0.9em;
+}
+
+.armor-eq {
+  color: var(--wh-text-mid);
+}
+
+.armor-total {
+  color: var(--wh-accent, #7a2a2a);
+  font-weight: bold;
+  font-size: 1.05em;
+}
+
+.armor-loc-label {
+  text-align: center;
+  font-size: 0.8em;
+  color: var(--wh-text-mid);
+  margin-bottom: 2px;
+}
+
+/* ─── Нижняя легенда ─── */
+.armor-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78em;
+  margin-top: 6px;
+  padding: 2px 4px;
+  color: var(--wh-text-mid);
+}
+
+.armor-hint {
+  font-style: italic;
+  margin-left: 4px;
+}
+
+/* ─── В чате ─── */
+.dmg-tb-note {
+  font-size: 0.82em;
+  color: #6a7a4a;
+  margin-left: 4px;
+  font-style: italic;
+}
+
+/* ── Итоговое поглощение — крупный читаемый блок ── */
+.armor-absorption-total {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 36px;
+  margin: 2px auto 4px;
+  padding: 2px 8px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 2px solid var(--wh-border-dark, #7a5c2e);
+  border-radius: 4px;
+  font-size: 1.25em;
+  font-weight: bold;
+  font-family: var(--wh-font-header, inherit);
+  color: var(--wh-text-dark, #1a1208);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.18);
+  cursor: default;
+}
+
+/* Выделяем если поглощение > 0 */
+.armor-absorption-total:not(:empty) {
+  border-color: var(--wh-accent, #8b1a1a);
+}
+
+/* ── Движение — значения только для чтения ── */
+.warhammer-dbc .movement-val {
+  display: inline-block;
+  min-width: 46px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1em;
+  color: var(--wh-text);
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  padding: 1px 4px;
+}
+
+/* ── Инициатива — строка с контролами ── */
+.warhammer-dbc .initiative-row {
+  align-items: center;
+}
+
+.warhammer-dbc .initiative-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.warhammer-dbc .initiative-base {
+  min-width: 24px;
+  text-align: center;
+  color: var(--wh-accent, #7a2a2a);
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  padding: 1px 3px;
+  font-weight: bold;
+}
+
+.warhammer-dbc .initiative-sep {
+  font-size: 0.85em;
+  color: var(--wh-text-mid);
+  padding: 0 1px;
+}
+
+.warhammer-dbc .initiative-mod-input {
+  width: 34px !important;
+  text-align: center;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  padding: 1px 2px;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: var(--wh-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   СИЛОВОЕ ПОЛЕ — вкладка Бой
+   ═══════════════════════════════════════════════════════════════ */
+
+.shield-combat-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Цвет рамки по статусу */
+.shield-combat-active   { border-color: #4caf50 !important; }
+.shield-combat-overloaded { border-color: #ffa000 !important; }
+.shield-combat-damaged  { border-color: #e53935 !important; }
+.shield-combat-none     { border-color: #555 !important; opacity: 0.85; }
+
+.shield-combat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+/* Название щита */
+.shield-combat-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.shield-combat-icon { font-size: 1.2em; }
+.shield-combat-name {
+  font-weight: bold;
+  font-size: 0.95em;
+  color: var(--wh-text, #2a1a0a);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Тип-бейдж в боевой панели */
+.shield-combat-type-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.72em;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+/* Статистики */
+.shield-combat-stats-row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+.shield-combat-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  background: rgba(0,0,0,0.06);
+  border-radius: 4px;
+  padding: 3px 4px;
+}
+.scs-label {
+  font-size: 0.68em;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.scs-value {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: var(--wh-text, #2a1a0a);
+}
+
+/* Рейтинг с подсветкой */
+.shield-rating-glow {
+  color: #4caf50;
+  font-size: 1.4em;
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+}
+
+/* Статус-бейдж */
+.shield-status-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+.shield-status-active    { background: rgba(76,175,80,0.2);  color: #4caf50; }
+.shield-status-inactive  { background: rgba(128,128,128,0.2);color: #888;    }
+.shield-status-overloaded{ background: rgba(255,160,0,0.2);  color: #ffa000; }
+.shield-status-damaged   { background: rgba(229,57,53,0.2);  color: #e53935; }
+
+/* Кнопки действий в боевой панели */
+.shield-combat-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.shield-combat-roll-btn,
+.shield-combat-toggle-btn,
+.shield-combat-activate-btn {
+  flex: 1;
+  min-width: 90px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--wh-border, #7a5c2e);
+  background: var(--wh-btn-bg, #c9b99a);
+  color: var(--wh-text, #2a1a0a);
+  font-family: inherit;
+  font-size: 0.82em;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.shield-combat-roll-btn:hover     { background: rgba(76,175,80,0.15); box-shadow: 0 0 6px rgba(76,175,80,0.3); }
+.shield-combat-toggle-btn:hover   { background: rgba(229,57,53,0.15); }
+.shield-combat-activate-btn:hover { background: rgba(76,175,80,0.15); box-shadow: 0 0 6px rgba(76,175,80,0.3); }
+
+/* Пустое состояние */
+.shield-combat-empty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #888;
+  font-style: italic;
+  font-size: 0.85em;
+  padding: 4px 0;
+}
+.shield-combat-empty-icon { font-size: 1.2em; }
+
+/* Список неактивных щитов */
+.shield-combat-inactive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.shield-combat-inactive-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 2px 4px;
+  background: rgba(0,0,0,0.04);
+  border-radius: 3px;
+}
+.sci-name {
+  font-size: 0.85em;
+  color: var(--wh-text, #2a1a0a);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   СИЛОВОЙ ЩИТ — сообщения в чате
+   ═══════════════════════════════════════════════════════════════ */
+
+.wh-shield-msg {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 4px solid #888;
+  font-family: inherit;
+}
+.shield-msg-active   { border-left-color: #4caf50; background: rgba(76,175,80,0.07); }
+.shield-msg-absorbed { border-left-color: #4caf50; background: rgba(76,175,80,0.12); }
+.shield-msg-overload { border-left-color: #ffa000; background: rgba(255,160,0,0.10); }
+.shield-msg-fail     { border-left-color: #e53935; background: rgba(229,57,53,0.07); }
+.shield-msg-off      { border-left-color: #888;    background: rgba(128,128,128,0.07); }
+.shield-msg-repair   { border-left-color: #29b6f6; background: rgba(41,182,246,0.07); }
+
+.shield-msg-header {
+  font-weight: bold;
+  font-size: 1em;
+  margin-bottom: 4px;
+}
+.shield-msg-shield-name {
+  font-size: 0.88em;
+  color: #888;
+  margin-bottom: 3px;
+}
+.shield-msg-body {
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+.shield-msg-stats {
+  font-size: 0.78em;
+  color: #777;
+  margin-top: 5px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  padding-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   СИЛОВОЕ ПОЛЕ — вкладка Бой
+   ═══════════════════════════════════════════════════════════════════ */
+
+.shield-combat-panel {
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+/* Цвет рамки по статусу */
+.shield-combat-active    { border-color: #4caf50 !important; }
+.shield-combat-overloaded{ border-color: #ffa000 !important; }
+.shield-combat-damaged   { border-color: #e53935 !important; }
+.shield-combat-none      { border-color: #555 !important; opacity: 0.88; }
+
+/* Тело панели */
+.shield-combat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 6px 8px;
+}
+
+/* Строка названия */
+.shield-combat-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.shield-combat-icon { font-size: 1.15em; flex-shrink: 0; }
+.shield-combat-name {
+  font-weight: bold;
+  font-size: 0.92em;
+  color: var(--wh-text, #2a1a0a);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Тип-бейдж в боевой панели */
+.shield-combat-type-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.7em;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+/* Статистики */
+.shield-combat-stats-row {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+.shield-combat-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  background: rgba(0,0,0,0.06);
+  border-radius: 4px;
+  padding: 3px 4px;
+  min-width: 0;
+}
+.scs-label {
+  font-size: 0.65em;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.scs-value {
+  font-size: 1em;
+  font-weight: bold;
+  color: var(--wh-text, #2a1a0a);
+  white-space: nowrap;
+}
+
+/* Рейтинг с подсветкой */
+.shield-rating-glow {
+  color: #4caf50;
+  font-size: 1.45em !important;
+  text-shadow: 0 0 10px rgba(76, 175, 80, 0.55);
+  line-height: 1;
+}
+
+/* Статус-бейджи */
+.shield-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.75em;
+  font-weight: bold;
+  white-space: nowrap;
+}
+.shield-status-active    { background: rgba(76,175,80,0.18);  color: #4caf50; }
+.shield-status-inactive  { background: rgba(128,128,128,0.18);color: #999;    }
+.shield-status-overloaded{ background: rgba(255,160,0,0.18);  color: #ffa000; }
+.shield-status-damaged   { background: rgba(229,57,53,0.18);  color: #e53935; }
+
+/* Кнопки действий */
+.shield-combat-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: stretch;
+}
+.shield-combat-roll-btn,
+.shield-combat-toggle-btn,
+.shield-combat-activate-btn {
+  flex: 1;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--wh-border, #7a5c2e);
+  background: var(--wh-btn-bg, #c9b99a);
+  color: var(--wh-text, #2a1a0a);
+  font-family: inherit;
+  font-size: 0.78em;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+  white-space: nowrap;
+  text-align: center;
+}
+.shield-combat-roll-btn:hover {
+  background: rgba(76,175,80,0.16);
+  box-shadow: 0 0 8px rgba(76,175,80,0.35);
+}
+.shield-combat-toggle-btn:hover {
+  background: rgba(229,57,53,0.14);
+}
+.shield-combat-activate-btn:hover {
+  background: rgba(76,175,80,0.16);
+  box-shadow: 0 0 8px rgba(76,175,80,0.35);
+}
+.shield-combat-roll-btn:active,
+.shield-combat-toggle-btn:active,
+.shield-combat-activate-btn:active { transform: scale(0.96); }
+
+/* Пустое состояние */
+.shield-combat-empty {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #999;
+  font-style: italic;
+  font-size: 0.82em;
+  padding: 3px 0;
+}
+.shield-combat-empty-icon { font-size: 1.1em; }
+
+/* Список неактивных */
+.shield-combat-inactive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 3px;
+}
+.shield-combat-inactive-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 2px 4px;
+  background: rgba(0,0,0,0.04);
+  border-radius: 3px;
+}
+.sci-name {
+  font-size: 0.82em;
+  color: var(--wh-text, #2a1a0a);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ЧАТОВЫЕ СООБЩЕНИЯ — Силовой щит
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wh-shield-msg {
+  padding: 8px 12px;
+  border-radius: 5px;
+  border-left: 4px solid #888;
+  font-family: inherit;
+  line-height: 1.4;
+}
+.shield-msg-active   { border-left-color: #4caf50; background: rgba(76,175,80,0.07);   }
+.shield-msg-absorbed { border-left-color: #4caf50; background: rgba(76,175,80,0.12);   }
+.shield-msg-overload { border-left-color: #ffa000; background: rgba(255,160,0,0.09);   }
+.shield-msg-fail     { border-left-color: #e53935; background: rgba(229,57,53,0.07);   }
+.shield-msg-off      { border-left-color: #888;    background: rgba(128,128,128,0.06); }
+.shield-msg-repair   { border-left-color: #29b6f6; background: rgba(41,182,246,0.07);  }
+
+.shield-msg-header {
+  font-weight: bold;
+  font-size: 1em;
+  margin-bottom: 3px;
+}
+.shield-msg-shield-name {
+  font-size: 0.86em;
+  color: #999;
+  margin-bottom: 3px;
+}
+.shield-msg-body {
+  font-size: 0.88em;
+}
+.shield-msg-sub {
+  color: #aaa;
+  font-size: 0.9em;
+  margin-left: 6px;
+}
+.shield-msg-stats {
+  font-size: 0.76em;
+  color: #888;
+  margin-top: 5px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(0,0,0,0.10);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ЛИСТ ПРЕДМЕТА — Силовой щит
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Компендиум */
+.shield-compendium-section { margin-bottom: 6px; }
+.shield-compendium-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.shield-compendium-row select {
+  flex: 1;
+  padding: 3px 6px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.84em;
+  border-radius: 3px;
+}
+.shield-compendium-btn {
+  padding: 3px 10px;
+  background: var(--wh-btn-bg, #c9b99a);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.84em;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.shield-compendium-btn:hover { background: rgba(139,0,0,0.10); }
+
+/* Статус */
+.shield-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+.shield-rating-badge {
+  font-size: 0.88em;
+  color: #4caf50;
+  font-weight: bold;
+}
+
+/* Параметры */
+.shield-params-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 14px;
+}
+.shield-param-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.shield-param-label {
+  font-size: 0.80em;
+  color: #777;
+  min-width: 115px;
+  flex-shrink: 0;
+}
+.shield-param-row input[type="number"],
+.shield-param-row select {
+  flex: 1;
+  padding: 2px 5px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.84em;
+  border-radius: 3px;
+}
+
+/* Сводка */
+.shield-rating-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 5px;
+  font-size: 0.86em;
+}
+.srs-label { color: #888; }
+.srs-value { font-weight: bold; color: var(--wh-text, #2a1a0a); }
+.srs-sep   { color: #ccc; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   СИЛОВОЕ ПОЛЕ — горизонтальная панель-бар
+   ═══════════════════════════════════════════════════════════════════ */
+
+.shield-combat-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--wh-border, #7a5c2e);
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+  background: var(--wh-panel-bg, #d6c9a8);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Активный — зелёная подсветка */
+.shield-bar-active {
+  border-color: #4caf50 !important;
+  background: linear-gradient(
+    90deg,
+    rgba(76, 175, 80, 0.08) 0%,
+    var(--wh-panel-bg, #d6c9a8) 40%
+  );
+}
+
+/* Неактивный */
+.shield-bar-inactive {
+  border-color: #888 !important;
+  opacity: 0.9;
+}
+
+/* Левый блок — иконка + название */
+.shield-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.shield-bar-icon {
+  font-size: 1.2em;
+}
+.shield-bar-icon-off {
+  opacity: 0.45;
+}
+
+.shield-bar-title {
+  font-size: 0.72em;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wh-accent, #8b0000);
+  flex-shrink: 0;
+}
+
+.shield-bar-name {
+  font-weight: bold;
+  font-size: 0.9em;
+  color: var(--wh-text, #2a1a0a);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shield-bar-type {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.70em;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.shield-bar-empty-text {
+  font-style: italic;
+  color: #999;
+  font-size: 0.85em;
+}
+
+/* Статистики */
+.shield-bar-stats {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+}
+
+.shield-bar-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 52px;
+}
+
+.shield-bar-stat-label {
+  font-size: 0.62em;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.shield-bar-stat-value {
+  font-weight: bold;
+  font-size: 1em;
+  color: var(--wh-text, #2a1a0a);
+  white-space: nowrap;
+}
+
+/* Рейтинг с подсветкой */
+.shield-rating-glow {
+  color: #4caf50 !important;
+  font-size: 1.35em !important;
+  text-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
+  line-height: 1;
+}
+
+/* Статус-бейдж */
+.shield-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.75em;
+  font-weight: bold;
+  white-space: nowrap;
+}
+.shield-status-active    { background: rgba(76,175,80,0.18);   color: #4caf50; }
+.shield-status-inactive  { background: rgba(128,128,128,0.18); color: #999;    }
+.shield-status-overloaded{ background: rgba(255,160,0,0.20);   color: #ffa000; }
+.shield-status-damaged   { background: rgba(229,57,53,0.18);   color: #e53935; }
+
+/* Кнопки */
+.shield-bar-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.shield-bar-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--wh-border, #7a5c2e);
+  background: var(--wh-btn-bg, #c9b99a);
+  color: var(--wh-text, #2a1a0a);
+  font-family: inherit;
+  font-size: 0.78em;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.shield-bar-btn-roll:hover {
+  background: rgba(76, 175, 80, 0.18);
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+.shield-bar-btn-off:hover {
+  background: rgba(229, 57, 53, 0.15);
+}
+.shield-bar-btn-on:hover {
+  background: rgba(76, 175, 80, 0.18);
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+.shield-bar-btn:active { transform: scale(0.95); }
+
+/* Список неактивных щитов */
+.shield-bar-inactive-list {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.shield-bar-inactive-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.shield-bar-inactive-name {
+  font-size: 0.82em;
+  color: var(--wh-text, #2a1a0a);
+  white-space: nowrap;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* ── Модификации оружия (индикатор в бою и снаряжении) ───────── */
+.warhammer-dbc .weapon-mod-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.72em;
+  color: #aef0e6;
+  background: rgba(58,122,138,0.28);
+  border: 1px solid #4fb3c4;
+  border-radius: 8px;
+  padding: 0 6px;
+  vertical-align: middle;
+}
+/* Когитатор: ещё контрастнее на тёмной шапке */
+.warhammer-dbc.wh-holo .weapon-mod-badge { color: #c9fff2; background: rgba(47,158,106,0.2); border-color: #2f9e6a; }
+.warhammer-dbc .mod-row-installed { background: rgba(58,122,138,0.08); }
+
+/* ── Ручные щиты (стр. 215): строка управления под щитом в списке ближнего боя ── */
+.warhammer-dbc .shield-ctl-row .shield-ctl-cell {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 8px !important;
+  background: rgba(77, 255, 166, .05);
+  border-top: none !important;
+}
+.warhammer-dbc .shield-ap-badge {
+  flex: 0 0 auto;
+  padding: 1px 7px; border-radius: 3px;
+  font-size: 11px; font-weight: 700;
+  color: #0b1a12; background: var(--wh-accent, #4dffa6);
+}
+.warhammer-dbc .shield-cover {
+  font-size: 11px; color: var(--wh-mint, #b8ffd8); opacity: .9;
+}
+.warhammer-dbc .shield-ctl-spacer { flex: 1 1 auto; }
+.warhammer-dbc .shield-hand-btn,
+.warhammer-dbc .shield-raise-btn {
+  flex: 0 0 auto; width: auto;
+  padding: 1px 8px; font-size: 11px; line-height: 1.5;
+  color: #9fd8bb; background: transparent;
+  border: 1px solid var(--wh-border-light, #23483a); border-radius: 3px;
+  cursor: pointer;
+}
+.warhammer-dbc .shield-hand-btn { min-width: 24px; text-align: center; }
+.warhammer-dbc .shield-hand-btn:hover,
+.warhammer-dbc .shield-raise-btn:hover { border-color: var(--wh-accent, #4dffa6); color: #d8ffe9; }
+.warhammer-dbc .shield-hand-btn.is-on,
+.warhammer-dbc .shield-raise-btn.is-on {
+  color: #0b1a12; background: var(--wh-accent, #4dffa6);
+  border-color: var(--wh-accent, #4dffa6); font-weight: 700;
+}

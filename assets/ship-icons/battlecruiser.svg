@@ -1,0 +1,54 @@
+<svg width="320" height="200" viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .hull{fill:#fff;fill-opacity:.16;stroke:#fff;stroke-width:2;stroke-linejoin:round}
+    .tower{fill:#fff;fill-opacity:.4;stroke:#fff;stroke-width:1.3;stroke-linejoin:round}
+    .deck{stroke:#fff;stroke-width:1;opacity:.55}
+    .port{fill:#fff;fill-opacity:.7;stroke:none}
+    .gun{stroke:#fff;stroke-width:1.2;stroke-linecap:round;opacity:.9}
+    .bell{fill:#fff;fill-opacity:.85;stroke:#fff;stroke-width:.9}
+    .lance{fill:#fff;fill-opacity:.9;stroke:#fff;stroke-width:.9}
+    .keel{stroke:#fff;stroke-width:1;opacity:.4}
+    .ram{stroke:#fff;stroke-width:3;stroke-linecap:round}
+  </style>
+  <g>
+    <path class="hull" d="M18.0 43.8 L18.0 43.8 L22.0 39.8 L44.0 39.6 L52.0 41.8 L100.0 42.0 L125.3 45.0 L134.0 47.6 L146.0 50.0 L146.0 50.0 L134.0 52.4 L125.3 55.0 L100.0 58.0 L52.0 58.2 L44.0 60.4 L22.0 60.2 L18.0 56.2 Z"/>
+    <path class="deck" d="M23.0 40.1 V59.9"/>
+    <path class="deck" d="M28.0 40.6 V59.4"/>
+    <path class="deck" d="M33.0 41.0 V59.0"/>
+    <path class="deck" d="M38.0 41.5 V58.5"/>
+    <path class="tower" d="M24.0 45.2 L46.0 46.5 L46.0 53.5 L24.0 54.8 Z"/>
+    <path class="port" d="M52.0 42.0 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M53.7 42.0 l0 -3.4"/>
+    <path class="port" d="M52.0 56.4 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M53.7 58.0 l0 3.4"/>
+    <path class="port" d="M59.7 42.0 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M61.4 42.0 l0 -3.4"/>
+    <path class="port" d="M59.7 56.4 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M61.4 58.0 l0 3.4"/>
+    <path class="port" d="M67.3 42.0 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M69.0 42.0 l0 -3.4"/>
+    <path class="port" d="M67.3 56.4 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M69.0 58.0 l0 3.4"/>
+    <path class="port" d="M75.0 42.0 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M76.7 42.0 l0 -3.4"/>
+    <path class="port" d="M75.0 56.4 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M76.7 58.0 l0 3.4"/>
+    <path class="port" d="M82.7 42.0 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M84.4 42.0 l0 -3.4"/>
+    <path class="port" d="M82.7 56.4 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M84.4 58.0 l0 3.4"/>
+    <path class="port" d="M90.3 42.0 l3.4 0 l0 -1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M92.0 42.0 l0 -3.4"/>
+    <path class="port" d="M90.3 56.4 l3.4 0 l0 1.6 l-3.4 0 Z"/>
+    <path class="gun" d="M92.0 58.0 l0 3.4"/>
+    <path class="bell" d="M18.0 43.4 l-5.4 -1.9 v3.8 Z"/>
+    <path class="bell" d="M18.0 47.8 l-5.4 -1.9 v3.8 Z"/>
+    <path class="bell" d="M18.0 52.2 l-5.4 -1.9 v3.8 Z"/>
+    <path class="bell" d="M18.0 56.6 l-5.4 -1.9 v3.8 Z"/>
+    <circle class="lance" cx="96.0" cy="50" r="2.3"/>
+    <circle class="lance" cx="82.0" cy="50" r="2.3"/>
+    <circle class="lance" cx="68.0" cy="50" r="2.3"/>
+    <path class="keel" d="M48.0 50 H136.0"/>
+    <path class="ram" d="M132.0 50 L146.0 50"/>
+  </g>
+</svg>

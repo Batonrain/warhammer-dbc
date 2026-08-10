@@ -1,0 +1,540 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Лист Демон-Принца: чистый Варп.
+   Тема окрашивается парой переменных бога:
+   --gc (основной), --gc2 (вторичный), --glow (свечение) —
+   выставляются на <form> из dpGodMeta().
+═══════════════════════════════════════════════════════ */
+
+.warhammer-dbc.demon-prince-sheet {
+  --gc: #b477ff; --gc2: #5c2d91; --glow: rgba(180,119,255,0.9);
+  /* Сдвиг тона для переиспользуемых вкладок (см. блок hue-rotate ниже). */
+  --dp-hue: 113deg;
+
+  /* ── Исходная когитаторная палитра для общих вкладок ──────────────────
+     Общие части (.stats-cog/.combat-cog/…) написаны в фосфорной зелени и
+     ссылаются на --cg* и --wh-*. У Демон-Принца нет классов .character-sheet
+     и .wh-holo, поэтому раньше эти переменные были не определены → тёмный
+     текст на тёмном фоне и «сломанные» таблицы. Задаём зелёную базу здесь,
+     а затем единым hue-rotate перекрашиваем тело в цвет Бога. */
+  --cg: #4dffa6; --cg-dim: #2f9e6a; --cg-line: #1f6f4a; --cg-fire: #ffb84d; --cg-red: #ff6b6b;
+
+  --wh-bg: #06120c; --wh-parchment: #08160e; --wh-parchment2: #0c2016; --wh-parchment3: #103022;
+  --wh-panel-dark: #04100a; --wh-panel-mid: #2f8f5e; --wh-red: #ff6b6b; --wh-red-tab: #04100a;
+  --wh-text: #b8ffd8; --wh-text-dark: #d8ffe8; --wh-text-mid: #7fe0a8; --wh-text-light: #d8ffe8;
+  --wh-link: #6fe6ff; --wh-link-hover: #a8f4ff; --wh-border: #1f6f4a; --wh-border-light: #2f9e6a;
+  --wh-input-bg: #0c2418; --wh-input-dark: #081a10; --wh-xp-spent: #ff6b6b; --wh-xp-current: #4dffa6;
+  --wh-accent: #4dffa6; --wh-panel-bg: #0c2016;
+}
+
+/* Тон переиспользуемых вкладок под каждого Бога (green #4dffa6 → цвет Бога). */
+.warhammer-dbc.demon-prince-sheet.dp-god-undivided { --dp-hue: 113deg; }
+.warhammer-dbc.demon-prince-sheet.dp-god-khorne    { --dp-hue: 200deg; }
+.warhammer-dbc.demon-prince-sheet.dp-god-nurgle    { --dp-hue: -74deg; }
+.warhammer-dbc.demon-prince-sheet.dp-god-tzeentch  { --dp-hue: 51deg; }
+.warhammer-dbc.demon-prince-sheet.dp-god-slaanesh  { --dp-hue: 155deg; }
+
+/* Единый сдвиг тона: зелёный терминал → чистый Варп цвета Бога.
+   В общих вкладках нет <img>, поэтому фильтр ничего не искажает.
+   Шапка/Истинное Имя/АПОФЕОЗ — вне этих обёрток и красятся через --gc. */
+.warhammer-dbc.demon-prince-sheet .stats-cog,
+.warhammer-dbc.demon-prince-sheet .combat-cog,
+.warhammer-dbc.demon-prince-sheet .abil-cog,
+.warhammer-dbc.demon-prince-sheet .gear-cog,
+.warhammer-dbc.demon-prince-sheet .advance-cog,
+.warhammer-dbc.demon-prince-sheet .notes-cog {
+  filter: hue-rotate(var(--dp-hue)) saturate(1.05);
+}
+
+/* ── Фон всего листа: глубина Имматериума ─────────────── */
+.wh-dp .window-content,
+.warhammer-dbc.demon-prince-sheet {
+  background:
+    radial-gradient(140% 90% at 85% -10%, color-mix(in srgb, var(--gc2) 26%, transparent), transparent 55%),
+    radial-gradient(120% 100% at -10% 110%, color-mix(in srgb, var(--gc) 14%, transparent), transparent 50%),
+    linear-gradient(165deg, #0d0714 0%, #070310 45%, #0a0516 100%);
+  color: #d9cff0;
+}
+
+/* ── Шапка-апофеоз ────────────────────────────────────── */
+.warhammer-dbc .dp-header {
+  position: relative; overflow: hidden; border-radius: 8px; margin-bottom: 6px;
+  border: 1px solid color-mix(in srgb, var(--gc) 45%, #1a1030);
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.65), 0 0 22px -6px var(--glow);
+  background: linear-gradient(180deg, #120a20, #080412);
+}
+/* Клубящийся варп: два слоя дышащих градиентов в противофазе */
+.warhammer-dbc .dp-warp-layer {
+  position: absolute; inset: -40%; pointer-events: none; opacity: 0.6;
+  background:
+    radial-gradient(35% 45% at 30% 40%, color-mix(in srgb, var(--gc) 30%, transparent), transparent 70%),
+    radial-gradient(40% 40% at 75% 60%, color-mix(in srgb, var(--gc2) 38%, transparent), transparent 72%);
+  animation: dpWarpSwirl 17s ease-in-out infinite;
+}
+.warhammer-dbc .dp-warp-b {
+  animation-duration: 23s; animation-direction: reverse; opacity: 0.45;
+  background:
+    radial-gradient(30% 50% at 60% 30%, color-mix(in srgb, var(--gc2) 30%, transparent), transparent 70%),
+    radial-gradient(45% 35% at 20% 75%, color-mix(in srgb, var(--gc) 22%, transparent), transparent 75%);
+}
+@keyframes dpWarpSwirl {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  33%      { transform: rotate(4deg) scale(1.12); }
+  66%      { transform: rotate(-3deg) scale(1.05); }
+}
+/* Пульсирующие «вены» варпа поверх */
+.warhammer-dbc .dp-warp-veins {
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; opacity: 0.35;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 26px, color-mix(in srgb, var(--gc) 16%, transparent) 27px, transparent 30px),
+    repeating-linear-gradient(-60deg, transparent 0 34px, color-mix(in srgb, var(--gc2) 14%, transparent) 35px, transparent 39px);
+  animation: dpVeins 9s ease-in-out infinite;
+}
+@keyframes dpVeins { 0%,100% { opacity: 0.2; } 50% { opacity: 0.45; } }
+
+.warhammer-dbc .dp-header-content {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 92px 1fr auto; gap: 14px; align-items: center;
+  padding: 12px 14px;
+}
+
+/* ── Сигил с вращающимися кольцами ────────────────────── */
+.warhammer-dbc .dp-sigil {
+  position: relative; width: 86px; height: 86px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+/* Пользовательский аватар вместо сигила бога */
+.warhammer-dbc .dp-avatar {
+  width: 74%; height: 74%; border-radius: 50%; object-fit: cover;
+  border: 1px solid color-mix(in srgb, var(--gc) 60%, transparent);
+  box-shadow: 0 0 12px -2px var(--glow); position: relative; z-index: 1;
+}
+/* Псайкер-вкладка красится в цвет Бога (демоничность = цвет покровителя) */
+.warhammer-dbc.demon-prince-sheet .psy-tab {
+  --pc: var(--gc); --pc2: var(--gc2, var(--gc));
+  --pc-soft: color-mix(in srgb, var(--gc) 15%, transparent);
+}
+.warhammer-dbc .dp-sigil-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, var(--gc) 70%, transparent);
+  animation: dpRingSpin 26s linear infinite;
+}
+.warhammer-dbc .dp-sigil-ring2 {
+  inset: 7px; border-style: dotted;
+  border-color: color-mix(in srgb, var(--gc2) 80%, transparent);
+  animation-direction: reverse; animation-duration: 17s;
+}
+@keyframes dpRingSpin { to { transform: rotate(360deg); } }
+.warhammer-dbc .dp-sigil-mask {
+  width: 68%; height: 68%; background: var(--gc);
+  filter: drop-shadow(0 0 6px var(--glow));
+  animation: dpSigilBreath 3.6s ease-in-out infinite;
+}
+@keyframes dpSigilBreath {
+  0%, 100% { filter: drop-shadow(0 0 5px var(--glow)); transform: scale(1); }
+  50%      { filter: drop-shadow(0 0 14px var(--glow)); transform: scale(1.05); }
+}
+
+/* ── Имя и селекторы ──────────────────────────────────── */
+.warhammer-dbc .dp-id { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.warhammer-dbc .dp-name {
+  font-size: 1.45em; font-weight: 800; letter-spacing: 0.03em; color: #f2e9ff;
+  background: transparent; border: none; border-bottom: 1px solid transparent; padding: 1px 2px;
+  text-shadow: 0 0 14px var(--glow);
+}
+.warhammer-dbc .dp-name:focus { outline: none; border-bottom-color: var(--gc); }
+.warhammer-dbc .dp-epithet {
+  font-size: 0.78em; font-style: italic; letter-spacing: 0.14em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--gc) 75%, #cfc3ea);
+  animation: dpEpithet 5s ease-in-out infinite;
+}
+@keyframes dpEpithet { 0%,100% { opacity: 0.75; } 50% { opacity: 1; text-shadow: 0 0 10px var(--glow); } }
+.warhammer-dbc .dp-selrow { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 3px; align-items: flex-end; }
+.warhammer-dbc .dp-selrow label {
+  display: flex; flex-direction: column; font-size: 0.64em; text-transform: uppercase;
+  letter-spacing: 0.06em; color: #8a7fb0; gap: 1px;
+}
+.warhammer-dbc .dp-selrow select, .warhammer-dbc .dp-selrow input[type=text], .warhammer-dbc .dp-inst input {
+  background: rgba(0,0,0,0.45); border: 1px solid color-mix(in srgb, var(--gc) 35%, #2a1e44);
+  color: #e4daf8; border-radius: 4px; padding: 2px 6px; font-size: 1.15em; min-width: 104px;
+}
+.warhammer-dbc .dp-inst input { min-width: 52px; width: 52px; text-align: center; }
+.warhammer-dbc .dp-psy-cb { flex-direction: row !important; align-items: center; gap: 4px; font-size: 0.72em !important; }
+.warhammer-dbc .dp-psy-cb input { accent-color: var(--gc); }
+
+/* ── Фавор ────────────────────────────────────────────── */
+.warhammer-dbc .dp-vitals { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; min-width: 150px; }
+.warhammer-dbc .dp-favor { display: flex; align-items: center; gap: 6px; }
+.warhammer-dbc .dp-favor-label {
+  font-size: 0.66em; letter-spacing: 0.18em; color: color-mix(in srgb, var(--gc) 80%, #cfc3ea); font-weight: 700;
+}
+.warhammer-dbc .dp-favor-value {
+  font-size: 1.5em; font-weight: 800; color: #ffe9b0; min-width: 30px; text-align: center;
+  text-shadow: 0 0 12px var(--glow);
+  animation: dpFavorGlow 2.8s ease-in-out infinite;
+}
+@keyframes dpFavorGlow { 0%,100% { text-shadow: 0 0 6px var(--glow); } 50% { text-shadow: 0 0 16px var(--glow), 0 0 30px var(--glow); } }
+.warhammer-dbc .dp-favor button {
+  width: 20px; height: 20px; line-height: 1; padding: 0; border-radius: 50%; cursor: pointer;
+  background: color-mix(in srgb, var(--gc) 20%, #140b22); color: #f0e6ff;
+  border: 1px solid color-mix(in srgb, var(--gc) 55%, transparent); font-weight: 700;
+}
+.warhammer-dbc .dp-favor button:hover { filter: brightness(1.3); box-shadow: 0 0 8px var(--glow); }
+.warhammer-dbc .dp-favor-pips { display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; max-width: 160px; }
+.warhammer-dbc .dp-pip {
+  width: 9px; height: 9px; transform: rotate(45deg); border-radius: 1px;
+  border: 1px solid color-mix(in srgb, var(--gc) 45%, transparent); background: transparent;
+}
+.warhammer-dbc .dp-pip.on {
+  background: linear-gradient(135deg, var(--gc), var(--gc2));
+  box-shadow: 0 0 6px var(--glow);
+  animation: dpPip 2.2s ease-in-out infinite;
+}
+@keyframes dpPip { 0%,100% { box-shadow: 0 0 4px var(--glow); } 50% { box-shadow: 0 0 10px var(--glow); } }
+.warhammer-dbc .dp-vrow { display: flex; gap: 6px; font-size: 0.8em; color: #9a8fc0; }
+.warhammer-dbc .dp-vrow b { color: #f2e9ff; }
+.warhammer-dbc .dp-btns { display: flex; gap: 4px; margin-top: 3px; }
+.warhammer-dbc .dp-btns button,
+.warhammer-dbc .dp-panel-title button {
+  width: auto; flex: 0 0 auto; line-height: 1;
+  padding: 3px 9px; font-size: 0.72em; font-weight: 700; cursor: pointer; border-radius: 4px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gc) 28%, #140b22), color-mix(in srgb, var(--gc2) 30%, #0a0714));
+  color: #f4ecff; border: 1px solid color-mix(in srgb, var(--gc) 60%, transparent); white-space: nowrap;
+}
+/* Заголовок панели: подпись слева, компактные кнопки-действия справа. */
+.warhammer-dbc .dp-panel-title { flex-wrap: wrap; }
+.warhammer-dbc .dp-panel-title button:first-of-type { margin-left: auto; }
+.warhammer-dbc .dp-gift-sacrifice { width: auto; flex: 0 0 auto; }
+.warhammer-dbc .dp-btns button:hover,
+.warhammer-dbc .dp-panel-title button:hover { filter: brightness(1.25); box-shadow: 0 0 10px var(--glow); }
+
+/* ── Истинное Имя: бегущие руны ───────────────────────── */
+.warhammer-dbc .dp-truename-strip {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;
+  padding: 6px 12px; border-radius: 6px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--gc2) 18%, rgba(0,0,0,0.3)), rgba(0,0,0,0.3) 60%);
+  border: 1px solid color-mix(in srgb, var(--gc) 30%, #2a1e44);
+}
+.warhammer-dbc .dp-truename {
+  display: flex; align-items: center; gap: 8px; font-size: 0.68em; letter-spacing: 0.12em;
+  color: #8a7fb0; font-weight: 700; flex-shrink: 0;
+}
+.warhammer-dbc .dp-truename input[type=text] {
+  background: rgba(0,0,0,0.45); border: 1px solid color-mix(in srgb, var(--gc) 40%, #2a1e44);
+  color: #ffd9a0; border-radius: 4px; padding: 2px 8px; font-size: 1.3em; min-width: 170px;
+  letter-spacing: 0.05em;
+}
+.warhammer-dbc .dp-syllables { display: flex; align-items: center; gap: 3px; }
+.warhammer-dbc .dp-rune {
+  font-size: 1.05em; color: var(--gc); text-shadow: 0 0 8px var(--glow);
+  animation: dpRune 2.4s ease-in-out infinite;
+}
+@keyframes dpRune {
+  0%, 100% { opacity: 0.45; transform: translateY(0); }
+  50%      { opacity: 1; transform: translateY(-2px); text-shadow: 0 0 12px var(--glow); }
+}
+.warhammer-dbc .dp-syllables input {
+  width: 44px; text-align: center; background: rgba(0,0,0,0.4); margin-left: 6px;
+  border: 1px solid color-mix(in srgb, var(--gc) 35%, #2a1e44); color: #e4daf8; border-radius: 4px;
+}
+.warhammer-dbc .dp-tn-cb { display: inline-flex; align-items: center; gap: 4px; font-size: 0.74em; color: #b7abd8; }
+.warhammer-dbc .dp-tn-cb input { accent-color: var(--gc); }
+
+/* ── Вкладка АПОФЕОЗ ──────────────────────────────────── */
+.warhammer-dbc .dp-tab-apotheosis { color: var(--gc) !important; text-shadow: 0 0 8px var(--glow); }
+/* .active обязателен: иначе display:flex перебивает .tab{display:none} (равная
+   специфичность, но правило ниже по каскаду) и панели АПОФЕОЗа лезут на все вкладки. */
+.warhammer-dbc .dp-apotheosis.active { display: flex; flex-direction: column; gap: 10px; }
+.warhammer-dbc .dp-panel {
+  padding: 9px 12px; border-radius: 6px; position: relative; overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--gc2) 14%, transparent), transparent 55%),
+    rgba(0,0,0,0.28);
+  border: 1px solid color-mix(in srgb, var(--gc) 26%, #241a3e);
+  border-left: 3px solid var(--gc);
+}
+.warhammer-dbc .dp-panel-god { box-shadow: inset 0 0 24px color-mix(in srgb, var(--gc2) 22%, transparent); }
+.warhammer-dbc .dp-panel-title {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  font-size: 0.78em; font-weight: 800; letter-spacing: 0.14em;
+  color: color-mix(in srgb, var(--gc) 82%, #f2e9ff);
+}
+.warhammer-dbc .dp-panel-sigil {
+  width: 16px; height: 16px; background: var(--gc); display: inline-block;
+  filter: drop-shadow(0 0 4px var(--glow));
+}
+.warhammer-dbc .dp-count {
+  font-size: 0.9em; padding: 0 7px; border-radius: 8px; color: #ffe9b0;
+  background: color-mix(in srgb, var(--gc2) 45%, transparent);
+}
+.warhammer-dbc .dp-note { font-size: 0.85em; line-height: 1.5; color: #c9bfe4; margin: 2px 0; }
+.warhammer-dbc .dp-note-flavor { font-style: italic; color: color-mix(in srgb, var(--gc) 55%, #c9bfe4); }
+.warhammer-dbc .dp-note-small { font-size: 0.74em; color: #8a7fb0; margin-top: 6px; }
+.warhammer-dbc .dp-reflist { display: flex; flex-direction: column; gap: 5px; }
+.warhammer-dbc .dp-ref {
+  font-size: 0.84em; line-height: 1.45; padding: 4px 9px; border-radius: 4px;
+  background: color-mix(in srgb, var(--gc) 7%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--gc) 65%, transparent);
+}
+.warhammer-dbc .dp-ref b { color: #f2e9ff; }
+
+/* ── Дары: реестр ─────────────────────────────────────── */
+.warhammer-dbc .dp-gift-list { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.warhammer-dbc .dp-gift {
+  padding: 6px 9px; border-radius: 5px; position: relative;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid color-mix(in srgb, var(--gc) 20%, #241a3e);
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.warhammer-dbc .dp-gift:hover {
+  border-color: color-mix(in srgb, var(--gc) 65%, transparent);
+  box-shadow: 0 0 12px -4px var(--glow);
+}
+.warhammer-dbc .dp-gift.owned {
+  background: linear-gradient(120deg, color-mix(in srgb, var(--gc2) 22%, rgba(0,0,0,0.3)), rgba(0,0,0,0.3) 70%);
+  border-color: color-mix(in srgb, var(--gc) 50%, transparent);
+}
+.warhammer-dbc .dp-gift-god { border-left: 2px solid var(--gc); }
+.warhammer-dbc .dp-gift-head { display: flex; align-items: center; gap: 6px; }
+.warhammer-dbc .dp-gift-cost {
+  min-width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  transform: rotate(45deg); font-size: 0.72em; font-weight: 800; color: #ffe9b0;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gc) 55%, #140b22), color-mix(in srgb, var(--gc2) 65%, #140b22));
+  border: 1px solid color-mix(in srgb, var(--gc) 70%, transparent); border-radius: 3px;
+  box-shadow: 0 0 6px -2px var(--glow); flex-shrink: 0;
+}
+.warhammer-dbc .dp-gift-cost > * { transform: rotate(-45deg); }
+.warhammer-dbc .dp-gift-cost { text-orientation: mixed; }
+.warhammer-dbc .dp-gift-cost.poor { opacity: 0.45; filter: grayscale(0.6); }
+.warhammer-dbc .dp-gift-name { font-size: 0.85em; font-weight: 700; color: #f2e9ff; flex: 1; min-width: 0; }
+.warhammer-dbc .dp-gift-badge {
+  font-size: 0.7em; font-weight: 800; color: var(--gc); padding: 0 5px;
+  border: 1px solid color-mix(in srgb, var(--gc) 55%, transparent); border-radius: 8px;
+}
+.warhammer-dbc .dp-gift-buy {
+  width: auto; flex: 0 0 auto; white-space: nowrap; line-height: 1;
+  padding: 3px 10px; font-size: 0.68em; font-weight: 700; cursor: pointer; border-radius: 4px;
+  background: color-mix(in srgb, var(--gc) 22%, #140b22); color: #f4ecff;
+  border: 1px solid color-mix(in srgb, var(--gc) 55%, transparent);
+  opacity: 0; transform: translateX(4px); transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.warhammer-dbc .dp-gift:hover .dp-gift-buy { opacity: 1; transform: translateX(0); }
+.warhammer-dbc .dp-gift-buy:hover { filter: brightness(1.3); box-shadow: 0 0 8px var(--glow); }
+.warhammer-dbc .dp-gift-text { font-size: 0.74em; line-height: 1.4; color: #a99dcb; margin-top: 4px; }
+.warhammer-dbc .dp-gift-auto {
+  font-size: 0.82em; color: var(--gc); filter: drop-shadow(0 0 4px var(--glow));
+  vertical-align: middle;
+}
+
+/* Обретённые дары */
+.warhammer-dbc .dp-gift-owned-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.warhammer-dbc .dp-gift-owned {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 12px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--gc) 26%, #140b22), color-mix(in srgb, var(--gc2) 30%, #0a0714));
+  border: 1px solid color-mix(in srgb, var(--gc) 60%, transparent);
+  box-shadow: 0 0 10px -4px var(--glow);
+  animation: dpOwnedGift 4s ease-in-out infinite;
+}
+@keyframes dpOwnedGift { 0%,100% { box-shadow: 0 0 8px -4px var(--glow); } 50% { box-shadow: 0 0 14px -3px var(--glow); } }
+.warhammer-dbc .dp-gift-owned-name { font-size: 0.8em; font-weight: 700; color: #f2e9ff; }
+.warhammer-dbc .dp-gift-owned-cost { font-size: 0.7em; color: #ffe9b0; }
+.warhammer-dbc .dp-gift-sacrifice {
+  background: transparent; border: none; cursor: pointer; padding: 0 2px; font-size: 0.9em;
+  filter: grayscale(0.7); transition: filter 0.2s, transform 0.2s;
+}
+.warhammer-dbc .dp-gift-sacrifice:hover { filter: none; transform: scale(1.25); }
+
+/* ── Текстовые поля ───────────────────────────────────── */
+.warhammer-dbc .dp-textarea {
+  width: 100%; min-height: 56px; margin-top: 4px; resize: vertical;
+  background: rgba(0,0,0,0.35); border: 1px solid color-mix(in srgb, var(--gc) 28%, #2a1e44);
+  color: #d9cff0; border-radius: 4px; padding: 5px 8px; font-size: 0.84em; line-height: 1.45;
+}
+.warhammer-dbc .dp-anointed-label {
+  display: flex; align-items: center; gap: 8px; margin-top: 6px;
+  font-size: 0.68em; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7fb0;
+}
+.warhammer-dbc .dp-anointed-label input {
+  flex: 1; background: rgba(0,0,0,0.4); border: 1px solid color-mix(in srgb, var(--gc) 30%, #2a1e44);
+  color: #e4daf8; border-radius: 4px; padding: 2px 8px; font-size: 1.2em; text-transform: none; letter-spacing: 0;
+}
+
+/* ── Чат-карточка Демон-Принца ────────────────────────── */
+.wh-dp-card {
+  --gc: #b477ff; --gc2: #5c2d91;
+  padding: 7px 10px; border-radius: 5px;
+  background:
+    radial-gradient(130% 130% at 0% 0%, color-mix(in srgb, var(--gc2) 26%, transparent), transparent 60%),
+    linear-gradient(180deg, #140b22, #0a0714);
+  border: 1px solid color-mix(in srgb, var(--gc) 40%, #2a1e44);
+  border-left: 3px solid var(--gc);
+  color: #d9cff0;
+}
+.wh-dp-card-h {
+  display: flex; align-items: center; gap: 7px; font-weight: 800; letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--gc) 80%, #f2e9ff); margin-bottom: 4px;
+}
+.wh-dp-card-sigil { width: 15px; height: 15px; background: var(--gc); display: inline-block; flex-shrink: 0; }
+.wh-dp-card-r { font-size: 0.88em; line-height: 1.45; margin: 2px 0; }
+.wh-dp-card-r .ok  { color: #8fbf3a; font-weight: 700; }
+.wh-dp-card-r .bad { color: #e0202e; font-weight: 700; }
+
+/* ═══════════════════════════════════════════════════════
+   Очки Бесчестия — полоса пула и трат (корбук 438).
+═══════════════════════════════════════════════════════ */
+.warhammer-dbc .dp-ip-strip {
+  margin-bottom: 8px; padding: 7px 12px; border-radius: 6px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--gc) 12%, rgba(0,0,0,0.35)), rgba(0,0,0,0.3) 70%);
+  border: 1px solid color-mix(in srgb, var(--gc) 30%, #2a1e44);
+  display: flex; flex-direction: column; gap: 6px;
+}
+/* Симметричная шапка: подпись слева · счётчик+пипсы по центру · ↻ справа */
+.warhammer-dbc .dp-ip-main { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.warhammer-dbc .dp-ip-label {
+  font-size: 0.7em; font-weight: 800; letter-spacing: 0.12em; flex: 0 0 auto;
+  color: color-mix(in srgb, var(--gc) 82%, #f2e9ff);
+}
+.warhammer-dbc .dp-ip-center { display: flex; align-items: center; gap: 12px; flex: 1 1 auto; justify-content: center; }
+.warhammer-dbc .dp-ip-counter { display: flex; align-items: center; gap: 7px; }
+.warhammer-dbc .dp-ip-value {
+  font-size: 1.4em; font-weight: 800; color: #ffe9b0; min-width: 40px; text-align: center;
+  text-shadow: 0 0 12px var(--glow);
+}
+.warhammer-dbc .dp-ip-max { font-size: 0.6em; color: #9a8fc0; font-weight: 600; }
+.warhammer-dbc .dp-ip-minus, .warhammer-dbc .dp-ip-plus, .warhammer-dbc .dp-ip-restore {
+  width: 22px; height: 22px; flex: 0 0 auto; line-height: 1; padding: 0; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--gc) 20%, #140b22); color: #f0e6ff;
+  border: 1px solid color-mix(in srgb, var(--gc) 55%, transparent); font-weight: 700;
+}
+.warhammer-dbc .dp-ip-restore { border-radius: 5px; }
+.warhammer-dbc .dp-ip-minus:hover, .warhammer-dbc .dp-ip-plus:hover, .warhammer-dbc .dp-ip-restore:hover {
+  filter: brightness(1.3); box-shadow: 0 0 8px var(--glow);
+}
+.warhammer-dbc .dp-ip-pips { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: 260px; }
+.warhammer-dbc .dp-ip-pip {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--gc) 45%, transparent); background: transparent;
+}
+.warhammer-dbc .dp-ip-pip.on { background: var(--gc); box-shadow: 0 0 6px var(--glow); }
+/* Равные по ширине кнопки-траты: симметричная сетка, ровные ряды. */
+.warhammer-dbc .dp-ip-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(134px, 1fr)); gap: 6px; }
+.warhammer-dbc .dp-ip-spend {
+  width: 100%; line-height: 1; padding: 5px 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  font-size: 0.72em; font-weight: 700; border-radius: 4px; white-space: nowrap;
+  background: color-mix(in srgb, var(--gc) 16%, #140b22); color: #ece0ff;
+  border: 1px solid color-mix(in srgb, var(--gc) 45%, transparent); transition: all 0.15s;
+}
+.warhammer-dbc .dp-ip-ic { font-size: 1.05em; line-height: 1; }
+.warhammer-dbc .dp-ip-spend:hover { filter: brightness(1.25); box-shadow: 0 0 9px -2px var(--glow); border-color: var(--gc); }
+.warhammer-dbc .dp-ip-spend.dis { opacity: 0.32; cursor: not-allowed; filter: grayscale(0.6); }
+.warhammer-dbc .dp-ip-spend.dis:hover { box-shadow: none; filter: grayscale(0.6); }
+.warhammer-dbc .dp-ip-patron {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gc) 40%, #140b22), color-mix(in srgb, var(--gc2) 38%, #0a0714));
+  border-color: color-mix(in srgb, var(--gc) 70%, transparent); color: #fff2d8;
+}
+.warhammer-dbc .dp-ip-patronage { display: flex; flex-direction: column; gap: 2px; }
+.warhammer-dbc .dp-ip-adv { font-size: 0.72em; color: #8fce6a; }
+.warhammer-dbc .dp-ip-dis { font-size: 0.72em; color: #d98a8a; }
+
+/* ═══════════════════════════════════════════════════════
+   Панель вкладок: варп-полоса вместо имперской парчи.
+═══════════════════════════════════════════════════════ */
+.warhammer-dbc.demon-prince-sheet .sheet-tabs {
+  background: linear-gradient(180deg, #0a0714, #070310);
+  border-top: 1px solid color-mix(in srgb, var(--gc) 30%, #241a3e);
+  border-bottom: 1px solid color-mix(in srgb, var(--gc) 40%, #241a3e);
+  box-shadow: inset 0 0 18px rgba(0,0,0,0.6);
+  border-radius: 5px; overflow: hidden;
+}
+.warhammer-dbc.demon-prince-sheet .sheet-tabs .item {
+  color: #9a8fc0; border-right: 1px solid rgba(0,0,0,0.4);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  transition: color 0.18s, background 0.18s, text-shadow 0.18s;
+}
+.warhammer-dbc.demon-prince-sheet .sheet-tabs .item:hover {
+  color: #f2e9ff; background: color-mix(in srgb, var(--gc) 18%, transparent);
+  text-shadow: 0 0 8px var(--glow);
+}
+.warhammer-dbc.demon-prince-sheet .sheet-tabs .item.active {
+  color: #f6efff; background: color-mix(in srgb, var(--gc2) 32%, transparent);
+  text-shadow: 0 0 10px var(--glow);
+  box-shadow: inset 0 -2px 0 var(--gc), inset 0 0 22px -8px var(--glow);
+}
+/* Вкладка АПОФЕОЗ — всегда пылает цветом Бога, слегка «дышит». */
+.warhammer-dbc.demon-prince-sheet .sheet-tabs .item.dp-tab-apotheosis {
+  animation: dpTabPulse 3.4s ease-in-out infinite;
+}
+@keyframes dpTabPulse {
+  0%,100% { text-shadow: 0 0 6px var(--glow); }
+  50%     { text-shadow: 0 0 14px var(--glow), 0 0 24px var(--glow); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Читаемость без .wh-holo: списки, плейсхолдеры, скроллбар.
+═══════════════════════════════════════════════════════ */
+.warhammer-dbc.demon-prince-sheet input,
+.warhammer-dbc.demon-prince-sheet select,
+.warhammer-dbc.demon-prince-sheet textarea { accent-color: var(--gc); }
+.warhammer-dbc.demon-prince-sheet input::placeholder,
+.warhammer-dbc.demon-prince-sheet textarea::placeholder { color: #6a5f90 !important; opacity: 1; }
+.warhammer-dbc.demon-prince-sheet option { background: #140b22; color: #e4daf8; }
+.warhammer-dbc.demon-prince-sheet option:checked,
+.warhammer-dbc.demon-prince-sheet option:hover { background: #2a1a4a; color: #f6efff; }
+.warhammer-dbc.demon-prince-sheet .sheet-body { scrollbar-color: color-mix(in srgb, var(--gc) 50%, transparent) transparent; }
+.warhammer-dbc.demon-prince-sheet .sheet-body::-webkit-scrollbar { width: 9px; }
+.warhammer-dbc.demon-prince-sheet .sheet-body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--gc) 45%, #1a1030); border-radius: 5px;
+}
+.warhammer-dbc.demon-prince-sheet .sheet-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.35); }
+
+/* Тонкая варп-виньетка по краям тела листа — «затягивает» взгляд в бездну. */
+.warhammer-dbc.demon-prince-sheet .sheet-body {
+  position: relative;
+  box-shadow: inset 0 0 60px -10px rgba(0,0,0,0.7);
+}
+
+/* ── Возвышение / Проявление / рефы Книги Хаоса ────────── */
+.warhammer-dbc .dp-ref-divine {
+  border-left-color: #ffd27a;
+  background: color-mix(in srgb, #ffcf6e 8%, transparent);
+}
+.warhammer-dbc .dp-ref-divine b { color: #ffe3a8; }
+.warhammer-dbc .dp-panel-ascend { border-left-width: 4px; box-shadow: inset 0 0 26px color-mix(in srgb, var(--gc2) 20%, transparent); }
+.warhammer-dbc .dp-ascend-btn {
+  width: auto; flex: 0 0 auto; margin-left: auto; line-height: 1;
+  padding: 4px 12px; font-size: 0.76em; font-weight: 800; letter-spacing: 0.04em; cursor: pointer; border-radius: 4px;
+  color: #150a1e; border: 1px solid color-mix(in srgb, var(--gc) 70%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gc) 85%, #fff), var(--gc));
+  box-shadow: 0 0 14px -3px var(--glow); text-shadow: none;
+  animation: dpAscendPulse 2.6s ease-in-out infinite;
+}
+.warhammer-dbc .dp-ascend-btn:hover { filter: brightness(1.15); box-shadow: 0 0 20px -2px var(--glow); }
+@keyframes dpAscendPulse { 0%,100% { box-shadow: 0 0 10px -4px var(--glow); } 50% { box-shadow: 0 0 22px -2px var(--glow); } }
+.warhammer-dbc .dp-unascend-btn { width: auto; flex: 0 0 auto; }
+.warhammer-dbc .dp-ascended-badge {
+  margin-left: auto; font-size: 0.82em; font-weight: 800; letter-spacing: 0.06em; color: #ffe9b0;
+  text-shadow: 0 0 10px var(--glow);
+}
+
+.warhammer-dbc .dp-manifest-row { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+.warhammer-dbc .dp-form-sel {
+  display: flex; flex-direction: column; gap: 2px;
+  font-size: 0.64em; text-transform: uppercase; letter-spacing: 0.06em; color: #8a7fb0;
+}
+.warhammer-dbc .dp-form-sel select {
+  background: rgba(0,0,0,0.45); border: 1px solid color-mix(in srgb, var(--gc) 35%, #2a1e44);
+  color: #e4daf8; border-radius: 4px; padding: 3px 8px; font-size: 1.5em; min-width: 190px;
+}
+.warhammer-dbc .dp-manifest-info { display: flex; align-items: baseline; gap: 8px; }
+.warhammer-dbc .dp-manifest-formula { font-size: 0.82em; color: #c9bfe4; }
+.warhammer-dbc .dp-manifest-unit {
+  font-size: 1.05em; font-weight: 800; color: var(--gc); text-shadow: 0 0 10px var(--glow);
+  letter-spacing: 0.04em;
+}
+
+/* ── Узкие экраны ─────────────────────────────────────── */
+@media (max-width: 760px) {
+  .warhammer-dbc .dp-gift-list { grid-template-columns: 1fr; }
+  .warhammer-dbc .dp-manifest-row { flex-direction: column; align-items: stretch; }
+}

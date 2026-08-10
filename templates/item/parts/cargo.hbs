@@ -1,0 +1,34 @@
+<div class="item-section">
+  <div class="item-section-title">ГРУЗ</div>
+  <div class="cargo-grid">
+    <label class="cargo-field cargo-field-wide">Тип груза
+      <select name="system.cargoType" class="cargo-select">{{{cargoTypeOptions}}}</select>
+    </label>
+    <label class="cargo-field">Грузоподъёмность (LC)
+      <input type="number" name="system.lc" value="{{system.lc}}" min="0" step="1"/>
+    </label>
+    <label class="cargo-field">Количество (шт.)
+      <input type="number" name="system.quantity" value="{{system.quantity}}" min="0" step="1" title="Число единиц (для расходуемого снаряжения: боеголовки, системы наведения, снаряды)"/>
+    </label>
+    <label class="cargo-field">Качество
+      <select name="system.quality">
+        <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Poor.Q</option>
+        <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Comm.Q</option>
+        <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Good.Q</option>
+        <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Best.Q</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+      </select>
+    </label>
+    <label class="cargo-field">Редкость (R)
+      <input type="number" name="system.rarity" value="{{system.rarity}}" step="1"/>
+    </label>
+  </div>
+
+  {{#if cargoTypeInfo}}
+  <div class="cargo-ref">
+    <div class="cargo-ref-row"><span class="cargo-ref-key">Базовая R типа:</span> {{cargoTypeInfo.rarity}}</div>
+    <div class="cargo-ref-row"><span class="cargo-ref-key">Примеры:</span> {{cargoTypeInfo.examples}}</div>
+    <div class="cargo-ref-hint">Ксенотовары и снаряжение Астартес получают +1 к R. R конкретного груза задаётся вручную выше.</div>
+  </div>
+  {{/if}}
+</div>

@@ -1,0 +1,290 @@
+<form class="wh-craft-form" autocomplete="off">
+  <div class="wh-craft-scroll">
+
+    {{#each projects as |p|}}
+    <section class="wh-craft-project {{#if p.collapsed}}collapsed{{/if}} {{#if p.isResearch}}is-research{{/if}}" data-pid="{{p.id}}">
+
+      {{!-- Шапка проекта --}}
+      <header class="wh-craft-phead">
+        <button type="button" class="wh-craft-caret" data-act="toggle" title="Свернуть/развернуть">{{#if p.collapsed}}▸{{else}}▾{{/if}}</button>
+        <input type="text" name="ptitle" value="{{p.title}}" placeholder="{{p.autoTitle}}" class="wh-craft-ptitle-input"/>
+        <span class="wh-craft-psummary" title="Прогресс">{{p.summary}}</span>
+        <button type="button" class="wh-craft-premove" data-act="remove" title="Удалить проект">✕</button>
+      </header>
+
+      {{#unless p.collapsed}}
+      <div class="wh-craft-pbody">
+
+        {{!-- Режим --}}
+        <div class="wh-craft-mode">
+          <button type="button" data-mode="craft" class="wh-craft-modebtn {{#if p.isCraft}}active{{/if}}">{{{../icoCraft}}}<span>Крафт</span></button>
+          <button type="button" data-mode="research" class="wh-craft-modebtn {{#if p.isResearch}}active{{/if}}">{{{../icoResearch}}}<span>Исследование</span></button>
+          <button type="button" data-mode="bio" class="wh-craft-modebtn {{#if p.isBio}}active{{/if}}">{{{../icoBio}}}<span>Биолаборатория</span></button>
+        </div>
+
+        {{!-- Крафтер --}}
+        <div class="wh-craft-panel">
+          <div class="wh-craft-ptitle">{{{../icoCrafter}}} Крафтер</div>
+          {{#if p.noCrafters}}
+            <div class="wh-craft-hint">Нет доступных крафтеров. На листе персонажа (ЗАМЕТКИ → СТАТУС) отметьте «Доступен для крафта».</div>
+          {{else}}
+          <select name="crafter" class="wh-craft-select">
+            <option value="">— выберите персонажа —</option>
+            {{#each p.crafters as |c|}}<option value="{{c.id}}" {{#if (eq c.id p.crafterId)}}selected{{/if}}>{{c.name}}</option>{{/each}}
+          </select>
+          {{/if}}
+        </div>
+
+        {{!-- Что создаём --}}
+        {{#if p.isBio}}{{else}}{{#if p.isCraft}}
+        <div class="wh-craft-panel">
+          <div class="wh-craft-ptitle">{{{../icoCraft}}} Категория предмета</div>
+          <div class="wh-craft-catgrid">
+            {{#each p.categories as |c|}}
+            <button type="button" class="wh-craft-cat {{#if c.selected}}active{{/if}}" data-cat="{{c.key}}" title="{{c.label}}"><span class="wh-craft-cat-ico">{{{c.icon}}}</span><span class="wh-craft-cat-lbl">{{c.label}}</span></button>
+            {{/each}}
+          </div>
+          {{#if p.categoryAlt}}<div class="wh-craft-hint">Альтернатива по книге: {{p.categoryAlt}}</div>{{/if}}
+        </div>
+        {{else}}
+        <div class="wh-craft-panel">
+          <div class="wh-craft-ptitle">{{{../icoResearch}}} Тип результата</div>
+          <select name="research-kind" class="wh-craft-select">
+            {{#each p.researchKinds as |k|}}<option value="{{k.key}}" {{#if k.selected}}selected{{/if}}>{{k.label}}</option>{{/each}}
+          </select>
+          <div class="wh-craft-hint">Исследование не использует Trade/Common Lore. Навык выбирается ниже из Знаний крафтера.</div>
+        </div>
+        {{/if}}{{/if}}
+
+        {{#unless p.isBio}}
+        {{!-- Параметры --}}
+        <div class="wh-craft-panel">
+          <div class="wh-craft-ptitle">{{{../icoQuality}}} Сложность и Банк</div>
+          <div class="wh-craft-params">
+            <label><span class="wh-craft-lbl">Редкость</span>
+              <select name="rarity" class="wh-craft-select">{{#each p.rarityOptions as |o|}}<option value="{{o.v}}" {{#if o.selected}}selected{{/if}}>{{o.v}} · {{o.l}}</option>{{/each}}</select>
+            </label>
+            <label><span class="wh-craft-lbl">Качество</span>
+              <select name="quality" class="wh-craft-select">{{#each p.qualityOptions as |o|}}<option value="{{o.k}}" {{#if o.selected}}selected{{/if}}>{{o.label}} (×{{o.mult}})</option>{{/each}}</select>
+            </label>
+            <label><span class="wh-craft-lbl">Инструменты</span>
+              <select name="tool" class="wh-craft-select">{{#each p.tools as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}} ({{#if (gte t.mod 0)}}+{{/if}}{{t.mod}})</option>{{/each}}</select>
+            </label>
+            <label><span class="wh-craft-lbl">Базовый Банк</span><input type="number" name="basebank" value="{{p.baseBankVal}}" min="1" class="wh-craft-num"/></label>
+            <label><span class="wh-craft-lbl">Ассистенты (успехи/смена)</span><input type="number" name="assistants" value="{{p.assistants}}" min="0" class="wh-craft-num"/></label>
+            <label><span class="wh-craft-lbl">Модификатор ГМа (±)</span><input type="number" name="gmmod" value="{{p.gmMod}}" class="wh-craft-num"/></label>
+          </div>
+          <div class="wh-craft-toggles">
+            <label class="wh-craft-check"><input type="checkbox" name="improve" {{#if p.improve}}checked{{/if}}/> Улучшение (−20, Банк /2)</label>
+            <label class="wh-craft-check"><input type="checkbox" name="monotony" {{#if p.monotony}}checked{{/if}}/> Монотонность (−30)</label>
+          </div>
+          {{#if p.notCraftable}}<div class="wh-craft-warn">⚠ По таблице предмет этой Категории не создаётся при выбранной Редкости — задайте Банк вручную или измените Редкость.</div>{{/if}}
+          {{#if p.machineNote}}<div class="wh-craft-hint">Машины: итоговый Банк ×(Размер+1) — учтите вручную. Орудия создаются отдельно.</div>{{/if}}
+        </div>
+
+        {{!-- Комбинированный тест --}}
+        <div class="wh-craft-panel">
+          <div class="wh-craft-ptitle">Комбинированный тест</div>
+          <table class="wh-craft-table">
+            <thead><tr><th class="wh-craft-th-skill">Навык (выберите)</th><th>Всего</th><th>Вклад в Предел</th></tr></thead>
+            <tbody>
+              {{#each p.testRows as |r|}}
+              <tr>
+                <td>
+                  <select class="wh-craft-select wh-craft-slot" data-slot="{{r.idx}}">{{#each r.options as |o|}}<option value="{{o.value}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}</select>
+                  {{#if r.suggestion}}<div class="wh-craft-sugg">по книге: {{r.suggestion}}</div>{{/if}}
+                </td>
+                <td>{{r.total}}</td>
+                <td>{{#if r.isPrimary}}<b>{{r.total}}</b> <span class="wh-craft-syn">ведущий</span>{{else}}+{{r.rankBonus}} <span class="wh-craft-sugg">ранг</span>{{/if}}{{#if r.synergy}} <span class="wh-craft-syn">+{{r.synergy}} синергия</span>{{/if}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+          <div class="wh-craft-limitrow">Итоговый Предел теста: <b class="wh-craft-{{p.limitCls}}">{{p.limit}}</b>
+            <span class="wh-craft-modline">(инструменты {{#if (gte p.toolModVal 0)}}+{{/if}}{{p.toolModVal}}{{#if p.gmModVal}} · ГМ {{#if (gte p.gmModVal 0)}}+{{/if}}{{p.gmModVal}}{{/if}}{{#if p.improveMod}} · улучшение {{p.improveMod}}{{/if}}). Редкость и Качество влияют только на Банк.</span>
+          </div>
+        </div>
+
+        {{!-- Банк и прогресс --}}
+        <div class="wh-craft-panel wh-craft-progress">
+          <div class="wh-craft-bankrow">
+            <div class="wh-craft-bank">Банк Успехов: <b>{{p.bank}}</b></div>
+            <div class="wh-craft-shifts">{{{../icoShift}}} Смен: <b>{{p.shifts}}</b> · Усталость: <b>{{p.fatigue}}</b></div>
+          </div>
+          <div class="wh-craft-bar"><div class="wh-craft-bar-fill{{#if p.done}} done{{/if}}" style="width:{{p.pct}}%"></div><span class="wh-craft-bar-txt">{{p.accumulated}} / {{p.bank}}{{#if p.done}} — ГОТОВО{{/if}}</span></div>
+          <div class="wh-craft-actions">
+            <button type="button" class="wh-craft-btn primary" data-act="shift" {{#unless p.hasCrafter}}disabled{{/unless}}>{{{../icoShift}}} Отработать смену</button>
+            <button type="button" class="wh-craft-btn" data-act="reset">Сбросить прогресс</button>
+          </div>
+        </div>
+        {{/unless}}
+
+        {{#if p.isBio}}
+        {{!-- ═══════════ БИОЛАБОРАТОРИЯ ДРУКХАРИ ═══════════ --}}
+        <div class="wh-bio">
+
+          {{!-- Чан: живая графика --}}
+          <div class="wh-craft-panel wh-bio-vatpanel">
+            <div class="wh-bio-stage">
+              <svg class="wh-bio-vat {{#if p.bio.ripe}}is-ripe{{/if}}" viewBox="0 0 120 170" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="bioFluid" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stop-color="#7fd8a0" stop-opacity=".55"/>
+                    <stop offset="55%"  stop-color="#3f9c6a" stop-opacity=".75"/>
+                    <stop offset="100%" stop-color="#14361f" stop-opacity=".95"/>
+                  </linearGradient>
+                  <radialGradient id="bioGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%"   stop-color="#d9ffe8"/>
+                    <stop offset="45%"  stop-color="#6fe6a0"/>
+                    <stop offset="100%" stop-color="#0d2416" stop-opacity="0"/>
+                  </radialGradient>
+                  <clipPath id="bioJar"><path d="M26 40h68v96a16 16 0 01-16 16H42a16 16 0 01-16-16z"/></clipPath>
+                </defs>
+
+                {{!-- крышка и патрубки --}}
+                <path class="wh-bio-cap" d="M36 20h48v20H36z"/>
+                <path class="wh-bio-pipe" d="M46 20V8h28v12M60 8V2"/>
+                <path class="wh-bio-pipe" d="M26 62H12v46h14M94 62h14v46H94"/>
+
+                {{!-- жидкость, свечение, пузыри --}}
+                <g clip-path="url(#bioJar)">
+                  <rect x="26" y="40" width="68" height="112" fill="url(#bioFluid)"/>
+                  <circle class="wh-bio-glow" cx="60" cy="100" r="34" fill="url(#bioGlow)"/>
+                  <g class="wh-bio-bubbles">
+                    <circle cx="42" cy="150" r="3"/><circle cx="58" cy="150" r="2"/>
+                    <circle cx="72" cy="150" r="3.5"/><circle cx="50" cy="150" r="2.4"/>
+                    <circle cx="66" cy="150" r="1.8"/><circle cx="80" cy="150" r="2.6"/>
+                  </g>
+                  {{!-- эмбрион импланта: растёт вместе с прогрессом --}}
+                  <g class="wh-bio-embryo">
+                    <path d="M60 84c9 5 13 15 10 24-3 8-11 13-19 11-8-2-13-10-11-19 2-8 11-14 20-16z"/>
+                    <path d="M60 90c5 4 6 12 3 18M56 96c-4 4-5 10-2 15"/>
+                    <circle cx="64" cy="96" r="2.2"/>
+                  </g>
+                </g>
+
+                {{!-- стекло, шкала, блик --}}
+                <path class="wh-bio-glass" d="M26 40h68v96a16 16 0 01-16 16H42a16 16 0 01-16-16z"/>
+                <path class="wh-bio-scale" d="M30 60h8M30 76h6M30 92h8M30 108h6M30 124h8"/>
+                <path class="wh-bio-shine" d="M36 52v84"/>
+              </svg>
+
+              <div class="wh-bio-readout">
+                <div class="wh-bio-title">ФЕРМЕНТНЫЙ ЧАН</div>
+                <div class="wh-bio-sub">{{#if p.bio.selName}}{{p.bio.selName}}{{else}}Образец не заряжен{{/if}}</div>
+                <div class="wh-bio-cyclebar">
+                  <div class="wh-bio-cyclefill{{#if p.bio.ripe}} ripe{{/if}}" style="width:{{p.bio.cyclePct}}%"></div>
+                  <span>Цикл {{p.bio.cycle}} / {{p.bio.cycles}}{{#if p.bio.ripe}} — СБОР УРОЖАЯ{{/if}}</span>
+                </div>
+                <div class="wh-bio-costs">
+                  <span class="wh-bio-cost">{{{../icoBiomass}}}<b>{{p.bio.biomass}}</b> биомассы</span>
+                  <span class="wh-bio-cost {{#if p.bio.freeSolution}}is-free{{/if}}">{{{../icoSolution}}}<b>{{p.bio.solution}}</b> раствора</span>
+                  <span class="wh-bio-cost {{#unless p.bio.needTemplate}}is-off{{/unless}}">{{{../icoTemplate}}}{{#if p.bio.needTemplate}}нужен шаблон{{else}}без шаблона{{/if}}</span>
+                  <span class="wh-bio-cost">{{{../icoShift}}}<b>{{p.bio.hours}}</b> ч</span>
+                </div>
+              </div>
+            </div>
+            <div class="wh-craft-hint"><b>Допуск к чану:</b> {{p.bio.entryReq}}</div>
+          </div>
+
+          {{!-- Настройка партии --}}
+          <div class="wh-craft-panel">
+            <div class="wh-craft-ptitle">{{{../icoBio}}} Партия</div>
+            <div class="wh-bio-grid">
+              <label>Что выращиваем
+                <select name="bio-implant" class="wh-craft-select">
+                  <option value="">— выберите биоимплант —</option>
+                  {{#each p.bio.catalogGroups as |g|}}
+                  <optgroup label="{{g.label}}">
+                    {{#each g.items as |i|}}<option value="{{i.key}}" {{#if i.selected}}selected{{/if}}>{{i.label}}</option>{{/each}}
+                  </optgroup>
+                  {{/each}}
+                </select>
+              </label>
+              <label>Качество чана
+                <select name="vat" class="wh-craft-select">
+                  {{#each p.bio.vats as |v|}}<option value="{{v.key}}" {{#if v.selected}}selected{{/if}}>{{v.label}} · R{{v.rarity}}</option>{{/each}}
+                </select>
+              </label>
+              <label>Желаемое качество
+                <select name="bio-target" class="wh-craft-select">
+                  {{#each p.bio.targets as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}} — {{t.parts}}</option>{{/each}}
+                </select>
+              </label>
+              <label>Тест
+                <select name="bio-skill" class="wh-craft-select">
+                  {{#each p.bio.skills as |k|}}<option value="{{k.key}}" {{#if k.selected}}selected{{/if}}>{{k.label}}</option>{{/each}}
+                </select>
+              </label>
+            </div>
+            <div class="wh-craft-hint wh-bio-vatnote">{{p.bio.vatNote}}</div>
+
+            <div class="wh-craft-limitrow">Модификатор теста:
+              <b class="wh-craft-{{#if p.bio.blocked}}bad{{else}}good{{/if}}">{{p.bio.modSign}}{{p.bio.mod}}</b>
+              <span class="wh-craft-modline">качество импланта + качество чана{{#if p.bio.rerolls}} · перебросов у чана: {{p.bio.rerolls}}{{/if}}</span>
+            </div>
+
+            {{#if p.bio.blocked}}
+            <div class="wh-bio-blocks">
+              {{#each p.bio.blocks as |b|}}<div class="wh-bio-block">✕ {{b}}</div>{{/each}}
+            </div>
+            {{/if}}
+
+            {{#if p.bio.needTemplate}}
+            <details class="wh-bio-tpl">
+              <summary>{{{../icoTemplate}}} Генетический шаблон — где взять</summary>
+              <div class="wh-craft-hint">{{p.bio.tplSources}}</div>
+              <div class="wh-craft-hint">{{p.bio.tplNote}}</div>
+              <div class="wh-bio-tplnum">Для R{{p.bio.rarity}} средних габаритов: Good.Q — <b>{{p.bio.tplGood}}</b> успехов, Best.Q — <b>{{p.bio.tplBest}}</b>. Это Исследование Medicae — заведите его отдельным проектом.</div>
+            </details>
+            {{/if}}
+
+            <div class="wh-craft-actions">
+              <button type="button" class="wh-craft-btn primary" data-act="bio-cycle" {{#unless p.hasCrafter}}disabled{{/unless}}>{{{../icoBio}}} Прогнать цикл (24 ч)</button>
+              <button type="button" class="wh-craft-btn" data-act="bio-reset">Слить чан</button>
+            </div>
+          </div>
+
+          {{!-- Журнал циклов --}}
+          {{#if p.bio.log.length}}
+          <div class="wh-craft-panel">
+            <div class="wh-craft-ptitle">Журнал чана</div>
+            <table class="wh-craft-table wh-bio-log">
+              <thead><tr><th>Цикл</th><th>Бросок</th><th>Предел</th><th>Ст.</th><th>Исход</th><th>Итог</th></tr></thead>
+              <tbody>
+                {{#each p.bio.log as |l|}}
+                <tr><td>{{l.cycle}}</td><td>{{l.roll}}</td><td>{{l.limit}}</td><td>{{l.dos}}</td><td>{{l.outcome}}</td><td>{{l.quality}}</td></tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+          {{/if}}
+
+          {{!-- Справка по исходам --}}
+          <details class="wh-craft-panel wh-bio-outcomes">
+            <summary class="wh-craft-ptitle">Результаты теста</summary>
+            {{#each p.bio.outcomes as |o|}}
+            <div class="wh-bio-outcome"><b>{{o.label}}</b> <i>({{o.dos}})</i><div>{{o.text}}</div></div>
+            {{/each}}
+          </details>
+
+        </div>
+        {{/if}}
+
+      </div>
+      {{/unless}}
+    </section>
+    {{/each}}
+
+    <button type="button" class="wh-craft-add" data-act="add-project">＋ Добавить крафт / исследование</button>
+
+    <details class="wh-craft-panel wh-craft-mats">
+      <summary class="wh-craft-ptitle">{{{icoMaterial}}} Материалы (справочно)</summary>
+      <table class="wh-craft-table">
+        <thead><tr><th>R</th><th>Материал</th><th>Описание</th></tr></thead>
+        <tbody>{{#each materials as |m|}}<tr><td>{{m.r}}</td><td>{{m.name}}</td><td class="wh-craft-matdesc">{{m.desc}}</td></tr>{{/each}}</tbody>
+      </table>
+    </details>
+
+  </div>
+</form>

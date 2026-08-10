@@ -1,0 +1,265 @@
+/* ── Мастерская: Крафт и Исследования ─────────────────────────────────── */
+/* Скролл — точная копия рабочего .wh-so/.wh-so-body: форма height:100% flex-колонкой,
+   тело — обычный блок flex:1 overflow-y:auto (НЕ flex-контейнер, поэтому скроллится). */
+.wh-craft .window-content { padding: 0; }
+.wh-craft-form { display: flex; flex-direction: column; height: 100%; color: #d6ffe9; }
+
+.craft-ico { width: 18px; height: 18px; vertical-align: -3px; flex: 0 0 auto; color: #78ffbe; }
+
+/* Шапка / режим */
+.wh-craft-head { padding: 8px 10px; border-bottom: 1px solid rgba(120,255,190,0.25); }
+.wh-craft-mode { display: flex; gap: 8px; }
+.wh-craft-modebtn {
+  display: flex; align-items: center; gap: 6px; padding: 6px 14px; cursor: pointer;
+  background: rgba(10,30,22,0.6); border: 1px solid rgba(120,255,190,0.3); border-radius: 5px;
+  color: #9fe8c4; font-weight: bold; font-size: 0.95em; transition: all 0.15s;
+}
+.wh-craft-modebtn:hover { border-color: rgba(120,255,190,0.7); }
+.wh-craft-modebtn.active { background: rgba(30,90,66,0.55); color: #eafff4; border-color: #78ffbe; box-shadow: 0 0 8px rgba(120,255,190,0.3); }
+.wh-craft-modebtn span { line-height: 1; }
+
+/* Тело */
+.wh-craft-body { flex: 1 1 auto; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+
+.wh-craft-panel { border: 1px solid rgba(120,255,190,0.2); border-radius: 6px; padding: 8px 10px; background: rgba(8,24,17,0.5); }
+.wh-craft-ptitle { display: flex; align-items: center; gap: 6px; font-weight: bold; color: #8cf0a0; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 6px; }
+
+.wh-craft-select, .wh-craft-num {
+  background: rgba(6,20,14,0.8); border: 1px solid rgba(120,255,190,0.3); border-radius: 4px;
+  color: #eafff4; padding: 3px 6px; font-size: 0.88em; width: 100%;
+}
+.wh-craft-hint { font-size: 0.8em; color: #7fc4a6; font-style: italic; margin-top: 5px; }
+.wh-craft-warn { font-size: 0.82em; color: #f0c88a; margin-top: 7px; padding: 5px 8px; border: 1px solid rgba(240,180,120,0.4); border-radius: 4px; background: rgba(60,40,10,0.35); }
+
+/* Сетка категорий — ровные плитки одинаковой высоты */
+.wh-craft-catgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; align-items: stretch; }
+.wh-craft-cat {
+  display: flex; align-items: center; gap: 9px; padding: 6px 10px; cursor: pointer; text-align: left;
+  min-height: 48px; box-sizing: border-box; width: 100%;
+  background: rgba(10,30,22,0.5); border: 1px solid rgba(120,255,190,0.22); border-radius: 5px;
+  color: #bdf0d6; transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.wh-craft-cat-ico { flex: 0 0 24px; display: flex; align-items: center; justify-content: center; }
+.wh-craft-cat-ico .craft-ico { width: 22px; height: 22px; }
+.wh-craft-cat-lbl { flex: 1 1 auto; min-width: 0; line-height: 1.15; font-size: 0.8em; }
+.wh-craft-cat:hover { border-color: rgba(120,255,190,0.6); color: #eafff4; }
+.wh-craft-cat.active { background: rgba(30,90,66,0.5); border-color: #78ffbe; color: #eafff4; box-shadow: 0 0 6px rgba(120,255,190,0.25); }
+@media (max-width: 760px) { .wh-craft-catgrid { grid-template-columns: repeat(2, 1fr); } }
+
+/* Проекты (множественные, сворачиваемые) */
+.wh-craft-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+.wh-craft-scroll > * { margin-bottom: 12px; }
+.wh-craft-scroll > *:last-child { margin-bottom: 0; }
+.wh-craft-project { border: 1px solid rgba(120,255,190,0.3); border-radius: 7px; background: rgba(6,20,14,0.55); overflow: hidden; }
+.wh-craft-project.is-research { border-color: rgba(120,200,255,0.35); }
+.wh-craft-phead { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(20,60,44,0.4); border-bottom: 1px solid rgba(120,255,190,0.18); }
+.wh-craft-project.collapsed .wh-craft-phead { border-bottom: none; }
+.wh-craft-caret { flex: 0 0 auto; background: none; border: none; color: #78ffbe; cursor: pointer; font-size: 1em; width: 22px; padding: 0; }
+.wh-craft-ptitle-input { flex: 1 1 auto; min-width: 0; background: rgba(6,20,14,0.6); border: 1px solid rgba(120,255,190,0.2); border-radius: 4px; color: #eafff4; font-weight: bold; padding: 3px 8px; }
+.wh-craft-psummary { flex: 0 0 auto; color: #9fe8c4; font-size: 0.85em; }
+.wh-craft-premove { flex: 0 0 auto; background: none; border: 1px solid rgba(240,150,140,0.3); color: #f0968a; border-radius: 4px; cursor: pointer; width: 24px; height: 24px; line-height: 1; }
+.wh-craft-premove:hover { background: rgba(90,20,20,0.4); border-color: #f0968a; }
+.wh-craft-pbody { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.wh-craft-pbody .wh-craft-mode { display: flex; gap: 8px; }
+
+.wh-craft-add {
+  align-self: flex-start; display: flex; align-items: center; gap: 6px; padding: 7px 16px; cursor: pointer;
+  background: rgba(30,90,66,0.4); border: 1px dashed rgba(120,255,190,0.5); border-radius: 6px;
+  color: #bdf0d6; font-weight: bold; transition: all 0.15s;
+}
+.wh-craft-add:hover { background: rgba(30,90,66,0.6); border-color: #78ffbe; color: #eafff4; }
+
+.wh-craft-limitrow { margin-top: 8px; font-size: 0.92em; color: #d6ffe9; }
+.wh-craft-limitrow b { font-size: 1.25em; }
+.wh-craft-limitrow .wh-craft-modline { display: block; margin-top: 2px; }
+
+/* Параметры */
+.wh-craft-params { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; align-items: end; }
+.wh-craft-params label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.wh-craft-lbl { font-size: 0.76em; color: #9fe8c4; min-height: 2.3em; display: flex; align-items: flex-end; line-height: 1.15; }
+.wh-craft-toggles { display: flex; gap: 18px; margin-top: 10px; flex-wrap: wrap; }
+.wh-craft-check { display: flex; align-items: center; gap: 5px; font-size: 0.82em; color: #bdf0d6; cursor: pointer; }
+
+/* Таблица теста / материалов */
+.wh-craft-table { width: 100%; border-collapse: collapse; font-size: 0.84em; table-layout: fixed; }
+.wh-craft-table th { text-align: left; color: #7fc4a6; font-weight: bold; padding: 4px 6px; border-bottom: 1px solid rgba(120,255,190,0.2); }
+.wh-craft-table td { padding: 4px 6px; border-bottom: 1px solid rgba(120,255,190,0.08); vertical-align: middle; }
+.wh-craft-th-skill { width: 52%; }
+.wh-craft-slot { width: 100%; }
+.wh-craft-sugg { font-size: 0.72em; color: #7fc4a6; margin-top: 2px; font-style: italic; }
+.wh-craft-target b { font-size: 1.1em; }
+.wh-craft-good .wh-craft-target, b.wh-craft-good { color: #8cf0a0; }
+.wh-craft-mid  .wh-craft-target, b.wh-craft-mid  { color: #e8d98c; }
+.wh-craft-bad  .wh-craft-target, b.wh-craft-bad  { color: #f0968a; }
+.wh-craft-untr { color: #c98; font-size: 0.85em; }
+.wh-craft-modline { font-size: 0.78em; color: #7fc4a6; margin-top: 6px; }
+.wh-craft-syn { color: #8cf0a0; }
+.wh-craft-matdesc { color: #9fc4b2; }
+
+/* Прогресс */
+.wh-craft-bankrow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.9em; }
+.wh-craft-bank b { color: #eafff4; font-size: 1.2em; }
+.wh-craft-shifts { display: flex; align-items: center; gap: 5px; color: #9fe8c4; }
+.wh-craft-bar { position: relative; height: 20px; background: rgba(6,20,14,0.8); border: 1px solid rgba(120,255,190,0.3); border-radius: 4px; overflow: hidden; }
+.wh-craft-bar-fill { height: 100%; background: linear-gradient(90deg, #1e5a42, #4be3a0); transition: width 0.25s; }
+.wh-craft-bar-fill.done { background: linear-gradient(90deg, #2a8f5a, #8cf0a0); }
+.wh-craft-bar-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.78em; color: #eafff4; text-shadow: 0 0 3px #000; }
+
+.wh-craft-actions { display: flex; gap: 8px; margin-top: 8px; }
+.wh-craft-btn {
+  display: flex; align-items: center; gap: 6px; padding: 6px 14px; cursor: pointer;
+  background: rgba(10,30,22,0.6); border: 1px solid rgba(120,255,190,0.35); border-radius: 5px;
+  color: #bdf0d6; font-weight: bold; transition: all 0.15s;
+}
+.wh-craft-btn:hover:not([disabled]) { border-color: #78ffbe; color: #eafff4; box-shadow: 0 0 8px rgba(120,255,190,0.3); }
+.wh-craft-btn.primary { background: rgba(30,90,66,0.5); color: #eafff4; }
+.wh-craft-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+.wh-craft-mats summary { cursor: pointer; }
+
+/* Чат-сообщение смены */
+.wh-craft-msg { border: 1px solid rgba(120,255,190,0.35); border-radius: 5px; padding: 6px 8px; background: rgba(8,24,17,0.4); }
+.wh-craft-msg-head { font-weight: bold; color: #8cf0a0; margin-bottom: 4px; }
+.wh-craft-roll-line { font-size: 0.85em; padding: 1px 0; }
+.wh-craft-roll-line.ok { color: #bdf0d6; }
+.wh-craft-roll-line.fail { color: #f0968a; }
+.wh-craft-msg-sum { margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(120,255,190,0.2); font-size: 0.9em; }
+.wh-craft-msg-sum.fail { color: #f0968a; }
+.wh-craft-msg-foot { font-size: 0.75em; color: #7fc4a6; margin-top: 3px; }
+
+
+/* ════════════════════════════════════════════════════════════════════
+   БИОЛАБОРАТОРИЯ ДРУКХАРИ — ферментный чан
+   ════════════════════════════════════════════════════════════════════ */
+.wh-bio {
+  --bio:      #6fe6a0;
+  --bio-dim:  #2f7a52;
+  --bio-line: rgba(111, 230, 160, .26);
+}
+
+/* ── Сцена: чан слева, показания справа ── */
+.wh-bio-stage { display: flex; gap: 16px; align-items: stretch; }
+.wh-bio-vat { flex: 0 0 118px; width: 118px; height: 168px; }
+
+.wh-bio-cap   { fill: rgba(111, 230, 160, .1); stroke: var(--bio-dim); stroke-width: 2; }
+.wh-bio-pipe  { fill: none; stroke: var(--bio-dim); stroke-width: 2; stroke-linecap: round; }
+.wh-bio-glass { fill: none; stroke: var(--bio); stroke-width: 2; opacity: .75; }
+.wh-bio-scale { stroke: var(--bio); stroke-width: 1.2; opacity: .45; }
+.wh-bio-shine { stroke: #eafff2; stroke-width: 3; opacity: .13; stroke-linecap: round; }
+
+.wh-bio-glow { animation: bioGlow 4.5s ease-in-out infinite; transform-origin: 60px 100px; }
+@keyframes bioGlow { 0%, 100% { opacity: .5; } 50% { opacity: .95; transform: scale(1.08); } }
+
+/* Пузыри всплывают со дна, каждый со своей задержкой */
+.wh-bio-bubbles circle { fill: #d9ffe8; opacity: .5; animation: bioBubble 3.6s linear infinite; }
+.wh-bio-bubbles circle:nth-child(2) { animation-duration: 4.6s; animation-delay: .5s; }
+.wh-bio-bubbles circle:nth-child(3) { animation-duration: 3.1s; animation-delay: 1.2s; }
+.wh-bio-bubbles circle:nth-child(4) { animation-duration: 5.2s; animation-delay: 1.9s; }
+.wh-bio-bubbles circle:nth-child(5) { animation-duration: 4.1s; animation-delay: 2.6s; }
+.wh-bio-bubbles circle:nth-child(6) { animation-duration: 3.4s; animation-delay: .9s; }
+@keyframes bioBubble {
+  0%   { transform: translateY(0)     scale(.6); opacity: 0; }
+  15%  { opacity: .55; }
+  85%  { opacity: .35; }
+  100% { transform: translateY(-108px) scale(1.1); opacity: 0; }
+}
+
+/* Эмбрион импланта — медленно ворочается в растворе */
+.wh-bio-embryo {
+  fill: rgba(217, 255, 232, .16);
+  stroke: #d9ffe8; stroke-width: 1.3; stroke-linecap: round;
+  transform-origin: 60px 104px;
+  animation: bioDrift 9s ease-in-out infinite;
+}
+.wh-bio-embryo circle { fill: #d9ffe8; stroke: none; opacity: .8; }
+@keyframes bioDrift {
+  0%, 100% { transform: rotate(-5deg) translateY(0); }
+  50%      { transform: rotate(6deg)  translateY(-5px); }
+}
+/* Урожай созрел — чан наливается светом */
+.wh-bio-vat.is-ripe .wh-bio-glass { opacity: 1; stroke-width: 2.6; filter: drop-shadow(0 0 6px var(--bio)); }
+.wh-bio-vat.is-ripe .wh-bio-embryo { animation-duration: 3.4s; }
+
+/* ── Показания ── */
+.wh-bio-readout { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.wh-bio-title {
+  font-size: 14px; letter-spacing: .2em; color: var(--bio);
+  text-shadow: 0 0 10px rgba(111, 230, 160, .45);
+}
+.wh-bio-sub { font-size: 12px; opacity: .8; }
+
+.wh-bio-cyclebar {
+  position: relative; height: 20px; border-radius: 2px;
+  background: rgba(0, 0, 0, .45); border: 1px solid var(--bio-line); overflow: hidden;
+}
+.wh-bio-cyclefill {
+  position: absolute; inset: 0 auto 0 0;
+  background: linear-gradient(90deg, var(--bio-dim), var(--bio));
+  opacity: .5; transition: width .25s;
+}
+.wh-bio-cyclefill.ripe { opacity: .85; box-shadow: 0 0 12px var(--bio); }
+.wh-bio-cyclebar span {
+  position: relative; display: block; line-height: 20px; text-align: center;
+  font-size: 11px; letter-spacing: .06em;
+}
+
+.wh-bio-costs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+.wh-bio-cost {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; font-size: 11px;
+  background: rgba(111, 230, 160, .08);
+  border: 1px solid var(--bio-line); border-radius: 3px;
+}
+.wh-bio-cost b { color: var(--bio); font-size: 12px; }
+.wh-bio-cost .craft-ico { width: 15px; height: 15px; opacity: .8; }
+.wh-bio-cost.is-off  { opacity: .42; }
+.wh-bio-cost.is-free { border-style: dashed; }
+
+/* ── Настройка партии ── */
+.wh-bio-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 8px 12px;
+}
+.wh-bio-grid label {
+  display: flex; flex-direction: column; gap: 3px;
+  font-size: 11px; letter-spacing: .04em; opacity: .85;
+}
+.wh-bio-vatnote { border-left: 2px solid var(--bio-line); padding-left: 8px; margin-top: 8px; }
+
+/* ── Запреты ── */
+.wh-bio-blocks { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.wh-bio-block {
+  padding: 5px 9px; font-size: 11px; line-height: 1.4;
+  color: #ffb4b4; background: rgba(150, 30, 30, .16);
+  border: 1px solid rgba(220, 90, 90, .4); border-radius: 2px;
+}
+
+/* ── Шаблон ── */
+.wh-bio-tpl { margin-top: 9px; border: 1px solid var(--bio-line); border-radius: 2px; padding: 6px 9px; }
+.wh-bio-tpl > summary {
+  cursor: pointer; font-size: 11px; letter-spacing: .06em; color: var(--bio);
+  display: flex; align-items: center; gap: 6px;
+}
+.wh-bio-tpl .craft-ico { width: 15px; height: 15px; }
+.wh-bio-tplnum { margin-top: 5px; font-size: 11px; }
+.wh-bio-tplnum b { color: var(--bio); }
+
+/* ── Журнал и исходы ── */
+.wh-bio-log td, .wh-bio-log th { text-align: center; font-size: 11px; }
+.wh-bio-log td:nth-child(5), .wh-bio-log td:nth-child(6) { text-align: left; }
+.wh-bio-outcomes > summary { cursor: pointer; }
+.wh-bio-outcome { margin-top: 7px; font-size: 11px; line-height: 1.45; }
+.wh-bio-outcome b { color: var(--bio); }
+.wh-bio-outcome i { opacity: .55; font-style: normal; }
+
+/* ── Карточка в чате ── */
+.wh-bio-msg-what  { font-size: 11px; opacity: .8; margin: 2px 0 4px; }
+.wh-bio-msg-out   { font-size: 12px; margin: 4px 0; }
+.wh-bio-msg-out.good { color: #6fe6a0; }
+.wh-bio-msg-out.mid  { color: #e6d06f; }
+.wh-bio-msg-out.bad  { color: #e68080; }
+.wh-bio-msg-text  { font-size: 11px; line-height: 1.45; opacity: .82; }
+.wh-bio-msg-cycle { margin-top: 5px; font-size: 11px; letter-spacing: .06em; opacity: .7; }
+
+/* Кнопка режима «Биолаборатория» — своим цветом */
+.wh-craft-modebtn[data-mode="bio"].active { color: #6fe6a0; border-color: rgba(111, 230, 160, .55); }

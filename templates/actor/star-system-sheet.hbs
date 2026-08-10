@@ -1,0 +1,157 @@
+<form class="warhammer-dbc star-system-sheet" autocomplete="off">
+
+  <header class="ship-header">
+    <img class="ship-portrait" src="{{actor.img}}" data-edit="img" title="Карта системы"/>
+    <div class="ship-head-fields">
+      <input class="ship-name" type="text" name="name" value="{{actor.name}}" placeholder="Название системы"/>
+      <div class="ship-head-row">
+        <label>Сектор <input type="text" name="system.sector" value="{{system.sector}}" placeholder="напр. Коронус"/></label>
+        <label>Регион 
+          <select name="system.region">
+            <option value="">— выбрать —</option>
+            {{#each regions}}
+            <option value="{{this}}" {{#if (eq this ../system.region)}}selected{{/if}}>{{this}}</option>
+            {{/each}}
+          </select>
+        </label>
+      </div>
+      <div class="ship-head-row">
+        <label>Главная звезда <input type="text" name="system.dominantStar" value="{{system.dominantStar}}"/></label>
+      </div>
+      <div class="ss-summary">
+        Тел: <b>{{derived.total}}</b> · Звёзд: <b>{{derived.stars}}</b>{{#if system.starConfig}} (<b>{{system.starConfig}}</b>){{/if}} · Обитаемых: <b>{{derived.habitable}}</b>
+        {{#if typeCounts.length}} · {{#each typeCounts}}<span class="ss-count" title="{{label}}">{{icon}}{{count}}</span> {{/each}}{{/if}}
+      </div>
+      {{#if inhabitantLabels}}<div class="ss-summary">Заселённость: <b>{{inhabitantLabels}}</b>{{#if xenosLabel}} · Ксеносы: <b>{{xenosLabel}}</b>{{/if}}</div>{{/if}}
+    </div>
+  </header>
+
+  <nav class="sheet-tabs ship-tabs tabs" data-group="primary">
+    <a class="item" data-tab="overview">Обзор</a>
+    <a class="item" data-tab="notes">Записи</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    {{!-- ───────────── ОБЗОР ───────────── --}}
+    <div class="tab ship-tab" data-tab="overview" data-group="primary">
+
+      <div class="ss-toolbar">
+        <button type="button" class="body-create"><i class="fas fa-plus"></i> Тело</button>
+        <button type="button" class="system-generate"><i class="fas fa-dice"></i> Сгенерировать</button>
+        {{#if isGM}}<button type="button" class="system-anomaly"><i class="fas fa-atom"></i> Аномалия</button>
+        <button type="button" class="system-encounter"><i class="fas fa-satellite-dish"></i> Встреча</button>{{/if}}
+        <button type="button" class="system-clear"><i class="fas fa-trash"></i> Очистить</button>
+        <button type="button" class="system-journal"><i class="fas fa-map-pin"></i> {{#if hasJournal}}Открыть журнал-пин{{else}}Журнал-пин{{/if}}</button>
+      </div>
+
+      <div class="item-section">
+        <div class="item-section-title">ОСОБЕННОСТИ СИСТЕМЫ</div>
+        <div class="ss-features">
+          {{#each featureOptions as |f|}}
+          <label class="ss-feature"><input type="checkbox" class="system-feature-cb" data-key="{{f.key}}" {{#if f.active}}checked{{/if}}/> {{f.label}}</label>
+          {{/each}}
+        </div>
+      </div>
+
+      {{#if resourceSummary.length}}
+      <div class="item-section">
+        <div class="item-section-title">РЕСУРСЫ СИСТЕМЫ · суммарное изобилие</div>
+        <div class="ss-res-chips">
+          {{#each resourceSummary}}<span class="ss-res-chip">{{#if icon}}<img class="ss-res-chip-ico" src="{{icon}}"/>{{/if}}<span class="ss-res-chip-lbl">{{label}}</span><b>{{value}}</b></span>{{/each}}
+        </div>
+        <div class="ss-res-legend">Изобилие — усл. рейтинг богатства месторождений (RT): 25 скудно · 50 умеренно · 75 богато · 90+ колоссально.</div>
+      </div>
+      {{/if}}
+
+      {{!-- Строка тела (переиспользуется в зонах звёзд и «прочих объектах») --}}
+      {{#*inline "bodyRow"}}
+      <div class="ss-body-row body-row{{#if isChild}} ss-child{{/if}}{{#if revealed}} ss-revealed{{/if}}{{#if unscouted}} ss-unscouted{{/if}}{{#if hasDossier}} ss-has-dossier{{/if}}{{#if plState}} ss-pl-{{plState}}{{/if}}" data-item-id="{{id}}" data-depth="{{depth}}" title="ЛКМ — описание · ПКМ — действия">
+        <div class="ss-body-line" style="padding-left:{{pad}}px;">
+          {{#if isChild}}<span class="ss-branch">↳</span>{{/if}}
+          {{#if hasDossier}}<span class="ss-body-caret"><i class="fas fa-caret-right"></i></span>{{/if}}
+          <span class="ss-body-icon">{{icon}}</span>
+          <span class="ss-body-name">{{name}}</span>
+          {{#if lifeWorld}}<span class="ss-life" title="Планета с жизнью">🌍 ЖИЗНЬ</span>{{/if}}
+          {{#if owner}}<span class="ss-owner ss-owner-{{owner.key}}">{{owner.label}}</span>{{/if}}
+          {{#if tithe}}<span class="ss-tithe" title="Имперская десятина">🏛 {{tithe}}</span>{{/if}}
+          <span class="ss-body-type">{{typeLabel}}{{#if presence}} · {{presence}}{{/if}}{{#if parentName}} · спутник {{parentName}}{{/if}}</span>
+          {{#if showScout}}<span class="ss-scout-flag" title="{{#if scouted}}Разведано — видно игрокам{{else}}Не разведано игроками{{/if}}"><i class="fas {{#if scouted}}fa-binoculars{{else}}fa-question{{/if}}"></i></span>{{/if}}
+          {{#if showLock}}<button type="button" class="body-reveal" title="{{#if revealed}}Тайны видны игрокам — нажмите, чтобы скрыть{{else}}Тайны скрыты — нажмите, чтобы раскрыть{{/if}}"><i class="fas {{#if revealed}}fa-eye{{else}}fa-eye-slash{{/if}}"></i></button>{{/if}}
+        </div>
+        {{#if summary}}<div class="ss-body-summary" style="padding-left:{{pad}}px;">{{summary}}</div>{{/if}}
+        {{#if resChips.length}}<div class="ss-res-line" style="padding-left:{{pad}}px;">{{#each resChips}}<span class="ss-res-pill" title="{{label}}">{{#if icon}}<img class="ss-res-pill-ico" src="{{icon}}"/>{{/if}}<span class="ss-res-pill-lbl">{{label}}</span><b>{{value}}</b></span>{{/each}}</div>{{/if}}
+        {{#if impChips.length}}<div class="ss-body-improvements" style="padding-left:{{pad}}px;"><span class="ss-imp-tag">Развитие</span> {{#each impChips}}<span class="ss-imp-chip{{#if dim}} ss-imp-dim{{/if}}" data-cat="{{cat}}" data-tooltip="{{tip}}" data-tooltip-direction="UP">{{#if catSvg}}<img class="ss-imp-ico" src="{{catSvg}}" alt="{{catLabel}}"/>{{/if}}{{name}}{{#if flag}} {{flag}}{{/if}}</span>{{/each}}</div>{{/if}}
+        {{#if unscouted}}<div class="ss-body-summary ss-unscouted-note" style="padding-left:{{pad}}px;">❔ Не разведано</div>{{/if}}
+        {{#if hasDossier}}
+        <div class="ss-body-dossier" style="margin-left:{{pad}}px;">
+          {{#if dossier.blocked}}<div class="ss-dossier-nodata">НЕТ ДАННЫХ</div>{{else}}
+            {{#if dossier.desc}}<div class="ss-dossier-desc{{#if dossier.descDim}} ss-pl-dim{{/if}}">{{dossier.desc}}</div>{{/if}}
+            {{#if dossier.lore}}<div class="ss-dossier-lore{{#if dossier.loreDim}} ss-pl-dim{{/if}}">{{dossier.lore}}</div>{{/if}}
+            {{#unless dossier.desc}}{{#unless dossier.lore}}<div class="ss-dossier-nodata">Нет дополнительных сведений.</div>{{/unless}}{{/unless}}
+          {{/if}}
+        </div>
+        {{/if}}
+      </div>
+      {{/inline}}
+
+      {{#each starGroups as |g|}}
+      <div class="ss-star-group">
+        <div class="ss-star-head">
+          <button type="button" class="ss-star-toggle" title="Свернуть/развернуть"><i class="fas fa-caret-down"></i></button>
+          {{#each g.stars as |st|}}
+          <span class="ss-star-line" data-item-id="{{st.id}}" title="ПКМ — действия со звездой">
+            <span class="ss-body-icon">☀</span><span class="ss-body-name">{{st.name}}</span><span class="ss-body-type">{{st.classLabel}}</span>
+          </span>
+          {{/each}}
+        </div>
+        <div class="ss-star-inner">
+          {{#if g.note}}<div class="ss-star-note">{{g.note}}</div>{{/if}}
+          {{#each g.zones as |z|}}
+          <div class="ss-zone-title">{{z.label}}</div>
+          <div class="ss-body-list">{{#each z.rows}}{{> bodyRow}}{{/each}}</div>
+          {{/each}}
+          {{#unless g.zones.length}}<div class="ss-empty-mini">Нет тел на орбите.</div>{{/unless}}
+        </div>
+      </div>
+      {{/each}}
+
+      {{#if orphanZones.length}}
+      <div class="ss-star-group">
+        <div class="ss-star-head">
+          <button type="button" class="ss-star-toggle"><i class="fas fa-caret-down"></i></button>
+          <span class="ss-star-line"><span class="ss-body-icon">•</span><span class="ss-body-name">Прочие объекты</span></span>
+        </div>
+        <div class="ss-star-inner">
+          {{#each orphanZones as |z|}}
+          <div class="ss-zone-title">{{z.label}}</div>
+          <div class="ss-body-list">{{#each z.rows}}{{> bodyRow}}{{/each}}</div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
+      {{#unless starGroups.length}}{{#unless orphanZones.length}}
+      <div class="ss-empty"><em>Тел нет. Добавьте вручную («+ Тело») или нажмите «Сгенерировать».</em></div>
+      {{/unless}}{{/unless}}
+
+    </div>
+
+    {{!-- ───────────── ЗАПИСИ ───────────── --}}
+    <div class="tab ship-tab" data-tab="notes" data-group="primary">
+      <div class="item-section">
+        <div class="item-section-title">ОПИСАНИЕ</div>
+        <textarea name="system.description" class="item-textarea" placeholder="Описание системы...">{{system.description}}</textarea>
+      </div>
+      <div class="item-section">
+        <div class="item-section-title">ВАРП-МАРШРУТЫ / ТОЧКА МАНДЕВИЛЯ</div>
+        <textarea name="system.warpRoutes" class="item-textarea" placeholder="Маршруты, опасности перехода...">{{system.warpRoutes}}</textarea>
+      </div>
+      <div class="item-section">
+        <div class="item-section-title">ЗАМЕТКИ ГМа</div>
+        <textarea name="system.gmNotes" class="item-textarea item-textarea-tall" placeholder="Тайны, зацепки...">{{system.gmNotes}}</textarea>
+      </div>
+    </div>
+
+  </section>
+</form>

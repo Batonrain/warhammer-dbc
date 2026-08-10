@@ -1,0 +1,54 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  ИСТОРИЯ/ОСОБЕННОСТЬ СИЛОВОЙ БРОНИ (справочная запись)                 --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "armourHistoryEntry")}}
+
+<div class="item-section">
+  <div class="item-section-title">ИСТОРИЯ БРОНИ</div>
+  <div class="trait-fx-hint">Справочная запись библиотеки «Истории силовой брони». Сам выбор/бросок Особенности комплекта делается на листе КОНКРЕТНОЙ силовой брони Астартес (вкладка «Особенность комплекта»), не здесь — перетаскивание этого предмета никуда его не «выдаёт».</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Источник</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Силовая броня: без шлема и особенности"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Таблица</label>
+    <select name="system.table" class="wr-select-sm">
+      <option value="history" {{#if (eq system.table "history")}}selected{{/if}}>История и особенности</option>
+      <option value="scars"   {{#if (eq system.table "scars")}}selected{{/if}}>Шрамы войны</option>
+      <option value="legend"  {{#if (eq system.table "legend")}}selected{{/if}}>Легенда</option>
+    </select>
+    <label class="wr-label">Бросок (к10)</label>
+    <input type="number" name="system.rollMin" value="{{system.rollMin}}" class="wr-input-sm" min="1" max="10"/>
+    <span>–</span>
+    <input type="number" name="system.rollMax" value="{{system.rollMax}}" class="wr-input-sm" min="1" max="10"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.zoneRoll" {{#if system.zoneRoll}}checked{{/if}}/>
+      Требует броска по зонам (см. эффект)
+    </label>
+  </div>
+
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.hasChoice" {{#if system.hasChoice}}checked{{/if}}/>
+      Требует выбора игрока
+    </label>
+    {{#if system.hasChoice}}
+    <input type="text" name="system.choiceLabel" value="{{system.choiceLabel}}" class="wr-input-md" placeholder="Название выбора (напр. «Тип врага»)"/>
+    <input type="text" name="system.choicePlaceholder" value="{{system.choicePlaceholder}}" class="wr-input-md" placeholder="Подсказка (напр. «Тираниды, демоны Кхорна»)"/>
+    {{/if}}
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЭФФЕКТ (МЕХАНИКА)</div>
+  <textarea name="system.effect" class="item-textarea"
+            placeholder="Механический эффект...">{{system.effect}}</textarea>
+</div>
+
+{{/if}}

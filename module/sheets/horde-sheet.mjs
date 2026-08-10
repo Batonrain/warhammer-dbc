@@ -1,0 +1,313 @@
+// module/sheets/horde-sheet.mjs
+// Лист Орды — множество слабых врагов, действующих как один персонаж.
+// Магнитуда вместо Ран, Размер по Магнитуде, психологический урон, состояние.
+
+import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+import { WEAPON_CLASSES, DAMAGE_TYPES } from "../constants/items.mjs";
+import { HIT_LOCATIONS } from "../constants/combat.mjs";
+import { resolveCharFormula, _degWord } from "../helpers/utils.mjs";
+import { resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
+         buildPropertyChatBlock, buildTargetEffectButtons } from "../combat/weapon-properties.mjs";
+import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
+import { attachItemPicker } from "./actor-sheet.mjs";
+
+const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
+// Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
+const HORDE_COMMON_MODS = [
+  { label: "Слабый свет",   melee: -10, ranged: -10 },
+  { label: "Дым / туман",   melee: -10, ranged: -20 },
+  { label: "Тьма",          melee: -20, ranged: -30 },
+  { label: "Цель лежит",    melee:  20, ranged: -20 },
+  { label: "Цель бежит",    melee:  20, ranged: -20 },
+  { label: "Цель Оглушена", melee:  20, ranged:  20 },
+  { label: "Цель Врасплох", melee:  30, ranged:  30 }
+];
+const HORDE_RANGED_MODS = [
+  { label: "Дистанция в упор (+30)",   value:  30 },
+  { label: "Короткая дистанция (+10)", value:  10 },
+  { label: "Боевая дистанция (±0)",    value:   0 },
+  { label: "Дальняя дистанция (−10)",  value: -10 },
+  { label: "Экстрем. дистанция (−30)", value: -30 }
+];
+
+export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
+
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      classes: ["warhammer-dbc", "sheet", "actor", "horde", "wh-holo"],
+      template: "systems/warhammer-dbc/templates/actor/horde-sheet.hbs",
+      width: 720, height: 820, resizable: true,
+      tabs: [{ navSelector: ".horde-tabs", contentSelector: ".horde-body", initial: "battle" }]
+    });
+  }
+
+  async getData(options) {
+    const context = await super.getData(options);
+    const system = this.actor.system;
+    context.system = system;
+
+    context.chars = CHAR_ORDER.map(k => ({
+      key: k, abbr: CHARACTERISTICS[k]?.abbr || k.toUpperCase(),
+      label: CHARACTERISTICS[k]?.label || k,
+      total: system.characteristics?.[k]?.total ?? 0,
+      bonus: system.characteristics?.[k]?.bonus ?? 0,
+      base:  system.characteristics?.[k]?.base ?? 0,
+      advance: system.characteristics?.[k]?.advance ?? 0
+    }));
+
+    context.d = system.derived || {};
+    context.weapons = this.actor.items.filter(i => i.type === "weapon")
+      .map(i => ({ id: i.id, name: i.name, img: i.img, sys: i.system }));
+    context.talents = this.actor.items.filter(i => i.type === "talent" || i.type === "trait")
+      .map(i => ({ id: i.id, name: i.name, img: i.img, type: i.type,
+        summary: i.system?.summary || i.system?.description || "" }));
+
+    context.stateLabel = { steady: "Боеспособна", weakened: "Ослаблена потерями", broken: "Сломлена — рассыпается" }[context.d.state] || "";
+    context.isGM = game.user.isGM;
+    return context;
+  }
+
+  activateListeners(html) {
+    super.activateListeners(html);
+    const el = html[0] ?? html;
+    if (!this.isEditable) return;
+
+    // Портрет отряда: выбор изображения через файл-пикер.
+    el.querySelector(".horde-portrait")?.addEventListener("click", () => {
+      new FilePicker({
+        type: "image",
+        current: this.actor.img || "",
+        callback: path => this.actor.update({ img: path })
+      }).render(true);
+    });
+
+    // Бросок характеристики (d100 vs total).
+    el.querySelectorAll("[data-char-roll]").forEach(b =>
+      b.addEventListener("click", () => this._rollChar(b.dataset.charRoll)));
+
+    // Управление Магнитудой (Shift/Ctrl — шаг ×5).
+    const stp = (ev) => (ev.shiftKey || ev.ctrlKey) ? 5 : 1;
+    el.querySelector("[data-mag='dmg']")?.addEventListener("click", (ev) => this._magChange(-stp(ev), 0));
+    el.querySelector("[data-mag='heal']")?.addEventListener("click", (ev) => this._magChange(stp(ev), 0));
+    el.querySelector("[data-mag='psych']")?.addEventListener("click", (ev) => this._magChange(-stp(ev), stp(ev)));
+    el.querySelector("[data-mag='psychheal']")?.addEventListener("click", (ev) => this._magChange(stp(ev), -stp(ev)));
+    el.querySelector("[data-mag='reset']")?.addEventListener("click", () => this._magReset());
+
+    // Предметы: создать / открыть / удалить.
+    el.querySelectorAll("[data-item-create]").forEach(b =>
+      b.addEventListener("click", () => this._createItem(b.dataset.itemCreate)));
+    el.querySelectorAll("[data-item-edit]").forEach(b =>
+      b.addEventListener("click", () => this.actor.items.get(b.dataset.itemEdit)?.sheet.render(true)));
+    el.querySelectorAll("[data-item-delete]").forEach(b =>
+      b.addEventListener("click", () => this._deleteItem(b.dataset.itemDelete)));
+    el.querySelectorAll("[data-weapon-roll]").forEach(b =>
+      b.addEventListener("click", () => this._hordeAttackDialog(b.dataset.weaponRoll)));
+
+    // Выбор Талантов и Черт из библиотеки — то же окно, что у персонажа.
+    el.querySelector(".horde-pick-talent")?.addEventListener("click", () => this._openItemPicker("talent"));
+    el.querySelector(".horde-pick-trait")?.addEventListener("click", () => this._openItemPicker("trait"));
+  }
+
+  async _magChange(dMag, dPsych) {
+    const s = this.actor.system;
+    const start = Number(s.magnitude?.start) || 0;
+    const cur   = Number(s.magnitude?.value) || 0;
+    const psych = Number(s.psychDamage) || 0;
+    const newVal   = Math.max(0, cur + dMag);
+    const cap = start > 0 ? start : Infinity;
+    const clamped  = Math.min(newVal, cap);
+    const newPsych = Math.max(0, psych + dPsych);
+    await this.actor.update({ "system.magnitude.value": clamped, "system.psychDamage": newPsych });
+  }
+
+  async _magReset() {
+    const start = Number(this.actor.system.magnitude?.start) || 0;
+    await this.actor.update({ "system.magnitude.value": start, "system.psychDamage": 0 });
+  }
+
+  async _createItem(type) {
+    const label = type === "weapon" ? "Оружие" : "Черта";
+    const [it] = await this.actor.createEmbeddedDocuments("Item", [{ name: `Новое: ${label}`, type }]);
+    it?.sheet.render(true);
+  }
+
+  async _deleteItem(id) {
+    const it = this.actor.items.get(id); if (!it) return;
+    const ok = await Dialog.confirm({ title: "Удалить", content: `<p>Удалить «${it.name}»?</p>` });
+    if (ok) await it.delete();
+  }
+
+  async _rollChar(key) {
+    const meta = CHARACTERISTICS[key];
+    const val  = this.actor.system.characteristics?.[key]?.total ?? 0;
+    const roll = await new Roll("1d100").evaluate();
+    const rv = roll.total, success = rv <= val;
+    const deg = Math.floor(Math.abs(rv - val) / 10) + 1;
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${this.actor.name} — ${meta?.label || key}</div>
+        <div class="roll-threshold">${meta?.abbr || key}: Порог <b>${val}</b></div>
+        <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        <div class="roll-outcome">${success
+          ? `<span class="roll-success">Успех (${deg} ст.)</span>`
+          : `<span class="roll-failure">Провал (${deg} ст.)</span>`}</div>
+      </div>`,
+      rolls: [roll]
+    }, { rollMode: game.settings.get("core", "rollMode") }));
+  }
+
+  // ── Диалог атаки Орды (по образцу атаки персонажа, с поправкой на правила Орд) ──
+  _hordeAttackDialog(id) {
+    const w = this.actor.items.get(id); if (!w) return;
+    const sys = w.system || {};
+    const isMelee = ["melee", "unarmed", "thrown"].includes(sys.weaponClass);
+    const key = isMelee ? "ws" : "bs";
+    const meta = CHARACTERISTICS[key];
+    const charVal = this.actor.system.characteristics?.[key]?.total ?? 0;
+    const d = this.actor.system.derived || {};
+    const targets = isMelee ? d.meleeTargets : d.rangedShots;
+
+    // Свойства оружия — напоминание.
+    const modFx  = getModEffects(this.actor, w);
+    const wProps = resolveWeaponPropsList(mergeWeaponPropEntries(w, modFx));
+    const wpBadges = wProps.map(p => {
+      const r = p.def.rating ? ` (${p.rating ?? 0})` : "";
+      return `<span class="atk-wprop-badge" title="${(p.def.desc || "").replace(/"/g, "&quot;")}">${p.def.label}${r}</span>`;
+    }).join("");
+
+    const rangedModsHtml = !isMelee ? HORDE_RANGED_MODS.map((m, i) =>
+      `<label class="attack-mod-check"><input type="radio" name="h-range" class="h-mod" data-value="${m.value}" ${i === 2 ? "checked" : ""}/><span>${m.label}</span></label>`).join("") : "";
+    const commonModsHtml = HORDE_COMMON_MODS.map(m => {
+      const v = isMelee ? m.melee : m.ranged;
+      return `<label class="attack-mod-check"><input type="checkbox" class="h-mod" data-value="${v}"/><span>${m.label} (${v >= 0 ? "+" : ""}${v})</span></label>`;
+    }).join("");
+
+    const rangeInfo = (!isMelee && sys.range > 0)
+      ? `<div class="atk-range-info"><div class="atk-range-title">Дистанции (Rng = ${sys.range}м)</div>
+          <div class="atk-range-grid"><span class="atr-zone atr-pb">В упор →+30</span><span class="atr-zone atr-sh">Кор. →+10</span><span class="atr-zone atr-cb">Боевая →±0</span><span class="atr-zone atr-lg">Дальняя →−10</span><span class="atr-zone atr-ex">Экстр. →−30</span></div></div>` : "";
+
+    const content = `<form class="wh-attack-form wh-horde-attack">
+      <div class="atk-dlg-header"><span class="atk-weapon-name">${w.name}</span><span class="atk-weapon-class">${WEAPON_CLASSES[sys.weaponClass] || ""}</span></div>
+      <div class="atk-horde-info">Орда · целей: <b>${targets}</b> · Магнитуда даёт <b>${d.magDamageStr}</b> к урону при попадании. Прицеливания и Избирательных атак у Орд нет.</div>
+      ${wpBadges ? `<div class="atk-dlg-modifiers"><div class="atk-mods-title">Свойства оружия</div><div class="atk-wprops-list">${wpBadges}</div></div>` : ""}
+      ${rangeInfo}
+      <div class="atk-dlg-row"><label>Характеристика:</label><span class="atk-horde-char">${meta?.abbr || key} (${charVal})</span></div>
+      <div class="atk-dlg-row"><label>Базовый порог:</label><input id="h-threshold" type="number" value="${charVal}"/></div>
+      <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="h-modifier" type="number" value="0"/></div>
+      ${!isMelee ? `<div class="atk-dlg-modifiers"><div class="atk-mods-title">Дистанция</div><div class="atk-mods-list">${rangedModsHtml}</div></div>` : ""}
+      <div class="atk-dlg-modifiers"><div class="atk-mods-title">Модификаторы</div><div class="atk-mods-list">${commonModsHtml}</div></div>
+      <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="h-total">${charVal}</span></div>
+    </form>`;
+
+    const dlg = new Dialog({
+      title: `Атака Орды: ${w.name}`,
+      content,
+      buttons: {
+        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async html => {
+          const base = parseInt(html.find("#h-threshold").val()) || 0;
+          const mod  = parseInt(html.find("#h-modifier").val()) || 0;
+          let sum = 0;
+          html.find(".h-mod:checked").each((_, cb) => { sum += parseInt(cb.dataset.value) || 0; });
+          await this._executeHordeAttack(w, key, base + mod + sum, isMelee, targets);
+        }},
+        cancel: { label: "Отмена" }
+      },
+      default: "roll",
+      render: html => {
+        const upd = () => {
+          const base = parseInt(html.find("#h-threshold").val()) || 0;
+          const mod  = parseInt(html.find("#h-modifier").val()) || 0;
+          let sum = 0; html.find(".h-mod:checked").each((_, cb) => { sum += parseInt(cb.dataset.value) || 0; });
+          html.find("#h-total").text(base + mod + sum);
+        };
+        html.find("#h-threshold, #h-modifier").on("input", upd);
+        html.find(".h-mod").on("change", upd); upd();
+      }
+    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"], width: 380 });
+    dlg.render(true);
+  }
+
+  // ── Исполнение атаки Орды: попадание, урон (+кубы Магнитуды), карточка с защитой ──
+  async _executeHordeAttack(w, key, threshold, isMelee, targets) {
+    const sys = w.system;
+    const actor = this.actor;
+    const d = actor.system.derived || {};
+    const chars = actor.system.characteristics;
+
+    const modFx  = getModEffects(actor, w);
+    const wProps = resolveWeaponPropsList(mergeWeaponPropEntries(w, modFx));
+    const wp     = aggregateAuto(wProps);
+
+    const roll = await new Roll("1d100").evaluate();
+    const rv = roll.total;
+    const hit = rv <= threshold;                       // «промах» у Орды — тоже урон, но без кубов Магнитуды и его можно Избегать
+    const deg = hit ? Math.floor((threshold - rv) / 10) + 1 : Math.floor((rv - threshold) / 10) + 1;
+
+    // Место попадания (по перевёрнутым цифрам, как в обычной атаке).
+    const rvStr = String(rv).padStart(2, "0");
+    const locRoll = Math.min(Math.max(parseInt(rvStr.split("").reverse().join("")) || 1, 1), 100);
+    const hitLoc = (HIT_LOCATIONS.find(l => locRoll >= l.min && locRoll <= l.max)?.label) || "Торс";
+
+    // Урон: база + S.b (рукопашная) + кубы Магнитуды (только при попадании).
+    const pen = (sys.penetration || 0) + (modFx.penMod || 0);
+    const sb  = chars.s?.bonus ?? 0;
+    let sbEff = sb; if (wp.mightySB) sbEff = sb * 2; if (wp.containedSB) sbEff = 0;
+    const flat = (isMelee ? sbEff : 0) + (modFx.damageMod || 0);
+    const rawDmg = String(sys.damage || "").replace(/\s+[REIXРЕИ](?:\([^)]*\))?\s*$/i, "").trim();
+    const baseDmg = rawDmg || (isMelee ? "0" : "1d10");
+    let formula = flat !== 0 ? `${baseDmg} + ${flat}` : baseDmg;
+    formula = applyDamageDiceMods(resolveCharFormula(formula, chars, actor.system.corruptionBonus ?? 0), wp);
+    const magDice = hit ? (d.magDamageDice || 0) : 0;
+    const fullFormula = magDice ? `${formula} + ${magDice}d10` : formula;
+
+    const dmgRoll = await new Roll(fullFormula).evaluate();
+    const dtLabel = DAMAGE_TYPES[sys.damageType] || sys.damageType || "";
+    const dtype = sys.damageType || "impact";
+
+    // Дистанции дайсов урона для наглядности.
+    const diceParts = (dmgRoll.dice || []).map(die => `${die.number}d${die.faces} [${die.results.map(r => r.result).join(",")}]`).join(" + ");
+
+    // Кнопки: применить урон всегда (попадание или «промах»); Уклонение — только при промахе
+    // (обычное попадание Орды Избегать нельзя — это шквал/навал).
+    const applyBtn = `<button class="wh-apply-dmg-btn" type="button"
+      data-damage="${dmgRoll.total}" data-penetration="${pen}" data-damage-type="${dtype}"
+      data-hit-location="${hitLoc}" data-weapon-name="${w.name}" data-attacker="${actor.name}"
+      data-felling="${wp.fellingRating || 0}" data-primitive="${wp.primitive ? 1 : 0}"
+      data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}">
+      Применить урон: <b>${dmgRoll.total}</b> → ${hitLoc}</button>`;
+    const dodgeBtn = !hit
+      ? `<div class="roll-defense-section"><div class="roll-section-head">Защита цели <span class="roll-head-hint">— промах Орды можно Избегать</span></div>
+           <div class="roll-defense-btns"><button class="wh-dodge-btn" type="button" data-extra-mod="0" data-attack-deg="${deg}">Уклонение</button>
+           ${isMelee && !wp.flexible ? `<button class="wh-parry-btn" type="button" data-extra-mod="0" data-attack-deg="${deg}">Парирование</button>` : ""}</div></div>`
+      : `<div class="roll-defense-note">Попадание Орды нельзя Избегать (шквал / навал).</div>`;
+
+    const targetEffectBtns = buildTargetEffectButtons(wProps, { hit, netDamageKnown: false });
+    const magNote = magDice ? ` · <span class="horde-chip">Магнитуда +${magDice}d10</span>` : "";
+    const meta = CHARACTERISTICS[key];
+
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result horde-atk">
+        ${buildPropertyChatBlock(wProps)}
+        <div class="roll-header">${actor.name} — ${w.name}</div>
+        <div class="roll-threshold">${meta?.abbr || key}: Порог <b>${threshold}</b> · целей: <b>${targets}</b> · бросок <b>${rv}</b></div>
+        <div class="roll-outcome">${hit
+          ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}, шквал накрывает цель</span>`
+          : `<span class="roll-failure">Промах = попадание без бонусов Магнитуды (можно Избегать)</span>`}</div>
+        <div class="roll-damage-section">
+          <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${isMelee ? `, S.b +${sbEff}` : ""}${magNote}</div>
+          <div class="roll-damage-line"><b>${hitLoc}</b>: <b class="roll-dmg-big">${dmgRoll.total}</b> <span class="horde-dmg-formula">= ${fullFormula}${diceParts ? ` → ${diceParts}` : ""}</span></div>
+        </div>
+        ${targetEffectBtns}
+        <div class="roll-apply-dmg-section"><div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>${applyBtn}</div>
+        ${dodgeBtn}
+      </div>`,
+      rolls: [roll, dmgRoll],
+      sound: CONFIG.sounds.dice
+    }, { rollMode: game.settings.get("core", "rollMode") }));
+  }
+}
+
+// Орда не наследует лист персонажа — подключаем окно выбора отдельно.
+attachItemPicker(WarhammerHordeSheet);

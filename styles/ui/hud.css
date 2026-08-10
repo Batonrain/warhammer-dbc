@@ -1,0 +1,466 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Боевой HUD Warhammer DBC — панель внизу вместо хотбара.
+   Палитра — «Зелёный когитатор» (тема wh-holo): тёмно-зелёный фон, мятный
+   текст, акцент #4dffa6.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+#wh-hud {
+  /* Слева отступ под угловой виджет «Окружение» (≈228px), чтобы HUD его не накрывал;
+     справа 0 — язычок хотбара внутри бара. Панель центрируется в оставшемся месте. */
+  position: fixed; left: 228px; right: 0; bottom: 0; z-index: 58;
+  display: flex; justify-content: center; padding: 0 4px;
+  pointer-events: none;              /* мимо панели клики уходят на карту */
+}
+
+/* Хотбар спрятан, а не удалён: язычок-макросы его возвращает.
+   Метку wh-hud-on ставит initHUD — если панель не поднялась, хотбар на месте. */
+body.wh-hud-on #hotbar { display: none; }
+body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
+
+.wh-hud-bar {
+  position: relative; pointer-events: auto;
+  display: flex; align-items: stretch;
+  width: 100%; max-width: 1040px; min-height: 92px; box-sizing: border-box;
+  padding: 6px 28px 6px 11px;        /* справа — место язычку хотбара */
+  color: #b8ffd8;
+  background: linear-gradient(180deg, #0c2016, #08160e 55%, #04100a);
+  border: 2px solid #1f6f4a; border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0 -3px 16px rgba(0,0,0,.65), inset 0 1px 0 rgba(77,255,166,.14);
+}
+/* Заклёпки по верхней грани. */
+.wh-hud-bar::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 3px; height: 3px;
+  pointer-events: none; opacity: .4;
+  background-image: radial-gradient(circle, #2f9e6a 1px, transparent 1.5px);
+  background-size: 15px 3px;
+}
+.wh-hud-bar.idle { min-height: 0; height: 42px; align-items: center; justify-content: center; }
+.wh-hud-idle { font-size: 12px; color: #5aa37e; font-style: italic; }
+
+.wh-hud-cell {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0 14px; border-right: 1px solid #123a28; min-width: 0;
+}
+.wh-hud-cell:first-child { padding-left: 0; }
+.wh-hud-cell:last-child { border-right: none; padding-right: 0; }
+
+/* ── Раны + броня + состояния (компактная левая колонка) ──────────────── */
+.wh-hud-vitals { flex: 0 0 auto; width: 210px; gap: 7px; justify-content: center; }
+.wh-hud-wounds { display: flex; align-items: center; gap: 8px; }
+.wh-hud-wlabel { font-size: 12px; color: #7fe0a8; flex: none; letter-spacing: .5px; }
+.wh-hud-wval { font-size: 28px; font-weight: 700; letter-spacing: -.5px; line-height: 1; flex: none; }
+.wh-hud-wmax { font-size: 14px; color: #5aa37e; font-weight: 400; }
+
+/* Броня по локациям — компактный ряд «Гл 5 · Т 5 · …» */
+.wh-hud-armor { display: flex; flex-wrap: wrap; gap: 5px 9px; }
+.wh-hud-ap { display: inline-flex; align-items: baseline; gap: 3px; font-size: 11px; }
+.wh-hud-ap-l { color: #5aa37e; letter-spacing: .3px; }
+.wh-hud-ap b { font-size: 13px; font-weight: 700; }
+.wh-hud-wcrit {
+  font-size: 12px; font-weight: 700; color: #06120c; background: #ff6b6b;
+  padding: 1px 6px; border-radius: 2px; animation: wh-hud-pulse 1s infinite;
+}
+.wh-hud-wbar {
+  flex: 1; height: 9px; background: #04100a; border: 1px solid #1f6f4a;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.85); overflow: hidden;
+}
+.wh-hud-wfill { display: block; height: 100%; transition: width .3s; }
+
+.wh-hud-track { display: flex; align-items: center; gap: 8px; }
+.wh-hud-tlabel { font-size: 11px; color: #7fe0a8; width: 46px; flex: none; letter-spacing: .5px; }
+.wh-hud-tbar {
+  flex: 1; height: 8px; background: #04100a; border: 1px solid #123a28;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.85); overflow: hidden;
+}
+.wh-hud-tfill { display: block; height: 100%; transition: width .3s; }
+.wh-hud-tfill.fatigue    { background: linear-gradient(180deg, #57c98a, #1f6f4a); }
+.wh-hud-tfill.corruption { background: linear-gradient(180deg, #b06cd9, #4a2870); box-shadow: 0 0 6px rgba(176,108,217,.5); }
+.wh-hud-tfill.insanity   { background: linear-gradient(180deg, #6fb4e8, #253d70); box-shadow: 0 0 6px rgba(111,180,232,.5); }
+.wh-hud-tnum { font-size: 12px; color: #b8ffd8; min-width: 34px; flex: none; text-align: right; }
+.wh-hud-tmax { color: #5aa37e; }
+.wh-hud-tnum.corruption { color: #d0a8e8; }
+.wh-hud-tnum.insanity { color: #a8d4f0; }
+
+/* Судьба — точки. */
+.wh-hud-fate { display: flex; align-items: center; gap: 8px; }
+.wh-hud-pips { display: flex; gap: 3px; }
+.wh-hud-pip {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1px solid #1f6f4a; background: #04100a;
+}
+.wh-hud-pip.full { background: #4dffa6; box-shadow: 0 0 5px rgba(77,255,166,.7); border-color: #4dffa6; }
+
+.wh-hud-lamps { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 1px; }
+.wh-hud-lamp {
+  font-size: 10px; font-weight: 700; letter-spacing: .5px; color: #4dffa6;
+  border: 1px solid #1f6f4a; padding: 1px 6px; border-radius: 2px; white-space: nowrap;
+}
+.wh-hud-lamp.bad { color: #ff6b6b; border-color: #ff6b6b; animation: wh-hud-pulse 1.4s infinite; }
+
+/* ── Оружие: две руки ─────────────────────────────────────────────────── */
+.wh-hud-gun { flex: 1; min-width: 300px; max-width: 520px; gap: 4px; }
+.wh-hud-gname {
+  font-size: 12px; color: #d8ffe8; letter-spacing: .3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wh-hud-gname.empty { color: #5aa37e; font-style: italic; }
+
+.wh-hud-hands { display: flex; gap: 6px; }
+.wh-hud-hand {
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1px;
+  padding: 2px 6px 3px; border: 1px solid #123a28; border-radius: 3px;
+  background: rgba(0,0,0,.18);
+}
+.wh-hud-hand.hand-main { border-left: 2px solid #2f9e6a; }
+.wh-hud-hand.hand-off  { border-left: 2px solid #1f5f6f; }
+.wh-hud-hand.empty { opacity: .55; }
+.wh-hud-hlabel { font-size: 9px; letter-spacing: 1px; color: #5aa37e; }
+.wh-hud-hempty { font-size: 12px; font-style: italic; color: #4a7060; padding: 6px 0; }
+.wh-hud-hname {
+  font-size: 11px; color: #d8ffe8; font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wh-hud-hstat { display: flex; align-items: baseline; gap: 6px; min-height: 0; }
+.wh-hud-hstat:empty { display: none; }
+.wh-hud-clip { display: flex; align-items: baseline; gap: 2px; cursor: pointer; line-height: 1; }
+.wh-hud-clip b {
+  font-size: 24px; color: #4dffa6; font-weight: 400; letter-spacing: -1px;
+  text-shadow: 0 0 10px rgba(77,255,166,.35);
+}
+.wh-hud-clip span { font-size: 12px; color: #5aa37e; }
+.wh-hud-clip:hover b { color: #a8ffd0; text-shadow: 0 0 12px rgba(77,255,166,.7); }
+.wh-hud-clip.empty b { color: #ff6b6b; text-shadow: 0 0 10px rgba(255,107,107,.5); animation: wh-hud-pulse 1.2s infinite; }
+.wh-hud-blade { display: none; }   /* «В РУКАХ» избыточно — экономим высоту */
+.wh-hud-recharge { font-size: 12px; color: #a8f4ff; }
+.wh-hud-rof { margin-left: auto; font-size: 13px; color: #4dffa6; letter-spacing: 1px; }
+
+.wh-hud-fire {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer;
+  font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #04100a;
+  background: linear-gradient(180deg, #4dffa6, #2f9e6a); border: 1px solid #1f6f4a;
+  border-radius: 3px; padding: 1px 8px;
+}
+.wh-hud-fire:hover { background: linear-gradient(180deg, #a8ffd0, #4dffa6); box-shadow: 0 0 10px rgba(77,255,166,.45); }
+.wh-hud-fire:active { transform: scale(.96); }
+
+.wh-hud-footrow { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.wh-hud-shield {
+  display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+  font-size: 12px; font-weight: 700; color: #6fe6ff;
+  border: 1px solid #1f5f6f; border-radius: 3px; padding: 3px 9px; margin-left: auto;
+}
+.wh-hud-shield.on { background: #06282e; color: #a8f4ff; border-color: #6fe6ff; box-shadow: 0 0 8px rgba(111,230,255,.35); }
+.wh-hud-shield:hover { filter: brightness(1.15); }
+
+/* Слоты оружия. */
+.wh-hud-slots { display: flex; gap: 4px; align-items: center; }
+.wh-hud-slot {
+  position: relative; box-sizing: border-box; flex: 0 0 auto;
+  width: 36px; height: 26px; cursor: pointer;
+  border: 1px solid #1f6f4a; border-radius: 3px; background: #04100a;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+/* contain + отступ — иконки/картинки любых пропорций центруются одинаково,
+   без обрезки, поэтому слоты выглядят ровным рядом. */
+.wh-hud-slot img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; opacity: .8; border: none; padding: 2px; box-sizing: border-box; }
+.wh-hud-slot.on img { opacity: 1; }
+.wh-hud-slot.hand-main { border-color: #4dffa6; box-shadow: 0 0 7px rgba(77,255,166,.45); }
+.wh-hud-slot.hand-off  { border-color: #6fe6ff; box-shadow: 0 0 7px rgba(111,230,255,.4); }
+.wh-hud-slot.melee { border-color: #2f9e6a; }
+.wh-hud-slot:hover { border-color: #57c98a; }
+.wh-hud-slotbadge {
+  position: absolute; right: 1px; bottom: 0; font-size: 8px; font-weight: 700;
+  line-height: 1; padding: 1px 2px; border-radius: 2px 0 0 0;
+  background: rgba(0,0,0,.7); color: #4dffa6;
+}
+.wh-hud-slot.hand-off .wh-hud-slotbadge { color: #6fe6ff; }
+
+/* ── Портрет ──────────────────────────────────────────────────────────── */
+.wh-hud-btns { flex: none; width: 74px; align-items: center; justify-content: center; }
+.wh-hud-sheet { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+.wh-hud-face {
+  width: 52px; height: 52px; object-fit: cover; border: 1px solid #1f6f4a;
+  border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,.6);
+}
+.wh-hud-sheet:hover .wh-hud-face { border-color: #4dffa6; box-shadow: 0 0 10px rgba(77,255,166,.4); }
+.wh-hud-sheet span {
+  font-size: 10px; color: #7fe0a8; max-width: 70px; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Язычок макросов. */
+.wh-hud-macro {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 44px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #5aa37e; border: 1px solid #123a28; border-radius: 3px;
+  background: #04100a;
+}
+.wh-hud-macro:hover { color: #4dffa6; border-color: #1f6f4a; }
+
+@keyframes wh-hud-pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+
+/* ── Псайкер: PR + психосилы (быстрый манифест) ── */
+.wh-hud-psy {
+  flex: 1 1 0; min-width: 176px; max-width: 320px; gap: 4px;
+  justify-content: flex-start; padding-top: 4px;
+}
+.wh-hud-psy-head {
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 3px; border-bottom: 1px solid #2a1c40;
+}
+.wh-hud-psy-orb {
+  font-size: 15px; font-weight: 700; color: #c49ae0; letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(176,108,217,.45); cursor: default;
+}
+.wh-hud-psy-orb.spent { color: #8a6a9a; text-shadow: none; opacity: 0.8; }
+.wh-hud-psy-bpr { font-size: 11px; color: #6a5a7a; font-weight: 400; }
+.wh-hud-psy-sus { font-size: 11px; color: #a08ac0; margin-left: auto; }
+/* Аккуратная сетка вместо кучи баблов: 2 колонки, прокрутка. */
+.wh-hud-psy-list {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
+  align-content: start; max-height: 84px; overflow-y: auto;
+  padding-right: 3px; scrollbar-width: thin; scrollbar-color: #4a2870 transparent;
+}
+.wh-hud-psy-list::-webkit-scrollbar { width: 6px; }
+.wh-hud-psy-list::-webkit-scrollbar-thumb { background: #4a2870; border-radius: 3px; }
+.wh-hud-psy-power {
+  width: 100%; cursor: pointer; text-align: left;
+  font-size: 10px; line-height: 1.5; padding: 1px 8px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border: 1px solid #3a2a5a; border-radius: 3px;
+  background: rgba(40,26,64,.32); color: #d0b8e8;
+}
+.wh-hud-psy-power:hover { background: rgba(176,108,217,.28); border-color: #b06cd9; color: #f0e0ff; }
+.wh-hud-psy-power.on { background: #4a2870; border-color: #b06cd9; color: #f0e0ff; box-shadow: 0 0 6px rgba(176,108,217,.4); }
+.wh-hud-psy-empty { font-size: 11px; font-style: italic; color: #6a5a7a; }
+
+/* При активном HUD плавающий чат (поле «Введите сообщение» и всплывающие
+   уведомления при закрытом чате) перекрывает панель — убираем его. */
+body.wh-hud-on #chat-notifications { display: none !important; }
+
+/* Хват и профиль оружия — панель кнопок под статами (стр. 39, 207-221) */
+.wh-hud-wopts {
+  display: flex; flex-direction: column; gap: 2px; margin: 2px 0;
+  padding: 3px 4px; border-radius: 3px;
+  background: rgba(0,0,0,.25); border: 1px solid #123a28;
+}
+.wh-hud-optrow { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+.wh-hud-optlbl { flex: 0 0 auto; width: 14px; text-align: center; color: #5aa37e; font-size: 10px; }
+.wh-hud-optbtn {
+  display: inline-flex; align-items: center; cursor: pointer;
+  padding: 1px 8px; font-size: 11px; line-height: 1.55; border-radius: 3px;
+  border: 1px solid #1f5f42; background: rgba(0,0,0,.28); color: #7fbfa0;
+  white-space: nowrap; transition: all .1s;
+}
+.wh-hud-optbtn:hover { color: #b8ffd8; border-color: #4dffa6; }
+.wh-hud-optbtn.on {
+  color: #04120b; background: #4dffa6; border-color: #4dffa6; font-weight: 700;
+  box-shadow: 0 0 6px rgba(77,255,166,.5);
+}
+.wh-hud-optbtn.prof { border-color: #2b5f7a; color: #83bcda; }
+.wh-hud-optbtn.prof:hover { color: #cdefff; border-color: #6fe6ff; }
+.wh-hud-optbtn.prof.on {
+  color: #04121a; background: #6fe6ff; border-color: #6fe6ff;
+  box-shadow: 0 0 6px rgba(111,230,255,.5);
+}
+
+/* Кнопка «приклад» (стрелковое в упор) + безоружный удар */
+.wh-hud-hact { display: flex; gap: 4px; align-items: stretch; }
+.wh-hud-hact .wh-hud-fire { flex: 1; }
+.wh-hud-melee-gun {
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  flex: 0 0 auto; padding: 2px 8px; font-size: 12px; color: #7fe0a8;
+  border: 1px solid #1f6f4a; border-radius: 3px; background: rgba(0,0,0,.2);
+}
+.wh-hud-melee-gun:hover { color: #4dffa6; border-color: #4dffa6; background: rgba(77,255,166,.12); }
+.wh-hud-unarmed {
+  display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; color: #d8ffe8;
+  border: 1px solid #1f6f4a; border-radius: 3px; padding: 3px 9px; background: rgba(0,0,0,.2);
+}
+.wh-hud-unarmed:hover { color: #4dffa6; border-color: #4dffa6; background: rgba(77,255,166,.12); }
+
+.wh-hud-unarmed-grp { display: inline-flex; gap: 2px; }
+.wh-hud-unarmed-grp .wh-hud-unarmed { padding: 3px 8px; }
+
+/* Разделитель между выбором оружия и действиями в нижнем ряду */
+.wh-hud-footsep { width: 1px; align-self: stretch; background: #1f5f4a; margin: 2px 3px; flex: 0 0 auto; }
+/* Слоты выбора оружия — крупнее для удобства клика */
+
+
+/* ═══════════════════════ HUD КОРАБЛЯ ═══════════════════════ */
+/* Та же панель, но раскладка судна: борт, защита, орудия, экипаж, действия. */
+
+.wh-ship-hud { max-width: 1240px; align-items: stretch; min-height: 96px; }
+.wh-ship-hud .wh-hud-cell { padding: 0 7px; border-left: 1px solid rgba(47,158,106,.22); }
+.wh-ship-hud .wh-hud-cell:first-child { border-left: none; }
+.wh-ship-hud .wh-hud-cell { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+
+/* ── Борт ── */
+.wh-ship-ident { flex: 0 0 auto; flex-direction: row !important; align-items: center; gap: 8px; }
+.wh-ship-img {
+  width: 54px; height: 54px; object-fit: cover; cursor: pointer;
+  border: 1px solid #2f9e6a; border-radius: 4px; background: #000;
+}
+.wh-ship-img:hover { border-color: #4dffa6; box-shadow: 0 0 8px rgba(77,255,166,.4); }
+.wh-ship-idbox { min-width: 118px; }
+.wh-ship-name {
+  font-weight: bold; font-size: 1.02em; color: #d8ffe8; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 146px;
+}
+.wh-ship-name:hover { color: #4dffa6; }
+.wh-ship-class { font-size: .74em; color: #2f8f5e; text-transform: uppercase; letter-spacing: .06em; }
+
+.wh-ship-hi { display: flex; align-items: center; gap: 5px; margin-top: 3px; cursor: ns-resize; }
+.wh-ship-hi-lbl { font-size: .7em; color: #2f8f5e; letter-spacing: .08em; }
+.wh-ship-hi-val { font-size: 1.15em; font-weight: bold; }
+.wh-ship-hi-max { font-size: .72em; opacity: .7; }
+.wh-ship-bar {
+  flex: 1 1 auto; height: 6px; min-width: 44px; border-radius: 3px; overflow: hidden;
+  background: #081a10; border: 1px solid #1f6f4a;
+}
+.wh-ship-fill { display: block; height: 100%; transition: width .18s; }
+.wh-ship-hi.crippled .wh-ship-hi-val { animation: wh-ship-blink 1.2s ease-in-out infinite; }
+@keyframes wh-ship-blink { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+/* ── Защита ── */
+.wh-ship-def { flex: 0 0 auto; min-width: 142px; }
+.wh-ship-shields { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.wh-ship-shields.down { opacity: .45; }
+.wh-ship-k { font-size: .7em; color: #2f8f5e; letter-spacing: .08em; width: 20px; flex: 0 0 20px; }
+.wh-ship-pips { display: flex; gap: 3px; flex-wrap: wrap; }
+.wh-ship-pip {
+  width: 11px; height: 11px; border-radius: 2px;
+  background: #081a10; border: 1px solid #1f6f4a;
+}
+.wh-ship-pip.on { background: #6fe6ff; border-color: #6fe6ff; box-shadow: 0 0 6px rgba(111,230,255,.6); }
+.wh-ship-none { font-size: .78em; color: #2f8f5e; font-style: italic; }
+.wh-ship-defrow { display: flex; gap: 4px; flex-wrap: wrap; }
+.wh-ship-chip {
+  font-size: .72em; padding: 1px 6px; border-radius: 8px; white-space: nowrap;
+  background: #081a10; border: 1px solid #1f6f4a; color: #7fe0a8;
+}
+.wh-ship-chip b { font-size: 1.2em; color: #d8ffe8; }
+
+/* ── Орудия: кнопка в полосе + раскрывающаяся панель ── */
+/* В полосе орудиям остаётся ~300px — ни колонками по дугам, ни рядом, ни сеткой
+   они туда не помещались без прокрутки или обрезки. Поэтому в полосе только
+   кнопка со сводкой, а список живёт в панели над ней, где ширины вдоволь. */
+.wh-ship-hud .wh-ship-guns {
+  flex: 1 1 0; min-width: 110px; padding: 0 8px;
+  flex-direction: column !important; align-items: center; justify-content: center; gap: 5px;
+}
+.wh-ship-gunsbtn {
+  display: flex; align-items: center; gap: 7px; cursor: pointer;
+  padding: 5px 16px; width: auto; height: auto; line-height: 1.4;
+  font-size: .78em; font-weight: bold; letter-spacing: .08em; white-space: nowrap;
+  background: linear-gradient(180deg, #103022, #0c2016);
+  border: 1px solid #2f9e6a; border-radius: 4px; color: #b8ffd8;
+}
+.wh-ship-gunsbtn:hover { border-color: #4dffa6; box-shadow: 0 0 9px rgba(77,255,166,.35); }
+.wh-ship-gunsbtn.on { background: #4dffa6; color: #04100a; border-color: #4dffa6; }
+.wh-ship-gunsbtn b { font-size: 1.35em; letter-spacing: 0; color: #d8ffe8; }
+.wh-ship-gunsbtn.on b { color: #04100a; }
+.wh-ship-gunsbtn-down { font-size: .9em; color: #ff6b6b; }
+
+/* Сводка по дугам: состав борта виден не открывая панель. */
+.wh-ship-arcpips { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
+.wh-ship-arcpip {
+  display: inline-flex; align-items: baseline; gap: 3px;
+  font-size: .66em; font-weight: bold; letter-spacing: .04em;
+  padding: 1px 6px; border-radius: 8px;
+  background: #081a10; border: 1px solid #1f6f4a; color: #2f8f5e;
+}
+.wh-ship-arcpip b { font-size: 1.2em; color: #b8ffd8; }
+.wh-ship-arcpip.loose { border-color: #7a5a1a; color: #ffc14d; }
+
+/* Панель над полосой. .wh-hud-bar уже position: relative. */
+.wh-ship-gunpanel {
+  display: none; position: absolute; left: 0; right: 24px; bottom: 100%;
+  margin-bottom: 5px; padding: 8px 10px; max-height: 46vh; overflow-y: auto;
+  background: linear-gradient(180deg, #0c2016, #06120c);
+  border: 2px solid #2f9e6a; border-radius: 6px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.7), inset 0 1px 0 rgba(77,255,166,.14);
+  scrollbar-width: thin; scrollbar-color: #2f9e6a #081a10;
+  z-index: 30;
+}
+.wh-ship-gunpanel.open { display: block; }
+.wh-ship-gunpanel::-webkit-scrollbar { width: 6px; }
+.wh-ship-gunpanel::-webkit-scrollbar-track { background: #081a10; border-radius: 3px; }
+.wh-ship-gunpanel::-webkit-scrollbar-thumb { background: #2f9e6a; border-radius: 3px; }
+
+.wh-ship-gunpanel .gp-arc { margin-bottom: 8px; }
+.wh-ship-gunpanel .gp-arc:last-child { margin-bottom: 0; }
+.wh-ship-gunpanel .gp-arc-lbl {
+  font-size: .7em; letter-spacing: .08em; text-transform: uppercase; color: #2f8f5e;
+  padding-bottom: 3px; margin-bottom: 5px; border-bottom: 1px solid rgba(47,158,106,.35);
+}
+.wh-ship-gunpanel .gp-arc-lbl span { color: #b8ffd8; }
+.wh-ship-gunpanel .gp-arc-lbl.loose { color: #ffc14d; }
+/* Сетка во всю ширину панели — прокручивать ничего не нужно. */
+.wh-ship-gunpanel .gp-arc-guns {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(224px, 1fr)); gap: 5px;
+}
+
+.wh-ship-gun {
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 9px; cursor: pointer; text-align: left; width: 100%; height: auto;
+  background: linear-gradient(180deg, #103022, #0c2016);
+  border: 1px solid #2f9e6a; border-radius: 4px; color: #b8ffd8;
+}
+.wh-ship-gun:hover { border-color: #4dffa6; box-shadow: 0 0 8px rgba(77,255,166,.35); }
+.wh-ship-gun-arc {
+  flex: 0 0 auto; font-size: .68em; font-weight: bold; letter-spacing: .04em;
+  padding: 2px 6px; border-radius: 3px; color: #04100a; background: #2f8f5e;
+}
+.wh-ship-gun-body { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.wh-ship-gun-name {
+  font-size: .84em; font-weight: bold; color: #d8ffe8; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wh-ship-gun-meta {
+  font-size: .7em; color: #2f8f5e; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Разбитый или обесточенный узел стрелять не может — видно сразу. */
+.wh-ship-gun.down { opacity: .45; border-color: #ff6b6b; }
+.wh-ship-gun.down .wh-ship-gun-name { text-decoration: line-through; }
+.wh-ship-empty { font-size: .82em; font-style: italic; color: #2f8f5e; padding: 6px; }
+
+/* ── Экипаж ── */
+.wh-ship-crew { flex: 0 0 auto; min-width: 132px; gap: 5px; }
+.wh-ship-crewbar { display: flex; align-items: center; gap: 5px; }
+.wh-ship-crewval { font-size: .95em; font-weight: bold; width: 28px; text-align: right; flex: 0 0 28px; }
+.wh-ship-pen {
+  font-size: .7em; color: #ffc14d; cursor: help;
+  border-bottom: 1px dotted #ffc14d; align-self: flex-start;
+}
+
+/* ── Действия и метки ── */
+.wh-ship-acts {
+  flex: 0 0 auto; width: 148px; gap: 3px;
+  flex-direction: row !important; flex-wrap: wrap;
+  align-content: center; justify-content: flex-end;
+}
+.wh-ship-act {
+  flex: 1 1 68px; padding: 2px 9px; font-size: .74em; font-weight: bold; letter-spacing: .06em;
+  cursor: pointer; white-space: nowrap;
+  background: linear-gradient(180deg, #103022, #0c2016);
+  border: 1px solid #2f9e6a; border-radius: 3px; color: #b8ffd8;
+}
+.wh-ship-act:hover { background: #4dffa6; color: #04100a; border-color: #4dffa6; }
+.wh-ship-flags {
+  display: flex; gap: 3px; flex-wrap: wrap; margin-top: 2px;
+  flex: 1 1 100%; justify-content: flex-end;
+}
+.wh-ship-flag {
+  font-size: .68em; padding: 0 6px; border-radius: 7px; white-space: nowrap;
+  background: #081a10; border: 1px solid #1f6f4a; color: #7fe0a8;
+}
+.wh-ship-flag.warn { color: #ffc14d; border-color: #7a5a1a; }
+.wh-ship-flag.dp   { color: #d98cff; border-color: #7a3f9e; }
+.wh-ship-flag.crit {
+  color: #ff6b6b; border-color: #ff6b6b; font-weight: bold;
+  animation: wh-ship-blink 1.4s ease-in-out infinite;
+}

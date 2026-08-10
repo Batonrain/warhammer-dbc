@@ -1,0 +1,34 @@
+{{!-- Оснащение техники --}}
+{{#if (eq item.type "vehicleGear")}}
+<div class="item-section">
+  <div class="item-section-title">СТАТЫ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Установлено / активно</label>
+    <input type="checkbox" name="system.active" {{#if system.active}}checked{{/if}}/>
+    <label class="wr-label">Качество</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Низкое</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Обычное</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Хорошее</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Лучшее</option>
+      {{#if system.drukhari}}<option value="artisan" {{#if (eq system.quality "artisan")}}selected{{/if}}>Ремесленное (Arts.Q)</option>{{/if}}
+    </select>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Доступность</label>
+    <select class="wr-select-avail availability-select">
+      <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+    </select>
+  </div>
+</div>
+{{/if}}

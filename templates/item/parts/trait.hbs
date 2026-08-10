@@ -1,0 +1,57 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  ЧЕРТА / ТРЕЙТ                                                          --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "trait")}}
+
+{{!-- ── ОСНОВНОЕ ─────────────────────────────────────────────────────────── --}}
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ ЧЕРТЫ</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Источник</label>
+    <input type="text" name="system.source" value="{{system.source}}"
+           class="wr-input-md" placeholder="напр. раса, мутация, имплант"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Книга</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Core, стр. 24"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" name="system.hasRating"
+             {{#if system.hasRating}}checked{{/if}}/>
+      Имеет рейтинг (X)
+    </label>
+    {{#if system.hasRating}}
+    <label class="wr-label">Рейтинг X</label>
+    <input type="number" name="system.rating" value="{{system.rating}}" class="wr-input-xs"/>
+    {{/if}}
+
+    <label class="drug-fx-cb-label" style="margin-left:10px;">
+      <input type="checkbox" name="system.hasRating2"
+             {{#if system.hasRating2}}checked{{/if}}/>
+      Второй рейтинг (Y)
+    </label>
+    {{#if system.hasRating2}}
+    <label class="wr-label">Рейтинг Y</label>
+    <input type="number" name="system.rating2" value="{{system.rating2}}" class="wr-input-xs"/>
+    {{/if}}
+  </div>
+
+  <div class="drug-effect-row">
+    <label class="drug-effect-label">Краткое преимущество</label>
+    <textarea name="system.benefit" class="drug-textarea-sm"
+              placeholder="Короткая выжимка для таблицы на листе...">{{system.benefit}}</textarea>
+  </div>
+</div>
+
+{{!-- ── АВТО-ЭФФЕКТЫ (ядро) ──────────────────────────────────────────────── --}}
+<div class="item-section">
+  <div class="item-section-title">АВТО-ЭФФЕКТЫ</div>
+  <div class="trait-fx-hint">Числовые авто-эффекты (бонус характеристики, AP, Рейтинг Страха, Размер, Инициатива, Скорость) переехали на вкладку «Эффекты» — добавьте их там как Active Effect. Старые значения этого предмета уже перенесены автоматически.</div>
+</div>
+
+{{/if}}{{!-- /trait --}}

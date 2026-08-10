@@ -1,0 +1,259 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — глобальная тема интерфейса Foundry (когитатор)
+   Перекраска всего GUI: сайдбар, панели, навигация, хотбар, окна, кнопки.
+   Только цвета/рамки/свечение — без изменения раскладки.
+═══════════════════════════════════════════════════════ */
+
+:root {
+  --wh-cg-bg:      #06120c;
+  --wh-cg-bg2:     #0a1c12;
+  --wh-cg-panel:   #0c2418;
+  --wh-cg-border:  #1f6f4a;
+  --wh-cg-border2: #2f9e6a;
+  --wh-cg-text:    #c6ffe0;
+  --wh-cg-dim:     #7fe0a8;
+  --wh-cg-accent:  #4dffa6;
+}
+
+/* ── Общий фон панелей UI ── */
+#ui-left, #ui-right, #ui-top, #ui-bottom, #ui-middle { color: var(--wh-cg-text); }
+
+/* ── Сайдбар ── (рамки через inset-тень, чтобы не сдвигать раскладку) */
+#sidebar, aside#sidebar, #sidebar.app {
+  background: rgba(6,18,12,0.92) !important;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(47,158,106,0.3);
+  color: var(--wh-cg-text);
+}
+#sidebar-tabs, nav#sidebar-tabs { border-bottom: 1px solid var(--wh-cg-border) !important; }
+#sidebar-tabs .item, #sidebar-tabs > a, #sidebar .tabs > a {
+  color: var(--wh-cg-dim) !important;
+}
+#sidebar-tabs .item.active, #sidebar-tabs > a.active, #sidebar .tabs > a.active {
+  color: var(--wh-cg-accent) !important;
+  border-bottom: 2px solid var(--wh-cg-accent) !important;
+  text-shadow: 0 0 6px rgba(77,255,166,0.6);
+}
+.directory, .directory .directory-list, #sidebar .directory-list { background: transparent !important; }
+.directory-item, .directory .directory-item, .directory-list li {
+  color: var(--wh-cg-text) !important;
+  border-bottom: 1px solid rgba(47,158,106,0.2) !important;
+}
+.directory-item:hover, .directory-list li:hover { background: rgba(77,255,166,0.08) !important; }
+/* Заголовок папки: НЕ перекрываем цвет папки (поддержка перекраски), только текст читаемый. */
+.directory .folder > .folder-header, .directory-item.folder > header {
+  color: var(--wh-cg-text) !important;
+}
+.directory .header-search input, .directory input[type="search"], #sidebar input {
+  background: var(--wh-cg-panel) !important;
+  border: 1px solid var(--wh-cg-border) !important;
+  color: var(--wh-cg-text) !important;
+}
+.directory .directory-footer, #sidebar .action-buttons button,
+.directory .header-actions button {
+  background: #0e2a1c !important; color: var(--wh-cg-text) !important; border: 1px solid var(--wh-cg-border2) !important;
+}
+
+/* ── Кнопки в правой панели (Создать актёра / папку, Ресурсы группы) ── */
+#ui-right button, .sidebar-tab button, .directory .header-actions a {
+  background: #0e2a1c; color: var(--wh-cg-text); border: 1px solid var(--wh-cg-border2);
+}
+#ui-right button:hover { background: #15492f; box-shadow: 0 0 7px rgba(77,255,166,0.4); }
+
+/* ── Левая панель управления сценой ── */
+#controls .control-tool, #scene-controls .control,
+#controls ol.control-tools > li, #scene-controls .control-tool {
+  color: var(--wh-cg-dim);
+}
+#controls .control-tool.active, #scene-controls .control.active,
+#scene-controls .control-tool.active {
+  color: #04100a !important;
+  background: var(--wh-cg-accent) !important;
+  box-shadow: 0 0 8px rgba(77,255,166,0.6) !important;
+}
+#controls .control-tool:hover, #scene-controls .control-tool:hover {
+  color: var(--wh-cg-accent); text-shadow: 0 0 6px rgba(77,255,166,0.5);
+}
+
+/* ── Верхняя навигация по сценам ── */
+#navigation .scene, #scene-navigation .scene, #nav .nav-item {
+  background: rgba(10,28,18,0.85) !important;
+  box-shadow: inset 0 0 0 1px var(--wh-cg-border) !important;
+  color: var(--wh-cg-text) !important;
+}
+#navigation .scene.active, #scene-navigation .scene.active, #nav .nav-item.active {
+  border-color: var(--wh-cg-accent) !important;
+  box-shadow: 0 0 8px rgba(77,255,166,0.45) !important;
+  color: var(--wh-cg-accent) !important;
+}
+#navigation .scene:hover, #scene-navigation .scene:hover { box-shadow: 0 0 6px rgba(77,255,166,0.4) !important; }
+
+/* ── Список игроков ── */
+#players, #players-active, aside#players {
+  background: rgba(6,18,12,0.9) !important;
+  box-shadow: inset 0 0 0 1px var(--wh-cg-border) !important;
+  color: var(--wh-cg-text) !important;
+}
+#players .player-name, #players .player .player-name { color: var(--wh-cg-text) !important; }
+#players h3, #players .players-mode, #players h2, #players .player { color: var(--wh-cg-dim) !important; }
+/* Пинг/задержка/FPS — читаемо */
+#fps, #fps .value, #players .player-ping, .player-list .ping { color: var(--wh-cg-dim) !important; opacity: 1 !important; }
+
+/* ── Хотбар (макросы) ── */
+#hotbar #macro-list .macro, #hotbar .macro, #macro-list .slot {
+  background: rgba(10,28,18,0.85) !important;
+  box-shadow: inset 0 0 0 1px var(--wh-cg-border) !important;
+}
+#hotbar #macro-list .macro:hover { box-shadow: 0 0 7px rgba(77,255,166,0.4) !important; }
+#hotbar .bar-controls a { color: var(--wh-cg-dim) !important; }
+
+/* ── Окна приложений (общие, не системные листы) ── */
+.app, .window-app, .application {
+  border: 1px solid var(--wh-cg-border) !important;
+  box-shadow: 0 0 14px rgba(0,0,0,0.55), 0 0 6px rgba(47,158,106,0.25) !important;
+}
+.window-app .window-header, .application .window-header {
+  background: linear-gradient(180deg, #0e3a26, #04100a) !important;
+  color: var(--wh-cg-text) !important;
+  border-bottom: 1px solid var(--wh-cg-border2) !important;
+}
+.window-app .window-header .window-title, .application .window-title { color: var(--wh-cg-text) !important; }
+.window-app .window-content, .application .window-content {
+  background: var(--wh-cg-bg) !important; color: var(--wh-cg-text) !important;
+}
+
+/* ── Кнопки и поля ввода глобально ── */
+.window-content button, .window-content .button {
+  background: #0e2a1c; color: var(--wh-cg-text); border: 1px solid var(--wh-cg-border2);
+}
+.window-content button:hover { background: #15492f; box-shadow: 0 0 6px rgba(77,255,166,0.4); }
+.window-content input, .window-content select, .window-content textarea {
+  background: var(--wh-cg-panel); color: var(--wh-cg-text); border: 1px solid var(--wh-cg-border);
+}
+
+/* ── Подсказки (tooltip) ── */
+#tooltip, .tooltip, aside#tooltip {
+  background: #0a1c12 !important; color: var(--wh-cg-text) !important;
+  border: 1px solid var(--wh-cg-border2) !important; box-shadow: 0 0 8px rgba(77,255,166,0.25) !important;
+}
+
+/* ── Меню настроек игры (вкладка «Настройки») — все кнопки в зелёный ── */
+#settings button, #settings a.button, #settings .settings-sidebar button,
+section.settings button, .settings-sidebar button, #game-settings button,
+#settings .game-system button, #settings .documentation button, #settings .access button {
+  background: #0e2a1c !important; color: var(--wh-cg-text) !important; border: 1px solid var(--wh-cg-border2) !important;
+}
+#settings button:hover, section.settings button:hover { background: #15492f !important; box-shadow: 0 0 7px rgba(77,255,166,0.4) !important; }
+#settings button i, section.settings button i { color: var(--wh-cg-accent) !important; }
+#settings h2, #settings h3, #settings .divider { color: var(--wh-cg-accent) !important; }
+
+/* ── Всплывающие сообщения чата (когда чат свёрнут) ── */
+/* Стилизуем ТОЛЬКО карточки сообщений; контейнер/список — прозрачные (без гигантского поля). */
+#chat-notifications .chat-message, #chat-notifications .message, #chat-notifications li.chat-message {
+  background: #08160e !important;
+  border: 1px solid var(--wh-cg-border) !important;
+  box-shadow: 0 0 8px rgba(0,0,0,0.55) !important;
+  color: var(--wh-cg-text) !important;
+}
+#chat-notifications, #chat-notifications ol, #chat-notifications > ol, #chat-notifications .chat-scroll {
+  background: transparent !important; border: none !important; box-shadow: none !important;
+}
+
+/* ── Контраст текста чата (перебиваем дефолтный #444444 Foundry v13) ──
+   Якорь — подтверждённый инспектором класс <li.chat-message>, БЕЗ .message
+   и БЕЗ #chat-log (в этой сборке они ненадёжны). */
+.chat-message .message-sender, .chat-message h4.message-sender { color: #cfffe6 !important; }
+.chat-message .flavor-text { color: #9fe8c0 !important; }
+.chat-message .message-timestamp,
+.chat-message .message-metadata,
+.chat-message .whisper-to { color: #7fcfa4 !important; }
+.chat-message .message-content, .chat-message .message-content * { color: #e0ffee !important; }
+.chat-message .dice-formula, .chat-message .dice-total, .chat-message .dice-result,
+.chat-message .dice-tooltip, .chat-message .dice-tooltip *,
+.chat-message .dice-roll, .chat-message .dice-roll * { color: #eafff4 !important; }
+.chat-message .dice-formula, .chat-message .dice-total {
+  background: #0e2a1c !important; border: 1px solid var(--wh-cg-border2) !important;
+}
+
+/* ── Выпадающие списки <select>/<option> — тёмный фон, светлый текст ──
+   (нативные опции по умолчанию наследуют светлый «пергамент» — нечитаемо) */
+.wh-add-item-select, .wh-add-item-select option,
+.wh-holo select, .wh-holo select option,
+.warhammer-dbc.wh-holo select, .warhammer-dbc.wh-holo select option,
+.window-content select option {
+  background: #0c2418 !important; color: #d8ffe8 !important;
+}
+.wh-add-item-select option:checked,
+.wh-holo select option:checked,
+.window-content select option:checked {
+  background: #15492f !important; color: #eafff4 !important;
+}
+
+/* ── Поле ввода чата и кости-трей ── */
+#chat-form textarea, #chat-message { background: var(--wh-cg-panel) !important; color: var(--wh-cg-text) !important; border: 1px solid var(--wh-cg-border) !important; }
+#roll-privacy .roll-type-select label, #chat-controls .control-buttons a { color: var(--wh-cg-dim) !important; }
+
+/* ── Контролы трея костей (нижняя панель) ── */
+#chat-controls, .chat-control-icon { color: var(--wh-cg-dim) !important; }
+/* Режим броска (Публичный/ГМ/Слепой/Себе): подсветить ВЫБРАННЫЙ */
+#chat-controls a.active, #chat-controls .active,
+#roll-privacy label.active, #roll-privacy .active,
+.roll-type-select .active, [data-roll-mode].active, button[data-roll-mode][aria-pressed="true"] {
+  color: #04100a !important; background: var(--wh-cg-accent) !important;
+  border-radius: 4px !important; box-shadow: 0 0 7px rgba(77,255,166,0.6) !important;
+}
+
+/* Иконки сайдбара справа — небольшой отступ от края окна (не впритык). */
+#sidebar-tabs { padding-right: 3px; }
+#ui-right { padding-right: 2px; }
+
+/* ── Встроенный трей костей ── */
+.wh-dice-tray {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 5px; margin: 3px 4px 2px;
+  background: rgba(10,28,18,0.9); border: 1px solid var(--wh-cg-border); border-radius: 5px;
+  position: relative; z-index: 5; pointer-events: auto; flex: 0 0 auto;
+}
+.wh-dice-tray button { pointer-events: auto; }
+/* Заголовок-переключатель: в свёрнутом виде от лотка остаётся только он. */
+.wh-dt-head {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; user-select: none;
+  font-size: 0.76em; font-weight: bold; letter-spacing: 0.04em;
+  color: #7fe0a8; text-transform: uppercase;
+}
+.wh-dt-head:hover { color: #d8ffe8; }
+.wh-dt-caret { font-size: 0.9em; opacity: .8; }
+.wh-dt-head-formula {
+  margin-left: auto; text-transform: none; letter-spacing: 0;
+  font-size: 1.05em; color: #9af2c4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%;
+}
+.wh-dt-body { display: flex; flex-direction: column; gap: 4px; }
+.wh-dice-tray.is-collapsed { padding: 3px 5px; }
+.wh-dice-tray.is-collapsed .wh-dt-body { display: none; }
+.wh-dt-formula { font-size: 0.82em; color: #9af2c4; text-align: center; min-height: 1.1em; font-weight: bold; letter-spacing: 0.02em; }
+/* Кубы — один ряд равных узких ячеек (сжимаются, не переносятся) */
+.wh-dt-dice { display: flex; gap: 3px; }
+.wh-dt-dice button { flex: 1 1 0; min-width: 0; padding: 4px 0; background: #0e2a1c; color: #d8ffe8; border: 1px solid var(--wh-cg-border2); border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 0.74em; }
+.wh-dt-dice button:hover { background: #15492f; box-shadow: 0 0 6px rgba(77,255,166,0.4); }
+/* Контролы — один ряд по центру */
+.wh-dt-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; }
+.wh-dt-row button { background: #0e2a1c; color: #d8ffe8; border: 1px solid var(--wh-cg-border2); border-radius: 3px; cursor: pointer; padding: 2px 6px; font-weight: bold; font-size: 0.8em; line-height: 1.25; }
+.wh-dt-row button:hover { background: #15492f; }
+/* Группа «− значение +» держится вместе */
+.wh-dt-grp { display: inline-flex; align-items: center; gap: 1px; border: 1px solid rgba(47,158,106,0.4); border-radius: 4px; padding: 0 1px; }
+.wh-dt-grp button { border: none !important; padding: 2px 5px; background: transparent; }
+.wh-dt-grp button:hover { background: #15492f; border-radius: 3px; }
+.wh-dt-keep.on { background: var(--wh-cg-accent); color: #04100a; box-shadow: 0 0 6px rgba(77,255,166,0.5); }
+.wh-dt-qty, .wh-dt-mod { min-width: 24px; text-align: center; color: #d8ffe8; font-weight: bold; font-size: 0.82em; }
+/* Строка действий: Сброс + Бросок в один ряд */
+.wh-dt-row-actions { flex-wrap: nowrap; }
+.wh-dt-row-actions button { flex: 1; padding: 4px 6px; }
+.wh-dt-clear { flex: 0 0 auto !important; color: #ff8a8a !important; }
+.wh-dt-roll { background: #15492f !important; color: #eafff4 !important; }
+.wh-dt-roll:hover { box-shadow: 0 0 8px rgba(77,255,166,0.6) !important; }
+
+/* ── Прокрутка ── */
+::-webkit-scrollbar-thumb { background: var(--wh-cg-border) !important; }
+::-webkit-scrollbar-thumb:hover { background: var(--wh-cg-border2) !important; }
+::-webkit-scrollbar-track { background: rgba(6,18,12,0.6) !important; }

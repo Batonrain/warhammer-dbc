@@ -1,0 +1,907 @@
+/* ═══════════════════════ Лист корабля ═══════════════════════ */
+.warhammer-dbc.ship-sheet { display: flex; flex-direction: column; }
+
+/* ── Лист звёздной системы (переиспользует .ship-header и т.п.) ── */
+.warhammer-dbc.star-system-sheet { display: flex; flex-direction: column; }
+.warhammer-dbc .ss-summary { font-size: 0.95em; opacity: 0.95; margin-top: 3px; line-height: 1.5; }
+.warhammer-dbc .ss-summary b { color: var(--wh-text-dark, #2a1a0a); }
+.warhammer-dbc .ss-count { display: inline-block; margin-right: 6px; white-space: nowrap; font-size: 1.05em; }
+
+/* Панель кнопок — компактная, несколько в ряд */
+.warhammer-dbc .ss-toolbar { display: flex; gap: 5px; flex-wrap: wrap; margin: 6px 0; }
+.warhammer-dbc .ss-toolbar button { flex: 1 1 110px; padding: 3px 9px; font-weight: bold; font-size: 0.82em; line-height: 1.5; cursor: pointer;
+  background: linear-gradient(180deg, var(--wh-parchment2), var(--wh-parchment3));
+  border: 1px solid var(--wh-border-light); border-radius: 3px; color: var(--wh-text-dark, #2a1a0a);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3); transition: background .12s, color .12s; white-space: nowrap; }
+.warhammer-dbc .ss-toolbar button:hover { background: linear-gradient(180deg, var(--wh-panel-mid), var(--wh-panel-dark)); color: var(--wh-text-light, #f0e6d2); }
+
+/* Особенности системы */
+.warhammer-dbc .ss-features { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 5px 14px; }
+.warhammer-dbc .ss-feature { font-size: 0.92em; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+
+/* Ресурсы системы — «чипы» + легенда единиц измерения */
+.warhammer-dbc .ss-res-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.warhammer-dbc .ss-res-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px 3px 8px; border-radius: 12px;
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border-light); font-size: 0.9em; font-weight: bold; color: var(--wh-text); line-height: 1.5; }
+.warhammer-dbc .ss-res-chip-ico { width: 15px; height: 15px; flex: 0 0 auto; }
+.warhammer-dbc .ss-res-chip-lbl { color: var(--wh-text); }
+.warhammer-dbc .ss-res-chip b { font-size: 1.12em; color: var(--wh-accent, #a37a20); margin-left: 1px; }
+.warhammer-dbc .ss-res-legend { font-size: 0.82em; font-style: italic; color: var(--wh-panel-mid); margin-top: 6px; line-height: 1.35; }
+
+/* Зоны и список тел */
+.warhammer-dbc .ss-zone-title { font-size: 1em; letter-spacing: 0.05em; }
+.warhammer-dbc .ss-body-list { display: flex; flex-direction: column; }
+.warhammer-dbc .ss-body-row {
+  padding: 6px 6px 6px 4px; border-bottom: 1px solid var(--wh-border-light); cursor: default;
+  border-left: 3px solid transparent; transition: background .1s; }
+.warhammer-dbc .ss-body-row:last-child { border-bottom: none; }
+.warhammer-dbc .ss-body-row:hover { background: rgba(122,31,31,0.08); border-left-color: var(--wh-accent, #a37a20); }
+.warhammer-dbc .ss-body-row.ss-child { background: rgba(0,0,0,0.035); }
+.warhammer-dbc .ss-body-line { display: flex; align-items: baseline; gap: 7px; }
+.warhammer-dbc .ss-branch { color: var(--wh-accent, #a37a20); font-size: 1.1em; font-weight: bold; margin-left: -14px; opacity: 0.85; }
+.warhammer-dbc .ss-body-icon { flex: 0 0 auto; width: 22px; text-align: center; font-size: 1.25em; }
+.warhammer-dbc .ss-body-id { cursor: pointer; display: inline-flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.warhammer-dbc .ss-body-id:hover .ss-body-name { color: var(--wh-accent, #a37a20); text-decoration: underline; }
+.warhammer-dbc .ss-body-name { font-size: 1.12em; font-weight: bold; color: var(--wh-text-dark, #2a1a0a); }
+.warhammer-dbc .ss-body-type { font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--wh-panel-mid); opacity: 0.85; }
+.warhammer-dbc .ss-body-summary { font-size: 0.9em; opacity: 0.92; line-height: 1.4; margin-top: 2px; padding-left: 29px; }
+.warhammer-dbc .ss-empty { padding: 16px; text-align: center; opacity: 0.7; font-size: 0.95em; }
+
+/* Бейдж принадлежности (кому принадлежит тело) + тип присутствия */
+.warhammer-dbc .ss-owner {
+  flex: 0 0 auto; font-size: 0.72em; font-weight: bold; letter-spacing: 0.03em; text-transform: uppercase;
+  padding: 1px 8px; border-radius: 10px; color: #fff; white-space: nowrap; }
+.warhammer-dbc .ss-owner-imperial    { background: #2f5d8a; }
+.warhammer-dbc .ss-owner-mechanicus  { background: #b5402a; }
+.warhammer-dbc .ss-owner-astartes    { background: #3c4654; }
+.warhammer-dbc .ss-owner-rogueTrader { background: #7a5a1a; }
+.warhammer-dbc .ss-owner-humans      { background: #2f6f7a; }
+.warhammer-dbc .ss-owner-chaos       { background: #7a1018; }
+.warhammer-dbc .ss-owner-xenos       { background: #2f7a4a; }
+.warhammer-dbc .ss-owner-abandoned   { background: #6a6a6a; }
+.warhammer-dbc .ss-body-type .ss-presence { font-style: italic; }
+.warhammer-dbc .ss-tithe { flex: 0 0 auto; font-size: 0.72em; font-weight: bold; white-space: nowrap;
+  padding: 1px 7px; border-radius: 10px; background: var(--wh-parchment3); border: 1px solid var(--wh-border-light); color: var(--wh-panel-mid); }
+
+/* Индикатор разведки (ГМ) + кнопка «раскрыть тайны» (ГМ) */
+.warhammer-dbc .ss-scout-flag { flex: 0 0 auto; margin-left: auto; font-size: 0.85em; color: var(--wh-panel-mid); opacity: 0.7; }
+.warhammer-dbc .ss-body-row.ss-revealed .ss-scout-flag,
+.warhammer-dbc .ss-body-row:not(.ss-unscouted) .ss-scout-flag { color: #2f7a4a; opacity: 1; }
+.warhammer-dbc .body-reveal {
+  flex: 0 0 auto; margin-left: 6px; width: auto; cursor: pointer; padding: 1px 8px;
+  background: transparent; border: 1px solid var(--wh-border-light); border-radius: 4px;
+  color: var(--wh-panel-mid); font-size: 0.85em; }
+.warhammer-dbc .body-reveal:hover { background: var(--wh-accent, #a37a20); color: #fff; border-color: var(--wh-accent, #a37a20); }
+.warhammer-dbc .ss-body-row.ss-revealed { box-shadow: inset 3px 0 0 #2f7a4a; }
+.warhammer-dbc .ss-body-row.ss-revealed .body-reveal { color: #2f7a4a; border-color: #2f7a4a; }
+.warhammer-dbc .ss-body-row.ss-unscouted .ss-body-name { opacity: 0.75; }
+.warhammer-dbc .ss-unscouted-note { font-style: italic; opacity: 0.65; }
+.warhammer-dbc .ss-body-improvements { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px;
+  font-size: 0.85em; opacity: 0.92; margin-top: 2px; line-height: 1.4; }
+.warhammer-dbc .ss-imp-tag { font-size: 0.82em; font-weight: bold; letter-spacing: 0.03em; text-transform: uppercase;
+  color: var(--wh-text-light, #f0e6d2); background: var(--wh-accent, #a37a20); border-radius: 8px; padding: 0 7px; }
+.warhammer-dbc .ss-imp-chip { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; cursor: help; }
+.warhammer-dbc .ss-imp-dim { color: #8a8a8a; opacity: 0.6; }   /* ещё не видно игрокам */
+.warhammer-dbc .ss-imp-ico { width: 13px; height: 13px; border: none; flex: 0 0 auto; }
+
+/* Генератор: обязательные (гарантированные) миры */
+.ss-gen-wc-add { display: flex; gap: 8px; align-items: center; }
+.ss-gen-wc-add select { flex: 1 1 auto; }
+.ss-gen-wc-btn { flex: 0 0 auto; width: 30px; height: 26px; cursor: pointer; font-weight: bold; line-height: 1;
+  border: 1px solid var(--wh-accent, #a37a20); border-radius: 4px; background: rgba(163,122,32,0.12); color: var(--wh-panel-mid); }
+.ss-gen-wc-btn:hover { background: rgba(163,122,32,0.28); }
+.ss-gen-wc-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.ss-gen-wc-list:empty { display: none; }
+.ss-gen-wc-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85em;
+  background: var(--wh-accent, #a37a20); color: var(--wh-text-light, #f0e6d2); border-radius: 10px; padding: 1px 4px 1px 9px; }
+.ss-gen-wc-chip button { border: none; background: rgba(0,0,0,0.25); color: inherit; cursor: pointer; padding: 0;
+  width: 16px; height: 16px; line-height: 14px; border-radius: 50%; font-size: 0.8em; }
+.ss-gen-wc-chip button:hover { background: rgba(0,0,0,0.5); }
+
+/* Ресурсы тела — наглядные чипы с иконками */
+.warhammer-dbc .ss-res-line { display: flex; flex-wrap: wrap; gap: 4px 5px; margin-top: 4px; }
+.warhammer-dbc .ss-res-pill {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px 1px 5px; border-radius: 10px;
+  background: rgba(120,255,180,0.07); border: 1px solid var(--wh-border-light); font-size: 0.82em; white-space: nowrap; line-height: 1.6; }
+.warhammer-dbc .ss-res-pill-ico { width: 13px; height: 13px; flex: 0 0 auto; }
+.warhammer-dbc .ss-res-pill-lbl { color: var(--wh-text-mid); }
+.warhammer-dbc .ss-res-pill b { color: var(--wh-text-dark); font-size: 1.05em; }
+
+/* ГМ-подсветка: что уже видят игроки. hidden — серым, scouted — жёлтым, revealed — зелёным. */
+.warhammer-dbc .ss-body-row.ss-pl-hidden { opacity: 0.62; border-left-color: #777; }
+.warhammer-dbc .ss-body-row.ss-pl-scouted { border-left-color: #c8a13a; }
+.warhammer-dbc .ss-body-row.ss-pl-revealed { border-left-color: #2f7a4a; }
+.warhammer-dbc .ss-pl-dim { color: #8a8a8a !important; opacity: 0.7; }   /* текст, ещё скрытый от игроков */
+
+/* Пометка планеты с жизнью */
+.warhammer-dbc .ss-life { flex: 0 0 auto; font-size: 0.7em; font-weight: bold; letter-spacing: 0.03em;
+  padding: 1px 7px; border-radius: 10px; background: #2f7a4a; color: #fff; white-space: nowrap; }
+
+/* Группа звезды (раскрываемая «вкладка») */
+.warhammer-dbc .ss-star-group { border: 1px solid var(--wh-border-light); border-radius: 5px; margin-bottom: 8px; overflow: hidden;
+  background: var(--wh-parchment2); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.warhammer-dbc .ss-star-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; cursor: default;
+  padding: 6px 10px; background: linear-gradient(180deg, var(--wh-panel-mid), var(--wh-panel-dark));
+  color: var(--wh-text-light, #f0e6d2); border-bottom: 2px solid var(--wh-accent, #a37a20); }
+.warhammer-dbc .ss-star-toggle { flex: 0 0 auto; width: auto; background: transparent; border: none; cursor: pointer;
+  color: var(--wh-text-light, #f0e6d2); padding: 0 2px; font-size: 1.05em; }
+.warhammer-dbc .ss-star-toggle i { transition: transform .12s; }
+.warhammer-dbc .ss-star-group.ss-collapsed .ss-star-toggle i { transform: rotate(-90deg); }
+.warhammer-dbc .ss-star-line { display: inline-flex; align-items: baseline; gap: 6px; cursor: context-menu; }
+.warhammer-dbc .ss-star-line .ss-body-name { color: var(--wh-text-light, #f0e6d2); font-size: 1.12em; }
+.warhammer-dbc .ss-star-line .ss-body-type { color: rgba(255,255,255,0.75); }
+.warhammer-dbc .ss-star-inner { padding: 4px 8px 8px; }
+.warhammer-dbc .ss-star-group.ss-collapsed .ss-star-inner { display: none; }
+.warhammer-dbc .ss-star-note { font-size: 0.86em; font-style: italic; color: var(--wh-panel-mid); margin: 6px 2px; line-height: 1.4;
+  border-left: 3px solid var(--wh-accent, #a37a20); padding-left: 8px; }
+.warhammer-dbc .ss-star-inner .ss-zone-title { margin: 8px 0 2px; font-size: 0.86em; letter-spacing: 0.05em;
+  color: var(--wh-panel-mid); border-bottom: 1px solid var(--wh-border-light); padding-bottom: 2px; text-transform: uppercase; font-weight: bold; }
+.warhammer-dbc .ss-empty-mini { font-size: 0.86em; opacity: 0.6; padding: 6px 2px; font-style: italic; }
+
+/* Разворачиваемое досье тела (описание + истинная природа) */
+.warhammer-dbc .ss-body-caret { flex: 0 0 auto; color: var(--wh-panel-mid); font-size: 0.95em; line-height: 1; }
+.warhammer-dbc .ss-body-caret i { transition: transform .12s; }
+.warhammer-dbc .ss-body-row.ss-open .ss-body-caret i { transform: rotate(90deg); }
+.warhammer-dbc .ss-has-dossier { cursor: pointer; }
+.warhammer-dbc .ss-body-dossier { display: none; margin-top: 5px; padding: 8px 11px;
+  background: rgba(0,0,0,0.045); border-left: 3px solid var(--wh-accent, #a37a20); border-radius: 3px; }
+.warhammer-dbc .ss-body-row.ss-open .ss-body-dossier { display: block; }
+.warhammer-dbc .ss-dossier-desc { font-size: 0.92em; line-height: 1.55; font-style: italic; white-space: pre-wrap; }
+.warhammer-dbc .ss-dossier-lore { font-size: 0.92em; line-height: 1.55; margin-top: 7px; padding-top: 7px;
+  border-top: 1px dashed var(--wh-border-light); color: #8a1820; white-space: pre-wrap; }
+.warhammer-dbc .ss-dossier-nodata { font-size: 0.95em; font-weight: bold; letter-spacing: 0.12em; opacity: 0.55; }
+.warhammer-dbc .wh-ctx-sep { height: 1px; background: var(--wh-border-light); margin: 3px 6px; }
+
+/* Секретный блок на листе тела (оборона / истинная природа) */
+.warhammer-dbc .ss-secret { border: 1px solid #8a1820; border-radius: 4px; padding: 8px; margin-top: 8px; background: rgba(138,24,32,0.05); }
+.warhammer-dbc .ss-secret .item-section-title { color: #8a1820; }
+.warhammer-dbc .ss-reveal-toggle { display: flex; align-items: center; gap: 7px; font-size: 0.88em; font-weight: bold; color: var(--wh-panel-mid); margin-bottom: 6px; cursor: pointer; }
+.warhammer-dbc .ss-reveal-toggle input { flex: 0 0 auto; }
+
+/* Сетка ресурсов на листе тела (celestial-body.hbs) */
+.warhammer-dbc .ss-res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px 10px; }
+.warhammer-dbc .ss-res { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.9em; }
+.warhammer-dbc .ss-res input { width: 52px; text-align: center; }
+.warhammer-dbc .ss-res span { display: inline-flex; align-items: center; gap: 4px; }
+.warhammer-dbc .ss-res-ico { width: 16px; height: 16px; flex: 0 0 auto; }
+
+/* ── Диалог генератора ── */
+.ss-gen { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
+.ss-gen-sec { display: flex; flex-direction: column; gap: 7px; }
+.ss-gen-sec h4 { margin: 0; font-size: 0.95em; letter-spacing: 0.04em; text-transform: uppercase;
+  border-bottom: 2px solid var(--wh-accent, #a37a20); padding-bottom: 3px; color: var(--wh-text-dark, #2a1a0a); }
+.ss-gen-sec h4 em { font-style: italic; font-weight: normal; font-size: 0.85em; opacity: 0.7; text-transform: none; }
+.ss-gen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 14px; }
+.ss-gen-opt { display: flex; align-items: center; gap: 7px; font-size: 0.95em; cursor: pointer; }
+.ss-gen-opt input { flex: 0 0 auto; }
+.ss-gen-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.ss-gen-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.85em; font-weight: bold; color: var(--wh-panel-mid); }
+.ss-gen-field select { font-size: 1em; font-weight: normal; padding: 3px 4px; }
+.ss-gen-check { display: flex; align-items: center; gap: 7px; font-size: 0.95em; font-weight: bold; cursor: pointer; }
+.ss-gen-hint { margin: 0; font-size: 0.85em; line-height: 1.45; color: var(--wh-panel-mid);
+  background: rgba(0,0,0,0.04); border-left: 3px solid var(--wh-accent, #a37a20); border-radius: 3px; padding: 6px 9px; }
+@media (max-width: 480px) { .ss-gen-cols { grid-template-columns: 1fr; } .ss-gen-grid { grid-template-columns: 1fr; } }
+
+/* ── Развитие колонии (диалог + список улучшений) ── */
+.ss-colony { display: flex; flex-direction: column; gap: 9px; padding: 2px; }
+.ss-imp-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
+.ss-imp-row { background: rgba(0,0,0,0.04); border: 1px solid var(--wh-border-light); border-left: 3px solid var(--wh-accent, #a37a20); border-radius: 3px; padding: 5px 9px; }
+.ss-imp-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ss-imp-head b { color: var(--wh-text-dark, #2a1a0a); }
+.imp-del { width: auto; flex: 0 0 auto; background: transparent; border: none; color: #a33; cursor: pointer; font-weight: bold; padding: 0 4px; line-height: 1; }
+.imp-del:hover { color: #d11; }
+.ss-imp-desc { font-size: 0.86em; opacity: 0.9; margin-top: 2px; line-height: 1.35; }
+.ss-imp-bonus { font-size: 0.86em; font-weight: bold; color: var(--wh-accent, #a37a20); margin-top: 3px; }
+.ss-imp-empty { opacity: 0.6; font-style: italic; padding: 4px 2px; }
+.ss-imp-actions { display: flex; gap: 8px; }
+.ss-imp-actions button { width: auto; flex: 0 0 auto; padding: 3px 12px; cursor: pointer; font-size: 0.9em; }
+.ss-imp-form { display: flex; flex-direction: column; gap: 6px; background: var(--wh-parchment2); border: 1px solid var(--wh-border-light); border-radius: 4px; padding: 8px; }
+.ss-imp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 8px; }
+.ss-imp-res { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 0.8em; }
+.ss-imp-res input { width: 46px; text-align: center; }
+.ss-imp-form-foot { text-align: right; }
+.ss-imp-form-foot button { width: auto; padding: 3px 14px; cursor: pointer; }
+.ss-imp-tools { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.imp-flag { width: auto; flex: 0 0 auto; background: transparent; border: 1px solid var(--wh-border-light); border-radius: 4px;
+  cursor: pointer; padding: 0 5px; font-size: 0.85em; opacity: 0.4; filter: grayscale(1); }
+.imp-flag.on { opacity: 1; filter: none; background: rgba(122,31,31,0.12); border-color: var(--wh-accent, #a37a20); }
+.ss-imp-chks { display: flex; gap: 16px; }
+.ss-imp-chk { display: flex; align-items: center; gap: 6px; font-size: 0.88em; font-weight: bold; color: var(--wh-panel-mid); cursor: pointer; }
+.ss-imp-chk input { flex: 0 0 auto; }
+
+/* Метка скрытости улучшения на листе тела */
+.warhammer-dbc .ss-imp-flag-tag { font-size: 0.78em; font-weight: bold; color: #8a1820; }
+
+/* Список улучшений на листе тела (только чтение) */
+.warhammer-dbc .ss-imp-readlist { display: flex; flex-direction: column; gap: 5px; }
+.warhammer-dbc .ss-imp-read { background: var(--wh-parchment3); border-left: 3px solid var(--wh-accent, #a37a20); border-radius: 3px; padding: 4px 8px; }
+.warhammer-dbc .ss-imp-read-name { font-weight: bold; color: var(--wh-text-dark, #2a1a0a); }
+.warhammer-dbc .ss-imp-read-bonus { font-weight: bold; color: var(--wh-accent, #a37a20); font-size: 0.9em; }
+.warhammer-dbc .ss-imp-read-desc { font-size: 0.85em; opacity: 0.9; line-height: 1.35; }
+.warhammer-dbc .ss-res-bonus { color: var(--wh-accent, #a37a20); font-weight: bold; font-style: normal; }
+
+.warhammer-dbc .ship-header {
+  display: flex; gap: 8px; padding: 5px 7px 6px;
+  border-bottom: 2px solid var(--wh-border-dark, #5a3a1a);
+}
+.warhammer-dbc .ship-portrait {
+  width: 62px; height: 62px; flex: 0 0 62px; object-fit: cover;
+  border: 2px solid var(--wh-border-dark, #5a3a1a); border-radius: 4px; background: #000;
+}
+.warhammer-dbc .ship-head-fields { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.warhammer-dbc .ship-name {
+  font-size: 1.12em; font-weight: bold; font-family: var(--wh-font, inherit); padding: 2px 5px;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+}
+.warhammer-dbc .ship-head-row { display: flex; gap: 6px; }
+.warhammer-dbc .ship-head-row label,
+.warhammer-dbc .ship-two-col label,
+.warhammer-dbc .ship-hull-grid label {
+  flex: 1; display: flex; flex-direction: column; font-size: 0.85em;
+  color: var(--wh-panel-mid); font-weight: bold; gap: 2px;
+}
+.warhammer-dbc .ship-head-row input,
+.warhammer-dbc .ship-head-row select,
+.warhammer-dbc .ship-two-col input,
+.warhammer-dbc .ship-two-col select,
+.warhammer-dbc .ship-hull-grid input {
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  font-family: inherit; font-size: 1em; font-weight: normal; padding: 2px 5px;
+}
+
+.warhammer-dbc .ship-tabs { display: flex; gap: 3px; padding: 3px 5px 0; }
+.warhammer-dbc .ship-tabs .item {
+  padding: 4px 12px; background: var(--wh-panel-mid); color: var(--wh-text-light);
+  border-radius: 4px 4px 0 0; font-weight: bold; font-size: 0.88em; cursor: pointer;
+}
+.warhammer-dbc .ship-tabs .item.active { background: var(--wh-panel-dark, #2a1a0a); }
+
+.warhammer-dbc .ship-tab { padding: 6px; }
+.warhammer-dbc .ship-panel {
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border-light);
+  border-radius: 4px; padding: 6px; margin-bottom: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+}
+.warhammer-dbc .ship-panel-title {
+  background: linear-gradient(180deg, var(--wh-panel-mid), var(--wh-panel-dark));
+  color: var(--wh-text-light);
+  font-weight: bold; font-size: 0.92em; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 4px 9px; margin: -6px -6px 8px; border-radius: 3px 3px 0 0;
+  border-bottom: 2px solid var(--wh-accent, #a37a20);
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+/* ─── Обзор: двухколоночная сетка ─── */
+.warhammer-dbc .ship-overview-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: start;
+}
+.warhammer-dbc .ship-overview-grid > .ship-panel { grid-column: 1 / -1; margin-bottom: 0; }
+.warhammer-dbc .ship-overview-grid > .ship-panel.ship-col-half { grid-column: span 1; }
+@media (max-width: 620px) {
+  .warhammer-dbc .ship-overview-grid > .ship-panel.ship-col-half { grid-column: 1 / -1; }
+}
+
+/* Характеристики */
+.warhammer-dbc .ship-chars-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px;
+}
+.warhammer-dbc .ship-char {
+  text-align: center;
+  background: linear-gradient(180deg, var(--wh-parchment2), var(--wh-parchment3));
+  border: 1px solid var(--wh-border-light); border-radius: 5px; padding: 3px 2px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.warhammer-dbc .ship-char-abbr { font-size: 0.85em; font-weight: bold; color: var(--wh-panel-mid); letter-spacing: 0.05em; }
+.warhammer-dbc .ship-char-val  { font-size: 1.6em; font-weight: bold; line-height: 1.05; color: var(--wh-text-dark, #2a1a0a); }
+.warhammer-dbc .ship-char-label { font-size: 0.78em; color: var(--wh-text); opacity: 0.9; line-height: 1.15; }
+
+/* Поворот / WC / Прочность под характеристиками */
+.warhammer-dbc .ship-chars-extra { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.warhammer-dbc .ship-char-extra {
+  flex: 1; min-width: 150px; display: flex; justify-content: space-between; align-items: center;
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border-light); border-radius: 4px; padding: 4px 9px;
+  font-size: 0.85em; font-weight: bold; color: var(--wh-text);
+}
+.warhammer-dbc .ship-char-extra-k { color: var(--wh-panel-mid); }
+.warhammer-dbc .ship-char-extra b { font-size: 1.1em; color: var(--wh-text-dark, #2a1a0a); }
+
+/* Прочность корпуса — компактная строка в блоке характеристик */
+.warhammer-dbc .ship-hi-extra { flex: 1.2; }
+.warhammer-dbc .ship-hi-inline { display: inline-flex; align-items: center; gap: 5px; }
+.warhammer-dbc .ship-hi-inline input { width: 54px; text-align: center; font-size: 1.05em; font-weight: bold; padding: 1px 3px;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); border-radius: 3px; }
+.warhammer-dbc .ship-hi-inline b { font-size: 1.05em; color: var(--wh-text-dark, #2a1a0a); }
+/* устаревшая полноразмерная панель HI (на случай прочих мест) */
+.warhammer-dbc .ship-hi-row { display: flex; align-items: center; justify-content: center; gap: 7px; }
+.warhammer-dbc .ship-hi-row input { width: 70px; text-align: center; font-size: 1.3em; font-weight: bold;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); border-radius: 4px; }
+.warhammer-dbc .ship-hi-sep { font-size: 1.2em; font-weight: bold; opacity: 0.6; }
+.warhammer-dbc .ship-hi-max { font-size: 1.3em; font-weight: bold; color: var(--wh-text-dark, #2a1a0a); }
+.warhammer-dbc .ship-hi-bonus { font-size: 0.78em; color: var(--wh-text-mid, #6a4a10); opacity: 0.9; margin-left: 4px; }
+
+/* Бюджеты */
+.warhammer-dbc .ship-budgets { display: flex; gap: 6px; flex-wrap: wrap; }
+.warhammer-dbc .ship-budgets.compact { margin-bottom: 6px; }
+.warhammer-dbc .ship-budget {
+  flex: 1; min-width: 120px; text-align: center; padding: 5px 6px; border-radius: 5px;
+  background: linear-gradient(180deg, var(--wh-parchment2), var(--wh-parchment3));
+  border: 1px solid var(--wh-border-light);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+  font-size: 0.86em; font-weight: bold;
+}
+.warhammer-dbc .ship-budget b { font-size: 1.15em; color: var(--wh-text-dark, #2a1a0a); }
+.warhammer-dbc .ship-budget span { display: block; font-size: 0.8em; font-weight: normal; opacity: 0.85; }
+.warhammer-dbc .ship-budget.over { background: #f4d0d0; border-color: #a33; color: #7a1010; }
+.warhammer-dbc .ship-budget.over b { color: #7a1010; }
+
+.warhammer-dbc .ship-two-col { display: flex; gap: 8px; flex-wrap: wrap; }
+.warhammer-dbc .ship-two-col label { min-width: 120px; }
+.warhammer-dbc .ship-morale-row { display: flex; align-items: center; gap: 5px; }
+.warhammer-dbc .ship-morale-row input { flex: 1; min-width: 0; text-align: center; }
+.warhammer-dbc .ship-morale-sep { font-weight: bold; opacity: 0.6; }
+.warhammer-dbc .ship-hint { font-size: 0.82em; color: var(--wh-panel-mid); opacity: 0.9; margin-top: 6px; line-height: 1.35; }
+
+.warhammer-dbc .ship-hull-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.warhammer-dbc .ship-hull-grid label { min-width: 70px; }
+.warhammer-dbc .ship-hull-grid input { text-align: center; }
+
+/* Таблица узлов */
+.warhammer-dbc .ship-comp-table { width: 100%; border-collapse: collapse; }
+.warhammer-dbc .ship-comp-table th {
+  background: var(--wh-panel-mid); color: var(--wh-text-light);
+  font-size: 0.74em; padding: 3px 2px; border: 1px solid var(--wh-panel-dark);
+}
+.warhammer-dbc .ship-comp-table td {
+  border: 1px solid var(--wh-border-light); padding: 1px 2px; background: var(--wh-parchment2);
+}
+.warhammer-dbc .ship-comp-table input,
+.warhammer-dbc .ship-comp-table select {
+  width: 100%; box-sizing: border-box; background: var(--wh-input-bg);
+  border: 1px solid transparent; font-family: inherit; font-size: 0.82em; padding: 2px;
+}
+.warhammer-dbc .ship-comp-table input:focus,
+.warhammer-dbc .ship-comp-table select:focus { border-color: var(--wh-border-light); }
+.warhammer-dbc .ship-comp-table .num { text-align: center; }
+.warhammer-dbc .ship-comp-table .cc-num { width: 8%; }
+.warhammer-dbc .ship-comp-table .cc-dmg, .warhammer-dbc .ship-comp-table .cc-del { width: 26px; text-align: center; }
+.warhammer-dbc .ship-comp-table .cc-cat, .warhammer-dbc .ship-comp-table .cc-mod { width: 16%; }
+.warhammer-dbc .ship-comp-delete { cursor: pointer; }
+.warhammer-dbc .ship-comp-special td { background: var(--wh-parchment3); }
+.warhammer-dbc tr.comp-damaged td { opacity: 0.55; text-decoration: line-through; }
+.warhammer-dbc tr.comp-damaged.ship-comp-special td { text-decoration: none; }
+
+.warhammer-dbc .btn-add-small {
+  font-size: 0.78em; padding: 1px 8px; cursor: pointer;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); border-radius: 3px;
+}
+/* Кнопки в заголовке панели («+ узел», «+ груз», бросок искажения и т.п.) —
+   компактные, прижаты вправо, не растягиваются на всю ширину. */
+.warhammer-dbc .ship-panel-title button,
+.warhammer-dbc .ship-panel-title .btn-add-small {
+  flex: 0 0 auto;
+  width: auto;
+  margin-left: auto;
+  font-size: 0.72em;
+  padding: 1px 10px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+/* Несколько кнопок в одном заголовке — с отступом между ними. */
+.warhammer-dbc .ship-panel-title button + button { margin-left: 6px; }
+.warhammer-dbc .ship-notes { width: 100%; min-height: 240px; resize: vertical;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); font-family: inherit; }
+
+.warhammer-dbc .ship-hi-max { font-size: 1.2em; font-weight: bold; }
+.warhammer-dbc .ship-warn { background: #f4e4c0; border-color: #a37a20 !important; color: #6a4a10; font-size: 0.85em; }
+
+/* Список узлов-предметов */
+.warhammer-dbc .ship-comp-open { cursor: pointer; display: flex; align-items: center; gap: 5px; color: var(--wh-text); font-weight: bold; }
+.warhammer-dbc .cc-img { width: 20px; height: 20px; object-fit: cover; border: 1px solid var(--wh-border-light); border-radius: 3px; }
+.warhammer-dbc tr.comp-hull td { background: var(--wh-parchment3) !important; font-weight: bold; }
+.warhammer-dbc .ship-comp-special td { background: var(--wh-parchment3); font-size: 0.78em; color: var(--wh-panel-mid); padding: 2px 6px !important; }
+.warhammer-dbc .ship-comp-table .cc-num { text-align: center; }
+.warhammer-dbc .ship-comp-table td.cc-cat { font-size: 0.8em; }
+
+/* Лист узла (component.hbs) */
+.warhammer-dbc .comp-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-bottom: 5px; }
+.warhammer-dbc .comp-row.comp-chars { gap: 2px 6px; }
+.warhammer-dbc .wr-input-lg { flex: 1; min-width: 140px; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); font-family: inherit; padding: 2px 4px; }
+
+/* Грузы — список на листе корабля */
+.warhammer-dbc .cargo-group { margin-bottom: 8px; }
+.warhammer-dbc .cargo-group-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid var(--wh-border-light); padding: 2px 2px 1px; margin-bottom: 3px;
+}
+.warhammer-dbc .cargo-group-name { font-weight: bold; color: var(--wh-text-dark, #2a1a0a); font-size: 0.95em; }
+.warhammer-dbc .cargo-group-meta { font-size: 0.82em; font-weight: bold; color: var(--wh-panel-mid); }
+.warhammer-dbc .cargo-row { background: var(--wh-parchment3); border: 1px solid var(--wh-border-light); border-radius: 3px; padding: 4px 7px; margin-bottom: 3px; }
+.warhammer-dbc .cargo-row-head { display: flex; align-items: baseline; gap: 8px; }
+.warhammer-dbc .cargo-row-name { cursor: pointer; font-weight: bold; color: var(--wh-text-dark, #2a1a0a); flex: 1; }
+.warhammer-dbc .cargo-row-qty {
+  flex: 0 0 auto; font-weight: bold; font-size: 0.95em; color: var(--wh-text-light);
+  background: var(--wh-accent, #a37a20); border-radius: 9px; padding: 0 8px; min-width: 28px; text-align: center;
+}
+.warhammer-dbc .cargo-row-tags { flex: 0 0 auto; font-size: 0.82em; font-weight: bold; color: var(--wh-panel-mid); white-space: nowrap; }
+.warhammer-dbc .cargo-row-desc { font-size: 0.85em; color: var(--wh-text); opacity: 0.92; margin-top: 3px; white-space: pre-wrap; line-height: 1.35; }
+
+/* Осквернение */
+.warhammer-dbc .ship-check-label { flex-direction: row !important; align-items: center; gap: 5px !important; }
+.warhammer-dbc .ship-check-label input { flex: 0 0 auto; width: auto; }
+.warhammer-dbc .ship-defile-status { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+.warhammer-dbc .ship-defile-chip { font-size: 0.78em; background: var(--wh-parchment3); border: 1px solid var(--wh-border-light); border-radius: 10px; padding: 1px 9px; }
+.warhammer-dbc .ship-defile-chip.warn { background: #f4e4c0; border-color: #a37a20; color: #6a4a10; font-weight: bold; }
+.warhammer-dbc .ship-panel.ship-daemon { box-shadow: 0 0 0 2px #7a1020 inset; }
+.warhammer-dbc .ship-panel.ship-daemon .ship-panel-title { background: #7a1020; }
+
+/* Журнал искажений (Записи) */
+.warhammer-dbc .ship-distort-log { display: flex; flex-direction: column; gap: 5px; }
+.warhammer-dbc .ship-distort-entry {
+  background: var(--wh-parchment3); border: 1px solid var(--wh-border-light);
+  border-left: 3px solid var(--wh-accent, #a37a20); border-radius: 3px; padding: 4px 7px;
+}
+.warhammer-dbc .ship-distort-entry-head {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: baseline; gap: 4px 10px;
+}
+.warhammer-dbc .ship-distort-name { font-weight: bold; font-size: 0.95em; color: var(--wh-text-dark, #2a1a0a); }
+.warhammer-dbc .ship-distort-meta { font-size: 0.78em; color: var(--wh-panel-mid); white-space: nowrap; }
+.warhammer-dbc .ship-distort-del {
+  flex: 0 0 auto; cursor: pointer; border: none; background: transparent;
+  color: #a33; font-weight: bold; padding: 0 2px; line-height: 1; font-size: 1em;
+}
+.warhammer-dbc .ship-distort-del:hover { color: #d11; }
+.warhammer-dbc .ship-distort-entry-desc { font-size: 0.85em; color: var(--wh-text); opacity: 0.9; margin-top: 3px; white-space: pre-wrap; line-height: 1.35; }
+
+/* Поле «Очки Корабля (макс.)» в Записях */
+.warhammer-dbc .ship-spmax-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.86em; font-weight: bold; color: var(--wh-panel-mid); max-width: 200px; }
+.warhammer-dbc .ship-spmax-field input { background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); font-family: inherit; font-weight: normal; font-size: 1.1em; padding: 3px 5px; text-align: center; }
+
+/* Кнопка «Огонь» в таблице орудий */
+.warhammer-dbc .ship-comp-table .cc-fire { width: 54px; text-align: center; }
+.warhammer-dbc .ship-fire-btn {
+  width: auto; cursor: pointer; font-size: 0.82em; font-weight: bold; padding: 1px 8px;
+  background: linear-gradient(180deg, #8a3320, #6a1f10); color: #f0e0d0;
+  border: 1px solid #4a1408; border-radius: 3px;
+}
+.warhammer-dbc .ship-fire-btn:hover { background: linear-gradient(180deg, #a33d24, #7a2414); }
+
+/* Справочники Манёвров / Длительных Действий */
+.warhammer-dbc .ship-ref-panel { padding: 0; }
+.warhammer-dbc .ship-ref-panel > summary { cursor: pointer; margin: 0; list-style: none; }
+.warhammer-dbc .ship-ref-panel > summary::-webkit-details-marker { display: none; }
+.warhammer-dbc .ship-ref-panel > summary::before { content: "▸ "; }
+.warhammer-dbc .ship-ref-panel[open] > summary::before { content: "▾ "; }
+.warhammer-dbc .ship-ref-list { padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; }
+.warhammer-dbc .ship-ref-row {
+  display: grid; grid-template-columns: 150px 1fr; gap: 1px 10px;
+  padding: 4px 0; border-bottom: 1px solid var(--wh-border-light);
+}
+.warhammer-dbc .ship-ref-name { font-weight: bold; color: var(--wh-text-dark, #2a1a0a); font-size: 0.86em; }
+.warhammer-dbc .ship-ref-test { font-size: 0.78em; color: var(--wh-accent, #a37a20); font-weight: bold; }
+.warhammer-dbc .ship-ref-desc { grid-column: 2; font-size: 0.82em; color: var(--wh-text); opacity: 0.9; line-height: 1.3; }
+.warhammer-dbc .ship-ref-list p { font-size: 0.84em; line-height: 1.4; margin: 0 0 6px; }
+
+/* Активные эффекты экипажа */
+.warhammer-dbc .crew-fx-group { margin-bottom: 6px; }
+.warhammer-dbc .crew-fx-head { font-size: 0.82em; font-weight: bold; color: var(--wh-panel-mid); margin-bottom: 2px; }
+.warhammer-dbc .crew-fx-row {
+  font-size: 0.84em; padding: 3px 7px; margin-bottom: 2px; line-height: 1.3;
+  background: var(--wh-parchment3); border-left: 3px solid var(--wh-accent, #a37a20); border-radius: 3px;
+}
+.warhammer-dbc .crew-fx-row.crew-fx-mutiny { border-left-color: #a33; background: #f4e0d8; color: #7a1010; }
+.warhammer-dbc .crew-fx-t { font-weight: bold; color: var(--wh-panel-mid); margin-right: 4px; }
+/* Описание искажения в чате */
+.roll-distort-desc { font-size: 0.86em; line-height: 1.4; margin-top: 4px; padding: 4px 6px; background: rgba(0,0,0,0.04); border-radius: 3px; }
+
+/* Лист груза (cargo.hbs) */
+.warhammer-dbc .cargo-grid { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.warhammer-dbc .cargo-field { display: flex; flex-direction: column; font-size: 0.78em; font-weight: bold; color: var(--wh-panel-mid); gap: 2px; flex: 1; min-width: 120px; }
+.warhammer-dbc .cargo-field-wide { flex: 1 1 100%; }
+.warhammer-dbc .cargo-field input, .warhammer-dbc .cargo-field select,
+.warhammer-dbc .cargo-select { background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); font-family: inherit; font-weight: normal; font-size: 1.05em; padding: 2px 4px; }
+.warhammer-dbc .cargo-ref { margin-top: 6px; padding: 6px 8px; background: var(--wh-parchment3); border: 1px solid var(--wh-border-light); border-radius: 3px; font-size: 0.9em; line-height: 1.4; }
+.warhammer-dbc .cargo-ref-row { margin-bottom: 3px; }
+.warhammer-dbc .cargo-ref-key { font-weight: bold; color: var(--wh-panel-mid); }
+.warhammer-dbc .cargo-ref-hint { font-size: 0.95em; color: var(--wh-panel-mid); font-style: italic; margin-top: 4px; }
+
+/* ── Отношение корабля (цвет токена) ── */
+.warhammer-dbc .ship-relation-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.9em; font-weight: bold;
+  padding: 6px 8px; border-radius: 4px; border-left: 4px solid var(--rel-color, #4dffa6); background: rgba(0,0,0,0.12); }
+.warhammer-dbc .ship-relation-field select { background: var(--wh-input-bg); border: 1px solid var(--rel-color, var(--wh-border)); color: var(--rel-color, var(--wh-text)); font-weight: bold; }
+.warhammer-dbc .ship-relation-player  { --rel-color: #ffd23f; }
+.warhammer-dbc .ship-relation-ally    { --rel-color: #3fb6ff; }
+.warhammer-dbc .ship-relation-enemy   { --rel-color: #ff4d4d; }
+.warhammer-dbc .ship-relation-neutral { --rel-color: #4dffa6; }
+
+/* ── Орудийная оснащённость (WC) ── */
+.warhammer-dbc .ship-wc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; }
+.warhammer-dbc .ship-wc-slot { border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.10); padding: 5px 7px; }
+.warhammer-dbc .ship-wc-slot.ship-wc-over { border-color: var(--wh-red); box-shadow: inset 0 0 0 1px var(--wh-red); }
+.warhammer-dbc .ship-wc-pos { font-size: 0.8em; font-weight: bold; color: var(--wh-panel-mid); }
+.warhammer-dbc .ship-wc-count { font-size: 0.9em; }
+.warhammer-dbc .ship-wc-count b { color: var(--wh-accent); }
+.warhammer-dbc .ship-wc-pips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.warhammer-dbc .ship-wc-pip { width: 11px; height: 11px; border-radius: 2px; border: 1px solid var(--wh-border-light); background: transparent; }
+.warhammer-dbc .ship-wc-pip-on { background: var(--wh-accent); border-color: var(--wh-accent); box-shadow: 0 0 4px var(--wh-accent); }
+.warhammer-dbc .ship-wc-pip-over { background: var(--wh-red); border-color: var(--wh-red); box-shadow: 0 0 4px var(--wh-red); }
+.warhammer-dbc .ship-wc-warn { font-size: 0.8em; color: var(--wh-red); margin-top: 6px; font-weight: bold; }
+.warhammer-dbc .ship-arc-select { max-width: 130px; font-size: 0.86em; background: var(--wh-input-bg); border: 1px solid var(--wh-border); }
+
+/* ── Тумблер «щиты схлопнуты» + список залпа ── */
+.warhammer-dbc .ship-vs-toggle { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.84em; color: var(--wh-panel-mid); }
+.warhammer-dbc .ship-vs-toggle.ship-vs-down { color: #ff8a3f; font-weight: bold; }
+.wh-attack-dialog .salvo-list { display: flex; flex-direction: column; gap: 3px; margin: 4px 0 8px; max-height: 180px; overflow-y: auto;
+  border: 1px solid var(--wh-border-light); border-radius: 4px; padding: 5px; background: rgba(0,0,0,0.08); }
+.wh-attack-dialog .salvo-row { display: flex; align-items: center; gap: 6px; font-size: 0.86em; }
+
+/* ── Явные кнопки Таран/Абордаж (под оснащённостью) ── */
+.warhammer-dbc .ship-attack-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.warhammer-dbc .ship-attack-actions .ship-attack-btn { flex: 0 1 auto; width: auto; padding: 3px 10px; line-height: 1.5;
+  font-weight: bold; font-size: 0.8em; white-space: nowrap; cursor: pointer;
+  background: linear-gradient(180deg, var(--wh-panel-mid), var(--wh-panel-dark)); color: var(--wh-text-light);
+  border: 1px solid var(--wh-accent); border-radius: 4px; letter-spacing: normal; text-transform: none;
+  box-shadow: 0 0 4px rgba(77,255,166,0.2); transition: box-shadow .12s, background .12s; }
+.warhammer-dbc .ship-attack-actions .ship-attack-btn:hover { box-shadow: 0 0 8px rgba(77,255,166,0.45); background: linear-gradient(180deg, var(--wh-accent), var(--wh-panel-mid)); color: #04140c; }
+.warhammer-dbc .ship-attack-actions .ship-attack-btn i { margin-right: 4px; }
+
+/* ── Офицеры корабля ── */
+.warhammer-dbc .ship-officer-help { font-size: 0.8em; font-style: italic; color: var(--wh-panel-mid); margin-bottom: 6px; line-height: 1.4; }
+.warhammer-dbc .ship-officer-add-bar { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.warhammer-dbc .ship-officer-add-bar .ship-officer-select { flex: 1 1 auto; min-width: 0; background: var(--wh-input-bg); border: 1px solid var(--wh-border); }
+.warhammer-dbc .ship-officer-add-bar .ship-officer-add { flex: 0 0 auto !important; width: auto; white-space: nowrap; padding: 2px 10px; font-size: 0.82em; }
+.warhammer-dbc .ship-officer-list { display: flex; flex-direction: column; gap: 3px; }
+.warhammer-dbc .ship-officer-row { display: flex; align-items: center; gap: 7px; padding: 3px 5px;
+  border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.06); }
+.warhammer-dbc .ship-officer-row.ship-officer-filled { border-left: 3px solid var(--wh-accent); }
+.warhammer-dbc .ship-officer-row.ship-officer-missing { opacity: 0.6; border-style: dashed; }
+.warhammer-dbc .ship-officer-grip { flex: 0 0 auto; cursor: grab; color: var(--wh-panel-mid); padding: 0 3px; opacity: 0.7; }
+.warhammer-dbc .ship-officer-grip:hover { color: var(--wh-accent); opacity: 1; }
+.warhammer-dbc .ship-officer-grip:active { cursor: grabbing; }
+.warhammer-dbc .ship-officer-row.wh-drag-over { box-shadow: inset 0 2px 0 var(--wh-accent); }
+.warhammer-dbc .ship-officer-title { flex: 0 0 150px; width: 150px; font-weight: bold; font-size: 0.85em; background: var(--wh-input-bg); border: 1px solid var(--wh-border); color: var(--wh-text-dark); }
+.warhammer-dbc .ship-officer-img { width: 26px; height: 26px; object-fit: cover; border: 1px solid var(--wh-border); border-radius: 3px; cursor: pointer; flex: 0 0 auto; }
+.warhammer-dbc .ship-officer-name { flex: 1 1 auto; cursor: pointer; color: var(--wh-text-dark); }
+.warhammer-dbc .ship-officer-name:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .ship-officer-empty { flex: 1 1 auto; font-size: 0.82em; font-style: italic; color: var(--wh-panel-mid); opacity: 0.75; }
+.warhammer-dbc .ship-officer-clear, .warhammer-dbc .ship-officer-remove { flex: 0 0 auto; cursor: pointer; color: var(--wh-panel-mid); padding: 0 4px; }
+.warhammer-dbc .ship-officer-clear:hover { color: #fff; background: var(--wh-panel-mid); border-radius: 3px; }
+.warhammer-dbc .ship-officer-remove:hover { color: #fff; background: var(--wh-red); border-radius: 3px; }
+
+/* ── Ангар ── */
+.warhammer-dbc .ship-hangar-summary { display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.9em; margin-bottom: 6px; }
+.warhammer-dbc .ship-hangar-summary b { color: var(--wh-accent); }
+.warhammer-dbc .ship-hangar-bays { display: flex; flex-wrap: wrap; gap: 6px; }
+.warhammer-dbc .ship-hangar-bay { display: flex; align-items: center; gap: 6px; padding: 3px 8px; border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.08); font-size: 0.85em; }
+.warhammer-dbc .ship-hangar-bay.comp-damaged { opacity: 0.5; text-decoration: line-through; }
+.warhammer-dbc .ship-hangar-bay-name { font-weight: bold; color: var(--wh-text-dark); }
+.warhammer-dbc .ship-hangar-bay-s { color: var(--wh-accent); font-weight: bold; }
+.warhammer-dbc .ship-craft-list { display: flex; flex-direction: column; gap: 4px; }
+.warhammer-dbc .ship-craft-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border: 1px solid var(--wh-border-light); border-radius: 4px; background: rgba(0,0,0,0.06); }
+.warhammer-dbc .ship-craft-row.ship-craft-launched { border-left: 3px solid #ff8a3f; }
+.warhammer-dbc .ship-craft-row.ship-craft-prepared { border-left: 3px solid var(--wh-accent); }
+.warhammer-dbc .ship-craft-img { width: 30px; height: 30px; object-fit: contain; cursor: pointer; flex: 0 0 auto; }
+.warhammer-dbc .ship-craft-main { flex: 1 1 auto; min-width: 0; }
+.warhammer-dbc .ship-craft-title { font-weight: bold; cursor: pointer; color: var(--wh-text-dark); }
+.warhammer-dbc .ship-craft-title:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .ship-craft-kind { font-size: 0.78em; color: var(--wh-panel-mid); font-weight: normal; }
+.warhammer-dbc .ship-craft-stats { font-size: 0.8em; color: var(--wh-panel-mid); }
+.warhammer-dbc .ship-craft-str-half { color: #ff8a3f; font-weight: bold; }
+.warhammer-dbc .ship-craft-str-destroyed { color: var(--wh-red); font-weight: bold; }
+.warhammer-dbc .ship-craft-qty { flex: 0 0 auto; font-size: 0.85em; color: var(--wh-panel-mid); }
+.warhammer-dbc .ship-craft-qty-inp { width: 40px; text-align: center; background: var(--wh-input-bg); border: 1px solid var(--wh-border); }
+.warhammer-dbc .ship-craft-state { flex: 0 0 auto; width: 120px; background: var(--wh-input-bg); border: 1px solid var(--wh-border); font-size: 0.84em; }
+.warhammer-dbc .ship-craft-btns { flex: 0 0 auto; display: flex; gap: 5px; }
+.warhammer-dbc .ship-craft-btns button, .warhammer-dbc .ship-craft-btns a { cursor: pointer; color: var(--wh-panel-mid); padding: 2px 6px; border: 1px solid var(--wh-border-light); border-radius: 3px; background: transparent; }
+.warhammer-dbc .ship-craft-btns button:hover { color: #fff; background: var(--wh-panel-mid); }
+.warhammer-dbc .ship-craft-del:hover { color: #fff; background: var(--wh-red); }
+
+/* ── Ангар: жизненный цикл эскадрилий ── */
+.warhammer-dbc .ship-craft-row.ship-craft-returning { border-left: 3px solid #ff8a3f; }
+.warhammer-dbc .ship-craft-row.ship-craft-rearming { border-left: 3px solid #7a6fff; opacity: 0.85; }
+.warhammer-dbc .ship-craft-row.ship-craft-dead { opacity: 0.45; }
+.warhammer-dbc .ship-craft-state-lbl { font-weight: bold; color: var(--wh-panel-mid); }
+.warhammer-dbc .ship-craft-fuel { font-size: 0.9em; color: var(--wh-panel-mid); }
+.warhammer-dbc .ship-craft-fuel-low { color: var(--wh-red); font-weight: bold; }
+.warhammer-dbc .ship-craft-prepare:hover { color: #fff; background: var(--wh-accent); }
+.warhammer-dbc .ship-craft-launch:hover { color: #fff; background: #ff8a3f; }
+.warhammer-dbc .ship-craft-return:hover { color: #fff; background: #7a6fff; }
+
+
+/* ═══════════════════ ТРЮМ: мерные шкалы и партии груза ═══════════════════ */
+
+/* Три шкалы в ряд: трюм, пассажиры, запасы. Сужается в одну колонку. */
+.warhammer-dbc .ship-hold-meters {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px; margin-bottom: 8px;
+}
+.warhammer-dbc .ship-meter {
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border);
+  border-radius: 4px; padding: 6px 9px 7px;
+}
+.warhammer-dbc .ship-meter-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 6px;
+  font-size: 0.78em; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--wh-panel-mid); margin-bottom: 5px;
+}
+.warhammer-dbc .ship-meter-head b { font-size: 1.35em; letter-spacing: 0; color: var(--wh-text-dark); }
+.warhammer-dbc .ship-meter-edit { font-size: 1.25em; color: var(--wh-text-dark); letter-spacing: 0; }
+.warhammer-dbc .ship-meter-edit input {
+  width: 3.2em; text-align: right; padding: 0 3px; height: 1.5em;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border);
+  border-radius: 3px; font-size: 0.95em; color: var(--wh-text-dark);
+}
+.warhammer-dbc .ship-meter-bar {
+  height: 7px; border-radius: 4px; overflow: hidden;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border);
+}
+.warhammer-dbc .ship-meter-bar > i {
+  display: block; height: 100%; background: var(--wh-accent);
+  box-shadow: 0 0 6px rgba(77,255,166,0.55); transition: width .18s;
+}
+.warhammer-dbc .ship-meter-foot {
+  margin-top: 5px; font-size: 0.78em; color: var(--wh-text-mid);
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+}
+.warhammer-dbc .ship-meter-foot .warn,
+.warhammer-dbc .ship-meter .warn { color: var(--wh-red); font-weight: bold; }
+
+/* Перегруз и истощение запасов — красным; последний месяц — янтарём. */
+.warhammer-dbc .ship-meter.over { border-color: var(--wh-red); }
+.warhammer-dbc .ship-meter.over .ship-meter-bar > i { background: var(--wh-red); box-shadow: 0 0 6px rgba(255,107,107,0.55); }
+.warhammer-dbc .ship-meter.over .ship-meter-head b { color: var(--wh-red); }
+.warhammer-dbc .ship-meter.low .ship-meter-bar > i { background: #ffc14d; box-shadow: 0 0 6px rgba(255,193,77,0.5); }
+
+.warhammer-dbc .ship-meter-foot button.mini {
+  padding: 1px 7px; font-size: 0.95em; line-height: 1.5; cursor: pointer;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.warhammer-dbc .ship-meter-foot button.mini:hover { background: var(--wh-accent); color: #04100a; border-color: var(--wh-accent); }
+
+/* ── Список партий ── */
+.warhammer-dbc .ship-hold-sum { font-size: 0.78em; color: var(--wh-text-mid); font-weight: normal; letter-spacing: 0; text-transform: none; margin-left: auto; }
+
+.warhammer-dbc .cargo-group { margin-bottom: 5px; }
+.warhammer-dbc .cargo-group-head {
+  display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+  padding: 3px 6px; border-radius: 3px; background: var(--wh-parchment3);
+  border: 1px solid var(--wh-border);
+}
+.warhammer-dbc .cargo-group-head:hover { border-color: var(--wh-border-light); }
+.warhammer-dbc .cargo-group-head > i { width: 9px; color: var(--wh-panel-mid); }
+.warhammer-dbc .cargo-group-name { font-weight: bold; color: var(--wh-text-dark); }
+.warhammer-dbc .cargo-group-tag {
+  font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 0 6px; border-radius: 8px; color: var(--wh-panel-mid);
+  border: 1px solid var(--wh-border);
+}
+.warhammer-dbc .cargo-group-meta { margin-left: auto; font-size: 0.8em; color: var(--wh-text-mid); }
+
+.warhammer-dbc .cargo-list { padding: 2px 0 2px 12px; }
+.warhammer-dbc .cargo-row {
+  display: flex; align-items: center; gap: 7px; padding: 3px 5px;
+  border-bottom: 1px solid rgba(47,158,106,0.18);
+}
+.warhammer-dbc .cargo-row:hover { background: rgba(77,255,166,0.06); }
+.warhammer-dbc .cargo-img { width: 22px; height: 22px; flex: 0 0 auto; border: none; border-radius: 3px; object-fit: cover; }
+.warhammer-dbc .cargo-main { flex: 1 1 auto; min-width: 0; }
+.warhammer-dbc .cargo-row-name { font-weight: bold; color: var(--wh-text-dark); cursor: pointer; }
+.warhammer-dbc .cargo-row-name:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .cargo-row-tags { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 0.76em; color: var(--wh-text-mid); }
+.warhammer-dbc .cargo-row-tags .strong { color: var(--wh-accent); font-weight: bold; }
+.warhammer-dbc .cargo-row-desc { font-size: 0.78em; font-style: italic; color: var(--wh-panel-mid); margin-top: 1px; }
+
+/* Груз на обслуживание корабля виден сразу: приглушён и с боковой меткой. */
+.warhammer-dbc .cargo-row.is-supply { opacity: 0.82; border-left: 2px solid var(--wh-panel-mid); }
+
+.warhammer-dbc .cargo-qty { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+.warhammer-dbc .cargo-qty-step {
+  width: 18px; height: 18px; padding: 0; line-height: 1; cursor: pointer;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.warhammer-dbc .cargo-qty-step:hover { background: var(--wh-accent); color: #04100a; }
+.warhammer-dbc .cargo-qty-input {
+  width: 3.1em; height: 19px; text-align: center; padding: 0 2px;
+  background: var(--wh-input-dark); color: var(--wh-text-dark);
+  border: 1px solid var(--wh-border); border-radius: 3px; font-size: 0.88em;
+}
+.warhammer-dbc .cargo-acts { display: flex; gap: 3px; flex: 0 0 auto; }
+.warhammer-dbc .cargo-acts button {
+  width: 20px; height: 20px; padding: 0; line-height: 1; cursor: pointer; font-size: 0.8em;
+  background: transparent; color: var(--wh-panel-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.warhammer-dbc .cargo-acts button:hover { color: var(--wh-text-dark); border-color: var(--wh-border-light); }
+.warhammer-dbc .cargo-supply-toggle.on { color: #04100a; background: var(--wh-panel-mid); border-color: var(--wh-panel-mid); }
+.warhammer-dbc .cargo-jettison:hover { color: var(--wh-red); border-color: var(--wh-red); }
+
+/* Пустое состояние и убираемая под спойлер справка. */
+.warhammer-dbc .ship-empty {
+  padding: 14px; text-align: center; font-style: italic;
+  color: var(--wh-panel-mid); border: 1px dashed var(--wh-border); border-radius: 4px;
+}
+.warhammer-dbc .ship-note { margin-top: 7px; font-size: 0.79em; color: var(--wh-text-mid); line-height: 1.45; }
+.warhammer-dbc .ship-note > summary { cursor: pointer; color: var(--wh-panel-mid); outline: none; }
+.warhammer-dbc .ship-note > summary:hover { color: var(--wh-accent); }
+
+
+/* ═══════════════ Сводка состояния в шапке и уплотнение ═══════════════ */
+
+/* Строка живых показателей под полями шапки — видна с любой вкладки. */
+.warhammer-dbc .ship-status-strip {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px;
+}
+.warhammer-dbc .ship-stat {
+  font-size: 0.76em; letter-spacing: 0.04em; padding: 1px 7px; border-radius: 9px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border);
+  color: var(--wh-text-mid); white-space: nowrap;
+}
+.warhammer-dbc .ship-stat b { font-size: 1.15em; color: var(--wh-text-dark); }
+.warhammer-dbc .ship-stat.off { opacity: 0.55; text-decoration: line-through; }
+.warhammer-dbc .ship-stat.dp { color: #d98cff; border-color: #7a3f9e; }
+.warhammer-dbc .ship-stat.crit {
+  color: var(--wh-red); border-color: var(--wh-red); font-weight: bold;
+  animation: ship-stat-pulse 1.6s ease-in-out infinite;
+}
+.warhammer-dbc .ship-stat.crit b { color: var(--wh-red); }
+@keyframes ship-stat-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+/* Шапка и характеристики — плотнее: портрет меньше, цифры не разъезжаются. */
+.warhammer-dbc .ship-header { padding: 4px 6px 5px; gap: 7px; }
+.warhammer-dbc .ship-portrait { width: 52px; height: 52px; flex: 0 0 52px; }
+.warhammer-dbc .ship-char { padding: 2px 2px 3px; }
+.warhammer-dbc .ship-char-val { font-size: 1.4em; }
+.warhammer-dbc .ship-char-label { font-size: 0.72em; }
+.warhammer-dbc .ship-chars-grid { gap: 4px; }
+.warhammer-dbc .ship-panel { padding: 6px 8px 7px; }
+.warhammer-dbc .ship-panel-title { display: flex; align-items: center; gap: 7px; }
+
+
+/* ═════════════ Качество узла (лист узла) ═════════════ */
+.warhammer-dbc .comp-quality {
+  margin: 6px 0; padding: 5px 8px 6px; border-radius: 4px;
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border);
+}
+.warhammer-dbc .comp-quality.incomplete { border-color: #ffc14d; }
+.warhammer-dbc .comp-quality-head {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: .78em; letter-spacing: .06em; color: var(--wh-panel-mid); margin-bottom: 4px;
+}
+.warhammer-dbc .cq-sp { color: var(--wh-accent); font-weight: bold; }
+.warhammer-dbc .cq-need { color: #ffc14d; font-weight: bold; }
+.warhammer-dbc .cq-fixed,
+.warhammer-dbc .cq-note { font-size: .78em; color: var(--wh-text-mid); margin-bottom: 4px; }
+.warhammer-dbc .cq-note { font-style: italic; }
+.warhammer-dbc .cq-opts { display: flex; flex-wrap: wrap; gap: 3px 5px; margin-bottom: 4px; }
+.warhammer-dbc .cq-opt {
+  display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+  font-size: .78em; padding: 1px 7px; border-radius: 9px;
+  background: var(--wh-input-dark); border: 1px solid var(--wh-border); color: var(--wh-text-mid);
+}
+.warhammer-dbc .cq-opt.on { border-color: var(--wh-accent); color: var(--wh-text-dark); }
+.warhammer-dbc .cq-opt input { margin: 0; }
+.warhammer-dbc .cq-result {
+  font-size: .8em; color: var(--wh-text-dark); padding-top: 3px;
+  border-top: 1px solid rgba(47,158,106,.25);
+}
+.warhammer-dbc .cq-custom {
+  display: flex; align-items: center; gap: 5px; margin-top: 4px;
+  font-size: .76em; color: var(--wh-panel-mid); cursor: pointer;
+}
+
+/* ═════════ Грузы: броски событий, метки и выбор типа ═════════ */
+.warhammer-dbc .cargo-rolls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+  margin-bottom: 6px; padding-bottom: 5px;
+  border-bottom: 1px solid rgba(47,158,106,.25);
+}
+.warhammer-dbc .cargo-roll {
+  /* flex: 0 0 auto и width:auto обязательны — общий стиль кнопок в панели
+     растягивает их на всю строку. */
+  flex: 0 0 auto; width: auto; height: auto; line-height: 1.5;
+  padding: 2px 10px; margin: 0; font-size: .78em; cursor: pointer; white-space: nowrap;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.warhammer-dbc .cargo-roll:hover { background: var(--wh-accent); color: #04100a; border-color: var(--wh-accent); }
+.warhammer-dbc .cargo-trade-hint { margin-left: auto; font-size: .76em; color: var(--wh-panel-mid); }
+.warhammer-dbc .cq-mark {
+  font-size: .95em; padding: 0 5px; border-radius: 7px;
+  color: #d98cff; border: 1px solid #7a3f9e;
+}
+
+/* Окно выбора типа груза — строками, как библиотека снаряжения */
+.wh-cargo-picker { padding: 6px 8px 8px; }
+.wh-cargo-picker .cp-hint {
+  font-size: .8em; font-style: italic; color: var(--wh-panel-mid);
+  margin-bottom: 7px; line-height: 1.4;
+}
+.wh-cargo-picker .cp-group { margin-bottom: 7px; }
+.wh-cargo-picker .cp-group-name {
+  font-size: .74em; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--wh-panel-mid); margin-bottom: 2px;
+  padding: 2px 6px; background: var(--wh-parchment3);
+  border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.wh-cargo-picker .cp-list { display: flex; flex-direction: column; }
+.wh-cargo-picker .cp-item {
+  display: flex; align-items: baseline; gap: 8px; width: 100%;
+  padding: 3px 8px; margin: 0; cursor: pointer; text-align: left;
+  height: auto; line-height: 1.45;
+  background: transparent; border: none; border-radius: 0; color: var(--wh-text);
+  border-bottom: 1px solid rgba(47,158,106,.18);
+}
+.wh-cargo-picker .cp-item:hover { background: rgba(77,255,166,.1); }
+.wh-cargo-picker .cp-item-name {
+  flex: 0 0 auto; font-weight: bold; color: var(--wh-text-dark); font-size: .92em;
+}
+.wh-cargo-picker .cp-item-r {
+  flex: 0 0 auto; margin-left: auto; font-size: .78em; color: var(--wh-panel-mid); white-space: nowrap;
+}
+.wh-cargo-picker .cp-item-ex {
+  flex: 1 1 auto; min-width: 0; font-size: .76em; color: var(--wh-text-mid);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ═════════ Экипаж: восстановление и бунт ═════════ */
+.warhammer-dbc .crew-acts {
+  display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 2px;
+}
+.warhammer-dbc .crew-acts button {
+  flex: 0 0 auto; width: auto; height: auto; line-height: 1.5;
+  padding: 3px 12px; margin: 0; font-size: .82em; cursor: pointer; white-space: nowrap;
+  background: linear-gradient(180deg, var(--wh-parchment3), var(--wh-parchment2));
+  color: var(--wh-text); border: 1px solid var(--wh-border-light); border-radius: 3px;
+}
+.warhammer-dbc .crew-acts button:hover { background: var(--wh-accent); color: #04100a; border-color: var(--wh-accent); }
+
+/* Окно восстановления экипажа */
+.wh-crew-recovery { padding: 6px 8px 8px; }
+.wh-crew-recovery .cr-way {
+  margin-bottom: 8px; padding: 6px 9px 7px; border-radius: 4px;
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border);
+}
+.wh-crew-recovery .cr-way-h {
+  font-size: .8em; font-weight: bold; letter-spacing: .05em;
+  color: var(--wh-text-dark); margin-bottom: 4px;
+}
+.wh-crew-recovery .cr-way-b {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  font-size: .84em; color: var(--wh-text-mid); line-height: 1.5;
+}
+.wh-crew-recovery .cr-way-b input[type="number"] { width: 4.2em; }
+.wh-crew-recovery .cr-note {
+  flex: 1 1 100%; font-size: .92em; font-style: italic; color: var(--wh-panel-mid);
+}
+.wh-crew-recovery .cr-go {
+  flex: 0 0 auto; width: auto; height: auto; line-height: 1.5;
+  padding: 2px 12px; margin: 0; font-size: .95em; cursor: pointer; white-space: nowrap;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border-light); border-radius: 3px;
+}
+.wh-crew-recovery .cr-go:hover { background: var(--wh-accent); color: #04100a; border-color: var(--wh-accent); }
+
+/* Окно подавления бунта */
+.wh-mutiny-quell { padding: 6px 8px 8px; }
+.wh-mutiny-quell .mq-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  font-size: .84em; margin-bottom: 7px; color: var(--wh-text-mid);
+}
+.wh-mutiny-quell .mq-way {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 2px 7px;
+  align-items: baseline; cursor: pointer;
+  margin-bottom: 5px; padding: 5px 9px; border-radius: 4px;
+  background: var(--wh-parchment2); border: 1px solid var(--wh-border);
+}
+.wh-mutiny-quell .mq-way:hover { border-color: var(--wh-border-light); }
+.wh-mutiny-quell .mq-way-h { font-weight: bold; color: var(--wh-text-dark); font-size: .88em; }
+.wh-mutiny-quell .mq-way-cost { font-size: .78em; color: var(--wh-red); white-space: nowrap; }
+.wh-mutiny-quell .mq-way-note {
+  grid-column: 2 / -1; font-size: .78em; font-style: italic; color: var(--wh-panel-mid);
+}
+.wh-mutiny-quell .mq-note {
+  font-size: .78em; color: var(--wh-text-mid); line-height: 1.45; margin-top: 6px;
+  padding-top: 5px; border-top: 1px solid rgba(47,158,106,.25);
+}

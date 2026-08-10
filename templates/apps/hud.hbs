@@ -1,0 +1,163 @@
+{{!-- Боевой HUD Warhammer DBC — панель внизу вместо хотбара. --}}
+<div class="wh-hud-bar {{#if idle}}idle{{/if}}">
+
+  {{#if idle}}
+  <div class="wh-hud-idle">
+    {{#if isGM}}Выбери токен персонажа — панель покажет его.{{else}}Персонаж не назначен.{{/if}}
+  </div>
+  {{else}}
+
+  {{!-- Раны + броня + состояния --}}
+  <div class="wh-hud-cell wh-hud-vitals">
+    <div class="wh-hud-wounds wound-{{wounds.key}}">
+      <span class="wh-hud-wlabel">РАНЫ</span>
+      <span class="wh-hud-wval" style="color:{{wounds.color}}">{{wounds.value}}<span class="wh-hud-wmax">/{{wounds.max}}</span></span>
+      {{#if wounds.crit}}<span class="wh-hud-wcrit" data-tooltip="Критический урон">✚{{wounds.crit}}</span>{{/if}}
+      <span class="wh-hud-wbar"><span class="wh-hud-wfill" style="width:{{wounds.pct}}%; background:{{wounds.color}}"></span></span>
+    </div>
+    {{#if armor.length}}
+    <div class="wh-hud-armor" data-tooltip="Поглощение по локациям (броня + бонус Стойкости)">
+      {{#each armor as |loc|}}
+      <span class="wh-hud-ap" data-tooltip="{{loc.label}}: поглощение {{loc.ap}} = броня {{loc.apOnly}} + T.b {{loc.tb}}"><span class="wh-hud-ap-l">{{loc.abbr}}</span><b style="color:{{loc.color}}">{{loc.ap}}</b></span>
+      {{/each}}
+    </div>
+    {{/if}}
+    {{#if fate.max}}
+    <div class="wh-hud-fate" data-tooltip="{{fateTerm.plural}} {{fate.value}}/{{fate.max}}">
+      <span class="wh-hud-tlabel">{{fateTerm.word}}</span>
+      <span class="wh-hud-pips">{{#each fate.pips as |p|}}<span class="wh-hud-pip {{#if p.full}}full{{/if}}"></span>{{/each}}</span>
+    </div>
+    {{/if}}
+    {{#if lamps.length}}
+    <div class="wh-hud-lamps">
+      {{#each lamps as |l|}}<span class="wh-hud-lamp {{#if l.bad}}bad{{/if}}">{{l.label}}</span>{{/each}}
+    </div>
+    {{/if}}
+  </div>
+
+  {{!-- Оружие: крупный readout + Огонь --}}
+  <div class="wh-hud-cell wh-hud-gun">
+    {{#if hasWeapon}}
+    <div class="wh-hud-hands">
+      {{#each hands as |h|}}
+      {{#unless h.hide}}
+      <div class="wh-hud-hand hand-{{h.slot}} {{#if h.empty}}empty{{/if}}">
+        <div class="wh-hud-hlabel">{{h.label}}</div>
+        {{#if h.empty}}
+        <div class="wh-hud-hempty">пусто</div>
+        {{else}}
+        <div class="wh-hud-hname" data-tooltip="{{h.name}}{{#if h.damage}} · {{h.damage}}{{#if h.pen}} Проб.{{h.pen}}{{/if}}{{/if}}{{#if h.loaded}} · {{h.loaded}}{{/if}}">{{h.name}}</div>
+        <div class="wh-hud-hstat">
+          {{#unless h.noMag}}
+          <a class="wh-hud-clip {{#if h.empty2}}empty{{/if}}" data-reload="{{h.slot}}" data-tooltip="Перезарядить"><b>{{h.clip}}</b><span>/{{h.clipMax}}</span></a>
+          {{else}}
+          <span class="wh-hud-blade">В РУКАХ</span>
+          {{/unless}}
+          {{#if h.rof}}<span class="wh-hud-rof" data-tooltip="Режимы огня">{{h.rof}}</span>{{/if}}
+          {{#if h.recharge}}<span class="wh-hud-recharge" data-tooltip="Требуется подзарядка">⚡</span>{{/if}}
+        </div>
+        {{#if h.hasOptions}}
+        <div class="wh-hud-wopts">
+          {{#if h.profOpts.length}}
+          <div class="wh-hud-optrow">
+            <span class="wh-hud-optlbl"><i class="fas fa-layer-group"></i></span>
+            {{#each h.profOpts as |p|}}
+            <a class="wh-hud-optbtn prof {{#if p.active}}on{{/if}}" data-profile-set="{{h.id}}" data-idx="{{p.idx}}"
+               data-tooltip="Профиль: {{p.label}}{{#if p.dmg}} · {{p.dmg}}{{/if}}">{{p.label}}</a>
+            {{/each}}
+          </div>
+          {{/if}}
+          {{#if h.gripOpts.length}}
+          <div class="wh-hud-optrow">
+            <span class="wh-hud-optlbl"><i class="fas fa-hand-fist"></i></span>
+            {{#each h.gripOpts as |gr|}}
+            <a class="wh-hud-optbtn grip {{#if gr.active}}on{{/if}}" data-grip-set="{{h.id}}" data-key="{{gr.key}}"
+               data-tooltip="Хват {{gr.label}}: {{gr.note}}">{{gr.short}}</a>
+            {{/each}}
+          </div>
+          {{/if}}
+        </div>
+        {{/if}}
+        <div class="wh-hud-hact">
+          <a class="wh-hud-fire" data-fire="{{h.slot}}" data-tooltip="Выбрать цель и {{#if h.isMelee}}ударить{{else}}стрелять{{/if}}">
+            <i class="fas fa-crosshairs"></i> {{#if h.isMelee}}УДАР{{else}}ОГОНЬ{{/if}}
+          </a>
+          {{#unless h.isMelee}}
+          <a class="wh-hud-melee-gun" data-melee-gun="{{h.id}}" data-tooltip="Удар оружием в упор / приклад"><i class="fas fa-gavel"></i></a>
+          {{/unless}}
+        </div>
+        {{/if}}
+      </div>
+      {{/unless}}
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="wh-hud-gname empty">Оружие не надето</div>
+    {{/if}}
+
+    <div class="wh-hud-footrow">
+      {{!-- Выбор оружия по рукам — первично, сразу под руками --}}
+      {{#if slots.length}}
+      <div class="wh-hud-slots" data-tooltip="ЛКМ — в правую руку, ПКМ — в левую">
+        {{#each slots as |s|}}
+        <a class="wh-hud-slot {{#if s.hand}}on hand-{{s.hand}}{{/if}} {{#if s.melee}}melee{{/if}}" data-weapon="{{s.id}}"
+           data-tooltip="{{s.name}} · ЛКМ — правая рука, ПКМ — левая">
+          {{#if s.img}}<img class="noborder" src="{{s.img}}"/>{{/if}}
+          {{#if s.hand}}<span class="wh-hud-slotbadge">{{#if (eq s.hand "main")}}П{{else}}Л{{/if}}</span>{{/if}}
+        </a>
+        {{/each}}
+      </div>
+      <span class="wh-hud-footsep"></span>
+      {{/if}}
+      {{!-- Безоружный бой --}}
+      <div class="wh-hud-unarmed-grp" data-tooltip="Безоружный бой — выбрать цель">
+        <a class="wh-hud-unarmed" data-unarmed="fist" title="Удар кулаком"><i class="fas fa-hand-fist"></i></a>
+        <a class="wh-hud-unarmed" data-unarmed="kick" title="Пинок"><i class="fas fa-shoe-prints"></i></a>
+        <a class="wh-hud-unarmed" data-unarmed="headbutt" title="Удар головой"><i class="fas fa-user"></i></a>
+      </div>
+      {{#if shield}}
+      <a class="wh-hud-shield {{#if shield.active}}on{{/if}}" data-shield="{{shield.id}}"
+         data-tooltip="{{shield.name}}{{#if shield.active}} — рейтинг {{shield.rating}} (выключить){{else}} — включить{{/if}}">
+        <i class="fas fa-shield-alt"></i>{{#if shield.active}} {{shield.rating}}{{/if}}
+      </a>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Псайкер: PR + психосилы (быстрый манифест) --}}
+  {{#if hasPsychic}}
+  <div class="wh-hud-cell wh-hud-psy">
+    <div class="wh-hud-psy-head">
+      <span class="wh-hud-psy-orb {{#unless psychic.canManifest}}spent{{/unless}}"
+            data-tooltip="Текущий Пси-Рейтинг (тПР) из базового {{psychic.bpr}}; поддерживается сил: {{psychic.sustain}}{{#unless psychic.canManifest}} · тПР 0 — новые силы нельзя{{/unless}}">
+        Ψ {{psychic.tpr}}<span class="wh-hud-psy-bpr">/{{psychic.bpr}}</span>
+      </span>
+      {{#if psychic.sustain}}<span class="wh-hud-psy-sus" data-tooltip="Поддерживается сил">◈{{psychic.sustain}}</span>{{/if}}
+    </div>
+    {{#if psychic.powers.length}}
+    <div class="wh-hud-psy-list">
+      {{#each psychic.powers as |p|}}
+      <button type="button" class="wh-hud-psy-power {{#if p.sustained}}on{{/if}}" data-psy="{{p.id}}"
+        data-tooltip="{{p.name}} · PR {{p.pr}}{{#if p.damage}} · урон {{p.damage}}{{/if}} · тест ≤{{p.threshold}}{{#if p.sustainable}} · ПКМ — поддержание{{/if}}">
+        {{p.name}}
+      </button>
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="wh-hud-psy-empty">нет психосил</div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  {{!-- Портрет + имя --}}
+  <div class="wh-hud-cell wh-hud-btns">
+    <a class="wh-hud-sheet" data-open-sheet="main" data-tooltip="Лист персонажа">
+      <img class="wh-hud-face noborder" src="{{img}}"/>
+      <span>{{name}}</span>
+    </a>
+  </div>
+  {{/if}}
+
+  <a class="wh-hud-macro" data-toggle-hotbar data-tooltip="Макросы (хотбар)"><i class="fas fa-bars"></i></a>
+
+</div>
