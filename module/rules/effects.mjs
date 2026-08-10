@@ -15,6 +15,7 @@ export const EFFECT_KINDS = {
   damageBonus: ["target", "value"],   // плюс к урону
   damageDice:  ["target", "value"],   // замена формулы урона
   grantValue:  ["target", "value"],   // плюс к производному полю
+  grantFlag:   ["target"],            // возможность по имени, см. rules/flags.mjs
   fearRating:  ["value"],             // берётся максимум, не сумма
   grantItem:   ["uuid"],              // выдать предмет; `qty` необязателен
   script:      ["code"]               // аварийный выход, см. docs/rules-format.md

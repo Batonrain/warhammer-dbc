@@ -108,9 +108,16 @@ describe("источники по умолчанию", () => {
     expect(getRuleSources().map(([key]) => key)).toEqual(["race", "homeworld"]);
   });
 
-  it("поле rules у данных пока не заполнено, сборка пустая и без ошибок", () => {
-    const hero = actor({ race: "astartes", items: [{ type: "homeworld", system: { key: "hive" } }] });
+  // Наполнена пока одна раса (этап 3 плана), у остальных поле rules пустое.
+  it("раса без правил даёт пустую сборку и не жалуется", () => {
+    const hero = actor({ race: "human", items: [{ type: "homeworld", system: { key: "hive" } }] });
     expect(collectRules(hero)).toEqual([]);
+    expect(errors).not.toHaveBeenCalled();
+  });
+
+  it("раса с правилами отдаёт их через настоящий источник", () => {
+    const hero = actor({ race: "astartes", size: 1, items: [] });
+    expect(collectRules(hero).map(r => r.id)).toContain("astartes.physiology");
     expect(errors).not.toHaveBeenCalled();
   });
 });
