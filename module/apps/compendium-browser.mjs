@@ -219,7 +219,7 @@ function pruneTree(node, pred) {
 
 function renderItemsHtml(items) {
   return items.map(it => `
-    <div class="cbrowse-item" data-uuid="${esc(it.uuid)}" data-name="${esc(it.name.toLowerCase())}">
+    <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-name="${esc(it.name.toLowerCase())}">
       <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
       <span class="cbrowse-item-name">${esc(it.name)}</span>
     </div>`).join("");
@@ -309,6 +309,17 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
           const doc = await fromUuid(uuid).catch(() => null);
           if (!doc) return ui.notifications.warn("Предмет не найден (возможно, компендиум изменился — нажмите ↻).");
           doc.sheet?.render(true);
+        });
+        // Драг-н-дроп наружу — на лист актора (в инвентарь) или на дроп-зоны
+        // вкладки МЕХАНИКА листа предмета (Черта/Талант/Свойство оружия).
+        // Тот же payload-формат, что Foundry ждёт нативно (type:"Item", uuid) —
+        // см. actor-sheet.mjs:2950-2961, тот же приём для драга из инвентаря.
+        html.find(".cbrowse-item").each((_, el) => {
+          el.addEventListener("dragstart", ev => {
+            ev.stopPropagation();
+            ev.dataTransfer.setData("text/plain", JSON.stringify({ type: "Item", uuid: el.dataset.uuid }));
+            ev.dataTransfer.effectAllowed = "copy";
+          });
         });
         if (!pickMode) {
           html.find(".cbrowse-refresh").on("click", async ev => {
