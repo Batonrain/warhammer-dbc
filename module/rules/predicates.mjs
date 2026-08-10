@@ -65,5 +65,8 @@ export const PREDICATES = {
 
   weaponClass: (actor, ctx, value) => list(value).includes(ctx?.weapon?.system?.weaponClass),
 
-  targetHasTrait: (actor, ctx, value) => hasNamed(ctx?.target, value)
+  // Актор цели лежит в ctx.targetActor, а не в ctx.target: в контексте броска
+  // (rules/match-context.mjs) имя `target` занято флагом «бросок нацелен», и на
+  // этапе 2 плана оба контекста сошлись в одном объекте.
+  targetHasTrait: (actor, ctx, value) => hasNamed(ctx?.targetActor, value)
 };
