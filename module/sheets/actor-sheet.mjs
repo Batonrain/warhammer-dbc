@@ -5075,10 +5075,15 @@ html.find(".addiction-remove-btn").click(async ev => {
   }
 
   /**
-   * Галочки Особенности родного мира для диалога броска.
+   * Галочки Особенности Происхождения для диалога броска.
    * Модификатор не применяется молча: игрок сам решает, уместен ли он здесь.
+   *
+   * Выключенная подсистема убирает Происхождение и отсюда: иначе выбор пропадал
+   * из шапки листа (homeworldSheetContext), а галочки Особенности у персонажа с
+   * уже применённым Происхождением оставались в диалоге броска.
    */
   _homeworldModsHtml(context) {
+    if (!isFeatureEnabled("homeworlds")) return { html: "", mods: [] };
     const mods = homeworldRollMods(actorHomeworldKey(this.actor), context);
     if (!mods.length) return { html: "", mods };
     const rows = mods.map((m, i) => {

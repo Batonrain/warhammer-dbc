@@ -12,6 +12,8 @@
 //  В книге: S=s, T=t, F=fel, I=int, W/WP=wp, P=per, A=ag, BS=bs, WS=ws.
 // ════════════════════════════════════════════════════════════════════════
 
+import { matchesContext } from "../rules/match-context.mjs";
+
 export const HOMEWORLD_SOURCE = "Родные миры и Предсказания";
 
 /**
@@ -415,21 +417,6 @@ export function homeworldRollMods(key, context = {}) {
     .map(m => ({ ...m, world: hw.label, feature: hw.feature.name }));
 }
 
-/**
- * Подходит ли модификатор к контексту броска. Экспортируется отдельно от
- * homeworldRollMods, чтобы тот же матчер переиспользовали и предметные
- * (Черта/Талант/Снаряжение) ситуативные модификаторы — см.
- * WarhammerCharacterSheet#_itemRollModsHtml в sheets/actor-sheet.mjs.
- */
-export function matchesContext(when = {}, ctx = {}) {
-  if (when.kind !== ctx.kind) return false;
-  if (when.skill && when.skill !== ctx.skill) return false;
-  if (when.group && when.group !== ctx.group) return false;
-  if (when.specialty && !String(ctx.specialty || "").toLowerCase().includes(when.specialty.toLowerCase())) return false;
-  if (when.char && when.char !== ctx.char) return false;
-  // Флаговые контексты: модификатор просится только в помеченный бросок.
-  if (when.suppression && !ctx.suppression && !(when.addiction && ctx.addiction)) return false;
-  if (when.single && !ctx.single) return false;
-  if (when.target && !ctx.target) return false;
-  return true;
-}
+// Матчер живёт в rules/match-context.mjs; здесь остаётся реэкспорт, чтобы
+// прежние импорты из этого файла (sheets/actor-sheet.mjs) продолжали работать.
+export { matchesContext };
