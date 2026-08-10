@@ -137,17 +137,10 @@ export function imperialToWorldTime({ millennium, year, fraction }, cfg = DEFAUL
   return cfg.epochWorldTime + deltaUnits * SECONDS_PER_FRACTION_UNIT;
 }
 
-/** Строка "К.ДДД.ГГГ.МXX". */
-export function formatImperialDate(worldTime, cfg = DEFAULT_CALENDAR_CONFIG) {
-  const { millennium, year, fraction } = worldTimeToImperial(worldTime, cfg);
-  const digit = Math.max(0, Math.min(9, Math.trunc(cfg.checkDigit ?? 1)));
-  return `${digit}.${pad3(fraction)}.${pad3(year)}.M${Math.max(1, millennium)}`;
-}
-
 /**
- * Та же дата, но разложенная на части с готовыми подписанными строками —
- * для виджета, которому нужно навесить отдельную подсказку на каждую часть
- * ("К.", долю года, год, тысячелетие), а не на дату целиком.
+ * Дата "К.ДДД.ГГГ.МXX", разложенная на части готовыми строками — виджет
+ * навешивает отдельную подсказку на каждую ("К.", долю года, год,
+ * тысячелетие), а не на дату целиком.
  */
 export function formatImperialDateParts(worldTime, cfg = DEFAULT_CALENDAR_CONFIG) {
   const { millennium, year, fraction } = worldTimeToImperial(worldTime, cfg);
