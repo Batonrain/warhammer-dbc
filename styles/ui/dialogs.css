@@ -1043,10 +1043,12 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-item-picker .pick-caret { flex: 0 0 auto; font-size: .8em; opacity: .8; }
 .wh-item-picker .pick-group.pick-collapsed .pick-group-body { display: none; }
 
-/* Счётчик талантов с невыполненными требованиями. */
+/* Счётчик талантов с невыполненными требованиями. Насыщенная (не 15%, а 75%)
+   полупрозрачная тёмно-красная подложка — на 15% альфа тёплый цвет тонул в
+   зелёном градиенте заголовка группы и читался мутным грязным пятном. */
 .wh-item-picker .pick-count-unmet {
   margin-left: 2px; padding: 0 6px; border-radius: 8px; opacity: 1;
-  background: rgba(255,107,107,.15); border: 1px solid #ff6b6b; color: #ff8a8a;
+  background: rgba(120,20,20,.75); border: 1px solid #ff6b6b; color: #ffdada;
 }
 .wh-item-picker .pick-count-unmet::before { content: "✕ "; }
 
@@ -1067,10 +1069,11 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-item-picker .pick-row.pick-unmet .pick-add:hover { background: rgba(255,107,107,.2); }
 
 /* Группа целиком недоступна по условию листа (Ген-навигатора, Архетип и т.п.) — */
-/* золотистый акцент, отдельно от красного «требование не выполнено» у отдельного таланта. */
+/* золотистый акцент, отдельно от красного «требование не выполнено» у отдельного таланта.
+   Насыщенная (75%, не 15%) подложка — та же правка контраста, что у pick-count-unmet выше. */
 .wh-item-picker .pick-count-locked {
   margin-left: 2px; padding: 0 6px; border-radius: 8px; opacity: 1;
-  background: rgba(255,196,77,.15); border: 1px solid #ffc44d; color: #ffd98a;
+  background: rgba(90,60,10,.75); border: 1px solid #ffc44d; color: #fff3d6;
   font-size: .82em;
 }
 .wh-item-picker .pick-group.pick-group-locked .pick-group-head { opacity: .75; }
