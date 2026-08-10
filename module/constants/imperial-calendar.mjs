@@ -37,6 +37,7 @@ export const CLASSIC4_WATCHES = Object.freeze([
   { label: "День",  icon: "☀", hours: 6 },
   { label: "Вечер", icon: "🌆", hours: 6 }
 ]);
+export const CLASSIC4_DESCRIPTION = "Классическое деление суток на ночь/утро/день/вечер, по 6 часов каждое.";
 
 export const HOURS24_WATCHES = Object.freeze(
   Array.from({ length: 24 }, (_, i) => ({ label: `${String(i).padStart(2, "0")}:00`, icon: "🕐", hours: 1 }))
@@ -54,6 +55,7 @@ export const CALIXIS_WATCHES = Object.freeze([
   { label: "Последняя собачья вахта", icon: "⚓", hours: 2 }, // 18:00–20:00
   { label: "Первая вахта",            icon: "⚓", hours: 4 }  // 20:00–00:00
 ]);
+export const CALIXIS_DESCRIPTION = "Вахты линейного флота Каликсиды: 4-часовые смены, кроме двух 2-часовых «собачьих» вахт вечером (16:00–20:00), чтобы состав вахтенных смещался день ото дня.";
 
 // Колхидское времяисчисление: солнечные сутки Колхиды = 7.1 терранских
 // суток = 170.4 терранского часа (лор: житель "шести колхидских лет" на
@@ -71,6 +73,7 @@ export const COLCHIS_WATCHES = Object.freeze([
   { label: "Хладомрак (Coldfall)",   icon: "🌑", hours: COLCHIS_SUBDAY_HOURS },
   { label: "Полночье (High Night)",  icon: "🌌", hours: COLCHIS_SUBDAY_HOURS }
 ]);
+export const COLCHIS_DESCRIPTION = "Колхидское времяисчисление: солнечные сутки Колхиды длятся 170.4 терранского часа (7.1 терранских суток), поделены на 7 примерно равных субдней.";
 
 /** Конфигурация календаря по умолчанию — эпоха, контрольный номер, включённые обозначения. */
 export const DEFAULT_CALENDAR_CONFIG = Object.freeze({
@@ -86,7 +89,11 @@ export const DEFAULT_CALENDAR_CONFIG = Object.freeze({
   // Основное деление (крупный лейбл 24ч) НЕ входит сюда — оно всегда фиксировано.
   enabledPresets: ["calixis"],
   // Свои пресеты, заведённые GM: [{key, label, watches:[{label,icon,hours}]}].
-  customPresets: []
+  customPresets: [],
+  // Описание пресета (правится GM в настройках, всплывает подсказкой при
+  // наведении на строку на виджете) — {presetKey: text}. Переопределяет
+  // дефолтное description встроенного пресета, если задано непустым.
+  presetDescriptions: {}
 });
 
 const pad3 = (n) => String(Math.abs(Math.trunc(n))).padStart(3, "0");
@@ -138,6 +145,51 @@ export function formatImperialDate(worldTime, cfg = DEFAULT_CALENDAR_CONFIG) {
 }
 
 /**
+ * Та же дата, но разложенная на части с готовыми подписанными строками —
+ * для виджета, которому нужно навесить отдельную подсказку на каждую часть
+ * ("К.", долю года, год, тысячелетие), а не на дату целиком.
+ */
+export function formatImperialDateParts(worldTime, cfg = DEFAULT_CALENDAR_CONFIG) {
+  const { millennium, year, fraction } = worldTimeToImperial(worldTime, cfg);
+  const digit = Math.max(0, Math.min(9, Math.trunc(cfg.checkDigit ?? 1)));
+  return {
+    digit: String(digit),
+    fraction: pad3(fraction),
+    year: pad3(year),
+    millennium: `M${Math.max(1, millennium)}`
+  };
+}
+
+// Контрольный номер (класс 0-9) — дословно по warhammer40k.fandom.com/ru/wiki/
+// Имперская_система_летоисчисления, раздел «Контрольный номер». Не сокращать
+// вольным пересказом — GM должен видеть точную формулировку лора по наведению.
+export const CHECK_DIGIT_MEANINGS = Object.freeze([
+  "0 — Терранское время: самое точное определение, используется для событий на Святой Терре.",
+  "1 — Терранское время: используется для записи событий за пределами Терры (например, на Титане).",
+  "2 — Прямой: событие произошло во время прямого астропатического контакта с Террой.",
+  "3 — Непрямой: событие произошло во время астропатического контакта с источником, который в это время был на связи с Террой.",
+  "4 — Подтверждённый: дата записана по системе отсчёта источника, недавно находившегося на связи с Террой.",
+  "5 — Частично подтверждённый: дата записана по системе отсчёта источника, недавно находившегося в контакте с подтверждённым источником (класса «4»).",
+  "6 — Неопределённая, ~1 год: не подтверждена предыдущими источниками, но является продолжением отсчёта с момента произошедшего ранее контакта.",
+  "7 — Неопределённая, ~10 лет: то же, что и класс 6, но с большей погрешностью.",
+  "8 — Неопределённая, 11+ лет: для ещё более длительных периодов времени.",
+  "9 — Приблизительная: для миров, использующих неимперский календарь."
+]);
+
+/** Подсказка при наведении на «К.» — краткая роспись всех 10 классов контрольного номера. */
+export function checkDigitTooltip() {
+  return "Контрольный номер — точность измерения даты (компенсация искажений варп-путешествий):\n"
+    + CHECK_DIGIT_MEANINGS.join("\n");
+}
+
+// Подсказки при наведении на остальные части даты — краткая суть, не полный лор.
+export const DATE_PART_TOOLTIPS = Object.freeze({
+  fraction: "Доля года (000–999): вместо недель/месяцев год делится Администратумом на 1000 равных частей.",
+  year: "Год (000–999): сколько лет прошло с начала текущего тысячелетия.",
+  millennium: "Тысячелетие (M + число): сколько неполных тысячелетий прошло с условного начала эры (0.000.000.M1)."
+});
+
+/**
  * Часы:минуты терранских суток, живьём из worldTime (не через сегменты
  * HOURS24_WATCHES — у тех подпись фиксирована на "HH:00", минуты внутри часа
  * в неё не попадают, и прокрутка минутами визуально "не работала" бы).
@@ -180,15 +232,18 @@ export function currentWatch(worldTime, cfg = { watches: HOURS24_WATCHES }) {
 export const WATCH_PRESETS = Object.freeze({
   classic4: {
     label: "Классика (4: ночь/утро/день/вечер)",
-    watches: CLASSIC4_WATCHES
+    watches: CLASSIC4_WATCHES,
+    description: CLASSIC4_DESCRIPTION
   },
   calixis: {
     label: "Флотские вахты",
-    watches: CALIXIS_WATCHES
+    watches: CALIXIS_WATCHES,
+    description: CALIXIS_DESCRIPTION
   },
   colchis: {
     label: "Колхидское времяисчисление (7 субдней, 170.4ч)",
-    watches: COLCHIS_WATCHES
+    watches: COLCHIS_WATCHES,
+    description: COLCHIS_DESCRIPTION
   }
 });
 
@@ -211,5 +266,10 @@ export function currentEnabledPhases(worldTime, cfg = DEFAULT_CALENDAR_CONFIG) {
   const keys = cfg.enabledPresets?.length ? cfg.enabledPresets : DEFAULT_CALENDAR_CONFIG.enabledPresets;
   return keys
     .filter(key => registry[key])
-    .map(key => ({ key, label: registry[key].label, ...currentWatch(worldTime, { watches: registry[key].watches }) }));
+    .map(key => ({
+      key, label: registry[key].label,
+      // GM-описание из настроек перекрывает дефолтное описание встроенного пресета.
+      description: cfg.presetDescriptions?.[key] || registry[key].description || "",
+      ...currentWatch(worldTime, { watches: registry[key].watches })
+    }));
 }

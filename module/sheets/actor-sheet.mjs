@@ -65,8 +65,9 @@ import { HOMEWORLD_BY_KEY, homeworldRollMods, matchesContext } from "../constant
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
 import { specOptions, matchSpec, specDef } from "../constants/skill-specializations.mjs";
-import { ASTARTES_IMPLANTS, ASTARTES_RACE, ASTARTES_IMPLANT_WEAPON_ITEMS,
+import { ASTARTES_IMPLANTS, ASTARTES_RACE,
          missingAstartesImplants } from "../constants/astartes-implants.mjs";
+import { syncAstartesImplantWeapon } from "../apps/astartes-implants.mjs";
 import { applyHomeworld, homeworldSheetContext, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination, divinationSheetContext } from "../apps/divinations.mjs";
 import { HELMETLESS_FEL_BONUS, HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
@@ -1691,15 +1692,12 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
     const docs = missing.map(o => foundry.utils.mergeObject(
       foundry.utils.deepClone(o), { flags: { "warhammer-dbc": { installed: true, geneSeed: true } } }));
-    await this.actor.createEmbeddedDocuments("Item", docs);
+    const created = await this.actor.createEmbeddedDocuments("Item", docs);
 
-    // Боевые профили связанных органов — только те, которых ещё нет.
-    const have = new Set(this.actor.items.filter(i => i.type === "weapon").map(i => i.name));
-    const weapons = ASTARTES_IMPLANT_WEAPON_ITEMS
-      .filter(w => missing.some(o => o.system.linkedWeapon === w.name) && !have.has(w.name))
-      .map(w => foundry.utils.mergeObject(foundry.utils.deepClone(w),
-        { flags: { "warhammer-dbc": { geneSeed: true } } }));
-    if (weapons.length) await this.actor.createEmbeddedDocuments("Item", weapons);
+    // Боевые профили связанных органов (Кислотный плевок Железы Бетчера и
+    // т.п.) — тот же синк, что держит их в актуальном состоянии при
+    // установке/снятии органа далее (см. syncAstartesImplantWeapon).
+    for (const item of created) if (item.system.linkedWeapon) await syncAstartesImplantWeapon(item);
 
     return missing.length;
   }
@@ -3013,6 +3011,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       // ...и любое выданное этим органом снаряжение/оружие (Кислотный плевок
       // Железы Бетчера и т.п.) — появляется/исчезает вместе с состоянием.
       await syncGrantedEquipment(item);
+      await syncAstartesImplantWeapon(item);
     });
 
     // ── Геносемя (Астартес) ─────────────────────────────────────────────────

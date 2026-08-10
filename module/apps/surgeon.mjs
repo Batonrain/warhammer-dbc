@@ -11,6 +11,7 @@ import { buildBodyState, buildBodyLayers, buildImplantsSvg,
          classifyImplant, implantCatColor } from "../constants/body-map.mjs";
 import { syncItemEffectsDisabled } from "./effects.mjs";
 import { syncGrantedEquipment } from "./mechanics.mjs";
+import { syncAstartesImplantWeapon } from "./astartes-implants.mjs";
 
 const { Application } = foundry.appv1.api;
 const NS = "warhammer-dbc";
@@ -179,6 +180,7 @@ export class SurgeonWindow extends Application {
           // Установлен — довыдаём его Механику (эффекты + связанные атаки/снаряжение).
           await syncItemEffectsDisabled(item, true);
           await syncGrantedEquipment(item);
+          await syncAstartesImplantWeapon(item);
           ui.notifications?.info(`🔧 Имплантировано: ${item.name}`);
         }
       } else if (src === "lib") {
@@ -187,7 +189,10 @@ export class SurgeonWindow extends Application {
         foundry.utils.setProperty(obj, `flags.${NS}.${NS_INST}`, true);
         const side = freeSide();
         if (side) foundry.utils.setProperty(obj, `flags.${NS}.bodySide`, side);
-        await this.actor.createEmbeddedDocuments("Item", [obj]);
+        const [created] = await this.actor.createEmbeddedDocuments("Item", [obj]);
+        // Родился сразу установленным — довыдать связанный боевой профиль (createItem-хук
+        // сам применит Механику, но связка linkedWeapon у Геносемени идёт мимо неё).
+        if (created) await syncAstartesImplantWeapon(created);
         ui.notifications?.info(`🔧 Имплантировано: ${doc.name}${side ? (side === "left" ? " (левый)" : " (правый)") : ""}`);
       }
       this.render(false);
@@ -201,6 +206,7 @@ export class SurgeonWindow extends Application {
       // плевок Железы Бетчера и т.п.) уходят вместе с ним, пока не установят обратно.
       await syncItemEffectsDisabled(item, false);
       await syncGrantedEquipment(item);
+      await syncAstartesImplantWeapon(item);
       ui.notifications?.info(`Имплант извлечён (в снаряжении): ${item.name}`);
       this.render(false);
     }));

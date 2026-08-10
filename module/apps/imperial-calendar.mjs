@@ -12,7 +12,7 @@
 //  только GM, прокрутка тоже только GM.
 // ════════════════════════════════════════════════════════════════════════
 
-import { formatImperialDate, formatClock, currentWatch, currentEnabledPhases, HOURS24_WATCHES, DEFAULT_CALENDAR_CONFIG, WATCH_PRESETS }
+import { formatImperialDateParts, formatClock, currentWatch, currentEnabledPhases, HOURS24_WATCHES, DEFAULT_CALENDAR_CONFIG, WATCH_PRESETS, checkDigitTooltip, DATE_PART_TOOLTIPS }
   from "../constants/imperial-calendar.mjs";
 import { triggerNewScene, triggerSessionEnd } from "./game-session.mjs";
 
@@ -88,7 +88,7 @@ const EDITABLE_STEPS = [
 function _widgetHTML() {
   const cfg = calendarConfig();
   const worldTime = game.time?.worldTime ?? 0;
-  const dateStr = formatImperialDate(worldTime, cfg);
+  const dateParts = formatImperialDateParts(worldTime, cfg);
   // Основное деление — ВСЕГДА 24 часа, не настраивается и не отключается.
   // Подпись — живые часы:минуты (не фиксированная "HH:00" метка сегмента),
   // иначе прокрутка минутами visually ничего не меняла бы внутри часа.
@@ -136,12 +136,20 @@ function _widgetHTML() {
       <span class="wh-cal-w-collapse" title="Свернуть/развернуть">▾</span>
     </div>
     <div class="wh-cal-w-body">
-      <div class="wh-cal-w-date">${esc(dateStr)}</div>
+      <div class="wh-cal-w-date">
+        <span class="wh-cal-w-date-part" title="${esc(checkDigitTooltip())}">${esc(dateParts.digit)}</span
+        ><span class="wh-cal-w-date-dot">.</span
+        ><span class="wh-cal-w-date-part" title="${esc(DATE_PART_TOOLTIPS.fraction)}">${esc(dateParts.fraction)}</span
+        ><span class="wh-cal-w-date-dot">.</span
+        ><span class="wh-cal-w-date-part" title="${esc(DATE_PART_TOOLTIPS.year)}">${esc(dateParts.year)}</span
+        ><span class="wh-cal-w-date-dot">.</span
+        ><span class="wh-cal-w-date-part" title="${esc(DATE_PART_TOOLTIPS.millennium)}">${esc(dateParts.millennium)}</span>
+      </div>
       <div class="wh-cal-w-watch wh-cal-w-watch-primary">
         <span class="wh-cal-w-watch-ic">${esc(w.watch.icon || "")}</span><span class="wh-cal-w-watch-lbl">${esc(clockStr)}</span>
       </div>
       ${phases.map(p => `
-      <div class="wh-cal-w-watch wh-cal-w-watch-secondary" title="${esc(p.label)}">
+      <div class="wh-cal-w-watch wh-cal-w-watch-secondary" title="${esc(p.label)}${p.description ? " — " + esc(p.description) : ""}">
         <span class="wh-cal-w-watch-ic">${esc(p.watch.icon || "")}</span><span class="wh-cal-w-watch-lbl">${esc(p.watch.label)}</span>
       </div>`).join("")}
       ${controls}
@@ -313,7 +321,12 @@ export async function openCalendarSettings() {
             epochFraction: Math.max(0, Math.min(999, Number(html[0].querySelector(".cal-epoch-frac").value) || 0)),
             checkDigit: Math.max(0, Math.min(9, Number(html[0].querySelector(".cal-check-digit").value) || 0)),
             enabledPresets: enabled,
-            customPresets: html[0]._whCalCustomPresets ?? cfg.customPresets
+            customPresets: html[0]._whCalCustomPresets ?? cfg.customPresets,
+            presetDescriptions: Object.fromEntries(
+              [...html[0].querySelectorAll(".wh-cal-preset-desc")]
+                .map(inp => [inp.dataset.key, inp.value.trim()])
+                .filter(([, v]) => v)
+            )
           };
           if (!newCfg.enabledPresets.length) newCfg.enabledPresets = DEFAULT_CALENDAR_CONFIG.enabledPresets;
           await game.settings.set("warhammer-dbc", "imperialCalendar", newCfg);
@@ -327,6 +340,9 @@ export async function openCalendarSettings() {
       const root = html[0];
       let customPresets = foundry.utils.deepClone(cfg.customPresets || []);
       let enabled = new Set(cfg.enabledPresets?.length ? cfg.enabledPresets : DEFAULT_CALENDAR_CONFIG.enabledPresets);
+      // Текущий текст описаний переживает пере-рендер списка (add/delete
+      // своего пресета) — иначе недописанный текст стирался бы при каждом клике.
+      let descriptions = { ...(cfg.presetDescriptions || {}) };
       root._whCalCustomPresets = customPresets; // читается в save-callback
 
       const checklist = html.find(".wh-cal-preset-checklist");
@@ -335,18 +351,28 @@ export async function openCalendarSettings() {
         checklist.empty();
         for (const [key, preset] of Object.entries(registry)) {
           const isCustom = customPresets.some(p => p.key === key);
-          const row = $(`<label class="wh-cal-preset-row">
-            <input type="checkbox" data-key="${esc(key)}" ${enabled.has(key) ? "checked" : ""}/>
-            <span class="wh-cal-preset-row-label">${esc(preset.label)}</span>
+          const row = $(`<div class="wh-cal-preset-row">
+            <label class="wh-cal-preset-row-check">
+              <input type="checkbox" data-key="${esc(key)}" ${enabled.has(key) ? "checked" : ""}/>
+              <span class="wh-cal-preset-row-label">${esc(preset.label)}</span>
+            </label>
+            <input type="text" class="wh-cal-preset-desc" data-key="${esc(key)}"
+                   placeholder="${esc(preset.description || "краткое описание...")}"
+                   value="${esc(descriptions[key] || "")}"
+                   style="display:${enabled.has(key) ? "block" : "none"}"/>
             ${isCustom ? `<button type="button" class="wh-cal-preset-delete" title="Удалить свой пресет">✕</button>` : ""}
-          </label>`);
-          row.find("input[type=checkbox]").on("change", ev => {
-            if (ev.currentTarget.checked) enabled.add(key); else enabled.delete(key);
+          </div>`);
+          row.find('input[type="checkbox"]').on("change", ev => {
+            const on = ev.currentTarget.checked;
+            if (on) enabled.add(key); else enabled.delete(key);
+            row.find(".wh-cal-preset-desc").css("display", on ? "block" : "none");
           });
+          row.find(".wh-cal-preset-desc").on("input", ev => { descriptions[key] = ev.currentTarget.value; });
           row.find(".wh-cal-preset-delete").on("click", () => {
             customPresets = customPresets.filter(p => p.key !== key);
             root._whCalCustomPresets = customPresets;
             enabled.delete(key);
+            delete descriptions[key];
             renderChecklist();
           });
           checklist.append(row);
