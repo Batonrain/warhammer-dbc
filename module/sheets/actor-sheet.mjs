@@ -62,6 +62,7 @@ import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { beginTargeting } from "../combat/aim.mjs";
 import { HOMEWORLD_BY_KEY, homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
 import { specOptions, matchSpec, specDef } from "../constants/skill-specializations.mjs";
 import { ASTARTES_IMPLANTS, ASTARTES_RACE, ASTARTES_IMPLANT_WEAPON_ITEMS,
@@ -5137,12 +5138,39 @@ html.find(".addiction-remove-btn").click(async ev => {
     return { mods: allMods, html: blocks };
   }
 
+  /**
+   * Галочки от реестра правил — третий источник модификаторов рядом с
+   * Особенностями Происхождения и предметными rollMods. Правила приходят через
+   * конвейер теста (module/rules/resolve-test.mjs, фазы 1–3): здесь только показ.
+   *
+   * Формат записи тот же, {value, label, halvePenalty}, поэтому дальше диалог
+   * складывает все три вида галочек одинаково.
+   */
+  _ruleRollModsHtml(context) {
+    const { mods } = resolveTest({ actor: this.actor, ...context });
+    if (!mods.length) return { html: "", mods };
+    const rows = mods.map((m, i) => {
+      const sign = m.value > 0 ? `+${m.value}` : (m.value < 0 ? `${m.value}` : "");
+      return `<label class="attack-mod-check rule-roll-mod">
+        <input type="checkbox" class="rule-mod" data-idx="${i}" data-value="${m.value || 0}"
+               ${m.halvePenalty ? 'data-halve="1"' : ""}/>
+        <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}</span></label>`;
+    }).join("");
+    return {
+      mods,
+      html: `<div class="atk-dlg-modifiers rule-mods">
+        <div class="atk-mods-title">Правила</div>
+        <div class="atk-mods-list">${rows}</div></div>`
+    };
+  }
+
   _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null) {
     return new Promise(resolve => {
       let resolved = false;
       const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
       const hw = this._homeworldModsHtml(rollCtx);
       const im = this._itemRollModsHtml(rollCtx);
+      const rl = this._ruleRollModsHtml(rollCtx);
       const defaultCharTotal = this.actor.system.characteristics[defaultChar]?.total ?? 0;
       const rankBonus        = baseTotal - defaultCharTotal;
       const charOptions = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
@@ -5169,6 +5197,7 @@ html.find(".addiction-remove-btn").click(async ev => {
             </div>
             ${hw.html}
             ${im.html}
+            ${rl.html}
           </form>`,
         buttons: {
           roll: {
@@ -5187,6 +5216,11 @@ html.find(".addiction-remove-btn").click(async ev => {
                 // Ситуативные модификаторы предметов (Черты/Таланты/etc. со
                 // скрипт-записанным flags.warhammer-dbc.rollMods) — та же логика.
                 html.find(".item-mod:checked").each((_, cb) => {
+                  modifier += parseInt(cb.dataset.value) || 0;
+                  if (cb.dataset.halve === "1") halve = true;
+                });
+                // Реестр правил (module/rules/) — та же логика.
+                html.find(".rule-mod:checked").each((_, cb) => {
                   modifier += parseInt(cb.dataset.value) || 0;
                   if (cb.dataset.halve === "1") halve = true;
                 });

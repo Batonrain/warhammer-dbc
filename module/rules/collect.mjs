@@ -57,10 +57,13 @@ function applyOverrides(rules) {
 }
 
 /**
- * Все правила, действующие для актора в этом контексте: сначала собрать от всех
- * источников, потом отобрать по `when`, и только потом снять вытесненные.
+ * Сбор без отбора: всё, что дают зарегистрированные источники. Отдельно от
+ * отбора, потому что конвейер теста (rules/resolve-test.mjs, фаза 2) даёт
+ * сторонним модулям дописать правила в этот список до того, как он просеян.
+ *
+ * Упавший источник не роняет сборку: ошибка в консоль, остальные отрабатывают.
  */
-export function collectRules(actor, ctx = {}) {
+export function gatherRules(actor, ctx = {}) {
   const all = [];
   for (const [key, source] of getRuleSources()) {
     try {
@@ -69,5 +72,18 @@ export function collectRules(actor, ctx = {}) {
       console.error(`Warhammer DBC | источник правил «${key}» упал`, err);
     }
   }
-  return applyOverrides(all.filter(rule => matchRule(rule, actor, ctx)));
+  return all;
+}
+
+/** Отбор: сначала по `when`, и только потом снятие вытесненных. */
+export function selectRules(rules, actor, ctx = {}) {
+  return applyOverrides(rules.filter(rule => matchRule(rule, actor, ctx)));
+}
+
+/**
+ * Все правила, действующие для актора в этом контексте: сначала собрать от всех
+ * источников, потом отобрать по `when`, и только потом снять вытесненные.
+ */
+export function collectRules(actor, ctx = {}) {
+  return selectRules(gatherRules(actor, ctx), actor, ctx);
 }

@@ -6,6 +6,7 @@
 
 import { RACES } from "../constants/races.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
+import { isFeatureEnabled } from "../constants/features.mjs";
 
 const SOURCES = new Map();
 
@@ -32,5 +33,11 @@ const hwKey = actor =>
 
 // Поле `rules` у данных расы и Происхождения пока не заполнено — источники
 // вернут пустой массив. Заполнение идёт на этапе 3 плана.
-registerRuleSource("race",      a => RACES[a?.system?.race]?.rules ?? []);
-registerRuleSource("homeworld", a => HOMEWORLD_BY_KEY[hwKey(a)]?.rules ?? []);
+registerRuleSource("race", a => RACES[a?.system?.race]?.rules ?? []);
+
+// Выключенная подсистема убирает свои правила из сборки: иначе выключатель
+// «Происхождения» гасил бы галочки в диалоге броска, а правила Происхождения
+// продолжали действовать. Вне Foundry isFeatureEnabled отдаёт значение по
+// умолчанию, поэтому реестр по-прежнему запускается в тестах.
+registerRuleSource("homeworld", a =>
+  isFeatureEnabled("homeworlds") ? (HOMEWORLD_BY_KEY[hwKey(a)]?.rules ?? []) : []);

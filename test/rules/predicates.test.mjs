@@ -128,12 +128,18 @@ describe("weaponClass", () => {
 
 describe("targetHasTrait", () => {
   it("у цели есть такая Черта", () => {
-    const target = actor({ items: [trait("Daemonic / Демонический")] });
-    expect(PREDICATES.targetHasTrait(actor(), { target }, "Daemonic")).toBe(true);
+    const targetActor = actor({ items: [trait("Daemonic / Демонический")] });
+    expect(PREDICATES.targetHasTrait(actor(), { targetActor }, "Daemonic")).toBe(true);
   });
 
   it("цели нет в контексте", () => {
     expect(PREDICATES.targetHasTrait(actor(), {}, "Daemonic")).toBe(false);
+  });
+
+  // ctx.target в контексте броска — флаг «бросок нацелен» (rules/match-context.mjs),
+  // а не актор. Предикат не должен принимать его за цель.
+  it("флаг ctx.target целью не считается", () => {
+    expect(PREDICATES.targetHasTrait(actor(), { target: true }, "Daemonic")).toBe(false);
   });
 });
 
