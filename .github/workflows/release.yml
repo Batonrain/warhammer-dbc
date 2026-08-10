@@ -2,28 +2,78 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
+    paths-ignore:
+      - "README.md"
+      - "LICENSE"
+      - ".gitignore"
+      - ".gitattributes"
+      - ".github/**"
+      - "books/**"
+      - "packs-src/**"
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Какую часть версии поднять"
+        required: true
+        default: patch
+        type: choice
+        options: [patch, minor, major]
 
 permissions:
   contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Определить версию из тега
+      - name: Вычислить следующую версию
         id: meta
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          MANUAL_BUMP: ${{ inputs.bump }}
         run: |
-          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+
+          latest=$(git tag -l 'v*' --sort=-v:refname | head -1 || true)
+          latest=${latest:-v0.0.0}
+          IFS=. read -r major minor patch <<< "${latest#v}"
+          major=${major:-0}; minor=${minor:-0}; patch=${patch:-0}
+
+          if [ -n "$MANUAL_BUMP" ]; then
+            bump="$MANUAL_BUMP"
+          elif printf '%s' "$COMMIT_MESSAGE" | grep -qi '#major'; then
+            bump=major
+          elif printf '%s' "$COMMIT_MESSAGE" | grep -qi '#minor'; then
+            bump=minor
+          else
+            bump=patch
+          fi
+
+          case "$bump" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
+
+          version="$major.$minor.$patch"
+          echo "Предыдущая версия: $latest, инкремент: $bump, новая версия: v$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
       - name: Подставить ссылки в system.json
         env:
           VERSION: ${{ steps.meta.outputs.version }}
           REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ steps.meta.outputs.tag }}
         run: |
           jq --arg version "$VERSION" \
              --arg url "https://github.com/$REPO" \
@@ -32,7 +82,7 @@ jobs:
              '.version = $version | .url = $url | .manifest = $manifest | .download = $download' \
              system.json > system.json.tmp
           mv system.json.tmp system.json
-          cat system.json | head -20
+          head -20 system.json
 
       - name: Собрать архив системы
         run: |
@@ -51,10 +101,28 @@ jobs:
             README.md \
             -x "packs/*/LOCK" "packs/*/LOG" "packs/*/LOG.old"
 
+      - name: Поставить тег
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
       - name: Опубликовать релиз
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ github.ref_name }}
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          generate_release_notes: true
+          body: |
+            Установка в Foundry VTT через **Manifest URL**:
+
+            ```
+            https://github.com/${{ github.repository }}/releases/latest/download/system.json
+            ```
+          append_body: true
           files: |
             system.json
             system.zip
