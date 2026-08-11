@@ -1,0 +1,44 @@
+{
+  "name": "Pict Caster / Пикт-Кастер",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Устройство записи изображений/потока и просмотра записанного. Две руки + один глаз (одной рукой — хуже качество).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": -1,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Ч/б или только статичные изображения.",
+      "good": "Функционал магнокуляра.",
+      "best": "Как Good.Q + 3D-запись для воспроизведения на гололите."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "1tOiYWlaaPGFcOBb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!1tOiYWlaaPGFcOBb"
+}

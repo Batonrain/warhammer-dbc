@@ -1,0 +1,60 @@
+{
+  "name": "Psalm of the Missing Mosaic / Псалом Недостающей Мозаики",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "E4orK1NdRaBbgKla",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "Киберпсалмы",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 0,
+    "cognitionCost": 2,
+    "energyCost": 1,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Касание",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Mechatendril, Fabrication Module · Цена: 2К+1Э · Процесс: Нет · Тип: Компенсатор (0), Физическое] Треб.: Tech-Use+10. Чинит поломку брони/оружия (≤1 смена), Расклинивает оружие, или восстанавливает Аблативную Броню/Реактивные Пластины/повреждение AP (одно). Не чинит аблативные Раны брони или Структуру техники.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "EW1sD5rMdBHrQQTF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040823,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EW1sD5rMdBHrQQTF"
+}

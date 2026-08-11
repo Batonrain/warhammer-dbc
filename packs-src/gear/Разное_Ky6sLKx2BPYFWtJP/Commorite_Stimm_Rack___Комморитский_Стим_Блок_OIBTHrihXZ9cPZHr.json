@@ -1,0 +1,58 @@
+{
+  "name": "Commorite Stimm-Rack / Комморитский Стим-Блок",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Продвинутый инжектор наркотиков и химикатов, излюбленный гладиаторами арены.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "у сердца или на шее",
+    "effect": "6 ампул, которые владелец активирует Свободным действием — выборочно или все сразу, немедленно применяя эффекты препаратов.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Просто инжектор с 6 ампулами.",
+      "good": "12 ампул. Позволяет создавать наркотики и медикаменты до R0 внутри блока (от нескольких минут до нескольких дней, нужно химическое сырьё; сырьём могут служить и другие наркотики).",
+      "best": "30 ампул. Позволяет создавать наркотики и медикаменты до R2 внутри блока."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Инструменты"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "OIBTHrihXZ9cPZHr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!OIBTHrihXZ9cPZHr"
+}

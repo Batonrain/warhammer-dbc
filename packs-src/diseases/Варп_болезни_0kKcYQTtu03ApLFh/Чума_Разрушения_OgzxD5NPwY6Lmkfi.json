@@ -1,0 +1,39 @@
+{
+  "name": "Чума Разрушения",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "nurgle",
+    "contagion": "",
+    "incubation": "7 дней",
+    "symptoms": "7 дней внутренности разлагаются, формируя мух. Каждый день +20 штрафа (накопительно) на все действия; штраф > Т → Беспомощен. Через 7 дней живот взрывается роем мух — человек гибнет; десантник падает до 0 Ран и регенерирует за день, цикл повторяется (7 циклов → смерть от истощения или становится Чумным Десантником).",
+    "vectors": "Мухи из взорвавшихся животов жалят всех вокруг: Т−30 или заражение.",
+    "cure": "Только психосила Панацея или вмешательство бога (обычно Тзинч), дарующее мутацию внутренностей.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "OgzxD5NPwY6Lmkfi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!OgzxD5NPwY6Lmkfi"
+}

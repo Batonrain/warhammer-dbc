@@ -1,0 +1,35 @@
+{
+  "name": "Резонирующее / Resonant",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Менее надёжно из-за резонанса. Понижает Надёжность на 1 (заклинивает чаще).",
+    "reminder": "〰️ Резонирующее: заклинивает чаще обычного",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "resonant",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "RC9Mm3SmOrctwrBu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353821,
+    "modifiedTime": 1786224353826,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!RC9Mm3SmOrctwrBu"
+}

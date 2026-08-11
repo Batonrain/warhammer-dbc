@@ -1,0 +1,52 @@
+{
+  "name": "Dark Omens / Тёмные Предзнаменования",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "EqUEc8xduRjbBMD4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Цель с Меткой Мести ощущает потусторонний страх, и сама судьба становится к ней менее благосклонна. Все проклятия, накладываемые на цель, получают бонус +30 и Преимущество.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Скорбные Пасти",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "fUCTNgc5u4Xhsy0P",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121993680,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!fUCTNgc5u4Xhsy0P"
+}

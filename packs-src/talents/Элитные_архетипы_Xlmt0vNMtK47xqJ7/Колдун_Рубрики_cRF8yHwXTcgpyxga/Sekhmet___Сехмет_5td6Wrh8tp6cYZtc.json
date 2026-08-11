@@ -1,0 +1,52 @@
+{
+  "name": "Sekhmet / Сехмет",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "cRF8yHwXTcgpyxga",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Освоил вселение душ големов в более продвинутые доспехи. Может создавать големов в Терминаторских Доспехах вместо обычных силовых. Голем-Терминатор имеет +10 WS, +10 S, поднимает макс. Ран на аблативные Раны доспеха и поднимает рейтинг Трейта Regeneration до 6.",
+    "tier": 2,
+    "requirement": "Тзинч, PR 7",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Колдун Рубрики",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "5td6Wrh8tp6cYZtc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121967179,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!5td6Wrh8tp6cYZtc"
+}

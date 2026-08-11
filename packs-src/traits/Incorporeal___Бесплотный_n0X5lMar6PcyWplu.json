@@ -1,0 +1,51 @@
+{
+  "name": "Incorporeal / Бесплотный",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Лишён материальности: проходит сквозь препятствия, не может физически взаимодействовать (кроме атак), считается имеющим Stealth (6); вредит ему только Варп/особое оружие. Будучи бестелесным и непрозрачным — +30 на Stealth.",
+    "notes": "",
+    "benefit": "Нематериален; проходит сквозь стены; +30 Stealth.",
+    "source": "Варп",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "n0X5lMar6PcyWplu",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781652440036,
+    "modifiedTime": 1786121961431,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!n0X5lMar6PcyWplu"
+}

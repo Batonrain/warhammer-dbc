@@ -1,0 +1,33 @@
+{
+  "name": "Камуфляжная сетка / Camo Netting",
+  "type": "vehicleGear",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Тесты на маскировку этой машины в местности, под которую сетка создана, получают бонус +30. Чтобы нацепить или снять сетку, экипаж тратит 5 минут работы. Когда машина двигается быстрее SPD или оказывается под огнём, камуфляжная сетка уничтожается.",
+    "notes": "",
+    "availability": -1,
+    "quality": "common",
+    "active": true
+  },
+  "_id": "PcWWljjk3MjuLSTa",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783179040775,
+    "modifiedTime": 1783179040775,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!PcWWljjk3MjuLSTa"
+}

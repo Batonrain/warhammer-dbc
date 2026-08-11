@@ -1,0 +1,58 @@
+{
+  "name": "Webway Portal / Портал Паутины",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Комплекс инструментов, создающий локальные проходы в Паутину — абсолютно безопасные и надёжные.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 20,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "",
+    "effect": "Создаёт тёмно-фиолетовый портал длиной и высотой от 20 м до 5 км, живущий от нескольких секунд до нескольких дней по желанию владельца. Купол разрастается в геометрической прогрессии, что даёт время не попасть в него случайно. Постройки не перемещает, технику и существ — перемещает, даже против их воли.\nТакже определяет положение носителя относительно Паутины и материального мира и позволяет прокладывать полноценные маршруты. До 10 активных куполов; при создании 11-го закрывается самый старый.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Только 1 купол. Обычно используется для карманных врат в Паутину — стабильных и надёжных.",
+      "good": "Уменьшается до сферы весом 3 кг, либо держит до 100 активных куполов.",
+      "best": "Уменьшается до 0.1 кг и вшивается в броню, либо держит до 1000 активных куполов."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Инструменты"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "F8duVkW2mJ9UqIGE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!F8duVkW2mJ9UqIGE"
+}

@@ -1,0 +1,60 @@
+{
+  "name": "Орбитальная высадка / Orbital Deployment",
+  "type": "vehicleTrait",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Машина десантируется с орбиты. 1-й Ход — влетает на Высокую высоту (все атаки по ней −30). 2-й Ход — приземляется, смещаясь на 2d10 м в случайном направлении (если точку не подсвечивает наводчик/маяк). При посадке на занятое место — считается Тараном на >1,5 SPD. Атаки из машины −20 в Раунд приземления.",
+    "notes": "",
+    "benefit": "Быстрая высадка с орбиты.",
+    "availability": 0,
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "hasRating3": false,
+    "rating3": 0,
+    "effects": {
+      "openTopped": false,
+      "manoeuvreMod": 0,
+      "spdMod": 0,
+      "spdDamageReduce": 0,
+      "noMove": false,
+      "swerveDisabled": false,
+      "fullMoveSpdMult": 0,
+      "smallMoveOnly": false,
+      "ignoreDifficultTerrain": false,
+      "critHalved": false,
+      "trackHitsToHull": false,
+      "siege": false,
+      "reloadRapid": false,
+      "commandBonus": 0,
+      "repairBonus": 0,
+      "deflectorShield": false,
+      "deflectorDaemonic": false,
+      "ignoreCrewCrits": false,
+      "autonomous": false,
+      "flickerfield": false
+    }
+  },
+  "_id": "I7r6LePqdzllBgG7",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783195371864,
+    "modifiedTime": 1783871637797,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!I7r6LePqdzllBgG7"
+}

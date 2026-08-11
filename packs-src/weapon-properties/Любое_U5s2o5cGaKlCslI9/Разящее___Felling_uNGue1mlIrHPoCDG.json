@@ -1,0 +1,35 @@
+{
+  "name": "Разящее / Felling",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "U5s2o5cGaKlCslI9",
+  "system": {
+    "description": "Способно сразить невероятно живучих врагов. При расчёте Поглощения уменьшает Сверхъестественную Стойкость цели на X (минимум 0).",
+    "reminder": "🪓 Разящее (X): −X к Сверхъест. Стойкости цели",
+    "category": "both",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "felling",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "uNGue1mlIrHPoCDG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353819,
+    "modifiedTime": 1786224353824,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!uNGue1mlIrHPoCDG"
+}

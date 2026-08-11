@@ -1,0 +1,51 @@
+{
+  "name": "Gene-Seed / Геносемя",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Космодесантник получает все преимущества имплантов Геносемени (см. гайд на вкладке СПОСОБНОСТИ): Второе Сердце, Орган Ларрамана, Преомнор, Сус-ан Мембрана, Железа Бетчера, Чёрный Панцирь и др.",
+    "notes": "",
+    "benefit": "Импланты Астартес (гайд Геносемени).",
+    "source": "Астартес",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "yQ89JEpX0Xv93v8e",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781701498775,
+    "modifiedTime": 1786121962354,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!yQ89JEpX0Xv93v8e"
+}

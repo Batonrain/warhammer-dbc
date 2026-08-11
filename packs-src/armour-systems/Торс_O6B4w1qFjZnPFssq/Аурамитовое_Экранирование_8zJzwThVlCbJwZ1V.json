@@ -1,0 +1,53 @@
+{
+  "name": "Аурамитовое Экранирование",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "O6B4w1qFjZnPFssq",
+  "system": {
+    "description": "Сетка проводов из переплавленной брони Кустодес: расчётная сила Haywire на эту броню −6 (на 3 строки вверх по таблице Haywire).",
+    "notes": "",
+    "category": "powerSystem",
+    "modGroup": "torso",
+    "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": "5",
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    }
+  },
+  "_id": "8zJzwThVlCbJwZ1V",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782145401867,
+    "modifiedTime": 1784850572351,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!8zJzwThVlCbJwZ1V"
+}

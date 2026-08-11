@@ -1,0 +1,52 @@
+{
+  "name": "Black Hand / Чёрная Рука",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "QYTyL0wuwu48FRxH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Касание открывает демонам путь к душе врага. Касаясь другого персонажа, может провести Инзорцизм, но вместо призыва демона позволить одному из своих демонов провести атаку Одержимостью против существа, как если бы демон имел Трейт Possession. Атака прекращается, если жертва разрывает контакт с рукой. Созданный демонхост подчиняется Инзорцисту так же, как подчинённый демон.",
+    "tier": 3,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Инзорцист",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "gADxy6uYzEtUmod6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121994398,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gADxy6uYzEtUmod6"
+}

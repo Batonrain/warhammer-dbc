@@ -1,0 +1,52 @@
+{
+  "name": "Long Hand of Corrosion / Длинная Рука Коррозии",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "fD6zAnEw9mcYxPp9",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Порченная плоть монаха служит лучшим проводником силы паразитов, позволяя им защищать его даже от атак издали, поражая вражеское оружие разрушающими лучами желтовато-зелёного света из раны. Может использовать Трейт Putrescence Within против попаданий стрелковым оружием.",
+    "tier": 2,
+    "requirement": "Нургл, Cor 49",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "Элитный архетип: Чумной Монах",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "0IvRtR5ASjiwYhd1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121962854,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0IvRtR5ASjiwYhd1"
+}

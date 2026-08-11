@@ -1,0 +1,75 @@
+{
+  "name": "Quicksilver / Ртуть",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-daemonology-pure.svg",
+  "folder": "XM7VwG3mSL8pmwUe",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 350,
+    "discipline": "daemonology",
+    "subtype": "Чистая Демонология",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "PR×15м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура. Треб.: Banishment. Все с Cor 0-29 в ауре под Командным Присутствием псайкера: +PR к SPD и Инициативе, +1 Реакция (только на Избегание от атак демонов и попаданий психосил).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "yzB1dVQXbHgGeoGL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122039733,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!yzB1dVQXbHgGeoGL"
+}

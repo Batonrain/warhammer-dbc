@@ -1,0 +1,55 @@
+{
+  "name": "Chokehold / Удушение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Puh1trK0GC8FNKqr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сжать персонажа наносит цели 1 Усталости, Заломить — 1 Усталости за Успех победы (или 1 даже при проигрыше). На 5+ Успехов во встречном Athletics Захвата — ещё 1 Усталости за каждые полные 5 Успехов. Только на живых существах, нуждающихся в кислороде.",
+    "tier": 2,
+    "requirement": "S 40, WS 40",
+    "aptitudes": [
+      "s",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "TjvvH85eUcgY7gDs",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121984714,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!TjvvH85eUcgY7gDs"
+}

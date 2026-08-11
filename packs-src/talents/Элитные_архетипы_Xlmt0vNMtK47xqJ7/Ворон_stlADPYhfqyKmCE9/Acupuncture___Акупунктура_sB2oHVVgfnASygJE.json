@@ -1,0 +1,52 @@
+{
+  "name": "Acupuncture / Акупунктура",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "stlADPYhfqyKmCE9",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Точечным иглоукалыванием тонко настраивает механику своего тела и рунических узоров в нём. Может за полудействие поменять текущую Стойку, даже если уже атаковал в этот Ход, и получить преимущества сразу двух Стоек, пока не сменит Стойку (на только одну, как обычно).",
+    "tier": 3,
+    "requirement": "Тзинч, Medicae+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Ворон",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "sB2oHVVgfnASygJE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786122004605,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!sB2oHVVgfnASygJE"
+}

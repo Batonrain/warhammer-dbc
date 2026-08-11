@@ -1,0 +1,52 @@
+{
+  "name": "Proxy Veil / Замещающая Вуаль",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "tUkMT9PeWTzNlrmX",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Глубоким гипнозом сооружает подставную личность в сознании союзника. Потратив Очко Бесчестия и 4 часа работы, может внедрить в разум добровольца доминирующую личность, заставив не искушённых в шпионаже союзников искренне верить в свои роли прикрытия. Любой успешный тест Scrutiny против них покажет их подставные личности. Подставная личность хрупка и уступает место основной через сутки или при активации кодовой фразой.",
+    "tier": 2,
+    "requirement": "Неделимый, Deceive+20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Когнитэ",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "4nuvwj9GEnYLU6Zm",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121966332,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4nuvwj9GEnYLU6Zm"
+}

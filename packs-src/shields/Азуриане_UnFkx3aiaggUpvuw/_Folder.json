@@ -1,0 +1,23 @@
+{
+  "name": "Азуриане",
+  "type": "Item",
+  "folder": null,
+  "sorting": "m",
+  "_id": "UnFkx3aiaggUpvuw",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805486,
+    "modifiedTime": 1781949805486,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!folders!UnFkx3aiaggUpvuw"
+}

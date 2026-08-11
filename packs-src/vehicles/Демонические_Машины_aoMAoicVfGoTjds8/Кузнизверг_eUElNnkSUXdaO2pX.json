@@ -1,0 +1,785 @@
+{
+  "name": "Кузнизверг",
+  "type": "vehicle",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "folder": "aoMAoicVfGoTjds8",
+  "system": {
+    "vehicleClass": "Кузнизверг",
+    "vehicleType": "walker",
+    "origin": "",
+    "commander": "",
+    "manoeuvrability": 0,
+    "operate": 0,
+    "size": 2,
+    "chassis": {
+      "type": "walker",
+      "spd": 10,
+      "spdDamage": 0,
+      "manoeuvreDamage": 0,
+      "strength": 65,
+      "unnaturalS": 6
+    },
+    "armour": {
+      "front": 35,
+      "side": 35,
+      "rear": 20
+    },
+    "structure": {
+      "value": 35,
+      "max": 35,
+      "critical": 0
+    },
+    "ammoReloads": 10,
+    "openTopped": false,
+    "traits": "",
+    "stations": [
+      {
+        "id": "00oaYeiI7VT7obvC",
+        "role": "pilot",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      }
+    ],
+    "damageStates": [],
+    "notes": "<p><b>Хаос — демон-движок.</b> Forgefiend: артиллерийская платформа, 2 руки (обязательно одинаковые) + пасть. Пилот-демон (<b>+10 BS</b>, Covering Fire, Storm of Lead). <b>Штурм</b>, <b>Многоногая (4)</b>.</p>",
+    "gmNotes": "",
+    "availability": 2
+  },
+  "items": [
+    {
+      "name": "Проводящая Броня / Conductive Plating",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Броня проводит электричество: её AP со всех сторон считается вдвое ниже реального (окр.▲) против E(El) Dmg.",
+        "notes": "",
+        "benefit": "E(El) Dmg игнорирует половину AP машины.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "32JNrwv8vFh8R5Na",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!eUElNnkSUXdaO2pX.32JNrwv8vFh8R5Na"
+    },
+    {
+      "name": "Многоногая / Multi-Legged",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "У Шагохода больше 2 ног. При Опрокидывании всегда урон по Лобовой броне, может Встать полудействием, экипаж +20 на тест против Оглушения. Поломки «Ходовая Часть Повреждена/Сломана» снижают SPD на X меньше (до 0 — игнорируются). Может Карабкаться как персонажи.",
+        "notes": "",
+        "benefit": "Легче переносит Опрокидывание.",
+        "availability": 0,
+        "hasRating": true,
+        "rating": 4,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "VvqrQ4e8nb4KVkb5",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!eUElNnkSUXdaO2pX.VvqrQ4e8nb4KVkb5"
+    },
+    {
+      "name": "Штурм / Onslaught",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Системы наведения шагохода для штурма. При Натиске пилот может совершить стрелковую атаку по цели Натиска или группе целей не более чем в 2 м от основной. Всегда считается с Боевой дистанции. Оружие со Spray можно провести из любой точки пути Натиска.",
+        "notes": "",
+        "benefit": "Можно стрелять во время Натиска.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "Flgub78tB7LiBmCN",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!eUElNnkSUXdaO2pX.Flgub78tB7LiBmCN"
+    },
+    {
+      "name": "Укреплённая Броня / Reinforced Armour",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Броня усилена, важнейшие системы защищены. Уменьшает вдвое (окр.▲) свою Отрицательную Структуру в расчёте Критических Эффектов (при −10 Стр. получает Крит 5). При непрямом попадании оружия со Blast половина (окр.▼) кубиков урона взрыва игнорируется (отбрасывая наибольшие).",
+        "notes": "",
+        "benefit": "½ крит-эффектов от негативной Структуры.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": true,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "eWrFpsFXnu444xeT",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!eUElNnkSUXdaO2pX.eWrFpsFXnu444xeT"
+    },
+    {
+      "name": "Paw / Лапа (Кузнизверг)",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "primitive",
+        "range": 0,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+12",
+        "damageType": "impact",
+        "penetration": 0,
+        "quality": "common",
+        "availability": 0,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Кулак, досягаемость 2–3. Природное оружие.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "reinforced"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "00oaYeiI7VT7obvC",
+          "mount": "hull",
+          "hArc": "—",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "wD8ZSujgfNOBfwL4",
+          "options": [
+            "Paw / Лапа (Кузнизверг)"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "ME6SNmqoxoZYjZsv",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341679,
+        "modifiedTime": 1783867341679,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!eUElNnkSUXdaO2pX.ME6SNmqoxoZYjZsv"
+    },
+    {
+      "name": "Paw / Лапа (Кузнизверг)",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "primitive",
+        "range": 0,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+12",
+        "damageType": "impact",
+        "penetration": 0,
+        "quality": "common",
+        "availability": 0,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Кулак, досягаемость 2–3. Природное оружие.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "reinforced"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "00oaYeiI7VT7obvC",
+          "mount": "hull",
+          "hArc": "—",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "psqie7moJAz8Rb96",
+          "options": [
+            "Paw / Лапа (Кузнизверг)"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "jI2X9blwaqBZTjZW",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341679,
+        "modifiedTime": 1783867341679,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!eUElNnkSUXdaO2pX.jI2X9blwaqBZTjZW"
+    },
+    {
+      "name": "Hades Autocannon / Автопушка Аид",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "solid",
+        "range": 250,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 1,
+        "rof_semi": 3,
+        "rof_full": 6,
+        "damage": "3d10+8",
+        "damageType": "impact",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 2,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Боезапас: ∞ (энергия/подача)",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "devastating",
+            "rating": 4
+          },
+          {
+            "key": "storm",
+            "rating": 2
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "00oaYeiI7VT7obvC",
+          "mount": "hull",
+          "hArc": "рука",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "2dCcC1yFH6dPdt6p",
+          "options": [
+            "Hades Autocannon / Автопушка Аид",
+            "Ectoplasma Cannon / Эктоплазменная Пушка"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "8SNsjjYvECpkOjeM",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341679,
+        "modifiedTime": 1783867341679,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!eUElNnkSUXdaO2pX.8SNsjjYvECpkOjeM"
+    },
+    {
+      "name": "Hades Autocannon / Автопушка Аид",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "solid",
+        "range": 250,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 1,
+        "rof_semi": 3,
+        "rof_full": 6,
+        "damage": "3d10+8",
+        "damageType": "impact",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 2,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Боезапас: ∞ (энергия/подача)",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "devastating",
+            "rating": 4
+          },
+          {
+            "key": "storm",
+            "rating": 2
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "00oaYeiI7VT7obvC",
+          "mount": "hull",
+          "hArc": "рука",
+          "vArc": "—",
+          "standard": false,
+          "reloads": 10,
+          "slotId": "dQ0k67Bu84y9WODt",
+          "options": [
+            "Hades Autocannon / Автопушка Аид",
+            "Ectoplasma Cannon / Эктоплазменная Пушка"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "QAlO0NAlJmZwPVk3",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341679,
+        "modifiedTime": 1783867341679,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!eUElNnkSUXdaO2pX.QAlO0NAlJmZwPVk3"
+    }
+  ],
+  "_id": "eUElNnkSUXdaO2pX",
+  "prototypeToken": {
+    "name": "Кузнизверг",
+    "displayName": 30,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783857422280,
+    "modifiedTime": 1783869241004,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!eUElNnkSUXdaO2pX"
+}

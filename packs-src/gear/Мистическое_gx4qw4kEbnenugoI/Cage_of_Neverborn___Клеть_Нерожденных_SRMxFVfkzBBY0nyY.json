@@ -1,0 +1,53 @@
+{
+  "name": "Cage of Neverborn / Клеть Нерожденных",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Бьющееся человеческое сердце с тремя заключёнными Низшими Демонами/Малыми Зверями.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Грудь / пояс",
+    "effect": "На груди/поясе растит 3 мясистых плода — их можно срывать и бросать как гранаты, призывая выбранного демона в Истинной Форме на 1d5+3 Хода (враждебен всему живому, связывается Владычеством; при изгнании возвращается в клеть). Отращивание плода — ритуал 5 минут, 1d10+3 в W (если снижает W на 8+, демон может немедленно провести Атаку Одержимостью).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Ритуал 1d10+5 в W.",
+      "good": "Ритуал 1d5+3 в W.",
+      "best": "Ритуал 3 в W."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "SRMxFVfkzBBY0nyY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!SRMxFVfkzBBY0nyY"
+}

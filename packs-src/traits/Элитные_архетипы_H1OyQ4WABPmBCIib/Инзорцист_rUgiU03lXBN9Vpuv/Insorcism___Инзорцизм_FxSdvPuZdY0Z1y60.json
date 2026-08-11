@@ -1,0 +1,51 @@
+{
+  "name": "Insorcism / Инзорцизм",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "rUgiU03lXBN9Vpuv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Извлекая запечатанное имя, призывает демона в Материум, используя собственную душу как якорь. За полудействие может призвать одного из демонов, чьё имя запечатал, в Истинной Форме, не более W.b м, уже подчинённым Владычеству. Если у демона Inf 31+, при призыве Инзорцист получает Inf.b демона непоглощаемого R Dmg в голову. Призванный демон остаётся до W.b Инзорциста суток и автоматически проходит тесты на Нестабильность, если не более W м от Инзорциста. Изгнанного демона можно призвать только через W.b + Inf.b (демона) часов; если изгнан экзорцизмом или выжиганием души — через столько же месяцев.",
+    "source": "Элитный архетип: Инзорцист",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "FxSdvPuZdY0Z1y60",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121958470,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!FxSdvPuZdY0Z1y60"
+}

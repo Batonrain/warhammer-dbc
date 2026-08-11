@@ -1,0 +1,48 @@
+{
+  "name": "Страдание — безжалостный учитель",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "suffering",
+    "roll": "72-75",
+    "rollMin": 72,
+    "rollMax": 75,
+    "text": "Страдание — безжалостный учитель",
+    "effect": "Первый раз за игровую сессию, когда персонаж получает урон, он получает бонус +20 к следующей проверке до конца своего следующего хода.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": []
+    },
+    "description": "",
+    "notes": ""
+  },
+  "_id": "EpBbfY9QY9d6HAdL",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": []
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786003756749,
+    "modifiedTime": 1786230667586,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!EpBbfY9QY9d6HAdL"
+}

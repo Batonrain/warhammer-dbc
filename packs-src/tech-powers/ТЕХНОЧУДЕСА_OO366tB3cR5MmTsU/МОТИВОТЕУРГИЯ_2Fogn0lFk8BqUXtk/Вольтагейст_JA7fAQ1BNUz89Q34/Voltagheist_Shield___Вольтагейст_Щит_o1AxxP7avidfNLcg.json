@@ -1,0 +1,60 @@
+{
+  "name": "Voltagheist Shield / Вольтагейст Щит",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "JA7fAQ1BNUz89Q34",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Вольтагейст",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 0,
+    "cognitionCost": 1,
+    "energyCost": 1,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Ferric Lure Implants, Luminen Capacitors · Цена: 1К+1Э · Процесс: ½ (У) · Тип: Компенсатор (0)] Треб.: T 35, Tech-Use+10. Не перегружающийся технологический щит-купол 1-(½I окр.▲ +10). Техножрец после броска урона решает, применять ли щит; каждое успешное отражение тратит 1 Энергию (Компенсатор применим).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "o1AxxP7avidfNLcg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042494,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!o1AxxP7avidfNLcg"
+}

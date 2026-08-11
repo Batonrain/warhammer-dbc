@@ -1,0 +1,51 @@
+{
+  "name": "Broken Chains / Порванные Цепи",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "zT2Ovr1Nc79zbuTy",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Аркано-механическая разгрузка вживлена в спину, затылок и руки, интегрирована в нервную систему. Даёт +3 бPR и Трейты Hoverer (W.b) и Unnatural W (+2), но не позволяет носить жёсткую или силовую броню. Порванные Цепи неуязвимы к эффектам Haywire и хорошо изолированы от воды и грязи.",
+    "source": "Элитный архетип: Дикий Псайкер",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "EEOk1eZQiJi2VRdY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121958277,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EEOk1eZQiJi2VRdY"
+}

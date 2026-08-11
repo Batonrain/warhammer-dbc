@@ -1,0 +1,46 @@
+{
+  "name": "Деревенант",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-bolt.svg",
+  "folder": "IQWUde65VkbLfhC1",
+  "system": {
+    "description": "В оболочку встроены осколки костей Сестёр Битвы-мучениц. Если болт наносит урон цели, не поклоняющейся Императору как единственному богу, та не может восстанавливать Раны (даже тратой Очков Бесчестия/Судьбы) 2 Раунда. Некроны, «убитые» под этим эффектом, немедленно телепортируются в гробницу из-за сбоя протоколов реанимации.",
+    "notes": "",
+    "weaponTypes": [
+      "bolt"
+    ],
+    "ammoCategory": "bolts",
+    "rarity": 4,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 4,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Цель-неимператорец не лечит Раны 2 раунда; некроны телепортируются в гробницу",
+    "properties": []
+  },
+  "_id": "x6jkemWPVSpZG6QW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!x6jkemWPVSpZG6QW"
+}

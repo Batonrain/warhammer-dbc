@@ -1,0 +1,94 @@
+{
+  "name": "Ракета: Моновыстрел",
+  "type": "weapon",
+  "folder": "wkvUviRkFCQwPwB8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "launcher",
+    "weaponType": "rocket",
+    "range": 0,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "1",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10+8",
+    "damageType": "rending",
+    "penetration": 4,
+    "quality": "common",
+    "availability": 1,
+    "weight": 0.1,
+    "attackBonus": 0,
+    "special": "",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": 8
+      },
+      {
+        "key": "devastating",
+        "rating": 3
+      },
+      {
+        "key": "monofilament",
+        "rating": 2
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "QZSEy2aJ8VvJ5dcW",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-launcher.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784645463257,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!QZSEy2aJ8VvJ5dcW"
+}

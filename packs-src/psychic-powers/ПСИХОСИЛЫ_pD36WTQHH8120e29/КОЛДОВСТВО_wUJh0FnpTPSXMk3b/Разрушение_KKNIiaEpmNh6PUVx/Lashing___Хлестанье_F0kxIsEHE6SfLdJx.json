@@ -1,0 +1,75 @@
+{
+  "name": "Lashing / Хлестанье",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-destruction.svg",
+  "folder": "KKNIiaEpmNh6PUVx",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "sorcery",
+    "subtype": "Разрушение",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "half",
+    "range": "PR×5м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+2×PR",
+    "damageType": "rending",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Психический Снаряд · Стрельба. Треб.: Melee Training (Кнут). Профиль: PR×5м, 1d10+2×PR R, Pen 0. Цель Размером ≤1: встречный W+0 или псайкер смещает её на PR×0,5м (игнор препятствий, не насильно в расчёте талантов); победив, цель сама может сместиться на PR×0,5м.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "F0kxIsEHE6SfLdJx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122026749,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!F0kxIsEHE6SfLdJx"
+}

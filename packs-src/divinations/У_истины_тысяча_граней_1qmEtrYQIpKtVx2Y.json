@@ -1,0 +1,112 @@
+{
+  "name": "У истины тысяча граней",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "facets",
+    "roll": "26-29",
+    "rollMin": 26,
+    "rollMax": 29,
+    "text": "У истины тысяча граней",
+    "effect": "P и I +3; первое получение очков Порчи в сессию наделяет +1 очком Порчи.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "+3 P, +3 I",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "per",
+          "value": 3
+        },
+        {
+          "stat": "int",
+          "value": 3
+        }
+      ]
+    },
+    "description": "",
+    "notes": ""
+  },
+  "_id": "1qmEtrYQIpKtVx2Y",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "OG1Hq8aqEEVw0g9Q",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "VNbJa9es9YqnOjpC",
+              "kind": "characteristic",
+              "charKey": "per",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "j6k7nkaY5sSXIJbB",
+              "kind": "characteristic",
+              "charKey": "int",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786027360703,
+    "modifiedTime": 1786281124359,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!1qmEtrYQIpKtVx2Y"
+}

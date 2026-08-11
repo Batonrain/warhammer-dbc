@@ -1,0 +1,75 @@
+{
+  "name": "Rockmaw / Каменная Пасть",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-geomancy.svg",
+  "folder": "bzVDfxBfAe5Ghmoz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "geomancy",
+    "subtype": "",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "PR×5м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2d10+PR",
+    "damageType": "rending",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Заземление · Непрямое · Психический Снаряд · Стрельба. Треб.: Earthshield. Линия 1м от псайкера, только Заземлённые (летающие авто-Избегают). Профиль: PR×5м, 2d10+PR R, Pen PR, Primitive, Snare (½PR окр.▲). Провал Snare → проваливается под землю (только S для вырывания).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "BdTEfoyGDcBA71yT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122025646,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!BdTEfoyGDcBA71yT"
+}

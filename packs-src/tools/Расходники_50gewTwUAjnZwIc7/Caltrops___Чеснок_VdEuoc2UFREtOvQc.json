@@ -1,0 +1,44 @@
+{
+  "name": "Caltrops / Чеснок",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Пакет металлических шипов (пирамидки по 4).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.5,
+    "availability": -1,
+    "quality": "common",
+    "toolCategory": "consumable",
+    "effect": "Полудействие: рассыпать 2×2м в ≤S.b м. Площадь — Трудный ландшафт −30 (тест даже для полного движения, но не полу-движения). Провал: падение + остановка + 1 непоглощаемого R в обе ноги, весь ландшафт Трудный −40 до конца боя/лечения. Жёсткая броня на ногах игнорирует. Тяжёлая версия R0 пробивает шины колёсной техники.",
+    "reminder": "Тяжёлая версия (R0) пробивает шины.",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "50gewTwUAjnZwIc7",
+  "_id": "VdEuoc2UFREtOvQc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!VdEuoc2UFREtOvQc"
+}

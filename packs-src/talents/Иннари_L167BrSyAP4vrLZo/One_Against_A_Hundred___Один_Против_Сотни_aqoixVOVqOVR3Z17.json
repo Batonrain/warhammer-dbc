@@ -1,0 +1,54 @@
+{
+  "name": "One Against A Hundred / Один Против Сотни",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "L167BrSyAP4vrLZo",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Против Орды или Низших Миньонов персонаж получает Преимущество на все тесты против них (включая физическое избегание их атак), а его рукопашные атаки получают Devastating (WS.b) против орд. Орда/низший миньон может нанести ему лишь 10 непоглощённого урона за раунд.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "aqoixVOVqOVR3Z17",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121990152,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aqoixVOVqOVR3Z17"
+}

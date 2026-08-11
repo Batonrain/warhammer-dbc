@@ -1,0 +1,55 @@
+{
+  "name": "Wrestler / Борец",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Puh1trK0GC8FNKqr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в Ход персонаж может перебросить любой тест на Борьбу, проведение Захвата или Уклонение от вражеского Захвата. Противники, пытающиеся Уклониться от его Захвата, должны перебрасывать успешные Уклонения.",
+    "tier": 2,
+    "requirement": "S 40, Athletics+20",
+    "aptitudes": [
+      "s",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "V9mX9JTX8bU2LA5h",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121985417,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!V9mX9JTX8bU2LA5h"
+}

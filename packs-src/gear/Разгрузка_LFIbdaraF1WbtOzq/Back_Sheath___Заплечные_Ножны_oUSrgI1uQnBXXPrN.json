@@ -1,0 +1,59 @@
+{
+  "name": "Back Sheath / Заплечные Ножны",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Заплечные ножны на перевязи для складывания двуручного рукопашного оружия на марше. Очень неудобные.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.6,
+    "availability": -1,
+    "quality": "common",
+    "gearCategory": "rig",
+    "worn": "Спина",
+    "effect": "1 слот 5×1 под двуручное рукопашное.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Со сложенным оружием: скорость Бега → Натиск, Натиск → Полное Движение.",
+      "good": "Считается неудобной (вместо очень неудобной).",
+      "best": "Заменяется магнитным замком 5×1: неудобный для Взятия, удобный для Складывания."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "veryAwkward",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "5x1",
+          "count": 1,
+          "note": "двуручное рукопашное"
+        }
+      ],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "LFIbdaraF1WbtOzq",
+  "_id": "oUSrgI1uQnBXXPrN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!oUSrgI1uQnBXXPrN"
+}

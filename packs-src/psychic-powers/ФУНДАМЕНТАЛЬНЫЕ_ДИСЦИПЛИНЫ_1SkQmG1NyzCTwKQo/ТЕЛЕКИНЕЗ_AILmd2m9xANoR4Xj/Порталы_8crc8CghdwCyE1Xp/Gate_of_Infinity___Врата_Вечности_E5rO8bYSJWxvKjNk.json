@@ -1,0 +1,75 @@
+{
+  "name": "Gate of Infinity / Врата Вечности",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telekinesis.svg",
+  "folder": "8crc8CghdwCyE1Xp",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "telekinesis",
+    "subtype": "Порталы",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×200км",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв · Длительность (PR Раундов). Треб.: Fold Space. Как Сложенное Пространство, но порталы не схлопываются от попаданий (укрытие PR×2 AP). Вход в контакте с псайкером; знакомое/видимое место выхода — точно, иначе случайно (на уровне пола). Пройдя сквозь — портал закрывается за ним. Каждое применение кроме первого в сутки: −1 тPR на 24 ч.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "E5rO8bYSJWxvKjNk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122026501,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!E5rO8bYSJWxvKjNk"
+}

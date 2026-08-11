@@ -1,0 +1,52 @@
+{
+  "name": "Daemonic Levy / Демоническое Ополчение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "QYTyL0wuwu48FRxH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Призыв могучего демона открывает путь для его свиты. Призывая Инзорцизмом демона с Inf 31+, может увеличить действие до полного и призвать вместе с ним до Inf.b (демона) низших демонов или меньших зверей того же Бога, чьи имена запечатаны. Эти демоны находятся под управлением своего демонического лидера, а не Инзорциста, и выполняют его приказы.",
+    "tier": 2,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Инзорцист",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "7XhTVCNaOqwEt7l5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121968756,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7XhTVCNaOqwEt7l5"
+}

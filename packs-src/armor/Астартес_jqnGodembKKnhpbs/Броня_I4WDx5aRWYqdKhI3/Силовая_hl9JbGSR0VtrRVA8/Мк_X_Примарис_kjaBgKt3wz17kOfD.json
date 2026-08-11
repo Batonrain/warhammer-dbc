@@ -1,0 +1,47 @@
+{
+  "name": "Мк X Примарис",
+  "type": "armor",
+  "folder": "hl9JbGSR0VtrRVA8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 8,
+    "body": 10,
+    "leftArm": 8,
+    "rightArm": 8,
+    "leftLeg": 8,
+    "rightLeg": 8,
+    "quality": "common",
+    "availability": 4,
+    "weight": 170,
+    "properties": [],
+    "strengthBonus": 20,
+    "wpBonus": 0,
+    "special": "Модульная, перестраивается без тестов. Тактикус: +1 AP всем зонам, Gorget (6), целеуказатель в авточувствах как Mk IV, +20 на обслуживание/ремонт как Mk V. Гравис: +3 AP всем зонам, Gorget (5), +10 аблативных Ран (восстановимы ремонтом), Трейт Auto-Stabilized; свободным действием закрыть горжет → попадания в голову идут в торс, нет бонуса >90°, теряется Auto-Stabilized; чёрный панцирь без Nimble, −15 к Ловкости. Фобос: авточувства +15 вместо +10, нет штрафа Stealth, невидим для тепловизора/аускультации, +Преимущество к Трудному Ландшафту и Stealth (бесшумность). Доступна в играх 42-го тыс. и позже."
+  },
+  "_id": "kjaBgKt3wz17kOfD",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!kjaBgKt3wz17kOfD"
+}

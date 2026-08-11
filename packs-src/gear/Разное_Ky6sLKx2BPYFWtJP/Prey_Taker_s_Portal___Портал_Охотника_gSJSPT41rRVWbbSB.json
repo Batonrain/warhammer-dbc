@@ -1,0 +1,58 @@
+{
+  "name": "Prey-Taker's Portal / Портал Охотника",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Тёмная сфера из застывшего антисвета, наполненного психокостью эльдар. Размером с фраг-гранату.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.3,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "",
+    "effect": "Полудействие: потереть сферу. Владелец выбирает любое число существ в радиусе 18 м и уходит с ними в Паутину. Внутри все проходят расстояние, как если бы перемещались 6 раундов подряд (можно и не перемещаться, а заняться другими делами за то же время). В материальном мире проходит ровно 1 раунд, после чего все выходят в новом месте с еле слышимой вспышкой (Awareness (P)+10 на слух). Выход внутри физического объекта смещает на ближайшую поверхность. Раз в 6 часов.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Перемещается только владелец сферы.",
+      "good": "Вместе с существами можно перенести технику до Size 2.",
+      "best": "Как Good.Q. Радиус до километра — можно перемещать целые армии. Вместо 6 раундов существа перемещаются как за 12. Выход абсолютно беззвучный."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "gSJSPT41rRVWbbSB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!gSJSPT41rRVWbbSB"
+}

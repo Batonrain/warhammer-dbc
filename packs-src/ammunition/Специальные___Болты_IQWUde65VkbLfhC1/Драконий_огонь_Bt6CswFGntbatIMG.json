@@ -1,0 +1,46 @@
+{
+  "name": "Драконий огонь",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-bolt.svg",
+  "folder": "IQWUde65VkbLfhC1",
+  "system": {
+    "description": "Зажигательный болт, начинённый сжатым горючим газом. Меняет вид урона на E(Fl), даёт свойство Flame, игнорирует укрытия.",
+    "notes": "",
+    "weaponTypes": [
+      "bolt"
+    ],
+    "ammoCategory": "bolts",
+    "rarity": 2,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 2,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "energy",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Flame; игнорирует укрытия",
+    "properties": []
+  },
+  "_id": "Bt6CswFGntbatIMG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Bt6CswFGntbatIMG"
+}

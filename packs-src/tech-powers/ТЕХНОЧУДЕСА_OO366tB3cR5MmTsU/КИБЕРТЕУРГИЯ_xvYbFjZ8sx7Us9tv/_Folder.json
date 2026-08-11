@@ -1,0 +1,21 @@
+{
+  "name": "КИБЕРТЕУРГИЯ",
+  "type": "Item",
+  "folder": "OO366tB3cR5MmTsU",
+  "sorting": "m",
+  "_id": "xvYbFjZ8sx7Us9tv",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!xvYbFjZ8sx7Us9tv"
+}

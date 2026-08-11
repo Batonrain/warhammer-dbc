@@ -1,0 +1,60 @@
+{
+  "name": "Командно-Штабная / Command & Control",
+  "type": "vehicleTrait",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Мобильный штабной центр. Командир/член экипажа/пассажир может Командовать подчинёнными машинами или отрядами как отдельными бойцами (складывается с другими Талантами) и получает +10 на все тесты Командования, кроме Брифингов. По умолчанию оснащена Вокс-Кастером и Ауспексом (версия 50 кг).",
+    "notes": "",
+    "benefit": "Командование машинами и отрядами, +10.",
+    "availability": 0,
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "hasRating3": false,
+    "rating3": 0,
+    "effects": {
+      "openTopped": false,
+      "manoeuvreMod": 0,
+      "spdMod": 0,
+      "spdDamageReduce": 0,
+      "noMove": false,
+      "swerveDisabled": false,
+      "fullMoveSpdMult": 0,
+      "smallMoveOnly": false,
+      "ignoreDifficultTerrain": false,
+      "critHalved": false,
+      "trackHitsToHull": false,
+      "siege": false,
+      "reloadRapid": false,
+      "commandBonus": 10,
+      "repairBonus": 0,
+      "deflectorShield": false,
+      "deflectorDaemonic": false,
+      "ignoreCrewCrits": false,
+      "autonomous": false,
+      "flickerfield": false
+    }
+  },
+  "_id": "t4gdV9QZadiSvVVN",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783195371864,
+    "modifiedTime": 1783871637797,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!t4gdV9QZadiSvVVN"
+}

@@ -1,0 +1,49 @@
+{
+  "name": "Инфернальная Воля",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Деяния и желания смертного мира не властны над персонажем. Вместо этого его страхи и переживания фокусированы на странных миссиях, что дали ему силы Варпа. Он получает иммунитет к Страху, но когда он проваливает любой тест Навыка на 4+ Провала, кроме Критических Провалов, он должен бросить по таблице Шока.\n\nЕсли он Неделимый, он может уменьшать результат по таблице Шока на половину своего Cor (окр.▲). Если он имеет Покровительство Бога, он может уменьшать результат на свой полный Cor, но только если бросок был вызван Провалами на дружественный ему Навык.",
+    "source": "Общие мутации, d100 44",
+    "roll": "44",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "vOiGjH4Hhao5ChM1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122022260,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!vOiGjH4Hhao5ChM1"
+}

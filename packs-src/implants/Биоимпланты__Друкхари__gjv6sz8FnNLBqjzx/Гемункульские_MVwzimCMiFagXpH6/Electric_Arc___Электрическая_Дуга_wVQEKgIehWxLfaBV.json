@@ -1,0 +1,67 @@
+{
+  "name": "Electric Arc / Электрическая Дуга",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 4. Электрогенные органы по телу.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Гемункульский. Электрогенные органы: все безоружные атаки получают Arc(7/2d10+T.b) и Shocking (с электропроводящим оружием/бронёй — и рукопашные). Сопротивление E(El), иммунитет к Shocking.\nBest.Q: дуги Pen 4 и Arc(8/2d10), вторичные дуги не бьют уже поражённых первичной + 1 эффект (R +1 за каждый доп.): 1) Электрическая броня (промахнувшийся в упор/безоружно/в Борьбе получает 1d10+T.b E(El) Pen 4 Shocking, Уворот не Парирование); 2) Электромагнитный импульс (безоружные/рукопашные Haywire(0)); 3) Восстановление (снять до T.b усталости, но без Arc/Shocking 8 ч); 4) Электрическая регенерация (при E(El) +1d10 ран; 1/час полное исцеление от мощного источника).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "MVwzimCMiFagXpH6",
+  "_id": "wVQEKgIehWxLfaBV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122017638,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wVQEKgIehWxLfaBV"
+}

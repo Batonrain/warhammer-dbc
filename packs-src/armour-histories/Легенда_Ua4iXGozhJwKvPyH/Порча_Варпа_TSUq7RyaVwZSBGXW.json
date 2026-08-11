@@ -1,0 +1,38 @@
+{
+  "name": "Порча Варпа",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "Ua4iXGozhJwKvPyH",
+  "system": {
+    "table": "legend",
+    "rollMin": 1,
+    "rollMax": 1,
+    "description": "В какой-то момент своей истории костюм подвергся воздействию чистой материи Варпа, и это оказало на броню странное влияние.",
+    "effect": "Носитель навсегда получает +10 очков Порчи, но также получает сопротивление демоническому присутствию +10.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "TSUq7RyaVwZSBGXW",
+  "effects": [],
+  "sort": 200000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354161,
+    "modifiedTime": 1786229458935,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!TSUq7RyaVwZSBGXW"
+}

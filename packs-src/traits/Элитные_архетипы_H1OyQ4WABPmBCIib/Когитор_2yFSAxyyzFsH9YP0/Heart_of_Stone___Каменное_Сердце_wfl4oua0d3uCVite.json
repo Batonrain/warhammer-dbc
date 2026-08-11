@@ -1,0 +1,51 @@
+{
+  "name": "Heart of Stone / Каменное Сердце",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "2yFSAxyyzFsH9YP0",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При заключении Пакта сердце Когитора трансмутирует из плоти в техномагический конструкт, в который заключается его душа, управляя остальным телом как марионеткой. Иммунен к варп-оружию и Выжиганию Души, кроме как от попаданий в сердце (−40 на Избирательные атаки), и иммунен к Одержимости (его тело уже одержимо им). Сердце продолжает перекачивать кровь и тело живёт, но он больше не полагается на тело в мышлении и памяти (хотя может использовать мозг для подключения к бионике и кибернетике). Особые эффекты атак, обычно требующие попадания в голову, для Когитора требуют попадания в сердце (враги должны пройти комбинированный тест For.Lore(Heresy)−10 и For.Lore(Warp)−20, чтобы понять это). Игнорирует все Критические Эффекты в голову, вызванные травмой мозга, включая даже смерть, хотя повреждения органов чувств влияют на него как обычно.",
+    "source": "Элитный архетип: Когитор",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "wfl4oua0d3uCVite",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121962249,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wfl4oua0d3uCVite"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Warp-Lure / Варп-Приманка",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-ectomancy.svg",
+  "folder": "u4jjWN4Gp1Lz3gU1",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "sorcery",
+    "subtype": "Эктомантия",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение. Психотест W−20 vs W+0. Треб.: For.Lore(Warp)+10. Только на разумном существе с душой (не псайкере); оно делает встречный тест авто. Победа псайкера: Феномен центрируется на цели, результат Феномена сдвигается до 5×<разница Успехов>, Прорыв — на 2×<разница>. Победа цели — Феномен на псайкере (цель так же модифицирует).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "da0fREBXd9uNhs4E",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122034723,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!da0fREBXd9uNhs4E"
+}

@@ -1,0 +1,59 @@
+{
+  "name": "Missile Rack / Ракетный Ранец",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Большой заплечный ранец для переноски ракет (обычно у заряжающего расчёта ракетной установки).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": 0,
+    "quality": "common",
+    "gearCategory": "rig",
+    "worn": "Спина",
+    "effect": "До 7 ракет [14 в версии Легиона]; брать как с удобной разгрузки, но только в Ход без перемещения. Несовместим с другим заплечным снаряжением.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "При попадании в торс с задней арки 90° случайная ракета детонирует, нанося попадание в персонажа.",
+      "good": "Может использоваться на ходу.",
+      "best": "Как Good.Q; вместимость 10[20] ракет, вес ранца и ракет не учитывается в Ношении (микро-репульсоры)."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": true,
+      "slots": [
+        {
+          "size": "3x1",
+          "count": 7,
+          "note": "ракеты"
+        }
+      ],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "LFIbdaraF1WbtOzq",
+  "_id": "l9CSp0rDpeEpkQSn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!l9CSp0rDpeEpkQSn"
+}

@@ -1,0 +1,1488 @@
+{
+  "name": "Сслит-Наёмник",
+  "type": "character",
+  "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+  "folder": "9MhZsNMDnqNwuJa0",
+  "system": {
+    "bodyType": "male",
+    "race": "sslyth",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "alignment": "loyalist",
+    "patronGod": "undivided",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 22,
+      "max": 22,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 0
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 9
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 0,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 42,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 42,
+        "bonus": 4,
+        "cost": 0
+      },
+      "bs": {
+        "base": 40,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 40,
+        "bonus": 4,
+        "cost": 0
+      },
+      "s": {
+        "base": 40,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 40,
+        "bonus": 4,
+        "cost": 0
+      },
+      "t": {
+        "base": 42,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 42,
+        "bonus": 4,
+        "cost": 0
+      },
+      "ag": {
+        "base": 36,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 36,
+        "bonus": 3,
+        "cost": 0
+      },
+      "int": {
+        "base": 28,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 28,
+        "bonus": 2,
+        "cost": 0
+      },
+      "per": {
+        "base": 34,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 34,
+        "bonus": 3,
+        "cost": 0
+      },
+      "wp": {
+        "base": 36,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 36,
+        "bonus": 3,
+        "cost": 0
+      },
+      "fel": {
+        "base": 25,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 25,
+        "bonus": 2,
+        "cost": 0
+      },
+      "inf": {
+        "base": 30,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 30,
+        "bonus": 3,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "athletics": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "awareness": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "charm": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "dodge": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "logic": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "survival": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "techUse": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "max": 0
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "<p><b>Кабал (наёмник).</b> <b>Роль:</b> змеечеловек-телохранитель, купленный за яды и плоть. Четыре руки — два осколочных пистолета и два клинка разом. Хладнокровен, стоек, безразличен к страху. Живая стена перед Архонтом.</p>",
+    "craftAvailable": false,
+    "possessed": false,
+    "haemonculus": {
+      "stage": 0,
+      "flesh": [],
+      "warp": [],
+      "splitPools": false,
+      "notes": ""
+    },
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "reactions": "",
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "vitals": {
+      "hunger": 0,
+      "thirst": 0,
+      "sleep": 0
+    }
+  },
+  "items": [
+    {
+      "name": "Осколочный Пистолет",
+      "type": "weapon",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "pistol",
+        "weaponType": "splinter",
+        "range": 30,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "½",
+        "magazineCur": 30,
+        "magazineMax": 30,
+        "rof_single": 1,
+        "rof_semi": 2,
+        "rof_full": 3,
+        "damage": "1d10+2",
+        "damageType": "rending",
+        "penetration": 2,
+        "quality": "common",
+        "availability": 1,
+        "weight": 1,
+        "attackBonus": 0,
+        "special": "Моды: Mono-Bayonet, Venom Drip. Hefty: R",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "hefty"
+          },
+          {
+            "key": "reliable"
+          },
+          {
+            "key": "toxic",
+            "rating": 2
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "bdrCfTGtN7i6IOlB",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.bdrCfTGtN7i6IOlB"
+    },
+    {
+      "name": "Осколочный Пистолет",
+      "type": "weapon",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "pistol",
+        "weaponType": "splinter",
+        "range": 30,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "½",
+        "magazineCur": 30,
+        "magazineMax": 30,
+        "rof_single": 1,
+        "rof_semi": 2,
+        "rof_full": 3,
+        "damage": "1d10+2",
+        "damageType": "rending",
+        "penetration": 2,
+        "quality": "common",
+        "availability": 1,
+        "weight": 1,
+        "attackBonus": 0,
+        "special": "Моды: Mono-Bayonet, Venom Drip. Hefty: R",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "hefty"
+          },
+          {
+            "key": "reliable"
+          },
+          {
+            "key": "toxic",
+            "rating": 2
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "UtzxCRP1Fi8q48zO",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.UtzxCRP1Fi8q48zO"
+    },
+    {
+      "name": "Ядовитый Клинок",
+      "type": "weapon",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "exotic",
+        "range": 4,
+        "balance": 1,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "2d10+3",
+        "damageType": "rending",
+        "penetration": 4,
+        "quality": "common",
+        "availability": 4,
+        "weight": 1.2,
+        "attackBonus": 0,
+        "special": "Меч; Хват 1р [2р, Об, Бл, Мх]; Досягаемость 2–4. +30 командование Друкхари; переброс тестов; +1 к кубам урона (+1 ещё если цель отравлена).",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "eldarPrecise"
+          },
+          {
+            "key": "extreme",
+            "rating": 8
+          },
+          {
+            "key": "felling",
+            "rating": 8
+          },
+          {
+            "key": "reinforced"
+          },
+          {
+            "key": "toxic",
+            "rating": 7
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "0h5nSByzaVjnWDXX",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.0h5nSByzaVjnWDXX"
+    },
+    {
+      "name": "Ядовитый Клинок",
+      "type": "weapon",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "exotic",
+        "range": 4,
+        "balance": 1,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "2d10+3",
+        "damageType": "rending",
+        "penetration": 4,
+        "quality": "common",
+        "availability": 4,
+        "weight": 1.2,
+        "attackBonus": 0,
+        "special": "Меч; Хват 1р [2р, Об, Бл, Мх]; Досягаемость 2–4. +30 командование Друкхари; переброс тестов; +1 к кубам урона (+1 ещё если цель отравлена).",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "eldarPrecise"
+          },
+          {
+            "key": "extreme",
+            "rating": 8
+          },
+          {
+            "key": "felling",
+            "rating": 8
+          },
+          {
+            "key": "reinforced"
+          },
+          {
+            "key": "toxic",
+            "rating": 7
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "kzo3JLQOwbKwLpic",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.kzo3JLQOwbKwLpic"
+    },
+    {
+      "name": "Ксеноячеистая Броня",
+      "type": "armor",
+      "system": {
+        "description": "",
+        "notes": "",
+        "armorType": "mesh",
+        "stacks": false,
+        "maxAgility": 100,
+        "propRatings": {},
+        "apSecond": {},
+        "equipped": true,
+        "head": 4,
+        "body": 4,
+        "leftArm": 4,
+        "rightArm": 4,
+        "leftLeg": 4,
+        "rightLeg": 4,
+        "quality": "common",
+        "availability": -1,
+        "weight": 3,
+        "properties": [
+          "sealed",
+          "stealthed"
+        ],
+        "strengthBonus": 0,
+        "wpBonus": 0,
+        "drukhari": false,
+        "fieldMode": "",
+        "special": "Flak. Flak — против Осколочного (Best.Q) и Стаб (Good.Q) оружия."
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "fkGu5Lx1P9f7vcwC",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.fkGu5Lx1P9f7vcwC"
+    },
+    {
+      "name": "Базовые Ядокристаллы",
+      "type": "ammo",
+      "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+      "system": {
+        "description": "Классические ядовитые кристаллы, используемые в осколочном оружии. Дают Toxic (2). Если применяется любой другой боеприпас, то Toxic с осколочного оружия пропадает.",
+        "notes": "",
+        "weaponTypes": [
+          "splinter"
+        ],
+        "ammoCategory": "splinter_crystals",
+        "rarity": 0,
+        "quantity": 4,
+        "weight": 0,
+        "availability": 0,
+        "attackMod": 0,
+        "damageMod": 0,
+        "damageDiceMod": 0,
+        "damageTypeOverride": "",
+        "penetrationMod": 0,
+        "rangeMod": 0,
+        "rangeMultiplier": 1,
+        "special": "Toxic (2)",
+        "properties": [],
+        "condMods": [],
+        "drukhari": false
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "lgiYKSXcjnDjHoQd",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.lgiYKSXcjnDjHoQd"
+    },
+    {
+      "name": "Multiple Arms (+2) / Многорукий (+2)",
+      "type": "trait",
+      "img": "icons/svg/item-bag.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Четыре руки: может держать и использовать до четырёх одноручных оружий, по одной атаке каждым при полной атаке (со штрафами за доп. руки).",
+        "source": "раса",
+        "hasRating": true,
+        "rating": 2,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "DEf6oMsgWsIvswzH",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.DEf6oMsgWsIvswzH"
+    },
+    {
+      "name": "Unnatural Strength (2) / Сверхъест. Сила (2)",
+      "type": "trait",
+      "img": "icons/svg/item-bag.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "+2 к Бонусу Силы.",
+        "source": "раса",
+        "hasRating": true,
+        "rating": 2,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "s",
+          "charBonusValue": 2,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "eaqjAs7DNuQckNoa",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.eaqjAs7DNuQckNoa"
+    },
+    {
+      "name": "Unnatural Toughness (2) / Сверхъест. Стойкость (2)",
+      "type": "trait",
+      "img": "icons/svg/item-bag.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "+2 к Бонусу Стойкости.",
+        "source": "раса",
+        "hasRating": true,
+        "rating": 2,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "t",
+          "charBonusValue": 2,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "FDGRrhZxRv9P7o3B",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.FDGRrhZxRv9P7o3B"
+    },
+    {
+      "name": "Ambidextrous / Амбидекстр",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж не получает штраф −20 за использование оружия в неосновной руке и уменьшает штраф за парное оружие на 10.",
+        "tier": 1,
+        "requirement": "A 30",
+        "aptitudes": [
+          "general",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Неделимый",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "OwGXdU4VHb0EbTsv",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.OwGXdU4VHb0EbTsv"
+    },
+    {
+      "name": "Two Weapon Wielder / Два Оружия",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж может совершать атаки с обеих рук как одну атаку, занимающую наибольшее действие из двух, но эти атаки получают −20. Парные рукопашные и стрелковые требуют двух разных специализаций, комбинация рукопашного+стрелкового — обеих. Цели могут быть разными, но не дальше 10м друг от друга.",
+        "tier": 2,
+        "requirement": "Нет",
+        "aptitudes": [
+          "general",
+          "offence"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Неделимый",
+        "specialization": "Melee, Ranged",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "B9F8PCgzqD4UBgbL",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.B9F8PCgzqD4UBgbL"
+    },
+    {
+      "name": "Gunslinger / Македонец",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж уменьшает штраф за парные пистолеты на 10.",
+        "tier": 3,
+        "requirement": "BS 40, Two Weapon Wielder (Ranged)",
+        "aptitudes": [
+          "bs",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Неделимый",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "ahyM8bOAtqVHYFcF",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.ahyM8bOAtqVHYFcF"
+    },
+    {
+      "name": "Nerves of Steel / Стальные Нервы",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж может перебрасывать тесты на Подавление.",
+        "tier": 2,
+        "requirement": "Нет",
+        "aptitudes": [
+          "wp",
+          "defence"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Нургл",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "LnIdbisyXoEkRJoj",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.LnIdbisyXoEkRJoj"
+    },
+    {
+      "name": "Fearless / Бесстрашный",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж автоматически проходит тесты Морали, но, чтобы выйти из боя или отказаться от драки, должен пройти W+0.",
+        "tier": 3,
+        "requirement": "Nerves of Steel",
+        "aptitudes": [
+          "wp",
+          "defence"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Нургл",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "U5Tqk2j1nC0IV17c",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.U5Tqk2j1nC0IV17c"
+    },
+    {
+      "name": "Combat Sense / Чувство Боя",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж может использовать P.b вместо A.b при броске на Инициативу.",
+        "tier": 1,
+        "requirement": "P 30",
+        "aptitudes": [
+          "per",
+          "fieldcraft"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Неделимый",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "oztrieKnsOlqN1uL",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!b6pSujypqWwPmZ76.oztrieKnsOlqN1uL"
+    }
+  ],
+  "prototypeToken": {
+    "name": "Сслит-Наёмник",
+    "displayName": 30,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "_id": "b6pSujypqWwPmZ76",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783850679427,
+    "modifiedTime": 1783850703426,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!b6pSujypqWwPmZ76"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "Открытые Сочленения",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "G9iZohogBP883qz0",
+  "system": {
+    "description": "+10 к Max.A, но штраф на попадание в сочленения −10 (обычно до −30).",
+    "notes": "",
+    "category": "armor",
+    "modGroup": "limbs",
+    "requirement": "Жёсткая броня. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": -1,
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 10,
+      "addProps": [],
+      "charBonuses": []
+    },
+    "drukhari": false
+  },
+  "_id": "7ZhEpQc7BmC1V0Wv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157649068,
+    "modifiedTime": 1786122045060,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7ZhEpQc7BmC1V0Wv"
+}

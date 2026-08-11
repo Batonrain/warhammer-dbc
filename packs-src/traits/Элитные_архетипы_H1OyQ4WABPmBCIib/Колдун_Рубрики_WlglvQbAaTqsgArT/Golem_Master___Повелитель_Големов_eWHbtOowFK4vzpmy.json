@@ -1,0 +1,51 @@
+{
+  "name": "Golem Master / Повелитель Големов",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "WlglvQbAaTqsgArT",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Имеет 8 душ големов, привязанных к его душе. Может потратить одну (комплект силовой брони, Л. Болтер или любое оружие, слот Миньона), чтобы создать Голема Рубрики — среднего Миньона-демона с фикс. Лояльностью 30, без Талантов и независимого мышления. Вселение духа мертвеца занимает 9 часов и требует теста For.Lore(Warp)−10. При смерти душа Голема возвращается к колдуну и может быть вселена в починенный или новый доспех.",
+    "source": "Элитный архетип: Колдун Рубрики",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "eWHbtOowFK4vzpmy",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121960740,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!eWHbtOowFK4vzpmy"
+}

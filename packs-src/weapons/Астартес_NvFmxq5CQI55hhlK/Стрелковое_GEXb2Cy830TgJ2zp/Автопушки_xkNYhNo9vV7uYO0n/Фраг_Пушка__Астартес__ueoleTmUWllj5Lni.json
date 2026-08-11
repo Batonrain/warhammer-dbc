@@ -1,0 +1,103 @@
+{
+  "name": "Фраг Пушка (Астартес)",
+  "type": "weapon",
+  "folder": "xkNYhNo9vV7uYO0n",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "heavy",
+    "weaponType": "solid",
+    "range": 30,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "2",
+    "magazineCur": 20,
+    "magazineMax": 20,
+    "rof_single": 1,
+    "rof_semi": 2,
+    "rof_full": 4,
+    "damage": "2d10+6",
+    "damageType": "impact",
+    "penetration": 4,
+    "quality": "common",
+    "availability": 2,
+    "weight": 45,
+    "attackBonus": 0,
+    "special": "",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "flush"
+      },
+      {
+        "key": "reliable"
+      },
+      {
+        "key": "scatter"
+      },
+      {
+        "key": "tearing"
+      },
+      {
+        "key": "legion"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    },
+    "rangeBands": [
+      {
+        "label": "Короткая дистанция (Рассеивание как в упор)",
+        "dice": 1
+      }
+    ]
+  },
+  "_id": "ueoleTmUWllj5Lni",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785247480179,
+    "modifiedTime": 1785247480179,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!ueoleTmUWllj5Lni"
+}

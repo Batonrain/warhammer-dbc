@@ -1,0 +1,52 @@
+{
+  "name": "Rift / Разлом",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kKTff106U9JXqhik",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Впиваясь в разлом реальности, обрушивает его внутрь себя, вызывая взрыв Варп-энергий. Когда открывает разрыв в Варп, может вместо того чтобы войти, детонировать его, нанося ½Cor.b (окр.▲) d10 E Dmg с Pen 10 всем персонажам в радиусе Cor.b м, не имеющим Трейта Daemonic. Если на броске урона выпало две шестёрки, семёрки, восьмёрки или девятки, разлом также призывает в Реальность 1d5 Демонеток, Чумоносов, Кровопускателей или Ужасов соответственно в Истинной Форме.",
+    "tier": 3,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Коготь Варпа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "rAccSTN3WorUXJPT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122003965,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!rAccSTN3WorUXJPT"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Mechromancy / Мехромантия",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-technomancy.svg",
+  "folder": "ZYi6cmJMhYcpxvG4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 650,
+    "discipline": "technomancy",
+    "subtype": "",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "int",
+    "testMod": -30,
+    "action": "half",
+    "range": "PR×5м / PR×100м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение. Психотест Logic(I)−30. Поддержание: Полное действие. Треб.: W 50+, Warp-Metal. Вселяется в пустую машину/остов Размером ≤4: восстанавливает повреждения/заряд/топливо/боеприпасы. Псайкер в Ступоре, контролирует машину (свои хар-ки + нужные Навыки/Таланты). Крит. Эффекты машины → 1d5 непоглощ. R стигматами. Развеивание возвращает машину к прежнему состоянию; уничтожение → взрыв 1d10+2×PR E, Pen PR, Tearing, Blast.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "6GjTyRzFeM3yGNmW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122024280,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6GjTyRzFeM3yGNmW"
+}

@@ -1,0 +1,49 @@
+{
+  "name": "Нерушимый",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Нургл обращает упорство своего чемпиона в физическую силу, удерживающую его как якорь даже против самых могущественных атак. Персонаж получает Трейт Sturdy и может потратить полудействие или реакцию, чтобы до начала своего следующего Хода получить полный иммунитет к любым эффектам, что сбивают его с ног против его SPD, и к атакам тараном — даже если в него на всей скорости влетит танк, он не сдвинет персонажа и даже не нанесёт урон, как словно он влетел в адамантиевую стену, а не существо из плоти и крови.",
+    "source": "Дары Нургл, d100 9…12",
+    "roll": "9…12",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "lrH2XhV5r6gd0Wz1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021506,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lrH2XhV5r6gd0Wz1"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Bloodbride / Кровавая Невеста",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "IHeHzXN4eZXIenbD",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может входить в ярость и выходить из неё за Свободное действие, не получает штрафов от Ярости и свободно выбирает противников. Убив кого-либо в ярости Бритвенным Цепом, Пронзателем, Осколочной Сетью, Агонайзером, Перчаткой Гидры, Осколочным Пистолетом, Бласт-Пистолетом, Плазменной Гранатой или Силовым Оружием, получает +1 ОД на совершение любой атаки сверх общего лимита. До +3 ОД за ход.",
+    "tier": 3,
+    "requirement": "2 таланта Ведьмы, женщина, талант Гекатрица из архетипа Сибарит",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Ведьма",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "HKbqetm82cKHvjEz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121975832,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!HKbqetm82cKHvjEz"
+}

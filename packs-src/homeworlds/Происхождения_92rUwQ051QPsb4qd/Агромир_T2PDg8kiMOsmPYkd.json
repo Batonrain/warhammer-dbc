@@ -1,0 +1,192 @@
+{
+  "name": "Агромир",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "agri",
+    "description": "Персонаж начинает игру с чертой Brutal Charge (2) и +2 Ранами.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Сила земли",
+    "featureDesc": "Персонаж начинает игру с чертой Brutal Charge (2) и +2 Ранами.",
+    "charModLabel": "+3 F, +3 S, −3 A",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "fel",
+          "value": 3
+        },
+        {
+          "stat": "s",
+          "value": 3
+        },
+        {
+          "stat": "ag",
+          "value": -3
+        }
+      ]
+    },
+    "notes": ""
+  },
+  "_id": "T2PDg8kiMOsmPYkd",
+  "effects": [],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 100000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "script": "const flag = \"woundBonusApplied\";\nif (!item.getFlag(\"warhammer-dbc\", flag)) {\n  await actor.update({\n    \"system.wounds.max\":   (actor.system.wounds?.max   || 0) + 2,\n    \"system.wounds.value\": (actor.system.wounds?.value || 0) + 2\n  });\n  await item.setFlag(\"warhammer-dbc\", flag, true);\n}\n\nconst TRAIT_UUID = \"Compendium.warhammer-dbc.traits.Item.IbofRJ9BzKCiA13D\"; // Brutal Charge / Брутальный Натиск (X)\n\nif (!actor.items.some(i => i.name === \"Brutal Charge / Брутальный Натиск (X)\")) {\n  const doc = await fromUuid(TRAIT_UUID);\n  if (doc) {\n    const obj = doc.toObject();\n    delete obj._id;\n    obj.system.rating = 2; // даёт «(2)» в отображаемом названии на листе\n    await actor.createEmbeddedDocuments(\"Item\", [obj]);\n  } else {\n    ui.notifications?.warn(`«${item.name}»: не нашёл трейт Brutal Charge по GUID — проверь ссылку.`);\n  }\n}",
+      "scriptAutoRun": true,
+      "mechanics": [
+        {
+          "id": "RKLfBXZUbFBGsPqt",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "CZ5WBbW43LvzOSja",
+              "kind": "characteristic",
+              "charKey": "fel",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "uPAknj631f7ksgxC",
+              "kind": "characteristic",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "dArs6mlsr7kBmfFH",
+              "kind": "characteristic",
+              "charKey": "ag",
+              "field": "total",
+              "op": "subtract",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "72CG4pJPJoFBSFuP",
+              "kind": "trait",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.IbofRJ9BzKCiA13D",
+              "sourceName": "Brutal Charge / Брутальный Натиск (X)",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+              "sourceHasRating": true,
+              "rating": 2,
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "xirleROwm7XsVz5M",
+              "kind": "wounds",
+              "corruptionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": "",
+              "woundsValue": "2",
+              "cohesionRole": "any",
+              "cohesionValue": "1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836767,
+    "modifiedTime": 1786271421331,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!T2PDg8kiMOsmPYkd"
+}

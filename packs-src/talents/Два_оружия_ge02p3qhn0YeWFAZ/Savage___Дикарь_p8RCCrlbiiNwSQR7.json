@@ -1,0 +1,55 @@
+{
+  "name": "Savage / Дикарь",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ge02p3qhn0YeWFAZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Вооружённый парными когтями, персонаж может перебрасывать одну неудачную атаку ими в Ход и получает +2 Успеха при успешной атаке.",
+    "tier": 3,
+    "requirement": "WS 40, Two Weapon Wielder (Melee)",
+    "aptitudes": [
+      "ws",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "p8RCCrlbiiNwSQR7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122001953,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!p8RCCrlbiiNwSQR7"
+}

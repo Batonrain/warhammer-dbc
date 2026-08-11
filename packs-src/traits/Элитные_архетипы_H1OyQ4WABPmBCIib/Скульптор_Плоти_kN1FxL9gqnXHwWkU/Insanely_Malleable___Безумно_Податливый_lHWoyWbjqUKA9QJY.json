@@ -1,0 +1,51 @@
+{
+  "name": "Insanely Malleable / Безумно Податливый",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "kN1FxL9gqnXHwWkU",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Власть над собственной плотью позволяет изменять её за секунды. За полудействие может потратить Очко Бесчестия и пройти тест Medicae−10, чтобы временно получить преимущества ритуала Лепки Плоти, добавляя Трейты за полученные Успехи. За каждый тест после получения Трейтов должен пройти тест W+0, или убрать «лишние» Трейты (как если бы Успехов стало меньше на число Провалов). За полное действие и тест Medicae−10 может перераспределить свои Успехи на другие Трейты.",
+    "source": "Элитный архетип: Скульптор Плоти",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "lHWoyWbjqUKA9QJY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121961340,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lHWoyWbjqUKA9QJY"
+}

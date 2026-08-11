@@ -1,0 +1,67 @@
+{
+  "name": "Bone Hump / Костяной Горб",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Костяной нарост с симбионтом.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Костяной нарост с симбионтом: при атаке по носителю со спины/фланга Горб тратит 1 свою Реакцию и бьёт костяным щупальцем (WS 50, S 50, Трейты Deadly Natural Weapons(3, Щупальце), Unnatural S(2)). Дефект (до Best.Q): −15 A.\nPoor.Q: WS 40, S 30, без Unnatural S; −20 A; атакует всех, кто быстро приближается к спине.\nGood.Q: атака горба Tearing; −10 A.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Двойной удар (вторая Реакция, можно бить одну цель дважды); 2) Усиленные шипы (S 60, Unnatural S(4), DNW(5)); 3) Костяной защитник (пассивен: Parry+2, Таланты Bodyguard/Blade Reader/Deflect Shot/Blade Shield, T.b Реакций, но не атакует); 4) Боевой горб (Таланты Frenzy/Furious Assault/Reckless Charge/Overpower, ярость свободным действием).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "r3L1E0FleRYKkFs0",
+  "_id": "7F83DSPIsidTncHW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122011462,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7F83DSPIsidTncHW"
+}

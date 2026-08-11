@@ -1,0 +1,42 @@
+{
+  "name": "Iron Halo / Железный Нимб",
+  "type": "forcefield",
+  "folder": "AnN2qDXTrN7Qt3MS",
+  "system": {
+    "description": "Характерный щит Космодесантников и высших командиров.",
+    "notes": "",
+    "shieldNature": "technological",
+    "shieldType": "dome",
+    "ratingMin": 1,
+    "ratingMax": 50,
+    "overloadThreshold": 5,
+    "currentRating": 0,
+    "isSpecialRating": false,
+    "equipped": false,
+    "status": "inactive",
+    "quality": "common",
+    "availability": 3,
+    "weight": 2
+  },
+  "_id": "o3LnXKnirUuOVfkj",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805492,
+    "modifiedTime": 1782752979845,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!o3LnXKnirUuOVfkj"
+}

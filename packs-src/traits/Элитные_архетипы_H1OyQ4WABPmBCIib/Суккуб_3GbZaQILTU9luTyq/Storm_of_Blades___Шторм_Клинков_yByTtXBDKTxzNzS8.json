@@ -1,0 +1,51 @@
+{
+  "name": "Storm of Blades / Шторм Клинков",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "3GbZaQILTU9luTyq",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Доступна Стойка Суккуба; её можно совмещать со Стойкой Гекатрии, имея сразу две. Стойка Суккуба (парное оружие одного типа): когда персонаж передвигается и в радиусе его рукопашного оружия появляется противник, он может потратить 1 Реакцию и 1 ОД, чтобы атаковать его как с Натиска (со всеми бонусами). При успехе на +4 Успехов совершает ещё одну атаку, увеличивая цену срабатывания на +1 успех; повторяется, пока противник не избежит атаки или успехов не хватит. Убив противника в этой стойке, раз в раунд может тестом A−20 закончить его жизнь красивым ударом, вернув потраченные Реакцию и ОД.",
+    "source": "Элитный архетип: Суккуб",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "yByTtXBDKTxzNzS8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121962323,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!yByTtXBDKTxzNzS8"
+}

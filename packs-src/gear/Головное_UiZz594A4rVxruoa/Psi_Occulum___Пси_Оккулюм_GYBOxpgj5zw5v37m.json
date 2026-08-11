@@ -1,0 +1,53 @@
+{
+  "name": "Psi-Occulum / Пси-Оккулюм",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Техноарканный прибор, показывающий проявления психосил как потоки света. Является визором.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "head",
+    "worn": "Глаза (визор) Н",
+    "effect": "Трейт Warp Sight. При попадании в голову отключается, нуждаясь в ремонте (смена, Scholastic Lore(Occult)+0 без тестов).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "При отключении от атаки вызывает Феномен.",
+      "good": "Экранирован, не отключается от атак.",
+      "best": "Как Good.Q; тонкие линзы в очки/визор шлема."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "UiZz594A4rVxruoa",
+  "_id": "GYBOxpgj5zw5v37m",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!GYBOxpgj5zw5v37m"
+}

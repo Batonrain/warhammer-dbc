@@ -1,0 +1,35 @@
+{
+  "name": "Калечащее / Crippling",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "U5s2o5cGaKlCslI9",
+  "system": {
+    "description": "Оставляет в ранах шипы/осколки. Если цель получила непоглощённый урон от этого оружия, то каждый раз при движении она получает X непоглощённого урона того же типа (до конца боя или полного исцеления).",
+    "reminder": "🩸 Калечащее (X): при движении цель получает X урона",
+    "category": "both",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "crippling",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "zbcTWCbBNTNSuLiS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353818,
+    "modifiedTime": 1786224353824,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!zbcTWCbBNTNSuLiS"
+}

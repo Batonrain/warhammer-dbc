@@ -1,0 +1,22 @@
+{
+  "name": "Архитектор",
+  "type": "Item",
+  "folder": "wUJh0FnpTPSXMk3b",
+  "sorting": "m",
+  "_id": "nkcXO1byihE4a36M",
+  "description": "",
+  "sort": 700000,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL",
+    "modifiedTime": 1783088676242
+  },
+  "_key": "!folders!nkcXO1byihE4a36M"
+}

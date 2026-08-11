@@ -1,0 +1,108 @@
+{
+  "name": "Мстящий Меч",
+  "type": "weapon",
+  "folder": "qeNef9C2zvUaeA9b",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "power",
+    "range": 4,
+    "balance": 2,
+    "grips": "1р (Об)",
+    "profileLabel": "Exotic",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "2d10+4",
+    "damageType": "energy",
+    "penetration": 7,
+    "quality": "common",
+    "availability": 5,
+    "weight": 3,
+    "attackBonus": 0,
+    "special": "Exotic; Хват 1р [Об]; Досягаемость 1–4. Aspect: Зловещие Мстители. Против друкхари: Hatred, Ярость, +5 хар-к, +10 WS.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "aspect"
+      },
+      {
+        "key": "duelingWeapon"
+      },
+      {
+        "key": "felling",
+        "rating": 8
+      },
+      {
+        "key": "powerField"
+      },
+      {
+        "key": "reinforced"
+      },
+      {
+        "key": "stepByStep"
+      },
+      {
+        "key": "warpWeapon"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "EmnIZw5D94iMH1Zi",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!EmnIZw5D94iMH1Zi"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Soul Killer / Убийца Души",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "yjDusz5KIcknoy6i",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "telepathy",
+    "subtype": "Ментальное оружие",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение. Психотест W−30 vs W+0. Поддержание: Полудействие. Треб.: Mind Sliver. Душа жертвы выбрасывается (тело падает беспомощным), её облепляют хищники с PRd10 Ран. В Ход жертвы хищники бьют (тест <тек. Раны>×2): 1d10+½PR(окр.▲) E, Pen 0, Warp Weapon, игнор щитов/брони; затем жертва полным действием W+0 — 1d10+W.b E в Раны хищников (Поглощение PR). 0 Ран хищников — душа возвращается. Жертва-псайкер: +бPR к их Ранам, но +5×тPR на атаки и +тPR к урону. Союзник по пси-чутью может помочь (полное действие, W+0, PR×10м: 1d10+PR в Раны хищников за 1-й и каждый третий Успех).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "tnBc6xvjUUc4ZFUl",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122038684,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!tnBc6xvjUUc4ZFUl"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Lhamaean Kiss / Ламеянский Поцелуй",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Z87kIan8nyXbuL5k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Целуя другого персонажа в губы, может пройти тест Trade (Chymist)(I)+10 vs T+0 (против яда) и за каждый успех нанести 1d5 непоглощаемого C(Tx) урона. Каждое попадание поцелуя имеет Toxic (+1), складывающийся вплоть до I.b, заставляя противника проходить тест после получения всего урона. За Полудействие может отправить отравленный воздушный поцелуй любому существу в радиусе 30 метров без преград между ними — это незримая стрелковая атака, если у цели нет сверхчутья на яды в воздухе. Поцелуй игнорирует респираторы и противогазы, заставляя пройти тест T+10 (против яда) или получить 1d10+I.b непоглощаемого C(Tx) урона и Toxic (I.b−3).",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Ламия",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "0fjeWvTseOx8Bw8p",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121963065,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0fjeWvTseOx8Bw8p"
+}

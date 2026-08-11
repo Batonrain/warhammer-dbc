@@ -1,0 +1,53 @@
+{
+  "name": "Убийца",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "ATdGrQfJBDNPQRAU",
+  "system": {
+    "key": "drAssassin",
+    "race": "drukhari",
+    "group": "Друкхари",
+    "charBonus": {
+      "ag": 3,
+      "per": 3
+    },
+    "charChoice": "",
+    "skills": "Acrobatics+20, Athletics, Deceive, Dodge+10, Forbidden Lore (Underworld)+10, Stealth+10, Survival+10, Tech-Use, Interrogate или Sleight of Hand",
+    "talents": "Ambidextrous, Backstab, Blind Fighting, Blade Juggler, Cold Hearted, Close Quarters, Combat Sense, Knife Fighter или Riding the Momentum, Reposition или Preternatural Speed",
+    "gear": "2 Hekatrii Blade (Best.Q); 2 Punch Dagger (Best.Q); Wychsuit (Good.Q)",
+    "wounds": "10+1d5",
+    "infRoll": "4d5+13",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Ловкий убийца с улиц Тёмного Города.",
+    "trait": {
+      "name": "Quiet Elimination / Тихое Устранение",
+      "benefit": "Атака врасплох: +1 куб урона, цель гибнет беззвучно. Только ножи/игольчатые/осколочные пистолеты — +10 к атаке."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "Mchz3p0Y0F99U7dj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536191,
+    "modifiedTime": 1786285536196,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Mchz3p0Y0F99U7dj"
+}

@@ -1,0 +1,149 @@
+{
+  "name": "Heart of Elder Stephanus / Сердце Старца Стефануса",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:3. Прочее.",
+    "notes": "",
+    "category": "mechOther",
+    "quality": "common",
+    "effect": "Адаптивные микро-дроны под бронёй: +2 АР на всех частях. При непоглощённом уроне потратить любое количество ⚡ — +5 АР за каждую против этого конкретного попадания (не всей атаки). Poor.Q: 3 АР/⚡; Good.Q: 7; Best.Q: 10.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 2,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "Y8xc4V2spArcQ4bF",
+  "_id": "vIdIKjXNRotMCCHS",
+  "effects": [
+    {
+      "name": "Heart of Elder Stephanus / Сердце Старца Стефануса (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.armour.head",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.body",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftArm",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightArm",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftLeg",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightLeg",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "t7PnC4EyQG3KVjv5",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122017433,
+        "modifiedTime": 1786122017433,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!vIdIKjXNRotMCCHS.t7PnC4EyQG3KVjv5"
+    }
+  ],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122017449,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!vIdIKjXNRotMCCHS"
+}

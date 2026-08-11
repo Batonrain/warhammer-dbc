@@ -1,0 +1,50 @@
+{
+  "name": "Аэльдарии (Гражданин)",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "5PlmH5louPuHbgaQ",
+  "system": {
+    "key": "aelAeldarii",
+    "race": "azuriane",
+    "group": "Жители Мира-Корабля",
+    "charBonus": {},
+    "charChoice": "+6 к одной Характеристике, +3 к другой (по выбору)",
+    "skills": "",
+    "talents": "",
+    "gear": "",
+    "wounds": "",
+    "infRoll": "1d5+5",
+    "requiredPath": "Любой",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Обычный гражданин с минимальными боевыми навыками, но под взором Богов.",
+    "trait": {
+      "name": "Just Civilian / Просто Гражданский + Взор Судьбы",
+      "benefit": "Знает 2 Пути на выбор (можно начать следовать в любой момент). +1 Очко Судьбы к максимуму; избирает Элитный Архетип, сохраняющий цену; Сжечь Судьбу — снизить его цену на 1500 (мин. 500); избранные Элитные не требуют учителей/обучения."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "gJ39lk5OjSCUdmnT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536191,
+    "modifiedTime": 1786285536195,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!gJ39lk5OjSCUdmnT"
+}

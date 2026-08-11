@@ -1,0 +1,44 @@
+{
+  "name": "Translator Rod / Жезл Переводчик",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Металлический жезл с микрофонами и вокс-решётками: анализирует и переводит речь (перевод слышит только держатель; по руне — замещает для цели речь персонажа на её язык). Знает Низкий и Высокий Готик + 4 языка.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "2 доп. языка, грубый неточный перевод.",
+      "good": "8 доп. языков, распознаёт жаргон Низкого Готика и культурный подтекст.",
+      "best": "Как Good.Q; интерпретирует неизвестные языки (за 2-3 ч общения вырабатывает словарь по теме)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "1BMXntvOkbcgQKWr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!1BMXntvOkbcgQKWr"
+}

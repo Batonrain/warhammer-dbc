@@ -1,0 +1,53 @@
+{
+  "name": "Icon of Silence / Икона Тишины",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Еретехническая конструкция культов Слаанеш, создающая сферу тишины.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "misc",
+    "worn": "Воротник",
+    "effect": "Барьер r6 м, не пропускающий звук в обе стороны: ситуационно до +30 на Stealth, нивелирует звуковые атаки и ударные волны сквозь барьер, может мешать Командованию.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Перегревается и выключается после 6 Раундов; охлаждение 6 минут.",
+      "good": "Настройка: поглощать только входящие/исходящие звуки, переключение (полудействие).",
+      "best": "Как Good.Q; полностью подавляет звук внутри барьера; весь X урон внутри уменьшается вдвое (окр.▼) до Поглощения."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "wI0nkIIzQ6lhAFKm",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!wI0nkIIzQ6lhAFKm"
+}

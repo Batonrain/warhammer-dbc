@@ -1,0 +1,75 @@
+{
+  "name": "Six Blades of Prosepheron / Шесть Клинков Просеферона",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-slaanesh.svg",
+  "folder": "B0hnPzTPMNZT1tsj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 450,
+    "discipline": "slaanesh",
+    "subtype": "",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание · Длительное (2×PR Раундов). Треб.: A 50+, Ambidextrous, Lightning Attack, Two Weapon Wielder (Melee). С двумя+ клинками: Молниеносная Атака каждым (не только одним), с базой Натиск, и вместо −20 на Молниеносные — +5×Успехи. По завершении 1d5 Усталости. Развеивается, если Ход без Молниеносной атаки.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "3NrAeB8XioAzejSE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122023377,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!3NrAeB8XioAzejSE"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Force Bolt / Силовой Снаряд",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telekinesis.svg",
+  "folder": "2rqLgVJGpTG3PXSV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "telekinesis",
+    "subtype": "Сокрушение",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "half",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+2+2×PR",
+    "damageType": "impact",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Незримое · Психический Снаряд · Стрельба. Треб.: Mind Over Matter. Профиль: PR×10м, 1d10+2+2×PR I(Cr), Pen 0. Попав с 3+ Успехами — сбивает с ног и отбрасывает на 1d5 м (требование удваивается за каждый уровень Размера >0: Размер 1 → 6+, Размер 2 → 12+).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "e2cteCU56mQQAMr7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122034861,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!e2cteCU56mQQAMr7"
+}

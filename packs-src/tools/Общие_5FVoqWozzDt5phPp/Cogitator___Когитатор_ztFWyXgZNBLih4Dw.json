@@ -1,0 +1,44 @@
+{
+  "name": "Cogitator / Когитатор",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Устройство обработки/хранения цифровой информации. Нужен для электронных носителей (если персонаж не читает их сам — Импланты Механикум/MIU).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 20,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "×4 работа по анализу больших оцифрованных массивов.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Создан для одной задачи, бесполезен для других.",
+      "good": "+10 на тесты с ним, или миниатюризован (1 кг, в броню с ретинальным дисплеем).",
+      "best": "Оба эффекта Good.Q (или только первый) и ×16 вместо ×4."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "ztFWyXgZNBLih4Dw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!ztFWyXgZNBLih4Dw"
+}

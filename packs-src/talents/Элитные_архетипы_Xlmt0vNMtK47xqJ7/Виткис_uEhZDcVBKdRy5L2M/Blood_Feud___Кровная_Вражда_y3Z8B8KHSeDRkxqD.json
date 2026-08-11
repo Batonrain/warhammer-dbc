@@ -1,0 +1,52 @@
+{
+  "name": "Blood Feud / Кровная Вражда",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "uEhZDcVBKdRy5L2M",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Гнев и мудрость сочетаются в его душе, открывая разум к ещё большим тайнам битвы. Когда использует War Seer против Ненавистного врага, эффект действует до конца боя, а не 1 Раунд. Однотипные эффекты не складываются, но заменяют друг друга, если у нового броска больше Успехов. Не действует на усиление приказов против цели, если у получающих приказы подчинённых нет Таланта Hatred против этой цели, и даже тогда действует только на приказы атаковать цель.",
+    "tier": 3,
+    "requirement": "Кхорн, Cor 64, Hatred (Любой)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Виткис",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "y3Z8B8KHSeDRkxqD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786122009018,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!y3Z8B8KHSeDRkxqD"
+}

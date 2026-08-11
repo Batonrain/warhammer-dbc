@@ -1,0 +1,51 @@
+{
+  "name": "Power From Flesh / Сила Из Плоти",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "HZOs0A2dUajZ5ewU",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Все эффекты Архетипа (включая бонусы к Характеристикам) действуют только с фреймом Хоминис и теряются при установке другого Фрейма. Трейт Machine отключает все эффекты Архетипа, кроме как от мутации Механоид или если персонаж возьмёт Талант Fleshmetal.",
+    "source": "Элитный архетип: Электрожрец",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "nO2bmI8pcC2g7vGP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121961508,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!nO2bmI8pcC2g7vGP"
+}

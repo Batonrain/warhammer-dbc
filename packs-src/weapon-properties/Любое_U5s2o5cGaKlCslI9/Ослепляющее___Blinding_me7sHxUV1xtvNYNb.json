@@ -1,0 +1,35 @@
+{
+  "name": "Ослепляющее / Blinding",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "U5s2o5cGaKlCslI9",
+  "system": {
+    "description": "При попадании цель проходит тест Per−10×X, иначе Ослеплена на 1 раунд за каждую ст. провала.",
+    "reminder": "🌫️ Ослепляющее (X): цель — тест Per−10×X или Ослепление",
+    "category": "both",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "blinding",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "me7sHxUV1xtvNYNb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353818,
+    "modifiedTime": 1786224353824,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!me7sHxUV1xtvNYNb"
+}

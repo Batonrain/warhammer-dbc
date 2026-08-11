@@ -1,0 +1,219 @@
+{
+  "name": "Мир-кузня",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "forge",
+    "description": "Персонаж начинает игру с талантом Technical Knock, либо с одной из специализаций Общих знаний на ранге «Тренированное» (+10).",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Выросший в труде",
+    "featureDesc": "Персонаж начинает игру с талантом Technical Knock, либо с одной из специализаций Общих знаний на ранге «Тренированное» (+10).",
+    "charModLabel": "+3 I, +3 T, −3 F",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "int",
+          "value": 3
+        },
+        {
+          "stat": "t",
+          "value": 3
+        },
+        {
+          "stat": "fel",
+          "value": -3
+        }
+      ]
+    },
+    "notes": ""
+  },
+  "_id": "iDFm4l3lqWvnmdji",
+  "effects": [],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 286719,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "bnCMcG6K9e4dQaBG",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "70kh2IgiY9zpSQbv",
+              "kind": "characteristic",
+              "charKey": "int",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "nXvOjMGylMNpgdKE",
+              "kind": "characteristic",
+              "charKey": "t",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "2fWHYfairfUjTYbZ",
+              "kind": "characteristic",
+              "charKey": "fel",
+              "field": "total",
+              "op": "subtract",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            }
+          ]
+        },
+        {
+          "id": "Da3KiQoLtCijzPSK",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "w132CAZ0lScDEVFw",
+              "kind": "talent",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.YfonzuxVTQOE572V",
+              "sourceName": "Technical Knock / Технический Трюк",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "K03x54zaM4rJhD9O",
+              "kind": "skill",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "group",
+              "skillKey": "commonLore",
+              "specKey": "__choice__",
+              "specialty": "",
+              "specChoiceKeys": [
+                "sump",
+                "toil",
+                "tech",
+                "imperium"
+              ],
+              "rank": "trained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836767,
+    "modifiedTime": 1786278862253,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!iDFm4l3lqWvnmdji"
+}

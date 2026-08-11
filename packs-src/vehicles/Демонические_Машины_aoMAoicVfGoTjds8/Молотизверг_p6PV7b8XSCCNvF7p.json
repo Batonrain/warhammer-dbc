@@ -1,0 +1,593 @@
+{
+  "name": "Молотизверг",
+  "type": "vehicle",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "folder": "aoMAoicVfGoTjds8",
+  "system": {
+    "vehicleClass": "Молотизверг",
+    "vehicleType": "walker",
+    "origin": "",
+    "commander": "",
+    "manoeuvrability": 10,
+    "operate": 0,
+    "size": 2,
+    "chassis": {
+      "type": "walker",
+      "spd": 12,
+      "spdDamage": 0,
+      "manoeuvreDamage": 0,
+      "strength": 65,
+      "unnaturalS": 6
+    },
+    "armour": {
+      "front": 35,
+      "side": 35,
+      "rear": 20
+    },
+    "structure": {
+      "value": 35,
+      "max": 35,
+      "critical": 0
+    },
+    "ammoReloads": 10,
+    "openTopped": false,
+    "traits": "",
+    "stations": [
+      {
+        "id": "VRzRO1CDiX0sqauB",
+        "role": "pilot",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      }
+    ],
+    "damageStates": [],
+    "notes": "<p><b>Хаос — демон-движок.</b> Maulerfiend: штурмовой шагоход ближнего боя. Силовые кулаки или магма-резаки (прорезают переборки). Пилот-демон (<b>+10 WS</b>, Unarmed Master, Step Aside). <b>Штурм</b>, <b>Многоногая (6)</b>.</p>",
+    "gmNotes": "",
+    "availability": 2
+  },
+  "items": [
+    {
+      "name": "Проводящая Броня / Conductive Plating",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Броня проводит электричество: её AP со всех сторон считается вдвое ниже реального (окр.▲) против E(El) Dmg.",
+        "notes": "",
+        "benefit": "E(El) Dmg игнорирует половину AP машины.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "ruc4qsAIjaRQ7gqc",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!p6PV7b8XSCCNvF7p.ruc4qsAIjaRQ7gqc"
+    },
+    {
+      "name": "Многоногая / Multi-Legged",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "У Шагохода больше 2 ног. При Опрокидывании всегда урон по Лобовой броне, может Встать полудействием, экипаж +20 на тест против Оглушения. Поломки «Ходовая Часть Повреждена/Сломана» снижают SPD на X меньше (до 0 — игнорируются). Может Карабкаться как персонажи.",
+        "notes": "",
+        "benefit": "Легче переносит Опрокидывание.",
+        "availability": 0,
+        "hasRating": true,
+        "rating": 6,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "E2rLIjvYA9LfsF1w",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!p6PV7b8XSCCNvF7p.E2rLIjvYA9LfsF1w"
+    },
+    {
+      "name": "Штурм / Onslaught",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Системы наведения шагохода для штурма. При Натиске пилот может совершить стрелковую атаку по цели Натиска или группе целей не более чем в 2 м от основной. Всегда считается с Боевой дистанции. Оружие со Spray можно провести из любой точки пути Натиска.",
+        "notes": "",
+        "benefit": "Можно стрелять во время Натиска.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "zl6p8gqMvZxsoN9Y",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!p6PV7b8XSCCNvF7p.zl6p8gqMvZxsoN9Y"
+    },
+    {
+      "name": "Укреплённая Броня / Reinforced Armour",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Броня усилена, важнейшие системы защищены. Уменьшает вдвое (окр.▲) свою Отрицательную Структуру в расчёте Критических Эффектов (при −10 Стр. получает Крит 5). При непрямом попадании оружия со Blast половина (окр.▼) кубиков урона взрыва игнорируется (отбрасывая наибольшие).",
+        "notes": "",
+        "benefit": "½ крит-эффектов от негативной Структуры.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": true,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "M4sdIZY4vIYxxCTo",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!p6PV7b8XSCCNvF7p.M4sdIZY4vIYxxCTo"
+    },
+    {
+      "name": "Daemon Power Fist / Силовой Кулак (Молотизверг)",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "power",
+        "range": 0,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "2d10+24",
+        "damageType": "energy",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 2,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Кулак, досягаемость 0–3.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "crunch"
+          },
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "powerField"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "VRzRO1CDiX0sqauB",
+          "mount": "hull",
+          "hArc": "—",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "OISnCAbloxydgrqi",
+          "options": [
+            "Daemon Power Fist / Силовой Кулак (Молотизверг)",
+            "Magma Cutters / Магма-Резаки"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "EJcXQQsewFXuCNOa",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341769,
+        "modifiedTime": 1783867341769,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!p6PV7b8XSCCNvF7p.EJcXQQsewFXuCNOa"
+    },
+    {
+      "name": "Daemon Power Fist / Силовой Кулак (Молотизверг)",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "power",
+        "range": 0,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "2d10+24",
+        "damageType": "energy",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 2,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Кулак, досягаемость 0–3.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "crunch"
+          },
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "powerField"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "VRzRO1CDiX0sqauB",
+          "mount": "hull",
+          "hArc": "—",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "I1AKaft5KWsv1xpX",
+          "options": [
+            "Daemon Power Fist / Силовой Кулак (Молотизверг)",
+            "Magma Cutters / Магма-Резаки"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "ztTx5z21ZGzOQowS",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341769,
+        "modifiedTime": 1783867341769,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!p6PV7b8XSCCNvF7p.ztTx5z21ZGzOQowS"
+    }
+  ],
+  "_id": "p6PV7b8XSCCNvF7p",
+  "prototypeToken": {
+    "name": "Молотизверг",
+    "displayName": 30,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783857422280,
+    "modifiedTime": 1783869241179,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!p6PV7b8XSCCNvF7p"
+}

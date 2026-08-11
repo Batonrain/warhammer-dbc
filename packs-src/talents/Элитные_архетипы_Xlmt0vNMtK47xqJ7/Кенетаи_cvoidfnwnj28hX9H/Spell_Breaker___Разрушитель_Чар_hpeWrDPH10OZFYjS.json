@@ -1,0 +1,52 @@
+{
+  "name": "Spell Breaker / Разрушитель Чар",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "cvoidfnwnj28hX9H",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Клинок разрубает нити заклинаний, опутывающих цель. При использовании Оккультного Клинка может вместо манифестации пройти психотест W+0 vs W+0 цели, чтобы снять с неё эффект одной психосилы по своему выбору. Может использоваться на союзнике (можно не наносить урон, цель может намеренно провалить встречный тест).",
+    "tier": 3,
+    "requirement": "Тзинч, PR 9",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Кенетаи",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "hpeWrDPH10OZFYjS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121996537,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hpeWrDPH10OZFYjS"
+}

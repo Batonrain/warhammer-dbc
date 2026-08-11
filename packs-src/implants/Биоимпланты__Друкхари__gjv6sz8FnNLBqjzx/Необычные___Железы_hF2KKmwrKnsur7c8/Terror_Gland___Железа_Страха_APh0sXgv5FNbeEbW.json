@@ -1,0 +1,67 @@
+{
+  "name": "Terror Gland / Железа Страха",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Пульсирующий орган в грудной клетке.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Инфразвук + феромоны ужаса: 1/день свободным действием все в 30 м считают носителя имеющим Трейт Fear(2). Дефект (до Best.Q): −10 W против страха/запугивания.\nPoor.Q: радиус 15 м, Fear(1); −20 W; кошмары — просыпается каждые 4 ч.\nGood.Q: −5 W.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Избирательный ужас (исключить до I.b существ); 2) Усиленная паника (Fear(3)); 3) Инфразвуковой удар (всем кроме себя в радиусе 1d5+2 X, Pen 4, Shocking); 4) Аура страха (пассивно +10 Intimidate, Fear(+1)).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "hF2KKmwrKnsur7c8",
+  "_id": "APh0sXgv5FNbeEbW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122011911,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!APh0sXgv5FNbeEbW"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Enzyme Vat / Ферментный Чан",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Биоалхимический реактор для выращивания имплантов из биомассы и генокода.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Станция выращивания биоимплантов. Тест Medicae+10 / Scholastic Lore (Chymistry) / Trade (Chymist). Биомасса R×3+3 ед., питательный раствор, цикл 24 ч (крупные — по 3 цикла/редкость). Для Good/Best.Q нужен генетический шаблон. Модификаторы: Poor.Q +30, Comm.Q +0, Good.Q −10, Best.Q −30. Качество чана: Poor.Q (R0) — только обычные до Good.Q; Good.Q — переброс, ликвидация за ½ ресурсов; Best.Q (R4) +30, 2 переброса, создаёт гемункульские.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "XXZiQkeknabUmzI3",
+  "_id": "MHkxqEgqivIjxUFv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122013842,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MHkxqEgqivIjxUFv"
+}

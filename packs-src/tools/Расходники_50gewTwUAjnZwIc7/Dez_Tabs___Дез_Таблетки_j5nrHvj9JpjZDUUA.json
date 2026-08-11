@@ -1,0 +1,44 @@
+{
+  "name": "Dez-Tabs / Дез-Таблетки",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Упаковка 10 таблеток: каждая обеззараживает до 2л воды (простые токсины, осаждает грязь).",
+    "notes": "",
+    "quantity": 10,
+    "weight": 0,
+    "availability": -3,
+    "quality": "common",
+    "toolCategory": "consumable",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "50gewTwUAjnZwIc7",
+  "_id": "j5nrHvj9JpjZDUUA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!j5nrHvj9JpjZDUUA"
+}

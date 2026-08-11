@@ -1,0 +1,52 @@
+{
+  "name": "Maester Pact Stage 1 / Стадия Пакта 1 (Мейстер)",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "UTKhtsPYf2tSvXWS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает видение диковинного аппарата, который может за смену работы собрать из медицинских инструментов и подручных материалов. «Целительный Прожектор» позволяет направлять энергии Пакта, чтобы обновлять защиту пациентов в бою. Весит 7 кг, занимает 1 руку и спину, является мистическим устройством (анти-варповые эффекты нарушают его работу). Раз в Ход за свободное действие может направить Прожектор на пациента под Вирусом Жизни в прямой видимости не далее 1 м: тот получает +3 Аблативные Раны, потенциально превышая обычный максимум (Сверхукрепление), и бонус на свой следующий тест T для Regeneration. Если пациент не был целью Прожектора в прошлый Ход Мейстера и имеет Раны Сверхукрепления, он в начале своего Хода теряет 3, до обычного максимума.",
+    "tier": 1,
+    "requirement": "Нургл, 750 xp: сознательно нанести урон и заразить болезнью здорового пациента под Вирусом Жизни, чтобы собрать с него Культивацию для лечения других",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "Элитный архетип: Мейстер",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "5iMDpprG3YSTVPKY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121967123,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!5iMDpprG3YSTVPKY"
+}

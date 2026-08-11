@@ -1,0 +1,49 @@
+{
+  "name": "Пожиратель Знаний",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Заполучив в свои руки беспомощную жертву, чемпион способен вытягивать из её разума знания и навыки, используя силу своего Бога. Проведя 9 минут, касаясь другого персонажа, чемпион может узнать одно из его воспоминаний или получить один из Навыков жертвы на том же уровне изучения на 1 день. Жертва теряет поглощённые знания и Навыки на период, пока чемпион ими пользуется. Если чемпион пожирает те же знания и Навыки жертвы в течение 9 дней подряд, жертва перманентно теряет их, а чемпион может продвигать эти Навыки до уровня жертвы, как если бы они были союзными.",
+    "source": "Дары Тзинч, d100 37…40",
+    "roll": "37…40",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Zg1gf5tW3hvw3HVW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020529,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Zg1gf5tW3hvw3HVW"
+}

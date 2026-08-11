@@ -1,0 +1,44 @@
+{
+  "name": "Cryo-Pod / Крио-Капсула",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Саркофаг криогенного анабиоза (Размер до 0). Не стареет, болезни не прогрессируют. Ввод/вывод 1 час. Постоянное питание (аварийные батареи); >24 ч без питания = смерть. Псайкеры сохраняют сознание.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 0,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Макс. Размер −1.",
+      "good": "Макс. Размер 1.",
+      "best": "Макс. Размер 2."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "Ms957dQrdvMsKsEn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!Ms957dQrdvMsKsEn"
+}

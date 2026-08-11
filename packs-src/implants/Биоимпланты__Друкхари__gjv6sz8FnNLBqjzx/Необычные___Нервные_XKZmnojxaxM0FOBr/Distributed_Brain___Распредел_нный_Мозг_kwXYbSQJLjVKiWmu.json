@@ -1,0 +1,67 @@
+{
+  "name": "Distributed Brain / Распределённый Мозг",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 3. Дублирующие нейрокластеры в спинном мозге.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Дублирующие нейрокластеры вдоль позвоночника: игнор всех крит-эффектов в голову (вплоть до смертельных). При психосиле/воздействии на разум — тест T+30, перейти на вторичный мозг (−20 всем тестам, но игнор эффекта). Дефект (до Best.Q): −6 инициатива, −10 I на мгновенные решения.\nPoor.Q: защита головы лишь до крит-эффекта 4; −10 инициатива, −20 I; при крите в голову кластер перехватывает управление (случайное действие).\nGood.Q: штраф инициативы убран, −5 I.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Двойной процессор (+1 ОД на ментальные действия); 2) Резервное сознание (при смерти мозга личность сохраняется → воскрешение в теле-пустышке без урона); 3) Усиленная защита (игнор Оглушения/Ступора/Без Сознания); 4) Параллельное восприятие (доп. чувства, +I.b к P.b на управление доп. конечностями).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "XKZmnojxaxM0FOBr",
+  "_id": "kwXYbSQJLjVKiWmu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122016204,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!kwXYbSQJLjVKiWmu"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Strings of Elder Sophos / Нити Старца Софоса",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:3. Прочее.",
+    "notes": "",
+    "category": "mechOther",
+    "quality": "common",
+    "effect": "Нано-коннекторы на мехадендритах: попав рукопашной атакой мехадендритом (можно без урона) по цели с Machine/Имплантами Механикум/Латами Скитарии/в силовой броне — +10 на все Техночудеса против неё до разрыва контакта. Контакт 3+ мехадендритами с генерирующей ⚡ целью — она генерирует на 1 меньше, персонаж +1 ⚡ в начале её Хода. Poor.Q: +5, без «воровства» ⚡; Good.Q: воровство при 2 (2 при 5+); Best.Q: + +3 за контакт на прочие тесты против цели.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "Y8xc4V2spArcQ4bF",
+  "_id": "wbti2uSggvYLGdXX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122017659,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wbti2uSggvYLGdXX"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Unforge / Расковать",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Fu14a3pbutM8tdCk",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Одного слова достаточно, чтобы разрушить своё демоническое оружие. Раз в Ход за свободное действие может уничтожить одно демоническое оружие с порабощённым им демоном — оружие взрывается, нанося 2d10+2×W.b демона E Dmg со свойством Warp Weapon всем в радиусе 8м, кроме самого Кузнеца и других его порабощённых демонов, после чего заключённый демон материализуется в Истинной Форме на месте оружия. Неограниченная дальность — может уничтожить оружие хоть на другом краю Галактики, пока держит порабощение.",
+    "tier": 2,
+    "requirement": "Кхорн, Trade (Weaponsmith)+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Кузнец Крови",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "WYpH6t8ZHIV9WLxp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121986273,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WYpH6t8ZHIV9WLxp"
+}

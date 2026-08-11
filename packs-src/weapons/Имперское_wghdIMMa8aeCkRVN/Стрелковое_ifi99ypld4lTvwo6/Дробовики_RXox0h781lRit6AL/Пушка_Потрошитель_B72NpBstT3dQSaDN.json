@@ -1,0 +1,94 @@
+{
+  "name": "Пушка Потрошитель",
+  "type": "weapon",
+  "folder": "RXox0h781lRit6AL",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "basic",
+    "weaponType": "solid",
+    "range": 30,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "4",
+    "magazineCur": 48,
+    "magazineMax": 48,
+    "rof_single": 1,
+    "rof_semi": 2,
+    "rof_full": 3,
+    "damage": "1d10+10",
+    "damageType": "impact",
+    "penetration": 0,
+    "quality": "common",
+    "availability": 1,
+    "weight": 35,
+    "attackBonus": 0,
+    "special": "Моды: Mono Bayonet. Hefty: I(Cr)",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "inaccurate"
+      },
+      {
+        "key": "hefty"
+      },
+      {
+        "key": "ogryned"
+      },
+      {
+        "key": "scatter"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "B72NpBstT3dQSaDN",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784645463257,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!B72NpBstT3dQSaDN"
+}

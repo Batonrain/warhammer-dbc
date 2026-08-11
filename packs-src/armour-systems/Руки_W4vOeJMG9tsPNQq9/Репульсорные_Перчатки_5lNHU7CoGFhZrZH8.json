@@ -1,0 +1,53 @@
+{
+  "name": "Репульсорные Перчатки",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "W4vOeJMG9tsPNQq9",
+  "system": {
+    "description": "Археотеховые грав-репульсоры: без оружия/предметов в руках — за каждую свободную руку +5 к А на движения (вкл. Уклонения) и +1 к Flyer/Hoverer; с двумя свободными — Трейт Flyer (2) в невесомости.",
+    "notes": "",
+    "category": "powerSystem",
+    "modGroup": "arms",
+    "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": "4",
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    }
+  },
+  "_id": "5lNHU7CoGFhZrZH8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782145401867,
+    "modifiedTime": 1784850598910,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!5lNHU7CoGFhZrZH8"
+}

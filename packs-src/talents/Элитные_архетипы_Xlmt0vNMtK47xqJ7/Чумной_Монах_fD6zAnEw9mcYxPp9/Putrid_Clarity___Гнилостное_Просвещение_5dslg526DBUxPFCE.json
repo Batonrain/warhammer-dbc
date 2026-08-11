@@ -1,0 +1,52 @@
+{
+  "name": "Putrid Clarity / Гнилостное Просвещение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "fD6zAnEw9mcYxPp9",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Медитируя над природой жизни и смерти, монах глубже проникает в тайны ядов и полнее раскрывает смертоносный потенциал своих паразитов. Когда враги проваливают тесты против его трупного яда, он бросает на урон яда 2 раза, выбирая лучший.",
+    "tier": 1,
+    "requirement": "Нургл, Forbidden Lore (Heresy)+20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "Элитный архетип: Чумной Монах",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "5dslg526DBUxPFCE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121967026,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!5dslg526DBUxPFCE"
+}

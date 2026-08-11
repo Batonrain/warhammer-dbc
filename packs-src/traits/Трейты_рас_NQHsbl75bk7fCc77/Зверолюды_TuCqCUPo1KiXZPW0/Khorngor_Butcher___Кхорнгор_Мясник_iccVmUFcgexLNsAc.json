@@ -1,0 +1,52 @@
+{
+  "name": "Khorngor Butcher / Кхорнгор Мясник",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "TuCqCUPo1KiXZPW0",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Кхорнгор имеет запас кубиков: по 1 за каждый Талант Hatred 2-го уровня и 1 за 2 Таланта Hatred 1-го уровня. Нанося урон атакой с бонусом от S.b (после броска урона, до щитов), он может потратить до ½ W.b (окр.▲) кубиков и добавить кубик урона за каждый (могут вызывать Экстремальный урон). Все потраченные кубики восстанавливаются в конце боя.\n\nБог: Кхорн. Требования: Cor 30, Inf 30, Hatred.",
+    "source": "Зверолюд (субраса)",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "requirement": ""
+  },
+  "_id": "iccVmUFcgexLNsAc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160739696,
+    "modifiedTime": 1786121961109,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!iccVmUFcgexLNsAc"
+}

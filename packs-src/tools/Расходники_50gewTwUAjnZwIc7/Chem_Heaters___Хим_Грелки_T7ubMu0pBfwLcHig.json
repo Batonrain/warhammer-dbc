@@ -1,0 +1,44 @@
+{
+  "name": "Chem-Heaters / Хим-Грелки",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Упаковка 10 пакетов с химнагревателем: при переламывании нагревается. Под одежду — 1 час нивелирует штрафы холода, или разогреть еду без костра.",
+    "notes": "",
+    "quantity": 10,
+    "weight": 0,
+    "availability": -1,
+    "quality": "common",
+    "toolCategory": "consumable",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "50gewTwUAjnZwIc7",
+  "_id": "T7ubMu0pBfwLcHig",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!T7ubMu0pBfwLcHig"
+}

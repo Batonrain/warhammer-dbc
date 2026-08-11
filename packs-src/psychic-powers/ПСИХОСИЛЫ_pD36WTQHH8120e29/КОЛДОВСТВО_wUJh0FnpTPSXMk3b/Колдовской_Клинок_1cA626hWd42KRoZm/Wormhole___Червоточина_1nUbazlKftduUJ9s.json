@@ -1,0 +1,75 @@
+{
+  "name": "Wormhole / Червоточина",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-blade.svg",
+  "folder": "1cA626hWd42KRoZm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "sorcery",
+    "subtype": "Колдовской клинок",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×20км",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв · Длительное (2 Раунда) · Физическое. Треб.: Inf 35+. Два портала-сферы Ø2м, между ними свободное перемещение. Вход — в контакте с псайкером. Знакомое/видимое место выхода — точно, иначе случайно (всегда на уровне земли). Cor 0-60, проходя портал — W+0 или +1d5 Порчи. По завершении порталы схлопываются: все рядом сбиты с ног и отброшены на 1d5 м.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "1nUbazlKftduUJ9s",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122022917,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1nUbazlKftduUJ9s"
+}

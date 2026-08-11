@@ -1,0 +1,60 @@
+{
+  "name": "Gate of Elder Hendrik / Врата Старца Гендрика",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "UgkBDS5lckPm4iaG",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Феррик",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 3,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -10,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×0,5м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Ferric Lure Implants · Цена: 3К+3Э · Процесс: 1 , 1 (У) · Тип: Компенсатор (1), Славословие (1)] Треб.: For.Lore (Mechanicum)+20. Магнитные врата Ø I.b×1м (входная/выходная сторона). Стрельба I/R сквозь них: со входа +1 кубик и +2 Pen, с выхода −1 кубик и −2 Pen. Персонаж в металле/аугметике: со входа +I.b×1м к движению, с выхода −I.b×1м.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "i9pI6bkudY0TabKo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042259,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!i9pI6bkudY0TabKo"
+}

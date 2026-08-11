@@ -1,0 +1,60 @@
+{
+  "name": "Doctrina Cestica / Доктрина Цестика",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "QU1EHlGpa6Y3D7Fs",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "ЭФМ",
+    "miracleType": "doctrine",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 2,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Ferric Lure Implants · Цена: 2К · Процесс: 1 · Тип: Доктрина] Треб.: Tech-Use+10, EFM Speed. Можно бросать все тесты S и тесты урона с бонусом от S.b дважды, выбирая лучший.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "QjtakctlPtI9iWNk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041413,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!QjtakctlPtI9iWNk"
+}

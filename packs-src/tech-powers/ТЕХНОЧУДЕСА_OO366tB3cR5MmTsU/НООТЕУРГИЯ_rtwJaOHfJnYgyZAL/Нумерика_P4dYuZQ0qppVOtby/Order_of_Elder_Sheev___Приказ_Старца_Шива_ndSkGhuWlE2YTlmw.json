@@ -1,0 +1,60 @@
+{
+  "name": "Order of Elder Sheev / Приказ Старца Шива",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "P4dYuZQ0qppVOtby",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "nootheurgy",
+    "subtype": "Нумерика",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 5,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "half",
+    "sustained": false,
+    "compiled": false,
+    "range": "Ноосфера",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Hasta Numerica · Цена: 5К · Процесс: Нет · Тип: Славословие (1)] Треб.: For.Lore (Mechanicum)+20. До I.b подключённых машин без сознания (сервочерепа/сервиторы/роботы). vs контролирующий/Инфограждение. При победе обращают свой/чужой (бывшие союзники → цели, враги → союзники). Хозяева могут восстанавливать десигнации (2 Когниции, Tech-Use(I)+0).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "ndSkGhuWlE2YTlmw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042458,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ndSkGhuWlE2YTlmw"
+}

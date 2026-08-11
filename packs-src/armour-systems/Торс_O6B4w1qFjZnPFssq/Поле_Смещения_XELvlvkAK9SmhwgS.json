@@ -1,0 +1,53 @@
+{
+  "name": "Поле Смещения",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "O6B4w1qFjZnPFssq",
+  "system": {
+    "description": "Перенаправляет все попадания в голову (кроме варп-оружия) в торс. 4 заряда (1/срабатывание), восстановление 1 заряд/мин; при 0 отключается. Вкл/выкл свободным действием.",
+    "notes": "",
+    "category": "powerSystem",
+    "modGroup": "torso",
+    "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": 3,
+    "quality": "common",
+    "activatable": true,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    }
+  },
+  "_id": "XELvlvkAK9SmhwgS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782145401867,
+    "modifiedTime": 1782752981512,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!XELvlvkAK9SmhwgS"
+}

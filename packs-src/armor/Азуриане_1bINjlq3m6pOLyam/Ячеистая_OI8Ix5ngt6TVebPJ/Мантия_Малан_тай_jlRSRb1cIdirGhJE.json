@@ -1,0 +1,51 @@
+{
+  "name": "Мантия Малан’тай",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Шлем, создаваемый мастерами ремесленниками и певцами кости. Особенность Мантии Малан’тай является то, что она имеет встроенные чужие камни душ, входящие в синергию с владельцем шлема, открывая ему секреты силы других провидцев, которые с радостью помогают все еще живому провидцу. Мантия берет свойства носимой брони. Мантия Малан’тай имеет 4 встроенных наполненных камня душ, Best.Q Призрачный Шлем. В начале своего хода, владелец Мантии Малан’Тай может потратить все свои ОД, отдав их камням душ, оставляя за собой лишь реакции. Камни душ получают ОД владельца Мантии Малан’Тай, всегда по итогу имея 2 ОД. Внутри камней душ находятся Провидцы с 3 Фокусами дисциплин, 9 PR, изученными 18 Психосилами, навыками на +20 и имеющие I, F, P, W на 80. Каждый из провидец в мантии манифестирует 2 свои психосилы на выбор, либо по просьбе владельца мантии. После этого, данный эффект не может быть применен в течении этого боя.\n",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 2,
+    "body": 2,
+    "leftArm": 2,
+    "rightArm": 2,
+    "leftLeg": 2,
+    "rightLeg": 2,
+    "quality": "common",
+    "availability": 5,
+    "weight": 0,
+    "properties": [
+      "aspect",
+      "runesOfProtection",
+      "special"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Видящие). Шлем. 4 камня душ + Best.Q Призрачный Шлем. Раз/бой — провидцы из камней манифестируют по 2 психосилы."
+  },
+  "_id": "jlRSRb1cIdirGhJE",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!jlRSRb1cIdirGhJE"
+}

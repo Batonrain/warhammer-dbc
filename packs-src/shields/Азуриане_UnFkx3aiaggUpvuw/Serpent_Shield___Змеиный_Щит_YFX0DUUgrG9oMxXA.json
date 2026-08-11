@@ -1,0 +1,42 @@
+{
+  "name": "Serpent Shield / Змеиный Щит",
+  "type": "forcefield",
+  "folder": "UnFkx3aiaggUpvuw",
+  "system": {
+    "description": "Надёжный купольный щит штормовых стражей (купол 30 м). Из-за габаритов −20 на тесты A и рукопашные приёмы (кроме обычной атаки). Можно ставить на грави-платформу/спину. Перегрузка: чинится 8-часовой сменой при Tech-Use+10 / Forbidden Lore (Bonesinger)+10 / трейте Bonesinger / бPR 4.",
+    "notes": "",
+    "shieldNature": "technological",
+    "shieldType": "dome",
+    "ratingMin": 1,
+    "ratingMax": 35,
+    "overloadThreshold": 0,
+    "currentRating": 0,
+    "isSpecialRating": false,
+    "equipped": false,
+    "status": "inactive",
+    "quality": "common",
+    "availability": 2,
+    "weight": 25
+  },
+  "_id": "YFX0DUUgrG9oMxXA",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805492,
+    "modifiedTime": 1782752979845,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!YFX0DUUgrG9oMxXA"
+}

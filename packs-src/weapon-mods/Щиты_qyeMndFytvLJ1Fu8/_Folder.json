@@ -1,0 +1,23 @@
+{
+  "name": "Щиты",
+  "type": "Item",
+  "sorting": "m",
+  "_id": "qyeMndFytvLJ1Fu8",
+  "description": "",
+  "folder": null,
+  "sort": 200000,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782557574399,
+    "modifiedTime": 1782557583229,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!folders!qyeMndFytvLJ1Fu8"
+}

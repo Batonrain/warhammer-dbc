@@ -1,0 +1,54 @@
+{
+  "name": "Шип",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "KnUk2d8QYuaqbcC2",
+  "system": {
+    "description": "Пустотелая пуля, заполненная тесно скрученной бритвенно-острой проволокой, терзающей рану. Даёт свойство Crippling (1).",
+    "notes": "",
+    "weaponTypes": [
+      "solid"
+    ],
+    "ammoCategory": "bullets",
+    "rarity": -1,
+    "quantity": 0,
+    "weight": 0,
+    "availability": -1,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageDiceMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Crippling (1)",
+    "properties": [
+      {
+        "key": "crippling",
+        "rating": 1,
+        "rating2": 0
+      }
+    ],
+    "condMods": []
+  },
+  "_id": "zNtKSFbJQ1H30x9Z",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1785149863465,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!zNtKSFbJQ1H30x9Z"
+}

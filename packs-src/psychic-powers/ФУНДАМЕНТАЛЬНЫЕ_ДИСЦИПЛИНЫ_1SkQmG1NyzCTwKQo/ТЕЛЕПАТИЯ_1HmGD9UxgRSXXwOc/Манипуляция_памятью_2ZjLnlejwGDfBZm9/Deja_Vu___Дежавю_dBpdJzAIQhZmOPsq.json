@@ -1,0 +1,75 @@
+{
+  "name": "Deja Vu / Дежавю",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "2ZjLnlejwGDfBZm9",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "telepathy",
+    "subtype": "Манипуляция памятью",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "testChar": "wp",
+    "testMod": 20,
+    "action": "half",
+    "range": "PR×5м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение. Психотест W+20 vs W+0. Треб.: Thought Sending. Стирает до 3×Успехи минут воспоминаний цели (не далее 15 минут назад). Частью Успехов можно заложить стирание будущих воспоминаний (цель забудет всё от манифестации до того момента через <Успехи> минут). После — цель будто вышла из раздумий, потеряв счёт времени.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "dBpdJzAIQhZmOPsq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122034599,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!dBpdJzAIQhZmOPsq"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Blade Weaver / Ткач Клинком",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-thaumaturgy.svg",
+  "folder": "YZxTGqflqSd7kYwq",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 900,
+    "discipline": "thaumaturgy",
+    "subtype": "Примарис",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "reaction",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Избегание · Реакция · Физическое. Треб.: Blade Bonding, For.Lore(Psykers)+30. Будучи с психосиловым оружием целью психосилы, манифестирует это; набрав больше Успехов, чем атакующая сила, перехватывает над ней контроль и направляет сам (поддерживает её сам псайкер), совершая сложный пасс оружием.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "28QVoPUMsPxTP3sU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122023097,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!28QVoPUMsPxTP3sU"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "All-Knowing / Всеведающий",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "gJxZKumWRrfAbMVM",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Духовная связь с Владыкой Войны даёт несравнимые знания о всех инструментах и техниках войны. Впервые увидев незнакомое оружие или боевую машину, автоматически знает её роль на поле боя и что она делает в бою (но не «как»). Раз в Ход может сконцентрироваться на конкретном персонаже и задать ГМу один вопрос о нём — ГМ отвечает честно, но только в аспектах, раскрывающих боевые способности этого персонажа, без объяснений, как они работают. Не раскрывает божественные Дары другого чемпиона, если только это не Дары Кхорна.",
+    "source": "Элитный архетип: Виткис",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "MDVZywnLCW8DWXGF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121959129,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MDVZywnLCW8DWXGF"
+}

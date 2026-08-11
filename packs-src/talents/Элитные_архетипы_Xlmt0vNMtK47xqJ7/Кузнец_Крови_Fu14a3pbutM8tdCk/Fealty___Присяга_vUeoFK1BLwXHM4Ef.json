@@ -1,0 +1,52 @@
+{
+  "name": "Fealty / Присяга",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Fu14a3pbutM8tdCk",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Поработив демона в схватке, может потребовать его Истинное Имя, и тот обязан его раскрыть. Знание Истинного Имени даёт +30 на тесты Призыва и Владычества против демона и все социальные взаимодействия с ним. Обычно передаётся новому владельцу, если Кузнец создаёт оружие не для себя.",
+    "tier": 1,
+    "requirement": "Кхорн",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Кузнец Крови",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "vUeoFK1BLwXHM4Ef",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122006979,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!vUeoFK1BLwXHM4Ef"
+}

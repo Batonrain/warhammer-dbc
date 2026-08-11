@@ -1,0 +1,51 @@
+{
+  "name": "Doctrina Imperative / Доктрина Императив",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "ALDbuR21DFxZpr3o",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Машинные слуги — продолжение его воли; может на ходу калибровать их прицелы и актуаторы. Удваивает максимальное число ассистентов для любой задачи, если все они машины или обладают Имплантами Механикум. Все машины/персонажи с Имплантами Механикум под его Командным Присутствием автоматически получают все три бонуса Присутствия, эффект детальной команды Прикрытие (с 1 Успехом), Таланты Double Team и Target Selection, и делятся друг с другом и с Архимагосом зрением, слухом и прочими чувствами (позволяя прицельно атаковать цели вне их поля зрения). В свой Ход может дать любому числу подчинённых бонус +3×I.b к тесту WS/BS/S/A за счёт такого же штрафа к BS/WS/A/S соответственно до начала следующего Хода (одна комбинация для всех выбранных).",
+    "source": "Элитный архетип: Архимагос",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "iGY6vRRY64oGtNn3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121961056,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!iGY6vRRY64oGtNn3"
+}

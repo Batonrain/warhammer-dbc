@@ -1,0 +1,75 @@
+{
+  "name": "Genesis / Генезис",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-biomancy.svg",
+  "folder": "8EoPu26J3zBS0JYU",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "biomancy",
+    "subtype": "Архитектор жизни",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "extended",
+    "range": "PR×0,5м / PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Биоманипуляция · Изменение · Истинная Плоть. Действие: Дл. (T.b цели Ходов). Треб.: I 45+, Cauldron. Только на животных с I ≤10. Тратит Успехи: 1У послушание; 1У +5 хар-ка/Раны; 1У Трейт (Amphibious/Burrower/Natural Armour и т.д.); 2У Deadly Natural Weapons/Flyer/Unnatural; 2У Размер ±1; 3У Parasite. После развеивания гибнет через PR часов (если не повторить).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Z5WayUhmO3zMdJOB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122033172,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Z5WayUhmO3zMdJOB"
+}

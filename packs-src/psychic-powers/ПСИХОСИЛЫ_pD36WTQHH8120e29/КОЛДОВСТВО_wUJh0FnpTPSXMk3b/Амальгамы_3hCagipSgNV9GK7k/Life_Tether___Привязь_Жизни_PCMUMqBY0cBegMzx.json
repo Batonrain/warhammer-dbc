@@ -1,0 +1,75 @@
+{
+  "name": "Life Tether / Привязь Жизни",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-amalgam.svg",
+  "folder": "3hCagipSgNV9GK7k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "sorcery",
+    "subtype": "Амальгамы",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "half",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение (½PR окр.▲) · Цикл (7) (Биомантия+Телекинез). Психотест W−30 vs W+0. Псайкер имеет Контакт Плоти со всеми целями и может делать до двух Контактов в Ход (один через Привязь, один настоящим касанием). Согласные авто-проваливают тест. Связь двусторонняя (цель тоже может дистанционно касаться псайкера). Привязи видимы.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "PCMUMqBY0cBegMzx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122030616,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!PCMUMqBY0cBegMzx"
+}

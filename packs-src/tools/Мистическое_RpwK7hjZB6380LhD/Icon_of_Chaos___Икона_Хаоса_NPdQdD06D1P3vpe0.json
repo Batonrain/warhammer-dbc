@@ -1,0 +1,44 @@
+{
+  "name": "Icon of Chaos / Икона Хаоса",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Восьмеричная звезда/символ Бога на навершии посоха — проводник и маяк психоэнергии для ритуалов призыва.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 6,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "mystic",
+    "effect": "Настройка на до Cor.b икон: результат ритуалов призыва / порталов (Червоточина, Врата Вечности) вызывается к иконе (в r15м), если она в той же звёздной системе. Смертный сосуд — знаменосец или жертва на нижнем шипе. Демоны у иконы +30 Нестабильности в r30м. Держать в руке. Как оружие — копьё/посох, Баланс −2. Качество влияет на использование как оружия/стяга Командования, но НЕ как мистического фокуса.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": "Икона Хаоса"
+  },
+  "folder": "RpwK7hjZB6380LhD",
+  "_id": "NPdQdD06D1P3vpe0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!NPdQdD06D1P3vpe0"
+}

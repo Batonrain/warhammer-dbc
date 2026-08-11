@@ -1,0 +1,128 @@
+{
+  "name": "Ы",
+  "type": "archetype",
+  "_id": "QCl80al3w2OixtZZ",
+  "img": "icons/svg/item-bag.svg",
+  "system": {
+    "key": "",
+    "race": "human",
+    "group": "",
+    "charBonus": {
+      "ws": null,
+      "bs": null,
+      "s": null,
+      "t": null,
+      "ag": null,
+      "int": null,
+      "per": null,
+      "wp": null,
+      "fel": null
+    },
+    "charChoice": "",
+    "skills": "",
+    "talents": "",
+    "gear": "",
+    "wounds": "",
+    "infRoll": "",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "",
+    "trait": {
+      "name": "",
+      "benefit": ""
+    },
+    "bookSource": "",
+    "notes": ""
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "MwSzJ8pTRQwJDkvh",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "PJa250v2e8z2HZv2",
+              "kind": "equipment",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
+              "equipCategoryPack": "weapons",
+              "equipWeaponClass": "melee",
+              "equipWeaponProp": "",
+              "equipArmorType": "",
+              "equipMaxAvailability": 5,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "",
+              "code": "",
+              "equipWeaponType": "goVJ62ZEXzDDOxbC"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786305647627,
+    "modifiedTime": 1786307834198,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!QCl80al3w2OixtZZ"
+}

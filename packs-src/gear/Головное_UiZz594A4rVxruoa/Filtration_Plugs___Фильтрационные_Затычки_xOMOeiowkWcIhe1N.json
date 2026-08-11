@@ -1,0 +1,53 @@
+{
+  "name": "Filtration Plugs / Фильтрационные Затычки",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Дешёвая незаметная замена респиратору: затычки в ноздри фильтруют воздух при вдохе через нос.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": -2,
+    "quality": "common",
+    "gearCategory": "head",
+    "worn": "Голова (П)",
+    "effect": "+20 на тесты T против вдыхаемых газов (только вдох носом). Не складывается с респиратором/противогазом. Засоряются через 1 час фильтрации или после сработавшей сцены. Реквизируются как расходники.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Бонус +10.",
+      "good": "Бонус +25.",
+      "best": "Бонус +30."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "UiZz594A4rVxruoa",
+  "_id": "xOMOeiowkWcIhe1N",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!xOMOeiowkWcIhe1N"
+}

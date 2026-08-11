@@ -1,0 +1,75 @@
+{
+  "name": "Battering Ram / Таран",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telekinesis.svg",
+  "folder": "2rqLgVJGpTG3PXSV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "telekinesis",
+    "subtype": "Сокрушение",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×2м / PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2d10+3×PR",
+    "damageType": "impact",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Стрельба · Непрямое. Треб.: Force Storm. Вырывает кусок ≥1м³ из неодушевлённого (не техники) предмета в первой дальности и метает по прямой. Цели на пути (ширина 1м) во второй дальности: А−10 (А+10 если предупреждены) или попадание (Избегание как от стрельбы): 2d10+3×PR I(Cr), Pen 0, Concussive (0); сбивает с ног и отбрасывает. Цели ≥750×PR кг не сбиваются и останавливают снаряд.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "4jq01cSZKuKyuUWv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122023851,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4jq01cSZKuKyuUWv"
+}

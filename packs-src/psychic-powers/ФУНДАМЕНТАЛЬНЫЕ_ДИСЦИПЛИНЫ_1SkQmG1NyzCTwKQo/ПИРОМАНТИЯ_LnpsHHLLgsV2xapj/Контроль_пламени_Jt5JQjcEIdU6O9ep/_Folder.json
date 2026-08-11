@@ -1,0 +1,21 @@
+{
+  "name": "Контроль пламени",
+  "type": "Item",
+  "folder": "LnpsHHLLgsV2xapj",
+  "sorting": "m",
+  "_id": "Jt5JQjcEIdU6O9ep",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!Jt5JQjcEIdU6O9ep"
+}

@@ -1,0 +1,68 @@
+{
+  "name": "Betcher's Gland / Железа Бетчера",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "На самом деле две маленькие луковицевидные железы: одна имплантируется в слюнные железы под языком, другая — в основание верхней губы. Первая укрепляет ротовую полость, горло и пищевод от кислоты, вторая вырабатывает и накапливает мощную кислоту. Известна также как Ядовитый Укус.\n\nВозраст имплантации: 16-17 лет.",
+    "notes": "",
+    "category": "geneseed",
+    "quality": "common",
+    "effect": "Позволяет плеваться кислотой со следующим профилем: Rng 3 м; Dmg 1d5 C; Pen 4; Corrosive (3), Independent, Precise — если рот десантника не закрыт шлемом или иным препятствием (респиратором, ребризером и т.п.). При попадании в глаза плевок также получает свойство Blinding (3). Позволяет также медленно (от 10 минут до часа) перегрызать стальные решётки или кандалы, если они не сделаны из пластека, адамантия или иных стойких к кислоте материалов. Бросок — по связанному профилю «Кислотный плевок».",
+    "installed": "череп",
+    "geneSeedOrder": 17,
+    "linkedWeapon": "Кислотный плевок (Железа Бетчера)",
+    "bookSource": "DoomBC — Основная книга, VIII. ПРОЧЕЕ («Геносемя» / «Трансформация в Астартес», стр. 485-487)",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "FwbqKKYqs2PGI08i",
+  "_id": "90l97IGi6M4KJrgp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786046629033,
+    "modifiedTime": 1786287363634,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!90l97IGi6M4KJrgp"
+}

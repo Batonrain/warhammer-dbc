@@ -1,0 +1,68 @@
+{
+  "name": "Progenoid Glands / Прогеноиды",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "Две железы: в основании шеи и в груди возле сердца, подключённые к эндокринной системе; через неё собирают генетические образцы остальных органов Геносемени, постепенно выращивая их зиготы внутри. Известны также как Геносемя.\n\nВозраст имплантации: 16-18 лет.",
+    "notes": "",
+    "category": "geneseed",
+    "quality": "common",
+    "effect": "Накапливают геносемя. Шейный прогеноид созревает через 10 лет после имплантации и извлекается из живого десантника тестом Medicae−30 (Провал повреждает прогеноид и наносит Провалы d10 урона в T); через 5 лет после удаления можно имплантировать новый, но каждый следующий цикл вдвое дольше предыдущего. Грудной прогеноид созревает через 5 лет и удаляется только после смерти — извлечение при жизни (Medicae−50) вызывает отторжение остальных органов и смерть через T.b месяцев. Извлечение из мёртвого десантника — тест Medicae+0 (−10 за каждые сутки после смерти); прогеноиды вне холодильного контейнера портятся за 24 часа. Если не имплантировать оба прогеноида перед Чёрным Панцирем, начинается отторжение органов, как при удалении грудного прогеноида у живого десантника. Из зрелых прогеноидов в полноценном апотекарионе (8 смен работы, тест For.Lore(Astartes Implants)+0) можно вырастить новый комплект органов Геносемени для другого аспиранта.",
+    "installed": "туловище",
+    "geneSeedOrder": 18,
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, VIII. ПРОЧЕЕ («Геносемя» / «Трансформация в Астартес», стр. 485-487)",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "FwbqKKYqs2PGI08i",
+  "_id": "Yh9D51iVAMwafO8E",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786046629033,
+    "modifiedTime": 1786287363636,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Yh9D51iVAMwafO8E"
+}

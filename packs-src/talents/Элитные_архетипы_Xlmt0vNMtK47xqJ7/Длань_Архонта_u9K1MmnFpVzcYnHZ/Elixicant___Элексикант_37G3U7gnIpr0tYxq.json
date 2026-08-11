@@ -1,0 +1,52 @@
+{
+  "name": "Elixicant / Элексикант",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "u9K1MmnFpVzcYnHZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Все члены отряда под его руководством получают иммунитет к обычным болезням и +20 на сопротивление остальным. Все атаки со свойством Toxic против отряда снижают рейтинг Toxic на ⅓ I.b (окр. вверх) персонажа, вплоть до отсутствия эффекта. Все в отряде считаются на 1 ступень раненности легче и всегда находятся в состоянии Отдыха, даже в бою, а отдыхая — считаются в постельном режиме. Пассивное лечение членов отряда восстанавливает 3 раны в сутки вместо одной, независимо от ступени раненности.",
+    "tier": 3,
+    "requirement": "I 45, Restitching или Placebo",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Длань Архонта",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "37G3U7gnIpr0tYxq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121965012,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!37G3U7gnIpr0tYxq"
+}

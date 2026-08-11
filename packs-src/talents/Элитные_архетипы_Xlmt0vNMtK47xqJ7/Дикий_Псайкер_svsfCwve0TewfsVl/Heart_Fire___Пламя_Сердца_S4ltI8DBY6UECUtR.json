@@ -1,0 +1,52 @@
+{
+  "name": "Heart Fire / Пламя Сердца",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "svsfCwve0TewfsVl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может перегрузить Цепи, выжав из себя дополнительную психическую силу ценой ускоренного отторжения. При манифестации психосилы может нанести себе 1d5 урона в T и S, чтобы получить +1d5 к эPR силы (один кубик на всё).",
+    "tier": 1,
+    "requirement": "Тзинч",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Дикий Псайкер",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "S4ltI8DBY6UECUtR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121983642,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!S4ltI8DBY6UECUtR"
+}

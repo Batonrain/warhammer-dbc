@@ -1,0 +1,587 @@
+{
+  "name": "Реактивный Мотоцикл Разоритель",
+  "type": "vehicle",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "folder": "jFXbvWNfuKBhDMkk",
+  "system": {
+    "vehicleClass": "Reaver Jetbike",
+    "vehicleType": "skimmer",
+    "origin": "",
+    "commander": "",
+    "manoeuvrability": 30,
+    "operate": 0,
+    "size": 1,
+    "chassis": {
+      "type": "skimmer",
+      "spd": 35,
+      "spdDamage": 0,
+      "manoeuvreDamage": 0,
+      "strength": 0,
+      "unnaturalS": 0
+    },
+    "armour": {
+      "front": 16,
+      "side": 16,
+      "rear": 14
+    },
+    "structure": {
+      "value": 15,
+      "max": 15,
+      "critical": 0
+    },
+    "ammoReloads": 10,
+    "openTopped": false,
+    "traits": "",
+    "stations": [
+      {
+        "id": "RU99EF4V6oygLrLo",
+        "role": "pilot",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      }
+    ],
+    "damageStates": [],
+    "notes": "<p><b>Друкхари.</b> Гравимотоцикл Разоритель — самый частый в Коммораге. Соперничает в небе с Бичевателями/Геллионами, превосходя в огне и скорости. Опция: Кластерные Калтропы (антиграв-гранаты).</p>",
+    "gmNotes": "",
+    "availability": 0
+  },
+  "items": [
+    {
+      "name": "Splinter Rifle / Осколочная Винтовка (техн.)",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "splinter",
+        "range": 200,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "½",
+        "magazineCur": 120,
+        "magazineMax": 120,
+        "rof_single": 1,
+        "rof_semi": 3,
+        "rof_full": 5,
+        "damage": "1d10+2",
+        "damageType": "rending",
+        "penetration": 4,
+        "quality": "common",
+        "availability": 0,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "toxic",
+            "rating": 4
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "RU99EF4V6oygLrLo",
+          "mount": "hull",
+          "hArc": "−10°..+10°",
+          "vArc": "−45°..+10°",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "zrqV6jeTlGbMKJUY",
+          "options": [
+            "Splinter Rifle / Осколочная Винтовка (техн.)",
+            "Shredder / Шреддер (техн.)",
+            "Blaster / Бластер (техн.)",
+            "Horrorfex / Хоррорфекс (техн.)",
+            "Heat Lance / Тепловое Копьё (техн.)"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "JVxcwjWWMgUnLfA3",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!FFwBNkVHdkyXewKF.JVxcwjWWMgUnLfA3"
+    },
+    {
+      "name": "Blades / Лезвия",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "primitive",
+        "range": 0,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+7",
+        "damageType": "rending",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 0,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Досягаемость 0–2. При Налёте бьёт по цели в радиусе; доп. попадание при Таране. На Рейдере/Опустошителе — 2d10+7.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "RU99EF4V6oygLrLo",
+          "mount": "hull",
+          "hArc": "корпус",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "QiMH4OHYFc6ksX2s",
+          "options": [
+            "Blades / Лезвия",
+            "Grav-Talon / Грав-Коготь"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "seLwfxkNxoVJRdVZ",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!FFwBNkVHdkyXewKF.seLwfxkNxoVJRdVZ"
+    },
+    {
+      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Прицельные системы и штурвалы управления машиной интегрированы. Водитель может совершить Большой Ход, Малый Ход или Хаотичное Маневрирование и выстрел из орудий одним полным действием.",
+        "notes": "",
+        "benefit": "Водитель может стрелять на Большом Ходу.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false
+        }
+      },
+      "_id": "tyo1dYuUzIK2A5bF",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!FFwBNkVHdkyXewKF.tyo1dYuUzIK2A5bF"
+    },
+    {
+      "name": "Быстрая / Fast",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Водитель может использовать Большой Ход полудействием. При Полном Ходу SPD утраивается, а не удваивается, а тесты Operate для Полного Хода получают +20 (обычно до +10).",
+        "notes": "",
+        "benefit": "Улучшенный Большой и Полный Ход.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 3,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false
+        }
+      },
+      "_id": "khc5IVYkMEy7GDKK",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!FFwBNkVHdkyXewKF.khc5IVYkMEy7GDKK"
+    },
+    {
+      "name": "Тормоза Падения / Fall Breaks",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Скиммер с системой экстренного торможения. При Крушении на Низкой высоте водитель может считать это Крушением с Приземной высоты, но сразу после приземления машина получает поломку «Ходовая Часть Повреждена». Не более 1 раза за бой/сцену (длительная перезарядка).",
+        "notes": "",
+        "benefit": "Крушение с Низкой высоты как с Приземной.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false
+        }
+      },
+      "_id": "HijAW8ynWgoCkEW9",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!FFwBNkVHdkyXewKF.HijAW8ynWgoCkEW9"
+    },
+    {
+      "name": "Открытая / Open Topped",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Экипаж и пассажиры могут стрелять из личного оружия, оставаясь в едущей машине. Избирательные атаки могут выцеливать экипаж/пассажиров, атаки по площади задевают их (по настоящему Размеру). Экипаж грузится/выгружается полудействием и совершает Обзор свободным действием. Рейтинг (X): 0 — нет укрытия; ½ — укрытие в торс/ноги; 1 — полное укрытие (кроме Раунда атаки); E — как Enclosed.",
+        "notes": "",
+        "benefit": "Можно атаковать из машины.",
+        "availability": 0,
+        "hasRating": true,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": true,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false
+        }
+      },
+      "_id": "gauCw4cwyvlYt1dr",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!FFwBNkVHdkyXewKF.gauCw4cwyvlYt1dr"
+    }
+  ],
+  "_id": "FFwBNkVHdkyXewKF",
+  "prototypeToken": {
+    "name": "Реактивный Мотоцикл Разоритель",
+    "displayName": 30,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783871637359,
+    "modifiedTime": 1783871637359,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!FFwBNkVHdkyXewKF"
+}

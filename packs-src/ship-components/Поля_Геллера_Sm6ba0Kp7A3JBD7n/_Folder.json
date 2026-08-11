@@ -1,0 +1,23 @@
+{
+  "name": "Поля Геллера",
+  "type": "Item",
+  "folder": null,
+  "sorting": "m",
+  "_id": "Sm6ba0Kp7A3JBD7n",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782040606511,
+    "modifiedTime": 1782040606511,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!folders!Sm6ba0Kp7A3JBD7n"
+}

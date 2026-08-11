@@ -1,0 +1,35 @@
+{
+  "name": "Мульти-удар / Multi-strike",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "i0yML1SKgQAz2uIn",
+  "system": {
+    "description": "Наносит несколько попаданий одним ударом. Дополнительное попадание при успехе, до максимума X. Каждое следующее со штрафом −X к урону.",
+    "reminder": "⚔️ Мульти-удар (X): доп. попадания (до X)",
+    "category": "melee",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "multiStrike",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "ZOnLjuRCYBHmLh4p",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353820,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ZOnLjuRCYBHmLh4p"
+}

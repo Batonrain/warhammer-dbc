@@ -1,0 +1,75 @@
+{
+  "name": "Shimmering Bridge / Мерцающий Мост",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-architect.svg",
+  "folder": "nkcXO1byihE4a36M",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 250,
+    "discipline": "sorcery",
+    "subtype": "Архитектор",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв. Полупрозрачная твёрдая опора из ≤2×PR секций (каждая ≤2×2 м, касается остальных), любой формы, может висеть в воздухе. Как Укрытие AP 10, но при пробитии секция теряет 1d5+1 AP (рассыпается на 0). Повторным тестом — сдвиг на PR м, смена формы или восстановление PR секций.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "pLycO2rzCOdrPTD6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122037684,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pLycO2rzCOdrPTD6"
+}

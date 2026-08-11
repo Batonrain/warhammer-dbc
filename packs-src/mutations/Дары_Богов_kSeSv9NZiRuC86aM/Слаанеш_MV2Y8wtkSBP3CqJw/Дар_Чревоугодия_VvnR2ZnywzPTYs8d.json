@@ -1,0 +1,49 @@
+{
+  "name": "Дар Чревоугодия",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Чемпион одарён вкусом к опаснейшей из всей дичи и его Бог вознаграждает его за удовлетворение его тёмных желаний. Если он ещё не имел его, персонаж получает Навык Trade (Cook)+20. Потратив 6 часов на тщательное приготовление изысканного блюда из телепрочного могучего чемпиона (персонажа с Inf 40+, в т.ч. союзника) и съев его, он может пройти тест на Cor+20 и получить Inf.b цели дополнительных Очков Бесчестия, которые не восстанавливаются. Эти дополнительные Очки Бесчестия не складываются.",
+    "source": "Дары Слаанеш, d100 44…47",
+    "roll": "44…47",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "VvnR2ZnywzPTYs8d",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020172,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VvnR2ZnywzPTYs8d"
+}

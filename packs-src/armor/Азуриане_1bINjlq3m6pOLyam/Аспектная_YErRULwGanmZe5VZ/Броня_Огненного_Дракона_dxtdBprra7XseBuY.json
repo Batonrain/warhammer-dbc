@@ -1,0 +1,58 @@
+{
+  "name": "Броня Огненного Дракона",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Окрашенные в “огненные” цвета, вроде оранжевого или красного, доспехи огненных драконов прочны для того, чтобы их носитель сумел приблизиться к противнику и совершить по нему выстрел из своего фузионного оружия. Отличительной чертой брони огненного дракона является наличие многочисленных шипов, которые имеют больше культурно–религиозный характер, чем практический.\n",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 60,
+    "equipped": false,
+    "head": 7,
+    "body": 8,
+    "leftArm": 7,
+    "rightArm": 7,
+    "leftLeg": 7,
+    "rightLeg": 7,
+    "quality": "common",
+    "availability": 4,
+    "weight": 15,
+    "properties": [
+      "aspect",
+      "hard",
+      "protective",
+      "sealed",
+      "stealthed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 10,
+    "special": "Aspect (Огненные Драконы)",
+    "propRatings": {
+      "protective": 7
+    }
+  },
+  "_id": "dxtdBprra7XseBuY",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!dxtdBprra7XseBuY"
+}

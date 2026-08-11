@@ -1,0 +1,42 @@
+{
+  "name": "Stasis Shield / Стазис Щит",
+  "type": "forcefield",
+  "folder": "IRQ8ooDLYqL9rtA6",
+  "system": {
+    "description": "Чародейский дефлектор стазисной природы.",
+    "notes": "",
+    "shieldNature": "warp",
+    "shieldType": "deflector",
+    "ratingMin": 1,
+    "ratingMax": 60,
+    "overloadThreshold": 10,
+    "currentRating": 0,
+    "isSpecialRating": false,
+    "equipped": false,
+    "status": "inactive",
+    "quality": "common",
+    "availability": 4,
+    "weight": 4
+  },
+  "_id": "9OtgXgOOhJ1fFl0h",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805492,
+    "modifiedTime": 1782752979845,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!9OtgXgOOhJ1fFl0h"
+}

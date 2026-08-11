@@ -1,0 +1,46 @@
+{
+  "name": "Гибельный удар",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-bolt.svg",
+  "folder": "IQWUde65VkbLfhC1",
+  "system": {
+    "description": "Болт с двумя взрывными ядрами (контактное и внутреннее), разработанный против космодесантников. Даёт свойства Felling (4) и Razor Sharp, уменьшает Надёжность оружия на 1.",
+    "notes": "",
+    "weaponTypes": [
+      "bolt"
+    ],
+    "ammoCategory": "bolts",
+    "rarity": 3,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 3,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Felling (4), Razor Sharp; −1 Надёжность",
+    "properties": []
+  },
+  "_id": "Qy82GcRGOhxcTMau",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Qy82GcRGOhxcTMau"
+}

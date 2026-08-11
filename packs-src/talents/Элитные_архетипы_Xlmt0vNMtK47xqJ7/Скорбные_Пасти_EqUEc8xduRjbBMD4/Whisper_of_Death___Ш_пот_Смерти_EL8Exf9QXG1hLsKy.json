@@ -1,0 +1,52 @@
+{
+  "name": "Whisper of Death / Шёпот Смерти",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "EqUEc8xduRjbBMD4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Приходя за целью с Меткой Мести, заставляет её слышать в голове особенно сильный шёпот. Этот шёпот накладывает штраф −3×Inf.b персонажа на все Ментальные и сложные действия. Критически провалив любой ментальный тест, цель на 1d5 раундов входит в ступор от тёмных откровений о своей скорой погибели.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Скорбные Пасти",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "EL8Exf9QXG1hLsKy",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121973585,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EL8Exf9QXG1hLsKy"
+}

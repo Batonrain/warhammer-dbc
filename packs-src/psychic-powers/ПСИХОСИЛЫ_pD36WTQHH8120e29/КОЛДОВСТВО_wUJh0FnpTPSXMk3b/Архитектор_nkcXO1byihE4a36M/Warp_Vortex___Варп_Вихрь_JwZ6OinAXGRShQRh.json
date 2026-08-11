@@ -1,0 +1,75 @@
+{
+  "name": "Warp Vortex / Варп-Вихрь",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-architect.svg",
+  "folder": "nkcXO1byihE4a36M",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "sorcery",
+    "subtype": "Архитектор",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×25м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2d10",
+    "damageType": "impact",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Призыв. Все в PR м от центра: T+0 или сбиты с ног и протянуты на 2 м к сингулярности. Затянутые получают 2d10 I, Pen 0 (повтор в начале каждого Хода псайкера). Движение от вихря требует A+0 (провал — нельзя удаляться). Стрельба сквозь зону −20.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "JwZ6OinAXGRShQRh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122028867,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JwZ6OinAXGRShQRh"
+}

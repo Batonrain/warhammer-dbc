@@ -1,0 +1,21 @@
+{
+  "name": "Рукопашное",
+  "type": "Item",
+  "folder": "2bHp4k6pZcAzGhe9",
+  "sorting": "m",
+  "_id": "V0vMf42aEJ9aQmup",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!V0vMf42aEJ9aQmup"
+}

@@ -1,0 +1,1247 @@
+{
+  "name": "Культист Разведчик",
+  "type": "character",
+  "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+  "folder": "bxRx0CNrjWZoicYj",
+  "system": {
+    "bodyType": "male",
+    "race": "human",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "alignment": "heretic",
+    "patronGod": "undivided",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 10,
+      "max": 10,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 1
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 25,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 30,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 33,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 33,
+        "bonus": 3,
+        "cost": 0
+      },
+      "bs": {
+        "base": 33,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 33,
+        "bonus": 3,
+        "cost": 0
+      },
+      "s": {
+        "base": 32,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 32,
+        "bonus": 3,
+        "cost": 0
+      },
+      "t": {
+        "base": 33,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 33,
+        "bonus": 3,
+        "cost": 0
+      },
+      "ag": {
+        "base": 42,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 42,
+        "bonus": 4,
+        "cost": 0
+      },
+      "int": {
+        "base": 31,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 31,
+        "bonus": 3,
+        "cost": 0
+      },
+      "per": {
+        "base": 41,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 41,
+        "bonus": 4,
+        "cost": 0
+      },
+      "wp": {
+        "base": 32,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 32,
+        "bonus": 3,
+        "cost": 0
+      },
+      "fel": {
+        "base": 21,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 21,
+        "bonus": 2,
+        "cost": 0
+      },
+      "inf": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "athletics": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "awareness": {
+        "rank": "veteran",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "charm": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "dodge": {
+        "rank": "veteran",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "logic": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "parry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "veteran",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "survival": {
+        "rank": "veteran",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "techUse": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      }
+    },
+    "groupSkills": {
+      "commonLore": [
+        {
+          "specialty": "Chaos",
+          "rank": "trained",
+          "char": "int",
+          "total": 51,
+          "cost": 0
+        },
+        {
+          "specialty": "любое",
+          "rank": "knows",
+          "char": "int",
+          "total": 41,
+          "cost": 0
+        }
+      ],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [
+        {
+          "specialty": "Low Gothic",
+          "rank": "knows",
+          "char": "int",
+          "total": 41,
+          "cost": 0
+        }
+      ],
+      "navigation": [
+        {
+          "specialty": "Surface",
+          "rank": "veteran",
+          "char": "int",
+          "total": 51,
+          "cost": 0
+        }
+      ],
+      "operate": [],
+      "trade": [
+        {
+          "specialty": "Cook",
+          "rank": "trained",
+          "char": "int",
+          "total": 51,
+          "cost": 0
+        }
+      ]
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "max": 0
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "<p>Бывшие охотники, контрабандисты и воры — разведка, слежка, засады, ловля «языков».</p><p><b>Вариации:</b> Диверсант (Tech-Use/Trade Technomat, Подрывные Заряды), Охотник за головами (Intimidate/Interrogate, наручники), Снайпер (BS 38 + Снайперская Винтовка/Лук/Лонглаз/Арбалеста).</p><p><b>Броня:</b> Импровизированная (−/3/2/2). <b>Как Средний Миньон-человек.</b></p>",
+    "craftAvailable": false,
+    "possessed": false,
+    "haemonculus": {
+      "stage": 0,
+      "flesh": [],
+      "warp": [],
+      "splitPools": false,
+      "notes": ""
+    },
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "reactions": "",
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "vitals": {
+      "hunger": 0,
+      "thirst": 0,
+      "sleep": 0
+    }
+  },
+  "items": [
+    {
+      "name": "Нож",
+      "type": "weapon",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "lowtech",
+        "range": 1,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d5",
+        "damageType": "rending",
+        "penetration": 0,
+        "quality": "common",
+        "availability": -3,
+        "weight": 0.2,
+        "attackBonus": 0,
+        "special": "Нож; Хват 1р [Об]; Досягаемость 1",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "precise"
+          },
+          {
+            "key": "primitive"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "jnzbWiwTNicidgnd",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.jnzbWiwTNicidgnd"
+    },
+    {
+      "name": "Лазган",
+      "type": "weapon",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "basic",
+        "weaponType": "laser",
+        "range": 100,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "½",
+        "magazineCur": 60,
+        "magazineMax": 60,
+        "rof_single": 1,
+        "rof_semi": 3,
+        "rof_full": 0,
+        "damage": "1d10+3",
+        "damageType": "energy",
+        "penetration": 0,
+        "quality": "common",
+        "availability": -2,
+        "weight": 3,
+        "attackBonus": 0,
+        "special": "Моды: Power Setting",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "reliable"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "x4HyOSp7uFRc1aTD",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.x4HyOSp7uFRc1aTD"
+    },
+    {
+      "name": "Роба Чемпиона",
+      "type": "armor",
+      "system": {
+        "description": "Иная вариация дополнительного снаряжения среди варлоков, которая может спасти их жизнь. Иногда варлоки выступают как отвлекающая боевая единица, в одиночку отправляющаяся громить противников, используя свои превосходящие психические способности и боевые навыки. И для гарантии своего выживания они могут использовать Робы Чемпиона, что ценою психических варлока укрепляют его против вражеских атак. Также это символ смелости и геройства, что дает некоторый престиж в войсках эльдар. Носитель Робы Чемпиона получает +10 на все тесты атаки и +20 на все тесты командования. В начале своего хода персонаж может разменивать 1 тPR на 2 аблативных AP, что выражается в лице психического щита. В начале каждого нового раунда данный щит становится слабее на 1d5+1 AP и теряет 1 AP после каждого попадания, независимо от того, сколько урона это попадание должно было нанести (по усмотрению ГМа более сильные атаки будут отнимать больше AP у щита).\n",
+        "notes": "",
+        "armorType": "power",
+        "stacks": false,
+        "maxAgility": 100,
+        "propRatings": {},
+        "apSecond": {},
+        "equipped": true,
+        "head": 0,
+        "body": 1,
+        "leftArm": 1,
+        "rightArm": 1,
+        "leftLeg": 1,
+        "rightLeg": 1,
+        "quality": "common",
+        "availability": 3,
+        "weight": 3,
+        "properties": [
+          "aspect",
+          "cloak",
+          "stealthed",
+          "undersuit"
+        ],
+        "strengthBonus": 0,
+        "wpBonus": 0,
+        "drukhari": false,
+        "fieldMode": "",
+        "special": "Aspect (Видящие). +10 атака, +20 командование. 1 тPR → 2 аблативных AP (психощит, слабеет 1d5+1/раунд)."
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "Sn5lrCEWgUPWTAY9",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.Sn5lrCEWgUPWTAY9"
+    },
+    {
+      "name": "Catfall",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Уменьшает урон от падения.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "U0x6lDAj70ezvIf1",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.U0x6lDAj70ezvIf1"
+    },
+    {
+      "name": "Deadeye Shot",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "−10 штраф за Избирательный выстрел / Размер.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "yfFaCoB00USHO8TP",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.yfFaCoB00USHO8TP"
+    },
+    {
+      "name": "Heightened Senses (Sight, Hearing)",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "+10 к тестам зрения и слуха.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "xsuOnXnesnRampTO",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.xsuOnXnesnRampTO"
+    },
+    {
+      "name": "Leap Up",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Встать за свободное действие.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "5E1eIFYcKLTKJ3dg",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.5E1eIFYcKLTKJ3dg"
+    },
+    {
+      "name": "Lightning Reflexes",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Бросает 2 раза на Init.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "5Fku0MPTjVxhMq2B",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.5Fku0MPTjVxhMq2B"
+    },
+    {
+      "name": "Light Sleeper",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Нет штрафа на тесты Восприятия во время сна.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "XlNerHTjGgNvM1r2",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.XlNerHTjGgNvM1r2"
+    },
+    {
+      "name": "Quick Draw",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Взять оружие за свободное действие.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "fujrpJmQwPIBhAon",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.fujrpJmQwPIBhAon"
+    },
+    {
+      "name": "Rapid Reaction",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "А+0, чтобы избежать засады.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "tkGqTahhyvyKpEW8",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.tkGqTahhyvyKpEW8"
+    },
+    {
+      "name": "Sentry",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Преимущество на пассивную Awareness.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "ksGYBU4VftfWwZXe",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!zO7skH15SwIpO5tO.ksGYBU4VftfWwZXe"
+    }
+  ],
+  "prototypeToken": {
+    "name": "Культист Разведчик",
+    "displayName": 30,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "_id": "zO7skH15SwIpO5tO",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783437660884,
+    "modifiedTime": 1783437660884,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!zO7skH15SwIpO5tO"
+}

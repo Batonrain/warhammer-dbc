@@ -1,0 +1,75 @@
+{
+  "name": "Rain of Foulness / Отвратный Дождь",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-nurgle.svg",
+  "folder": "00ZvnUhFYwaFxL3X",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 300,
+    "discipline": "nurgle",
+    "subtype": "",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×20м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+7",
+    "damageType": "chemical",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Психический Взрыв (1+Успехи) · Стрельба. Профиль: PR×20м, 1d10+7 C, Pen PR, Blast (1+Успехи), Corrosive (1), Toxic (3). Покровительство Нургла игнорирует Corrosive. Попавшие без покровительства — тест Подавление+0.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "II62UR7XpOyxBEuA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122028052,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!II62UR7XpOyxBEuA"
+}

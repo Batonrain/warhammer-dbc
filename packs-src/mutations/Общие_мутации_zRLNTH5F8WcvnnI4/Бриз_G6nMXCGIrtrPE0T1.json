@@ -1,0 +1,49 @@
+{
+  "name": "Бриз",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Где бы персонаж ни находился, его окружает пузырь радиусом 2м с собственной погодой. Вне зависимости от внешнего ветра, персонажу всегда в лицо дует слабый прохладный ветер. Персонаж не получает штрафов за сильный ветер и экстремальную жару или холод и сохраняет вокруг себя пузырь воздуха в вакууме (но не в жидкостях). Он полностью игнорирует сопротивление воздуха, так что его терминальная скорость падения не ограничена, но он также не получает урона от трения воздуха при входе в атмосферу с орбиты.",
+    "source": "Общие мутации, d100 80",
+    "roll": "80",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "G6nMXCGIrtrPE0T1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122019082,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!G6nMXCGIrtrPE0T1"
+}

@@ -1,0 +1,42 @@
+{
+  "name": "Prismatic Amulet / Призматический Амулет",
+  "type": "forcefield",
+  "folder": "AnN2qDXTrN7Qt3MS",
+  "system": {
+    "description": "Технологический сквозной щит в виде амулета.",
+    "notes": "",
+    "shieldNature": "technological",
+    "shieldType": "penetrating",
+    "ratingMin": 1,
+    "ratingMax": 60,
+    "overloadThreshold": 10,
+    "currentRating": 0,
+    "isSpecialRating": false,
+    "equipped": false,
+    "status": "inactive",
+    "quality": "common",
+    "availability": 4,
+    "weight": 3
+  },
+  "_id": "KUlZkk6hMp3r1syb",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805492,
+    "modifiedTime": 1782752979845,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!KUlZkk6hMp3r1syb"
+}

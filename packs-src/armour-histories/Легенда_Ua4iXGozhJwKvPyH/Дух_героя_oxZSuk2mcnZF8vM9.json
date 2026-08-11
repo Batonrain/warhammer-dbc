@@ -1,0 +1,38 @@
+{
+  "name": "Дух героя",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "Ua4iXGozhJwKvPyH",
+  "system": {
+    "table": "legend",
+    "rollMin": 8,
+    "rollMax": 9,
+    "description": "Броню носил герой великой легенды, и после его падения что-то от доблестного духа осталось в доспехах. Говорят, он направляет руку носителя и иногда берёт управление на себя.",
+    "effect": "Владелец может впасть в транс и выбрать один бонус: +15 к WS, +15 к BS или талант Fearless на время боя. После боя персонаж получает 1к10 очков Порчи.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "oxZSuk2mcnZF8vM9",
+  "effects": [],
+  "sort": 500000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354162,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!oxZSuk2mcnZF8vM9"
+}

@@ -1,0 +1,112 @@
+{
+  "name": "Поцелуй Арлекина",
+  "type": "weapon",
+  "folder": "V0vMf42aEJ9aQmup",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "exotic",
+    "range": 1,
+    "balance": 2,
+    "grips": "1р",
+    "profileLabel": "Кулак",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10+8",
+    "damageType": "rending",
+    "penetration": 9,
+    "quality": "common",
+    "availability": 4,
+    "weight": 0.1,
+    "attackBonus": 0,
+    "special": "Кулак; Хват 1р; Досягаемость 0–1. Toxic: 7, 2d10. Extreme (1)…(6) — по 1 за пункт Machine/Unnatural T цели. Крит-эффект R+2. Встроен мононитевой пистолет (33 м, Pen 10, боезапас бесконечный). При попадании тест T−60 → провал: крит-эффект R = числу провалов +3.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "crippling",
+        "rating": 4
+      },
+      {
+        "key": "eldarPrecise"
+      },
+      {
+        "key": "eldarRazorSharp"
+      },
+      {
+        "key": "felling",
+        "rating": 6
+      },
+      {
+        "key": "reinforced"
+      },
+      {
+        "key": "tearing"
+      },
+      {
+        "key": "toxic"
+      },
+      {
+        "key": "wrist"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "XGADd4uKzCghVtgx",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!XGADd4uKzCghVtgx"
+}

@@ -1,0 +1,101 @@
+{
+  "name": "Сюрикен Катапульта Мстителей",
+  "type": "weapon",
+  "folder": "3dL75Tuvex2X0733",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "basic",
+    "weaponType": "shuriken",
+    "range": 100,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "½",
+    "magazineCur": 180,
+    "magazineMax": 180,
+    "rof_single": 1,
+    "rof_semi": 6,
+    "rof_full": 12,
+    "damage": "1d10+5",
+    "damageType": "rending",
+    "penetration": 4,
+    "quality": "common",
+    "availability": 2,
+    "weight": 3,
+    "attackBonus": 0,
+    "special": "Моды: Pistol Grip, Targeter. Aspect: Зловещие Мстители. Режимы стрельбы: Одиночный/Полуавто/Авто (см. справочник).",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "aspect"
+      },
+      {
+        "key": "carbine"
+      },
+      {
+        "key": "eldarRazorSharp"
+      },
+      {
+        "key": "extreme",
+        "rating": 9
+      },
+      {
+        "key": "reliable"
+      },
+      {
+        "key": "tearing"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "JjxngcJrKfmqHBtu",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784645463257,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!JjxngcJrKfmqHBtu"
+}

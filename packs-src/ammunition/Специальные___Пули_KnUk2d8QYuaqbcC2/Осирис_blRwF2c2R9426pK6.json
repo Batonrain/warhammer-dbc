@@ -1,0 +1,56 @@
+{
+  "name": "Осирис",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "KnUk2d8QYuaqbcC2",
+  "system": {
+    "description": "Археотеховые пули с грав-репульсорами и микрокогитаторами, огибающие препятствия и преследующие цели, детонирующие при попадании. Даёт +1 кубик урона и меняет тип урона на X. Если стрелок носит силовую броню с авточувствами и вокс-связью или ретинальный дисплей с когитатором, он может за полудействие отметить цель, получив +20 на стрельбу, игнорируя укрытия, штрафы за скорость/высоту/ближний бой/заложников; если цель уклонится — пуля развернётся и нанесёт ещё одно попадание с обратной стороны.",
+    "notes": "",
+    "weaponTypes": [
+      "solid"
+    ],
+    "ammoCategory": "bullets",
+    "rarity": 4,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 4,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageDiceMod": 1,
+    "damageTypeOverride": "blast",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "+1 кубик урона; при ретинальной отметке +20 и игнор укрытий, разворот при уклонении",
+    "properties": [],
+    "condMods": [
+      {
+        "label": "Цель отмечена на ретинальном дисплее (полудействие)",
+        "atk": 20,
+        "dmg": 0,
+        "wp": [],
+        "note": "Игнорирует укрытие цели, штрафы за скорость, высоту, ближний бой и заложников"
+      }
+    ]
+  },
+  "_id": "blRwF2c2R9426pK6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1785149961121,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!blRwF2c2R9426pK6"
+}

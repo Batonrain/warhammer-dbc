@@ -1,0 +1,255 @@
+{
+  "name": "Пограничный мир",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "frontier",
+    "description": "Персонаж получает +20 к навыку Tech-Use когда добавляет личные модификации к оружию, и +10 когда ремонтирует свои вещи.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Надейся на себя",
+    "featureDesc": "Персонаж получает +20 к навыку Tech-Use когда добавляет личные модификации к оружию, и +10 когда ремонтирует свои вещи.",
+    "charModLabel": "+3 BS, +3 P, −3 F",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "bs",
+          "value": 3
+        },
+        {
+          "stat": "per",
+          "value": 3
+        },
+        {
+          "stat": "fel",
+          "value": -3
+        }
+      ]
+    },
+    "notes": ""
+  },
+  "_id": "3zZgSefn7w6Sv0Xh",
+  "effects": [
+    {
+      "name": "Пограничный (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.bs.total",
+            "type": "add",
+            "value": 3,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.per.total",
+            "type": "add",
+            "value": 3,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.fel.total",
+            "type": "add",
+            "value": -3,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "Zn7w1TiIJiq0t5sj",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122043068,
+        "modifiedTime": 1786185863422,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!3zZgSefn7w6Sv0Xh.Zn7w1TiIJiq0t5sj"
+    }
+  ],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 286232,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "ETRqWVVYfemJlvM8",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "M6hWnuWnghSF9RK0",
+              "kind": "characteristic",
+              "charKey": "bs",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "yhC315wUoUFdspRW",
+              "kind": "characteristic",
+              "charKey": "per",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "05nUGxfGFR6A1Sns",
+              "kind": "characteristic",
+              "charKey": "fel",
+              "field": "total",
+              "op": "subtract",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "i5E5zRbLIqd0Isnd",
+              "kind": "rollmod",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 20,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "techUse",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "Установка модификаций",
+              "code": ""
+            },
+            {
+              "id": "zV2RMA2NptGXI5wk",
+              "kind": "rollmod",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 10,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "techUse",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "Ремонт своего снаряжения",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836766,
+    "modifiedTime": 1786277408021,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!3zZgSefn7w6Sv0Xh"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Ribcage Carapace / Реберный Панцирь",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Рёбра разрастаются во внешний панцирь.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Рёбра/грудина/позвонки разрастаются в костяной панцирь: Трейт Natural Armour(3) в Торс и Руки. Дефект (до Best.Q): −10 A, −1 SPD.\nPoor.Q: NA до 1, −15 A, −20 Stealth; при крит. в торс пластина лопается (1d5 непогл. R в торс).\nGood.Q: NA до 4, −5 A, без штрафа SPD.\nBest.Q: NA до 6, дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Костяные шипы (промахнувшийся в упор / безоружно атаковавший / в Борьбе получает попадание (Уворот, не Парирование) 1d10+S.b R Pen 2; запястные клинки Rng 0 Mono/Reinforced; но +10 клинковым атакам по персонажу; +10 Intimidate); 2) Самовосстановление (+1 NA/AP каждые 10−T.b мин; 1/сессию при крит. в торс +1d5+T.b ран и ослабление эффекта); 3) Амортизирующая структура (иммунитет к Оглушению/Усталости от попаданий/критов в торс); 4) Живые полости (2 предмета 1×1).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "LgfOMhOI1IHZXldl",
+  "_id": "7mmUQTEJ2WZsSvIr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122011683,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7mmUQTEJ2WZsSvIr"
+}

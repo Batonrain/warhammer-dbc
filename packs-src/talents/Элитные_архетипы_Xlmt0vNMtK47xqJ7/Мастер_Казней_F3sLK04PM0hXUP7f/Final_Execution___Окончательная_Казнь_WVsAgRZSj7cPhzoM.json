@@ -1,0 +1,52 @@
+{
+  "name": "Final Execution / Окончательная Казнь",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "F3sLK04PM0hXUP7f",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Обрушивает удары нарастающей мощи. Совершая атаку Казнью, может потратить Очко Трофеев, чтобы первая атака получила свойства Extreme(9) и Proven(5), а каждая следующая атака Казни — накапливающиеся −1 к рейтингу Extreme и +1 к Proven. Если такая атака убивает добычу, получает Трейт Fear(2) (сверхъестественный) на 1 Раунд.",
+    "tier": 3,
+    "requirement": "Неделимый, Inf 60",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Мастер Казней",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "WVsAgRZSj7cPhzoM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121986154,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WVsAgRZSj7cPhzoM"
+}

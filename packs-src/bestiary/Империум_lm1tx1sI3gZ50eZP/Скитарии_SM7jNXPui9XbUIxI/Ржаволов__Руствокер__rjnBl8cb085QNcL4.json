@@ -1,0 +1,801 @@
+{
+  "name": "Ржаволов (Руствокер)",
+  "type": "character",
+  "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+  "folder": "SM7jNXPui9XbUIxI",
+  "system": {
+    "bodyType": "male",
+    "race": "human",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "alignment": "loyalist",
+    "patronGod": "undivided",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 14,
+      "max": 14,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 1
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 0,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 45,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 45,
+        "bonus": 4,
+        "cost": 0
+      },
+      "bs": {
+        "base": 30,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 30,
+        "bonus": 3,
+        "cost": 0
+      },
+      "s": {
+        "base": 38,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 38,
+        "bonus": 3,
+        "cost": 0
+      },
+      "t": {
+        "base": 38,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 38,
+        "bonus": 3,
+        "cost": 0
+      },
+      "ag": {
+        "base": 45,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 45,
+        "bonus": 4,
+        "cost": 0
+      },
+      "int": {
+        "base": 22,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 22,
+        "bonus": 2,
+        "cost": 0
+      },
+      "per": {
+        "base": 38,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 38,
+        "bonus": 3,
+        "cost": 0
+      },
+      "wp": {
+        "base": 38,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 38,
+        "bonus": 3,
+        "cost": 0
+      },
+      "fel": {
+        "base": 10,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 10,
+        "bonus": 1,
+        "cost": 0
+      },
+      "inf": {
+        "base": 19,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 19,
+        "bonus": 1,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "athletics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "awareness": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "charm": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "dodge": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "logic": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "expert",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "survival": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "techUse": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "max": 0
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "<p><b>Роль:</b> Сикариан-ассасин ближнего боя. Трансонические клинки и хордокоготь режут броню как бумагу; стремителен (Ag 45), бьёт из тени. Внушает <b>Страх (1)</b> жутким обликом ржавого убийцы. Иммунен к страху.</p>",
+    "craftAvailable": false,
+    "possessed": false,
+    "haemonculus": {
+      "stage": 0,
+      "flesh": [],
+      "warp": [],
+      "splitPools": false,
+      "notes": ""
+    },
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "reactions": "",
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "vitals": {
+      "hunger": 0,
+      "thirst": 0,
+      "sleep": 0
+    }
+  },
+  "items": [
+    {
+      "name": "Skitarii War Plate / Боевые Латы Скитарии",
+      "type": "implant",
+      "img": "icons/svg/item-bag.svg",
+      "system": {
+        "description": "Базовый комплект имплантов Скитарии; включает комплект брони, интегрированный в плоть. Снятие требует операции, как замена бионики; посекционно можно снимать для ремонта.",
+        "notes": "",
+        "category": "mechanicus",
+        "quality": "common",
+        "effect": "<p><b>Броня 6/7/7/5/5</b> (голова/тело/руки/ноги), свойства: Conductive, Sealed, Void; модификации Insulated, Thermal, Foam Sealant, Thrusters, Cooler, Transteel. Интегрирована в плоть.</p><p><b>Атомантическое Укрепление:</b> не перегружающийся технологический дефлектор (рейтинг 1–10). Если AP какой-либо части опускается до 0 — щит теряется, пока часть не починена.</p><p><b>Мантия Искателя:</b> смена бионических конечностей за 3 мин без теста; в комплекте пара бионических рук и ног (Good.Q). <b>Актуаторные Банки:</b> иммунитет к Усталости от бега/марша; работают как Потенциа-Коил на 1⚡ (заряжаются Электу-Индукторами). <b>Мозжечковые Анализаторы Путей:</b> трудный ландшафт как обычный, без штрафов в рукопашной и вождении. <b>Черепные Цепи</b> и <b>Ноосферный Фид.</b> <b>Катехизисы Командования:</b> считается сервитором/роботом для Binary Dominion; обязан выполнять команды Механикус, даже смертельные.</p>",
+        "installed": "всё тело",
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "apHead": 6,
+          "apBody": 7,
+          "apArms": 7,
+          "apLegs": 5,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        },
+        "shield": {
+          "enabled": true,
+          "shieldNature": "technological",
+          "shieldType": "deflector",
+          "ratingMin": 1,
+          "ratingMax": 10,
+          "overloadThreshold": 0,
+          "isSpecialRating": false,
+          "currentRating": 0,
+          "equipped": false,
+          "status": "inactive"
+        }
+      },
+      "_id": "HzPys5oWbXJpDEYU",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!rjnBl8cb085QNcL4.HzPys5oWbXJpDEYU"
+    },
+    {
+      "name": "Мозговой замок / Mind-Lock",
+      "type": "trait",
+      "img": "icons/svg/paralysis.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Доктринальный замок разума: иммунитет к Страху и большинству психологических эффектов; беспрекословно исполняет приказы своего альфы. При гибели командира действует по последнему приказу.",
+        "source": "аугметика",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "qESw87jkBomRbJXz",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!rjnBl8cb085QNcL4.qESw87jkBomRbJXz"
+    },
+    {
+      "name": "Ambidextrous / Амбидекстр",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Персонаж не получает штраф −20 за использование оружия в неосновной руке и уменьшает штраф за парное оружие на 10.",
+        "tier": 1,
+        "requirement": "A 30",
+        "aptitudes": [
+          "general",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Неделимый",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "ggObIn20LH0mqe99",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!rjnBl8cb085QNcL4.ggObIn20LH0mqe99"
+    },
+    {
+      "name": "Swift Attack / Быстрая Атака",
+      "type": "talent",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Приём (База: Стандартная/Осторожная Атака; Оружие: любое с Балансом не ниже −1). Базовая атака со штрафом −10. При Успехе наносит одно попадание за каждый нечётный Успех (1,3,5…) до WS.b. Только одним оружием в Ход. Не активирует Cleave и Whirlwind of Death.",
+        "tier": 2,
+        "requirement": "WS 30",
+        "aptitudes": [
+          "ws",
+          "finesse"
+        ],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "Кхорн",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "HbE6HMWQ7LL1LBhb",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!rjnBl8cb085QNcL4.HbE6HMWQ7LL1LBhb"
+    },
+    {
+      "name": "Fear (1) / Страх (1)",
+      "type": "trait",
+      "img": "icons/svg/terror.svg",
+      "system": {
+        "description": "Бесшумный ржавый ассасин, чьи клинки поют перед смертью.",
+        "notes": "",
+        "benefit": "Вызывает Страх (1) — цели проходят тест Воли.",
+        "source": "",
+        "hasRating": true,
+        "rating": 1,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 1,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "y3zdId1CXJw1DFlm",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!rjnBl8cb085QNcL4.y3zdId1CXJw1DFlm"
+    }
+  ],
+  "_id": "rjnBl8cb085QNcL4",
+  "prototypeToken": {
+    "name": "Ржаволов (Руствокер)",
+    "displayName": 0,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783092301396,
+    "modifiedTime": 1783092301396,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!rjnBl8cb085QNcL4"
+}

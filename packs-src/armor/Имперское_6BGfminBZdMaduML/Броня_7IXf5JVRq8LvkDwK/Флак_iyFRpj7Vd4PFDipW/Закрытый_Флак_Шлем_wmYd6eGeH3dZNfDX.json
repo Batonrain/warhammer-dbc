@@ -1,0 +1,52 @@
+{
+  "name": "Закрытый Флак Шлем",
+  "type": "armor",
+  "folder": "iyFRpj7Vd4PFDipW",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "flak",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 4,
+    "body": 0,
+    "leftArm": 0,
+    "rightArm": 0,
+    "leftLeg": 0,
+    "rightLeg": 0,
+    "quality": "common",
+    "availability": 0,
+    "weight": 1.4,
+    "properties": [
+      "flak",
+      "hard",
+      "sealed"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "",
+    "propRatings": {}
+  },
+  "_id": "wmYd6eGeH3dZNfDX",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!wmYd6eGeH3dZNfDX"
+}

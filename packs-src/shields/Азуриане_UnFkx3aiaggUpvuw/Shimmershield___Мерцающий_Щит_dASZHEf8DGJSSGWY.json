@@ -1,0 +1,42 @@
+{
+  "name": "Shimmershield / Мерцающий Щит",
+  "type": "forcefield",
+  "folder": "UnFkx3aiaggUpvuw",
+  "system": {
+    "description": "Качественный надёжный щит экзархов и варлоков в форме тупого лезвия на руке. Если не защитил от атаки — атака теряет 4 Dmg до Поглощения. Вариация «мерцающий камень» (R4) распространяется на союзников в 10 м.",
+    "notes": "",
+    "shieldNature": "technological",
+    "shieldType": "dome",
+    "ratingMin": 1,
+    "ratingMax": 50,
+    "overloadThreshold": 0,
+    "currentRating": 0,
+    "isSpecialRating": false,
+    "equipped": false,
+    "status": "inactive",
+    "quality": "common",
+    "availability": 3,
+    "weight": 1
+  },
+  "_id": "dASZHEf8DGJSSGWY",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805492,
+    "modifiedTime": 1782752979845,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!dASZHEf8DGJSSGWY"
+}

@@ -1,0 +1,55 @@
+{
+  "name": "Adjutant / Адъютант",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "8GybVcvQhfdrQVXK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Командир персонажа может до ½I.b (окр.▲) раз за бой перебросить тест Командования и раз в Раунд — любой тест Lore для распознания событий на поле боя, если у персонажа этот Навык продвинут хотя бы на уровень ниже, чем у Командира. Эффекты нескольких Адъютантов не складываются (берётся наибольший I.b), но расширяют список Lore.",
+    "tier": 3,
+    "requirement": "I 35, Logic+10",
+    "aptitudes": [
+      "int",
+      "social"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "gQsP63ic2iR2EDdk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121994501,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gQsP63ic2iR2EDdk"
+}

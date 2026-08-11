@@ -1,0 +1,55 @@
+{
+  "name": "Boarder / Абордажник",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "HaggfreEznYtJu21",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Руководя или отражая Действия Абордаж и Ударил-отступил, персонаж получает +10 ко всем своим тестам.",
+    "tier": 2,
+    "requirement": "Command, Trade (Voidfarer) или Trade (Shipwright), Common Lore (War) +10 или Scholastic Lore (Tactica Imperialis) или Forbidden Lore (Codex Astartes)",
+    "aptitudes": [
+      "fel",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "4IRvMGaG3ONUepRH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160740113,
+    "modifiedTime": 1786121965866,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4IRvMGaG3ONUepRH"
+}

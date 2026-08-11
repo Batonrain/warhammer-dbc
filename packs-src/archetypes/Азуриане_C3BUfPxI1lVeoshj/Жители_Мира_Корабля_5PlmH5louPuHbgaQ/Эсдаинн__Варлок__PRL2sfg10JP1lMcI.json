@@ -1,0 +1,53 @@
+{
+  "name": "Эсдаинн (Варлок)",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "5PlmH5louPuHbgaQ",
+  "system": {
+    "key": "aelEsdainn",
+    "race": "azuriane",
+    "group": "Жители Мира-Корабля",
+    "charBonus": {
+      "wp": 6,
+      "ws": 2
+    },
+    "charChoice": "",
+    "skills": "",
+    "talents": "",
+    "gear": "",
+    "wounds": "",
+    "infRoll": "3d5+10",
+    "requiredPath": "Путь Варлока",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Псайкер-воин, обрекающий врагов на гибель.",
+    "trait": {
+      "name": "The Inevitable / Неизбежное",
+      "benefit": "При попадании в рукопашной за Очко Судьбы — состязание W+20 vs W+0; при успехе все атаки им и союзниками по этой цели в след. раунде получают +½ тPR (окр.▼) успехов. Не повторять на той же цели за бой."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "PRL2sfg10JP1lMcI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536191,
+    "modifiedTime": 1786285536194,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!PRL2sfg10JP1lMcI"
+}

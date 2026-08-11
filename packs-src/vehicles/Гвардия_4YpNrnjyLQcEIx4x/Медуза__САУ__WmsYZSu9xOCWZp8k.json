@@ -1,0 +1,594 @@
+{
+  "name": "Медуза (САУ)",
+  "type": "vehicle",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "folder": "4YpNrnjyLQcEIx4x",
+  "system": {
+    "vehicleClass": "Василиск",
+    "vehicleType": "artillery",
+    "origin": "",
+    "commander": "",
+    "manoeuvrability": -5,
+    "operate": 0,
+    "size": 3,
+    "chassis": {
+      "type": "tracked",
+      "spd": 12,
+      "spdDamage": 0,
+      "manoeuvreDamage": 0,
+      "strength": 0,
+      "unnaturalS": 0
+    },
+    "armour": {
+      "front": 30,
+      "side": 18,
+      "rear": 14
+    },
+    "structure": {
+      "value": 40,
+      "max": 40,
+      "critical": 0
+    },
+    "ammoReloads": 10,
+    "openTopped": false,
+    "traits": "",
+    "stations": [
+      {
+        "id": "aK400CbtVkxawFih",
+        "role": "commander",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "NgmjOVtwV5hyTYvS",
+        "role": "driver",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "mcGkZ0vR4eK0Qryf",
+        "role": "gunner",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "zpIplpWXSeqe0HD8",
+        "role": "loader",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      }
+    ],
+    "damageStates": [],
+    "notes": "<p><b>Гвардия.</b> Тяжёлая осадная САУ на шасси Василиска — специалист по крепостям и укреплениям. Меньше дальность, чем у Василиска.</p>",
+    "gmNotes": "",
+    "availability": 3
+  },
+  "items": [
+    {
+      "name": "Проводящая Броня / Conductive Plating",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Броня проводит электричество: её AP со всех сторон считается вдвое ниже реального (окр.▲) против E(El) Dmg.",
+        "notes": "",
+        "benefit": "E(El) Dmg игнорирует половину AP машины.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "mesPEHGfJMBD99hU",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WmsYZSu9xOCWZp8k.mesPEHGfJMBD99hU"
+    },
+    {
+      "name": "Открытая / Open Topped",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Экипаж и пассажиры могут стрелять из личного оружия, оставаясь в едущей машине. Избирательные атаки могут выцеливать экипаж/пассажиров, атаки по площади задевают их (по настоящему Размеру). Экипаж грузится/выгружается полудействием и совершает Обзор свободным действием. Рейтинг (X): 0 — нет укрытия; ½ — укрытие в торс/ноги; 1 — полное укрытие (кроме Раунда атаки); E — как Enclosed.",
+        "notes": "",
+        "benefit": "Можно атаковать из машины.",
+        "availability": 0,
+        "hasRating": true,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": true,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "pf7lQazXBhkiAeza",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WmsYZSu9xOCWZp8k.pf7lQazXBhkiAeza"
+    },
+    {
+      "name": "Medusa Siege Cannon / Осадная Пушка Медуза",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "solid",
+        "range": 1500,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "2",
+        "magazineCur": 1,
+        "magazineMax": 1,
+        "rof_single": 1,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "5d10+12",
+        "damageType": "blast",
+        "penetration": 14,
+        "quality": "common",
+        "availability": 3,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Боезапас в укладке: 18",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "arcing"
+          },
+          {
+            "key": "blast",
+            "rating": 10
+          },
+          {
+            "key": "concussive",
+            "rating": 3
+          },
+          {
+            "key": "ordnance"
+          },
+          {
+            "key": "proven",
+            "rating": 3
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "aK400CbtVkxawFih",
+          "mount": "fixed",
+          "hArc": "−2°..+2°",
+          "vArc": "0°..+40°",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "uMY5c35CNgQwrLtK",
+          "options": [
+            "Medusa Siege Cannon / Осадная Пушка Медуза"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "7rFqrebBuu8iaaum",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867340959,
+        "modifiedTime": 1783867340959,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!WmsYZSu9xOCWZp8k.7rFqrebBuu8iaaum"
+    },
+    {
+      "name": "Heavy Bolter / Тяжёлый Болтер",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "bolt",
+        "range": 150,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "1",
+        "magazineCur": 160,
+        "magazineMax": 160,
+        "rof_single": 1,
+        "rof_semi": 4,
+        "rof_full": 8,
+        "damage": "2d10+8",
+        "damageType": "blast",
+        "penetration": 5,
+        "quality": "common",
+        "availability": 2,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "tearing"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "mcGkZ0vR4eK0Qryf",
+          "mount": "hull",
+          "hArc": "−25°..+25°",
+          "vArc": "−10°..+25°",
+          "standard": false,
+          "reloads": 10,
+          "slotId": "o9qDELZODF02Kf8F",
+          "options": [
+            "Heavy Bolter / Тяжёлый Болтер",
+            "Heavy Flamer / Тяжёлый Огнемёт"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "EgEnqznZB6Hc1T4y",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867340959,
+        "modifiedTime": 1783867340959,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!WmsYZSu9xOCWZp8k.EgEnqznZB6Hc1T4y"
+    },
+    {
+      "name": "Heavy Stubber / Тяжёлый Стаббер",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "solid",
+        "range": 120,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "2",
+        "magazineCur": 200,
+        "magazineMax": 200,
+        "rof_single": 1,
+        "rof_semi": 0,
+        "rof_full": 12,
+        "damage": "1d10+8",
+        "damageType": "impact",
+        "penetration": 3,
+        "quality": "common",
+        "availability": 0,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "NgmjOVtwV5hyTYvS",
+          "mount": "pintle",
+          "hArc": "−150°..+150°",
+          "vArc": "−35°..+90°",
+          "standard": false,
+          "reloads": 10,
+          "slotId": "YHK8UJH7Pdn1lXqL",
+          "options": [
+            "Heavy Stubber / Тяжёлый Стаббер",
+            "Combi-Bolter / Комби-Болтер",
+            "Storm Bolter / Шторм-Болтер"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "dRDFysKzEGuhHJ8l",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867340959,
+        "modifiedTime": 1783867340959,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!WmsYZSu9xOCWZp8k.dRDFysKzEGuhHJ8l"
+    }
+  ],
+  "_id": "WmsYZSu9xOCWZp8k",
+  "prototypeToken": {
+    "name": "Медуза (САУ)",
+    "displayName": 30,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783857422280,
+    "modifiedTime": 1783857422280,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!WmsYZSu9xOCWZp8k"
+}

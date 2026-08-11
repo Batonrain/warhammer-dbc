@@ -1,0 +1,75 @@
+{
+  "name": "Fall of the Mighty / Падение Могучих",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-divination.svg",
+  "folder": "iPFCaeAqRSmRhSP4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "divination",
+    "subtype": "Судьбоплёт",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "psyniscience",
+    "testMod": -40,
+    "action": "half",
+    "range": "PR×10м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура. Психотест Psyniscience(P)−40 vs Inf+0. Треб.: P 55+, Favour. Цели в ауре (кроме исключённых), провалившие встречный бросок, не могут тратить Очки Бесчестия/Судьбы на способности ОБ и не могут сжигать их для спасения от смерти.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "oNr7BUGRPbUj9pzM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122037409,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!oNr7BUGRPbUj9pzM"
+}

@@ -1,0 +1,39 @@
+{
+  "name": "Вирус Облитератора",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "",
+    "contagion": "",
+    "incubation": "1 неделя",
+    "symptoms": "Каждую неделю усиливается: (1) +10 BS, +20 удержать оружие; (2) оружие в руке >2 Ходов прирастает (стреляет без боеприпасов); (3) срастание с оружием и бронёй (броня запитывается от тела); (4) втягивает/отращивает оружие до пистолета (без Tech-Use+0 → 1d10 перм. урон I); (5) поглощает любое стрелковое оружие и металл — Machine (8), Unnatural S (4), Unnatural T (4), Size (1) (без Tech-Use+10 → 2d10 урон I); (6) полная трансформация в Облитератора (при I<50 — безумие).",
+    "vectors": "Инъекция заражённой крови/мозговой жидкости в кровь/мышцы/жир — авто-заражение.",
+    "cure": "Только в инкубацию/первую неделю: полноценный апотекарион, полная замена крови ≥10 раз за сутки, затем Medicae−60; при успехе — излечение.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "eRRdHU3JTwiI1jDu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!eRRdHU3JTwiI1jDu"
+}

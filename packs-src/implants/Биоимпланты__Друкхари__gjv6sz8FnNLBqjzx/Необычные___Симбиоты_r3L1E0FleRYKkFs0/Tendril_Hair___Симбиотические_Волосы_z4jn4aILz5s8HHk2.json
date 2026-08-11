@@ -1,0 +1,67 @@
+{
+  "name": "Tendril Hair / Симбиотические Волосы",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Волосы заменены щупальцами.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Волосы заменены щупальцами: Трейт Multiple Arms(+8) на голове; каждое держит до T.b кг и удлиняется до T.b×3 м; объединить в пучок Deadly Natural Weapons(T.b, Щупальце), дистанция T.b×3 м. Дефект (до Best.Q): шевелятся сами, реагируя на эмоции — ситуативные штрафы.\nPoor.Q: держат лишь до 100 г, не дольше 1 раунда; бесполезны в бою.\nGood.Q: штрафы −5.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Живая корона (+1 ОД только на атаки щупальцами, Independent); 2) Сенсорная сеть (ориентация по вибрациям); 3) Манипуляторы (до 10 кг, простые действия, перезарядка оружия ×2 быстрее); 4) Глаза (на конце косички вырастает глаз).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "r3L1E0FleRYKkFs0",
+  "_id": "z4jn4aILz5s8HHk2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122018022,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!z4jn4aILz5s8HHk2"
+}

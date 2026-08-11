@@ -1,0 +1,67 @@
+{
+  "name": "Enhanced Muscles / Усиленные Мышцы",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Утолщённые мышечные волокна.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Утолщённые волокна: +10 к S. Дефект (до Best.Q): −10 A, −1 SPD.\nPoor.Q: +5 S, −20 A; при провале точной моторики бесконтрольно сжимает предмет (S.b ×2, может сломать).\nGood.Q: −5 A, штраф SPD убран.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Нечеловеческая сила (Трейт Unnatural S(+2)); 2) Железный хват (+20 Захват/Борьба, нельзя вырвать предмет, безоружные Mighty); 3) Усиленные удары (безоружные 2d10+S.b, Pen S.b, Reinforced); 4) Мышечная броня (+3 к эфф. T.b торса и конечностей).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "yBiDuo3FMEuOjtsV",
+  "_id": "aEIX1HodeV5JYAy1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122015083,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aEIX1HodeV5JYAy1"
+}

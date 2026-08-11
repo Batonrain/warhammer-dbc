@@ -1,0 +1,21 @@
+{
+  "name": "Механикум",
+  "type": "Item",
+  "folder": "ifi99ypld4lTvwo6",
+  "sorting": "m",
+  "_id": "41PfRYM48BxJYurB",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!41PfRYM48BxJYurB"
+}

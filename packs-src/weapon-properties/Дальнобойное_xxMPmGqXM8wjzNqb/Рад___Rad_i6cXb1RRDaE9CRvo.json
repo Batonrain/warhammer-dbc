@@ -1,0 +1,35 @@
+{
+  "name": "Рад / Rad",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Облучает цель ионизирующей радиацией. Если непоглощённый урон ≥ X — цель проходит тест T. Живые существа получают эффект Радиации.",
+    "reminder": "☢️ Рад (X): при непоглощ. уроне ≥X — тест T или Радиация",
+    "category": "ranged",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "rad",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "i6cXb1RRDaE9CRvo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353821,
+    "modifiedTime": 1786224353826,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!i6cXb1RRDaE9CRvo"
+}

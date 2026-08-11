@@ -1,0 +1,67 @@
+{
+  "name": "Ossified Engine / Окостенелый Двигатель",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 4. Остеогенная колония вместо костного мозга.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Гемункульский. Остеогенная колония вместо костного мозга: +3 T.b поглощения и свойство брони Protective(T.b) всем частям даже без брони; переломы/вывихи за 30−T.b секунд.\nBest.Q: можно безболезненно ломать и перестраивать свои кости по желанию + 1 эффект (R +1 за каждый доп.): 1) Шипастый панцирь (промахнувшийся в упор/безоружно/в Борьбе — 2d10+S.b атакующего+T.b R Pen 0 Primitive, Уворот не Парирование); 2) Несокрушимый скелет (Unnatural T(+2), до (+4) без брони с AP>3); 3) Кальциевая броня (отрастить до T.b элементов брони, +2 AP в части тела).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "MVwzimCMiFagXpH6",
+  "_id": "IxdahJFN4dLxfbpk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122013045,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!IxdahJFN4dLxfbpk"
+}

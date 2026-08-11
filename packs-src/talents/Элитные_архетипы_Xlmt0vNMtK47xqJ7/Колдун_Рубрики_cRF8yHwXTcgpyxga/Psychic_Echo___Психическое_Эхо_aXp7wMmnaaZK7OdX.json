@@ -1,0 +1,52 @@
+{
+  "name": "Psychic Echo / Психическое Эхо",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "cRF8yHwXTcgpyxga",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сотворив заклинание, направляет энергии сквозь душу голема. Раз в Ход после успешной манифестации психосилы может усилить регенерацию одного из големов — тот проходит следующий тест на регенерацию автоматически и восстанавливает двойное число Ран.",
+    "tier": 2,
+    "requirement": "Тзинч, PR 6",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Колдун Рубрики",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "aXp7wMmnaaZK7OdX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121989903,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aXp7wMmnaaZK7OdX"
+}

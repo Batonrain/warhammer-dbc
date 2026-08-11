@@ -1,0 +1,75 @@
+{
+  "name": "Astral Telepathy / Астральная Телепатия",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-thaumaturgy.svg",
+  "folder": "qOfP1gp7zp5Fd2z5",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 250,
+    "discipline": "thaumaturgy",
+    "subtype": "Астропатия",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "extended",
+    "range": "Особая",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Действие: 20−P.b минут. Транс: сообщение как поток эмоций/образов в направлении получателя не далее соседнего сектора (реальные расстояния не важны). Чёткость от Успехов, длительность эха от PR. «Скучные» сообщения чётче, но эхо затихает быстрее; «важные» отдаются эхом широко во времени (могут прийти до отправления/повторяться годами), но чёткость теряется. Дальше соседнего сектора — через ретрансляторные станции.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "joXWZbwW5f9LhszU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122036335,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!joXWZbwW5f9LhszU"
+}

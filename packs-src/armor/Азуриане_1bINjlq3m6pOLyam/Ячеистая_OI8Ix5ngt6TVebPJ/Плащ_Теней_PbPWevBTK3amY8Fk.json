@@ -1,0 +1,52 @@
+{
+  "name": "Плащ Теней",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Редкое снаряжение среди варлоков, используемое в ситуации когда у противника есть превосходящая огневая мощь. Произнесенная психоактивная фраза пробуждает заключенную в плаще тьму, которая окутывает варлока и его союзников от стрелковых атак противника. Персонаж, имеющий Путь Видящего на уровне Следующий или выше, может до трех раз в битву за Свободное действие произнести фразу и активировать психосилу Крепость Туманов, что автоматически успешно манифестируется и имеет бPR 6. Однако, создаваемый таким образом туман больше напоминает неестественную тьму, чем туман. Вне боя плащ восстанавливает 1 заряд раз в 24 часа, хотя псайкер с бPR 6 может провести 8 часовую медитацию над плащом и восстановить 1 заряд.\n",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 0,
+    "body": 1,
+    "leftArm": 1,
+    "rightArm": 1,
+    "leftLeg": 1,
+    "rightLeg": 1,
+    "quality": "common",
+    "availability": 3,
+    "weight": 1,
+    "properties": [
+      "aspect",
+      "cloak",
+      "stealthed",
+      "undersuit"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Видящие). Видящий (Следующий+): до 3 раз/бой Свободным действием — психосила Крепость Туманов (бPR 6)."
+  },
+  "_id": "PbPWevBTK3amY8Fk",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!PbPWevBTK3amY8Fk"
+}

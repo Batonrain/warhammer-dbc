@@ -1,0 +1,67 @@
+{
+  "name": "Shadow Shroud / Покров Теней",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 3. Светопреломляющая мембрана.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Мембрана из Элиндраха/кожи мандрагор: +30 Stealth в тусклом свете/тьме (активация полудействием). Дефект (до Best.Q): каждые 10 мин невидимости — 1 непогл. R; после часа — 1 усталость.\nPoor.Q: +20/+10; каждые 10 мин 2 урона, усталость через 30 мин.\nGood.Q: урон каждые 20 мин, усталость через 2 ч.\nBest.Q: подпитывается от метаболизма, дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Полная невидимость (+40 в тусклом, в тьме невидим даже ауспексам); 2) Тепловая маскировка (против ИК/тепловизоров/некоторых варп-чувств); 3) Мгновенная активация (Реакцией); 4) Теневое преломление (+20 Уворот в тусклом, +30 в тьме).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "r3L1E0FleRYKkFs0",
+  "_id": "Pm1W9yoB5fOGZEIE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122014149,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Pm1W9yoB5fOGZEIE"
+}

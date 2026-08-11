@@ -1,0 +1,52 @@
+{
+  "name": "Death Is Not The End / Смерть – Это Не Конец",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "V2ME9AI050jFcoHO",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Черта Шута Смерти. В начале раунда персонаж может пройти BS+10 и при успехе получить +2 Dmg на все стрелковые атаки до конца битвы; убивая противника — тоже +2 Dmg. Бонусы до BS.b раз, каждый раунд итоговый бонус −2. Убийство через Toxic — все видевшие проходят тест против Страха персонажа. Стреляя в одну и ту же цель — +2 Felling и +1 Toxic (до +4/+2); сгорает при атаке другого. Убийство через Toxic восстанавливает (или даёт сверх лимита) Очко Судьбы. Атакуя отступающего — все кубики урона считаются как 10 (экстремальный урон +5, до 6). Может использовать тяжёлое оружие Арлекин (Пушка Помех, Призматическая Пушка), игнорируя штрафы снятия с техники; Пушка Крикун получает Eldar Accurate, Eldar Precise, Proven (4).",
+    "tier": 1,
+    "requirement": "Создание Персонажа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Черта архетипа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "z58aqlU3TJj9H5Vc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122009356,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!z58aqlU3TJj9H5Vc"
+}

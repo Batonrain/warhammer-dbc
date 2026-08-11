@@ -1,0 +1,67 @@
+{
+  "name": "Para-Lungs / Пара-Лёгкие",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Дополнительные дыхательные мешки.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Доп. дыхательные мешки с примитивным сознанием: задержка дыхания ×T.b, +20 против удушья/вдыхаемых газов, дышит независимо от травм. Дефект (до Best.Q): −10 A на гибкость торса (уклонение/узкие проёмы).\nPoor.Q: ×2 задержка, +5 против газов; −20 A; при крите в торс мешки рвутся (внутр. кровотечение).\nGood.Q: −5 A.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Вакуумная адаптация (вакуум до 30 мин); 2) Кислородный выброс (1/день сбить огонь/жидкость выдохом); 3) Газоанализатор (+20 P на анализ воздуха/токсинов); 4) Дыхание водой (Трейт Amphibious).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "r3L1E0FleRYKkFs0",
+  "_id": "e6gRhx6ZlMST7tfE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122015441,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!e6gRhx6ZlMST7tfE"
+}

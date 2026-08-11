@@ -1,0 +1,55 @@
+{
+  "name": "Aegis of Will / Эгида Воли",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "iSsQmZ2gkxraxksi",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При психосилах, действующих на площадь (аура, психический взрыв, дыхание), псайкер может исключить до ½PR (окр.▲) целей из воздействия. Психическая стрельба может огибать защищённые цели, но психосилы с множеством выстрелов теряют половину попаданий (окр.▼), разбивающихся о защищённого союзника.",
+    "tier": 3,
+    "requirement": "W 50, PR 6",
+    "aptitudes": [
+      "wp",
+      "psyker"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "H9RcnXnK4KMqCRs3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121975628,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!H9RcnXnK4KMqCRs3"
+}

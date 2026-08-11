@@ -1,0 +1,60 @@
+{
+  "name": "Evasion Imperative / Императив Избегания",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "XNujjsA0fvZbmVy6",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "nootheurgy",
+    "subtype": "Пастырь Императивов",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 2,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Ноосфера",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Noospheric Uplink · Цена: 2К · Процесс: Нет · Тип: Императив (I.b×2), Славословие (1)] Цели Императива +до +30 на Избегания (кроме Отскока в укрытие, −20), но AP укрытий −8 (не более чем вдвое).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "lCF8jHRwf23xy139",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042366,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lCF8jHRwf23xy139"
+}

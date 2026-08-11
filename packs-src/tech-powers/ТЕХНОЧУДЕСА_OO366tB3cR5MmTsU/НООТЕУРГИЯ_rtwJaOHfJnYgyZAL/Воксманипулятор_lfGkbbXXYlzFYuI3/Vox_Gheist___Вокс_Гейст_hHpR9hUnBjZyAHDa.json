@@ -1,0 +1,60 @@
+{
+  "name": "Vox Gheist / Вокс Гейст",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "lfGkbbXXYlzFYuI3",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "nootheurgy",
+    "subtype": "Воксманипулятор",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 0,
+    "energyCost": 0,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Вокс",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Noospheric Emitter · Цена: — · Процесс: 1 · Тип: —] Треб.: Tech-Use+30, Vox Omniscience. Как Вокс Всеведенье (тест −20+5×X), но за 1 Когницию: заглушить/заменить/сфабриковать вокс-сообщение (голосом услышанного ≥3 раза). Tech-Use(I) вместо Deceive/Intimidate. Изменённый приказ даёт бонусы, но −3 Успеха.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "hHpR9hUnBjZyAHDa",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042196,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hHpR9hUnBjZyAHDa"
+}

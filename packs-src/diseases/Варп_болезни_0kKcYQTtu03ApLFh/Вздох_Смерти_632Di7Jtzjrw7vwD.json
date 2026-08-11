@@ -1,0 +1,39 @@
+{
+  "name": "Вздох Смерти",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "nurgle",
+    "contagion": "",
+    "incubation": "Нет",
+    "symptoms": "Нельзя снимать Усталость никаким способом (включая сверхъестественные и Катушки Потенции). Потеря сознания от Усталости (T.b+1) → вместо этого смерть. Покровительство Нургла игнорирует все эффекты.",
+    "vectors": "При каждом получении Усталости — психоволна в радиусе 7 м: все существа Т+0 или заражаются. Инкубации нет.",
+    "cure": "Неделя непрерывного отдыха с минимальной активностью, затем тест Т+20: успех — излечение, провал — +1 Усталость.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "632Di7Jtzjrw7vwD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!632Di7Jtzjrw7vwD"
+}

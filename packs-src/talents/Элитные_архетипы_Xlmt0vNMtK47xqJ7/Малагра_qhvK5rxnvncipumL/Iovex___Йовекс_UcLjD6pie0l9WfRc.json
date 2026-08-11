@@ -1,0 +1,52 @@
+{
+  "name": "Iovex / Йовекс",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "qhvK5rxnvncipumL",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Мощь мотивирующей силы покоряется его воле. Когда Совершенная Катушка активирована, может увеличивать урон всех Люминен Техночудес на 1d10 и их Pen на ½P.b (окр.▲), но при этом автоматически проваливает тесты Компенсатора на них (игнорируя эффект Техночуда Luminen Drain).",
+    "tier": 1,
+    "requirement": "Неделимый, Luminen Shock",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Малагра",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "UcLjD6pie0l9WfRc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121985102,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!UcLjD6pie0l9WfRc"
+}

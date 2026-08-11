@@ -1,0 +1,52 @@
+{
+  "name": "Thousand Papercuts / Тысяча Бумажных Порезов",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "tUkMT9PeWTzNlrmX",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Способны поставить на службу имперскую бюрократию. Успешно внедрившись в местный Администратум (может занять целую миссию), может потратить любое количество Очков Бесчестия, чтобы натравить на противника несокрушимые проверки, ревизии, диспуты по правам собственности и даже внимание Арбитров и Инквизиции — чем больше Очков потрачено, тем сильнее эффект (ГМ описывает приблизительный результат).",
+    "tier": 3,
+    "requirement": "Неделимый, Scholastic Lore (Bureaucracy)+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Когнитэ",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "lG3EERAvA8wMPBsg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121999009,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lG3EERAvA8wMPBsg"
+}

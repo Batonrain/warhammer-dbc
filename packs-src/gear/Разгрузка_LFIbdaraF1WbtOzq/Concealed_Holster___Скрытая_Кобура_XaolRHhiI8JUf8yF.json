@@ -1,0 +1,59 @@
+{
+  "name": "Concealed Holster / Скрытая Кобура",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Кобура на боку под пистолет ≤1.5 кг или нож. До двух штук.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.2,
+    "availability": -1,
+    "quality": "common",
+    "gearCategory": "rig",
+    "worn": "Бок (под одеждой)",
+    "effect": "Неудобная. Под плащом/курткой оружие незаметно, если наблюдатель не пройдёт Awareness−30.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Считается очень неудобной.",
+      "good": "Считается удобной.",
+      "best": "Удобная; встраивается в нагрудник Жёсткой брони с незаметным швом (не нужна одежда поверх), штраф на обнаружение до −60."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "awkward",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "2x1",
+          "count": 1,
+          "note": "пистолет ≤1.5кг / нож"
+        }
+      ],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "LFIbdaraF1WbtOzq",
+  "_id": "XaolRHhiI8JUf8yF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!XaolRHhiI8JUf8yF"
+}

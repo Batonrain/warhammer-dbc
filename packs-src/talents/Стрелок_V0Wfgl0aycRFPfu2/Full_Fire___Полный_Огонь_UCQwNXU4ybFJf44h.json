@@ -1,0 +1,55 @@
+{
+  "name": "Full Fire / Полный Огонь",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "V0Wfgl0aycRFPfu2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может потратить Реакцию, чтобы одновременно стрелять из: винтовки и её комби-подствольника; оружия в ладони и оружия на запястье этой руки; или тяжёлого оружия и встроенной через Tandem винтовки/пистолета (одно из), но все такие атаки получают −10.",
+    "tier": 2,
+    "requirement": "BS 40",
+    "aptitudes": [
+      "bs",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "UCQwNXU4ybFJf44h",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121984980,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!UCQwNXU4ybFJf44h"
+}

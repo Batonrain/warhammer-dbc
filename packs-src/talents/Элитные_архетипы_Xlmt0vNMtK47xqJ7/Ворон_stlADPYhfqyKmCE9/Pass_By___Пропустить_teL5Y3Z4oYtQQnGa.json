@@ -1,0 +1,52 @@
+{
+  "name": "Pass By / Пропустить",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "stlADPYhfqyKmCE9",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Уходя из-под атаки, умелым манёвром заставляет врага сделать пару лишних шагов и зайти ему за спину. Избегая рукопашной атаки на 5+ Успехов, может потратить 4 Успеха и пройти тест WS+0 vs WS+0, при победе заставив атакующего переместиться сквозь Ворона на противоположную сторону, где тот остаётся повёрнутым к Ворону спиной и немедленно заканчивает свой Ход.",
+    "tier": 2,
+    "requirement": "Тзинч, P 50",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Ворон",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "teL5Y3Z4oYtQQnGa",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786122005790,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!teL5Y3Z4oYtQQnGa"
+}

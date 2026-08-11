@@ -1,0 +1,21 @@
+{
+  "name": "Бичеватель — Клюв",
+  "type": "Item",
+  "folder": "gjv6sz8FnNLBqjzx",
+  "sorting": "m",
+  "_id": "snP5jFGB2tOxz8HY",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!snP5jFGB2tOxz8HY"
+}

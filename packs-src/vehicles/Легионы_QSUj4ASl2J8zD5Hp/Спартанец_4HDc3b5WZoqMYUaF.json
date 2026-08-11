@@ -1,0 +1,1394 @@
+{
+  "name": "Спартанец",
+  "type": "vehicle",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "folder": "QSUj4ASl2J8zD5Hp",
+  "system": {
+    "vehicleClass": "Лэнд Рейдер",
+    "vehicleType": "tank",
+    "origin": "",
+    "commander": "",
+    "manoeuvrability": 0,
+    "operate": 0,
+    "size": 4,
+    "chassis": {
+      "type": "tracked",
+      "spd": 15,
+      "spdDamage": 0,
+      "manoeuvreDamage": 0,
+      "strength": 0,
+      "unnaturalS": 0
+    },
+    "armour": {
+      "front": 50,
+      "side": 50,
+      "rear": 50
+    },
+    "structure": {
+      "value": 75,
+      "max": 75,
+      "critical": 0
+    },
+    "ammoReloads": 10,
+    "openTopped": false,
+    "traits": "",
+    "stations": [
+      {
+        "id": "EMORazF8LeSvzZY9",
+        "role": "driver",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "KnaCtYRlurEGmgk2",
+        "role": "gunner",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "4FAtWf7dGjBQVaHJ",
+        "role": "gunner",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "3nn7JzFHJASMBan7",
+        "role": "gunner",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "Qc1X13AdlQIoroNf",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "kTqkRQURAG2Hp69B",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "czJPxwWxHfH0NSi8",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "oPSwW2rtZFGoB6p5",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "2Y7kQZlvVKwKux9F",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "FjTpEx82RoMLzazR",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "5JyOfL0yx3unfuEv",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "JEG3vEriWSuG1S8d",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "1rvczeZOU3pEYGbU",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "w6twRePEPTjJZGz0",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "n9sq0RPBmT4hSSx7",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "EPEJ8VzqlfnRq0Sr",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "KvizzRXGTtjyF35I",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "C8YafAvj9x16l7Ve",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "VKprR6TziyLrrB0G",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "6jj3xhKhmeTQW6Op",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "ocdCdypX9Jpj1qJw",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "EkJLYN0cLc8ZCVIe",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "dkJ7diKYYLjZRdVc",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "M57X4JdZONS5Qb0Y",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "vBcncNjASaI3Hl8p",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "2amciMjkFM8ohSA3",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "z3A6YAPJZwqywd4Y",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "Fuu0Wcun8YiCsRdS",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "kLANb2f1OCKn1Jex",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      }
+    ],
+    "damageStates": [],
+    "notes": "<p><b>Легионы / Хаос.</b> Сверхтяжёлый штурмовой транспорт: спонсонные счетверённые лазпушки, десант до 25. <b>Сверхтяжёлая</b>.</p>",
+    "gmNotes": "",
+    "availability": 5
+  },
+  "items": [
+    {
+      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Прицельные системы и штурвалы управления машиной интегрированы. Водитель может совершить Большой Ход, Малый Ход или Хаотичное Маневрирование и выстрел из орудий одним полным действием.",
+        "notes": "",
+        "benefit": "Водитель может стрелять на Большом Ходу.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "7CZM9o1m7g4DHepP",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.7CZM9o1m7g4DHepP"
+    },
+    {
+      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Орудия этой машины настроены на общую прицельную систему. Это позволяет члену экипажа одним действием выстрелить из всех орудий, которыми он управляет, по одной цели или группе целей не более чем в 2 м от основной цели. Только первый выстрел получает преимущество Прицеливания.",
+        "notes": "",
+        "benefit": "Может стрелять из множественных орудий.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "2DuplhnqkK2KB5b6",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.2DuplhnqkK2KB5b6"
+    },
+    {
+      "name": "Штурмовая Рампа / Assault Ramp",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Просторная лобовая рампа для выгрузки в гущу боя. Пассажиры могут Выгрузиться за полное действие, совершив Бег или Натиск из рампы тем же действием.",
+        "notes": "",
+        "benefit": "Натиск и Бег при Выгрузке пассажиров.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "9q8FxHbAlPBWBcuy",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.9q8FxHbAlPBWBcuy"
+    },
+    {
+      "name": "Автономная / Autonomous",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Продвинутый автопилот с Пределом Operate+0 в X, BS в Y и Awareness+0 в Z; может заменять любых членов экипажа. Не является ИИ — лишь выполняет приказы командира/водителя или повторяет последние действия. Бросает 1d10 + Y/10 (окр.▼) на Инициативу.",
+        "notes": "",
+        "benefit": "Автопилот может водить машину и стрелять.",
+        "availability": 0,
+        "hasRating": true,
+        "rating": 0,
+        "hasRating2": true,
+        "rating2": 0,
+        "hasRating3": true,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "4Q4XmeRQb3QRNSkx",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.4Q4XmeRQb3QRNSkx"
+    },
+    {
+      "name": "Командно-Штабная / Command & Control",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Мобильный штабной центр. Командир/член экипажа/пассажир может Командовать подчинёнными машинами или отрядами как отдельными бойцами (складывается с другими Талантами) и получает +10 на все тесты Командования, кроме Брифингов. По умолчанию оснащена Вокс-Кастером и Ауспексом (версия 50 кг).",
+        "notes": "",
+        "benefit": "Командование машинами и отрядами, +10.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 10,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "5UpGQnPNkwF1ZvRJ",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.5UpGQnPNkwF1ZvRJ"
+    },
+    {
+      "name": "Закрытая / Enclosed",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Экипаж и пассажиры не могут атаковать личным оружием без люка/двери/бойницы, их нельзя атаковать снаружи без особых чувств, и они получают полное укрытие от атак снаружи, равное АР той стороны, с которой их атакуют.",
+        "notes": "",
+        "benefit": "Экипаж защищён от атак снаружи.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "aPAN586DKPXls51F",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.aPAN586DKPXls51F"
+    },
+    {
+      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Ремонт критических повреждений восстанавливает 1 Структуры за каждый нечётный Успех. Уничтоженную машину всё ещё можно ремонтировать, как если бы у неё было −10 Структуры. Уничтоженную Ходовую чинят как Сломанную.",
+        "notes": "",
+        "benefit": "Восстановление после уничтожения.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "vBrINnqHKeYgLap6",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.vBrINnqHKeYgLap6"
+    },
+    {
+      "name": "Легион / Legion",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Машина для Космодесантников. Персонажи Размером меньше 1 или с S.b меньше 8 получают −20 на все тесты управления ей. Космодесантники обычно не могут управлять машинами без этого Трейта.",
+        "notes": "",
+        "benefit": "Предназначена для Космодесантников.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "mGmh9yNqUyvwfH5w",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.mGmh9yNqUyvwfH5w"
+    },
+    {
+      "name": "Мультиприцел / Multi-Targeter",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Системы наведения позволяют вести несколько целей с разных направлений: пилот может стрелять по разным целям независимо от углового расстояния между ними.",
+        "notes": "",
+        "benefit": "Независимая стрельба в разные стороны.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "I9nftRfAB2JoS4PK",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.I9nftRfAB2JoS4PK"
+    },
+    {
+      "name": "Укреплённая Броня / Reinforced Armour",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Броня усилена, важнейшие системы защищены. Уменьшает вдвое (окр.▲) свою Отрицательную Структуру в расчёте Критических Эффектов (при −10 Стр. получает Крит 5). При непрямом попадании оружия со Blast половина (окр.▼) кубиков урона взрыва игнорируется (отбрасывая наибольшие).",
+        "notes": "",
+        "benefit": "½ крит-эффектов от негативной Структуры.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": true,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "7NoLmsMcJI5OdhjK",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.7NoLmsMcJI5OdhjK"
+    },
+    {
+      "name": "Герметичная / Sealed",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Запечатана от внешней среды, давление внутри повышено. Экипаж не страдает от газов; при пересечении водоёмов по дну вода не проникает; даже при уроне разница давлений выталкивает ядовитые газы (но не воду) из пробоин. Теряется от Крит. Эффектов, снимающих Enclosed, и временно — при открывании люков/дверей/рамп/бойниц.",
+        "notes": "",
+        "benefit": "Защита от газов и жидкостей.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "SYznXi9Fy8onqNVI",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.SYznXi9Fy8onqNVI"
+    },
+    {
+      "name": "Боковые Двери / Side Hatches",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Боковые двери для быстрой высадки: пассажиры могут Выгрузиться за полное действие, совершив Бег тем же действием.",
+        "notes": "",
+        "benefit": "Бег из транспорта.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "Aajyt2AttZgySbgO",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.Aajyt2AttZgySbgO"
+    },
+    {
+      "name": "Сверхтяжелая / Super-Heavy",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Игнорирует Трудный Ландшафт и преодолевает препятствия (камни, ловушки, деревья, руины, остовы меньше её Размером) без штрафов. Сверхтяжёлые шагоходы перешагивают препятствия до 5 м или идут напролом через стены/лес/здания. Экипаж игнорирует большинство Крит. Эффектов на экипаж — действуют только повреждения орудий (на стрелков/заряжающих этих орудий). Атаки из машины не штрафуются за Ordnance. Реквизиция: как 10 обычных машин той же Редкости или 100 обычных предметов (−20).",
+        "notes": "",
+        "benefit": "Вездеходность и защита экипажа.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": 0,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": true,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false
+        }
+      },
+      "_id": "QVO6R2DkydJLCL0N",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.QVO6R2DkydJLCL0N"
+    },
+    {
+      "name": "Twin Heavy Bolter / Спаренный Тяжёлый Болтер",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "bolt",
+        "range": 150,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "1",
+        "magazineCur": 320,
+        "magazineMax": 320,
+        "rof_single": 1,
+        "rof_semi": 4,
+        "rof_full": 8,
+        "damage": "2d10+8",
+        "damageType": "blast",
+        "penetration": 5,
+        "quality": "common",
+        "availability": 2,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "tearing"
+          },
+          {
+            "key": "twinLinked"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "KnaCtYRlurEGmgk2",
+          "mount": "hull",
+          "hArc": "−21°..+21°",
+          "vArc": "−10°..+18°",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "YXanNrAGnRt3xbI5",
+          "options": [
+            "Twin Heavy Bolter / Спаренный Тяжёлый Болтер",
+            "Twin Heavy Flamer / Спаренный Тяжёлый Огнемёт"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "JWMutAn1AOei553G",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341556,
+        "modifiedTime": 1783867341556,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.JWMutAn1AOei553G"
+    },
+    {
+      "name": "Quad Lascannon / Счетверённая Лазпушка",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "laser",
+        "range": 300,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 1,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "5d10+10",
+        "damageType": "energy",
+        "penetration": 10,
+        "quality": "common",
+        "availability": 3,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Боезапас: ∞ (энергия/подача)",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "quad"
+          },
+          {
+            "key": "proven",
+            "rating": 3
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "KnaCtYRlurEGmgk2",
+          "mount": "sponson",
+          "hArc": "борт",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "X6ae6qlim8bK72l2",
+          "options": [
+            "Quad Lascannon / Счетверённая Лазпушка"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "krAeeA4aMIL8cOJ6",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341556,
+        "modifiedTime": 1783867341556,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.krAeeA4aMIL8cOJ6"
+    },
+    {
+      "name": "Quad Lascannon / Счетверённая Лазпушка",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "laser",
+        "range": 300,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 1,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "5d10+10",
+        "damageType": "energy",
+        "penetration": 10,
+        "quality": "common",
+        "availability": 3,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Боезапас: ∞ (энергия/подача)",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "quad"
+          },
+          {
+            "key": "proven",
+            "rating": 3
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "KnaCtYRlurEGmgk2",
+          "mount": "sponson",
+          "hArc": "борт",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "SwZ2KdgNVPrPlK4Z",
+          "options": [
+            "Quad Lascannon / Счетверённая Лазпушка"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "w19dq9xhqFFCvxNo",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341556,
+        "modifiedTime": 1783867341556,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!4HDc3b5WZoqMYUaF.w19dq9xhqFFCvxNo"
+    }
+  ],
+  "_id": "4HDc3b5WZoqMYUaF",
+  "prototypeToken": {
+    "name": "Спартанец",
+    "displayName": 30,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783857422280,
+    "modifiedTime": 1783857422280,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!4HDc3b5WZoqMYUaF"
+}

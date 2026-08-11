@@ -1,0 +1,21 @@
+{
+  "name": "Санктус",
+  "type": "Item",
+  "folder": "xvYbFjZ8sx7Us9tv",
+  "sorting": "m",
+  "_id": "OYXIP1SU7H9NigU3",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!OYXIP1SU7H9NigU3"
+}

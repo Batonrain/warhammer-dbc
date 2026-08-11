@@ -1,0 +1,53 @@
+{
+  "name": "Дхан (Лидер)",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "2W72KI9I4jJY7H7q",
+  "system": {
+    "key": "aelDhan",
+    "race": "azuriane",
+    "group": "Отступники",
+    "charBonus": {
+      "fel": 5,
+      "int": 2
+    },
+    "charChoice": "",
+    "skills": "",
+    "talents": "",
+    "gear": "",
+    "wounds": "",
+    "infRoll": "4d5+13",
+    "requiredPath": "Путь Изгоя или Путь Дипломата",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Манипулятор разумами низших рас.",
+    "trait": {
+      "name": "Master of Minds of Mon-Keigh / Повелитель Разумов Мон-Кей",
+      "benefit": "Если Люди под его командованием не знают его природы (или признают лидером) — за Очко Судьбы даёт им Fearless (с инстинктом самосохранения) до конца Битвы/Сцены. Игнорирует требования по характеристикам для Миньона-Человека."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "vxWARvONy4CpN99t",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536190,
+    "modifiedTime": 1786285536194,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!vxWARvONy4CpN99t"
+}

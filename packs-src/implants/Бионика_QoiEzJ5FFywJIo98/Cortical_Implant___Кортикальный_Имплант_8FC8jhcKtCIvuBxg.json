@@ -1,0 +1,67 @@
+{
+  "name": "Cortical Implant / Кортикальный Имплант",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:2. Кибернетический мозговой имплант.",
+    "notes": "",
+    "category": "bionic",
+    "quality": "common",
+    "effect": "Восстанавливает мозг после вегетативного состояния (Haywire отключает). Poor.Q подчинён программе; Good.Q Unnatural Int (+2) и +20 Знания; Best.Q + 1 эффект (доп. глаза/визор, доп. ментальные полудействия, защита от контроля разума, экранирован от ЭМИ, ретинальный дисплей).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "QoiEzJ5FFywJIo98",
+  "_id": "8FC8jhcKtCIvuBxg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781722725656,
+    "modifiedTime": 1786122011786,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!8FC8jhcKtCIvuBxg"
+}

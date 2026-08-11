@@ -1,0 +1,55 @@
+{
+  "name": "Motive Eucharist / Мотивное Причастие",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Nu4M8EyPNQpHOOjO",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Подключаясь Электу-Индукторами к портам другого техножреца, раз в Ход за свободное действие персонаж может передать до 3 Когниции любому согласному персонажу в базовом контакте.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [
+      "int",
+      "tech"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "6yjm0n9iYD9ULD7E",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121968326,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6yjm0n9iYD9ULD7E"
+}

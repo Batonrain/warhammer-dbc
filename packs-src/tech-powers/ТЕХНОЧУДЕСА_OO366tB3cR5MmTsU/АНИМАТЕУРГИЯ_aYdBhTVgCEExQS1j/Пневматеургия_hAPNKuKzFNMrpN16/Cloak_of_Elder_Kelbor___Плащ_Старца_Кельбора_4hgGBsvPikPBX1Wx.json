@@ -1,0 +1,60 @@
+{
+  "name": "Cloak of Elder Kelbor / Плащ Старца Кельбора",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "hAPNKuKzFNMrpN16",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "animatheurgy",
+    "subtype": "Пневматеургия",
+    "miracleType": "anima",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 0,
+    "sustainCost": 3,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "reaction",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×1м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Noospheric Uplink · Цена: 3К · Процесс: 3 · Тип: Анима, Славословие (2)] Треб.: Cor 30, For.Lore (Mechanicum)+30. Реакция на попадание под Haywire (после броска интенсивности, до применения). Шаблон I.b м — эффекты Haywire внутри игнорируются (полностью прекращаются, если весь шаблон/точечный эффект внутри).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "4hgGBsvPikPBX1Wx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040242,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4hgGBsvPikPBX1Wx"
+}

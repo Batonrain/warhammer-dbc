@@ -1,0 +1,55 @@
+{
+  "name": "Razor's Edge / На Лезвии Бритвы",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "pLgnldl5cff6lVNS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если Инициатива персонажа выше, чем у цели, при использовании ножей он добавляет разницу в Инициативе к Dmg (максимум +10; не учитывается в пробитии брони). При попытках Избегать одиночных ударов его ножа более медленная цель должна перебить все его Успехи на попадание.",
+    "tier": 3,
+    "requirement": "WS 40, A 50",
+    "aptitudes": [
+      "ag",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "qwbNFMxqpgbGKKuo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122003753,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qwbNFMxqpgbGKKuo"
+}

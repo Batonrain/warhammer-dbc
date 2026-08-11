@@ -1,0 +1,75 @@
+{
+  "name": "Enfeeble / Ослабление",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-biomancy.svg",
+  "folder": "unD8p16jNxldhppD",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "biomancy",
+    "subtype": "Витамантия",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×20м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Биоманипуляция · Изменение (PR). Психотест W−20 vs T+0. Поддержание: Полудействие. Треб.: Life Leech. Проигравшие тест: временный урон 4×PR в WS, BS, S, T, A (не лечится, проходит с развеиванием). T до 0 — паралич, не смерть. На одной цели поддержание — свободное действие.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "L0RmeqAyYNwgFabe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122029454,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!L0RmeqAyYNwgFabe"
+}

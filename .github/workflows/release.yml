@@ -10,7 +10,6 @@ on:
       - ".gitattributes"
       - ".github/**"
       - "books/**"
-      - "packs-src/**"
       - "docs/**"
       - "test/**"
       - "package.json"
@@ -88,6 +87,19 @@ jobs:
              system.json > system.json.tmp
           mv system.json.tmp system.json
           head -20 system.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Установить зависимости
+        run: npm ci
+
+      # Компендиумы в git не лежат: их содержимое — JSON в packs-src/.
+      # Без этого шага архив уехал бы с пустыми компендиумами.
+      - name: Собрать компендиумы
+        run: npm run packs:build
 
       - name: Собрать архив системы
         run: |

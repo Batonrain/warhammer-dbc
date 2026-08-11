@@ -1,0 +1,75 @@
+{
+  "name": "Primordial Annihilation / Изначальное Уничтожение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-highSorcery.svg",
+  "folder": "aoMdXgyBdXUaPsdW",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 1000,
+    "discipline": "highSorcery",
+    "subtype": "",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "cor",
+    "testMod": -20,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "PRd10",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Психический Взрыв (10×PR) · Стрельба. Психотест Cor−20. Треб.: Cor 70. Только в усиленном режиме. Взрыв центрируется на псайкере (он и его опора не задеты). Профиль: PRd10 E, Pen 0, Blast (10×PR), Flame, Warp Weapon. Бьёт по всем объектам в области (даже бездушным), невзирая на Warp Weapon. Феномен: автоматически два Прорыва.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "91n4tgmZyO1IpPT6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122024936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!91n4tgmZyO1IpPT6"
+}

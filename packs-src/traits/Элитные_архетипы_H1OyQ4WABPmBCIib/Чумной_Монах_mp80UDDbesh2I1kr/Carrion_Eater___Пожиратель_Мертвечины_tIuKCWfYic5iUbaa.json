@@ -1,0 +1,51 @@
+{
+  "name": "Carrion Eater / Пожиратель Мертвечины",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "mp80UDDbesh2I1kr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За 7 минут может сожрать труп разумного существа на расстоянии рукопашной атаки, восстанавливая 1d5 + T.b Ран, т.к. паразиты в его брюхе набрасываются на пиршество и приносят его в жертву Нурглу. Если труп был мёртв больше 7 дней, или умер от яда, болезни, радиации или атак, получающих преимущества трупного яда, Монах также увеличивает рейтинг Трейта Unnatural T на 1d5 до максимума в Cor.b+2.",
+    "source": "Элитный архетип: Чумной Монах",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "tIuKCWfYic5iUbaa",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121961912,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!tIuKCWfYic5iUbaa"
+}

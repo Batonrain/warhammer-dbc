@@ -1,0 +1,75 @@
+{
+  "name": "Feast of the Neverborn / Пир Нерождённых",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-bloodMagic.svg",
+  "folder": "mPkSuxuvyxFv4Lup",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "bloodMagic",
+    "subtype": "",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×5м / PR×25м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение (PR) · Кровавая Жертва (W.b + Inf.b демонов). Треб.: Red Harvest. Заменяет тест Демонического Владычества (те же случаи/результаты), подчиняя демонов/демоническое оружие. Не на демонов с Inf ≥ Inf псайкера или уже подчинённых.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "bPhVzaUBqrJ3wnfR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122033825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!bPhVzaUBqrJ3wnfR"
+}

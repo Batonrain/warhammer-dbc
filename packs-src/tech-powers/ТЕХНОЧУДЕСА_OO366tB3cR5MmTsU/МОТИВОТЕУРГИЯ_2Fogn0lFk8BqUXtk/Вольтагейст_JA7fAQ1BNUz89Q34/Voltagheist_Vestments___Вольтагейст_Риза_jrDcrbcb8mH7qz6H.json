@@ -1,0 +1,60 @@
+{
+  "name": "Voltagheist Vestments / Вольтагейст Риза",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "JA7fAQ1BNUz89Q34",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Вольтагейст",
+    "miracleType": "passive",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 0,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Ferric Lure Implants, Luminen Capacitors · Цена: — · Процесс: Нет · Тип: Пассивное] Треб.: T 40, Tech-Use+20, Voltagheist Shield. Перед броском щита от Вольтагейст Щита/Капеллы можно увеличить цену срабатывания в Энергии и рейтинг Компенсатора на +1, чтобы поднять рейтинг щита до 1-I.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "jrDcrbcb8mH7qz6H",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042295,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!jrDcrbcb8mH7qz6H"
+}

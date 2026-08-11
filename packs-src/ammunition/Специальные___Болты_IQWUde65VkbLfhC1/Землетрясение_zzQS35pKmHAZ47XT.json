@@ -1,0 +1,46 @@
+{
+  "name": "Землетрясение",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-bolt.svg",
+  "folder": "IQWUde65VkbLfhC1",
+  "system": {
+    "description": "При детонации создаёт локализированное сотрясение земли. Даёт Concussive (2); все стоящие на земле цели в радиусе 3 м от цели (включая саму цель) должны пройти тест A−20, или их сбивает с ног.",
+    "notes": "",
+    "weaponTypes": [
+      "bolt"
+    ],
+    "ammoCategory": "bolts",
+    "rarity": 4,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 4,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Concussive (2); все на земле в радиусе 3 м — тест A−20 или сбиты с ног",
+    "properties": []
+  },
+  "_id": "zzQS35pKmHAZ47XT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!zzQS35pKmHAZ47XT"
+}

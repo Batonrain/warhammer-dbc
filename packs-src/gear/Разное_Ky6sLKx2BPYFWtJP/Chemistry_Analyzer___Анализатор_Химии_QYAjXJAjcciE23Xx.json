@@ -1,0 +1,58 @@
+{
+  "name": "Chemistry Analyzer / Анализатор Химии",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Столик-анализатор, распознающий химический след и предвидящий взаимодействия на уровне биохимии. Требует Tech-Use+10 либо Trade (Chymist)+10 и Tech-Use+0.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 5,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "",
+    "effect": "Опознаёт химические вещества при работе владельца, +10 к тесту. Улавливает вещества вокруг себя и положенные на детектор. Если положить кусок органики и дать T.b жертвы минут — выдаёт, как адаптировать имеющиеся яды под эту жертву.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Набор отдельных детекторов: 1d10 минут на тест из-за перебора реагентов, +20 только на обнаружение следа. Реквизируется как R0.",
+      "good": "Носится на поясе как людской ауспекс. +30 на выслеживание по запаху, автоматически опознаёт вещества, +20 на тесты Химии. Игнорирует любые штрафы внешней среды.",
+      "best": "Надевается как противогаз или встраивается в шлем друкхарийской брони. Как Good.Q, плюс защита от газов, 10 зарядов стимуляторов типа Аэрозоль, зрение на газы в воздухе и круговые Unnatural Senses (P.b×2, Запах) м."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Инструменты"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "QYAjXJAjcciE23Xx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!QYAjXJAjcciE23Xx"
+}

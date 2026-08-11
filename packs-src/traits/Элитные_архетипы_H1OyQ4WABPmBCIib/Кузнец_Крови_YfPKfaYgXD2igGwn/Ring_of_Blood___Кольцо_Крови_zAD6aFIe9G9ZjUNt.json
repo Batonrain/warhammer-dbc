@@ -1,0 +1,51 @@
+{
+  "name": "Ring of Blood / Кольцо Крови",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "YfPKfaYgXD2igGwn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Победив демона в ритуальном поединке, может поработить его. Перед призывом демона может заключить себя и его в ритуальный круг, нарисованный кровью, обязывающий демона сразиться 1 на 1. Если демон побеждает и Кузнец покидает круг или вмешивается третий — демон вырывается на свободу (бросает d10 непоглощаемого R Dmg) и сохраняет Истинную Форму, теряя Warp Instability на 8 дней. Если Кузнец побеждает, демон перманентно становится рабом: при обычном/руническом оружии демон вселяется в него; при демоническом — дух обвивается вокруг него ещё восемь часов. Оружие с двумя демонами использует суммарную W.b обоих в расчёте Dmg и Pen; за полное действие может вселить второго демона в другое оружие. При демоническом оружии Кольца Крови сам выбирает результаты бросков на демонические свойства. Автоматически проходит тесты Демонического Владычества против порабощённых Кольцом Крови демонов.",
+    "source": "Элитный архетип: Кузнец Крови",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zAD6aFIe9G9ZjUNt",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121962426,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zAD6aFIe9G9ZjUNt"
+}

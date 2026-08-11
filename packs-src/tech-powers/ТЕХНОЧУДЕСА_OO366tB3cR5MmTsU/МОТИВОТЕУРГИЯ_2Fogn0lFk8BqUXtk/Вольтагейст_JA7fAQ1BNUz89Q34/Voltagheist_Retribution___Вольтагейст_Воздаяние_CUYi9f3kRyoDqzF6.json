@@ -1,0 +1,60 @@
+{
+  "name": "Voltagheist Retribution / Вольтагейст Воздаяние",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "JA7fAQ1BNUz89Q34",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Вольтагейст",
+    "miracleType": "passive",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 1,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×2м",
+    "damage": "Xd10+I.b",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Ferric Lure Implants, Luminen Capacitors · Цена: 1К · Процесс: Нет · Тип: Незримое, Пассивное, Стрельба] Треб.: T 50, Tech-Use+30, Voltagheist Vestments. Успешное отражение Вольтагейст Щитом (не Капеллой) даёт 1 заряд (до 5). Потратив все заряды (X): авто-стрелковое попадание Xd10+I.b E(Ls), Pen 0, Extreme (11−X), Rad (Xd5). Засекающие радиацию видят луч и Избегают (игнор Незримое).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "CUYi9f3kRyoDqzF6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040714,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!CUYi9f3kRyoDqzF6"
+}

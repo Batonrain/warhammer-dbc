@@ -1,0 +1,53 @@
+{
+  "name": "Mask of Ang'Grath / Маска Анг'Грата",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Маска в подобие лика Владыки Кровожадов с частицей его ярости.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 4,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Голова",
+    "effect": "Кхорн: Трейт Unnatural WS(+4) и Таланты Battle Rage и Gatekeeper, если нет. В Ярости авто-успех Свободных Атак и тестов WS против Вольтов с 8 Успехами (можно проходить как обычно, игнорируя <8).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "При непоглощённом уроне — тест W+0 или немедленная Ярость; −30 на выход из Ярости.",
+      "good": "Низшие Демоны и Демонические Звери Кхорна воспринимают как Герольда и подчиняются (если нет командира с большим Inf).",
+      "best": "Как Good.Q; полный контроль в Ярости, все Избегания как обычно."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "UBvE0g6VDyiiqjGT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!UBvE0g6VDyiiqjGT"
+}

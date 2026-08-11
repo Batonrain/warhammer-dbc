@@ -1,0 +1,55 @@
+{
+  "name": "Hamstring / Подрезать Сухожилья",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "XeycnCsRlazxEDgr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в Ход, когда Избирательная рукопашная атака персонажа в ногу наносит непоглощённый урон, он может пройти А+0 vs A+0 и при Успехе сбить цель с ног; на 5+ Успехов цель также теряет полудействие в следующий Ход. Не работает с приёмами Swift Attack и Lightning Attack.",
+    "tier": 3,
+    "requirement": "WS 50, A 50",
+    "aptitudes": [
+      "ws",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zljFiU00FP2qPkKi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122010359,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zljFiU00FP2qPkKi"
+}

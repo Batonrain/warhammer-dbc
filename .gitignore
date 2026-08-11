@@ -1,10 +1,9 @@
 # PDF правил — не публикуются
 books/*.pdf
 
-# Рантайм-файлы LevelDB (создаются Foundry при запуске)
-packs/*/LOCK
-packs/*/LOG
-packs/*/LOG.old
+# Скомпилированные компендиумы: содержимое лежит в packs-src/, а packs/
+# собирается из него — npm run packs:build (в релизе это делает CI).
+packs/
 
 # Рабочие файлы
 _tmp_*.txt

@@ -1,0 +1,44 @@
+{
+  "name": "Rendering Kit / Раздирающий Комплект",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Набор инструментов для ритуального расчленения трупов и использования тел и их частей в оккультных практиках. Как правило упакован в увесистый сундук, носимый за спиной, и требует минимум 10 минут, чтобы разложить инструменты и подготовить их к работе.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 20,
+    "availability": 3,
+    "quality": "common",
+    "toolCategory": "kits",
+    "effect": "+10 на все тесты ритуалов с жертвоприношением разумных существ; +20 на подготовку жертв для Пути Силы «Жертва». Необходим для создания Фетишей из трупов могучих противников или союзников.",
+    "reminder": "Ритуалы с жертвой +10; подготовка жертвы для «Жертвы» +20.",
+    "qualityEffects": {
+      "poor": "Массивный набор ритуальных инструментов общим весом 100 кг: переносится командой слуг или устанавливается стационарно.",
+      "good": "Миниатюризирован до набора размером с аптечку, вес 2 кг.",
+      "best": "Как Good.Q, плюс перед ритуалом можно подготовить отводящую жертву: при провале ритуала все негативные последствия достаются ей, а не ритуалисту. ГМ тайно бросает за игрока Forbidden Lore (Warp)+0, чтобы определить, удалась ли подготовка."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "7RcCrAuCY0AvI2aH",
+  "_id": "lrOVDVbfM9jyy9dY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785255155409,
+    "modifiedTime": 1785255155409,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!lrOVDVbfM9jyy9dY"
+}

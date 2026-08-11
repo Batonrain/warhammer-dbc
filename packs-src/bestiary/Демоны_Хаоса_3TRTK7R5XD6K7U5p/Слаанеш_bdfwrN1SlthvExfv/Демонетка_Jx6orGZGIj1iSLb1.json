@@ -1,0 +1,1965 @@
+{
+  "name": "Демонетка",
+  "type": "daemon",
+  "img": "systems/warhammer-dbc/assets/Slaanesh.png",
+  "folder": "bdfwrN1SlthvExfv",
+  "system": {
+    "race": "",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "alignment": "heretic",
+    "isPsyker": [
+      true,
+      true
+    ],
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 18,
+      "max": 18,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 0
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 100,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 52,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 52,
+        "bonus": 5,
+        "cost": 0
+      },
+      "bs": {
+        "base": 30,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 30,
+        "bonus": 3,
+        "cost": 0
+      },
+      "s": {
+        "base": 38,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 38,
+        "bonus": 3,
+        "cost": 0
+      },
+      "t": {
+        "base": 44,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 44,
+        "bonus": 4,
+        "cost": 0
+      },
+      "ag": {
+        "base": 51,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 51,
+        "bonus": 5,
+        "cost": 0
+      },
+      "int": {
+        "base": 16,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 16,
+        "bonus": 1,
+        "cost": 0
+      },
+      "per": {
+        "base": 35,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 35,
+        "bonus": 3,
+        "cost": 0
+      },
+      "wp": {
+        "base": 36,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 36,
+        "bonus": 3,
+        "cost": 0
+      },
+      "fel": {
+        "base": 32,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 32,
+        "bonus": 3,
+        "cost": 0
+      },
+      "inf": {
+        "base": 22,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 22,
+        "bonus": 2,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "veteran",
+        "cost": 0,
+        "total": 0
+      },
+      "athletics": {
+        "rank": "knows",
+        "cost": 0,
+        "total": 0
+      },
+      "awareness": {
+        "rank": "knows",
+        "cost": 0,
+        "total": 0
+      },
+      "charm": {
+        "rank": "trained",
+        "cost": 0,
+        "total": 0
+      },
+      "command": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "knows",
+        "cost": 0,
+        "total": 0
+      },
+      "dodge": {
+        "rank": "trained",
+        "cost": 0,
+        "total": 0
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "trained",
+        "cost": 0,
+        "total": 0
+      },
+      "intimidate": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "logic": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "survival": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "techUse": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [
+        {
+          "specialty": "Daemons",
+          "rank": "trained",
+          "char": "int",
+          "total": 26,
+          "cost": 0
+        }
+      ],
+      "scholasticLore": [],
+      "linguistics": [
+        {
+          "specialty": "Eldar",
+          "rank": "knows",
+          "char": "int",
+          "total": 16,
+          "cost": 0
+        },
+        {
+          "specialty": "Low Gothic",
+          "rank": "knows",
+          "char": "int",
+          "total": 16,
+          "cost": 0
+        },
+        {
+          "specialty": "True Tongue",
+          "rank": "knows",
+          "char": "int",
+          "total": 16,
+          "cost": 0
+        }
+      ],
+      "navigation": [],
+      "operate": [],
+      "trade": [
+        {
+          "specialty": "Dancer",
+          "rank": "veteran",
+          "char": "int",
+          "total": 71,
+          "cost": 0
+        }
+      ]
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "max": 90
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "<p>Низший демон Слаанеш — стремительная танцовщица клинков, воплощение желания и избытка.</p><p><b>Возвышение (Соблазнительница):</b> I→34, W→48, F→44, Раны→22 + один из наборов улучшений (WS/A/BS/F + таланты).</p><p>Музыкант: +20 всем Демонеткам отряда на Trade (Dancer).</p>",
+    "craftAvailable": false,
+    "possessed": false,
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "reactions": "",
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "allegiance": "slaanesh",
+    "rank": "lesser",
+    "form": "trueForm",
+    "instabilityRating": 4,
+    "trueName": "",
+    "trueNameKnown": false,
+    "portfolio": "желание и избыток",
+    "isDaemon": true
+  },
+  "items": [
+    {
+      "name": "Alluring Presence",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Чарующая аура: все враги −10 на Избегания против атак демона.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "GoDe3RuR1Y6UEnlg",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.GoDe3RuR1Y6UEnlg"
+    },
+    {
+      "name": "Daemonic (4)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "×4 к T.b в Поглощении.",
+        "source": "демон",
+        "hasRating": true,
+        "rating": 4,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [
+            {
+              "stat": "t",
+              "value": 4
+            }
+          ],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "YX1Ch8SdBsatPBAi",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.YX1Ch8SdBsatPBAi"
+    },
+    {
+      "name": "Unnatural A (2)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Сверхъестественная Ловкость: +2 к A.b.",
+        "source": "демон",
+        "hasRating": true,
+        "rating": 2,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [
+            {
+              "stat": "ag",
+              "value": 2
+            }
+          ],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "xDOMrbyvLfdIRuyJ",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.xDOMrbyvLfdIRuyJ"
+    },
+    {
+      "name": "Daemonic Armament (Серебряный Дротик)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Формирует оружие из Варпа.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "CgvYO01HOE7vPTBw",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.CgvYO01HOE7vPTBw"
+    },
+    {
+      "name": "Daemonic Presence (10/10)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Аура присутствия демона.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "SYwbToriSIf6G8BJ",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.SYwbToriSIf6G8BJ"
+    },
+    {
+      "name": "Dark Sight",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Видит в темноте.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "1DLmDF1Z21KfYBJY",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.1DLmDF1Z21KfYBJY"
+    },
+    {
+      "name": "Digitigrade (2)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Пальцеходящие ноги: +2 к прыжкам/бегу.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "14pC3EC3CsVYPKxf",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.14pC3EC3CsVYPKxf"
+    },
+    {
+      "name": "From Beyond",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Не дышит/ест/спит; иммунен к ядам/болезням/удушью/вакууму.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "AeJ3sYIcbAvG3mCL",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.AeJ3sYIcbAvG3mCL"
+    },
+    {
+      "name": "Fear (2) / Страх (2)",
+      "type": "trait",
+      "img": "icons/svg/terror.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Вызывает Страх (2) — цели проходят тест Воли.",
+        "source": "",
+        "hasRating": true,
+        "rating": 2,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 2,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "G1TwW9FiXhg4lFYR",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.G1TwW9FiXhg4lFYR"
+    },
+    {
+      "name": "Nimble (10)",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "+10 к Уклонению.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "4XO7olMM8mzrJeJ2",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.4XO7olMM8mzrJeJ2"
+    },
+    {
+      "name": "Stuff of Nightmares",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Иммунитет к Страху/Оглушению/Крит-эффектам разума.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "B8HX1lJx6zuYT68B",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.B8HX1lJx6zuYT68B"
+    },
+    {
+      "name": "Warp Instability",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Тесты Нестабильности при уроне.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "qYZhE8XMNmZvzpAF",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.qYZhE8XMNmZvzpAF"
+    },
+    {
+      "name": "Warp Sight",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Видит сквозь Завесу и души.",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "lHsxNGkIccomMBIs",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.lHsxNGkIccomMBIs"
+    },
+    {
+      "name": "Deadly Natural Weapons",
+      "type": "trait",
+      "img": "icons/svg/aura.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Смертельное естественное оружие (Клешни, Клинки, Поцелуй, Пинок).",
+        "source": "демон",
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "charBonuses": [],
+          "charValueBonuses": [],
+          "armourAll": 0,
+          "fearRating": 0,
+          "sizeMod": 0,
+          "initMod": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "xuoeBuf04dDdKZJY",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.xuoeBuf04dDdKZJY"
+    },
+    {
+      "name": "Pincer Claws / Клешни (×2)",
+      "type": "weapon",
+      "img": "icons/svg/sword.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "Естественное",
+        "range": "0",
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": false,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+4",
+        "damageType": "rending",
+        "penetration": 3,
+        "quality": "common",
+        "availability": "",
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Считается ладонью; парные.",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "extreme",
+            "rating": 8
+          },
+          {
+            "key": "razorSharp"
+          },
+          {
+            "key": "reinforced"
+          },
+          {
+            "key": "tearing"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "_id": "eFpNsDVcA674qqj2",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.eFpNsDVcA674qqj2"
+    },
+    {
+      "name": "Piercing Blades / Пронзающие Клинки (×2)",
+      "type": "weapon",
+      "img": "icons/svg/sword.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "Естественное",
+        "range": "0",
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": false,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+6",
+        "damageType": "rending",
+        "penetration": 3,
+        "quality": "common",
+        "availability": "",
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Парные (1-5).",
+        "equipped": true,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "crippling",
+            "rating": 2
+          },
+          {
+            "key": "extreme",
+            "rating": 8
+          },
+          {
+            "key": "precise"
+          },
+          {
+            "key": "reinforced"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "_id": "tNpna6vsLdXlu8j1",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.tNpna6vsLdXlu8j1"
+    },
+    {
+      "name": "Kick / Пинок",
+      "type": "weapon",
+      "img": "icons/svg/sword.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "Естественное",
+        "range": "0",
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": false,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+3",
+        "damageType": "rending",
+        "penetration": 2,
+        "quality": "common",
+        "availability": "",
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Атака ногой.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "reinforced"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "_id": "qZ8VqR8xwZpW16Sr",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.qZ8VqR8xwZpW16Sr"
+    },
+    {
+      "name": "Ambidextrous",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "−10 штраф за 2 оружия; нет штрафа за левую руку.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "KSmP1IzzdRblodD7",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.KSmP1IzzdRblodD7"
+    },
+    {
+      "name": "Flip",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Перекат вместо сбивания с ног.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "nWzGdw0r5al9twNj",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.nWzGdw0r5al9twNj"
+    },
+    {
+      "name": "Hard Target",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "−10 на стрельбу по персонажу при Беге и Натиске.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "QgvP6Cz5siKKknGx",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.QgvP6Cz5siKKknGx"
+    },
+    {
+      "name": "Heightened Senses (All)",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "+10 к тестам на все чувства.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "WxuvITVgNeK7z3YS",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.WxuvITVgNeK7z3YS"
+    },
+    {
+      "name": "Pirouette",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Прыжок с пути несущегося вперёд врага.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "Wx526ccOsyK2vfF0",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.Wx526ccOsyK2vfF0"
+    },
+    {
+      "name": "Step Aside",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "+1 Реакция.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "LxLbYqrIaWvkPb2r",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.LxLbYqrIaWvkPb2r"
+    },
+    {
+      "name": "Sure Strike",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "−10 штраф за Избирательный удар или Размер.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "aFc1gNsCpifDPqzF",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.aFc1gNsCpifDPqzF"
+    },
+    {
+      "name": "Swift Attack",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Приём с −10 на ½ Успехи попаданий.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "OchQdj5M0b6Ountt",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.OchQdj5M0b6Ountt"
+    },
+    {
+      "name": "Two-Weapon Wielder (Melee)",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "Бой двумя оружиями со штрафом −20.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "ZD2Mf24xNAIvjCGU",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.ZD2Mf24xNAIvjCGU"
+    },
+    {
+      "name": "Возвышение (Соблазнительница)",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "benefit": "I→34, W→48, F→44, Раны→22 + один комплект улучшений.",
+        "tier": 3,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "94LDP2VEfqNFWZtf",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!Jx6orGZGIj1iSLb1.94LDP2VEfqNFWZtf"
+    }
+  ],
+  "prototypeToken": {
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/Slaanesh.png",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#e85ad6",
+      "alphaThreshold": 0.75
+    },
+    "actorLink": true,
+    "name": "Демонетка",
+    "displayName": 30,
+    "width": 1,
+    "height": 1,
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "_id": "Jx6orGZGIj1iSLb1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783427242304,
+    "modifiedTime": 1783438060489,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!Jx6orGZGIj1iSLb1"
+}

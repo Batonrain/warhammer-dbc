@@ -1,0 +1,51 @@
+{
+  "name": "Chain Shot / Цепной Выстрел",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "JVTpPcz3F58iAw7f",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Перегружая силовой ранец, может выжать из пистолетов невероятную скорострельность. Силовой ранец включает интегрированный прыжковый ранец паттерна Фаэтон (Трейт Flyer(10) и маневрирование без тестов) и кабели питания для энергетических оружий. Если к кабелям присоединён пистолет, может потратить Очко Бесчестия, чтобы сделать из него до BS.b Одиночных Выстрелов по целям в секторе обстрела 45°, но Надёжность оружия понижается на 1 на этот Ход, и на первом же промахе или клине он должен прекратить стрельбу (успешные Избегания цели не считаются промахами). После Цепного Выстрела пистолет должен остыть и не может использоваться до конца следующего Хода. Может активировать Цепной Выстрел для двух пистолетов одновременно, всё ещё тратя только одно Очко Бесчестия, стреляя из каждого поочередно; промах или Клин из одного не обрывает цепочку из другого.",
+    "source": "Элитный архетип: Моритат",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "6cNGmZQVXwldnrFd",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121957405,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6cNGmZQVXwldnrFd"
+}

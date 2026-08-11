@@ -1,0 +1,52 @@
+{
+  "name": "Fell Discharge / Жестокая Разрядка",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "qhvK5rxnvncipumL",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может обратить сердце мотивирующей силы Механикум против него самого. Успешно используя Numerica Dominion, может за 3 Успеха взять контроль над Катушкой Потенции цели и мгновенно разрядить её, убирая заряды: 1 непоглощаемого E(El) Dmg за 1 заряд, 1 Усталости за каждые полные 2 заряда, и Парализуя жертву на 1 Ход.",
+    "tier": 1,
+    "requirement": "Неделимый, Numerica Dominion",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Малагра",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "vkoJV8CK4O1DqsUd",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122007111,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!vkoJV8CK4O1DqsUd"
+}

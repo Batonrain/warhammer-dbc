@@ -1,0 +1,35 @@
+{
+  "name": "Колдовское Лезвие / Witch's Edge",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "i0yML1SKgQAz2uIn",
+  "system": {
+    "description": "Перед боем владелец выбирает бонус: либо свойства Force (если есть), либо набор Dueling Weapon, Reinforced, Power Field, Precise, Mighty. В любом случае считается имеющим Force в расчёте механик (психосилы, воздействия). Требует талант Secrets of the Seer.",
+    "reminder": "🔮 Колдовское Лезвие: выбор — бонусы Force или Dueling/Reinforced/Power Field/Precise/Mighty",
+    "category": "melee",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "witchsEdge",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "mOE2Dz9FvwnrML0i",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!mOE2Dz9FvwnrML0i"
+}

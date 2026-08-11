@@ -1,0 +1,35 @@
+{
+  "name": "Омывание / Flush",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Омывает цель волной пламени/жидкости. Игнорирует укрытия цели и бонусные AP от Защиты щитов.",
+    "reminder": "🌊 Омывание: игнор укрытий и бонус AP щитов",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "flush",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "tBUK7bfNmTrjIxcD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353819,
+    "modifiedTime": 1786224353824,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!tBUK7bfNmTrjIxcD"
+}

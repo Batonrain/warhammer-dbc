@@ -1,0 +1,60 @@
+{
+  "name": "Doctrina Negavolt / Доктрина Негавольт",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "8Myy7biwI0W0j67k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Люминен",
+    "miracleType": "doctrine",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 4,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Luminen Capacitors · Цена: 4К · Процесс: 1 · Тип: Анима, Доктрина] Треб.: Cor 30, Hatred, Doctrina Fulgurite, Doctrina Corpuscarii. При уроне Люминен-техночуда — до 3 Энергии: +кубик урона за каждую (по одной цели), игнор Daemonic/Stuff of Nightmares. Ненавистная цель: +1 кубик без траты Энергии (макс. +2 ещё). Непоглощ. урон/убийство Ненавистной → +1 Энергия (2 за убийство). Падение уровня ранения → +1 Энергия.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "vZaJEd9Mt3rQQU6K",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042786,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!vZaJEd9Mt3rQQU6K"
+}

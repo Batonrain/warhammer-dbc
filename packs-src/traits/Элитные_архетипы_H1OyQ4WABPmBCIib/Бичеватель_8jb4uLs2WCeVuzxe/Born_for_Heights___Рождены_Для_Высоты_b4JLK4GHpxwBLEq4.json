@@ -1,0 +1,51 @@
+{
+  "name": "Born for Heights / Рождены Для Высоты",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "8jb4uLs2WCeVuzxe",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При взятии архетипа получает 4 или Inf.b+1 (что выше) Очков имплантов, где 1 редкость = 1 очко. Основные импланты обязательны: Полые Кости (R1), Модифицированные Мышцы (R1) и Крылья (R1). Полые Кости: S и T нельзя продвигать выше +10 (уже продвинутое снижается без возврата опыта), максимум S и T — 50, −10 к S и T, Раны −1d5+1 (мин. 1, макс. 4), экстремальный урон и криты от I(Cr) против персонажа +3; даёт Unnatural A (+2) только в воздухе. Модифицированные Мышцы: снимают лимит продвижения T (поднимая его до 60), +10 S, снижают рост критов и экстремального урона на −2 (до +1), в полёте дают A.b×5 к Operate (Aeronautica) и Nimble (20), содержат железу для синтеза одного наркотика на выбор. Крылья: Flyer (A.b+4), +1 поглощения урона в торс, руки и ноги с задней арки 180°, считаются ногами при избирательных атаках, при попадании 1d10 на 1-5 проходит через оперение без урона. Крылья не работают без Полых Костей и Модифицированных Мышц. Доступны опциональные варианты крыльев, перьев, клювов, когтей и вживляемых систем.",
+    "source": "Элитный архетип: Бичеватель",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "b4JLK4GHpxwBLEq4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121960370,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!b4JLK4GHpxwBLEq4"
+}

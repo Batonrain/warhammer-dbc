@@ -1,0 +1,52 @@
+{
+  "name": "Forge of One / Кузница Одного",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "VU8gc2eg17sL6Qsj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Поле боя — его кузница. Полагаясь только на встроенные в тело инструменты, может в поле проводить ремонт и создание предметов и машин, обычно требующих полноценной кузницы. Потратив Очко Бесчестия, может собрать известный ему паттерн техники или оболочку демонической машины (R3 и ниже) из обломков вражеского танка или деталей из стен хаб-блока за сутки непрерывной работы.",
+    "tier": 3,
+    "requirement": "Неделимый, Mastery (Tech-Use)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Варп-Кузнец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "R474RGCtmYO0eZQh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121982958,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!R474RGCtmYO0eZQh"
+}

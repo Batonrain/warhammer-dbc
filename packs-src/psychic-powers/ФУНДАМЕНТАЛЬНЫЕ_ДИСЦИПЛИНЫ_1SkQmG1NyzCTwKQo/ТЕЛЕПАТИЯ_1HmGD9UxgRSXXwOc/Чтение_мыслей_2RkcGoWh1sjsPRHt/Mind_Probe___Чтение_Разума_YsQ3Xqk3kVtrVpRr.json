@@ -1,0 +1,75 @@
+{
+  "name": "Mind Probe / Чтение Разума",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "2RkcGoWh1sjsPRHt",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 250,
+    "discipline": "telepathy",
+    "subtype": "Чтение мыслей",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "extended",
+    "range": "PR×1м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение. Действие: Расш. (период 1 Раунд). Психотест W+0 vs W+0. Треб.: Empath. 5 Ходов встречных тестов (только 1-й — Феномен; победа жертвы развеивает). Можно −20 для скрытности. 1: имя/настроение/самочувствие. 2: поверхностные мысли, ложь, страхи/желания, уровень Порчи. 3: память ~12 ч, пароли/коды, уровень Бесчестия. 4: ключевые воспоминания, цели/мотивация, все коды. 5: весь разум открыт, импланты/«стёртая» память.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "YsQ3Xqk3kVtrVpRr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122033062,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!YsQ3Xqk3kVtrVpRr"
+}

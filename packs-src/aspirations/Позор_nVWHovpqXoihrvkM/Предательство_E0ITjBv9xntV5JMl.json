@@ -1,0 +1,34 @@
+{
+  "name": "Предательство",
+  "type": "aspiration",
+  "img": "icons/svg/aura.svg",
+  "folder": "nVWHovpqXoihrvkM",
+  "system": {
+    "key": "disgrace:1",
+    "table": "disgrace",
+    "n": 1,
+    "mods": "+3 Cor, +5 I, −10 на тесты Charm",
+    "description": "Ценит других лишь пока полезны; бросает, когда польза исчерпана.",
+    "bookSource": "Black Crusade — Стремления (стр. 22)"
+  },
+  "_id": "E0ITjBv9xntV5JMl",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285535468,
+    "modifiedTime": 1786285535472,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!E0ITjBv9xntV5JMl"
+}

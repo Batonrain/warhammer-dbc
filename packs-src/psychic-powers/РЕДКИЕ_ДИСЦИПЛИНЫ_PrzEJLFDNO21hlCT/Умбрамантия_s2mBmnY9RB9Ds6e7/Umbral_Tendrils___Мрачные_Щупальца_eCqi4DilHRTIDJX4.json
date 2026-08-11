@@ -1,0 +1,75 @@
+{
+  "name": "Umbral Tendrils / Мрачные Щупальца",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-umbramancy.svg",
+  "folder": "s2mBmnY9RB9Ds6e7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 350,
+    "discipline": "umbramancy",
+    "subtype": "",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×15м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Призыв. Треб.: Enveloping Darkness. Из тени (Размер 0+) — ½PR(окр.▲) щупалец (PR Ран, PR Поглощения каждое), в Инициативу за псайкером. WS/S = W псайкера, Athletics+0, +3×PR на тесты. Берут в Захват ближайших в 5м (Сжать → Заломить).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "eCqi4DilHRTIDJX4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122034923,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!eCqi4DilHRTIDJX4"
+}

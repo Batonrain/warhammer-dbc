@@ -1,0 +1,52 @@
+{
+  "name": "Trip / Подножка",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "stlADPYhfqyKmCE9",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Выбивая врага из баланса выпад за выпадом, Ворон опрокидывает его наземь. Когда побеждает в любом атакующем встречном тесте WS на 5+ Успехов против цели Размером до 1, также Сбивает цель с ног.",
+    "tier": 1,
+    "requirement": "Тзинч, Deceive+20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Ворон",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "voj6TLgp9rpa2BU1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786122007243,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!voj6TLgp9rpa2BU1"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Emotional Explosion / Эмоциональный Взрыв",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "BHFD9WvxCcrQdrNS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает дополнительную атаку для трейта Эмпат — Emotional Explosion (Exotic Пистолет, дальность 70 м, S/–/–, Незримая). При попадании противник проходит тест W−10−5×бPR Медузы (считается против Страха, но игнорирует обычный иммунитет, давая +30 вместо иммунитета); при провале бросает тест против Шока, используя провалы как от страха. Вызвав шок 101 и выше, Медуза в начале следующего хода получает +2 ОД; при повторе за ту же битву — только +1 ОД.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Медуза",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "O11xiU4btS6rZu6t",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121981010,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!O11xiU4btS6rZu6t"
+}

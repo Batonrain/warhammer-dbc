@@ -1,0 +1,52 @@
+{
+  "name": "Unusual Animals / Необычные Звери",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CXiOYm16hgGFql1y",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может считать Миньонов Людей, Машин и Демонов за Зверей, сломив их волю. Механикум и Тираниды удваивают свой W.b против пыток персонажа, Орки, Астартес и Демоны — учетверяют. Сломив волю, может провести последнюю пытку длиной W.b×10 часов (с тем же удвоением и учетверением) и окончательно переломить волю цели. Против Орков, Астартес и Тиранид нужны дополнительные хирургические вмешательства, а демонов надо провести через круги отчаяния с нуль-технологиями и оккультными технологиями Гемункулов.",
+    "tier": 3,
+    "requirement": "Подчинить 3 Бхаргези, либо 5 Когтистых Дьяволов или Кхимер",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Укротитель",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "0wxZaPoXy0BPrqn7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121963182,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0wxZaPoXy0BPrqn7"
+}

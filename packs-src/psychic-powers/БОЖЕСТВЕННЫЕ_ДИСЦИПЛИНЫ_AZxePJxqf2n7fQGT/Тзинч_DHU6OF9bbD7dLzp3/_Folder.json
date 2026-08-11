@@ -1,0 +1,21 @@
+{
+  "name": "Тзинч",
+  "type": "Item",
+  "folder": "AZxePJxqf2n7fQGT",
+  "sorting": "m",
+  "_id": "DHU6OF9bbD7dLzp3",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!DHU6OF9bbD7dLzp3"
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Manacles / Наручники",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Наручники для сковывания цели в Борьбе (приём Пересилить).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.5,
+    "availability": -2,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Скованные руки нельзя использовать; ноги → SPD 2, нет Натиска/Бега пешком. Снять ключом: полудействие с другого / полное с себя. Взлом: расширенный Security+0, 10 Успехов (скованными руками −30). Вырваться как из Борьбы: Предел 70, авто 5 Успехов (при 5+ Провалах — Провалы−4 R в руку). Уничтожить: Размер −3, 12 AP, 5 Структуры.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Взлом +10/5У; Сломать 8AP/3Стр; Вырваться Пор50/3У.",
+      "good": "Взлом −20/20У; Сломать 16AP/10Стр; Вырваться Пор80/7У, игнор авто-ничью Un(S).",
+      "best": "Взлом −30/30У; Сломать 20AP/13Стр; Вырваться Пор100/9У, считается имеющим Un(S)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "p3SXXrxUIU6DJoIX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!p3SXXrxUIU6DJoIX"
+}

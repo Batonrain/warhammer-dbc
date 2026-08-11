@@ -1,0 +1,51 @@
+{
+  "name": "Digital Ghost / Цифровой Призрак",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "iKyQ2t3oAppThJdr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Ноосферные протоколы способны проскользнуть мимо внимания самого бдительного наблюдателя, не оставляя следов. Проводя любое засекаемое Ноосферным Сканированием действие, может пройти тест Stealth(P)+0; Успехи на нём отнимаются от Успехов на Ноосферное Сканирование, потенциально превращая Успех в Провал.",
+    "source": "Элитный архетип: Малагра",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "1AGgaNzbOJYiVHP7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121957126,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1AGgaNzbOJYiVHP7"
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Chaos Instrument / Инструмент Хаоса",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Демонический музыкальный инструмент, диктующий ритм битвы (проводник воли высших демонов).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 2,
+    "quality": "common",
+    "toolCategory": "mystic",
+    "effect": "+10 на Командование демонами, или +20 демонами одного из Богов. С Trade(Musician) — бросать Командование демонами дважды (обычно + Trade(Musician)), выбрать одно.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "RpwK7hjZB6380LhD",
+  "_id": "Mwmdl7R83DSmIcDX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!Mwmdl7R83DSmIcDX"
+}

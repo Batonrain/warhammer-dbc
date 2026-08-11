@@ -1,0 +1,53 @@
+{
+  "name": "Flaming Rack / Пылающая Стойка",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Стойка из факелов/горелок/жаровен или зачарованных костей в варп-пламени, вмонтированная в броню.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "misc",
+    "worn": "Спина/воротник",
+    "effect": "Источник света и пламени (для Пиромантов). Ситуационные бонусы на запугивание/социальные взаимодействия.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": "Отмечена личными рунами пироманта — только он может использовать как источник Открытого Пламени."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "lV1C79n9yZNmibes",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!lV1C79n9yZNmibes"
+}

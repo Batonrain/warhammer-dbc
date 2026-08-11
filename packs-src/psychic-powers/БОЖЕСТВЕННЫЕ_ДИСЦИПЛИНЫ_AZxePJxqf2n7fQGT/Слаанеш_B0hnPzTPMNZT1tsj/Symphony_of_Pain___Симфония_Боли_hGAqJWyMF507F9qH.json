@@ -1,0 +1,75 @@
+{
+  "name": "Symphony of Pain / Симфония Боли",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-slaanesh.svg",
+  "folder": "B0hnPzTPMNZT1tsj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 300,
+    "discipline": "slaanesh",
+    "subtype": "",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×20м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение · Физическое. Поддержание: Полудействие. Треб.: Метка Слаанеш, T 40+. Когда персонаж в ауре без покровительства Слаанеш выбрасывает дубль: Ступор до след. Хода, ½PR(окр.▲) Усталости, успех нивелируется. Они же +1d10 Dmg от звукового оружия Шумовых Десантников. Лишённые слуха иммунны.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "hGAqJWyMF507F9qH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122035538,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hGAqJWyMF507F9qH"
+}

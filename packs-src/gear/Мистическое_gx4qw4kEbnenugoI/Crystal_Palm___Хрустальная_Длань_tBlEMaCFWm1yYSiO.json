@@ -1,0 +1,53 @@
+{
+  "name": "Crystal Palm / Хрустальная Длань",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Латная рукавица из пластин психоактивного кристалла.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.4,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Кисть",
+    "effect": "Касанием (полудействие) наносит на кожу персональные руны для Пути Силы Нечестивые Символы. Хрупкая: удар/парирование рукой с ней → перчатка разбивается, 1d10+3 R в руку, Crippling(3), Felling(4), игнор брони. Осколки собираются за смену (Scholastic Lore(Occult)(A)−10).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Добавляет S.b к урону разбивания.",
+      "good": "При разбивании — тест WS+10, при Успехе не разбивается.",
+      "best": "Не разбивается вовсе."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": "Хрустальная Длань (разбивание)"
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "tBlEMaCFWm1yYSiO",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!tBlEMaCFWm1yYSiO"
+}

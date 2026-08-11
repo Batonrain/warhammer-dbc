@@ -1,0 +1,138 @@
+{
+  "name": "Дикий мир",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "wild",
+    "description": "В руках выходца персонажа любое примитивное оружие теряет качество Primitive и получает качество Proven (3).",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Старые Пути",
+    "featureDesc": "В руках выходца персонажа любое примитивное оружие теряет качество Primitive и получает качество Proven (3).",
+    "charModLabel": "+3 S, +3 T, −3 F",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "s",
+          "value": 3
+        },
+        {
+          "stat": "t",
+          "value": 3
+        },
+        {
+          "stat": "fel",
+          "value": -3
+        }
+      ]
+    },
+    "notes": ""
+  },
+  "_id": "ouMi1GsAgD9MBcTN",
+  "effects": [],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 250000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "x2Q8rEJtZjAuwHnb",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "TvNEg7DGPbtmCmK3",
+              "kind": "characteristic",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "d2yU8PeJLTBFuRh3",
+              "kind": "characteristic",
+              "charKey": "t",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "UvySJuCBXtI0eWMm",
+              "kind": "characteristic",
+              "charKey": "fel",
+              "field": "total",
+              "op": "subtract",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836766,
+    "modifiedTime": 1786276505411,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ouMi1GsAgD9MBcTN"
+}

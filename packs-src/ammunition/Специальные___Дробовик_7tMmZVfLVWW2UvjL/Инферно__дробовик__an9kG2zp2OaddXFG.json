@@ -1,0 +1,46 @@
+{
+  "name": "Инферно (дробовик)",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
+  "folder": "7tMmZVfLVWW2UvjL",
+  "system": {
+    "description": "Зажигательная пуля для дробовика, заполненная прометием. Меняет вид урона на E(Fl), даёт свойство Flame, убирает свойство Scatter.",
+    "notes": "",
+    "weaponTypes": [
+      "solid"
+    ],
+    "ammoCategory": "shotgun_shells",
+    "rarity": 1,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 1,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "energy",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Flame; убирает Scatter",
+    "properties": []
+  },
+  "_id": "an9kG2zp2OaddXFG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!an9kG2zp2OaddXFG"
+}

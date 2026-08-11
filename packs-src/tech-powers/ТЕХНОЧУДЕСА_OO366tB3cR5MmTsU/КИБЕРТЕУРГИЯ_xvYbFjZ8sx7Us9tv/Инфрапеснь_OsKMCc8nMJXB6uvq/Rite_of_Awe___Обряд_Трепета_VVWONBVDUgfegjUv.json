@@ -1,0 +1,60 @@
+{
+  "name": "Rite of Awe / Обряд Трепета",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "OsKMCc8nMJXB6uvq",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "Инфрапеснь",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 1,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×2м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Respirator Unit · Цена: 1К · Процесс: ½ (У) · Тип: —] Треб.: Medicae+0, Feedback Screech. Инфразвук: все в дальности −3×I.b на встречные тесты против социальных взаимодействий/психического контроля/Одержимости. Импланты Механикум — иммунны. 1 Энергия — направленный.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "VVWONBVDUgfegjUv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041687,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VVWONBVDUgfegjUv"
+}

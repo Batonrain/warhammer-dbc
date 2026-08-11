@@ -1,0 +1,51 @@
+{
+  "name": "Iron Cage / Железная Клеть",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "Atst6W906sMj7L8D",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Техно-арканные инструменты доспеха заарканивают демонов петлями эфирных излучателей и нуль-полей. За полное действие может заарканить демона в Истинной Форме на расстоянии не более I.b м (тест Tech-Use−10 vs W+0). Заарканенный демон парализован и стабилизирован в реальности, пока Кузнец не сдвинется с места. Через W.b (демона) часов пытки демон подчиняется его воле и считается Сломленным: автоматически проваливает встречные тесты W против Кузнеца, пока не вернётся в Варп.",
+    "source": "Элитный архетип: Варп-Кузнец",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "mqxtrmWBRyXWJVbK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121961409,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!mqxtrmWBRyXWJVbK"
+}

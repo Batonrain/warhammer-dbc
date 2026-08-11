@@ -1,0 +1,55 @@
+{
+  "name": "Warprod / Варпоотвод",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "nbyfPB9dD9cOjRiA",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж делает все броски на цену ритуала и цену ошибки 2 раза, выбирая один. Ассистируя, главный ритуалист не может переносить на него цену ритуала/провала без его согласия.",
+    "tier": 3,
+    "requirement": "Forbidden Lore (Warp)+20",
+    "aptitudes": [
+      "int",
+      "knowledge"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "NKtqDF9GfqyjPQkF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121980521,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!NKtqDF9GfqyjPQkF"
+}

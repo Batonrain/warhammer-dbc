@@ -1,0 +1,60 @@
+{
+  "name": "Psalm of the Parting / Псалом Разделения",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "E4orK1NdRaBbgKla",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "Киберпсалмы",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 1,
+    "energyCost": 1,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "athletics",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Касание",
+    "damage": "3d10+S.b",
+    "damageType": "impact",
+    "penetration": 0,
+    "effect": "[Железо: 2+ мехадендрита, Embedded Auspex · Цена: 1К+1Э · Процесс: Нет · Тип: Борьба, Компенсатор, Физическое] Треб.: Athletics+10. Только если держит цель в Захвате ≥2 мехадендритами (S слабейшего). Athletics(S) vs Athletics(S); при победе: 3d10+S.b I(Cr), Pen 0, Concussive (1), Wrecker (3), игнор AP. +1 Когниция (до +3) — +10 на тест за каждую.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "HQ97dWOj7sZwBRQG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041004,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!HQ97dWOj7sZwBRQG"
+}

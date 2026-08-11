@@ -1,0 +1,60 @@
+{
+  "name": "Logis Input / Логис Ввод",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "dRi5YRmgeryXAgUt",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "nootheurgy",
+    "subtype": "Логис",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 1,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "logic",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Logis Engine · Цена: 1К · Процесс: ½ (У) · Тип: —] Треб.: Logic+0. Logic(I) вместо Awareness(P). Копит Логис-Данные (ЛД) на объекты (1 ЛД при первом появлении в Ход; макс. по уровню Logic: +0→1 … Mastery→5). Своб. действием 1 Когниция: Logic(I)+0 на объект — +1 ЛД за 1/4/7/10 Успехи.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "78YxM8zLIh7wkMRM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040402,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!78YxM8zLIh7wkMRM"
+}

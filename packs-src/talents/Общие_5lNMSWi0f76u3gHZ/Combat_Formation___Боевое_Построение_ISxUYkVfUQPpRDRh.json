@@ -1,0 +1,102 @@
+{
+  "name": "Combat Formation / Боевое Построение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "5lNMSWi0f76u3gHZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж тщательно планирует расстановку в бою. Персонаж и все его соратники, с которыми он поделился планами, получают +1 к Инициативе и могут использовать I.b вместо A.b при броске на Инициативу.",
+    "tier": 1,
+    "requirement": "I 40",
+    "aptitudes": [
+      "int",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 1,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ISxUYkVfUQPpRDRh",
+  "effects": [
+    {
+      "name": "Combat Formation / Боевое Построение (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.initiative",
+            "type": "add",
+            "value": 1,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "qP6yMjcuONk4WLAE",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786121976745,
+        "modifiedTime": 1786121976745,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!ISxUYkVfUQPpRDRh.qP6yMjcuONk4WLAE"
+    }
+  ],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121976765,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ISxUYkVfUQPpRDRh"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Chosen One of Darkness / Избранник Тьмы",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "GdIUrM7btft6vPRp",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Все подчинённые-мандрагоры, когда персонаж уходит во тьму или фазовое состояние, могут уйти вместе с ним и перенестись в указанную им точку. Между всеми подчинёнными и признающими его власть мандрагорами возникает телепатическая связь, позволяющая координировать действия. Может перебрасывать проваленные тесты Командования, находясь в Слабом Свете или во Тьме.",
+    "source": "Элитный архетип: Ночной Демон",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "kUVqqrl0shERTlfo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121961221,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!kUVqqrl0shERTlfo"
+}

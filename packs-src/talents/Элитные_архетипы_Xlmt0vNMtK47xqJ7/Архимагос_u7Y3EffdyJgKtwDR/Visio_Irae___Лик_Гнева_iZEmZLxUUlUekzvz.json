@@ -1,0 +1,52 @@
+{
+  "name": "Visio Irae / Лик Гнева",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "u7Y3EffdyJgKtwDR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Ноосферный облик внушает благоговейный ужас в холодные механические сердца. Может потратить Очко Бесчестия, чтобы до конца боя/сцены получить рейтинг Страха 3 против всех недружественных персонажей, способных воспринимать ноосферу, игнорируя их Таланты и Трейты для авто-прохода тестов на Страх.",
+    "tier": 2,
+    "requirement": "Неделимый, Intimidate+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Архимагос",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "iZEmZLxUUlUekzvz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121997035,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!iZEmZLxUUlUekzvz"
+}

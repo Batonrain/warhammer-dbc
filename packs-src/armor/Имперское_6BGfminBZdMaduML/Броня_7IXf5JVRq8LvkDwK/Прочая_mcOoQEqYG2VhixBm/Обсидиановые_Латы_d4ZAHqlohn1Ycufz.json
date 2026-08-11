@@ -1,0 +1,54 @@
+{
+  "name": "Обсидиановые Латы",
+  "type": "armor",
+  "folder": "mcOoQEqYG2VhixBm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "carapace",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 8,
+    "body": 10,
+    "leftArm": 8,
+    "rightArm": 8,
+    "leftLeg": 8,
+    "rightLeg": 8,
+    "quality": "common",
+    "availability": 4,
+    "weight": 4,
+    "properties": [
+      "gorget",
+      "hard",
+      "heavy"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "",
+    "propRatings": {
+      "gorget": 7
+    }
+  },
+  "_id": "d4ZAHqlohn1Ycufz",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!d4ZAHqlohn1Ycufz"
+}

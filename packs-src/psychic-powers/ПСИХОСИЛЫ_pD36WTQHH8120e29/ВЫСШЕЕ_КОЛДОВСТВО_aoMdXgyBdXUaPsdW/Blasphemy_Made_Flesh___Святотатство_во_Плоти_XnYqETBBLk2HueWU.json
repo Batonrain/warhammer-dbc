@@ -1,0 +1,75 @@
+{
+  "name": "Blasphemy Made Flesh / Святотатство во Плоти",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-highSorcery.svg",
+  "folder": "aoMdXgyBdXUaPsdW",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "highSorcery",
+    "subtype": "",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "cor",
+    "testMod": -10,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание. Психотест Cor−10. Поддержание: Полудействие. Треб.: Cor 30+. Атакующий псайкера проходит W−3×PR или замирает от ужаса (теряет действия, оканчивает Ход). Пока поддерживается, все Феномены в 30 м авто-вызывают Прорывы.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "XnYqETBBLk2HueWU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122032728,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!XnYqETBBLk2HueWU"
+}

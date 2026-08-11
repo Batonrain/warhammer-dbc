@@ -1,0 +1,67 @@
+{
+  "name": "Heart Echo / Эхолот Сердца",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Слух, настроенный на сердцебиение.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Слух, настроенный на сердцебиение: Трейт Unnatural Senses(30) на стук сердец живых/умирающих. Дефект (до Best.Q): −10 на тесты, требующие концентрации (гул крови в ушах).\nPoor.Q: штраф −20 постоянно; 1/день при резком звуке своего сердца глохнет на 1 раунд (после Бега/комбо/наркотиков).\nGood.Q: штраф −5.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Диагност (состояние цели по ритму, Medicae(P)+10); 2) Сонар страха (Unnatural Senses(60) против запуганных); 3) Допросист (фокус на одном существе: +20 Deceive/Interrogate/Intimidate); 4) Заглушка (свободным действием отключать чувствительность).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "etJvVu2vXLYA2Du4",
+  "_id": "ligMq88asMhTBJnu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122016332,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ligMq88asMhTBJnu"
+}

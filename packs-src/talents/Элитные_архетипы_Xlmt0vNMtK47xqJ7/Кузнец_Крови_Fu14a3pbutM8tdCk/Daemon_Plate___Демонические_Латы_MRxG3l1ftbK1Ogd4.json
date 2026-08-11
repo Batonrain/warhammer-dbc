@@ -1,0 +1,52 @@
+{
+  "name": "Daemon Plate / Демонические Латы",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Fu14a3pbutM8tdCk",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может вселить порабощённого демона в любой полный доспех. Такой демонический доспех даёт владельцу Трейты Daemonic, Unnatural S и Unnatural A (рейтинги = W.b демона), и весь доспех иммунен к Haywire. При надевании и за каждые сутки ношения владелец проходит тест Демонического Владычества, или попадает под контроль демона на сутки (или пока не снимут доспех); демон получает +40 на встречный тест. Сам Кузнец проходит эти тесты автоматически, пока не теряет порабощение над демоном.",
+    "tier": 2,
+    "requirement": "Кхорн, Trade (Armourer)+20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Кузнец Крови",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "MRxG3l1ftbK1Ogd4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121979683,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MRxG3l1ftbK1Ogd4"
+}

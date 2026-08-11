@@ -1,0 +1,46 @@
+{
+  "name": "Прессованные",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "ev14sDnVPb24ZUoV",
+  "system": {
+    "description": "Особо спрессованные кристаллы, которые способны наносить больший урон, но жертвуют токсичностью. Дают +2 Dmg, +1 Pen и Toxic (1).",
+    "notes": "",
+    "weaponTypes": [
+      "splinter"
+    ],
+    "ammoCategory": "splinter_crystals",
+    "rarity": 2,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 2,
+    "attackMod": 0,
+    "damageMod": 2,
+    "damageTypeOverride": "",
+    "penetrationMod": 1,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "+2 Урон, +1 Пробитие, Toxic (1)",
+    "properties": []
+  },
+  "_id": "4sqVasCm8DWWe0iC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783814777010,
+    "modifiedTime": 1783814777010,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!4sqVasCm8DWWe0iC"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Last Actor / Последний Актёр",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "KL96OdH8roKxwvkZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Черта Солитера. Персонаж имеет A.b реакций и 4 ОД, бросает трижды на инициативу (три хода в раунде). Парирует Flexible как обычное оружие и атаки существ любого размера; контролирует сколько угодно противников в рукопашной; авто-проходит контратаки и избегание от свободных атак. Получает разницу A с противником на все физические тесты против него; если A.b противника ≤½ его — противник не может физически избегать его атак. Бонус к рукопашному урону = разница инициатив. Может применять рукопашные таланты на любые свои атаки.",
+    "tier": 1,
+    "requirement": "Создание Персонажа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Черта архетипа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "2z2oZkoiVxXbxLqb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121964894,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!2z2oZkoiVxXbxLqb"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Halo of Lightning / Нимб Молний",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-fulmination.svg",
+  "folder": "wHuZcMub9poC3Rx5",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 350,
+    "discipline": "fulmination",
+    "subtype": "",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание. Треб.: Thunderfist. Не перегружающийся щит-купол 1-<20+5×PR> (макс. 1-80). Дубль на щите → молния в атакующего (до PR×10м): 1d10+PR E(El), Pen ½PR(окр.▲), Arc (8/2d10). Можно снизить до 1-<10+3×PR> для молний на любом чётном. Иммунен к E(El).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "SPZtcGSy3voBcZTJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122031550,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SPZtcGSy3voBcZTJ"
+}

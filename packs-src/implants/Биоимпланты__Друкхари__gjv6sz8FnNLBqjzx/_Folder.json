@@ -1,0 +1,23 @@
+{
+  "name": "Биоимпланты (Друкхари)",
+  "type": "Item",
+  "sorting": "m",
+  "_id": "gjv6sz8FnNLBqjzx",
+  "description": "",
+  "folder": null,
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448751,
+    "modifiedTime": 1782031448751,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!folders!gjv6sz8FnNLBqjzx"
+}

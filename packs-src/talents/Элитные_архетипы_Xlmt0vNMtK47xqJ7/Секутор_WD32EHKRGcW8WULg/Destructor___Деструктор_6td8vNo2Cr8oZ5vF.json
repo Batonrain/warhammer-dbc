@@ -1,0 +1,52 @@
+{
+  "name": "Destructor / Деструктор",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "WD32EHKRGcW8WULg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Структурные анализаторы способны заметить мельчайшую слабину в броне. Может потратить Очко Бесчестия, чтобы до конца боя при Структурном Анализе добавлять ещё +½I.b (окр.▲) к Pen оружия при атаках по целям с высокотехнологичной бронёй (не примитивной), машинам и зданиям.",
+    "tier": 3,
+    "requirement": "Тзинч",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Секутор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "6td8vNo2Cr8oZ5vF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121968201,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6td8vNo2Cr8oZ5vF"
+}

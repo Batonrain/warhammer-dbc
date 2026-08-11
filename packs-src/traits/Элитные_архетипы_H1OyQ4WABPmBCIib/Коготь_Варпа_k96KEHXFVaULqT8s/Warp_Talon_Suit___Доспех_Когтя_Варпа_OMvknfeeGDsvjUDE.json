@@ -1,0 +1,51 @@
+{
+  "name": "Warp Talon Suit / Доспех Когтя Варпа",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "k96KEHXFVaULqT8s",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Броня и прыжковый ранец сливаются с телом. Не способен снимать броню и прыжковый ранец, но они больше не нуждаются в зарядке и способны регенерировать боевые повреждения; не считаются технологическими устройствами и не могут быть повреждены или отключены эффектом Haywire. Может использовать AP своей брони против урона от горения и оружия со свойством Warp Weapon. Не получает негативных эффектов от нахождения в Варпе без защитных полей. Шлем изменяется, чтобы включать раскрываемую пасть, с помощью которой может есть или плеваться кислотой, не снимая шлема.",
+    "source": "Элитный архетип: Коготь Варпа",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "OMvknfeeGDsvjUDE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121959405,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!OMvknfeeGDsvjUDE"
+}

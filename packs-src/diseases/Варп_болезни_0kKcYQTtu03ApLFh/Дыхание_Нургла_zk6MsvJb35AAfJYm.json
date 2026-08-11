@@ -1,0 +1,39 @@
+{
+  "name": "Дыхание Нургла",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "nurgle",
+    "contagion": "",
+    "incubation": "T.b часов",
+    "symptoms": "Тяжёлая одышка: −10 на соц. взаимодействие; Бег/Натиск не чаще раза в 2 Хода. Раз за сцену/бой — выблевать поток гноя (пистолет: Rng 10 м, S/–/–, 2d10 C, Pen 2, Corrosive (3), Independent, Spray, Toxic (2)). Два «7» на кубиках урона → заражённый взрывается изнутри и гибнет.",
+    "vectors": "Непоглощённое бронёй попадание гноем — Т+0 или заражение.",
+    "cure": "Две недели постельного режима + Medicae−20.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "zk6MsvJb35AAfJYm",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!zk6MsvJb35AAfJYm"
+}

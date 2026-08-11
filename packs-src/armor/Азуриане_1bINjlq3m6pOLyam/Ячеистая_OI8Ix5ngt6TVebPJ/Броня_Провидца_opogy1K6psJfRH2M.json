@@ -1,0 +1,55 @@
+{
+  "name": "Броня Провидца",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Обычная униформа провидцев эльдар, которую они носят обычно поверх или под своей рунной броней. Легкая тканевая церемониальная одежда прошита нитями из психокости, что позволяет концентрировать свое сознание на определенных вещах, что помогает в прорицании и ритуальных делах. Броня провидца дает бонус +10 на манифестацию всех психосил, +20 на сопротивление вражеским психосилам и одержимости, удваивающийся против одержимости демонов Слаанеш и бонус +30 на тесты психосил из категории Прорицания и на проведение ритуалов. \n\n",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 2,
+    "body": 2,
+    "leftArm": 2,
+    "rightArm": 2,
+    "leftLeg": 2,
+    "rightLeg": 2,
+    "quality": "common",
+    "availability": 4,
+    "weight": 1,
+    "properties": [
+      "aspect",
+      "protective",
+      "runesOfProtection",
+      "stealthed"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Провидцы/Путевидцы). +10 манифестация, +20 сопротивление психосилам/одержимости (×2 против Слаанеш), +30 на Прорицание/ритуалы.",
+    "propRatings": {
+      "protective": 4
+    }
+  },
+  "_id": "opogy1K6psJfRH2M",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!opogy1K6psJfRH2M"
+}

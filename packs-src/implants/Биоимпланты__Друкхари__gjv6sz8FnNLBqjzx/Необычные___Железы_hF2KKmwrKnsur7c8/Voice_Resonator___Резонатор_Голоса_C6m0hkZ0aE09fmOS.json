@@ -1,0 +1,67 @@
+{
+  "name": "Voice Resonator / Резонатор Голоса",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Многослойные мембраны вместо связок.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Многослойные мембраны и резонирующие полости: 1/бой за полудействие боевой вопль — все без звуковой защиты в 40 м проходят P+10 или Глохнут на Провалы раундов (на 5+ Провалов также Оглушены 1 раунд). После — голос срывается на 10 мин (нет социальных тестов).\nPoor.Q: радиус 10 м; срыв на 1 час; 1/день голос срывается самопроизвольно.\nGood.Q: срыв на 1 минуту.\nBest.Q: неутомимые связки, дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Ультразвук (не слышен большинству, тест существам P−20; глухие иммунны); 2) Инфразвук (также страх как Fear(2), сквозь стены до 5 м); 3) Гипнотический голос (+20 Charm/Intimidate/Interrogate); 4) Каскадный резонанс (1/день всем укреплениям в T.b урон в AP, кроме целых).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "hF2KKmwrKnsur7c8",
+  "_id": "C6m0hkZ0aE09fmOS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122012133,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!C6m0hkZ0aE09fmOS"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Atlas / Атлант",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telekinesis.svg",
+  "folder": "ygP4X0hhfw7I8drJ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "telekinesis",
+    "subtype": "Разное",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение. Треб.: Mind Over Matter. Двигать предмет ≤PR×1т где угодно в дальности (≤W.b×1 м/Ход). Слишком тяжёлый — поддерживать и полным действием поднять эPR на 1 (до ×3 стартового). Поднятый персонаж — A+20 при манифестации и в начале своего Хода, чтобы высвободиться. Пока поддерживается, нельзя Атаки и Бег; Оглушение развеивает.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "QTWw2tJjclejZuk1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122030937,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!QTWw2tJjclejZuk1"
+}

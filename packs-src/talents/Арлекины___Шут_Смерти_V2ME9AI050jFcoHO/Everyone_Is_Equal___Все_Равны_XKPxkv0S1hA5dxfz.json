@@ -1,0 +1,54 @@
+{
+  "name": "Everyone Is Equal / Все Равны",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "V2ME9AI050jFcoHO",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Нанеся минимум 5 непоглощённого урона технике, весь её экипаж проходит тест против Страха. Если провалила половина+ экипажа — в следующий раунд весь экипаж теряет 1 ОД и 1 Реакцию. Пилот обязан пытаться спасти технику от Шута Смерти независимо от своего теста.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "XKPxkv0S1hA5dxfz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121986661,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!XKPxkv0S1hA5dxfz"
+}

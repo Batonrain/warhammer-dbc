@@ -1,0 +1,54 @@
+{
+  "name": "Токс",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "KnUk2d8QYuaqbcC2",
+  "system": {
+    "description": "Пуля, оставляющая в ране след из быстро растворимого порошкового яда. Даёт свойство Toxic (2).",
+    "notes": "",
+    "weaponTypes": [
+      "solid"
+    ],
+    "ammoCategory": "bullets",
+    "rarity": -1,
+    "quantity": 0,
+    "weight": 0,
+    "availability": -1,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageDiceMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Toxic (2)",
+    "properties": [
+      {
+        "key": "toxic",
+        "rating": 2,
+        "rating2": 0
+      }
+    ],
+    "condMods": []
+  },
+  "_id": "ke5NsfgTtL27ea4L",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1785149863465,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!ke5NsfgTtL27ea4L"
+}

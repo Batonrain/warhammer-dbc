@@ -1,0 +1,55 @@
+{
+  "name": "Psychic Collapse / Психический Обвал",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "eI14Vbl1EBbwi5Rc",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За полудействие псайкер может развеять психосилу, что поддерживал на себе/оружии (поддержание которой уменьшает его тPR), чтобы развеять чужую психосилу на себе или автоматически победить в текущем встречном тесте против атаки Одержимостью, но немедленно вызывает Феномен.",
+    "tier": 3,
+    "requirement": "PR 7, For.Lore (Warp)+30",
+    "aptitudes": [
+      "defence",
+      "psyker"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "bVEwsytvZRleYpK2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121990497,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!bVEwsytvZRleYpK2"
+}

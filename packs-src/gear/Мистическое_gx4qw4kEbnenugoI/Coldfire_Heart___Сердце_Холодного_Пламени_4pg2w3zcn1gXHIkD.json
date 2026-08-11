@@ -1,0 +1,53 @@
+{
+  "name": "Coldfire Heart / Сердце Холодного Пламени",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Искусственное сердце из псиоактивных кристаллов; не приживается у Нургла.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Имплант сердца",
+    "effect": "Раз за бой/сцену заменить результат Феномена на «Могильный Холод» (даже Прорыв). Тзинч: при манифестации другого псайкера в 50 м — тест W+0 или эPR той силы −Провалы (аннулируется при 0). Иммунны носящие частички носителя (≤9 дней). Снять только пересадкой сердца или с трупа.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Замена Феномена вызывает 1 Усталости.",
+      "good": "Замену Феномена до 3 раз за сцену.",
+      "best": "Как Good.Q; также иммунитет к холоду."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "4pg2w3zcn1gXHIkD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!4pg2w3zcn1gXHIkD"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Flesh-Crafted Gut / Гастральный Биоимплант",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 1. Живой желудочно-кишечный тракт.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Живой ЖКТ, восстанавливает пищеварение и обмен веществ.\n\nВАРИАЦИИ:\n• Усиленный метаболизм (R1): нужно ½ пищи; 1/день после плотного обеда (≥0.5 кг) +1d5 ран; в засуху −10 T (нужно больше воды).\n• Плотоядный желудок (R2): полное питание из сырой плоти, иммунитет к испорченному мясу; после 1 кг сырой плоти за час +10 T на 6 ч.\n• Желудок-алхимик (R2): сознательно проглоченный яд хранится 24 ч без вреда — выплюнуть или нанести на оружие/ногти; переваривает органику и часть пластиков.\nPoor.Q: −1d5+10 T, болезненно-худой, тошнота; при провале T — рвота (−10 действиям, полудействие на восстановление).\nGood.Q: иммунитет к пищевым отравлениям (гниль), переваривает любую органику; снимает 1 уровень усталости от голода/истощения за 30 мин.\nBest.Q: всё Good.Q + иммунитет ко всем съеденным/выпитым ядам, анализ состава проглоченного (Awareness+0) + 1 эффект (R +1 за каждый доп.): 1) Всеядность (любая органика/пластик, не голодает при наличии органики); 2) Ядовитый резервуар (хранение яда неделю, выплюнуть/передать через поцелуй/укус; метаболизировать яд за неделю → иммунитет; берётся несколько раз); 3) Регенеративное питание (поедание плоти разумных живых/недавних, ≥1 кг → +1d5+2 ран/30 мин в течение часа, отрастить конечность); 4) Гастрономический анализатор (раса/болезни/место обитания по вкусу крови, +20); 5) Кислотный вздох (1/день струя кислоты 5 м, 1d10+3+T.b C, Pen 4).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "BNlIBu7Dewa9PnWE",
+  "_id": "52nkkzV1Brovjt7L",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122011060,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!52nkkzV1Brovjt7L"
+}

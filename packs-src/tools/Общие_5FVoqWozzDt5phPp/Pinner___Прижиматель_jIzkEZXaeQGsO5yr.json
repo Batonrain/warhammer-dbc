@@ -1,0 +1,44 @@
+{
+  "name": "Pinner / Прижиматель",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Гантель с магнитными катушками. Включение/выключение за полудействие. Батарея лазпистолета (Clip 30, Rld ½), 5 зарядов/Ход активности.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": 2,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Поле r20м: магнитные замки нельзя выключить, предметы снять только силой.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "10 зарядов/Ход, радиус только 15м.",
+      "good": "Радиус 30м, не действует на пользователя.",
+      "best": "Как Good.Q; за полное действие 15 зарядов — на секунду отключить все замки в r30м (предметы падают)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "jIzkEZXaeQGsO5yr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!jIzkEZXaeQGsO5yr"
+}

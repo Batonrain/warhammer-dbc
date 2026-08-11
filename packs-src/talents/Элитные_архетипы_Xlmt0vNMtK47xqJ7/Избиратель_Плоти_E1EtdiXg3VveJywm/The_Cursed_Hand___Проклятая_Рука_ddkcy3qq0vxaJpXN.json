@@ -1,0 +1,52 @@
+{
+  "name": "The Cursed Hand / Проклятая Рука",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "E1EtdiXg3VveJywm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может модифицировать ритуал, используя руки Best.Q своих жертв. Одна рука даёт на выбор: считаться ассистентом-ритуалистом со всеми нужными навыками, талантами и трейтами кроме PR (если рука псайкера — с его PR); закрыть одно требуемое знание, сократив нужное число знаний; считаться Записью (+1) вплоть до Запись (4). За три руки — один переброс проваленного теста ритуала. Также может запечатывать ритуалы внутри рук: на Best.Q руку жертвы наносятся зелёные руны за 2 часа работы, после чего касание этой рукой любого ритуала персонажа или его союзников поглощает ритуал целиком — предметы, круги и оставшееся время — и позволяет высвободить его в любом месте. Ритуалы персонажа используют не энергии Варпа, а энергии тьмы Элиндраха, что избавляет от демонов, но может призвать Мандрагор.",
+    "tier": 3,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Избиратель Плоти",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ddkcy3qq0vxaJpXN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121992096,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ddkcy3qq0vxaJpXN"
+}

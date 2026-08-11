@@ -1,0 +1,52 @@
+{
+  "name": "Alien Consciousness, Alien Powers / Чуждое Сознание, Чуждые Силы",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "BHFD9WvxCcrQdrNS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Медуза игнорирует все психосилы Телепатии, применяя свои эффекты на противников как обычно и игнорируя урон от телепатических сил. Игнорирует рейтинг From Beyond всех противников в расчёте своих атак и психосил, что позволяет обманывать ощущения даже демонов и сородичей.",
+    "tier": 3,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Медуза",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ufI5ON3PpyWAq0As",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786122006481,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ufI5ON3PpyWAq0As"
+}

@@ -1,0 +1,35 @@
+{
+  "name": "ЭМИ / Haywire",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Всплеск ЭМ-энергии. Создаёт сферическое поле радиусом X. Воздействует на высокотех. снаряжение (эффект по таблице 1d10, +X к броску), длится 1 ход.",
+    "reminder": "📡 ЭМИ (X): нарушает высокотех. снаряжение (таблица 1d10+X)",
+    "category": "ranged",
+    "hasRating": true,
+    "hasRating2": false,
+    "autoKey": "haywire",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "wt7ixguILscIOUAP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353819,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!wt7ixguILscIOUAP"
+}

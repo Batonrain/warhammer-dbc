@@ -1,0 +1,84 @@
+{
+  "name": "Гравитационные паруса (крейсеры+)",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "IVKXcmObWAIHiGgB",
+  "system": {
+    "kind": "supplemental",
+    "power": 5,
+    "space": 0,
+    "sp": 4,
+    "rarity": 4,
+    "quality": "common",
+    "hulls": "Лёгкие крейсеры, Крейсеры, Линейные крейсеры, Гранд-крейсеры, Линкоры",
+    "aspects": "",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [
+      {
+        "key": "xenotech"
+      },
+      {
+        "key": "external"
+      },
+      {
+        "key": "fast",
+        "rating": 1
+      },
+      {
+        "key": "maneuverable",
+        "rating": 5
+      }
+    ],
+    "hull": {
+      "spaceMax": 0,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "",
+      "hullIntegrity": 0
+    },
+    "chars": {
+      "speed": 0,
+      "manoeuvrability": 0,
+      "detection": 0,
+      "voidShields": 0,
+      "armour": 0,
+      "turretRating": 0
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 0,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "mXQXi5njLyNAlPFO",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782058869090,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!mXQXi5njLyNAlPFO"
+}

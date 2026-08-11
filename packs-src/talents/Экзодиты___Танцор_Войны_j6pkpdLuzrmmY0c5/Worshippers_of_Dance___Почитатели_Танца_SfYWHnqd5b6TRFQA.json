@@ -1,0 +1,52 @@
+{
+  "name": "Worshippers of Dance / Почитатели Танца",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "j6pkpdLuzrmmY0c5",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Черта Танцора Войны. Полудвижение SPD×2, Полное Движение SPD×3, Натиск SPD×6, Бег SPD×12. +1 реакция. Неограниченное число атак в ход (пока есть ОД и Реакции) и контратак в раунд; неограниченные провокации Cleave; Быстрая/Молниеносная атака провоцирует Cleave или Whirlwind of Death на выбор. +1 успех на проваленные Acrobatics. Может использовать Trade (Dancer)(A) вместо BS (метание, гранаты) и WS (Финт, Давление). Доп. тесты уворота без сжигания успехов. Перебрасывает Acrobatics/Stealth/Sleight of Hand. Без усталости от Sprint. Assassin Strike — прыжок на полное движение, авто-проход, неограниченно. Нанося экстремальный урон, может потратить до 2 очков судьбы (+4 за каждое).",
+    "tier": 1,
+    "requirement": "Создание Персонажа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Черта архетипа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "SfYWHnqd5b6TRFQA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121983912,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SfYWHnqd5b6TRFQA"
+}

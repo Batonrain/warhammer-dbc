@@ -1,0 +1,67 @@
+{
+  "name": "Glow Symbiote / Живой Фонарь",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 1. Светящийся симбионт на теле.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Биолюминесцентный свет до 30 м (цвет/частота по мысли); вспышка-луч 100 м в конусе 30°. Дефект (до Best.Q): в покое светится — ситуативный штраф Stealth.\nPoor.Q: свет тусклый (10 / 50 м); −20 Stealth.\nGood.Q: яркий (50 / 150 м); −5 Stealth.\nBest.Q: можно гасить до нуля, дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Ультрафиолет (подсветка следов/знаков, +10 Восприятие на улики); 2) Тепловое излучение (обогрев себя/союзников в 2 м, +10 T против холода); 3) Сигнальный прожектор (узкий луч 250 м); 4) Ослепительная вспышка (1/бой Blast(T.b) Blinding(1) на себя, +30 на свой тест).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "r3L1E0FleRYKkFs0",
+  "_id": "o7NW40x6jzfP1QfE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122016651,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!o7NW40x6jzfP1QfE"
+}

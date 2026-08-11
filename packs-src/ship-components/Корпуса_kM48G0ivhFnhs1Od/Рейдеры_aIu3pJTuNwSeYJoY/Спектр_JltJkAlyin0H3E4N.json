@@ -1,0 +1,78 @@
+{
+  "name": "Спектр",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "aIu3pJTuNwSeYJoY",
+  "system": {
+    "kind": "hull",
+    "power": 0,
+    "space": 0,
+    "sp": 31,
+    "rarity": 0,
+    "quality": "common",
+    "hulls": "",
+    "aspects": "Warp Speed: /4",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [
+      {
+        "key": "warpSpeed"
+      },
+      {
+        "key": "voidShadow",
+        "rating": 0,
+        "rating2": 15
+      }
+    ],
+    "hull": {
+      "spaceMax": 30,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "1Н",
+      "hullIntegrity": 20
+    },
+    "chars": {
+      "speed": 14,
+      "manoeuvrability": 50,
+      "detection": 25,
+      "voidShields": 0,
+      "armour": 13,
+      "turretRating": 1
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 0,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "JltJkAlyin0H3E4N",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!JltJkAlyin0H3E4N"
+}

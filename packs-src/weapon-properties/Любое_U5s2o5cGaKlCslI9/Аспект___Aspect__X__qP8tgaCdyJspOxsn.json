@@ -1,0 +1,35 @@
+{
+  "name": "Аспект / Aspect (X)",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "U5s2o5cGaKlCslI9",
+  "system": {
+    "description": "Оружие создано под определённый аспект/группу эльдарских воинов. Без соответствующего Пути (указанного в скобках) — штраф −30 на тесты использования. Не-Асуриане/Иннари могут модификацией R3 убрать штраф.",
+    "reminder": "🛡️ Аспект: без нужного Пути −30 к использованию",
+    "category": "both",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "aspect",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "qP8tgaCdyJspOxsn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353822,
+    "modifiedTime": 1786224353827,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!qP8tgaCdyJspOxsn"
+}

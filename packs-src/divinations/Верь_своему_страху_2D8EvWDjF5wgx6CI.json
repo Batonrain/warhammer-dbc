@@ -1,0 +1,126 @@
+{
+  "name": "Верь своему страху",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "fear",
+    "roll": "02-05",
+    "rollMin": 2,
+    "rollMax": 5,
+    "text": "Верь своему страху",
+    "effect": "P +5 и талант Paranoia.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "+5 P",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "per",
+          "value": 5
+        }
+      ]
+    },
+    "description": "",
+    "notes": ""
+  },
+  "_id": "2D8EvWDjF5wgx6CI",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "YjRGEbML7ePxkAiY",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "BY2hgtJrVF5rrGKE",
+              "kind": "characteristic",
+              "charKey": "per",
+              "field": "total",
+              "op": "add",
+              "value": 5,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "tuT5YUPZX9ma8OEG",
+              "kind": "talent",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.IvX0UEz5sTGtU9dy",
+              "sourceName": "Paranoia / Паранойя",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786003756747,
+    "modifiedTime": 1786281028055,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!2D8EvWDjF5wgx6CI"
+}

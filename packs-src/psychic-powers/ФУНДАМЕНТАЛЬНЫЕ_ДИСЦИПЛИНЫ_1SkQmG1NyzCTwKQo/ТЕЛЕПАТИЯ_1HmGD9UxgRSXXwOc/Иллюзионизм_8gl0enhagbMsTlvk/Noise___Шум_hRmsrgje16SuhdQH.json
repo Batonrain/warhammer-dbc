@@ -1,0 +1,75 @@
+{
+  "name": "Noise / Шум",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "8gl0enhagbMsTlvk",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 100,
+    "discipline": "telepathy",
+    "subtype": "Иллюзионизм",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 20,
+    "action": "half",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение. Психотест W+20 (или −40 по площади) vs W+0. Треб.: Thought Sending. На одну цель (+20) или всех в дальности кроме исключённых (−40). При победе: −5×Успехи на все тесты (кроме T) до начала след. Хода псайкера (макс. −20). Сильнее: 3+У — теряет полудействие; 6+У — Ступор на <Провалы−5> Раундов; 12+У — теряет сознание до урона/пробуждения.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "hRmsrgje16SuhdQH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122035615,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hRmsrgje16SuhdQH"
+}

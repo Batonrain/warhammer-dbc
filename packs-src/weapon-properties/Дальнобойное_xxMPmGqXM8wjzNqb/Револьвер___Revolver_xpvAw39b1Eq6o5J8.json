@@ -1,0 +1,35 @@
+{
+  "name": "Револьвер / Revolver",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Переключается между патронами в магазине (разные типы боеприпасов в барабане).",
+    "reminder": "🔄 Револьвер: переключение между патронами в барабане",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "revolver",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "xpvAw39b1Eq6o5J8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353821,
+    "modifiedTime": 1786224353826,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!xpvAw39b1Eq6o5J8"
+}

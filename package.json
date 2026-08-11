@@ -5,9 +5,12 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "packs:unpack": "node tools/unpack.mjs",
+    "packs:build": "node tools/pack.mjs"
   },
   "devDependencies": {
+    "@foundryvtt/foundryvtt-cli": "^3.0.4",
     "eslint": "^9",
     "globals": "^16",
     "vitest": "^3"

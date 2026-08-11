@@ -1,0 +1,60 @@
+{
+  "name": "Moravec Maw / Пасть Моравека",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "f9otPZYmgnLApc8A",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "animatheurgy",
+    "subtype": "Моравек",
+    "miracleType": "anima",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 5,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -10,
+    "action": "half",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "2d10+2×I.b",
+    "damageType": "rending",
+    "penetration": 0,
+    "effect": "[Железо: Repository of Moravec · Цена: 5К · Процесс: Нет · Тип: Анима, Атака, Стрельба] Треб.: I 55, For.Lore(Warp)+30, Moravec Eyes. Шаблон на техножреце (не бьёт его/дружественных, но может их телепортировать): 2d10+2×I.b R, Pen 0, Blast (I.b), Shocking, Tearing. Цели в шаблоне телепортируются на <больший кубик урона> м в выбранном направлении.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "DxDHa7krUHhxX0mV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040804,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!DxDHa7krUHhxX0mV"
+}

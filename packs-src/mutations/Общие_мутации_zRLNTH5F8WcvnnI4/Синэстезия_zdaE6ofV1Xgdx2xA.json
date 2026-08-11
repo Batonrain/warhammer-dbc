@@ -1,0 +1,49 @@
+{
+  "name": "Синэстезия",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Наблюдение за персонажем одним из чувств активирует несколько других чувств наблюдателя. Взгляд на него сопровождается музыкой или скрежетом и запахом цветов или вонью мертвечины, его голос светится переливами многоцветного пламени и чувствуется кожей как брызги воды и т. п. Тесты Scrutiny против персонажа получают штраф −20, а Избирательные атаки по нему получают дополнительный штраф −10, но он получает штраф −20 на все социальные взаимодействия и Командование и по решению ГМа также штраф на тесты Stealth, особенно на попытки смешаться с толпой.",
+    "source": "Общие мутации, d100 50",
+    "roll": "50",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zdaE6ofV1Xgdx2xA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122022514,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zdaE6ofV1Xgdx2xA"
+}

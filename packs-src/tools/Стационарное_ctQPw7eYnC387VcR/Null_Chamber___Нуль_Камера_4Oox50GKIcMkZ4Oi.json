@@ -1,0 +1,44 @@
+{
+  "name": "Null Chamber / Нуль Камера",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Камера удержания псайкеров, отрезающая от Варпа. Все внутри теряют Трейт Psyker (но не мешает демоническим дарам / Инкантациям).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 2,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Медленно сводит с ума: 1 урона в W за 10−PR дней (не восстанавливается внутри); при W 0 сходит с ума.",
+      "good": "Размером с гроб, с жизнеобеспечением; анабиоз для бета/альфа-псайкеров.",
+      "best": "Как Good.Q; авто-убивает заключённого при любом нарушении сдерживания (альфа-плюс)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "4Oox50GKIcMkZ4Oi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!4Oox50GKIcMkZ4Oi"
+}

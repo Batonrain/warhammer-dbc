@@ -1,0 +1,75 @@
+{
+  "name": "Vault of Time / Сокровищница Времени",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-chronomancy.svg",
+  "folder": "ucMfNIrwP2mezoaI",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "chronomancy",
+    "subtype": "",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание. Треб.: Rewind, Total Recall. Запоминает текущее состояние себя для отката Перемоткой; до I.b образов (новый заменяет старый при лимите).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "JtpitxAM4iVmsyn4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122028696,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JtpitxAM4iVmsyn4"
+}

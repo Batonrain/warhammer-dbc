@@ -1,0 +1,54 @@
+{
+  "name": "Рабочий Шлем",
+  "type": "armor",
+  "folder": "3McgPlLCvgsBJmpX",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "simple",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 2,
+    "body": 0,
+    "leftArm": 0,
+    "rightArm": 0,
+    "leftLeg": 0,
+    "rightLeg": 0,
+    "quality": "common",
+    "availability": -4,
+    "weight": 1,
+    "properties": [
+      "hard",
+      "primitive",
+      "protective"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "",
+    "propRatings": {
+      "protective": 5
+    }
+  },
+  "_id": "CzAU232pvsXmKnwb",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!CzAU232pvsXmKnwb"
+}

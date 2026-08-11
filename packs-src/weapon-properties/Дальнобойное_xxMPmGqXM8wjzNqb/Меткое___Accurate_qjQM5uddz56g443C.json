@@ -1,0 +1,35 @@
+{
+  "name": "Меткое / Accurate",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Для метких снайперских выстрелов. Одиночный прицельный выстрел получает +10 к попаданию и +1d10 урона при 3–4 СУ, либо +2d10 при 5+ СУ. Эти доп. кубы не вызывают Экстремальный урон.",
+    "reminder": "🎯 Меткое: одиночный прицельный +10; +1d10 урона (3–4 СУ) / +2d10 (5+ СУ)",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "accurate",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "qjQM5uddz56g443C",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353817,
+    "modifiedTime": 1786224353823,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!qjQM5uddz56g443C"
+}

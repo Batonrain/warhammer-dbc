@@ -1,0 +1,54 @@
+{
+  "name": "Sweeping Storm / Сметающий Шторм",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "V2ME9AI050jFcoHO",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "С Крикуном персонаж за полудействие может отметить BS.b целей на ретинальном дисплее: +20 на стрельбу по ним, игнор укрытий, штрафов за скорость/высоту/ближний бой/заложников; при Уклонении пуля разворачивается и наносит ещё одно попадание с обратной стороны. Только на короткой дистанции.",
+    "tier": 2,
+    "requirement": "Оружие Крикун",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "OgW97Gy3adrq0s39",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121981768,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!OgW97Gy3adrq0s39"
+}

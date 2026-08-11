@@ -1,0 +1,33 @@
+{
+  "name": "Дополнительное Бронирование / Extra Armour",
+  "type": "vehicleGear",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Дополнительные пластины защищают экипаж и топливоводы. Когда Крит. Эффект вызывает штрафы для экипажа или Пожар, бросьте 1d10 — на 5+ экипаж игнорирует эффект, а Пожар не начинается.",
+    "notes": "",
+    "availability": 2,
+    "quality": "common",
+    "active": true
+  },
+  "_id": "K4ToQYHWS4XwKv4u",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783179040775,
+    "modifiedTime": 1783179040775,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!K4ToQYHWS4XwKv4u"
+}

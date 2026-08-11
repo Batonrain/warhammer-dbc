@@ -1,0 +1,55 @@
+{
+  "name": "Blade Juggler / Жонглер Клинком",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "pLgnldl5cff6lVNS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Вооружённый ножом с пустой рукой, раз в Ход за ментальное свободное действие персонаж проходит против противника Deceive(WS)+0 vs Awareness(P)+0; при победе накладывает Успехи×5 штрафа на Избегания цели от его следующей атаки ножом в этот Ход. Это занимает свободную руку (ею нельзя атаковать в этот Ход).",
+    "tier": 2,
+    "requirement": "WS 40, Deceive, Ambidextrous",
+    "aptitudes": [
+      "ws",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "wXeb0Jp9k0zbGsFi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122007851,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wXeb0Jp9k0zbGsFi"
+}

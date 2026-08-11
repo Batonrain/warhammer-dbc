@@ -1,0 +1,53 @@
+{
+  "name": "Collar of Khorne / Ошейник Кхорна",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Тяжёлый бронзовый ошейник с рунами ненависти.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Шея",
+    "effect": "−30 на психотесты в r16 м, +30 на сопротивление психосилам; Force-оружие, попавшее по носителю, теряет Force до начала следующего Хода атакующего. Укусы носителя — Sanctified. Псайкер в ошейнике теряет Трейт Psyker и Беспомощен; без снятия умирает через 8 ч. AP 8 в шею (не складывается).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Нет ауры −30; псайкер не умирает — просто Беспомощен.",
+      "good": "Психосила, не сработавшая из-за −30, вызывает Феномен.",
+      "best": "Как Good.Q; иммунитет к эффектам Феноменов и Прорывов."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "gckT8Q33aPM9EBwC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!gckT8Q33aPM9EBwC"
+}

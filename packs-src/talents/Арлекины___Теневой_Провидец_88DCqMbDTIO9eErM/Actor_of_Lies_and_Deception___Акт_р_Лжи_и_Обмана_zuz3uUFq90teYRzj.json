@@ -1,0 +1,52 @@
+{
+  "name": "Actor of Lies and Deception / Актёр Лжи и Обмана",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "88DCqMbDTIO9eErM",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Черта Теневого Провидца. Может считывать мысли в обход обычной защиты (кроме покровителей ксено-божеств). +20 на психосилы Телекинеза/Телепатии/Прорицания. При успехе этих + Фантасмагории получает успехи от Unnatural W; при провале манифестации уменьшает провалы на ½ Unnatural W (мин.1); феномен/прорыв уменьшается на 10×Unnatural W (вплоть до отмены). Снижает стоимость этих психосил вдвое (окр.▼). Фокусы психосил за 500 опыта (кроме Либрариума). Psyniscience: успех с P.b (не-психосила) или ½ Unnatural W успехами. Все его психосилы неопознаваемы. Сразу владеет Руной Судьбы и Руной Битвы как Путь Силы.",
+    "tier": 1,
+    "requirement": "Создание Персонажа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Черта архетипа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zuz3uUFq90teYRzj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122010499,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zuz3uUFq90teYRzj"
+}

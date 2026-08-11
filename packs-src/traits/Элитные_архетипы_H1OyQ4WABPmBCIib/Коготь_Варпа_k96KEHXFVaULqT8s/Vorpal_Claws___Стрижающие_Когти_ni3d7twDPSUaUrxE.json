@@ -1,0 +1,51 @@
+{
+  "name": "Vorpal Claws / Стрижающие Когти",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "k96KEHXFVaULqT8s",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Руки и ноги искажаются в длинные когти, потрескивающие энергией Варпа. Считаются Когтями с профилем: Когти.P, Rng 1, Dmg 1d10+4 R, Pen 7, Power Field, Reinforced, Tainted, Warp Weapon. За свободное действие может отключать и включать обратно любые из свойств когтей. Не может проводить тонкие манипуляции пальцами (нужные для большинства Навыков Trade) и пользуется только специально модифицированным под эти руки оружием. Когти на ногах могут хватать предметы и персонажей точно так же, как руки.",
+    "source": "Элитный архетип: Коготь Варпа",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ni3d7twDPSUaUrxE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121961563,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ni3d7twDPSUaUrxE"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Harder They Fall / Тем Больнее Им Падать",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "uEhZDcVBKdRy5L2M",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Зная слабые и сильные места противника, использует его размер и вес против него. Когда использует Трейт War Seer против цели Размером больше 1, увеличивает Успехи в Размер цели раз.",
+    "tier": 1,
+    "requirement": "Кхорн, Common Lore (War)+20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Виткис",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "YZ65dWDIorKy2bcn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121987499,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!YZ65dWDIorKy2bcn"
+}

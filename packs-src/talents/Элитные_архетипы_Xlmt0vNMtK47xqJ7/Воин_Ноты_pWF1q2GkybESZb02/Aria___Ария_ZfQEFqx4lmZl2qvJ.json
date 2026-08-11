@@ -1,0 +1,52 @@
+{
+  "name": "Aria / Ария",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "pWF1q2GkybESZb02",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Рассекая воздух элегантными дугами, клинки издают божественную музыку. Вооружённый клинковым оружием с Балансом не ниже 0, может раз в Ход за свободное действие пройти тест Trade(Dancer)−10, при Успехе выдавая музыку из оружия (считается как вживую). Не работает в вакууме или под водой.",
+    "tier": 1,
+    "requirement": "Слаанеш, Cor 30, Trade (Dancer)+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Воин Ноты",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ZfQEFqx4lmZl2qvJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121988639,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ZfQEFqx4lmZl2qvJ"
+}

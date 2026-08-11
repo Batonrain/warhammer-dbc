@@ -1,0 +1,112 @@
+{
+  "name": "Ветряная Глефа",
+  "type": "weapon",
+  "folder": "V0vMf42aEJ9aQmup",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "exotic",
+    "range": 6,
+    "balance": 2,
+    "grips": "2р (1р, Бл)",
+    "profileLabel": "Глефа",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10+11",
+    "damageType": "rending",
+    "penetration": 9,
+    "quality": "common",
+    "availability": 4,
+    "weight": 0.4,
+    "attackBonus": 0,
+    "special": "Глефа; Хват 2р [1р, Бл]; Досягаемость 4–6. Режим посоха (досяг. 2–4): 1d10+2 I(Cr), Pen 2, Dueling Weapon, Eldar Precise, Power Field, Reinforced. По конечности без силовой брони +1d10. −10 рейтингу щитов. Proven (9) (минимум 4). Атака в сочленение: +1d10 и ещё +1d10 за каждые 3 успеха.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "duelingWeapon"
+      },
+      {
+        "key": "eldarPrecise"
+      },
+      {
+        "key": "eldarRazorSharp"
+      },
+      {
+        "key": "extreme",
+        "rating": 8
+      },
+      {
+        "key": "felling",
+        "rating": 6
+      },
+      {
+        "key": "powerField"
+      },
+      {
+        "key": "reinforced"
+      },
+      {
+        "key": "stepByStep"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "TZ5UiZUOh4WQj7Ft",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!TZ5UiZUOh4WQj7Ft"
+}

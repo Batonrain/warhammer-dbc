@@ -1,0 +1,53 @@
+{
+  "name": "Retinal Display / Ретинальный Дисплей",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Микро-когитатор и лазерный проектор изображения на сетчатку, считывающий движение зрачка для команд-пассов.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.5,
+    "availability": 1,
+    "quality": "common",
+    "gearCategory": "head",
+    "worn": "Голова (И)",
+    "effect": "Присоединяется к когитатору/ауспексу/картографу/инфопланшету/визору и выводит данные; переключение визоров в шлеме за свободное действие.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Громоздкий (1.5 кг), зернистое изображение: −10 на тесты зрения через него.",
+      "good": "Компактен (0.1 кг), встраивается в дужку очков/монокль.",
+      "best": "Замаскирован под родинку у глаза (0 кг)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "UiZz594A4rVxruoa",
+  "_id": "ojOBvlqx4x4h6K4T",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!ojOBvlqx4x4h6K4T"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Tongue Worm / Симбиот-Переводчик",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Червь-симбионт в языке и гортани.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Червь в языке/гортани: понимает незнакомый язык после 1 мин прослушивания и говорит на нём базово. Дефект (до Best.Q): при провале социального теста на +2 искажает перевод; нужно 150 г сырого мяса/день, иначе спячка.\nPoor.Q: понимание за 10 мин, речь ломаная; ошибки при любом провале; без мяса грызёт язык (нет речи).\nGood.Q: понимание за 1 мин; ошибки лишь при провале на +3; мясо раз в неделю.\nBest.Q: язык усваивается навсегда, дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Абсолютная память (до 500 языков); 2) Имитация голоса (Талант Mimic; если есть — повтор за 10 мин, +30 Deceive); 3) Понимание животных (эмоции/намерения, феромоны как речь); 4) Бессловесная связь (с носителями такого же импланта в 30 м феромонами).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "r3L1E0FleRYKkFs0",
+  "_id": "IWk5G2UDM3t97Gfp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122012897,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!IWk5G2UDM3t97Gfp"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "Паттерн: Минерва",
+  "type": "weaponMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/weaponmod.svg",
+  "folder": "NvazMigqr5D1QKOM",
+  "system": {
+    "description": "−1 Надёжность, −1 Dmg. Увеличивает RoF лазпистолета или лазкарабина до S/4/6, лазгана — до S/5/7 (выставьте вручную).",
+    "notes": "",
+    "category": "ranged",
+    "modGroup": "las",
+    "requirement": "Лазпистолет, лазкарабин, лазган или лонглаз; паттерны между собой несовместимы, кроме лонглаза. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": 0,
+    "quality": "common",
+    "effects": {
+      "attackMod": 0,
+      "damageMod": -1,
+      "penMod": 0,
+      "rangeMod": 0,
+      "rangeMult": 1,
+      "clipMod": 0,
+      "clipMult": 1,
+      "rofSemiMod": 0,
+      "rofFullMod": 0,
+      "reliabilityMod": -1,
+      "balanceMod": 0,
+      "weightPct": 0,
+      "addProps": [],
+      "removeProps": []
+    },
+    "drukhari": false
+  },
+  "_id": "xaKPb42xff0wMsCb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785247479839,
+    "modifiedTime": 1786122048792,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!xaKPb42xff0wMsCb"
+}

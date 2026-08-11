@@ -1,0 +1,51 @@
+{
+  "name": "Blunted / Затупленный (X)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Душа незаметна для психического взора: атаки/психосилы на основе Варпа против него Psyniscience −10×X; обнаружение Awareness +20−10×X. Полностью игнорирует Warp Weapon.",
+    "notes": "",
+    "benefit": "Скрыт от Варпа; защита от психо-атак ×X.",
+    "source": "Варп/природа",
+    "hasRating": true,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "NIqtExZhiuT96TvS",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781652440036,
+    "modifiedTime": 1786121959294,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!NIqtExZhiuT96TvS"
+}

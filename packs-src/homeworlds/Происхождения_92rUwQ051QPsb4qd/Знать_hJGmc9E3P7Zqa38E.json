@@ -1,0 +1,166 @@
+{
+  "name": "Знать",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "noble",
+    "description": "Персонаж получает +5 на тест Command(F) прямыми подчинёнными, +10 к Лояльности всех миньонов и Common Lore (Intrigue).",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Привычка к власти",
+    "featureDesc": "Персонаж получает +5 на тест Command(F) прямыми подчинёнными, +10 к Лояльности всех миньонов и Common Lore (Intrigue).",
+    "charModLabel": "+3 F, +3 I, −3 T",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "fel",
+          "value": 3
+        },
+        {
+          "stat": "int",
+          "value": 3
+        },
+        {
+          "stat": "t",
+          "value": -3
+        }
+      ]
+    },
+    "notes": ""
+  },
+  "_id": "hJGmc9E3P7Zqa38E",
+  "effects": [],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 275000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "7GCjrR7JVIoOax9o",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "RATZnzlCHuiGXQTZ",
+              "kind": "characteristic",
+              "charKey": "fel",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "Q838nnBfG43szhGG",
+              "kind": "characteristic",
+              "charKey": "int",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "DaGllDqjS6QkDdsQ",
+              "kind": "characteristic",
+              "charKey": "t",
+              "field": "total",
+              "op": "subtract",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "FiSvpWyd8OGOo3nU",
+              "kind": "skill",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "group",
+              "skillKey": "commonLore",
+              "specKey": "intrigue",
+              "specialty": "Intrigue",
+              "rank": "knows",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836767,
+    "modifiedTime": 1786271525422,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!hJGmc9E3P7Zqa38E"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Somatic Arsenal / Соматический Арсенал",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 4. Полипотентные клетки-архитекторы в конечностях.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Свободным действием раз в раунд формирует биооружие (+10 WS): Монокогти (1d10+T.b R, Pen 9, Crunch/Tearing); Костяные Клинки (1d10+4 R, Pen 4, Dueling, Extreme(8), Reinforced, Tearing); Инъекционный Шип (1d5+T.b R, Toxic(5)); Хитиновый Хлыст (1d10+4 I(Cr), Flexible). Best.Q: всё оружие получает Reinforced + Power Field, опции «Сдвоенные конечности» и «Метательные лезвия» (20 м).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "MVwzimCMiFagXpH6",
+  "_id": "cDeouewf2pPsprVy",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122015217,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!cDeouewf2pPsprVy"
+}

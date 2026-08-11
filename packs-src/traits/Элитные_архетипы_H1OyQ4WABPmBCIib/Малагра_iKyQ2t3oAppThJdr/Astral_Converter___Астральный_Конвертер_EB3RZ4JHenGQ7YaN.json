@@ -1,0 +1,51 @@
+{
+  "name": "Astral Converter / Астральный Конвертер",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "iKyQ2t3oAppThJdr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Реактор в сердце черпает силу из крохотной звезды, заключённой техниками Тёмной Эры Технологий. Имеет Катушку Потенции с 10 зарядами и в начале своего Хода восстанавливает 1 заряд.",
+    "source": "Элитный архетип: Малагра",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "EB3RZ4JHenGQ7YaN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121958240,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EB3RZ4JHenGQ7YaN"
+}

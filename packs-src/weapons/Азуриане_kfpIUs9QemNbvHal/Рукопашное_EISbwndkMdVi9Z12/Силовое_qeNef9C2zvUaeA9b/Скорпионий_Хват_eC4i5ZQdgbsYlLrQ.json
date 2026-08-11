@@ -1,0 +1,95 @@
+{
+  "name": "Скорпионий Хват",
+  "type": "weapon",
+  "folder": "qeNef9C2zvUaeA9b",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "power",
+    "range": 2,
+    "balance": 1,
+    "grips": "Л+П",
+    "profileLabel": "Когти.П",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10+2",
+    "damageType": "energy",
+    "penetration": 6,
+    "quality": "common",
+    "availability": 3,
+    "weight": 3,
+    "attackBonus": 0,
+    "special": "Когти.П; Хват Л+П; Досягаемость 1–2. Aspect: Жалящие Скорпионы. Атаки +1 Размер; +10 S; встроен Сюрикен Пистолет (Independent).",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "aspect"
+      },
+      {
+        "key": "powerField"
+      },
+      {
+        "key": "reinforced"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "eC4i5ZQdgbsYlLrQ",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!eC4i5ZQdgbsYlLrQ"
+}

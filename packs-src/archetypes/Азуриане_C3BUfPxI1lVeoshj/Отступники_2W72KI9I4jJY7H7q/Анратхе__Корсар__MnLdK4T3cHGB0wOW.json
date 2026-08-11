@@ -1,0 +1,52 @@
+{
+  "name": "Анратхе (Корсар)",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "2W72KI9I4jJY7H7q",
+  "system": {
+    "key": "aelAnrathe",
+    "race": "azuriane",
+    "group": "Отступники",
+    "charBonus": {
+      "t": 5
+    },
+    "charChoice": "+3 к WS или BS (на выбор)",
+    "skills": "",
+    "talents": "",
+    "gear": "",
+    "wounds": "",
+    "infRoll": "3d5+10",
+    "requiredPath": "Путь Изгоя или Путь Мореплавателя",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Корсар, кичащийся своим богатством.",
+    "trait": {
+      "name": "Bragging Wealth / Бахвальное Богатство",
+      "benefit": "+15 на оценку ценности, поиск трофеев и взлом замков. При провале поиска ценностей — находит 1d5+1 расходников. До I.b вещей всегда в Удобной разгрузке; их можно доставать/возвращать 3 раза/битву за Свободное действие. Только эльдарское снаряжение и предметы с Compact, не Тяжёлое."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "MnLdK4T3cHGB0wOW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536190,
+    "modifiedTime": 1786285536194,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!MnLdK4T3cHGB0wOW"
+}

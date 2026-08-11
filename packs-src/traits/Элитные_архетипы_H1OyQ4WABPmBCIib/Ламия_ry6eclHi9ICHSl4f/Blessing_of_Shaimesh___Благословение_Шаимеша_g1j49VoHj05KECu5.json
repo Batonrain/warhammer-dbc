@@ -1,0 +1,51 @@
+{
+  "name": "Blessing of Shaimesh / Благословение Шаимеша",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "ry6eclHi9ICHSl4f",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Перед боем может усилить оружие до I.b персонажей (для себя бесплатно), дав ему Crippling (+2), Felling (4/+2), Toxic (+2). Только для оружия с уроном R, I, I(Cr) и X(Fr). Улучшение держится I.b часов. Одно и то же оружие нельзя улучшить дважды, даже разными ламиями. Когда усиленное оружие вызывает условия для Очка Боли, персонаж тоже его получает.",
+    "source": "Элитный архетип: Ламия",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "g1j49VoHj05KECu5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121960829,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!g1j49VoHj05KECu5"
+}

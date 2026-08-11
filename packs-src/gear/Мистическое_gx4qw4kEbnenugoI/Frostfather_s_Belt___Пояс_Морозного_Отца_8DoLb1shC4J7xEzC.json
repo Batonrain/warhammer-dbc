@@ -1,0 +1,59 @@
+{
+  "name": "Frostfather's Belt / Пояс Морозного Отца",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Тяжёлый пояс культа Морозных Отцов (Виткисы).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Пояс",
+    "effect": "Колчан на 16 стрел / 4 дротика или до 4 ножен/петель под одноручное метательное/метаемое рукопашное. Пробыв 8 ч в связанном элементе, снаряд/оружие мистически связывается: в конце Хода растворяется дымом и возникает в разгрузке (если не в руке). Вне разгрузки 8 ч или занятая разгрузка → связь рвётся.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Связывается только с 2 ножнами/петлями.",
+      "good": "Можно намеренно подавить возвращение снарядов/оружия.",
+      "best": "Как Good.Q; за полудействие вернуть снаряд/оружие, который кто-то держит в руке."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "4x1",
+          "count": 4,
+          "note": "ножны/петли или колчан"
+        }
+      ],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "8DoLb1shC4J7xEzC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!8DoLb1shC4J7xEzC"
+}

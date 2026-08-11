@@ -1,0 +1,60 @@
+{
+  "name": "Swarm of Elder Sotha / Рой Старицы Соты",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "f9otPZYmgnLApc8A",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "animatheurgy",
+    "subtype": "Моравек",
+    "miracleType": "anima",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 4,
+    "energyCost": 0,
+    "sustainCost": 2,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "half",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×1м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Repository of Moravec · Цена: 4К · Процесс: 2 (У) · Тип: Славословие (2)] Треб.: For.Lore (Warp)+30. Вселяет мелких демонов в до I.b высокотехнологичного оружия/предметов: демоническое (W 10), авто-подчиняется; не тратит энергию/топливо, иммунно к Haywire. При прекращении/выходе из дальности демон покидает предмет.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "SxxZkYPK86XDG8jp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041585,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SxxZkYPK86XDG8jp"
+}

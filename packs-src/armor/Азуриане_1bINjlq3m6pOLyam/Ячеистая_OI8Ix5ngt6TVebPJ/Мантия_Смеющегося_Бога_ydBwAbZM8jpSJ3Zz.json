@@ -1,0 +1,50 @@
+{
+  "name": "Мантия Смеющегося Бога",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Легкая пестрая тканевая одежда, которая отмечает своего владельца как того, кто находится под покровительством самого Смеющегося Бога и его слуг – арлекинов. Раз в несколько десятилетий каждая маска получает от своего покровителя по три подобные мантии и распространяют их среди особо отличительных личностей разных эльдар, в основном среди миров–кораблей. До тех пор, пока персонаж носит данную броню – он получает +2 очков судьбы к максимуму, поскольку сам Смеющийся Бог покровительствует ему. Если броня попадает в чужие руки тем или иным образом – она всегда возвращается в руки персонажа не позже чем через неделю, ибо Смеющийся Бог не даст своему подарку пропасть в чужих руках.",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 0,
+    "body": 0,
+    "leftArm": 0,
+    "rightArm": 0,
+    "leftLeg": 0,
+    "rightLeg": 0,
+    "quality": "common",
+    "availability": 4,
+    "weight": 0,
+    "properties": [
+      "protective",
+      "stealthed"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Protective (A.b). AP = A.b−4 по всем зонам. +2 к максимуму Очков Судьбы; всегда возвращается владельцу."
+  },
+  "_id": "ydBwAbZM8jpSJ3Zz",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!ydBwAbZM8jpSJ3Zz"
+}

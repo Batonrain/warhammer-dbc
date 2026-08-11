@@ -1,0 +1,52 @@
+{
+  "name": "Diabolist / Дьяболист",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "hhrwa4G7Vg9pXSsH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В свой Ход может потратить Очко Бесчестия, чтобы до конца боя/сцены иметь возможность обращать (меняя местами десятки и единицы) броски на ритуалы, Демоническое Владычество, психосилы и Феномены (но не Прорывы). Если выбрасывает дубль на ритуале призыва — призывает более мощного демона или большую группу, автоматически подчиняет их Владычеством, и те лишаются Трейта Warp Instability на W.b персонажа Часов.",
+    "tier": 3,
+    "requirement": "Неделимый, W 60",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Ветеран Долгой Войны",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "DuwBvBfo78y5Wei5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121973099,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!DuwBvBfo78y5Wei5"
+}

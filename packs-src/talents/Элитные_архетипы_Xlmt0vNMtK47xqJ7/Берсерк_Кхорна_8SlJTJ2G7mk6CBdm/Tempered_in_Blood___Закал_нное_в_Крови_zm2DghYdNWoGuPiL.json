@@ -1,0 +1,52 @@
+{
+  "name": "Tempered in Blood / Закалённое в Крови",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "8SlJTJ2G7mk6CBdm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Мощь кузницы Кровавого Бога пронизывает оружие сквозь покрывающую его кровь. Если рукопашное оружие R Dmg нанесло хотя бы 1 урона в этом бою, до конца боя оно не может быть уничтожено, повреждено, выбито или вырвано из рук.",
+    "tier": 2,
+    "requirement": "Кхорн, Cor 25",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Берсерк Кхорна",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zm2DghYdNWoGuPiL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122010400,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zm2DghYdNWoGuPiL"
+}

@@ -1,0 +1,76 @@
+{
+  "name": "Защитный кожух плазменного двигателя (Гранд/Линкоры)",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "jLcHdh9jQMma4SY5",
+  "system": {
+    "kind": "supplemental",
+    "power": -2,
+    "space": 2,
+    "sp": 1,
+    "rarity": 2,
+    "quality": "common",
+    "hulls": "Гранд-крейсеры, Линкоры",
+    "aspects": "Robust Design: 4; плазменный двигатель. Integral: Plasma Drive",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [
+      {
+        "key": "robustDesign"
+      },
+      {
+        "key": "integral"
+      }
+    ],
+    "hull": {
+      "spaceMax": 0,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "",
+      "hullIntegrity": 0
+    },
+    "chars": {
+      "speed": 0,
+      "manoeuvrability": 0,
+      "detection": 0,
+      "voidShields": 0,
+      "armour": 0,
+      "turretRating": 0
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 0,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "XcbJ7aMaE8P92yBR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782058869090,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!XcbJ7aMaE8P92yBR"
+}

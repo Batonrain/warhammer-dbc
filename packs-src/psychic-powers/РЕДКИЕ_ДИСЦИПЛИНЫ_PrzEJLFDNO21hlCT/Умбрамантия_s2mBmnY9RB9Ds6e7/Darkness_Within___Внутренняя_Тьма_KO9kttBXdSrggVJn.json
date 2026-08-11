@@ -1,0 +1,75 @@
+{
+  "name": "Darkness Within / Внутренняя Тьма",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-umbramancy.svg",
+  "folder": "s2mBmnY9RB9Ds6e7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "umbramancy",
+    "subtype": "",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+PR",
+    "damageType": "rending",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Незримое · Психический Обстрел · Стрельба. Треб.: Enveloping Darkness. Профиль: PR×10м, 1d10+PR R, Pen 0, Felling (PR), игнор брони (не AP техники)/укрытий/линии обзора. Уклонение только через W. Убийство — тень твердеет на PR Раундов (Страх 1 для врагов).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "KO9kttBXdSrggVJn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122029000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KO9kttBXdSrggVJn"
+}

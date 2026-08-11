@@ -1,0 +1,46 @@
+{
+  "name": "Сетка",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-shell.svg",
+  "folder": "7tMmZVfLVWW2UvjL",
+  "system": {
+    "description": "Выстрел сжатой сеткой из стальной проволоки. Уменьшает дальность вдвое, не наносит урона, даёт свойство Snare (1).",
+    "notes": "",
+    "weaponTypes": [
+      "solid"
+    ],
+    "ammoCategory": "shotgun_shells",
+    "rarity": 0,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 0,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 0.5,
+    "special": "Без урона; Snare (1)",
+    "properties": []
+  },
+  "_id": "BAAMOuVJYaG0BKwT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!BAAMOuVJYaG0BKwT"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Malearius / Малеарий",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "6zqwe7FwtprTdkL4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сражается метеоритным молотом, танцуя на его реактивных струях как артист. Вооружённый метеоритным молотом и не нося броню прочнее AP4 ни на одной части тела, удваивает длину и высоту прыжков и отскока Уклонением и Талантом Assassin Strike, а также получает доп. Реакцию, которую может тратить только на Уклонение и доп. атаки молотом от Furious Assault.",
+    "tier": 2,
+    "requirement": "Неделимый, Exotic Weapon Training (Meteor Hammer)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Гладиатор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "h4WDs4xOChyAWwqD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121995641,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!h4WDs4xOChyAWwqD"
+}

@@ -1,0 +1,60 @@
+{
+  "name": "Мерцающие Поля / Flickerfield",
+  "type": "vehicleTrait",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Друкхарийское мерцающее поле мешает вести огонь. Любые стрелковые атаки по машине дальше дистанции «в упор» получают −20. Размер машины в расчёте бонусов противника на стрельбу по ней уменьшается на −2, и размер не влияет на её скрытность.",
+    "notes": "",
+    "benefit": "−20 стрелкам издали; Size −2 против неё.",
+    "availability": 0,
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "hasRating3": false,
+    "rating3": 0,
+    "effects": {
+      "openTopped": false,
+      "manoeuvreMod": 0,
+      "spdMod": 0,
+      "spdDamageReduce": 0,
+      "noMove": false,
+      "swerveDisabled": false,
+      "fullMoveSpdMult": 0,
+      "smallMoveOnly": false,
+      "ignoreDifficultTerrain": false,
+      "critHalved": false,
+      "trackHitsToHull": false,
+      "siege": false,
+      "reloadRapid": false,
+      "commandBonus": 0,
+      "repairBonus": 0,
+      "deflectorShield": false,
+      "deflectorDaemonic": false,
+      "ignoreCrewCrits": false,
+      "autonomous": false,
+      "flickerfield": true
+    }
+  },
+  "_id": "zDnL3ON3ttYqsL7I",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783871637791,
+    "modifiedTime": 1783871637791,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!zDnL3ON3ttYqsL7I"
+}

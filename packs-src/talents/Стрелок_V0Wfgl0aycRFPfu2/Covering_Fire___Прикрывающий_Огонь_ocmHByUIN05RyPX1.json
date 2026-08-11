@@ -1,0 +1,55 @@
+{
+  "name": "Covering Fire / Прикрывающий Огонь",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "V0Wfgl0aycRFPfu2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Совершая Выход из Боя, в конце движения персонаж может за свободное действие совершить короткую/длинную очередь из пистолета/винтовки (не дл. винтовки) по тем, из рукопашной с кем выходил, со штрафом −20. Если те попытаются Натиск на него — тест Подавление +10/+0 (короткая/длинная).",
+    "tier": 2,
+    "requirement": "BS 40, P 40",
+    "aptitudes": [
+      "bs",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "ocmHByUIN05RyPX1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122001474,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ocmHByUIN05RyPX1"
+}

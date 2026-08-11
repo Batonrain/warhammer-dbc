@@ -1,0 +1,75 @@
+{
+  "name": "Blood Strings / Кровавые Нити",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-bloodMagic.svg",
+  "folder": "mPkSuxuvyxFv4Lup",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "bloodMagic",
+    "subtype": "",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×5м / PR×20м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение · Кровавая Жертва (T.b цели). Психотест W+0 vs T+0. Треб.: Exanguinate. Только на цель с Кровотечением. Победа: действия жертвы контролируются (без Ментальных действий); Unnatural S/T/A (+PR), игнор Усталости и Крит. Эффектов (кроме смерти/потери конечностей), авто-проходит Кровотечение. В конце Хода с активными физ. действиями — PR в А.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "X44Fl1Fr2eWcdNAx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122032541,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!X44Fl1Fr2eWcdNAx"
+}

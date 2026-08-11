@@ -1,0 +1,75 @@
+{
+  "name": "Phoenix / Феникс",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-pyromancy.svg",
+  "folder": "iUtDvue9DBG7pOTR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 350,
+    "discipline": "pyromancy",
+    "subtype": "Внутреннее пламя",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание · Цикл (1). Треб.: Fiery Form (поддерживается). При смерти псайкер развеивает силу и становится костром Ø PR×0,5м; если не потушат — через 1d5 Раундов возрождается в Огненной Форме с полными Ранами; потушат — настоящая смерть.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "afUw8h6IE9E5rX9t",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122033570,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!afUw8h6IE9E5rX9t"
+}

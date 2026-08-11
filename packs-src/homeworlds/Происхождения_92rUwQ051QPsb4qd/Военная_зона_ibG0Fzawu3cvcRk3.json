@@ -1,0 +1,166 @@
+{
+  "name": "Военная зона",
+  "type": "homeworld",
+  "img": "icons/svg/city.svg",
+  "system": {
+    "key": "warzone",
+    "description": "Выполняя одиночную атаку, персонаж может изменить результат определения места попадания, увеличив или уменьшив результат до своего A.b.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "featureName": "Выживание среди убийц",
+    "featureDesc": "Выполняя одиночную атаку, персонаж может изменить результат определения места попадания, увеличив или уменьшив результат до своего A.b.",
+    "charModLabel": "+3 A, +3 P, −3 T",
+    "choices": {},
+    "friendlySpecs": [],
+    "effects": {
+      "charValueBonuses": [
+        {
+          "stat": "ag",
+          "value": 3
+        },
+        {
+          "stat": "per",
+          "value": 3
+        },
+        {
+          "stat": "t",
+          "value": -3
+        }
+      ]
+    },
+    "notes": ""
+  },
+  "_id": "ibG0Fzawu3cvcRk3",
+  "effects": [],
+  "folder": "92rUwQ051QPsb4qd",
+  "sort": 150000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "nZGgNsBPSjHhA8Rp",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "b5WRM43QHOHmV7u2",
+              "kind": "characteristic",
+              "charKey": "ag",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "f77ENtJdBRfZXLGB",
+              "kind": "characteristic",
+              "charKey": "per",
+              "field": "total",
+              "op": "add",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "KTnltgM5Y8pisqja",
+              "kind": "characteristic",
+              "charKey": "t",
+              "field": "total",
+              "op": "subtract",
+              "value": 3,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "",
+              "code": ""
+            },
+            {
+              "id": "gPcabIUhkmiWDLGS",
+              "kind": "script",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "label": "Сдвиг попадания",
+              "code": "await item.setFlag(\"warhammer-dbc\", \"hitLocationShift\", true);"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785948836768,
+    "modifiedTime": 1786271401976,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ibG0Fzawu3cvcRk3"
+}

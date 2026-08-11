@@ -1,0 +1,53 @@
+{
+  "name": "Vortex Pendant / Вихревая Подвеска",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Фокус из редких психокристаллов для развеивания чужих чар.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Корона/ожерелье/перстень",
+    "effect": "За полное действие тест W−20 прервать поддержание одной психосилы, чья цель/источник в r ½ W м. Пси-Чутьё <7 Успехов не засекает её как артефакт.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "При Провале развеять одну из своих сил (по выбору). Не скрыта от Пси-Чутья.",
+      "good": "Тест W−15, дальность W м.",
+      "best": "Тест W−10, дальность W м; также психофокус (манифест через неё засекается −30)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "xPM5xIfVFqAiMaDB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!xPM5xIfVFqAiMaDB"
+}

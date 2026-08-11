@@ -1,0 +1,60 @@
+{
+  "name": "Psalm of the Singing Blades / Псалом Поющих Клинков",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "E4orK1NdRaBbgKla",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "Киберпсалмы",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 2,
+    "energyCost": 0,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Unctor Cognis, Noise Reductor · Цена: 2К · Процесс: 1 (У) · Тип: —] Треб.: Trade (Weaponsmith)+10. Всё рукопашное оружие, интегрированное в бионику/кибернетику (вкл. Унктор Когнис) без Contained, получает Reinforced и Resonant.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "JLR9pXDtjywW9kGI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041129,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JLR9pXDtjywW9kGI"
+}

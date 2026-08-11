@@ -1,0 +1,53 @@
+{
+  "name": "Endless Grasp / Бесконечная Хватка",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Бронзовый скелет руки, прожигающийся к костям ладони.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1.5,
+    "availability": 5,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Ладонь (сплавлена)",
+    "effect": "Наложение: 1d10 E в руку, рука бесполезна неделю. После исцеления — за свободное действие призывать Оружие Наследия в руку, где бы оно ни было.",
+    "reminder": "Качество не влияет на функционал.",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "cia9CsIofq2rIeWT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!cia9CsIofq2rIeWT"
+}

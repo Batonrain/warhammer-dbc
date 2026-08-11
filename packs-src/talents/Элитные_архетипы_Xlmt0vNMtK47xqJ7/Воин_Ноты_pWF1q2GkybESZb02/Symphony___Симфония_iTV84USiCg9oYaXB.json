@@ -1,0 +1,52 @@
+{
+  "name": "Symphony / Симфония",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "pWF1q2GkybESZb02",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Под божественную гармонию музыки клинки поражают врагов со сверхъестественной точностью. Когда слышит музыку на 6+ Успехов вживую или по воксу, все его рукопашные и метательные атаки получают свойства Felling (Успехи−5) и Precise.",
+    "tier": 3,
+    "requirement": "Слаанеш, Cor 60",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Воин Ноты",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "iTV84USiCg9oYaXB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121996965,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!iTV84USiCg9oYaXB"
+}

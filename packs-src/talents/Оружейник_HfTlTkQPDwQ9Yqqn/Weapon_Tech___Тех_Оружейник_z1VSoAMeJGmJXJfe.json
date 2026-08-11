@@ -1,0 +1,55 @@
+{
+  "name": "Weapon-Tech / Тех-Оружейник",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "HfTlTkQPDwQ9Yqqn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может увеличить Dmg и Pen плазменного, мельта или экзотического стрелкового оружия на I.b. Нужно потратить 5 минут на подготовку (можно заранее); нельзя применить к тому же оружию повторно без повторной настройки.",
+    "tier": 1,
+    "requirement": "I 40, Tech-Use+10",
+    "aptitudes": [
+      "offence",
+      "tech"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "z1VSoAMeJGmJXJfe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122009296,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!z1VSoAMeJGmJXJfe"
+}

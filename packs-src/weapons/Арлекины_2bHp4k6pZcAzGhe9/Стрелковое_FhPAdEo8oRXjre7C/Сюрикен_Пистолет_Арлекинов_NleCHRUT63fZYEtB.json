@@ -1,0 +1,102 @@
+{
+  "name": "Сюрикен Пистолет Арлекинов",
+  "type": "weapon",
+  "folder": "FhPAdEo8oRXjre7C",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "pistol",
+    "weaponType": "shuriken",
+    "range": 30,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "½",
+    "magazineCur": 40,
+    "magazineMax": 40,
+    "rof_single": 1,
+    "rof_semi": 3,
+    "rof_full": 5,
+    "damage": "1d10+4",
+    "damageType": "rending",
+    "penetration": 6,
+    "quality": "common",
+    "availability": 4,
+    "weight": 0.9,
+    "attackBonus": 0,
+    "special": "Toxic: 7, 2d10. Цель, погибшая от Toxic, оплавляется. Атака в сочленение: +1d10 и ещё +1d10 за каждые 3 успеха.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "eldarPrecise"
+      },
+      {
+        "key": "eldarRazorSharp"
+      },
+      {
+        "key": "extreme",
+        "rating": 9
+      },
+      {
+        "key": "felling",
+        "rating": 6
+      },
+      {
+        "key": "toxic"
+      },
+      {
+        "key": "veryReliable"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "NleCHRUT63fZYEtB",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784645463257,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!NleCHRUT63fZYEtB"
+}

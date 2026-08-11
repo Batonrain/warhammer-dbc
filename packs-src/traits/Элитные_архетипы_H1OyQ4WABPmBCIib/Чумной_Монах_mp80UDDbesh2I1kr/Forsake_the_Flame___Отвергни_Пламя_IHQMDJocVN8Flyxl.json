@@ -1,0 +1,51 @@
+{
+  "name": "Forsake the Flame / Отвергни Пламя",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "mp80UDDbesh2I1kr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Благословения монаха отрицают оружие, что сжигает плоть, изгоняя её из цикла жизни и смерти. Не может использовать оружие, наносящее E Dmg — его руки буквально не слушаются, когда он пытается им замахнуться или нажать спусковой крючок.",
+    "source": "Элитный архетип: Чумной Монах",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "IHQMDJocVN8Flyxl",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121958638,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!IHQMDJocVN8Flyxl"
+}

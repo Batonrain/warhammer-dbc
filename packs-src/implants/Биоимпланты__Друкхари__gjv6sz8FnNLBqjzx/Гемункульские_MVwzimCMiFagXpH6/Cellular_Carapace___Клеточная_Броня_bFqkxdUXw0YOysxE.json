@@ -1,0 +1,67 @@
+{
+  "name": "Cellular Carapace / Клеточная Броня",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 4. Кожа замещена колонией-панцирем.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Гемункульский. Кожа замещена колонией-панцирем: ×2 T.b в расчёте поглощения физ. урона, Трейт Regeneration(2).\nBest.Q: в начале сессии выбрать тип урона — +4 T.b против него + 1 эффект (R +1 за каждый доп.): 1) Активная оборона (1/день Реакцией +8 AP всем частям на 1 раунд, перезарядка 1 ч); 2) Хитиновые лезвия (Deadly Natural Weapons(4, Когти/Кулаки/Голова/Копыта)); 3) Мимикрия (+20 Stealth, поверхностная имитация внешности).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "MVwzimCMiFagXpH6",
+  "_id": "bFqkxdUXw0YOysxE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122015106,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!bFqkxdUXw0YOysxE"
+}

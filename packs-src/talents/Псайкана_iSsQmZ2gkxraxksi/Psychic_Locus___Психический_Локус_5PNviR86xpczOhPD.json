@@ -1,0 +1,55 @@
+{
+  "name": "Psychic Locus / Психический Локус",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "iSsQmZ2gkxraxksi",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Изучая потоки Варпа 8 часов, персонаж проходит Psyniscience+0 и при Успехе запоминает местность (запишите Успехи). Не дальше P.b×100м от неё он может уменьшить любой бросок на Феномен на Успехи×5, но уменьшает Успехи места на 1. Только один локус одновременно.",
+    "tier": 1,
+    "requirement": "PR 1, Meditation, Psyniscience+20",
+    "aptitudes": [
+      "per",
+      "psyker"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "5PNviR86xpczOhPD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121966934,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!5PNviR86xpczOhPD"
+}

@@ -1,0 +1,49 @@
+{
+  "name": "Дыхание Жизни",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Нургл дарует своему чемпиону силу, способную бросать вызов смерти. Он может вдохнуть своё дыхание в рот трупу, умершему не более 3 дней назад. Его собственные Раны при этом опускаются до 0 (если они не были ниже), а труп возвращается к жизни с 0 Ран. Персонаж не может использовать эту способность повторно, пока полностью не вылечит свои Раны. Персонажи с покровительством Тзинча или Слаанеш при воскрешении должны выбрать либо проигнорировать эффект и остаться мёртвыми, либо потерять покровительство своего Бога.",
+    "source": "Дары Нургл, d100 78…80",
+    "roll": "78…80",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "N0PjW8fVPs1mw8xo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019530,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!N0PjW8fVPs1mw8xo"
+}

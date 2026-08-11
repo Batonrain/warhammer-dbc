@@ -1,0 +1,44 @@
+{
+  "name": "Reductor / Редуктор",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Инструмент полевых похоронных церемоний Космодесанта для извлечения геносемени необученными.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 5,
+    "availability": 0,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Полудействие: извлечь геносемя/органы Medicae+30 (сквозь броню). 6 крио-контейнеров.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "1 контейнер, одноразовый.",
+      "good": "Донорские органы/кровь тем же тестом; 10 контейнеров.",
+      "best": "Как Good.Q; Преимущество на все тесты."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "EDX0M2TEbpXYBi0q",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!EDX0M2TEbpXYBi0q"
+}

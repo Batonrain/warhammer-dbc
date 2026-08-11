@@ -1,0 +1,67 @@
+{
+  "name": "Manipulus Motive Banks / Мотивные Банки Манипулюс",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:2.",
+    "notes": "",
+    "category": "mechEnergy",
+    "quality": "common",
+    "effect": "+5 к максимуму Катушки Потенции и 3 манипулятора (не атакуют, держат предметы/подключаются к сети в 3м). Держа батарею 2 манипуляторами — зарядка Катушки как Электу-Индукторами за полудействие с +20. Poor.Q: без бонуса; Good.Q: +30; Best.Q: 4 манипулятора, зарядка свободным действием при 4-х.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "NBO8AaBSYk9ANq1M",
+  "_id": "LCT0h8DWNVc9prWs",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122013557,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LCT0h8DWNVc9prWs"
+}

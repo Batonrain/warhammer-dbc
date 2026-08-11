@@ -1,0 +1,67 @@
+{
+  "name": "Metabolic Engine / Метаболический Двигатель",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 4. Биореактор в брюшной полости.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Гемункульский. Биореактор в брюшине: Трейт Unnatural S(+2); питание из любой органики, потребность ½; 1/день, поглотив ≥5 кг биомассы, +4 SPD и +30 S на час.\nBest.Q: Unnatural S(+4), всплеск 2/день + 1 эффект (R +1 за каждый доп.): 1) Кислотный плевок (1/час T.b м, 2d10 C, Pen 4, Corrosive(3), Independent, Precise); 2) Авто-регенерация (5 кг биомассы → +2d10 ран/мин); 3) Токсичная кровь (иммунитет к Corrosive, снимает Crippling/Piercing в конце хода; при ранении брызги — все в 2 м А−10 или Corrosive(3)); 4) Феромонный контроль (+20 социальные вдыхающим запах, +40 соблазнение).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "MVwzimCMiFagXpH6",
+  "_id": "7JRoTEerjmYBj45y",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122011490,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7JRoTEerjmYBj45y"
+}

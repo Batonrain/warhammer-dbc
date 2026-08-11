@@ -1,0 +1,21 @@
+{
+  "name": "Житель Бездны",
+  "type": "Item",
+  "folder": "eJZK7cPWLY4ZBEOe",
+  "sorting": "m",
+  "_id": "fnscN7fsgg07YN1A",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!fnscN7fsgg07YN1A"
+}

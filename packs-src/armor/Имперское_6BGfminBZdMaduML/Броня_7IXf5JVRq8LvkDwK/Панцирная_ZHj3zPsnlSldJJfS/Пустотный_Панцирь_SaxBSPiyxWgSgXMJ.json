@@ -1,0 +1,57 @@
+{
+  "name": "Пустотный Панцирь",
+  "type": "armor",
+  "folder": "ZHj3zPsnlSldJJfS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "carapace",
+    "stacks": false,
+    "maxAgility": 40,
+    "equipped": false,
+    "head": 6,
+    "body": 6,
+    "leftArm": 5,
+    "rightArm": 5,
+    "leftLeg": 5,
+    "rightLeg": 5,
+    "quality": "common",
+    "availability": 1,
+    "weight": 16,
+    "properties": [
+      "blinders",
+      "conductive",
+      "hard",
+      "heavy",
+      "sealed",
+      "void"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "",
+    "propRatings": {
+      "blinders": 180
+    }
+  },
+  "_id": "SaxBSPiyxWgSgXMJ",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!SaxBSPiyxWgSgXMJ"
+}

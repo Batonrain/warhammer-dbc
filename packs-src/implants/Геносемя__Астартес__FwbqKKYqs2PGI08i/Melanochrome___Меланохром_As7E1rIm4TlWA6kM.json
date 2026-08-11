@@ -1,0 +1,68 @@
+{
+  "name": "Melanochrome / Меланохром",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "Орган в центре спины, подключённый к лимфатической системе; выпускает в неё ретровирусы, генетически модифицирующие клетки эпителия кожи, заменяя в них меланин более продвинутым пигментом, сформированным в хроматофоры. Известен также как Кожещит.\n\nВозраст имплантации: 15-17 лет.",
+    "notes": "",
+    "category": "geneseed",
+    "quality": "common",
+    "effect": "Кожа темнеет при сильном ультрафиолетовом и прочем ионизирующем облучении и светлеет без него за считанные минуты. Под мощной радиацией кожа становится угольно-чёрной и даёт ограниченную стойкость к фоновой радиации — но не к оружию со свойством Rad.",
+    "installed": "подкожно",
+    "geneSeedOrder": 13,
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, VIII. ПРОЧЕЕ («Геносемя» / «Трансформация в Астартес», стр. 485-487)",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "FwbqKKYqs2PGI08i",
+  "_id": "As7E1rIm4TlWA6kM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786046629033,
+    "modifiedTime": 1786287363635,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!As7E1rIm4TlWA6kM"
+}

@@ -1,0 +1,55 @@
+{
+  "name": "Dive / Нырок",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "jBCgNSAjjDZw85gW",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Находясь на Высокой высоте, пилот может вместо Виража спуститься на Приземную высоту и избежать всех атак по нему, но после этого самолёт входит в Штопор.",
+    "tier": 2,
+    "requirement": "Operate(Aeronautica)+10",
+    "aptitudes": [
+      "defence",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "VOIZfWPWdSBW67p0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121985494,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VOIZfWPWdSBW67p0"
+}

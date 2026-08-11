@@ -1,0 +1,75 @@
+{
+  "name": "Sun God / Бог Солнца",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-pyromancy.svg",
+  "folder": "iUtDvue9DBG7pOTR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "pyromancy",
+    "subtype": "Внутреннее пламя",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "full",
+    "range": "PR×25м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "3d10+2×PR",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Психический Снаряд · Стрельба. Треб.: Fiery Form (поддерживается). Профиль: PR×25м, 3d10+2×PR E(Ls), Pen 2×PR, Blinding (½PR окр.▲), Deflagrate (PR).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "BpKtYdQOAGhJ6lSA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122025816,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!BpKtYdQOAGhJ6lSA"
+}

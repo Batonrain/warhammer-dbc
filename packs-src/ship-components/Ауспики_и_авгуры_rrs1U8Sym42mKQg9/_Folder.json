@@ -1,0 +1,23 @@
+{
+  "name": "Ауспики и авгуры",
+  "type": "Item",
+  "folder": null,
+  "sorting": "m",
+  "_id": "rrs1U8Sym42mKQg9",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782040606519,
+    "modifiedTime": 1782040606519,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!folders!rrs1U8Sym42mKQg9"
+}

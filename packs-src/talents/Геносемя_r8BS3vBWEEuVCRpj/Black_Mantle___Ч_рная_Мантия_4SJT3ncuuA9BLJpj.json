@@ -1,0 +1,56 @@
+{
+  "name": "Black Mantle / Чёрная Мантия",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "r8BS3vBWEEuVCRpj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Десантник ощущает приблизительный уровень фоновой радиации и за полудействие может ввести Меланохром в усиленный режим (радиационная защита −2 вместо −1, любой урон в Т от радиации −1 до минимума 1) или вывести его. Также может сознательно менять цвет кожи Меланохромом независимо от фоновой радиации.",
+    "bookSource": "",
+    "tier": "2",
+    "requirement": "P 45, Awareness+20",
+    "aptitudes": [
+      "per",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "4SJT3ncuuA9BLJpj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786280487238,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4SJT3ncuuA9BLJpj"
+}

@@ -1,0 +1,53 @@
+{
+  "name": "Daemon Hide / Шкура Демона",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Накидка из волос/кожи/жил людей, умерших в одержимости.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 3,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Накидка",
+    "effect": "Низшие демоны и демонические звери считают носителя демоном и не агрессивны сразу при призыве. Настроенные на бога — воспринимают как герольда; враждебные тому богу — враждебнее. Качество влияет на внешний вид/прочность, не на функционал.",
+    "reminder": "Качество не влияет на функционал.",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "HfqzWJ3oNFJ34TWq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!HfqzWJ3oNFJ34TWq"
+}

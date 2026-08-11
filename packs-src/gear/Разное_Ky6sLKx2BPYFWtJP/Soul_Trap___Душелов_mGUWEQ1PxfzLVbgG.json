@@ -1,0 +1,58 @@
+{
+  "name": "Soul-Trap / Душелов",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "От складных пирамидальных призм до инкрустированных черепов в вампирических рунах. Функция одна: пленить душу могущественного врага и усилить владельца похищенными энергиями.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "",
+    "effect": "Когда носитель кого-либо убивает (до Божественного или Чудесного Спасения), он может пройти Inf+20 vs Inf+0 и при успехе заключить чужую душу в душелов.\nЭто позволяет использовать все таланты и навыки заключённого, заставлять его манифестировать психосилы (у душелова 2 ОД), техночудеса и прочее — запирая все знания вместе с ним и давая почву для их применения, даже если обычно для этого нужны импланты или предметы.\nС существом внутри можно общаться, пытать его, убить или выпустить. Пойманного нельзя воскресить, пока он внутри. Душелов не даёт отслеживать захваченное существо и не позволяет ему взаимодействовать с внешним миром без дозволения владельца.\nЗа каждое качество поверх Comm.Q душелов ловит на +1 существо больше. Существа внутри могут общаться между собой, но не вредить друг другу.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "Вмещает на 1 существо больше.",
+      "best": "Вмещает на 2 существа больше."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "mGUWEQ1PxfzLVbgG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!mGUWEQ1PxfzLVbgG"
+}

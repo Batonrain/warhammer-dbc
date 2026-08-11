@@ -1,0 +1,55 @@
+{
+  "name": "Voice of God / Глас Божий",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "8GybVcvQhfdrQVXK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "До ½Inf.b (окр.▲) раз за бой, имея Риск 4+ и успешно отдавая Личную Команду, получатель также получает Очко Бесчестия, которое можно потратить только на Переброс/Усиление/Успех для выполнения этой Команды (теряется в конце действия Команды).",
+    "tier": 3,
+    "requirement": "Inf 60, Cor 60, Command+30",
+    "aptitudes": [
+      "fel",
+      "social"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "UKVycdTauWBWmr4A",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121985023,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!UKVycdTauWBWmr4A"
+}

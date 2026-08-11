@@ -1,0 +1,39 @@
+{
+  "name": "Воспаленный Саван",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "nurgle",
+    "contagion": "",
+    "incubation": "T.b дней",
+    "symptoms": "Кожа сочится зелёным дымом — облако радиусом 7 м. Каждые 24 ч тест Т+0 или Критический Эффект I 1d5+Провалы в торс. Покровительство Нургла игнорирует криты с Кровотечением/смертью.",
+    "vectors": "Вдохнувший дым без противогаза/респиратора или открывший голую кожу — Т+0 или заражение.",
+    "cure": "Неделя постельного режима + Medicae+0.",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "D2XrdTem11GaPFbq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!D2XrdTem11GaPFbq"
+}

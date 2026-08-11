@@ -1,0 +1,54 @@
+{
+  "name": "Virtuoso of Weapons / Виртуоз Оружия",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "n4MVIjhVCl4Iv8eQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Можно брать раз за каждое Оружие Наследия. Выбранный вид рукопашного оружия даёт +10 на все тесты с ним, Extreme (9/−1), Proven (2/+1) и +1 качество (или +2 Pen, если качество поднять нельзя).",
+    "tier": 1,
+    "requirement": "Оружие Наследия",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "sgn3obnewQJkQabt",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122004987,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!sgn3obnewQJkQabt"
+}

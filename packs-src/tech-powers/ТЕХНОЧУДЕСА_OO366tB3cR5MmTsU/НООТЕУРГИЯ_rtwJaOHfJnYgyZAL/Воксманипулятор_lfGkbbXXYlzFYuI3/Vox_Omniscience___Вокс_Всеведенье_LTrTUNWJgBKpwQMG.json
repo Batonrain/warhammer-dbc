@@ -1,0 +1,60 @@
+{
+  "name": "Vox Omniscience / Вокс Всеведенье",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "lfGkbbXXYlzFYuI3",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "nootheurgy",
+    "subtype": "Воксманипулятор",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 0,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Вокс",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Noospheric Emitter · Цена: — · Процесс: ½ · Тип: —] Треб.: Tech-Use+20, Vox Warding. Цена = X, тест Tech-Use(I)−10+5×X vs Tech-Use(I)+0. Прослушка зашифрованного вокс-канала, пока не сменит кодировку. До P.b каналов одновременно (доп. чувство).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "LTrTUNWJgBKpwQMG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041241,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LTrTUNWJgBKpwQMG"
+}

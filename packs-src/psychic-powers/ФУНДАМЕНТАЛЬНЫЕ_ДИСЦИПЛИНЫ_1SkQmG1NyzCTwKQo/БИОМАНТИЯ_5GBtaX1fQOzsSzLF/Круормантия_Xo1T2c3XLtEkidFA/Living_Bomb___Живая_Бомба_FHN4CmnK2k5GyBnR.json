@@ -1,0 +1,75 @@
+{
+  "name": "Living Bomb / Живая Бомба",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-biomancy.svg",
+  "folder": "Xo1T2c3XLtEkidFA",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "biomancy",
+    "subtype": "Круормантия",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "half",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Биоманипуляция · Изменение. Психотест W−30 vs T+0. Треб.: Blood Boil. Встречный тест каждый Ход (только первый — Феномены). Победа: 1d5 непоглощ. X. При непоглощ. уроне (кроме головы/этой силы) — +PR непоглощ. X в ту же зону. Смерть → взрыв 2d10+<T.b цели> X, Pen ½брони торса, Blast (T.b); все в радиусе А+0 или −10 WS/BS; враги — Страх 1.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "FHN4CmnK2k5GyBnR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122026966,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!FHN4CmnK2k5GyBnR"
+}

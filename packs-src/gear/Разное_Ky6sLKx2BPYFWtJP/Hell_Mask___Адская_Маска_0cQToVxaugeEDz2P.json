@@ -1,0 +1,58 @@
+{
+  "name": "Hell Mask / Адская Маска",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Маска, от которой исходит сверхъестественный ужас, сбивающий противнику прицел.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.3,
+    "availability": 1,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "на лицо",
+    "effect": "Когда носителя пытаются атаковать в Сочленение или с Прицеливанием, противник проходит тест как против Fear (1). При провале атака совершается, но без прицеливания и без атаки в сочленение.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Маска просто косметическая.",
+      "good": "Рейтинг страха +1 (до 2).",
+      "best": "Рейтинг страха +2 (до 3)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "0cQToVxaugeEDz2P",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380040,
+    "modifiedTime": 1785349380042,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!0cQToVxaugeEDz2P"
+}

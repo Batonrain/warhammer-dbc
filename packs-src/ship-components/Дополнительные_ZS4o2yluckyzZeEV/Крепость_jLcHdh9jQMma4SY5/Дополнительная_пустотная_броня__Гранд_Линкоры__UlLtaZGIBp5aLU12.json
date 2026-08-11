@@ -1,0 +1,82 @@
+{
+  "name": "Дополнительная пустотная броня (Гранд/Линкоры)",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "jLcHdh9jQMma4SY5",
+  "system": {
+    "kind": "supplemental",
+    "power": 0,
+    "space": 4,
+    "sp": 3,
+    "rarity": 2,
+    "quality": "common",
+    "hulls": "Гранд-крейсеры, Линкоры",
+    "aspects": "",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [
+      {
+        "key": "armored",
+        "rating": 3
+      },
+      {
+        "key": "clumsy",
+        "rating": 3
+      },
+      {
+        "key": "slowed",
+        "rating": 2
+      }
+    ],
+    "hull": {
+      "spaceMax": 0,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "",
+      "hullIntegrity": 0
+    },
+    "chars": {
+      "speed": 0,
+      "manoeuvrability": 0,
+      "detection": 0,
+      "voidShields": 0,
+      "armour": 0,
+      "turretRating": 0
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 0,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "UlLtaZGIBp5aLU12",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782058869090,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!UlLtaZGIBp5aLU12"
+}

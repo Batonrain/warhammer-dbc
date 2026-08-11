@@ -1,0 +1,46 @@
+{
+  "name": "Укреплённая батарея",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-battery.svg",
+  "folder": "WguZ0f93VifeyxSN",
+  "system": {
+    "description": "Высококачественная батарея, способная выдерживать перегрузки. Увеличивает Надёжность оружия на 1. При перезарядке от огня становится обычной батареей.",
+    "notes": "",
+    "weaponTypes": [
+      "laser"
+    ],
+    "ammoCategory": "batteries",
+    "rarity": 1,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 1,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "+1 Надёжность оружия",
+    "properties": []
+  },
+  "_id": "Pwu28ussra7vB9hP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Pwu28ussra7vB9hP"
+}

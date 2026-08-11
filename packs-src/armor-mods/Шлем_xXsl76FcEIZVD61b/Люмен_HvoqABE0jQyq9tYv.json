@@ -1,0 +1,58 @@
+{
+  "name": "Люмен",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "xXsl76FcEIZVD61b",
+  "system": {
+    "description": "Прожектор на шлеме: освещает цели, на которые смотрит персонаж, лучом 30° (как Spray).",
+    "notes": "",
+    "category": "armor",
+    "modGroup": "helmet",
+    "requirement": "Жёсткий шлем. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 0.5,
+    "availability": -1,
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    },
+    "drukhari": false
+  },
+  "_id": "HvoqABE0jQyq9tYv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157649068,
+    "modifiedTime": 1786122045144,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!HvoqABE0jQyq9tYv"
+}

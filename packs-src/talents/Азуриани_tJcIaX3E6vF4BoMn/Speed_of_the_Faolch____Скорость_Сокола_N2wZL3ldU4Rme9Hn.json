@@ -1,0 +1,55 @@
+{
+  "name": "Speed of the Faolchú / Скорость Сокола",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "tJcIaX3E6vF4BoMn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает +2 SPD вне битвы. В битве — бонус к движению на один раунд в зависимости от движения прошлого раунда: +1 за полу-/полное движение, +2 за натиск/бег. Если не двигался — может потратить 1 реакцию на полудвижение или 2 на полное движение (не провоцируя атаки, но и не активируя талант).",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [
+      "ag",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "N2wZL3ldU4Rme9Hn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121980145,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!N2wZL3ldU4Rme9Hn"
+}

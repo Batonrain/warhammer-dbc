@@ -1,0 +1,55 @@
+{
+  "name": "Slip Away / Ускользнуть",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "glylIrW9Q6I2fKel",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в Раунд при тесте Уклонения от Захвата или любом тесте А в Борьбе персонаж может либо получить +30 на этот тест (решить до броска), либо перебросить его (решить после). Он также может игнорировать авто-ничью из-за Трейта Unnatural во встречных тестах Борьбы, где использует А.",
+    "tier": 2,
+    "requirement": "A 40",
+    "aptitudes": [
+      "ag",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "P40MT41FmKHuMKvj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121981989,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!P40MT41FmKHuMKvj"
+}

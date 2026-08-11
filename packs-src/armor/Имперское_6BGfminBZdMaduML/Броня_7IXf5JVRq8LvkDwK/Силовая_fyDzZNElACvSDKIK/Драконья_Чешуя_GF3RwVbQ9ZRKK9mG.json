@@ -1,0 +1,47 @@
+{
+  "name": "Драконья Чешуя",
+  "type": "armor",
+  "folder": "fyDzZNElACvSDKIK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 8,
+    "body": 9,
+    "leftArm": 8,
+    "rightArm": 8,
+    "leftLeg": 8,
+    "rightLeg": 8,
+    "quality": "common",
+    "availability": 2,
+    "weight": 65,
+    "properties": [],
+    "strengthBonus": 20,
+    "wpBonus": 0,
+    "special": "Древняя силовая броня Механикум. Носят только персонажи с Имплантами Механикум (питается от Катушки Потенции, без батареи). Даёт Трейт Nimble (10), не подавляет Трейты, совместима с имплантами/мутациями."
+  },
+  "_id": "GF3RwVbQ9ZRKK9mG",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!GF3RwVbQ9ZRKK9mG"
+}

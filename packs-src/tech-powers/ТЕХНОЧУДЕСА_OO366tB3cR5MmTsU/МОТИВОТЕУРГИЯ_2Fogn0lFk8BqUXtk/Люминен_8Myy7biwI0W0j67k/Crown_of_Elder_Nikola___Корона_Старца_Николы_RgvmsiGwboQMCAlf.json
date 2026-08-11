@@ -1,0 +1,60 @@
+{
+  "name": "Crown of Elder Nikola / Корона Старца Николы",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "8Myy7biwI0W0j67k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Люминен",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 3,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -10,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Luminen Capacitors · Цена: 3К+3Э · Процесс: 1 , 1 (У) · Тип: Компенсатор (1), Славословие (1)] Треб.: For.Lore (Mechanicum)+20. Аура Успехи м. Атаке E(El) в ауре техножрец даёт +1 кубик урона и −2 к первому рейтингу Arc, либо −1 кубик и +2 к Arc (до 10). В начале Хода аура −1 м.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "RgvmsiGwboQMCAlf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041494,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!RgvmsiGwboQMCAlf"
+}

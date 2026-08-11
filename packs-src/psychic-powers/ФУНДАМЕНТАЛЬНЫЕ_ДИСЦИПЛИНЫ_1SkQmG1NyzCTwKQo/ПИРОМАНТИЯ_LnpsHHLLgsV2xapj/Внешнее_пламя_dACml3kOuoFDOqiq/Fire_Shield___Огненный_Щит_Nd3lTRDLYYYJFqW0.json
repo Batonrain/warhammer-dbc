@@ -1,0 +1,75 @@
+{
+  "name": "Fire Shield / Огненный Щит",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-pyromancy.svg",
+  "folder": "dACml3kOuoFDOqiq",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 350,
+    "discipline": "pyromancy",
+    "subtype": "Внешнее пламя",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×10м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание · Открытое Пламя · Личное Пламя. Враги не могут целиться в части тела псайкера. До PR раз/Раунд, когда противник в ауре атакует псайкера (даже неудачно) — после атаки 1d10+PR E(Fl), Pen 0 (Избегание как от стрельбы).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Nd3lTRDLYYYJFqW0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122030099,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Nd3lTRDLYYYJFqW0"
+}

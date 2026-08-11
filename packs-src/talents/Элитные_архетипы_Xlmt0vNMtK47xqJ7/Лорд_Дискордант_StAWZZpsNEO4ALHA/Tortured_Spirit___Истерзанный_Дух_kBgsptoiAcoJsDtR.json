@@ -1,0 +1,52 @@
+{
+  "name": "Tortured Spirit / Истерзанный Дух",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "StAWZZpsNEO4ALHA",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Вырывает духи машин вместе с когитаторами из избранных повреждённых им машин и встраивает их в оболочку Адского Сталкера. Раз в Ход может за ментальное полудействие использовать Трейт Machine Spirit Thief, как если бы получил 1 украденный дух.",
+    "tier": 3,
+    "requirement": "Неделимый, Forbidden Lore (Mechanicum)+20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Лорд-Дискордант",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "kBgsptoiAcoJsDtR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121998185,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!kBgsptoiAcoJsDtR"
+}

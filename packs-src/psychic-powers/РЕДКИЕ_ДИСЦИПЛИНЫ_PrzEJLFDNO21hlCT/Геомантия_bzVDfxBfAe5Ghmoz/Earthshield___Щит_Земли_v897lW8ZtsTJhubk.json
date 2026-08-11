@@ -1,0 +1,75 @@
+{
+  "name": "Earthshield / Щит Земли",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-geomancy.svg",
+  "folder": "bzVDfxBfAe5Ghmoz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 300,
+    "discipline": "geomancy",
+    "subtype": "",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×5м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура · Заземление · Непрямое. Треб.: Awareness+10. До ½PR(окр.▲) раз/Раунд, когда видимый противник попадает по псайкеру/союзнику в ауре — вырастить на пути полное Укрытие AP 2×PR (рушится после отражения атаки). Нужна земля/камень в 3м. Не против незасечённых Незримых атак.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "v897lW8ZtsTJhubk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122038985,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!v897lW8ZtsTJhubk"
+}

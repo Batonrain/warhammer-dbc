@@ -1,0 +1,44 @@
+{
+  "name": "Auspex / Ауспекс",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Сканнер сигнатур r50м. Режимы: Вокс/Жизнь/Звук/Пустоты/Радиация/Тепло/Энергия. Версии 5/15/50 кг с r150/450/1500м.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 0,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Настройка режима Tech-Use+0 (полудействие). +20 Awareness на нахождение засекаемого; занимает руку (или с ретинальным дисплеем — без рук). Засекает цели как точки в горизонтальной плоскости высотой 3 м.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Один режим, нельзя переключать.",
+      "good": "+30 Awareness; расширенные возможности каждого режима.",
+      "best": "Как Good.Q; одновременно два режима сканирования."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "d4Nw3iPhztwCmkUE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!d4Nw3iPhztwCmkUE"
+}

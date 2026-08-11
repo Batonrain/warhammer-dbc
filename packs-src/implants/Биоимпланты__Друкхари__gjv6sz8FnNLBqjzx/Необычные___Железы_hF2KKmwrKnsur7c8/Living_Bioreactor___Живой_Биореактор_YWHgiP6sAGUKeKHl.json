@@ -1,0 +1,67 @@
+{
+  "name": "Living Bioreactor / Живой Биореактор",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 3. Массивный железистый орган в брюшине.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Железистый орган в брюшине: питание из любой органики (игнор испорченной пищи), +30 T против голода/последствий, потребность в провизии ¼. Дефект (до Best.Q): −20 Stealth и −20 социальные (кроме Intimidate) в помещениях (запах/тепло).\nPoor.Q: потребность ½ (не ¼), +20 T против голода; штрафы −30; раз в неделю перегрев (1d5 непогл. E).\nGood.Q: штрафы −10.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Обогрев (тепло себе и союзникам в 3 м, +20°C); 2) Энергопитание (другой биоимплант с перезарядкой сокращает её на T.b с/мин/ч/дней); 3) Очистка крови (+30 T против ядов/болезней в крови); 4) Горючий выхлоп (1/день облако 15 м, 1d10+T.b E(Fl), Flame(1d5+T.b), Spray).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "hF2KKmwrKnsur7c8",
+  "_id": "YWHgiP6sAGUKeKHl",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122014852,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!YWHgiP6sAGUKeKHl"
+}

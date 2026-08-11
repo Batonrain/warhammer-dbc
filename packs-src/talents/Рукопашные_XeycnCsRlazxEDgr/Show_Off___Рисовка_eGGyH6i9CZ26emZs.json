@@ -1,0 +1,55 @@
+{
+  "name": "Show-Off / Рисовка",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "XeycnCsRlazxEDgr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Действие: Полудействие (Физическое, Рукопашное, Ментальное). В рукопашной персонаж проводит WS+0 vs WS+0 против до F.b целей в базовом контакте (один бросок против всех). При победе цели до начала его следующего Хода теряют все преимущества Командования и не могут получать новых, а он может немедленно провести по одной базовой атаке по каждой цели, против которой победил на 5+ Успехов (не считается атакой).",
+    "tier": 3,
+    "requirement": "WS 50, F 40",
+    "aptitudes": [
+      "ws",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "eGGyH6i9CZ26emZs",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121992555,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!eGGyH6i9CZ26emZs"
+}

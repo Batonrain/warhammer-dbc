@@ -1,0 +1,39 @@
+{
+  "name": "Кровь тех, кто был здесь раньше",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "CrIUtdfNnQLWTUax",
+  "system": {
+    "table": "scars",
+    "rollMin": 5,
+    "rollMax": 5,
+    "description": "Внутренняя часть костюма навсегда запятнана кровью предыдущих обитателей — по традиции эти жидкости не убирают.",
+    "effect": "+10 к тестам сопротивления Подавлению и Страху.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности",
+    "notes": ""
+  },
+  "_id": "Be02FMpHjNcpzMST",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354161,
+    "modifiedTime": 1786229458935,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Be02FMpHjNcpzMST"
+}

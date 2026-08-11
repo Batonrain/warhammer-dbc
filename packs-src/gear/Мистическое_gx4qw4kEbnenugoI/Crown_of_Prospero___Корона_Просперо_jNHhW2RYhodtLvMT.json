@@ -1,0 +1,53 @@
+{
+  "name": "Crown of Prospero / Корона Просперо",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Тонкий золотой психический капюшон-обруч Тысячи Сынов. Является Психическим Капюшоном, но не работает как шлем и не считается технологическим устройством.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Голова (Н)",
+    "effect": "Тзинч: при Феномене/Прорыве бросок 1d100 — на 1–81 игнорирует эффекты (но все остальные получают их сполна); на 99 — ещё Феномен. Качество как для Психического Капюшона (см. Psychic Hood).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "−10 на тесты Пси-Капюшона.",
+      "good": "+5 на тесты Пси-Капюшона.",
+      "best": "+10 на тесты Пси-Капюшона."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "jNHhW2RYhodtLvMT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!jNHhW2RYhodtLvMT"
+}

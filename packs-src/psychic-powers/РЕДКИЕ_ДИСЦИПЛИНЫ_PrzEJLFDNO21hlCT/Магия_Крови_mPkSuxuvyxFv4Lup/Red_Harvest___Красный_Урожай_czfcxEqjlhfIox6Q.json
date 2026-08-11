@@ -1,0 +1,75 @@
+{
+  "name": "Red Harvest / Красный Урожай",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-bloodMagic.svg",
+  "folder": "mPkSuxuvyxFv4Lup",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 100,
+    "discipline": "bloodMagic",
+    "subtype": "",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 20,
+    "action": "half",
+    "range": "PR×5м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура · Кровавая Жертва (1). Сфера крови над головой. Когда персонаж в ауре с кровью получает 5+ непоглощ. R/X/I (не I(Cr)) — W+2×PR vs T+0, победа: 1 Усталости цели, +1 кровь (смерть → T.b+W.b−Усталость крови). Накопление до 5×PR. 8+ крови — поддержание не тратит тПР. Кровь тратится на питание сил, остановку Кровотечения, снятие Усталости, снижение штрафа тПР, полное питание силы от крови (игнор штрафов, без Пси-Капюшона). Не гневит Кхорна.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "czfcxEqjlhfIox6Q",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122034475,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!czfcxEqjlhfIox6Q"
+}

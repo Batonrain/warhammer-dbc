@@ -1,0 +1,55 @@
+{
+  "name": "Agony From Afar / Агония Издалека",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "bwU2RyKtdu3KfRmE",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Друкхари учится извлекать Боль с больших дистанций. За каждое повышение Psyniscience (+10/+20/+30) талант можно взять ещё 1 раз; дальность поглощения Боли увеличивается на P.b м за каждое взятие.",
+    "tier": 1,
+    "requirement": "Psyniscience+10 / +20 / +30",
+    "aptitudes": [
+      "per",
+      "wp"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "on0YLhtpJD31cNmD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594705868,
+    "modifiedTime": 1786122001697,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!on0YLhtpJD31cNmD"
+}

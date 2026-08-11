@@ -1,0 +1,52 @@
+{
+  "name": "Maester Pact Stage 5 / Стадия Пакта 5 (Мейстер)",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "UTKhtsPYf2tSvXWS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда тратит полудействие на дополнительное использование Прожектора в Ход, может применять эти срабатывания на другие цели, не обязательно на ту же. Также получает дополнительное полудействие в Ход, которое тратит только на использование Прожектора. Окружён аурой радиусом 7 м, в которой все разумные существа с душами получают Трейт Undying: получив эффект смерти внутри ауры, они бросают на время до смерти только покинув ауру, а умирающее существо с Undying, попав в ауру, временно останавливает счётчик Ходов до смерти. Сам Мейстер не может умереть вовсе, кроме как от атак, игнорирующих чародейскую защиту ауры или уничтожающих душу. Раз в Ход может либо восстановить всем существам в ауре (исключая цели по выбору) 1 Рану, либо нанести им 1 непоглощаемого C(Tx) Dmg в торс (игнорируя иммунитеты к яду от Трейтов Daemonic и Stuff of Nightmares). Против Орд это наносит 1 урона в Магнитуду за каждые полные 10 Магнитуды Орды.",
+    "tier": 3,
+    "requirement": "Нургл, 2000 xp: Inf 70, Cor 70; поднять из мёртвых могучего чемпиона Тзинча с Inf 60+ и 7 месяцев держать его отсечённую голову в ранце прожектора, затем начать эпидемию выросшей из него чумой",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "Элитный архетип: Мейстер",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "YvJOg6LSnsYXqnVJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121987616,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!YvJOg6LSnsYXqnVJ"
+}

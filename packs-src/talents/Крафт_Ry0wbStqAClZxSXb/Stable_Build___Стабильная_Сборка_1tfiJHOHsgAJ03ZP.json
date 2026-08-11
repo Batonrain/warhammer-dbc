@@ -1,0 +1,55 @@
+{
+  "name": "Stable Build / Стабильная Сборка",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Ry0wbStqAClZxSXb",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может потратить ½ смены работы (без теста), чтобы убрать у предмета в процессе Улучшения обычные штрафы на работу с ним, пока Улучшение не продолжится.",
+    "tier": "1",
+    "requirement": "Logic+0",
+    "aptitudes": [
+      "int",
+      "tech"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "1tfiJHOHsgAJ03ZP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121963931,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1tfiJHOHsgAJ03ZP"
+}

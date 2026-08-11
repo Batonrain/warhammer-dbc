@@ -1,0 +1,149 @@
+{
+  "name": "Heat-Resistant Feathers / Термостойкие Перья",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Негорючие перья-теплоизолятор.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Укреплённые перья, которые слабо горят и держат внешнюю температуру.\n• Снижает своё AP против всего урона на 1 (то есть Natural Armour 1).\n• +2 AP против всего урона E.\n• Дополнительно +4 AP против урона E(Fl).\n• Удерживают жар и холод подальше от персонажа — ситуативные бонусы на усмотрение ГМа.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 1,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "ZNIOTvbgAcs0DbLd",
+  "_id": "dQ2dEXfUejMeuJK6",
+  "effects": [
+    {
+      "name": "Heat-Resistant Feathers / Термостойкие Перья (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.armour.head",
+            "type": "add",
+            "value": 1,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.body",
+            "type": "add",
+            "value": 1,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftArm",
+            "type": "add",
+            "value": 1,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightArm",
+            "type": "add",
+            "value": 1,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftLeg",
+            "type": "add",
+            "value": 1,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightLeg",
+            "type": "add",
+            "value": 1,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "0jvea7wJerEML8Sp",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122015336,
+        "modifiedTime": 1786122015336,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!dQ2dEXfUejMeuJK6.0jvea7wJerEML8Sp"
+    }
+  ],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330254774,
+    "modifiedTime": 1786122015355,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!dQ2dEXfUejMeuJK6"
+}

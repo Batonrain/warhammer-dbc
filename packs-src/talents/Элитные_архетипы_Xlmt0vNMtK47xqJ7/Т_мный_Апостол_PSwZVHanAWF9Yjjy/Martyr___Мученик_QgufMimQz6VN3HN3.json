@@ -1,0 +1,52 @@
+{
+  "name": "Martyr / Мученик",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "PSwZVHanAWF9Yjjy",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Истинно верующие готовы пожертвовать собой, чтобы впустить в мир посланцев Богов. Потратив полное действие на ритуальные распевы и тест For.Lore(Heresy)+0, может призвать низшего демона или демонического зверя в одного из Правоверных в поле зрения. Правоверный мучительно умирает, его плоть искажается в форму демона. Демон сражается на стороне Апостола, но не контролируется ГМом. На 4+ Успеха Апостол сам выбирает призванного демона, на 1-3 выбирает ГМ.",
+    "tier": 2,
+    "requirement": "Неделимый, Cor 60",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Тёмный Апостол",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "QgufMimQz6VN3HN3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121982757,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!QgufMimQz6VN3HN3"
+}

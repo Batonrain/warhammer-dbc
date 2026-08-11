@@ -1,0 +1,75 @@
+{
+  "name": "Rewind / Перемотка",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-chronomancy.svg",
+  "folder": "ucMfNIrwP2mezoaI",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "chronomancy",
+    "subtype": "",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "Касание",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение. Треб.: Time Thief. Состояние цели Размером ≤½PR(окр.▼)−2 откатывается на ≤PR Раундов: Раны, Усталость, Крит. Эффекты, поддерживаемые силы, снаряжение/боеприпасы (но не позицию). Цель (не псайкер) теряет память отмотанного. Можно лечить/воскрешать/перезаряжать.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "srwpiaZ7bctLBF2s",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122038390,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!srwpiaZ7bctLBF2s"
+}

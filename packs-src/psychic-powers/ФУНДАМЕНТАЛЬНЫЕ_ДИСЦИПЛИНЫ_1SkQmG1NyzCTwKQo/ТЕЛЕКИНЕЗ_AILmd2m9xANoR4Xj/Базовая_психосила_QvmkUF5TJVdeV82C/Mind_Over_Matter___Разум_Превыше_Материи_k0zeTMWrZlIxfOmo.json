@@ -1,0 +1,75 @@
+{
+  "name": "Mind Over Matter / Разум Превыше Материи",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telekinesis.svg",
+  "folder": "QvmkUF5TJVdeV82C",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 100,
+    "discipline": "telekinesis",
+    "subtype": "Базовая психосила",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 20,
+    "action": "half",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+PR",
+    "damageType": "impact",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака. Три режима: 1) Постоянное Движение (W+20): двигать предмет ≤PR×20кг где угодно в дальности (≤W.b×2 м/Ход); только этот режим поддерживается. 2) Пинок (W+10): запустить цель на PR+<Успехи> м; персонаж с опорой — встречный vs S+0; макс. вес PR×150кг (тяжелее — дистанция пропорц. меньше); урон как от падения с половины дистанции. 3) Снаряд (W+0): метнуть предмет ≤PR×5кг — 1d10+PR I, Pen 0, Primitive (рукопашное оружие — базовый урон +PR, d5→d10; метательное комбинируется с метанием). Уклонение/парирование как обычно. [Вес: человек 50-120кг, Огрин 400-500, Астартес в броне 450-600, Дредноут 12-15т, Лэнд Рейдер 72-79т и т.д.]",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "k0zeTMWrZlIxfOmo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122036452,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!k0zeTMWrZlIxfOmo"
+}

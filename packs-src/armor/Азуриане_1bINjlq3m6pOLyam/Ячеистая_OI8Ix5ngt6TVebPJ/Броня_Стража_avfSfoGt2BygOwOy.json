@@ -1,0 +1,56 @@
+{
+  "name": "Броня Стража",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Представитель ячеистой брони, состоящей из десятков тысяч ячеек термопласта и психокости, создавая сверхплотный материал, напоминающий чешую рептилии или кольчугу. При столкновении с чем–либо материал резко затвердевает и распределяет всю силу удара по броне, снижая получаемый урон. А из–за вкраплений термопласта броня отлично защищает от энергетического и теплового оружия. Броня адаптируется к каждому своему носителю из–за психической природы, что не сковывает движения даже в самые жесткие моменты или при выполнении любых акробатических маневров. Носитель данной брони при совершении безоружной атаки может по его желанию считаться имеющим Best.Q Мононож. Обладает встроенными охотничьим визором, ретинальным дисплеем и встроенным когитатором в предплечье. Имеет модификации Osmotic Life Sustainer, Bio-Monitor. Имеет встроенный легкий ранец, дающий модификацию Light Backpack Feed для любого эльдарского стрелкового оружия.\n",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 4,
+    "body": 5,
+    "leftArm": 4,
+    "rightArm": 4,
+    "leftLeg": 4,
+    "rightLeg": 4,
+    "quality": "common",
+    "availability": 1,
+    "weight": 3,
+    "properties": [
+      "protective",
+      "sealed",
+      "stealthed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Визор, ретинальный дисплей, когитатор; моды Osmotic Life Sustainer, Bio-Monitor; лёгкий ранец.",
+    "propRatings": {
+      "protective": 4
+    }
+  },
+  "_id": "avfSfoGt2BygOwOy",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!avfSfoGt2BygOwOy"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Blessed with Pus / Благословенный Гноем",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "LMfjIpQJZ9aNxxn8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Густая гниль сочится из пор и трещин брони, покрывая слоем скользкой жижи. Противники получают Помеху на все тесты Захвата против него. Иммунитет к Горению и эффекту Corrosive. Каждый раз, когда противник без покровительства Нургла касается его голой кожей, получает 1d10 C Dmg Toxic(0); выжившие — тест T+0 или заражение.",
+    "tier": 3,
+    "requirement": "Нургл, Cor 40",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "Элитный архетип: Чумной Десантник",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "VPLUSOsenK9Co4fL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121985571,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VPLUSOsenK9Co4fL"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Shaving Dance / Бритвенный Танец",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "IHeHzXN4eZXIenbD",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Удерживая бритвоцеп в форме хлыста, может совершить Полную Атаку вокруг, центрируя на себе шаблон Blast, равный максимальной дистанции хлыста (8). Может избрать до A.b целей и избежать их тел, продолжая размахивать по остальным. Бритвоцеп не останавливается, даже если не убил цель, но должен нанести ей хотя бы 1 непоглощённый урон, чтобы пройти дальше. Останавливается на цели 2-го размера и больше, если её не убил, при успешном парировании, при отсутствии непоглощённого урона или когда цели кончились. Остановившись на цели, персонаж может тестом A+10 дать бритвоцепу Monofilament (WS.b) против неё. Если цель провалила тест и охвачена бритвоцепом, атаковать им нельзя, но в начале хода можно тестом S+20 vs S+0 притянуть цель на Успехи метров. Освободить цель — Свободное действие.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Ведьма",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Rw7l7SUqUdqImHRA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121983599,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Rw7l7SUqUdqImHRA"
+}

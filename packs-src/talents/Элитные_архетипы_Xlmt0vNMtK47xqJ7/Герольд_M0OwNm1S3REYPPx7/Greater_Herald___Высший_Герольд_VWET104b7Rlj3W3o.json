@@ -1,0 +1,52 @@
+{
+  "name": "Greater Herald / Высший Герольд",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "M0OwNm1S3REYPPx7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Одним лишь представлением способен возвысить кого-то в глазах слушателей, укрепив его авторитет и репутацию. За полудействие может потратить Очко Бесчестия и пройти тест Charm+0, чтобы в случае Успеха дать другому персонажу или себе Преимущество на все тесты Command, Charm или Intimidate до конца сцены или боя.",
+    "tier": 3,
+    "requirement": "Неделимый, Inf 45",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Герольд",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "VWET104b7Rlj3W3o",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121985655,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VWET104b7Rlj3W3o"
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Stummer / Стаммер",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Глушитель звука, анализирующий и снижающий громкость в r30м. Установка Tech-Use+0. Батарея 20 минут (и от сети).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": -1,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "Приглушает выстрелы (как глушители), глушит с глушителями полностью. +20 на скрытное передвижение, −20 на слух в радиусе.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Удваивает штраф на слух.",
+      "good": "Штраф на слух до −10.",
+      "best": "Как Good.Q; работает без установки, переносимый в руке."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "2qv2fOPxJS8bFWE3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!2qv2fOPxJS8bFWE3"
+}

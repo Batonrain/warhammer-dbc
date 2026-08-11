@@ -1,0 +1,75 @@
+{
+  "name": "Glimpse / Проблеск",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-divination.svg",
+  "folder": "xz4bUrq3b3FsfvcG",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 100,
+    "discipline": "divination",
+    "subtype": "Чувство будущего",
+    "powerType": "concentration",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "testChar": "psyniscience",
+    "testMod": -10,
+    "action": "free",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание · Концентрация. Треб.: Precognition. Следующий не-атакующий тест Характеристики/Навыка (кроме Знаний, Избеганий, психотестов) до начала след. Хода: +5×PR (для длительных/расширенных тестов — +3×PR).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "KmTZzeSL3mjePGAV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122029369,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KmTZzeSL3mjePGAV"
+}

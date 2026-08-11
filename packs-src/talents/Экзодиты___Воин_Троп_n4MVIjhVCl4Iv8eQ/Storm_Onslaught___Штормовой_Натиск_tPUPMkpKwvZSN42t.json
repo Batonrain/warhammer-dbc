@@ -1,0 +1,54 @@
+{
+  "name": "Storm Onslaught / Штормовой Натиск",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "n4MVIjhVCl4Iv8eQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Преуспев в атаке на +5 успехов, персонаж может совершить точно такую же атаку (приём/стойка/база, с тем же бонусом) со штрафом −20; каждое новое попадание −1 урона (для Быстрой/Молниеносной). После Натиска может потратить 2 Реакции, чтобы закончить ход и войти в защитную стойку.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "tPUPMkpKwvZSN42t",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122005508,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!tPUPMkpKwvZSN42t"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Supreme Avarice / Высшая Алчность",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "FgdGoSekSCHU21Ha",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает неизлечимое ментальное расстройство «Перфекционизм» на Тяжести −2, и его Тяжесть не может опуститься ниже −2. «Работа над самосовершенствованием» для него обычно состоит в поиске подходящей жертвы, выпив которую досуха, он сможет исправить своё несовершенство, украв её внешность, знания или манеры. Когда жертва найдена, усилия поймать её или втереться в доверие для внезапного предательства считаются работой над собой в расчёте расстройства. Иногда следующую жертву являет ему во сне демон-покровитель.",
+    "source": "Элитный архетип: Вампир",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "yCWcldQONAj8RBn3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121962338,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!yCWcldQONAj8RBn3"
+}

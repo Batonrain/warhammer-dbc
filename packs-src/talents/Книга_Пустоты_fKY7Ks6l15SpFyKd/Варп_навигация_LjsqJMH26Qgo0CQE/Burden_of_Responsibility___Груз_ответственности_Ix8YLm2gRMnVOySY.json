@@ -1,0 +1,55 @@
+{
+  "name": "Burden of Responsibility / Груз ответственности",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "LjsqJMH26Qgo0CQE",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает +5 к тестам Navigation (Warp) при навигировании корабля в варпе.",
+    "tier": 1,
+    "requirement": "Navigation (Warp), W 40, P 30",
+    "aptitudes": [
+      "wp",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Ix8YLm2gRMnVOySY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160740113,
+    "modifiedTime": 1786121976926,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Ix8YLm2gRMnVOySY"
+}

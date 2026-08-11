@@ -1,0 +1,52 @@
+{
+  "name": "Material Wreck / Материальное Крушение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "BHFD9WvxCcrQdrNS",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает изменённую версию Волны Эмпатии, теряющую Warp Weapon и наносящую урон вражеской технике. Эта волна получает +1d10 и меняет свой Pen на Y×3. Требует Полное действие и даёт Медузе 1 усталость от переутомления.",
+    "tier": 2,
+    "requirement": "Emotional Explosion",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Медуза",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "aVaq0O4qfjfv1njA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121989853,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aVaq0O4qfjfv1njA"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "Броня Идранель",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Идранель с Ультве был известным провидцем школы прорицания, в особенности избегания вражеских ударов. Поглощенный паранойей, он вшил в свою броню сверхсложную рунную систему, которая постоянно поддерживала его в бою, уводя его от тех ударов, что должны были убить его и ослабляя те удары, что должны были серьезно ранить его. Однако, слишком сильно доверившись броне, Идранель встретил свою погибель в бою против другого, не менее могущественного псайкера, что сумел обмануть его прорицательское чутье. Пока персонаж носит Броню Идранеля, на него всегда действуют психосилы Проблеск и Прекогнитивное Уклонение с PR 8. Проблеск действует лишь на физическое избегание и защитные приемы. Персонаж с бPR 8 и выше в начале своего хода может потратить полудействие и пройти тест W+0 чтобы прочитать паттерн рун Брони Идранеля и игнорировать психосилы этой брони. В остальном работает как рунная броня.\n",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 6,
+    "body": 7,
+    "leftArm": 6,
+    "rightArm": 6,
+    "leftLeg": 6,
+    "rightLeg": 6,
+    "quality": "common",
+    "availability": 5,
+    "weight": 3,
+    "properties": [
+      "aspect",
+      "protective",
+      "runesOfProtection",
+      "sealed",
+      "stealthed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Видящие). Как Рунная. Психосилы Проблеск и Прекогнитивное Уклонение (PR 8).",
+    "propRatings": {
+      "protective": 6
+    }
+  },
+  "_id": "shbwaM8XMZFwmWXQ",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!shbwaM8XMZFwmWXQ"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Chaos Greatbow / Великий Лук Хаоса",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "VtxB4oTCqDmAYaJ4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Луки обычных смертных неспособны выдержать силу Броненосца. Получив в руки огромный металлический лук, может концентрироваться на нём минуту и трансформировать его. Великий Лук выдерживает практически любое натяжение, не имеет верхнего предела бонуса к урону от S.b, получает +½Cor.b (окр.▲) к Dmg и Pen и теряет свойство Primitive. Использует огромные стрелы для обычных великих луков.",
+    "tier": 2,
+    "requirement": "Неделимый, BS 40",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Броненосец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "alz0mPRqqcfwXpTg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121990027,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!alz0mPRqqcfwXpTg"
+}

@@ -1,0 +1,53 @@
+{
+  "name": "Fallen Banner / Падший Штандарт",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Стяг Нургла, сплетённый из 7 любимых Отцом Чумы трупов.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Шея/плащ/Трофейная Стойка",
+    "effect": "С Покровительством Нургла: он и Нурглиты в r W.b м +1 SPD и в начале Хода тест T+0 чтобы снять 1 Усталости. Остальные в радиусе: −1 SPD и тест T+0 или +1 Усталости.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Не-нурглиты −2 SPD (вместо −1) и −10 на их тесты T против штандарта.",
+      "good": "Нурглиты +2 SPD (вместо +1) и +10 на их тесты T от штандарта.",
+      "best": "Как Poor.Q и Good.Q."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "r3QhL2PMXA0hZoga",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!r3QhL2PMXA0hZoga"
+}

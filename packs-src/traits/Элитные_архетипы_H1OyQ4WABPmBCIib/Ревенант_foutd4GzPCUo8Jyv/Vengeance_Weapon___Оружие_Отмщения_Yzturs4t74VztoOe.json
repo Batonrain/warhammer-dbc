@@ -1,0 +1,51 @@
+{
+  "name": "Vengeance Weapon / Оружие Отмщения",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "foutd4GzPCUo8Jyv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Выбирает одно оружие Редкостью 1 или ниже (Космодесантники считают по Редкости аналогов для людей). Может сделать это оружие Best.Q за 1 смену работы без всяких тестов, но вне его рук оно получает −20 к Пределу Критических Провалов (Клина для стрелкового), обычно до 76+. Всё ещё нуждается в материалах и инструментах для Крафта. Считается имеющим все нужные Таланты для владения этим оружием (но не другим оружием того же типа), получает +10 на все тесты его использования и +30 на тесты обслуживания (в т.ч. Расклина) и Крафта боеприпасов и модификаций для него. Также удваивает бонус от Таланта Hatred для Оружия Отмщения (даже стрелкового), обычно до +20.",
+    "source": "Элитный архетип: Ревенант",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Yzturs4t74VztoOe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121960119,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Yzturs4t74VztoOe"
+}

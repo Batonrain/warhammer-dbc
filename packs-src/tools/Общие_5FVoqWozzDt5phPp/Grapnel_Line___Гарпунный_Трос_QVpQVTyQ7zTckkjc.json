@@ -1,0 +1,44 @@
+{
+  "name": "Grapnel Line / Гарпунный Трос",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Пневморужьё, выстреливающее гарпун с 100-метровым тросом через провалы/между зданиями. Трос и гарпун держат до 200 кг. Версия Легиона — 10 кг, до 1000 кг, R0.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": -2,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Одноразовый.",
+      "good": "Встроенная лебёдка: подъём без теста, по одному персонажу.",
+      "best": "Как Good.Q; самокрутящаяся лебёдка ×3 скорость подъёма, гравитационный якорь (отцепляется сигналом, втягивается)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "QVpQVTyQ7zTckkjc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!QVpQVTyQ7zTckkjc"
+}

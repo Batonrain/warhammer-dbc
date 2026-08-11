@@ -1,0 +1,55 @@
+{
+  "name": "Raptor / Раптор",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "XeycnCsRlazxEDgr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Совершая Натиск в полёте, персонаж наносит +1d10 Dmg на 2+ Успехах на попадание и ещё +1d10 Dmg на 4+ Успехах.",
+    "tier": "1",
+    "requirement": "Aeronautica+0",
+    "aptitudes": [
+      "ag",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "EDR7vQV5M7Rt1VYX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121973492,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EDR7vQV5M7Rt1VYX"
+}

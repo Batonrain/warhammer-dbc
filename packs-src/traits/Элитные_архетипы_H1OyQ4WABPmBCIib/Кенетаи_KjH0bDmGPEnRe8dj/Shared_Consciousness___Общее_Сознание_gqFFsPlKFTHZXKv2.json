@@ -1,0 +1,51 @@
+{
+  "name": "Shared Consciousness / Общее Сознание",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "KjH0bDmGPEnRe8dj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В бою Кенетаи и соратники действуют как единый организм. Потратив 5 минут на ритуал, может телепатически соединить свой разум с разумами до бPR союзников. Пока союзники не более W.b м, он и все связанные получают +2 на все тесты WS за каждого связанного союзника в радиусе (связанный Кенетаи даёт +5 вместо +2). В начале Раунда согласные союзники в радиусе могут усреднить Инициативу (окр.▼) и действовать одновременно; при синхронизации делятся радиусами обзора и могут парировать союзникам не более 3м, перемещаясь в рукопашное расстояние без Свободных Атак.",
+    "source": "Элитный архетип: Кенетаи",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "gqFFsPlKFTHZXKv2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121960906,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gqFFsPlKFTHZXKv2"
+}

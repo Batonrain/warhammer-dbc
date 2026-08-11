@@ -1,0 +1,88 @@
+{
+  "name": "Грав-Усилитель",
+  "type": "weapon",
+  "folder": "cHwiIsG6VZt9ZiIR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "heavy",
+    "weaponType": "exotic",
+    "range": 100,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "1",
+    "magazineCur": 1,
+    "magazineMax": 1,
+    "rof_single": 1,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "",
+    "damageType": "impact",
+    "penetration": 12,
+    "quality": "common",
+    "availability": 4,
+    "weight": 35,
+    "attackBonus": 0,
+    "special": "",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "spray"
+      },
+      {
+        "key": "legion"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "AsSVY6IluGna2ULu",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784645463257,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!AsSVY6IluGna2ULu"
+}

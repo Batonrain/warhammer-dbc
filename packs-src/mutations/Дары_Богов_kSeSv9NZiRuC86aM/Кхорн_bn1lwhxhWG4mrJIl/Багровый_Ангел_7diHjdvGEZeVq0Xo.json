@@ -1,0 +1,49 @@
+{
+  "name": "Багровый Ангел",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Гнев в душе чемпиона вырывается наружу в виде призрачных крыльев, сотканных из крови и тёмного пламени. Когда в пределах видимости персонажа есть цель, к которой он имеет талант Hatred, он может получить Трейт Flyer (A.b×2). Персонаж теряет этот Трейт, если в свой Ход он не двигался к Ненавистному врагу и не совершал по нему рукопашные атаки.",
+    "source": "Дары Кхорн, d100 48…51",
+    "roll": "48…51",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "7diHjdvGEZeVq0Xo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122018700,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7diHjdvGEZeVq0Xo"
+}

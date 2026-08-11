@@ -1,0 +1,51 @@
+{
+  "name": "Magus Supreme / Высший Магус",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "TnSdp0RF5LIbT10t",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Тонкий контроль над ненадёжными силами Варпа. Феномены (но не Прорывы), вызванные им самим, не воздействуют на него, но оказывают обычный эффект на всех вокруг. Потратив Очко Бесчестия, может исключить дополнительных персонажей (обычно союзников) в поле зрения из эффекта Феномена. Если Феномен вызвал Прорыв, за 3 Очка Бесчестия может перенести эффект на другое существо в поле зрения не далее 9м — это не даёт ему иммунитета от площадных эффектов Прорыва, если они его задевают.",
+    "source": "Элитный архетип: Архимаг",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "sqNp45D8AmWJrgvb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121961893,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!sqNp45D8AmWJrgvb"
+}

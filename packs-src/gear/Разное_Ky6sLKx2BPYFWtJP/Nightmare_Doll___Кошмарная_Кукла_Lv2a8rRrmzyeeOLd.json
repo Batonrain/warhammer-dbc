@@ -1,0 +1,58 @@
+{
+  "name": "Nightmare Doll / Кошмарная Кукла",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Один из редчайших предметов Комморы: создаётся только руками псайкера, которые у друкхари обычно игрушки, оттого кукол считанные единицы. Излучает ауру боли и страха, а при правильном использовании показывает будущее.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 5,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "",
+    "effect": "Носитель получает Fear (4). Когда противник проваливает тест против его страха, он получает эффект Hallucinogenic на W.b владельца раундов.\nКогда любое враждебное существо проваливает тест W в радиусе 54 м от владельца, оно считается провалившим тест против Кубка Злобы, и эффект длится 3 раунда.\nВсе существа в радиусе 54 м получают на 1 Боль больше от всех источников, а владелец — на +2 Боли больше от всех источников.\nКоснувшись головы куклы, владелец видит ближайшее будущее по своему желанию — от 5 секунд до столетий, может изучать каждую деталь и провести там десятилетия, пока в материальном мире пройдёт секунда.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": "Качество меняет только внешний вид куклы и её красоту (точнее — отвратительность)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "Lv2a8rRrmzyeeOLd",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380042,
+    "modifiedTime": 1785349380044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Lv2a8rRrmzyeeOLd"
+}

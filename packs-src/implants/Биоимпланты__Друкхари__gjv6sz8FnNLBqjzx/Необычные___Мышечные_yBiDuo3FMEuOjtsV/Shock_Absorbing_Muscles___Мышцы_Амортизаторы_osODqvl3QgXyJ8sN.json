@@ -1,0 +1,67 @@
+{
+  "name": "Shock-Absorbing Muscles / Мышцы-Амортизаторы",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Гидравлические демпфирующие мышцы.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Гидравлические камеры в мышцах: +10 T против Борьбы/сдвига и на перегруппировку; при Оглушении/Сбитии с ног тест T+0 чтобы проигнорировать. Дефект (до Best.Q): −2 SPD, −3 инициатива.\nPoor.Q: бонус T до +5, −3 SPD, −5 инициатива; при крите I камера лопается (1d5 непогл. X в торс, −1 SPD до конца боя).\nGood.Q: бонус T до +20; убирается штраф SPD ИЛИ инициативы (на выбор).\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Усиленная отдача (при получении I урона в след. раунде +1 SPD, до T.b раз, сгорает в конце боя); 2) Полное гашение (иммунитет к урону от падения до T.b×5 м, нет штрафов трудного ландшафта от вибрации/неровностей); 3) Сейсмический сенсор (+20 P на приближающихся через пол, если неподвижен); 4) Амортизирующий удар (1/день при успешной рукопашной цель T−20 или сбита с ног и оглушена 1 раунд).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "yBiDuo3FMEuOjtsV",
+  "_id": "osODqvl3QgXyJ8sN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122016700,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!osODqvl3QgXyJ8sN"
+}

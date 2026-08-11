@@ -1,0 +1,49 @@
+{
+  "name": "Живое Оружие",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Всё, что попадает в руки чемпиону Кхорна, становится оружием, продолжающим его волю. Персонаж может за полудействие потратить Очко Бесчестия, чтобы до конца боя или сцены влить частицу своей души в оружие или предмет, который он использует как импровизированное оружие. Пока он добровольно не выпустит его из рук, это оружие нельзя у него вырвать или выбить, оно получает +10 на все тесты WS с ним, его Баланс увеличивается до 0 (если он не был выше), а Pen до Cor.b персонажа, если он не был выше у оружия. Это оружие теряет свойство Primitive и получает свойство Reinforced. Если таким образом усилено импровизированное оружие, оно также не получает обычный штраф −20, получает +1 кубик урона и удваивает S.b в расчёте урона. Оружие при этом видимо трансформируется уникальным для каждого чемпиона образом.",
+    "source": "Дары Кхорн, d100 41…43",
+    "roll": "41…43",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "hRwi2DatRrINumVS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021216,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hRwi2DatRrINumVS"
+}

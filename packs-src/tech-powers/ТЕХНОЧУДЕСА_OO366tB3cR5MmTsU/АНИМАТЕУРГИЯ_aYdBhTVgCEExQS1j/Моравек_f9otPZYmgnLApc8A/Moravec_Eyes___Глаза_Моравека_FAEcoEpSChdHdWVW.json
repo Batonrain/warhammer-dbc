@@ -1,0 +1,60 @@
+{
+  "name": "Moravec Eyes / Глаза Моравека",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "f9otPZYmgnLApc8A",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "animatheurgy",
+    "subtype": "Моравек",
+    "miracleType": "anima",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "half",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×1м",
+    "damage": "1d10+I.b",
+    "damageType": "energy",
+    "penetration": 8,
+    "effect": "[Железо: Repository of Moravec · Цена: 3К · Процесс: Нет · Тип: Анима, Атака, Стрельба] Треб.: I 50, For.Lore(Warp)+20, Moravec Locus. Как длинная очередь (1 попадание за Успех): I×1м, 1d10+I.b E, Pen 8, Corrosive (2), Extreme (8), Tearing.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "FAEcoEpSChdHdWVW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040895,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!FAEcoEpSChdHdWVW"
+}

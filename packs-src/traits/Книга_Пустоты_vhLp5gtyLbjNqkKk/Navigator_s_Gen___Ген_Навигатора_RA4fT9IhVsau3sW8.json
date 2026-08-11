@@ -1,0 +1,52 @@
+{
+  "name": "Navigator's Gen / Ген Навигатора",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "vhLp5gtyLbjNqkKk",
+  "system": {
+    "description": "Навигатор — живое окно в Варп; ген навигатора позволяет воспринимать разрушающую разум природу Варпа уникальным образом и оставаться в своём уме.",
+    "notes": "",
+    "benefit": "НЕ получает Порчу от Варп-Шока (на другие источники Порчи не распространяется). Может брать Силы навигаторов и таланты раздела «Ген Навигатора». Вместо обычных мутаций — Мутации навигатора. При варп-путешествиях — особые правила.",
+    "source": "Навигатор (субраса Человека)",
+    "bookSource": "Книга Пустоты, Навигаторы («Navigator / Навигатор», стр. 211)",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "RA4fT9IhVsau3sW8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786274183518,
+    "modifiedTime": 1786280326616,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!RA4fT9IhVsau3sW8"
+}

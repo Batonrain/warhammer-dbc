@@ -1,0 +1,58 @@
+{
+  "name": "Охладитель",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "vAuHo2O7CxjhPObv",
+  "system": {
+    "description": "Контуры охлаждения: игнор негативных эффектов Горения 1d5 Ходов, если пламя наносит не больше 1d10 урона.",
+    "notes": "",
+    "category": "armor",
+    "modGroup": "general",
+    "requirement": "Полный комплект со свойством Sealed. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 3,
+    "availability": 2,
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    },
+    "drukhari": false
+  },
+  "_id": "u2at3jZkADjVQgvc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157649068,
+    "modifiedTime": 1786122045444,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!u2at3jZkADjVQgvc"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Hammerhand / Молоторукий",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-biomancy.svg",
+  "folder": "g467KnrAg04523vx",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "biomancy",
+    "subtype": "Пугномантия",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Биоманипуляция · Вливание. Треб.: Flesh Sense. Unarmed Warrior+Master; безоружные +PR Dmg, +½PR(окр.▲) Pen, уменьшают AP пробитой брони на ½PR(окр.▲) (как Corrosive). По камню/рокриту — удвоенный урон до Поглощения.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "4RkWnh6AnQp0PK3x",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122023710,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4RkWnh6AnQp0PK3x"
+}

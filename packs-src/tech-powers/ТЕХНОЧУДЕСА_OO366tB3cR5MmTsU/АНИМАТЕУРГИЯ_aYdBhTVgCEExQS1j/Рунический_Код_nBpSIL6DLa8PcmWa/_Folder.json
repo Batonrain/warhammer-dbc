@@ -1,0 +1,21 @@
+{
+  "name": "Рунический Код",
+  "type": "Item",
+  "folder": "aYdBhTVgCEExQS1j",
+  "sorting": "m",
+  "_id": "nBpSIL6DLa8PcmWa",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!nBpSIL6DLa8PcmWa"
+}

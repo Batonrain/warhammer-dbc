@@ -1,0 +1,52 @@
+{
+  "name": "Blood Offering / Кровавое Подношение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "8SlJTJ2G7mk6CBdm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда с лезвий стекает кровь жизни, мощь Владыки Резни пробивает барьеры и трюки трусливых чародеев и демонов. Убив персонажа рукопашным оружием R Dmg, следующее попадание этого оружия наносит +½Cor.b (окр.▲) Dmg и получает свойство Sanctified. Эффект теряется, если в течение Cor.b Ходов оружие так и не нанесло попаданий.",
+    "tier": 3,
+    "requirement": "Кхорн, Cor 40",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "Элитный архетип: Берсерк Кхорна",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "xMmebIPjWRfx7qr1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122008327,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!xMmebIPjWRfx7qr1"
+}

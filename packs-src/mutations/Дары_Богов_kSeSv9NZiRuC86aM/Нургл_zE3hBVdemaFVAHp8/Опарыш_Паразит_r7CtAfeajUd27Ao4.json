@@ -1,0 +1,49 @@
+{
+  "name": "Опарыш-Паразит",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сознание и душа персонажа заключаются в паразитическом опарыше, что возникает у него в животе, замещая кишки. Паразит сохраняет все его Характеристики, кроме S, T и A, которые опускаются до 10, и Раны, которые опускаются до 7, а также получает Трейты Deadly Natural Weapons (Cor.b), Parasite и Size (−2). Он автоматически контролирует своё бывшее тело. Если его тело умирает, он может за свободное действие выскочить из него, прорываясь сквозь свою броню, и провести атаку Паразитом против персонажа в пределах 3м. Успешно захватив новое тело с помощью Трейта Parasite, он зарывается вглубь, замещая кишки нового хоста, и более не может быть выцелен Избирательной атакой. Если он покидает живой хост, тот умирает через 7 ч.",
+    "source": "Дары Нургл, d100 41…43",
+    "roll": "41…43",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "r7CtAfeajUd27Ao4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021964,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!r7CtAfeajUd27Ao4"
+}

@@ -1,0 +1,41 @@
+{
+  "name": "Бомбардировщик «Звёздный Ястреб»",
+  "type": "smallCraft",
+  "img": "systems/warhammer-dbc/assets/item-icons/small-craft.svg",
+  "folder": "s3XhTSBIM41OImPr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "craftKind": "bomber",
+    "faction": "Имперские",
+    "cr": 0,
+    "crAlt": 0,
+    "spd": 6,
+    "squadronSize": 10,
+    "props": "Robust Craft",
+    "rarity": 0,
+    "qty": 1,
+    "state": "stored",
+    "strength": "full"
+  },
+  "_id": "HBLzKszlNWY2ozWh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783249735219,
+    "modifiedTime": 1783249735219,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!HBLzKszlNWY2ozWh"
+}

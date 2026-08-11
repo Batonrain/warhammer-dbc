@@ -1,0 +1,52 @@
+{
+  "name": "Anointed / Помазанник",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "yZG5ZRAC9obmDWOJ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в Раунд может без траты Реакции парировать атаку по дружественному персонажу в 1м от него, или получить попадание вместо него. Когда принимает попадание за союзника, может пройти тест Forbidden Lore(Heresy)(W)+10, чтобы увеличить рейтинг силового щита своей брони на 35 (обычно до 1-70) против этого попадания.",
+    "tier": 3,
+    "requirement": "Неделимый, Forbidden Lore (Heresy)+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Чемпион-Терминатор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "p6DR0OSTIv7srWul",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122001895,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!p6DR0OSTIv7srWul"
+}

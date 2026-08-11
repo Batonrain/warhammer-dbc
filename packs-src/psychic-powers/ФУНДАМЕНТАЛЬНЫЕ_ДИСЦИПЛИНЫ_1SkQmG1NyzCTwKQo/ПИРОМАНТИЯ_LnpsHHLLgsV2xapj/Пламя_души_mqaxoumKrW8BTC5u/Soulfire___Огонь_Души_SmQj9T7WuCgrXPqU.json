@@ -1,0 +1,75 @@
+{
+  "name": "Soulfire / Огонь Души",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-pyromancy.svg",
+  "folder": "mqaxoumKrW8BTC5u",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "pyromancy",
+    "subtype": "Пламя души",
+    "powerType": "concentration",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "free",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Концентрация. Треб.: Manifest Flame. При нанесении E(Fl) урона (после Избегания, до щитов): при Успехе псайкер себе PR+1d5 в W, и +PRd5 к урону одного попадания пламени по цели. Усиленное пламя игнорирует иммунитет к E/E(Fl).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "SmQj9T7WuCgrXPqU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122031695,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SmQj9T7WuCgrXPqU"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Mob Justice / Правосудие Толпы",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CFivSmNFLzFuFVyu",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Ненависть, взращённая в душах, даёт плоды, когда они проливают кровь угнетателей. Когда Орда под его командованием имеет Талант Hatred и убивает лидера Ненавистного врага, может пройти тест Charm+0 — при Успехе Орда пропускает свой следующий Ход (осквернить труп над толпой), но получает рейтинг Страха 2 против рядовых солдат Ненавистного врага до конца следующего Хода, а все дружественные Орды, что видели, восстанавливают 2d10+Успехи урона в Магнитуду.",
+    "tier": 1,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Иерофант",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "3Dg1eNbRUacHXNYX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121965109,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!3Dg1eNbRUacHXNYX"
+}

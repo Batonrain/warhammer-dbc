@@ -1,0 +1,58 @@
+{
+  "name": "Tormentor Helmet / Шлем Мучителя",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Шлем Инкубов, отдалённо напоминающий шлема Жалящих Скорпионов. Читает мысли владельца и открывает огонь по его приказу.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 2,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "шлем",
+    "effect": "В шлем встроен Осколочный Пистолет со свойствами Independent и Twin-Linked. Атака из него — Свободное действие и НЕ входит в общий лимит атак. Пистолет всегда считает противника в Упор, даже если тот в рукопашной с владельцем, со всеми соответствующими бонусами. При стрельбе из шлема +20 на короткие и длинные очереди.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Пистолет лишается Twin-Linked.",
+      "good": "Пистолет получает Storm (2).",
+      "best": "Пистолет можно заменить на любое другое оружие типа «пистолет». Если это пистолет типа Splinter — он получает Storm (2/+1)."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "NpupATOxtNYDW1Hz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380043,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!NpupATOxtNYDW1Hz"
+}

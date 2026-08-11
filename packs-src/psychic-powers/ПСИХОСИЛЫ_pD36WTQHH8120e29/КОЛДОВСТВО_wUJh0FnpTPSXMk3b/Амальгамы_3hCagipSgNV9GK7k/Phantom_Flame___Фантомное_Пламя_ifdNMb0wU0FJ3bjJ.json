@@ -1,0 +1,75 @@
+{
+  "name": "Phantom Flame / Фантомное Пламя",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-amalgam.svg",
+  "folder": "3hCagipSgNV9GK7k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "sorcery",
+    "subtype": "Амальгамы",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание · Личное Пламя · Незримое · Цикл (7) (Телепатия+Пиромантия). Нужна свободная рука: источник Открытого Пламени в руке (рука занята). Безоружные атаки этой рукой 1d10+PR E(Fl), Pen PR, Flame, Contained. Это пламя и подожжённое им невидимо для не-иммунных к телепатии/иллюзиям. Силы Пиромантии типа Открытое Пламя из этой сферы получают тип Незримое.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "ifdNMb0wU0FJ3bjJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122035916,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ifdNMb0wU0FJ3bjJ"
+}

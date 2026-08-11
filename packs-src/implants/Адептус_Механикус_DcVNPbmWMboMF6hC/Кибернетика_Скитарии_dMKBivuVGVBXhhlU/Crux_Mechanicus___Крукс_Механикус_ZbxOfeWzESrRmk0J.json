@@ -1,0 +1,172 @@
+{
+  "name": "Crux Mechanicus / Крукс Механикус",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:3.",
+    "notes": "",
+    "category": "skitarii",
+    "quality": "common",
+    "effect": "Органы и часть мозга заменены машиной: Трейты Unnatural S (+2), Unnatural T (+2) и Machine (+2). Символ статуса: +10 на социальные/Командование другими Скитариями.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [
+        {
+          "stat": "s",
+          "value": 2
+        },
+        {
+          "stat": "t",
+          "value": 2
+        }
+      ],
+      "charValueBonuses": [],
+      "armourAll": 2,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "dMKBivuVGVBXhhlU",
+  "_id": "ZbxOfeWzESrRmk0J",
+  "effects": [
+    {
+      "name": "Crux Mechanicus / Крукс Механикус (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.s.bonus",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.t.bonus",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.head",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.body",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftArm",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightArm",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftLeg",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightLeg",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "6a8f1hfMTZZkSvGM",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122015012,
+        "modifiedTime": 1786122015012,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!ZbxOfeWzESrRmk0J.6a8f1hfMTZZkSvGM"
+    }
+  ],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122015029,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ZbxOfeWzESrRmk0J"
+}

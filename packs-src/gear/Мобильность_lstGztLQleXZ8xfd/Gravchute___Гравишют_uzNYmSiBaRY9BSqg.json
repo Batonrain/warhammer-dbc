@@ -1,0 +1,53 @@
+{
+  "name": "Gravchute / Гравишют",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Ранец с грав-суспензорами и парой реактивных двигателей для замедления падения.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 12,
+    "availability": 1,
+    "quality": "common",
+    "gearCategory": "mobility",
+    "worn": "Спина (верх)",
+    "effect": "Безопасное приземление с любой высоты (Operate(Aeronautica)+30). При провале — высота падения → <Провалы> м + Сгруппироваться. Активация на любой высоте (Operate+0): падение 5 м/Ход, горизонт. SPD 3, Уклонения в падении. В невесомости — Трейт Flyer(4). Неактивный: −10 на тесты A движения тела, отстёгивается свободным действием. Батарея 5 мин (60 Раундов), заряжается как 5 батарей лаз-гана. Есть версия для силовой брони (R2). Занимает верх спины (лопатки и выше) — можно носить другое заплечное со штрафом −20.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "При любой активации 1d10: на 1 не срабатывает (смертельно).",
+      "good": "+10 на все связанные тесты.",
+      "best": "Как Good.Q; форсаж за полудействие даёт Flyer(3) ценой ×2 разрядки, не более 3 Раундов подряд."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": true,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "lstGztLQleXZ8xfd",
+  "_id": "uzNYmSiBaRY9BSqg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!uzNYmSiBaRY9BSqg"
+}

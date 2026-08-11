@@ -1,0 +1,54 @@
+{
+  "name": "Sword Stance / Стойка Меча",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "n4MVIjhVCl4Iv8eQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Парировав атаку на +3 успеха, персонаж проходит WS+20−20×Размер противника и при успехе перенаправляет вражескую атаку на самого противника (авто-попадание, переброс урона с выбором лучшего), после чего бьёт удерживаемым мечом (авто-попадание). Если его атака нанесла больше урона, чем перенаправленная, противник немедленно заканчивает ход.",
+    "tier": 1,
+    "requirement": "Оружие Наследия – Меч/Сабля/Рапира",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "lve1OgOnZwBWOniz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121999522,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lve1OgOnZwBWOniz"
+}

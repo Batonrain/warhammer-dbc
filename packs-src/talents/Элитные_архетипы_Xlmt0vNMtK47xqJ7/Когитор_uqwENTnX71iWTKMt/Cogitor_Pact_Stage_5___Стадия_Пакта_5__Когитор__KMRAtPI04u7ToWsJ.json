@@ -1,0 +1,52 @@
+{
+  "name": "Cogitor Pact Stage 5 / Стадия Пакта 5 (Когитор)",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "uqwENTnX71iWTKMt",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Полностью трансформируется в конструкт из сияющих кристаллов и колдовского пламени и даже поглощает всё снаряжение, пробывшее на нём больше 9 минут, придавая ему свойства своего тела. Получает +9 Ран и Трейт Swarm (1d5), отображающий подвижную природу его тела, способного пропускать атаки, смыкаясь за ними, а также Трейты Deadly Natural Weapons (3, кулаки) и Warp Weapon. При ускорении сознания может совершать до 2 атак в Ход, если одна из них использует полученное от ускорения полудействие; если не потратил это полудействие до конца своего Хода, оно меняется на дополнительную Реакцию. Больше не тратит Реакции на восстановление Очков Вдохновения от убийств. Может тратить Очки Вдохновения, чтобы «считывать планы» дополнительных целей в Ход, по 1 за каждое очко. Создавая оружие Трейтом Daemonic Armament, может дать ему одно из свойств: Force, Haywire (0) или Tainted, и может потратить Очко Вдохновения, чтобы «пересоздать» оружие за свободное действие.",
+    "tier": 3,
+    "requirement": "Тзинч, 2000 xp: Inf 70, Cor 70; переиграть и предать самого демона-покровителя, давшего ему эту силу",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Когитор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "KMRAtPI04u7ToWsJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121978094,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KMRAtPI04u7ToWsJ"
+}

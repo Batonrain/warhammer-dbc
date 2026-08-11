@@ -1,0 +1,75 @@
+{
+  "name": "Enthrall / Порабощение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "9ssV0AszmvvEldQb",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "telepathy",
+    "subtype": "Мезмеризм",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×5м / PR×20м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение. Психотест W−20 vs W+0. Треб.: Compel. Цель делает все действия в Ход псайкера под его контролем, использует WS/BS псайкера, если они ниже. Освобождение (выход из дальности) — Ступор на 1 Раунд. Суицидальное действие — тест W+0 на вырывание. С Очками Судьбы/Бесчестия — потратить одно на повторный встречный тест; ради немыслимого — сжечь любое число (+30 за очко).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "eZ2y5bf78uJpgvmB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122035007,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!eZ2y5bf78uJpgvmB"
+}

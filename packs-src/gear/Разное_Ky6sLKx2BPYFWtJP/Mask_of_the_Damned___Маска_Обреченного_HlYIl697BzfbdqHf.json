@@ -1,0 +1,58 @@
+{
+  "name": "Mask of the Damned / Маска Обреченного",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Маска, наполненная эссенцией гладиатора, осознавшего обречённость своего состояния и не желавшего умирать.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.3,
+    "availability": 1,
+    "quality": "common",
+    "gearCategory": "misc",
+    "linkedWeapon": "",
+    "worn": "на лицо",
+    "effect": "Когда противник ВПЕРВЫЕ за битву оказывается на дистанции рукопашного боя с носителем и видит его, он проходит тест W−10 (считается как против страха). Провал — падает на колени и становится оглушённым, борясь с образами собственной худшей смерти. Состояние длится Провалы раундов.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Тест меняется на W+30.",
+      "good": "Тест меняется на W−20.",
+      "best": "Как Good.Q. Гвардейцы, стражи эльдар и бойзы орков при взгляде на маску проваливают тест автоматически и впадают в состояние на раунд; выходя из него, проходят тест заново, словно не смотрели на маску."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "drukhari": true,
+    "folderPath": [
+      "Друкхари",
+      "Снаряжение"
+    ]
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "HlYIl697BzfbdqHf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785349380041,
+    "modifiedTime": 1785349380043,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!HlYIl697BzfbdqHf"
+}

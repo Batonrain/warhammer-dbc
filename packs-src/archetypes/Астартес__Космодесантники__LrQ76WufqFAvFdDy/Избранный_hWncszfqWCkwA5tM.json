@@ -1,0 +1,50 @@
+{
+  "name": "Избранный",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "LrQ76WufqFAvFdDy",
+  "system": {
+    "key": "chosen",
+    "race": "astartes",
+    "group": "",
+    "charBonus": {},
+    "charChoice": "",
+    "skills": "Intimidate или Security, Stealth или Common Lore (War) +10, Dodge +10 или Parry +10",
+    "talents": "Lightning Reflexes, Leap Up или Rapid Reload, Disarm или Double Tap, Sure Strike или Deadeye Shot",
+    "gear": "L. Chain Weapon (до R1) или L. Flamer, L. Meltagun или L. Plasmagun",
+    "wounds": "16+1d5",
+    "infRoll": "",
+    "requiredPath": "",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Элитный оружейный специалист легиона.",
+    "trait": {
+      "name": "Cold Killer / Хладнокровный Убийца",
+      "benefit": "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "hWncszfqWCkwA5tM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536187,
+    "modifiedTime": 1786285536192,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!hWncszfqWCkwA5tM"
+}

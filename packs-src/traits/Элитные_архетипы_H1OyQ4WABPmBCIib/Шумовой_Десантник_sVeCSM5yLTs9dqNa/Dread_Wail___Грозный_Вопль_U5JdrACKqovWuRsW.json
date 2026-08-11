@@ -1,0 +1,51 @@
+{
+  "name": "Dread Wail / Грозный Вопль",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "sVeCSM5yLTs9dqNa",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз за бой может потратить Очко Бесчестия, чтобы перегрузить динамики и звуковые усилители брони: до начала следующего Хода усилить Dmg и Pen звукового оружия на R.b, ЛИБО испустить звуковую волну по всем в радиусе ½ Cor.b м, кто не посвящён Слаанеш (тест W−20 или один из эффектов на выбор до активации: рейтинг Страха 2 до конца боя; 1d5 Усталости; Оглушение на 2 Раунда).",
+    "source": "Элитный архетип: Шумовой Десантник",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "U5JdrACKqovWuRsW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121959852,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!U5JdrACKqovWuRsW"
+}

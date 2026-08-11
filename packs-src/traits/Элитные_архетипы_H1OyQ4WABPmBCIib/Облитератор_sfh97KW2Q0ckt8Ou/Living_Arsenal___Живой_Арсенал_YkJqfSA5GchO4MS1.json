@@ -1,0 +1,51 @@
+{
+  "name": "Living Arsenal / Живой Арсенал",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "sfh97KW2Q0ckt8Ou",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За полное действие может ассимилировать касанием любое оружие или механизм размера, которым может пользоваться космодесантник или персонаж поменьше. Предмет разрушается, Облитератор узнаёт, как он работает и как его создать. Ассимиляция не работает на технологиях Орков и Некронов, Демоническом и Руническом оружии, оружии Наследия и психическом оружии вроде психосилового; нельзя ассимилировать ракеты, гранаты, бомбы и их пусковые установки. За полудействие может превратить одну или две свои руки в оружие или инструмент, которые ассимилировал; может использовать тяжёлое оружие или винтовки одной рукой без штрафа. Его оружие никогда не Заклинивает и не Перегревается (Критические Провалы просто вызывают промахи) и имеет неограниченный запас стандартных боеприпасов. Если сформированное оружие — пистолет, винтовка или длинная винтовка, может создать два таких на одной руке, добавляя свойство Twin-Linked.",
+    "source": "Элитный архетип: Облитератор",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "YkJqfSA5GchO4MS1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121960080,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!YkJqfSA5GchO4MS1"
+}

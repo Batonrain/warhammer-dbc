@@ -1,0 +1,95 @@
+{
+  "name": "Электровытягивающий Посох",
+  "type": "weapon",
+  "folder": "YCVIsdaiG7Gpf0Au",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "shock",
+    "range": 4,
+    "balance": 1,
+    "grips": "2р",
+    "profileLabel": "Посох",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "2d10+6",
+    "damageType": "energy",
+    "penetration": 0,
+    "quality": "common",
+    "availability": 2,
+    "weight": 1.5,
+    "attackBonus": 0,
+    "special": "Посох; Хват 2р; Досягаемость 2–4",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "contained"
+      },
+      {
+        "key": "reinforced"
+      },
+      {
+        "key": "shocking"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "nd3sVnU2B3SkFFmZ",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!nd3sVnU2B3SkFFmZ"
+}

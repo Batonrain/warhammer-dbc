@@ -1,0 +1,55 @@
+{
+  "name": "Tempered Cocoon / Закалённый Кокон",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "r8BS3vBWEEuVCRpj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Десантник получает ещё +10 на все тесты против жара, холода и вакуума, и вместо переброса этих тестов от Мукраноида получает на них Преимущество.",
+    "tier": 1,
+    "requirement": "T 50",
+    "aptitudes": [
+      "t",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Нургл",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "pKD4rAbElsK4OCUZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122002096,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pKD4rAbElsK4OCUZ"
+}

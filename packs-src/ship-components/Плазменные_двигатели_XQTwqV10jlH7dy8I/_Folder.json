@@ -1,0 +1,23 @@
+{
+  "name": "Плазменные двигатели",
+  "type": "Item",
+  "folder": null,
+  "sorting": "m",
+  "_id": "XQTwqV10jlH7dy8I",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782039811025,
+    "modifiedTime": 1782039811025,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!folders!XQTwqV10jlH7dy8I"
+}

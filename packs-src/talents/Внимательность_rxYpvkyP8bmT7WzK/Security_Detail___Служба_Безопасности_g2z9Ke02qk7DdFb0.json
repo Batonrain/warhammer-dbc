@@ -1,0 +1,55 @@
+{
+  "name": "Security Detail / Служба Безопасности",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "rxYpvkyP8bmT7WzK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При любом тесте Awareness для поиска спрятавшихся существ, скрытого оружия, мин, ловушек и т.д. персонаж считается имеющим Трейт Unnatural P (+2).",
+    "tier": 3,
+    "requirement": "Awareness+20, Security",
+    "aptitudes": [
+      "per",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "g2z9Ke02qk7DdFb0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121994180,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!g2z9Ke02qk7DdFb0"
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Teleportarium / Телепортариум",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Массивная телепортационная камера у реактора (корабли от крейсера). Оператор Tech-Use+20 и F.L.(Warp)+10. До 10 существ Размер 0 (Размер 1/2 = 2/5 существ).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 4,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "Активация: полное действие + комбо-тест Tech-Use−20 & F.L.(Warp)−10 (моды: +40 маяк, +20 планы, −10 движется, −20 пустотные щиты). Режимы Исходящий/Входящий/Транзитный (дальность 5000 км). Телепортационный Стресс: T+0 или урон + W+20 или Порча. Перезарядка 10 минут.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Перезарядка 1 час, −20 против стресса.",
+      "good": "До 3 использований (восстановление 1/10 мин), +20 против стресса.",
+      "best": "Как Good.Q; +40 против стресса, уменьшает смещение в занятое пространство."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "n73A90Krxdf5ZAcQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!n73A90Krxdf5ZAcQ"
+}

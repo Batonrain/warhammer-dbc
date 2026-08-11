@@ -1,0 +1,47 @@
+{
+  "name": "Мк III Индомитус",
+  "type": "armor",
+  "folder": "od7g4AunuERomXc7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 45,
+    "equipped": false,
+    "head": 14,
+    "body": 14,
+    "leftArm": 14,
+    "rightArm": 14,
+    "leftLeg": 14,
+    "rightLeg": 14,
+    "quality": "common",
+    "availability": 4,
+    "weight": 1000,
+    "properties": [],
+    "strengthBonus": 30,
+    "wpBonus": 0,
+    "special": "Сверхброня. Второй профиль AP: 3/5/4/4. +10 аблативных Ран. Штраф −20 к Ловкости. Обзор 180°. Неперегружаемый щит-дефлектор 1–35. Есть уменьшенная мортальная версия (400 кг, R 5)."
+  },
+  "_id": "8bACcjoKlenRSYgp",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!8bACcjoKlenRSYgp"
+}

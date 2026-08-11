@@ -1,0 +1,44 @@
+{
+  "name": "Extinguisher / Тушитель",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Небольшой баллон CO2, химингибиторов и охладителей.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 0,
+    "quality": "common",
+    "toolCategory": "consumable",
+    "effect": "Полудействие: разбить о себя или цель в ≤S.b м — потушить Горение на цели.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "50gewTwUAjnZwIc7",
+  "_id": "qCOucDCZktv1nwTU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!qCOucDCZktv1nwTU"
+}

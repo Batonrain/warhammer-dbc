@@ -1,0 +1,21 @@
+{
+  "name": "Таланты архетипа",
+  "type": "Item",
+  "sorting": "m",
+  "folder": "7qD2N7WD8kjJDZqM",
+  "_id": "zz0tb5HLirvbQEm6",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!zz0tb5HLirvbQEm6"
+}

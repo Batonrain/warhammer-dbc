@@ -1,0 +1,52 @@
+{
+  "name": "Khymera / Кхимера",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CXiOYm16hgGFql1y",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает возможность приобретать необученных Кхимер как предмет R3, обученных как R4. Кхимера считается для Укротителя Средним Миньоном. Также может получать их через особую миссию в своих сновидениях или сновидениях пытаемых рабов.",
+    "tier": 2,
+    "requirement": "Подчинить 2 Адских Пауков",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Укротитель",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "f7lyTgmBhK67dcn8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121993467,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!f7lyTgmBhK67dcn8"
+}

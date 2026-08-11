@@ -1,0 +1,149 @@
+{
+  "name": "Skitarii War Plate / Боевые Латы Скитарии",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:1. Базовый комплект имплантов Скитарии; включает комплект брони, интегрированный в плоть. Снятие требует операции, как замена бионики; посекционно можно снимать для ремонта.",
+    "notes": "",
+    "category": "skitarii",
+    "quality": "common",
+    "effect": "<p><b>Броня 6/7/7/5/5</b> (голова/тело/руки/ноги), свойства: Conductive, Sealed, Void; модификации Insulated, Thermal, Foam Sealant, Thrusters, Cooler, Transteel. Интегрирована в плоть.</p><p><b>Атомантическое Укрепление:</b> не перегружающийся технологический дефлектор (рейтинг 1–10). Если AP какой-либо части опускается до 0 — щит теряется, пока часть не починена.</p><p><b>Мантия Искателя:</b> смена бионических конечностей за 3 мин без теста; в комплекте пара бионических рук и ног (Good.Q). <b>Актуаторные Банки:</b> иммунитет к Усталости от бега/марша; работают как Потенциа-Коил на 1⚡ (заряжаются Электу-Индукторами). <b>Мозжечковые Анализаторы Путей:</b> трудный ландшафт как обычный, без штрафов в рукопашной и вождении. <b>Черепные Цепи</b> и <b>Ноосферный Фид.</b> <b>Катехизисы Командования:</b> считается сервитором/роботом для Binary Dominion; обязан выполнять команды Механикус, даже смертельные.</p>",
+    "installed": "всё тело",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 6,
+      "apBody": 7,
+      "apArms": 7,
+      "apLegs": 5,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": true,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "dMKBivuVGVBXhhlU",
+  "_id": "5uZ4tNpHsLHjOEMB",
+  "effects": [
+    {
+      "name": "Skitarii War Plate / Боевые Латы Скитарии (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.armour.head",
+            "type": "add",
+            "value": 6,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.body",
+            "type": "add",
+            "value": 7,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftArm",
+            "type": "add",
+            "value": 7,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightArm",
+            "type": "add",
+            "value": 7,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftLeg",
+            "type": "add",
+            "value": 5,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightLeg",
+            "type": "add",
+            "value": 5,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "CJQwf9WyQbHyf9qR",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122011200,
+        "modifiedTime": 1786122011200,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!5uZ4tNpHsLHjOEMB.CJQwf9WyQbHyf9qR"
+    }
+  ],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122011266,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!5uZ4tNpHsLHjOEMB"
+}

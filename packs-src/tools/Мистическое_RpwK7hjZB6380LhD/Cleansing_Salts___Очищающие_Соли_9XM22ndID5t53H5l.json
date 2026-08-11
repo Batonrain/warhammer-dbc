@@ -1,0 +1,44 @@
+{
+  "name": "Cleansing Salts / Очищающие Соли",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Пакет священных солей мира-святыни из слёз пилигримов.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 4,
+    "quality": "common",
+    "toolCategory": "mystic",
+    "effect": "Разведённые в ванне: купание выводит ½Cor.b(окр.▲)d5 Порчи, но наносит ½Cor.b(окр.▲)d10 урона во все Характеристики (восстанавливается ×4 медленнее — 1/4 ч). Cor 50+: W−(Cor−50) чтобы не выпрыгнуть. Прерванная процедура — ½ урона (d5 вместо d10), но без снятия Cor. Урон W до 0 → −1 мутация и потеря Psyker; T до 0 → смерть (без Inf). Cor 0-19: неделю ½ полученной Порчи (окр.▼).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "RpwK7hjZB6380LhD",
+  "_id": "9XM22ndID5t53H5l",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!9XM22ndID5t53H5l"
+}

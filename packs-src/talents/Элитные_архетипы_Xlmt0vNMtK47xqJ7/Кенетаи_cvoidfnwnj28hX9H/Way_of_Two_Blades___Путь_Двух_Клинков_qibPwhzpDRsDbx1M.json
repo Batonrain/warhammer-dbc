@@ -1,0 +1,52 @@
+{
+  "name": "Way of Two Blades / Путь Двух Клинков",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "cvoidfnwnj28hX9H",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Подобно Кенетаи Ордена Шакала, идёт в бой с двумя Психосиловыми клинками. Может применять Оккультный Клинок два раза в Раунд, или применять его и Выжигание Души в один Ход, но только если оба попадания нанесены двумя разными оружиями.",
+    "tier": 2,
+    "requirement": "Слаанеш, Two Weapon Wielder (Melee)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Кенетаи",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "qibPwhzpDRsDbx1M",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122003633,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qibPwhzpDRsDbx1M"
+}

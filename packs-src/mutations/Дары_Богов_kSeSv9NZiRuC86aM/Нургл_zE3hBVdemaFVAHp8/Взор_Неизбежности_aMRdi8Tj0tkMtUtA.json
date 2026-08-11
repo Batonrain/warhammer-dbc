@@ -1,0 +1,49 @@
+{
+  "name": "Взор Неизбежности",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Из глазниц чемпиона смотрит сила превыше его самого и лишь беглого взгляда в её глаза достаточно, чтобы подорвать волю к жизни и напомнить его врагам о неизбежности смерти. Противники, что могут видеть глаза персонажа (или визоры его брони), должны комбинировать любой тест на Избегание от его атак с тестом на W−10. Если они проваливают этот тест, они теряют все свои Реакции.\n\nЗа полное действие персонаж может сконцентрировать взор на одной цели в пределах его видимости. Та должна пройти тест на W−30 или потерять все Реакции.",
+    "source": "Дары Нургл, d100 13…15",
+    "roll": "13…15",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "aMRdi8Tj0tkMtUtA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020623,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aMRdi8Tj0tkMtUtA"
+}

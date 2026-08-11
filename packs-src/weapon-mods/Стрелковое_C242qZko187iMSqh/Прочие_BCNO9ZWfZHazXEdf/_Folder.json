@@ -1,0 +1,21 @@
+{
+  "name": "Прочие",
+  "type": "Item",
+  "sorting": "m",
+  "folder": "C242qZko187iMSqh",
+  "_id": "BCNO9ZWfZHazXEdf",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!BCNO9ZWfZHazXEdf"
+}

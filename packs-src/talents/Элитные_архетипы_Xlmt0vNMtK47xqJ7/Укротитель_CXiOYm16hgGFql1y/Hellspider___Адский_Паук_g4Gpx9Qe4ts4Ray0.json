@@ -1,0 +1,52 @@
+{
+  "name": "Hellspider / Адский Паук",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CXiOYm16hgGFql1y",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает возможность приобретать необученных Адских Пауков как предмет R2, обученных как R3. Адский Паук считается для Укротителя Средним Миньоном.",
+    "tier": 2,
+    "requirement": "Подчинить 2 Бритвокрылов",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Укротитель",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "g4Gpx9Qe4ts4Ray0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121994276,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!g4Gpx9Qe4ts4Ray0"
+}

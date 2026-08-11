@@ -1,0 +1,75 @@
+{
+  "name": "Ferryman / Лодочник",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-pyromancy.svg",
+  "folder": "Jt5JQjcEIdU6O9ep",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "pyromancy",
+    "subtype": "Контроль пламени",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×3м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура. Треб.: One With the Flame. Защищает союзников в ауре от собственных сил Пиромантии псайкера (золотой кокон, нивелирующий урон/эффекты). Пока поддерживает Глаза Огня/Неопалимый/Огненный Щит — союзники в ауре и прямой видимости тоже получают их преимущества. Может переносить касающихся союзников психосилой Ходящий по Пламени (пламя должно вместить всех).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "EASM7cDpM823rbm5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122026541,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EASM7cDpM823rbm5"
+}

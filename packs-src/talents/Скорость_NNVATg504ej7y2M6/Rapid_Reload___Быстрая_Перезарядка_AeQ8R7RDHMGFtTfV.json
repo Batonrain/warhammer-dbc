@@ -1,0 +1,55 @@
+{
+  "name": "Rapid Reload / Быстрая Перезарядка",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "NNVATg504ej7y2M6",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Время перезарядки любого оружия снижается вдвое (окр.▼). Если оружие можно было перезарядить полудействием, персонаж перезаряжает его свободным действием. Пустой магазин выбрасывается под ноги.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [
+      "ag",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "AeQ8R7RDHMGFtTfV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121971038,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!AeQ8R7RDHMGFtTfV"
+}

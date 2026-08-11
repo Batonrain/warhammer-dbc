@@ -1,0 +1,53 @@
+{
+  "name": "Риоссаибха (Пустотный Мечтатель)",
+  "type": "archetype",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "2W72KI9I4jJY7H7q",
+  "system": {
+    "key": "aelRiossaibha",
+    "race": "azuriane",
+    "group": "Отступники",
+    "charBonus": {
+      "wp": 10,
+      "per": 3
+    },
+    "charChoice": "−5 к WS, BS или I (на выбор)",
+    "skills": "",
+    "talents": "",
+    "gear": "",
+    "wounds": "",
+    "infRoll": "4d5+10",
+    "requiredPath": "Путь Изгоя или Путь Мореплавателя",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "psykerClass": "",
+    "grantsWarPlate": false,
+    "grantsImplants": false,
+    "description": "Проводник кораблей сквозь Варп без глубоких пси-навыков.",
+    "trait": {
+      "name": "Lord of the Streams / Владыка Потоков",
+      "benefit": "Тест W−30: проводит суда Эльдар сквозь потоки Варпа (быстрее имперских прыжков, но на короткие дистанции/множество коротких). Navigation Stellar и Warp может использовать через W или P."
+    },
+    "bookSource": "Black Crusade — Архетипы (Мастер создания)"
+  },
+  "_id": "ivQbHz3hv7vIhOI7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285536190,
+    "modifiedTime": 1786285536194,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ivQbHz3hv7vIhOI7"
+}

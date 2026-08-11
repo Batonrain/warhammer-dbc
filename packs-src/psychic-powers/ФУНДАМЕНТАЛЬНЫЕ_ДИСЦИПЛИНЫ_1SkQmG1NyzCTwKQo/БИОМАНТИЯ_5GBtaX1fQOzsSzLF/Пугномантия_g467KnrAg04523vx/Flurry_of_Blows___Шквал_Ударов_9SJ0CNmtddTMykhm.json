@@ -1,0 +1,75 @@
+{
+  "name": "Flurry of Blows / Шквал Ударов",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-biomancy.svg",
+  "folder": "g467KnrAg04523vx",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 350,
+    "discipline": "biomancy",
+    "subtype": "Пугномантия",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "Ближний бой",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Биоманипуляция · Рукопашное · Физическое. Действие: зависит от базы. Треб.: Hammerhand. Рукопашный Приём (любая база, кроме Верховой), нужна свободная рука. PR безоружных попаданий по целям в рукопашной; Избирательные: 3+ конечность, 5+ голова, 7+ сочленения, 9+ глаза. Отдельные атаки.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "9SJ0CNmtddTMykhm",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122025011,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!9SJ0CNmtddTMykhm"
+}

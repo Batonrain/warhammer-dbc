@@ -1,0 +1,58 @@
+{
+  "name": "Рунная Броня",
+  "type": "armor",
+  "folder": "OI8Ix5ngt6TVebPJ",
+  "system": {
+    "description": "Самая стойкая не–аспектная броня эльдар, используемая преимущественно только видящими. Она мало чем отличается внешним видом от брони стража, однако обладает вшитыми рунами защиты, что даруют владельцу брони невероятну живучесть и боеспособность. А благодаря психическим способностям видящего – он может пережить даже прямое попадание из сверхтяжелого калибра и как ни в чем ни бывало продолжить движение. Имеет те же свойства и бонусы, что и Броня Стража, кроме рюкзака. AP этой брони работает против варп–урона. К PR в расчете блокирования свойством Runes of Protection добавляется +2 бPR. При определенных условиях рунная броня усиливает поглощение вражеских атак:",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 6,
+    "body": 7,
+    "leftArm": 6,
+    "rightArm": 6,
+    "leftLeg": 6,
+    "rightLeg": 6,
+    "quality": "common",
+    "availability": 3,
+    "weight": 3,
+    "properties": [
+      "aspect",
+      "protective",
+      "runesOfProtection",
+      "sealed",
+      "stealthed",
+      "void",
+      "wraithboneRegen"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Aspect (Видящие). AP работает против варп-урона. +2 бPR к Runes of Protection. Усиления поглощения по свойствам оружия (см. справочник). Специализации: Варлока/Духовидца/Провидца/Певца Кости.",
+    "propRatings": {
+      "protective": 6
+    }
+  },
+  "_id": "6L8rws1twq5lcR78",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!6L8rws1twq5lcR78"
+}

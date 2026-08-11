@@ -1,0 +1,60 @@
+{
+  "name": "Light of Elder Zagreus / Светоч Старца Загреуса",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "nBpSIL6DLa8PcmWa",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "animatheurgy",
+    "subtype": "Рунический код",
+    "miracleType": "anima",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 4,
+    "energyCost": 0,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Касание",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Runic Circuits · Цена: 4К · Процесс: 1 (У) · Тип: Анима, Реакция, Славословие (2)] Треб.: For.Lore (Warp)+30. Одно высокотехнологичное рукопашное оружие получает Extreme (9/−1), Haywire (0), Reinforced, Sanctified и иммунитет к Haywire; светится (цвет зависит от верований жреца).",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "3lDXE5Zn98VGiYk1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040153,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!3lDXE5Zn98VGiYk1"
+}

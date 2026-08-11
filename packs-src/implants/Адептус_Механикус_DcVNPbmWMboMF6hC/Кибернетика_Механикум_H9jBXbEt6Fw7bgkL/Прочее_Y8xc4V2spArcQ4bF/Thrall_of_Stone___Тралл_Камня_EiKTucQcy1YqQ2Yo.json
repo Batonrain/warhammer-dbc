@@ -1,0 +1,67 @@
+{
+  "name": "Thrall of Stone / Тралл Камня",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:5. Прочее.",
+    "notes": "",
+    "category": "mechOther",
+    "quality": "common",
+    "effect": "Скованный Изуверский Интеллект ТЭТ: свободным действием дать команду и время активации, после чего Тралл контролирует тело (Трейт Parasite). Тралл: WS/BS/I/P/F 95, Unnatural Characteristic (8) на них, W 50, Трейт From Beyond; полная ⚡ в начале Хода, до 4 полудействий (половина не физические). Следует букве команды, но интерпретирует ради своих целей (перехват тела/копирование себя). Крайне опасно давать свободу надолго.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "Y8xc4V2spArcQ4bF",
+  "_id": "EiKTucQcy1YqQ2Yo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122012359,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EiKTucQcy1YqQ2Yo"
+}

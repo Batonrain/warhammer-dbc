@@ -1,0 +1,51 @@
+{
+  "name": "Rite of Eight Specks / Ритуал Восьми Спиц",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "8gFQg6BGfgXHgqzZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Силы Когнитэ исходят из сделок с Разрушительными Силами, требующих подпитки свежими жертвами. Каждую неделю получает видение, требующее определённого жертвоприношения («отец 5 детей», «человек, предавший лучшего друга», «бывший алкоголик»). До конца недели должен выследить или убить жертву, иначе получает накапливающийся штраф −10 на все тесты, вызванные Трейтами и Талантами Архетипа, за каждую неделю опоздания.",
+    "source": "Элитный архетип: Когнитэ",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "dTaTSpfwNPw7k8Th",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121960595,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!dTaTSpfwNPw7k8Th"
+}

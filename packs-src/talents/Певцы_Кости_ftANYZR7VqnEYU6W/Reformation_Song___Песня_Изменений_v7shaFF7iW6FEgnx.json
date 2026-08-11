@@ -1,0 +1,55 @@
+{
+  "name": "Reformation Song / Песня Изменений",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ftANYZR7VqnEYU6W",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За Полное действие — до F.b психокостяных вещей в радиусе W м получают Восстановление или Разрушение (на выбор; цели — Оружие, Снаряжение, Броня). Вне боя — стилистическое изменение вида снаряжения/техники (сложные дизайны могут потребовать несколько смен). Броня: Восст. — +F.b AP во всех зонах и +½ (окр.▲) F.b аблативных AP (как мод. Аблативная); Разр. — −F.b AP во всех зонах (не уничтожается, даже при AP 0), а аблативные раны и доп. AP (напр. от талантов) до конца боя нивелируются. Оружие: Восст. — расклинивает и восстанавливает повреждённое/уничтоженное, +Reinforced до конца боя; Разр. — стрелковое заклинивает и не расклинивается раунд; рукопашное с Reinforced теряет его до конца боя, без Reinforced — уничтожается. Снаряжение: Восст. — восстанавливает работу и +1 качество до конца боя; Разр. — блокирует работу на раунд и −1 качество до конца боя. Иммунное снаряжение (сложный принцип работы или мистическая/божественная природа) не затрагивается. До 3 раз за сессию.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [
+      "fel",
+      "tech"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "v7shaFF7iW6FEgnx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122006899,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!v7shaFF7iW6FEgnx"
+}

@@ -1,0 +1,49 @@
+{
+  "name": "Лик Кхорна",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Образ Владыки Черепов, полный гнева и кровожадности, накладывается на внешность персонажа, придавая ему частичное сходство с его Богом. Он получает бонус +20 на все тесты социальных взаимодействий с солдатами и воинами, поднимающийся до +30 со смертными последователями Кхорна, а также бонус +10 на тесты запугивания против всех остальных. Демоны Кхорна рангом ниже Герольда автоматически считают его одним из их рода и признают его авторитет в Командовании, если его Inf 30+ и ими не командует кто-то более могущественный.\n\nЗа свободное действие персонаж может потратить Очко Бесчестия, чтобы усилить сходство лика с оригиналом до предела, получив рейтинг Страха 3 до начала своего следующего Хода. Этот Страх не работает на других Кхорнитов, а Слаанешиты, провалившие тест на Страх от него, вместо бросков на Шок в течение 1 Раунда должны перебрасывать Успехи на любые тесты, кроме атак по персонажу или тестов на то, чтобы убраться от него как можно дальше.",
+    "source": "Дары Кхорн, d100 1…5",
+    "roll": "1…5",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "wkpvChQkINn5SodJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122022333,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wkpvChQkINn5SodJ"
+}

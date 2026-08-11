@@ -1,0 +1,52 @@
+{
+  "name": "Hellbound / Адосвязанный",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "StAWZZpsNEO4ALHA",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Сделки с Кузницей Душ дают доступ к продвинутым ритуалам связывания демона с машиной. Может за смену работы отметить машину доп. рунами связывания, но не может держать такие руны на более чем ½W.b (окр.▲) машин (при нанесении «лишней» самая старая теряет силу). Демон в этой машине может использовать свой WS, BS или A (по выбору) вместо сгенерированного при вселении в машину, а при уничтожении машины может перебрасывать кубик на затягивание остова машины в Варп.",
+    "tier": 2,
+    "requirement": "Неделимый, Forbidden Lore (Daemons)+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Лорд-Дискордант",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "zijw7nlgVcxApnAC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122010314,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!zijw7nlgVcxApnAC"
+}

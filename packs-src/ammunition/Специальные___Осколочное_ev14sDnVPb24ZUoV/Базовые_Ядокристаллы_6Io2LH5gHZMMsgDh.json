@@ -1,0 +1,46 @@
+{
+  "name": "Базовые Ядокристаллы",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "ev14sDnVPb24ZUoV",
+  "system": {
+    "description": "Классические ядовитые кристаллы, используемые в осколочном оружии. Дают Toxic (2). Если применяется любой другой боеприпас, то Toxic с осколочного оружия пропадает.",
+    "notes": "",
+    "weaponTypes": [
+      "splinter"
+    ],
+    "ammoCategory": "splinter_crystals",
+    "rarity": 0,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 0,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "Toxic (2)",
+    "properties": []
+  },
+  "_id": "6Io2LH5gHZMMsgDh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783814777010,
+    "modifiedTime": 1783814777010,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!6Io2LH5gHZMMsgDh"
+}

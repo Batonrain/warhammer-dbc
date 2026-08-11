@@ -1,0 +1,49 @@
+{
+  "name": "Библиотека Акаши",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Архитектору Судеб ведомо всё, что когда-либо было узнано смертным разумом, и его чемпион может получить частицы этой мудрости. Чемпион может выбрать Критически преуспеть в любом тесте Знания (как до, так и после броска), даже если он не владеет им, потратив Очко Бесчестия. Сразу после этого он должен пройти тест на Cor+10, или получить 1 Порчи и 1d5 непоглощаемого E Dmg в голову, случайно подсмотрев отблески безумного сознания своего Бога в его истинном величии.",
+    "source": "Дары Тзинч, d100 52…54",
+    "roll": "52…54",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "fmzZfu6MqEF65ZJS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021117,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!fmzZfu6MqEF65ZJS"
+}

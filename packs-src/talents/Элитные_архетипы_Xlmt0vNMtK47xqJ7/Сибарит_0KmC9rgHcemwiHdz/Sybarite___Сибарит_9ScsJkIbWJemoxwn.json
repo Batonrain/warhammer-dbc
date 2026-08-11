@@ -1,0 +1,52 @@
+{
+  "name": "Sybarite / Сибарит",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "0KmC9rgHcemwiHdz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может иметь в отряде до 20 друкхари, если те из того же кабала, распространяя на них все бонусы как обычно. Может проводить быструю подготовку новых членов отряда: персонаж и ГМ определяют таланты, которые есть у большинства членов отряда или должны быть у боевика, после чего персонаж в обход обычных правил Обучения обучает одно существо одному таланту из списка за 10−F.b (мин. 1) дней. Тесты не требуются, но обучающий и обучаемый получают 1 Усталость.",
+    "tier": 3,
+    "requirement": "F 40, принадлежность к Кабалу",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Сибарит",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "9ScsJkIbWJemoxwn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121970104,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!9ScsJkIbWJemoxwn"
+}

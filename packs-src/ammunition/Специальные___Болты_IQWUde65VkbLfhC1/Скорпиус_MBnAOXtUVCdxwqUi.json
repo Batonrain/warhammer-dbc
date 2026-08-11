@@ -1,0 +1,46 @@
+{
+  "name": "Скорпиус",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo-bolt.svg",
+  "folder": "IQWUde65VkbLfhC1",
+  "system": {
+    "description": "Сверхскоростной снайперский болт с ракетным двигателем. Считается трассером, увеличивает дальность вдвое, даёт +1d10 урона при попадании в сочленение брони, визор или незащищённое тело; автоматически заклинивает оружие при стрельбе любой очередью.",
+    "notes": "",
+    "weaponTypes": [
+      "bolt"
+    ],
+    "ammoCategory": "bolts",
+    "rarity": 3,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 3,
+    "attackMod": 0,
+    "damageMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 2,
+    "special": "Трассер; +1d10 по сочленениям/визору/незащищённому телу; авто-Клин при любой очереди",
+    "properties": []
+  },
+  "_id": "MBnAOXtUVCdxwqUi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1782752979740,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!MBnAOXtUVCdxwqUi"
+}

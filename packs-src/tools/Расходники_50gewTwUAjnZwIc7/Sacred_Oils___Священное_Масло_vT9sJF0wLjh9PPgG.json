@@ -1,0 +1,44 @@
+{
+  "name": "Sacred Oils / Священное Масло",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Виал масла, освящённого жрецом Бога Машины.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "consumable",
+    "effect": "Смазать оружие при обслуживании → +1 к Надёжности в следующем бою.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "50gewTwUAjnZwIc7",
+  "_id": "vT9sJF0wLjh9PPgG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!vT9sJF0wLjh9PPgG"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Chariot / Колесница",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telekinesis.svg",
+  "folder": "KmcWnY7WY8e7fAqC",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "telekinesis",
+    "subtype": "Гравимантия",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "full",
+    "range": "Касание / PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение · Касание. Треб.: Levitation. Поднять и управлять неодушевлённым объектом ≤PR×1т (можно вырывать куски из непрочных материалов). Движение ≤W.b×2 м/полудействие или W.b×6 м/полное (в пределах поддержания). Как укрытие/транспорт/оружие: атака W−20, Избегание +20, попадание 2d10+<1 за 100кг, не более дистанции разгона> I(Cr), Pen 0 по цели и объекту.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "7GJP8Dx6MQPaF7hq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122024529,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7GJP8Dx6MQPaF7hq"
+}

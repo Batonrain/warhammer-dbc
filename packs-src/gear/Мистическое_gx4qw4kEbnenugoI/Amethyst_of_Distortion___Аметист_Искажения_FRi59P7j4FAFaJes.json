@@ -1,0 +1,53 @@
+{
+  "name": "Amethyst of Distortion / Аметист Искажения",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Лучший аметистовый амулет К'Сала с частичками расщеплённых демонов.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 4,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Над сердцем",
+    "effect": "−15 на все психотесты и стрелковые атаки демоническими дарами, основной целью которых является носитель (даже свои). Усложняет и дружественные силы / силы с дальностью «Сам».",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Только против психосил ИЛИ только против даров/Одержимости.",
+      "good": "−20 вместо −15.",
+      "best": "−25 вместо −15."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "FRi59P7j4FAFaJes",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!FRi59P7j4FAFaJes"
+}

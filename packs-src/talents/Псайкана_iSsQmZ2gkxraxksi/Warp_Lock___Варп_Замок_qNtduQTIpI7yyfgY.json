@@ -1,0 +1,55 @@
+{
+  "name": "Warp Lock / Варп-Замок",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "iSsQmZ2gkxraxksi",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в час персонаж может игнорировать выпавший Феномен или Прорыв, но получает 1d5 непоглощаемого E Dmg в голову, все поддерживаемые психосилы развеиваются, и до начала следующего Хода он теряет Трейт Psyker. Также может в начале Хода подавить психопотенциал без урона (аналогичный эффект), не более W.b раз в час.",
+    "tier": 3,
+    "requirement": "W 50, PR 3, Strong Minded",
+    "aptitudes": [
+      "wp",
+      "psyker"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "qNtduQTIpI7yyfgY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122003135,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qNtduQTIpI7yyfgY"
+}

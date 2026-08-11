@@ -1,0 +1,75 @@
+{
+  "name": "Null Zone / Нуль Зона",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-librarium.svg",
+  "folder": "Z5XFbrl5xD3Dr4XM",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "librarium",
+    "subtype": "",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×10м (Аура)",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура. Треб.: Heroic Smite. До начала след. Хода все Силовые Щиты в ауре −5×PR к Рейтингу (до перегрузки) от атак Космодесантников (дружественных и враждебных).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "fLasGKyNVrcDwXAc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856119,
+    "modifiedTime": 1786122035167,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!fLasGKyNVrcDwXAc"
+}

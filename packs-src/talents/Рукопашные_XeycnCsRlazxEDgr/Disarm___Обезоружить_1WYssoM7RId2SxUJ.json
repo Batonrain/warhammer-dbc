@@ -1,0 +1,55 @@
+{
+  "name": "Disarm / Обезоружить",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "XeycnCsRlazxEDgr",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Приём (База: Стандартная/Натиск/Осторожная Атака; Оружие: любое). Персонаж и цель проходят WS+0 vs WS+0. При победе персонаж выбивает одно оружие из рук цели; на 5+ Успехов — выбивает ещё одно или отбирает выбитое себе. С кнутом/кистенём — +10. Нельзя выбить интегрированное оружие (когти, кулаки, наручные щиты).",
+    "tier": 1,
+    "requirement": "A 30",
+    "aptitudes": [
+      "ws",
+      "defence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "1WYssoM7RId2SxUJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121963652,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1WYssoM7RId2SxUJ"
+}

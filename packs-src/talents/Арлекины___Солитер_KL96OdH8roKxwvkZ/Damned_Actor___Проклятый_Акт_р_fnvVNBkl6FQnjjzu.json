@@ -1,0 +1,52 @@
+{
+  "name": "Damned Actor / Проклятый Актёр",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "KL96OdH8roKxwvkZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Черта Солитера (Аребенниан). Полный иммунитет к Выжиганию Души и психосилам демонов/псайкеров с Cor>20. Не может быть целью любого ритуала и игнорирует их. Считается парией против демонического воздействия; игнорирует Daemonic и Stuff of Nightmares врагов, вызванные варпом. Нанеся непоглощённый урон псайкеру с Cor 20+, снижает его бPR на −2 до конца битвы (не складывается). Игнорирует Force/Sanctified/Tainted от существ с Cor 20+. Всё ещё может использовать психосилы. При гибели тратит Очки Судьбы только на Божественное Вмешательство; иначе за его душу спорят Слаанеш и Цегорах (3×1d10). Не может быть командиром (авто-провал командования).",
+    "tier": 1,
+    "requirement": "Создание Персонажа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Черта архетипа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "fnvVNBkl6FQnjjzu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121993992,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!fnvVNBkl6FQnjjzu"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Криомантия",
+  "type": "Item",
+  "folder": "PrzEJLFDNO21hlCT",
+  "sorting": "m",
+  "_id": "FjIlCtk2PzA7lPlI",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!FjIlCtk2PzA7lPlI"
+}

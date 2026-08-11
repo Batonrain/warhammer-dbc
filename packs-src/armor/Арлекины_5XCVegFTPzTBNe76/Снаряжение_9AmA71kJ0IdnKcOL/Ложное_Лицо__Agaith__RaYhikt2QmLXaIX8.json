@@ -1,0 +1,47 @@
+{
+  "name": "Ложное Лицо (Agaith)",
+  "type": "armor",
+  "folder": "9AmA71kJ0IdnKcOL",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "mesh",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 3,
+    "body": 0,
+    "leftArm": 0,
+    "rightArm": 0,
+    "leftLeg": 0,
+    "rightLeg": 0,
+    "quality": "common",
+    "availability": 4,
+    "weight": 0.1,
+    "properties": [],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Маска (голова). Скрывает эмоции/мысли даже от психосил. Fear (2) (включая демонов ниже герольда). Иммунитет к Hallucinogenic. Good.Q Психофокус; Best.Q противогаз/ингалятор/фото-визор/ребризер/глушащие беруши/охотничий визор/ретинальный дисплей. Warp Sight. +3 AP головы. Вариации: Перекошенная / Ужасная / Страшная Маска."
+  },
+  "_id": "RaYhikt2QmLXaIX8",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782054428033,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!RaYhikt2QmLXaIX8"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Sending / Послание",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-thaumaturgy.svg",
+  "folder": "qOfP1gp7zp5Fd2z5",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 750,
+    "discipline": "thaumaturgy",
+    "subtype": "Астропатия",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "extended",
+    "range": "Особая",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Действие: 24−2×W.b часов. Треб.: For.Lore(Psykers)+20. Концентрация на разуме псайкера с бPR 5+, известном ≥10 лет. Если он жив и не далее соседнего сектора — получает устное послание до минуты. Псайкер теряет сознание от Усталости; не-Хаосит проходит W+0 или получает Провалы Порчи.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "LMMiOU4zdJSGLlO5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122029553,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LMMiOU4zdJSGLlO5"
+}

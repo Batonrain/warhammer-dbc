@@ -1,0 +1,53 @@
+{
+  "name": "Warp Flask / Варп-Склянка",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Склянка Тёмных Апостолов с частицей низшего демона для межзвёздной связи.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.2,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Плечо / в руке",
+    "effect": "Передаёт слова носителю другой склянки слово в слово, но монотонным голосом нормальной громкости. Качество влияет на внешний вид/прочность, не на функционал.",
+    "reminder": "Качество не влияет на функционал.",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "gAvfRFxsF6VbqsNO",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!gAvfRFxsF6VbqsNO"
+}

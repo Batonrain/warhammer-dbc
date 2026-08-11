@@ -1,0 +1,43 @@
+{
+  "name": "Избранный Хаоса",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "Ua4iXGozhJwKvPyH",
+  "system": {
+    "table": "legend",
+    "rollMin": 3,
+    "rollMax": 4,
+    "description": "Носители этого костюма снова и снова становились лучшими представителями космодесанта Хаоса: удерживали армии, спасали командиров, устраняли вражеских лидеров.",
+    "effect": "+5 к тестам Command и на сопротивление Подавлению и Страху.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности",
+    "notes": ""
+  },
+  "_id": "AGZUZxL02euz0yMI",
+  "effects": [],
+  "sort": 100000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": []
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354162,
+    "modifiedTime": 1786229627014,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!AGZUZxL02euz0yMI"
+}

@@ -1,0 +1,55 @@
+{
+  "name": "Preservation / Защита",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ftANYZR7VqnEYU6W",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За Полное действие — песнь защиты. Одна психокостяная техника в радиусе W м получает неперегружаемый колдовской щит-дефлектор 1-50/− (складывается с другими щитами); либо радиус 10 м — щит-купол 1-35/−. Рейтинг меняется в зависимости от размеров техники. До F.b раз за сессию.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [
+      "fel",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "BG1Vrg3anWU6e6YG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121971345,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!BG1Vrg3anWU6e6YG"
+}

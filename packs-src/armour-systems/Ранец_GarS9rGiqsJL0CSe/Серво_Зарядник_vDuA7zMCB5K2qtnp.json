@@ -1,0 +1,54 @@
+{
+  "name": "Серво-Зарядник",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "GarS9rGiqsJL0CSe",
+  "system": {
+    "description": "Полуавтономная серво-рука: 1 полудействие/Ход — взять предмет с разгрузки, положить, или перезарядить оружие (Rld вдвое в этот Ход). Свободным действием можно забрать/дать ей предмет. До 2 на ранец.",
+    "notes": "",
+    "category": "powerSystem",
+    "modGroup": "backpack",
+    "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": "3",
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    },
+    "drukhari": false
+  },
+  "_id": "vDuA7zMCB5K2qtnp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782145401867,
+    "modifiedTime": 1785527350003,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!vDuA7zMCB5K2qtnp"
+}

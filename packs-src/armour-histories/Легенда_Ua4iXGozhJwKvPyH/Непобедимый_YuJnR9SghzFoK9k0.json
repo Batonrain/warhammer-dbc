@@ -1,0 +1,38 @@
+{
+  "name": "Непобедимый",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "Ua4iXGozhJwKvPyH",
+  "system": {
+    "table": "legend",
+    "rollMin": 5,
+    "rollMax": 5,
+    "description": "Ни один предыдущий владелец этой брони никогда не терпел серьёзного поражения. Носители становятся смелыми и бесстрашными, если не сказать самоуверенными.",
+    "effect": "+10 к тестам сопротивления Подавлению и Страху, но базовая Слаженность снижается на 10. Каждый раз, когда носитель отступает, бонус +10 навсегда уменьшается на 1 (штраф к Слаженности остаётся).",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "YuJnR9SghzFoK9k0",
+  "effects": [],
+  "sort": 400000,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354162,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!YuJnR9SghzFoK9k0"
+}

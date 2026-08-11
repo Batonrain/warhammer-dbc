@@ -1,0 +1,35 @@
+{
+  "name": "Психосиловое / Force",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "i0yML1SKgQAz2uIn",
+  "system": {
+    "description": "Проводник психической силы. В руках псайкера получает +PR к урону и Pen (макс +10) и свойство Reinforced; позволяет Выжигание Души. У не-псайкера — обычное примитивное рукопашное.",
+    "reminder": "🔮 Психосиловое: в руках псайкера +PR урон/Pen, Выжигание Души",
+    "category": "melee",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "force",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "0OUSJP87bXvyMDj7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353819,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!0OUSJP87bXvyMDj7"
+}

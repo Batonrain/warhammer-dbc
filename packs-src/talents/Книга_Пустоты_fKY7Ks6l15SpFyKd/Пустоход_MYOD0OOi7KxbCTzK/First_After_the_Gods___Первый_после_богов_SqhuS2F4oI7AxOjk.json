@@ -1,0 +1,55 @@
+{
+  "name": "First After the Gods / Первый после богов",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "MYOD0OOi7KxbCTzK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может тратить Очки Бесчестья на переброс любых проваленных корабельных Действий, предпринятых NPC, другими игроками или через CR.",
+    "tier": 3,
+    "requirement": "Inf 40+, Air of Authority",
+    "aptitudes": [
+      "fel",
+      "social"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "SqhuS2F4oI7AxOjk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782160740113,
+    "modifiedTime": 1786121984027,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SqhuS2F4oI7AxOjk"
+}

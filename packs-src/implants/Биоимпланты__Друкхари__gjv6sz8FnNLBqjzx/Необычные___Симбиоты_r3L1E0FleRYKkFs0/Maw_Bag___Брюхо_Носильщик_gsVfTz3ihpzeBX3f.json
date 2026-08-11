@@ -1,0 +1,67 @@
+{
+  "name": "Maw-Bag / Брюхо-Носильщик",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Огромная сумка-желудок на спине.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Сумка-желудок на спине: до 120 кг или одно существо Size(0); содержимое выплюнуть полным действием. Дефект (до Best.Q): рудиментарный разум — 1/день переваривает случайный предмет (2d10 C, Pen 4); −10 WS и A (тяжесть).\nPoor.Q: 40 кг / 0.5 м; переваривание до 3×/день; −20.\nGood.Q: переваривание раз в неделю; −5.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Непробиваемое брюхо (+5 T.b поглощения с задней арки); 2) Живой сейф (содержимое невидимо сканерам/варпу); 3) Увеличенное брюхо (500 кг, существо Size(1) или 4× Size(0); −5 A/WS); 4) Регенеративная смесь (переваривание органики → +1d5 ран 1/день).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "r3L1E0FleRYKkFs0",
+  "_id": "gsVfTz3ihpzeBX3f",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122015790,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gsVfTz3ihpzeBX3f"
+}

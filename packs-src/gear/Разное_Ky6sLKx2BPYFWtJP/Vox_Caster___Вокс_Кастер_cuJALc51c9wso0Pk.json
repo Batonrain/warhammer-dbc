@@ -1,0 +1,53 @@
+{
+  "name": "Vox Caster / Вокс Кастер",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Тяжёлый заплечный вокс-ретранслятор командных отрядов и наводчиков.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 12,
+    "availability": 0,
+    "quality": "common",
+    "gearCategory": "misc",
+    "worn": "Спина",
+    "effect": "Вокс-связь до 100 км (низкая орбита) + шифровка +3 к Инфограждению. Синхронизируется с вокс-бусинами/вокс-линками (даёт им свою дальность и шифровку).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Дальность 50 км, без шифровки.",
+      "good": "Дальность 300 км, Инфограждение +4.",
+      "best": "Связь с любой точкой планеты и средней орбиты, Инфограждение +5."
+    },
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": true,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "4x3",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "Ky6sLKx2BPYFWtJP",
+  "_id": "cuJALc51c9wso0Pk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!cuJALc51c9wso0Pk"
+}

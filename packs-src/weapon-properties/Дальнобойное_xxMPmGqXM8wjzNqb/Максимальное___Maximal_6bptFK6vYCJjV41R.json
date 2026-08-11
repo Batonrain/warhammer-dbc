@@ -1,0 +1,35 @@
+{
+  "name": "Максимальное / Maximal",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Может быть активировано на максимальном режиме: +10 Rng, +1d10 урона, +2 Pen, получает Blast(2) и Recharge, удвоенный расход боеприпасов.",
+    "reminder": "⚡ Максимальное: усиленный режим (+урон/Pen/Rng, Recharge)",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "maximal",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "6bptFK6vYCJjV41R",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353820,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!6bptFK6vYCJjV41R"
+}

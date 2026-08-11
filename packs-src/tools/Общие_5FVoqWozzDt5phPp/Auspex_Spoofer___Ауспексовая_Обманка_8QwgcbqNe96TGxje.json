@@ -1,0 +1,44 @@
+{
+  "name": "Auspex Spoofer / Ауспексовая Обманка",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Генератор помех (чемодан/рюкзак, 3×3). Скрывает область r3м от ауспекса в одном режиме. Не работает против ауспексов с большим Качеством. Перенастройка Tech-Use+0 (две руки).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 12,
+    "availability": 1,
+    "quality": "common",
+    "toolCategory": "general",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Один режим, нельзя переключать.",
+      "good": "До 3 режимов одновременно.",
+      "best": "Как Good.Q; 2 кг, слот 3×1; интегрируется в силовую броню (управление ретинальным дисплеем)."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "5FVoqWozzDt5phPp",
+  "_id": "8QwgcbqNe96TGxje",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!8QwgcbqNe96TGxje"
+}

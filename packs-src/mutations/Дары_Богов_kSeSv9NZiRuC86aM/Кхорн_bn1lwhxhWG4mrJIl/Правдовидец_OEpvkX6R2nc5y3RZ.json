@@ -1,0 +1,49 @@
+{
+  "name": "Правдовидец",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Кхорн ограждает своего чемпиона от лжи и обмана. Персонаж автоматически преуспевает во всех тестах против обмана с Cor.b Успехов. Он иммунен к любым эффектам, что изменяют его чувства, вроде галлюциногенов или психосил Иллюзионизма, способен видеть сквозь иллюзии и голограммы и видеть истинные формы существ, что изменили свою внешность, будь это психосилами, ритуалами или хирургически. Он также получает Преимущество на встречные тесты против Финта.",
+    "source": "Дары Кхорн, d100 37…40",
+    "roll": "37…40",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "OEpvkX6R2nc5y3RZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019631,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!OEpvkX6R2nc5y3RZ"
+}

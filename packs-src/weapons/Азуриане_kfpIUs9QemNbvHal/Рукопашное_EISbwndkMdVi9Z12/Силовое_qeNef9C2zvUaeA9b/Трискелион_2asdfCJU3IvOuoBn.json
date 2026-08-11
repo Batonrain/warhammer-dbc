@@ -1,0 +1,143 @@
+{
+  "name": "Трискелион",
+  "type": "weapon",
+  "folder": "qeNef9C2zvUaeA9b",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "power",
+    "range": 2,
+    "balance": 1,
+    "grips": "1р",
+    "profileLabel": "",
+    "profiles": [
+      {
+        "label": "Метательный",
+        "range": "S.b×4",
+        "damage": "1d10+4",
+        "damageType": "energy",
+        "penetration": 4,
+        "weaponProps": [
+          {
+            "key": "devastating",
+            "rating": 5,
+            "rating2": 0
+          },
+          {
+            "key": "extreme",
+            "rating": 9,
+            "rating2": 0
+          },
+          {
+            "key": "felling",
+            "rating": 4,
+            "rating2": 0
+          },
+          {
+            "key": "powerField",
+            "rating": 0,
+            "rating2": 0
+          },
+          {
+            "key": "reinforced",
+            "rating": 0,
+            "rating2": 0
+          }
+        ]
+      }
+    ],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10+4",
+    "damageType": "energy",
+    "penetration": 4,
+    "quality": "common",
+    "availability": 4,
+    "weight": 2,
+    "attackBonus": 0,
+    "special": "Нож (рукопашный/метательный); Хват 1р; Досягаемость 0–2. Aspect: Воющие Баньши. Метательный (S.b×4): 1d10+4 E, Pen 4, Devastating (5), Extreme (9), Felling (4), Power Field, Reinforced.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "aspect"
+      },
+      {
+        "key": "extreme",
+        "rating": 7
+      },
+      {
+        "key": "felling",
+        "rating": 4
+      },
+      {
+        "key": "multiStrike",
+        "rating": 3
+      },
+      {
+        "key": "powerField"
+      },
+      {
+        "key": "reinforced"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "2asdfCJU3IvOuoBn",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true,
+      "profilesAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!2asdfCJU3IvOuoBn"
+}

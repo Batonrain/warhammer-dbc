@@ -1,0 +1,49 @@
+{
+  "name": "Чёрные Глаза",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Глаза персонажа превращаются в хрустальные сферы столь же чёрные, как его испорченная душа, и их зрение усиливается Порчей в его душе. Он получает бонус +½Cor (окр.▲) на все тесты зрения. При Cor 40+ его зрение позволяет ему видеть в инфра-красном и ультрафиолетовом спектрах. При Cor 60+ никакая преграда, кроме твёрдой стены, не мешает его зрению, позволяя ему видеть сквозь дым, тьму и колдовской морок (в т.ч. психосилы Иллюзий), игнорируя штрафы на попадания от них. При Cor 80+ он получает способность проводить Полу-Прицеливание как свободное действие, если он видит цель.",
+    "source": "Дары Слаанеш, d100 19…21",
+    "roll": "19…21",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Hlw5CFjMVy0OCF9z",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019233,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Hlw5CFjMVy0OCF9z"
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Артиллерия / Ordnance",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Огромное крупнокалиберное оружие. Стрелять можно раз в 2 раунда, −30 ко всем остальным атакам в этот ход.",
+    "reminder": "🎆 Артиллерия: огонь раз в 2 раунда, −30 прочим атакам",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "ordnance",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "sGh1aXxnIqVLp7pG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353820,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!sGh1aXxnIqVLp7pG"
+}

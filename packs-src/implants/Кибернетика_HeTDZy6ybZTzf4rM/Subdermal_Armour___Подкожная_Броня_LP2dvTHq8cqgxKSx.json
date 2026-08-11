@@ -1,0 +1,149 @@
+{
+  "name": "Subdermal Armour / Подкожная Броня",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:2.",
+    "notes": "",
+    "category": "cybernetic",
+    "quality": "common",
+    "effect": "Сетка брони под кожей: +2 AP к торсу, рукам и ногам. Poor.Q −10 A; Good.Q без минусов; Best.Q −2 любой критэффект в торс, −2 в руки/ноги.",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 2,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "HeTDZy6ybZTzf4rM",
+  "_id": "LP2dvTHq8cqgxKSx",
+  "effects": [
+    {
+      "name": "Subdermal Armour / Подкожная Броня (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.armour.head",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.body",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftArm",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightArm",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.leftLeg",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.armour.rightLeg",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "xRf0kf7U9T9gJnot",
+      "img": "icons/svg/aura.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786122013621,
+        "modifiedTime": 1786122013621,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!LP2dvTHq8cqgxKSx.xRf0kf7U9T9gJnot"
+    }
+  ],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781726577228,
+    "modifiedTime": 1786122013639,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LP2dvTHq8cqgxKSx"
+}

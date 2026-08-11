@@ -1,0 +1,67 @@
+{
+  "name": "Plasma Cutter / Плазменный Резак",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:3. Оружие.",
+    "notes": "",
+    "category": "mechadendrite",
+    "quality": "common",
+    "effect": "S 30, Дл. 2м, Rng 0-6. Удар 1d10+10 E, Pen 8, Contained (или 1d10+3 I(Cr), Imprecise). Резка до 3м листа/100мм или сварка 0,3м шва за Ход. +20 Tech-Use/Trade на резку/сварку. Стрельба как Легион-Плазменный Пистолет (Rng 5м, без Maximal, не тратит боеприпасы).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "rnByB1WoKnZMCYSp",
+  "_id": "o5aM3cZqycWWcYyh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122016632,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!o5aM3cZqycWWcYyh"
+}

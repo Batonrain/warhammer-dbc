@@ -1,0 +1,49 @@
+{
+  "name": "Чистота Битвы",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Воля Владыки Черепов расходится от его чемпиона волной кровавых брызг, вымывая из всех вокруг любые искусственные преимущества, оставляя лишь честную битву лицом к лицу. За полное действие (даже находясь в Ярости) персонаж может потратить Очко Бесчестия, чтобы выпустить из себя сферическую волну радиусом Cor.b м. Со всех персонажей в этом радиусе немедленно снимаются эффекты боевых наркотиков, психосил и техночудес, и они не могут подвергаться снятым с них эффектам до конца боя или сцены.",
+    "source": "Дары Кхорн, d100 30…33",
+    "roll": "30…33",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "4Sdz3wYLKDm7jGcQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122018482,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!4Sdz3wYLKDm7jGcQ"
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Throne of Chaos / Трон Хаоса",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Массивный трон, освящённый в жертвенной крови. Связывается с Хаоситом Inf 60+ (перековка под другого — смена работы).",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0,
+    "availability": 3,
+    "quality": "common",
+    "toolCategory": "stationary",
+    "effect": "В замкнутом помещении ≤100×100м: трон неуязвим; чемпион получает Трейты Daemonic(2)/From Beyond/Stuff of Nightmares; доп. полный Ход раз в Раунд; непоглощённый не-Sanctified урон → на щит трона; игнор Феномена/Прорыва за 10 Ран щита. Щит: 40 Ран (при 0 — эффекты отключаются), восстанавливает W.b при смерти души в r Cor.b м. Мобильная версия R4 (r30м, запас Ран ½).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Щит 20 Ран.",
+      "good": "Щит 60 Ран.",
+      "best": "Щит 80 Ран."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "ctQPw7eYnC387VcR",
+  "_id": "NgMMxDhyMJhsDUZR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!NgMMxDhyMJhsDUZR"
+}

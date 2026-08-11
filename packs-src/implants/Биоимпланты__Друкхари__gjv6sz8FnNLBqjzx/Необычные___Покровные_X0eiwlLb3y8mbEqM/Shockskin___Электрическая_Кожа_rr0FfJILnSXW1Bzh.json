@@ -1,0 +1,67 @@
+{
+  "name": "Shockskin / Электрическая Кожа",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Биоэлектрические бактерии в коже.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Электрогенные бактерии: раз в 30−T.b мин разряд при касании (в т.ч. через электропроводящее оружие/броню, частично психокость) — 1d10+T.b×2 E(Fl), Pen 2, Shocking. Дефект (до Best.Q): в воде/под дождём тест T−20 или сам получает ½ урона.\nPoor.Q: 1d5+T.b E(Fl), Pen 0, без Shocking; тест самопоражения −30; самопроизвольный разряд при контакте с металлом (1 непогл. E(Fl)).\nGood.Q: атака за 1 Очко Боли вместо времени; тест в воде без штрафа.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Усиленный разряд (2d10+T.b×3, цель −T.b×5 против Shocking); 2) Цепная дуга (Arc(10−T.b/T.b)); 3) Электрический щит (сопротивление E(Fl), +30 против Shocking); 4) Питание (движение >10 ч/день = сыт).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "X0eiwlLb3y8mbEqM",
+  "_id": "rr0FfJILnSXW1Bzh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122017097,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!rr0FfJILnSXW1Bzh"
+}

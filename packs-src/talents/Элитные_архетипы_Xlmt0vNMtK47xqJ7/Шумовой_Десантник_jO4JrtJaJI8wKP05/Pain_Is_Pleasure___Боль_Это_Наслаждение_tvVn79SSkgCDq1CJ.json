@@ -1,0 +1,52 @@
+{
+  "name": "Pain Is Pleasure / Боль Это Наслаждение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "jO4JrtJaJI8wKP05",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Прикосновение лезвия или пули вызывает всплеск экстаза. Получив не поглощённый урон, снимает 1 Усталости и получает +10 на все тесты до конца своего следующего Хода (макс. +30).",
+    "tier": 2,
+    "requirement": "Слаанеш, Cor 30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Шумовой Десантник",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "tvVn79SSkgCDq1CJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122006190,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!tvVn79SSkgCDq1CJ"
+}

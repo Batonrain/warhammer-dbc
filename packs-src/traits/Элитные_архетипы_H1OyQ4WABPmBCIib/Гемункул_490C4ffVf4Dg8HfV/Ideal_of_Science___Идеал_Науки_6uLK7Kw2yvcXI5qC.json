@@ -1,0 +1,51 @@
+{
+  "name": "Ideal of Science / Идеал Науки",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "490C4ffVf4Dg8HfV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает неизлечимое ментальное расстройство «Перфекционизм» Тяжести −2; Тяжесть не может опуститься ниже −2. Работа над самосовершенствованием состоит в модификации себя научными методами и попытках лишиться эмоций. Расстройство не исправить, пока Гемункул не достигнет верхов своего возвышения.",
+    "source": "Элитный архетип: Гемункул",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "6uLK7Kw2yvcXI5qC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255528,
+    "modifiedTime": 1786121957474,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6uLK7Kw2yvcXI5qC"
+}

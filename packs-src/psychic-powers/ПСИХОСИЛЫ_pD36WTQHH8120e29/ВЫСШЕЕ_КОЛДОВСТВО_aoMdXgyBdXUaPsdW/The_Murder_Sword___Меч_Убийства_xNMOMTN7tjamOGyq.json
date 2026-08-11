@@ -1,0 +1,75 @@
+{
+  "name": "The Murder Sword / Меч Убийства",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-highSorcery.svg",
+  "folder": "aoMdXgyBdXUaPsdW",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 800,
+    "discipline": "highSorcery",
+    "subtype": "",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "extended",
+    "range": "Касание / PR×1км",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Психический Клинок. Действие: Дл. (30 минут). Треб.: Inf 70+. Назначает известную цель: оружие +2×PR Dmg, +2×PR Pen, +30 WS против неё; цель −5×PR к рейтингу силовых щитов против оружия. Попадания по цели нельзя перенаправить (Unholy Devotion/Fanatic). Смертельное ранение цели: она тратит двойной Inf или сжигает 2 Очка Судьбы. Цель чувствует рок от оружия. Со смертью цели сила развеивается.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "xNMOMTN7tjamOGyq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122039344,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!xNMOMTN7tjamOGyq"
+}

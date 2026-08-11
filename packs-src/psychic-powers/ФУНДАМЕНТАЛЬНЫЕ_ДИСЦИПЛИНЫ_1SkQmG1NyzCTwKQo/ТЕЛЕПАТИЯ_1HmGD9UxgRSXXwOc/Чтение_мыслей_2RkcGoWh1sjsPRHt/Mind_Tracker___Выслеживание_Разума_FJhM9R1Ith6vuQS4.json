@@ -1,0 +1,75 @@
+{
+  "name": "Mind Tracker / Выслеживание Разума",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "2RkcGoWh1sjsPRHt",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 450,
+    "discipline": "telepathy",
+    "subtype": "Чтение мыслей",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "extended",
+    "range": "PR×2км",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура. Действие: Дл. (6 Ходов). Треб.: Mind Radiance. Если искомая цель в ауре — направление, дистанция, общий уровень эмоций/самочувствия. Нет в ауре/покинула — развеивается. Знание цели: −40 (по описанию) … +40 (Чтение Разума 4-5 уровня); +0 общался по душам, +20 близкий знакомый и т.д.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "FJhM9R1Ith6vuQS4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122027081,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!FJhM9R1Ith6vuQS4"
+}

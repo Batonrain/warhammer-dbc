@@ -1,0 +1,52 @@
+{
+  "name": "Fight, Die In My Name! / В Бой! Умрите Во Имя Меня!",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "oAhMRYFpOmBlnqTp",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Видя, что подчинённые боятся сражаться, в шоке или подавлены огнём, за Свободное действие проходит тест Command(Inf)−30 и при успехе даёт всем подчинённым Fearless и выводит их из страха, шока и подавленности. На Unnatural Inf.b раундов подчинённые получают +Inf.b ко всем тестам. В конце боя все подчинённые и сам персонаж получают 1 усталость от ментального недомогания.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Архонт",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "gs0vVAR624HL5cIL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121995228,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gs0vVAR624HL5cIL"
+}

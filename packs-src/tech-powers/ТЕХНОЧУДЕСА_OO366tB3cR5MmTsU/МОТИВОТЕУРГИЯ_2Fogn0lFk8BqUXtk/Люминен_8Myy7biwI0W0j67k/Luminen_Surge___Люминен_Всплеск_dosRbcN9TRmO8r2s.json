@@ -1,0 +1,60 @@
+{
+  "name": "Luminen Surge / Люминен Всплеск",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "8Myy7biwI0W0j67k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Люминен",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 0,
+    "cognitionCost": 1,
+    "energyCost": 1,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "half",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×1м",
+    "damage": "1d10+I.b",
+    "damageType": "energy",
+    "penetration": 2,
+    "effect": "[Железо: Luminen Capacitors · Цена: 1К+1Э · Процесс: Нет · Тип: Атака, Компенсатор (0), Манипула (1), Стрельба, Физическое] Треб.: I 40, Tech-Use+10, Luminen Shock. Цель: 1d10+I.b E(El), Pen 2, Arc (7/1d10+½I.b окр.▲), Shocking. Для Уклонения цель должна потратить не меньше Успехов, чем техножрец на активации.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "dosRbcN9TRmO8r2s",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122042092,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!dosRbcN9TRmO8r2s"
+}

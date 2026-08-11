@@ -1,0 +1,75 @@
+{
+  "name": "Wither / Увядание",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-thaumaturgy.svg",
+  "folder": "88LWPn2KFfFQfTyn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 75,
+    "discipline": "thaumaturgy",
+    "subtype": "Малые психосилы",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "half",
+    "range": "PR×2м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "[Малая · Цикл (1)] Все растения в ауре мгновенно гибнут и высыхают в пыль — облегчает проход через густую растительность (но густой слой пыли может слегка мешать по решению ГМа).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "TqtrZyF5h72pLbKo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122031951,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!TqtrZyF5h72pLbKo"
+}

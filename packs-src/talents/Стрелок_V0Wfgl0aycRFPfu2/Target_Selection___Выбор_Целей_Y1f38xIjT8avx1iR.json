@@ -1,0 +1,55 @@
+{
+  "name": "Target Selection / Выбор Целей",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "V0Wfgl0aycRFPfu2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может стрелять в цели, связанные в ближнем бою, без штрафов, а его промахи никогда не попадают в союзников (но могут в других врагов).",
+    "tier": 3,
+    "requirement": "BS 50",
+    "aptitudes": [
+      "bs",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Y1f38xIjT8avx1iR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121987265,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Y1f38xIjT8avx1iR"
+}

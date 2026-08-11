@@ -1,0 +1,51 @@
+{
+  "name": "Bloody Performance / Кровавое Представление",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "WR5Z2pT0JK1JDn2W",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Гладиатор в равной мере артист и воин; его движения в бою завораживают аудиторию симфонией кровопролития. Если заканчивает свой Ход с большим количеством очков Момента, чем закончил предыдущий Ход, может пройти тест F+0 с бонусом +10 за каждое полученное очко и +5 за каждую часть тела, не закрытую бронёй, и использовать Успехи либо как Успехи в тесте на Командование союзников (как первый эффект Короткой Команды, не тратящей действия), либо как тест на Запугивание противников.",
+    "source": "Элитный архетип: Гладиатор",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "nhUlgfLBwREwIq48",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835547,
+    "modifiedTime": 1786121961544,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!nhUlgfLBwREwIq48"
+}

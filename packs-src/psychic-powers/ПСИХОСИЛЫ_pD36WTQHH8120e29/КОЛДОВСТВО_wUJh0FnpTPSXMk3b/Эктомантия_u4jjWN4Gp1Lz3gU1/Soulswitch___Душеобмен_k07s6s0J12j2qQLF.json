@@ -1,0 +1,75 @@
+{
+  "name": "Soulswitch / Душеобмен",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-ectomancy.svg",
+  "folder": "u4jjWN4Gp1Lz3gU1",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "sorcery",
+    "subtype": "Эктомантия",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -25,
+    "action": "half",
+    "range": "PR×15м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение (PR) · Физическое. Психотест W−25 vs W+0. Треб.: For.Lore(Warp)+20, Psychic Precision. До PR целей/предметов Размером ≤2 (Размер 1 = 2, Размер 2 = 3). Душа делает встречный тест (или авто-провал). Меняет местами пары одного Размера, не прошедшие тест: формы (с оружием/бронёй/снаряжением) меняются болезненно; −10 на тесты (кроме T) на 1 Раунд. Задержанным полудействием — Реакцией на атаку (до Избеганий), меняя цель атаки (псайкер должен действовать первым). Нужны 2 свободные руки.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "k07s6s0J12j2qQLF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122036416,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!k07s6s0J12j2qQLF"
+}

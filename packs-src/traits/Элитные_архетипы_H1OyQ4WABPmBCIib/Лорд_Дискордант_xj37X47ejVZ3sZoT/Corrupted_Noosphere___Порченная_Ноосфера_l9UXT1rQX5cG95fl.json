@@ -1,0 +1,51 @@
+{
+  "name": "Corrupted Noosphere / Порченная Ноосфера",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "xj37X47ejVZ3sZoT",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Подключив импланты к эфирным излучателям Сталкера, наполняет Ноосферу вокруг порченым кодом. В ауре радиусом I.b м вокруг Лорда верхом на Адском Сталкере все недружественные техножрецы увеличивают стоимость активации Техночудес в 2 раза и суммарную стоимость Процессов на 2 Когниции. Каждый раз, когда недружественный техножрец опускает Когницию до 0, Лорд получает 1 Когницию.",
+    "source": "Элитный архетип: Лорд-Дискордант",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "l9UXT1rQX5cG95fl",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645499,
+    "modifiedTime": 1786121961289,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!l9UXT1rQX5cG95fl"
+}

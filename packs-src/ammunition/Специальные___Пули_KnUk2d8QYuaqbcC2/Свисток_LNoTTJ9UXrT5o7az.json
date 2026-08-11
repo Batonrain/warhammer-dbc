@@ -1,0 +1,74 @@
+{
+  "name": "Свисток",
+  "type": "ammo",
+  "img": "systems/warhammer-dbc/assets/item-icons/ammo.svg",
+  "folder": "KnUk2d8QYuaqbcC2",
+  "system": {
+    "description": "Фигурная пуля из эльдарской психокости с осколком разбитого камня душ, притягивающаяся к душам врагов с пронзительным свистом. Даёт +10 на попадание, +3 урона и Razor Sharp против целей с душами; до +20 на попадание и +6 урона против псайкеров, демонов и Эльдар, а против Эльдар также штраф −30 на Избегание от этих пуль.",
+    "notes": "",
+    "weaponTypes": [
+      "solid"
+    ],
+    "ammoCategory": "bullets",
+    "rarity": 3,
+    "quantity": 0,
+    "weight": 0,
+    "availability": 3,
+    "attackMod": 0,
+    "damageMod": 3,
+    "damageDiceMod": 0,
+    "damageTypeOverride": "",
+    "penetrationMod": 0,
+    "rangeMod": 0,
+    "rangeMultiplier": 1,
+    "special": "+10 попадание и Razor Sharp против обладающих душой (до +20/+6 против псайкеров, демонов, Эльдар)",
+    "properties": [],
+    "condMods": [
+      {
+        "label": "Цель обладает душой",
+        "atk": 10,
+        "dmg": 0,
+        "wp": [
+          "razorSharp"
+        ],
+        "note": ""
+      },
+      {
+        "label": "Псайкер / демон / Эльдар (вместо предыдущего)",
+        "atk": 20,
+        "dmg": 3,
+        "wp": [
+          "razorSharp"
+        ],
+        "note": ""
+      },
+      {
+        "label": "Цель — Эльдар: −30 на её Избегание",
+        "atk": 0,
+        "dmg": 0,
+        "wp": [],
+        "note": "Штраф применяет защищающийся"
+      }
+    ]
+  },
+  "_id": "LNoTTJ9UXrT5o7az",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782743041465,
+    "modifiedTime": 1785149961121,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!LNoTTJ9UXrT5o7az"
+}

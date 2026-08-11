@@ -1,0 +1,55 @@
+{
+  "name": "Eldanesh Technique / Техника Эльданеша",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "tJcIaX3E6vF4BoMn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может использовать A.b вместо S.b в расчёте всех эффектов оружия, требующих S.b (включая метание), если не указано иное. Урон всё ещё умножается от Mighty и т.п. При создании персонажа считается 2-го уровня; для Путей со склонностями WS/Fin/Def/Off — тоже 2-го уровня.",
+    "tier": 3,
+    "requirement": "A 50",
+    "aptitudes": [
+      "ag",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "8CNWUAIMJ2bEGkxZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121969044,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!8CNWUAIMJ2bEGkxZ"
+}

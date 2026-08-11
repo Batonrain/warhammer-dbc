@@ -1,0 +1,44 @@
+{
+  "name": "Glimmerstone / Проблескамень",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Пористый камень из гнёзд Проблескрылов (варп-штормы). Мешочек по 10 шт.",
+    "notes": "",
+    "quantity": 10,
+    "weight": 0.1,
+    "availability": 2,
+    "quality": "common",
+    "toolCategory": "mystic",
+    "effect": "Псайкер, полудействием пропустив разряд, взрывает камень облаком серой пыли r3м (блокирует обзор, оседает 1d5 Ходов). В облаке псайкер игнорирует штрафы PR и Феноменов от уже поддерживаемых сил, но W+0 или облако преждевременно рассеивается.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "bonuses": [],
+    "linkedWeapon": "Проблескамень (облако)"
+  },
+  "folder": "RpwK7hjZB6380LhD",
+  "_id": "jmrJ4DW71ynT5yfb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!jmrJ4DW71ynT5yfb"
+}

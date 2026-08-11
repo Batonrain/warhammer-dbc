@@ -1,0 +1,60 @@
+{
+  "name": "Luminen Smite / Люминен Сокрушение",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "8Myy7biwI0W0j67k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Люминен",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 2,
+    "cognitionCost": 2,
+    "energyCost": 3,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": -10,
+    "action": "full",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×1м",
+    "damage": "2d10+2×I.b",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Luminen Capacitors · Цена: 2К+3Э · Процесс: Нет · Тип: Атака, Компенсатор (2), Манипула (2), Стрельба, Физическое] Треб.: I 55, Tech-Use+30, Luminen Pila. Молния: 2d10+2×I.b E(El), Pen ½I.b, Arc (7/1d10+I.b), Concussive (2), Extreme (7); затем взрыв ударной волны 3d10 X, Pen 0, Blast (½I.b окр.▲), Concussive (2). Уклонение от молнии — не меньше Успехов активации; Избежавший молнию не получает урон от взрыва.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "VCOJZIgdtC6folzP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122041650,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VCOJZIgdtC6folzP"
+}

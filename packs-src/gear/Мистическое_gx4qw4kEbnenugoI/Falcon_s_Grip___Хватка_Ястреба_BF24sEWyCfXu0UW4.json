@@ -1,0 +1,53 @@
+{
+  "name": "Falcon's Grip / Хватка Ястреба",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Комплект из 5 тяжёлых серебряных перстней на одной руке.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.5,
+    "availability": 3,
+    "quality": "common",
+    "gearCategory": "mystic",
+    "worn": "Пальцы одной руки",
+    "effect": "Оружие в руке получает Reinforced; рука не получает урона от безоружного парирования и от безоружных атак по броне с шипами.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "−10 на все тесты WS и BS этой рукой.",
+      "good": "Рукопашные атаки рукой/оружием в ней получают Power Field (ломает оружие на 1–40, не 1–75).",
+      "best": "Как Good.Q; при успешном Захвате — немедленный авто-попадающий удар кулаком в торс."
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "gx4qw4kEbnenugoI",
+  "_id": "BF24sEWyCfXu0UW4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!BF24sEWyCfXu0UW4"
+}

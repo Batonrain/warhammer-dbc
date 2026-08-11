@@ -1,0 +1,58 @@
+{
+  "name": "Ообтековые Ячейки",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "3S2DLJENpK7spDrg",
+  "system": {
+    "description": "Бронепакеты с неньютоновой жидкостью: +2 AP против I Dmg (+4 против I(Cr) Dmg).",
+    "notes": "",
+    "category": "armor",
+    "modGroup": "reinforcement",
+    "requirement": "Любая. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 2,
+    "availability": 2,
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 2,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    },
+    "drukhari": false
+  },
+  "_id": "oHraQT3sb7ipFHhN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157649068,
+    "modifiedTime": 1786122045407,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!oHraQT3sb7ipFHhN"
+}

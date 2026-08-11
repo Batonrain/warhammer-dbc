@@ -1,0 +1,52 @@
+{
+  "name": "Cyber-Shepherd / Кибер-Пастырь",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "PQDFDX9YQ0yRNS2P",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Командные алгоритмы позволяют дирижировать ордами траллов в бою. Может давать Команды Ордам тех-траллов, как если бы они были одиночными персонажами, но только через Tech-Use(I).",
+    "tier": 1,
+    "requirement": "Неделимый, Binary Dominion",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Лакрималлус",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "oaqTX92OmLK3aDJf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122001374,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!oaqTX92OmLK3aDJf"
+}

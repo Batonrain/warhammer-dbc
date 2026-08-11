@@ -1,0 +1,38 @@
+{
+  "name": "Под взглядом богов",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "s8lKzSrVLBSddHVo",
+  "system": {
+    "table": "history",
+    "rollMin": 10,
+    "rollMax": 10,
+    "description": "Эту броню носил великий чемпион Хаоса или целые поколения воинов одной из Губительных Сил, и благословение пантеона легло на неё.",
+    "effect": "Пока носитель верен выбранной силе и имеет её Покровительство, все зоны получают +1 ОБ.",
+    "hasChoice": true,
+    "choiceLabel": "Покровитель",
+    "choicePlaceholder": "Хаос Неделимый / Кхорн / Нургл / Тзинч / Слаанеш",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "nqtUOzW8sqxpnWxe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354160,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!nqtUOzW8sqxpnWxe"
+}

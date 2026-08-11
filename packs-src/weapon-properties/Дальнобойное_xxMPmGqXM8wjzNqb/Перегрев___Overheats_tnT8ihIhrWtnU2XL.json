@@ -1,0 +1,35 @@
+{
+  "name": "Перегрев / Overheats",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Нестабильно и может навредить оператору. Понижает Надёжность на 1, и вместо Клина наносит урон по стрелку (в руку, что держит; случайную при двуручном хвате).",
+    "reminder": "♨️ Перегрев: −1 Надёжность; вместо Клина урон по стрелку (в руку)",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "overheats",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "tnT8ihIhrWtnU2XL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353820,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!tnT8ihIhrWtnU2XL"
+}

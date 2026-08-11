@@ -1,0 +1,52 @@
+{
+  "name": "Dissection / Рассечение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "E1EtdiXg3VveJywm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Получает приём «Рассечение» (база: Обычная Атака, Полная Атака, Натиск; оружие: меч в двуручном хвате). Избирательная атака в сочленение (−40) в руки или ноги с бонусом +10. При непоглощённом уроне вместо урона совершается бросок на критический эффект R 1d5−4, к которому добавляется +1 за каждые 3 непоглощённых урона, что должна была нанести атака, вплоть до +8. Этот критический эффект не может убить сам по себе, но может создать условия, отрубив руки или ноги. Если противник должен был умереть от критического эффекта, он проживёт ещё около минуты.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Избиратель Плоти",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "t2bO1eQMR0IPZcbi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786122005215,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!t2bO1eQMR0IPZcbi"
+}

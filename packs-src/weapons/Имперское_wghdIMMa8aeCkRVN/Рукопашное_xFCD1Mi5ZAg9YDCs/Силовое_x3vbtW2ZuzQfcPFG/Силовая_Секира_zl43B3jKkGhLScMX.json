@@ -1,0 +1,137 @@
+{
+  "name": "Силовая Секира",
+  "type": "weapon",
+  "folder": "x3vbtW2ZuzQfcPFG",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "weaponType": "power",
+    "range": 4,
+    "balance": -1,
+    "grips": "2р (1р, Бл, 1р+Кл)",
+    "profileLabel": "Топор",
+    "profiles": [
+      {
+        "label": "Молот",
+        "range": "",
+        "damage": "2d10+6",
+        "damageType": "energy",
+        "penetration": 5,
+        "weaponProps": [
+          {
+            "key": "concussive",
+            "rating": 1,
+            "rating2": 0
+          },
+          {
+            "key": "imprecise",
+            "rating": 0,
+            "rating2": 0
+          },
+          {
+            "key": "powerField",
+            "rating": 0,
+            "rating2": 0
+          }
+        ]
+      },
+      {
+        "label": "Посох",
+        "range": "2-4",
+        "damage": "1d10-2",
+        "damageType": "impact",
+        "penetration": 0,
+        "weaponProps": [
+          {
+            "key": "imprecise",
+            "rating": 0,
+            "rating2": 0
+          },
+          {
+            "key": "primitive",
+            "rating": 0,
+            "rating2": 0
+          }
+        ]
+      }
+    ],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "2d10+6",
+    "damageType": "energy",
+    "penetration": 7,
+    "quality": "common",
+    "availability": 2,
+    "weight": 3,
+    "attackBonus": 0,
+    "special": "Топор; Хват 2р [1р, Бл, 1р+Кл]; Досягаемость 4. Молот: 2d10+6 E, Pen 5, Concussive (1), Imprecise, Power Field; Посох (2–4): 1d10-2 I(Cr), Imprecise, Primitive.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "imprecise"
+      },
+      {
+        "key": "powerField"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "zl43B3jKkGhLScMX",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true,
+      "profilesAuto": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!zl43B3jKkGhLScMX"
+}

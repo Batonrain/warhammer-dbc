@@ -1,0 +1,60 @@
+{
+  "name": "Maglev Ascension / Маглев Вознесение",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "fvfKnxsWuCnMitLa",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Маглев",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 0,
+    "cognitionCost": 2,
+    "energyCost": 1,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "Сам",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Maglev Coils · Цена: 2К+1Э · Процесс: 1 , 1 (У) · Тип: Компенсатор (0), Реакция] Треб.: I 50, Tech-Use+20, Maglev Grace. Трейт Flyer (I.b×2). Можно вне Хода (зависание вместо падения). Если за прошлый Ход двигался полётом ≤I.b×4м — авто-тест Компенсатора на цену Процесса.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "Ct3ddS5BHi4d1iID",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040731,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Ct3ddS5BHi4d1iID"
+}

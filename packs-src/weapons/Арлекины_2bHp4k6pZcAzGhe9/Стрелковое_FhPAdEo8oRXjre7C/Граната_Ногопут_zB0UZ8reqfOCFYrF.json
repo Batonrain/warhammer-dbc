@@ -1,0 +1,96 @@
+{
+  "name": "Граната Ногопут",
+  "type": "weapon",
+  "folder": "FhPAdEo8oRXjre7C",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "thrown",
+    "weaponType": "grenade",
+    "range": 0,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 1,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10+11",
+    "damageType": "impact",
+    "penetration": 0,
+    "quality": "common",
+    "availability": 3,
+    "weight": 0.3,
+    "attackBonus": 0,
+    "special": "Моды: 4), Linger (3). Haywire (6, 1d10. Арлекины иммунны к её эффекту.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": 6
+      },
+      {
+        "key": "concussive",
+        "rating": 3
+      },
+      {
+        "key": "grav"
+      },
+      {
+        "key": "grav"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "zB0UZ8reqfOCFYrF",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784645463257,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!zB0UZ8reqfOCFYrF"
+}

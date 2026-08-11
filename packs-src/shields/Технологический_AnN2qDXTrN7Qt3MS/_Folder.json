@@ -1,0 +1,23 @@
+{
+  "name": "Технологический",
+  "type": "Item",
+  "folder": null,
+  "sorting": "m",
+  "_id": "AnN2qDXTrN7Qt3MS",
+  "description": "",
+  "sort": -100000,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805430,
+    "modifiedTime": 1782059906919,
+    "lastModifiedBy": "TcTwVVgsrGiUR4X7"
+  },
+  "_key": "!folders!AnN2qDXTrN7Qt3MS"
+}

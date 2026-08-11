@@ -1,0 +1,60 @@
+{
+  "name": "Litany of the Electromancer / Литания Электроманта",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "8Myy7biwI0W0j67k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "motivotheurgy",
+    "subtype": "Люминен",
+    "miracleType": "compensator",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 3,
+    "energyCost": 2,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "testSkill": "techUse",
+    "testMod": 0,
+    "action": "half",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×3м",
+    "damage": "1d10+I.b",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Luminen Capacitors · Цена: 3К+2Э · Процесс: 1 (У) · Тип: Компенсатор (1), Манипула (1), Славословие (1)] Треб.: For.Lore (Mechanicum)+20. До I.b целей в коронах статики на Успехи Раундов. При рукопашной/в упор атаке по цели — корона развеивается, в атакующего 1d10+I.b E(El), Pen ½I.b, Extreme (7), Shocking (AP не удваивается; Оглушённый атакующий — атака отменяется). При прекращении/выходе из дальности корона разряжается в саму цель.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "Ft4hH5B4A9SRMpqg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040913,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Ft4hH5B4A9SRMpqg"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Selfless Warrior / Самоотверженный Воин",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "n4MVIjhVCl4Iv8eQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Черта Воина Троп. Рядом с союзниками или защищая эльдарскую символику/строения: +1 рукопашного урона за каждую потерянную чётную рану (при >14 ранах бонус не работает, пока раны не ниже 14; макс +7). Бонус 3×Потерянные Раны на Парирование (5× при парировании за союзника). При попытке его обезоружить — +30 или −30 противнику. Силовое/психосиловое оружие типа Меч/Сабля/Рапира/Копьё при взятии архетипа становится оружием Наследия (Наследие Излишества, характер Бдительное (7)). Если Inf противника на 10+ выше — доп. Обычная Атака; если у противника Cor.b 5+ — ещё одна атака.",
+    "tier": 1,
+    "requirement": "Создание Персонажа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Черта архетипа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "OLbBiRH0tx4vALoM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121981158,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!OLbBiRH0tx4vALoM"
+}

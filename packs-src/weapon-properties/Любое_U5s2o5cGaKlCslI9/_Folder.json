@@ -1,0 +1,23 @@
+{
+  "name": "Любое",
+  "type": "Item",
+  "sorting": "m",
+  "_id": "U5s2o5cGaKlCslI9",
+  "description": "",
+  "folder": null,
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353698,
+    "modifiedTime": 1786224353698,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!folders!U5s2o5cGaKlCslI9"
+}

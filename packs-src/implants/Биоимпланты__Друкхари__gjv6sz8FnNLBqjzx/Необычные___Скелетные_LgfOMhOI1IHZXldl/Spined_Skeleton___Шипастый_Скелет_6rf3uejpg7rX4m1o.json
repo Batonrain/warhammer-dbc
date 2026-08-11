@@ -1,0 +1,67 @@
+{
+  "name": "Spined Skeleton / Шипастый Скелет",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R 2. Острые костяные шипы сквозь кожу.",
+    "notes": "",
+    "category": "bioimplant",
+    "quality": "common",
+    "effect": "Костяные шипы сквозь кожу: Deadly Natural Weapons(2) на все безоружные атаки. В начале хода в Захвате — свободным действием неизбегаемое попадание шипами. Промахнувшийся в упор / безоружно атаковавший / в Борьбе получает попадание (Уворот, не Парирование) 1d10+2+S.b R Pen 2; запястные клинки Rng 0 Mono. Дефект (до Best.Q): −10 социальные (кроме Запугивания), крит-эффекты R по персонажу +1.\nPoor.Q: без бонуса безоружному урону и урону в захвате; встречный урон 1d5+S.b; штрафы ×2.\nGood.Q: шипы Reinforced и +T.b к урону.\nBest.Q: Полным действием втягивать/вытягивать шипы; дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Ядовитое покрытие (Toxic(3) шипам); 2) Метательные шипы (1/день стрелковая 1d10+T.b+S.b Pen 4 Blast(T.b) Tearing на себя, иммунен; восстанавливаются 24−T.b ч, без бонусов пока нет); 3) Шипастая броня (Natural Armour(+2)); 4) Усиленный захват (+40 Карабканье, +20 на очень твёрдых).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "LgfOMhOI1IHZXldl",
+  "_id": "6rf3uejpg7rX4m1o",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782031448828,
+    "modifiedTime": 1786122011380,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6rf3uejpg7rX4m1o"
+}

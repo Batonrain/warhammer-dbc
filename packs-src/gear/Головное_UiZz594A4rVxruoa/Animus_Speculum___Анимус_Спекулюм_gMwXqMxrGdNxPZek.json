@@ -1,0 +1,53 @@
+{
+  "name": "Animus Speculum / Анимус Спекулюм",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Шлем Ассасинов Кулексус для усиления антипсихики. Для не-Парии — просто громоздкий шлем со встроенным ретинальным дисплеем и Best.Q фото-визором.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 2,
+    "availability": 5,
+    "quality": "common",
+    "gearCategory": "head",
+    "worn": "Голова (Н)",
+    "effect": "Пария: Трейт Warp Sight; сужение/расширение ауры Парии (до себя или до ×2 радиуса); при ауре ≥½ обычного радиуса души в ней проходят W−20 или стирают Парию из восприятия. Накапливает психозаряды (до 50, −20/Ход без душ в ауре); стрельба «Арканным Глазом» (5 зарядов/выстрел): 50 м, S/3/5, 1d10+6 E, Pen 0, Accurate, Extreme(9), Independent, Sanctified, Warp Weapon (+1 куб урона и −1 Extreme за каждые 4 бPR псайкера / 25 Inf демона).",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": "Арканный Глаз (Анимус Спекулюм)"
+  },
+  "folder": "UiZz594A4rVxruoa",
+  "_id": "gMwXqMxrGdNxPZek",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!gMwXqMxrGdNxPZek"
+}

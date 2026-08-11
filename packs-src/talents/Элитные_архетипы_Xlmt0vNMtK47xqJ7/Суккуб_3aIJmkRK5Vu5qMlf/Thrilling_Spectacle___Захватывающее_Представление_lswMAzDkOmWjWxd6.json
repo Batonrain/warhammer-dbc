@@ -1,0 +1,52 @@
+{
+  "name": "Thrilling Spectacle / Захватывающее Представление",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "3aIJmkRK5Vu5qMlf",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в битву может автоматически преуспеть в тесте на Молниеносную Атаку на 12 Успехов и, игнорируя обычные лимиты, нанести 12 рукопашных попаданий. Противник не может контратаковать против этой атаки. Если он погиб, а атаки остались, персонаж автоматически преуспевает в тестах против других противников, пока попадания не кончатся или не закончится ход. После хода получает T.b+W.b−1 усталости, снимаемой только отдыхом или Очками Боли.",
+    "tier": 3,
+    "requirement": "Blood Dancer, Lightning Attack, Superagility",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Суккуб",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "lswMAzDkOmWjWxd6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121999362,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lswMAzDkOmWjWxd6"
+}

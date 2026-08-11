@@ -1,0 +1,52 @@
+{
+  "name": "Trophies of Judgement / Трофеи Приговора",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "F3sLK04PM0hXUP7f",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Включает доп. ритуалы в обряды трофеев, черпая силу из казней преступивших законы банды. Честно (по мнению ГМа) определив вину члена банды, приведя приговор в исполнение, восстанавливает очки Трофеев (по усмотрению ГМа в перерывах между миссиями).",
+    "tier": 1,
+    "requirement": "Неделимый, Scholastic Lore (Judgement)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Мастер Казней",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "RqpPumWY3ItOHSKI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121983478,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!RqpPumWY3ItOHSKI"
+}

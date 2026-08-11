@@ -1,0 +1,21 @@
+{
+  "name": "Вооружение",
+  "type": "Item",
+  "folder": "ZS4o2yluckyzZeEV",
+  "sorting": "m",
+  "_id": "47P9lqMIxGXAXuD9",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!47P9lqMIxGXAXuD9"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Pact Stage 4 / Стадия Пакта 4",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "IrlS2rQYzXZBPJmE",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При укусе может потратить до 2 Реакций для увеличения урона в W и получения дополнительной Жажды. Считается демоном в Хосте собственного тела и получает Трейт Daemonic (3). При смерти или изгнании может быть призван как низший демон (с Incorporeal), но не может сам вселяться в Хосты без ритуалов. Пси-чутьё засекает его как демона только в боевой форме. Не имея живого физического тела, временно теряет Трейт The Thirst. Эффект Unnatural Characteristic длится Cor.b минут. В боевой форме получает Daemonic Presence (10/10), Nimble (10) и +1 к рейтингам Deadly Natural Weapons когтей и укуса; может пить кровь от попаданий когтями (но они не вводят в Ступор и нельзя тратить Реакции). Может использовать Пути Силы при манифестации и поддерживать психосилу до Cor.b минут/часов/дней за дополнительные 1/2/3 Жажды (вне лимита траты за Раунд). Может возвысить до ¼I.b (окр.▲) своих Рабов Крови до 2-й Стадии, дав им выпить своей крови; автоматически узнаёт, когда возвышенный Раб умирает или освобождается, и может лишить возвышения, выпив его досуха не убивая. Часовым ритуалом может перманентно превратить Раба Крови в Тварь Ночи — зверообразную увеличенную версию боевой формы, уничтожив его личность и разум (Тварь Ночи: Размер 2, Раны 30, WS 45, S 40, T 40, A 40, I 05, P 25, W 05, F 05, Cor 60; Броня Толстая Шкура 2/2/2/2, Погл. 10/10/10/10; Таланты Ambidextrous, Berserk Charge, Blind Fighting, Reaper, Savage, Step Aside, Two Weapon Wielder (Melee), Wrestler; Трейты Bite (3), Daemonic (2), Dark Sight, Deadly Natural Weapons (3), Fanatic, Flyer (12), From Beyond, Natural Armour (2), Stuff of Nightmares, Size (1), Unnatural S/T/A (2), The Thirst). Может взять Тварь Ночи как среднего Миньона-человека или демона; иначе она становится враждебной всему живому неразумной тварью, охотящейся по ночам.",
+    "tier": 3,
+    "requirement": "Слаанеш, 1500 xp: Inf 50, Cor 50; выпить до дна Хаосита с Inf 40+ или сравнимого чемпиона Императора либо ксеносов",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Вампир",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "NZs8STJHEzmijqlp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121980704,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!NZs8STJHEzmijqlp"
+}

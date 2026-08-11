@@ -1,0 +1,52 @@
+{
+  "name": "Perfect Mask / Совершенная Маска",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "tUkMT9PeWTzNlrmX",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Комбинацией технологии и колдовства создаёт сложную обвязку, проецирующую ложный образ носителя в реальность. Потратив голографический проектор минимум Good.Q, 8 часов работы и пройдя комбинированный тест Tech-Use−20 и Scholastic Lore(Occult)−20, создаёт Совершенную Маску под конкретного носителя, показывающую его как другого персонажа для всех чувств и даже психического чтения разума и истинного зрения. Изменяет внешность, одежду, голос, запах и манеры, обманывает осязание; без калибровки (её может провести только Когнитэ с этим Талантом) выходит из строя через неделю.",
+    "tier": 2,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Когнитэ",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "q2KnPTVeoqcPqHw8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786122002874,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!q2KnPTVeoqcPqHw8"
+}

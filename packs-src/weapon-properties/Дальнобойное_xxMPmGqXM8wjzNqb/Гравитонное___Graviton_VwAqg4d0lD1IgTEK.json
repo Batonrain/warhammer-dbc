@@ -1,0 +1,35 @@
+{
+  "name": "Гравитонное / Graviton",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Шаблоны Blast и Haywire от этого оружия в начале каждого Хода стрелка уменьшают радиус на 1, пока не исчезнут. Зона взрыва — Трудный Ландшафт−30, требующий тесты даже при обычном движении. Провалившие тест на 5+ Провалов вместо сбивания с ног подбрасываются вверх на 1d10м и падают на землю.",
+    "reminder": "🕳 Гравитонное: зона — Трудный Ландшафт−30, радиус тает на 1/Ход; 5+ Провалов — подброс на 1d10м",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "graviton",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "VwAqg4d0lD1IgTEK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353819,
+    "modifiedTime": 1786224353825,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!VwAqg4d0lD1IgTEK"
+}

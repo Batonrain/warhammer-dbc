@@ -1,0 +1,54 @@
+{
+  "name": "The Beginning of the Hunt / Начало Охоты",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "J0ZY2cXuj2u9t44Z",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Избрав Духа Курноуса: подчинённые с копьём как основным оружием получают +10 к WS/T и могут входить в стойку Частокол за Свободное действие (в пределах F.b м). Избрав Духа Фаолчу: подчинённые с луком/арбалетом получают +10 к BS/P, −1 ОД на прицеливание и до двух атак в ход (одна — стрелковая) в пределах F.b м. Первые два раунда персонаж и подчинённые перебрасывают один бросок атаки.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "SQiuGSDNU9SkGMwT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121983796,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SQiuGSDNU9SkGMwT"
+}

@@ -1,0 +1,53 @@
+{
+  "name": "Шлем Диагностор",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "L0a7VMT0FyRw8Kb6",
+  "system": {
+    "description": "Инструменты апотекарских авточувств: тепловое и рентгеновское зрение (рентген требует фонаря Нартеция), идентификация источников радиации (Awareness+20), +10 к Medicae (+20 для диагностики, +30 с Нартецием).",
+    "notes": "",
+    "category": "powerSystem",
+    "modGroup": "helmet",
+    "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": "4",
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    }
+  },
+  "_id": "uCIog3RwaDdYmQFn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782145401867,
+    "modifiedTime": 1784659282281,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!uCIog3RwaDdYmQFn"
+}

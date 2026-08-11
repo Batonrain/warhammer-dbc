@@ -1,0 +1,60 @@
+{
+  "name": "Psalm of the Vigilant Eye / Псалом Бдительного Ока",
+  "type": "techPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/techpower.svg",
+  "folder": "E4orK1NdRaBbgKla",
+  "system": {
+    "description": "",
+    "notes": "",
+    "discipline": "cybertheurgy",
+    "subtype": "Киберпсалмы",
+    "miracleType": "imperative",
+    "extraTypes": [],
+    "iron": "",
+    "cost": 0,
+    "rating": 1,
+    "cognitionCost": 0,
+    "energyCost": 0,
+    "sustainCost": 0,
+    "sustainAction": "free",
+    "testSkill": "awareness",
+    "testMod": 10,
+    "action": "free",
+    "sustained": false,
+    "compiled": false,
+    "range": "I×1м",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "effect": "[Железо: Optical MCD, Embedded Auspex · Цена: — · Процесс: Да (У) · Тип: Концентрация] Тест Awareness(I)+10. Узнаёт текущие/макс. Раны или Структуру цели, AP брони, тип/рейтинг щита. Пока в Процессах и цель в дальности — обновления; раз в Ход −1 Когниция к одному техночуду по этой цели.",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": []
+    }
+  },
+  "_id": "AMFBphwezdiiALFu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782614856287,
+    "modifiedTime": 1786122040622,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!AMFBphwezdiiALFu"
+}

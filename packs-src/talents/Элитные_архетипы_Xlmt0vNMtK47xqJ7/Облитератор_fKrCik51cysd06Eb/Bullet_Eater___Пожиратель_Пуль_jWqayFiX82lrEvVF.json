@@ -1,0 +1,52 @@
+{
+  "name": "Bullet Eater / Пожиратель Пуль",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "fKrCik51cysd06Eb",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Может поглощать специализированные боеприпасы и хранить их внутри тела. Может заряжать их в подходящее оружие и менять боеприпасы в оружии, как если бы был селектор патронов. Потратив Очко Бесчестия, может размножить один из специализированных боеприпасов, чтобы заполнить им один стандартный магазин для оружия. Не может размножать боеприпасы с мистическими свойствами (вроде Инферно-болтов Тзинча).",
+    "tier": 1,
+    "requirement": "Неделимый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Облитератор",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "jWqayFiX82lrEvVF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121997740,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!jWqayFiX82lrEvVF"
+}

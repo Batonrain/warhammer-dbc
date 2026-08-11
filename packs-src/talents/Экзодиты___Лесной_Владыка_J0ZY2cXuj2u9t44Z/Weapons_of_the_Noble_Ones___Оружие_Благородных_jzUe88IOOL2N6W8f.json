@@ -1,0 +1,52 @@
+{
+  "name": "Weapons of the Noble Ones / Оружие Благородных",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "J0ZY2cXuj2u9t44Z",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Черта Лесного Владыки. Используя копьё как основное оружие, перед боем может обратиться к Духу Курноуса (запрещает другое рукопашное оружие): копьё становится оружием Наследия (Inf 60, Наследие Крови, характеры Терпение/Неприкасаемый/Защитник). Используя лук/арбалет — Дух Фаолчу (Inf 60, Наследие Бойни, характеры Убийца/Кромсающее/Быстрое). Иначе может получить один из трёх характеров соответствующего духа на время битвы на любое своё оружие.",
+    "tier": 1,
+    "requirement": "Создание Персонажа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Черта архетипа",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "jzUe88IOOL2N6W8f",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121998043,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!jzUe88IOOL2N6W8f"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Shard of Poison / Осколок Яда",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Z87kIan8nyXbuL5k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Потратив 8 часов работы, может заменить кристалл осколочного оружия, окунув его в любой имеющийся яд. Нужно 150 доз яда с вектором Инъекция, Рана или Контакт, чтобы окунуть кристалл полностью. Это увеличивает Toxic на одну обойму на +1, и каждое попадание применяет эффекты яда.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Ламия",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "JvliFXLitmJr5aLT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121977732,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JvliFXLitmJr5aLT"
+}

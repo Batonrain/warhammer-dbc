@@ -1,0 +1,55 @@
+{
+  "name": "Frenzy / Ярость",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "GD2SVUHWSvG5UbRH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За полное действие персонаж входит в боевую ярость: +10 к WS, S и W; −20 на все тесты BS, I и F; игнорирует −10 от Усталости; не может быть Оглушён; авто-проходит тесты Морали. Обязан двигаться к ближайшему видимому врагу и атаковать его в рукопашной (если это не суицид), не может Избегать и общаться иначе, чем воплями, авто-проваливая социальные тесты кроме Запугивания. Псайкеры не могут манифестировать психосилы в Ярости и в начале каждого Хода проходят W+0, чтобы не прекратить поддержание. Выход из Ярости — тест W+0 (1 попытка/Ход) или потеря сознания; после боя +10 за каждый Ход. Однажды выйдя, нельзя войти снова до конца боя, кроме как наркотиками/психосилами.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [
+      "s",
+      "offence"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Кхорн",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "FP1xN9yNXHr9vWw8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121974514,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!FP1xN9yNXHr9vWw8"
+}

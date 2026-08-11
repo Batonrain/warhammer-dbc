@@ -1,0 +1,49 @@
+{
+  "name": "Оракул Стали",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Все инструменты смерти ведомы Повелителю Битв, и его верный чемпион разделяет это знание. С первого взгляда на любое оружие или боевую технику персонаж автоматически знает его предназначение и принципы работы, как если бы он Критически преуспел в тесте Знания на его опознание. Он также получает владение всеми видами оружия, включая экзотические.",
+    "source": "Дары Кхорн, d100 34…36",
+    "roll": "34…36",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "WuLRLc3YQSXGlZaD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020284,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WuLRLc3YQSXGlZaD"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Mortal Instrument / Смертный Инструмент",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "PSwZVHanAWF9Yjjy",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Самые могущественные Апостолы напрямую проводят волю Пантеона. Раз в сессию, находясь в смертельной опасности, может потратить Очко Бесчестия и открыть свою душу воле Богов. Наиболее заинтересованный в ситуации Бог в меру интереса оказывает помощь — от мистического щита (отражает один смертельный удар) до внезапной мутации до полноценного вторжения демонической армии или высшего демона по выбору ГМа. Апостол, посвятивший себя одному Богу, может надеяться только на него.",
+    "tier": 3,
+    "requirement": "Неделимый, Inf 75",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Тёмный Апостол",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "mbCbCFSDjg2km7dG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784713645894,
+    "modifiedTime": 1786121999847,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!mbCbCFSDjg2km7dG"
+}

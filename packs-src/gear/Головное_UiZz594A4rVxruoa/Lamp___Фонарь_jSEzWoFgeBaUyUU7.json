@@ -1,0 +1,53 @@
+{
+  "name": "Lamp / Фонарь",
+  "type": "gear",
+  "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+  "system": {
+    "description": "Узконаправленный фонарь на шлем/обруч, освещающий цели, на которые смотрит персонаж.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 0.2,
+    "availability": -4,
+    "quality": "common",
+    "gearCategory": "head",
+    "worn": "Голова (И,Н)",
+    "effect": "",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "",
+      "good": "",
+      "best": ""
+    },
+    "isRig": false,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [],
+      "magLocks": []
+    },
+    "itemSize": "",
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "UiZz594A4rVxruoa",
+  "_id": "jSEzWoFgeBaUyUU7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783257026163,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!jSEzWoFgeBaUyUU7"
+}

@@ -1,0 +1,41 @@
+{
+  "name": "«Кровавый Живодёр»",
+  "type": "smallCraft",
+  "img": "systems/warhammer-dbc/assets/item-icons/small-craft.svg",
+  "folder": "85o9GCIWffLRAKB2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "craftKind": "multipurpose",
+    "faction": "Рак'гол",
+    "cr": 8,
+    "crAlt": 0,
+    "spd": 9,
+    "squadronSize": 15,
+    "props": "Multipurpose Craft (штурмовая лодка; истребитель, 4)",
+    "rarity": 0,
+    "qty": 1,
+    "state": "stored",
+    "strength": "full"
+  },
+  "_id": "kvbn3NqBTn3Iwm5G",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783249735219,
+    "modifiedTime": 1783249735219,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!kvbn3NqBTn3Iwm5G"
+}

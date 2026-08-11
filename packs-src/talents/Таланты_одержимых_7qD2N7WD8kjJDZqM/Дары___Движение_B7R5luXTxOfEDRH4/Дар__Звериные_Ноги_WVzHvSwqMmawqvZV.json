@@ -1,0 +1,52 @@
+{
+  "name": "Дар: Звериные Ноги",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "B7R5luXTxOfEDRH4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Digitigrade (4) + Deadly Natural Weapon (Копыта) от Проявления; если руки — когти, ещё Quadruped (1).",
+    "tier": 1,
+    "requirement": "Базовый",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Дар Одержимого",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "WVzHvSwqMmawqvZV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783447629952,
+    "modifiedTime": 1786121986192,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WVzHvSwqMmawqvZV"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Hungry Darkness / Голодная Тьма",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "bVdkbbmtp2ey1CBH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Все рукопашные атаки получают Corrosive (3/+1) и Crippling (3/+1), а стрелковые на боевой дистанции или в упор — Corrosive (+1) и Crippling (+1). Все атаки трейта «Проводник Тёмной Энергии» независимо от дистанции получают бонусы как при рукопашной атаке. Если персонаж должен нанести урон через Corrosive, может вместо этого заставить цель пройти тест T−10×урон, который должен был нанестись; при провале жертва получает 2 усталости.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "Элитный архетип: Житель Бездны",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "0GoejTvIIPpfsQ7u",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785330255844,
+    "modifiedTime": 1786121962774,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0GoejTvIIPpfsQ7u"
+}

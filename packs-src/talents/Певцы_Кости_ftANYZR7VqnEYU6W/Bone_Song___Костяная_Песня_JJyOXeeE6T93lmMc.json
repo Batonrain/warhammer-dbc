@@ -1,0 +1,55 @@
+{
+  "name": "Bone Song / Костяная Песня",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ftANYZR7VqnEYU6W",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За Полное действие — костяная песнь. Одна психокостяная техника в радиусе W м восстанавливает 1d10+F.b структуры и столько же AP и избавляется от всех поломок; либо радиус 10 м — вся техника восстанавливает 1d5+½ (окр.▲) F.b структуры и AP и одну поломку. Объём восстановления меньше для очень крупной техники (рыцари/титаны). До F.b раз за сессию.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [
+      "fel",
+      "fieldcraft"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "JJyOXeeE6T93lmMc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121977310,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JJyOXeeE6T93lmMc"
+}

@@ -1,0 +1,55 @@
+{
+  "name": "Hekatrii Technique / Техника Гекатрии",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "E2q2l1ne3DTNMduU",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Доступна Стойка Гекатрии (оружие: парное одного типа). Эффект: персонаж теряет одну реакцию и возможность финта, но может совершать неограниченное число Быстрых и Молниеносных Атак. Существа с более чем двумя руками могут использовать дополнительные руки, но получают −10 на все тесты атаки/парирования за каждую руку после 2-й (−20 при четырёх руках).",
+    "tier": 3,
+    "requirement": "WS 55, Ambidextrous, Two Weapon Wielder (Melee)",
+    "aptitudes": [
+      "ws",
+      "finesse"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "DQBr9OjV6ypw13Io",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121972763,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!DQBr9OjV6ypw13Io"
+}

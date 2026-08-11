@@ -1,0 +1,67 @@
+{
+  "name": "Cyberleash / Киберпривязь",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "system": {
+    "description": "R:1. Прочее.",
+    "notes": "",
+    "category": "mechOther",
+    "quality": "common",
+    "effect": "Ноосферный адаптер Кибер-Мантии: управлять сервочерепами как мехадендритами (используя свои WS/BS/I/P/W, Навыки и Таланты), тратя на их действия свои действия/Реакции. Движения черепа могут стоить 1 ⚡ вместо полудействия (до 2/Ход на череп); «бесплатны», если череп держит позицию относительно хозяина. До 2 черепов (по 1 слоту Кибер-Мантии каждый). Poor.Q: 1; Good.Q: 3; Best.Q: 4 (один без слота).",
+    "installed": "",
+    "geneSeedOrder": 0,
+    "linkedWeapon": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    }
+  },
+  "folder": "Y8xc4V2spArcQ4bF",
+  "_id": "KZkx9kzHE54GOZou",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782216489702,
+    "modifiedTime": 1786122013358,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!KZkx9kzHE54GOZou"
+}

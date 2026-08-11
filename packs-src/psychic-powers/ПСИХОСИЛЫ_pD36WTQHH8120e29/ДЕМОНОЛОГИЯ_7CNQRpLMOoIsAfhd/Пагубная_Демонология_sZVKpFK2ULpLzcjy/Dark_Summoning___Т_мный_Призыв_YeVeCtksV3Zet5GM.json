@@ -1,0 +1,75 @@
+{
+  "name": "Dark Summoning / Тёмный Призыв",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-daemonology.svg",
+  "folder": "sZVKpFK2ULpLzcjy",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 200,
+    "discipline": "daemonology",
+    "subtype": "Пагубная Демонология",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв. Треб.: Cursed Ground. Режим W+0: при завершении ритуала Призыва сохраняет в душе до W.b+Cor.b демонов (низший зверь = 2, высший = 3, герольд = 5); при развеивании призывает всех в Истинной Форме. Режим W−50: призывает одного низшего демона за каждый нечётный Успех.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "YeVeCtksV3Zet5GM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782594706461,
+    "modifiedTime": 1786122032999,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!YeVeCtksV3Zet5GM"
+}

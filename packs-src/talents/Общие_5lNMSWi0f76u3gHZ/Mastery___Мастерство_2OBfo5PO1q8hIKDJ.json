@@ -1,0 +1,54 @@
+{
+  "name": "Mastery / Мастерство",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "5lNMSWi0f76u3gHZ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может потратить Очко Бесчестия, чтобы автоматически пройти тест на выбранный Навык с финальным модификатором +0 или легче с количеством Успехов, равным бонусу использованной в тесте Характеристики. Вдобавок, каждый раз, когда персонаж набирает 5+ Успехов в тесте на выбранный Навык (кроме Психотестов и тестов активации Техночудес), это считается Критическим Успехом (до 3-х стандартных эффектов крит-успеха с разрешения ГМа).\n\nСКЛОННОСТИ: «как у Навыка» — талант наследует обе склонности выбранного Навыка, поэтому его цена зависит от выбора (стр. 62). Привязку спрашивает пикер при покупке.",
+    "tier": "3",
+    "requirement": "Навык+30",
+    "aptitudes": [
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "любой Навык",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "2OBfo5PO1q8hIKDJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121964532,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!2OBfo5PO1q8hIKDJ"
+}

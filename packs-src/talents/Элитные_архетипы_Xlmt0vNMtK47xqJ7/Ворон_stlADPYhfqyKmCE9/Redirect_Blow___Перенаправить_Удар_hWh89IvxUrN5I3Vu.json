@@ -1,0 +1,52 @@
+{
+  "name": "Redirect Blow / Перенаправить Удар",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "stlADPYhfqyKmCE9",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Противники в рукопашной с Вороном должны опасаться не только его, но и друг друга. Когда Ворон связан в рукопашной, где у противника нет численного превосходства, и по нему промахиваются атакой (в т.ч. стрелковой), он может раз в Раунд пройти тест WS+0 vs WS+0 против одного противника в этой рукопашной (но не самого атакующего), и при Успехе этот промах считается попаданием по этому противнику с 1 Успехом.",
+    "tier": 2,
+    "requirement": "Тзинч, Deceive+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Тзинч",
+    "specialization": "Элитный архетип: Ворон",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "hWh89IvxUrN5I3Vu",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121996127,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hWh89IvxUrN5I3Vu"
+}

@@ -1,0 +1,50 @@
+{
+  "name": "Призрачный Шлем Алишазиера",
+  "type": "armor",
+  "folder": "YErRULwGanmZe5VZ",
+  "system": {
+    "description": "Алишазиера, провидица с мира–корабля Ультве, опасалась за свою жизнь – она не хотела подвергаться кристаллизации, как то сделали многие провидцы до нее. Дабы спасти свою душу от этой участи, она усложнила психическую матрицу своего призрачного шлема и переселила свою душу в камень душ, после чего тот был установлен в шлем. Молодые провидцы Ультве иногда обращаются к ее мудрости и способностям. Считается Best.Q Призрачным Шлемом со встроенным заполненным камнем душ. В этом камне душ содержится дух Алишазиеры, к которой персонаж может обращаться за советом или помощью – несмотря на свое нахождение в камне душ она все еще может манифестировать психосилы, обладая 9 бPR и характеристиками 50, кроме W, которое у нее равняется 70.\n",
+    "notes": "",
+    "armorType": "aspect",
+    "stacks": false,
+    "maxAgility": 100,
+    "equipped": false,
+    "head": 6,
+    "body": 0,
+    "leftArm": 0,
+    "rightArm": 0,
+    "leftLeg": 0,
+    "rightLeg": 0,
+    "quality": "common",
+    "availability": 5,
+    "weight": 0,
+    "properties": [
+      "runesOfProtection",
+      "special"
+    ],
+    "strengthBonus": 0,
+    "wpBonus": 0,
+    "special": "Шлем. Best.Q Призрачный Шлем с камнем душ Алишазиеры (бПР 9, хар-ки 50, W 70) — советы/манифестация."
+  },
+  "_id": "kixYn9gkoIijsK08",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781950060330,
+    "modifiedTime": 1782752979796,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!kixYn9gkoIijsK08"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "True Illusion / Истинная Иллюзия",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-sorcery-amalgam.svg",
+  "folder": "3hCagipSgNV9GK7k",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "sorcery",
+    "subtype": "Амальгамы",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "half",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв (Телепатия+Телекинез). Треб.: See Me Not, Precision Telekinesis. Иллюзия существа Размером до ⅓PR(окр.▼): использует W псайкера для тестов, T.b = W.b псайкера, AP = PR; рушится от непоглощ. урона (развеивая силу). Управляется действиями/Реакциями псайкера; если только движется — до двух полудействий/одно полное «бесплатно». Оружие как Daemonic Armament (0/½PR окр.▼); может брать реальное оружие.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "mufIk3msYPuLHDpI",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "0avJJRhWNcjVNZyk": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782755933070,
+    "modifiedTime": 1786122037005,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!mufIk3msYPuLHDpI"
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Неизбежность гнева",
+  "type": "armourHistoryEntry",
+  "img": "icons/svg/upgrade.svg",
+  "folder": "s8lKzSrVLBSddHVo",
+  "system": {
+    "table": "history",
+    "rollMin": 2,
+    "rollMax": 2,
+    "description": "Редкий и ценный дух захвата цели постоянно сканирует врагов, предсказывая дальность, скорость и высоту, и вносит почти незаметные коррективы в прицеливание.",
+    "effect": "+5 к BS. Броня медленно реагирует на неожиданное: −10 на Dodge в ближнем бою.",
+    "hasChoice": false,
+    "choiceLabel": "",
+    "choicePlaceholder": "",
+    "zoneRoll": false,
+    "bookSource": "Силовая броня: без шлема и особенности"
+  },
+  "_id": "vygDjKyLSl9iHcLB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224354160,
+    "modifiedTime": 1786229458936,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!vygDjKyLSl9iHcLB"
+}

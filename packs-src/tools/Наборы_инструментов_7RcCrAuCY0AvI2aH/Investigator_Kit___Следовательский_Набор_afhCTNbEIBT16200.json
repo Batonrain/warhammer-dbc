@@ -1,0 +1,44 @@
+{
+  "name": "Investigator Kit / Следовательский Набор",
+  "type": "tool",
+  "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
+  "system": {
+    "description": "Мультиспектральные кастеры, измерители, сканеры отпечатков, миниатюрная хим-лаборатория.",
+    "notes": "",
+    "quantity": 1,
+    "weight": 1,
+    "availability": 0,
+    "quality": "common",
+    "toolCategory": "kits",
+    "effect": "+20 на детальный осмотр местности; отпечатки, ДНК, баллистика на месте.",
+    "reminder": "",
+    "qualityEffects": {
+      "poor": "Громоздкий ящик 10 кг.",
+      "good": "Бонус +30.",
+      "best": "Бонус +40."
+    },
+    "bonuses": [],
+    "linkedWeapon": ""
+  },
+  "folder": "7RcCrAuCY0AvI2aH",
+  "_id": "afhCTNbEIBT16200",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783258181542,
+    "modifiedTime": 1785256458221,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!afhCTNbEIBT16200"
+}

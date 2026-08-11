@@ -1,0 +1,35 @@
+{
+  "name": "Когнис / Cognis",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Пробуждённый дух машины оружия: прямой контакт с сознанием Механикум через Ноосферу/МИУ, интеграция с системами носителя; ограждает оружие от использования непосвящёнными.",
+    "reminder": "⚙️ Когнис: дух машины оружия",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "cognis",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+  },
+  "_id": "KVCQxxPJw52TOkOi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786224353818,
+    "modifiedTime": 1786224353824,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!KVCQxxPJw52TOkOi"
+}

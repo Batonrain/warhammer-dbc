@@ -1,0 +1,52 @@
+{
+  "name": "Finale / Финале",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "pWF1q2GkybESZb02",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Шок и ужас на лицах врагов питает его тщеславие. Убив или парализовав рукопашной или метательной атакой вражеского чемпиона, монстра или машину, может потратить Реакцию и пройти тест Trade(Dancer)(A)−40 vs W+0 против всех видевших это врагов. Если хотя бы один враг проигрывает, восстанавливает Очко Бесчестия; если проигрывают все (не меньше 6) — восстанавливает 1d5 Очков.",
+    "tier": 2,
+    "requirement": "Слаанеш, Trade (Dancer)+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Слаанеш",
+    "specialization": "Элитный архетип: Воин Ноты",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "8vdrgs8zuIj3ApWW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784731835766,
+    "modifiedTime": 1786121969657,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!8vdrgs8zuIj3ApWW"
+}

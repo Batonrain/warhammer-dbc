@@ -1,0 +1,49 @@
+{
+  "name": "Глашатай Смирения",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Аура смирения и апатии расходится от чемпиона, подрывая силы и волю к борьбе его врагов. Все персонажи в радиусе ½Cor (окр.▲)м, кроме тех, кого он выбрал исключить из ауры, получают штраф −10 на все встречные тесты, поднимающийся до −30 на тесты против социальных взаимодействий, что сводятся к требованиям сдаться или подчиниться. Тзинчиты иммунны к эффектам этой ауры.",
+    "source": "Дары Нургл, d100 16…18",
+    "roll": "16…18",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "C7x2hsHMWpLTx7TM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122018922,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!C7x2hsHMWpLTx7TM"
+}

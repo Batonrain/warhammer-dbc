@@ -1,0 +1,55 @@
+{
+  "name": "Understanding the Path / Понимание Пути",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "tJcIaX3E6vF4BoMn",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз за сцену/битву персонаж может перебросить любой тест своего Пути (через характеристику склонностей Пути или подходящий по решению ГМа). Если тест всё равно провален — успех с 1 успехом. Не распространяется на манифестации психосил и атакующие/оборонительные тесты.",
+    "tier": "3",
+    "requirement": "Путь на уровне Мастера",
+    "aptitudes": [
+      "general",
+      "knowledge"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "QGpWwFlrKvy0Dzjm",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786121982604,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!QGpWwFlrKvy0Dzjm"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Клинки силы",
+  "type": "Item",
+  "folder": "AILmd2m9xANoR4Xj",
+  "sorting": "m",
+  "_id": "a7v19sKHJXMylOUN",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!a7v19sKHJXMylOUN"
+}

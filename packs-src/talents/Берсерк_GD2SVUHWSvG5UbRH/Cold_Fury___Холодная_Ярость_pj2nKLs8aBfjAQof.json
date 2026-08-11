@@ -1,0 +1,55 @@
+{
+  "name": "Cold Fury / Холодная Ярость",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "GD2SVUHWSvG5UbRH",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может свободно говорить в Ярости и не получает штрафа к F от Ярости; может перебрасывать неудачные попытки выйти из Ярости или сопротивление нападению на союзника. Псайкер с этим Талантом может манифестировать и поддерживать психосилы в Ярости со штрафом −10 на психотесты через W.",
+    "tier": 1,
+    "requirement": "W 50, Frenzy",
+    "aptitudes": [
+      "wp",
+      "general"
+    ],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "pj2nKLs8aBfjAQof",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452383,
+    "modifiedTime": 1786122002642,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pj2nKLs8aBfjAQof"
+}
