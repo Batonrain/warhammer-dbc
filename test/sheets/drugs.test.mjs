@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { rollAddictionTest, applyEffectExtras } from "../../module/sheets/tabs/drugs.mjs";
+import { rollAddictionTest, applyEffectExtras, applyDrug } from "../../module/sheets/tabs/drugs.mjs";
 import { computeWoundHealing, computeWoundDamage } from "../../module/sheets/tabs/wounds.mjs";
 
-function drug({ id = "drug-1", addicted = false } = {}) {
+function drug({ id = "drug-1", addicted = false, system = null } = {}) {
   const updates = [];
   const item = {
     id,
     name: "Пыльца",
     type: "drug",
     updates,
-    system: { addiction: { hasAddiction: true, isAddicted: addicted } },
+    system: system ?? { addiction: { hasAddiction: true, isAddicted: addicted } },
     update: async data => {
       updates.push(data);
       for (const [path, value] of Object.entries(data)) {
@@ -23,7 +23,8 @@ function drug({ id = "drug-1", addicted = false } = {}) {
         target[parts.at(-1)] = value;
       }
       return data;
-    }
+    },
+    toObject: () => ({ _id: id, name: item.name, type: item.type, system: structuredClone(item.system) })
   };
   return item;
 }
@@ -38,10 +39,13 @@ function actor({ items = [], fatigue = 0, t = 40, wp = 35 } = {}) {
     system: {
       fatigue: { value: fatigue },
       conditions: {},
+      wounds: { value: 5, max: 10, critical: 0 },
       characteristics: {
         t: { total: t, bonus: Math.floor(t / 10) },
-        wp: { total: wp, bonus: Math.floor(wp / 10) }
-      }
+        wp: { total: wp, bonus: Math.floor(wp / 10) },
+        int: { total: 40, value: 40, bonus: 4 }
+      },
+      corruptionBonus: 0
     },
     update: async data => {
       updates.push(data);
@@ -61,6 +65,14 @@ function actor({ items = [], fatigue = 0, t = 40, wp = 35 } = {}) {
 }
 
 beforeEach(resetCaptured);
+
+beforeEach(() => {
+  game.time = { worldTime: 123 };
+  Item.create = async (data, options = {}) => {
+    captured.created.push({ data, parent: options.parent });
+    return data;
+  };
+});
 
 describe("drug addiction test", () => {
   it("провал ставит зависимость на препарат и состояние на актора", async () => {
@@ -144,5 +156,87 @@ describe("drug special effects", () => {
     });
     expect(result.rolls).toHaveLength(2);
     expect(result.lines.join("\n")).toContain("Обескровливания");
+  });
+});
+
+describe("applyDrug", () => {
+  it("самоприменение расходует дозу, активирует эффект, применяет спецэффекты и пишет чат", async () => {
+    const item = drug({ system: {
+      quantity: 2,
+      drugCategory: "medicine",
+      deliveryMethod: "injection",
+      duration: "1d5",
+      effect: "Бодрит",
+      statMods: { t: 5 },
+      specialEffects: {
+        removesBleedingLevels: 1,
+        grantsCondition: "stunned",
+        grantsConditionLevel: 1
+      },
+      activeEffect: {}
+    } });
+    const a = actor({ items: [item] });
+    a.system.conditions = { bleeding: true, bleedingLevel: 2, stunned: false };
+    captured.nextRoll = 3;
+
+    await applyDrug(a, item);
+
+    expect(item.updates[0]).toMatchObject({
+      "system.quantity": 1,
+      "system.activeEffect.isActive": true,
+      "system.activeEffect.appliedAt": 123,
+      "system.activeEffect.roundsRemaining": 3
+    });
+    expect(a.updates[0]).toMatchObject({
+      "system.conditions.bleedingLevel": 1,
+      "system.conditions.bleeding": true,
+      "system.conditions.stunned": true
+    });
+    expect(captured.chat[0].content).toContain("Длительность");
+    expect(captured.chat[0].content).toContain("Осталось: 1");
+  });
+
+  it("применение на цель расходует дозу владельца и создаёт активную копию при длящемся эффекте", async () => {
+    const item = drug({ system: {
+      quantity: 1,
+      drugCategory: "narcotic",
+      duration: "1d5",
+      statMods: { s: 10 },
+      specialEffects: {},
+      activeEffect: {}
+    } });
+    const owner = actor({ items: [item] });
+    owner.name = "Медик";
+    const target = actor();
+    target.name = "Цель";
+    captured.nextRoll = 4;
+
+    await applyDrug(owner, item, target);
+
+    expect(item.updates[0]).toEqual({ "system.quantity": 0 });
+    expect(captured.created).toHaveLength(1);
+    expect(captured.created[0].parent).toBe(target);
+    expect(captured.created[0].data.system).toMatchObject({
+      quantity: 0,
+      activeEffect: {
+        isActive: true,
+        isAfterEffect: false,
+        appliedAt: 123,
+        roundsRemaining: 4
+      }
+    });
+    expect(captured.chat[0].content).toContain("Медик");
+    expect(captured.chat[0].content).toContain("Цель");
+  });
+
+  it("не применяет препарат с нулевым запасом", async () => {
+    const item = drug({ system: { quantity: 0, specialEffects: {}, activeEffect: {} } });
+    const a = actor({ items: [item] });
+
+    await applyDrug(a, item);
+
+    expect(item.updates).toEqual([]);
+    expect(a.updates).toEqual([]);
+    expect(captured.chat).toEqual([]);
   });
 });
