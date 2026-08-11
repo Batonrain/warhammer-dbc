@@ -55,6 +55,19 @@ export function _degWord(n) {
   return "степеней";
 }
 
+/** Разбивает строку по запятым верхнего уровня (запятые внутри скобок не режут). */
+export function splitTopLevel(str) {
+  const out = []; let depth = 0, cur = "";
+  for (const ch of String(str)) {
+    if (ch === "(") depth++;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    if (ch === "," && depth === 0) { out.push(cur); cur = ""; }
+    else cur += ch;
+  }
+  if (cur.trim()) out.push(cur);
+  return out.map(s => s.trim()).filter(Boolean);
+}
+
 export function _getActorFromIds(actorId, tokenId) {
   if (tokenId) {
     const token = canvas.tokens?.get(tokenId);
