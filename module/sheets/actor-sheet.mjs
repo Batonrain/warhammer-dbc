@@ -1,7 +1,9 @@
 import { BODY_TYPES } from "../constants/body-map.mjs";
 import { ELITE_ARCHETYPES } from "../constants/elite-archetypes.mjs";
-import { HAEM_STAGES, HAEM_FLESH_TRAITS, HAEM_WARP_TRAITS, HAEM_TRAIT_MAP,
-         isHaemonculus, haemState, traitCost } from "../constants/haemonculus.mjs";
+import { isHaemonculus } from "../constants/haemonculus.mjs";
+import { haemonculusContext, haemStep, haemToggleTrait,
+         haemRank } from "./tabs/haemonculus.mjs";
+import { centerPicker, pickerPos } from "./picker-ui.mjs";
 // module/sheets/actor-sheet.mjs
 
 import { CHARACTERISTICS, SKILL_RANKS, APTITUDES } from "../constants/characteristics.mjs";
@@ -27,8 +29,7 @@ import { _executeFearRoll, _executeTraumaRoll } from "../combat/fear.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
          buildTargetEffectButtons, buildPropertyChatBlock } from "../combat/weapon-properties.mjs";
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
-import { mutationByRoll, giftByRoll, mutationCatalog, mutationItemData,
-         GOD_GIFTS } from "../constants/mutations.mjs";
+import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { qualityEffects }                   from "../constants/quality.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
@@ -178,44 +179,6 @@ function cultFxOf(actor) {
   const gs = actor?.system?.geneSeed;
   if (!gs) return null;
   return resolveCultureFx(gs.cultureLegion || gs.legion, gs.cultureChapter || gs.chapter);
-}
-
-/**
- * Позиция окна-пикера: Foundry считает top по запрошенной высоте, а окно
- * потом дорастает содержимым и уезжает вниз за край экрана. Считаем сами:
- * ужимаем размер под окно браузера и центрируем.
- */
-/**
- * Доводит окно-пикер по месту ПОСЛЕ отрисовки. Foundry считает top по
- * запрошенной высоте, а окно потом дорастает содержимым и уезжает вниз —
- * поэтому меряем фактический размер элемента и центрируем сами.
- * Заодно гасим Enter в строке поиска: диалог принимал его за нажатие
- * кнопки по умолчанию и закрывался.
- */
-function centerPicker(html) {
-  const el = html.closest?.(".app")?.[0] ?? html[0]?.closest?.(".app");
-  if (!el) return;
-  requestAnimationFrame(() => {
-    const h = Math.min(el.offsetHeight || 0, window.innerHeight - 40);
-    const w = Math.min(el.offsetWidth  || 0, window.innerWidth  - 40);
-    if (!h || !w) return;
-    el.style.height = `${h}px`;
-    el.style.top    = `${Math.max(10, Math.round((window.innerHeight - h) / 2))}px`;
-    el.style.left   = `${Math.max(10, Math.round((window.innerWidth  - w) / 2))}px`;
-  });
-  html.find(".pick-search").on("keydown", ev => {
-    if (ev.key === "Enter") { ev.preventDefault(); ev.stopPropagation(); }
-  });
-}
-
-function pickerPos(width, height) {
-  const w = Math.min(width, window.innerWidth - 40);
-  const h = Math.min(height, window.innerHeight - 80);
-  return {
-    width: w, height: h,
-    left: Math.max(10, Math.round((window.innerWidth - w) / 2)),
-    top:  Math.max(10, Math.round((window.innerHeight - h) / 2))
-  };
 }
 
 export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
@@ -481,7 +444,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     }
     // ── Гемункул: путь возвышения (стадии 0–5) и таблицы трейтов ──────────
     context.isHaemonculus = isHaemonculus(this.actor);
-    if (context.isHaemonculus) context.haem = this._haemContext();
+    if (context.isHaemonculus) context.haem = haemonculusContext(this.actor);
 
     context.possessed = context.isHeretic && !!system.possessed;
     if (context.possessed) {
@@ -1138,169 +1101,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     });
   }
 
-  /**
-   * Бросок 1d100 по ОБЩЕМУ ПУЛУ — либо таблица Общих Мутаций (стр. 440), либо
-   * таблица Даров выбранного Бога (стр. 453-460); тип выбирается в диалоге,
-   * один и тот же бросок переинтерпретируется по нужной таблице. Сдвиг ±Inf.b
-   * (если результат НЕ от Порчи за Провал) работает одинаково для обеих
-   * веток — раньше был только у Мутаций. Неделимые бросают дважды и выбирают
-   * результат — только для ветки Мутаций (по тексту книги, Дары привязаны к
-   * конкретному Богу-покровителю и не имеют двойного броска).
-   */
-  async _rollMutationOrGift() {
-    const infB = this.actor.system.characteristics?.inf?.bonus ?? 0;
-    const patron = this.actor.system.patronGod || "";
-    const undivided = patron === "undivided";
-    const roll1 = await new Roll("1d100").evaluate();
-    const roll2 = undivided ? await new Roll("1d100").evaluate() : null;
-    const defaultGod = GOD_GIFTS[patron] ? patron : Object.keys(GOD_GIFTS)[0];
-    const godOptions = Object.entries(GOD_GIFTS)
-      .map(([k, g]) => `<option value="${k}" ${k === defaultGod ? "selected" : ""}>${g.label}</option>`).join("");
-    const resultName = (type, god, val) => type === "gift" ? (giftByRoll(god, val)?.name || "—") : mutationByRoll(val);
-
-    const content = `
-      <form class="wh-attack-form" style="padding:6px;">
-        <div class="atk-dlg-row"><label>Тип:</label>
-          <select id="mg-type" class="pm-input">
-            <option value="mutation">Мутация (Общие, стр. 440)</option>
-            <option value="gift">Дар Бога (стр. 453-460)</option>
-          </select></div>
-        <div class="atk-dlg-row" id="mg-god-row"><label>Бог-покровитель:</label>
-          <select id="mg-god" class="pm-input">${godOptions}</select></div>
-        <div class="atk-dlg-row"><label>Бросок:</label><span><b>${roll1.total}</b></span></div>
-        ${roll2 ? `<div class="atk-dlg-row"><label>Второй (Неделимый):</label><span><b>${roll2.total}</b></span></div>
-        <div class="atk-dlg-row" id="mg-which-row"><label>Использовать:</label>
-          <select id="mg-which"><option value="1">Первый (${roll1.total})</option><option value="2">Второй (${roll2.total})</option></select></div>` : ""}
-        <div class="atk-dlg-row">
-          <label>Сдвиг (±Inf.b ${infB}):</label>
-          <input type="number" id="mg-shift" value="0" min="-${infB}" max="${infB}"
-                 title="Только если результат НЕ от Порчи за Провал"/>
-        </div>
-        <div class="atk-dlg-row"><label>Итог:</label><b id="mg-result">${resultName("mutation", defaultGod, roll1.total)}</b></div>
-      </form>`;
-
-    new Dialog({
-      title: "🧬 Мутация / Дар Бога",
-      content,
-      buttons: {
-        ok: { label: "Получить", callback: async (html) => {
-          const type  = String(html.find("#mg-type").val() || "mutation");
-          const god   = String(html.find("#mg-god").val() || defaultGod);
-          const base  = (roll2 && type === "mutation" && html.find("#mg-which").val() === "2") ? roll2.total : roll1.total;
-          const shift = Math.max(-infB, Math.min(infB, parseInt(html.find("#mg-shift").val()) || 0));
-          const val   = base + shift;
-          const name  = resultName(type, god, val);
-          const data  = foundry.utils.deepClone(mutationItemData(name, type === "gift" ? god : ""));
-          delete data.folder; delete data.folderParent;
-          const [item] = await this.actor.createEmbeddedDocuments("Item", [data]);
-          ChatMessage.create({
-            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: `<div class="wh-roll-result"><div class="roll-header">${type === "gift" ? `Дар ${GOD_GIFTS[god]?.label || god}` : "Мутация"}</div>
-              <div class="roll-statline"><span class="roll-stat"><label>Бросок</label><b>${base}</b></span>
-              ${shift ? `<span class="roll-stat"><label>Сдвиг</label><b>${shift > 0 ? "+" : ""}${shift}</b></span>` : ""}
-              <span class="roll-stat"><label>Итог</label><b>${val}</b></span></div>
-              <div class="roll-outcome"><b>${name}</b></div></div>`,
-            rolls: [roll1, ...(roll2 ? [roll2] : [])]
-          });
-          item?.sheet?.render(true);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "ok",
-      render: html => {
-        const syncVisibility = () => {
-          const type = html.find("#mg-type").val();
-          html.find("#mg-god-row").toggle(type === "gift");
-          html.find("#mg-which-row").toggle(!!roll2 && type === "mutation");
-        };
-        const upd = () => {
-          const type  = html.find("#mg-type").val();
-          const god   = html.find("#mg-god").val();
-          const base  = (roll2 && type === "mutation" && html.find("#mg-which").val() === "2") ? roll2.total : roll1.total;
-          const shift = Math.max(-infB, Math.min(infB, parseInt(html.find("#mg-shift").val()) || 0));
-          html.find("#mg-result").text(resultName(type, god, base + shift));
-        };
-        syncVisibility();
-        html.find("#mg-type").on("change", () => { syncVisibility(); upd(); });
-        html.find("#mg-god, #mg-shift, #mg-which").on("input change", upd);
-      }
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 420 }).render(true);
-  }
-
-  /**
-   * Пикер общего пула Мутаций (стр. 440-452) и Даров Богов (стр. 453-460):
-   * список прямо из таблиц книги, поэтому работает и до того, как соберётся
-   * компендиум. Один объединённый пул — можно выбрать ЛЮБУЮ запись, не
-   * ограничиваясь Богом-покровителем персонажа.
-   */
-  async _openMutationPicker() {
-    const cat = mutationCatalog();
-    const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-    const row = (x) => `
-      <div class="pick-row" data-name="${esc(x.name.toLowerCase())}">
-        <div class="pick-head">
-          <button type="button" class="pick-exp" title="Показать описание">▸</button>
-          <span class="pick-name" title="Раскрыть">${esc(x.name)}</span>
-          <span class="pick-req">d100 ${esc(x.range)}</span>
-          <button type="button" class="pick-add" data-name="${esc(x.name)}" data-god="${esc(x.god)}"
-                  title="Добавить на лист">＋</button>
-        </div>
-        <div class="pick-desc" style="display:none;">${esc(x.text) || "<em>Описание ещё не перенесено из книги</em>"}</div>
-      </div>`;
-    const groups = [
-      { label: "Общие мутации (стр. 440)", items: cat.common },
-      ...cat.gifts.map(g => ({ label: `Дары — ${g.label}`, items: g.items }))
-    ];
-
-    const body = groups.map(g => `
-      <div class="pick-group">
-        <div class="pick-group-head">${esc(g.label)} <span class="pick-count">${g.items.length}</span></div>
-        <div class="pick-group-body">${g.items.map(row).join("")}</div>
-      </div>`).join("");
-
-    new Dialog({
-      title: "Добавить мутацию или Дар Бога",
-      content: `<div class="wh-item-picker">
-        <div class="pick-top"><input type="text" class="pick-search" placeholder="Поиск…"/></div>
-        <div class="pick-list">${body}</div>
-      </div>`,
-      buttons: { close: { label: "Закрыть" } },
-      default: "close",
-      render: html => {
-        centerPicker(html);
-        html.find(".pick-add").on("click", async ev => {
-          ev.preventDefault(); ev.stopPropagation();
-          const { name, god } = ev.currentTarget.dataset;
-          const data = foundry.utils.deepClone(mutationItemData(name, god));
-          delete data.folder; delete data.folderParent;
-          await this.actor.createEmbeddedDocuments("Item", [data]);
-          ui.notifications.info(`Добавлено: ${name}`);
-          $(ev.currentTarget).closest(".pick-row").addClass("just-added");
-        });
-        const toggle = (r) => {
-          const d = r.querySelector(".pick-desc"), e = r.querySelector(".pick-exp");
-          const open = d.style.display !== "none";
-          d.style.display = open ? "none" : "block";
-          e.textContent = open ? "▸" : "▾";
-        };
-        html.find(".pick-exp").on("click", ev => { ev.preventDefault(); toggle(ev.currentTarget.closest(".pick-row")); });
-        html.find(".pick-name").on("click", ev => toggle(ev.currentTarget.closest(".pick-row")));
-        html.find(".pick-search").on("input", ev => {
-          const q = ev.currentTarget.value.toLowerCase().trim();
-          // ВАЖНО: тело в фигурных скобках. classList.toggle возвращает булево, а
-          // jQuery .each() прерывает обход, если колбэк вернул false — из-за этого
-          // фильтр обрывался на первой же СОВПАВШЕЙ строке и остаток списка не
-          // фильтровался вовсе.
-          html.find(".pick-row").each((_, r) => {
-            r.classList.toggle("pick-hidden", !!q && !(r.dataset.name || "").includes(q));
-          });
-          html.find(".pick-group").each((_, g) => {
-            g.style.display = g.querySelectorAll(".pick-row:not(.pick-hidden)").length ? "" : "none";
-          });
-        });
-      }
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-item-picker-dialog"], ...pickerPos(560, 640) }).render(true);
-  }
 
   /**
    * Пикер СНАРЯЖЕНИЯ из компендиумов: оружие, броня, щиты, боеприпасы,
@@ -2753,88 +2553,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   }
 
 
-  /** Сводка Гемункула для вкладки: лестница ступеней, бюджеты, таблицы. */
-  _haemContext() {
-    const st = haemState(this.actor);
-    const h  = this.actor.system.haemonculus || {};
-
-    const ladder = HAEM_STAGES.map(s => ({
-      stage: s.stage, name: s.name, gain: s.gain, cost: s.stage ? s.cost : 0, inf: s.inf,
-      req: s.req, sample: s.sample, benefits: s.benefits,
-      open: s.stage <= st.stage, isCurrent: s.stage === st.stage
-    }));
-
-    const budgets = st.split
-      ? [pool("Идеал Плоти", st.pools.flesh), pool("Идеал Варпа", st.pools.warp)]
-      : [pool("Общий пул", st.pools.shared)];
-    function pool(label, p) {
-      const cap = p.cap || 0;
-      return { label, cap, spent: p.spent, over: p.spent > cap,
-               pct: cap ? Math.min(100, Math.round(p.spent / cap * 100)) : 0 };
-    }
-
-    // Строка таблицы: определение трейта + текущее состояние покупки.
-    const rows = (defs, kind) => defs.map(d => {
-      const taken = (h[kind] || []).find(e => e.key === d.key);
-      const ranks = taken ? Math.max(1, Number(taken.ranks) || 1) : 0;
-      return { key: d.key, name: d.name, take: d.take, up: d.up, note: d.note,
-               noCor: kind === "warp" && d.cor === false,
-               taken: !!taken, ranks, cost: taken ? traitCost(d, ranks) : 0 };
-    });
-
-    return {
-      ...st, current: HAEM_STAGES[st.stage], ladder, budgets,
-      anyTable: st.fleshOpen || st.warpOpen,
-      tables: [
-        { kind: "flesh", title: "ИДЕАЛ ПЛОТИ", open: st.fleshOpen, needStage: 1,
-          rows: rows(HAEM_FLESH_TRAITS, "flesh") },
-        { kind: "warp",  title: "ИДЕАЛ ВАРПА", open: st.warpOpen,  needStage: 4,
-          corNote: true, cor: st.warpCor, rows: rows(HAEM_WARP_TRAITS, "warp") }
-      ]
-    };
-  }
-
-  /** Взойти на следующую ступень / откатить текущую. */
-  async _haemStep(delta) {
-    const cur  = Number(this.actor.system.haemonculus?.stage) || 0;
-    const next = Math.max(0, Math.min(5, cur + delta));
-    if (next === cur) return;
-    if (delta > 0) {
-      const s = HAEM_STAGES[next];
-      const ok = await Dialog.confirm({
-        title: `Стадия ${next} — ${s.name}`,
-        content: `<p><b>Стоимость:</b> ${s.cost} xp${s.inf ? `, требуется Inf ${s.inf}` : ""}.</p>`
-               + `<p><b>Требования:</b> ${s.req}</p>`
-               + (s.sample ? `<p><b>Образец:</b> ${s.sample}</p>` : "")
-               + `<p>Опыт списывается вручную во вкладке РАЗВИТИЕ — ступени идут отдельной веткой.</p>`
-      });
-      if (!ok) return;
-    }
-    await this.actor.update({ "system.haemonculus.stage": next });
-  }
-
-  /** Взять или убрать трейт из таблицы Идеала. */
-  async _haemToggleTrait(kind, key) {
-    const def = HAEM_TRAIT_MAP[kind]?.[key];
-    if (!def) return;
-    const list = foundry.utils.duplicate(this.actor.system.haemonculus?.[kind] || []);
-    const i = list.findIndex(e => e.key === key);
-    if (i >= 0) list.splice(i, 1);
-    else list.push({ key, ranks: 1 });
-    await this.actor.update({ [`system.haemonculus.${kind}`]: list });
-  }
-
-  /** Изменить число рейтингов взятого трейта. */
-  async _haemRank(kind, key, delta) {
-    const def = HAEM_TRAIT_MAP[kind]?.[key];
-    if (!def || def.up == null) return;
-    const list = foundry.utils.duplicate(this.actor.system.haemonculus?.[kind] || []);
-    const e = list.find(x => x.key === key);
-    if (!e) return;
-    e.ranks = Math.max(1, (Number(e.ranks) || 1) + delta);
-    await this.actor.update({ [`system.haemonculus.${kind}`]: list });
-  }
-
   activateListeners(html) {
     requestAnimationFrame(() => { this._restoreScrollPositions(); });
     super.activateListeners(html);
@@ -2874,15 +2592,15 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     html.find(".dv-select").on("change", ev => applyDivination(this.actor, ev.currentTarget.value));
 
     // ── Вкладка ГЕМУНКУЛ ──────────────────────────────────────────────────
-    html.find(".haem-advance-btn").click(() => this._haemStep(1));
-    html.find(".haem-descend-btn").click(() => this._haemStep(-1));
+    html.find(".haem-advance-btn").click(() => haemStep(this.actor, 1));
+    html.find(".haem-descend-btn").click(() => haemStep(this.actor, -1));
     html.find(".haem-toggle-btn").click(ev => {
       const d = ev.currentTarget.dataset;
-      this._haemToggleTrait(d.kind, d.key);
+      haemToggleTrait(this.actor, d.kind, d.key);
     });
     html.find(".haem-rank-btn").click(ev => {
       const d = ev.currentTarget.dataset;
-      this._haemRank(d.kind, d.key, Number(d.delta));
+      haemRank(this.actor, d.kind, d.key, Number(d.delta));
     });
     // Ступень раскрывается по клику на заголовок — все описания сразу не влезают.
     html.find(".haem-step-head").click(ev => {
@@ -3434,7 +3152,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     // ＋ мутация / ＋ Дар — выбор КОНКРЕТНОЙ записи из таблиц книги.
     html.find(".gear-lib-btn").click(ev => { ev.preventDefault(); this._openGearPicker(); });
 
-    // ＋ Мутация/Дар — общий пул (см. _openMutationPicker): выбор ЛЮБОЙ
+    // ＋ Мутация/Дар — общий пул (см. tabs/mutations.mjs): выбор ЛЮБОЙ
     // записи из Общих Мутаций ИЛИ Даров любого Бога, не только покровителя.
     html.find(".mutgift-add-btn").click(async ev => {
       ev.preventDefault();
@@ -3442,7 +3160,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
         const item = await Item.create({ name: "Новая мутация", type: "mutation" }, { parent: this.actor });
         return item?.sheet?.render(true);
       }
-      this._openMutationPicker();
+      openMutationPicker(this.actor);
     });
 
     // 🎲 Бросок по общему пулу (Общие Мутации ИЛИ Дар Бога — тип выбирается в
@@ -3450,7 +3168,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     // Провала) — спрашиваем модификатор.
     html.find(".mutgift-roll-btn").click(async ev => {
       ev.preventDefault();
-      await this._rollMutationOrGift();
+      await rollMutationOrGift(this.actor);
     });
 
     // ── Склонности персонажа (Развитие) ────────────────────────────────────

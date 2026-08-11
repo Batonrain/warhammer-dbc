@@ -18,12 +18,13 @@
  * `dice` — очередь значений кубов для честного разбора формул (см. Roll ниже).
  * Пока она null, бросок ведёт себя по-старому: любая формула даёт `nextRoll`.
  */
-export const captured = { dialog: null, rolls: [], chat: [], nextRoll: 50, dice: null };
+export const captured = { dialog: null, rolls: [], chat: [], created: [], nextRoll: 50, dice: null };
 
 export function resetCaptured() {
   captured.dialog = null;
   captured.rolls = [];
   captured.chat = [];
+  captured.created = [];
   captured.nextRoll = 50;
   captured.dice = null;
 }
@@ -182,8 +183,16 @@ export function sheetOf(cls, { items = [], ...system } = {}) {
   list.get = id => list.find(i => i.id === id) ?? null;
   Object.defineProperty(sheet, "actor", {
     // `update` — заглушка: диалог атаки сбрасывает им прицеливание, а тест
-    // проверяет порог броска, а не запись в актора.
-    value: { id: "actor-stub", name: "Подставной", system, items: list, update: async () => {} },
+    // проверяет порог броска, а не запись в актора. Выданные предметы, наоборот,
+    // запоминаются: тест мутаций проверяет, что именно легло на лист.
+    value: {
+      id: "actor-stub", name: "Подставной", system, items: list,
+      update: async () => {},
+      createEmbeddedDocuments: async (type, docs) => {
+        captured.created.push(...docs);
+        return docs.map(d => ({ ...d, sheet: { render: () => {} } }));
+      }
+    },
     configurable: true
   });
   return sheet;
