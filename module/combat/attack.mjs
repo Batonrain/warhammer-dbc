@@ -1,11 +1,13 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
-import { HIT_LOCATIONS, MELEE_STANCES }            from "../constants/combat.mjs";
-import { _degWord, _getAmmoSpent, _buildAmmoModString, resolveCharFormula } from "../helpers/utils.mjs";
+import { MELEE_STANCES }                           from "../constants/combat.mjs";
+import { _degWord, _getAmmoSpent, _buildAmmoModString } from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
-import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
+import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
          jamThreshold, buildPropertyChatBlock,
          buildTargetEffectButtons }                 from "./weapon-properties.mjs";
+import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
+         attackPenetration, damageFormulaFor, bonusDamageDice } from "./attack-outcome.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
 import { qualityEffects, buildQualityChatBlock }    from "../constants/quality.mjs";
 import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../constants/drukhari-splinter.mjs";
@@ -168,20 +170,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // flags.warhammer-dbc.hitLocationShift = true; см. кнопки ниже, у карточки,
   // и обработчик в hooks.mjs — они переигрывают эту же атаку с тем же rv
   // через opts.forcedRoll, добавляя opts.locationShift).
-  const rvStr    = String(rv).padStart(2, "0");
-  const reversed = parseInt(rvStr.split("").reverse().join(""));
-  const locRoll  = Math.min(Math.max(reversed + (Number(opts.locationShift) || 0), 1), 100);
-  let hitLocLabel = "Торс";
-  if (aimTarget?.value) {
-    const aimMap = {
-      torso: "Торс", leg: "Нога", arm: "Рука",
-      head: "Голова", joint: "Сочленение / Шея", eye: "Глаз (Голова)"
-    };
-    hitLocLabel = aimMap[aimTarget.value] ?? "Торс";
-  } else if (hit) {
-    const loc = HIT_LOCATIONS.find(l => locRoll >= l.min && locRoll <= l.max);
-    hitLocLabel = loc?.label ?? "Торс";
-  }
+  const { locRoll, label: rolledLoc } = hitLocation({ rv, hit, shift: opts.locationShift, aimTarget });
+  let hitLocLabel = rolledLoc;
 
   // ── Цель — техника: место попадания по таблице машины (реверс броска),
   //    либо по указанной части при Избирательной атаке (aimTarget.vehiclePart).
@@ -195,55 +185,20 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // Место конкретного попадания: у техники 1-е и 2-е — в часть, остальные в Корпус;
   // у существ — множественные (3+) идут в Торс.
-  const locForHit = (i) => targetIsVehicle
-    ? (i < 2 ? vehPart : "Корпус")
-    : ((hitsCount > 1 && i >= 2) ? "Торс" : hitLocLabel);
+  const locForHit = (i) => locationForHit(i, {
+    label: hitLocLabel, hitsCount, targetIsVehicle, vehiclePart: vehPart
+  });
 
   const deg = hit
     ? Math.floor((threshold - rv) / 10) + 1
     : Math.floor((rv - threshold) / 10) + 1;
 
   // Попадания и расход патронов
-  let hitsCount = 0, rofLabel = "Рукопашная";
+  const { count: hitsCount, label: rofLabel } = hitCount({
+    hit, isMelee, rofMode, deg, wp, sys,
+    isSwift: opts.isSwift, isLightning: opts.isLightning
+  });
   let ammoSpent = 0;
-
-  if (hit) {
-    if (isMelee) {
-      hitsCount = 1;
-      if (opts.isSwift)     hitsCount = Math.ceil(deg / 2);
-      if (opts.isLightning) hitsCount = Math.ceil(deg / 2) + 1;
-      // Мульти-удар: до X дополнительных попаданий при успехе
-      if (wp.multiStrikeRating > 0) hitsCount += wp.multiStrikeRating;
-    } else {
-      switch (rofMode) {
-        case "single":
-          rofLabel = "Одиночный"; hitsCount = 1; break;
-        case "semi":
-          // Короткая Очередь (стр. 35): одно попадание за каждый НЕЧЁТНЫЙ Успех
-          // (1, 3, 5…) до максимума во ВТОРУЮ позицию RoF. Потолок — сам rof_semi,
-          // а не его половина (из-за лишнего /2 при 6 степенях выходило 2 вместо 3).
-          rofLabel = "Полуавтомат";
-          hitsCount = Math.min(Math.ceil(deg / 2), sys.rof_semi); break;
-        case "full":
-          rofLabel = "Автоматический";
-          hitsCount = Math.min(Math.ceil(deg / 2), sys.rof_full); break;
-        case "suppression":
-          rofLabel = "Подавление"; hitsCount = 0; break;
-      }
-      // Шторм — удвоение попаданий; Спаренное/Квад — +1 при успехе
-      if (wp.extraHits === "storm")      hitsCount *= 2;
-      else if (wp.extraHits === "twinLinked" && hitsCount > 0) hitsCount += 1;
-    }
-  } else {
-    if (!isMelee) {
-      switch (rofMode) {
-        case "single":      rofLabel = "Одиночный";      break;
-        case "semi":        rofLabel = "Полуавтомат";    break;
-        case "full":        rofLabel = "Автоматический"; break;
-        case "suppression": rofLabel = "Подавление";     break;
-      }
-    }
-  }
 
   // Талант/Черта «сдвинуть место попадания» (flags.warhammer-dbc.hitLocationShift
   // на предмете — ставится kind:"script" Конструктора при получении). «Одиночная
@@ -304,13 +259,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Психосиловое в руках псайкера: +PR к урону и Pen (макс +10)
   const forceBonus = (wp.forcePR && isPsyker) ? Math.min(pr, 10) : 0;
 
-  let pen       = effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0);
-  // Бритвенно острое: 3+ СУ → ×2 Пробитие | Мельта: короткая дист. → ×2 Пробитие
-  if (wp.razorSharp && hit && deg >= 3) pen *= 2;
-  if (wp.meltaShort && shortRange)      pen *= 2;
-  if (maximalOn) pen += 2;          // Максимальный режим: +2 Пробитие
-  if (band?.pen) pen += Number(band.pen) || 0;   // Полоса дальности: +Пробитие
-  pen += forceBonus;
+  const pen = attackPenetration({
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0),
+    wp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
+  });
 
   // Эффекты, открывающиеся по Порче владельца (стр. 220, Чёрная Булава):
   // печатаем только те, что уже доступны при текущей Cor, — остальные молчат.
@@ -324,39 +276,24 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const sb      = chars.s?.bonus ?? 0;
 
   // Бонус Силы в рукопашной: Могучее ×2, Сдержанное = 0
-  let sbEff = sb;
-  if (wp.mightySB)    sbEff = sb * 2;
-  if (wp.containedSB) sbEff = 0;
+  const sbEff = meleeStrengthBonus({ sb, wp });
   // Порча: +Cor.b владельца к урону
   const taintedAdd = wp.taintedCorB ? (actor.system.corruptionBonus ?? 0) : 0;
 
   const ammoCondDmg = Number(opts.ammoCondDmg) || 0;
   const bandDmg     = Number(band?.dmg) || 0;
   const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0);
-  // Защита: убираем тип урона, если он по ошибке попал в формулу ("1d10+4 R",
-  // "1d10+3 E(Ls)" → "1d10+4" / "1d10+3"), иначе new Roll() падает на букве.
-  const rawDmg    = String(effDamage || "").replace(/\s+[REIXРЕИ](?:\([^)]*\))?\s*$/i, "").trim();
-  const baseDmg   = rawDmg || (isMelee ? "" : "1d10");
-  let dmgFormula  = flatBonus !== 0
-    ? (baseDmg ? `${baseDmg} + ${flatBonus}` : `${flatBonus}`)
-    : (baseDmg || "0");
-  // Подстановка характеристик (S.b, I.b, W.b и т.п.) → затем модификаторы кубов
-  dmgFormula = resolveCharFormula(dmgFormula, chars, actor.system.corruptionBonus ?? 0);
-  // Рвущее / Проверенное — модификаторы кубов
-  dmgFormula = applyDamageDiceMods(dmgFormula, wp);
+  const dmgFormula = damageFormulaFor({
+    damage: effDamage, flatBonus, chars,
+    corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
+  });
 
   // Доп. кубы урона: Меткое (одиночный, по СУ), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
-  let bonusDice = 0;
-  if (wp.accurate && rofMode === "single" && hit) {
-    if (deg >= 5)      bonusDice += 2;
-    else if (deg >= 3) bonusDice += 1;
-  }
-  if (wp.scatter && shortRange) bonusDice += 1;
-  if (maximalOn)                bonusDice += 1;
-  if (band?.dice)               bonusDice += Number(band.dice) || 0;
-  // Доп. кубики урона от боеприпаса (стр. 203: Фарос и Осирис — «+1 кубик урона»).
-  bonusDice += Number(ammoSys?.damageDiceMod) || 0;
+  const bonusDice = bonusDamageDice({
+    wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
+    ammoDice: ammoSys?.damageDiceMod
+  });
 
   const damageRolls = [];
   const allRolls    = [roll];
