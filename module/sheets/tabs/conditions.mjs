@@ -135,6 +135,24 @@ export async function fatigueSleep(actor) {
   }, rollMode));
 }
 
+/** Крестик в строке состояния: снять его, а со счётчиком — обнулить и счётчик. */
+export async function removeCondition(actor, key) {
+  const def     = CONDITIONS_DEF[key];
+  const updates = { [`system.conditions.${key}`]: false };
+  if (def?.hasLevel && def.levelField) {
+    updates[`system.conditions.${def.levelField}`] = 0;
+  }
+  await actor.update(updates);
+}
+
+/** Поле уровня: раунды оглушения, стадии кровотечения и прочие счётчики. */
+export async function setConditionLevel(actor, key, value) {
+  const def = CONDITIONS_DEF[key];
+  const val = parseInt(value) || 0;
+  if (!def?.hasLevel || !def.levelField) return;
+  await actor.update({ [`system.conditions.${def.levelField}`]: val });
+}
+
 export function showAddConditionDialog(actor) {
   const conditions = actor.system.conditions || {};
   const inactive = Object.entries(CONDITIONS_DEF)
@@ -177,4 +195,39 @@ export function showAddConditionDialog(actor) {
     },
     default: "add"
   }, { classes: ["dialog", "wh-add-condition-dialog", "warhammer-dbc", "wh-holo"], width: 360 }).render(true);
+}
+
+export function activateConditionsListeners(html, actor) {
+  html.find(".conditions-add-btn").click(ev => {
+    ev.preventDefault();
+    showAddConditionDialog(actor);
+  });
+
+  html.find(".condition-remove-btn").click(async ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    await removeCondition(actor, ev.currentTarget.dataset.condition);
+  });
+
+  html.find(".condition-level-input").change(async ev => {
+    ev.stopPropagation();
+    await setConditionLevel(actor, ev.currentTarget.dataset.condition, ev.currentTarget.value);
+  });
+
+  html.find(".fatigue-add-btn").click(async ev => {
+    ev.preventDefault();
+    await addFatigue(actor, 1);
+  });
+  html.find(".fatigue-remove-btn").click(async ev => {
+    ev.preventDefault();
+    await removeFatigue(actor, 1);
+  });
+  html.find(".fatigue-rest-btn").click(async ev => {
+    ev.preventDefault();
+    await fatiguePeriodRest(actor);
+  });
+  html.find(".fatigue-sleep-btn").click(async ev => {
+    ev.preventDefault();
+    await fatigueSleep(actor);
+  });
 }

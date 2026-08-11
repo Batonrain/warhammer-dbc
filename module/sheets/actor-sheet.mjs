@@ -22,8 +22,7 @@ import { buildDrukhariFactionOptions, getDrukhariFaction,
 import { buildMasqueOptions, getMasque } from "../constants/harlequin-masques.mjs";
 import { MELEE_STANCES, MELEE_TECHNIQUES, GRIPS, parseGrips, gripEffects } from "../constants/combat.mjs";
 import { _degWord, _buildAmmoModString, resolveCharFormula, fateTerm } from "../helpers/utils.mjs";
-import { buildSkillDisplay, buildGetData,
-         CONDITIONS_DEF }                  from "./sheet-helpers.mjs";
+import { buildSkillDisplay, buildGetData } from "./sheet-helpers.mjs";
 import { _executeAttackRoll }              from "../combat/attack.mjs";
 import { attackThreshold }                 from "../combat/attack-threshold.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
@@ -31,8 +30,7 @@ import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { openFearDialog, rollTrauma, rollDisorder, createDisorderItem, openDisorderPicker,
          rollDisorderTest } from "./tabs/disorders.mjs";
-import { fatiguePenalty, addFatigue, removeFatigue, fatiguePeriodRest, fatigueSleep,
-         showAddConditionDialog } from "./tabs/conditions.mjs";
+import { fatiguePenalty, activateConditionsListeners } from "./tabs/conditions.mjs";
 import { painChatMsg, painChange, openPainSoulBurnDialog } from "./tabs/pain.mjs";
 import { showHealingDialog, applyHealing } from "./tabs/healing.mjs";
 import { activateDrugListeners } from "./tabs/drugs.mjs";
@@ -2717,11 +2715,8 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     activateDrugListeners(html, this.actor, {
       resolveOtherTargetActor: () => this._resolveOtherTargetActor()
     });
-    // ── Состояния ─────────────────────────────────────────────────────────
-    html.find(".conditions-add-btn").click(ev => {
-      ev.preventDefault();
-      this._showAddConditionDialog();
-    });
+    // ── Состояния и Усталость ─────────────────────────────────────────────
+    activateConditionsListeners(html, this.actor);
 
     // ── Вкладка ТЕЛО ──────────────────────────────────────────────────────
     activateBodyListeners(html, this.actor);
@@ -2730,47 +2725,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     html.find(".poss-manifest-btn").on("click", async ev => {
       ev.preventDefault();
       await this._toggleManifest();
-    });
-
-    html.find(".condition-remove-btn").click(async ev => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      const condition = ev.currentTarget.dataset.condition;
-      const def       = CONDITIONS_DEF[condition];
-      const updates   = { [`system.conditions.${condition}`]: false };
-      if (def?.hasLevel && def.levelField) {
-        updates[`system.conditions.${def.levelField}`] = 0;
-      }
-      await this.actor.update(updates);
-    });
-
-    html.find(".condition-level-input").change(async ev => {
-      ev.stopPropagation();
-      const condition = ev.currentTarget.dataset.condition;
-      const def       = CONDITIONS_DEF[condition];
-      const val       = parseInt(ev.currentTarget.value) || 0;
-      if (!def?.hasLevel || !def.levelField) return;
-      await this.actor.update({
-        [`system.conditions.${def.levelField}`]: val
-      });
-    });
-
-    // ── Усталость ─────────────────────────────────────────────────────────
-    html.find(".fatigue-add-btn").click(async ev => {
-      ev.preventDefault();
-      await this._addFatigue(1);
-    });
-    html.find(".fatigue-remove-btn").click(async ev => {
-      ev.preventDefault();
-      await this._removeFatigue(1);
-    });
-    html.find(".fatigue-rest-btn").click(async ev => {
-      ev.preventDefault();
-      await this._fatiguePeriodRest();
-    });
-    html.find(".fatigue-sleep-btn").click(async ev => {
-      ev.preventDefault();
-      await this._fatigueSleep();
     });
 
     // ── Стойка ───────────────────────────────────────────────────────────
@@ -2799,32 +2753,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
         this._showAttackDialogNoWeapon(techDef);
       }
     });
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // ── МЕХАНИКА УСТАЛОСТИ
-  // ══════════════════════════════════════════════════════════════════════════
-
-  async _addFatigue(amount = 1) {
-    return addFatigue(this.actor, amount);
-  }
-
-  async _removeFatigue(amount = 1) {
-    return removeFatigue(this.actor, amount);
-  }
-
-  async _fatiguePeriodRest() {
-    return fatiguePeriodRest(this.actor);
-  }
-
-  async _fatigueSleep() {
-    return fatigueSleep(this.actor);
-  }
-
-  // ── Диалог добавления состояния ───────────────────────────────────────────
-
-  _showAddConditionDialog() {
-    return showAddConditionDialog(this.actor);
   }
 
   // ── Диалог атаки ─────────────────────────────────────────────────────────

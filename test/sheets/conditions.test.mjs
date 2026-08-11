@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, fakeHtml, resetCaptured } from "../support/foundry-stub.mjs";
-import { addFatigue, removeFatigue, fatigueSleep,
+import { activateConditionsListeners, addFatigue, removeCondition, removeFatigue,
+         fatigueSleep, setConditionLevel,
          showAddConditionDialog } from "../../module/sheets/tabs/conditions.mjs";
 
 function makeActor(options = {}) {
@@ -93,5 +94,97 @@ describe("showAddConditionDialog", () => {
     }));
 
     expect(a.updates[0]).toEqual({ "system.conditions.stunned": true });
+  });
+});
+
+describe("condition rows", () => {
+  it("removeCondition обнуляет счётчик у состояния с уровнем", async () => {
+    const a = makeActor();
+
+    await removeCondition(a, "bleeding");
+
+    expect(a.updates[0]).toEqual({
+      "system.conditions.bleeding": false,
+      "system.conditions.bleedingLevel": 0
+    });
+  });
+
+  it("removeCondition у состояния без уровня пишет только флаг", async () => {
+    const a = makeActor();
+
+    await removeCondition(a, "prone");
+
+    expect(a.updates[0]).toEqual({ "system.conditions.prone": false });
+  });
+
+  it("setConditionLevel пишет уровень и молчит для состояний без счётчика", async () => {
+    const a = makeActor();
+
+    await setConditionLevel(a, "stunned", "3");
+    await setConditionLevel(a, "stunned", "мусор");
+    await setConditionLevel(a, "prone", "2");
+
+    expect(a.updates).toEqual([
+      { "system.conditions.stunnedRounds": 3 },
+      { "system.conditions.stunnedRounds": 0 }
+    ]);
+  });
+});
+
+describe("activateConditionsListeners", () => {
+  function wire(actor) {
+    const handlers = {};
+    const html = {
+      find: selector => ({
+        click:  fn => { handlers[`${selector}:click`] = fn; },
+        change: fn => { handlers[`${selector}:change`] = fn; }
+      })
+    };
+    activateConditionsListeners(html, actor);
+    return handlers;
+  }
+
+  const ev = (dataset = {}, value) => ({
+    preventDefault: () => {},
+    stopPropagation: () => {},
+    currentTarget: { dataset, value }
+  });
+
+  it("кнопки Усталости считают от текущего уровня", async () => {
+    const a = makeActor({ fatigue: 2, tBonus: 4, wpBonus: 3 });
+    const handlers = wire(a);
+
+    await handlers[".fatigue-add-btn:click"](ev());
+    expect(a.system.fatigue.value).toBe(3);
+
+    await handlers[".fatigue-remove-btn:click"](ev());
+    expect(a.system.fatigue.value).toBe(2);
+
+    await handlers[".fatigue-rest-btn:click"](ev());
+    expect(a.system.fatigue.value).toBe(1);
+
+    await handlers[".fatigue-sleep-btn:click"](ev());
+    expect(a.system.fatigue.value).toBe(0);
+  });
+
+  it("крестик снимает состояние, поле уровня его записывает", async () => {
+    const a = makeActor();
+    const handlers = wire(a);
+
+    await handlers[".condition-remove-btn:click"](ev({ condition: "burning" }));
+    await handlers[".condition-level-input:change"](ev({ condition: "burning" }, "2"));
+
+    expect(a.updates).toEqual([
+      { "system.conditions.burning": false, "system.conditions.burningLevel": 0 },
+      { "system.conditions.burningLevel": 2 }
+    ]);
+  });
+
+  it("плюсик открывает диалог добавления состояний", () => {
+    const handlers = wire(makeActor());
+
+    handlers[".conditions-add-btn:click"](ev());
+
+    expect(captured.dialog.title).toBe("Добавить состояние");
   });
 });
