@@ -31,8 +31,8 @@ const DRUG_CATEGORY_ICON = {
   elixir: "⚗️"
 };
 
-function rollTermsText(roll, total) {
-  if (!roll.terms) return String(total);
+function rollTermsExpression(roll, fallback = "") {
+  if (!roll.terms) return fallback;
   const parts = [];
   for (const term of roll.terms) {
     if (term.results) {
@@ -46,7 +46,12 @@ function rollTermsText(roll, total) {
       parts.push(String(term.number));
     }
   }
-  return `${parts.join("")} = ${total}`;
+  return parts.join("");
+}
+
+function rollTermsText(roll, total) {
+  const expression = rollTermsExpression(roll);
+  return expression ? `${expression} = ${total}` : String(total);
 }
 
 /**
@@ -326,6 +331,164 @@ export async function applyDrug(owner, item, recipient = null) {
     ...(allRolls.length ? { rolls: allRolls } : {}),
     sound: CONFIG.sounds.dice
   }, rollMode));
+}
+
+export async function triggerAfterEffect(actor, item) {
+  const sys = item.system;
+  if (!sys.hasAfterEffect) return;
+
+  const fx = sys.afterEffectSpecial || {};
+  const actorUpdates = {};
+
+  if (fx.removesBleedingLevels > 0) {
+    const cur = actor.system.conditions?.bleedingLevel || 0;
+    const newVal = Math.max(0, cur - fx.removesBleedingLevels);
+    actorUpdates["system.conditions.bleedingLevel"] = newVal;
+    actorUpdates["system.conditions.bleeding"] = newVal > 0;
+  }
+
+  if (fx.removesFatigueLevels > 0) {
+    const cur = actor.system.conditions?.fatiguedLevel || 0;
+    const newVal = Math.max(0, cur - fx.removesFatigueLevels);
+    actorUpdates["system.conditions.fatiguedLevel"] = newVal;
+    actorUpdates["system.conditions.fatigued"] = newVal > 0;
+    const fatVal = actor.system.fatigue?.value || 0;
+    actorUpdates["system.fatigue.value"] = Math.max(0, fatVal - fx.removesFatigueLevels);
+  }
+
+  if (fx.removesWounds > 0) {
+    Object.assign(actorUpdates, computeWoundHealing(actor.system, fx.removesWounds));
+  }
+
+  if (fx.grantsCondition) {
+    const condDef = CONDITIONS_DEF[fx.grantsCondition];
+    const lvlToGrant = fx.grantsConditionLevel ?? 1;
+    actorUpdates[`system.conditions.${fx.grantsCondition}`] = true;
+    if (condDef?.hasLevel && condDef.levelField) {
+      const curLvl = actor.system.conditions?.[condDef.levelField] || 0;
+      actorUpdates[`system.conditions.${condDef.levelField}`] = curLvl + lvlToGrant;
+    }
+    if (fx.grantsCondition === "fatigued") {
+      const fatVal = actor.system.fatigue?.value || 0;
+      actorUpdates["system.fatigue.value"] = fatVal + lvlToGrant;
+    }
+  }
+
+  const extras = await applyEffectExtras(actor, fx);
+  Object.assign(actorUpdates, extras.updates);
+
+  if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
+
+  const cd = sys.afterEffectCharDamage || {};
+  let charDamageStat = "";
+  let charDamageAmount = 0;
+  let charDamageRoll = null;
+  let charDamageDiceStr = "";
+
+  if (cd.stat && cd.formula) {
+    const chars = actor.system.characteristics;
+    const resolved = resolveCharFormula(cd.formula, chars, actor.system.corruptionBonus ?? 0);
+    try {
+      charDamageRoll = await new Roll(resolved).evaluate();
+      charDamageAmount = Math.max(0, charDamageRoll.total);
+      charDamageStat = cd.stat;
+      charDamageDiceStr = rollTermsExpression(charDamageRoll);
+    } catch(e) {
+      ui.notifications.warn(`Не удалось бросить формулу урона в характеристику: ${cd.formula}`);
+      console.error(e);
+    }
+  }
+
+  await item.update({
+    "system.activeEffect.isActive": true,
+    "system.activeEffect.isAfterEffect": true,
+    "system.activeEffect.roundsRemaining": 0,
+    "system.activeEffect.charDamageStat": charDamageStat,
+    "system.activeEffect.charDamageAmount": charDamageAmount
+  });
+
+  const categoryIcon = DRUG_CATEGORY_ICON[sys.drugCategory] || "💊";
+  let chatContent = `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("warn","#ffb84d")}Пост-эффект: ${categoryIcon} ${item.name}</div>`;
+
+  const afterStatMods = sys.afterEffectStatMods || {};
+  const afterModParts = [];
+  for (const [key, value] of Object.entries(afterStatMods)) {
+    if (value && value !== 0) afterModParts.push(`${key.toUpperCase()} ${value > 0 ? "+" : ""}${value}`);
+  }
+  if (afterModParts.length > 0) {
+    chatContent += `<div class="roll-threshold">${rollIcon("chart","#8fd0ff")}Модификаторы: <b>${afterModParts.join(", ")}</b></div>`;
+  }
+
+  if (charDamageStat && charDamageAmount > 0) {
+    const label = CHARACTERISTICS[charDamageStat]?.abbr ?? charDamageStat.toUpperCase();
+    chatContent += `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Урон в характеристику <b>${label}</b>: ${charDamageDiceStr ? `${charDamageDiceStr} = ` : ""}<b style="color:#8b0000;">−${charDamageAmount}</b> <span style="font-size:0.85em;color:#5a4a30;">(действует, пока активен пост-эффект)</span></div>`;
+  }
+
+  for (const line of extras.lines)
+    chatContent += `<div class="roll-threshold">${line}</div>`;
+
+  if (sys.afterEffect) {
+    chatContent += `<div class="roll-outcome"><span class="roll-failure">${rollIcon("warn","#ffb84d")}${sys.afterEffect}</span></div>`;
+  }
+
+  if (sys.afterEffectDice) {
+    try {
+      const chars = actor.system.characteristics;
+      const resolvedFormula = resolveCharFormula(sys.afterEffectDice, chars, actor.system.corruptionBonus ?? 0);
+      const roll = await new Roll(resolvedFormula).evaluate();
+      const diceStr = rollTermsExpression(roll, resolvedFormula);
+
+      chatContent += `<div class="roll-threshold">
+        ${rollIcon("dice","#6fe6ff")}Формула: <b>${sys.afterEffectDice}</b> → ${diceStr} =
+        <b style="color:#8b0000;">${roll.total}</b>
+      </div>`;
+
+      if (fx.removesBleedingLevels > 0)
+        chatContent += `<div class="roll-threshold">${rollIcon("blood","#ff6b6b")}Снято ур. Кровотечения: <b>${fx.removesBleedingLevels}</b></div>`;
+      if (fx.removesFatigueLevels > 0)
+        chatContent += `<div class="roll-threshold">${rollIcon("warn","#ffb84d")}Снято ур. Усталости: <b>${fx.removesFatigueLevels}</b></div>`;
+      if (fx.removesWounds > 0)
+        chatContent += `<div class="roll-threshold">${rollIcon("heart","#ff8a8a")}Снято Ран: <b>${fx.removesWounds}</b></div>`;
+      if (fx.grantsCondition) {
+        const lvl = fx.grantsConditionLevel ?? 1;
+        chatContent += `<div class="roll-threshold">${rollIcon("warn","#ff6b6b")}Наложено${lvl > 1 ? ` ${lvl} ур.` : ""}: <b>${fx.grantsCondition}</b></div>`;
+      }
+      if (fx.customEffect)
+        chatContent += `<div class="roll-threshold">${rollIcon("target","#8fd0ff")}${fx.customEffect}</div>`;
+
+      chatContent += "</div>";
+
+      const rollMode = game.settings.get("core", "rollMode");
+      await ChatMessage.create(ChatMessage.applyRollMode({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: chatContent,
+        rolls: [roll, ...(charDamageRoll ? [charDamageRoll] : []), ...extras.rolls],
+        sound: CONFIG.sounds.dice
+      }, rollMode));
+    } catch(e) {
+      chatContent += "</div>";
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: chatContent
+      });
+      ui.notifications.warn(`Не удалось бросить формулу пост-эффекта: ${sys.afterEffectDice}`);
+      console.error(e);
+    }
+  } else {
+    if (fx.customEffect)
+      chatContent += `<div class="roll-threshold">${rollIcon("target","#8fd0ff")}${fx.customEffect}</div>`;
+    chatContent += "</div>";
+    const rollMode = game.settings.get("core", "rollMode");
+    const postRolls = [...(charDamageRoll ? [charDamageRoll] : []), ...extras.rolls];
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: chatContent,
+      ...(postRolls.length ? { rolls: postRolls, sound: CONFIG.sounds.dice } : {})
+    }, rollMode));
+  }
+
+  ui.notifications.info(`${item.name}: пост-эффект активирован.`);
 }
 
 export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0) {

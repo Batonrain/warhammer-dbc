@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { rollAddictionTest, applyEffectExtras, applyDrug } from "../../module/sheets/tabs/drugs.mjs";
+import { rollAddictionTest, applyEffectExtras, applyDrug, triggerAfterEffect } from "../../module/sheets/tabs/drugs.mjs";
 import { computeWoundHealing, computeWoundDamage } from "../../module/sheets/tabs/wounds.mjs";
 
 function drug({ id = "drug-1", addicted = false, system = null } = {}) {
@@ -238,5 +238,61 @@ describe("applyDrug", () => {
     expect(item.updates).toEqual([]);
     expect(a.updates).toEqual([]);
     expect(captured.chat).toEqual([]);
+  });
+});
+
+describe("triggerAfterEffect", () => {
+  it("не трогает препарат без пост-эффекта", async () => {
+    const item = drug({ system: { hasAfterEffect: false, activeEffect: {} } });
+    const a = actor({ items: [item] });
+
+    await triggerAfterEffect(a, item);
+
+    expect(item.updates).toEqual([]);
+    expect(a.updates).toEqual([]);
+    expect(captured.chat).toEqual([]);
+  });
+
+  it("активирует пост-эффект, применяет спецэффекты, урон в характеристику и пишет чат", async () => {
+    const item = drug({ system: {
+      hasAfterEffect: true,
+      drugCategory: "poison",
+      afterEffect: "Откат",
+      afterEffectDice: "1d5",
+      afterEffectStatMods: { wp: -5 },
+      afterEffectCharDamage: { stat: "int", formula: "1d5" },
+      afterEffectSpecial: {
+        removesBleedingLevels: 1,
+        removesWounds: 2,
+        grantsCondition: "stunned",
+        customEffect: "Побочный эффект"
+      },
+      activeEffect: { isActive: true, roundsRemaining: 1 }
+    } });
+    const a = actor({ items: [item] });
+    a.system.conditions = { bleeding: true, bleedingLevel: 2, stunned: false };
+    captured.nextRoll = 2;
+
+    await triggerAfterEffect(a, item);
+
+    expect(a.updates[0]).toMatchObject({
+      "system.conditions.bleedingLevel": 1,
+      "system.conditions.bleeding": true,
+      "system.wounds.value": 7,
+      "system.wounds.critical": 0,
+      "system.conditions.stunned": true
+    });
+    expect(item.updates[0]).toMatchObject({
+      "system.activeEffect.isActive": true,
+      "system.activeEffect.isAfterEffect": true,
+      "system.activeEffect.roundsRemaining": 0,
+      "system.activeEffect.charDamageStat": "int",
+      "system.activeEffect.charDamageAmount": 2
+    });
+    expect(captured.chat[0].content).toContain("Пост-эффект");
+    expect(captured.chat[0].content).toContain("Модификаторы");
+    expect(captured.chat[0].content).toContain("Урон в характеристику");
+    expect(captured.chat[0].content).toContain("Побочный эффект");
+    expect(captured.chat[0].rolls).toHaveLength(2);
   });
 });
