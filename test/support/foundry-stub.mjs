@@ -34,6 +34,75 @@ class ApplicationStub {
   render() { return this; }
 }
 
+/* ── Схема типа данных ──────────────────────────────────────────────────────
+ * Поля и TypeDataModel — ровно столько, чтобы проверить, какие умолчания
+ * объявляет схема и что она делает с исходником документа. Валидацию Foundry
+ * заглушка не изображает: недопустимое значение поля с `choices` она пропустит,
+ * а настоящий Foundry поднимет ошибку. Поэтому тесты схем спрашивают про
+ * умолчания и про сохранность данных из packs-src, а не про поведение на
+ * заведомо неверных значениях — иначе проверялась бы заглушка, а не система.
+ */
+class DataFieldStub {
+  constructor(options = {}) { this.options = options; }
+
+  /** Значение поля, когда в исходнике его нет. */
+  get initial() {
+    const init = this.options.initial;
+    return typeof init === "function" ? init() : init;
+  }
+
+  /** Значение поля из исходника документа. */
+  clean(value) { return value === undefined ? this.initial : this.cast(value); }
+
+  cast(value) { return value; }
+}
+
+class StringFieldStub extends DataFieldStub {
+  get initial() { return this.options.initial ?? ""; }
+  cast(value) { return String(value); }
+}
+
+class NumberFieldStub extends DataFieldStub {
+  get initial() { return this.options.initial ?? 0; }
+  cast(value) { return Number(value); }
+}
+
+class BooleanFieldStub extends DataFieldStub {
+  get initial() { return this.options.initial ?? false; }
+  cast(value) { return Boolean(value); }
+}
+
+/** Свободный объект: хранится как есть, ключи не перечисляются. */
+class ObjectFieldStub extends DataFieldStub {
+  get initial() {
+    const init = this.options.initial;
+    return typeof init === "function" ? init() : structuredClone(init ?? {});
+  }
+  cast(value) { return structuredClone(value); }
+}
+
+/**
+ * Тип данных документа. Настоящий `TypeDataModel` при инициализации прогоняет
+ * исходник через `migrateData`, потом через очистку полей — тот же порядок
+ * повторён здесь: иначе миграция проверялась бы в отрыве от схемы.
+ */
+class TypeDataModelStub {
+  constructor(source = {}) {
+    const schema = this.constructor.defineSchema();
+    const data   = this.constructor.migrateData(structuredClone(source ?? {}));
+    for (const [key, field] of Object.entries(schema)) this[key] = field.clean(data[key]);
+  }
+
+  static migrateData(source) { return source; }
+
+  /** Данные документа без служебных полей — с чем сравнивать template.json. */
+  toObject() {
+    const out = {};
+    for (const key of Object.keys(this.constructor.defineSchema())) out[key] = this[key];
+    return out;
+  }
+}
+
 globalThis.foundry = {
   appv1: {
     api: { Application: ApplicationStub, Dialog: class extends ApplicationStub {}, FormApplication: class extends ApplicationStub {} },
@@ -52,7 +121,16 @@ globalThis.foundry = {
     setProperty: () => true
   },
   documents: { collections: {} },
-  data: { fields: {}, regionBehaviors: { RegionBehaviorType: class {} } }
+  abstract: { TypeDataModel: TypeDataModelStub },
+  data: {
+    fields: {
+      StringField:  StringFieldStub,
+      NumberField:  NumberFieldStub,
+      BooleanField: BooleanFieldStub,
+      ObjectField:  ObjectFieldStub
+    },
+    regionBehaviors: { RegionBehaviorType: class {} }
+  }
 };
 
 globalThis.CONST = {
