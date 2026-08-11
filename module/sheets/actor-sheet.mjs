@@ -7,12 +7,12 @@ import { openItemPicker, talentCategory } from "./item-picker.mjs";
 import { openGearPicker } from "./gear-picker.mjs";
 // module/sheets/actor-sheet.mjs
 
-import { CHARACTERISTICS, SKILL_RANKS, APTITUDES } from "../constants/characteristics.mjs";
-import { talentCostXP, charCostXP, skillCostXP, aptitudeCat, charAptitudeSet,
+import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
+import { talentCostXP, aptitudeCat, charAptitudeSet,
          CHAR_APTITUDES, resolveTalentAptitudes } from "../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES, WEAPON_CLASSES, DAMAGE_TYPES } from "../constants/items.mjs";
-import { resolveCultureFx, cultureCat } from "../constants/legions.mjs";
+import { resolveCultureFx } from "../constants/legions.mjs";
 import { AZURIANE_PATHS, PATH_GRADES, PATH_GRADE_ORDER,
          buildPathSelectOptions, buildGradeSelectOptions } from "../constants/aeldari-paths.mjs";
 import { buildWorldSelectOptions, buildBandSelectOptions,
@@ -40,7 +40,9 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners } from "./tabs/gear.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
-import { activateItemContextMenu, openContextMenu, closeContextMenus } from "./context-menu.mjs";
+import { activateAdvanceListeners, charImpCost as advCharImpCost,
+         skillCumCost as advSkillCumCost } from "./tabs/advance.mjs";
+import { activateItemContextMenu } from "./context-menu.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { qualityEffects }                   from "../constants/quality.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
@@ -163,16 +165,6 @@ function ruSkillString(str) {
     const parts = e.split(/\s+или\s+/);
     return parts.map(p => ruSkillEntry(p)).join(" или ");
   }).join(", ");
-}
-
-/**
- * Машинная культура легиона персонажа. Культура может быть от ДРУГОГО легиона,
- * чем геносемя (в системе это отдельные поля), поэтому берём именно её.
- */
-function cultFxOf(actor) {
-  const gs = actor?.system?.geneSeed;
-  if (!gs) return null;
-  return resolveCultureFx(gs.cultureLegion || gs.legion, gs.cultureChapter || gs.chapter);
 }
 
 export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
@@ -2189,19 +2181,12 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
         [`system.characteristics.${el.dataset.char}.${el.dataset.field}`]: parseInt(el.value) || 0
       });
     });
-    // Уровень улучшения → накопительная авто-цена по склонностям (стр. 23-24).
-    // Цена = сумма шагов +5..+25 до выбранного уровня (категория по совпадению склонностей).
-    const CHAR_IMP_STEPS = { none: 0, simple: 1, average: 2, trained: 3, significant: 4, expert: 5 };
-    // grantedImp — бесплатный уровень улучшения от архетипа/расы (кнопка ★):
-    // опыт считается только за ступени ВЫШЕ выданного, как и у навыков.
-    const charImpCost = (charKey, improvement, grantedImp) => {
-      const apts  = charAptitudeSet(this.actor.system.aptitudes);
-      const steps = CHAR_IMP_STEPS[improvement] ?? 0;
-      const floor = CHAR_IMP_STEPS[grantedImp ?? this.actor.system.characteristics?.[charKey]?.grantedImp] ?? 0;
-      let sum = 0;
-      for (let i = Math.max(floor, 0); i < steps; i++) sum += charCostXP(i, charKey, apts);
-      return sum;
-    };
+    // Накопительные авто-цены по склонностям (стр. 23-24) считает tabs/advance.mjs;
+    // здесь короткие обёртки — секции ниже зовут их без актора.
+    const charImpCost  = (charKey, improvement, grantedImp) =>
+      advCharImpCost(this.actor, charKey, improvement, grantedImp);
+    const skillCumCost = (def, rank, entryChar, grantedRank) =>
+      advSkillCumCost(this.actor, def, rank, entryChar, grantedRank);
     html.find(".char-improvement-select").change(ev => {
       const el = ev.currentTarget;
       const charKey = el.dataset.char;
@@ -2292,26 +2277,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       this.actor.update({ [`system.groupSkills.${gk}`]: entries });
     });
 
-    // Ранг навыка → накопительная авто-цена по склонностям (стр. 23-24, 57).
-    // grantedRank — бесплатный базовый уровень от архетипа/расы (стр. 5-21): опыт
-    // тратится только за ступени ВЫШЕ выданного (иначе раздувалась трата).
-    const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
-    const skillCumCost = (def, rank, entryChar, grantedRank) => {
-      const apts  = charAptitudeSet(this.actor.system.aptitudes);
-      const itemApts = [entryChar || def?.char, def?.apt2].filter(Boolean);
-      const steps  = SKILL_RANK_STEPS[rank] ?? 0;
-      const floor  = SKILL_RANK_STEPS[grantedRank] ?? 0;
-      let sum = 0;
-      // Имя навыка берём из его определения — в этой области видимости
-      // отдельной переменной name нет.
-      // Общие знания и Ремесло всегда Дружественные — это перебивает и
-      // Склонности, и культуру легиона (стр. 58, 61).
-      const _cc = def?.alwaysAlly ? "ally"
-        : cultureCat("skill", def?.label || def?.name || "", "", cultFxOf(this.actor));
-      for (let i = Math.max(floor, 0); i < steps; i++) sum += skillCostXP(i, itemApts, apts, _cc);
-      return sum;
-    };
-
     // ── Навыки ────────────────────────────────────────────────────────────
     html.find(".skill-roll").click(ev => {
       const isGroup = ev.currentTarget.dataset.group === "true";
@@ -2351,70 +2316,11 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       this.actor.update({ [`system.skills.${el.dataset.skill}.cost`]: parseInt(el.value) || 0 });
     });
 
-    // ── Групповые навыки ──────────────────────────────────────────────────
-    html.find(".add-group-skill").click(ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      this._addGroupSkill(ev.currentTarget.dataset.group);
+    // ── Вкладка РАЗВИТИЕ ──────────────────────────────────────────────────
+    // Выбор специализации остаётся тут: пикер — часть листа, а не вкладки.
+    activateAdvanceListeners(html, this.actor, {
+      addGroupSkill: groupKey => this._addGroupSkill(groupKey)
     });
-    html.find(".group-skill-rank-select").change(ev => {
-      const el      = ev.currentTarget;
-      const entries = foundry.utils.deepClone(this.actor.system.groupSkills?.[el.dataset.group] ?? []);
-      const idx     = parseInt(el.dataset.index);
-      if (entries[idx]) {
-        entries[idx].rank = el.value;
-        const def = GROUP_SKILLS_DEF[el.dataset.group];
-        entries[idx].cost = skillCumCost(def, el.value, entries[idx].char, entries[idx].grantedRank || "untrained");
-      }
-      this.actor.update({ [`system.groupSkills.${el.dataset.group}`]: entries });
-    });
-    html.find(".group-skill-cost-input").change(ev => {
-      const el      = ev.currentTarget;
-      const entries = foundry.utils.deepClone(this.actor.system.groupSkills?.[el.dataset.group] ?? []);
-      const idx     = parseInt(el.dataset.index);
-      if (entries[idx]) entries[idx].cost = parseInt(el.value) || 0;
-      this.actor.update({ [`system.groupSkills.${el.dataset.group}`]: entries });
-    });
-    html.find(".group-skill-char-select").change(ev => {
-      const el      = ev.currentTarget;
-      const entries = foundry.utils.deepClone(this.actor.system.groupSkills?.[el.dataset.group] ?? []);
-      const idx     = parseInt(el.dataset.index);
-      if (entries[idx]) entries[idx].char = el.value;
-      this.actor.update({ [`system.groupSkills.${el.dataset.group}`]: entries });
-    });
-
-    // Контекстное меню групповых навыков
-    html.find(".group-skill-entry-row").on("contextmenu", ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      const row      = $(ev.currentTarget);
-      const groupKey = row.data("group");
-      const idx      = parseInt(row.data("index"));
-      openContextMenu(ev, [
-        {
-          cls: "wh-ctx-rename",
-          label: "✏️ Переименовать",
-          onClick: () => {
-            const entries = this.actor.system.groupSkills?.[groupKey] ?? [];
-            const current = entries[idx]?.specialty ?? "";
-            this._showRenameDialog(current).then(newName => {
-              if (!newName || newName === current) return;
-              const updated = foundry.utils.deepClone(this.actor.system.groupSkills?.[groupKey] ?? []);
-              if (updated[idx]) updated[idx].specialty = newName;
-              this.actor.update({ [`system.groupSkills.${groupKey}`]: updated });
-            });
-          }
-        },
-        {
-          cls: "wh-ctx-delete",
-          label: "🗑️ Удалить",
-          onClick: () => {
-            const updated = foundry.utils.deepClone(this.actor.system.groupSkills?.[groupKey] ?? []);
-            updated.splice(idx, 1);
-            this.actor.update({ [`system.groupSkills.${groupKey}`]: updated });
-          }
-        }
-      ]);
-    });
-    html.find(".skills-advance-scroll").on("scroll", () => closeContextMenus());
 
     // ── Снаряжение ────────────────────────────────────────────────────────
     html.find(".add-item-btn").click(() => { this._showAddItemDialog(); });
@@ -2457,65 +2363,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       await rollMutationOrGift(this.actor);
     });
 
-    // ── Склонности персонажа (Развитие) ────────────────────────────────────
-    // Текущий список как массив (защита от случая, когда значение стало объектом)
-    const getAptitudes = () => {
-      const v = this.actor.system.aptitudes;
-      if (Array.isArray(v)) return [...v];
-      if (v && typeof v === "object") return Object.values(v);
-      return [];
-    };
-    html.find(".apt-char-add-btn").click(async ev => {
-      ev.preventDefault();
-      const arr = getAptitudes();
-      // Первая незанятая склонность из списка (чтобы не плодить дубли/пустышки).
-      const used = new Set(arr);
-      const free = Object.keys(APTITUDES).find(k => k !== "general" && !used.has(k)) || "ws";
-      arr.push(free);
-      await this.actor.update({ "system.aptitudes": arr });
-    });
-    html.find(".apt-char-remove").click(async ev => {
-      ev.preventDefault();
-      const idx = parseInt(ev.currentTarget.dataset.index);
-      const arr = getAptitudes();
-      arr.splice(idx, 1);
-      await this.actor.update({ "system.aptitudes": arr });
-    });
-    html.find(".apt-char-select").on("change", async () => {
-      const arr = [];
-      html.find(".apt-char-select").each((_, el) => arr.push(el.value));
-      await this.actor.update({ "system.aptitudes": arr });
-      // Смена склонности → пересчёт цен характеристик, навыков, групповых навыков (стр. 24).
-      const upd = {};
-      for (const [k, c] of Object.entries(this.actor.system.characteristics || {}))
-        if (c?.improvement && c.improvement !== "none")
-          upd[`system.characteristics.${k}.cost`] = charImpCost(k, c.improvement, c.grantedImp || "none");
-      for (const [k, s] of Object.entries(this.actor.system.skills || {}))
-        if (s?.rank && s.rank !== "untrained") upd[`system.skills.${k}.cost`] = skillCumCost(SKILLS_DEF[k], s.rank, null, s.grantedRank || "untrained");
-      for (const [gk, arr2] of Object.entries(this.actor.system.groupSkills || {})) {
-        if (!Array.isArray(arr2) || !arr2.length) continue;
-        const def = GROUP_SKILLS_DEF[gk];
-        const nw = arr2.map(e => ({ ...e, cost: (e?.rank && e.rank !== "untrained") ? skillCumCost(def, e.rank, e.char, e.grantedRank || "untrained") : (e.cost || 0) }));
-        upd[`system.groupSkills.${gk}`] = nw;
-      }
-      if (Object.keys(upd).length) await this.actor.update(upd);
-      // Пересчёт цен купленных талантов-предметов (стартовые с cost 0 не трогаем).
-      const apts = charAptitudeSet(this.actor.system.aptitudes);
-      const defs = { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF };
-      const talUpd = this.actor.items
-        .filter(it => it.type === "talent" && it.system?.purchased)
-        .map(it => {
-          // Mastery / Beyond Human считаем по склонностям привязанной Х-ки/Навыка
-          // (aptSource), а не по записи компендиума (стр. 62).
-          const a = it.system.aptSource
-            ? resolveTalentAptitudes(it.name, it.system.aptitudes || [], it.system.aptSource, defs)
-            : (it.system.aptitudes || []);
-          return { _id: it.id, "system.cost": talentCostXP(it.system.tier, a, apts,
-          this._talentCat(it.name)) };
-        });
-      if (talUpd.length) await this.actor.updateEmbeddedDocuments("Item", talUpd);
-    });
-
     // ── Стремления (стр. 22) — 3 ЖЁСТКИХ слота: [0]=Гордыня,[1]=Позор,[2]=Мотивация ──
     // Позиция в массиве = категория, слоты всегда 3 (не добавляются/не удаляются
     // как раньше — только очищаются "✕" или переключаются на "Своё").
@@ -2546,49 +2393,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       if (ev.currentTarget.classList.contains("aspir-custom-name")) arr[i].name = ev.currentTarget.value;
       else arr[i].mods = ev.currentTarget.value;
       await this.actor.update({ "system.aspirations": arr });
-    });
-
-    // ── Таланты в Развитии (название + цена) ─────────────────────────────────
-    const getAdvTalents = () => {
-      const v = this.actor.system.advanceTalents;
-      if (Array.isArray(v)) return foundry.utils.deepClone(v);
-      if (v && typeof v === "object") return Object.values(v);
-      return [];
-    };
-    html.find(".advtal-add-btn").click(async ev => {
-      ev.preventDefault();
-      const arr = getAdvTalents();
-      arr.push({ name: "", cost: 0 });
-      await this.actor.update({ "system.advanceTalents": arr });
-    });
-    html.find(".advtal-remove").click(async ev => {
-      ev.preventDefault();
-      const idx = parseInt(ev.currentTarget.dataset.index);
-      const arr = getAdvTalents();
-      arr.splice(idx, 1);
-      await this.actor.update({ "system.advanceTalents": arr });
-    });
-    // Удаление КУПЛЕННОГО таланта-предмета прямо из «Развития» (возврат опыта
-    // происходит сам: actor.mjs суммирует system.cost предметов-талантов).
-    html.find(".advtal-item-remove").click(async ev => {
-      ev.preventDefault();
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (!item) return;
-      const ok = await Dialog.confirm({
-        title: "Удалить талант",
-        content: `<p>Удалить <b>${item.name}</b> с листа? Потраченный опыт (${parseInt(item.system?.cost) || 0}) вернётся.</p>`
-      });
-      if (ok) await item.delete();
-    });
-    html.find(".advtal-input").on("change", async () => {
-      const arr = [];
-      html.find(".advtal-input").each((_, el) => {
-        const i = parseInt(el.dataset.index);
-        if (!arr[i]) arr[i] = { name: "", cost: 0 };
-        if (el.dataset.field === "cost") arr[i].cost = parseInt(el.value) || 0;
-        else                             arr[i].name = el.value;
-      });
-      await this.actor.update({ "system.advanceTalents": arr });
     });
 
     // ── Пути Аэльдари ───────────────────────────────────────────────────────
@@ -3461,55 +3265,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   }
 
   // ── Диалоги броска ────────────────────────────────────────────────────────
-
-  _showRenameDialog(currentName) {
-    return new Promise(resolve => {
-      let resolved = false;
-      const d = new Dialog({
-        title: "Переименовать специализацию",
-        content: `<form style="padding:8px 4px;">
-          <input type="text" id="rename-input" value="${currentName}"
-            style="width:100%;padding:4px 6px;background:var(--wh-input-bg,#ccc8bc);
-                   border:1px solid var(--wh-border,#7a5c2e);font-family:inherit;
-                   font-size:1em;box-sizing:border-box;" autocomplete="off"/>
-        </form>`,
-        buttons: {
-          ok: {
-            icon: '<i class="fas fa-check"></i>', label: "Сохранить",
-            callback: html => {
-              if (!resolved) {
-                resolved = true;
-                resolve(html.find("#rename-input").val().trim() || null);
-              }
-            }
-          },
-          cancel: {
-            icon: '<i class="fas fa-times"></i>', label: "Отмена",
-            callback: () => { if (!resolved) { resolved = true; resolve(null); } }
-          }
-        },
-        default: "ok",
-        render: html => {
-          setTimeout(() => {
-            const inp = html.find("#rename-input")[0];
-            if (inp) { inp.focus(); inp.select(); }
-          }, 50);
-          html.find("#rename-input").on("keydown", ev => {
-            if (ev.key === "Enter") {
-              ev.preventDefault();
-              if (!resolved) {
-                resolved = true;
-                const val = html.find("#rename-input").val().trim();
-                d.close(); resolve(val || null);
-              }
-            }
-          });
-        },
-        close: () => { if (!resolved) { resolved = true; resolve(null); } }
-      }, { classes: ["dialog","wh-rename-dialog"], width: 360 });
-      d.render(true);
-    });
-  }
 
   async _addGroupSkill(groupKey) {
     const def = GROUP_SKILLS_DEF[groupKey];

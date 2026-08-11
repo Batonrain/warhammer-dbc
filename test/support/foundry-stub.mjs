@@ -18,7 +18,8 @@
  * `dice` — очередь значений кубов для честного разбора формул (см. Roll ниже).
  * Пока она null, бросок ведёт себя по-старому: любая формула даёт `nextRoll`.
  */
-export const captured = { dialog: null, rolls: [], chat: [], created: [], nextRoll: 50, dice: null };
+export const captured = { dialog: null, rolls: [], chat: [], created: [], nextRoll: 50, dice: null,
+  confirmAnswer: true };
 
 export function resetCaptured() {
   captured.dialog = null;
@@ -27,6 +28,7 @@ export function resetCaptured() {
   captured.created = [];
   captured.nextRoll = 50;
   captured.dice = null;
+  captured.confirmAnswer = true;
 }
 
 class ApplicationStub {
@@ -151,6 +153,8 @@ globalThis.ui     = { notifications: { warn: () => {}, info: () => {}, error: ()
 globalThis.Dialog = class {
   constructor(config) { captured.dialog = config; }
   render() {}
+  /** «Да/Нет»: ответ задаёт тест через captured.confirmAnswer. */
+  static async confirm(config) { captured.dialog = config; return captured.confirmAnswer; }
 };
 
 /**
