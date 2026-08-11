@@ -2225,28 +2225,7 @@
       "penetration": 0,
       "effect": ""
     },
-    "trait": {
-      "description": "",
-      "notes": "",
-      "benefit": "",
-      "source": "",
-      "bookSource": "",
-      "hasRating": false,
-      "rating": 0,
-      "hasRating2": false,
-      "rating2": 0,
-      "effects": {
-        "charBonusStat": "",
-        "charBonusValue": 0,
-        "charBonuses": [],
-        "charValueBonuses": [],
-        "armourAll": 0,
-        "fearRating": 0,
-        "sizeMod": 0,
-        "initMod": 0,
-        "speedMod": 0
-      }
-    },
+    "trait": {},
     "implant": {
       "description": "",
       "notes": "",
@@ -2389,15 +2368,7 @@
         "charValueBonuses": []
       }
     },
-    "weaponProperty": {
-      "description": "",
-      "reminder": "",
-      "category": "both",
-      "hasRating": false,
-      "hasRating2": false,
-      "autoKey": "",
-      "bookSource": ""
-    },
+    "weaponProperty": {},
     "armourHistoryEntry": {
       "table": "",
       "rollMin": 0,
@@ -2410,14 +2381,7 @@
       "zoneRoll": false,
       "bookSource": ""
     },
-    "aspiration": {
-      "key": "",
-      "table": "pride",
-      "n": 0,
-      "mods": "",
-      "description": "",
-      "bookSource": ""
-    },
+    "aspiration": {},
     "archetype": {
       "key": "",
       "race": "",
