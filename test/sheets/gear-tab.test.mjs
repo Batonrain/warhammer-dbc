@@ -1,0 +1,143 @@
+import { describe, it, expect, beforeEach } from "vitest";
+import { resetCaptured } from "../support/foundry-stub.mjs";
+import {
+  activateGearListeners,
+  equipItem,
+  setShieldHand,
+  setWeaponLoadedAmmo,
+  toggleShieldRaised
+} from "../../module/sheets/tabs/gear.mjs";
+
+function item({ id = "item-1", name = "Предмет", system = {}, raised = false } = {}) {
+  const flags = { shieldRaised: raised };
+  const it = {
+    id,
+    name,
+    system,
+    updates: [],
+    embeddedUpdates: [],
+    flags,
+    effects: { contents: [] },
+    sheet: { rendered: 0, render: () => { it.sheet.rendered += 1; } },
+    update: async data => {
+      it.updates.push(data);
+      return data;
+    },
+    updateEmbeddedDocuments: async (type, docs) => {
+      it.embeddedUpdates.push({ type, docs });
+      return docs;
+    },
+    getFlag: (_scope, key) => flags[key],
+    setFlag: async (_scope, key, value) => {
+      flags[key] = value;
+      return value;
+    }
+  };
+  return it;
+}
+
+function actor(items = []) {
+  const list = [...items];
+  list.get = id => list.find(i => i.id === id) ?? null;
+  return { id: "actor-1", name: "Воин", items: list };
+}
+
+function event({ itemId = "item-1", checked = false, value = "", hand = "left" } = {}) {
+  return {
+    preventDefault: () => {},
+    stopPropagation: () => {},
+    target: { closest: () => null },
+    currentTarget: {
+      checked,
+      value,
+      dataset: { itemId, hand }
+    }
+  };
+}
+
+beforeEach(resetCaptured);
+
+describe("gear tab helpers", () => {
+  it("equipItem обновляет equipped и синхронизирует ActiveEffect", async () => {
+    const weapon = item({ system: { equipped: false } });
+    weapon.effects.contents = [{ id: "fx-1", disabled: true }];
+
+    await equipItem(weapon, true);
+
+    expect(weapon.updates[0]).toEqual({ "system.equipped": true });
+    expect(weapon.embeddedUpdates[0]).toEqual({
+      type: "ActiveEffect",
+      docs: [{ _id: "fx-1", disabled: false }]
+    });
+  });
+
+  it("setShieldHand записывает руку щита", async () => {
+    const shield = item();
+
+    await setShieldHand(shield, "right");
+
+    expect(shield.flags.shieldHand).toBe("right");
+  });
+
+  it("toggleShieldRaised переключает поднятый щит", async () => {
+    const shield = item({ name: "Ростовой щит", raised: false });
+
+    await toggleShieldRaised(shield);
+    await toggleShieldRaised(shield);
+
+    expect(shield.flags.shieldRaised).toBe(false);
+  });
+
+  it("setWeaponLoadedAmmo записывает выбранный боеприпас", async () => {
+    const weapon = item();
+
+    await setWeaponLoadedAmmo(weapon, "ammo-1");
+
+    expect(weapon.updates[0]).toEqual({ "system.loadedAmmoId": "ammo-1" });
+  });
+});
+
+describe("gear tab listeners", () => {
+  it("activateGearListeners привязывает обработчики с actor-only API", async () => {
+    const handlers = {};
+    const html = {
+      find: selector => ({
+        change: fn => { handlers[`${selector}:change`] = fn; },
+        click: fn => { handlers[`${selector}:click`] = fn; },
+        on: (eventName, fn) => { handlers[`${selector}:${eventName}`] = fn; }
+      })
+    };
+    const weapon = item({ id: "weapon-1" });
+    const armor = item({ id: "armor-1" });
+    const shield = item({ id: "shield-1" });
+    const a = actor([weapon, armor, shield]);
+    const calls = [];
+
+    activateGearListeners(html, a, {
+      reloadWeapon: (...args) => calls.push(["reload", ...args]),
+      toggleShield: (...args) => calls.push(["toggle", ...args]),
+      rollShieldActivation: (...args) => calls.push(["roll", ...args]),
+      repairShield: (...args) => calls.push(["repair", ...args])
+    });
+
+    await handlers[".weapon-equip-cb:change"](event({ itemId: "weapon-1", checked: true }));
+    await handlers[".armor-equip-cb:change"](event({ itemId: "armor-1", checked: true }));
+    await handlers[".shield-hand-btn:click"](event({ itemId: "shield-1", hand: "right" }));
+    await handlers[".shield-raise-btn:click"](event({ itemId: "shield-1" }));
+    await handlers[".weapon-ammo-select:change"](event({ itemId: "weapon-1", value: "ammo-2" }));
+    await handlers[".weapon-reload-btn:click"](event({ itemId: "weapon-1" }));
+    await handlers[".shield-toggle-btn:click"](event({ itemId: "shield-1" }));
+    await handlers[".shield-roll-btn:click"](event({ itemId: "shield-1" }));
+    await handlers[".shield-repair-btn:click"](event({ itemId: "shield-1" }));
+    handlers[".shield-row:dblclick"](event({ itemId: "shield-1" }));
+
+    expect(weapon.updates).toContainEqual({ "system.equipped": true });
+    expect(weapon.updates).toContainEqual({ "system.loadedAmmoId": "ammo-2" });
+    expect(armor.updates[0]).toEqual({ "system.equipped": true });
+    expect(shield.flags.shieldHand).toBe("right");
+    expect(shield.flags.shieldRaised).toBe(true);
+    expect(shield.sheet.rendered).toBe(1);
+    expect(calls.map(c => c[0])).toEqual(["reload", "toggle", "roll", "repair"]);
+    expect(calls.every(c => c[1] === a)).toBe(true);
+  });
+});

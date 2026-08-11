@@ -40,12 +40,11 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          resolvePsyCastAttr, rollPsyWpTest, rollPsyniscience, showManifestDialog,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
+import { activateGearListeners } from "./tabs/gear.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { qualityEffects }                   from "../constants/quality.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { _performDodge, _performParry }    from "../combat/defense.mjs";
-import { _reloadWeapon, _getCompatibleAmmo,
-         _showAmmoSelectDialog }           from "../combat/reload.mjs";
 import { _showContestDialog }              from "../combat/techniques.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { openSurgeon }                       from "../apps/surgeon.mjs";
@@ -57,9 +56,6 @@ import { RACES, SUBRACES, SUBRACE_DATA,
 import { getLegion, getChapter, buildLegionOptions, buildChapterOptions, buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
 import { archetypeEntries, archetypesForRace, archetypeSheetContext, applyArchetype } from "../apps/archetypes.mjs";
 import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
-import { _toggleShield,
-         _rollShieldActivation,
-         _repairShield }                   from "../combat/shield.mjs";
 import { WarhammerItemSheet } from "./item-sheet.mjs";
 import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../constants/possession.mjs";
@@ -2701,19 +2697,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts)
     });
 
-    html.find(".weapon-equip-cb").change(async ev => {
-      const itemId   = ev.currentTarget.dataset.itemId;
-      const equipped = ev.currentTarget.checked;
-      const item     = this.actor.items.get(itemId);
-      if (item) { await item.update({ "system.equipped": equipped }); await syncItemEffectsDisabled(item, equipped); }
-    });
-
-    html.find(".armor-equip-cb").change(async ev => {
-      const itemId   = ev.currentTarget.dataset.itemId;
-      const equipped = ev.currentTarget.checked;
-      const item     = this.actor.items.get(itemId);
-      if (item) { await item.update({ "system.equipped": equipped }); await syncItemEffectsDisabled(item, equipped); }
-    });
+    activateGearListeners(html, this.actor);
 
     html.find(".weapon-attack-roll").click(ev => {
       const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
@@ -2728,38 +2712,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       } else {
         this._showAttackDialog(item);
       }
-    });
-
-    // ── Ручные щиты (стр. 215) ───────────────────────────────────────────
-    // Рука определяет, какая «Р1» в зонах защиты; «поднять щит» включает зоны,
-    // указанные в скобках (они прикрываются лишь осознанным движением).
-    html.find(".shield-hand-btn").click(async ev => {
-      ev.preventDefault();
-      const el = ev.currentTarget;
-      const item = this.actor.items.get(el.dataset.itemId);
-      if (item) await item.setFlag("warhammer-dbc", "shieldHand", el.dataset.hand);
-    });
-    html.find(".shield-raise-btn").click(async ev => {
-      ev.preventDefault();
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (!item) return;
-      const on = !item.getFlag("warhammer-dbc", "shieldRaised");
-      await item.setFlag("warhammer-dbc", "shieldRaised", on);
-      ui.notifications.info(on
-        ? `${item.name}: щит поднят — прикрыты дополнительные зоны.`
-        : `${item.name}: щит опущен.`);
-    });
-
-    html.find(".weapon-reload-btn").click(async ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) await _reloadWeapon(this.actor, item);
-    });
-
-    html.find(".weapon-ammo-select").change(async ev => {
-      const itemId = ev.currentTarget.dataset.itemId;
-      const ammoId = ev.currentTarget.value;
-      const item   = this.actor.items.get(itemId);
-      if (item) await item.update({ "system.loadedAmmoId": ammoId });
     });
 
     // ── Контекстное меню предметов ────────────────────────────────────────
@@ -2789,38 +2741,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
         ev2.stopPropagation(); menu.remove(); $(document).off("click.wh-ctx");
         item.delete();
       });
-    });
-
-    html.find(".shield-row").on("dblclick", ev => {
-      if ($(ev.target).closest("button").length) return;
-      const itemId = $(ev.currentTarget).data("item-id");
-      const item   = this.actor.items.get(itemId);
-      if (item) item.sheet.render(true);
-    });
-
-    html.find(".shield-toggle-btn, .shield-roll-btn, .shield-repair-btn").on("contextmenu", ev => {
-      ev.stopPropagation();
-    });
-
-    html.find(".shield-toggle-btn").on("click", async ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      const itemId = ev.currentTarget.dataset.itemId;
-      const item   = this.actor.items.get(itemId);
-      if (item) await _toggleShield(this.actor, item);
-    });
-
-    html.find(".shield-roll-btn").on("click", async ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      const itemId = ev.currentTarget.dataset.itemId;
-      const item   = this.actor.items.get(itemId);
-      if (item) await _rollShieldActivation(this.actor, item);
-    });
-
-    html.find(".shield-repair-btn").on("click", async ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      const itemId = ev.currentTarget.dataset.itemId;
-      const item   = this.actor.items.get(itemId);
-      if (item) await _repairShield(this.actor, item);
     });
 
     // ── Препараты ─────────────────────────────────────────────────────────────
