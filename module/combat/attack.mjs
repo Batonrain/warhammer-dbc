@@ -8,6 +8,7 @@ import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
          buildTargetEffectButtons }                 from "./weapon-properties.mjs";
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice } from "./attack-outcome.mjs";
+import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
 import { qualityEffects, buildQualityChatBlock }    from "../constants/quality.mjs";
 import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../constants/drukhari-splinter.mjs";
@@ -16,14 +17,13 @@ import { vehicleHitLocation }                        from "../constants/vehicle.
 export async function _executeAttackRoll(actor, item, charKey, threshold, rofMode, aimTarget, opts = {}) {
   const sys     = item.system;
   const isMelee = sys.weaponClass === "melee" || sys.weaponClass === "thrown";
-  // Выбранный профиль атаки (стр. 207-221): переопределяет урон/тип/пробитие.
+  // Выбранный профиль атаки (стр. 207-221) и хват (стр. 39) переопределяют урон.
   const P = opts.profile || null;
-  let   effDamage   = (P && P.damage)      ? P.damage      : sys.damage;
-  const effDmgType  = (P && P.damageType)  ? P.damageType  : sys.damageType;
-  const effPen0     = P ? (Number(P.penetration) || 0) : (Number(sys.penetration) || 0);
-  // Плоский мод урона от хвата (стр. 39): 2р как вторичный +3, Кулачный −2 и т.п.
   const gripDmgFlat = Number(opts.gripDmgFlat) || 0;
-  if (gripDmgFlat && effDamage) effDamage = `${effDamage}${gripDmgFlat > 0 ? "+" : ""}${gripDmgFlat}`;
+  const eff = effectiveDamage({ sys, profile: P, gripDmgFlat });
+  let   effDamage  = eff.damage;
+  const effDmgType = eff.damageType;
+  const effPen0    = eff.penetration;
 
   // ── Особые свойства оружия (+ от установленных модификаций) ───────────────
   //   Если выбран доп. профиль со своими свойствами (Крюк/Посох) — берём их
@@ -34,72 +34,21 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const _propSource = (P && Array.isArray(P.weaponProps) && P.weaponProps.length)
     ? { system: { weaponProps: P.weaponProps } }
     : item;
-  const _mergedEntries = mergeWeaponPropEntries(_propSource, modFx);
-  // Хват может добавлять свойства (Бл → Precise, Хв → Cheap Shot; стр. 39)
-  for (const gk of (opts.gripProps || [])) {
-    if (!_mergedEntries.some(x => x.key === gk)) _mergedEntries.push({ key: gk, rating: 0, rating2: 0 });
-  }
-  // Свойства от боеприпаса (стр. 203): постоянные (Шип → Crippling, Токс →
-  // Toxic, Инферно → Flame) плюс ОТМЕЧЕННЫЕ игроком условные (Razor Sharp у
-  // Свистка против одушевлённых, Sanctified у Фароса против псайкеров).
-  const _ammoAll = [...(loadedAmmo?.system?.properties || []),
-                    ...((opts.ammoCondProps || []).map(k => ({ key: k, rating: 0, rating2: 0 })))];
-  for (const p of _ammoAll) {
-    const key = typeof p === "string" ? p : p.key;
-    if (!key) continue;
-    const rating  = (typeof p === "string" ? 0 : (p.rating  || 0));
-    const rating2 = (typeof p === "string" ? 0 : (p.rating2 || 0));
-    const ex = _mergedEntries.find(x => x.key === key);
-    if (ex) {   // уже есть у оружия — берём больший рейтинг
-      if (typeof ex.rating !== "string" && typeof rating !== "string")
-        ex.rating = Math.max(ex.rating || 0, rating);
-      if (typeof ex.rating2 !== "string" && typeof rating2 !== "string")
-        ex.rating2 = Math.max(ex.rating2 || 0, rating2);
-    } else _mergedEntries.push({ key, rating, rating2 });
-  }
-  // Свойства, появляющиеся только в двуручном хвате (стр. 211, 220):
-  // Силовая Булава и Кистень, оба Крозиуса — «в 2р Хвате получает Concussive (0)».
-  if (String(opts.gripKey || "") === "2р") {
-    for (const g of (sys.gripProps2h || [])) {
-      const e = (typeof g === "string") ? { key: g, rating: 0, rating2: 0 } : { rating: 0, rating2: 0, ...g };
-      if (e.key && !_mergedEntries.some(x => x.key === e.key)) _mergedEntries.push(e);
-    }
-  }
+  let _mergedEntries = mergeExtraProps(mergeWeaponPropEntries(_propSource, modFx), {
+    gripProps:   opts.gripProps || [],
+    gripKey:     opts.gripKey,
+    gripProps2h: sys.gripProps2h || [],
+    ammoProps:   loadedAmmo?.system?.properties || [],
+    condProps:   opts.ammoCondProps || []
+  });
 
   // ── Выключенное оружие (стр. 209-211) ────────────────────────────────────
-  // Цепное теряет 2 урона, 1 пробитие и Рвущее; шоковое считается примитивным
-  // с −2 урона; силовое работает как свой примитивный аналог (offProfile).
-  // Сюда же попадает подавление полем Haywire — правило то же самое.
-  const wType     = sys.weaponType || "";
-  const canOff    = ["chain", "shock", "power"].includes(wType);
-  const weaponOff = canOff && !!opts.weaponOff;
-  let offDmgMod = 0, offPenMod = 0, offNote = "";
-  if (weaponOff) {
-    const drop = { chain: ["tearing"], shock: ["shocking"], power: ["powerField"] }[wType] || [];
-    for (const k of drop) {
-      const i = _mergedEntries.findIndex(x => x.key === k);
-      if (i >= 0) _mergedEntries.splice(i, 1);
-    }
-    if (wType !== "chain" && !_mergedEntries.some(x => x.key === "primitive"))
-      _mergedEntries.push({ key: "primitive", rating: 0, rating2: 0 });
-    if (wType === "chain") {
-      offDmgMod = -2; offPenMod = -1;
-      offNote = "Оружие выключено: −2 урона, −1 Пробитие, без Рвущего.";
-    } else if (wType === "shock") {
-      offDmgMod = -2;
-      offNote = "Оружие выключено: считается соответствующим примитивным, −2 урона.";
-    } else {
-      const op = sys.offProfile;
-      if (op?.damage) {
-        effDamage = op.damage;
-        if (gripDmgFlat) effDamage = `${effDamage}${gripDmgFlat > 0 ? "+" : ""}${gripDmgFlat}`;
-        offPenMod = (Number(op.penetration) || 0) - effPen0;
-        offNote = `Оружие выключено: работает как «${op.name}» (${op.damage}, Проб. ${Number(op.penetration) || 0}).`;
-      } else {
-        offNote = "Оружие выключено: работает как соответствующее примитивное оружие.";
-      }
-    }
-  }
+  const off = weaponOffEffects({
+    sys, entries: _mergedEntries, on: !!opts.weaponOff, basePen: effPen0, gripDmgFlat
+  });
+  _mergedEntries = off.entries;
+  const offDmgMod = off.dmgMod, offPenMod = off.penMod, offNote = off.note;
+  if (off.damage) effDamage = off.damage;
 
   // Осколочное оружие: длинная очередь рвёт плоть — добавляем Tearing к этому
   // выстрелу до сборки свойств, чтобы он попал и в формулу урона, и в карточку.
