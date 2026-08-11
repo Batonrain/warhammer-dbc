@@ -7,7 +7,7 @@
     "description": "",
     "notes": "",
     "benefit": "Персонаж получает +10 на Command, Commerce, Deceive и Intimidate против целей слабее его в данной ситуации, но −10 на Charm и Logic против них же.",
-    "bookSource": "",
+    "bookSource": "DoomBC — Основная книга",
     "tier": "2",
     "requirement": "S 35, W 35",
     "aptitudes": [

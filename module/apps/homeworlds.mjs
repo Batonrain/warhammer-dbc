@@ -1,6 +1,6 @@
 // module/apps/homeworlds.mjs
 // ════════════════════════════════════════════════════════════════════════
-//  Родные миры: библиотека-компендиум, выбор Происхождения и применение.
+//  Родные миры: выбор Происхождения и применение.
 //
 //  Выбор мира кладёт на актора предмет-мир (он несёт модификаторы
 //  Характеристик), Черту-Особенность и всё, что мир выдаёт: навыки, таланты,
@@ -26,28 +26,6 @@ registerPackCache(PACK, TAG);
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
-// ── Библиотека для компендиума ───────────────────────────────────────────
-
-/** Предметы-миры для компендиума «Родные миры». */
-export function homeworldLibrary() {
-  return HOMEWORLDS.map(hw => ({
-    name: hw.label,
-    type: "homeworld",
-    img: "icons/svg/city.svg",
-    system: {
-      key: hw.key,
-      description: hw.feature.desc,
-      source: HOMEWORLD_SOURCE,
-      bookSource: HOMEWORLD_SOURCE,
-      featureName: hw.feature.name,
-      featureDesc: hw.feature.desc,
-      charModLabel: charModLabel(hw.chars) + (hw.charChoice ? " + выбор" : ""),
-      choices: {}, friendlySpecs: []
-    },
-    flags: { [FLAG]: { mechanics: charBonusesToMechanics(Object.entries(hw.chars || {}).map(([stat, value]) => ({ stat, value }))) } }
-  }));
-}
 
 // ── Чтение состояния актора ──────────────────────────────────────────────
 
@@ -440,48 +418,3 @@ async function postSummary(actor, hw, { charBonuses, grants, chosenLabels, corru
   }, { rollMode: game.settings.get("core", "rollMode") }));
 }
 
-// ── Наполнение компендиума ───────────────────────────────────────────────
-
-/** Неразрушающе добавляет недостающие записи в компендиум «Родные миры». */
-export async function fillHomeworldPack() {
-  const pack = game.packs.get(PACK);
-  if (!pack) { console.warn("Warhammer DBC | Компендиум 'homeworlds' не найден."); return; }
-  if (pack.locked) await pack.configure({ locked: false });
-  try {
-    const lib      = homeworldLibrary();
-    const index    = await pack.getIndex();
-    const existing = new Set(index.map(e => e.name));
-    const toAdd = lib.filter(d => !existing.has(d.name));
-    if (toAdd.length) {
-      await Item.createDocuments(toAdd, { pack: pack.collection });
-      console.log(`Warhammer DBC | Родные миры: добавлено ${toAdd.length} записей.`);
-    }
-    // Разовый backfill system.bookSource и flags.mechanics на уже созданных
-    // записях (оба появились позже библиотеки: bookSource как поле, а
-    // mechanics — как замена легаси system.effects.charValueBonuses при
-    // миграции Task #7, см. заголовок файла) — без этого старые каталожные
-    // записи остались бы без книги-источника/новой Механики до пересоздания.
-    const libByName = new Map(lib.map(d => [d.name, d]));
-    const docs = await pack.getDocuments();
-    const updates = [];
-    for (const doc of docs) {
-      const d = libByName.get(doc.name);
-      if (!d) continue;
-      const upd = { _id: doc.id };
-      let dirty = false;
-      if ((doc.system?.bookSource || "") !== (d.system.bookSource || "")) {
-        upd["system.bookSource"] = d.system.bookSource; dirty = true;
-      }
-      if (d.flags?.[FLAG]?.mechanics && !doc.getFlag(FLAG, "mechanics")) {
-        upd[`flags.${FLAG}.mechanics`] = d.flags[FLAG].mechanics; dirty = true;
-      }
-      if (dirty) updates.push(upd);
-    }
-    if (updates.length) {
-      await Item.updateDocuments(updates, { pack: pack.collection });
-      console.log(`Warhammer DBC | Родные миры: обновлено ${updates.length} записей (bookSource/mechanics).`);
-    }
-  } catch (e) {
-    console.error("Warhammer DBC | Не удалось заполнить библиотеку родных миров:", e);
-  }
-}

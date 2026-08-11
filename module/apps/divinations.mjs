@@ -1,13 +1,13 @@
 // module/apps/divinations.mjs
 // ════════════════════════════════════════════════════════════════════════
-//  Предсказания: библиотека-компендиум, выбор в шапке и применение.
+//  Предсказания: выбор в шапке и применение.
 //
 //  Дропдаун читает компендиум, а не константы — значит, ГМ может завести
 //  своё предсказание прямо в библиотеке, и оно появится в списке.
 // ════════════════════════════════════════════════════════════════════════
 
 import { DIVINATIONS, DIVINATION_BY_KEY, DIVINATION_SOURCE,
-         rollLabel, charModLabel, divinationByRoll, hasChoices } from "../constants/divinations.mjs";
+         rollLabel, divinationByRoll, hasChoices } from "../constants/divinations.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { promptGrantChoices, applyGrants, clearGrantedBy,
          registerPackCache, packEntries, charBonusesToMechanics } from "./origin-shared.mjs";
@@ -15,24 +15,6 @@ import { promptGrantChoices, applyGrants, clearGrantedBy,
 const PACK = "warhammer-dbc.divinations";
 const FLAG = "warhammer-dbc";
 export const DIVINATION_TAG = "divination";
-
-// ── Библиотека ───────────────────────────────────────────────────────────
-
-/** Предметы-предсказания для компендиума. */
-export function divinationLibrary() {
-  return DIVINATIONS.map(d => ({
-    name: d.text,
-    type: "divination",
-    img: "icons/svg/eye.svg",
-    system: {
-      key: d.key, roll: rollLabel(d), rollMin: d.min, rollMax: d.max,
-      text: d.text, effect: d.effect, source: DIVINATION_SOURCE, bookSource: DIVINATION_SOURCE,
-      charModLabel: charModLabel(d.chars) + (d.charChoices?.length ? " + выбор" : ""),
-      choices: {}
-    },
-    flags: { [FLAG]: { mechanics: charBonusesToMechanics(Object.entries(d.chars || {}).map(([stat, value]) => ({ stat, value }))) } }
-  }));
-}
 
 /** Кэш компендиума: список для дропдауна с учётом рукописных записей ГМа. */
 registerPackCache(PACK, DIVINATION_TAG);
@@ -182,47 +164,4 @@ async function postSummary(actor, def, { charBonuses, chosen, summary, extra, ro
     </div>`,
     rolls: rolled ? [rolled] : []
   }, { rollMode: game.settings.get("core", "rollMode") }));
-}
-
-// ── Наполнение компендиума ───────────────────────────────────────────────
-
-export async function fillDivinationPack() {
-  const pack = game.packs.get(PACK);
-  if (!pack) { console.warn("Warhammer DBC | Компендиум 'divinations' не найден."); return; }
-  if (pack.locked) await pack.configure({ locked: false });
-  try {
-    const lib      = divinationLibrary();
-    const index    = await pack.getIndex();
-    const existing = new Set(index.map(e => e.name));
-    const toAdd = lib.filter(d => !existing.has(d.name));
-    if (toAdd.length) {
-      await Item.createDocuments(toAdd, { pack: pack.collection });
-      console.log(`Warhammer DBC | Предсказания: добавлено ${toAdd.length} записей.`);
-    }
-    // Разовый backfill system.bookSource и flags.mechanics на уже созданных
-    // записях (bookSource — поле появилось позже библиотеки; mechanics —
-    // замена легаси system.effects.charValueBonuses, см. homeworlds.mjs).
-    const libByName = new Map(lib.map(d => [d.name, d]));
-    const docs = await pack.getDocuments();
-    const updates = [];
-    for (const doc of docs) {
-      const d = libByName.get(doc.name);
-      if (!d) continue;
-      const upd = { _id: doc.id };
-      let dirty = false;
-      if ((doc.system?.bookSource || "") !== (d.system.bookSource || "")) {
-        upd["system.bookSource"] = d.system.bookSource; dirty = true;
-      }
-      if (d.flags?.[FLAG]?.mechanics && !doc.getFlag(FLAG, "mechanics")) {
-        upd[`flags.${FLAG}.mechanics`] = d.flags[FLAG].mechanics; dirty = true;
-      }
-      if (dirty) updates.push(upd);
-    }
-    if (updates.length) {
-      await Item.updateDocuments(updates, { pack: pack.collection });
-      console.log(`Warhammer DBC | Предсказания: обновлено ${updates.length} записей (bookSource/mechanics).`);
-    }
-  } catch (e) {
-    console.error("Warhammer DBC | Не удалось заполнить библиотеку предсказаний:", e);
-  }
 }

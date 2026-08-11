@@ -302,9 +302,8 @@ export const TRAIT_LIBRARY = [
 ];
 
 /**
- * Черты Книги Пустоты, требующие своей папки в компендиуме — заполняются
- * через _fillModLibrary (см. warhammer-dbc.mjs), т.к. TRAIT_LIBRARY выше
- * льётся простым createDocuments без резолва folder-строки в реальный ID.
+ * Черты Книги Пустоты. Своя папка в компендиуме задаётся полем folder;
+ * содержимое пака живёт в packs-src/traits/ (этап 4 плана).
  */
 export const VOID_TRAIT_LIBRARY = [
   {
@@ -322,8 +321,8 @@ export const VOID_TRAIT_LIBRARY = [
 
 /**
  * Особые расовые Черты субрас Зверолюдов (Кхорнгор/Слаангор/Тзаангор/Пестигор).
- * Кладутся во вложенную папку «Трейты рас → Зверолюды» отдельным билдером
- * (см. warhammer-dbc.mjs). folder/folderParent поддерживает _fillModLibrary.
+ * Лежат во вложенной папке «Трейты рас → Зверолюды»: путь задают поля
+ * folderParent и folder, само содержимое пака — в packs-src/traits/.
  */
 const RT = (name, god, req, desc) => ({
   name, type: "trait", img: IMG,
