@@ -5,8 +5,59 @@
 
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
-import { _degWord } from "../../helpers/utils.mjs";
+import { _degWord, resolveCharFormula } from "../../helpers/utils.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
+import { computeWoundHealing, computeWoundDamage } from "./wounds.mjs";
+
+/**
+ * Применяет «доп.» (мульти-) эффекты блока к цели: снятие Обескровливания,
+ * лечение по формуле, доп. Усталость, непоглощаемый урон в Раны.
+ */
+export async function applyEffectExtras(target, fx) {
+  const updates = {};
+  const lines = [];
+  const rolls = [];
+  if (!fx) return { updates, lines, rolls };
+  const chars = target.system.characteristics;
+
+  if (fx.removesHaemorrhagingLevels > 0) {
+    const cur = target.system.conditions?.haemorrhagingLevel || 0;
+    const nv = Math.max(0, cur - fx.removesHaemorrhagingLevels);
+    updates["system.conditions.haemorrhagingLevel"] = nv;
+    updates["system.conditions.haemorrhaging"] = nv > 0;
+    lines.push(`${rollIcon("blood","#ff6b6b")}Снято ур. Обескровливания: <b>${fx.removesHaemorrhagingLevels}</b>`);
+  }
+
+  if (fx.healFormula) {
+    try {
+      const r = await new Roll(resolveCharFormula(fx.healFormula, chars)).evaluate();
+      rolls.push(r);
+      Object.assign(updates, computeWoundHealing(target.system, r.total));
+      lines.push(`${rollIcon("heart","#ff8a8a")}Лечение: <b>${fx.healFormula}</b> = <b>${r.total}</b>`);
+    } catch(e) {
+      console.error("healFormula:", e);
+    }
+  }
+
+  if (fx.grantsFatigue > 0) {
+    const fatVal = target.system.fatigue?.value ?? 0;
+    updates["system.fatigue.value"] = fatVal + fx.grantsFatigue;
+    lines.push(`${rollIcon("warn","#ffb84d")}Усталость +<b>${fx.grantsFatigue}</b>`);
+  }
+
+  if (fx.woundDamage) {
+    try {
+      const r = await new Roll(resolveCharFormula(fx.woundDamage, chars)).evaluate();
+      rolls.push(r);
+      Object.assign(updates, computeWoundDamage(target.system, r.total));
+      lines.push(`${rollIcon("burst","#ff6b6b")}Непоглощаемый урон в Раны: <b>${fx.woundDamage}</b> = <b style="color:#8b0000;">${r.total}</b>`);
+    } catch(e) {
+      console.error("woundDamage:", e);
+    }
+  }
+
+  return { updates, lines, rolls };
+}
 
 export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0) {
   const charTotal = actor.system.characteristics[charKey]?.total ?? 0;

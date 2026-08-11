@@ -4,10 +4,10 @@
 //  пользуется Орда; поэтому расчёт и диалог принимают актора, а не лист.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { CHARACTERISTICS, APTITUDES, CHAR_APTITUDES } from "../constants/characteristics.mjs";
+import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { talentCostXP, aptitudeCat, charAptitudeSet, ALIGN_LABEL,
-         raceAllyTalent, dynamicAptKind,
+         raceAllyTalent, dynamicAptKind, CHAR_APTITUDES,
          resolveTalentAptitudes } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { rollAddictionTest } from "../../module/sheets/tabs/drugs.mjs";
+import { rollAddictionTest, applyEffectExtras } from "../../module/sheets/tabs/drugs.mjs";
+import { computeWoundHealing, computeWoundDamage } from "../../module/sheets/tabs/wounds.mjs";
 
 function drug({ id = "drug-1", addicted = false } = {}) {
   const updates = [];
@@ -97,5 +98,51 @@ describe("drug addiction test", () => {
 
     expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": false });
     expect(a.updates).toEqual([]);
+  });
+});
+
+describe("drug special effects", () => {
+  it("computeWoundHealing сначала снимает критический урон, потом лечит Раны", () => {
+    expect(computeWoundHealing({
+      wounds: { value: 4, max: 10, critical: 3 }
+    }, 5)).toEqual({
+      "system.wounds.value": 6,
+      "system.wounds.critical": 0
+    });
+  });
+
+  it("computeWoundDamage переносит переполнение в критический урон и сбрасывает First Aid", () => {
+    expect(computeWoundDamage({
+      wounds: { value: 2, max: 10, critical: 1, firstAidUsed: true }
+    }, 5)).toEqual({
+      "system.wounds.value": 0,
+      "system.wounds.critical": 4,
+      "system.wounds.firstAidUsed": false
+    });
+  });
+
+  it("applyEffectExtras собирает апдейты, строки чата и броски", async () => {
+    const a = actor({ fatigue: 1, t: 40 });
+    a.system.conditions = { haemorrhaging: true, haemorrhagingLevel: 3 };
+    a.system.wounds = { value: 5, max: 10, critical: 0, firstAidUsed: true };
+    captured.nextRoll = 2;
+
+    const result = await applyEffectExtras(a, {
+      removesHaemorrhagingLevels: 2,
+      grantsFatigue: 1,
+      healFormula: "1d5",
+      woundDamage: "1d5"
+    });
+
+    expect(result.updates).toMatchObject({
+      "system.conditions.haemorrhagingLevel": 1,
+      "system.conditions.haemorrhaging": true,
+      "system.fatigue.value": 2,
+      "system.wounds.value": 3,
+      "system.wounds.critical": 0,
+      "system.wounds.firstAidUsed": false
+    });
+    expect(result.rolls).toHaveLength(2);
+    expect(result.lines.join("\n")).toContain("Обескровливания");
   });
 });

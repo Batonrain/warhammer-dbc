@@ -36,7 +36,8 @@ import { fatiguePenalty, addFatigue, removeFatigue, fatiguePeriodRest, fatigueSl
          showAddConditionDialog } from "./tabs/conditions.mjs";
 import { painChatMsg, painChange, openPainSoulBurnDialog } from "./tabs/pain.mjs";
 import { showHealingDialog, applyHealing } from "./tabs/healing.mjs";
-import { rollAddictionTest } from "./tabs/drugs.mjs";
+import { rollAddictionTest, applyEffectExtras } from "./tabs/drugs.mjs";
+import { computeWoundHealing, computeWoundDamage } from "./tabs/wounds.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { qualityEffects }                   from "../constants/quality.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
@@ -4311,7 +4312,7 @@ async _triggerAfterEffect(item) {
 
   // Снять раны (ЛЕЧЕНИЕ: восстанавливаем здоровье)
   if (fx.removesWounds > 0) {
-    Object.assign(actorUpdates, _computeWoundHealing(actor.system, fx.removesWounds));
+    Object.assign(actorUpdates, computeWoundHealing(actor.system, fx.removesWounds));
   }
 
   // Наложить состояние
@@ -4330,7 +4331,7 @@ async _triggerAfterEffect(item) {
   }
 
   // Доп. (мульти-) эффекты пост-эффекта
-  const extras = await _applyEffectExtras(actor, fx);
+  const extras = await applyEffectExtras(actor, fx);
   Object.assign(actorUpdates, extras.updates);
 
   if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
@@ -4939,7 +4940,7 @@ async _triggerAfterEffect(item) {
 
     // Телесная Конверсия — цена в Ранах (платится при использовании Пути)
     if (PATH.woundCost) {
-      Object.assign(actorUpdates, _computeWoundDamage(this.actor.system, PATH.woundCost));
+      Object.assign(actorUpdates, computeWoundDamage(this.actor.system, PATH.woundCost));
     }
 
     // ── Авто-урон (для атакующих сил при успехе) ──────────────────────────────
@@ -5545,7 +5546,7 @@ async _triggerAfterEffect(item) {
 
   // Снять раны (ЛЕЧЕНИЕ: восстанавливаем здоровье — сначала критический урон, затем текущие до максимума)
   if (fx.removesWounds > 0) {
-    Object.assign(actorUpdates, _computeWoundHealing(actor.system, fx.removesWounds));
+    Object.assign(actorUpdates, computeWoundHealing(actor.system, fx.removesWounds));
   }
 
   // Снять состояние
@@ -5610,7 +5611,7 @@ async _triggerAfterEffect(item) {
   }
 
   // Доп. (мульти-) эффекты: Обескровливание, лечение/урон по формуле, доп. Усталость
-  const extras = await _applyEffectExtras(actor, fx);
+  const extras = await applyEffectExtras(actor, fx);
   Object.assign(actorUpdates, extras.updates);
 
   if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
@@ -5744,58 +5745,6 @@ async _triggerAfterEffect(item) {
 }
 }
 
-// ── Вспомогательная функция ───────────────────────────────────────────────────
-function _conditionLevelField(condition) {
-  const def = CONDITIONS_DEF[condition];
-  return def?.levelField || null;
-}
-
-/**
- * Лечение ран. В этой системе wounds.value — текущее здоровье (убывает при уроне),
- * wounds.critical — критический урон сверх нуля (растёт). Поэтому лечение сначала
- * убирает критический урон, затем восстанавливает текущие раны до максимума.
- * Возвращает объект апдейтов для actor.update().
- */
-function _computeWoundHealing(system, amount) {
-  let value      = system.wounds?.value    ?? 0;
-  let critical   = system.wounds?.critical ?? 0;
-  const max      = system.wounds?.max      ?? 0;
-  let heal       = Math.max(0, amount);
-
-  if (critical > 0) {
-    const h = Math.min(critical, heal);
-    critical -= h;
-    heal     -= h;
-  }
-  if (heal > 0) {
-    value = max > 0 ? Math.min(max, value + heal) : value + heal;
-  }
-  return {
-    "system.wounds.value":    value,
-    "system.wounds.critical": critical
-  };
-}
-
-/** Непоглощаемый урон в Раны: уменьшает текущие, переполнение → критический урон. */
-function _computeWoundDamage(system, amount) {
-  let value    = system.wounds?.value    ?? 0;
-  let critical = system.wounds?.critical ?? 0;
-  const dmg    = Math.max(0, amount);
-  if (value >= dmg) {
-    value -= dmg;
-  } else {
-    critical += (dmg - value);
-    value = 0;
-  }
-  const out = {
-    "system.wounds.value":    value,
-    "system.wounds.critical": critical
-  };
-  // Новый урон → снова можно оказать Первую Помощь.
-  if (dmg > 0) out["system.wounds.firstAidUsed"] = false;
-  return out;
-}
-
 /** Подставляет бонусы характеристик в формулу и берёт первую (формульную) часть. */
 // Делегирует единому каноническому резолверу (utils). corB — бонус Порчи (Cor.b).
 function _resolveCharFormula(formula, chars, corB = 0) {
@@ -5858,54 +5807,3 @@ function _groupGifts(activeSet = new Set()) {
   return order.map(g => ({ group: g, gifts: map.get(g) || [] }));
 }
 
-/**
- * Применяет «доп.» (мульти-) эффекты блока к цели: снятие Обескровливания,
- * лечение по формуле, доп. Усталость, непоглощаемый урон в Раны.
- * Возвращает { updates, lines, rolls } для слияния в актор-апдейт и чат.
- */
-async function _applyEffectExtras(target, fx) {
-  const updates = {};
-  const lines   = [];
-  const rolls   = [];
-  if (!fx) return { updates, lines, rolls };
-  const chars = target.system.characteristics;
-
-  // Снять уровни Обескровливания
-  if (fx.removesHaemorrhagingLevels > 0) {
-    const cur = target.system.conditions?.haemorrhagingLevel || 0;
-    const nv  = Math.max(0, cur - fx.removesHaemorrhagingLevels);
-    updates["system.conditions.haemorrhagingLevel"] = nv;
-    updates["system.conditions.haemorrhaging"]      = nv > 0;
-    lines.push(`${rollIcon("blood","#ff6b6b")}Снято ур. Обескровливания: <b>${fx.removesHaemorrhagingLevels}</b>`);
-  }
-
-  // Лечение Ран по формуле (бросок)
-  if (fx.healFormula) {
-    try {
-      const r = await new Roll(_resolveCharFormula(fx.healFormula, chars)).evaluate();
-      rolls.push(r);
-      Object.assign(updates, _computeWoundHealing(target.system, r.total));
-      lines.push(`${rollIcon("heart","#ff8a8a")}Лечение: <b>${fx.healFormula}</b> = <b>${r.total}</b>`);
-    } catch(e) { console.error("healFormula:", e); }
-  }
-
-  // Доп. Усталость
-  if (fx.grantsFatigue > 0) {
-    const fatVal = target.system.fatigue?.value ?? 0;
-    updates["system.fatigue.value"] = fatVal + fx.grantsFatigue;
-    lines.push(`${rollIcon("warn","#ffb84d")}Усталость +<b>${fx.grantsFatigue}</b>`);
-  }
-
-  // Непоглощаемый урон в Раны (бросок)
-  if (fx.woundDamage) {
-    try {
-      const r = await new Roll(_resolveCharFormula(fx.woundDamage, chars)).evaluate();
-      rolls.push(r);
-      Object.assign(updates, _computeWoundDamage(target.system, r.total));
-      lines.push(`${rollIcon("burst","#ff6b6b")}Непоглощаемый урон в Раны: <b>${fx.woundDamage}</b> = <b style="color:#8b0000;">${r.total}</b>`);
-    } catch(e) { console.error("woundDamage:", e); }
-  }
-
-  return { updates, lines, rolls };
-
-}
