@@ -41,23 +41,72 @@ export function buildTestContext(input = {}) {
 }
 
 /**
+ * Область атаки: `attack` — любой удар и выстрел, `weapon:melee` и
+ * `weapon:ranged` — половина из них, `weapon:<класс>` — конкретный класс оружия
+ * (`pistol`, `heavy`, `basic`…).
+ *
+ * Метательное считается рукопашным, как и в самой атаке
+ * ([attack.mjs](../combat/attack.mjs), `isMelee`): расходись эти два места, одно
+ * и то же правило действовало бы по-разному в диалоге и в броске.
+ */
+function attackScopeApplies(scope, ctx) {
+  if (scope === "attack") return true;
+  if (!scope.startsWith("weapon:")) return false;
+  const want = scope.slice("weapon:".length);
+  if (want === "melee")  return ctx.isMelee === true;
+  if (want === "ranged") return ctx.isMelee === false;
+  return want === String(ctx.weaponClass ?? "").toLowerCase();
+}
+
+/**
  * Область действия эффекта: `target` записывается с двоеточием
- * (`skill:medicae`, `char:wp`, `initiative`), `all` или пустой — «в любом тесте».
+ * (`skill:medicae`, `char:wp`, `weapon:melee`, `initiative`), `all` или пустой —
+ * «в любом тесте».
  *
  * Тест навыка и тест характеристики различаются наличием `ctx.skill`: у теста
  * характеристики его нет. Поэтому `char:int` не подхватывается броском навыка на
  * Интеллекте — иначе одна запись означала бы два разных правила книги.
  *
- * Области атак и психосил (`weapon:`, `power:`) на этом этапе не совпадают ни с
- * чем: атаки переводятся на конвейер на шаге 5.2 плана.
+ * По той же причине атака отбирается отдельной веткой и не подхватывает
+ * `char:ws`: «+10 к тестам Оружейного Мастерства» и «+10 ко всем ударам» — два
+ * разных правила книги, и различает их область.
+ *
+ * Область психосил (`power:`) не совпадает ни с чем: психосилы на конвейер ещё
+ * не переведены.
  */
 function effectAppliesTo(target, ctx) {
   const scope = String(target ?? "all").trim().toLowerCase();
   if (scope === "all" || scope === "") return true;
   if (scope === "initiative") return ctx.kind === "initiative";
+  if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
   if (ctx.char)  return scope === `char:${String(ctx.char).toLowerCase()}`;
   return false;
+}
+
+/**
+ * Значение эффекта. Обычно это число в `value`, но у правил, зависящих от того,
+ * по кому бьют, числа в данных быть не может: «Проворный» даёт атакующему минус
+ * Бонус Ловкости ЦЕЛИ, а он у каждой цели свой. Такие правила пишут `valueFrom`,
+ * и значение считается на каждый бросок.
+ *
+ * Известен один источник — `targetCharBonus`. Неизвестный не превращается молча
+ * в ноль, а жалуется: правило, тихо давшее «+0», ищется днями.
+ *
+ * @returns {?number} null, если источник значения не распознан
+ */
+function effectValue(effect, ctx, ruleId) {
+  if (!effect.valueFrom) return Number(effect.value) || 0;
+
+  const { targetCharBonus, multiplier = 1 } = effect.valueFrom;
+  if (targetCharBonus) {
+    const bonus = ctx?.targetActor?.system?.characteristics?.[targetCharBonus]?.bonus ?? 0;
+    // «|| 0» убирает минус ноль: без цели галочка иначе подписывалась бы «−0».
+    return bonus * multiplier || 0;
+  }
+
+  console.error(`Warhammer DBC | правило «${ruleId ?? "без id"}»: неизвестный источник значения ${JSON.stringify(effect.valueFrom)}`);
+  return null;
 }
 
 /**
@@ -84,7 +133,8 @@ export function rollModsFromRules(rules, ctx = {}) {
 
       const label = effect.label ?? rule.label ?? rule.id;
       if (effect.kind === "rollBonus") {
-        mods.push({ ruleId: rule.id, label, value: Number(effect.value) || 0, halvePenalty: false });
+        const value = effectValue(effect, ctx, rule.id);
+        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false });
         continue;
       }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.

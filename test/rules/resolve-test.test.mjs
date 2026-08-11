@@ -168,3 +168,96 @@ describe("галочки из эффектов", () => {
     expect(mods).toEqual([{ ruleId: "bonus", label: "Плюс", value: 10, halvePenalty: false }]);
   });
 });
+
+describe("область атаки", () => {
+  const rule = (target, value = 10) => ({
+    id: "r", label: "Правило", effects: [{ kind: "rollBonus", target, value }]
+  });
+  /** Контекст атаки: вид теста «attack», класс оружия и рукопашность. */
+  const melee  = buildTestContext({ kind: "attack", weaponClass: "melee",  isMelee: true,  char: "ws" });
+  const ranged = buildTestContext({ kind: "attack", weaponClass: "pistol", isMelee: false, char: "bs" });
+
+  it("«attack» попадает в любую атаку и только в атаку", () => {
+    expect(rollModsFromRules([rule("attack")], melee)).toHaveLength(1);
+    expect(rollModsFromRules([rule("attack")], ranged)).toHaveLength(1);
+    expect(rollModsFromRules([rule("attack")], buildTestContext({ skill: "medicae" }))).toHaveLength(0);
+  });
+
+  it("«weapon:melee» и «weapon:ranged» делят атаки надвое", () => {
+    expect(rollModsFromRules([rule("weapon:melee")],  melee)).toHaveLength(1);
+    expect(rollModsFromRules([rule("weapon:melee")],  ranged)).toHaveLength(0);
+    expect(rollModsFromRules([rule("weapon:ranged")], ranged)).toHaveLength(1);
+    expect(rollModsFromRules([rule("weapon:ranged")], melee)).toHaveLength(0);
+  });
+
+  it("метательное считается рукопашным — как и в самой атаке", () => {
+    const thrown = buildTestContext({ kind: "attack", weaponClass: "thrown", isMelee: true, char: "ws" });
+    expect(rollModsFromRules([rule("weapon:melee")], thrown)).toHaveLength(1);
+  });
+
+  it("«weapon:<класс>» попадает только в свой класс оружия", () => {
+    expect(rollModsFromRules([rule("weapon:pistol")], ranged)).toHaveLength(1);
+    expect(rollModsFromRules([rule("weapon:heavy")],  ranged)).toHaveLength(0);
+  });
+
+  it("«all» действует и в атаке", () => {
+    expect(rollModsFromRules([rule("all")], melee)).toHaveLength(1);
+  });
+
+  it("char:<ключ> в атаку не подхватывается, хотя атака идёт по этой характеристике", () => {
+    // Иначе «+10 к тестам Оружейного Мастерства» молча стало бы «+10 ко всем
+    // ударам» — это два разных правила книги, и различает их область.
+    expect(rollModsFromRules([rule("char:ws")], melee)).toHaveLength(0);
+  });
+
+  it("область психосил в атаку не попадает: она ждёт своего шага", () => {
+    expect(rollModsFromRules([rule("power:smite")], melee)).toHaveLength(0);
+  });
+});
+
+describe("значение эффекта от цели", () => {
+  const target = (agBonus, traits = ["Nimble / Проворный"]) => ({
+    system: { characteristics: { ag: { bonus: agBonus } } },
+    items: traits.map(name => ({ type: "trait", name }))
+  });
+  const nimble = {
+    id: "r", label: "Проворный",
+    effects: [{ kind: "rollBonus", target: "attack", valueFrom: { targetCharBonus: "ag", multiplier: -1 } }]
+  };
+
+  it("значение берётся из бонуса характеристики цели", () => {
+    const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: target(4) });
+    expect(rollModsFromRules([nimble], ctx)).toEqual([
+      { ruleId: "r", label: "Проворный", value: -4, halvePenalty: false }
+    ]);
+  });
+
+  it("другая цель — другое число: значение считается на каждый бросок", () => {
+    const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: target(7) });
+    expect(rollModsFromRules([nimble], ctx)[0].value).toBe(-7);
+  });
+
+  it("без цели значение ноль, а не ошибка", () => {
+    const ctx = buildTestContext({ kind: "attack", isMelee: true });
+    expect(rollModsFromRules([nimble], ctx)[0].value).toBe(0);
+  });
+
+  it("множитель по умолчанию единица", () => {
+    const rule = { id: "r", effects: [{ kind: "rollBonus", target: "attack", valueFrom: { targetCharBonus: "ag" } }] };
+    const ctx  = buildTestContext({ kind: "attack", isMelee: true, targetActor: target(3) });
+    expect(rollModsFromRules([rule], ctx)[0].value).toBe(3);
+  });
+
+  it("неизвестный источник значения — ошибка в консоль, а не молчаливый ноль", () => {
+    const rule = { id: "r", effects: [{ kind: "rollBonus", target: "attack", valueFrom: { charBonusOfSomeone: "ag" } }] };
+    const ctx  = buildTestContext({ kind: "attack", isMelee: true, targetActor: target(3) });
+    expect(rollModsFromRules([rule], ctx)).toEqual([]);
+    expect(errors).toHaveBeenCalledOnce();
+  });
+
+  it("valueFrom вытесняет value: два значения в одной записи — ошибка данных", () => {
+    const rule = { id: "r", effects: [{ kind: "rollBonus", target: "attack", value: 99, valueFrom: { targetCharBonus: "ag" } }] };
+    const ctx  = buildTestContext({ kind: "attack", isMelee: true, targetActor: target(3) });
+    expect(rollModsFromRules([rule], ctx)[0].value).toBe(3);
+  });
+});

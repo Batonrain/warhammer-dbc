@@ -7,6 +7,7 @@
 import { RACES } from "../constants/races.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
+import { CORE_RULES } from "./library/core.mjs";
 
 const SOURCES = new Map();
 
@@ -30,6 +31,11 @@ export function clearRuleSources() {
  */
 const hwKey = actor =>
   [...(actor?.items ?? [])].find(i => i?.type === "homeworld")?.system?.key ?? "";
+
+// Правила основной книги приходят каждому актору: они не привязаны ни к расе,
+// ни к Происхождению, а отбираются по условию `when`. Так живёт «Проворный» —
+// Черта нескольких рас, штраф от которой достаётся не носителю, а атакующему.
+registerRuleSource("core", () => CORE_RULES);
 
 // Поле `rules` у данных расы и Происхождения пока не заполнено — источники
 // вернут пустой массив. Заполнение идёт на этапе 3 плана.

@@ -12,14 +12,20 @@
 //
 // Файл импортируется первым, до импорта проверяемого модуля.
 
-/** Что перехвачено у Foundry: диалог, броски, отправленные сообщения. */
-export const captured = { dialog: null, rolls: [], chat: [], nextRoll: 50 };
+/**
+ * Что перехвачено у Foundry: диалог, броски, отправленные сообщения.
+ *
+ * `dice` — очередь значений кубов для честного разбора формул (см. Roll ниже).
+ * Пока она null, бросок ведёт себя по-старому: любая формула даёт `nextRoll`.
+ */
+export const captured = { dialog: null, rolls: [], chat: [], nextRoll: 50, dice: null };
 
 export function resetCaptured() {
   captured.dialog = null;
   captured.rolls = [];
   captured.chat = [];
   captured.nextRoll = 50;
+  captured.dice = null;
 }
 
 class ApplicationStub {
@@ -39,6 +45,7 @@ globalThis.foundry = {
   utils: {
     mergeObject: (a, b) => ({ ...a, ...b }),
     duplicate: x => structuredClone(x),
+    deepClone: x => structuredClone(x),
     randomID: () => "stubid",
     getProperty: () => undefined,
     setProperty: () => true
@@ -67,10 +74,78 @@ globalThis.Dialog = class {
   render() {}
 };
 
-/** Бросок без случайности: тест задаёт результат через captured.nextRoll. */
+/**
+ * Разбор формулы броска на термы. Набор намеренно узкий: целые слагаемые и
+ * «NdM» с модификаторами «min» и «kh» — ровно то, что порождают
+ * applyDamageDiceMods (Рвущее, Проверенное) и сборка формулы урона. Всё
+ * остальное роняет тест: заглушка, тихо считающая неправильно, хуже, чем её
+ * отсутствие.
+ */
+function parseRollFormula(formula, takeDie) {
+  const src   = String(formula ?? "").replace(/\s+/g, "");
+  const parts = src.match(/[+-]?[^+-]+/g) ?? [];
+  const terms = [];
+  let total = 0;
+
+  for (const part of parts) {
+    const sign = part.startsWith("-") ? -1 : 1;
+    const body = part.replace(/^[+-]/, "");
+
+    if (/^\d+$/.test(body)) {
+      total += sign * Number(body);
+      terms.push({ number: sign * Number(body) });
+      continue;
+    }
+
+    const m = body.match(/^(\d+)d(\d+)(?:min(\d+))?(?:kh(\d+))?$/i);
+    if (!m) throw new Error(`Заглушка Roll: не разобрана формула «${formula}» (часть «${part}»)`);
+
+    const [, nStr, facesStr, minStr, khStr] = m;
+    const faces   = Number(facesStr);
+    const results = [];
+    for (let i = 0; i < Number(nStr); i++) {
+      const rolled = takeDie(faces);
+      // «min X» — Foundry поднимает выпавшее значение до X, а не перебрасывает.
+      results.push({ result: minStr ? Math.max(rolled, Number(minStr)) : rolled, active: true });
+    }
+    if (khStr) {
+      const keep = Number(khStr);
+      [...results]
+        .sort((a, b) => b.result - a.result)
+        .slice(keep)
+        .forEach(r => { r.active = false; });
+    }
+    for (const r of results) if (r.active) total += sign * r.result;
+    terms.push({ faces, results });
+  }
+  return { total, terms };
+}
+
+/**
+ * Бросок без случайности.
+ *
+ * По умолчанию любая формула даёт `captured.nextRoll` — этого хватает тестам
+ * диалога навыка, где проверяется порог, а не кубы. Тест атаки выставляет
+ * `captured.dice` — очередь выпадающих значений, — и тогда формула считается
+ * честно, с `terms`: их читает Экстремальный урон, а `active` — Рвущее.
+ */
 globalThis.Roll = class {
   constructor(formula) { this.formula = formula; captured.rolls.push(formula); }
-  async evaluate() { this.total = captured.nextRoll; return this; }
+
+  async evaluate() {
+    if (captured.dice === null) { this.total = captured.nextRoll; return this; }
+    const take = faces => {
+      if (!captured.dice.length)
+        throw new Error(`Заглушка Roll: очередь кубов пуста, а формула «${this.formula}» просит ещё d${faces}`);
+      return captured.dice.shift();
+    };
+    const { total, terms } = parseRollFormula(this.formula, take);
+    this.total = total;
+    this.terms = terms;
+    return this;
+  }
+
+  async render() { return `<div class="stub-roll">${this.formula} = ${this.total}</div>`; }
 };
 
 globalThis.ChatMessage = class {
@@ -91,7 +166,11 @@ globalThis.canvas = {};
 globalThis.renderTemplate = async () => "";
 globalThis.fromUuid = async () => null;
 globalThis.fromUuidSync = () => null;
-globalThis.$ = () => ({});
+/** jQuery-обёртка над элементом: диалог атаки читает галочки через $(cb).data(). */
+globalThis.$ = el => ({
+  data:    key => el?.dataset?.[key],
+  closest: () => ({ text: () => "" })
+});
 
 /**
  * Лист без Foundry: объект с прототипом класса и подставным актором. Конструктор
@@ -99,8 +178,12 @@ globalThis.$ = () => ({});
  */
 export function sheetOf(cls, { items = [], ...system } = {}) {
   const sheet = Object.create(cls.prototype);
+  const list  = [...items];
+  list.get = id => list.find(i => i.id === id) ?? null;
   Object.defineProperty(sheet, "actor", {
-    value: { name: "Подставной", system, items },
+    // `update` — заглушка: диалог атаки сбрасывает им прицеливание, а тест
+    // проверяет порог броска, а не запись в актора.
+    value: { id: "actor-stub", name: "Подставной", system, items: list, update: async () => {} },
     configurable: true
   });
   return sheet;
@@ -109,12 +192,21 @@ export function sheetOf(cls, { items = [], ...system } = {}) {
 /**
  * Подставной jQuery для колбэка кнопки диалога: `fields` отдаёт значения полей
  * по селектору, `checks` — отмеченные галочки.
+ *
+ * Значение поля читается тремя способами, как и в настоящем диалоге:
+ * `.val()` — текст поля, `.is(":checked")` — отмечен ли флажок (задаётся
+ * значением `true`), `.data(ключ)` — data-атрибут (задаётся объектом).
  */
 export function fakeHtml(fields = {}, checks = {}) {
   return {
-    find: selector => Object.hasOwn(fields, selector)
-      ? { val: () => fields[selector], on: () => {}, each: () => {} }
-      : { val: () => undefined, on: () => {}, each: fn => (checks[selector] ?? []).forEach((cb, i) => fn(i, cb)) }
+    find: selector => ({
+      val:  () => fields[selector],
+      is:   () => fields[selector] === true,
+      data: key => (typeof fields[selector] === "object" && fields[selector] !== null)
+        ? fields[selector][key] : undefined,
+      on:   () => {},
+      each: fn => (checks[selector] ?? []).forEach((cb, i) => fn(i, cb))
+    })
   };
 }
 
