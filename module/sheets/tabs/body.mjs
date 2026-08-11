@@ -6,6 +6,9 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { openSurgeon } from "../../apps/surgeon.mjs";
+import { syncAstartesImplantWeapon } from "../../apps/astartes-implants.mjs";
+import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
+import { syncGrantedEquipment } from "../../apps/mechanics.mjs";
 
 /** Переключить фигуру муж./жен. Значение приходит из data-атрибута кнопки. */
 export async function toggleBodyType(actor, current) {
@@ -38,6 +41,40 @@ export async function toggleImplantSide(item, side) {
   } else {
     await item.setFlag("warhammer-dbc", "bodySide", side);
   }
+}
+
+/** Реестр органов Геносемени: клик по названию открывает лист органа. */
+export function openOrganSheet(actor, itemId) {
+  const item = actor.items.get(itemId);
+  if (item) item.sheet?.render(true);
+}
+
+/**
+ * Ручное состояние органа Геносемени: не вживлён / вживлён / не работает.
+ * "installed" решает, попадает ли орган на био-скан и в снаряжение как
+ * установленный; "disabled" — отдельный флаг, глушащий только его эффекты
+ * (см. gate в actor.mjs), сам орган при этом остаётся на месте.
+ */
+export async function setOrganState(actor, itemId, state) {
+  const item = actor.items.get(itemId);
+  if (!item) return;
+  if (state === "off") {
+    await item.unsetFlag("warhammer-dbc", "disabled");
+    await item.unsetFlag("warhammer-dbc", "installed");
+  } else if (state === "on") {
+    await item.unsetFlag("warhammer-dbc", "disabled");
+    await item.setFlag("warhammer-dbc", "installed", true);
+  } else {
+    await item.setFlag("warhammer-dbc", "installed", true);
+    await item.setFlag("warhammer-dbc", "disabled", true);
+  }
+  // Тот же тумблер гасит и любые ActiveEffect, добавленные на орган через
+  // вкладку «Эффекты» — только "on" считается по-настоящему активным.
+  await syncItemEffectsDisabled(item, state === "on");
+  // ...и любое выданное этим органом снаряжение/оружие (Кислотный плевок
+  // Железы Бетчера и т.п.) — появляется/исчезает вместе с состоянием.
+  await syncGrantedEquipment(item);
+  await syncAstartesImplantWeapon(item);
 }
 
 /** Подсказки при наведении на импланты фигуры — чистый DOM, актор не нужен. */
@@ -98,5 +135,13 @@ export function activateBodyListeners(html, actor, { openSurgeonWindow = openSur
     ev.stopPropagation();
     const el = ev.currentTarget;
     await toggleImplantSide(actor.items.get(el.dataset.itemId), el.dataset.side);
+  });
+
+  html.find(".geneseed-name-link").click(ev => {
+    openOrganSheet(actor, ev.currentTarget.dataset.itemId);
+  });
+
+  html.find(".geneseed-state-select").change(async ev => {
+    await setOrganState(actor, ev.currentTarget.dataset.itemId, ev.currentTarget.value);
   });
 }

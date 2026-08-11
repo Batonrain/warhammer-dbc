@@ -3,21 +3,33 @@ import { resetCaptured } from "../support/foundry-stub.mjs";
 import {
   activateBodyListeners,
   adjustVital,
+  openOrganSheet,
   setDeceased,
+  setOrganState,
   setVital,
   toggleBodyType,
   toggleImplantSide
 } from "../../module/sheets/tabs/body.mjs";
 
-function item({ id = "imp-1", side } = {}) {
+function item({ id = "imp-1", side, effectDisabled } = {}) {
   const flags = side === undefined ? {} : { bodySide: side };
-  return {
+  const effects = effectDisabled === undefined
+    ? []
+    : [{ id: "fx-1", disabled: effectDisabled }];
+  const it = {
     id,
+    type: "implant",
+    system: {},
     flags,
+    effects: { contents: effects },
+    effectUpdates: [],
+    sheet: { rendered: 0, render: () => { it.sheet.rendered += 1; } },
     getFlag: (_scope, key) => flags[key],
     setFlag: async (_scope, key, value) => { flags[key] = value; return value; },
-    unsetFlag: async (_scope, key) => { delete flags[key]; }
+    unsetFlag: async (_scope, key) => { delete flags[key]; },
+    updateEmbeddedDocuments: async (_type, updates) => { it.effectUpdates.push(...updates); }
   };
+  return it;
 }
 
 function actor({ vitals = {}, items = [] } = {}) {
@@ -93,6 +105,52 @@ describe("body tab helpers", () => {
   });
 });
 
+describe("реестр органов Геносемени", () => {
+  // Каждое состояние проверяется на свежем органе: иначе флаг, оставшийся от
+  // прошлого перехода, скрыл бы его пропажу в новом.
+  async function stateFlags(state, from = {}) {
+    const organ = item({ id: "organ-1" });
+    Object.assign(organ.flags, from);
+    await setOrganState(actor({ items: [organ] }), "organ-1", state);
+    return organ.flags;
+  }
+
+  it("три состояния органа дают три набора флагов", async () => {
+    expect(await stateFlags("on")).toEqual({ installed: true });
+    expect(await stateFlags("broken")).toEqual({ installed: true, disabled: true });
+    expect(await stateFlags("off")).toEqual({});
+  });
+
+  it("вживление снимает поломку, изъятие снимает оба флага", async () => {
+    const broken = { installed: true, disabled: true };
+
+    expect(await stateFlags("on", broken)).toEqual({ installed: true });
+    expect(await stateFlags("off", broken)).toEqual({});
+  });
+
+  it("неработающий орган гасит свои эффекты, вживлённый — включает", async () => {
+    const organ = item({ id: "organ-1", effectDisabled: false });
+    const a = actor({ items: [organ] });
+
+    await setOrganState(a, "organ-1", "broken");
+    expect(organ.effectUpdates).toEqual([{ _id: "fx-1", disabled: true }]);
+
+    organ.effects.contents[0].disabled = true;
+    await setOrganState(a, "organ-1", "on");
+    expect(organ.effectUpdates[1]).toEqual({ _id: "fx-1", disabled: false });
+  });
+
+  it("клик по названию открывает лист органа, отсутствующий id молчит", () => {
+    const organ = item({ id: "organ-1" });
+    const a = actor({ items: [organ] });
+
+    openOrganSheet(a, "organ-1");
+    openOrganSheet(a, "нет-такого");
+
+    expect(organ.sheet.rendered).toBe(1);
+  });
+});
+
 describe("body tab listeners", () => {
   it("activateBodyListeners привязывает обработчики с actor-only API", async () => {
     const handlers = {};
@@ -112,10 +170,10 @@ describe("body tab listeners", () => {
 
     activateBodyListeners(html, a, { openSurgeonWindow: actorArg => surgeonCalls.push(actorArg) });
 
-    const ev = dataset => ({
+    const ev = (dataset, value) => ({
       preventDefault: () => {},
       stopPropagation: () => {},
-      currentTarget: { dataset, checked: true }
+      currentTarget: { dataset, value, checked: true }
     });
 
     await handlers[".bc-sex-toggle:click"](ev({ bodytype: "male" }));
@@ -124,6 +182,8 @@ describe("body tab listeners", () => {
     await handlers["[data-vital-reset]:click"](ev({ vitalReset: "hunger" }));
     await handlers[".bc-death-toggle:change"](ev({}));
     await handlers[".bc-side-btn:click"](ev({ itemId: "eye-1", side: "left" }));
+    handlers[".geneseed-name-link:click"](ev({ itemId: "eye-1" }));
+    await handlers[".geneseed-state-select:change"](ev({ itemId: "eye-1" }, "on"));
 
     expect(a.flags.bodyType).toBe("female");
     expect(surgeonCalls).toEqual([a]);
@@ -133,5 +193,7 @@ describe("body tab listeners", () => {
     ]);
     expect(a.flags.deceased).toBe(true);
     expect(eye.flags.bodySide).toBe("left");
+    expect(eye.sheet.rendered).toBe(1);
+    expect(eye.flags.installed).toBe(true);
   });
 });

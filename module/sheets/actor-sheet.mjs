@@ -72,7 +72,6 @@ import { HELMETLESS_FEL_BONUS, HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../
 import { isHelmetMod } from "../combat/armor-mods.mjs";
 import { isFeatureEnabled, disabledRaceKeys } from "../constants/features.mjs";
 import { syncItemEffectsDisabled } from "../apps/effects.mjs";
-import { syncGrantedEquipment } from "../apps/mechanics.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
 // Влияние (inf) сюда не входит — оно от arch.infRoll.
@@ -2027,39 +2026,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       const shown = row.toggle().is(":visible");
       ev.currentTarget.textContent = shown ? "▾" : "▸";
       ev.currentTarget.closest("tr")?.classList.toggle("ability-row-open", shown);
-    });
-
-    // Реестр органов Геносемени на вкладке ТЕЛО — открыть орган по клику.
-    html.find(".geneseed-name-link").click(ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) item.sheet?.render(true);
-    });
-
-    // Ручное состояние органа Геносемени: не вживлён / вживлён / не работает.
-    // "installed" решает, попадает ли орган на био-скан и в снаряжение как
-    // установленный; "disabled" — отдельный флаг, глушащий только его эффекты
-    // (см. gate в actor.mjs), сам орган при этом остаётся на месте.
-    html.find(".geneseed-state-select").change(async ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (!item) return;
-      const state = ev.currentTarget.value;
-      if (state === "off") {
-        await item.unsetFlag("warhammer-dbc", "disabled");
-        await item.unsetFlag("warhammer-dbc", "installed");
-      } else if (state === "on") {
-        await item.unsetFlag("warhammer-dbc", "disabled");
-        await item.setFlag("warhammer-dbc", "installed", true);
-      } else {
-        await item.setFlag("warhammer-dbc", "installed", true);
-        await item.setFlag("warhammer-dbc", "disabled", true);
-      }
-      // Тот же тумблер гасит и любые ActiveEffect, добавленные на орган через
-      // вкладку «Эффекты» — только "on" считается по-настоящему активным.
-      await syncItemEffectsDisabled(item, state === "on");
-      // ...и любое выданное этим органом снаряжение/оружие (Кислотный плевок
-      // Железы Бетчера и т.п.) — появляется/исчезает вместе с состоянием.
-      await syncGrantedEquipment(item);
-      await syncAstartesImplantWeapon(item);
     });
 
     // ── Геносемя (Астартес) ─────────────────────────────────────────────────
