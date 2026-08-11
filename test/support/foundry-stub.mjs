@@ -166,7 +166,11 @@ globalThis.canvas = {};
 globalThis.renderTemplate = async () => "";
 globalThis.fromUuid = async () => null;
 globalThis.fromUuidSync = () => null;
-globalThis.$ = () => ({});
+/** jQuery-обёртка над элементом: диалог атаки читает галочки через $(cb).data(). */
+globalThis.$ = el => ({
+  data:    key => el?.dataset?.[key],
+  closest: () => ({ text: () => "" })
+});
 
 /**
  * Лист без Foundry: объект с прототипом класса и подставным актором. Конструктор
@@ -174,8 +178,12 @@ globalThis.$ = () => ({});
  */
 export function sheetOf(cls, { items = [], ...system } = {}) {
   const sheet = Object.create(cls.prototype);
+  const list  = [...items];
+  list.get = id => list.find(i => i.id === id) ?? null;
   Object.defineProperty(sheet, "actor", {
-    value: { name: "Подставной", system, items },
+    // `update` — заглушка: диалог атаки сбрасывает им прицеливание, а тест
+    // проверяет порог броска, а не запись в актора.
+    value: { id: "actor-stub", name: "Подставной", system, items: list, update: async () => {} },
     configurable: true
   });
   return sheet;
@@ -184,12 +192,21 @@ export function sheetOf(cls, { items = [], ...system } = {}) {
 /**
  * Подставной jQuery для колбэка кнопки диалога: `fields` отдаёт значения полей
  * по селектору, `checks` — отмеченные галочки.
+ *
+ * Значение поля читается тремя способами, как и в настоящем диалоге:
+ * `.val()` — текст поля, `.is(":checked")` — отмечен ли флажок (задаётся
+ * значением `true`), `.data(ключ)` — data-атрибут (задаётся объектом).
  */
 export function fakeHtml(fields = {}, checks = {}) {
   return {
-    find: selector => Object.hasOwn(fields, selector)
-      ? { val: () => fields[selector], on: () => {}, each: () => {} }
-      : { val: () => undefined, on: () => {}, each: fn => (checks[selector] ?? []).forEach((cb, i) => fn(i, cb)) }
+    find: selector => ({
+      val:  () => fields[selector],
+      is:   () => fields[selector] === true,
+      data: key => (typeof fields[selector] === "object" && fields[selector] !== null)
+        ? fields[selector][key] : undefined,
+      on:   () => {},
+      each: fn => (checks[selector] ?? []).forEach((cb, i) => fn(i, cb))
+    })
   };
 }
 

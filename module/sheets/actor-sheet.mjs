@@ -22,6 +22,7 @@ import { _degWord, _buildAmmoModString, resolveCharFormula, fateTerm } from "../
 import { buildSkillDisplay, buildGetData,
          CONDITIONS_DEF }                  from "./sheet-helpers.mjs";
 import { _executeAttackRoll }              from "../combat/attack.mjs";
+import { attackThreshold }                 from "../combat/attack-threshold.mjs";
 import { _executeFearRoll, _executeTraumaRoll } from "../combat/fear.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
          buildTargetEffectButtons, buildPropertyChatBlock } from "../combat/weapon-properties.mjs";
@@ -4295,6 +4296,19 @@ html.find(".addiction-remove-btn").click(async ev => {
     const wantShortBox = !isMelee && (wp.meltaShort || wp.scatter);
     const wantMaximal  = !isMelee && wp.maximal;
 
+    // ── Правила из реестра (module/rules/) ───────────────────────────────────
+    //   Атака — такой же тест конвейера, как бросок навыка: вид теста «attack»,
+    //   область эффекта «attack» или «weapon:<класс>». Актор цели нужен
+    //   правилам, чей отбор зависит от того, по кому бьют (targetHasTrait).
+    const attackCtx = {
+      kind: "attack",
+      weaponClass: sys.weaponClass,
+      isMelee,
+      char: charKey,
+      targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
+    };
+    const ruleMods = this._ruleRollModsHtml(attackCtx);
+
     const stance      = this.actor.system.meleeStance || "standard";
     const stanceDef   = MELEE_STANCES[stance];
     const stanceBonus = isMelee ? (stanceDef?.wsBonus ?? 0) : 0;
@@ -4644,6 +4658,7 @@ html.find(".addiction-remove-btn").click(async ev => {
         ${rangeInfoHtml}
         ${shortRangeHtml}${bandHtml}${offHtml}${maximalHtml}
         ${ammoCondHtml}
+        ${ruleMods.html}
 
         <details class="av-adv">
           <summary>Ситуативные модификаторы<span class="av-adv-hint">— разверни, если нужны</span></summary>
@@ -4717,12 +4732,24 @@ html.find(".addiction-remove-btn").click(async ev => {
               const ammoCondDmg = ammoCondSel.reduce((n, c) => n + (c.dmg || 0), 0);
               const ammoCondProps = ammoCondSel.flatMap(c => c.wp || []);
 
+              // Галочки от реестра правил — тот же формат, что у Особенностей
+              // Происхождения и предметных rollMods в диалоге броска навыка.
+              let halveRulePenalty = false;
+              html.find(".rule-mod:checked").each((_, cb) => {
+                modSum += parseInt(cb.dataset.value) || 0;
+                if (cb.dataset.halve === "1") halveRulePenalty = true;
+              });
+
               const isSwift     = html.find("#atk-swift").is(":checked");
               const isLightning = html.find("#atk-lightning").is(":checked");
               const isAllOut    = html.find("#atk-allout").is(":checked");
               const extraBonus  = (isSwift ? 10 : 0) + (isLightning ? 10 : 0) + (isAllOut ? 20 : 0);
               // Мод хвата (gripWs) уже вошёл в charBase/threshold; мод препаратов — в char.total.
-              const finalThreshold = threshold + modifier + modSum + rofBonus + aimPenalty + extraBonus;
+              const finalThreshold = attackThreshold({
+                base: threshold,
+                mods: [modifier, modSum, rofBonus, aimPenalty, extraBonus],
+                halvePenalty: halveRulePenalty
+              });
 
               await this.actor.update({ "system.aiming": "none" });
 
@@ -4789,10 +4816,21 @@ html.find(".addiction-remove-btn").click(async ev => {
             html.find(".atk-ammo-cond:checked").each((_, cb) => {
               modsAmmo += parseInt(cb.dataset.atk) || 0;
             });
-            const mods = modsSit + modsAmmo;
+            // Правила реестра — считаем тем же кодом, что и сам бросок ниже:
+            // иначе игрок увидит в окне одно число, а бросится другое.
+            let modsRule = 0, halveRule = false;
+            html.find(".rule-mod:checked").each((_, cb) => {
+              modsRule += parseInt(cb.dataset.value) || 0;
+              if (cb.dataset.halve === "1") halveRule = true;
+            });
+            const mods = modsSit + modsAmmo + modsRule;
             html.find("#atk-threshold").val(base + aimBon);
             html.find("#atk-total-display")
-                .text(base + aimBon + mod + mods + rofBon + aimPen + extra)
+                .text(attackThreshold({
+                  base: base + aimBon,
+                  mods: [mod, mods, rofBon, aimPen, extra],
+                  halvePenalty: halveRule
+                }))
                 .css("color", "");
             // Блок ситуативных свёрнут по умолчанию, поэтому его сводка должна
             // быть видна в заголовке — иначе авто-отметки (Усталость, Ослеплён)
@@ -4811,7 +4849,7 @@ html.find(".addiction-remove-btn").click(async ev => {
           };
           html.find("#atk-char, #atk-aim").on("change", updateTotal);
           html.find("#atk-modifier").on("input", updateTotal);
-          html.find(".atk-mod-cb, .atk-ammo-cond, input[name='atk-rof'], input[name='atk-aiming'], #atk-swift, #atk-lightning, #atk-allout")
+          html.find(".atk-mod-cb, .atk-ammo-cond, .rule-mod, input[name='atk-rof'], input[name='atk-aiming'], #atk-swift, #atk-lightning, #atk-allout")
               .on("change", updateTotal);
           // Сворачивание «Ситуативные модификаторы» — подгоняем высоту окна.
           const el0 = html[0] ?? html;

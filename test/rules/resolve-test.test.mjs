@@ -168,3 +168,49 @@ describe("галочки из эффектов", () => {
     expect(mods).toEqual([{ ruleId: "bonus", label: "Плюс", value: 10, halvePenalty: false }]);
   });
 });
+
+describe("область атаки", () => {
+  const rule = (target, value = 10) => ({
+    id: "r", label: "Правило", effects: [{ kind: "rollBonus", target, value }]
+  });
+  /** Контекст атаки: вид теста «attack», класс оружия и рукопашность. */
+  const melee  = buildTestContext({ kind: "attack", weaponClass: "melee",  isMelee: true,  char: "ws" });
+  const ranged = buildTestContext({ kind: "attack", weaponClass: "pistol", isMelee: false, char: "bs" });
+
+  it("«attack» попадает в любую атаку и только в атаку", () => {
+    expect(rollModsFromRules([rule("attack")], melee)).toHaveLength(1);
+    expect(rollModsFromRules([rule("attack")], ranged)).toHaveLength(1);
+    expect(rollModsFromRules([rule("attack")], buildTestContext({ skill: "medicae" }))).toHaveLength(0);
+  });
+
+  it("«weapon:melee» и «weapon:ranged» делят атаки надвое", () => {
+    expect(rollModsFromRules([rule("weapon:melee")],  melee)).toHaveLength(1);
+    expect(rollModsFromRules([rule("weapon:melee")],  ranged)).toHaveLength(0);
+    expect(rollModsFromRules([rule("weapon:ranged")], ranged)).toHaveLength(1);
+    expect(rollModsFromRules([rule("weapon:ranged")], melee)).toHaveLength(0);
+  });
+
+  it("метательное считается рукопашным — как и в самой атаке", () => {
+    const thrown = buildTestContext({ kind: "attack", weaponClass: "thrown", isMelee: true, char: "ws" });
+    expect(rollModsFromRules([rule("weapon:melee")], thrown)).toHaveLength(1);
+  });
+
+  it("«weapon:<класс>» попадает только в свой класс оружия", () => {
+    expect(rollModsFromRules([rule("weapon:pistol")], ranged)).toHaveLength(1);
+    expect(rollModsFromRules([rule("weapon:heavy")],  ranged)).toHaveLength(0);
+  });
+
+  it("«all» действует и в атаке", () => {
+    expect(rollModsFromRules([rule("all")], melee)).toHaveLength(1);
+  });
+
+  it("char:<ключ> в атаку не подхватывается, хотя атака идёт по этой характеристике", () => {
+    // Иначе «+10 к тестам Оружейного Мастерства» молча стало бы «+10 ко всем
+    // ударам» — это два разных правила книги, и различает их область.
+    expect(rollModsFromRules([rule("char:ws")], melee)).toHaveLength(0);
+  });
+
+  it("область психосил в атаку не попадает: она ждёт своего шага", () => {
+    expect(rollModsFromRules([rule("power:smite")], melee)).toHaveLength(0);
+  });
+});

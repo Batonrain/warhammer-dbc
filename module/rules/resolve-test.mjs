@@ -41,20 +41,44 @@ export function buildTestContext(input = {}) {
 }
 
 /**
+ * Область атаки: `attack` — любой удар и выстрел, `weapon:melee` и
+ * `weapon:ranged` — половина из них, `weapon:<класс>` — конкретный класс оружия
+ * (`pistol`, `heavy`, `basic`…).
+ *
+ * Метательное считается рукопашным, как и в самой атаке
+ * ([attack.mjs](../combat/attack.mjs), `isMelee`): расходись эти два места, одно
+ * и то же правило действовало бы по-разному в диалоге и в броске.
+ */
+function attackScopeApplies(scope, ctx) {
+  if (scope === "attack") return true;
+  if (!scope.startsWith("weapon:")) return false;
+  const want = scope.slice("weapon:".length);
+  if (want === "melee")  return ctx.isMelee === true;
+  if (want === "ranged") return ctx.isMelee === false;
+  return want === String(ctx.weaponClass ?? "").toLowerCase();
+}
+
+/**
  * Область действия эффекта: `target` записывается с двоеточием
- * (`skill:medicae`, `char:wp`, `initiative`), `all` или пустой — «в любом тесте».
+ * (`skill:medicae`, `char:wp`, `weapon:melee`, `initiative`), `all` или пустой —
+ * «в любом тесте».
  *
  * Тест навыка и тест характеристики различаются наличием `ctx.skill`: у теста
  * характеристики его нет. Поэтому `char:int` не подхватывается броском навыка на
  * Интеллекте — иначе одна запись означала бы два разных правила книги.
  *
- * Области атак и психосил (`weapon:`, `power:`) на этом этапе не совпадают ни с
- * чем: атаки переводятся на конвейер на шаге 5.2 плана.
+ * По той же причине атака отбирается отдельной веткой и не подхватывает
+ * `char:ws`: «+10 к тестам Оружейного Мастерства» и «+10 ко всем ударам» — два
+ * разных правила книги, и различает их область.
+ *
+ * Область психосил (`power:`) не совпадает ни с чем: психосилы на конвейер ещё
+ * не переведены.
  */
 function effectAppliesTo(target, ctx) {
   const scope = String(target ?? "all").trim().toLowerCase();
   if (scope === "all" || scope === "") return true;
   if (scope === "initiative") return ctx.kind === "initiative";
+  if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
   if (ctx.char)  return scope === `char:${String(ctx.char).toLowerCase()}`;
   return false;
