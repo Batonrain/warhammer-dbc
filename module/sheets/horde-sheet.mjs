@@ -9,7 +9,7 @@ import { resolveCharFormula, _degWord } from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
          buildPropertyChatBlock, buildTargetEffectButtons } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
-import { attachItemPicker } from "./actor-sheet.mjs";
+import { attachItemPicker } from "./item-picker.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).

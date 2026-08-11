@@ -9,6 +9,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured, sheetOf } from "../support/foundry-stub.mjs";
 
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
+const { talentGroupLock } = await import("../../module/sheets/item-picker.mjs");
+const { applyHealing } = await import("../../module/sheets/tabs/healing.mjs");
 
 const medic = () => sheetOf(WarhammerCharacterSheet, {
   race: "human",
@@ -33,20 +35,20 @@ beforeEach(resetCaptured);
 
 describe("папка талантов «Геносемя»", () => {
   it("открыта Астартес", () => {
-    const sheet = sheetOf(WarhammerCharacterSheet, { race: "astartes", size: 1 });
-    expect(sheet._talentGroupLock("talent", "", "Геносемя")).toBeNull();
+    const actor = sheetOf(WarhammerCharacterSheet, { race: "astartes", size: 1 }).actor;
+    expect(talentGroupLock(actor, "talent", "", "Геносемя")).toBeNull();
   });
 
   it("закрыта человеку", () => {
-    const sheet = sheetOf(WarhammerCharacterSheet, { race: "human" });
-    expect(sheet._talentGroupLock("talent", "", "Геносемя")).toMatch(/Геносемя/);
+    const actor = sheetOf(WarhammerCharacterSheet, { race: "human" }).actor;
+    expect(talentGroupLock(actor, "talent", "", "Геносемя")).toMatch(/Геносемя/);
   });
 });
 
 describe("лечение: физиология Астартес", () => {
   const heal = (race, mode) => {
     const updates = [];
-    return medic()._applyHealing(patient(race, updates), { mode, care: false, mod: 0, bonus: 0 })
+    return applyHealing(medic().actor, patient(race, updates), { mode, care: false, mod: 0, bonus: 0 })
       .then(() => ({ updates, content: captured.chat[0]?.content ?? "" }));
   };
 

@@ -3,12 +3,13 @@ import { ELITE_ARCHETYPES } from "../constants/elite-archetypes.mjs";
 import { isHaemonculus } from "../constants/haemonculus.mjs";
 import { haemonculusContext, haemStep, haemToggleTrait,
          haemRank } from "./tabs/haemonculus.mjs";
-import { centerPicker, pickerPos } from "./picker-ui.mjs";
+import { openItemPicker, talentCategory } from "./item-picker.mjs";
+import { openGearPicker } from "./gear-picker.mjs";
 // module/sheets/actor-sheet.mjs
 
 import { CHARACTERISTICS, SKILL_RANKS, APTITUDES } from "../constants/characteristics.mjs";
-import { talentCostXP, charCostXP, skillCostXP, aptitudeCat, charAptitudeSet, ALIGN_LABEL, CHAR_APTITUDES, raceAllyTalent,
-         dynamicAptKind, resolveTalentAptitudes } from "../constants/advancement.mjs";
+import { talentCostXP, charCostXP, skillCostXP, aptitudeCat, charAptitudeSet,
+         CHAR_APTITUDES, resolveTalentAptitudes } from "../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES, WEAPON_CLASSES, DAMAGE_TYPES } from "../constants/items.mjs";
 import { resolveCultureFx, cultureCat } from "../constants/legions.mjs";
@@ -25,11 +26,17 @@ import { buildSkillDisplay, buildGetData,
          CONDITIONS_DEF }                  from "./sheet-helpers.mjs";
 import { _executeAttackRoll }              from "../combat/attack.mjs";
 import { attackThreshold }                 from "../combat/attack-threshold.mjs";
-import { _executeFearRoll, _executeTraumaRoll } from "../combat/fear.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
          buildTargetEffectButtons, buildPropertyChatBlock } from "../combat/weapon-properties.mjs";
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
+import { openFearDialog, rollTrauma, rollDisorder, createDisorderItem, openDisorderPicker,
+         rollDisorderTest } from "./tabs/disorders.mjs";
+import { fatiguePenalty, addFatigue, removeFatigue, fatiguePeriodRest, fatigueSleep,
+         showAddConditionDialog } from "./tabs/conditions.mjs";
+import { painChatMsg, painChange, openPainSoulBurnDialog } from "./tabs/pain.mjs";
+import { showHealingDialog, applyHealing } from "./tabs/healing.mjs";
+import { rollAddictionTest } from "./tabs/drugs.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { qualityEffects }                   from "../constants/quality.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
@@ -45,9 +52,6 @@ import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { RACES, SUBRACES, SUBRACE_DATA,
          RACE_GROUPS, AELDARI_RACES, AELDARI_PATHS } from "../constants/races.mjs";
 import { getLegion, getChapter, buildLegionOptions, buildChapterOptions, buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
-import { FEAR_RATINGS,
-         MENTAL_DISORDERS,
-         DISORDER_LIBRARY, rollDisorderEntry }      from "../constants/fear-tables.mjs";
 import { archetypeEntries, archetypesForRace, archetypeSheetContext, applyArchetype } from "../apps/archetypes.mjs";
 import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
 import { _toggleShield,
@@ -63,10 +67,9 @@ import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../constants/possession.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { beginTargeting } from "../combat/aim.mjs";
-import { HOMEWORLD_BY_KEY, homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
+import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-import { checkRequirement } from "../constants/talent-requirements.mjs";
 import { specOptions, matchSpec, specDef } from "../constants/skill-specializations.mjs";
 import { ASTARTES_IMPLANTS, ASTARTES_RACE,
          missingAstartesImplants } from "../constants/astartes-implants.mjs";
@@ -548,8 +551,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
    * Дружественным (Total Recall у Астартес), иначе решает культура легиона.
    */
   _talentCat(name, folder = "") {
-    if (raceAllyTalent(this.actor.system.race, name)) return "ally";
-    return cultureCat("talent", name, folder, cultFxOf(this.actor));
+    return talentCategory(this.actor, name, folder);
   }
 
   /**
@@ -562,13 +564,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   }
 
   _getFatiguePenalty(charKey) {
-    const fatigueExempt = ["t", "inf", "cog", "pf"];
-    // Добывающий мир, «Потом и кровью»: штрафы начинаются лишь после T.b Усталости.
-    const hw = HOMEWORLD_BY_KEY[actorHomeworldKey(this.actor)];
-    const grace = hw?.fatigueGrace === "tBonus" ? (this.actor.system.characteristics?.t?.bonus ?? 0) : 0;
-    if ((this.actor.system.fatigue?.value ?? 0) < 1 + grace) return 0;
-    if (fatigueExempt.includes((charKey ?? "").toLowerCase())) return 0;
-    return -10;
+    return fatiguePenalty(this.actor, charKey);
   }
 
   /**
@@ -751,307 +747,8 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     return await this._createTalentsFromList([...fixed, ...chosen], source);
   }
 
-  /**
-   * Пикер добавления Талантов/Черт прямо с листа (без лазания в компендиум).
-   * Группировка по типам корбука (папки компендиума, стр. 62-105) + Аэльдари.
-   * Поиск, раскрытие описания стрелкой, добавление по «＋». kind: "talent"|"trait".
-   */
-  async _openItemPicker(kind) {
-    const PACKS = { trait: "warhammer-dbc.traits", mutation: "warhammer-dbc.mutations",
-                    talent: "warhammer-dbc.talents" };
-    const packName = PACKS[kind] || PACKS.talent;
-    const pack = game.packs.get(packName);
-    if (!pack) return ui.notifications.warn(`Компендиум не найден: ${packName}`);
-    const docs = await pack.getDocuments();
-    const esc  = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-
-    // Группировка по папкам (учёт родителя) + порядок по folder.sort (порядок корбука).
-    const groups = new Map();
-    for (const d of docs) {
-      const f = d.folder;
-      const parent = f?.folder?.name || "";
-      const label  = f ? (parent ? `${parent} · ${f.name}` : f.name) : "Прочее";
-      const sort   = (f?.folder?.sort ?? 900000) * 1000 + (f?.sort ?? 0);
-      const lock   = f ? this._talentGroupLock(kind, parent, f.name) : null;
-      if (!groups.has(label)) groups.set(label, { sort, items: [], lock });
-      groups.get(label).items.push(d);
-    }
-    const ordered = [...groups.entries()].sort((a, b) => a[1].sort - b[1].sort || a[0].localeCompare(b[0], "ru"));
-    const kindLabel = kind === "trait" ? "черты" : (kind === "mutation" ? "мутации" : "таланта");
-    // Склонности персонажа — для авто-цены таланта (стр. 23-24).
-    // У Орды нет ни Склонностей, ни Опыта: цены не показываем и не начисляем.
-    const hasXP    = Array.isArray(this.actor.system.aptitudes);
-    const charApts = charAptitudeSet(this.actor.system.aptitudes || []);
-
-    const body = ordered.map(([label, g]) => {
-      const rows = g.items
-        .sort((a, b) => ((a.system.tier || 0) - (b.system.tier || 0)) || a.name.localeCompare(b.name, "ru"))
-        .map(d => {
-          const tier = (kind === "talent" && d.system.tier) ? `<span class="pick-tier">Ур.${d.system.tier}</span>` : "";
-          // Требования сверяются с листом: невыполненные подсвечиваются красным.
-          const chk  = d.system.requirement ? checkRequirement(this.actor, d.system.requirement)
-                                            : { state: "ok", unmet: [] };
-          const reqTitle = chk.state === "fail"
-            ? `Не выполнено: ${esc(chk.unmet.join(", "))}`
-            : (chk.state === "unknown" ? "Требование не удалось проверить автоматически" : "Требования выполнены");
-          const req  = d.system.requirement
-            ? `<span class="pick-req pick-req-${chk.state}" title="${reqTitle}">${esc(d.system.requirement)}</span>`
-            : "";
-          const ben  = esc(d.system.benefit || d.system.description || "—");
-          let cost = "";
-          if (kind === "talent" && hasXP) {
-            // Mastery / Beyond Human наследуют склонности выбранной Х-ки/Навыка
-            // (стр. 62) — цена станет известна только после выбора привязки.
-            const dyn = dynamicAptKind(d.name);
-            if (dyn) {
-              const range = this._dynamicTalentCostRange(d, charApts, dyn);
-              cost = `<span class="pick-cost cost-dyn" title="Склонности «как у ${dyn === "char" ? "Характеристики" : "Навыка"}» — цена зависит от выбора при покупке (стр. 62)">${range} XP</span>`;
-            } else {
-              const forced = this._talentCat(d.name, d.folder);
-              const cat = forced === "ally" ? "ally" : aptitudeCat(charApts, d.system.aptitudes || []);
-              const xp  = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
-                this._talentCat(d.name, d.folder));
-              cost = `<span class="pick-cost cost-${cat}" title="${ALIGN_LABEL[cat]} — совпадений склонностей: ${(d.system.aptitudes||[]).filter(a=>charApts.has(a)).length}">${xp} XP</span>`;
-            }
-          }
-          const addBtn = g.lock
-            ? `<button type="button" class="pick-add" data-id="${d.id}" disabled title="${esc(g.lock)}">🔒</button>`
-            : `<button type="button" class="pick-add" data-id="${d.id}" title="Купить и добавить на лист">＋</button>`;
-          return `<div class="pick-row${chk.state === "fail" ? " pick-unmet" : ""}${g.lock ? " pick-row-locked" : ""}" data-name="${esc(String(d.name).toLowerCase())}" data-req="${chk.state}">
-            <div class="pick-head">
-              <button type="button" class="pick-exp" title="Показать описание">▸</button>
-              <span class="pick-name" title="Раскрыть">${esc(d.name)}</span>${tier}${req}${cost}
-              ${addBtn}
-            </div>
-            <div class="pick-desc" style="display:none;">${ben}</div>
-          </div>`;
-        }).join("");
-      const unmet = (rows.match(/class="pick-row[^"]*pick-unmet/g) || []).length;
-      const lockHtml = g.lock
-        ? `<span class="pick-count pick-count-locked" title="${esc(g.lock)}">🔒 ${esc(g.lock)}</span>` : "";
-      return `<div class="pick-group pick-collapsed${g.lock ? " pick-group-locked" : ""}">
-        <div class="pick-group-head" title="Свернуть / развернуть">
-          <span class="pick-caret">▸</span>${esc(label)}
-          <span class="pick-count">${g.items.length}</span>
-          ${unmet ? `<span class="pick-count pick-count-unmet" title="Требования не выполнены">${unmet}</span>` : ""}
-          ${lockHtml}
-        </div>
-        <div class="pick-group-body">${rows}</div></div>`;
-    }).join("");
-
-    // Гейтинг папок (_talentGroupLock) действует только у Талантов — только там
-    // и показываем управление им (скрыть недоступное / разблокировать покупку).
-    const gateControls = kind === "talent" ? `
-      <div class="pick-top pick-top-gate">
-        <label class="pick-hide-locked-label">
-          <input type="checkbox" class="pick-hide-locked-cb"/> Скрывать недоступные
-        </label>
-        <button type="button" class="pick-force-unlock"
-                title="Разблокирует покупку талантов из закрытых групп, даже если персонаж не подходит под условие">
-          🔒 Разрешить покупку при несоответствии
-        </button>
-      </div>` : "";
-
-    const content = `<div class="wh-item-picker">
-      <div class="pick-top">
-        <input type="text" class="pick-search" placeholder="Поиск ${kindLabel}…"/>
-        <button type="button" class="pick-custom" title="Создать свой ${kindLabel} с нуля">＋ Своё</button>
-      </div>
-      ${gateControls}
-      <div class="pick-list">${body || "<em>Пусто</em>"}</div>
-    </div>`;
-
-    new Dialog({
-      title: kind === "trait" ? "Добавить черту" : (kind === "mutation" ? "Добавить мутацию / Дар" : "Добавить талант"),
-      content,
-      buttons: { close: { label: "Закрыть" } },
-      default: "close",
-      render: html => {
-        centerPicker(html);
-        // Скрыть недоступные группы / разблокировать покупку из них вопреки
-        // условию — только пока диалог открыт, ничего не сохраняется.
-        let hideLocked = false;
-        let forceUnlock = false;
-        // Своё с нуля — пустой предмет + открыть его лист.
-        html.find(".pick-custom").on("click", async ev => {
-          ev.preventDefault();
-          const item = await Item.create({ name: kind === "trait" ? "Новая черта" : (kind === "mutation" ? "Новая мутация" : "Новый талант"), type: kind }, { parent: this.actor });
-          item?.sheet?.render(true);
-        });
-        html.find(".pick-add").on("click", async ev => {
-          ev.preventDefault(); ev.stopPropagation();
-          const d = docs.find(x => x.id === ev.currentTarget.dataset.id);
-          if (!d) return;
-          const dFolder = d.folder;
-          const lock = dFolder ? this._talentGroupLock(kind, dFolder.folder?.name || "", dFolder.name) : null;
-          if (lock && !forceUnlock) return ui.notifications.warn(`Недоступно: ${lock}`);
-          const obj = d.toObject();
-          if (kind === "talent" && hasXP) {
-            // Авто-цена по склонностям; помечаем как купленный (учитывается в Опыте).
-            obj.system = obj.system || {};
-            const dyn = dynamicAptKind(d.name);
-            if (dyn) {
-              // Mastery / Beyond Human: сначала выбор привязки (стр. 62), затем
-              // цена по склонностям выбранной Характеристики/Навыка (стр. 23-24).
-              const pick = await this._promptDynamicAptTalent(d, dyn, charApts);
-              if (!pick) return;                       // отмена — ничего не покупаем
-              obj.system.specialization = pick.label;
-              obj.system.aptitudes      = pick.apts;   // фиксируем на предмете
-              obj.system.aptSource      = pick.key;    // ключ Х-ки/навыка для пересчёта
-              obj.system.cost           = pick.cost;
-            } else {
-              obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
-                this._talentCat(d.name, d.folder));
-            }
-            obj.system.purchased = true;
-          }
-          await this.actor.createEmbeddedDocuments("Item", [obj]);
-          ui.notifications.info(kind === "talent" && obj.system?.cost
-            ? `Куплено: ${d.name} (−${obj.system.cost} XP)` : `Добавлено: ${d.name}`);
-          $(ev.currentTarget).closest(".pick-row").addClass("just-added");
-        });
-        const toggle = row => {
-          const desc = row.querySelector(".pick-desc");
-          const exp  = row.querySelector(".pick-exp");
-          const open = desc.style.display !== "none";
-          desc.style.display = open ? "none" : "block";
-          exp.textContent = open ? "▸" : "▾";
-        };
-        html.find(".pick-exp").on("click", ev => { ev.preventDefault(); toggle(ev.currentTarget.closest(".pick-row")); });
-        html.find(".pick-name").on("click", ev => toggle(ev.currentTarget.closest(".pick-row")));
-
-        // Категории свёрнуты по умолчанию — раскрываются кликом по заголовку.
-        html.find(".pick-group-head").on("click", ev => {
-          const grp = ev.currentTarget.closest(".pick-group");
-          const collapsed = grp.classList.toggle("pick-collapsed");
-          const caret = grp.querySelector(".pick-caret");
-          if (caret) caret.textContent = collapsed ? "▸" : "▾";
-        });
-
-        // Видимость групп: скрытые по поиску (нет совпадений) ИЛИ, если включён
-        // чекбокс «Скрывать недоступные», заблокированные по условию листа.
-        const applyGroupVisibility = () => {
-          const q = html.find(".pick-search").val().toLowerCase().trim();
-          html.find(".pick-group").each((_, gr) => {
-            if (hideLocked && gr.classList.contains("pick-group-locked")) { gr.style.display = "none"; return; }
-            const hits = gr.querySelectorAll(".pick-row:not(.pick-hidden)").length;
-            gr.style.display = hits ? "" : "none";
-            // При поиске раскрываем найденное, при пустой строке — снова свернуть.
-            gr.classList.toggle("pick-collapsed", !q);
-            const caret = gr.querySelector(".pick-caret");
-            if (caret) caret.textContent = q ? "▾" : "▸";
-          });
-        };
-
-        html.find(".pick-search").on("input", ev => {
-          const q = ev.currentTarget.value.toLowerCase().trim();
-          html.find(".pick-row").each((_, r) => { r.classList.toggle("pick-hidden", !!q && !(r.dataset.name || "").includes(q)); });
-          applyGroupVisibility();
-        });
-
-        html.find(".pick-hide-locked-cb").on("change", ev => {
-          hideLocked = ev.currentTarget.checked;
-          applyGroupVisibility();
-        });
-
-        // Разрешить покупку из закрытых групп вопреки условию — снимает
-        // disabled и меняет 🔒 на ＋ у всех уже отрисованных «недоступных» кнопок.
-        html.find(".pick-force-unlock").on("click", ev => {
-          ev.preventDefault();
-          forceUnlock = !forceUnlock;
-          const btn = ev.currentTarget;
-          btn.classList.toggle("on", forceUnlock);
-          btn.textContent = forceUnlock ? "🔓 Покупка разрешена вопреки условию" : "🔒 Разрешить покупку при несоответствии";
-          html.find(".pick-row-locked .pick-add").each((_, b) => {
-            b.disabled = !forceUnlock;
-            b.textContent = forceUnlock ? "＋" : "🔒";
-            if (forceUnlock) b.title = `Доступно вопреки условию: ${b.title}`;
-            else b.title = b.title.replace(/^Доступно вопреки условию: /, "");
-          });
-        });
-      }
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-item-picker-dialog"], ...pickerPos(580, 660) }).render(true);
-  }
-
-  /**
-   * Список вариантов привязки для Mastery / Beyond Human (стр. 62) с ценой
-   * каждого: талант наследует ОБЕ склонности выбранной Характеристики/Навыка.
-   * @returns {{key,label,apts,cat,cost}[]} отсортировано по возрастанию цены
-   */
-  _dynamicTalentOptions(doc, kind, charApts) {
-    const defs = { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF };
-    const tier = doc.system?.tier || 3;
-    const src  = kind === "char"
-      ? Object.entries(CHAR_APTITUDES).map(([k]) => [k, CHARACTERISTICS[k]?.label || k.toUpperCase()])
-      : [...Object.entries(SKILLS_DEF).map(([k, v]) => [k, v.label]),
-         ...Object.entries(GROUP_SKILLS_DEF).map(([k, v]) => [k, `${v.label} (группа)`])];
-    return src.map(([key, label]) => {
-      const apts = resolveTalentAptitudes(doc.name, doc.system?.aptitudes || [], key, defs);
-      const cat  = aptitudeCat(charApts, apts);
-      return { key, label, apts, cat, cost: talentCostXP(tier, apts, charApts,
-        this._talentCat(label)) };
-    }).sort((a, b) => a.cost - b.cost || a.label.localeCompare(b.label, "ru"));
-  }
-
-  /** Компактная запись «мин–макс XP» для бейджа в пикере. */
-  _dynamicTalentCostRange(doc, charApts, kind) {
-    const opts = this._dynamicTalentOptions(doc, kind, charApts);
-    if (!opts.length) return "?";
-    const lo = opts[0].cost, hi = opts[opts.length - 1].cost;
-    return lo === hi ? String(lo) : `${lo}–${hi}`;
-  }
-
-  /**
-   * Диалог привязки Mastery / Beyond Human: выбор Характеристики или Навыка,
-   * от которого талант берёт склонности (и, как следствие, цену).
-   */
-  _promptDynamicAptTalent(doc, kind, charApts) {
-    const opts = this._dynamicTalentOptions(doc, kind, charApts);
-    const esc  = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-    const what = kind === "char" ? "Характеристика" : "Навык";
-    const rows = opts.map(o =>
-      `<option value="${esc(o.key)}" data-cost="${o.cost}" data-cat="${o.cat}">
-         ${esc(o.label)} — ${o.cost} XP (${ALIGN_LABEL[o.cat]})
-       </option>`).join("");
-
-    return new Promise(resolve => {
-      new Dialog({
-        title: `${doc.name}: выбор привязки`,
-        content: `
-          <form class="wh-dyn-apt">
-            <p class="dyn-hint">Талант наследует склонности выбранн${kind === "char" ? "ой Характеристики" : "ого Навыка"}
-               (стр. 62), поэтому от выбора зависит цена (стр. 23-24).</p>
-            <div class="atk-dlg-row">
-              <label>${what}:</label>
-              <select id="dyn-apt-sel" class="pm-input pm-wide">${rows}</select>
-            </div>
-            <div class="dyn-preview" id="dyn-preview"></div>
-          </form>`,
-        buttons: {
-          ok: {
-            label: "Купить",
-            callback: html => {
-              const key = String(html.find("#dyn-apt-sel").val() || "");
-              resolve(opts.find(o => o.key === key) || null);
-            }
-          },
-          cancel: { label: "Отмена", callback: () => resolve(null) }
-        },
-        default: "ok",
-        close: () => resolve(null),
-        render: html => {
-          const upd = () => {
-            const o = opts.find(x => x.key === String(html.find("#dyn-apt-sel").val() || ""));
-            if (!o) return;
-            html.find("#dyn-preview").html(
-              `<span class="pick-cost cost-${o.cat}">${o.cost} XP</span>
-               <span class="dyn-apts">склонности: ${o.apts.map(a => APTITUDES[a] || a).join(" + ")}</span>`);
-          };
-          html.find("#dyn-apt-sel").on("change", upd);
-          upd();
-        }
-      }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-dyn-apt-dialog"], width: 460 }).render(true);
-    });
+  _openItemPicker(kind) {
+    return openItemPicker(this.actor, kind);
   }
 
   /** Диалог выбора для «или»/«любые N». Резолвится массивом строк-имён талантов. */
@@ -1102,166 +799,8 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   }
 
 
-  /**
-   * Пикер СНАРЯЖЕНИЯ из компендиумов: оружие, броня, щиты, боеприпасы,
-   * снаряжение и инструменты. В одном стиле с пикерами талантов и мутаций:
-   * вкладки-категории, поиск, раскрытие описания, добавление по «＋».
-   */
-  async _openGearPicker() {
-    const PACKS = [
-      { id: "warhammer-dbc.weapons",   label: "Оружие" },
-      { id: "warhammer-dbc.armor",     label: "Броня" },
-      { id: "warhammer-dbc.shields",   label: "Силовые щиты" },
-      { id: "warhammer-dbc.ammunition",label: "Боеприпасы" },
-      { id: "warhammer-dbc.gear",      label: "Снаряжение" },
-      { id: "warhammer-dbc.tools",     label: "Инструменты" }
-    ];
-    const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-
-    // Загружаем только существующие паки (часть может быть не установлена).
-    const groups = [];
-    for (const p of PACKS) {
-      const pack = game.packs.get(p.id);
-      if (!pack) continue;
-      const docs = await pack.getDocuments();
-      if (!docs.length) continue;
-      // Внутри пака — разбивка по папкам компендиума (Стрелковое/Рукопашное/…).
-      const byFolder = new Map();
-      for (const d of docs) {
-        const f = d.folder;
-        const parent = f?.folder?.name || "";
-        const label  = f ? (parent ? `${parent} · ${f.name}` : f.name) : "Прочее";
-        if (!byFolder.has(label)) byFolder.set(label, []);
-        byFolder.get(label).push(d);
-      }
-      groups.push({ pack: p, folders: [...byFolder.entries()]
-        .sort((a, b) => a[0].localeCompare(b[0], "ru")) });
-    }
-    if (!groups.length) return ui.notifications.warn("Компендиумы снаряжения не найдены.");
-
-    // Краткая строка характеристик — чтобы выбирать, не открывая лист.
-    const statLine = (d) => {
-      const g = d.system || {};
-      const bits = [];
-      if (d.type === "weapon") {
-        if (g.damage) bits.push(`${g.damage}${g.damageType ? " " + (DAMAGE_TYPES[g.damageType] || g.damageType) : ""}`);
-        if (g.penetration) bits.push(`Проб. ${g.penetration}`);
-        if (g.range)     bits.push(`${g.range}м`);
-        const rof = [g.rof_single, g.rof_semi, g.rof_full].filter(x => x != null);
-        if (rof.length && (g.rof_semi || g.rof_full)) bits.push(`RoF ${g.rof_single || "–"}/${g.rof_semi || "–"}/${g.rof_full || "–"}`);
-      } else if (d.type === "armor") {
-        bits.push(`AP ${g.head||0}/${g.body||0}/${g.leftArm||0}/${g.leftLeg||0}`);
-        if (g.strengthBonus) bits.push(`S +${g.strengthBonus}`);
-      } else if (d.type === "forcefield") {
-        bits.push(`Щит ${g.ratingMin || 1}-${g.ratingMax || 0}`);
-      }
-      if (g.weight) bits.push(`${g.weight}кг`);
-      if (g.availability != null) bits.push(`R ${g.availability}`);
-      return bits.join(" · ");
-    };
-
-    const rowHtml = (d) => `
-      <div class="pick-row" data-name="${esc(String(d.name).toLowerCase())}">
-        <div class="pick-head">
-          <button type="button" class="pick-exp" title="Показать описание">▸</button>
-          <span class="pick-name" title="Раскрыть">${esc(d.name)}</span>
-          <span class="pick-req">${esc(statLine(d))}</span>
-          <button type="button" class="pick-add" data-uuid="${d.uuid}" title="Добавить на лист">＋</button>
-        </div>
-        <div class="pick-desc" style="display:none;">${esc(d.system?.special || d.system?.description || "—")}</div>
-      </div>`;
-
-    const tabs = groups.map((g, i) =>
-      `<button type="button" class="gp-tab${i === 0 ? " is-on" : ""}" data-tab="${i}" data-hits="">${esc(g.pack.label)}</button>`).join("");
-    const panes = groups.map((g, i) => `
-      <div class="gp-pane" data-pane="${i}" style="${i === 0 ? "" : "display:none;"}">
-        ${g.folders.map(([label, docs]) => `
-          <div class="pick-group">
-            <div class="pick-group-head">${esc(label)} <span class="pick-count">${docs.length}</span></div>
-            <div class="pick-group-body">${docs
-              .sort((a, b) => a.name.localeCompare(b.name, "ru")).map(rowHtml).join("")}</div>
-          </div>`).join("")}
-      </div>`).join("");
-
-    new Dialog({
-      title: "📚 Библиотека снаряжения",
-      content: `<div class="wh-item-picker wh-gear-picker">
-        <div class="pick-top"><input type="text" class="pick-search" placeholder="Поиск по названию…"/></div>
-        <div class="gp-tabs">${tabs}</div>
-        <div class="pick-list">${panes}</div>
-      </div>`,
-      buttons: { close: { label: "Закрыть" } },
-      default: "close",
-      render: html => {
-        centerPicker(html);
-        // Прилипание вкладок: высоты строки поиска и полосы вкладок кладём в
-        // CSS-переменные — иначе заголовки папок наезжают на вкладки.
-        const root = html.find(".wh-gear-picker")[0];
-        if (root) requestAnimationFrame(() => {
-          const topH = root.querySelector(".pick-top")?.offsetHeight ?? 0;
-          const tabH = root.querySelector(".gp-tabs")?.offsetHeight  ?? 0;
-          root.style.setProperty("--pick-top-h", `${topH}px`);
-          root.style.setProperty("--gp-tabs-h", `${topH + tabH}px`);
-        });
-        html.find(".gp-tab").on("click", ev => {
-          const idx = ev.currentTarget.dataset.tab;
-          html.find(".gp-tab").removeClass("is-on");
-          $(ev.currentTarget).addClass("is-on");
-          html.find(".gp-pane").each((_, p) => { p.style.display = p.dataset.pane === idx ? "" : "none"; });
-        });
-        html.find(".pick-add").on("click", async ev => {
-          ev.preventDefault(); ev.stopPropagation();
-          const doc = await fromUuid(ev.currentTarget.dataset.uuid);
-          if (!doc) return;
-          const obj = doc.toObject(); delete obj._id;
-          await this.actor.createEmbeddedDocuments("Item", [obj]);
-          ui.notifications.info(`Добавлено: ${doc.name}`);
-          $(ev.currentTarget).closest(".pick-row").addClass("just-added");
-        });
-        const toggle = (r) => {
-          const d = r.querySelector(".pick-desc"), e = r.querySelector(".pick-exp");
-          const open = d.style.display !== "none";
-          d.style.display = open ? "none" : "block";
-          e.textContent = open ? "▸" : "▾";
-        };
-        html.find(".pick-exp").on("click", ev => { ev.preventDefault(); toggle(ev.currentTarget.closest(".pick-row")); });
-        html.find(".pick-name").on("click", ev => toggle(ev.currentTarget.closest(".pick-row")));
-        html.find(".pick-search").on("input", ev => {
-          const q = ev.currentTarget.value.toLowerCase().trim();
-          // ВАЖНО: тело в фигурных скобках. classList.toggle возвращает булево, а
-          // jQuery .each() прерывает обход, если колбэк вернул false — из-за этого
-          // фильтр обрывался на первой же СОВПАВШЕЙ строке и остаток списка не
-          // фильтровался вовсе.
-          html.find(".pick-row").each((_, r) => {
-            r.classList.toggle("pick-hidden", !!q && !(r.dataset.name || "").includes(q));
-          });
-          html.find(".pick-group").each((_, g) => {
-            g.style.display = g.querySelectorAll(".pick-row:not(.pick-hidden)").length ? "" : "none";
-          });
-          // Совпадения могут лежать в другой вкладке, а она скрыта — поэтому
-          // считаем найденное по каждой и подсказываем числом на кнопке.
-          // Если в текущей вкладке пусто, а где-то есть — переключаемся туда сами.
-          let firstHit = -1, total = 0;
-          html.find(".gp-pane").each((_, pane) => {
-            const n = pane.querySelectorAll(".pick-row:not(.pick-hidden)").length;
-            total += n;
-            if (n && firstHit < 0) firstHit = Number(pane.dataset.pane);
-            const tab = html.find(`.gp-tab[data-tab="${pane.dataset.pane}"]`)[0];
-            if (tab) {
-              tab.dataset.hits = q ? String(n) : "";
-              tab.classList.toggle("gp-tab-empty", !!q && !n);
-            }
-          });
-          const active = html.find(".gp-tab.is-on")[0];
-          const activeHits = active ? Number(active.dataset.hits || 0) : 0;
-          if (q && !activeHits && firstHit >= 0) html.find(`.gp-tab[data-tab="${firstHit}"]`).trigger("click");
-          html.find(".gp-empty").remove();
-          if (q && !total) {
-            html.find(".pick-list").append('<div class="gp-empty">Ничего не найдено</div>');
-          }
-        });
-      }
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-item-picker-dialog"], ...pickerPos(700, 680) }).render(true);
+  _openGearPicker() {
+    return openGearPicker(this.actor);
   }
 
   /** Выдаёт базовые импланты Механикум (пропуская уже имеющиеся). */
@@ -1284,75 +823,22 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
   /** Тест Страха → при провале таблица Шока (1d100 + 10×Провалы−1 − Infamy). */
   async _rollFear() {
-    const wp = this.actor.system.characteristics.wp?.total ?? 0;
-    const ratingOpts = Object.entries(FEAR_RATINGS).map(([k, r]) =>
-      `<option value="${k}">${r.label} — важный W${r.important >= 0 ? "+" : ""}${r.important}, Infamy ${r.infamy}+</option>`).join("");
-    new Dialog({
-      title: "😱 Тест Страха",
-      content: `
-        <form class="wh-attack-form" style="padding:6px;">
-          <div class="atk-dlg-row"><label>Рейтинг Страха:</label><select id="fear-rating">${ratingOpts}</select></div>
-          <div class="atk-dlg-row"><label>Тип персонажа:</label>
-            <select id="fear-type"><option value="important">Важный (игрок)</option><option value="normal">Обычный</option></select></div>
-          <div class="atk-dlg-row"><label>Infamy:</label><input id="fear-infamy" type="number" value="0"/></div>
-          <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="fear-mod" type="number" value="0"/></div>
-          <div class="atk-dlg-section">Свойства</div>
-          <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"/> Демон</label></div>
-        </form>`,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async html => {
-          const ratingKey = html.find("#fear-rating").val();
-          const type      = html.find("#fear-type").val();
-          const infamy    = parseInt(html.find("#fear-infamy").val()) || 0;
-          const mod       = parseInt(html.find("#fear-mod").val()) || 0;
-          // Свойства источника Страха — читаются в карточку/флаги сообщения;
-          // Демон уже даёт бесплатный переброс при провале (см. fear.mjs).
-          const properties = { demon: html.find("#fear-prop-demon").is(":checked") };
-          await _executeFearRoll(this.actor, ratingKey, type, infamy, mod, properties);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll"
-    }, { classes: ["dialog", "wh-attack-dialog"], width: 380 }).render(true);
+    return openFearDialog(this.actor);
   }
 
   /** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. */
   async _rollTrauma() {
-    await _executeTraumaRoll(this.actor);
+    return rollTrauma(this.actor);
   }
 
   /** Случайное Ментальное Расстройство (d100) — создаёт предмет и сообщает в чат. */
   async _rollDisorder() {
-    const roll = await new Roll("1d100").evaluate();
-    const row  = rollDisorderEntry(roll.total);
-    if (row) await this._createDisorderItem(row);
-    const rollMode = game.settings.get("core", "rollMode");
-    const dice = await roll.render();
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("dice","#6fe6ff")}Ментальное Расстройство — ${this.actor.name}</div>
-          <div class="roll-dice">Бросок d100: <b>${roll.total}</b></div>
-          <div class="roll-outcome"><span class="roll-failure">${rollIcon("warn","#ffb84d")}${row?.name ?? "—"}</span></div>
-          ${row?.desc ? `<div class="roll-threshold">${row.desc}</div>` : ""}
-          <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-        </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, rollMode));
+    return rollDisorder(this.actor);
   }
 
   /** Создаёт предмет-расстройство на акторе из записи библиотеки (без дублей по имени). */
   async _createDisorderItem(entry) {
-    if (this.actor.items.some(i => i.type === "mentalDisorder" && i.name === entry.name)) {
-      ui.notifications.info(`Расстройство «${entry.name}» уже есть.`);
-      return null;
-    }
-    const [item] = await this.actor.createEmbeddedDocuments("Item", [{
-      name: entry.name, type: "mentalDisorder",
-      system: { description: entry.desc || "", testChar: "wp", testMod: entry.testMod || 0 }
-    }]);
-    return item;
+    return createDisorderItem(this.actor, entry);
   }
 
   /**
@@ -1361,100 +847,12 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
    * стрелкой, добавление по «＋» прямо из строки.
    */
   _addDisorderDialog() {
-    const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-    const have = new Set(this.actor.items.filter(i => i.type === "mentalDisorder").map(i => i.name));
-    const rows = DISORDER_LIBRARY.map((d, i) => {
-      const rng  = d.min === d.max ? String(d.min) : `${d.min}\u2013${d.max}`;
-      const test = `W${d.testMod >= 0 ? "+" : ""}${d.testMod}`;
-      const own  = have.has(d.name) ? '<span class="pick-owned">уже есть</span>' : "";
-      return `
-        <div class="pick-row${have.has(d.name) ? " pick-row-owned" : ""}" data-name="${esc(d.name.toLowerCase())}">
-          <div class="pick-head">
-            <button type="button" class="pick-exp" title="Показать описание">▸</button>
-            <span class="pick-name" title="Раскрыть">${esc(d.name)}</span>
-            <span class="pick-tier">${test}</span>
-            <span class="pick-req">d100 ${rng}</span>${own}
-            <button type="button" class="pick-add" data-idx="${i}" title="Добавить на лист">＋</button>
-          </div>
-          <div class="pick-desc" style="display:none;">${esc(d.desc || "—")}</div>
-        </div>`;
-    }).join("");
-
-    new Dialog({
-      title: "🧠 Добавить расстройство",
-      content: `<div class="wh-item-picker">
-        <div class="pick-top"><input type="text" class="pick-search" placeholder="Поиск расстройства…"/></div>
-        <div class="pick-list">
-          <div class="pick-group">
-            <div class="pick-group-head">Ментальные расстройства <span class="pick-count">${DISORDER_LIBRARY.length}</span></div>
-            <div class="pick-group-body">${rows}</div>
-          </div>
-        </div>
-      </div>`,
-      buttons: { close: { label: "Закрыть" } },
-      default: "close",
-      render: html => {
-        centerPicker(html);
-        html.find(".pick-add").on("click", async ev => {
-          ev.preventDefault(); ev.stopPropagation();
-          const entry = DISORDER_LIBRARY[parseInt(ev.currentTarget.dataset.idx)];
-          if (!entry) return;
-          const item = await this._createDisorderItem(entry);
-          if (item) {
-            $(ev.currentTarget).closest(".pick-row").addClass("just-added");
-            item.sheet?.render(true);
-          }
-        });
-        const toggle = (r) => {
-          const d = r.querySelector(".pick-desc"), e = r.querySelector(".pick-exp");
-          const open = d.style.display !== "none";
-          d.style.display = open ? "none" : "block";
-          e.textContent = open ? "▸" : "▾";
-        };
-        html.find(".pick-exp").on("click", ev => { ev.preventDefault(); toggle(ev.currentTarget.closest(".pick-row")); });
-        html.find(".pick-name").on("click", ev => toggle(ev.currentTarget.closest(".pick-row")));
-        html.find(".pick-search").on("input", ev => {
-          const q = ev.currentTarget.value.toLowerCase().trim();
-          // ВАЖНО: тело в фигурных скобках. classList.toggle возвращает булево, а
-          // jQuery .each() прерывает обход, если колбэк вернул false — из-за этого
-          // фильтр обрывался на первой же СОВПАВШЕЙ строке и остаток списка не
-          // фильтровался вовсе.
-          html.find(".pick-row").each((_, r) => {
-            r.classList.toggle("pick-hidden", !!q && !(r.dataset.name || "").includes(q));
-          });
-        });
-      }
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-item-picker-dialog"], ...pickerPos(560, 620) }).render(true);
+    return openDisorderPicker(this.actor);
   }
 
   /** Тест конкретного расстройства (W + его testMod). */
   async _rollDisorderTest(item) {
-    const sys     = item.system;
-    const charKey = sys.testChar || "wp";
-    const meta    = CHARACTERISTICS[charKey];
-    const charVal = this.actor.system.characteristics[charKey]?.total ?? 0;
-    const eff     = charVal + (sys.testMod || 0);
-    const roll    = await new Roll("1d100").evaluate();
-    const rv      = roll.total;
-    const success = rv <= eff;
-    const deg     = Math.floor(Math.abs(rv - eff) / 10) + 1;
-    const rollMode = game.settings.get("core", "rollMode");
-    const dice    = await roll.render();
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("spark","#c98bff")}${item.name} — ${this.actor.name}</div>
-          <div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${sys.testMod ? ` ${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : ""} → Порог: <b>${eff}</b></div>
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">${success
-            ? `<span class="roll-success">Успех — контроль удержан (${deg} ${_degWord(deg)})</span>`
-            : `<span class="roll-failure">Провал — расстройство проявляется (${deg} ${_degWord(deg)})</span>`}</div>
-          ${sys.description ? `<div class="roll-threshold" style="font-size:0.9em;">${sys.description}</div>` : ""}
-          <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-        </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, rollMode));
+    return rollDisorderTest(this.actor, item);
   }
 
   /** Бросает формулу стартовых Ран вида "15+1d5". */
@@ -2422,71 +1820,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       if (!keys) return false;
       return keys.includes(race) || keys.includes(sub);
     });
-  }
-
-  /**
-   * Доступность целой папки-группы в пикере Талантов по условиям листа
-   * (не путать с requirement отдельного таланта — тут гейтится вся папка).
-   * Возвращает null (открыто) либо причину блокировки для бейджа/тултипа.
-   */
-  _talentGroupLock(kind, parent, folderName) {
-    if (kind !== "talent") return null;
-    const sys = this.actor.system || {};
-    const DRUKHARI_RACES = ["drukhari", "truebornDrukhari", "mandrake", "wrack"];
-
-    if (parent === "Книга Пустоты" && folderName === "Ген навигатора") {
-      const has = this.actor.items.some(i => i.type === "trait" && i.name === "Navigator's Gen / Ген Навигатора");
-      return has ? null : "Нужна Черта Navigator's Gen / Ген Навигатора";
-    }
-    if (parent === "Элитные архетипы") {
-      const has = sys.eliteArchetype === folderName || (sys.eliteArchetypesExtra || []).includes(folderName);
-      return has ? null : `Нужен Элитный архетип «${folderName}»`;
-    }
-    if (parent === "Таланты одержимых") {
-      return sys.possessed ? null : "Нужна включённая опция «Одержимый» (вкладка Записи)";
-    }
-    if (parent === "Таланты Астартес" && folderName === "Повелители Ночи") {
-      return sys.geneSeed?.legion === "VIII" ? null : "Нужно Геносемя Повелителей Ночи (или одной из их варбанд)";
-    }
-    if (parent === "Книга Пустоты" && folderName === "Псайкер") {
-      return (Number(sys.psyker?.rating) || 0) > 0 ? null : "Нужен Пси-Рейтинг больше 0";
-    }
-    if (!parent && folderName.startsWith("Экзодиты — ")) {
-      return sys.race === "exodite" ? null : "Нужна раса Экзодит";
-    }
-    if (!parent && folderName === "Друкхари") {
-      return DRUKHARI_RACES.includes(sys.race) ? null : "Нужна раса Друкхари";
-    }
-    if (!parent && folderName === "Азуриани") {
-      return sys.race === "azuriane" ? null : "Нужна раса Азуриане";
-    }
-    if (!parent && folderName.startsWith("Арлекины — ")) {
-      return sys.race === "harlequin" ? null : "Нужна раса Арлекин";
-    }
-    if (!parent && folderName === "Иннари") {
-      return sys.race === "ynnari" ? null : "Нужна раса Иннари";
-    }
-    if (!parent && folderName === "Псайкана") {
-      return (Number(sys.psyker?.rating) || 0) > 0 ? null : "Нужен Пси-Рейтинг больше 0";
-    }
-    if (!parent && folderName === "Скитарии") {
-      const has = this.actor.items.some(i => i.type === "implant" && i.name === "Skitarii War Plate / Боевые Латы Скитарии");
-      return has ? null : "Нужны установленные Боевые Латы Скитарии";
-    }
-    if (!parent && folderName === "Таланты Боли") {
-      return DRUKHARI_RACES.includes(sys.race) ? null : "Нужна раса Друкхари";
-    }
-    if (!parent && (folderName === "Механикум" || folderName === "Техномистик")) {
-      const has = this.actor.items.some(i => i.type === "trait" && i.name === "Mechanicum Implants / Импланты Механикум");
-      return has ? null : "Нужна Черта Mechanicum Implants / Импланты Механикум";
-    }
-    // Возможность, а не раса: доступ открывает правило «astartes.geneseed»
-    // (module/rules/library/astartes.mjs). Любая другая раса с Геносеменем
-    // получит ту же папку из своих данных, без правки этой строки.
-    if (!parent && folderName === "Геносемя") {
-      return hasRuleFlag(this.actor, "talents.geneSeed") ? null : "Нужно Геносемя (раса Астартес)";
-    }
-    return null;
   }
 
   /**
@@ -3806,160 +3139,25 @@ html.find(".addiction-remove-btn").click(async ev => {
   // ══════════════════════════════════════════════════════════════════════════
 
   async _addFatigue(amount = 1) {
-    const system   = this.actor.system;
-    const tb        = system.characteristics?.t?.bonus  ?? 0;
-    const wb        = system.characteristics?.wp?.bonus ?? 0;
-    const threshold = tb + wb;
-    const current  = system.fatigue?.value ?? 0;
-    const newVal   = current + amount;
-
-    const updates = {
-      "system.fatigue.value": newVal,
-      "system.fatigue.max":   threshold
-    };
-
-    if (threshold > 0 && newVal >= threshold) {
-      const unconsciousMinutes = Math.max(1, 10 - tb);
-      updates["system.conditions.unconscious"] = true;
-
-      await this.actor.update(updates);
-
-      const rollMode = game.settings.get("core", "rollMode");
-      await ChatMessage.create(ChatMessage.applyRollMode({
-        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-        content: `<div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("warn","#ff6b6b")}${this.actor.name} — Потеря сознания!</div>
-          <div class="roll-threshold">
-            Усталость: <b>${newVal}</b> ≥ порог T.b + W.b (<b>${threshold}</b>) — превышен.
-          </div>
-          <div class="roll-outcome">
-            <span class="roll-failure">
-              Персонаж без сознания <b>${unconsciousMinutes}</b> мин.
-              (10 − ${tb} = ${unconsciousMinutes}, мин. 1)
-            </span>
-          </div>
-          <div class="roll-threshold" style="font-size:0.85em;">
-            После прихода в себя — снимается 1 Усталость автоматически.
-          </div>
-        </div>`
-      }, rollMode));
-
-      ui.notifications.warn(`${this.actor.name} потерял сознание на ${unconsciousMinutes} минут!`);
-    } else {
-      await this.actor.update(updates);
-      if (newVal >= 1 && current < 1) {
-        ui.notifications.info(`${this.actor.name}: Усталость 1+ — штраф −10 на все тесты (кроме T, Inf, Cog).`);
-      }
-    }
+    return addFatigue(this.actor, amount);
   }
 
   async _removeFatigue(amount = 1) {
-    const system   = this.actor.system;
-    const current  = system.fatigue?.value ?? 0;
-    const tb        = system.characteristics?.t?.bonus  ?? 0;
-    const wb        = system.characteristics?.wp?.bonus ?? 0;
-    const threshold = tb + wb;
-    const newVal   = Math.max(0, current - amount);
-
-    const updates = {
-      "system.fatigue.value": newVal,
-      "system.fatigue.max":   threshold
-    };
-
-    if (system.conditions?.unconscious && newVal < threshold) {
-      updates["system.conditions.unconscious"] = false;
-    }
-
-    await this.actor.update(updates);
+    return removeFatigue(this.actor, amount);
   }
 
   async _fatiguePeriodRest() {
-    const current = this.actor.system.fatigue?.value ?? 0;
-    if (current <= 0) {
-      ui.notifications.info(`${this.actor.name}: Усталость и так 0.`);
-      return;
-    }
-    await this._removeFatigue(1);
-
-    const rollMode = game.settings.get("core", "rollMode");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("spark","#4dffa6")}${this.actor.name} — Час отдыха</div>
-        <div class="roll-outcome">
-          <span class="roll-success">Снята 1 Усталость. Осталось: <b>${Math.max(0, current - 1)}</b></span>
-        </div>
-      </div>`
-    }, rollMode));
+    return fatiguePeriodRest(this.actor);
   }
 
   async _fatigueSleep() {
-    const current = this.actor.system.fatigue?.value ?? 0;
-    const tb      = this.actor.system.characteristics?.t?.bonus  ?? 0;
-    const wb      = this.actor.system.characteristics?.wp?.bonus ?? 0;
-
-    await this.actor.update({
-      "system.fatigue.value":          0,
-      "system.fatigue.max":            tb + wb,
-      "system.conditions.unconscious": false
-    });
-
-    const rollMode = game.settings.get("core", "rollMode");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("spark","#4dffa6")}${this.actor.name} — Полноценный сон</div>
-        <div class="roll-outcome">
-          <span class="roll-success">Вся Усталость снята (было: <b>${current}</b>).</span>
-        </div>
-      </div>`
-    }, rollMode));
+    return fatigueSleep(this.actor);
   }
 
   // ── Диалог добавления состояния ───────────────────────────────────────────
 
   _showAddConditionDialog() {
-    const conds = this.actor.system.conditions || {};
-    const inactive = Object.entries(CONDITIONS_DEF)
-      .filter(([key]) => !conds[key])
-      .map(([key, def]) =>
-        `<label class="add-cond-label" style="--cond-color:${def.color || "#4dffa6"};">
-          <input type="checkbox" class="add-cond-cb" data-condition="${key}"/>
-          <span class="add-cond-icon">${def.svg || def.icon}</span>
-          <span class="add-cond-name">${def.label}</span>
-        </label>`
-      ).join("");
-
-    if (!inactive) {
-      ui.notifications.info("Все состояния уже активны!");
-      return;
-    }
-
-    new Dialog({
-      title: "Добавить состояние",
-      content: `
-        <form class="wh-add-condition-form">
-          <div class="add-cond-list">${inactive}</div>
-        </form>`,
-      buttons: {
-        add: {
-          icon: '<i class="fas fa-plus"></i>',
-          label: "Добавить",
-          callback: async html => {
-            const updates = {};
-            html.find(".add-cond-cb:checked").each((_, cb) => {
-              const key = cb.dataset.condition;
-              updates[`system.conditions.${key}`] = true;
-            });
-            if (Object.keys(updates).length > 0) {
-              await this.actor.update(updates);
-            }
-          }
-        },
-        cancel: { label: "Отмена" }
-      },
-      default: "add"
-    }, { classes: ["dialog", "wh-add-condition-dialog", "warhammer-dbc", "wh-holo"], width: 360 }).render(true);
+    return showAddConditionDialog(this.actor);
   }
 
   // ── Диалог атаки ─────────────────────────────────────────────────────────
@@ -5058,247 +4256,28 @@ html.find(".addiction-remove-btn").click(async ev => {
   // ── Лечение / Первая Помощь ───────────────────────────────────────────────
   /** Диалог лечения: себя или выбранной цели (тест Медики/Стойкости). */
   _showHealingDialog() {
-    const medic   = this.actor;
-    const tgt     = [...(game.user.targets ?? [])][0]?.actor || null;
-    const hasTgt  = !!tgt && tgt.id !== medic.id;
-    const refHtml = `
-      <details class="heal-reference" style="margin-top:6px;font-size:0.82em;">
-        <summary style="cursor:pointer;font-weight:bold;">📖 Справка по лечению</summary>
-        <div style="padding:4px 2px;line-height:1.35;">
-          <b>Уровни ранения</b> (потеря Ран): Лёгкое — до T.b×2; Тяжёлое — больше T.b×2; Критическое — Отрицательные Раны (крит. урон).<br/>
-          <b>Первая Помощь</b> (5 Ходов; 1 раз после урона, провал = использование): Лёгкое Medicae+10 (I.b Ран), Тяжёлое Medicae+0 (2), Критическое Medicae−10 (1).<br/>
-          <b>Пассивное</b> (раз в сутки): Лёгкое 1; Тяжёлое — тест T+0 на 1; Критическое — нет.<br/>
-          <b>Отдых</b> (сутки, без тяжёлой работы/боёв): Лёгкое ½T.b; Тяжёлое 1; Критическое — тест T+0 на 1.<br/>
-          <b>Постельный режим</b> (сутки, лёжа): Лёгкое T.b; Тяжёлое ½T.b (окр.▲); Критическое 1.<br/>
-          <b>Мед. уход</b>: Medicae+0 (лёгкий/тяжёлый) сокращает период до 8 часов; Medicae−10 (критический) — лечится как тяжёлый, но раз в сутки.<br/>
-          <b>Физиология Астартес</b>: всегда считается отдыхающим; реальный отдых = постельный режим; полный постельный режим не ускоряет сверх этого.<br/>
-          <b>Прижигание</b>: раскалённым предметом — 1d5 Усталости и 1d10 урона в Т, цель фиксируют или тест W−20; иногда останавливает заражение через рану.<br/>
-          <b>Бесполезные конечности/Ампутация</b>: лечение перелома — 5 мин + Medicae+0 (конечность бесполезна 2d10−T.b сут.). Без помощи 2×T.b ч — перманентно; ампутация Medicae−10 (провал → Кровотечение, обрубок Medicae−10 или Гангрена).<br/>
-          <b>Пришивание конечностей</b>: Medicae−30 (нужно качественное снаряжение); успех — восстановление 1d10+3−T.b сут.<br/>
-          <b>Бионика/Кибернетика</b>: установка Medicae−30; провал — 1d10 непогл. R; успех — 1d10+3−T.b сут. адаптации.<br/>
-          <b>Кома</b>: вывод раз в 10−T.b дней тестом Medicae−40 (нужен уход и питание).<br/>
-          <b>Лечение болезней</b>: по умолчанию постельный режим; просто отдых −20, без отдыха −40; тест обычно раз в сутки.
-        </div>
-      </details>`;
-
-    const content = `
-      <form class="wh-wizard-form" style="padding:6px;">
-        <div class="atk-dlg-header"><span class="atk-weapon-name">${rollIcon("heart","#ff8a8a")}Лечение</span></div>
-        <div class="atk-dlg-row"><label>Пациент:</label>
-          <select id="heal-patient">
-            <option value="self">${medic.name} (себя)</option>
-            ${hasTgt ? `<option value="target" selected>${tgt.name} (цель)</option>` : ``}
-          </select>
-        </div>
-        <div class="atk-dlg-row"><label>Режим:</label>
-          <select id="heal-mode">
-            <option value="firstAid">Первая Помощь (тест Медики)</option>
-            <option value="rest">Отдых (сутки)</option>
-            <option value="bedRest">Постельный режим (сутки)</option>
-            <option value="passive">Пассивное (сутки)</option>
-          </select>
-        </div>
-        <div class="atk-dlg-row"><label title="Medicae: критический лечится как тяжёлый; период до 8 часов"><input type="checkbox" id="heal-care"/> Мед. уход</label></div>
-        <div class="atk-dlg-row"><label>Мод. теста:</label><input type="number" id="heal-mod" value="0" style="width:60px;"/></div>
-        <div class="atk-dlg-row"><label title="Напр. Мастер-Хирургеон +2">Доп. Раны:</label><input type="number" id="heal-bonus" value="0" style="width:60px;"/></div>
-        <div id="heal-note" class="atk-range-info" style="font-size:0.84em;"></div>
-        ${refHtml}
-      </form>`;
-
-    const updateNote = (html) => {
-      const patient = html.find("#heal-patient").val() === "target" ? tgt : medic;
-      if (!patient) return;
-      const lvl   = _woundLevel(patient.system);
-      const parts = [
-        `<b>Пациент:</b> ${patient.name}`,
-        `<b>Уровень ранения:</b> ${lvl.label} (потеряно ${lvl.lost}${lvl.crit ? `, крит ${lvl.crit}` : ""}, T.b ${lvl.tb})`
-      ];
-      if (hasRuleFlag(patient, "healing.astartes")) parts.push(`<i>Физиология Астартес: всегда считается отдыхающим.</i>`);
-      if (patient.system.wounds?.firstAidUsed) parts.push(`<span style="color:#a33;">⚠ Первая Помощь уже оказана (нужен новый урон).</span>`);
-      html.find("#heal-note").html(parts.join("<br/>"));
-    };
-
-    new Dialog({
-      title: "Лечение",
-      content,
-      buttons: {
-        go: { icon: '<i class="fas fa-heart"></i>', label: "Выполнить", callback: async html => {
-          const patient = html.find("#heal-patient").val() === "target" ? tgt : medic;
-          if (!patient) { ui.notifications.warn("Нет выбранной цели — наведите таргет (T) на токен пациента."); return; }
-          await this._applyHealing(patient, {
-            mode:  html.find("#heal-mode").val(),
-            care:  html.find("#heal-care").is(":checked"),
-            mod:   parseInt(html.find("#heal-mod").val())   || 0,
-            bonus: parseInt(html.find("#heal-bonus").val()) || 0
-          });
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "go",
-      render: html => {
-        updateNote(html);
-        html.find("#heal-patient, #heal-mode").on("change", () => updateNote(html));
-      }
-    }, { classes: ["dialog", "wh-attack-dialog"], width: 440 }).render(true);
+    return showHealingDialog(this.actor);
   }
 
   /** Расчёт и применение лечения к пациенту + сообщение в чат. */
   async _applyHealing(patient, { mode, care, mod, bonus }) {
-    const medic = this.actor;
-    const lvl   = _woundLevel(patient.system);
-    const tb    = lvl.tb;
-    // Физиология Астартес — возможность от правил, а не раса пациента:
-    // «лечится как космодесантник» книга пишет и про другие расы.
-    const isAstartes = hasRuleFlag(patient, "healing.astartes");
-    const rolls = [];
-    const lines = [];
-    let heal = 0;
-    const lblOf = { light: "Лёгкое", heavy: "Тяжёлое", critical: "Критическое" };
-    const half  = (n, up) => up ? Math.ceil(n / 2) : Math.floor(n / 2);
-    const medSkill = () => medic.system.skills?.medicae?.total
-      ?? ((medic.system.characteristics?.int?.value ?? 20) - 20);
-
-    if (mode === "firstAid") {
-      if (patient.system.wounds?.firstAidUsed) {
-        ui.notifications.warn(`${patient.name}: Первая Помощь уже оказывалась после этого урона.`);
-        return;
-      }
-      const testMod = ({ light: 10, heavy: 0, critical: -10 }[lvl.key]) + mod;
-      const skill   = medSkill();
-      const eff     = skill + testMod;
-      const roll    = await new Roll("1d100").evaluate(); rolls.push(roll);
-      const rv      = roll.total;
-      const success = rv <= eff;
-      const deg     = Math.floor(Math.abs(success ? eff - rv : rv - eff) / 10) + 1;
-      const baseHeal = { light: medic.system.characteristics?.int?.bonus ?? 0, heavy: 2, critical: 1 }[lvl.key];
-      lines.push(`${rollIcon("heart","#ff8a8a")}<b>Первая Помощь</b> (${lvl.label}): Медика ${skill}${testMod >= 0 ? "+" : ""}${testMod} → порог <b>${eff}</b>, бросок <b>${rv}</b> — ${success ? `<span class="roll-success">Успех (${deg})</span>` : `<span class="roll-failure">Провал (${deg})</span>`}`);
-      heal = success ? Math.max(0, baseHeal + bonus) : 0;
-      if (!success) lines.push(`Восстановление: 0 — Первая Помощь израсходована.`);
-      try { await patient.update({ "system.wounds.firstAidUsed": true }); } catch(e) {}
-    } else {
-      // Физиология Астартес: пассивное → отдых; отдых → постельный режим.
-      let effMode = mode;
-      if (isAstartes) {
-        if (mode === "passive")   effMode = "rest";
-        else if (mode === "rest") effMode = "bedRest";
-        if (effMode !== mode) lines.push(`<i>Астартес: режим «${({passive:"Пассивное",rest:"Отдых"})[mode]}» считается как «${({rest:"Отдых",bedRest:"Постельный режим"})[effMode]}».</i>`);
-      }
-      // Мед. уход.
-      let key = lvl.key;
-      if (care) {
-        const careMod = (lvl.key === "critical" ? -10 : 0) + mod;
-        const eff  = medSkill() + careMod;
-        const roll = await new Roll("1d100").evaluate(); rolls.push(roll);
-        const ok   = roll.total <= eff;
-        if (lvl.key === "critical") {
-          lines.push(`${rollIcon("heart","#ff8a8a")}<b>Мед. уход</b> (крит): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${ok ? `<span class="roll-success">Успех — лечится как тяжёлый</span>` : `<span class="roll-failure">Провал</span>`}`);
-          if (ok) key = "heavy";
-        } else {
-          lines.push(`${rollIcon("heart","#ff8a8a")}<b>Мед. уход</b>: Медика+0${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${ok ? `<span class="roll-success">Успех — период до 8 часов</span>` : `<span class="roll-failure">Провал</span>`}`);
-        }
-      }
-      const modeLabel = { rest: "Отдых", bedRest: "Постельный режим", passive: "Пассивное лечение" }[effMode];
-      let amount = 0, needT = false;
-      if (effMode === "rest") {
-        amount = { light: half(tb), heavy: 1, critical: 0 }[key];
-        if (key === "critical") needT = true;
-      } else if (effMode === "bedRest") {
-        amount = { light: tb, heavy: half(tb, true), critical: 1 }[key];
-      } else { // passive
-        amount = { light: 1, heavy: 0, critical: 0 }[key];
-        if (key === "heavy") needT = true;
-      }
-      if (needT) {
-        const tv   = (patient.system.characteristics?.t?.value ?? 0) + mod;
-        const roll = await new Roll("1d100").evaluate(); rolls.push(roll);
-        const ok   = roll.total <= tv;
-        lines.push(`${rollIcon("heart","#8fd0ff")}<b>${modeLabel}</b> (${lblOf[key]}): тест T+0${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${tv}</b>, бросок <b>${roll.total}</b> — ${ok ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`);
-        heal = ok ? Math.max(0, 1 + bonus) : 0;
-      } else {
-        heal = amount > 0 ? Math.max(0, amount + bonus) : 0;
-        lines.push(`${rollIcon("heart","#8fd0ff")}<b>${modeLabel}</b> (${lblOf[key]}): восстановление <b>${amount}</b>${bonus && amount > 0 ? ` + ${bonus} (доп.)` : ""} Ран${amount === 0 ? " — нет лечения" : ""}.`);
-      }
-    }
-
-    // Применяем (не больше, чем не хватает Ран).
-    const missing = Math.max(0, (patient.system.wounds?.max ?? 0) - (patient.system.wounds?.value ?? 0))
-                  + (patient.system.wounds?.critical ?? 0);
-    const applied = Math.min(heal, missing);
-    if (applied > 0) {
-      try {
-        await patient.update(_computeWoundHealing(patient.system, applied));
-        lines.push(`${rollIcon("heart","#ff8a8a")}Восстановлено Ран: <b>${applied}</b>${applied < heal ? ` (ограничено нехваткой)` : ""}.`);
-      } catch(e) {
-        lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — восстановите <b>${applied}</b> Ран вручную (нужен ГМ).`);
-      }
-    }
-
-    const rollMode = game.settings.get("core", "rollMode");
-    const msg = ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: medic }),
-      content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("heart","#ff8a8a")}Лечение — ${patient.name}</div><div class="roll-threshold">${lines.join("<br/>")}</div></div>`,
-      rolls,
-      sound: rolls.length ? CONFIG.sounds.dice : undefined
-    }, rollMode);
-    await ChatMessage.create(msg);
+    return applyHealing(this.actor, patient, { mode, care, mod, bonus });
   }
 
   // ── Очки Боли (Друкхари) ──────────────────────────────────────────────────
   /** Краткое сообщение о Боли в чат. */
   async _painChatMsg(text) {
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("bolt","#c98bff")}Очки Боли — ${this.actor.name}</div><div class="roll-threshold">${text}</div></div>`
-    }, game.settings.get("core", "rollMode")));
+    return painChatMsg(this.actor, text);
   }
 
   /** Впитать (+1) или потратить (−1) Очко Боли. */
   async _painChange(delta, kind) {
-    const cur = this.actor.system.fate?.value ?? 0;
-    const max = this.actor.system.fate?.max   ?? 0;
-    if (delta > 0 && cur >= max) { ui.notifications.info(`Очки Боли уже на максимуме (${max}).`); return; }
-    if (delta < 0 && cur <= 0)   { ui.notifications.info("Нет Очков Боли для траты."); return; }
-    const next = Math.max(0, Math.min(max, cur + delta));
-    await this.actor.update({ "system.fate.value": next });
-    await this._painChatMsg(kind === "absorb"
-      ? `＋ Впитана <b>1</b> Боль (Реакция). Текущая Боль: <b>${next}</b> / ${max}.`
-      : `− Потрачена <b>1</b> Боль. Осталось: <b>${next}</b> / ${max}.`);
+    return painChange(this.actor, delta, kind);
   }
 
   /** Выжигание Души / Варп-урон: Боль выжигается первой (3 урона за 1 Боль). */
   _painSoulBurn() {
-    const content = `
-      <form class="wh-wizard-form" style="padding:6px;">
-        <div class="atk-dlg-header"><span class="atk-weapon-name">🔥 Выжигание Души / Варп-урон</span></div>
-        <div class="atk-dlg-row"><label>Входящий урон:</label><input type="number" id="pain-sb-dmg" value="0" min="0" style="width:70px;"/></div>
-        <div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Боль выжигается первой: 1 Боль поглощает 3 урона. Остаток уходит в Раны.</div>
-      </form>`;
-    new Dialog({
-      title: "Поглощение Болью",
-      content,
-      buttons: {
-        go: { icon: '<i class="fas fa-fire"></i>', label: "Поглотить", callback: async html => {
-          const dmg = Math.max(0, parseInt(html.find("#pain-sb-dmg").val()) || 0);
-          if (!dmg) return;
-          const cur = this.actor.system.fate?.value ?? 0;
-          const painUsed = Math.min(cur, Math.ceil(dmg / 3));
-          const absorbed = Math.min(dmg, painUsed * 3);
-          const remaining = dmg - absorbed;
-          const updates = { "system.fate.value": cur - painUsed };
-          if (remaining > 0) Object.assign(updates, _computeWoundDamage(this.actor.system, remaining));
-          await this.actor.update(updates);
-          const lines = [
-            `Входящий урон: <b>${dmg}</b>`,
-            `${rollIcon("fire","#ff8a3a")}Выжжено Боли: <b>${painUsed}</b> → поглощено <b>${absorbed}</b> урона`,
-            remaining > 0 ? `${rollIcon("blood","#ff6b6b")}В Раны: <b>${remaining}</b>` : `Урон полностью поглощён Болью`,
-            `Осталось Боли: <b>${cur - painUsed}</b> / ${this.actor.system.fate?.max ?? 0}`
-          ];
-          await this._painChatMsg(lines.join("<br/>"));
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "go"
-    }, { classes: ["dialog", "wh-attack-dialog"], width: 380 }).render(true);
+    return openPainSoulBurnDialog(this.actor);
   }
 // ── Активация пост-эффекта ────────────────────────────────────────────────
 
@@ -5566,57 +4545,7 @@ async _triggerAfterEffect(item) {
   // ── Тест Зависимости ───────────────────────────────────────────────────────
 
   async _rollAddictionTest(item, charKey = "t", testMod = 0) {
-    const charTotal   = this.actor.system.characteristics[charKey]?.total ?? 0;
-    const fatigue     = this._getFatiguePenalty(charKey);
-    const eff         = charTotal + testMod + fatigue;
-    const wasAddicted = item?.system?.addiction?.isAddicted || false;
-
-    const roll    = await new Roll("1d100").evaluate();
-    const rv      = roll.total;
-    const success = rv <= eff;
-    const deg     = Math.floor(Math.abs(rv - eff) / 10) + 1;
-    const abbr    = CHARACTERISTICS[charKey]?.abbr ?? charKey.toUpperCase();
-    const name    = item?.name ?? "Наркотик";
-
-    let outcome;
-    if (success) {
-      if (wasAddicted && item) {
-        // Срыв зависимости — избавление
-        await item.update({ "system.addiction.isAddicted": false });
-        const still = this.actor.items.some(i =>
-          i.type === "drug" && i.id !== item.id &&
-          i.system.addiction?.hasAddiction && i.system.addiction?.isAddicted
-        );
-        if (!still) await this.actor.update({ "system.conditions.addicted": false });
-        outcome = `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Зависимость преодолена!</span>`;
-      } else {
-        outcome = `<span class="roll-success">Сопротивление успешно — ${deg} ${_degWord(deg)}</span>`;
-      }
-    } else {
-      // Провал → персонаж зависим от ЭТОГО препарата
-      if (item) await item.update({ "system.addiction.isAddicted": true });
-      await this.actor.update({ "system.conditions.addicted": true });
-      outcome = wasAddicted
-        ? `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Зависимость сохраняется.</span>`
-        : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Персонаж стал зависим!</span>`;
-    }
-
-    const rollMode = game.settings.get("core", "rollMode");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("warn","#ffb84d")}Тест Зависимости — ${name}</div>
-          <div class="roll-threshold">
-            ${abbr}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${fatigue !== 0 ? ` 😓 ${fatigue}` : ""}
-            → Порог: <b>${eff}</b>
-          </div>
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">${outcome}</div>
-        </div>`,
-      rolls: [roll],
-      sound: CONFIG.sounds.dice
-    }, rollMode));
+    return rollAddictionTest(this.actor, item, charKey, testMod);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -6867,26 +5796,6 @@ function _computeWoundDamage(system, amount) {
   return out;
 }
 
-/**
- * Уровень ранения по текущим Ранам:
- *  - critical>0 (Отрицательные Раны) → «critical»
- *  - потеряно > T.b×2 → «heavy»
- *  - иначе → «light» (в т.ч. без ранений)
- * Возвращает { key, label, lost, tb }.
- */
-function _woundLevel(system) {
-  const value = system.wounds?.value    ?? 0;
-  const max   = system.wounds?.max      ?? 0;
-  const crit  = system.wounds?.critical ?? 0;
-  const tb    = system.characteristics?.t?.bonus ?? 0;
-  const lost  = Math.max(0, max - value);
-  let key = "light";
-  if (crit > 0)            key = "critical";
-  else if (lost > tb * 2)  key = "heavy";
-  const label = { light: "Лёгкое", heavy: "Тяжёлое", critical: "Критическое" }[key];
-  return { key, label, lost, tb, crit };
-}
-
 /** Подставляет бонусы характеристик в формулу и берёт первую (формульную) часть. */
 // Делегирует единому каноническому резолверу (utils). corB — бонус Порчи (Cor.b).
 function _resolveCharFormula(formula, chars, corB = 0) {
@@ -6999,17 +5908,4 @@ async function _applyEffectExtras(target, fx) {
 
   return { updates, lines, rolls };
 
-}
-
-/**
- * Подключает окно выбора Талантов/Черт к листу, который не наследует лист
- * персонажа (например, к Орде). Копируются только методы самого пикера —
- * остальная механика листа не затрагивается.
- */
-export function attachItemPicker(SheetClass) {
-  for (const m of ["_openItemPicker", "_promptDynamicAptTalent",
-                   "_dynamicTalentCostRange", "_dynamicTalentOptions"]) {
-    if (WarhammerCharacterSheet.prototype[m] && !SheetClass.prototype[m])
-      SheetClass.prototype[m] = WarhammerCharacterSheet.prototype[m];
-  }
 }
