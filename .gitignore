@@ -12,6 +12,7 @@ reqs.txt
 
 # Локальные настройки инструментов
 .claude/settings.local.json
+.codegraph/
 
 # Системный мусор
 .DS_Store
