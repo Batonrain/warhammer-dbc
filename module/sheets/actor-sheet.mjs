@@ -12,7 +12,6 @@ import { talentCostXP, aptitudeCat, charAptitudeSet,
          CHAR_APTITUDES, resolveTalentAptitudes } from "../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES, WEAPON_CLASSES, DAMAGE_TYPES } from "../constants/items.mjs";
-import { resolveCultureFx } from "../constants/legions.mjs";
 import { AZURIANE_PATHS, PATH_GRADES, PATH_GRADE_ORDER,
          buildPathSelectOptions, buildGradeSelectOptions } from "../constants/aeldari-paths.mjs";
 import { buildWorldSelectOptions, buildBandSelectOptions,
@@ -23,7 +22,7 @@ import { buildMasqueOptions, getMasque } from "../constants/harlequin-masques.mj
 import { MELEE_STANCES, MELEE_TECHNIQUES, GRIPS, parseGrips, gripEffects } from "../constants/combat.mjs";
 import { _degWord, _buildAmmoModString, resolveCharFormula, fateTerm,
          splitTopLevel } from "../helpers/utils.mjs";
-import { grantCreationSkills, grantCultureSkills } from "../apps/creation.mjs";
+import { showCreationWizard, ruSpec } from "../apps/creation.mjs";
 import { buildSkillDisplay, buildGetData } from "./sheet-helpers.mjs";
 import { _executeAttackRoll }              from "../combat/attack.mjs";
 import { attackThreshold }                 from "../combat/attack-threshold.mjs";
@@ -54,11 +53,10 @@ import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
-import { RACES, SUBRACES, SUBRACE_DATA,
+import { RACES, SUBRACES,
          RACE_GROUPS, AELDARI_RACES, AELDARI_PATHS } from "../constants/races.mjs";
-import { getLegion, getChapter, buildLegionOptions, buildChapterOptions, buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
-import { archetypeEntries, archetypesForRace, archetypeSheetContext, applyArchetype } from "../apps/archetypes.mjs";
-import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
+import { getLegion, getChapter, resolveCulture } from "../constants/legions.mjs";
+import { archetypeSheetContext, applyArchetype } from "../apps/archetypes.mjs";
 import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../constants/possession.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -77,10 +75,6 @@ import { isHelmetMod } from "../combat/armor-mods.mjs";
 import { isFeatureEnabled, disabledRaceKeys } from "../constants/features.mjs";
 import { syncItemEffectsDisabled } from "../apps/effects.mjs";
 
-// 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
-// Влияние (inf) сюда не входит — оно от arch.infRoll.
-const CREATION_ROLL_CHARS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
-
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
 // «Minion of Chaos», дефисы, мн.ч. и опечатки.
@@ -92,72 +86,6 @@ const TALENT_ALIAS = {
 };
 // Разделители вариантов выбора в данных: « или » и «/».
 const TALENT_CHOICE_SEP = /\s+или\s+|\s*\/\s*/i;
-// ── Локализация навыков/специализаций для мастера (англ. данные → русский) ──
-const _EN_SKILL = {
-  "acrobatics":"acrobatics","athletics":"athletics","awareness":"awareness","charm":"charm",
-  "command":"command","commerce":"commerce","deceive":"deceive","dodge":"dodge","inquiry":"inquiry",
-  "interrogate":"interrogate","intimidate":"intimidate","logic":"logic","medicae":"medicae",
-  "parry":"parry","psyniscience":"psyniscience","scrutiny":"scrutiny","security":"security",
-  "sleight of hand":"sleightOfHand","stealth":"stealth","survival":"survival","tech-use":"techUse","tech use":"techUse"
-};
-const _EN_GROUP = {
-  "common lore":"commonLore","forbidden lore":"forbiddenLore","scholastic lore":"scholasticLore",
-  "schol. lore":"scholasticLore","linguistics":"linguistics","navigation":"navigation",
-  "navigate":"navigation","operate":"operate","trade":"trade"
-};
-const _SPEC_RU = {
-  // Чувства
-  "sight":"Зрение","hearing":"Слух","smell":"Обоняние","taste":"Вкус","touch":"Осязание","all":"Все",
-  // Типы оружия
-  "bolt":"Болтерное","flame":"Зажигательное","grav":"Гравитонное","las":"Лазерное","launcher":"Пусковое",
-  "melta":"Мельта","plasma":"Плазма","power":"Силовое","shock":"Шоковое","chain":"Цепное","bow":"Лук",
-  "solid projectile":"Твердотельное","primary":"Основное","primitive":"Примитивное","exotic":"Экзотическое",
-  "flechette":"Флешетты","needle":"Игольное","galvanic":"Гальваническое","rad":"Радиационное",
-  // Сопротивления
-  "cold":"Холод","blindness":"Слепота","deafness":"Глухота","disease":"Болезни","fear":"Страх",
-  "heat":"Жар","poison":"Яды","poisons":"Яды","psychic powers":"Психосилы","stun":"Оглушение","radiation":"Радиация",
-  // Знания/языки
-  "imperium":"Империум","war":"Война","chaos":"Хаос","astartes":"Астартес","adeptus astartes":"Астартес",
-  "adeptus mechanicus":"Механикус","mechanicus":"Механикус","daemons":"Демоны","warp":"Варп","heresy":"Ересь",
-  "horus heresy and long war":"Ересь Хоруса и Долгая Война","xenos":"Ксеносы","psykers":"Псайкеры","mutants":"Мутанты",
-  "heraldry":"Геральдика","codex astartes":"Кодекс Астартес","legend":"Легенды","legends":"Легенды",
-  "numerology":"Нумерология","occult":"Оккультизм","beasts":"Звери","pirates":"Пираты",
-  "high gothic":"Высокий Готик","low gothic":"Низкий Готик","battle cant":"Боевой Язык","battle kant":"Боевой Язык",
-  "druchii":"Друкхари","lameldannar":"ЛамЭлданнар","lameldannar druchii":"ЛамЭлданнар (Друкхари)",
-  "aeldari":"Аэльдари","corsair":"Корсар","eldar":"Эльдар","chaos glyphs":"Глифы Хаоса","true tongue":"Истинный Язык",
-  "inquisition":"Инквизиция","navigators":"Навигаторы","xenobiology":"Ксенобиология","tactica imperialis":"Тактика Империалис"
-};
-const _norm = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
-function ruSpec(x) { return _SPEC_RU[_norm(x)] || String(x).trim(); }
-// Один элемент строки навыков → русский («Common Lore (Druchii) +10» → «Общие Знания (Друкхари) +10»).
-function ruSkillEntry(str) {
-  let s = String(str).trim();
-  const rk = (s.match(/\+(\d+)/) || [])[1]; const suf = rk ? ` +${rk}` : "";
-  s = s.replace(/\+\d+/, "").trim();
-  const gm = s.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
-  if (gm) {
-    const base = _norm(gm[1]); const inside = gm[2].trim();
-    const gk = _EN_GROUP[base]; const sk = _EN_SKILL[base];
-    const lbl = gk ? GROUP_SKILLS_DEF[gk]?.label : (sk ? SKILLS_DEF[sk]?.label : gm[1].trim());
-    if (/люб/i.test(inside)) return `${lbl} (${inside})${suf}`;
-    const specs = inside.split(/\s*,\s*/).map(x => ruSpec(x)).join(", ");
-    return `${lbl} (${specs})${suf}`;
-  }
-  const sk = _EN_SKILL[_norm(s)];
-  return (sk ? SKILLS_DEF[sk]?.label : s) + suf;
-}
-// Полная строка навыков (через запятую, с учётом «или»/скобок) → русский.
-function ruSkillString(str) {
-  if (!str) return "";
-  // Разбиваем по запятым верхнего уровня (скобки не трогаем).
-  const out = []; let d = 0, cur = "";
-  for (const ch of String(str)) { if (ch === "(") d++; else if (ch === ")") d--; if (ch === "," && d === 0) { out.push(cur); cur = ""; } else cur += ch; }
-  if (cur.trim()) out.push(cur);
-  return out.map(e => {
-    const parts = e.split(/\s+или\s+/);
-    return parts.map(p => ruSkillEntry(p)).join(" или ");
-  }).join(", ");
-}
 
 export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
@@ -765,22 +693,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     return openGearPicker(this.actor);
   }
 
-  /** Выдаёт базовые импланты Механикум (пропуская уже имеющиеся). */
-  async _grantMechanicusImplants() {
-    const existing = new Set(this.actor.items.filter(i => i.type === "implant").map(i => i.name));
-    const toAdd = MECHANICUS_IMPLANTS.filter(d => !existing.has(d.name)).map(d => foundry.utils.deepClone(d));
-    if (toAdd.length) await this.actor.createEmbeddedDocuments("Item", toAdd);
-    return toAdd.length;
-  }
-
-  /** Выдаёт Скитарию Боевые Латы Скитарии (броня + дефлектор) вместо имплантов Механикум. */
-  async _grantSkitariiWarPlate() {
-    const existing = new Set(this.actor.items.filter(i => i.type === "implant").map(i => i.name));
-    if (existing.has(SKITARII_WAR_PLATE.name)) return 0;
-    await this.actor.createEmbeddedDocuments("Item", [foundry.utils.deepClone(SKITARII_WAR_PLATE)]);
-    return 1;
-  }
-
   // ── Страх / Безумие ────────────────────────────────────────────────────
 
   /** Тест Страха → при провале таблица Шока (1d100 + 10×Провалы−1 − Infamy). */
@@ -815,13 +727,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   /** Тест конкретного расстройства (W + его testMod). */
   async _rollDisorderTest(item) {
     return rollDisorderTest(this.actor, item);
-  }
-
-  /** Бросает формулу стартовых Ран вида "15+1d5". */
-  async _rollWoundsFormula(formula) {
-    if (!formula) return 0;
-    try { return (await new Roll(String(formula)).evaluate()).total; }
-    catch(e) { console.warn("wounds formula:", formula, e); return 0; }
   }
 
   /** Применяет расовые бонусы (характеристики только в пустые поля + расовые Черты). */
@@ -935,458 +840,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     }
 
     await apply(noCurse ? null : { name: effName, text: curse });
-  }
-
-  /**
-   * Мастер создания персонажа: Раса → Субраса → Мировоззрение → Архетип.
-   * Применяет всё разом (характеристики только в пустые поля, Черты/импланты —
-   * недостающие). Безопасно при повторном запуске.
-   */
-  // Резолвит объекты расы/архетипа/субрасы/«Прошлого» по выбранным ключам мастера.
-  _resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harlequinPast }) {
-    const race = RACES[raceKey];
-    const arch = archetypeEntries()[archKey];
-    const sub  = SUBRACE_DATA[subraceKey];
-    const pastKey = raceKey === "ynnari" ? ynnariPast
-                  : raceKey === "harlequin" ? harlequinPast : "";
-    const past = (pastKey && RACES[pastKey]) ? RACES[pastKey] : null;
-    return { race, arch, sub, past, pastKey };
-  }
-
-  // Плоская база характеристик до броска: раса (+ Прошлое) + архетип + субраса.
-  _creationCharSum({ race, past, arch, sub }) {
-    const sum = {};
-    for (const [k, v] of Object.entries(race?.chars    || {})) sum[k] = (sum[k] || 0) + v;
-    for (const [k, v] of Object.entries(past?.chars    || {})) sum[k] = (sum[k] || 0) + v;
-    for (const [k, v] of Object.entries(arch?.charBonus || {})) sum[k] = (sum[k] || 0) + v;
-    for (const [k, v] of Object.entries(sub?.charMods   || {})) sum[k] = (sum[k] || 0) + v;
-    return sum;
-  }
-
-  // Число бонусных бросков расы (по выбранным ключам мастера).
-  _creationBonusRolls(raceKey) {
-    return Number(RACES[raceKey]?.bonusRolls) || 0;
-  }
-
-  // Один комплект метода «Генерация»: 9 (+бонус) бросков 2d10, берём 9 старших.
-  _rollCharSet(bonusRolls = 0) {
-    const d = () => 1 + Math.floor(Math.random() * 10);
-    const r2 = () => d() + d();
-    const vals = Array.from({ length: 9 + bonusRolls }, r2).sort((a, b) => b - a).slice(0, 9);
-    return { vals, sum: vals.reduce((s, v) => s + v, 0) };
-  }
-
-  // Итоговые значения распределения: { charKey: значение активного набора }.
-  _wizardCharValues() {
-    const set  = this._wizardSets?.[this._wizardActiveSet];
-    const vals = set?.vals || [];
-    const out = {};
-    for (const k of CREATION_ROLL_CHARS) {
-      const vi = this._wizardAssign?.[k];
-      out[k] = (vi != null) ? (vals[vi] ?? 0) : 0;
-    }
-    return out;
-  }
-
-  _showCreationWizard() {
-    const curRace = this.actor.system.race || "human";
-    // Метод «Генерация»: два независимых набора (каждый можно перебросить). Игрок
-    // выбирает набор, затем раскидывает его значения по х-кам (drag&drop / клики).
-    //   _wizardSets       — [{vals:[9], sum}, {vals:[9], sum}]
-    //   _wizardActiveSet  — индекс выбранного набора (0/1)
-    //   _wizardAssign     — { charKey: индекс значения в активном наборе }
-    //   _wizardArmed      — «взятое кликом» значение (индекс) для клик-раскидки
-    const _bonus = this._creationBonusRolls(curRace);
-    this._wizardSets = [this._rollCharSet(_bonus), this._rollCharSet(_bonus)];
-    this._wizardActiveSet = 0;
-    this._wizardAssign = {};
-    this._wizardArmed = null;
-    // Расы выключенных подсистем («Книга Эльдар» и т.п.) прячем из Мастера —
-    // та же логика, что и у шапки листа (context.raceGroups выше).
-    const offRacesWiz = disabledRaceKeys();
-    const raceOpts = RACE_GROUPS.map(g => {
-      const opts = g.races.filter(k => RACES[k] && (k === curRace || !offRacesWiz.includes(k)))
-        .map(k => `<option value="${k}" ${k === curRace ? "selected" : ""}>${RACES[k].label}</option>`).join("");
-      return opts ? `<optgroup label="${g.label}">${opts}</optgroup>` : "";
-    }).join("");
-    const ynnariPastOpts = `<option value="">— не выбрано —</option>` + (RACES.ynnari.pastRaces || [])
-      .map(k => `<option value="${k}" ${k === this.actor.system.ynnariPast ? "selected" : ""}>${RACES[k]?.label || k}</option>`).join("");
-    const harlequinPastOpts = `<option value="">— не выбрано —</option>` + (RACES.harlequin.pastRaces || [])
-      .map(k => `<option value="${k}" ${k === this.actor.system.harlequinPast ? "selected" : ""}>${RACES[k]?.label || k}</option>`).join("");
-
-    const content = `
-      <form class="wh-wizard-form" style="padding:6px;">
-        <div class="atk-dlg-header"><span class="atk-weapon-name">🧙 Создание персонажа</span></div>
-        <div class="atk-dlg-row"><label>Раса:</label><select id="wiz-race">${raceOpts}</select></div>
-        <div class="atk-dlg-row wiz-ynnari-row" style="display:none;"><label>Прошлое:</label><select id="wiz-ynnari-past">${ynnariPastOpts}</select></div>
-        <div class="atk-dlg-row wiz-harlequin-row" style="display:none;"><label>Прошлое:</label><select id="wiz-harlequin-past">${harlequinPastOpts}</select></div>
-        <div class="atk-dlg-row"><label>Субраса:</label><select id="wiz-subrace"></select></div>
-        <div class="atk-dlg-row wiz-align-row"><label>Мировоззрение:</label>
-          <select id="wiz-align">
-            <option value="loyalist">Лоялист</option>
-            <option value="renegade">Ренегат</option>
-            <option value="heretic">Хаосит</option>
-          </select>
-        </div>
-        <div class="atk-dlg-row"><label>Архетип:</label><select id="wiz-arch"></select></div>
-        <div id="wiz-note" class="atk-range-info" style="font-size:0.84em;"></div>
-        <div id="wiz-legion" class="wiz-legion" style="display:none;">
-          <div class="wiz-gen-lbl">Легион Астартес (геносемя и культура выбираются отдельно):</div>
-          <div class="atk-dlg-row"><label>Легион (геносемя):</label><select id="wiz-legion-sel">${buildLegionOptions("")}</select></div>
-          <div class="atk-dlg-row"><label>Орден / Банда:</label><select id="wiz-chapter-sel"></select></div>
-          <div class="atk-dlg-row"><label title="Геносемя сохраняешь, а культуру можно перенять у другого легиона (напр. Повелитель Ночи в Чёрном Легионе).">Культура (легион):</label><select id="wiz-cult-sel">${buildCultureLegionOptions("")}</select></div>
-          <div class="atk-dlg-row" id="wiz-cult-chapter-row" style="display:none;"><label>Культура (орден):</label><select id="wiz-cult-chapter-sel"></select></div>
-        </div>
-        <div class="wiz-gen">
-          <div class="wiz-gen-lbl">1. Выбери набор бросков (можно перебросить):</div>
-          <div id="wiz-sets" class="wiz-sets"></div>
-          <div class="wiz-gen-lbl">2. Раскидай значения по характеристикам — перетащи или кликни значение, затем характеристику:
-            <button type="button" id="wiz-auto" class="wiz-mini-btn" title="Разложить по убыванию">↕ по порядку</button>
-            <button type="button" id="wiz-clear" class="wiz-mini-btn" title="Снять все значения">✕ сброс</button>
-          </div>
-          <div id="wiz-chips" class="wiz-chips"></div>
-          <div id="wiz-slots" class="wiz-slots"></div>
-        </div>
-        <div class="roll-threshold" style="font-size:0.8em;color:#5a4a30;">
-          Итог = база расы/архетипа + раскиданное значение. Заполняются только пустые поля; повторный запуск безопасен.
-        </div>
-      </form>`;
-
-    const dlg = new Dialog({
-      title: "Мастер создания персонажа",
-      content,
-      buttons: {
-        apply: {
-          icon: '<i class="fas fa-user-plus"></i>', label: "Создать",
-          callback: async html => {
-            const isAstartes = html.find("#wiz-race").val() === "astartes";
-            await this._applyCreation({
-              raceKey:    html.find("#wiz-race").val(),
-              subraceKey: html.find("#wiz-subrace").val(),
-              alignment:  html.find("#wiz-align").val(),
-              archKey:    html.find("#wiz-arch").val(),
-              ynnariPast: html.find("#wiz-ynnari-past").val(),
-              harlequinPast: html.find("#wiz-harlequin-past").val(),
-              charRolls:  this._wizardCharValues(),
-              geneSeed: isAstartes ? {
-                legion:         html.find("#wiz-legion-sel").val() || "",
-                chapter:        html.find("#wiz-chapter-sel").val() || "",
-                cultureLegion:  html.find("#wiz-cult-sel").val() || "",
-                cultureChapter: html.find("#wiz-cult-chapter-sel").val() || ""
-              } : null
-            });
-          }
-        },
-        cancel: { label: "Отмена" }
-      },
-      default: "apply",
-      render: html => {
-        const rebuild = () => {
-          const rk    = html.find("#wiz-race").val();
-          const race  = RACES[rk];
-          const subOpts = ['<option value="">— нет —</option>']
-            .concat((race?.subraces || []).map(sk => `<option value="${sk}">${SUBRACES[sk] || sk}</option>`));
-          html.find("#wiz-subrace").html(subOpts.join(""));
-          // Архетипы: Астартес/Азуриане/Друкхари/Арлекины — свои; Человек — обычные.
-          // Прочие (сплайсы, гарпии, наги, скваты и т.п.) — человеческие архетипы.
-          // Исключения: Аэльдари (используют Пути) и Сслиты — архетипа не выбирают.
-          // (фильтрация вынесена в archetypesForRace — тот же приём, что читает и шапка листа)
-          const archEntries = archetypesForRace(rk);
-          // Группировка по полю group (если есть)
-          const grouped = {};
-          for (const [k, a] of archEntries) (grouped[a.group || ""] ??= []).push([k, a]);
-          const archOpts = archEntries.length
-            ? Object.entries(grouped).map(([g, list]) => {
-                const opts = list.map(([k, a]) => `<option value="${k}">${a.name}</option>`).join("");
-                return g ? `<optgroup label="${g}">${opts}</optgroup>` : opts;
-              }).join("")
-            : '<option value="">— нет (Аэльдари используют Пути; Сслиты — без архетипа) —</option>';
-          html.find("#wiz-arch").html(archOpts);
-          html.find(".wiz-ynnari-row").toggle(rk === "ynnari");
-          html.find(".wiz-harlequin-row").toggle(rk === "harlequin");
-          // Аэльдари используют Пути, а не Мировоззрение — скрываем выбор.
-          html.find(".wiz-align-row").toggle(!AELDARI_RACES.includes(rk));
-          // Легион+культура — только для Астартес.
-          html.find("#wiz-legion").toggle(rk === "astartes");
-          if (rk === "astartes") refreshLegion();
-          // Число бонусных бросков зависит от расы — перекатываем оба набора и
-          // сбрасываем раскладку.
-          const bonus = this._creationBonusRolls(rk);
-          this._wizardSets = [this._rollCharSet(bonus), this._rollCharSet(bonus)];
-          this._wizardActiveSet = 0;
-          this._wizardAssign = {};
-          this._wizardArmed = null;
-          this._updateWizardNote(html);
-          renderGen();
-        };
-
-        // Астартес: заполнить зависимые селекты (Орден по легиону, Культура-орден по культуре-легиону).
-        const refreshLegion = () => {
-          const lg = html.find("#wiz-legion-sel").val();
-          html.find("#wiz-chapter-sel").html(buildChapterOptions(lg, ""));
-          const cl = html.find("#wiz-cult-sel").val();
-          html.find("#wiz-cult-chapter-row").toggle(!!cl);
-          if (cl) html.find("#wiz-cult-chapter-sel").html(buildChapterOptions(cl, ""));
-        };
-
-        // Присвоить значение (индекс vi активного набора) характеристике k.
-        // Если это значение уже занято другой х-кой — освобождаем её (без дублей).
-        const assignTo = (k, vi) => {
-          if (vi == null || Number.isNaN(vi)) return;
-          for (const c of CREATION_ROLL_CHARS) if (c !== k && this._wizardAssign[c] === vi) delete this._wizardAssign[c];
-          this._wizardAssign[k] = vi;
-          this._wizardArmed = null;
-        };
-
-        // Полный рендер блока Генерации: наборы + пул фишек + слоты х-к.
-        const renderGen = () => {
-          const { race, arch, sub, past } = this._resolveCreation({
-            raceKey:       html.find("#wiz-race").val(),
-            subraceKey:    html.find("#wiz-subrace").val(),
-            archKey:       html.find("#wiz-arch").val(),
-            ynnariPast:    html.find("#wiz-ynnari-past").val(),
-            harlequinPast: html.find("#wiz-harlequin-past").val()
-          });
-          const sum    = this._creationCharSum({ race, past, arch, sub });
-          const sets   = this._wizardSets || [];
-          const active = this._wizardActiveSet || 0;
-          const vals   = sets[active]?.vals || [];
-          const assign = this._wizardAssign || {};
-          const armed  = this._wizardArmed;
-
-          // 1) Наборы
-          html.find("#wiz-sets").html(sets.map((s, si) => `
-            <div class="wiz-set ${si === active ? "active" : ""}" data-set="${si}" title="Выбрать набор ${si + 1}">
-              <div class="wiz-set-head"><span class="wiz-set-name">Набор ${si + 1}</span>
-                <span class="wiz-set-sum">Σ ${s.sum}</span>
-                <a class="wiz-set-reroll" data-set="${si}" title="Перебросить набор ${si + 1}">↻</a>
-              </div>
-              <div class="wiz-set-vals">${s.vals.map(v => `<span>${v}</span>`).join("")}</div>
-            </div>`).join(""));
-
-          // 2) Пул фишек (незанятые значения активного набора)
-          const used = new Set(Object.values(assign).filter(v => v != null));
-          const poolVis = vals.map((_, i) => i).filter(i => !used.has(i));
-          html.find("#wiz-chips").html(
-            poolVis.length
-              ? poolVis.map(vi => `<span class="wiz-chip ${vi === armed ? "armed" : ""}" draggable="true" data-vi="${vi}">${vals[vi]}</span>`).join("")
-              : `<span class="wiz-chips-empty">все значения разложены</span>`
-          );
-
-          // 3) Слоты характеристик
-          html.find("#wiz-slots").html(CREATION_ROLL_CHARS.map(k => {
-            const base = sum[k] || 0;
-            const vi   = assign[k];
-            const has  = vi != null;
-            const val  = has ? (vals[vi] ?? 0) : 0;
-            return `<div class="wiz-slot ${has ? "filled" : "empty"}" data-char="${k}" title="${CHARACTERISTICS[k].label}: база ${base}${has ? ` + ${val}` : ""}">
-              <span class="ws-abbr">${CHARACTERISTICS[k].abbr}</span>
-              <span class="ws-chip" ${has ? `draggable="true" data-vi="${vi}"` : ""}>${has ? val : "—"}</span>
-              <span class="ws-total">${base + val}</span>
-              <span class="ws-base">база ${base}</span>
-            </div>`;
-          }).join(""));
-
-          // Кол-во разложенных — для подсветки готовности.
-          const done = CREATION_ROLL_CHARS.filter(k => assign[k] != null).length;
-          html.find(".wiz-gen").toggleClass("incomplete", done < CREATION_ROLL_CHARS.length);
-
-          wireGen();
-        };
-
-        // Навешиваем обработчики (drag&drop + клики) после каждого рендера.
-        const wireGen = () => {
-          // Выбор набора
-          html.find(".wiz-set").off("click").on("click", ev => {
-            if ($(ev.target).closest(".wiz-set-reroll").length) return;   // не по кнопке переброса
-            const si = Number(ev.currentTarget.dataset.set);
-            if (si === this._wizardActiveSet) return;
-            this._wizardActiveSet = si;
-            this._wizardAssign = {};                                      // новый набор — новые значения
-            this._wizardArmed = null;
-            renderGen();
-          });
-          // Переброс набора
-          html.find(".wiz-set-reroll").off("click").on("click", ev => {
-            ev.preventDefault(); ev.stopPropagation();
-            const si = Number(ev.currentTarget.dataset.set);
-            const bonus = this._creationBonusRolls(html.find("#wiz-race").val());
-            this._wizardSets[si] = this._rollCharSet(bonus);
-            if (si === this._wizardActiveSet) { this._wizardAssign = {}; this._wizardArmed = null; }
-            renderGen();
-          });
-          // Клик по фишке — «взять/отпустить» для клик-раскладки
-          html.find(".wiz-chip").off("click").on("click", ev => {
-            const vi = Number(ev.currentTarget.dataset.vi);
-            this._wizardArmed = (this._wizardArmed === vi) ? null : vi;
-            renderGen();
-          });
-          // Клик по слоту — положить взятое значение / снять текущее (в пул)
-          html.find(".wiz-slot").off("click").on("click", ev => {
-            const k = ev.currentTarget.dataset.char;
-            if (this._wizardArmed != null) { assignTo(k, this._wizardArmed); renderGen(); return; }
-            if (this._wizardAssign[k] != null) { delete this._wizardAssign[k]; renderGen(); }   // снять
-          });
-          // Drag&drop
-          html.find(".wiz-chip[draggable], .ws-chip[draggable]").off("dragstart").on("dragstart", ev => {
-            ev.originalEvent.dataTransfer.setData("text/plain", String(ev.currentTarget.dataset.vi));
-            ev.originalEvent.dataTransfer.effectAllowed = "move";
-          });
-          html.find(".wiz-slot").off("dragover").on("dragover", ev => { ev.preventDefault(); });
-          html.find(".wiz-slot").off("drop").on("drop", ev => {
-            ev.preventDefault();
-            const vi = Number(ev.originalEvent.dataTransfer.getData("text/plain"));
-            assignTo(ev.currentTarget.dataset.char, vi);
-            renderGen();
-          });
-          // Сброс фишки обратно в пул — дроп на область фишек
-          html.find("#wiz-chips").off("dragover").on("dragover", ev => ev.preventDefault());
-          html.find("#wiz-chips").off("drop").on("drop", ev => {
-            ev.preventDefault();
-            const vi = Number(ev.originalEvent.dataTransfer.getData("text/plain"));
-            const k = CREATION_ROLL_CHARS.find(c => this._wizardAssign[c] === vi);
-            if (k) { delete this._wizardAssign[k]; renderGen(); }
-          });
-        };
-
-        html.find("#wiz-race").on("change", rebuild);
-        html.find("#wiz-subrace, #wiz-arch, #wiz-ynnari-past, #wiz-harlequin-past").on("change", () => {
-          this._updateWizardNote(html); renderGen();
-        });
-        // Астартес: зависимые селекты легиона/культуры.
-        html.find("#wiz-legion-sel, #wiz-cult-sel").on("change", refreshLegion);
-        // «По порядку» — разложить значения по убыванию (WS←макс … FEL←мин).
-        html.find("#wiz-auto").on("click", ev => {
-          ev.preventDefault();
-          this._wizardAssign = {};
-          CREATION_ROLL_CHARS.forEach((k, i) => { this._wizardAssign[k] = i; });
-          this._wizardArmed = null;
-          renderGen();
-        });
-        html.find("#wiz-clear").on("click", ev => {
-          ev.preventDefault();
-          this._wizardAssign = {}; this._wizardArmed = null; renderGen();
-        });
-        rebuild();
-      }
-    }, { classes: ["dialog", "wh-attack-dialog", "warhammer-dbc", "wh-holo"], width: 460 });
-    dlg.render(true);
-  }
-
-  _updateWizardNote(html) {
-    const race = RACES[html.find("#wiz-race").val()];
-    const arch = archetypeEntries()[html.find("#wiz-arch").val()];
-    const parts = [];
-    if (race?.skills) parts.push(`<b>Навыки расы:</b> ${ruSkillString(race.skills)}`);
-    if (arch) {
-      if (Object.keys(arch.charBonus || {}).length)
-        parts.push(`<b>Бонус архетипа:</b> ${Object.entries(arch.charBonus).map(([k, v]) => `${k.toUpperCase()} ${v >= 0 ? "+" : ""}${v}`).join(", ")}`);
-      if (arch.charChoice)   parts.push(`<b>Выбор:</b> ${arch.charChoice}`);
-      if (arch.infRoll)      parts.push(`<b>Влияние:</b> ${arch.infRoll}`);
-      if (arch.requiredPath) parts.push(`<b>Требуемый Путь:</b> ${arch.requiredPath}`);
-      if (arch.wounds)       parts.push(`<b>Раны:</b> ${arch.wounds}`);
-      if (arch.trait) parts.push(`<b>Трейт:</b> ${arch.trait.name}`);
-    }
-    html.find("#wiz-note").html(parts.join("<br/>"));
-  }
-
-  async _applyCreation({ raceKey, subraceKey, alignment, archKey, ynnariPast, harlequinPast, charRolls = null, geneSeed = null }) {
-    const { race, arch, sub, past, pastKey } =
-      this._resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harlequinPast });
-    const chars = this.actor.system.characteristics;
-
-    const updates = {
-      "system.race":      raceKey,
-      "system.subrace":   subraceKey || "",
-      "system.alignment": alignment || "loyalist",
-      "system.archetype": archKey || "",
-      "system.ynnariPast":    raceKey === "ynnari"    ? (ynnariPast || "")    : "",
-      "system.harlequinPast": raceKey === "harlequin" ? (harlequinPast || "") : ""
-    };
-    // Астартес: сохраняем легион (геносемя) и отдельно культуру (стр. 489-506).
-    if (geneSeed) {
-      updates["system.geneSeed.legion"]         = geneSeed.legion || "";
-      updates["system.geneSeed.chapter"]        = geneSeed.chapter || "";
-      updates["system.geneSeed.cultureLegion"]  = geneSeed.cultureLegion || "";
-      updates["system.geneSeed.cultureChapter"] = geneSeed.cultureChapter || "";
-    }
-    if (arch?.isPsyker)     updates["system.isPsyker"]     = true;
-    if (arch?.isTechpriest) updates["system.isTechpriest"] = true;
-    if (arch?.psykerClass)  updates["system.psyker.class"] = arch.psykerClass;
-    // Азуриане — псайкеры (трейт Psyker, «Древнее Мастерство»); то же для Иннари/Арлекина с Прошлым Азуриан
-    if (raceKey === "azuriane" || pastKey === "azuriane") updates["system.isPsyker"] = true;
-
-    // Характеристики (только в пустые поля): база = раса (+ Прошлое) + бонус
-    // архетипа + бонус субрасы, ПЛЮС бросок 2d10 в каждую из 9 основных х-к
-    // (корник вахи). Влияние (inf) 2d10 не кидается — оно от arch.infRoll ниже.
-    const sum = this._creationCharSum({ race, past, arch, sub });
-    for (const [k, v] of Object.entries(sum)) {
-      if ((chars[k]?.base || 0) === 0) {
-        const roll = (charRolls && CREATION_ROLL_CHARS.includes(k)) ? (charRolls[k] || 0) : 0;
-        updates[`system.characteristics.${k}.base`] = v + roll;
-      }
-    }
-
-    // Раны (только если ещё не заданы)
-    const w = await this._rollWoundsFormula(arch?.wounds);
-    if (w && (this.actor.system.wounds?.max || 0) === 0) {
-      updates["system.wounds.max"]   = w;
-      updates["system.wounds.value"] = w;
-    }
-
-    // Влияние (Inf) по броску архетипа — только в пустое поле
-    if (arch?.infRoll && (chars.inf?.base || 0) === 0) {
-      const infv = await this._rollWoundsFormula(arch.infRoll);
-      if (infv) updates["system.characteristics.inf.base"] = infv;
-    }
-
-    await this.actor.update(updates);
-
-    // Черты: расовые (+ Прошлого для Иннари) + субрасовые + архетипный
-    let traits = 0;
-    traits += await this._createTraitsFromList(race?.traits, race?.label || raceKey);
-    if (past?.traits) traits += await this._createTraitsFromList(past.traits, past.label || pastKey);
-    if (sub?.traits) traits += await this._createTraitsFromList(sub.traits, sub.label || subraceKey);
-    if (arch?.trait) traits += await this._createTraitsFromList([arch.trait], `Архетип: ${arch.name}`);
-
-    // Импланты Механикум / Боевые Латы Скитарии
-    let implants = 0;
-    if (arch?.grantsImplants) implants = await this._grantMechanicusImplants();
-    else if (arch?.grantsWarPlate) implants = await this._grantSkitariiWarPlate();
-    // Органы Геносемени — космодесантнику при создании.
-    if (raceKey === ASTARTES_RACE) implants += await this._grantAstartesImplants();
-
-    // Стартовые таланты: раса + Прошлое + субраса + архетип (выборы — через диалог)
-    // Культура легиона выдаёт свои Таланты (стр. 489-506). Культура может быть
-    // от ДРУГОГО легиона, чем геносемя, — берём именно её.
-    const cultFx = geneSeed
-      ? resolveCultureFx(geneSeed.cultureLegion || geneSeed.legion,
-                         geneSeed.cultureChapter || geneSeed.chapter)
-      : null;
-    const talRaw = [].concat(
-      race?.talents || [],
-      past?.talents || [],
-      sub?.talents  || [],
-      arch?.talents ? [arch.talents] : [],
-      cultFx?.grantTalents || []
-    );
-    const srcLabel = `${race?.label || raceKey}${arch ? ` / ${arch.name}` : ""}`;
-    const talents = await this._applyStartingTalents(talRaw, srcLabel);
-
-    // Навыки архетипа/расы — выдаём БЕСПЛАТНО (grantedRank), опыт не тратится (стр. 5-21).
-    const grantedSkills = await grantCreationSkills(this.actor, { race, past, sub, arch });
-    // Навыки от культуры легиона — тоже бесплатным рангом.
-    const cultSkills = await grantCultureSkills(this.actor, cultFx);
-
-    // Снаряжение архетипа/расы — ВРЕМЕННО ОТКЛЮЧЕНО (grantCreationGear в
-    // apps/creation.mjs оставлена для будущих доработок: нужен словарь
-    // EN→компендиум для надёжности).
-    // const gearN = await grantCreationGear(this.actor, { race, past, sub, arch, isAstartes: raceKey === "astartes" });
-
-    await this.actor.setFlag("warhammer-dbc", "setupDone", true);
-    this._applyThemeClasses();
-
-    ui.notifications.info(`🧙 Создание: ${race?.label}${arch ? ` / ${arch.name}` : ""} — Черт ${traits}, Талантов ${talents}, Навыков ${grantedSkills + cultSkills} (бесплатно)${implants ? `, имплантов ${implants}` : ""}. Снаряжение — вручную.`);
   }
 
   // ── Очки Бесчестия (корбук 438) — переопределяется листом Демон-Принца ────
@@ -1626,9 +1079,16 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     if (!this.isEditable) return;
 
     // ── Мастер создания персонажа (только по кнопке) ────────────────────────
+    // Черты, стартовые таланты, органы Геносемени и тема листа остаются здесь:
+    // их зовут и кнопки «Применить расу»/«Применить легион».
     html.find(".char-wizard-btn").click(ev => {
       ev.preventDefault();
-      this._showCreationWizard();
+      showCreationWizard(this.actor, {
+        createTraits:          (list, source) => this._createTraitsFromList(list, source),
+        applyStartingTalents:  (raw, source)  => this._applyStartingTalents(raw, source),
+        grantAstartesImplants: ()             => this._grantAstartesImplants(),
+        applyTheme:            ()             => this._applyThemeClasses()
+      });
     });
 
     // Раскрытие описания таланта/черты/мутации в выпадающей строке под основной.

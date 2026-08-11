@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
 import { splitTopLevel } from "../../module/helpers/utils.mjs";
-import { grantCreationSkills, grantCultureSkills, grantCreationGear }
-  from "../../module/apps/creation.mjs";
+import { grantCreationSkills, grantCultureSkills, grantCreationGear,
+         resolveCreation, creationCharSum, rollCharSet, applyCreation,
+         showCreationWizard } from "../../module/apps/creation.mjs";
 
 /** Обновление по плоскому пути: Foundry меняет документ на месте, тесты — тоже. */
 function applyPath(target, path, value) {
@@ -12,10 +13,13 @@ function applyPath(target, path, value) {
   cur[keys.at(-1)] = value;
 }
 
-function actor({ skills = {}, groupSkills = {} } = {}) {
+function actor({ skills = {}, groupSkills = {}, characteristics = {},
+                 wounds = { max: 0, value: 0 } } = {}) {
   const a = {
     name: "Подставной",
-    system: { skills, groupSkills },
+    system: { skills, groupSkills, characteristics, wounds },
+    items: [],
+    flags: {},
     updates: [],
     created: [],
     update: async data => {
@@ -23,9 +27,22 @@ function actor({ skills = {}, groupSkills = {} } = {}) {
       for (const [path, value] of Object.entries(data)) applyPath(a, path, value);
       return data;
     },
-    createEmbeddedDocuments: async (_type, docs) => { a.created.push(...docs); return docs; }
+    createEmbeddedDocuments: async (_type, docs) => { a.created.push(...docs); return docs; },
+    setFlag: async (scope, key, value) => { (a.flags[scope] ??= {})[key] = value; }
   };
   return a;
+}
+
+/** Черты, таланты, органы и тема остаются на листе — сюда приходят колбэками. */
+function sheetDeps() {
+  const calls = { traits: [], talents: [], astartes: 0, theme: 0 };
+  return {
+    calls,
+    createTraits: async (list, source) => { calls.traits.push({ list, source }); return (list || []).length; },
+    applyStartingTalents: async (raw, source) => { calls.talents.push({ raw, source }); return (raw || []).length; },
+    grantAstartesImplants: async () => { calls.astartes++; return 3; },
+    applyTheme: () => { calls.theme++; }
+  };
 }
 
 /** Диалог выбора резолвится не сам: даём промису дойти до `new Dialog`. */
@@ -35,6 +52,23 @@ const tick = () => new Promise(r => setTimeout(r, 0));
 function answerDialog(values) {
   const selects = values.map((value, i) => ({ dataset: { i: String(i) }, value }));
   captured.dialog.buttons.ok.callback(fakeHtml({}, { "select[data-i]": selects }));
+}
+
+/**
+ * Доводит создание до конца: по пути оно спрашивает про навыки-выборы, а без
+ * игрока диалог висит вечно. Отвечаем «ничего не выбрано» на каждый.
+ */
+async function settle(promise) {
+  let done = false;
+  promise.then(() => { done = true; }, () => { done = true; });
+  for (let i = 0; i < 20 && !done; i++) {
+    await tick();
+    if (!done && captured.dialog?.buttons?.ok) {
+      const dlg = captured.dialog; captured.dialog = null;
+      dlg.buttons.ok.callback(fakeHtml({}, { "select[data-i]": [] }));
+    }
+  }
+  return promise;
 }
 
 beforeEach(resetCaptured);
@@ -175,5 +209,106 @@ describe("стартовое снаряжение", () => {
     const html = captured.chat.at(-1).content;
     expect(html).toContain("Плазма-пистолет");
     expect(html).not.toContain("Болтер");
+  });
+});
+
+describe("резолв выбора мастера", () => {
+  it("Прошлое Иннари подмешивает бывшую расу", () => {
+    const { past, pastKey } = resolveCreation({ raceKey: "ynnari", ynnariPast: "azuriane" });
+    expect(pastKey).toBe("azuriane");
+    expect(past?.chars).toBeTruthy();
+  });
+
+  it("Прошлое чужой расы игнорируется", () => {
+    expect(resolveCreation({ raceKey: "human", ynnariPast: "azuriane" }).past).toBeNull();
+  });
+});
+
+describe("база характеристик до броска", () => {
+  it("складывает расу и бонус архетипа", () => {
+    const { race, arch, sub } = resolveCreation({ raceKey: "human", archKey: "renegade" });
+    const sum = creationCharSum({ race, arch, sub });
+    expect(sum.bs).toBe(30);   // 25 у Человека + 5 Ренегата
+    expect(sum.ws).toBe(27);
+  });
+});
+
+describe("набор бросков «Генерации»", () => {
+  it("девять значений по убыванию, сумма сходится", () => {
+    const set = rollCharSet(0);
+    expect(set.vals).toHaveLength(9);
+    expect([...set.vals].sort((x, y) => y - x)).toEqual(set.vals);
+    expect(set.sum).toBe(set.vals.reduce((s, v) => s + v, 0));
+    expect(Math.min(...set.vals)).toBeGreaterThanOrEqual(2);
+    expect(Math.max(...set.vals)).toBeLessThanOrEqual(20);
+  });
+
+  it("бонусные броски расы отбрасывают младшие, а не добавляют характеристики", () => {
+    expect(rollCharSet(3).vals).toHaveLength(9);
+  });
+});
+
+describe("применение создания", () => {
+  it("характеристики пишутся только в пустые поля, вместе с раскидкой", async () => {
+    const a = actor({ characteristics: { ws: { base: 0 }, bs: { base: 40 } } });
+    await settle(applyCreation(a, { raceKey: "human", archKey: "renegade",
+      charRolls: { ws: 12 } }, sheetDeps()));
+    expect(a.system.characteristics.ws.base).toBe(39);   // 25 расы + 2 архетипа + 12 броска
+    expect(a.system.characteristics.bs.base).toBe(40);   // уже заполнено — не трогаем
+  });
+
+  it("готовые Раны не перебрасываются", async () => {
+    const a = actor({ wounds: { max: 12, value: 12 } });
+    await settle(applyCreation(a, { raceKey: "human", archKey: "renegade" }, sheetDeps()));
+    expect(a.system.wounds.max).toBe(12);
+  });
+
+  it("пустые Раны берутся из формулы архетипа", async () => {
+    const a = actor();
+    captured.nextRoll = 13;
+    await settle(applyCreation(a, { raceKey: "human", archKey: "renegade" }, sheetDeps()));
+    expect(captured.rolls).toContain("10+1d5");
+    expect(a.system.wounds).toMatchObject({ max: 13, value: 13 });
+  });
+
+  it("Астартес: геносемя сохраняется, органы выдаёт лист", async () => {
+    const a = actor();
+    const d = sheetDeps();
+    await settle(applyCreation(a, { raceKey: "astartes", archKey: "sorcerer",
+      geneSeed: { legion: "I", chapter: "vengeance",
+                  cultureLegion: "I", cultureChapter: "vengeance" } }, d));
+    expect(a.system.geneSeed.legion).toBe("I");
+    expect(d.calls.astartes).toBe(1);
+    expect(a.system.isPsyker).toBe(true);                        // Чародей
+    expect(d.calls.talents.at(-1).raw).toContain("Hatred (Fallen)");   // культура ордена
+  });
+
+  it("Азуриан — псайкер и без архетипа", async () => {
+    const a = actor();
+    await settle(applyCreation(a, { raceKey: "azuriane" }, sheetDeps()));
+    expect(a.system.isPsyker).toBe(true);
+  });
+
+  it("ставит флаг завершённой настройки и перекрашивает лист", async () => {
+    const a = actor();
+    const d = sheetDeps();
+    await settle(applyCreation(a, { raceKey: "human", alignment: "heretic" }, d));
+    expect(a.flags["warhammer-dbc"].setupDone).toBe(true);
+    expect(a.system.alignment).toBe("heretic");
+    expect(d.calls.theme).toBe(1);
+  });
+});
+
+describe("окно мастера", () => {
+  it("кнопка «Создать» применяет выбор из формы", async () => {
+    const a = actor();
+    showCreationWizard(a, sheetDeps());
+    expect(captured.dialog.title).toBe("Мастер создания персонажа");
+    const form = fakeHtml({ "#wiz-race": "human", "#wiz-subrace": "",
+                            "#wiz-align": "renegade", "#wiz-arch": "pirate" });
+    await settle(captured.dialog.buttons.apply.callback(form));
+    expect(a.system.race).toBe("human");
+    expect(a.system.archetype).toBe("pirate");
+    expect(a.system.alignment).toBe("renegade");
   });
 });
