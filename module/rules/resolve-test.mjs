@@ -85,6 +85,31 @@ function effectAppliesTo(target, ctx) {
 }
 
 /**
+ * Значение эффекта. Обычно это число в `value`, но у правил, зависящих от того,
+ * по кому бьют, числа в данных быть не может: «Проворный» даёт атакующему минус
+ * Бонус Ловкости ЦЕЛИ, а он у каждой цели свой. Такие правила пишут `valueFrom`,
+ * и значение считается на каждый бросок.
+ *
+ * Известен один источник — `targetCharBonus`. Неизвестный не превращается молча
+ * в ноль, а жалуется: правило, тихо давшее «+0», ищется днями.
+ *
+ * @returns {?number} null, если источник значения не распознан
+ */
+function effectValue(effect, ctx, ruleId) {
+  if (!effect.valueFrom) return Number(effect.value) || 0;
+
+  const { targetCharBonus, multiplier = 1 } = effect.valueFrom;
+  if (targetCharBonus) {
+    const bonus = ctx?.targetActor?.system?.characteristics?.[targetCharBonus]?.bonus ?? 0;
+    // «|| 0» убирает минус ноль: без цели галочка иначе подписывалась бы «−0».
+    return bonus * multiplier || 0;
+  }
+
+  console.error(`Warhammer DBC | правило «${ruleId ?? "без id"}»: неизвестный источник значения ${JSON.stringify(effect.valueFrom)}`);
+  return null;
+}
+
+/**
  * Галочки для диалога броска. Формат тот же, что у Особенностей Происхождения и
  * предметных `rollMods`: { value, label, halvePenalty } — лист складывает их
  * одинаково, не зная, откуда галочка пришла.
@@ -108,7 +133,8 @@ export function rollModsFromRules(rules, ctx = {}) {
 
       const label = effect.label ?? rule.label ?? rule.id;
       if (effect.kind === "rollBonus") {
-        mods.push({ ruleId: rule.id, label, value: Number(effect.value) || 0, halvePenalty: false });
+        const value = effectValue(effect, ctx, rule.id);
+        if (value !== null) mods.push({ ruleId: rule.id, label, value, halvePenalty: false });
         continue;
       }
       // Диалог умеет только ополовинить штраф — другого множителя в нём нет.
