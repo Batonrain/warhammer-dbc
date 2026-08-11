@@ -36,7 +36,7 @@ import { fatiguePenalty, addFatigue, removeFatigue, fatiguePeriodRest, fatigueSl
          showAddConditionDialog } from "./tabs/conditions.mjs";
 import { painChatMsg, painChange, openPainSoulBurnDialog } from "./tabs/pain.mjs";
 import { showHealingDialog, applyHealing } from "./tabs/healing.mjs";
-import { applyDrug, triggerAfterEffect, rollAddictionTest } from "./tabs/drugs.mjs";
+import { activateDrugListeners } from "./tabs/drugs.mjs";
 import { computeWoundDamage } from "./tabs/wounds.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { qualityEffects }                   from "../constants/quality.mjs";
@@ -2134,8 +2134,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       ev.currentTarget.textContent = (this._geneSeedOpen ? "▾" : "▸") + " Импланты";
     });
 
-    // Длительность теперь бросается автоматически при применении препарата
-    // (см. _applyDrug). Отдельная кнопка-бросок убрана.
+    // Длительность теперь бросается автоматически при применении препарата.
 
     // ── Страх / Безумие / Порча ────────────────────────────────────────────
     html.find(".fear-roll").click(() => this._rollFear());
@@ -2925,77 +2924,9 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     });
 
     // ── Препараты ─────────────────────────────────────────────────────────────
-html.find(".drug-apply-btn").click(async ev => {
-  ev.preventDefault();
-  const itemId = ev.currentTarget.dataset.itemId;
-  const item   = this.actor.items.get(itemId);
-  if (item) await this._applyDrug(item);
-});
-
-html.find(".drug-apply-other-btn").click(async ev => {
-  ev.preventDefault();
-  const itemId = ev.currentTarget.dataset.itemId;
-  const item   = this.actor.items.get(itemId);
-  if (!item) return;
-  const target = this._resolveOtherTargetActor();
-  if (!target) return;
-  await this._applyDrug(item, target);
-});
-
-html.find(".drug-name-link").click(ev => {
-  ev.preventDefault();
-  const itemId = ev.currentTarget.dataset.itemId;
-  const item   = this.actor.items.get(itemId);
-  if (item) item.sheet.render(true);
-});
-
-html.find(".effect-deactivate-btn").click(async ev => {
-  ev.preventDefault();
-  const itemId = ev.currentTarget.dataset.itemId;
-  const item   = this.actor.items.get(itemId);
-  if (!item) return;
-  await item.update({
-    "system.activeEffect.isActive":         false,
-    "system.activeEffect.isAfterEffect":    false,
-    "system.activeEffect.roundsRemaining":  0,
-    "system.activeEffect.charDamageStat":   "",
-    "system.activeEffect.charDamageAmount": 0
-  });
-  ui.notifications.info(`Эффект «${item.name}» завершён.`);
-});
-
-// ── Пост-эффект препарата ──────────────────────────────────────────────────
-html.find(".effect-trigger-after-btn").click(async ev => {
-  ev.preventDefault();
-  ev.stopPropagation();
-  const itemId = ev.currentTarget.dataset.itemId;
-  const item   = this.actor.items.get(itemId);
-  if (!item) return;
-  await this._triggerAfterEffect(item);
-});
-
-// ── Тест Зависимости ────────────────────────────────────────────────────────
-html.find(".addiction-test-btn").click(async ev => {
-  ev.preventDefault();
-  ev.stopPropagation();
-  const item    = this.actor.items.get(ev.currentTarget.dataset.itemId);
-  const charKey = ev.currentTarget.dataset.char || "t";
-  const mod     = parseInt(ev.currentTarget.dataset.mod) || 0;
-  await this._rollAddictionTest(item, charKey, mod);
-});
-
-// ── Снять зависимость ────────────────────────────────────────────────────────
-html.find(".addiction-remove-btn").click(async ev => {
-  ev.preventDefault();
-  ev.stopPropagation();
-  const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-  if (item) await item.update({ "system.addiction.isAddicted": false });
-  // Снимаем общее состояние «Зависимость», если больше нет активных зависимостей
-  const stillAddicted = this.actor.items.some(i =>
-    i.type === "drug" && i.system.addiction?.hasAddiction && i.system.addiction?.isAddicted
-  );
-  if (!stillAddicted) await this.actor.update({ "system.conditions.addicted": false });
-});
+    activateDrugListeners(html, this.actor, {
+      resolveOtherTargetActor: () => this._resolveOtherTargetActor()
+    });
     // ── Состояния ─────────────────────────────────────────────────────────
     html.find(".conditions-add-btn").click(ev => {
       ev.preventDefault();
@@ -4280,11 +4211,6 @@ html.find(".addiction-remove-btn").click(async ev => {
   _painSoulBurn() {
     return openPainSoulBurnDialog(this.actor);
   }
-  // ── Активация пост-эффекта ────────────────────────────────────────────────
-
-  async _triggerAfterEffect(item) {
-    return triggerAfterEffect(this.actor, item);
-  }
   // ── Бросок характеристики ─────────────────────────────────────────────────
 
   async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false) {
@@ -4329,12 +4255,6 @@ html.find(".addiction-remove-btn").click(async ev => {
   }
 
   _degWord(n) { return _degWord(n); }
-
-  // ── Тест Зависимости ───────────────────────────────────────────────────────
-
-  async _rollAddictionTest(item, charKey = "t", testMod = 0) {
-    return rollAddictionTest(this.actor, item, charKey, testMod);
-  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // ── ПСАЙКАНА
@@ -5244,11 +5164,6 @@ html.find(".addiction-remove-btn").click(async ev => {
     }, game.settings.get("core", "rollMode")));
   }
 
-  // ── Применение препарата ──────────────────────────────────────────────────
-
-  async _applyDrug(item, recipient = null) {
-    return applyDrug(this.actor, item, recipient);
-  }
 }
 
 /** Подставляет бонусы характеристик в формулу и берёт первую (формульную) часть. */

@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { rollAddictionTest, applyEffectExtras, applyDrug, triggerAfterEffect } from "../../module/sheets/tabs/drugs.mjs";
+import {
+  rollAddictionTest,
+  applyEffectExtras,
+  applyDrug,
+  triggerAfterEffect,
+  deactivateDrugEffect,
+  removeDrugAddiction,
+  activateDrugListeners
+} from "../../module/sheets/tabs/drugs.mjs";
 import { computeWoundHealing, computeWoundDamage } from "../../module/sheets/tabs/wounds.mjs";
 
 function drug({ id = "drug-1", addicted = false, system = null } = {}) {
@@ -32,6 +40,7 @@ function drug({ id = "drug-1", addicted = false, system = null } = {}) {
 function actor({ items = [], fatigue = 0, t = 40, wp = 35 } = {}) {
   const updates = [];
   const list = [...items];
+  list.get = id => list.find(i => i.id === id) ?? null;
   const a = {
     name: "Подставной",
     updates,
@@ -294,5 +303,68 @@ describe("triggerAfterEffect", () => {
     expect(captured.chat[0].content).toContain("Урон в характеристику");
     expect(captured.chat[0].content).toContain("Побочный эффект");
     expect(captured.chat[0].rolls).toHaveLength(2);
+  });
+});
+
+describe("drug sheet listeners", () => {
+  it("deactivateDrugEffect завершает активный эффект препарата", async () => {
+    const item = drug({ system: {
+      activeEffect: {
+        isActive: true,
+        isAfterEffect: true,
+        roundsRemaining: 3,
+        charDamageStat: "int",
+        charDamageAmount: 2
+      }
+    } });
+
+    await deactivateDrugEffect(item);
+
+    expect(item.updates[0]).toEqual({
+      "system.activeEffect.isActive": false,
+      "system.activeEffect.isAfterEffect": false,
+      "system.activeEffect.roundsRemaining": 0,
+      "system.activeEffect.charDamageStat": "",
+      "system.activeEffect.charDamageAmount": 0
+    });
+  });
+
+  it("removeDrugAddiction снимает общее состояние только если других зависимостей нет", async () => {
+    const item = drug({ id: "drug-1", addicted: true });
+    const other = drug({ id: "drug-2", addicted: true });
+    const a = actor({ items: [item, other] });
+
+    await removeDrugAddiction(a, item);
+
+    expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": false });
+    expect(a.updates).toEqual([]);
+
+    await removeDrugAddiction(a, other);
+
+    expect(other.updates[0]).toEqual({ "system.addiction.isAddicted": false });
+    expect(a.updates[0]).toEqual({ "system.conditions.addicted": false });
+  });
+
+  it("activateDrugListeners привязывает обработчики препаратов к actor-only API", async () => {
+    const handlers = {};
+    const html = {
+      find: selector => ({
+        click: fn => { handlers[selector] = fn; }
+      })
+    };
+    const item = drug({ system: { activeEffect: { isActive: true } } });
+    const a = actor({ items: [item] });
+
+    activateDrugListeners(html, a);
+
+    await handlers[".effect-deactivate-btn"]({
+      preventDefault: () => {},
+      currentTarget: { dataset: { itemId: item.id } }
+    });
+
+    expect(item.updates[0]).toMatchObject({
+      "system.activeEffect.isActive": false,
+      "system.activeEffect.isAfterEffect": false
+    });
   });
 });

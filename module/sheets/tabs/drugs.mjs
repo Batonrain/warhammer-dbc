@@ -491,6 +491,79 @@ export async function triggerAfterEffect(actor, item) {
   ui.notifications.info(`${item.name}: пост-эффект активирован.`);
 }
 
+export async function deactivateDrugEffect(item) {
+  if (!item) return;
+  await item.update({
+    "system.activeEffect.isActive": false,
+    "system.activeEffect.isAfterEffect": false,
+    "system.activeEffect.roundsRemaining": 0,
+    "system.activeEffect.charDamageStat": "",
+    "system.activeEffect.charDamageAmount": 0
+  });
+  ui.notifications.info(`Эффект «${item.name}» завершён.`);
+}
+
+export async function removeDrugAddiction(actor, item) {
+  if (item) await item.update({ "system.addiction.isAddicted": false });
+  const stillAddicted = actor.items.some(i =>
+    i.type === "drug" && i.system.addiction?.hasAddiction && i.system.addiction?.isAddicted
+  );
+  if (!stillAddicted) await actor.update({ "system.conditions.addicted": false });
+}
+
+export function activateDrugListeners(html, actor, { resolveOtherTargetActor } = {}) {
+  html.find(".drug-apply-btn").click(async ev => {
+    ev.preventDefault();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) await applyDrug(actor, item);
+  });
+
+  html.find(".drug-apply-other-btn").click(async ev => {
+    ev.preventDefault();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    const target = resolveOtherTargetActor?.();
+    if (!target) return;
+    await applyDrug(actor, item, target);
+  });
+
+  html.find(".drug-name-link").click(ev => {
+    ev.preventDefault();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) item.sheet.render(true);
+  });
+
+  html.find(".effect-deactivate-btn").click(async ev => {
+    ev.preventDefault();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    await deactivateDrugEffect(item);
+  });
+
+  html.find(".effect-trigger-after-btn").click(async ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    await triggerAfterEffect(actor, item);
+  });
+
+  html.find(".addiction-test-btn").click(async ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    const charKey = ev.currentTarget.dataset.char || "t";
+    const mod = parseInt(ev.currentTarget.dataset.mod) || 0;
+    await rollAddictionTest(actor, item, charKey, mod);
+  });
+
+  html.find(".addiction-remove-btn").click(async ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    await removeDrugAddiction(actor, item);
+  });
+}
+
 export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0) {
   const charTotal = actor.system.characteristics[charKey]?.total ?? 0;
   const fatigue = fatiguePenalty(actor, charKey);
