@@ -41,13 +41,14 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners } from "./tabs/gear.mjs";
+import { activateBodyListeners } from "./tabs/body.mjs";
+import { activateItemContextMenu, openContextMenu, closeContextMenus } from "./context-menu.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { qualityEffects }                   from "../constants/quality.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { _performDodge, _performParry }    from "../combat/defense.mjs";
 import { _showContestDialog }              from "../combat/techniques.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
-import { openSurgeon }                       from "../apps/surgeon.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
@@ -56,7 +57,6 @@ import { RACES, SUBRACES, SUBRACE_DATA,
 import { getLegion, getChapter, buildLegionOptions, buildChapterOptions, buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
 import { archetypeEntries, archetypesForRace, archetypeSheetContext, applyArchetype } from "../apps/archetypes.mjs";
 import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
-import { WarhammerItemSheet } from "./item-sheet.mjs";
 import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../constants/possession.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -2421,40 +2421,36 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     // Контекстное меню групповых навыков
     html.find(".group-skill-entry-row").on("contextmenu", ev => {
       ev.preventDefault(); ev.stopPropagation();
-      $(".wh-context-menu").remove();
       const row      = $(ev.currentTarget);
       const groupKey = row.data("group");
       const idx      = parseInt(row.data("index"));
-      const menu = $(`
-        <div class="wh-context-menu">
-          <div class="wh-ctx-item wh-ctx-rename">✏️ Переименовать</div>
-          <div class="wh-ctx-item wh-ctx-delete">🗑️ Удалить</div>
-        </div>
-      `).css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });
-      $("body").append(menu);
-      setTimeout(() => { $(document).one("click.wh-ctx", () => menu.remove()); }, 50);
-      menu.find(".wh-ctx-rename").on("click", ev2 => {
-        ev2.stopPropagation(); menu.remove(); $(document).off("click.wh-ctx");
-        const entries = this.actor.system.groupSkills?.[groupKey] ?? [];
-        const current = entries[idx]?.specialty ?? "";
-        this._showRenameDialog(current).then(newName => {
-          if (!newName || newName === current) return;
-          const updated = foundry.utils.deepClone(this.actor.system.groupSkills?.[groupKey] ?? []);
-          if (updated[idx]) updated[idx].specialty = newName;
-          this.actor.update({ [`system.groupSkills.${groupKey}`]: updated });
-        });
-      });
-      menu.find(".wh-ctx-delete").on("click", ev2 => {
-        ev2.stopPropagation(); menu.remove(); $(document).off("click.wh-ctx");
-        const updated = foundry.utils.deepClone(this.actor.system.groupSkills?.[groupKey] ?? []);
-        updated.splice(idx, 1);
-        this.actor.update({ [`system.groupSkills.${groupKey}`]: updated });
-      });
+      openContextMenu(ev, [
+        {
+          cls: "wh-ctx-rename",
+          label: "✏️ Переименовать",
+          onClick: () => {
+            const entries = this.actor.system.groupSkills?.[groupKey] ?? [];
+            const current = entries[idx]?.specialty ?? "";
+            this._showRenameDialog(current).then(newName => {
+              if (!newName || newName === current) return;
+              const updated = foundry.utils.deepClone(this.actor.system.groupSkills?.[groupKey] ?? []);
+              if (updated[idx]) updated[idx].specialty = newName;
+              this.actor.update({ [`system.groupSkills.${groupKey}`]: updated });
+            });
+          }
+        },
+        {
+          cls: "wh-ctx-delete",
+          label: "🗑️ Удалить",
+          onClick: () => {
+            const updated = foundry.utils.deepClone(this.actor.system.groupSkills?.[groupKey] ?? []);
+            updated.splice(idx, 1);
+            this.actor.update({ [`system.groupSkills.${groupKey}`]: updated });
+          }
+        }
+      ]);
     });
-    html.find(".skills-advance-scroll").on("scroll", () => {
-      $(".wh-context-menu").remove();
-      $(document).off("click.wh-ctx");
-    });
+    html.find(".skills-advance-scroll").on("scroll", () => closeContextMenus());
 
     // ── Снаряжение ────────────────────────────────────────────────────────
     html.find(".add-item-btn").click(() => { this._showAddItemDialog(); });
@@ -2715,33 +2711,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     });
 
     // ── Контекстное меню предметов ────────────────────────────────────────
-    html.find(".item-row").on("contextmenu", ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      $(".wh-context-menu").remove();
-      const itemId = $(ev.currentTarget).data("item-id");
-      const item   = this.actor.items.get(itemId);
-      if (!item) return;
-      const menu = $(`
-        <div class="wh-context-menu">
-          <div class="wh-ctx-item wh-ctx-edit">✏️ Редактировать</div>
-          <div class="wh-ctx-item wh-ctx-delete">🗑️ Удалить</div>
-        </div>
-      `).css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });
-      $("body").append(menu);
-      setTimeout(() => { $(document).one("click.wh-ctx", () => menu.remove()); }, 50);
-
-      menu.find(".wh-ctx-edit").on("click", ev2 => {
-        ev2.stopPropagation(); menu.remove(); $(document).off("click.wh-ctx");
-        const sheet = item.sheet;
-        if (sheet) { sheet.render(true); }
-        else { new WarhammerItemSheet(item).render(true); }
-      });
-
-      menu.find(".wh-ctx-delete").on("click", ev2 => {
-        ev2.stopPropagation(); menu.remove(); $(document).off("click.wh-ctx");
-        item.delete();
-      });
-    });
+    activateItemContextMenu(html, this.actor);
 
     // ── Препараты ─────────────────────────────────────────────────────────────
     activateDrugListeners(html, this.actor, {
@@ -2753,68 +2723,13 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       this._showAddConditionDialog();
     });
 
-    // Переключатель типа тела (муж./жен.) на вкладке ТЕЛО.
-    html.find(".bc-sex-toggle").click(async ev => {
-      ev.preventDefault();
-      const cur = ev.currentTarget.dataset.bodytype || "male";
-      await this.actor.setFlag("warhammer-dbc", "bodyType", cur === "female" ? "male" : "female");
-    });
-
-    // Открыть окно имплантации (хирургеон).
-    html.find(".bc-surgeon-btn").click(ev => { ev.preventDefault(); openSurgeon(this.actor); });
-
-    // Жизненные потребности: изменить стадию Голода/Жажды/Сна (0-3).
-    const _setVital = async (key, val) => {
-      const v = Math.max(0, Math.min(3, Math.round(Number(val) || 0)));
-      await this.actor.update({ [`system.vitals.${key}`]: v });
-    };
-    html.find("[data-vital-adj]").on("click", ev => {
-      ev.preventDefault();
-      const b = ev.currentTarget;
-      const key = b.dataset.vitalAdj;
-      const cur = Math.round(Number(this.actor.system.vitals?.[key]) || 0);
-      _setVital(key, cur + Number(b.dataset.dir));
-    });
-    html.find("[data-vital-reset]").on("click", ev => { ev.preventDefault(); _setVital(ev.currentTarget.dataset.vitalReset, 0); });
+    // ── Вкладка ТЕЛО ──────────────────────────────────────────────────────
+    activateBodyListeners(html, this.actor);
 
     // ── Одержимый: Проявить / Заключить (полудействие + тест Cor+20) ──────────
     html.find(".poss-manifest-btn").on("click", async ev => {
       ev.preventDefault();
       await this._toggleManifest();
-    });
-
-    // Всплывающие подсказки при наведении на импланты/органы фигуры.
-    const figPanel = html.find(".bc-figure-panel")[0];
-    if (figPanel) {
-      let tipEl = figPanel.querySelector(".bc-imp-tip");
-      if (!tipEl) { tipEl = document.createElement("div"); tipEl.className = "bc-imp-tip"; figPanel.appendChild(tipEl); }
-      figPanel.querySelectorAll(".body-implants .imp-tipwrap[data-tip]").forEach(gEl => {
-        gEl.addEventListener("mouseenter", () => { tipEl.textContent = gEl.getAttribute("data-tip"); tipEl.classList.add("show"); });
-        gEl.addEventListener("mousemove", ev => {
-          const r = figPanel.getBoundingClientRect();
-          const x = Math.min(ev.clientX - r.left + 12, figPanel.clientWidth - 208);
-          const y = Math.min(ev.clientY - r.top + 12, figPanel.clientHeight - 44);
-          tipEl.style.left = Math.max(4, x) + "px"; tipEl.style.top = Math.max(4, y) + "px";
-        });
-        gEl.addEventListener("mouseleave", () => tipEl.classList.remove("show"));
-      });
-    }
-
-    // Констатация смерти — останавливает кардиомонитор (плоская линия).
-    html.find(".bc-death-toggle").change(async ev => {
-      await this.actor.setFlag("warhammer-dbc", "deceased", ev.currentTarget.checked);
-    });
-
-    // Выбор стороны (Л/П) для имплантов конечностей/глаз в реестре аугметики.
-    html.find(".bc-side-btn").click(async ev => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (!item) return;
-      const side = ev.currentTarget.dataset.side;
-      const cur  = item.getFlag("warhammer-dbc", "bodySide");
-      if (cur === side) await item.unsetFlag("warhammer-dbc", "bodySide");
-      else await item.setFlag("warhammer-dbc", "bodySide", side);
     });
 
     html.find(".condition-remove-btn").click(async ev => {

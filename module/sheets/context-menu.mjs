@@ -1,0 +1,72 @@
+// module/sheets/context-menu.mjs
+// ════════════════════════════════════════════════════════════════════════════
+//  Контекстное меню по правой кнопке: общий конструктор и меню строки предмета.
+//  Меню живёт в <body>, а не внутри листа: строки таблиц скроллятся и обрезаются
+//  по overflow, и вложенное меню срезало бы нижним пунктом.
+//  Функции принимают актора, а не лист.
+// ════════════════════════════════════════════════════════════════════════════
+
+import { WarhammerItemSheet } from "./item-sheet.mjs";
+
+/** Убрать открытые меню и отвязать одноразовый обработчик закрытия. */
+export function closeContextMenus(jq = globalThis.$) {
+  jq(".wh-context-menu").remove();
+  jq(globalThis.document).off("click.wh-ctx");
+}
+
+/**
+ * Показать меню у курсора.
+ *
+ * @param {object} ev      событие contextmenu (нужны clientX/clientY)
+ * @param {Array}  entries пункты: { cls, label, onClick }
+ * @param {Function} jq    jQuery (подменяется в тестах)
+ */
+export function openContextMenu(ev, entries, jq = globalThis.$) {
+  jq(".wh-context-menu").remove();
+
+  const items = entries
+    .map(e => `<div class="wh-ctx-item ${e.cls}">${e.label}</div>`)
+    .join("");
+  const menu = jq(`<div class="wh-context-menu">${items}</div>`)
+    .css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });
+
+  jq("body").append(menu);
+  // Задержка: клик, открывший меню, ещё всплывает — без неё меню закрылось бы
+  // тем же событием, которым открылось.
+  setTimeout(() => { jq(globalThis.document).one("click.wh-ctx", () => menu.remove()); }, 50);
+
+  for (const entry of entries) {
+    menu.find(`.${entry.cls}`).on("click", ev2 => {
+      ev2.stopPropagation();
+      menu.remove();
+      jq(globalThis.document).off("click.wh-ctx");
+      entry.onClick(ev2);
+    });
+  }
+
+  return menu;
+}
+
+/** ПКМ по строке предмета: открыть лист предмета или удалить его. */
+export function activateItemContextMenu(html, actor, jq = globalThis.$) {
+  html.find(".item-row").on("contextmenu", ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    // Прежнее меню снимается даже когда предмета уже нет: строка могла остаться
+    // от ре-рендера, и висящее меню указывало бы на удалённый предмет.
+    jq(".wh-context-menu").remove();
+    const item = actor.items.get(jq(ev.currentTarget).data("item-id"));
+    if (!item) return;
+    openContextMenu(ev, [
+      {
+        cls: "wh-ctx-edit",
+        label: "✏️ Редактировать",
+        onClick: () => {
+          const sheet = item.sheet;
+          if (sheet) sheet.render(true);
+          else new WarhammerItemSheet(item).render(true);
+        }
+      },
+      { cls: "wh-ctx-delete", label: "🗑️ Удалить", onClick: () => item.delete() }
+    ], jq);
+  });
+}
