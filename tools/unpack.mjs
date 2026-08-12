@@ -16,6 +16,27 @@ import { join } from "node:path";
 import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs } from "./packs.mjs";
 import { bookSource } from "./book-source.mjs";
 
+// ── Имена файлов исходника ────────────────────────────────────────────────
+// Сам по себе CLI кладёт документ в «<Папка>_<id16>/<Название>_<id16>.json».
+// На кириллице такой путь перестаёт влезать в лимит Windows: буква весит два
+// байта, и самый длинный путь тянул на 300 байт при потолке в 260 — checkout
+// падал с «Filename too long». Поэтому у каталогов снимается суффикс id
+// (одноимённых соседей в паках нет), а название документа режется. Полное имя
+// лежит внутри JSON, id в имени файла остаётся, максимум пути — 240 байт.
+const NAME_LIMIT = 40;
+
+/** Как в CLI: в имени файла остаются только буквы и цифры. */
+const safe = (name) => String(name).replace(/[^a-zA-Z0-9А-я]/g, "_");
+
+const transformFolderName = (doc) => (doc.name ? safe(doc.name) : doc._id);
+
+const transformName = (doc, { documentType, folder }) => {
+  // Папку именует transformFolderName, её «_Folder.json» собирает сам CLI.
+  if (documentType === "Folder") return null;
+  const stem = doc.name ? `${safe(doc.name).slice(0, NAME_LIMIT)}_${doc._id}` : doc._id;
+  return folder ? join(folder, `${stem}.json`) : `${stem}.json`;
+};
+
 const hasDb = (p) => {
   if (existsSync(abs(p.dir, "CURRENT"))) return true;
   console.warn(`пропущен ${p.name}: в ${p.dir} нет базы LevelDB`);
@@ -27,7 +48,9 @@ for (const p of LIBRARY_PACKS) {
   if (!hasDb(p)) continue;
   // clean снимает файлы удалённых документов, omitVolatile не переписывает
   // файл, если изменились только метки времени в _stats.
-  await extractPack(abs(p.dir), abs(p.src), { folders: true, clean: true, omitVolatile: true });
+  await extractPack(abs(p.dir), abs(p.src), {
+    folders: true, clean: true, omitVolatile: true, transformFolderName, transformName
+  });
   console.log(`извлечён ${p.name} → ${p.src}`);
   done++;
 }
