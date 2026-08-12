@@ -35,6 +35,8 @@ export function resetCaptured() {
 class ApplicationStub {
   static get defaultOptions() { return {}; }
   render() { return this; }
+  /** Как у Foundry: базовый контекст пустой, всё нужное добавляет лист. */
+  getData() { return {}; }
 }
 
 /* ── Схема типа данных ──────────────────────────────────────────────────────
