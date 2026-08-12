@@ -37,7 +37,12 @@ class ApplicationStub {
   render() { return this; }
   /** Как у Foundry: базовый контекст пустой, всё нужное добавляет лист. */
   getData() { return {}; }
+  /** Базовые слушатели Foundry (вкладки, свёртки) тестам не нужны. */
+  activateListeners() {}
 }
+
+// Лист восстанавливает прокрутку следующим кадром; в node кадров нет.
+globalThis.requestAnimationFrame ??= () => 0;
 
 /* ── Схема типа данных ──────────────────────────────────────────────────────
  * Поля и TypeDataModel — ровно столько, чтобы проверить, какие умолчания
@@ -157,6 +162,7 @@ globalThis.ui     = { notifications: { warn: m => captured.warnings.push(String(
 globalThis.Dialog = class {
   constructor(config) { captured.dialog = config; }
   render() {}
+  close() {}
   /** «Да/Нет»: ответ задаёт тест через captured.confirmAnswer. */
   static async confirm(config) { captured.dialog = config; return captured.confirmAnswer; }
 };
@@ -302,6 +308,31 @@ export function fakeHtml(fields = {}, checks = {}) {
       on:   () => {},
       each: fn => (checks[selector] ?? []).forEach((cb, i) => fn(i, cb))
     })
+  };
+}
+
+/**
+ * Подставной jQuery для activateListeners: запоминает обработчики под ключом
+ * «селектор:событие» в html.handlers, а всё остальное (классы, текст,
+ * видимость) молча проглатывает — тесты проверяют поведение обработчика, а не
+ * оформление. nodes отдаёт узлы для .each() по селектору.
+ */
+export function listenerHtml(nodes = {}) {
+  const handlers = {};
+  return {
+    handlers,
+    find(selector) {
+      const node = {
+        click:  fn => { handlers[`${selector}:click`]  = fn; return node; },
+        change: fn => { handlers[`${selector}:change`] = fn; return node; },
+        on: (event, fn) => { handlers[`${selector}:${event}`] = fn; return node; },
+        each: fn => { (nodes[selector] ?? []).forEach((el, i) => fn(i, el)); return node; },
+        text: () => node, addClass: () => node, removeClass: () => node,
+        toggleClass: () => node, css: () => node, toggle: () => node,
+        val: () => undefined, is: () => false
+      };
+      return node;
+    }
   };
 }
 

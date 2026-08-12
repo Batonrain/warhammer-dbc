@@ -204,3 +204,31 @@ export async function rollDisorderTest(actor, item) {
     sound: CONFIG.sounds.dice
   }, rollMode));
 }
+
+/**
+ * Кнопки безумия на вкладке ЭФФЕКТЫ: тесты Страха, Травмы и Порчи, случайное
+ * расстройство, пикер и строки уже полученных.
+ * rollCharacteristic — бросок листа: диалог характеристики остаётся его частью.
+ */
+export function activateDisorderListeners(html, actor, { rollCharacteristic } = {}) {
+  html.find(".fear-roll").click(() => openFearDialog(actor));
+  html.find(".trauma-roll").click(() => rollTrauma(actor));
+  html.find(".disorder-roll, .disorder-roll-btn").click(() => rollDisorder(actor));
+  html.find(".disorder-add-btn").click(() => openDisorderPicker(actor));
+  html.find(".disorder-test-btn").click(ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) rollDisorderTest(actor, item);
+  });
+  html.find(".disorder-remove-btn").click(async ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) await item.delete();
+  });
+  html.find(".disorder-name-link").click(ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) item.sheet?.render(true);
+  });
+  html.find(".corruption-roll").click(() => {
+    const wp = actor.system.characteristics.wp?.total ?? 0;
+    rollCharacteristic("Воля (Порча)", "WP", wp, "wp");
+  });
+}

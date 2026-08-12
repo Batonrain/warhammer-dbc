@@ -248,6 +248,116 @@ export async function removePurchasedTalent(actor, itemId) {
 }
 
 export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = globalThis.$ } = {}) {
+
+  // ── Характеристики: значение, уровень улучшения и цена ────────────────────
+  html.find(".char-input").change(ev => {
+    const el = ev.currentTarget;
+    actor.update({
+      [`system.characteristics.${el.dataset.char}.${el.dataset.field}`]: parseInt(el.value) || 0
+    });
+  });
+  html.find(".char-improvement-select").change(ev => {
+    const el = ev.currentTarget;
+    const charKey = el.dataset.char;
+    // Ставим уровень И авто-цену (можно затем поправить вручную в поле «Цена»).
+    actor.update({
+      [`system.characteristics.${charKey}.improvement`]: el.value,
+      [`system.characteristics.${charKey}.cost`]: charImpCost(actor, charKey, el.value)
+    });
+  });
+  html.find(".char-cost-input").change(ev => {
+    const el = ev.currentTarget;
+    actor.update({ [`system.characteristics.${el.dataset.char}.cost`]: parseInt(el.value) || 0 });
+  });
+
+  // ── Навыки: ранг и цена ───────────────────────────────────────────────────
+  html.find(".skill-rank-select").change(ev => {
+    const el = ev.currentTarget;
+    const key = el.dataset.skill;
+    const granted = actor.system.skills?.[key]?.grantedRank || "untrained";
+    actor.update({
+      [`system.skills.${key}.rank`]: el.value,
+      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], el.value, null, granted)
+    });
+  });
+  html.find(".skill-cost-input").change(ev => {
+    const el = ev.currentTarget;
+    actor.update({ [`system.skills.${el.dataset.skill}.cost`]: parseInt(el.value) || 0 });
+  });
+
+  // ── Ручная пометка «выдано архетипом» (★) ────────────────────────────────
+  // Мастер выдаёт бесплатное автоматически (grantedRank/grantedImp), но то,
+  // что вписано руками, считалось купленным: обнулённая цена возвращалась при
+  // следующей смене ранга. Кнопка ★ фиксирует текущий уровень как бесплатный.
+  html.find(".grant-toggle[data-char]").click(ev => {
+    ev.preventDefault();
+    const charKey = ev.currentTarget.dataset.char;
+    const c   = actor.system.characteristics?.[charKey] || {};
+    const imp = c.improvement || "none";
+    const on  = (c.grantedImp || "none") !== "none";
+    const nextGranted = on ? "none" : imp;
+    if (!on && imp === "none")
+      return ui.notifications.warn("Сначала выберите уровень улучшения, потом помечайте его как выданный.");
+    actor.update({
+      [`system.characteristics.${charKey}.grantedImp`]: nextGranted,
+      [`system.characteristics.${charKey}.cost`]: charImpCost(actor, charKey, imp, nextGranted)
+    });
+  });
+
+  html.find(".grant-toggle[data-skill]").click(ev => {
+    ev.preventDefault();
+    const key = ev.currentTarget.dataset.skill;
+    const sk  = actor.system.skills?.[key] || {};
+    const rank = sk.rank || "untrained";
+    const on   = (sk.grantedRank || "untrained") !== "untrained";
+    const nextGranted = on ? "untrained" : rank;
+    if (!on && rank === "untrained")
+      return ui.notifications.warn("Сначала выберите ранг навыка, потом помечайте его как выданный.");
+    actor.update({
+      [`system.skills.${key}.grantedRank`]: nextGranted,
+      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], rank, null, nextGranted)
+    });
+  });
+
+  // ★ у таланта-предмета: «выдан архетипом» ↔ «куплен за опыт».
+  html.find(".grant-toggle[data-talent]").click(async ev => {
+    ev.preventDefault();
+    const item = actor.items.get(ev.currentTarget.dataset.talent);
+    if (!item) return;
+    const cost = parseInt(item.system?.cost) || 0;
+    const on   = !!item.system?.granted || (cost === 0 && !item.system?.purchased);
+    if (on) {
+      // Снимаем ★ → талант считается купленным, цена по склонностям (стр. 23-24).
+      const apts = charAptitudeSet(actor.system.aptitudes);
+      const a = item.system.aptSource
+        ? resolveTalentAptitudes(item.name, item.system.aptitudes || [], item.system.aptSource,
+            { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF })
+        : (item.system.aptitudes || []);
+      await item.update({
+        "system.granted": false, "system.purchased": true,
+        "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name))
+      });
+    } else {
+      await item.update({ "system.granted": true, "system.purchased": false, "system.cost": 0 });
+    }
+  });
+
+  html.find(".grant-toggle[data-group]").click(ev => {
+    ev.preventDefault();
+    const el      = ev.currentTarget;
+    const gk      = el.dataset.group;
+    const idx     = parseInt(el.dataset.index);
+    const entries = foundry.utils.deepClone(actor.system.groupSkills?.[gk] ?? []);
+    const e = entries[idx]; if (!e) return;
+    const rank = e.rank || "untrained";
+    const on   = (e.grantedRank || "untrained") !== "untrained";
+    if (!on && rank === "untrained")
+      return ui.notifications.warn("Сначала выберите ранг навыка, потом помечайте его как выданный.");
+    e.grantedRank = on ? "untrained" : rank;
+    e.cost = skillCumCost(actor, GROUP_SKILLS_DEF[gk], rank, e.char, e.grantedRank);
+    actor.update({ [`system.groupSkills.${gk}`]: entries });
+  });
+
   html.find(".add-group-skill").click(ev => {
     ev.preventDefault(); ev.stopPropagation();
     addGroupSkill(ev.currentTarget.dataset.group);

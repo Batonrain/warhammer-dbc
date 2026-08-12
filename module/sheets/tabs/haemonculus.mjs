@@ -94,3 +94,25 @@ export async function haemRank(actor, kind, key, delta) {
   e.ranks = Math.max(1, (Number(e.ranks) || 1) + delta);
   await actor.update({ [`system.haemonculus.${kind}`]: list });
 }
+
+/** Кнопки вкладки: ступени Ковена, трейты Идеалов и раскрытие ступени. */
+export function activateHaemonculusListeners(html, actor) {
+  html.find(".haem-advance-btn").click(() => haemStep(actor, 1));
+  html.find(".haem-descend-btn").click(() => haemStep(actor, -1));
+  html.find(".haem-toggle-btn").click(ev => {
+    const d = ev.currentTarget.dataset;
+    haemToggleTrait(actor, d.kind, d.key);
+  });
+  html.find(".haem-rank-btn").click(ev => {
+    const d = ev.currentTarget.dataset;
+    haemRank(actor, d.kind, d.key, Number(d.delta));
+  });
+  // Ступень раскрывается по клику на заголовок — все описания сразу не влезают.
+  html.find(".haem-step-head").click(ev => {
+    const step = ev.currentTarget.closest(".haem-step");
+    const body = step.querySelector(".haem-step-body");
+    const show = body.style.display === "none";
+    body.style.display = show ? "" : "none";
+    step.classList.toggle("is-expanded", show);
+  });
+}

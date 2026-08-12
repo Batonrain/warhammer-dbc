@@ -1,40 +1,37 @@
-import { ELITE_ARCHETYPES } from "../constants/elite-archetypes.mjs";
-import { haemStep, haemToggleTrait, haemRank } from "./tabs/haemonculus.mjs";
+import { activateEliteListeners } from "./elite-picker.mjs";
+import { activateHaemonculusListeners } from "./tabs/haemonculus.mjs";
 import { openItemPicker, talentCategory } from "./item-picker.mjs";
 import { openGearPicker } from "./gear-picker.mjs";
 // module/sheets/actor-sheet.mjs
 
 import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
-import { talentCostXP, charAptitudeSet, resolveTalentAptitudes } from "../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES } from "../constants/items.mjs";
-import { AZURIANE_PATHS, PATH_GRADE_ORDER } from "../constants/aeldari-paths.mjs";
-import { MELEE_STANCES, MELEE_TECHNIQUES } from "../constants/combat.mjs";
 import { _degWord, splitTopLevel } from "../helpers/utils.mjs";
 import { showCreationWizard, ruSpec } from "../apps/creation.mjs";
 import { buildSkillDisplay, buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
-import { showAttackDialog, showAttackDialogWithTechnique,
-         showAttackDialogNoWeapon } from "./attack-dialog.mjs";
+import { showAttackDialog, showAttackDialogNoWeapon } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
-import { openFearDialog, rollTrauma, rollDisorder, createDisorderItem, openDisorderPicker,
-         rollDisorderTest } from "./tabs/disorders.mjs";
+import { createDisorderItem, activateDisorderListeners } from "./tabs/disorders.mjs";
+import { activateDiseaseListeners } from "./tabs/diseases.mjs";
 import { fatiguePenalty, activateConditionsListeners } from "./tabs/conditions.mjs";
-import { painChatMsg, painChange, openPainSoulBurnDialog } from "./tabs/pain.mjs";
-import { showHealingDialog, applyHealing } from "./tabs/healing.mjs";
+import { painChatMsg } from "./tabs/pain.mjs";
+import { applyHealing } from "./tabs/healing.mjs";
 import { activateDrugListeners } from "./tabs/drugs.mjs";
 import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          resolvePsyCastAttr, rollPsyWpTest, rollPsyniscience, showManifestDialog,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners } from "./tabs/gear.mjs";
+import { activateAspirationListeners } from "./tabs/aspirations.mjs";
+import { activatePathListeners } from "./tabs/paths.mjs";
+import { activateCombatListeners } from "./tabs/combat.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
-import { activateAdvanceListeners, charImpCost as advCharImpCost,
-         skillCumCost as advSkillCumCost } from "./tabs/advance.mjs";
+import { activateAdvanceListeners } from "./tabs/advance.mjs";
 import { activateItemContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { _performDodge, _performParry }    from "../combat/defense.mjs";
-import { _showContestDialog }              from "../combat/techniques.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
@@ -43,7 +40,6 @@ import { RACES, AELDARI_PATHS } from "../constants/races.mjs";
 import { getLegion, getChapter, resolveCulture } from "../constants/legions.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { twinSpiritMeta } from "../constants/possession.mjs";
-import { beginTargeting } from "../combat/aim.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
 import { specOptions, matchSpec, specDef } from "../constants/skill-specializations.mjs";
@@ -434,40 +430,9 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     return openGearPicker(this.actor);
   }
 
-  // ── Страх / Безумие ────────────────────────────────────────────────────
-
-  /** Тест Страха → при провале таблица Шока (1d100 + 10×Провалы−1 − Infamy). */
-  async _rollFear() {
-    return openFearDialog(this.actor);
-  }
-
-  /** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. */
-  async _rollTrauma() {
-    return rollTrauma(this.actor);
-  }
-
-  /** Случайное Ментальное Расстройство (d100) — создаёт предмет и сообщает в чат. */
-  async _rollDisorder() {
-    return rollDisorder(this.actor);
-  }
-
   /** Создаёт предмет-расстройство на акторе из записи библиотеки (без дублей по имени). */
   async _createDisorderItem(entry) {
     return createDisorderItem(this.actor, entry);
-  }
-
-  /**
-   * Пикер ментальных расстройств (стр. 292) — в одном стиле с пикерами
-   * талантов, черт и мутаций: поиск, диапазон d100, раскрытие описания
-   * стрелкой, добавление по «＋» прямо из строки.
-   */
-  _addDisorderDialog() {
-    return openDisorderPicker(this.actor);
-  }
-
-  /** Тест конкретного расстройства (W + его testMod). */
-  async _rollDisorderTest(item) {
-    return rollDisorderTest(this.actor, item);
   }
 
   /** Применяет расовые бонусы (характеристики только в пустые поля + расовые Черты). */
@@ -599,124 +564,12 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
   // ── Слушатели ─────────────────────────────────────────────────────────────
 
-  /** Какие расы из листа подходят под метку расы элитного архетипа. */
-  _eliteRaceMatch(entry) {
-    const r = String(entry.race || "Любая");
-    if (/люб/i.test(r)) return true;
-    const race = this.actor.system.race || "";
-    const sub  = this.actor.system.subrace || "";
-    const MAP = {
-      "Космодесантник": ["astartes"],
-      "Человек":        ["human", "ogryn", "ratling", "navigator", "squat"],
-      // Метка «Друкхари» покрывает и субрасы — так сказано в книге.
-      "Друкхари":       ["drukhari", "truebornDrukhari", "mandrake", "wrack"],
-      "Друкхари Истиннорожденный": ["truebornDrukhari"],
-      "Сслит":          ["sslyth"],
-      "Мандрагора":     ["mandrake"],
-      "Развалина":      ["wrack"]
-    };
-    // Метка может перечислять несколько рас через запятую.
-    return r.split(/[,/]/).some(part => {
-      const keys = MAP[part.trim()];
-      if (!keys) return false;
-      return keys.includes(race) || keys.includes(sub);
-    });
-  }
-
-  /**
-   * Пикер элитных архетипов: подходящие сверху, остальные — под спойлером.
-   * extraIndex — индекс в system.eliteArchetypesExtra (доп. поля из шапки,
-   * кнопка «+»); без него, как раньше, пишет в основное system.eliteArchetype.
-   */
-  _showElitePicker(sheetHtml, extraIndex = null) {
-    const cur = extraIndex == null
-      ? (this.actor.system.eliteArchetype || "")
-      : (this.actor.system.eliteArchetypesExtra?.[extraIndex] || "");
-    const fit = [], rest = [];
-    for (const e of ELITE_ARCHETYPES) (this._eliteRaceMatch(e) ? fit : rest).push(e);
-
-    const card = (e, dim) => `
-      <button type="button" class="ep-item ${dim ? "dim" : ""} ${e.name === cur ? "on" : ""}"
-              data-name="${e.name}">
-        <span class="ep-name">${e.name}</span>
-        <span class="ep-meta">${e.race}${e.god ? " · " + e.god : ""}</span>
-        <span class="ep-req">${e.req || ""}</span>
-      </button>`;
-
-    const dlg = new Dialog({
-      title: "Элитный архетип",
-      content: `<form class="wh-elite-picker">
-        <input type="text" class="ep-search" placeholder="Поиск по названию или требованиям…"/>
-        <div class="ep-sec">Доступные расе (${fit.length})</div>
-        <div class="ep-list">${fit.map(e => card(e, false)).join("") || '<div class="ep-none">Для этой расы записей нет — впишите свой архетип вручную.</div>'}</div>
-        ${rest.length ? `<details class="ep-rest"><summary>Прочие архетипы (${rest.length}) — требования не выполнены</summary>
-          <div class="ep-list">${rest.map(e => card(e, true)).join("")}</div></details>` : ""}
-        <div class="ep-custom">
-          <label>Свой архетип</label>
-          <input type="text" class="ep-own" value="${cur.replace(/"/g, "&quot;")}" placeholder="Название своего элитного архетипа"/>
-          <button type="button" class="ep-own-set">Записать</button>
-        </div>
-      </form>`,
-      buttons: { close: { label: "Закрыть" } },
-      default: "close",
-      render: html => {
-        const put = async (name) => {
-          if (extraIndex == null) {
-            await this.actor.update({ "system.eliteArchetype": name });
-          } else {
-            const arr = foundry.utils.deepClone(this.actor.system.eliteArchetypesExtra || []);
-            arr[extraIndex] = name;
-            await this.actor.update({ "system.eliteArchetypesExtra": arr });
-          }
-          dlg.close();
-        };
-        html.find(".ep-item").click(ev => put(ev.currentTarget.dataset.name));
-        html.find(".ep-own-set").click(() => put(html.find(".ep-own").val().trim()));
-        html.find(".ep-own").on("keydown", ev => {
-          if (ev.key === "Enter") { ev.preventDefault(); put(ev.currentTarget.value.trim()); }
-        });
-        html.find(".ep-search").on("input", ev => {
-          const q = ev.currentTarget.value.trim().toLowerCase();
-          html.find(".ep-item").each((_, el) => {
-            el.classList.toggle("ep-hidden", !!q && !el.textContent.toLowerCase().includes(q));
-          });
-        });
-      }
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 560, height: 620 });
-    dlg.render(true);
-  }
-
-
   activateListeners(html) {
     requestAnimationFrame(() => { this._restoreScrollPositions(); });
     super.activateListeners(html);
 
-    // Выбор Элитного архетипа: список фильтруется по расе персонажа, но поле
-    // остаётся текстовым — свой архетип можно просто вписать руками.
-    html.find(".elite-pick-btn").click(() => this._showElitePicker(html));
-
-    // Доп. элитные архетипы (кнопка «+» в шапке) — простой текстовый список
-    // поверх основного system.eliteArchetype (тот остаётся первым/главным).
-    const getEliteExtra = () => foundry.utils.deepClone(this.actor.system.eliteArchetypesExtra || []);
-    html.find(".elite-add-btn").click(async ev => {
-      ev.preventDefault();
-      const arr = getEliteExtra(); arr.push("");
-      await this.actor.update({ "system.eliteArchetypesExtra": arr });
-    });
-    html.find(".elite-extra-input").on("change", async ev => {
-      const i = parseInt(ev.currentTarget.dataset.index);
-      const arr = getEliteExtra(); if (arr[i] === undefined) return;
-      arr[i] = ev.currentTarget.value;
-      await this.actor.update({ "system.eliteArchetypesExtra": arr });
-    });
-    html.find(".elite-extra-remove").click(async ev => {
-      ev.preventDefault();
-      const i = parseInt(ev.currentTarget.dataset.index);
-      const arr = getEliteExtra(); arr.splice(i, 1);
-      await this.actor.update({ "system.eliteArchetypesExtra": arr });
-    });
-    html.find(".elite-extra-pick-btn").click(ev =>
-      this._showElitePicker(html, parseInt(ev.currentTarget.dataset.index)));
+    // ── Элитный архетип в шапке ───────────────────────────────────────────
+    activateEliteListeners(html, this.actor);
 
     // ── Происхождение (Родные миры) ───────────────────────────────────────
     // Смена мира снимает всё, что дал прежний, и выдаёт новое (с диалогом
@@ -726,24 +579,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     html.find(".dv-select").on("change", ev => applyDivination(this.actor, ev.currentTarget.value));
 
     // ── Вкладка ГЕМУНКУЛ ──────────────────────────────────────────────────
-    html.find(".haem-advance-btn").click(() => haemStep(this.actor, 1));
-    html.find(".haem-descend-btn").click(() => haemStep(this.actor, -1));
-    html.find(".haem-toggle-btn").click(ev => {
-      const d = ev.currentTarget.dataset;
-      haemToggleTrait(this.actor, d.kind, d.key);
-    });
-    html.find(".haem-rank-btn").click(ev => {
-      const d = ev.currentTarget.dataset;
-      haemRank(this.actor, d.kind, d.key, Number(d.delta));
-    });
-    // Ступень раскрывается по клику на заголовок — все описания сразу не влезают.
-    html.find(".haem-step-head").click(ev => {
-      const step = ev.currentTarget.closest(".haem-step");
-      const body = step.querySelector(".haem-step-body");
-      const show = body.style.display === "none";
-      body.style.display = show ? "" : "none";
-      step.classList.toggle("is-expanded", show);
-    });
+    activateHaemonculusListeners(html, this.actor);
 
     // Очки Бесчестия (общая полоса infamy-strip)
     if (this.isEditable) {
@@ -910,47 +746,12 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
     // Длительность теперь бросается автоматически при применении препарата.
 
-    // ── Страх / Безумие / Порча ────────────────────────────────────────────
-    html.find(".fear-roll").click(() => this._rollFear());
-    html.find(".trauma-roll").click(() => this._rollTrauma());
-    html.find(".disorder-roll, .disorder-roll-btn").click(() => this._rollDisorder());
-    html.find(".disorder-add-btn").click(() => this._addDisorderDialog());
-    html.find(".disorder-test-btn").click(ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) this._rollDisorderTest(item);
+    // ── Страх / Безумие / Порча и Болезни ──────────────────────────────────
+    activateDisorderListeners(html, this.actor, {
+      rollCharacteristic: (label, abbr, threshold, charKey) =>
+        this._rollCharacteristic(label, abbr, threshold, charKey)
     });
-    html.find(".disorder-remove-btn").click(async ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) await item.delete();
-    });
-    html.find(".disorder-name-link").click(ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) item.sheet?.render(true);
-    });
-
-    // ── Болезни ───────────────────────────────────────────────────────────
-    html.find(".disease-name-link").click(ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) item.sheet?.render(true);
-    });
-    html.find(".disease-remove-btn").click(async ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) await item.delete();
-    });
-    html.find(".disease-active-toggle").click(async ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) await item.update({ "system.active": !item.system.active });
-    });
-    html.find(".disease-add-btn").click(async () => {
-      const [it] = await this.actor.createEmbeddedDocuments("Item", [
-        { name: "Новая болезнь", type: "disease", system: { diseaseType: "warp" } }
-      ]);
-      it?.sheet.render(true);
-    });
-    html.find(".corruption-roll").click(() => {
-      const wp = this.actor.system.characteristics.wp?.total ?? 0;
-      this._rollCharacteristic("Воля (Порча)", "WP", wp, "wp");
-    });
+    activateDiseaseListeners(html, this.actor);
 
     // ── Кнопки «+» показателей: Безумие/Порча (число или XdY+Z), Опыт,
     //    Благосклонность Бога-покровителя (ЗАПИСИ) — общий диалог+лог в чат ──
@@ -999,109 +800,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       this._rollCharacteristic(charLabel(key, this.actor.system.alignment), meta.abbr, total, key);
     });
 
-    // ── Редактирование характеристик ──────────────────────────────────────
-    html.find(".char-input").change(ev => {
-      const el = ev.currentTarget;
-      this.actor.update({
-        [`system.characteristics.${el.dataset.char}.${el.dataset.field}`]: parseInt(el.value) || 0
-      });
-    });
-    // Накопительные авто-цены по склонностям (стр. 23-24) считает tabs/advance.mjs;
-    // здесь короткие обёртки — секции ниже зовут их без актора.
-    const charImpCost  = (charKey, improvement, grantedImp) =>
-      advCharImpCost(this.actor, charKey, improvement, grantedImp);
-    const skillCumCost = (def, rank, entryChar, grantedRank) =>
-      advSkillCumCost(this.actor, def, rank, entryChar, grantedRank);
-    html.find(".char-improvement-select").change(ev => {
-      const el = ev.currentTarget;
-      const charKey = el.dataset.char;
-      // Ставим уровень И авто-цену (можно затем поправить вручную в поле «Цена»).
-      this.actor.update({
-        [`system.characteristics.${charKey}.improvement`]: el.value,
-        [`system.characteristics.${charKey}.cost`]: charImpCost(charKey, el.value)
-      });
-    });
-    html.find(".char-cost-input").change(ev => {
-      const el      = ev.currentTarget;
-      const charKey = el.dataset.char;
-      const cost    = parseInt(el.value) || 0;
-      this.actor.update({ [`system.characteristics.${charKey}.cost`]: cost });
-    });
-
-    // ── Ручная пометка «выдано архетипом» (★) ────────────────────────────
-    // Мастер выдаёт бесплатное автоматически (grantedRank/grantedImp), но то,
-    // что вписано руками, считалось купленным: обнулённая цена возвращалась при
-    // следующей смене ранга. Кнопка ★ фиксирует текущий уровень как бесплатный.
-    html.find(".grant-toggle[data-char]").click(ev => {
-      ev.preventDefault();
-      const charKey = ev.currentTarget.dataset.char;
-      const c   = this.actor.system.characteristics?.[charKey] || {};
-      const imp = c.improvement || "none";
-      const on  = (c.grantedImp || "none") !== "none";
-      const nextGranted = on ? "none" : imp;
-      if (!on && imp === "none")
-        return ui.notifications.warn("Сначала выберите уровень улучшения, потом помечайте его как выданный.");
-      this.actor.update({
-        [`system.characteristics.${charKey}.grantedImp`]: nextGranted,
-        [`system.characteristics.${charKey}.cost`]: charImpCost(charKey, imp, nextGranted)
-      });
-    });
-
-    html.find(".grant-toggle[data-skill]").click(ev => {
-      ev.preventDefault();
-      const key = ev.currentTarget.dataset.skill;
-      const sk  = this.actor.system.skills?.[key] || {};
-      const rank = sk.rank || "untrained";
-      const on   = (sk.grantedRank || "untrained") !== "untrained";
-      const nextGranted = on ? "untrained" : rank;
-      if (!on && rank === "untrained")
-        return ui.notifications.warn("Сначала выберите ранг навыка, потом помечайте его как выданный.");
-      this.actor.update({
-        [`system.skills.${key}.grantedRank`]: nextGranted,
-        [`system.skills.${key}.cost`]: skillCumCost(SKILLS_DEF[key], rank, null, nextGranted)
-      });
-    });
-
-    // ★ у таланта-предмета: «выдан архетипом» ↔ «куплен за опыт».
-    html.find(".grant-toggle[data-talent]").click(async ev => {
-      ev.preventDefault();
-      const item = this.actor.items.get(ev.currentTarget.dataset.talent);
-      if (!item) return;
-      const cost = parseInt(item.system?.cost) || 0;
-      const on   = !!item.system?.granted || (cost === 0 && !item.system?.purchased);
-      if (on) {
-        // Снимаем ★ → талант считается купленным, цена по склонностям (стр. 23-24).
-        const apts = charAptitudeSet(this.actor.system.aptitudes);
-        const a = item.system.aptSource
-          ? resolveTalentAptitudes(item.name, item.system.aptitudes || [], item.system.aptSource,
-              { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF })
-          : (item.system.aptitudes || []);
-        await item.update({
-          "system.granted": false, "system.purchased": true,
-          "system.cost": talentCostXP(item.system.tier, a, apts,
-            this._talentCat(item.name))
-        });
-      } else {
-        await item.update({ "system.granted": true, "system.purchased": false, "system.cost": 0 });
-      }
-    });
-
-    html.find(".grant-toggle[data-group]").click(ev => {
-      ev.preventDefault();
-      const el      = ev.currentTarget;
-      const gk      = el.dataset.group;
-      const idx     = parseInt(el.dataset.index);
-      const entries = foundry.utils.deepClone(this.actor.system.groupSkills?.[gk] ?? []);
-      const e = entries[idx]; if (!e) return;
-      const rank = e.rank || "untrained";
-      const on   = (e.grantedRank || "untrained") !== "untrained";
-      if (!on && rank === "untrained")
-        return ui.notifications.warn("Сначала выберите ранг навыка, потом помечайте его как выданный.");
-      e.grantedRank = on ? "untrained" : rank;
-      e.cost = skillCumCost(GROUP_SKILLS_DEF[gk], rank, e.char, e.grantedRank);
-      this.actor.update({ [`system.groupSkills.${gk}`]: entries });
-    });
-
     // ── Навыки ────────────────────────────────────────────────────────────
     html.find(".skill-roll").click(ev => {
       const isGroup = ev.currentTarget.dataset.group === "true";
@@ -1119,26 +817,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
         const sk  = this.actor.system.skills?.[key];
         this._rollSkill(def?.label ?? key, sk?.total ?? -20, def?.char ?? "ag", { skill: key });
       }
-    });
-
-    html.find(".wounds-heal-btn").click(() => this._showHealingDialog());
-
-    html.find(".pain-absorb-btn").click(() => this._painChange(+1, "absorb"));
-    html.find(".pain-spend-btn").click(() => this._painChange(-1, "spend"));
-    html.find(".pain-soulburn-btn").click(() => this._painSoulBurn());
-
-    html.find(".skill-rank-select").change(ev => {
-      const el = ev.currentTarget;
-      const key = el.dataset.skill;
-      const granted = this.actor.system.skills?.[key]?.grantedRank || "untrained";
-      this.actor.update({
-        [`system.skills.${key}.rank`]: el.value,
-        [`system.skills.${key}.cost`]: skillCumCost(SKILLS_DEF[key], el.value, null, granted)
-      });
-    });
-    html.find(".skill-cost-input").change(ev => {
-      const el = ev.currentTarget;
-      this.actor.update({ [`system.skills.${el.dataset.skill}.cost`]: parseInt(el.value) || 0 });
     });
 
     // ── Вкладка РАЗВИТИЕ ──────────────────────────────────────────────────
@@ -1188,81 +866,9 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       await rollMutationOrGift(this.actor);
     });
 
-    // ── Стремления (стр. 22) — 3 ЖЁСТКИХ слота: [0]=Гордыня,[1]=Позор,[2]=Мотивация ──
-    // Позиция в массиве = категория, слоты всегда 3 (не добавляются/не удаляются
-    // как раньше — только очищаются "✕" или переключаются на "Своё").
-    const getAspir = () => {
-      const v = this.actor.system.aspirations;
-      const arr = Array.isArray(v) ? foundry.utils.deepClone(v) : [];
-      while (arr.length < 3) arr.push({ id: "" });
-      return arr;
-    };
-    html.find(".aspir-remove").click(async ev => {
-      ev.preventDefault();
-      const i = parseInt(ev.currentTarget.dataset.index);
-      const arr = getAspir(); arr[i] = { id: "" };
-      await this.actor.update({ "system.aspirations": arr });
-    });
-    html.find(".aspir-select").on("change", async ev => {
-      const i = parseInt(ev.currentTarget.dataset.index);
-      const arr = getAspir();
-      arr[i] = (ev.currentTarget.value === "__custom__")
-        ? { custom: true, name: "", mods: "", desc: "" }
-        : { id: ev.currentTarget.value };
-      await this.actor.update({ "system.aspirations": arr });
-    });
-    html.find(".aspir-custom-name, .aspir-custom-mods").on("change", async ev => {
-      const i = parseInt(ev.currentTarget.dataset.index);
-      const arr = getAspir();
-      arr[i] = { ...arr[i], custom: true };
-      if (ev.currentTarget.classList.contains("aspir-custom-name")) arr[i].name = ev.currentTarget.value;
-      else arr[i].mods = ev.currentTarget.value;
-      await this.actor.update({ "system.aspirations": arr });
-    });
-
-    // ── Пути Аэльдари ───────────────────────────────────────────────────────
-    const getPaths = () => {
-      const v = this.actor.system.paths;
-      if (Array.isArray(v)) return foundry.utils.deepClone(v);
-      if (v && typeof v === "object") return Object.values(v);
-      return [];
-    };
-    html.find(".path-add-btn").click(async ev => {
-      ev.preventDefault();
-      const arr = getPaths();
-      arr.push({ key: "", grade: "" });
-      await this.actor.update({ "system.paths": arr });
-    });
-    html.find(".path-remove").click(async ev => {
-      ev.preventDefault();
-      const idx = parseInt(ev.currentTarget.dataset.index);
-      const arr = getPaths();
-      arr.splice(idx, 1);
-      await this.actor.update({ "system.paths": arr });
-    });
-    const savePaths = async () => {
-      const arr = [];
-      html.find(".path-sel").each((_, el) => {
-        const i = parseInt(el.dataset.index);
-        if (!arr[i]) arr[i] = { key: "", grade: "" };
-        arr[i].key = el.value;
-      });
-      html.find(".path-grade").each((_, el) => {
-        const i = parseInt(el.dataset.index);
-        if (!arr[i]) arr[i] = { key: "", grade: "" };
-        arr[i].grade = el.value;
-      });
-      // При смене пути сбрасываем градацию на первую доступную
-      html.find(".path-sel").each((_, el) => {
-        const i = parseInt(el.dataset.index);
-        const path = AZURIANE_PATHS[el.value];
-        if (path && arr[i] && !path.grades?.[arr[i].grade]) {
-          arr[i].grade = PATH_GRADE_ORDER.find(g => path.grades?.[g]) || "";
-        }
-      });
-      await this.actor.update({ "system.paths": arr });
-    };
-    html.find(".path-sel, .path-grade").on("change", savePaths);
+    // ── Стремления и Пути Аэльдари ─────────────────────────────────────────
+    activateAspirationListeners(html, this.actor);
+    activatePathListeners(html, this.actor);
 
     // Сворачивание панели Путей (состояние держится между перерисовками)
     if (this._pathsOpen === false) {
@@ -1288,20 +894,8 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
     activateGearListeners(html, this.actor);
 
-    html.find(".weapon-attack-roll").click(ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (!item) return;
-      // Стрельба по клику: у стрелкового/метательного оружия без уже выбранной
-      // цели — сперва прицеливание перекрестием, диалог откроется по выбору цели.
-      // Ближний бой и уже назначенная цель — сразу диалог (прежнее поведение).
-      const isRanged = item.system?.weaponClass && item.system.weaponClass !== "melee";
-      const hasTarget = (game.user?.targets?.size ?? 0) > 0;
-      if (isRanged && !hasTarget && canvas?.ready) {
-        beginTargeting(this.actor, item, () => this._showAttackDialog(item));
-      } else {
-        this._showAttackDialog(item);
-      }
-    });
+    // ── Вкладка БОЙ ───────────────────────────────────────────────────────
+    activateCombatListeners(html, this.actor);
 
     // ── Контекстное меню предметов ────────────────────────────────────────
     activateItemContextMenu(html, this.actor);
@@ -1322,32 +916,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       await this._toggleManifest();
     });
 
-    // ── Стойка ───────────────────────────────────────────────────────────
-    html.find(".stance-radio").change(ev => {
-      this.actor.update({ "system.meleeStance": ev.currentTarget.value });
-    });
-
-    // ── Приёмы ───────────────────────────────────────────────────────────
-    html.find(".technique-btn").click(ev => {
-      const tech    = ev.currentTarget.dataset.technique;
-      const techDef = MELEE_TECHNIQUES[tech];
-      if (!techDef) return;
-
-      const meleeItem = this.actor.items.find(i =>
-        i.type === "weapon" && i.system.equipped &&
-        (i.system.weaponClass === "melee" || i.system.weaponClass === "thrown")
-      );
-      const stance    = this.actor.system.meleeStance || "standard";
-      const stanceDef = MELEE_STANCES[stance];
-
-      if (tech === "knockdown" || tech === "feint" || tech === "press") {
-        _showContestDialog(this.actor, techDef);
-      } else if (meleeItem) {
-        this._showAttackDialogWithTechnique(meleeItem, techDef, stanceDef, tech);
-      } else {
-        this._showAttackDialogNoWeapon(techDef);
-      }
-    });
   }
 
   // ── Диалог атаки ─────────────────────────────────────────────────────────
@@ -1356,10 +924,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   // кнопки листа и HUD (module/apps/hud.mjs) — через actor.sheet.
   _showAttackDialog(item, techniqueOpts = {}) {
     return showAttackDialog(this.actor, item, techniqueOpts);
-  }
-
-  _showAttackDialogWithTechnique(item, techDef, stanceDef, techKey) {
-    return showAttackDialogWithTechnique(this.actor, item, techDef, stanceDef, techKey);
   }
 
   _showAttackDialogNoWeapon(techDef) {
@@ -1679,32 +1243,16 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     await ChatMessage.create(messageData);
   }
 
-  // ── Лечение / Первая Помощь ───────────────────────────────────────────────
-  /** Диалог лечения: себя или выбранной цели (тест Медики/Стойкости). */
-  _showHealingDialog() {
-    return showHealingDialog(this.actor);
-  }
-
   /** Расчёт и применение лечения к пациенту + сообщение в чат. */
   async _applyHealing(patient, { mode, care, mod, bonus }) {
     return applyHealing(this.actor, patient, { mode, care, mod, bonus });
   }
 
-  // ── Очки Боли (Друкхари) ──────────────────────────────────────────────────
   /** Краткое сообщение о Боли в чат. */
   async _painChatMsg(text) {
     return painChatMsg(this.actor, text);
   }
 
-  /** Впитать (+1) или потратить (−1) Очко Боли. */
-  async _painChange(delta, kind) {
-    return painChange(this.actor, delta, kind);
-  }
-
-  /** Выжигание Души / Варп-урон: Боль выжигается первой (3 урона за 1 Боль). */
-  _painSoulBurn() {
-    return openPainSoulBurnDialog(this.actor);
-  }
   // ── Бросок характеристики ─────────────────────────────────────────────────
 
   async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false) {
