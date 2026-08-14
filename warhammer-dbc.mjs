@@ -62,10 +62,7 @@ import { importBooks }                from "./module/apps/books.mjs";
 import { registerHandlebarsHelpers }  from "./module/helpers/handlebars.mjs";
 import { registerHooks }              from "./module/hooks.mjs";
 import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
-import { GEAR_LIBRARY }               from "./module/constants/gear-library.mjs";
-import { TOOLS_LIBRARY }              from "./module/constants/tools-library.mjs";
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
-import { IMPLANT_LIBRARY }            from "./module/constants/implants.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
 import { computeShipIdentity }        from "./module/constants/ship-tokens.mjs";
 
@@ -1140,19 +1137,6 @@ const TWIN_FLAG = "warhammer-dbc";
 // пара начнёт удалять друг друга по кругу.
 const _twinDeleting = new Set();
 
-/** Ссылка на боевой профиль по имени предмета — прямо из библиотеки. */
-function _twinLinkByName(name) {
-  if (!_twinByName) {
-    _twinByName = new Map();
-    for (const d of [...GEAR_LIBRARY, ...TOOLS_LIBRARY, ...IMPLANT_LIBRARY]) {
-      const w = d.system?.linkedWeapon;
-      if (w) _twinByName.set(d.name, w);
-    }
-  }
-  return _twinByName.get(name) || "";
-}
-let _twinByName = null;
-
 /** Ищет предмет оружия в компендиуме по точному имени. */
 async function _twinLookup(name) {
   const pack = game.packs.get("warhammer-dbc.weapons");
@@ -1284,10 +1268,11 @@ Hooks.on("createItem", async (item, options, userId) => {
   if (game.user.id !== userId) return;
   const actor = item.parent;
   if (!(actor instanceof Actor)) return;
-  // Ссылку берём из предмета, а если её там нет — из библиотеки по имени.
-  // Компендиум мог быть засеян до появления поля, и полагаться только на
-  // него нельзя: пара просто молча не создавалась бы.
-  const link = item.system?.linkedWeapon || _twinLinkByName(item.name);
+  // Ссылка живёт на самом предмете. Раньше рядом стояла запасная дорожка —
+  // поиск по имени в библиотеках констант, на случай компендиума, засеянного
+  // до появления поля. Поле теперь есть у всех носителей в packs-src
+  // (wdbc-ff4.8), и запасная дорожка снята вместе с тремя импортами.
+  const link = item.system?.linkedWeapon;
   if (!link) return;
   // Сам боевой профиль второго профиля не порождает.
   if (item.getFlag(TWIN_FLAG, "twinOf")) return;

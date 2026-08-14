@@ -10,7 +10,7 @@
     "effect": "Имплант в горле: разрушительный звуковой залп (профиль: Rng 3м, 2d10+5 X, Concussive(2), Extreme(8), Independent). Poor.Q 4ч перезарядка; Good.Q 10мин; Best.Q 3 Хода.",
     "installed": "",
     "geneSeedOrder": 0,
-    "linkedWeapon": "",
+    "linkedWeapon": "Звуковой Крикун (имплант)",
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,
@@ -37,7 +37,8 @@
       "currentRating": 0,
       "equipped": false,
       "status": "inactive"
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, БИОНИКА И КИБЕРНЕТИКА (стр. 263-275)"
   },
   "folder": "HeTDZy6ybZTzf4rM",
   "_id": "t9ncnfJySLwSCftJ",

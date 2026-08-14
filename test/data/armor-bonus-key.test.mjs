@@ -18,7 +18,7 @@ import fs   from "node:fs";
 import path from "node:path";
 
 import { EFFECT_KEY_LABELS, EFFECT_KEY_WHITELIST, expectedPhase,
-         legacyEffectsToChanges } from "../../module/constants/effect-keys.mjs";
+         legacyEffectsToChanges, summarizeEffectChanges } from "../../module/constants/effect-keys.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
 const template = JSON.parse(
@@ -79,6 +79,20 @@ describe("ключ складываемой брони", () => {
 // (item-sheet.mjs). После wdbc-b3m это неправда: у хранимого поля фаза обязана
 // быть "initial", и такими же всегда были сдвиг индекса грузоподъёмности и SPD
 // Конструктора — все они получали ложное «⚠ initial».
+// Деления у ядра Foundry нет: divideUp/divideDown применяет хук
+// "applyActiveEffect" (warhammer-dbc.mjs), и Конструктор их предлагает.
+// Своим типам нужна и своя подпись, иначе сводка на листе предмета печатает
+// сырое «divideUp2» — механика работает, а выглядит поломкой.
+describe("подписи типов изменения", () => {
+  it("свои типы деления подписаны, а не печатаются как есть", () => {
+    const summary = summarizeEffectChanges([
+      { key: "system.characteristics.ag.total", type: "divideUp", value: 2 },
+      { key: "system.characteristics.s.total",  type: "divideDown", value: 2 }
+    ]);
+    expect(summary).toBe("Ag (значение) ÷↑ (вверх)2, S (значение) ÷↓ (вниз)2");
+  });
+});
+
 describe("какая фаза какому ключу положена", () => {
   it("хранимым полям — initial", () => {
     for (const key of ["system.armorBonus.head",
