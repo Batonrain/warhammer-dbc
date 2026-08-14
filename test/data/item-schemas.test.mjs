@@ -452,11 +452,9 @@ const TYPES = {
     }
   },
 
-  // ── Ритуалы (wdbc-5ed) ─────────────────────────────────────────────────────
+  // ── Ритуалы (wdbc-5ed, контент — wdbc-qg1) ─────────────────────────────────
   ritual: {
-    // Пак заводится следующей задачей (wdbc-qg1) — пока сохранность спрашивать
-    // не у чего, проверяются только умолчания.
-    pack: null,
+    pack: "rituals",
     defaults: {
       description: "", notes: "", source: "", bookSource: "",
       ritualType: "summon", record: 0, assistMin: 0, assistMax: 0,
