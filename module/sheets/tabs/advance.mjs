@@ -270,6 +270,13 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     actor.update({ [`system.characteristics.${el.dataset.char}.cost`]: parseInt(el.value) || 0 });
   });
 
+  // Цена психосилы и техночуда: поле есть и здесь, и на вкладках «ПСИ»/«ТЕХНО»,
+  // а сумма из них уходит в «Потрачено» на этой вкладке — потому обработчик один.
+  html.find(".psy-cost-input, .tech-cost-input").on("change", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) item.update({ "system.cost": parseInt(ev.currentTarget.value) || 0 });
+  });
+
   // ── Навыки: ранг и цена ───────────────────────────────────────────────────
   html.find(".skill-rank-select").change(ev => {
     const el = ev.currentTarget;

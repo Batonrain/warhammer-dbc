@@ -28,6 +28,7 @@ import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
+import { activatePossessionListeners } from "./tabs/possession.mjs";
 import { activateAdvanceListeners } from "./tabs/advance.mjs";
 import { activateItemContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
@@ -36,21 +37,16 @@ import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
-import { RACES, AELDARI_PATHS } from "../constants/races.mjs";
-import { getLegion, getChapter, resolveCulture } from "../constants/legions.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
-import { twinSpiritMeta } from "../constants/possession.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
 import { specOptions, matchSpec, specDef } from "../constants/skill-specializations.mjs";
-import { ASTARTES_IMPLANTS, ASTARTES_RACE,
-         missingAstartesImplants } from "../constants/astartes-implants.mjs";
-import { syncAstartesImplantWeapon } from "../apps/astartes-implants.mjs";
 import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
+import { activateRaceListeners } from "../apps/races.mjs";
+import { grantAstartesImplants } from "../apps/astartes-implants.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
-import { syncItemEffectsDisabled } from "../apps/effects.mjs";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
@@ -111,38 +107,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     html.find(`.gear-modsub-row[data-host-id="${hid}"]`).css("display", collapsed ? "none" : "");
     if (collapsed) html.find(`.ability-detail-row[data-host-id="${hid}"]`).css("display", "none");
     html.find(`.gear-mods-toggle[data-host-id="${hid}"]`).toggleClass("collapsed", collapsed);
-  }
-
-  // ── Одержимый: переключение Проявления (+ тест Cor+20 при входе) ───────────
-  async _toggleManifest() {
-    const sys = this.actor.system;
-    const p   = sys.possession || {};
-    const now = !p.manifested;
-    const meta = twinSpiritMeta(p.demon || "katart");
-    const updates = { "system.possession.manifested": now };
-
-    if (now) {
-      // Вход в Проявление — тест Cor+20; при Провале +1 Порчи.
-      const cor    = sys.corruption?.value ?? 0;
-      const target = Math.min(100, cor + 20);
-      const roll   = await (new Roll("1d100")).evaluate();
-      const success = roll.total <= target;
-      if (!success) updates["system.corruption.value"] = Math.min(100, cor + 1);
-      const body = `
-        <div class="wh-poss-card" style="--gc:${meta.color}">
-          <div class="wh-poss-card-h">⛧ ПРОЯВЛЕНИЕ — ${meta.label} (${meta.godLabel})</div>
-          <div class="wh-poss-card-r">Тест Cor+20: <b>${roll.total}</b> против <b>${target}</b> —
-            <span class="${success ? "ok" : "bad"}">${success ? "Успех" : "Провал: +1 Порчи"}</span></div>
-          <div class="wh-poss-card-n">Демон перестраивает тело в боевую форму. Броня/одежда сплавляются с формой.</div>
-        </div>`;
-      await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor: this.actor }), flavor: body });
-    } else {
-      ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-        content: `<div class="wh-poss-card" style="--gc:${meta.color}"><div class="wh-poss-card-h">Демон заключён — смертная форма</div></div>`
-      });
-    }
-    await this.actor.update(updates);
   }
 
   // ── getData ───────────────────────────────────────────────────────────────
@@ -435,119 +399,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     return createDisorderItem(this.actor, entry);
   }
 
-  /** Применяет расовые бонусы (характеристики только в пустые поля + расовые Черты). */
-  async _applyRaceData(raceKey) {
-    const race = RACES[raceKey];
-    if (!race) return;
-    const chars = this.actor.system.characteristics;
-    const upd = {};
-    for (const [k, v] of Object.entries(race.chars || {})) {
-      if ((chars[k]?.base || 0) === 0) upd[`system.characteristics.${k}.base`] = v;
-    }
-    if (Object.keys(upd).length) await this.actor.update(upd);
-    const n  = await this._createTraitsFromList(race.traits || [], race.label || raceKey);
-    const nt = await this._applyStartingTalents(race.talents || [], race.label || raceKey);
-    // Космодесантнику органы Геносемени положены по умолчанию.
-    const ng = raceKey === ASTARTES_RACE ? await this._grantAstartesImplants() : 0;
-    ui.notifications.info(`🧬 ${race.label}: характеристик ${Object.keys(upd).length}, `
-      + `Черт ${n}, Талантов ${nt}${ng ? `, органов Геносемени ${ng}` : ""}.`);
-  }
-
-  /**
-   * Выдаёт космодесантнику недостающие органы Геносемени. Они не операция,
-   * а часть тела, поэтому сразу помечаются вживлёнными — иначе их эффекты
-   * не учитывались бы и они не попали бы на карту тела.
-   * Железа Бетчера приносит с собой профиль кислотного плевка.
-   */
-  async _grantAstartesImplants() {
-    const missing = missingAstartesImplants(this.actor);
-    if (!missing.length) return 0;
-
-    const docs = missing.map(o => foundry.utils.mergeObject(
-      foundry.utils.deepClone(o), { flags: { "warhammer-dbc": { installed: true, geneSeed: true } } }));
-    const created = await this.actor.createEmbeddedDocuments("Item", docs);
-
-    // Боевые профили связанных органов (Кислотный плевок Железы Бетчера и
-    // т.п.) — тот же синк, что держит их в актуальном состоянии при
-    // установке/снятии органа далее (см. syncAstartesImplantWeapon).
-    for (const item of created) if (item.system.linkedWeapon) await syncAstartesImplantWeapon(item);
-
-    return missing.length;
-  }
-
-  // Совместимость: кнопка геносемени применяет расу Астартес
-  async _applyAstartesRace() { return this._applyRaceData("astartes"); }
-
-  /** Иннари: бонусы Прошлого (бывшей расы) + Черты Иннари. */
-  async _applyYnnari() {
-    const past = this.actor.system.ynnariPast;
-    if (past && RACES[past]) await this._applyRaceData(past);  // бонусы изначальной расы
-    const n = await this._createTraitsFromList(RACES.ynnari.traits || [], "Иннари");
-    ui.notifications.info(`Иннари: применены Черты Иннари (${n})${past ? ` и бонусы Прошлого (${RACES[past]?.label})` : ""}.`);
-  }
-
-  /** Арлекин: бонусы Прошлого (изначальной расы) + Черты Арлекина. */
-  async _applyHarlequin() {
-    const past = this.actor.system.harlequinPast;
-    if (past && RACES[past]) await this._applyRaceData(past);  // бонусы изначальной расы
-    const n = await this._createTraitsFromList(RACES.harlequin.traits || [], "Арлекин");
-    ui.notifications.info(`Арлекин: применены Черты Арлекина (${n})${past ? ` и бонусы Прошлого (${RACES[past]?.label})` : ""}.`);
-  }
-
-  /**
-   * Применяет легион/орден: создаёт Черты «Геносемя/Культура/Проклятье» с текстом
-   * (и авто-эффектами, где есть числовые бонусы — Unnatural и т.п.). Повторный
-   * запуск обновляет: старые легион-Черты (source «Легион») удаляются.
-   */
-  async _applyLegion() {
-    const gs = this.actor.system.geneSeed || {};
-    const legion  = getLegion(gs.legion || "");
-    if (!legion) return ui.notifications.warn("Сначала выберите Легион на вкладке «Записи».");
-    const chapter = getChapter(gs.legion || "", gs.chapter || "");
-    const effName = chapter ? `${legion.num} ${chapter.name}` : `${legion.num} ${legion.name}`;
-    const geneseed = chapter ? chapter.geneseed : legion.geneseed;
-    const curse    = chapter ? chapter.curse    : legion.curse;
-    const effects  = (chapter && chapter.effects) || legion.effects || null;
-    const choices  = (chapter && chapter.curseChoices) || legion.curseChoices || null;
-    const noCurse  = !curse || /^(нет проклятья|—)/i.test(curse.trim());
-
-    // Культура может быть перенята у другого легиона/банды (геносемя сохраняется).
-    const cul = (gs.cultureLegion && resolveCulture(gs.cultureLegion, gs.cultureChapter))
-              || { name: effName, culture: (chapter ? chapter.culture : legion.culture) };
-
-    const baseList = [
-      { name: `Геносемя: ${effName}`, benefit: geneseed, effects: effects ? { charBonuses: effects.charBonuses || [], armourAll: effects.armourAll || 0, fearRating: effects.fearRating || 0, sizeMod: effects.sizeMod || 0 } : undefined },
-      { name: `Культура: ${cul.name}`, benefit: cul.culture }
-    ];
-
-    const apply = async (curseEntry) => {
-      // Удаляем прежние легион-Черты (source «Легион»), чтобы переприменить.
-      const old = this.actor.items.filter(i => i.type === "trait" && i.system?.source === "Легион").map(i => i.id);
-      if (old.length) await this.actor.deleteEmbeddedDocuments("Item", old);
-      const list = [...baseList];
-      if (curseEntry) list.push({ name: `Проклятье: ${curseEntry.name}`, benefit: curseEntry.text });
-      const n = await this._createTraitsFromList(list, "Легион");
-      ui.notifications.info(`Легион применён: ${effName}. Создано Черт: ${n}${effects ? " (числовые бонусы Геносемени применены)" : ""}.`);
-    };
-
-    // Если у проклятья есть варианты — даём выбрать.
-    if (choices && choices.length) {
-      const buttons = {};
-      choices.forEach((ch, i) => {
-        buttons[`c${i}`] = { label: ch.name, callback: () => apply(ch) };
-      });
-      buttons.none = { label: "Без проклятья", callback: () => apply(null) };
-      new Dialog({
-        title: `Проклятье: ${effName}`,
-        content: `<div style="padding:6px;font-size:0.9em;">Выберите проклятье:<ul style="margin:6px 0 0;padding-left:16px;">${choices.map(ch => `<li><b>${ch.name}</b> — ${ch.text}</li>`).join("")}</ul></div>`,
-        buttons, default: "c0"
-      }, { width: 460 }).render(true);
-      return;
-    }
-
-    await apply(noCurse ? null : { name: effName, text: curse });
-  }
-
   // ── Очки Бесчестия (корбук 438) — переопределяется листом Демон-Принца ────
   // Хаосит: пул = поле «Очки Бесчестья» в шапке (system.fate), счётчик в полосе
   // скрыт; тема/сигил — по выбранному Богу-покровителю (system.patronGod).
@@ -563,6 +414,19 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   _ipSpend(key)     { return spendInfamy(this.actor, key, { godKey: this._infamyKey, ipFullPath: this._infamyPath, ipMax: this._infamyMax, meta: this._infamyMeta() }); }
 
   // ── Слушатели ─────────────────────────────────────────────────────────────
+  //
+  // Расчёт отсюда вынесен: остались вызовы `activate*Listeners` модулей и три
+  // вещи, которым место именно здесь.
+  //
+  // 1. Состояние ОКНА, а не актора: прокрутка, свёртка Стоек/Приёмов, категорий
+  //    Снаряжения, улучшений под носителем, гайда имплантов и Путей, тема листа,
+  //    раскрытие строки описания, зрачок Третьего Глаза, драг предметов. Всё это
+  //    живёт до закрытия листа и в актора не пишется.
+  // 2. Точки входа диалогов листа: Мастер создания, пикеры, броски
+  //    характеристики и навыка, «+» показателей, Очки Бесчестия. Диалог —
+  //    часть листа; модулю он приходит колбэком (так же его зовёт HUD).
+  // 3. Одна строка на источник бонусов: Родной мир, Архетип, Прорицание — сам
+  //    расчёт в apps/.
 
   activateListeners(html) {
     requestAnimationFrame(() => { this._restoreScrollPositions(); });
@@ -656,14 +520,15 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     if (!this.isEditable) return;
 
     // ── Мастер создания персонажа (только по кнопке) ────────────────────────
-    // Черты, стартовые таланты, органы Геносемени и тема листа остаются здесь:
-    // их зовут и кнопки «Применить расу»/«Применить легион».
+    // Черты, стартовые таланты и тема листа остаются здесь: их зовут и кнопки
+    // «Применить расу»/«Применить легион». Органы Геносемени переехали к своему
+    // синку в apps/astartes-implants.mjs, но приходят тем же колбэком.
     html.find(".char-wizard-btn").click(ev => {
       ev.preventDefault();
       showCreationWizard(this.actor, {
         createTraits:          (list, source) => this._createTraitsFromList(list, source),
         applyStartingTalents:  (raw, source)  => this._applyStartingTalents(raw, source),
-        grantAstartesImplants: ()             => this._grantAstartesImplants(),
+        grantAstartesImplants: ()             => grantAstartesImplants(this.actor),
         applyTheme:            ()             => this._applyThemeClasses()
       });
     });
@@ -681,57 +546,14 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       ev.currentTarget.closest("tr")?.classList.toggle("ability-row-open", shown);
     });
 
-    // ── Геносемя (Астартес) ─────────────────────────────────────────────────
-    html.find(".gene-origin-input").change(ev => {
-      this.actor.update({ "system.geneSeed.origin": ev.currentTarget.value });
-    });
-    html.find(".gene-apply-btn").click(async ev => {
-      ev.preventDefault();
-      await this._applyAstartesRace();
-    });
-    html.find(".legion-apply-btn").click(async ev => {
-      ev.preventDefault();
-      await this._applyLegion();
-    });
-    // Цена психосилы (синхронно: вкладки «Развитие» и «ПСИ» → авто-сумма в Опыт).
-    html.find(".psy-cost-input, .tech-cost-input").on("change", ev => {
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) item.update({ "system.cost": parseInt(ev.currentTarget.value) || 0 });
-    });
-    // Вкл/выкл включаемой системы силовой брони (бонусы учитываются только во вкл.).
-    html.find(".armormod-active-toggle").on("click", async ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (item) {
-        const active = !item.system.active;
-        await item.update({ "system.active": active });
-        await syncItemEffectsDisabled(item);
-      }
+    // ── Раса, Прошлое и легион ──────────────────────────────────────────────
+    // Разбор строк книг остаётся на листе и уходит в модуль колбэками: те же
+    // две функции зовёт Мастер создания персонажа.
+    activateRaceListeners(html, this.actor, {
+      createTraits:         (list, source) => this._createTraitsFromList(list, source),
+      applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source)
     });
 
-    // ── Установка мода/системы на носитель (инлайн-выпадашка) ────────────────
-    html.find(".gear-mod-install").on("change", async ev => {
-      ev.stopPropagation();
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      const targetId = ev.currentTarget.value;
-      if (item && targetId) { await item.update({ "system.installedOn": targetId }); await syncItemEffectsDisabled(item); }
-    });
-
-    // ── Снять мод/систему с носителя ─────────────────────────────────────────
-    html.find(".gear-mod-uninstall").on("click", async ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      // Снятие также выключает включаемую систему (бонусы не должны висеть).
-      if (item) { await item.update({ "system.installedOn": "", "system.active": false }); await syncItemEffectsDisabled(item, false); }
-    });
-    html.find(".ynnari-apply-btn").click(async ev => {
-      ev.preventDefault();
-      await this._applyYnnari();
-    });
-    html.find(".harlequin-apply-btn").click(async ev => {
-      ev.preventDefault();
-      await this._applyHarlequin();
-    });
     // Сворачивание гайда имплантов (состояние держится между перерисовками)
     if (this._geneSeedOpen) {
       html.find(".gene-organs").removeClass("collapsed");
@@ -780,11 +602,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
         return;
       }
       await this.actor.rollInitiative({ createCombatants: false, rerollInitiative: true });
-    });
-
-    // ── Смена расы ────────────────────────────────────────────────────────
-    html.find(".race-select").change(ev => {
-      this.actor.update({ "system.race": ev.currentTarget.value, "system.subrace": "" });
     });
 
     // ── Бросок характеристики ─────────────────────────────────────────────
@@ -910,12 +727,8 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     // ── Вкладка ТЕЛО ──────────────────────────────────────────────────────
     activateBodyListeners(html, this.actor);
 
-    // ── Одержимый: Проявить / Заключить (полудействие + тест Cor+20) ──────────
-    html.find(".poss-manifest-btn").on("click", async ev => {
-      ev.preventDefault();
-      await this._toggleManifest();
-    });
-
+    // ── Вкладка ОДЕРЖИМОСТЬ ───────────────────────────────────────────────
+    activatePossessionListeners(html, this.actor);
   }
 
   // ── Диалог атаки ─────────────────────────────────────────────────────────

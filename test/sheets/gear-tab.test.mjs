@@ -3,9 +3,12 @@ import { resetCaptured } from "../support/foundry-stub.mjs";
 import {
   activateGearListeners,
   equipItem,
+  installGearMod,
   setShieldHand,
   setWeaponLoadedAmmo,
-  toggleShieldRaised
+  toggleGearModActive,
+  toggleShieldRaised,
+  uninstallGearMod
 } from "../../module/sheets/tabs/gear.mjs";
 
 function item({ id = "item-1", name = "Предмет", system = {}, raised = false } = {}) {
@@ -95,6 +98,40 @@ describe("gear tab helpers", () => {
 
     expect(weapon.updates[0]).toEqual({ "system.loadedAmmoId": "ammo-1" });
   });
+
+  it("installGearMod ставит улучшение на носителя, а пустой выбор игнорирует", async () => {
+    const mod = item({ system: { installedOn: "", activatable: false } });
+
+    await installGearMod(mod, "");
+    expect(mod.updates).toEqual([]);
+
+    await installGearMod(mod, "host-1");
+    expect(mod.updates[0]).toEqual({ "system.installedOn": "host-1" });
+  });
+
+  it("uninstallGearMod снимает улучшение и гасит включаемую систему", async () => {
+    const mod = item({ system: { installedOn: "host-1", activatable: true, active: true } });
+    mod.effects.contents = [{ id: "fx-1", disabled: false }];
+
+    await uninstallGearMod(mod);
+
+    expect(mod.updates[0]).toEqual({ "system.installedOn": "", "system.active": false });
+    expect(mod.embeddedUpdates[0]).toEqual({
+      type: "ActiveEffect",
+      docs: [{ _id: "fx-1", disabled: true }]
+    });
+  });
+
+  it("toggleGearModActive переключает систему туда и обратно", async () => {
+    const mod = item({ system: { installedOn: "host-1", activatable: true, active: false } });
+
+    await toggleGearModActive(mod);
+    expect(mod.updates[0]).toEqual({ "system.active": true });
+
+    mod.system.active = true;                    // документ обновился — читаем новое состояние
+    await toggleGearModActive(mod);
+    expect(mod.updates[1]).toEqual({ "system.active": false });
+  });
 });
 
 describe("gear tab listeners", () => {
@@ -130,10 +167,18 @@ describe("gear tab listeners", () => {
     await handlers[".shield-roll-btn:click"](event({ itemId: "shield-1" }));
     await handlers[".shield-repair-btn:click"](event({ itemId: "shield-1" }));
     handlers[".shield-row:dblclick"](event({ itemId: "shield-1" }));
+    await handlers[".gear-mod-install:change"](event({ itemId: "armor-1", value: "weapon-1" }));
+    await handlers[".gear-mod-uninstall:click"](event({ itemId: "armor-1" }));
+    await handlers[".armormod-active-toggle:click"](event({ itemId: "armor-1" }));
 
     expect(weapon.updates).toContainEqual({ "system.equipped": true });
     expect(weapon.updates).toContainEqual({ "system.loadedAmmoId": "ammo-2" });
     expect(armor.updates[0]).toEqual({ "system.equipped": true });
+    expect(armor.updates.slice(1)).toEqual([
+      { "system.installedOn": "weapon-1" },
+      { "system.installedOn": "", "system.active": false },
+      { "system.active": true }
+    ]);
     expect(shield.flags.shieldHand).toBe("right");
     expect(shield.flags.shieldRaised).toBe(true);
     expect(shield.sheet.rendered).toBe(1);

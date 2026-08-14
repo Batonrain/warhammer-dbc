@@ -2,7 +2,8 @@
 //
 // Слушатели листа персонажа, которые шаг 5.3 выносит из activateListeners:
 // вкладка РАЗВИТИЕ (характеристики, ранги навыков, ★), вкладка ГЕМУНКУЛ,
-// Элитный архетип в шапке и вкладка БОЙ.
+// Элитный архетип в шапке, вкладка БОЙ, улучшения на носителе (вкладка
+// Снаряжения), Проявление Одержимого и применение расы, Прошлого и легиона.
 //
 // Тест написан ДО выноса и работает через сам лист: activateListeners навешивает
 // обработчики, тест дёргает их и смотрит, что легло в актора. После переезда в
@@ -15,6 +16,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured, listenerHtml } from "../support/foundry-stub.mjs";
 import { weaponFor } from "../support/combat-fixtures.mjs";
 import { eliteRaceMatch } from "../../module/sheets/elite-picker.mjs";
+import { LEGIONS } from "../../module/constants/legions.mjs";
 
 // Динамический импорт: глобали Foundry должны быть на месте раньше листа.
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
@@ -35,7 +37,7 @@ function sheetFor({ items = [], ...system } = {}) {
   const list = [...items];
   list.get = id => list.find(i => i.id === id) ?? null;
   const actor = {
-    id: "actor-stub", name: "Подставной", system, items: list, updates: [],
+    id: "actor-stub", name: "Подставной", system, items: list, updates: [], deleted: [],
     update: async data => {
       actor.updates.push(data);
       for (const [path, value] of Object.entries(data)) applyPath(actor, path, value);
@@ -44,6 +46,10 @@ function sheetFor({ items = [], ...system } = {}) {
     createEmbeddedDocuments: async (_type, docs) => {
       captured.created.push(...docs);
       return docs.map(d => ({ ...d, sheet: { render: () => {} } }));
+    },
+    deleteEmbeddedDocuments: async (_type, ids) => {
+      actor.deleted.push(...ids);
+      return ids;
     }
   };
   const sheet = Object.create(WarhammerCharacterSheet.prototype);
@@ -494,5 +500,169 @@ describe("вкладка БОЙ", () => {
     await handlers[".pain-spend-btn:click"](ev());           // пусто — трата не проходит
     expect(sheet.actor.system.fate.value).toBe(0);
     expect(sheet.actor.updates).toHaveLength(2);
+  });
+});
+
+describe("Снаряжение: улучшения на носителе", () => {
+
+  /** Улучшение: update пишет по плоскому пути, как настоящий документ, — иначе
+   *  синхронизация эффектов читала бы состояние ДО правки. */
+  function modItem({ id = "mod-1", disabled = true, ...system } = {}) {
+    const it = {
+      id, name: "Улучшение", type: "armorMod",
+      system: { installedOn: "", active: false, activatable: true, ...system },
+      updates: [], effectUpdates: [], effects: { contents: [{ id: "fx-1", disabled }] },
+      async update(data) {
+        it.updates.push(data);
+        for (const [path, value] of Object.entries(data)) applyPath(it, path, value);
+        return data;
+      },
+      async updateEmbeddedDocuments(_type, docs) { it.effectUpdates.push(...docs); return docs; }
+    };
+    return it;
+  }
+
+  it("установка на носителя включает эффекты улучшения", async () => {
+    const mod = modItem({ activatable: false });
+    const handlers = wire(sheetFor({ items: [mod] }));
+
+    await handlers[".gear-mod-install:change"](ev({ itemId: "mod-1" }, "host-1"));
+
+    expect(mod.system.installedOn).toBe("host-1");
+    expect(mod.effectUpdates).toEqual([{ _id: "fx-1", disabled: false }]);
+  });
+
+  it("снятие с носителя гасит и включаемую систему, и её эффекты", async () => {
+    const mod = modItem({ installedOn: "host-1", active: true, disabled: false });
+    const handlers = wire(sheetFor({ items: [mod] }));
+
+    await handlers[".gear-mod-uninstall:click"](ev({ itemId: "mod-1" }));
+
+    expect(mod.updates[0]).toEqual({ "system.installedOn": "", "system.active": false });
+    expect(mod.effectUpdates).toEqual([{ _id: "fx-1", disabled: true }]);
+  });
+
+  it("ВКЛ/выкл включаемой системы переключает её эффекты", async () => {
+    const mod = modItem({ installedOn: "host-1" });
+    const handlers = wire(sheetFor({ items: [mod] }));
+
+    await handlers[".armormod-active-toggle:click"](ev({ itemId: "mod-1" }));
+
+    expect(mod.system.active).toBe(true);
+    expect(mod.effectUpdates).toEqual([{ _id: "fx-1", disabled: false }]);
+  });
+
+  it("цена психосилы и техночуда пишется числом", async () => {
+    const power = {
+      id: "psy-1", type: "psychicPower", name: "Сила", system: { cost: 0 }, updates: [],
+      async update(data) { power.updates.push(data); return data; }
+    };
+    const handlers = wire(sheetFor({ items: [power] }));
+
+    await handlers[".psy-cost-input, .tech-cost-input:change"](ev({ itemId: "psy-1" }, "400"));
+
+    expect(power.updates[0]).toEqual({ "system.cost": 400 });
+  });
+});
+
+describe("Одержимость: Проявление", () => {
+
+  const possessed = () => ({
+    possession: { demon: "katart", manifested: false }, corruption: { value: 30 }
+  });
+
+  it("Провал теста Cor+20 добавляет Порчу, но форму всё равно включает", async () => {
+    const sheet = sheetFor(possessed());
+    const handlers = wire(sheet);
+    captured.nextRoll = 90;                                  // 90 > 30+20 — Провал
+
+    await handlers[".poss-manifest-btn:click"](ev());
+
+    expect(sheet.actor.system.possession.manifested).toBe(true);
+    expect(sheet.actor.system.corruption.value).toBe(31);
+    expect(captured.chat.at(-1).flavor).toContain("Провал");
+  });
+
+  it("успех Порчу не трогает, а заключение демона не бросает тест", async () => {
+    const sheet = sheetFor(possessed());
+    const handlers = wire(sheet);
+    captured.nextRoll = 40;                                  // 40 ≤ 50 — Успех
+
+    await handlers[".poss-manifest-btn:click"](ev());
+    expect(sheet.actor.system.corruption.value).toBe(30);
+
+    await handlers[".poss-manifest-btn:click"](ev());        // обратно в смертную форму
+    expect(sheet.actor.system.possession.manifested).toBe(false);
+    expect(captured.chat.at(-1).content).toContain("смертная форма");
+  });
+});
+
+describe("Применение расы, Прошлого и легиона", () => {
+
+  const traitNames = () => captured.created.filter(d => d.type === "trait").map(d => d.name);
+
+  it("расовые бонусы идут только в пустые характеристики", async () => {
+    const sheet = sheetFor({ characteristics: { ws: { base: 45 }, bs: {} } });
+    const handlers = wire(sheet);
+
+    await handlers[".gene-apply-btn:click"](ev());
+
+    const upd = sheet.actor.updates[0];
+    expect(upd["system.characteristics.ws.base"]).toBeUndefined();   // занято — не трогаем
+    expect(upd["system.characteristics.bs.base"]).toBe(30);
+    expect(captured.created.some(d => d.type === "implant")).toBe(true);  // органы Геносемени
+  });
+
+  it("Иннари получает Черты Иннари поверх бонусов Прошлого", async () => {
+    const handlers = wire(sheetFor({ characteristics: {}, ynnariPast: "aeldari" }));
+
+    await handlers[".ynnari-apply-btn:click"](ev());
+
+    expect(traitNames().length).toBeGreaterThan(0);
+  });
+
+  it("легион пересоздаёт свои Черты, убирая прежние", async () => {
+    const legion = LEGIONS.find(l => !l.curseChoices?.length);
+    const old = { id: "old-1", type: "trait", name: "Геносемя: прежний", system: { source: "Легион" } };
+    const sheet = sheetFor({ characteristics: {}, items: [old], geneSeed: { legion: legion.id } });
+    const handlers = wire(sheet);
+
+    await handlers[".legion-apply-btn:click"](ev());
+
+    expect(sheet.actor.deleted).toEqual(["old-1"]);
+    expect(traitNames().some(n => n.startsWith("Геносемя: "))).toBe(true);
+    expect(traitNames().some(n => n.startsWith("Культура: "))).toBe(true);
+  });
+
+  it("проклятье с вариантами спрашивает, и «Без проклятья» создаёт две Черты", async () => {
+    const legion = LEGIONS.find(l => l.curseChoices?.length);
+    const sheet = sheetFor({ characteristics: {}, geneSeed: { legion: legion.id } });
+    const handlers = wire(sheet);
+
+    await handlers[".legion-apply-btn:click"](ev());
+    expect(captured.dialog.buttons.c0.label).toBe(legion.curseChoices[0].name);
+
+    await captured.dialog.buttons.none.callback();
+    expect(traitNames().filter(n => n.startsWith("Проклятье: "))).toEqual([]);
+    expect(traitNames()).toHaveLength(2);                   // Геносемя + Культура
+  });
+
+  it("смена расы обнуляет субрасу — иначе на листе осталась бы чужая", async () => {
+    const sheet = sheetFor({ race: "drukhari", subrace: "wrack" });
+    const handlers = wire(sheet);
+
+    await handlers[".race-select:change"](ev({}, "human"));
+
+    expect(sheet.actor.updates[0]).toEqual({ "system.race": "human", "system.subrace": "" });
+  });
+
+  it("без выбранного легиона кнопка объясняет порядок и ничего не создаёт", async () => {
+    const sheet = sheetFor({ characteristics: {}, geneSeed: {} });
+    const handlers = wire(sheet);
+
+    await handlers[".legion-apply-btn:click"](ev());
+
+    expect(captured.created).toEqual([]);
+    expect(captured.warnings).toHaveLength(1);
   });
 });
