@@ -50,6 +50,26 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     properties, canReroll ? { ratingKey, type, infamy, mod } : null);
 }
 
+/**
+ * Заводит след активной Травмы — предмет mentalTrauma, без дублей по тексту.
+ *
+ * Имя предмета обрезается: строка таблицы бывает в несколько предложений, а в
+ * списке нужна подпись. Полный текст лежит в описании.
+ */
+export async function createTraumaItem(actor, row) {
+  const text = String(row?.text ?? "").trim();
+  if (!text) return null;
+  if (actor.items.some(i => i.type === "mentalTrauma" && i.system?.description === text)) return null;
+  const label = text.length > 60 ? text.slice(0, 57) + "…" : text;
+  const [item] = await actor.createEmbeddedDocuments("Item", [{
+    name: label, type: "mentalTrauma",
+    // Всегда W+0: в таблице Травмы своего модификатора теста нет, в отличие
+    // от Расстройств.
+    system: { description: text, testChar: "wp", testMod: 0 }
+  }]);
+  return item;
+}
+
 /** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без Демона/переброса. */
 export async function _executeTraumaRoll(actor) {
   const wp   = actor.system.characteristics.wp?.total ?? 0;
@@ -66,6 +86,10 @@ export async function _executeTraumaRoll(actor) {
     traumaHtml = `<div class="roll-damage-section">
       <div class="roll-damage-label">Травма (${tRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""} = ${total}):</div>
       <div class="roll-threshold">${row?.text ?? "—"}</div></div>`;
+    // Провал оставляет постоянный след. Без него «Подавление Травмы» на
+    // вкладке Показатели не знало бы, что тестировать: раньше результат
+    // просто падал в чат и исчезал.
+    await createTraumaItem(actor, row);
   }
   await _postFearMsg(actor, "🧠 Ментальная Травма", "тест W+0", wp, 0, rv, wp, success, dof, traumaHtml, allRolls);
 }

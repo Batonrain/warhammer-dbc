@@ -588,6 +588,22 @@ export function buildGetData(actor) {
     };
   });
 
+  // ── Ментальные травмы ───────────────────────────────────────────────────────
+  // Форма записи та же, что у Расстройств, и тест им катает одна и та же
+  // функция: «Подавление Травмы» и «Подавление Расстройства» различаются
+  // только фильтром по типу предмета.
+  context.mentalTraumas = allItems.filter(i => i.type === "mentalTrauma").map(i => {
+    const abbr = CHARACTERISTICS[i.system.testChar]?.abbr ?? "W";
+    const mod  = i.system.testMod || 0;
+    return {
+      id: i.id, name: i.name,
+      desc: i.system.description || "",
+      testLabel: `${abbr}${mod >= 0 ? "+" : ""}${mod}`,
+      testCharKey: i.system.testChar || "wp",
+      testMod: mod
+    };
+  });
+
   // ── Болезни ─────────────────────────────────────────────────────────────────
   const DIS_GODS = { "": "", nurgle: "Нургл", tzeentch: "Тзинч", slaanesh: "Слаанеш", khorne: "Кхорн", other: "Иное" };
   const DIS_SEV  = { light: "Лёгкая", severe: "Тяжёлая", deadly: "Смертельная" };

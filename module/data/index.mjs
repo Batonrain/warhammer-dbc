@@ -26,6 +26,7 @@ import { AbilityData }        from "./item/ability.mjs";
 import { MutationData }       from "./item/mutation.mjs";
 import { DiseaseData }        from "./item/disease.mjs";
 import { MentalDisorderData } from "./item/mental-disorder.mjs";
+import { MentalTraumaData }   from "./item/mental-trauma.mjs";
 import { HomeworldData }      from "./item/homeworld.mjs";
 import { DivinationData }     from "./item/divination.mjs";
 import { ArchetypeData }      from "./item/archetype.mjs";
@@ -77,6 +78,7 @@ export const ITEM_DATA_MODELS = {
   mutation:       MutationData,
   disease:        DiseaseData,
   mentalDisorder: MentalDisorderData,
+  mentalTrauma:   MentalTraumaData,
   // Данные персонажа (wdbc-ff4.1.5)
   homeworld:          HomeworldData,
   divination:         DivinationData,
