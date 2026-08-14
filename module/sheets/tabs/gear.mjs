@@ -12,6 +12,10 @@ export async function equipItem(item, equipped) {
   if (!item) return;
   await item.update({ "system.equipped": equipped });
   await syncItemEffectsDisabled(item, equipped);
+  // Эффекты установленных модификаций гаснут вместе с носителем (isItemActive),
+  // но update пришёл не им — пересчитываем сами.
+  for (const mod of item.parent?.items ?? [])
+    if (mod.system?.installedOn === item.id) await syncItemEffectsDisabled(mod);
 }
 
 export async function setShieldHand(item, hand) {

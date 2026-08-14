@@ -25,8 +25,18 @@ export function isItemActive(item) {
   const sys = item.system || {};
   switch (item.type) {
     case "weapon": case "armor": return !!sys.equipped;
-    case "armorMod": case "weaponMod":
-      return !!sys.installedOn && (!sys.activatable || !!sys.active);
+    case "armorMod": case "weaponMod": {
+      if (!sys.installedOn || (sys.activatable && !sys.active)) return false;
+      // Носитель в рюкзаке механику не даёт: так считал старый расчёт
+      // модификаций брони (getInstalledArmorMods в combat/armor-mods.mjs), и
+      // эффекты, забравшие эту механику, обязаны считать так же. Носителя не
+      // нашли (предмет пака, битая ссылка) — судим по своим полям, как раньше.
+      // Потолок: снятый шлем и требование силовой брони у систем сюда не
+      // заведены — их по-прежнему знает только getInstalledArmorMods, то есть
+      // старое поле. Заводить, когда такая механика уедет в эффект.
+      const host = item.parent?.items?.get(sys.installedOn);
+      return host ? !!host.system?.equipped : true;
+    }
     case "psychicPower": return !!sys.isSustained;
     case "techPower": return !!sys.sustained || sys.miracleType === "passive";
     case "navigatorPower": return !!sys.isSustained;

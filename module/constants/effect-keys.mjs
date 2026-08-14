@@ -20,6 +20,15 @@ const AP_LOCATIONS = {
   leftLeg: "Левая нога", rightLeg: "Правая нога"
 };
 
+// Надбавка AP против конкретного типа урона. Цель — производное
+// system.absorption.vsType (documents/actor.mjs собирает его в конце разбора
+// брони), поэтому фаза только "final": до prepareDerivedData объекта ещё нет,
+// а сам он каждый цикл собирается заново. Читает поглощение combat/damage.mjs.
+const AP_VS_TYPES = {
+  energy: "Энергетического", impact: "Ударного",
+  rending: "Разрывного", blast: "Взрывного"
+};
+
 /** Путь → подпись. Генерируется из CHARACTERISTICS + AP_LOCATIONS + ручные записи. */
 export const EFFECT_KEY_LABELS = {};
 for (const [key, def] of Object.entries(CHARACTERISTICS)) {
@@ -29,6 +38,9 @@ for (const [key, def] of Object.entries(CHARACTERISTICS)) {
 }
 for (const [key, label] of Object.entries(AP_LOCATIONS)) {
   EFFECT_KEY_LABELS[`system.armour.${key}`] = `AP: ${label}`;
+}
+for (const [key, label] of Object.entries(AP_VS_TYPES)) {
+  EFFECT_KEY_LABELS[`system.absorption.vsType.${key}`] = `AP против ${label}`;
 }
 Object.assign(EFFECT_KEY_LABELS, {
   "system.fearRating":  "Рейтинг Страха",
@@ -63,6 +75,9 @@ export function summarizeEffectChanges(changes = []) {
 }
 
 const AP_ALL_KEYS = Object.keys(AP_LOCATIONS);
+/** Поле старого формата → тип урона: apVsEnergy → energy и т.д. */
+const AP_VS_KEYS = new Map(Object.keys(AP_VS_TYPES)
+  .map(t => [`apVs${t[0].toUpperCase()}${t.slice(1)}`, t]));
 const change = (key, type, value) => ({ key, type, value, phase: "final", priority: 0 });
 
 /**
@@ -82,6 +97,8 @@ const change = (key, type, value) => ({ key, type, value, phase: "final", priori
  *  - apAll      → все 6 локаций AP, "add".
  *  - apHead/apBody → своя локация, "add".
  *  - apArms/apLegs → левая+правая соответствующей пары, "add".
+ *  - apVsEnergy/Impact/Rending/Blast → system.absorption.vsType.<тип>, "add"
+ *    (старый код тоже суммировал, см. armorVsType в documents/actor.mjs).
  *  - fearRating → "upgrade" (НЕ "add" — старый код брал Math.max, а не сумму;
  *    два источника Rating 2 должны остаться 2, а не стать 4).
  *  - sizeMod/initMod/speedMod → "add" (старый код суммировал через +=).
@@ -93,6 +110,7 @@ export function hasLegacyEffects(effects) {
   if (Array.isArray(effects.charBonuses) && effects.charBonuses.some(cb => cb?.stat && cb?.value)) return true;
   if (Array.isArray(effects.charValueBonuses) && effects.charValueBonuses.some(cb => cb?.stat && cb?.value)) return true;
   return ["armourAll", "apAll", "apHead", "apBody", "apArms", "apLegs",
+          ...AP_VS_KEYS.keys(),
           "fearRating", "sizeMod", "initMod", "speedMod"].some(k => !!effects[k]);
 }
 
@@ -112,6 +130,9 @@ export function legacyEffectsToChanges(effects = {}) {
   if (effects.apBody) out.push(change("system.armour.body", "add", effects.apBody));
   if (effects.apArms) { out.push(change("system.armour.leftArm", "add", effects.apArms)); out.push(change("system.armour.rightArm", "add", effects.apArms)); }
   if (effects.apLegs) { out.push(change("system.armour.leftLeg", "add", effects.apLegs)); out.push(change("system.armour.rightLeg", "add", effects.apLegs)); }
+
+  for (const [field, type] of AP_VS_KEYS)
+    if (effects[field]) out.push(change(`system.absorption.vsType.${type}`, "add", effects[field]));
 
   if (effects.fearRating) out.push(change("system.fearRating", "upgrade", effects.fearRating));
   if (effects.sizeMod)    out.push(change("system.sizeMod", "add", effects.sizeMod));

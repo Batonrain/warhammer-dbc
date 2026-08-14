@@ -30,7 +30,7 @@ import path from "node:path";
 
 import { legacyEffectsToChanges } from "../../module/constants/effect-keys.mjs";
 import { migrateItemEffects, repairCharValueEffectKeys, dropMechanicsDuplicates,
-         migrateAllItemEffects, MIGRATE_EFFECT_TYPES } from "../../module/migrations/item-effects.mjs";
+         migrateAllItemEffects, MIGRATE_EFFECT_TYPES, LEGACY_ONLY_KEYS } from "../../module/migrations/item-effects.mjs";
 
 const PACKS_SRC = path.resolve(import.meta.dirname, "../../packs-src");
 const CHAR_BONUS = { charBonuses: [{ stat: "s", value: 2 }] };
@@ -140,11 +140,22 @@ describe("перенос system.effects в ActiveEffect", () => {
       .toEqual(["system.fearRating", "system.characteristics.s.bonus"]);
   });
 
-  it("модификация с полями мимо ActiveEffect перенесённой не помечается", async () => {
-    // AP против типа урона считает combat/armor-mods.mjs по старому полю и
-    // гасит его по этому же флагу: пометить — значит потерять механику.
+  it("AP против типа урона переносится в absorption.vsType", async () => {
     const item = itemDoc({ type: "armorMod", name: "Дефлективная",
                            effects: { apVsRending: 2, apVsBlast: 2 } });
+
+    expect(await migrateItemEffects(item)).toBe(true);
+
+    expect(changesOf(item).map(c => c.key))
+      .toEqual(["system.absorption.vsType.rending", "system.absorption.vsType.blast"]);
+  });
+
+  it("модификация с полями мимо ActiveEffect перенесённой не помечается", async () => {
+    // Потолок Ловкости не считает никто: ни у эффектов такого ключа нет, ни
+    // system.maxAgility брони actor.mjs не читает (wdbc-fde). Пометить —
+    // значит закрыть последний путь, старое поле.
+    const item = itemDoc({ type: "armorMod", name: "Открытые Сочленения",
+                           effects: { maxAgilityMod: 10 } });
 
     expect(await migrateItemEffects(item)).toBe(false);
 
@@ -429,6 +440,33 @@ describe("предметы packs-src", () => {
       if (both.length) doubled.push(`${doc.name}: ${[...new Set(both)].join(", ")}`);
     }
     expect(doubled).toEqual([]);
+  });
+
+  it("ни одна модификация брони не осталась с мёртвым AP против типа урона", async () => {
+    // Помеченный перенесённым мод старое поле теряет: combat/armor-mods.mjs
+    // читает его только у непомеченных. Значит у каждого apVs* в паке должен
+    // быть свой эффект — иначе Керамит и Дефлективная не дают ничего (wdbc-1j8).
+    const dead = [];
+    for (const doc of allPackDocs()) {
+      if (doc.type !== "armorMod" || !doc.flags?.["warhammer-dbc"]?.migratedEffect) continue;
+      const keys = new Set(legacyEffectsToChanges(doc.system?.effects ?? {}).map(c => c.key));
+      if (!keys.size) continue;
+      for (const c of (doc.effects ?? []).flatMap(f => f.system?.changes ?? [])) keys.delete(c.key);
+      if (keys.size) dead.push(`${doc.name}: ${[...keys].join(", ")}`);
+    }
+    expect(dead).toEqual([]);
+  });
+
+  it("ни один предмет пака не помечен перенесённым с полем мимо ActiveEffect", async () => {
+    // Пометка велит актору старое поле не читать, а переносить такое поле
+    // некуда — механика пропадает с обеих сторон. Миграция пометить не даст
+    // (LEGACY_ONLY_KEYS), но прошлая версия успела: так стояли «Открытые
+    // Сочленения» с потолком Ловкости (wdbc-1j8, ждёт wdbc-fde).
+    const stuck = allPackDocs()
+      .filter(doc => doc.flags?.["warhammer-dbc"]?.migratedEffect
+                  && LEGACY_ONLY_KEYS.some(k => doc.system?.effects?.[k]))
+      .map(doc => doc.name);
+    expect(stuck).toEqual([]);
   });
 
   it("предмет с механикой Конструктора миграция не трогает", async () => {

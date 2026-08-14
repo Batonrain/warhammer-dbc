@@ -35,13 +35,16 @@ const MIGRATE_COMPENDIA = [
   "warhammer-dbc.armor-mods", "warhammer-dbc.weapon-mods"
 ];
 
-// Поля старого формата, которым в ActiveEffect соответствия нет: AP против
-// конкретного типа урона и потолок Ловкости считает combat/armor-mods.mjs, и
-// гасит он их по тому же флагу. Пока такое поле заполнено, помечать предмет
-// перенесённым нельзя — механика исчезла бы с обеих сторон. Так уже стоят 6
-// модификаций брони в паках (Дефлективная, Керамит, Открытые Сочленения и др.):
-// их разбор — отдельная задача, здесь важно не добавлять к ним новых.
-const LEGACY_ONLY_KEYS = ["apVsEnergy", "apVsImpact", "apVsRending", "apVsBlast", "maxAgilityMod"];
+// Поля старого формата, которым в ActiveEffect соответствия нет. Пока такое
+// поле заполнено, помечать предмет перенесённым нельзя: старое поле актор у
+// помеченного не читает (documents/actor.mjs, combat/armor-mods.mjs) — механика
+// исчезла бы с обеих сторон.
+//
+// Остался один: потолок Ловкости не считает вообще никто — ни ключа эффекта,
+// ни чтения system.maxAgility брони в actor.mjs (wdbc-fde). Так стоят
+// «Открытые Сочленения» в паке. AP против типа урона отсюда ушёл: у него
+// теперь есть ключ system.absorption.vsType.* (wdbc-1j8).
+export const LEGACY_ONLY_KEYS = ["maxAgilityMod"];
 
 // Суффикс имени перенесённого эффекта. Единственный признак, по которому дубль
 // отличим от эффекта Конструктора: ключ у них один и тот же, а имена своим
@@ -132,9 +135,10 @@ export async function migrateItemEffects(item) {
   // Старый расчёт пропускал предметы в неактивном состоянии (неустановленный или
   // неисправный имплант, неподдерживаемая психосила) — эффект рождается в том же
   // состоянии и тем же предикатом, каким его ведут дальше (isItemActive и
-  // syncItemEffectsDisabled в apps/effects.mjs). Совпадение не полное: у
-  // модификаций брони старый расчёт смотрел ещё и на надетость носителя
-  // (combat/armor-mods.mjs), а isItemActive — только на установку и включение.
+  // syncItemEffectsDisabled в apps/effects.mjs). Надетость носителя модификации
+  // isItemActive теперь тоже проверяет; чего он не знает — снятого шлема и
+  // требований систем силовой брони, их по-прежнему считает только
+  // getInstalledArmorMods (combat/armor-mods.mjs).
   await item.createEmbeddedDocuments("ActiveEffect", [{
     name: `${item.name}${MIGRATED_SUFFIX}`, icon: item.img,
     disabled: !isItemActive(item),

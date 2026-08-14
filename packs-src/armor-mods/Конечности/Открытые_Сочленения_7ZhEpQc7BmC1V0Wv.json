@@ -39,9 +39,7 @@
     "TcTwVVgsrGiUR4X7": 3
   },
   "flags": {
-    "warhammer-dbc": {
-      "migratedEffect": true
-    }
+    "warhammer-dbc": {}
   },
   "_stats": {
     "compendiumSource": null,

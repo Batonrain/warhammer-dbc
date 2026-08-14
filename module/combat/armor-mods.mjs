@@ -50,8 +50,10 @@ export function getArmorModEffects(actor, armor) {
     maxAgilityMod: 0, charBonuses: [], names: []
   };
   for (const mod of getInstalledArmorMods(actor, armor)) {
-    // Мигрированные моды несут эти же AP как embedded ActiveEffect
-    // (см. migrations/item-effects.mjs) — не считаем дважды.
+    // Мигрированные моды несут эти же AP (и AP против типа урона) как embedded
+    // ActiveEffect (см. migrations/item-effects.mjs) — не считаем дважды.
+    // maxAgilityMod сюда не относится: ключа эффекта у него нет, и миграция
+    // мод с ним не помечает (LEGACY_ONLY_KEYS).
     const e = mod.getFlag("warhammer-dbc", "migratedEffect") ? {} : (mod.system.effects || {});
     fx.apAll  += e.apAll  || 0;
     fx.apHead += e.apHead || 0;

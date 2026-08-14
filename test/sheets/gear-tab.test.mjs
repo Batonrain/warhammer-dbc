@@ -24,6 +24,16 @@ function item({ id = "item-1", name = "Предмет", system = {}, raised = fa
     sheet: { rendered: 0, render: () => { it.sheet.rendered += 1; } },
     update: async data => {
       it.updates.push(data);
+      // Настоящий документ правку сразу применяет, и следом за ним состояние
+      // пересчитывают другие: модификации смотрят на надетость носителя
+      // (isItemActive). Заглушка, только запоминающая правку, этот порядок
+      // спрятала бы.
+      for (const [path, value] of Object.entries(data)) {
+        const keys = path.split(".");
+        let target = it;
+        for (const key of keys.slice(0, -1)) target = (target[key] ??= {});
+        target[keys.at(-1)] = value;
+      }
       return data;
     },
     updateEmbeddedDocuments: async (type, docs) => {
@@ -71,6 +81,26 @@ describe("gear tab helpers", () => {
     expect(weapon.embeddedUpdates[0]).toEqual({
       type: "ActiveEffect",
       docs: [{ _id: "fx-1", disabled: false }]
+    });
+  });
+
+  it("снятая броня гасит и эффекты установленных на неё модификаций", async () => {
+    // Их состояние зависит от носителя (isItemActive), а update приходит ему —
+    // сами они о снятии не узнают и продолжали бы давать AP из рюкзака.
+    const armor = item({ id: "armor-1", system: { equipped: true } });
+    armor.type = "armor";
+    const mod = item({ id: "mod-1", name: "Керамит", system: { installedOn: "armor-1" } });
+    mod.type = "armorMod";
+    mod.effects.contents = [{ id: "fx-1", disabled: false }];
+    const owner = actor([armor, mod]);
+    armor.parent = owner;
+    mod.parent   = owner;
+
+    await equipItem(armor, false);
+
+    expect(mod.embeddedUpdates[0]).toEqual({
+      type: "ActiveEffect",
+      docs: [{ _id: "fx-1", disabled: true }]
     });
   });
 
