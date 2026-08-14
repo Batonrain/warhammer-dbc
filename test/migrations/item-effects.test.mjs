@@ -80,6 +80,7 @@ describe("перенос system.effects в ActiveEffect", () => {
 
     expect(changesOf(item)).toEqual(legacyEffectsToChanges(effects));
     expect(item.effects[0].name).toBe("Черта (перенесено)");
+    expect(item.effects[0].img).toBe(item.img);
     expect(item.getFlag("warhammer-dbc", "migratedEffect")).toBe(true);
   });
 

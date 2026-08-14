@@ -11,7 +11,11 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { isItemActive } from "../../module/apps/effects.mjs";
+import fs   from "node:fs";
+import path from "node:path";
+import { isItemActive, createBlankEffect } from "../../module/apps/effects.mjs";
+
+const MODULE = path.resolve(import.meta.dirname, "../../module");
 
 /** Актор с предметами: модификации нужен доступ к носителю через parent. */
 function actorWith(...items) {
@@ -54,5 +58,45 @@ describe("isItemActive: модификация и её носитель", () => 
 
   it("носителя не найти (предмет пака, битая ссылка) — судим по своим полям", () => {
     expect(isItemActive(mod("armor-1"))).toBe(true);
+  });
+});
+
+// У ActiveEffect картинка называется img: поле icon Foundry объединила с ним в
+// v12, и схема v13+ чужое имя молча отбрасывает — эффект получает умолчание
+// ядра icons/svg/aura.svg. Видно по packs-src: у всех созданных миграцией
+// эффектов стоит именно оно.
+describe("картинка создаваемого эффекта", () => {
+  it("createBlankEffect берёт картинку предмета", async () => {
+    const created = [];
+    const item = {
+      img: "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      createEmbeddedDocuments: async (_type, docs) => {
+        created.push(...docs);
+        return docs.map(() => ({ sheet: { render: () => {} } }));
+      }
+    };
+
+    await createBlankEffect(item);
+
+    expect(created[0].img).toBe(item.img);
+    expect(created[0].icon).toBeUndefined();
+  });
+
+  it("ни одна точка создания эффекта не передаёт icon", () => {
+    // Точек семь и правка в них одинаковая — проверка ловит и восьмую, которую
+    // напишут по образцу соседней (wdbc-s94).
+    const offenders = [];
+    const walk = dir => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) { walk(full); continue; }
+        if (!entry.name.endsWith(".mjs")) continue;
+        const src = fs.readFileSync(full, "utf8");
+        for (const call of src.matchAll(/createEmbeddedDocuments\("ActiveEffect",[^;]*?icon:/gs))
+          offenders.push(`${path.relative(MODULE, full)}: ${call[0].split("\n").at(-1).trim()}`);
+      }
+    };
+    walk(MODULE);
+    expect(offenders).toEqual([]);
   });
 });

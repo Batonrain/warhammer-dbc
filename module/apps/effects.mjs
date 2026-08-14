@@ -68,7 +68,7 @@ export async function syncItemEffectsDisabled(item, activeOverride) {
  */
 export async function createBlankEffect(item) {
   const [fx] = await item.createEmbeddedDocuments("ActiveEffect", [{
-    name: "Новый эффект", icon: item.img,
+    name: "Новый эффект", img: item.img,
     system: { changes: [{ key: "", type: "add", value: "", phase: "final", priority: 0 }] }
   }]);
   fx?.sheet?.render(true);

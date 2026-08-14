@@ -140,7 +140,7 @@ export async function migrateItemEffects(item) {
   // требований систем силовой брони, их по-прежнему считает только
   // getInstalledArmorMods (combat/armor-mods.mjs).
   await item.createEmbeddedDocuments("ActiveEffect", [{
-    name: `${item.name}${MIGRATED_SUFFIX}`, icon: item.img,
+    name: `${item.name}${MIGRATED_SUFFIX}`, img: item.img,
     disabled: !isItemActive(item),
     system: { changes }
   }]);

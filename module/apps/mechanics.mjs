@@ -736,7 +736,7 @@ async function applyMechEntry(actor, entry, sourceItem) {
   if (entry.kind === "characteristic") {
     const key = `system.characteristics.${entry.charKey}.${entry.field}`;
     await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-      name: describeMechEntry(entry), icon: sourceItem.img,
+      name: describeMechEntry(entry), img: sourceItem.img,
       system: { changes: [{ key, type: entry.op, value: Number(entry.value) || 0, phase: "final", priority: 0 }] }
     }]);
     return;
@@ -755,14 +755,14 @@ async function applyMechEntry(actor, entry, sourceItem) {
       // initial-фаза: должно быть на месте ДО пересчёта в actor.mjs (сдвигает
       // входной индекс, а не готовый результат) — см. комментарий в шапке файла.
       await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-        name: describeMechEntry(entry), icon: sourceItem.img,
+        name: describeMechEntry(entry), img: sourceItem.img,
         system: { changes: [{ key, type: "add", value, phase: "initial", priority: 0 }] }
       }]);
     } else {
       const targets = entry.weightScope === "all" ? ["carry", "lift", "push"] : [entry.weightScope];
       const changes = targets.map(t => ({ key: `system.encumbrance.${t}`, type: "add", value, phase: "final", priority: 0 }));
       await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-        name: describeMechEntry(entry), icon: sourceItem.img, system: { changes }
+        name: describeMechEntry(entry), img: sourceItem.img, system: { changes }
       }]);
     }
     return;
@@ -772,7 +772,7 @@ async function applyMechEntry(actor, entry, sourceItem) {
     const isSpd = entry.movementTarget === "spd";
     const key   = isSpd ? "system.movement.spdBonus" : `system.movement.${entry.movementTarget}`;
     await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-      name: describeMechEntry(entry), icon: sourceItem.img,
+      name: describeMechEntry(entry), img: sourceItem.img,
       system: { changes: [{ key, type: entry.op, value: Number(entry.movementValue) || 0,
         phase: isSpd ? "initial" : "final", priority: 0 }] }
     }]);
@@ -832,7 +832,7 @@ async function applyMechEntry(actor, entry, sourceItem) {
 
   if (entry.kind === "poolMax") {
     await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-      name: describeMechEntry(entry), icon: sourceItem.img,
+      name: describeMechEntry(entry), img: sourceItem.img,
       system: { changes: [{ key: "system.fate.max", type: "add", value: Number(entry.value) || 0, phase: "final", priority: 0 }] }
     }]);
     return;
