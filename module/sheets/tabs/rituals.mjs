@@ -12,6 +12,12 @@
 
 import { RITUAL_ITEM_TYPES_MAP } from "../../constants/rituals.mjs";
 import { openCompendiumBrowser } from "../../apps/compendium-browser.mjs";
+import { getItemRequirements, isReqComplete, describeReqEntry } from "../../apps/mechanics.mjs";
+
+/** Требования набора, разобранные в строки текста. Пустые условия отбрасываются. */
+const reqLinesOf = (item, flagKey) =>
+  getItemRequirements(item, flagKey)
+    .flatMap(g => (g.entries || []).filter(isReqComplete).map(describeReqEntry));
 
 /** Строки раздела: по ритуалу на строку. */
 export function ritualsContext(actor) {
@@ -19,7 +25,13 @@ export function ritualsContext(actor) {
     const s = i.system || {};
     const min = Number(s.assistMin) || 0;
     const max = Number(s.assistMax) || 0;
+    // Требования механические (группы И/ИЛИ во флагах), поэтому в строке
+    // листа они показываются разобранным текстом, а не полем system.
+    const reqLines = reqLinesOf(i, "req");
+    const assistReqLines = reqLinesOf(i, "assistReq");
     return {
+      reqLines,
+      assistReqLines,
       id: i.id,
       name: i.name,
       typeLabel: RITUAL_ITEM_TYPES_MAP[s.ritualType]?.label || s.ritualType || "—",
@@ -32,8 +44,11 @@ export function ritualsContext(actor) {
       failureCost: s.failureCost || "",
       // У ритуалов из пресетов проза пустая: в книге она есть, а в пресетах
       // нет. Без этого признака строка раскрывалась бы в пустой блок вместо
-      // честного «описание не заполнено».
-      hasAnyText: !!(s.procedure || s.result || s.cost || s.failureCost)
+      // честного «описание не заполнено». Требования тоже считаются
+      // содержимым — иначе строка с одними требованиями показывала бы их и
+      // «описание не заполнено» разом.
+      hasAnyText: !!(s.procedure || s.result || s.cost || s.failureCost
+        || reqLines.length || assistReqLines.length)
     };
   });
 }

@@ -1,5 +1,7 @@
 {{!-- Ритуал (корбук стр. 393-425). Разметка на общих классах weapon-row,
-      как у остальных партиалов предметов. --}}
+      как у остальных партиалов предметов. Требования — не текст, а
+      механические группы И/ИЛИ (тот же конструктор, что в «Механике»):
+      отдельно для ритуалиста и отдельно для ассистентов. --}}
 
 <div class="item-section">
   <div class="item-section-title">ПАРАМЕТРЫ РИТУАЛА</div>
@@ -30,6 +32,32 @@
     <span class="wr-sep">—</span>
     <input type="number" name="system.assistMax" value="{{system.assistMax}}" min="0" class="wr-input-sm" title="Максимум"/>
   </div>
+</div>
+
+{{!-- Требования ритуалиста: механические группы И/ИЛИ --}}
+<div class="item-section">
+  <div class="item-section-title">
+    ТРЕБОВАНИЯ
+    {{#if isGM}}<span class="effects-tab-actions">
+      <button type="button" class="req-group-add" data-req="req" data-op="AND" title="Новая группа — нужны ВСЕ условия">➕ И-группа</button>
+      <button type="button" class="req-group-add" data-req="req" data-op="OR" title="Новая группа — достаточно ОДНОГО условия">➕ ИЛИ-группа</button>
+    </span>{{/if}}
+  </div>
+  <div class="trait-fx-hint">Кто может проводить ритуал: Навык нужного ранга, Талант/Черта нужного рейтинга, Раса, Элитный архетип или Покровительство Бога.</div>
+  <div class="req-groups" data-req="req">{{{ritualReqHtml}}}</div>
+</div>
+
+{{!-- Требования к ассистентам: тот же конструктор, отдельный набор групп --}}
+<div class="item-section">
+  <div class="item-section-title">
+    ТРЕБОВАНИЯ К АССИСТЕНТАМ
+    {{#if isGM}}<span class="effects-tab-actions">
+      <button type="button" class="req-group-add" data-req="assistReq" data-op="AND" title="Новая группа — нужны ВСЕ условия">➕ И-группа</button>
+      <button type="button" class="req-group-add" data-req="assistReq" data-op="OR" title="Новая группа — достаточно ОДНОГО условия">➕ ИЛИ-группа</button>
+    </span>{{/if}}
+  </div>
+  <div class="trait-fx-hint">Кого можно взять в помощники. Пусто — годится любой (кроме общего правила стр. 25: тот же Навык хотя бы на «Знает»).</div>
+  <div class="req-groups" data-req="assistReq">{{{ritualAssistReqHtml}}}</div>
 </div>
 
 <div class="item-section">

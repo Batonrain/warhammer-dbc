@@ -1297,11 +1297,14 @@
   width: auto; flex: 1 1 130px; font-size: .82em;
 }
 .warhammer-dbc .grant-entry-kind { flex: 0 0 90px; }
-.warhammer-dbc .grant-entry-remove {
+/* Виды условий-Требований подписаны длиннее («Покровительство Бога»), поэтому
+   селектор общий с Механикой, а ширина своя. */
+.warhammer-dbc .req-entry-kind { flex: 0 0 130px; }
+.warhammer-dbc .grant-entry-remove, .warhammer-dbc .req-entry-remove {
   width: auto; flex: 0 0 auto; padding: 1px 8px; font-size: .85em;
   border: 1px solid #7a2e2e; background: rgba(255,110,110,.12); color: #ffb0b0;
 }
-.warhammer-dbc .grant-entry-remove:hover { background: #ff6e6e; color: #2a0505; }
+.warhammer-dbc .grant-entry-remove:hover, .warhammer-dbc .req-entry-remove:hover { background: #ff6e6e; color: #2a0505; }
 .warhammer-dbc .grant-drop-zone {
   flex: 1 1 180px; display: flex; align-items: center; gap: 5px; min-height: 26px;
   padding: 2px 6px; border: 1px dashed var(--wh-border, #1f6f4a); border-radius: 4px; font-size: .82em;
@@ -1309,16 +1312,16 @@
 .warhammer-dbc .grant-drop-placeholder { opacity: .6; }
 .warhammer-dbc .grant-drop-img { width: 20px; height: 20px; border: none; border-radius: 2px; }
 .warhammer-dbc .grant-drop-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.warhammer-dbc .grant-drop-clear, .warhammer-dbc .wprop-drop-clear {
+.warhammer-dbc .grant-drop-clear, .warhammer-dbc .wprop-drop-clear, .warhammer-dbc .req-drop-clear {
   width: auto; flex: 0 0 auto; padding: 0 5px; font-size: .8em; background: none; border: none; color: #ffb0b0;
 }
 .warhammer-dbc .grant-entry-preview { margin-top: 3px; font-size: .78em; color: #7fffba; opacity: .85; }
 .warhammer-dbc .grant-empty-hint { font-size: .82em; opacity: .7; padding: 2px 0; }
-.warhammer-dbc .grant-entry-add {
+.warhammer-dbc .grant-entry-add, .warhammer-dbc .req-entry-add {
   width: auto; padding: 2px 10px; font-size: .85em;
   border: 1px solid #2f9e6a; background: rgba(77,255,166,.1); color: #d6ffe9;
 }
-.warhammer-dbc .grant-entry-add:hover { background: #4dffa6; color: #04120b; }
+.warhammer-dbc .grant-entry-add:hover, .warhammer-dbc .req-entry-add:hover { background: #4dffa6; color: #04120b; }
 
 /* «По выбору при получении» (skill/rollmod, specKey:"__choice__") — список
    чекбоксов-кандидатов; актор потом выбирает один диалогом. */

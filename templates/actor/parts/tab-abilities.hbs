@@ -84,6 +84,8 @@
         </tr>
         <tr class="ability-detail-row" data-item-id="{{r.id}}" style="display:none;"> <td colspan="6">
           <div class="ability-detail-text">
+            {{#if r.reqLines.length}}<div><b>Требования:</b> {{#each r.reqLines}}{{this}}{{#unless @last}}; {{/unless}}{{/each}}</div>{{/if}}
+            {{#if r.assistReqLines.length}}<div><b>Требования к ассистентам:</b> {{#each r.assistReqLines}}{{this}}{{#unless @last}}; {{/unless}}{{/each}}</div>{{/if}}
             {{#if r.procedure}}<div><b>Ритуал:</b> {{r.procedure}}</div>{{/if}}
             {{#if r.result}}<div><b>Результат:</b> {{r.result}}</div>{{/if}}
             {{#if r.cost}}<div><b>Цена:</b> {{r.cost}}</div>{{/if}}

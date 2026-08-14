@@ -16,7 +16,17 @@ import { ritualsContext } from "../../module/sheets/tabs/rituals.mjs";
 /** Актор с произвольным набором предметов. */
 const actorWith = (...items) => ({ items });
 
-const ritual = (id, name, system = {}) => ({ id, name, type: "ritual", system });
+/** Ритуал. flags — то, что вернёт getFlag: наборы групп-требований. */
+const ritual = (id, name, system = {}, flags = {}) => ({
+  id, name, type: "ritual", system,
+  getFlag: (_scope, key) => flags[key]
+});
+
+/** Группа требований с одним заполненным условием по расе. */
+const raceGroup = raceKey => ({
+  id: "g", operator: "AND",
+  entries: [{ id: "e", kind: "reqRace", raceKey }]
+});
 
 describe("раздел Ритуалов", () => {
 
@@ -65,5 +75,35 @@ describe("раздел Ритуалов", () => {
     ));
 
     expect(ctx.map(r => r.hasAnyText)).toEqual([false, true]);
+  });
+
+  it("механические Требования разбираются в строки текста", () => {
+    const ctx = ritualsContext(actorWith(
+      ritual("r1", "С требованиями", {}, {
+        req:       [raceGroup("drukhari")],
+        assistReq: [raceGroup("human")]
+      })
+    ));
+
+    expect(ctx[0].reqLines).toEqual(["Раса: Друкхари"]);
+    expect(ctx[0].assistReqLines).toEqual(["Раса: Человек"]);
+  });
+
+  it("незаполненные условия в строки не попадают", () => {
+    const ctx = ritualsContext(actorWith(
+      ritual("r1", "Пустое условие", {}, { req: [raceGroup("")] })
+    ));
+
+    expect(ctx[0].reqLines).toEqual([]);
+  });
+
+  it("одни Требования без прозы всё равно считаются содержимым", () => {
+    // Иначе строка показала бы разобранные требования И «описание не
+    // заполнено» разом — так было в исходной ветке.
+    const ctx = ritualsContext(actorWith(
+      ritual("r1", "Только требования", {}, { req: [raceGroup("drukhari")] })
+    ));
+
+    expect(ctx[0].hasAnyText).toBe(true);
   });
 });
