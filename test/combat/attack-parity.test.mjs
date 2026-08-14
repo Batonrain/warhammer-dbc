@@ -158,6 +158,17 @@ describe("рукопашная", () => {
     expect(damageFormula()).toBe("1d10+2 + 8");        // S.b 4 × 2
     expect(card()).toContain("Могучее ×2");
   });
+
+  it("Обратный хват половинит бонус Силы", async () => {
+    const weapon = chainsword({ weaponProps: [] });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [15, 5];
+
+    await _executeAttackRoll(actor, weapon, "ws", 55, "melee", null, { gripKey: "Об", gripSbHalf: true });
+
+    expect(damageFormula()).toBe("1d10+2 + 2");        // S.b 4 → ½
+    expect(card()).toContain("S.b +2 (½ хват)");
+  });
 });
 
 // ── Профиль, боеприпас, прицел, щит ─────────────────────────────────────────

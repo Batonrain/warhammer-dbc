@@ -944,7 +944,7 @@ Hooks.on("preCreateItem", (doc, data) => {
 // акторе (автовыдача при создании персонажа, перетаскивание из компендиума
 // «Импланты», ручное добавление GM'ом), он сразу считается вживлённым и
 // попадает на био-скан вкладки ТЕЛО, а не только когда выдан через
-// _grantAstartesImplants.
+// grantAstartesImplants (module/apps/astartes-implants.mjs).
 Hooks.on("preCreateItem", (doc, data) => {
   try {
     if ((data?.type ?? doc.type) !== "implant") return;

@@ -33,6 +33,27 @@ export async function setWeaponLoadedAmmo(item, ammoId) {
   await item.update({ "system.loadedAmmoId": ammoId });
 }
 
+/** Установка модификации/системы на носителя (оружие или броню). */
+export async function installGearMod(item, hostId) {
+  if (!item || !hostId) return;
+  await item.update({ "system.installedOn": hostId });
+  await syncItemEffectsDisabled(item);
+}
+
+/** Снятие с носителя: заодно выключает включаемую систему — бонусы не должны висеть. */
+export async function uninstallGearMod(item) {
+  if (!item) return;
+  await item.update({ "system.installedOn": "", "system.active": false });
+  await syncItemEffectsDisabled(item, false);
+}
+
+/** Вкл/выкл включаемой системы: её бонусы учитываются только во включённом состоянии. */
+export async function toggleGearModActive(item) {
+  if (!item) return;
+  await item.update({ "system.active": !item.system.active });
+  await syncItemEffectsDisabled(item);
+}
+
 export function activateGearListeners(html, actor, {
   reloadWeapon = _reloadWeapon,
   toggleShield = _toggleShield,
@@ -105,5 +126,21 @@ export function activateGearListeners(html, actor, {
     const itemId = ev.currentTarget.dataset.itemId;
     const item   = actor.items.get(itemId);
     if (item) await repairShield(actor, item);
+  });
+
+  // ── Улучшения и системы на носителе (инлайн-выпадашка в строке носителя) ──
+  html.find(".gear-mod-install").on("change", async ev => {
+    ev.stopPropagation();
+    await installGearMod(actor.items.get(ev.currentTarget.dataset.itemId), ev.currentTarget.value);
+  });
+
+  html.find(".gear-mod-uninstall").on("click", async ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    await uninstallGearMod(actor.items.get(ev.currentTarget.dataset.itemId));
+  });
+
+  html.find(".armormod-active-toggle").on("click", async ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    await toggleGearModActive(actor.items.get(ev.currentTarget.dataset.itemId));
   });
 }

@@ -12,10 +12,31 @@
 //  всего остального выданного.
 // ════════════════════════════════════════════════════════════════════════
 
-import { ASTARTES_IMPLANT_WEAPON_ITEMS } from "../constants/astartes-implants.mjs";
+import { ASTARTES_IMPLANT_WEAPON_ITEMS, missingAstartesImplants } from "../constants/astartes-implants.mjs";
 import { isItemActive } from "./effects.mjs";
 
 const FLAG = "warhammer-dbc";
+
+/**
+ * Выдаёт космодесантнику недостающие органы Геносемени. Они не операция,
+ * а часть тела, поэтому сразу помечаются вживлёнными — иначе их эффекты
+ * не учитывались бы и они не попали бы на карту тела.
+ * Железа Бетчера приносит с собой профиль кислотного плевка.
+ */
+export async function grantAstartesImplants(actor) {
+  const missing = missingAstartesImplants(actor);
+  if (!missing.length) return 0;
+
+  const docs = missing.map(o => foundry.utils.mergeObject(
+    foundry.utils.deepClone(o), { flags: { [FLAG]: { installed: true, geneSeed: true } } }));
+  const created = await actor.createEmbeddedDocuments("Item", docs);
+
+  // Боевые профили связанных органов — тот же синк, что держит их в актуальном
+  // состоянии при установке/снятии органа далее (см. syncAstartesImplantWeapon).
+  for (const item of created) if (item.system.linkedWeapon) await syncAstartesImplantWeapon(item);
+
+  return missing.length;
+}
 
 /** Довыдаёт/убирает боевой профиль органа Геносемени по его текущему состоянию. */
 export async function syncAstartesImplantWeapon(item) {

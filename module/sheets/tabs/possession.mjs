@@ -4,8 +4,9 @@
 // низшего демона (Двойной Дух). Считает Симбиоз и его предел, бонусы хоста,
 // профиль Проявления по Порче и каталог Даров с пометкой надетых.
 //
-// Функция принимает актора, а не лист: всё берётся из actor.system и данных
-// книги, поэтому проверяется без Foundry.
+// Функции принимают актора, а не лист. Расчёт вкладки берётся из actor.system и
+// данных книги, поэтому проверяется без Foundry; Проявление, наоборот, бросает
+// куб и пишет в чат — ему нужна заглушка (test/support/foundry-stub.mjs).
 
 import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../../constants/possession.mjs";
@@ -65,4 +66,46 @@ export function possessionContext(actor) {
     // Руны True Tongue (генерируются в шаблоне; сюда — сид анимации по богу)
     runeSeed: (p.demon || "katart").length * 7 % 12
   };
+}
+
+/**
+ * Проявление демона и обратное заключение (полудействие). Вход в Проявление —
+ * тест Cor+20; при Провале Порча растёт на единицу, но форма всё равно
+ * включается: демон уже наружу.
+ */
+export async function toggleManifest(actor) {
+  const sys  = actor.system;
+  const p    = sys.possession || {};
+  const now  = !p.manifested;
+  const meta = twinSpiritMeta(p.demon || "katart");
+  const updates = { "system.possession.manifested": now };
+
+  if (now) {
+    const cor    = sys.corruption?.value ?? 0;
+    const target = Math.min(100, cor + 20);
+    const roll   = await (new Roll("1d100")).evaluate();
+    const success = roll.total <= target;
+    if (!success) updates["system.corruption.value"] = Math.min(100, cor + 1);
+    const body = `
+      <div class="wh-poss-card" style="--gc:${meta.color}">
+        <div class="wh-poss-card-h">⛧ ПРОЯВЛЕНИЕ — ${meta.label} (${meta.godLabel})</div>
+        <div class="wh-poss-card-r">Тест Cor+20: <b>${roll.total}</b> против <b>${target}</b> —
+          <span class="${success ? "ok" : "bad"}">${success ? "Успех" : "Провал: +1 Порчи"}</span></div>
+        <div class="wh-poss-card-n">Демон перестраивает тело в боевую форму. Броня/одежда сплавляются с формой.</div>
+      </div>`;
+    await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: body });
+  } else {
+    ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-poss-card" style="--gc:${meta.color}"><div class="wh-poss-card-h">Демон заключён — смертная форма</div></div>`
+    });
+  }
+  await actor.update(updates);
+}
+
+export function activatePossessionListeners(html, actor) {
+  html.find(".poss-manifest-btn").on("click", async ev => {
+    ev.preventDefault();
+    await toggleManifest(actor);
+  });
 }

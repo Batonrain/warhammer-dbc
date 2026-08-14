@@ -239,6 +239,9 @@ globalThis.Roll = class {
   }
 
   async render() { return `<div class="stub-roll">${this.formula} = ${this.total}</div>`; }
+
+  /** Бросок, отправленный в чат сам собой (Проявление Одержимого, Механикум). */
+  async toMessage(data = {}) { captured.chat.push({ ...data, roll: this }); return data; }
 };
 
 globalThis.ChatMessage = class {
