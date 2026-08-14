@@ -15,6 +15,7 @@ import { RITUAL_TYPES, RITUAL_TYPES_MAP, TEST_CHARS, RITUAL_SUMMON_MODS, CURSE_F
          applyRitualItem } from "../constants/rituals.mjs";
 import { getPhenomenon, getPeril } from "../constants/psyker-tables.mjs";
 import { ritualPresetGroups, applyRitualPreset } from "../constants/ritual-presets.mjs";
+import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
 import { TAROT_DECK, SUITS, SUIT_HINTS, TAROT_SPREADS, TAROT_GUIDE,
          cardByN, cardTitle, cardSuitLine, cardImgSrc } from "../constants/tarot.mjs";
 import { DW_GODS, DW_GODS_MAP, DEMON_INF_FORMULAS, VESSEL_RESONANCE, VESSEL_RESONANCE_GROUPS,
@@ -37,8 +38,9 @@ function _newJourney() {
 
 function _newRitual() {
   return {
-    // itemId — выбранный ритуал-предмет Ритуалиста: он даёт путь проведения
-    // (wdbc-lla). Пустой — ГМ ведёт ритуал руками или пресетом книги, как раньше.
+    // itemId — выбранный ритуал-предмет Ритуалиста: он даёт путь проведения и
+    // требования, которые гейтят проведение (wdbc-lla/j13). Пустой — ГМ ведёт
+    // ритуал руками или пресетом книги, как раньше.
     ritualistId: "", itemId: "", name: "", type: "summon",
     skillValue: "", testChar: "", gmMod: -20,
     assistants: 0, assistBonus: 10,
@@ -159,9 +161,17 @@ export class VeilMystic extends Application {
     const chars = actor?.system?.characteristics || {};
 
     // Ритуалы, лежащие на Ритуалисте. Смена ритуалиста роняет выбор: чужой
-    // предмет к нему отношения не имеет.
+    // предмет к нему отношения не имеет, а его требования гейтили бы не того.
     const ritualItems = (actor?.items ?? []).filter(i => i.type === "ritual");
     if (!ritualItems.find(i => i.id === R.itemId)) R.itemId = "";
+    const ritualItem = ritualItems.find(i => i.id === R.itemId) || null;
+    // Требования ритуалиста — тем же checkRequirements, которым отмечает строку
+    // раздела «Ритуалы» на листе (sheets/tabs/rituals.mjs). Требования к
+    // ассистентам сюда не входят: их проверяют по каждому помощнику отдельно.
+    const req = ritualItem
+      ? checkRequirements(actor, getItemRequirements(ritualItem, "req"))
+      : { ok: true, failed: [] };
+
     const skills = actor ? buildRitualSkills(actor) : [];
     if (!skills.find(s => s.value === R.skillValue)) R.skillValue = skills[0]?.value || "";
     const skillOpt = ritualSkillOption(skills, R.skillValue);
@@ -210,6 +220,7 @@ export class VeilMystic extends Application {
       presetGroups: ritualPresetGroups(),
       ritualItems: ritualItems.map(i => ({ id: i.id, name: i.name, selected: i.id === R.itemId })),
       hasRitualItems: ritualItems.length > 0,
+      reqOk: req.ok, reqFailed: req.failed,
       rows, threshold, thresholdSigned: sgn(threshold),
       aversionPerFail: R.aversionPerFail
     };
@@ -1010,6 +1021,10 @@ export class VeilMystic extends Application {
     const actor = game.actors.get(R.ritualistId);
     if (!actor) { ui.notifications?.warn("Ритуал: выберите Ритуалиста."); return; }
     const d = this._ritualData();
+    // Требования ритуала гейтят проведение, но не запрещают его наглухо:
+    // последнее слово за ГМом, поэтому спрашиваем подтверждение и называем,
+    // чего не хватает.
+    if (!d.reqOk && !(await this._confirmUnmet(actor, d.reqFailed))) return;
     const threshold = d.threshold;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total;
@@ -1038,6 +1053,17 @@ export class VeilMystic extends Application {
       </div>`,
       rolls: allRolls, sound: CONFIG.sounds.dice
     }, rollMode));
+  }
+
+  /** Ритуалист не проходит требования ритуала: подтвердить или отменить. */
+  async _confirmUnmet(actor, failed) {
+    return Dialog.confirm({
+      title: "Требования ритуала не выполнены",
+      content: `<p><b>${escHtml(actor.name)}</b> не проходит требования ритуала:</p>
+        <ul>${failed.map(f => `<li>${escHtml(f)}</li>`).join("")}</ul>
+        <p>Провести всё равно?</p>`,
+      defaultYes: false
+    });
   }
 
   async _ritualFailure(R, failures, prMax, allRolls) {

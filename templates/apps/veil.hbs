@@ -172,6 +172,12 @@
             </select>
           </div>
           {{/if}}
+          {{#unless reqOk}}
+          <div class="wv-rit-unmet">
+            <b>Требования не выполнены:</b>
+            {{#each reqFailed}}<div>{{this}}</div>{{/each}}
+          </div>
+          {{/unless}}
           <div class="wv-rit-row">
             <label class="wv-rit-lbl">Название</label>
             <input type="text" name="ritName" class="wv-rit-wide" value="{{name}}" placeholder="напр. Призыв Низшего Демона"/>

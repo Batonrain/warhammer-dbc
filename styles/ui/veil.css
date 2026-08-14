@@ -298,6 +298,12 @@
 .wv-rit-sm { min-width: 120px; }
 .wv-rit-xs { width: 58px; }
 .wv-rit-cb { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8em; margin-left: auto; }
+/* Ритуалист не проходит Требования выбранного ритуала: проведение спросит подтверждение. */
+.wv-rit-unmet {
+  margin: 6px 0 0; padding: 6px 8px; font-size: 0.8em;
+  color: #ff9a9a; background: rgba(255,107,107,0.08);
+  border: 1px solid rgba(255,107,107,0.35); border-radius: 3px;
+}
 .wv-rit-mods { display: flex; flex-direction: column; gap: 3px; }
 .wv-rit-mod {
   display: grid; grid-template-columns: 18px 40px 1fr; align-items: center; gap: 6px;

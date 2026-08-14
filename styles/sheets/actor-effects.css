@@ -224,6 +224,11 @@
 .warhammer-dbc .rituals-table .col-narrow { width: 64px; text-align: center; }
 .warhammer-dbc .ritual-row-actions { width: 28px; text-align: center; }
 
+/* Требования ритуалиста: те же цвета, что у пикера предметов (dialogs.css). */
+.warhammer-dbc .ritual-req-ok   { color: #7ac47a; opacity: .75; }
+.warhammer-dbc .ritual-req-fail { color: #ff8a8a; font-weight: 600; }
+.warhammer-dbc .ritual-row-unmet { background: rgba(255,107,107,0.07); }
+
 .warhammer-dbc .ritual-name-link {
   cursor: pointer;
   text-decoration: underline dotted;
