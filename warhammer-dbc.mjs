@@ -1100,10 +1100,6 @@ async function _unlockAllSystemPacks() {
     ui.notifications?.info(`Warhammer DBC: разблокировано компендиумов для редактирования — ${n}.`);
   }
 }
-Hooks.once("ready", async () => {
-  if (!game.user.isGM) return;
-  if (_editsProtected()) await _unlockAllSystemPacks();
-});
 
 // ─── Типы изменений ActiveEffect "divideUp"/"divideDown" (Конструктор эффектов) ──
 // У ядра Foundry нет деления как типа change (только add/subtract/multiply/
@@ -1126,8 +1122,14 @@ Hooks.on("applyActiveEffect", (targetDoc, change) => {
 
 // ─── Миграция: system.effects.* существующих предметов → embedded ActiveEffect ──
 // Сама миграция — в module/migrations/item-effects.mjs (проверяется без Foundry).
+//
+// Разблокировка идёт здесь же и строго до миграции: миграция снимает замок с
+// пака и возвращает его, каким взяла, а Foundry соседние ready-хуки не
+// дожидается — в разных хуках она читала бы замок посреди разблокировки и
+// закрывала паки, которые ГМ просил открыть.
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
+  if (_editsProtected()) await _unlockAllSystemPacks();
   await migrateAllItemEffects();
 });
 

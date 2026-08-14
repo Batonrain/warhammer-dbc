@@ -240,20 +240,44 @@ describe("миграция мира", () => {
     expect(changesOf(item)).toEqual(legacyEffectsToChanges(effects));
   });
 
-  it("проходит по компендиумам библиотек, разблокировав пак", async () => {
+  /** Пак-заглушка: пишет в `lock` каждую смену замка. */
+  function packStub(lock, { locked = true, getDocuments = async () => [] } = {}) {
+    return { locked, getDocuments,
+             configure: async ({ locked: l }) => { lock.push(l); } };
+  }
+
+  it("проходит по компендиумам библиотек, разблокировав пак и вернув замок", async () => {
     const doc  = itemDoc({ name: "Мир-улей", effects: { charValueBonuses: [{ stat: "wp", value: 3 }] } });
     const lock = [];
-    globalThis.game.packs = new Map([["warhammer-dbc.homeworlds", {
-      locked: true,
-      configure: async ({ locked }) => { lock.push(locked); },
-      getDocuments: async () => [doc]
-    }]]);
+    globalThis.game.packs = new Map([["warhammer-dbc.homeworlds",
+      packStub(lock, { getDocuments: async () => [doc] })]]);
 
     const { migrated } = await migrateAllItemEffects();
 
     expect(migrated).toBe(1);
     expect(changesOf(doc)).toEqual(legacyEffectsToChanges({ charValueBonuses: [{ stat: "wp", value: 3 }] }));
-    expect(lock[0]).toBe(false);
+    // Замок снят на время обхода и возвращён: иначе пак остаётся открытым на
+    // правку мимо настройки protectCompendiumEdits — до конца жизни мира.
+    expect(lock).toEqual([false, true]);
+  });
+
+  it("замок возвращается и когда пак упал посреди обхода", async () => {
+    const lock = [];
+    globalThis.game.packs = new Map([["warhammer-dbc.homeworlds",
+      packStub(lock, { getDocuments: async () => { throw new Error("пак недоступен"); } })]]);
+
+    await migrateAllItemEffects();
+
+    expect(lock).toEqual([false, true]);
+  });
+
+  it("пак, открытый ГМом до миграции, остаётся открытым", async () => {
+    const lock = [];
+    globalThis.game.packs = new Map([["warhammer-dbc.homeworlds", packStub(lock, { locked: false })]]);
+
+    await migrateAllItemEffects();
+
+    expect(lock).toEqual([]);
   });
 });
 

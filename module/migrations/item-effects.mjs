@@ -135,12 +135,17 @@ export async function migrateAllItemEffects() {
     }
   }
 
-  // Компендиумы библиотек — та же логика, с разблокировкой пака.
+  // Компендиумы библиотек — та же логика, с разблокировкой пака. Замок
+  // возвращается в finally: configure пишет в game.settings, то есть снятый
+  // замок переживает перезапуск и открывает пак на правку мимо настройки
+  // protectCompendiumEdits навсегда. Пак, открытый ГМом до миграции, таким и
+  // остаётся — отсюда wasLocked с обеих сторон.
   for (const packId of MIGRATE_COMPENDIA) {
     const pack = game.packs.get(packId);
     if (!pack) continue;
+    const wasLocked = pack.locked;
     try {
-      if (pack.locked) await pack.configure({ locked: false });
+      if (wasLocked) await pack.configure({ locked: false });
       const docs = await pack.getDocuments();
       for (const doc of docs) {
         repaired += await repairCharValueEffectKeys(doc);
@@ -148,6 +153,8 @@ export async function migrateAllItemEffects() {
       }
     } catch (e) {
       console.error(`Warhammer DBC | Миграция эффектов '${packId}':`, e);
+    } finally {
+      if (wasLocked) await pack.configure({ locked: true });
     }
   }
 
