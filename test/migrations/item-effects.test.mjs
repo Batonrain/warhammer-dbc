@@ -29,8 +29,8 @@ import fs   from "node:fs";
 import path from "node:path";
 
 import { legacyEffectsToChanges } from "../../module/constants/effect-keys.mjs";
-import { migrateItemEffects, repairCharValueEffectKeys, migrateAllItemEffects,
-         MIGRATE_EFFECT_TYPES } from "../../module/migrations/item-effects.mjs";
+import { migrateItemEffects, repairCharValueEffectKeys, dropMechanicsDuplicates,
+         migrateAllItemEffects, MIGRATE_EFFECT_TYPES } from "../../module/migrations/item-effects.mjs";
 
 const PACKS_SRC = path.resolve(import.meta.dirname, "../../packs-src");
 const CHAR_BONUS = { charBonuses: [{ stat: "s", value: 2 }] };
@@ -42,8 +42,9 @@ function itemDoc({ type = "trait", name = "Черта", effects = {},
   const doc = {
     id: "item-1", type, name, img: "icons/svg/aura.svg",
     system: { effects, ...system },
-    effects: fx.map(f => {
+    effects: fx.map((f, i) => {
       const effect = structuredClone(f);
+      effect.id = effect._id ?? `fx-${i}`;
       // Починка правит только этот ключ — больше заглушке знать нечего.
       effect.update = async data => { effect.system.changes = data["system.changes"]; return effect; };
       return effect;
@@ -53,6 +54,10 @@ function itemDoc({ type = "trait", name = "Черта", effects = {},
     createEmbeddedDocuments: async (_type, docs) => {
       doc.effects.push(...docs.map(d => structuredClone(d)));
       return docs;
+    },
+    deleteEmbeddedDocuments: async (_type, ids) => {
+      doc.effects = doc.effects.filter(f => !ids.includes(f.id));
+      return ids;
     }
   };
   return doc;
@@ -212,6 +217,64 @@ describe("починка ключа характеристики .value → .tot
   });
 });
 
+// Ранняя миграция перенесла в эффект механику, которую потом завели и в
+// Конструкторе (либо наоборот) — так в паке оказались 13 Родных миров. На
+// акторе работают оба источника: эффект приезжает с предметом, а Конструктор
+// заводит свой при получении предмета — бонус удваивается. Побеждает
+// Конструктор: он и есть штатное место механики, эффект «(перенесено)» — след
+// миграции.
+describe("снятие механики, задвоенной Конструктором", () => {
+  /** Группа Конструктора с записями характеристик — как в packs-src. */
+  const mechanics = (...entries) => [{ id: "g1", operator: "AND",
+    entries: entries.map(([charKey, value], i) => ({ id: `e${i}`, kind: "characteristic",
+      charKey, field: "total", op: "add", value })) }];
+
+  const migrated = (name, ...keys) => ({ name: `${name} (перенесено)`, system: {
+    changes: keys.map(key => ({ key, type: "add", value: 3, phase: "final", priority: 0 })) } });
+
+  it("перенесённый эффект, чью механику ведёт Конструктор, снимается целиком", async () => {
+    const item = itemDoc({ type: "homeworld", name: "Добывающий мир",
+      flags: { mechanics: mechanics(["s", 3], ["t", 3], ["fel", -3]) },
+      fx: [migrated("Добывающий", "system.characteristics.s.total",
+        "system.characteristics.t.total", "system.characteristics.fel.total")] });
+
+    expect(await dropMechanicsDuplicates(item)).toBe(3);
+    expect(item.effects).toEqual([]);
+  });
+
+  it("часть, которой в Конструкторе нет, остаётся", async () => {
+    const item = itemDoc({ type: "trait", name: "Черта",
+      flags: { mechanics: mechanics(["s", 3]) },
+      fx: [migrated("Черта", "system.characteristics.s.total", "system.size")] });
+
+    expect(await dropMechanicsDuplicates(item)).toBe(1);
+    expect(changesOf(item).map(c => c.key)).toEqual(["system.size"]);
+  });
+
+  it("эффекты самого Конструктора не трогает", async () => {
+    // Их он завёл на те же ключи — по ключу дубль от источника не отличить,
+    // отличает имя: «(перенесено)» пишет только миграция (applyMechEntry
+    // называет свои через describeMechEntry).
+    const item = itemDoc({ type: "homeworld", name: "Мир-улей",
+      flags: { mechanics: mechanics(["wp", 3]), mechanicsApplied: true },
+      fx: [{ name: "Сила Воли: + 3", system: { changes:
+        [{ key: "system.characteristics.wp.total", type: "add", value: 3, phase: "final", priority: 0 }] } }] });
+
+    expect(await dropMechanicsDuplicates(item)).toBe(0);
+    expect(changesOf(item)).toHaveLength(1);
+  });
+
+  it("у предмета без Конструктора ничего не снимает", async () => {
+    // Предмет мог попасть к актору до того, как механику завели в Конструкторе:
+    // его копия своих записей не получит, и эффект — единственный источник.
+    const item = itemDoc({ type: "homeworld", name: "Добывающий мир",
+      fx: [migrated("Добывающий", "system.characteristics.s.total")] });
+
+    expect(await dropMechanicsDuplicates(item)).toBe(0);
+    expect(changesOf(item)).toHaveLength(1);
+  });
+});
+
 describe("миграция мира", () => {
   it("проходит по предметам акторов и считает перенесённые", async () => {
     const legacy  = itemDoc({ name: "Аморфный", effects: { sizeMod: 1 } });
@@ -238,6 +301,24 @@ describe("миграция мира", () => {
 
     expect([migrated, repaired]).toEqual([0, 1]);
     expect(changesOf(item)).toEqual(legacyEffectsToChanges(effects));
+  });
+
+  it("снимает задвоенный Конструктором эффект и не заводит его заново", async () => {
+    // Старое поле у таких предметов заполнено той же механикой, поэтому снятый
+    // эффект перенос мог бы восстановить — не должен: записи Конструктора он
+    // считает уже несомой механикой (carriedKeys).
+    const item = itemDoc({ type: "homeworld", name: "Добывающий мир",
+      effects: { charValueBonuses: [{ stat: "s", value: 3 }] },
+      flags: { migratedEffect: true, mechanics: [{ id: "g1", operator: "AND", entries:
+        [{ id: "e0", kind: "characteristic", charKey: "s", field: "total", op: "add", value: 3 }] }] },
+      fx: [{ name: "Добывающий (перенесено)", system: { changes:
+        [{ key: "system.characteristics.s.total", type: "add", value: 3, phase: "final", priority: 0 }] } }] });
+    globalThis.game.actors = [{ name: "Персонаж", items: [item] }];
+
+    const { migrated, deduped } = await migrateAllItemEffects();
+
+    expect([migrated, deduped]).toEqual([0, 1]);
+    expect(item.effects).toEqual([]);
   });
 
   /** Пак-заглушка: пишет в `lock` каждую смену замка. */
@@ -282,23 +363,24 @@ describe("миграция мира", () => {
 });
 
 describe("предметы packs-src", () => {
-  /** Документы паков мигрируемых типов, у которых есть старая механика. */
-  function legacyPackDocs() {
+  /** Все документы packs-src. */
+  function allPackDocs() {
     const out = [];
     const walk = dir => {
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) { walk(full); continue; }
         if (!entry.name.endsWith(".json")) continue;
-        const doc = JSON.parse(fs.readFileSync(full, "utf8"));
-        if (!MIGRATE_EFFECT_TYPES.has(doc.type)) continue;
-        if (!legacyEffectsToChanges(doc.system?.effects ?? {}).length) continue;
-        out.push(doc);
+        out.push(JSON.parse(fs.readFileSync(full, "utf8")));
       }
     };
     walk(PACKS_SRC);
     return out;
   }
+
+  /** Из них — мигрируемых типов и со старой механикой. */
+  const legacyPackDocs = () => allPackDocs().filter(doc =>
+    MIGRATE_EFFECT_TYPES.has(doc.type) && legacyEffectsToChanges(doc.system?.effects ?? {}).length);
 
   /** Предмет пака как документ: те же эффекты, флаги и старое поле. */
   const packItem = doc => itemDoc({
@@ -334,6 +416,19 @@ describe("предметы packs-src", () => {
         expect(count(after, key), `${doc.name}: ${key}`).toBe(was || 1);
       }
     }
+  });
+
+  it("ни один предмет пака не правит характеристику из двух источников", async () => {
+    // Иначе на акторе сложатся оба: эффект приезжает с предметом, записи
+    // Конструктора он отыгрывает сам при получении (wdbc-43d — 13 Родных миров).
+    const doubled = [];
+    for (const doc of allPackDocs()) {
+      const mech = new Set(mechanicsKeys(doc));
+      const both = (doc.effects ?? []).flatMap(f => f.system?.changes ?? [])
+        .map(c => c.key).filter(k => mech.has(k));
+      if (both.length) doubled.push(`${doc.name}: ${[...new Set(both)].join(", ")}`);
+    }
+    expect(doubled).toEqual([]);
   });
 
   it("предмет с механикой Конструктора миграция не трогает", async () => {

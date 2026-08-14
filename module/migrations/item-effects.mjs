@@ -43,28 +43,72 @@ const MIGRATE_COMPENDIA = [
 // их разбор — отдельная задача, здесь важно не добавлять к ним новых.
 const LEGACY_ONLY_KEYS = ["apVsEnergy", "apVsImpact", "apVsRending", "apVsBlast", "maxAgilityMod"];
 
+// Суффикс имени перенесённого эффекта. Единственный признак, по которому дубль
+// отличим от эффекта Конструктора: ключ у них один и тот же, а имена своим
+// эффектам Конструктор даёт через describeMechEntry (apps/mechanics.mjs).
+const MIGRATED_SUFFIX = " (перенесено)";
+
 /**
- * Ключи, механику которых предмет уже несёт.
- *
- * Свои эффекты — прошлый перенос (в том числе переименованный) либо ручной
- * эффект GM на то же поле. Сравниваем по ключам, а не по имени эффекта: имя
- * правится в UI одним кликом, ключ — нет.
- *
- * Записи Конструктора (`flags.mechanics`, apps/mechanics.mjs) — свои эффекты он
- * заводит сам, когда предмет попадает к актору, поэтому в компендиуме их ещё
- * нет и читать приходится сами записи. Ключ строится ровно как в applyMechEntry.
- * У всех 13 Родных миров и 8 Предсказаний в паках он совпадает со старым полем:
- * перенести их значило бы удвоить бонусы.
+ * Ключи характеристик, которые правят записи Конструктора (`flags.mechanics`,
+ * apps/mechanics.mjs). Свои эффекты он заводит сам, когда предмет попадает к
+ * актору, поэтому в компендиуме их ещё нет и читать приходится сами записи.
+ * Ключ строится ровно как в applyMechEntry.
  */
-function carriedKeys(item) {
+function mechanicsKeys(item) {
   const keys = new Set();
-  for (const effect of item.effects ?? [])
-    for (const c of effect.system?.changes ?? []) keys.add(c.key);
   for (const group of item.getFlag(SYSTEM, "mechanics") ?? [])
     for (const entry of group.entries ?? [])
       if (entry.kind === "characteristic")
         keys.add(`system.characteristics.${entry.charKey}.${entry.field}`);
   return keys;
+}
+
+/**
+ * Ключи, механику которых предмет уже несёт: свои эффекты плюс записи
+ * Конструктора. Свои эффекты — прошлый перенос (в том числе переименованный)
+ * либо ручной эффект GM на то же поле. Сравниваем по ключам, а не по имени
+ * эффекта: имя правится в UI одним кликом, ключ — нет.
+ *
+ * У всех 13 Родных миров и 8 Предсказаний в паках записи Конструктора совпадают
+ * со старым полем: перенести их значило бы удвоить бонусы.
+ */
+function carriedKeys(item) {
+  const keys = mechanicsKeys(item);
+  for (const effect of item.effects ?? [])
+    for (const c of effect.system?.changes ?? []) keys.add(c.key);
+  return keys;
+}
+
+/**
+ * Снимает с перенесённых эффектов правки, которые уже ведёт Конструктор.
+ * Возвращает число снятых.
+ *
+ * Ранняя миграция перенесла в эффект механику, которую потом завели и в
+ * Конструкторе — так в паке оказались 13 Родных миров. На акторе работали оба
+ * источника разом (эффект приезжает с предметом, записи Конструктора он
+ * отыгрывает при получении), и бонус удваивался: Добывающий мир давал S +3/+3,
+ * T +3/+3, Fel −3/−3. Побеждает Конструктор — штатное место механики.
+ *
+ * Предмет без записей Конструктора не трогаем: его копия могла уехать к актору
+ * до того, как механику там завели, и эффект — единственный её источник.
+ */
+export async function dropMechanicsDuplicates(item) {
+  const mech = mechanicsKeys(item);
+  if (!mech.size) return 0;
+
+  let dropped = 0;
+  const emptied = [];
+  for (const effect of item.effects ?? []) {
+    if (!effect.name?.endsWith(MIGRATED_SUFFIX)) continue;
+    const changes = effect.system?.changes ?? [];
+    const keep = changes.filter(c => !mech.has(c.key));
+    if (keep.length === changes.length) continue;
+    dropped += changes.length - keep.length;
+    if (keep.length) await effect.update({ "system.changes": keep });
+    else emptied.push(effect.id);
+  }
+  if (emptied.length) await item.deleteEmbeddedDocuments("ActiveEffect", emptied);
+  return dropped;
 }
 
 /** Переносит механику одного предмета. true — если эффект создан. */
@@ -92,7 +136,7 @@ export async function migrateItemEffects(item) {
   // модификаций брони старый расчёт смотрел ещё и на надетость носителя
   // (combat/armor-mods.mjs), а isItemActive — только на установку и включение.
   await item.createEmbeddedDocuments("ActiveEffect", [{
-    name: `${item.name} (перенесено)`, icon: item.img,
+    name: `${item.name}${MIGRATED_SUFFIX}`, icon: item.img,
     disabled: !isItemActive(item),
     system: { changes }
   }]);
@@ -123,17 +167,20 @@ export async function repairCharValueEffectKeys(item) {
 
 /** Весь мир: предметы акторов и компендиумы библиотек. */
 export async function migrateAllItemEffects() {
-  let migrated = 0, repaired = 0;
+  let migrated = 0, repaired = 0, deduped = 0;
 
-  // Акторы мира — каждый их предмет с непустыми старыми эффектами. Починка
-  // идёт первой: эффект ранней миграции с ключом `.value` иначе не узнать по
-  // ключу (перенос ищет `.total`), и рядом лёг бы второй — тот же бонус дважды.
-  for (const actor of game.actors) {
-    for (const item of actor.items) {
-      repaired += await repairCharValueEffectKeys(item);
-      if (await migrateItemEffects(item)) migrated++;
-    }
+  /** Порядок шагов важен — см. комментарии внутри. */
+  async function pass(item) {
+    // Починка идёт первой: эффект ранней миграции с ключом `.value` иначе не
+    // узнать по ключу (перенос ищет `.total`), и рядом лёг бы второй — тот же
+    // бонус дважды. Она же приводит ключ к тому виду, в каком его сверяет
+    // снятие дублей.
+    repaired += await repairCharValueEffectKeys(item);
+    deduped  += await dropMechanicsDuplicates(item);
+    if (await migrateItemEffects(item)) migrated++;
   }
+
+  for (const actor of game.actors) for (const item of actor.items) await pass(item);
 
   // Компендиумы библиотек — та же логика, с разблокировкой пака. Замок
   // возвращается в finally: configure пишет в game.settings, то есть снятый
@@ -146,11 +193,7 @@ export async function migrateAllItemEffects() {
     const wasLocked = pack.locked;
     try {
       if (wasLocked) await pack.configure({ locked: false });
-      const docs = await pack.getDocuments();
-      for (const doc of docs) {
-        repaired += await repairCharValueEffectKeys(doc);
-        if (await migrateItemEffects(doc)) migrated++;
-      }
+      for (const doc of await pack.getDocuments()) await pass(doc);
     } catch (e) {
       console.error(`Warhammer DBC | Миграция эффектов '${packId}':`, e);
     } finally {
@@ -166,5 +209,9 @@ export async function migrateAllItemEffects() {
     console.log(`Warhammer DBC | Починка эффектов: исправлено ${repaired} эффект(ов) с ключом .value → .total.`);
     ui.notifications?.info(`Warhammer DBC: исправлены неработавшие бонусы характеристик — ${repaired}.`);
   }
-  return { migrated, repaired };
+  if (deduped) {
+    console.log(`Warhammer DBC | Снято правок, задвоенных Конструктором: ${deduped}.`);
+    ui.notifications?.info(`Warhammer DBC: убраны задвоенные бонусы — ${deduped}.`);
+  }
+  return { migrated, repaired, deduped };
 }
