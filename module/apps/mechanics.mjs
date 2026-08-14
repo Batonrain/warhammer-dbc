@@ -199,6 +199,7 @@ const KIND_LABELS = {
   weight: "Вес", rollmod: "Модификатор броска", poolMax: "Очки Судьбы или Бесчестья",
   weaponProp: "Оружие: Свойство",
   movement: "Движение: Скорость", terrainIgnore: "Движение: Ландшафт (игнор)",
+  fatigue: "Усталость",
   equipment: "Снаряжение",
   group: "Вложенная группа",
   script: "Код"
@@ -207,6 +208,11 @@ const KIND_LABELS = {
 // вкладки МЕХАНИКА уже уровень 1, поэтому подгрупп-в-подгруппах допускается 4.
 const MAX_GROUP_DEPTH = 5;
 const WEIGHT_SCOPE_LABELS = { all: "Общее", carry: "Ношение", lift: "Подъём", push: "Толкание" };
+// «Усталость» (kind:"fatigue") — каскад «действие → уточнение». Действие пока
+// одно; список оставлен на вырост, чтобы будущее («Снять уровень», «Порог
+// потери сознания») не ломало уже сохранённые записи.
+const FATIGUE_ACTIONS = [["threshold", "Порог штрафа"]];
+const FATIGUE_THRESHOLD_CHARS = [["t", "Бонус Стойкости (T.b)"], ["wp", "Бонус Воли (WP.b)"]];
 // Действия над Свойством оружия (kind:"weaponProp"). increase/decrease появляются
 // в дропдауне только когда перетащенное свойство обладает рейтингом (см.
 // buildEntryFieldsHtml) — рейтинговых свойств большинство, но не все.
@@ -341,6 +347,8 @@ export function blankMechEntry(kind = "characteristic") {
     movementTarget: "spd", movementValue: 1,
     // terrainIgnore
     ignoreTerrainProps: [],
+    // fatigue — каскад: действие → характеристика (см. шапку файла)
+    fatigueAction: "threshold", fatigueThresholdChar: "t",
     // equipment
     equipMode: "direct", equipQty: 1,
     equipSourceUuid: "", equipSourceName: "", equipSourceImg: "",
@@ -423,6 +431,11 @@ export function describeMechEntry(entry) {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
       return `Ландшафт: игнорирует — ${labels.join(", ")}`;
+    }
+    case "fatigue": {
+      if (entry.fatigueAction !== "threshold") return "Усталость: (действие не выбрано)";
+      const charLabel = entry.fatigueThresholdChar === "wp" ? "Воли" : "Стойкости";
+      return `Усталость: штраф начинается с Бонуса ${charLabel} (вместо 1)`;
     }
     case "equipment": {
       const qty = Math.max(1, parseInt(entry.equipQty) || 1);
@@ -515,6 +528,8 @@ function isEntryComplete(e) {
       return !!e.movementTarget && numOk(e.movementValue);
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
+    case "fatigue":
+      return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
     case "equipment":
       if (!numOk(e.equipQty) || Number(e.equipQty) <= 0) return false;
       return e.equipMode === "choice" ? !!e.equipCategoryPack : !!e.equipSourceUuid;
@@ -785,6 +800,12 @@ async function applyMechEntry(actor, entry, sourceItem) {
   if (entry.kind === "terrainIgnore") {
     // Ничего не пишем и не создаём — см. комментарий в шапке файла:
     // ignoredTerrainKeysForActor() читает Механику предмета напрямую, живьём.
+    return;
+  }
+
+  if (entry.kind === "fatigue") {
+    // Тоже живой запрос: fatigueGraceForActor() (rules/fatigue-grace.mjs)
+    // читает Механику в момент теста, писать и откатывать нечего.
     return;
   }
 
@@ -1157,6 +1178,20 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
       `<option value="${esc(p.key)}" ${chosen.has(p.key) ? "selected" : ""}>${esc(p.label)} (${p.mod >= 0 ? "+" : ""}${p.mod})</option>`
     ).join("");
     return `<select class="mech-terrain-ignore" multiple size="6" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>`;
+  }
+
+  if (ent.kind === "fatigue") {
+    // Каскад: сначала ЧТО делать с Усталостью, потом уточнение. Действие пока
+    // одно, но выбор оставлен списком — чтобы будущие действия («Снять
+    // уровень» и т.п.) не потребовали переделки уже сохранённых записей.
+    const actionOpts = FATIGUE_ACTIONS
+      .map(([v, l]) => optHtml(v, l, (ent.fatigueAction || "threshold") === v)).join("");
+    const charOpts = FATIGUE_THRESHOLD_CHARS
+      .map(([v, l]) => optHtml(v, l, (ent.fatigueThresholdChar || "t") === v)).join("");
+    const charSelect = (ent.fatigueAction || "threshold") === "threshold"
+      ? `<select class="mech-fatigue-char" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${charOpts}</select>`
+      : "";
+    return `<select class="mech-fatigue-action" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${actionOpts}</select>${charSelect}`;
   }
 
   if (ent.kind === "equipment") {

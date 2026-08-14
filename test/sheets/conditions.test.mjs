@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, fakeHtml, resetCaptured } from "../support/foundry-stub.mjs";
 import { activateConditionsListeners, addFatigue, removeCondition, removeFatigue,
-         fatigueSleep, setConditionLevel,
+         fatigueSleep, setConditionLevel, fatiguePenalty,
          showAddConditionDialog } from "../../module/sheets/tabs/conditions.mjs";
 
 function makeActor(options = {}) {
@@ -35,6 +35,34 @@ function makeActor(options = {}) {
 }
 
 beforeEach(resetCaptured);
+
+describe("fatiguePenalty", () => {
+  /** Предмет с записью Конструктора «Усталость: порог штрафа». */
+  const graceItem = char => ({
+    getFlag: (scope, key) => (scope === "warhammer-dbc" && key === "mechanics"
+      ? [{ id: "g", operator: "AND", entries: [{
+          id: "e", kind: "fatigue", fatigueAction: "threshold", fatigueThresholdChar: char }] }]
+      : undefined)
+  });
+
+  it("без предметов штраф начинается с первой единицы Усталости", () => {
+    expect(fatiguePenalty(makeActor({ fatigue: 0 }), "ws")).toBe(0);
+    expect(fatiguePenalty(makeActor({ fatigue: 1 }), "ws")).toBe(-10);
+  });
+
+  it("запись Конструктора поднимает порог до Бонуса характеристики", () => {
+    const a = makeActor({ fatigue: 4, tBonus: 4 });
+    a.items = [graceItem("t")];
+    // Порог стал 1 + 4: на четвёртой единице штрафа ещё нет.
+    expect(fatiguePenalty(a, "ws")).toBe(0);
+    a.system.fatigue.value = 5;
+    expect(fatiguePenalty(a, "ws")).toBe(-10);
+  });
+
+  it("Стойкость от Усталости не страдает в любом случае", () => {
+    expect(fatiguePenalty(makeActor({ fatigue: 9 }), "t")).toBe(0);
+  });
+});
 
 describe("fatigue controls", () => {
   it("addFatigue пишет новый уровень и порог T.b + W.b", async () => {

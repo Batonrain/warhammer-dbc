@@ -954,6 +954,18 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       e.ignoreTerrainProps = Array.from(ev.currentTarget.selectedOptions).map(o => o.value);
       saveMech(arr);
     });
+    // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
+    // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.
+    html.find(".mech-fatigue-action").on("change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.fatigueAction = ev.currentTarget.value; saveMech(arr); }
+    });
+    html.find(".mech-fatigue-char").on("change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.fatigueThresholdChar = ev.currentTarget.value; saveMech(arr); }
+    });
     // Снаряжение (kind:"equipment")
     html.find(".mech-equip-mode").on("change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
