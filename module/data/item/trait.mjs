@@ -19,6 +19,8 @@ function emptyEffects() {
   };
 }
 
+import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+
 export class TraitData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -42,25 +44,6 @@ export class TraitData extends foundry.abstract.TypeDataModel {
     };
   }
 
-  /**
-   * Данные прошлого формата: одиночный бонус к Бонусу характеристики лежал
-   * двумя полями (`charBonusStat` + `charBonusValue`), а поздние Черты пишут
-   * тот же бонус списком `charBonuses`. Два пути чтения тянутся через весь
-   * расчёт актора (documents/actor.mjs) и через перенос в ActiveEffect
-   * (constants/effect-keys.mjs); миграция оставляет один — список.
-   *
-   * @override
-   */
-  static migrateData(source) {
-    const fx = source?.effects;
-    if (fx && typeof fx === "object") {
-      const { charBonusStat, charBonusValue } = fx;
-      if (charBonusStat && charBonusValue) {
-        fx.charBonuses = [...(fx.charBonuses ?? []), { stat: charBonusStat, value: charBonusValue }];
-      }
-      delete fx.charBonusStat;
-      delete fx.charBonusValue;
-    }
-    return source;
-  }
+  /** @override — общий разбор пары charBonusStat/charBonusValue. */
+  static migrateData(source) { return migrateCharBonusPair(source); }
 }

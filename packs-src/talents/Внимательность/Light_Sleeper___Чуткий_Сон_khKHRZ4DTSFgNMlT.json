@@ -8,7 +8,7 @@
     "notes": "",
     "benefit": "При тестах на P или Awareness персонаж всегда считается бодрствующим, даже если спит.",
     "bookSource": "DoomBC — Основная книга",
-    "tier": "1",
+    "tier": 1,
     "requirement": "P 30",
     "aptitudes": [
       "per",

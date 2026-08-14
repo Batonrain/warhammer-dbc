@@ -21,6 +21,11 @@ import { ForcefieldData }     from "./item/forcefield.mjs";
 import { WeaponData }         from "./item/weapon.mjs";
 import { AmmoData }           from "./item/ammo.mjs";
 import { ArmorData }          from "./item/armor.mjs";
+import { TalentData }         from "./item/talent.mjs";
+import { AbilityData }        from "./item/ability.mjs";
+import { MutationData }       from "./item/mutation.mjs";
+import { DiseaseData }        from "./item/disease.mjs";
+import { MentalDisorderData } from "./item/mental-disorder.mjs";
 
 /** Тип предмета → класс схемы. Раскладывается в CONFIG.Item.dataModels в init. */
 export const ITEM_DATA_MODELS = {
@@ -38,5 +43,11 @@ export const ITEM_DATA_MODELS = {
   // Оружие и броня (wdbc-ff4.1.2)
   weapon:         WeaponData,
   ammo:           AmmoData,
-  armor:          ArmorData
+  armor:          ArmorData,
+  // Способности, черты, состояния (wdbc-ff4.1.3)
+  talent:         TalentData,
+  ability:        AbilityData,
+  mutation:       MutationData,
+  disease:        DiseaseData,
+  mentalDisorder: MentalDisorderData
 };

@@ -8,7 +8,7 @@
     "notes": "",
     "benefit": "Персонаж может использовать P.b вместо A.b при броске на Инициативу.",
     "bookSource": "DoomBC — Основная книга",
-    "tier": "1",
+    "tier": 1,
     "requirement": "P 30",
     "aptitudes": [
       "per",

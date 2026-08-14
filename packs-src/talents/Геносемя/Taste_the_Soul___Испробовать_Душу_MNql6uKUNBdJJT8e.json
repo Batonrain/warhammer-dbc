@@ -8,7 +8,7 @@
     "notes": "",
     "benefit": "Десантник получает +½ P (окр.▲) на тесты использования Омофагеи.",
     "bookSource": "DoomBC — Основная книга",
-    "tier": "1",
+    "tier": 1,
     "requirement": "Meditation",
     "aptitudes": [
       "per",

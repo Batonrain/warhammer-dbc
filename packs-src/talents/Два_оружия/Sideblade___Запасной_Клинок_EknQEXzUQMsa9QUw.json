@@ -7,7 +7,7 @@
     "description": "",
     "notes": "",
     "benefit": "Персонаж уменьшает штраф за парное оружие на 10, если одно из них — нож.",
-    "tier": "2",
+    "tier": 2,
     "requirement": "WS 35, Two Weapon Wielder (Melee)",
     "aptitudes": [
       "ws",

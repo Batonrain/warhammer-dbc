@@ -7,7 +7,7 @@
     "description": "",
     "notes": "",
     "benefit": "Подключённый к Ноосфере, персонаж увеличивает максимум Когниции на 2 (при отключении «лишняя» теряется). Можно брать до 3 раз (2-й требует For.Lore (Mechanicum)+20, 3-й — +30).",
-    "tier": "1",
+    "tier": 1,
     "requirement": "Forbidden Lore (Mechanicum)+10",
     "aptitudes": [
       "int",

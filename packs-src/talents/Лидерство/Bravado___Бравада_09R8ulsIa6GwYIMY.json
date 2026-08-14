@@ -7,7 +7,7 @@
     "description": "",
     "notes": "",
     "benefit": "Персонаж считает свой уровень Риска на 1 выше реального, если он не равен 1.",
-    "tier": "2",
+    "tier": 2,
     "requirement": "Command+10, Deceive+20",
     "aptitudes": [
       "fel",

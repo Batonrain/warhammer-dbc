@@ -7,7 +7,7 @@
     "description": "",
     "notes": "",
     "benefit": "Персонаж уменьшает штраф за парное оружие для атак кулаками на 10.",
-    "tier": "2",
+    "tier": 2,
     "requirement": "Unarmed Warrior, Two Weapon Wielder (Melee)",
     "aptitudes": [
       "ws",

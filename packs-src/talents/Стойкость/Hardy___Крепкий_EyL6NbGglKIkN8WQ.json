@@ -8,7 +8,7 @@
     "notes": "",
     "benefit": "В отношении лечения персонаж всегда считается легко раненным.",
     "bookSource": "DoomBC — Основная книга",
-    "tier": "2",
+    "tier": 2,
     "requirement": "T 40",
     "aptitudes": [
       "t",

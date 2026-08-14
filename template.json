@@ -1741,19 +1741,7 @@
         "notes": ""
       }
     },
-    "disease": {
-      "diseaseType": "warp",
-      "severity": "",
-      "god": "nurgle",
-      "contagion": "",
-      "incubation": "",
-      "symptoms": "",
-      "vectors": "",
-      "cure": "",
-      "active": false,
-      "description": "",
-      "notes": ""
-    },
+    "disease": {},
     "cargo": {
       "cargoType": "minerals",
       "lc": 1,
@@ -1930,60 +1918,10 @@
     },
     "tool": {},
     "cybernetic": {},
-    "talent": {
-      "description": "",
-      "notes": "",
-      "benefit": "",
-      "bookSource": "",
-      "tier": 1,
-      "requirement": "",
-      "aptitudes": [],
-      "aptSource": "",
-      "aspirations": [],
-      "god": "",
-      "specialization": "",
-      "cost": 0,
-      "purchased": false,
-      "granted": false,
-      "effects": {
-        "charBonusStat": "",
-        "charBonusValue": 0,
-        "initMod": 0,
-        "fearRating": 0,
-        "speedMod": 0
-      }
-    },
-    "ability": {
-      "description": "",
-      "notes": "",
-      "benefit": ""
-    },
-    "mutation": {
-      "description": "",
-      "notes": "",
-      "benefit": "",
-      "source": "",
-      "bookSource": "",
-      "roll": "",
-      "god": "",
-      "effects": {
-        "charBonusStat": "",
-        "charBonusValue": 0,
-        "charBonuses": [],
-        "charValueBonuses": [],
-        "armourAll": 0,
-        "fearRating": 0,
-        "sizeMod": 0,
-        "initMod": 0,
-        "speedMod": 0
-      }
-    },
-    "mentalDisorder": {
-      "description": "",
-      "notes": "",
-      "testChar": "wp",
-      "testMod": 0
-    },
+    "talent": {},
+    "ability": {},
+    "mutation": {},
+    "mentalDisorder": {},
     "navigatorPower": {
       "description": "",
       "notes": "",

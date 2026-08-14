@@ -7,7 +7,7 @@
     "description": "",
     "notes": "",
     "benefit": "Совершая Натиск в полёте, персонаж наносит +1d10 Dmg на 2+ Успехах на попадание и ещё +1d10 Dmg на 4+ Успехах.",
-    "tier": "1",
+    "tier": 1,
     "requirement": "Aeronautica+0",
     "aptitudes": [
       "ag",

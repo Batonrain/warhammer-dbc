@@ -134,6 +134,51 @@ const TYPES = {
       drukhari: false
     }
   },
+  // ── Способности, черты, состояния (wdbc-ff4.1.3) ───────────────────────────
+  talent: {
+    pack: "talents",
+    defaults: {
+      description: "", notes: "", benefit: "", bookSource: "", tier: 1,
+      requirement: "", aptitudes: [], aptSource: "", aspirations: [], god: "",
+      specialization: "", cost: 0, purchased: false, granted: false,
+      effects: { initMod: 0, fearRating: 0, speedMod: 0 }
+    },
+    migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
+  },
+  ability: {
+    // Предметов этого типа в паках нет — способности заводит сам ГМ.
+    pack: null,
+    defaults: { description: "", notes: "", benefit: "" }
+  },
+  mutation: {
+    pack: "mutations",
+    defaults: {
+      description: "", notes: "", benefit: "", source: "", bookSource: "",
+      roll: "", god: "",
+      // В template.json объявлено не было, но лежит у трёх мутаций пака и
+      // читается общим пикером Талантов, Черт и Мутаций — как у Черты.
+      requirement: "",
+      effects: {
+        charBonuses: [], charValueBonuses: [], armourAll: 0,
+        fearRating: 0, sizeMod: 0, initMod: 0, speedMod: 0
+      }
+    },
+    migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
+  },
+  disease: {
+    pack: "diseases",
+    defaults: {
+      diseaseType: "warp", severity: "", god: "nurgle", contagion: "",
+      incubation: "", symptoms: "", vectors: "", cure: "", active: false,
+      description: "", notes: ""
+    }
+  },
+  mentalDisorder: {
+    // Предметов этого типа в паках нет — расстройства заводит сам ГМ.
+    pack: null,
+    defaults: { description: "", notes: "", testChar: "wp", testMod: 0 }
+  },
+
   // ── Оружие и броня (wdbc-ff4.1.2) ──────────────────────────────────────────
   weapon: {
     pack: ["weapons", "vehicle-weapons"],

@@ -8,7 +8,7 @@
     "notes": "",
     "benefit": "Персонаж бросает на Инициативу 2 раза и выбирает больший результат.",
     "bookSource": "DoomBC — Основная книга",
-    "tier": "1",
+    "tier": 1,
     "requirement": "Нет",
     "aptitudes": [
       "ag",
