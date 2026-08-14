@@ -15,6 +15,14 @@
 
 import { CHARACTERISTICS } from "./characteristics.mjs";
 
+// Складываемая надбавка AP по зонам. Цель — system.armorBonus.<зона>, ХРАНИМОЕ
+// поле схемы, поэтому фаза у него "initial": расчёт листа читает его в середине
+// prepareDerivedData (рядом с естественной бронёй Черт), а не после. Тот же
+// приём, что у system.encumbrance.indexBonus.
+//
+// До wdbc-b3m ключ звался system.armour.<зона> — такого поля у актора нет
+// вовсе: в схеме system.armor, и это ручной блок, который берётся через
+// Math.max, а не складывается. Эффекты писали в никуда.
 const AP_LOCATIONS = {
   head: "Голова", body: "Тело", leftArm: "Левая рука", rightArm: "Правая рука",
   leftLeg: "Левая нога", rightLeg: "Правая нога"
@@ -37,7 +45,7 @@ for (const [key, def] of Object.entries(CHARACTERISTICS)) {
   EFFECT_KEY_LABELS[`system.characteristics.${key}.total`] = `${def.abbr} (значение)`;
 }
 for (const [key, label] of Object.entries(AP_LOCATIONS)) {
-  EFFECT_KEY_LABELS[`system.armour.${key}`] = `AP: ${label}`;
+  EFFECT_KEY_LABELS[`system.armorBonus.${key}`] = `AP: ${label}`;
 }
 for (const [key, label] of Object.entries(AP_VS_TYPES)) {
   EFFECT_KEY_LABELS[`system.absorption.vsType.${key}`] = `AP против ${label}`;
@@ -57,6 +65,21 @@ export const EFFECT_TYPE_LABELS = {
   add: "+", subtract: "−", multiply: "×", override: "=",
   upgrade: "↑ (не меньше)", downgrade: "↓ (не больше)"
 };
+
+// Ключи, которые обязаны применяться ДО расчёта листа: это ХРАНИМЫЕ поля, из
+// которых prepareDerivedData считает производные. Поставить им "final" — значит
+// записать поверх уже посчитанного и не повлиять ни на что. Всем остальным,
+// наоборот, нужна "final": расчёт перезапишет их сам.
+const INITIAL_PHASE_KEYS = [
+  "system.armorBonus.",             // складываемая надбавка AP (см. AP_LOCATIONS)
+  "system.encumbrance.indexBonus.", // сдвиг индекса грузоподъёмности (apps/mechanics.mjs)
+  "system.movement.spdBonus"        // SPD — вход расчёта перемещений, а не его итог
+];
+
+/** Фаза, в которой ключ обязан применяться. */
+export function expectedPhase(key = "") {
+  return INITIAL_PHASE_KEYS.some(p => key.startsWith(p)) ? "initial" : "final";
+}
 
 /** Путь → подпись, либо сам путь без "system." для незнакомых полей. */
 export function effectKeyLabel(key = "") {
@@ -78,7 +101,9 @@ const AP_ALL_KEYS = Object.keys(AP_LOCATIONS);
 /** Поле старого формата → тип урона: apVsEnergy → energy и т.д. */
 const AP_VS_KEYS = new Map(Object.keys(AP_VS_TYPES)
   .map(t => [`apVs${t[0].toUpperCase()}${t.slice(1)}`, t]));
-const change = (key, type, value) => ({ key, type, value, phase: "final", priority: 0 });
+const change = (key, type, value, phase = "final") => ({ key, type, value, phase, priority: 0 });
+/** Надбавка AP по зоне — хранимое поле, значит фаза "initial" (см. AP_LOCATIONS). */
+const apChange = (loc, value) => change(`system.armorBonus.${loc}`, "add", value, "initial");
 
 /**
  * Переводит старый объект system.effects.{...} (talent/trait/implant/
@@ -124,12 +149,12 @@ export function legacyEffectsToChanges(effects = {}) {
   for (const cb of effects.charBonuses ?? []) addChar(cb?.stat, cb?.value, "bonus");
   for (const cb of effects.charValueBonuses ?? []) addChar(cb?.stat, cb?.value, "total");
 
-  if (effects.armourAll) for (const loc of AP_ALL_KEYS) out.push(change(`system.armour.${loc}`, "add", effects.armourAll));
-  if (effects.apAll)     for (const loc of AP_ALL_KEYS) out.push(change(`system.armour.${loc}`, "add", effects.apAll));
-  if (effects.apHead) out.push(change("system.armour.head", "add", effects.apHead));
-  if (effects.apBody) out.push(change("system.armour.body", "add", effects.apBody));
-  if (effects.apArms) { out.push(change("system.armour.leftArm", "add", effects.apArms)); out.push(change("system.armour.rightArm", "add", effects.apArms)); }
-  if (effects.apLegs) { out.push(change("system.armour.leftLeg", "add", effects.apLegs)); out.push(change("system.armour.rightLeg", "add", effects.apLegs)); }
+  if (effects.armourAll) for (const loc of AP_ALL_KEYS) out.push(apChange(loc, effects.armourAll));
+  if (effects.apAll)     for (const loc of AP_ALL_KEYS) out.push(apChange(loc, effects.apAll));
+  if (effects.apHead) out.push(apChange("head", effects.apHead));
+  if (effects.apBody) out.push(apChange("body", effects.apBody));
+  if (effects.apArms) { out.push(apChange("leftArm", effects.apArms)); out.push(apChange("rightArm", effects.apArms)); }
+  if (effects.apLegs) { out.push(apChange("leftLeg", effects.apLegs)); out.push(apChange("rightLeg", effects.apLegs)); }
 
   for (const [field, type] of AP_VS_KEYS)
     if (effects[field]) out.push(change(`system.absorption.vsType.${type}`, "add", effects[field]));

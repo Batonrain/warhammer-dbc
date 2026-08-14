@@ -30,7 +30,8 @@ import path from "node:path";
 
 import { legacyEffectsToChanges } from "../../module/constants/effect-keys.mjs";
 import { migrateItemEffects, repairCharValueEffectKeys, dropMechanicsDuplicates,
-         migrateAllItemEffects, MIGRATE_EFFECT_TYPES, LEGACY_ONLY_KEYS } from "../../module/migrations/item-effects.mjs";
+         repairDeadArmourKeys, migrateAllItemEffects, MIGRATE_EFFECT_TYPES,
+         legacyOnlyKeys } from "../../module/migrations/item-effects.mjs";
 
 const PACKS_SRC = path.resolve(import.meta.dirname, "../../packs-src");
 const CHAR_BONUS = { charBonuses: [{ stat: "s", value: 2 }] };
@@ -51,6 +52,7 @@ function itemDoc({ type = "trait", name = "Черта", effects = {},
     }),
     getFlag: (_scope, key) => own[key],
     setFlag: async (_scope, key, value) => { own[key] = value; return value; },
+    unsetFlag: async (_scope, key) => { delete own[key]; },
     createEmbeddedDocuments: async (_type, docs) => {
       doc.effects.push(...docs.map(d => structuredClone(d)));
       return docs;
@@ -163,6 +165,18 @@ describe("перенос system.effects в ActiveEffect", () => {
     expect(item.getFlag("warhammer-dbc", "migratedEffect")).toBeUndefined();
   });
 
+  it("AP модификации брони в эффект не уезжает", async () => {
+    // Он складывается в AP своего носителя ДО сравнения броней между собой и
+    // обвешан гейтами (снятый шлем, тип брони) — считает только
+    // getArmorModEffects, значит старое поле должно остаться читаемым.
+    const item = itemDoc({ type: "armorMod", name: "Аблативная", effects: { apAll: 5 } });
+
+    expect(await migrateItemEffects(item)).toBe(false);
+
+    expect(item.effects).toEqual([]);
+    expect(item.getFlag("warhammer-dbc", "migratedEffect")).toBeUndefined();
+  });
+
   it("чужой эффект на другое поле за перенос не принимается", async () => {
     const item = itemDoc({ effects: CHAR_BONUS, fx: [{ name: "Ручной эффект", system: { changes:
       [{ key: "system.speed", type: "add", value: 1, phase: "final", priority: 0 }] } }] });
@@ -218,14 +232,83 @@ describe("починка ключа характеристики .value → .tot
   it("правит неработавший ключ и второй раз ничего не делает", async () => {
     const item = itemDoc({ fx: [{ name: "Черта (перенесено)", system: { changes: [
       { key: "system.characteristics.t.value", type: "add", value: 3, phase: "final", priority: 0 },
-      { key: "system.armour.head", type: "add", value: 1, phase: "final", priority: 0 }
+      { key: "system.armorBonus.head", type: "add", value: 1, phase: "initial", priority: 0 }
     ] } }] });
 
     expect(await repairCharValueEffectKeys(item)).toBe(1);
     expect(changesOf(item)[0].key).toBe("system.characteristics.t.total");
-    expect(changesOf(item)[1].key).toBe("system.armour.head");
+    expect(changesOf(item)[1].key).toBe("system.armorBonus.head");
 
     expect(await repairCharValueEffectKeys(item)).toBe(0);
+  });
+});
+
+// Ранняя миграция целилась в system.armour.<зона> — поля с таким именем у
+// актора нет (в схеме system.armor, и это ручной блок через Math.max). AP всех
+// перенесённых предметов был мёртв: старое поле актор у помеченного не читает,
+// а эффект писал в никуда.
+describe("починка мёртвого ключа брони", () => {
+  const deadFx = (name, ...locs) => ({ name, system: { changes: locs.map(loc =>
+    ({ key: `system.armour.${loc}`, type: "add", value: 2, phase: "final", priority: 0 })) } });
+
+  it("черте ключ переводится на armorBonus и в фазу initial", async () => {
+    const item = itemDoc({ type: "trait", name: "Естественная Броня",
+                           effects: { armourAll: 2 }, flags: { migratedEffect: true },
+                           fx: [deadFx("Естественная Броня (перенесено)", "head", "body")] });
+
+    expect(await repairDeadArmourKeys(item)).toBe(1);
+
+    expect(changesOf(item).map(c => c.key))
+      .toEqual(["system.armorBonus.head", "system.armorBonus.body"]);
+    expect(changesOf(item).every(c => c.phase === "initial")).toBe(true);
+    // Флаг остаётся: механику ведёт эффект, старое поле читать по-прежнему нельзя.
+    expect(item.getFlag("warhammer-dbc", "migratedEffect")).toBe(true);
+
+    expect(await repairDeadArmourKeys(item)).toBe(0);
+  });
+
+  it("модификации брони эффект снимается, а флаг гасится", async () => {
+    // AP модификации складывается в AP её носителя ДО того, как брони
+    // сравниваются между собой (armorFromItems в actor.mjs), и обвешана
+    // гейтами снятого шлема и типа брони. Актору её отдавать нельзя — считает
+    // только getArmorModEffects, значит поле должно снова стать видимым.
+    const item = itemDoc({ type: "armorMod", name: "Аблативная",
+                           effects: { apAll: 5 }, flags: { migratedEffect: true },
+                           fx: [deadFx("Аблативная (перенесено)", "head", "body")] });
+
+    expect(await repairDeadArmourKeys(item)).toBe(1);
+
+    expect(item.effects).toEqual([]);
+    expect(item.getFlag("warhammer-dbc", "migratedEffect")).toBeUndefined();
+  });
+
+  it("часть эффекта с другой механикой переживает починку", async () => {
+    // Крукс Механикус: бонус S/T работал, AP был мёртв — снять надо только AP.
+    const item = itemDoc({ type: "implant", name: "Крукс Механикус",
+      effects: { charBonuses: [{ stat: "s", value: 2 }], armourAll: 2 },
+      flags: { migratedEffect: true },
+      fx: [{ name: "Крукс Механикус (перенесено)", system: { changes: [
+        { key: "system.characteristics.s.bonus", type: "add", value: 2, phase: "final", priority: 0 },
+        { key: "system.armour.head", type: "add", value: 2, phase: "final", priority: 0 }
+      ] } }] });
+
+    expect(await repairDeadArmourKeys(item)).toBe(1);
+
+    expect(changesOf(item).map(c => c.key))
+      .toEqual(["system.characteristics.s.bonus", "system.armorBonus.head"]);
+  });
+
+  it("модификация с рабочим AP против типа урона под починку не попадает", async () => {
+    const item = itemDoc({ type: "armorMod", name: "Керамит",
+      effects: { apVsEnergy: 3 }, flags: { migratedEffect: true },
+      fx: [{ name: "Керамит (перенесено)", system: { changes: [
+        { key: "system.absorption.vsType.energy", type: "add", value: 3, phase: "final", priority: 0 }
+      ] } }] });
+
+    expect(await repairDeadArmourKeys(item)).toBe(0);
+
+    expect(item.effects).toHaveLength(1);
+    expect(item.getFlag("warhammer-dbc", "migratedEffect")).toBe(true);
   });
 });
 
@@ -390,9 +473,16 @@ describe("предметы packs-src", () => {
     return out;
   }
 
-  /** Из них — мигрируемых типов и со старой механикой. */
+  /**
+   * Из них — мигрируемых типов и со старой механикой, которую есть куда
+   * переносить. Предмет с полем из legacyOnlyKeys миграция обходит целиком
+   * (AP модификации, потолок Ловкости) — за него отвечает отдельная проверка
+   * ниже, что он и не помечен перенесённым.
+   */
   const legacyPackDocs = () => allPackDocs().filter(doc =>
-    MIGRATE_EFFECT_TYPES.has(doc.type) && legacyEffectsToChanges(doc.system?.effects ?? {}).length);
+    MIGRATE_EFFECT_TYPES.has(doc.type)
+    && legacyEffectsToChanges(doc.system?.effects ?? {}).length
+    && !legacyOnlyKeys(doc).some(k => doc.system?.effects?.[k]));
 
   /** Предмет пака как документ: те же эффекты, флаги и старое поле. */
   const packItem = doc => itemDoc({
@@ -465,9 +555,17 @@ describe("предметы packs-src", () => {
     // Сочленения» с потолком Ловкости (wdbc-1j8, ждёт wdbc-fde).
     const stuck = allPackDocs()
       .filter(doc => doc.flags?.["warhammer-dbc"]?.migratedEffect
-                  && LEGACY_ONLY_KEYS.some(k => doc.system?.effects?.[k]))
+                  && legacyOnlyKeys(doc).some(k => doc.system?.effects?.[k]))
       .map(doc => doc.name);
     expect(stuck).toEqual([]);
+  });
+
+  it("мёртвого ключа system.armour.* в паках не осталось", async () => {
+    const dead = [];
+    for (const doc of allPackDocs())
+      for (const c of (doc.effects ?? []).flatMap(f => f.system?.changes ?? []))
+        if (c.key?.startsWith("system.armour.")) dead.push(`${doc.name}: ${c.key}`);
+    expect(dead).toEqual([]);
   });
 
   it("предмет с механикой Конструктора миграция не трогает", async () => {

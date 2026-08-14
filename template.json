@@ -619,6 +619,14 @@
         "leftLeg": 0,
         "rightLeg": 0
       },
+      "armorBonus": {
+        "head": 0,
+        "body": 0,
+        "leftArm": 0,
+        "rightArm": 0,
+        "leftLeg": 0,
+        "rightLeg": 0
+      },
       "movement": {
         "halfMove": 0,
         "move": 0,
@@ -1029,6 +1037,14 @@
         "leftLeg": 0,
         "rightLeg": 0
       },
+      "armorBonus": {
+        "head": 0,
+        "body": 0,
+        "leftArm": 0,
+        "rightArm": 0,
+        "leftLeg": 0,
+        "rightLeg": 0
+      },
       "movement": {
         "halfMove": 0,
         "move": 0,
@@ -1431,6 +1447,14 @@
         "leftArm": 0,
         "rightArm": 0,
         "body": 0,
+        "leftLeg": 0,
+        "rightLeg": 0
+      },
+      "armorBonus": {
+        "head": 0,
+        "body": 0,
+        "leftArm": 0,
+        "rightArm": 0,
         "leftLeg": 0,
         "rightLeg": 0
       },

@@ -152,8 +152,8 @@
                 <td class="item-name-cell effect-name-link" data-effect-id="{{fx.id}}">{{fx.name}}</td>
                 <td class="effect-changes-cell">{{#if fx.summary}}{{fx.summary}}{{else}}<em>нет изменений</em>{{/if}}</td>
                 <td class="effect-phase-cell">
-                  {{#if fx.hasNonFinalChange}}
-                  <span class="effect-phase-warn" title="Есть строка не в фазе «final» — применится ДО финального расчёта листа и будет переписана автоматикой">⚠ initial</span>
+                  {{#if fx.hasWrongPhase}}
+                  <span class="effect-phase-warn" title="Фаза строки не совпадает с той, которой требует её ключ: производное поле правят в «final» (расчёт листа считает его заново), хранимое — в «initial» (расчёт читает его как вход). Иначе правка либо ни на что не влияет, либо будет переписана">⚠ фаза</span>
                   {{/if}}
                 </td>
                 <td class="effect-row-actions">

@@ -32,7 +32,7 @@ import { CHARACTERISTICS, APTITUDES }                from "../constants/characte
 import { PSY_DISCIPLINES, TECH_DISCIPLINES,
          buildDisciplineContext }                    from "../constants/disciplines.mjs";
 import { DW_GODS_MAP }                               from "../constants/demon-weapon.mjs";
-import { summarizeEffectChanges }                    from "../constants/effect-keys.mjs";
+import { summarizeEffectChanges, expectedPhase }     from "../constants/effect-keys.mjs";
 import { createBlankEffect } from "../apps/effects.mjs";
 import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml, syncWeaponPropItemEffects, findMechGroup, findMechEntry } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
@@ -627,7 +627,9 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       name: fx.name,
       disabled: !!fx.disabled,
       summary: summarizeEffectChanges(fx.system?.changes),
-      hasNonFinalChange: (fx.system?.changes ?? []).some(c => c.phase !== "final")
+      // Не «не final», а «не та, которую требует ключ»: хранимому полю нужна
+      // именно "initial" (см. expectedPhase) — оно вход расчёта, а не итог.
+      hasWrongPhase: (fx.system?.changes ?? []).some(c => c.phase !== expectedPhase(c.key))
     }));
 
     context.isGM = !!game.user.isGM;

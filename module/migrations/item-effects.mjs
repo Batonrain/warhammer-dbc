@@ -40,11 +40,27 @@ const MIGRATE_COMPENDIA = [
 // помеченного не читает (documents/actor.mjs, combat/armor-mods.mjs) — механика
 // исчезла бы с обеих сторон.
 //
-// Остался один: потолок Ловкости не считает вообще никто — ни ключа эффекта,
-// ни чтения system.maxAgility брони в actor.mjs (wdbc-fde). Так стоят
-// «Открытые Сочленения» в паке. AP против типа урона отсюда ушёл: у него
-// теперь есть ключ system.absorption.vsType.* (wdbc-1j8).
-export const LEGACY_ONLY_KEYS = ["maxAgilityMod"];
+// Потолок Ловкости не считает вообще никто — ни ключа эффекта, ни чтения
+// system.maxAgility брони в actor.mjs (wdbc-fde). Так стоят «Открытые
+// Сочленения» в паке. AP против типа урона отсюда ушёл: у него появился ключ
+// system.absorption.vsType.* (wdbc-1j8).
+const LEGACY_ONLY_KEYS = ["maxAgilityMod"];
+
+// А это — поля, легаси-только у одних лишь модификаций. Обычный AP модификации
+// складывается в AP её носителя ДО того, как брони сравниваются между собой
+// (armorFromItems в actor.mjs: у нестакающихся берётся лучшая), и обвешан
+// гейтами, которых у эффекта нет, — снятый шлем, тип брони под систему. Эффект
+// на акторе лёг бы поверх победившей брони, а не той, на которой стоит. Считает
+// это только getArmorModEffects, поэтому старое поле у модификаций обязано
+// остаться читаемым. У черт и имплантов те же поля переносятся штатно.
+const MOD_LEGACY_ONLY_KEYS = ["armourAll", "apAll", "apHead", "apBody", "apArms", "apLegs"];
+
+/** Поля, которые у ЭТОГО предмета переносить некуда. */
+export function legacyOnlyKeys(item) {
+  return item.type === "armorMod" || item.type === "weaponMod"
+    ? [...LEGACY_ONLY_KEYS, ...MOD_LEGACY_ONLY_KEYS]
+    : LEGACY_ONLY_KEYS;
+}
 
 // Суффикс имени перенесённого эффекта. Единственный признак, по которому дубль
 // отличим от эффекта Конструктора: ключ у них один и тот же, а имена своим
@@ -118,7 +134,7 @@ export async function dropMechanicsDuplicates(item) {
 export async function migrateItemEffects(item) {
   if (!MIGRATE_EFFECT_TYPES.has(item.type)) return false;
   const fx = item.system?.effects;
-  if (LEGACY_ONLY_KEYS.some(k => fx?.[k])) return false;
+  if (legacyOnlyKeys(item).some(k => fx?.[k])) return false;
 
   const carried = carriedKeys(item);
   const changes = hasLegacyEffects(fx)
@@ -146,6 +162,49 @@ export async function migrateItemEffects(item) {
   }]);
   await item.setFlag(SYSTEM, "migratedEffect", true);
   return true;
+}
+
+// Починка бага ранней версии миграции: она целилась в system.armour.<зона> —
+// поля с таким именем у актора нет вовсе (в схеме system.armor, и это ручной
+// блок, который берётся через Math.max, а не складывается). AP перенесённых
+// предметов был мёртв: старое поле актор у помеченного не читает, а эффект
+// писал в никуда. Живой ключ — system.armorBonus.<зона>, хранимый, поэтому и
+// фаза меняется на "initial" (см. constants/effect-keys.mjs).
+//
+// У модификаций брони починка другая: их AP в эффект не уезжает вовсе
+// (MOD_LEGACY_ONLY_KEYS), поэтому мёртвый эффект снимается целиком, а с ним и
+// флаг — старое поле снова должно стать видимым для getArmorModEffects.
+//
+// Возвращает число тронутых эффектов. Идемпотентно: мёртвых ключей не остаётся.
+const DEAD_AP_KEY = /^system\.armour\.(\w+)$/;
+
+export async function repairDeadArmourKeys(item) {
+  const isMod = item.type === "armorMod" || item.type === "weaponMod";
+  let fixed = 0;
+  const emptied = [];
+
+  for (const effect of item.effects ?? []) {
+    const changes = effect.system?.changes ?? [];
+    if (!changes.some(c => DEAD_AP_KEY.test(c.key))) continue;
+    fixed++;
+
+    if (isMod) {
+      const keep = changes.filter(c => !DEAD_AP_KEY.test(c.key));
+      if (keep.length) await effect.update({ "system.changes": keep });
+      else emptied.push(effect.id);
+      continue;
+    }
+    await effect.update({ "system.changes": changes.map(c => {
+      const loc = c.key.match(DEAD_AP_KEY)?.[1];
+      return loc ? { ...c, key: `system.armorBonus.${loc}`, phase: "initial" } : c;
+    }) });
+  }
+
+  if (emptied.length) await item.deleteEmbeddedDocuments("ActiveEffect", emptied);
+  // Механику модификации снова ведёт старое поле — пометка должна уйти, иначе
+  // актор его так и не прочтёт.
+  if (fixed && isMod) await item.unsetFlag(SYSTEM, "migratedEffect");
+  return fixed;
 }
 
 // Починка бага ранней версии миграции: charValueBonuses (обычные +X к
@@ -180,6 +239,11 @@ export async function migrateAllItemEffects() {
     // бонус дважды. Она же приводит ключ к тому виду, в каком его сверяет
     // снятие дублей.
     repaired += await repairCharValueEffectKeys(item);
+    // И эта тоже до переноса: мёртвый ключ брони перенос за уже несомую
+    // механику не считает (carriedKeys сверяет по ключу), и рядом лёг бы
+    // второй — тот же AP дважды. У модификаций она, наоборот, снимает флаг,
+    // и перенос обязан увидеть предмет уже без него.
+    repaired += await repairDeadArmourKeys(item);
     deduped  += await dropMechanicsDuplicates(item);
     if (await migrateItemEffects(item)) migrated++;
   }

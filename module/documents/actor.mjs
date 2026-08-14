@@ -1012,14 +1012,20 @@ export class WarhammerActor extends Actor {
     const shieldAP = shieldArmorByLocation(this);
     system.shieldArmor = shieldAP;
     const best = (k) => Math.max(armorFromItems[k], armorManual[k] || 0, shieldAP[k] || 0);
+    // Складываемая надбавка AP от эффектов (естественная броня Черт, броня
+    // имплантов, что угодно ещё). Хранимое поле схемы — эффекты целятся в него
+    // в фазе "initial", то есть ДО этого расчёта, тем же приёмом, что и
+    // encumbrance.indexBonus. Ложится рядом с traitArmourAll: после снятия
+    // шлема, поэтому естественная броня головы вместе с ним не теряется.
+    const fxArmor = system.armorBonus || {};
     // Естественная броня (трейты) + пер-локационная от имплантов складываются с носимой/ручной
     const armorAP = {
-      head:     best("head")     + traitArmourAll + traitArmorLoc.head,
-      body:     best("body")     + traitArmourAll + traitArmorLoc.body,
-      leftArm:  best("leftArm")  + traitArmourAll + traitArmorLoc.leftArm,
-      rightArm: best("rightArm") + traitArmourAll + traitArmorLoc.rightArm,
-      leftLeg:  best("leftLeg")  + traitArmourAll + traitArmorLoc.leftLeg,
-      rightLeg: best("rightLeg") + traitArmourAll + traitArmorLoc.rightLeg,
+      head:     best("head")     + traitArmourAll + traitArmorLoc.head     + (fxArmor.head     || 0),
+      body:     best("body")     + traitArmourAll + traitArmorLoc.body     + (fxArmor.body     || 0),
+      leftArm:  best("leftArm")  + traitArmourAll + traitArmorLoc.leftArm  + (fxArmor.leftArm  || 0),
+      rightArm: best("rightArm") + traitArmourAll + traitArmorLoc.rightArm + (fxArmor.rightArm || 0),
+      leftLeg:  best("leftLeg")  + traitArmourAll + traitArmorLoc.leftLeg  + (fxArmor.leftLeg  || 0),
+      rightLeg: best("rightLeg") + traitArmourAll + traitArmorLoc.rightLeg + (fxArmor.rightLeg || 0),
     };
 
     system.absorption = {

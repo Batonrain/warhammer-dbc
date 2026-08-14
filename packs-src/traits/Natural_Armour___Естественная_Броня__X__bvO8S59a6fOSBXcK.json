@@ -31,45 +31,45 @@
       "system": {
         "changes": [
           {
-            "key": "system.armour.head",
+            "key": "system.armorBonus.head",
             "type": "add",
             "value": 2,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           },
           {
-            "key": "system.armour.body",
+            "key": "system.armorBonus.body",
             "type": "add",
             "value": 2,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           },
           {
-            "key": "system.armour.leftArm",
+            "key": "system.armorBonus.leftArm",
             "type": "add",
             "value": 2,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           },
           {
-            "key": "system.armour.rightArm",
+            "key": "system.armorBonus.rightArm",
             "type": "add",
             "value": 2,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           },
           {
-            "key": "system.armour.leftLeg",
+            "key": "system.armorBonus.leftLeg",
             "type": "add",
             "value": 2,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           },
           {
-            "key": "system.armour.rightLeg",
+            "key": "system.armorBonus.rightLeg",
             "type": "add",
             "value": 2,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           }
         ]
