@@ -58,20 +58,15 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 <!-- END BEADS INTEGRATION -->
 
 
-## Build & Test
+## Инструкции по этому проекту
 
-_Add your build and test commands here_
+Живут в [AGENTS.md](AGENTS.md) — там проверки, источники истины, приём на новый
+тип данных, устройство механики (эффекты, Конструктор, миграции) и соглашения по
+языку. Второй копии здесь нет намеренно: одна вещь описана в одном месте.
 
-```bash
-# Example:
-# npm install
-# npm test
-```
+Коротко, чтобы не открывать: гейты — `npm test`, `npm run lint`,
+`npm run packs:build`; схемы документов в `module/data/`, а не в `template.json`;
+содержимое компендиумов правится в `packs-src/`, не в `packs/`.
 
-## Architecture Overview
-
-_Add a brief overview of your project architecture_
-
-## Conventions & Patterns
-
-_Add your project-specific conventions here_
+Установка, сборка компендиумов и порядок релизов — [README.md](README.md).
+Замысел архитектуры — [docs/architecture-plan.md](docs/architecture-plan.md).
