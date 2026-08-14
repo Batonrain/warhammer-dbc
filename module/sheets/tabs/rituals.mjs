@@ -14,10 +14,18 @@ import { RITUAL_ITEM_TYPES_MAP } from "../../constants/rituals.mjs";
 import { openCompendiumBrowser } from "../../apps/compendium-browser.mjs";
 import { getItemRequirements, isReqComplete, describeReqEntry } from "../../apps/mechanics.mjs";
 
-/** Требования набора, разобранные в строки текста. Пустые условия отбрасываются. */
+/**
+ * Требования набора — по строке на группу. Оператор группы обязан дожить до
+ * текста: схлопывание всех групп в один плоский список переворачивает смысл
+ * ИЛИ на противоположный, и альтернативы читаются как обязательные разом.
+ * Формулировки те же, что в отчёте checkRequirements.
+ */
 const reqLinesOf = (item, flagKey) =>
-  getItemRequirements(item, flagKey)
-    .flatMap(g => (g.entries || []).filter(isReqComplete).map(describeReqEntry));
+  getItemRequirements(item, flagKey).flatMap(g => {
+    const parts = (g.entries || []).filter(isReqComplete).map(describeReqEntry);
+    if (!parts.length) return [];
+    return [g.operator === "OR" ? `одно из: ${parts.join(" / ")}` : parts.join("; ")];
+  });
 
 /** Строки раздела: по ритуалу на строку. */
 export function ritualsContext(actor) {
@@ -38,6 +46,9 @@ export function ritualsContext(actor) {
       record: Number(s.record) || 0,
       // Вилка «0—0» значит «в одиночку», а не «данных нет» — рисуем прочерк.
       assistLabel: (min || max) ? `${min}—${max}` : "—",
+      // ОПИСАНИЕ есть у любого типа предмета и правится на общем листе —
+      // без него заполненный туда текст был бы недостижим с листа актора.
+      description: s.description || "",
       procedure:   s.procedure   || "",
       result:      s.result      || "",
       cost:        s.cost        || "",
@@ -47,7 +58,7 @@ export function ritualsContext(actor) {
       // честного «описание не заполнено». Требования тоже считаются
       // содержимым — иначе строка с одними требованиями показывала бы их и
       // «описание не заполнено» разом.
-      hasAnyText: !!(s.procedure || s.result || s.cost || s.failureCost
+      hasAnyText: !!(s.description || s.procedure || s.result || s.cost || s.failureCost
         || reqLines.length || assistReqLines.length)
     };
   });

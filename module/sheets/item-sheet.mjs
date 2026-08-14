@@ -9,7 +9,7 @@ import { ARMOR_PROPERTIES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
          ARMOR_MOD_GROUPS, GEAR_CATEGORIES,
-         TOOL_CATEGORIES, RIG_COMFORT, RIG_SLOT_SIZES } from "../constants/items.mjs";
+         TOOL_CATEGORIES, RIG_COMFORT, RIG_SLOT_SIZES, ITEM_TYPES } from "../constants/items.mjs";
 import { qualityEffects, itemSpecificQuality }       from "../constants/quality.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
@@ -80,7 +80,10 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
    * указанный в data-req (req — ритуалисту, assistReq — ассистентам).
    */
   async _onDropReqItem(event, data, dropZone) {
-    if (!this.item.isOwner) return;
+    // Требования правит только Мастер: остальные элементы конструктора ему
+    // рисуются disabled, а зона дропа disabled не бывает — без проверки
+    // владелец-игрок переписал бы мастерское требование перетаскиванием.
+    if (!this.item.isOwner || !game.user.isGM) return;
     const { req: reqKey, groupId, entryId } = dropZone.dataset;
     const src = await Item.implementation.fromDropData(data);
     if (!src) return;
@@ -91,8 +94,9 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
 
     const want = entry.kind === "reqTalent" ? "talent" : "trait";
     if (src.type !== want) {
+      const need = want === "talent" ? "Талант" : "Черту";
       return ui.notifications.warn(
-        `Сюда нужен ${want === "talent" ? "Талант" : "Черта"}, а перетащено: ${src.type}.`);
+        `Сюда нужно перетащить ${need}, а перетащено: ${ITEM_TYPES[src.type] || src.type}.`);
     }
     entry.sourceUuid = src.uuid;
     entry.sourceName = src.name;
@@ -973,8 +977,11 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     }));
     html.find(".req-rank").on("change",      ev => patchReq(ev, (e, el) => { e.rank = el.value; }));
     html.find(".req-spec").on("change",      ev => patchReq(ev, (e, el) => {
+      const spec = el.value ? specOptions(e.skillKey).find(s => s.key === el.value) : null;
       e.specKey = el.value;
-      e.specialty = el.value ? (specOptions(e.skillKey).find(s => s.key === el.value)?.label || el.value) : "";
+      // Сверку ведёт specKey, поэтому в specialty кладём русское имя — оно
+      // идёт в текст требования на листе (AGENTS.md: интерфейс русский).
+      e.specialty = spec ? (spec.ru || spec.label) : "";
     }));
     html.find(".req-rating").on("change",    ev => patchReq(ev, (e, el) => {
       e.rating = el.value === "" ? "" : (parseInt(el.value) || 0);

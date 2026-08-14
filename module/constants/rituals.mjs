@@ -45,24 +45,6 @@ export const RITUAL_ITEM_TYPES = [
 ];
 export const RITUAL_ITEM_TYPES_MAP = Object.fromEntries(RITUAL_ITEM_TYPES.map(t => [t.key, t]));
 
-// Категория пресета (RITUAL_PRESETS[].cat) → ключ типа предмета. Ключи легли
-// один-в-один, поэтому папки компендиума совпали с разделами книги.
-export const RITUAL_CAT_TO_TYPE = {
-  "Призыв":            "summon",
-  "Круги":             "circle",
-  "Экзорцизм":         "exorcism",
-  "Проклятья":         "curse",
-  "Тёмные молитвы":    "darkPrayer",
-  "Алхимантия":        "alchymantia",
-  "Наблюдение":        "observation",
-  "Связь":             "connection",
-  "Путешествие":       "travel",
-  "Контроль":          "control",
-  "Ведьмограждение":   "witchWard",
-  "Некромантия":       "necromancy",
-  "Элитные архетипы":  "archetype"
-};
-
 // Характеристика теста (Символизм → I, Вера → W, Геометрия → A и т.п.).
 export const TEST_CHARS = [
   { key: "int", abbr: "I",  label: "Интеллект (символизм)" },

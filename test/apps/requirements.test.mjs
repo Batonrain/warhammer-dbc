@@ -58,6 +58,20 @@ describe("движок Требований", () => {
       expect(actorMeetsReq(a, need("Warp"))).toBe(false);
     });
 
+    it("групповой навык: специализация узнаётся по ключу, английскому и русскому имени", () => {
+      // Конструктор персонажа кладёт в specialty РУССКОЕ имя (creation.mjs),
+      // а конструктор требований выбирается из specOptions, где есть и ключ,
+      // и английская метка. Сверять строки напрямую нельзя — не сойдётся.
+      const ru = actorOf({ groupSkills: { forbiddenLore: [{ specialty: "Демоны", rank: "trained" }] } });
+      const need = over => req("reqSkill",
+        { skillScope: "group", skillKey: "forbiddenLore", rank: "knows", ...over });
+
+      expect(actorMeetsReq(ru, need({ specKey: "daemons" }))).toBe(true);
+      expect(actorMeetsReq(ru, need({ specialty: "Daemons" }))).toBe(true);
+      expect(actorMeetsReq(ru, need({ specialty: "Демоны" }))).toBe(true);
+      expect(actorMeetsReq(ru, need({ specKey: "warp" }))).toBe(false);
+    });
+
     it("групповой навык: ранг спрашивается у той же специализации", () => {
       // Ловушка: нужный ранг есть, но у ДРУГОЙ специализации.
       const a = actorOf({ groupSkills: { forbiddenLore: [
@@ -79,6 +93,33 @@ describe("движок Требований", () => {
       expect(actorMeetsReq(a, req("reqTalent", { sourceName: "Иное" }))).toBe(false);
       // Тип имеет значение: Черта с тем же именем Талантом не считается.
       expect(actorMeetsReq(a, req("reqTrait", { sourceName: "Тёмная Душа" }))).toBe(false);
+    });
+
+    it("имя сверяется целиком, а не вхождением подстроки", () => {
+      // «Железная Воля» не закрывает требование «Воля».
+      const a = actorOf({}, [{ type: "talent", name: "Железная Воля", system: {} }]);
+      expect(actorMeetsReq(a, req("reqTalent", { sourceName: "Воля" }))).toBe(false);
+      expect(actorMeetsReq(a, req("reqTalent", { sourceName: "Железная Воля" }))).toBe(true);
+    });
+
+    it("специализация в скобках у имени предмета не мешает", () => {
+      const a = actorOf({}, [{ type: "talent", name: "Оружейное Мастерство (Болтер)", system: {} }]);
+      expect(actorMeetsReq(a, req("reqTalent", { sourceName: "Оружейное Мастерство" }))).toBe(true);
+    });
+
+    it("пустое имя источника не выполняется ничем", () => {
+      // Ловушка: сверка вхождением делала бы пустую строку подходящей ко
+      // всему, и требование «любой талант» проходило бы у кого угодно.
+      const a = actorOf({}, [{ type: "talent", name: "Тёмная Душа", system: {} }]);
+      expect(actorMeetsReq(a, req("reqTalent", { sourceUuid: "Item.abc", sourceName: "" }))).toBe(false);
+      expect(isReqComplete(req("reqTalent", { sourceUuid: "Item.abc", sourceName: "" }))).toBe(false);
+    });
+
+    it("рейтинг спрашивается только у Черты — у Таланта его в схеме нет", () => {
+      // TalentData поля rating не объявляет, поэтому требование по рейтингу
+      // Таланта было бы невыполнимо навсегда. Рейтинг у Таланта игнорируется.
+      const a = actorOf({}, [{ type: "talent", name: "Тёмная Душа", system: {} }]);
+      expect(actorMeetsReq(a, req("reqTalent", { sourceName: "Тёмная Душа", rating: 2 }))).toBe(true);
     });
 
     it("черта с рейтингом: пустой рейтинг не важен, заданный — не ниже", () => {

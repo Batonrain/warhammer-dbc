@@ -1399,8 +1399,9 @@ export function describeReqEntry(e) {
     case "reqTalent":
     case "reqTrait": {
       const what = e.kind === "reqTalent" ? "Талант" : "Черта";
-      if (!e.sourceUuid && !e.sourceName) return `${what}: (перетащите)`;
-      const r = (e.rating !== "" && e.rating != null) ? ` — рейтинг не ниже ${e.rating}` : "";
+      if (!e.sourceName) return `${what}: (перетащите)`;
+      const r = (e.kind === "reqTrait" && e.rating !== "" && e.rating != null)
+        ? ` — рейтинг не ниже ${e.rating}` : "";
       return `${what}: ${e.sourceName || "?"}${r}`;
     }
     case "reqRace":
@@ -1420,8 +1421,9 @@ export function describeReqEntry(e) {
 export function isReqComplete(e) {
   switch (e.kind) {
     case "reqSkill":     return !!e.skillKey;
+    // Сверка идёт по имени, поэтому один только UUID проверять нечем.
     case "reqTalent":
-    case "reqTrait":     return !!(e.sourceName || e.sourceUuid);
+    case "reqTrait":     return !!e.sourceName;
     case "reqRace":      return !!e.raceKey;
     case "reqArchetype": return !!e.archetypeName;
     case "reqPatron":    return !!e.patronKey;
@@ -1437,14 +1439,16 @@ export function actorMeetsReq(actor, e) {
       const need = SKILL_RANK_STEPS[e.rank] ?? 0;
       if (e.skillScope === "group") {
         const arr = actor.system.groupSkills?.[e.skillKey] || [];
-        // Специализация не задана — годится любая специализация этой группы.
-        const want = normReq(e.specialty || e.specKey);
-        // Ранг спрашивается у ТОЙ ЖЕ записи, что подошла по специализации:
-        // «Запретные знания (Демоны) на Ветеране» не закрываются Ветераном
-        // по Варпу. Имя специализации в данных лежит то в specialty, то в
-        // name — читаем как остальной код (constants/rituals.mjs).
-        return arr.some(x => (!want || normReq(x.specialty || x.name) === want)
-          && (SKILL_RANK_STEPS[x.rank] ?? 0) >= need);
+        // Специализация не задана — годится любая специализация группы.
+        if (!e.specKey && !e.specialty)
+          return arr.some(x => (SKILL_RANK_STEPS[x.rank] ?? 0) >= need);
+        // Задана — ищем её общим сопоставителем: в данных специализация
+        // лежит то ключом, то английской меткой, то русской (Конструктор
+        // персонажа пишет русскую), и сравнение строк напрямую не сходится.
+        // Ранг спрашивается у НАЙДЕННОЙ записи: «Запретные знания (Демоны)
+        // на Ветеране» не закрываются Ветераном по Варпу.
+        const hit = findGroupEntry(actor, e.skillKey, e.specKey || e.specialty);
+        return !!hit && (SKILL_RANK_STEPS[hit.rank] ?? 0) >= need;
       }
       return (SKILL_RANK_STEPS[actor.system.skills?.[e.skillKey]?.rank] ?? 0) >= need;
     }
@@ -1452,11 +1456,21 @@ export function actorMeetsReq(actor, e) {
     case "reqTrait": {
       const type = e.kind === "reqTalent" ? "talent" : "trait";
       const want = normReq(e.sourceName);
-      // Сверяем по ИМЕНИ: перетащенный из компендиума образец и лежащий на
-      // акторе предмет — разные документы, общее у них только name.
-      const hits = actor.items.filter(i => i.type === type && normReq(i.name).includes(want));
+      // Пустое имя не выполняется ничем: сверка вхождением сделала бы пустую
+      // строку подходящей к любому предмету.
+      if (!want) return false;
+      // Сверяем по ИМЕНИ целиком: перетащенный из компендиума образец и
+      // лежащий на акторе предмет — разные документы, общее у них только
+      // name. Вхождением сверять нельзя — «Железная Воля» закрыла бы «Волю».
+      // Специализацию в скобках у имени предмета при этом отбрасываем, как
+      // это делает hasTalent (constants/talent-requirements.mjs).
+      const bare = s => normReq(s).replace(/\s*\([^)]*\)\s*$/, "");
+      const hits = actor.items.filter(i =>
+        i.type === type && (normReq(i.name) === want || bare(i.name) === want));
       if (!hits.length) return false;
-      if (e.rating === "" || e.rating == null) return true;
+      // Рейтинг есть только у Черты: в схеме Таланта поля rating нет, и
+      // требование по нему было бы невыполнимо навсегда.
+      if (e.kind !== "reqTrait" || e.rating === "" || e.rating == null) return true;
       const need = Number(e.rating) || 0;
       return hits.some(i => (Number(i.system?.rating) || 0) >= need);
     }
@@ -1530,10 +1544,15 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
            ${dis ? "" : `<button type="button" class="req-drop-clear" ${d} title="Убрать">✕</button>`}`
         : `<span class="grant-drop-placeholder">${dis ? "—" : `Перетащите ${what} сюда`}</span>`;
       let out = `<div class="grant-drop-zone req-drop-zone" ${d}>${inner}</div>`;
-      // Рейтинг спрашиваем всегда: у перетащенного из компендиума образца
-      // hasRating может быть не выставлен, а требование по рейтингу нужно.
-      out += `<input type="number" class="req-rating" ${d} value="${esc(e.rating ?? "")}"
-                     placeholder="рейтинг ≥" title="Минимальный рейтинг (пусто — не важен)" ${dis}/>`;
+      // Рейтинг только у Черты. У Таланта поля rating в схеме нет
+      // (module/data/item/talent.mjs), и требование по нему нельзя было бы
+      // выполнить никогда — поле не показываем, чтобы не заводить ловушку.
+      // Внутри Черты спрашиваем всегда: у перетащенного из компендиума
+      // образца hasRating может быть не выставлен.
+      if (e.kind === "reqTrait") {
+        out += `<input type="number" class="req-rating" ${d} value="${esc(e.rating ?? "")}"
+                       placeholder="рейтинг ≥" title="Минимальный рейтинг (пусто — не важен)" ${dis}/>`;
+      }
       return out;
     }
     case "reqRace": {

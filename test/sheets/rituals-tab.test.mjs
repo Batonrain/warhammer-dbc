@@ -22,10 +22,10 @@ const ritual = (id, name, system = {}, flags = {}) => ({
   getFlag: (_scope, key) => flags[key]
 });
 
-/** Группа требований с одним заполненным условием по расе. */
-const raceGroup = raceKey => ({
-  id: "g", operator: "AND",
-  entries: [{ id: "e", kind: "reqRace", raceKey }]
+/** Группа требований по расам: operator задаёт И/ИЛИ между ними. */
+const raceGroup = (operator, ...raceKeys) => ({
+  id: "g", operator,
+  entries: raceKeys.map((raceKey, n) => ({ id: `e${n}`, kind: "reqRace", raceKey }))
 });
 
 describe("раздел Ритуалов", () => {
@@ -80,8 +80,8 @@ describe("раздел Ритуалов", () => {
   it("механические Требования разбираются в строки текста", () => {
     const ctx = ritualsContext(actorWith(
       ritual("r1", "С требованиями", {}, {
-        req:       [raceGroup("drukhari")],
-        assistReq: [raceGroup("human")]
+        req:       [raceGroup("AND", "drukhari")],
+        assistReq: [raceGroup("AND", "human")]
       })
     ));
 
@@ -89,9 +89,37 @@ describe("раздел Ритуалов", () => {
     expect(ctx[0].assistReqLines).toEqual(["Раса: Человек"]);
   });
 
-  it("незаполненные условия в строки не попадают", () => {
+  it("ИЛИ-группа показывается как выбор, а не как список обязательных", () => {
+    // Схлопывание групп в один плоский список переворачивало смысл ИЛИ на
+    // противоположный: альтернативы читались как обязательные разом.
     const ctx = ritualsContext(actorWith(
-      ritual("r1", "Пустое условие", {}, { req: [raceGroup("")] })
+      ritual("r1", "Или то, или это", {}, { req: [raceGroup("OR", "drukhari", "human")] })
+    ));
+
+    expect(ctx[0].reqLines).toEqual(["одно из: Раса: Друкхари / Раса: Человек"]);
+  });
+
+  it("И-группа перечисляет условия через точку с запятой", () => {
+    const ctx = ritualsContext(actorWith(
+      ritual("r1", "И то, и это", {}, { req: [raceGroup("AND", "drukhari", "human")] })
+    ));
+
+    expect(ctx[0].reqLines).toEqual(["Раса: Друкхари; Раса: Человек"]);
+  });
+
+  it("группы между собой — отдельными строками", () => {
+    const ctx = ritualsContext(actorWith(
+      ritual("r1", "Две группы", {}, {
+        req: [raceGroup("AND", "drukhari"), raceGroup("OR", "human")]
+      })
+    ));
+
+    expect(ctx[0].reqLines).toHaveLength(2);
+  });
+
+  it("незаполненные условия в строки не попадают, пустая группа не даёт строки", () => {
+    const ctx = ritualsContext(actorWith(
+      ritual("r1", "Пустое условие", {}, { req: [raceGroup("AND", "")] })
     ));
 
     expect(ctx[0].reqLines).toEqual([]);
@@ -101,9 +129,20 @@ describe("раздел Ритуалов", () => {
     // Иначе строка показала бы разобранные требования И «описание не
     // заполнено» разом — так было в исходной ветке.
     const ctx = ritualsContext(actorWith(
-      ritual("r1", "Только требования", {}, { req: [raceGroup("drukhari")] })
+      ritual("r1", "Только требования", {}, { req: [raceGroup("AND", "drukhari")] })
     ));
 
+    expect(ctx[0].hasAnyText).toBe(true);
+  });
+
+  it("общее Описание предмета тоже показывается и считается содержимым", () => {
+    // ОПИСАНИЕ есть у любого типа предмета и правится на листе; без него
+    // заполненный текст был бы недостижим с листа актора.
+    const ctx = ritualsContext(actorWith(
+      ritual("r1", "С описанием", { description: "Круг чертится мелом" })
+    ));
+
+    expect(ctx[0].description).toBe("Круг чертится мелом");
     expect(ctx[0].hasAnyText).toBe(true);
   });
 });
