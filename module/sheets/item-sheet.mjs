@@ -528,58 +528,10 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       // availabilityStr для drug — отдельно, гарантируем строку
       context.system.availabilityStr = String(sys.availability ?? "0");
 
-      // Гарантируем все вложенные объекты
-      if (!sys.statMods) sys.statMods = {
-        ws: 0, bs: 0, s: 0, t: 0, ag: 0, int: 0, per: 0, wp: 0, fel: 0
-      };
-      if (!sys.specialEffects) sys.specialEffects = {
-        removesBleedingLevels:  0,
-        removesFatigueLevels:   0,
-        removesWounds:          0,
-        healsWoundsPerRound:    "",
-        woundsToToughness:      false,
-        removesCondition:       "",
-        removesConditionLevel:  0,
-        grantsCondition:        "",
-        grantsConditionLevel:   1,
-        immuneToPoisons:        false,
-        counteractsDrugs:       false,
-        removesRadiation:       false,
-        bonusVsPoisons:         0,
-        reduceDamageOnHit:      0,
-        noSleepNeeded:          false,
-        noFatigueFromMarch:     false,
-        customEffect:           ""
-      };
-
-      // Гарантируем новые поля если их нет (старые предметы)
-      if (sys.specialEffects.removesConditionLevel === undefined)
-        sys.specialEffects.removesConditionLevel = 0;
-      if (sys.specialEffects.grantsConditionLevel === undefined)
-        sys.specialEffects.grantsConditionLevel  = 1;
-
-      if (!sys.addiction) sys.addiction = {
-        hasAddiction: false, minDose: 0,
-        testChar: "t", testMod: 0, frequency: "", penalty: ""
-      };
-      if (!sys.activeEffect) sys.activeEffect = {
-        isActive: false, appliedAt: null, expiresAt: null, roundsRemaining: 0,
-        charDamageStat: "", charDamageAmount: 0
-      };
-      if (!sys.afterEffectCharDamage) sys.afterEffectCharDamage = { stat: "", formula: "" };
-      if (!sys.afterEffectSpecial)    sys.afterEffectSpecial    = {};
-
-      // Новые поля движка мульти-эффектов — для старых предметов
-      for (const block of [sys.specialEffects, sys.afterEffectSpecial]) {
-        if (!block) continue;
-        if (block.removesHaemorrhagingLevels === undefined) block.removesHaemorrhagingLevels = 0;
-        if (block.grantsFatigue === undefined)              block.grantsFatigue = 0;
-        if (block.woundDamage === undefined)                block.woundDamage = "";
-      }
-      if (sys.specialEffects && sys.specialEffects.healFormula === undefined)
-        sys.specialEffects.healFormula = "";
-      if (!Array.isArray(sys.poisonVector)) sys.poisonVector = [];
-      if (!sys.quality) sys.quality = "common";
+      // Доподстановки вложенных блоков здесь больше нет: их раздаёт схема
+      // DrugData (module/data/item/drug.mjs), через которую проходит любой
+      // документ. Что именно она гарантирует — записано в проверке умолчаний
+      // (test/data/item-schemas.test.mjs).
 
       // Краткое отображение модов характеристик
       const modParts = [];
