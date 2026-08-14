@@ -127,6 +127,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/armour-history-entry.hbs", // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/aspiration.hbs",           // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/archetype.hbs",            // ← НОВОЕ
+    "systems/warhammer-dbc/templates/item/parts/faction.hbs",
     // Звёздная система
     "systems/warhammer-dbc/templates/item/parts/celestial-body.hbs",
     "systems/warhammer-dbc/templates/actor/star-system-sheet.hbs",
