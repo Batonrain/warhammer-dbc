@@ -13,6 +13,9 @@
 // Foundry здесь не нужен: на вход идут либо литералы, либо уже прочитанные
 // поля документа, и всё проверяется тестом без заглушки.
 
+import { isSameOrDescendant, anySameOrDescendant, actorFactionKeys, getFactionIndex }
+  from "./factions.mjs";
+
 /** Виды цели и их подписи для интерфейса. */
 export const TARGET_KINDS = {
   faction:   "Фракция",
@@ -90,4 +93,37 @@ export function targetLabel(target) {
 /** Ключи фракций среди целей — то, с чем работает дерево на отборе. */
 export function factionRefs(targets = []) {
   return targets.filter(t => t?.kind === "faction").map(t => t.ref).filter(Boolean);
+}
+
+/**
+ * Подходит ли цель Таланта к текущему броску.
+ *
+ * У фракции два пути, и они не пересекаются:
+ *
+ *   в бою цель — это выделенный токен, и его фракции лежат предметами на
+ *   акторе (ctx.targetActor);
+ *   в социальном тесте токена нет вовсе — «Инквизицию» не выделишь мышью, —
+ *   поэтому игрок выбирает фракцию собеседника в диалоге, и она приезжает в
+ *   ctx.socialFaction одним ключом.
+ *
+ * Отбор односторонний, как и всё дерево: Ненависть к Хаосу срабатывает на роту
+ * в его составе, Ненависть к роте на весь Хаос — нет.
+ *
+ * @param {object} target  запись из system.targets Таланта
+ * @param {object} ctx     контекст броска (rules/resolve-test.mjs)
+ * @param {Map}    byKey   дерево фракций; по умолчанию — реестр
+ */
+export function targetMatches(target, ctx = {}, byKey = getFactionIndex()) {
+  if (!target) return false;
+  if (target.kind === "all") return true;
+  if (target.kind === "actorType") return ctx?.targetActor?.type === target.value;
+  if (target.kind !== "faction") return false;
+
+  if (ctx?.socialFaction) return isSameOrDescendant(ctx.socialFaction, target.ref, byKey);
+  return anySameOrDescendant(actorFactionKeys(ctx?.targetActor), target.ref, byKey);
+}
+
+/** Сработала ли хоть одна цель Таланта: цели в списке соединены через «или». */
+export function anyTargetMatches(targets = [], ctx = {}, byKey = getFactionIndex()) {
+  return targets.some(t => targetMatches(t, ctx, byKey));
 }

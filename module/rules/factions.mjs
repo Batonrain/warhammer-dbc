@@ -13,6 +13,36 @@
 // Вход везде одинаковый: `byKey` — обычная карта «ключ → фракция», где у
 // фракции есть `system.parent` (или просто `parent`, если это литерал теста).
 
+// ── Реестр дерева ───────────────────────────────────────────────────────────
+//
+// Предикаты обязаны быть чистыми функциями, а разбор цепочки предков требует
+// знать ВСЕ фракции — их каталог лежит в компендиуме и читается асинхронно.
+// Протаскивать карту через контекст каждого броска значило бы править все
+// точки входа, поэтому карта живёт здесь, а наполняет её сторона Foundry один
+// раз при готовности мира.
+//
+// Тот же приём, что у реестра источников правил (rules/sources.mjs): модульная
+// переменная плюс очистка для тестов. Предикаты по-прежнему не знают ни про
+// game, ни про компендиумы.
+
+let _index = new Map();
+
+/** Кладёт каталог фракций в реестр. На входе предметы либо литералы. */
+export function setFactionIndex(list = []) {
+  _index = indexFactions(list);
+  return _index;
+}
+
+/** Текущее дерево. Пустое, пока мир не загрузился: правило просто не сработает. */
+export function getFactionIndex() {
+  return _index;
+}
+
+/** Очистка. Нужна тестам, чтобы подставить своё дерево и вернуть как было. */
+export function clearFactionIndex() {
+  _index = new Map();
+}
+
 /** Ключ родителя у записи любого вида: предмет Foundry либо литерал теста. */
 function parentOf(faction) {
   return String(faction?.system?.parent ?? faction?.parent ?? "").trim();
@@ -104,4 +134,16 @@ export function isSameOrDescendant(candidate, wanted, byKey) {
  */
 export function anySameOrDescendant(candidates = [], wanted, byKey) {
   return candidates.some(key => isSameOrDescendant(key, wanted, byKey));
+}
+
+/**
+ * Ключи фракций, в которых состоит актор. Фракция — обычный предмет на листе,
+ * поэтому актор может состоять сразу в нескольких: астартес-предатель это и
+ * Хаос, и свой легион.
+ */
+export function actorFactionKeys(actor) {
+  return [...(actor?.items ?? [])]
+    .filter(i => i?.type === "faction")
+    .map(factionKey)
+    .filter(Boolean);
 }

@@ -57,6 +57,7 @@ import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
+import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
 import { setSystemPackLocks }         from "./module/apps/pack-locks.mjs";
 import { importBooks }                from "./module/apps/books.mjs";
 import { registerHandlebarsHelpers }  from "./module/helpers/handlebars.mjs";
@@ -1084,6 +1085,10 @@ Hooks.on("updateActor", async (doc, changes) => {
 
 // Кэш библиотек Происхождения и Предсказаний для дропдаунов в шапке листа.
 initPackCaches();
+
+// Дерево фракций для предикатов правил: каталог лежит в компендиуме, а разбор
+// цепочки предков обязан быть чистыми функциями — см. module/rules/factions.mjs.
+initFactionIndex();
 
 /** Просил ли ГМ открыть библиотеки (настройка protectCompendiumEdits выше). */
 function _libsUnlocked() {

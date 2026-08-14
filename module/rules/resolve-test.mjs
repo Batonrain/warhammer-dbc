@@ -16,6 +16,19 @@
 
 import { gatherRules, selectRules } from "./collect.mjs";
 import { isKnownEffectKind } from "./effects.mjs";
+import { SKILLS_DEF } from "../constants/skills.mjs";
+
+/**
+ * Социальный ли навык. Своего перечня здесь нет намеренно: признак уже лежит
+ * в таблице навыков (constants/skills.mjs, apt2:"social") — Обаяние,
+ * Командование, Коммерция, Обман, Дознание, Допрос, Запугивание. Заведи мы
+ * второй список, он разошёлся бы с первым при добавлении навыка.
+ *
+ * Проницательность (scrutiny) помечена «общей» и сюда не входит — так в книге.
+ */
+function isSocialSkill(skill) {
+  return SKILLS_DEF?.[String(skill ?? "")]?.apt2 === "social";
+}
 
 /** Хук вне Foundry не существует: в тестах конвейер работает без него. */
 function callHook(name, ...args) {
@@ -78,6 +91,7 @@ function effectAppliesTo(target, ctx) {
   const scope = String(target ?? "all").trim().toLowerCase();
   if (scope === "all" || scope === "") return true;
   if (scope === "initiative") return ctx.kind === "initiative";
+  if (scope === "social") return isSocialSkill(ctx.skill);
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
   if (ctx.char)  return scope === `char:${String(ctx.char).toLowerCase()}`;

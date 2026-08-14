@@ -5,6 +5,9 @@
 // иначе правило не проверить тестом без запуска Foundry, а ради этого всё и
 // затевалось. Формат записи — docs/rules-format.md.
 
+import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIndex }
+  from "./factions.mjs";
+
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
 
@@ -51,6 +54,20 @@ function sizeOf(actor) {
   return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0);
 }
 
+/**
+ * Состоит ли актор в каждой из перечисленных фракций — считая нижестоящие.
+ * Персонаж из III роты Несущих Слово подходит под условие «Хаос».
+ *
+ * Список означает «и», как у hasTalent/hasTrait: правило с альтернативами
+ * пишется двумя правилами, а требование двух принадлежностей сразу иначе не
+ * выразить.
+ */
+function inFactions(actor, wanted) {
+  const mine = actorFactionKeys(actor);
+  const byKey = getFactionIndex();
+  return list(wanted).every(key => anySameOrDescendant(mine, key, byKey));
+}
+
 export const PREDICATES = {
   race:    (actor, ctx, value) => list(value).includes(actor?.system?.race),
   subrace: (actor, ctx, value) => list(value).includes(actor?.system?.subrace),
@@ -68,5 +85,19 @@ export const PREDICATES = {
   // Актор цели лежит в ctx.targetActor, а не в ctx.target: в контексте броска
   // (rules/match-context.mjs) имя `target` занято флагом «бросок нацелен», и на
   // этапе 2 плана оба контекста сошлись в одном объекте.
-  targetHasTrait: (actor, ctx, value) => hasNamed(ctx?.targetActor, value)
+  targetHasTrait: (actor, ctx, value) => hasNamed(ctx?.targetActor, value),
+
+  // Принадлежность к фракции — своя и у цели. Обе считают нижестоящие: условие
+  // «Хаос» подходит и роте в составе его легиона, обратное неверно.
+  hasFaction: (actor, ctx, value) => inFactions(actor, value),
+
+  // У социального теста цели-токена нет вовсе: фракцию собеседника игрок
+  // выбирает в диалоге, и она приезжает в ctx.socialFaction одним ключом.
+  // Поэтому смотрим сначала туда, и только потом на выделенного актора.
+  targetHasFaction: (actor, ctx, value) => {
+    const byKey = getFactionIndex();
+    if (ctx?.socialFaction)
+      return list(value).every(key => isSameOrDescendant(ctx.socialFaction, key, byKey));
+    return inFactions(ctx?.targetActor, value);
+  }
 };
