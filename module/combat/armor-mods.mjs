@@ -71,6 +71,30 @@ export function getArmorModEffects(actor, armor) {
   return fx;
 }
 
+/**
+ * Потолок Ловкости от надетой брони (корбук, Max Agility) либо null, если
+ * потолка нет. У брони это `system.maxAgility` (обычной проставлено 100),
+ * модификации его поднимают своим maxAgilityMod — «Открытые Сочленения» дают
+ * +10 той броне, на которую поставлены.
+ *
+ * Надето несколько — действует самый строгий: снять ограничение терминаторского
+ * доспеха, накинув поверх мантию, нельзя.
+ *
+ * Модификации считаются через getArmorModEffects, поэтому потолок двигает
+ * только то, что реально работает: установленное на эту самую броню,
+ * включённое и не в снятом шлеме.
+ */
+export function armorAgilityCap(actor) {
+  let cap = null;
+  for (const item of actor?.items ?? []) {
+    if (item.type !== "armor" || !item.system?.equipped) continue;
+    const own   = Number(item.system.maxAgility);
+    const value = (Number.isFinite(own) ? own : 100) + getArmorModEffects(actor, item).maxAgilityMod;
+    cap = cap === null ? value : Math.min(cap, value);
+  }
+  return cap;
+}
+
 /** AP-надбавка модификаций по локации (ключ поля брони). */
 export function armorModApForLocation(fx, key) {
   switch (key) {

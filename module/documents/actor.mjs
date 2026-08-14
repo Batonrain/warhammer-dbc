@@ -2,7 +2,7 @@ import { IMPROVEMENT_BONUS, SKILL_RANKS } from "../constants/characteristics.mjs
 import { HAEM_STAGES, isHaemonculus } from "../constants/haemonculus.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }   from "../constants/skills.mjs";
 import { _calcMaxCarry }                   from "../helpers/utils.mjs";
-import { getArmorModEffects, armorModApForLocation } from "../combat/armor-mods.mjs";
+import { getArmorModEffects, armorModApForLocation, armorAgilityCap } from "../combat/armor-mods.mjs";
 import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
 import { fieldModeEffects } from "../constants/drukhari-armor-fields.mjs";
@@ -872,6 +872,15 @@ export class WarhammerActor extends Actor {
     }
     system.armorCharBonus = armorCharBonus;
 
+    // Потолок Ловкости надетой брони (корбук, Max Agility): терминаторский
+    // доспех держит Ловкость не выше 25, Катафракт — 35. Считается ДО
+    // характеристик, чтобы Бонус взялся уже от ограниченного значения.
+    // null — потолка нет, и тогда ничего не ограничивается вовсе.
+    const agilityCap = armorAgilityCap(this);
+    // На лист выносим только тот потолок, который что-то значит: у обычной
+    // брони в данных стоит 100, и показывать его игроку незачем.
+    system.maxAgilityCap = (agilityCap !== null && agilityCap < 100) ? agilityCap : null;
+
     // ── Характеристики ────────────────────────────────────────────────────
     const charDamage = system.charDamage || {};
     // Авто-дебафф от потребностей (Голод/Жажда) — отдельно от ручного charDamage.
@@ -890,6 +899,10 @@ export class WarhammerActor extends Actor {
       char.vitalMod   = vitalMod;
       // База не трогается; урон и потребности — отдельные временные модификаторы
       char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod - dmgMod - vitalMod;
+      // Потолок брони режет готовое значение Ловкости — и Бонус ниже считается
+      // уже от урезанного. Сверхъестественная Ловкость потолком не ограничена:
+      // она прибавляется к Бонусу отдельным слагаемым, а не к значению.
+      if (key === "ag" && agilityCap !== null) char.total = Math.min(char.total, agilityCap);
       char.bonus   = Math.floor(char.total / 10) + (char.supernatural || 0) + traitMod + pathMod;
     }
 
