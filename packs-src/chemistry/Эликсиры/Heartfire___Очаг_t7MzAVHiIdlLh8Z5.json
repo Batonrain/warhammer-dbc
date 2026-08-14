@@ -9,7 +9,7 @@
     "deliveryMethod": "liquid",
     "quantity": 1,
     "weight": 0,
-    "availability": "3",
+    "availability": 3,
     "quality": "common",
     "duration": "",
     "effect": "Снимает всю Усталость и считается 8 часов полноценным сном.",

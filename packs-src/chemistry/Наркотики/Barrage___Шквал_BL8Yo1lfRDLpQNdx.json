@@ -9,7 +9,7 @@
     "deliveryMethod": "injection",
     "quantity": 1,
     "weight": 0,
-    "availability": "1",
+    "availability": 1,
     "quality": "common",
     "duration": "T.b",
     "effect": "T.b минут: +2×T.b временных Ран и Unnatural S (+5).",

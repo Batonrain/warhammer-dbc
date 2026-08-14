@@ -9,7 +9,7 @@
     "deliveryMethod": "liquid",
     "quantity": 1,
     "weight": 0,
-    "availability": "1",
+    "availability": 1,
     "quality": "common",
     "duration": "T.b",
     "effect": "T.b Раундов: Lightning Reflexes + Rapid Reaction + Unnatural Ag (+1) + Unnatural W (+1).",

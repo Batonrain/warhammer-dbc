@@ -9,7 +9,7 @@
     "deliveryMethod": "injection",
     "quantity": 1,
     "weight": 0,
-    "availability": "0",
+    "availability": 0,
     "quality": "common",
     "duration": "",
     "effect": "Излечивает лучевую болезнь и урон в T от радиации.",

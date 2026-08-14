@@ -9,7 +9,7 @@
     "deliveryMethod": "injection",
     "quantity": 1,
     "weight": 0,
-    "availability": "-2",
+    "availability": -2,
     "quality": "common",
     "duration": "",
     "effect": "Снимает 1d5 уровней Обескровливания (авто снимает 1 ур.; ГМ может увеличить под бросок 1d5).",

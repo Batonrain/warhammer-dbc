@@ -9,7 +9,7 @@
     "deliveryMethod": "food",
     "quantity": 1,
     "weight": 0,
-    "availability": "4",
+    "availability": 4,
     "quality": "common",
     "duration": "",
     "effect": "По-разному действует на Астартес и обычных людей.",

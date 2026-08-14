@@ -9,7 +9,7 @@
     "deliveryMethod": "liquid",
     "quantity": 1,
     "weight": 0,
-    "availability": "2",
+    "availability": 2,
     "quality": "common",
     "duration": "4d10",
     "effect": "4d10 минут: глубокий анабиоз, неотличимый от смерти — без сознания и беспомощен; Medicae меньше 5 Успехов определяет как труп.",

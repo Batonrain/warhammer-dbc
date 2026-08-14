@@ -9,7 +9,7 @@
     "deliveryMethod": "injection",
     "quantity": 1,
     "weight": 0,
-    "availability": "1",
+    "availability": 1,
     "quality": "common",
     "duration": "1d5+T.b",
     "effect": "1d5+T.b минут: +20 на тесты против ядов, длительность ядов вдвое, d10→d5 в уроне ядов; но −5 к S и Ag.",

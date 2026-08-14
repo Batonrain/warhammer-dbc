@@ -26,6 +26,11 @@ import { AbilityData }        from "./item/ability.mjs";
 import { MutationData }       from "./item/mutation.mjs";
 import { DiseaseData }        from "./item/disease.mjs";
 import { MentalDisorderData } from "./item/mental-disorder.mjs";
+import { HomeworldData }      from "./item/homeworld.mjs";
+import { DivinationData }     from "./item/divination.mjs";
+import { ArchetypeData }      from "./item/archetype.mjs";
+import { ArmourHistoryEntryData } from "./item/armour-history-entry.mjs";
+import { DrugData }           from "./item/drug.mjs";
 
 /** Тип предмета → класс схемы. Раскладывается в CONFIG.Item.dataModels в init. */
 export const ITEM_DATA_MODELS = {
@@ -49,5 +54,11 @@ export const ITEM_DATA_MODELS = {
   ability:        AbilityData,
   mutation:       MutationData,
   disease:        DiseaseData,
-  mentalDisorder: MentalDisorderData
+  mentalDisorder: MentalDisorderData,
+  // Данные персонажа (wdbc-ff4.1.5)
+  homeworld:          HomeworldData,
+  divination:         DivinationData,
+  archetype:          ArchetypeData,
+  armourHistoryEntry: ArmourHistoryEntryData,
+  drug:               DrugData
 };

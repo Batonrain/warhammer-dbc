@@ -9,7 +9,7 @@
     "deliveryMethod": "smoke",
     "quantity": 1,
     "weight": 0,
-    "availability": "1",
+    "availability": 1,
     "quality": "common",
     "duration": "3",
     "effect": "3 часа: +30 к P (Trait Night Vision при P.b≥...). Если набрал 5+ Успехов — Ступор 1d5 Раундов.",

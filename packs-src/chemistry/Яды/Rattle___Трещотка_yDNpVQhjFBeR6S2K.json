@@ -9,7 +9,7 @@
     "deliveryMethod": "wound",
     "quantity": 1,
     "weight": 0,
-    "availability": "2",
+    "availability": 2,
     "quality": "common",
     "duration": "",
     "effect": "Тест T−10.",

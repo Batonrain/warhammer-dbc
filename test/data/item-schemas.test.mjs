@@ -134,6 +134,82 @@ const TYPES = {
       drukhari: false
     }
   },
+  // ── Данные персонажа (wdbc-ff4.1.5) ────────────────────────────────────────
+  // У всех четырёх «справочных» типов в данных лежит `notes`, которого в
+  // template.json не было: лист предмета показывает это поле всем типам.
+  homeworld: {
+    pack: "homeworlds",
+    defaults: {
+      key: "", description: "", notes: "", source: "", bookSource: "",
+      featureName: "", featureDesc: "", charModLabel: "", choices: {},
+      friendlySpecs: [], effects: { charValueBonuses: [] }
+    }
+  },
+  divination: {
+    pack: "divinations",
+    defaults: {
+      key: "", roll: "", rollMin: 0, rollMax: 0, text: "", effect: "",
+      source: "", bookSource: "", charModLabel: "", choices: {},
+      description: "", notes: "", effects: { charValueBonuses: [] }
+    }
+  },
+  archetype: {
+    pack: "archetypes",
+    defaults: {
+      key: "", race: "", group: "", charBonus: {}, charChoice: "", skills: "",
+      talents: "", gear: "", wounds: "", infRoll: "", requiredPath: "",
+      isPsyker: false, isTechpriest: false, psykerClass: "",
+      grantsWarPlate: false, grantsImplants: false, description: "", notes: "",
+      trait: { name: "", benefit: "" }, bookSource: ""
+    }
+  },
+  armourHistoryEntry: {
+    pack: "armour-histories",
+    defaults: {
+      table: "", rollMin: 0, rollMax: 0, description: "", notes: "", effect: "",
+      hasChoice: false, choiceLabel: "", choicePlaceholder: "", zoneRoll: false,
+      bookSource: ""
+    }
+  },
+  drug: {
+    pack: "chemistry",
+    defaults: {
+      description: "", notes: "", drugCategory: "medicine",
+      deliveryMethod: "injection", quantity: 1, weight: 0, availability: 0,
+      quality: "common", duration: "", effect: "", afterEffect: "",
+      afterEffectDice: "", afterEffectCharDamage: { stat: "", formula: "" },
+      hasAfterEffect: false,
+      addiction: {
+        hasAddiction: false, isAddicted: false, minDose: 0, testChar: "t",
+        testMod: 0, frequency: "", penalty: ""
+      },
+      statMods:            { ws: 0, bs: 0, s: 0, t: 0, ag: 0, int: 0, per: 0, wp: 0, fel: 0 },
+      afterEffectStatMods: { ws: 0, bs: 0, s: 0, t: 0, ag: 0, int: 0, per: 0, wp: 0, fel: 0 },
+      specialEffects: {
+        removesBleedingLevels: 0, removesHaemorrhagingLevels: 0,
+        removesFatigueLevels: 0, removesWounds: 0, healFormula: "",
+        healsWoundsPerRound: "", woundDamage: "", grantsFatigue: 0,
+        woundsToToughness: false, removesCondition: "", removesConditionLevel: 0,
+        grantsCondition: "", grantsConditionLevel: 1, immuneToPoisons: false,
+        counteractsDrugs: false, removesRadiation: false, bonusVsPoisons: 0,
+        reduceDamageOnHit: 0, noSleepNeeded: false, noFatigueFromMarch: false,
+        customEffect: ""
+      },
+      afterEffectSpecial: {
+        removesBleedingLevels: 0, removesHaemorrhagingLevels: 0,
+        removesFatigueLevels: 0, removesWounds: 0, healFormula: "",
+        woundDamage: "", grantsFatigue: 0, grantsCondition: "",
+        grantsConditionLevel: 1, customEffect: ""
+      },
+      poisonVector: [], poisonEffect: "", poisonTestChar: "t", poisonTestMod: 0,
+      // appliedAt/expiresAt — метки времени мира: null значит «не применялось».
+      activeEffect: {
+        isActive: false, isAfterEffect: false, appliedAt: null, expiresAt: null,
+        roundsRemaining: 0, charDamageStat: "", charDamageAmount: 0
+      }
+    }
+  },
+
   // ── Способности, черты, состояния (wdbc-ff4.1.3) ───────────────────────────
   talent: {
     pack: "talents",

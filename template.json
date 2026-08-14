@@ -1818,104 +1818,7 @@
     "armorMod": {},
     "forcefield": {},
     "gear": {},
-    "drug": {
-      "description": "",
-      "notes": "",
-      "drugCategory": "medicine",
-      "deliveryMethod": "injection",
-      "quantity": 1,
-      "weight": 0,
-      "availability": 0,
-      "quality": "common",
-      "duration": "",
-      "effect": "",
-      "afterEffect": "",
-      "afterEffectDice": "",
-      "afterEffectCharDamage": {
-        "stat": "",
-        "formula": ""
-      },
-      "hasAfterEffect": false,
-      "addiction": {
-        "hasAddiction": false,
-        "isAddicted": false,
-        "minDose": 0,
-        "testChar": "t",
-        "testMod": 0,
-        "frequency": "",
-        "penalty": ""
-      },
-      "statMods": {
-        "ws": 0,
-        "bs": 0,
-        "s": 0,
-        "t": 0,
-        "ag": 0,
-        "int": 0,
-        "per": 0,
-        "wp": 0,
-        "fel": 0
-      },
-      "afterEffectStatMods": {
-        "ws": 0,
-        "bs": 0,
-        "s": 0,
-        "t": 0,
-        "ag": 0,
-        "int": 0,
-        "per": 0,
-        "wp": 0,
-        "fel": 0
-      },
-      "specialEffects": {
-        "removesBleedingLevels": 0,
-        "removesHaemorrhagingLevels": 0,
-        "removesFatigueLevels": 0,
-        "removesWounds": 0,
-        "healFormula": "",
-        "healsWoundsPerRound": "",
-        "woundDamage": "",
-        "grantsFatigue": 0,
-        "woundsToToughness": false,
-        "removesCondition": "",
-        "removesConditionLevel": 0,
-        "grantsCondition": "",
-        "grantsConditionLevel": 1,
-        "immuneToPoisons": false,
-        "counteractsDrugs": false,
-        "removesRadiation": false,
-        "bonusVsPoisons": 0,
-        "reduceDamageOnHit": 0,
-        "noSleepNeeded": false,
-        "noFatigueFromMarch": false,
-        "customEffect": ""
-      },
-      "afterEffectSpecial": {
-        "removesBleedingLevels": 0,
-        "removesHaemorrhagingLevels": 0,
-        "removesFatigueLevels": 0,
-        "removesWounds": 0,
-        "healFormula": "",
-        "woundDamage": "",
-        "grantsFatigue": 0,
-        "grantsCondition": "",
-        "grantsConditionLevel": 1,
-        "customEffect": ""
-      },
-      "poisonVector": [],
-      "poisonEffect": "",
-      "poisonTestChar": "t",
-      "poisonTestMod": 0,
-      "activeEffect": {
-        "isActive": false,
-        "isAfterEffect": false,
-        "appliedAt": null,
-        "expiresAt": null,
-        "roundsRemaining": 0,
-        "charDamageStat": "",
-        "charDamageAmount": 0
-      }
-    },
+    "drug": {},
     "tool": {},
     "cybernetic": {},
     "talent": {},
@@ -2017,72 +1920,11 @@
         "charBonuses": []
       }
     },
-    "homeworld": {
-      "key": "",
-      "description": "",
-      "source": "",
-      "bookSource": "",
-      "featureName": "",
-      "featureDesc": "",
-      "charModLabel": "",
-      "choices": {},
-      "friendlySpecs": [],
-      "effects": {
-        "charValueBonuses": []
-      }
-    },
-    "divination": {
-      "key": "",
-      "roll": "",
-      "rollMin": 0,
-      "rollMax": 0,
-      "text": "",
-      "effect": "",
-      "source": "",
-      "bookSource": "",
-      "charModLabel": "",
-      "choices": {},
-      "effects": {
-        "charValueBonuses": []
-      }
-    },
+    "homeworld": {},
+    "divination": {},
     "weaponProperty": {},
-    "armourHistoryEntry": {
-      "table": "",
-      "rollMin": 0,
-      "rollMax": 0,
-      "description": "",
-      "effect": "",
-      "hasChoice": false,
-      "choiceLabel": "",
-      "choicePlaceholder": "",
-      "zoneRoll": false,
-      "bookSource": ""
-    },
+    "armourHistoryEntry": {},
     "aspiration": {},
-    "archetype": {
-      "key": "",
-      "race": "",
-      "group": "",
-      "charBonus": {},
-      "charChoice": "",
-      "skills": "",
-      "talents": "",
-      "gear": "",
-      "wounds": "",
-      "infRoll": "",
-      "requiredPath": "",
-      "isPsyker": false,
-      "isTechpriest": false,
-      "psykerClass": "",
-      "grantsWarPlate": false,
-      "grantsImplants": false,
-      "description": "",
-      "trait": {
-        "name": "",
-        "benefit": ""
-      },
-      "bookSource": ""
-    }
+    "archetype": {}
   }
 }
