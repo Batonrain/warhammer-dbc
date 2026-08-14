@@ -1,0 +1,34 @@
+{
+  "name": "VI воинство",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": null,
+  "system": {
+    "key": "word-bearers-host-6",
+    "parent": "word-bearers",
+    "aliases": [],
+    "isLore": false,
+    "description": "Одно из воинств Несущих Слово.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnWBHostVI0001",
+  "effects": [],
+  "sort": 400000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnWBHostVI0001"
+}

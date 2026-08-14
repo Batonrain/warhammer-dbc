@@ -42,6 +42,7 @@ import { VehicleGearData }    from "./item/vehicle-gear.mjs";
 import { VehicleTraitData }   from "./item/vehicle-trait.mjs";
 import { SmallCraftData }     from "./item/small-craft.mjs";
 import { RitualData }         from "./item/ritual.mjs";
+import { FactionData }        from "./item/faction.mjs";
 
 import { DaemonData }      from "./actor/daemon.mjs";
 import { DemonPrinceData } from "./actor/demon-prince.mjs";
@@ -95,7 +96,9 @@ export const ITEM_DATA_MODELS = {
   vehicleTrait:  VehicleTraitData,
   smallCraft:    SmallCraftData,
   // Ритуалы (wdbc-5ed)
-  ritual:        RitualData
+  ritual:        RitualData,
+  // Дерево принадлежностей (фракции, шаг 1)
+  faction:       FactionData
 };
 
 /** Тип актора → класс схемы. Раскладывается в CONFIG.Actor.dataModels в init. */

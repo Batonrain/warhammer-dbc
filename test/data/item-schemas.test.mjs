@@ -462,6 +462,18 @@ const TYPES = {
       testSkillScope: "", testSkillKey: "", testSpecialty: "",
       testChar: "int", testMod: 0
     }
+  },
+
+  // ── Дерево принадлежностей ────────────────────────────────────────────────
+  // Тип заведён сразу схемой, в template.json его никогда не было, поэтому
+  // «умолчания прежнего template.json» здесь читаются как «умолчания, с
+  // которыми тип родился»: тест держит их от случайной смены ровно так же.
+  faction: {
+    pack: "factions",
+    defaults: {
+      key: "", parent: "", aliases: [], isLore: false,
+      description: "", notes: "", bookSource: ""
+    }
   }
 };
 

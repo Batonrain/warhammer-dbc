@@ -1,0 +1,37 @@
+{
+  "name": "Несущие Слово",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": null,
+  "system": {
+    "key": "word-bearers",
+    "parent": "traitor-legions",
+    "aliases": [
+      "Word Bearers",
+      "XVII легион"
+    ],
+    "isLore": true,
+    "description": "XVII легион, первым принявший веру в Тёмных Богов.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnWordBearer01",
+  "effects": [],
+  "sort": 300000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnWordBearer01"
+}

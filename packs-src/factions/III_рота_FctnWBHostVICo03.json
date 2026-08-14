@@ -1,0 +1,34 @@
+{
+  "name": "III рота",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": null,
+  "system": {
+    "key": "word-bearers-host-6-company-3",
+    "parent": "word-bearers-host-6",
+    "aliases": [],
+    "isLore": false,
+    "description": "Рота в составе VI воинства Несущих Слово. Нижний уровень примера: как Знание такая запись не годится, поэтому isLore выключен.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnWBHostVICo03",
+  "effects": [],
+  "sort": 500000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnWBHostVICo03"
+}

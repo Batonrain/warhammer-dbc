@@ -679,6 +679,16 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
 
     super.activateListeners(html);
 
+    // ── Фракция: список «других названий» одним полем ───────────────────────
+    // system.aliases — ArrayField, и авто-submit формы строку в массив не
+    // превратит. Разбираем сами, тем же приёмом, что и прочие списки в этом
+    // файле: собрать значение и отдать одним update.
+    html.find(".faction-aliases").on("change", ev => {
+      const list = String(ev.currentTarget.value || "")
+        .split(",").map(s => s.trim()).filter(Boolean);
+      this.item.update({ "system.aliases": list });
+    });
+
     // ── Эффекты (Active Effect Foundry) — общая вкладка для всех типов ──────────
     html.find(".effect-create-btn").on("click", ev => { ev.preventDefault(); createBlankEffect(this.item); });
     html.find(".effect-name-link, .effect-edit-btn").on("click", ev => {

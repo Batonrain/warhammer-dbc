@@ -1,0 +1,36 @@
+{
+  "name": "Хаос",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": null,
+  "system": {
+    "key": "chaos",
+    "parent": "",
+    "aliases": [
+      "Chaos"
+    ],
+    "isLore": true,
+    "description": "Силы Изменения, Разложения, Крови и Излишеств и всё, что им служит. Корень дерева: правило, нацеленное сюда, достаёт любую нижестоящую фракцию.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnChaosRoot001",
+  "effects": [],
+  "sort": 100000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnChaosRoot001"
+}

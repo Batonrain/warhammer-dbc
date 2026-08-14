@@ -1,0 +1,49 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  ФРАКЦИЯ — узел дерева принадлежностей                                 --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "faction")}}
+
+<div class="item-section">
+  <div class="item-section-title">ФРАКЦИЯ</div>
+  <div class="trait-fx-hint">
+    Узел дерева принадлежностей: Хаос → Легионы-предатели → Несущие Слово →
+    VI воинство → III рота. Уровень нигде не хранится — его задаёт поле
+    «Входит в состав», и глубина считается по цепочке. Правило, нацеленное на
+    эту фракцию, срабатывает и на любую нижестоящую: Ненависть к Хаосу достаёт
+    и роту, но Ненависть к роте не достаёт весь Хаос.
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label" title="Устойчивый идентификатор: на него ссылаются другие фракции и Таланты. Переименование подписи его не трогает.">Ключ</label>
+    <input type="text" name="system.key" value="{{system.key}}"
+           class="wr-input-md" placeholder="напр. word-bearers"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label" title="Ключ вышестоящей фракции. Пусто — это корень дерева.">Входит в состав</label>
+    <input type="text" name="system.parent" value="{{system.parent}}"
+           class="wr-input-md" placeholder="ключ вышестоящей, пусто — корень"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label" title="Другие названия той же силы: по ним фракция находится при разборе книжных строк («Ecclesiarchy» и «Экклезиархия» — одна запись).">Другие названия</label>
+    <input type="text" class="faction-aliases wr-input-md"
+           value="{{join system.aliases ', '}}" placeholder="через запятую"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label"
+           title="Верхние уровни годятся как специализация Общих/Запретных/Академических Знаний, отделение — нет.">
+      <input type="checkbox" name="system.isLore" {{#if system.isLore}}checked{{/if}}/>
+      Годится как специализация Знаний
+    </label>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Источник</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Core, стр. 166"/>
+  </div>
+</div>
+
+{{/if}}
