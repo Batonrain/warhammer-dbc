@@ -41,6 +41,8 @@ import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
+import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX }
+  from "../rules/assists.mjs";
 import { specOptions, matchSpec, specDef } from "../constants/skill-specializations.mjs";
 import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
@@ -942,6 +944,13 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
         return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>${meta.abbr} — ${meta.label} (${v})</option>`;
       }).join("");
 
+      // Ассистенты (стр. 25). Список держится в замыкании диалога, а не на
+      // акторе: это выбор на ОДИН бросок, а не постоянное состояние. Правила
+      // «кто вправе помогать» и «во что это превращается в числах» лежат в
+      // module/rules/assists.mjs и проверяются без Foundry.
+      const assistMax = DEFAULT_ASSIST_MAX;
+      const assistants = [];   // { uuid, name }
+
       const dialog = new Dialog({
         title: `Проверка: ${label}`,
         content: `
@@ -959,6 +968,12 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
               <label>Модификатор:</label>
               <input id="skill-modifier" type="number" value="0"/>
             </div>
+            <div class="roll-dlg-row assist-row">
+              <label>Ассистенты:</label>
+              <span id="assist-count">0/${assistMax}</span>
+            </div>
+            <div id="assist-dropzone" class="assist-dropzone">Перетащите актора-помощника сюда</div>
+            <div id="assist-list" class="assist-list"></div>
             ${hw.html}
             ${im.html}
             ${rl.html}
@@ -989,10 +1004,15 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
                   if (cb.dataset.halve === "1") halve = true;
                 });
                 if (halve && modifier < 0) modifier = -Math.floor(Math.abs(modifier) / 2);
+                // Ассистенты: +10 к порогу за каждого идут в общий модификатор,
+                // а прибавка к степени — отдельным полем: она применяется
+                // только при успехе, и решать это должен вызывающий код.
+                modifier += assistThresholdBonus(assistants.length);
                 resolve({
                   charKey:  html.find("#skill-char-select").val(),
                   target:   parseInt(html.find("#skill-target").val())   || 0,
-                  modifier
+                  modifier,
+                  assistCount: assistants.length
                 });
               }
             }
@@ -1009,6 +1029,51 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
               (this.actor.system.characteristics[ev.currentTarget.value]?.total ?? 0) + rankBonus
             );
           });
+
+          // ── Ассистенты: зона дропа, чипы, счётчик ──────────────────────────
+          const zone  = html.find("#assist-dropzone")[0];
+          const list  = html.find("#assist-list")[0];
+          const count = html.find("#assist-count")[0];
+          const renderAssists = () => {
+            count.textContent = `${assistants.length}/${assistMax}`;
+            list.innerHTML = assistants.map(a => `
+              <div class="assist-chip" data-uuid="${a.uuid}">
+                <span>${a.name}</span>
+                <button type="button" class="assist-chip-remove" title="Убрать">✕</button>
+              </div>`).join("");
+            zone.classList.toggle("assist-dropzone-full", assistants.length >= assistMax);
+            list.querySelectorAll(".assist-chip-remove").forEach(btn => {
+              btn.addEventListener("click", () => {
+                const uuid = btn.closest(".assist-chip").dataset.uuid;
+                const i = assistants.findIndex(a => a.uuid === uuid);
+                if (i >= 0) assistants.splice(i, 1);
+                renderAssists();
+              });
+            });
+          };
+          zone.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("assist-dropzone-over"); });
+          zone.addEventListener("dragleave", () => zone.classList.remove("assist-dropzone-over"));
+          zone.addEventListener("drop", async ev => {
+            ev.preventDefault();
+            zone.classList.remove("assist-dropzone-over");
+            let data = null;
+            try { data = JSON.parse(ev.dataTransfer.getData("text/plain")); } catch { /* не наш дроп */ }
+            if (!data || (data.type !== "Actor" && data.type !== "Token")) return;
+            const uuid = data.uuid
+              || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
+              || (data.type === "Token" && data.sceneId && data.tokenId
+                    ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null);
+            if (!uuid) return;
+            const doc = await fromUuid(uuid).catch(() => null);
+            const candidate = doc?.actor ?? doc;
+            // Почему нельзя — решают правила, диалог только показывает ответ.
+            const why = assistRejection(candidate, {
+              actor: this.actor, assistants, max: assistMax, ctx: rollCtx
+            });
+            if (why) return ui.notifications.warn(why);
+            assistants.push({ uuid: candidate.uuid, name: candidate.name });
+            renderAssists();
+          });
         },
         close: () => { if (!resolved) { resolved = true; resolve(null); } }
       }, { classes: ["dialog","wh-roll-dialog-window"], width: 340 });
@@ -1021,7 +1086,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   async _rollSkill(label, baseTotal, defaultChar, rollContext = null) {
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext);
     if (!result) return;
-    const { charKey, target, modifier } = result;
+    const { charKey, target, modifier, assistCount = 0 } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(defaultChar);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
@@ -1033,8 +1098,11 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     const rv       = roll.total;
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
     const rollMode = game.settings.get("core", "rollMode");
-    const deg      = Math.floor(Math.abs(rv <= eff ? eff - rv : rv - eff) / 10) + 1;
-    const outcome  = rv <= eff
+    const success  = rv <= eff;
+    // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
+    const deg      = assistDegrees(
+      Math.floor(Math.abs(success ? eff - rv : rv - eff) / 10) + 1, assistCount, success);
+    const outcome  = success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
     const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
@@ -1050,6 +1118,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${eff}</b>
           </div>
+          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${success ? `, +${assistCount} к степени` : ""})</div>` : ""}
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           <div class="roll-outcome">${outcome}</div>
         </div>`,
@@ -1075,7 +1144,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false) {
     const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect);
     if (!result) return;
-    const { target, modifier } = result;
+    const { target, modifier, assistCount = 0 } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(charKey);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
@@ -1086,8 +1155,11 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     const roll     = await new Roll("1d100").evaluate();
     const rv       = roll.total;
     const rollMode = game.settings.get("core", "rollMode");
-    const deg      = Math.floor(Math.abs(rv <= eff ? eff - rv : rv - eff) / 10) + 1;
-    const outcome  = rv <= eff
+    const success  = rv <= eff;
+    // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
+    const deg      = assistDegrees(
+      Math.floor(Math.abs(success ? eff - rv : rv - eff) / 10) + 1, assistCount, success);
+    const outcome  = success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
     const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
@@ -1103,6 +1175,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${eff}</b>
           </div>
+          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${success ? `, +${assistCount} к степени` : ""})</div>` : ""}
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           <div class="roll-outcome">${outcome}</div>
         </div>`,
