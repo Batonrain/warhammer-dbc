@@ -1013,6 +1013,22 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipQty = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
     });
+    // Лояльность миньонов (kind:"loyalty")
+    html.find(".mech-loyalty-type").on("change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.loyaltyMinionType = ev.currentTarget.value; saveMech(arr); }
+    });
+    html.find(".mech-loyalty-op").on("change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.loyaltyOp = ev.currentTarget.value; saveMech(arr); }
+    });
+    html.find(".mech-loyalty-value").on("change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.loyaltyValue = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
+    });
     // Модификатор броска (kind:"rollmod") — навык/специализация переиспользуют
     // .grant-entry-skillref/.grant-entry-specialty/-spec-custom (см. ниже).
     html.find(".mech-rollmod-label").on("change", ev => {

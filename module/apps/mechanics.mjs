@@ -94,6 +94,17 @@
 //      flags.warhammer-dbc.grantedByItem — общий deleteItem-откат подхватывает
 //      его так же, как Черты/Таланты. Отмена диалога выбора (choice) — просто
 //      ничего не выдаётся, без ошибки.
+//    loyalty: { loyaltyMinionType:""|"human"|"beast"|"machine"|"daemon",
+//               loyaltyOp:"add"|"subtract", loyaltyValue }
+//      → ОДНОРАЗОВАЯ ПЕРМАНЕНТНАЯ правка system.loyalty.value у ВСЕХ Миньонов
+//      владельца предмета (module/apps/minions.mjs: отдельные акторы
+//      character/daemon с system.masterUuid === actor.uuid), опционально
+//      суженная одним из четырёх типов миньона книги (стр. 111-113); "" —
+//      любой тип. Как corruption/wounds — хранимое состояние, а не
+//      производное, поэтому ActiveEffect тут не годится.
+//      Отката при снятии предмета НЕТ, и это осознанный пробел: правка
+//      нескольких ЧУЖИХ акторов сразу не укладывается в откат deleteItem,
+//      который работает по флагу на предмете владельца.
 //    group: { } — ВЛОЖЕННАЯ подгруппа И/ИЛИ (поле entry.group = {id,operator,
 //      entries:[...]}, та же форма, что и группа верхнего уровня). Даёт выбор
 //      между НАБОРАМИ из нескольких записей сразу — напр. ИЛИ: [И: Болтер +
@@ -133,6 +144,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF }      from "../constants/skills.mjs";
+import { MINION_TYPES, minionsOf, loyaltyAfterChange } from "./minions.mjs";
 import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics.mjs";
 import { specOptions, findGroupEntry }        from "../constants/skill-specializations.mjs";
 import { executeItemCode }                    from "./item-script.mjs";
@@ -201,6 +213,7 @@ const KIND_LABELS = {
   movement: "Движение: Скорость", terrainIgnore: "Движение: Ландшафт (игнор)",
   fatigue: "Усталость",
   equipment: "Снаряжение",
+  loyalty: "Лояльность миньонов",
   group: "Вложенная группа",
   script: "Код"
 };
@@ -354,6 +367,8 @@ export function blankMechEntry(kind = "characteristic") {
     equipSourceUuid: "", equipSourceName: "", equipSourceImg: "",
     equipCategoryPack: "weapons", equipWeaponType: "", equipWeaponProp: "",
     equipArmorType: "", equipMaxAvailability: 5,
+    // loyalty — тип миньона ("" = любой), знак и величина (см. шапку файла)
+    loyaltyMinionType: "", loyaltyOp: "add", loyaltyValue: 1,
     // weaponProp — «Свойство» перетаскивается (weaponPropKey/Label/HasRating[2]),
     // «Новое свойство» — только при weaponPropAction:"replace".
     weaponPropAction: "add",
@@ -454,6 +469,15 @@ export function describeMechEntry(entry) {
       if (!entry.equipSourceUuid) return "Снаряжение: (выберите предмет)";
       return `Снаряжение: ${entry.equipSourceName || "?"} ×${qty}`;
     }
+    case "loyalty": {
+      const typeLabel = entry.loyaltyMinionType
+        ? (MINION_TYPES[entry.loyaltyMinionType]?.label || entry.loyaltyMinionType)
+        : "любой тип";
+      if (entry.loyaltyValue === "" || entry.loyaltyValue == null)
+        return `Лояльность: (не задано) — миньоны (${typeLabel})`;
+      const sign = entry.loyaltyOp === "subtract" ? "−" : "+";
+      return `Лояльность: ${sign}${entry.loyaltyValue} миньонам (${typeLabel})`;
+    }
     case "rollmod": {
       if (!entry.skillKey) return "Модификатор броска: (не выбран навык)";
       const def = entry.skillScope === "group" ? GROUP_SKILLS_DEF[entry.skillKey] : SKILLS_DEF[entry.skillKey];
@@ -533,6 +557,8 @@ function isEntryComplete(e) {
     case "equipment":
       if (!numOk(e.equipQty) || Number(e.equipQty) <= 0) return false;
       return e.equipMode === "choice" ? !!e.equipCategoryPack : !!e.equipSourceUuid;
+    case "loyalty":
+      return numOk(e.loyaltyValue);
     case "rollmod":
       if (!e.skillKey) return false;
       if (e.skillScope === "group" && !groupSpecOk(e)) return false;
@@ -837,6 +863,18 @@ async function applyMechEntry(actor, entry, sourceItem) {
     // при пересинхронизации по активности источника (импланты — installed/disabled).
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id, equipEntryId: entry.id } };
     await actor.createEmbeddedDocuments("Item", [data]);
+    return;
+  }
+
+  if (entry.kind === "loyalty") {
+    // Правим ЧУЖИХ акторов — миньонов владельца предмета. Ограничение по типу
+    // необязательно: пустое значение означает «любой тип».
+    const amount = (entry.loyaltyOp === "subtract" ? -1 : 1) * (Number(entry.loyaltyValue) || 0);
+    const targets = minionsOf(actor, [...(game.actors ?? [])])
+      .filter(m => !entry.loyaltyMinionType || m.system.minionType === entry.loyaltyMinionType);
+    for (const minion of targets) {
+      await minion.update({ "system.loyalty.value": loyaltyAfterChange(minion, amount) });
+    }
     return;
   }
 
@@ -1230,6 +1268,17 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     }
     out += `<input type="number" class="mech-equip-qty" min="1" step="1" placeholder="Кол-во" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipQty ?? 1)}" ${dis}/>`;
     return out;
+  }
+
+  if (ent.kind === "loyalty") {
+    const typeOpts = [`<option value="">— любой тип —</option>`]
+      .concat(Object.entries(MINION_TYPES)
+        .map(([k, d]) => optHtml(k, d.label, (ent.loyaltyMinionType || "") === k))).join("");
+    const opOpts = CORRUPTION_OP_OPTIONS
+      .map(o => optHtml(o.value, o.label, (ent.loyaltyOp || "add") === o.value)).join("");
+    return `<select class="mech-loyalty-type" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${typeOpts}</select>
+      <select class="mech-loyalty-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
+      <input type="number" class="mech-loyalty-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.loyaltyValue ?? 1)}" ${dis}/>`;
   }
 
   if (ent.kind === "rollmod") {

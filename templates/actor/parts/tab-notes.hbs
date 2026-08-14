@@ -106,7 +106,58 @@
       {{/each}}
     </tbody> </table>
     <div class="gene-seed-hint" style="padding:3px 4px 0;">Модификаторы — справка (к Базе вручную; часто «или»/«по выбору»). «Своё…» — свой вариант.</div>
-  </div><div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <textarea name="system.notes" class="notes-textarea" placeholder="Записи...">{{system.notes}}</textarea> </div>
+  </div>
+
+  {{#if isMinionCapable}}
+  <div class="notes-section-panel minion-panel">
+    <div class="panel-title">МИНЬОН <span class="gene-seed-hint" style="font-weight:400;">— если этот актор чей-то миньон (стр. 111-113)</span></div>
+    <div class="origin-grid">
+      <div class="origin-row"> <label class="origin-label">Хозяин</label>
+        <select name="system.masterUuid" class="origin-select"> <option value="">— нет —</option>
+          {{#each masterOptions as |m|}}<option value="{{m.uuid}}" {{#if m.selected}}selected{{/if}}>{{m.name}}</option>{{/each}}
+        </select> </div>
+      <div class="origin-row"> <label class="origin-label">Тип</label>
+        <select name="system.minionType" class="origin-select"> <option value="">— не выбран —</option>
+          {{#each minionTypeOptions as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}
+        </select> </div>
+      <div class="origin-row"> <label class="origin-label">Уровень</label>
+        <select name="system.minionTier" class="origin-select"> <option value="">— не выбран —</option>
+          {{#each minionTierOptions as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}
+        </select> </div>
+      <div class="origin-row"> <label class="origin-label">Лояльность</label>
+        <input type="number" name="system.loyalty.value" value="{{minionLoyaltyValue}}" style="width:4em;"/> /
+        <input type="number" name="system.loyalty.max" value="{{minionLoyaltyMax}}" style="width:4em;"/>
+        <button type="button" class="minion-loyalty-sync-btn" title="Пересчитать от характеристики Хозяина">🔄</button>
+      </div>
+    </div>
+    <div class="gene-seed-hint" style="padding:3px 4px 0;">Базовая Лояльность — значение характеристики Хозяина: F у человека, P у зверя, I у машины, W у демона.</div>
+  </div>
+  {{/if}}
+
+  {{#if canHaveMinions}}
+  <div class="notes-section-panel">
+    <div class="panel-title">МОИ МИНЬОНЫ</div>
+    {{#if myMinions.length}}
+    <table class="items-table">
+      <thead><tr><th>Имя</th><th class="col-narrow">Тип</th><th class="col-narrow">Уровень</th><th class="col-narrow">Лояльность</th></tr></thead>
+      <tbody>
+        {{#each myMinions as |m|}}
+        <tr class="item-row">
+          <td class="item-name-cell minion-open-link" data-uuid="{{m.uuid}}" title="Открыть лист">{{m.name}}</td>
+          <td class="godgift-god">{{m.typeLabel}}</td>
+          <td class="godgift-god">{{m.tierLabel}}</td>
+          <td class="godgift-god">{{m.loyaltyValue}}/{{m.loyaltyMax}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="gene-seed-hint">Миньонов нет. Привязка заводится на листе самого миньона — там выбирается Хозяин.</div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  <div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <textarea name="system.notes" class="notes-textarea" placeholder="Записи...">{{system.notes}}</textarea> </div>
   <div class="notes-section-panel"> <div class="panel-title">СТАТУС</div>
     <div class="status-checks">
       <label class="checkbox-label"> <input type="checkbox" name="system.isPsyker" {{#if system.isPsyker}}checked{{/if}}/> <span>Пси-Пробуждение</span> </label>

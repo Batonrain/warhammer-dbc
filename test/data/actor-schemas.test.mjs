@@ -36,11 +36,21 @@ const PACKS = {
 };
 
 /** Намеренные расхождения схемы с прежним template.json: поле → почему. */
+// Миньоны (стр. 111-113) — поля заведены уже после того, как template.json
+// перестал описывать поля, поэтому в снимке прежних умолчаний их нет.
+// Миньоном бывает Персонаж и Демон, Хозяином — они же и Принц Демонов, и
+// набор полей у всех троих один (module/data/actor/_creature.mjs).
+const MINION_FIELDS = {
+  masterUuid: "", minionType: "", minionTier: "", loyalty: { value: 0, max: 0 }
+};
 const DEVIATIONS = {
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
     availability: 0
-  }
+  },
+  character:   { ...MINION_FIELDS },
+  daemon:      { ...MINION_FIELDS },
+  demonPrince: { ...MINION_FIELDS }
 };
 
 /**

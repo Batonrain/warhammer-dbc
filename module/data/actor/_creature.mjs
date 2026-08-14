@@ -136,6 +136,13 @@ export function creatureSchema({ granted = false } = {}) {
     fate:      pool("Судьба"),
     deadMight: pool("Мощь мёртвых"),
     fatigue:   pool("Усталость"),
+    // Миньоны (стр. 111-113). Поля общие у всех троих намеренно: миньоном
+    // бывает Персонаж и Демон, Хозяином — они же и Принц Демонов, а отдельного
+    // типа актора у миньона нет (module/apps/minions.mjs).
+    masterUuid: str("", "Хозяин"),
+    minionType: str("", "Тип миньона"),
+    minionTier: str("", "Уровень миньона"),
+    loyalty:    pool("Лояльность"),
     insanity:   new SchemaField({ value: num(0, "Значение"), threshold: num(0, "Порог") }, { label: "Безумие" }),
     corruption: new SchemaField({ value: num(0, "Значение"), threshold: num(0, "Порог") }, { label: "Порча" }),
     characteristics: new SchemaField(charFields, { label: "Характеристики" }),

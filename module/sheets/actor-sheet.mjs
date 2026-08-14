@@ -25,6 +25,7 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners } from "./tabs/gear.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
+import { minionsContext, activateMinionListeners } from "../apps/minions.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
@@ -122,6 +123,11 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     // character-context.mjs — самого персонажа. Здесь остаётся только то, что
     // знает окно, а не актор.
     Object.assign(context, buildGetData(this.actor), characterContext(this.actor));
+
+    // Миньоны (стр. 111-113): панель на вкладке ЗАПИСИ, общая с листами Демона
+    // и Принца Демонов. Список акторов мира передаём сюда — сам расчёт про
+    // game ничего не знает и проверяется без Foundry.
+    Object.assign(context, minionsContext(this.actor, [...(game.actors ?? [])]));
 
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
     context.combatStanceCollapsed = !!this._combatCollapse?.stance;
@@ -690,6 +696,11 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     // ── Стремления и Пути Аэльдари ─────────────────────────────────────────
     activateAspirationListeners(html, this.actor);
     activatePathListeners(html, this.actor);
+
+    // ── Миньоны (стр. 111-113) ─────────────────────────────────────────────
+    // Панель на вкладке ЗАПИСИ, листы Демона и Принца Демонов получают её
+    // вместе с этим super.activateListeners().
+    activateMinionListeners(html, this.actor);
 
     // ── Ритуалы (стр. 393-425) ─────────────────────────────────────────────
     activateRitualListeners(html, this.actor);
