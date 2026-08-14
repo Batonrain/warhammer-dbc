@@ -450,6 +450,20 @@ const TYPES = {
       isSpecialRating: false, equipped: false, status: "inactive",
       quality: "common", availability: 2, weight: 0, drukhari: false
     }
+  },
+
+  // ── Ритуалы (wdbc-5ed) ─────────────────────────────────────────────────────
+  ritual: {
+    // Пак заводится следующей задачей (wdbc-qg1) — пока сохранность спрашивать
+    // не у чего, проверяются только умолчания.
+    pack: null,
+    defaults: {
+      description: "", notes: "", source: "", bookSource: "",
+      ritualType: "summon", record: 0, assistMin: 0, assistMax: 0,
+      procedure: "", result: "", cost: "", failureCost: "",
+      testSkillScope: "", testSkillKey: "", testSpecialty: "",
+      testChar: "int", testMod: 0
+    }
   }
 };
 

@@ -20,6 +20,7 @@ export const ITEM_TYPES = {
   techPower:    "Техносила",
   navigatorPower: "Сила навигатора",
   mentalDisorder: "Ментальное расстройство",
+  ritual:         "Ритуал",
   vehicleGear:    "Оснащение техники",
   vehicleTrait:   "Черта техники",
   smallCraft:     "Малое судно (МЛА)"
