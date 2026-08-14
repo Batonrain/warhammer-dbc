@@ -73,7 +73,15 @@ class StringFieldStub extends DataFieldStub {
 }
 
 class NumberFieldStub extends DataFieldStub {
-  get initial() { return this.options.initial ?? 0; }
+  // `?? 0` здесь нельзя: у nullable-поля умолчание null — осмысленное значение,
+  // и оно означает «поля нет». Так отличают щит от прочего оружия
+  // (system.shieldAP, см. combat/hand-shield.mjs).
+  get initial() { return "initial" in this.options ? this.options.initial : 0; }
+  clean(value) {
+    if (value === undefined) return this.initial;
+    if (value === null) return this.options.nullable ? null : this.cast(value);
+    return this.cast(value);
+  }
   cast(value) { return Number(value); }
 }
 

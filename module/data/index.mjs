@@ -18,6 +18,9 @@ import { ImplantData }        from "./item/implant.mjs";
 import { WeaponModData }      from "./item/weapon-mod.mjs";
 import { ArmorModData }       from "./item/armor-mod.mjs";
 import { ForcefieldData }     from "./item/forcefield.mjs";
+import { WeaponData }         from "./item/weapon.mjs";
+import { AmmoData }           from "./item/ammo.mjs";
+import { ArmorData }          from "./item/armor.mjs";
 
 /** Тип предмета → класс схемы. Раскладывается в CONFIG.Item.dataModels в init. */
 export const ITEM_DATA_MODELS = {
@@ -31,5 +34,9 @@ export const ITEM_DATA_MODELS = {
   implant:        ImplantData,
   weaponMod:      WeaponModData,
   armorMod:       ArmorModData,
-  forcefield:     ForcefieldData
+  forcefield:     ForcefieldData,
+  // Оружие и броня (wdbc-ff4.1.2)
+  weapon:         WeaponData,
+  ammo:           AmmoData,
+  armor:          ArmorData
 };

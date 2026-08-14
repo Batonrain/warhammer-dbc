@@ -134,6 +134,63 @@ const TYPES = {
       drukhari: false
     }
   },
+  // ── Оружие и броня (wdbc-ff4.1.2) ──────────────────────────────────────────
+  weapon: {
+    pack: ["weapons", "vehicle-weapons"],
+    defaults: {
+      description: "", notes: "", rangeBands: [], offProfile: {}, gripProps2h: [],
+      corEffects: [], weaponClass: "melee", weaponType: "laser", range: 0,
+      balance: 0, grips: "", profileLabel: "", profiles: [], reload: "1",
+      magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
+      damage: "", damageType: "impact", penetration: 0, quality: "common",
+      availability: 0, weight: 0, attackBonus: 0, special: "", equipped: false,
+      loadedAmmoId: "", weaponProps: [], needsRecharge: false, legacyWeapon: false,
+      sacred: false,
+      daemonWeapon: {
+        bound: false, god: "", demonName: "", binding: 0, demonWb: 0, demonInf: 0,
+        subdued: false, runic: false, properties: [], preProps: [], preDamage: "", prePen: 0
+      },
+      vehicleMount: {
+        isMounted: false, operator: "gunner", stationId: "", mount: "turret",
+        hArc: "360°", vArc: "", standard: false, reloads: 10
+      },
+      drukhari: false,
+      // Ручной щит — рукопашное оружие, дающее AP на прикрываемые зоны
+      // (combat/hand-shield.mjs). В template.json объявлены не были.
+      // shieldAP именно null, а не 0: сама «щитовость» определяется наличием
+      // поля (`s.shieldAP != null` в sheet-helpers.mjs и isHandShield),
+      // и умолчание 0 сделало бы щитом всё оружие подряд.
+      shieldAP: null, shieldZones: "", shieldForm: ""
+    }
+  },
+  ammo: {
+    pack: "ammunition",
+    defaults: {
+      description: "", notes: "", weaponTypes: [], ammoCategory: "bullets",
+      rarity: 0, quantity: 0, weight: 0, availability: 0, attackMod: 0,
+      damageMod: 0, damageDiceMod: 0, damageTypeOverride: "", penetrationMod: 0,
+      rangeMod: 0, rangeMultiplier: 1, special: "", properties: [], condMods: [],
+      drukhari: false
+    }
+  },
+  armor: {
+    pack: "armor",
+    defaults: {
+      description: "", notes: "", armorType: "simple", stacks: false,
+      maxAgility: 100, propRatings: {}, apSecond: {}, equipped: false,
+      head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
+      quality: "common", availability: 0, weight: 0, properties: [],
+      strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
+      history: {
+        table: "", key: "", roll: 0, name: "", desc: "", effect: "", choice: "",
+        zones: {},
+        second: { table: "", key: "", roll: 0, name: "", desc: "", effect: "", choice: "" }
+      },
+      // Текст особенностей комплекта — заполнен у 65 предметов пака, а в
+      // template.json объявлен не был.
+      special: ""
+    }
+  },
   forcefield: {
     pack: "shields",
     defaults: {
