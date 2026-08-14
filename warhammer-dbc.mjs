@@ -62,7 +62,7 @@ import { registerHooks }              from "./module/hooks.mjs";
 import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
 import { GEAR_LIBRARY }               from "./module/constants/gear-library.mjs";
 import { TOOLS_LIBRARY }              from "./module/constants/tools-library.mjs";
-import { hasLegacyEffects, legacyEffectsToChanges } from "./module/constants/effect-keys.mjs";
+import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { IMPLANT_LIBRARY }            from "./module/constants/implants.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
 import { computeShipIdentity }        from "./module/constants/ship-tokens.mjs";
@@ -1125,98 +1125,10 @@ Hooks.on("applyActiveEffect", (targetDoc, change) => {
 });
 
 // ─── Миграция: system.effects.* существующих предметов → embedded ActiveEffect ──
-// Разово (по флагу на каждом предмете — устойчиво к перезапускам и не трогает
-// уже мигрированное) переводит старые числовые эффекты в реальный, работающий
-// Active Effect — единственный источник правды для этих 11 типов отныне.
-// Сам system.effects НЕ стираем (легаси/справка), только перестаём его читать
-// в prepareDerivedData и показывать для редактирования (см. партиалы листов).
-const MIGRATE_EFFECT_TYPES = new Set([
-  "talent", "trait", "implant", "mutation", "psychicPower", "techPower",
-  "homeworld", "divination", "armorMod", "weaponMod"
-]);
-const MIGRATE_COMPENDIA = [
-  "warhammer-dbc.traits", "warhammer-dbc.talents", "warhammer-dbc.implants",
-  "warhammer-dbc.mutations", "warhammer-dbc.psychic-powers", "warhammer-dbc.tech-powers",
-  "warhammer-dbc.homeworlds", "warhammer-dbc.divinations",
-  "warhammer-dbc.armor-mods", "warhammer-dbc.weapon-mods"
-];
-
-async function _migrateItemEffects(item) {
-  if (!MIGRATE_EFFECT_TYPES.has(item.type)) return false;
-  if (item.getFlag("warhammer-dbc", "migratedEffect")) return false;
-  const fx = item.system?.effects;
-  if (!hasLegacyEffects(fx)) {
-    // Нечего переносить — всё равно ставим флаг, чтобы не пересканировать
-    // этот предмет на каждом следующем перезапуске.
-    await item.setFlag("warhammer-dbc", "migratedEffect", true);
-    return false;
-  }
-  const changes = legacyEffectsToChanges(fx);
-  await item.createEmbeddedDocuments("ActiveEffect", [{
-    name: `${item.name} (перенесено)`, icon: item.img,
-    system: { changes }
-  }]);
-  await item.setFlag("warhammer-dbc", "migratedEffect", true);
-  return true;
-}
-
-// Починка бага ранней версии миграции: charValueBonuses (обычные +X к
-// характеристике — Родные миры, импланты и т.п.) переводились в
-// system.characteristics.<стат>.value — поля, которого не существует ни в
-// схеме, ни в коде листа (сравните с prepareDerivedData: считается .total).
-// Эффект тихо создавался, но ни на что не влиял. Верный путь — .total, он
-// пересчитывается заново из base/advance/... каждый цикл, поэтому
-// "final"-эффект безопасно ложится поверх (тот же приём, что и у .bonus).
-// Идемпотентно само по себе — почищенных .value-ключей просто не останется.
-async function _repairCharValueEffectKeys(item) {
-  let fixed = 0;
-  for (const effect of item.effects ?? []) {
-    const changes = effect.system?.changes ?? [];
-    if (!changes.some(c => /^system\.characteristics\.\w+\.value$/.test(c.key))) continue;
-    const newChanges = changes.map(c => /^system\.characteristics\.\w+\.value$/.test(c.key)
-      ? { ...c, key: c.key.replace(/\.value$/, ".total") } : c);
-    await effect.update({ "system.changes": newChanges });
-    fixed++;
-  }
-  return fixed;
-}
-
+// Сама миграция — в module/migrations/item-effects.mjs (проверяется без Foundry).
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  let migrated = 0, repaired = 0;
-
-  // Акторы мира — каждый их предмет с непустыми старыми эффектами.
-  for (const actor of game.actors) {
-    for (const item of actor.items) {
-      if (await _migrateItemEffects(item)) migrated++;
-      repaired += await _repairCharValueEffectKeys(item);
-    }
-  }
-
-  // Компендиумы библиотек — та же логика, с разблокировкой пака.
-  for (const packId of MIGRATE_COMPENDIA) {
-    const pack = game.packs.get(packId);
-    if (!pack) continue;
-    try {
-      if (pack.locked) await pack.configure({ locked: false });
-      const docs = await pack.getDocuments();
-      for (const doc of docs) {
-        if (await _migrateItemEffects(doc)) migrated++;
-        repaired += await _repairCharValueEffectKeys(doc);
-      }
-    } catch (e) {
-      console.error(`Warhammer DBC | Миграция эффектов '${packId}':`, e);
-    }
-  }
-
-  if (migrated) {
-    console.log(`Warhammer DBC | Миграция эффектов: перенесено ${migrated} предм. в Active Effect.`);
-    ui.notifications?.info(`Warhammer DBC: перенесено в новую систему эффектов — ${migrated}.`);
-  }
-  if (repaired) {
-    console.log(`Warhammer DBC | Починка эффектов: исправлено ${repaired} эффект(ов) с ключом .value → .total.`);
-    ui.notifications?.info(`Warhammer DBC: исправлены неработавшие бонусы характеристик — ${repaired}.`);
-  }
+  await migrateAllItemEffects();
 });
 
 /* ═══════════════ ДВУПРОФИЛЬНЫЕ ПРЕДМЕТЫ (снаряжение + оружие) ═══════════════

@@ -51,7 +51,7 @@ export function getArmorModEffects(actor, armor) {
   };
   for (const mod of getInstalledArmorMods(actor, armor)) {
     // Мигрированные моды несут эти же AP как embedded ActiveEffect
-    // (см. warhammer-dbc.mjs, _migrateItemEffects) — не считаем дважды.
+    // (см. migrations/item-effects.mjs) — не считаем дважды.
     const e = mod.getFlag("warhammer-dbc", "migratedEffect") ? {} : (mod.system.effects || {});
     fx.apAll  += e.apAll  || 0;
     fx.apHead += e.apHead || 0;
