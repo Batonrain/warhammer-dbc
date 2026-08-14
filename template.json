@@ -1883,36 +1883,7 @@
       },
       "drukhari": false
     },
-    "weaponMod": {
-      "description": "",
-      "notes": "",
-      "category": "ranged",
-      "modGroup": "other",
-      "requirement": "",
-      "installedOn": "",
-      "weight": 0,
-      "availability": 0,
-      "quality": "common",
-      "effects": {
-        "attackMod": 0,
-        "damageMod": 0,
-        "penMod": 0,
-        "rangeMod": 0,
-        "rangeMult": 1,
-        "clipMod": 0,
-        "clipMult": 1,
-        "rofSemiMod": 0,
-        "rofFullMod": 0,
-        "reliabilityMod": 0,
-        "balanceMod": 0,
-        "weightPct": 0,
-        "addProps": [],
-        "removeProps": [],
-        "mechAddProps": [],
-        "mechRemoveProps": []
-      },
-      "drukhari": false
-    },
+    "weaponMod": {},
     "ammo": {
       "description": "",
       "notes": "",
@@ -1977,80 +1948,9 @@
         }
       }
     },
-    "armorMod": {
-      "description": "",
-      "notes": "",
-      "category": "armor",
-      "modGroup": "general",
-      "requirement": "",
-      "installedOn": "",
-      "weight": 0,
-      "availability": 0,
-      "quality": "common",
-      "activatable": false,
-      "active": false,
-      "effects": {
-        "apAll": 0,
-        "apHead": 0,
-        "apBody": 0,
-        "apArms": 0,
-        "apLegs": 0,
-        "apVsEnergy": 0,
-        "apVsImpact": 0,
-        "apVsRending": 0,
-        "apVsBlast": 0,
-        "maxAgilityMod": 0,
-        "addProps": [],
-        "charBonuses": []
-      },
-      "drukhari": false
-    },
-    "forcefield": {
-      "description": "",
-      "notes": "",
-      "shieldNature": "technological",
-      "shieldType": "dome",
-      "ratingMin": 1,
-      "ratingMax": 35,
-      "overloadThreshold": 10,
-      "currentRating": 0,
-      "isSpecialRating": false,
-      "equipped": false,
-      "status": "inactive",
-      "quality": "common",
-      "availability": 2,
-      "weight": 0,
-      "drukhari": false
-    },
-    "gear": {
-      "description": "",
-      "notes": "",
-      "quantity": 1,
-      "weight": 0,
-      "availability": 0,
-      "quality": "common",
-      "gearCategory": "misc",
-      "linkedWeapon": "",
-      "worn": "",
-      "effect": "",
-      "reminder": "",
-      "qualityEffects": {
-        "poor": "",
-        "good": "",
-        "best": ""
-      },
-      "isRig": false,
-      "rig": {
-        "comfort": "normal",
-        "backSlot": false,
-        "slots": [],
-        "magLocks": []
-      },
-      "itemSize": "",
-      "bonuses": [],
-      "drukhari": false,
-      "bookSource": ""
-    },
+    "armorMod": {},
+    "forcefield": {},
+    "gear": {},
     "drug": {
       "description": "",
       "notes": "",
@@ -2149,34 +2049,8 @@
         "charDamageAmount": 0
       }
     },
-    "tool": {
-      "description": "",
-      "notes": "",
-      "quantity": 1,
-      "weight": 0,
-      "availability": 0,
-      "quality": "common",
-      "toolCategory": "general",
-      "linkedWeapon": "",
-      "effect": "",
-      "reminder": "",
-      "qualityEffects": {
-        "poor": "",
-        "good": "",
-        "best": ""
-      },
-      "bonuses": [],
-      "drukhari": false
-    },
-    "cybernetic": {
-      "description": "",
-      "notes": "",
-      "installed": "",
-      "linkedWeapon": "",
-      "quality": "common",
-      "availability": 0,
-      "weight": 0
-    },
+    "tool": {},
+    "cybernetic": {},
     "talent": {
       "description": "",
       "notes": "",
@@ -2250,44 +2124,7 @@
       "effect": ""
     },
     "trait": {},
-    "implant": {
-      "description": "",
-      "notes": "",
-      "category": "mechanicus",
-      "quality": "common",
-      "effect": "",
-      "installed": "",
-      "geneSeedOrder": 0,
-      "linkedWeapon": "",
-      "bookSource": "",
-      "effects": {
-        "charBonusStat": "",
-        "charBonusValue": 0,
-        "charBonuses": [],
-        "charValueBonuses": [],
-        "armourAll": 0,
-        "apHead": 0,
-        "apBody": 0,
-        "apArms": 0,
-        "apLegs": 0,
-        "fearRating": 0,
-        "sizeMod": 0,
-        "initMod": 0,
-        "speedMod": 0
-      },
-      "shield": {
-        "enabled": false,
-        "shieldNature": "technological",
-        "shieldType": "deflector",
-        "ratingMin": 1,
-        "ratingMax": 10,
-        "overloadThreshold": 0,
-        "isSpecialRating": false,
-        "currentRating": 0,
-        "equipped": false,
-        "status": "inactive"
-      }
-    },
+    "implant": {},
     "psychicPower": {
       "description": "",
       "notes": "",

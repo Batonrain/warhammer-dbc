@@ -11,7 +11,7 @@
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
     "installedOn": "",
     "weight": 0,
-    "availability": "5",
+    "availability": 5,
     "quality": "common",
     "activatable": false,
     "active": false,

@@ -1,0 +1,50 @@
+// module/data/item/armor-mod.mjs
+// ════════════════════════════════════════════════════════════════════════════
+//  МОДИФИКАЦИЯ БРОНИ и СИСТЕМА СИЛОВОЙ БРОНИ (category="powerSystem").
+//  Действует, пока установлена на надетый носитель, а включаемая — ещё и пока
+//  включена (см. combat/armor-mods.mjs и isItemActive в apps/effects.mjs).
+//
+//  `effects` перечислены схемой, а не свободным объектом: их считает
+//  getArmorModEffects, и в ActiveEffect они не переезжают — AP модификации
+//  складывается в AP её носителя ДО сравнения броней между собой, а потолок
+//  Ловкости не считает пока никто (wdbc-b3m, wdbc-fde). Исключение —
+//  apVs*: они уже уехали в эффекты (wdbc-1j8), но поля остаются как легаси
+//  у непомеченных предметов.
+// ════════════════════════════════════════════════════════════════════════════
+
+export class ArmorModData extends foundry.abstract.TypeDataModel {
+
+  /** @override */
+  static defineSchema() {
+    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const ap = label => new NumberField({ initial: 0, nullable: false, label });
+    return {
+      description:  new StringField({ initial: "", label: "Описание" }),
+      notes:        new StringField({ initial: "", label: "Заметки" }),
+      category:     new StringField({ initial: "armor", label: "Категория" }),
+      modGroup:     new StringField({ initial: "general", label: "Группа" }),
+      requirement:  new StringField({ initial: "", label: "Требование" }),
+      installedOn:  new StringField({ initial: "", label: "Установлена на" }),
+      weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
+      availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
+      quality:      new StringField({ initial: "common", label: "Качество" }),
+      activatable:  new BooleanField({ initial: false, label: "Включаемая" }),
+      active:       new BooleanField({ initial: false, label: "Включена" }),
+      effects: new SchemaField({
+        apAll:         ap("AP: все зоны"),
+        apHead:        ap("AP: голова"),
+        apBody:        ap("AP: тело"),
+        apArms:        ap("AP: руки"),
+        apLegs:        ap("AP: ноги"),
+        apVsEnergy:    ap("AP против энергетического"),
+        apVsImpact:    ap("AP против ударного"),
+        apVsRending:   ap("AP против разрывного"),
+        apVsBlast:     ap("AP против взрывного"),
+        maxAgilityMod: ap("Потолок Ловкости"),
+        addProps:     new ArrayField(new ObjectField(), { label: "Добавляет свойства" }),
+        charBonuses:  new ArrayField(new ObjectField(), { label: "Бонусы характеристик" })
+      }, { label: "Механика" }),
+      drukhari:     new BooleanField({ initial: false, label: "Друкхари" })
+    };
+  }
+}

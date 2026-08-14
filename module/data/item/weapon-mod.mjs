@@ -1,0 +1,49 @@
+// module/data/item/weapon-mod.mjs
+// ════════════════════════════════════════════════════════════════════════════
+//  МОДИФИКАЦИЯ ОРУЖИЯ — прицел, глушитель, удлинённый ствол и т.п.
+//  Действует, пока установлена на носитель (installedOn = id оружия).
+//
+//  `effects` здесь, в отличие от Черт и имплантов, — НЕ уходящий формат:
+//  правки профиля оружия (меткость, урон, дальность, ёмкость) в ActiveEffect
+//  не переезжают, их считает разбор оружия. Поэтому ключи перечислены схемой:
+//  опечатка в пути дала бы тихий ноль.
+// ════════════════════════════════════════════════════════════════════════════
+
+export class WeaponModData extends foundry.abstract.TypeDataModel {
+
+  /** @override */
+  static defineSchema() {
+    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const props = label => new ArrayField(new ObjectField(), { label });
+    return {
+      description:  new StringField({ initial: "", label: "Описание" }),
+      notes:        new StringField({ initial: "", label: "Заметки" }),
+      category:     new StringField({ initial: "ranged", label: "Категория" }),
+      modGroup:     new StringField({ initial: "other", label: "Группа" }),
+      requirement:  new StringField({ initial: "", label: "Требование" }),
+      installedOn:  new StringField({ initial: "", label: "Установлена на" }),
+      weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
+      availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
+      quality:      new StringField({ initial: "common", label: "Качество" }),
+      effects: new SchemaField({
+        attackMod:      new NumberField({ initial: 0, nullable: false, label: "Меткость" }),
+        damageMod:      new NumberField({ initial: 0, nullable: false, label: "Урон" }),
+        penMod:         new NumberField({ initial: 0, nullable: false, label: "Пробитие" }),
+        rangeMod:       new NumberField({ initial: 0, nullable: false, label: "Дальность" }),
+        rangeMult:      new NumberField({ initial: 1, nullable: false, label: "Дальность, множитель" }),
+        clipMod:        new NumberField({ initial: 0, nullable: false, label: "Ёмкость" }),
+        clipMult:       new NumberField({ initial: 1, nullable: false, label: "Ёмкость, множитель" }),
+        rofSemiMod:     new NumberField({ initial: 0, nullable: false, label: "Очередь, короткая" }),
+        rofFullMod:     new NumberField({ initial: 0, nullable: false, label: "Очередь, полная" }),
+        reliabilityMod: new NumberField({ initial: 0, nullable: false, label: "Надёжность" }),
+        balanceMod:     new NumberField({ initial: 0, nullable: false, label: "Баланс" }),
+        weightPct:      new NumberField({ initial: 0, nullable: false, label: "Вес, %" }),
+        addProps:        props("Добавляет свойства"),
+        removeProps:     props("Снимает свойства"),
+        mechAddProps:    props("Добавляет свойства (механикум)"),
+        mechRemoveProps: props("Снимает свойства (механикум)")
+      }, { label: "Механика" }),
+      drukhari:     new BooleanField({ initial: false, label: "Друкхари" })
+    };
+  }
+}

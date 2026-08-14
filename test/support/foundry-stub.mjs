@@ -92,6 +92,39 @@ class ObjectFieldStub extends DataFieldStub {
 }
 
 /**
+ * Вложенная схема: своё поле на каждый ключ. В отличие от ObjectField ключи
+ * перечислены, и незаявленный до документа не доедет — ради этого схемы и
+ * заводятся. Тип элементов ArrayField заглушка не разбирает: она проверяет
+ * структуру и умолчания, а не валидацию (см. шапку файла).
+ */
+class SchemaFieldStub extends DataFieldStub {
+  constructor(fields = {}, options = {}) { super(options); this.fields = fields; }
+
+  get initial() {
+    const out = {};
+    for (const [key, field] of Object.entries(this.fields)) out[key] = field.initial;
+    return out;
+  }
+
+  clean(value) {
+    const out = {};
+    for (const [key, field] of Object.entries(this.fields)) out[key] = field.clean(value?.[key]);
+    return out;
+  }
+}
+
+/** Список: хранится целиком, умолчание — пустой. */
+class ArrayFieldStub extends DataFieldStub {
+  constructor(element, options = {}) { super(options); this.element = element; }
+  get initial() {
+    const init = this.options.initial;
+    if (typeof init === "function") return init();
+    return structuredClone(init ?? []);
+  }
+  clean(value) { return Array.isArray(value) ? structuredClone(value) : this.initial; }
+}
+
+/**
  * Тип данных документа. Настоящий `TypeDataModel` при инициализации прогоняет
  * исходник через `migrateData`, потом через очистку полей — тот же порядок
  * повторён здесь: иначе миграция проверялась бы в отрыве от схемы.
@@ -137,7 +170,9 @@ globalThis.foundry = {
       StringField:  StringFieldStub,
       NumberField:  NumberFieldStub,
       BooleanField: BooleanFieldStub,
-      ObjectField:  ObjectFieldStub
+      ObjectField:  ObjectFieldStub,
+      SchemaField:  SchemaFieldStub,
+      ArrayField:   ArrayFieldStub
     },
     regionBehaviors: { RegionBehaviorType: class {} }
   }

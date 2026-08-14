@@ -11,7 +11,7 @@
     "requirement": "Bolt оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
     "installedOn": "",
     "weight": 0,
-    "availability": "2",
+    "availability": 2,
     "quality": "common",
     "effects": {
       "attackMod": 0,

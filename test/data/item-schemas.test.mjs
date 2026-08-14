@@ -49,13 +49,107 @@ const TYPES = {
       }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
+  },
+
+  // ── Снаряжение и модификации (wdbc-ff4.1.1) ────────────────────────────────
+  gear: {
+    pack: "gear",
+    defaults: {
+      description: "", notes: "", quantity: 1, weight: 0, availability: 0,
+      quality: "common", gearCategory: "misc", linkedWeapon: "", worn: "",
+      effect: "", reminder: "", qualityEffects: { poor: "", good: "", best: "" },
+      isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
+      itemSize: "", bonuses: [], drukhari: false, bookSource: "",
+      // В template.json объявлено не было, но лежит у 20 предметов пака —
+      // след раскладки по папкам компендиума при импорте. Кодом не читается;
+      // объявлено, чтобы правка предмета в игре его не стирала.
+      folderPath: []
+    }
+  },
+  tool: {
+    pack: "tools",
+    defaults: {
+      description: "", notes: "", quantity: 1, weight: 0, availability: 0,
+      quality: "common", toolCategory: "general", linkedWeapon: "", effect: "",
+      reminder: "", qualityEffects: { poor: "", good: "", best: "" },
+      bonuses: [], drukhari: false
+    }
+  },
+  cybernetic: {
+    // Предметов этого типа в паках нет — сохранять нечего, проверяются
+    // только умолчания.
+    pack: null,
+    defaults: {
+      description: "", notes: "", installed: "", linkedWeapon: "",
+      quality: "common", availability: 0, weight: 0
+    }
+  },
+  implant: {
+    pack: "implants",
+    defaults: {
+      description: "", notes: "", category: "mechanicus", quality: "common",
+      effect: "", installed: "", geneSeedOrder: 0, linkedWeapon: "", bookSource: "",
+      effects: {
+        charBonuses: [], charValueBonuses: [], armourAll: 0,
+        apHead: 0, apBody: 0, apArms: 0, apLegs: 0,
+        fearRating: 0, sizeMod: 0, initMod: 0, speedMod: 0
+      },
+      shield: {
+        enabled: false, shieldNature: "technological", shieldType: "deflector",
+        ratingMin: 1, ratingMax: 10, overloadThreshold: 0, isSpecialRating: false,
+        currentRating: 0, equipped: false, status: "inactive"
+      },
+      // Свойства встроенного оружия импланта — правятся на листе предмета
+      // (item-sheet.mjs), а в template.json объявлены не были.
+      weaponProps: []
+    },
+    migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
+  },
+  weaponMod: {
+    pack: "weapon-mods",
+    defaults: {
+      description: "", notes: "", category: "ranged", modGroup: "other",
+      requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      effects: {
+        attackMod: 0, damageMod: 0, penMod: 0, rangeMod: 0, rangeMult: 1,
+        clipMod: 0, clipMult: 1, rofSemiMod: 0, rofFullMod: 0, reliabilityMod: 0,
+        balanceMod: 0, weightPct: 0,
+        addProps: [], removeProps: [], mechAddProps: [], mechRemoveProps: []
+      },
+      drukhari: false
+    }
+  },
+  armorMod: {
+    // Модификации брони лежат в двух паках: обычные и Системы силовой брони.
+    pack: ["armor-mods", "armour-systems"],
+    defaults: {
+      description: "", notes: "", category: "armor", modGroup: "general",
+      requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      activatable: false, active: false,
+      effects: {
+        apAll: 0, apHead: 0, apBody: 0, apArms: 0, apLegs: 0,
+        apVsEnergy: 0, apVsImpact: 0, apVsRending: 0, apVsBlast: 0,
+        maxAgilityMod: 0, addProps: [], charBonuses: []
+      },
+      drukhari: false
+    }
+  },
+  forcefield: {
+    pack: "shields",
+    defaults: {
+      description: "", notes: "", shieldNature: "technological", shieldType: "dome",
+      ratingMin: 1, ratingMax: 35, overloadThreshold: 10, currentRating: 0,
+      isSpecialRating: false, equipped: false, status: "inactive",
+      quality: "common", availability: 2, weight: 0, drukhari: false
+    }
   }
 };
 
 const PACKS_SRC = path.resolve(import.meta.dirname, "../../packs-src");
 
-/** Документы пака: по файлу на предмет, папки — это папки компендиума. */
+/** Документы пака (или нескольких): по файлу на предмет, папки — папки компендиума. */
 function packDocuments(pack, type) {
+  if (Array.isArray(pack)) return pack.flatMap(p => packDocuments(p, type));
   const out = [];
   const walk = dir => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -96,7 +190,9 @@ describe("типы данных предметов", () => {
         expect(new Model({}).toObject()).toEqual(defaults);
       });
 
-      it("документы пака проходят через схему без потерь", () => {
+      // Тип без предметов в паках (cybernetic) проверять нечем — сохранность
+      // спрашивается у настоящих данных, а их нет.
+      it.skipIf(!pack)("документы пака проходят через схему без потерь", () => {
         const docs = packDocuments(pack, type);
         expect(docs.length).toBeGreaterThan(0);
 

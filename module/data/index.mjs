@@ -11,10 +11,25 @@
 import { WeaponPropertyData } from "./item/weapon-property.mjs";
 import { AspirationData }     from "./item/aspiration.mjs";
 import { TraitData }          from "./item/trait.mjs";
+import { GearData }           from "./item/gear.mjs";
+import { ToolData }           from "./item/tool.mjs";
+import { CyberneticData }     from "./item/cybernetic.mjs";
+import { ImplantData }        from "./item/implant.mjs";
+import { WeaponModData }      from "./item/weapon-mod.mjs";
+import { ArmorModData }       from "./item/armor-mod.mjs";
+import { ForcefieldData }     from "./item/forcefield.mjs";
 
 /** Тип предмета → класс схемы. Раскладывается в CONFIG.Item.dataModels в init. */
 export const ITEM_DATA_MODELS = {
   weaponProperty: WeaponPropertyData,
   aspiration:     AspirationData,
-  trait:          TraitData
+  trait:          TraitData,
+  // Снаряжение и модификации (wdbc-ff4.1.1)
+  gear:           GearData,
+  tool:           ToolData,
+  cybernetic:     CyberneticData,
+  implant:        ImplantData,
+  weaponMod:      WeaponModData,
+  armorMod:       ArmorModData,
+  forcefield:     ForcefieldData
 };
