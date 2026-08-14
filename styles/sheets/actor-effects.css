@@ -208,6 +208,37 @@
 }
 .warhammer-dbc .trait-add-btn:hover { background: rgba(255,255,255,0.22); }
 
+/* ── Ритуалы (стр. 393-425) ───────────────────────────────── */
+/* Кнопка «＋» повторяет черты — отдельного вида у раздела нет. */
+.warhammer-dbc .ritual-add-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.30); border-radius: 2px;
+  cursor: pointer; font-size: 0.9em; line-height: 1; padding: 0;
+  color: var(--wh-text-light); margin-left: 8px;
+  transition: background 0.12s; flex-shrink: 0;
+}
+.warhammer-dbc .ritual-add-btn:hover { background: rgba(255,255,255,0.22); }
+
+.warhammer-dbc .rituals-table .col-narrow { width: 64px; text-align: center; }
+.warhammer-dbc .ritual-row-actions { width: 28px; text-align: center; }
+
+.warhammer-dbc .ritual-name-link {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  transition: color 0.12s;
+}
+.warhammer-dbc .ritual-name-link:hover { color: var(--wh-red, #8b0000); }
+
+.warhammer-dbc .ritual-remove-btn {
+  width: 18px; height: 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--wh-red); color: #fff; border: none; border-radius: 50%;
+  cursor: pointer; font-size: 0.78em; line-height: 1; padding: 0;
+}
+.warhammer-dbc .ritual-remove-btn:hover { background: #b02020; }
+
 .warhammer-dbc .traits-table .col-narrow { width: 64px; text-align: center; }
 .warhammer-dbc .trait-rating-cell { text-align: center; font-weight: 700; color: var(--wh-red, #8b1a1a); white-space: nowrap; }
 .warhammer-dbc .trait-fx-cell { font-size: 0.92em; color: #3a5a1a; }

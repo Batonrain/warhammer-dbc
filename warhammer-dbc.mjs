@@ -104,6 +104,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/armor.hbs",
     "systems/warhammer-dbc/templates/item/parts/gear.hbs",
     "systems/warhammer-dbc/templates/item/parts/talent.hbs",
+    "systems/warhammer-dbc/templates/item/parts/ritual.hbs",
     "systems/warhammer-dbc/templates/item/parts/shield.hbs",
     "systems/warhammer-dbc/templates/item/parts/drug.hbs",          // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/trait.hbs",         // ← НОВОЕ

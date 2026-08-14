@@ -43,6 +43,7 @@ const TAB_DEFS = [
 const CATEGORIES = [
   { label: "Черты",                   sources: [{ pack: "traits" }], tabs: ["abilities"] },
   { label: "Таланты",                 sources: [{ pack: "talents" }], tabs: ["abilities"] },
+  { label: "Ритуалы",                 sources: [{ pack: "rituals" }], tabs: ["abilities"] },
   { label: "Архетипы",                sources: [{ pack: "archetypes" }], tabs: ["abilities"] },
   { label: "Элитные архетипы",        sources: [{ pack: "traits", onlyFolder: "Элитные архетипы" },
                                                   { pack: "talents", onlyFolder: "Элитные архетипы" }], tabs: ["abilities"] },

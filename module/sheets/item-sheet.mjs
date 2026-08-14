@@ -36,6 +36,7 @@ import { summarizeEffectChanges, expectedPhase }     from "../constants/effect-k
 import { createBlankEffect } from "../apps/effects.mjs";
 import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml, syncWeaponPropItemEffects, findMechGroup, findMechEntry } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
+import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -591,6 +592,9 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     // собой прежние раздельные Скрипты/Выдачи/кнопку «Конструктор» в Эффектах.
     context.itemMechGroups   = getItemMechanics(this.item);
     context.itemMechanicsHtml = buildMechanicsTabHtml(this.item, context.isGM);
+
+    // Ритуал — контентные разделы книги для дропдауна (стр. 393-425).
+    if (this.item.type === "ritual") context.ritualItemTypes = RITUAL_ITEM_TYPES;
 
     return context;
   }
