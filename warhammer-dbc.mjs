@@ -56,6 +56,7 @@ import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
+import { setSystemPackLocks }         from "./module/apps/pack-locks.mjs";
 import { importBooks }                from "./module/apps/books.mjs";
 import { registerHandlebarsHelpers }  from "./module/helpers/handlebars.mjs";
 import { registerHooks }              from "./module/hooks.mjs";
@@ -238,11 +239,11 @@ Hooks.once("init", () => {
     name: "Разблокировать библиотеки для правки",
     hint: "Включите, чтобы редактировать компендиумы системы (Таланты, Черты, "
       + "Импланты и остальные) вручную: все компендиумы системы будут "
-      + "разблокированы при запуске мира. Правки останутся в вашем мире; чтобы "
-      + "они попали в систему, их нужно снять в исходники командой "
-      + "npm run packs:unpack.",
+      + "разблокированы при запуске мира. Выключите — замки вернутся, включая "
+      + "снятые вручную. Правки останутся в вашем мире; чтобы они попали в "
+      + "систему, их нужно снять в исходники командой npm run packs:unpack.",
     scope: "world", config: true, type: Boolean, default: false,
-    onChange: async (on) => { if (on && game.user.isGM) await _unlockAllSystemPacks(); }
+    onChange: async (on) => { if (game.user.isGM) await setSystemPackLocks(!on); }
   });
 
   // Настройка: убрать серую рамку у заметок-пинов на сцене.
@@ -1080,25 +1081,10 @@ Hooks.on("updateActor", async (doc, changes) => {
 // Кэш библиотек Происхождения и Предсказаний для дропдаунов в шапке листа.
 initPackCaches();
 
-/** Просил ли GM разблокировать компендиумы (настройка protectCompendiumEdits выше). */
-function _editsProtected() {
+/** Просил ли ГМ открыть библиотеки (настройка protectCompendiumEdits выше). */
+function _libsUnlocked() {
   try { return game.settings.get("warhammer-dbc", "protectCompendiumEdits") === true; }
   catch (e) { return false; }
-}
-
-/** Разблокирует все компендиумы системы разом — по запросу настройки выше. */
-async function _unlockAllSystemPacks() {
-  let n = 0;
-  for (const pack of game.packs) {
-    if (pack.metadata.packageName !== "warhammer-dbc") continue;
-    if (!pack.locked) continue;
-    try { await pack.configure({ locked: false }); n++; }
-    catch (e) { console.error(`Warhammer DBC | Не удалось разблокировать '${pack.collection}':`, e); }
-  }
-  if (n) {
-    console.log(`Warhammer DBC | Разблокировано компендиумов: ${n}.`);
-    ui.notifications?.info(`Warhammer DBC: разблокировано компендиумов для редактирования — ${n}.`);
-  }
 }
 
 // ─── Типы изменений ActiveEffect "divideUp"/"divideDown" (Конструктор эффектов) ──
@@ -1123,13 +1109,13 @@ Hooks.on("applyActiveEffect", (targetDoc, change) => {
 // ─── Миграция: system.effects.* существующих предметов → embedded ActiveEffect ──
 // Сама миграция — в module/migrations/item-effects.mjs (проверяется без Foundry).
 //
-// Разблокировка идёт здесь же и строго до миграции: миграция снимает замок с
-// пака и возвращает его, каким взяла, а Foundry соседние ready-хуки не
-// дожидается — в разных хуках она читала бы замок посреди разблокировки и
-// закрывала паки, которые ГМ просил открыть.
+// Замки библиотек приводятся к настройке здесь же и строго до миграции:
+// миграция снимает замок с пака и возвращает его, каким взяла, а Foundry
+// соседние ready-хуки не дожидается — в разных хуках она читала бы замок
+// посреди чужой правки и закрывала паки, которые ГМ просил открыть.
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
-  if (_editsProtected()) await _unlockAllSystemPacks();
+  await setSystemPackLocks(!_libsUnlocked());
   await migrateAllItemEffects();
 });
 
