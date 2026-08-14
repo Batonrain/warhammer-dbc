@@ -38,6 +38,7 @@ import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml
          getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
+import { ritualTestContext }                         from "./tabs/rituals.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -632,6 +633,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     // механических требований: к ритуалисту и к ассистентам.
     if (this.item.type === "ritual") {
       context.ritualItemTypes     = RITUAL_ITEM_TYPES;
+      context.ritualTest          = ritualTestContext(this.item);
       context.ritualReqHtml       = buildRequirementsHtml(this.item, "req", context.isGM);
       context.ritualAssistReqHtml = buildRequirementsHtml(this.item, "assistReq", context.isGM);
     }

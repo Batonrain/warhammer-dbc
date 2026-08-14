@@ -10,7 +10,8 @@
 //  Foundry.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { RITUAL_ITEM_TYPES_MAP } from "../../constants/rituals.mjs";
+import { RITUAL_ITEM_TYPES_MAP, TEST_CHARS } from "../../constants/rituals.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 import { openCompendiumBrowser } from "../../apps/compendium-browser.mjs";
 import { getItemRequirements, isReqComplete, describeReqEntry } from "../../apps/mechanics.mjs";
 
@@ -62,6 +63,24 @@ export function ritualsContext(actor) {
         || reqLines.length || assistReqLines.length)
     };
   });
+}
+
+/**
+ * Поля пути проведения для листа предмета-ритуала: каким Навыком и от какой
+ * характеристики он кидается. Набор навыков зависит от вида — обычные и
+ * групповые не смешиваются, иначе в `testSkillKey` попал бы ключ, которого у
+ * актора не бывает, и подстановка в консоли Завесы молча промахнулась бы.
+ */
+export function ritualTestContext(item) {
+  const s = item?.system || {};
+  const isGroupSkill = s.testSkillScope === "group";
+  const defs = isGroupSkill ? GROUP_SKILLS_DEF : SKILLS_DEF;
+  return {
+    isGroupSkill,
+    skills: Object.entries(defs)
+      .map(([key, def]) => ({ key, label: def.label, selected: key === s.testSkillKey })),
+    chars: TEST_CHARS.map(c => ({ ...c, selected: c.key === (s.testChar || "int") }))
+  };
 }
 
 export function activateRitualListeners(html, actor) {

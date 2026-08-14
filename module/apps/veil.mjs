@@ -11,7 +11,8 @@ import { VEIL_FACTORS, VEIL_EVENTS, WARP_GODS, warpGod, defaultVeil, veilTotal, 
   from "../constants/veil.mjs";
 import { RITUAL_TYPES, RITUAL_TYPES_MAP, TEST_CHARS, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY,
          CURSE_SYMPATHY, NUMEROLOGY, WARP_AVERSION, lookupAversion, SUMMON_FORMS,
-         buildRitualSkills, ritualSkillOption, ritualDegrees, charAbbr } from "../constants/rituals.mjs";
+         buildRitualSkills, ritualSkillOption, ritualDegrees, charAbbr,
+         applyRitualItem } from "../constants/rituals.mjs";
 import { getPhenomenon, getPeril } from "../constants/psyker-tables.mjs";
 import { ritualPresetGroups, applyRitualPreset } from "../constants/ritual-presets.mjs";
 import { TAROT_DECK, SUITS, SUIT_HINTS, TAROT_SPREADS, TAROT_GUIDE,
@@ -36,7 +37,9 @@ function _newJourney() {
 
 function _newRitual() {
   return {
-    ritualistId: "", name: "", type: "summon",
+    // itemId — выбранный ритуал-предмет Ритуалиста: он даёт путь проведения
+    // (wdbc-lla). Пустой — ГМ ведёт ритуал руками или пресетом книги, как раньше.
+    ritualistId: "", itemId: "", name: "", type: "summon",
     skillValue: "", testChar: "", gmMod: -20,
     assistants: 0, assistBonus: 10,
     summon: {}, curseFam: "close", curseSymp: {},
@@ -155,6 +158,10 @@ export class VeilMystic extends Application {
     const actor = game.actors.get(R.ritualistId) || null;
     const chars = actor?.system?.characteristics || {};
 
+    // Ритуалы, лежащие на Ритуалисте. Смена ритуалиста роняет выбор: чужой
+    // предмет к нему отношения не имеет.
+    const ritualItems = (actor?.items ?? []).filter(i => i.type === "ritual");
+    if (!ritualItems.find(i => i.id === R.itemId)) R.itemId = "";
     const skills = actor ? buildRitualSkills(actor) : [];
     if (!skills.find(s => s.value === R.skillValue)) R.skillValue = skills[0]?.value || "";
     const skillOpt = ritualSkillOption(skills, R.skillValue);
@@ -201,6 +208,8 @@ export class VeilMystic extends Application {
       numMod, psyker: R.psyker, psykerBonus: R.psykerBonus, prMax,
       summonForms: SUMMON_FORMS,
       presetGroups: ritualPresetGroups(),
+      ritualItems: ritualItems.map(i => ({ id: i.id, name: i.name, selected: i.id === R.itemId })),
+      hasRitualItems: ritualItems.length > 0,
       rows, threshold, thresholdSigned: sgn(threshold),
       aversionPerFail: R.aversionPerFail
     };
@@ -711,6 +720,7 @@ export class VeilMystic extends Application {
       R.numerology[cb.dataset.num] = e.target.checked; rr2();
     }));
     el.querySelector("[name=ritPreset]")?.addEventListener("change", e => this._applyPreset(e.target.value));
+    el.querySelector("[name=ritItem]")?.addEventListener("change", e => this._applyRitualItem(e.target.value));
     el.querySelector("[name=ritName]")?.addEventListener("change", e => { R.name = e.target.value; });
     el.querySelector("[name=ritPsyker]")?.addEventListener("change", e => { R.psyker = e.target.checked; rr2(); });
     el.querySelector("[name=ritPsykerB]")?.addEventListener("change", e => { R.psykerBonus = parseInt(e.target.value) || 0; rr2(); });
@@ -978,7 +988,19 @@ export class VeilMystic extends Application {
     const actor = game.actors.get(this.ritual.ritualistId);
     if (!actor) { ui.notifications?.warn("Ритуал: выберите Ритуалиста."); this.render(false); return; }
     const applied = applyRitualPreset(actor, Number(idxStr), buildRitualSkills);
-    if (applied) Object.assign(this.ritual, applied);
+    // Пресет — не предмет: выбор ритуала-предмета снимается, иначе гейт
+    // требований остался бы от прошлого ритуала.
+    if (applied) Object.assign(this.ritual, applied, { itemId: "" });
+    this.render(false);
+  }
+
+  // Применить ритуал-предмет Ритуалиста: путь проведения из его полей.
+  _applyRitualItem(itemId) {
+    const R = this.ritual;
+    const actor = game.actors.get(R.ritualistId);
+    const item = itemId ? actor?.items?.get(itemId) : null;
+    if (!item) { R.itemId = ""; this.render(false); return; }
+    Object.assign(R, applyRitualItem(actor, item, buildRitualSkills));
     this.render(false);
   }
 

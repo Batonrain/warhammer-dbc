@@ -34,6 +34,47 @@
   </div>
 </div>
 
+{{!-- Путь проведения: этими полями консоль Ритуалов (Завеса) заполняет форму,
+      когда ритуал выбран у ритуалиста. Списки навыков разные у обычных и
+      групповых, поэтому вид переключает набор — лист перерисовывается сам. --}}
+<div class="item-section">
+  <div class="item-section-title">ПУТЬ ПРОВЕДЕНИЯ</div>
+  <div class="trait-fx-hint">Каким Навыком и от какой характеристики ритуал кидается по умолчанию. Ритуалист вправе выбрать другой путь — консоль Завесы позволяет переопределить.</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Навык</label>
+    <select name="system.testSkillScope" class="wr-select-sm" title="Обычный или Групповой навык">
+      <option value="plain" {{#unless ritualTest.isGroupSkill}}selected{{/unless}}>Обычный</option>
+      <option value="group" {{#if ritualTest.isGroupSkill}}selected{{/if}}>Групповой</option>
+    </select>
+    <select name="system.testSkillKey" class="wr-select-md">
+      <option value="">— не выбран —</option>
+      {{#each ritualTest.skills as |s|}}
+      <option value="{{s.key}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{#if ritualTest.isGroupSkill}}
+  <div class="weapon-row">
+    <label class="wr-label" title="Специализация группового навыка — как в книге: Warp, Daemons, Occult…">Специализация</label>
+    <input type="text" name="system.testSpecialty" value="{{system.testSpecialty}}"
+           class="wr-input-md" placeholder="напр. Warp"/>
+  </div>
+  {{/if}}
+
+  <div class="weapon-row">
+    <label class="wr-label" title="Символизм — Инт, вера — Сила Воли, геометрия — Ловкость">Характеристика</label>
+    <select name="system.testChar" class="wr-select-md">
+      {{#each ritualTest.chars as |c|}}
+      <option value="{{c.key}}" {{#if c.selected}}selected{{/if}}>{{c.label}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label" title="Сложность ритуала: у ритуалов книги обычно в минус">Модификатор</label>
+    <input type="number" name="system.testMod" value="{{system.testMod}}" step="5" class="wr-input-sm"/>
+  </div>
+</div>
+
 {{!-- Требования ритуалиста: механические группы И/ИЛИ --}}
 <div class="item-section">
   <div class="item-section-title">
