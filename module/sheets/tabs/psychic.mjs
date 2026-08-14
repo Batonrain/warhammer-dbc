@@ -14,6 +14,8 @@ import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula } from "../../helpers/utils.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock } from "../../combat/weapon-properties.mjs";
+import { attackThreshold } from "../../combat/attack-threshold.mjs";
+import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { computeWoundDamage } from "./wounds.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
@@ -90,6 +92,16 @@ export function showManifestDialog(actor, item) {
   const powerMod = Number(sys.testMod) || 0;
   const variantMods = variants.map(v => Number(v.testMod) || 0);
   const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar };
+
+  // Правила реестра. Манифестация — такой же тест конвейера, как бросок навыка
+  // и атака: вид теста «power», область эффекта «power» или «power:<имя>». Сама
+  // сила лежит в контексте целиком — по ней область и находит нужную
+  // (rules/resolve-test.mjs).
+  const ruleMods = ruleRollModsHtml(actor, {
+    kind: "power", power: item, char: cast.key,
+    skill: cast.key === "psyniscience" ? "psyniscience" : undefined,
+    targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
+  });
 
   const discLabel = (PSY_DISCIPLINES?.[sys.discipline]?.label) || "";
   const typeLabel = (PSY_POWER_TYPES?.[sys.powerType]) || sys.powerType || "";
@@ -172,6 +184,7 @@ export function showManifestDialog(actor, item) {
             <input id="psy-pr-range" class="pm-input pm-num" type="number" value="0" min="0" title="0 = полный эPR. Можно снизить эPR только для дальности (мин. 1)"/>
           </div>
         </details>
+        ${ruleMods.html}
       </form>`;
 
   new Dialog({
@@ -181,7 +194,14 @@ export function showManifestDialog(actor, item) {
       cast: {
         icon: '<i class="fas fa-hat-wizard"></i>', label: "Психотест!",
         callback: async html => {
+          // Галочки правил — тот же формат и тот же разбор, что в диалоге атаки.
+          let ruleMod = 0, halveRulePenalty = false;
+          html.find(".rule-mod:checked").each((_, cb) => {
+            ruleMod += parseInt(cb.dataset.value) || 0;
+            if (cb.dataset.halve === "1") halveRulePenalty = true;
+          });
           await executePsychotest(actor, item, {
+            ruleMod, halveRulePenalty,
             mPR:      parseInt(html.find("#psy-pr").val())     || minPR,
             prMod:    parseInt(html.find("#psy-pr-mod").val()) || 0,
             mode:     html.find("#psy-mode").val()             || "normal",
@@ -233,7 +253,18 @@ export function wirePsyManifestPreview(html, m) {
     ePR += pd.ePR || 0;
     const pathTest = (pd.testMod || 0) + (pd.dyn ? (m.dynBonus[pd.dyn] || 0) : 0);
     const varMod = (varIdx >= 0) ? (m.variantMods[varIdx] || 0) : 0;
-    const thr = m.charVal + 5 * ePR + mod + pathTest + m.powerMod + varMod;
+    // Галочки правил считаем тем же кодом, что и сам бросок (executePsychotest),
+    // иначе игрок увидит в окне одно число, а бросится другое.
+    let ruleMod = 0, halveRule = false;
+    el.querySelectorAll(".rule-mod:checked").forEach(cb => {
+      ruleMod += parseInt(cb.dataset.value) || 0;
+      if (cb.dataset.halve === "1") halveRule = true;
+    });
+    const thr = attackThreshold({
+      base: m.charVal + 5 * ePR,
+      mods: [mod, ruleMod, pathTest, m.powerMod, varMod],
+      halvePenalty: halveRule
+    });
 
     $("#pm-thr").textContent = thr;
     $("#pm-epr").textContent = `${ePR}${eprSuffix}`;
@@ -371,7 +402,13 @@ export async function executePsychotest(actor, item, opts) {
   const variantMod = Number(variant?.testMod) || 0;
 
   const powerMod  = sys.testMod || 0; // собственный модификатор силы
-  const threshold = charVal + 5 * ePR + (opts.modifier || 0) + pathTestMod + powerMod + variantMod;
+  // Складываем тем же счётчиком, что и атака: галочка «ополовинить штраф»
+  // делит сумму, только если она в минус, и округляет в пользу игрока.
+  const threshold = attackThreshold({
+    base: charVal + 5 * ePR,
+    mods: [opts.modifier || 0, opts.ruleMod || 0, pathTestMod, powerMod, variantMod],
+    halvePenalty: !!opts.halveRulePenalty
+  });
   const roll = await new Roll("1d100").evaluate();
   const rv   = roll.total;
   let success = rv <= threshold;

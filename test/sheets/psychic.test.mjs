@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
+import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import {
   activateNavigatorPower,
   activatePsychicListeners,
@@ -158,6 +159,92 @@ describe("psychic manifestation", () => {
 
     expect(captured.chat[0].content).toContain("mPR <b>3</b> +1 = <b>4</b>");
     expect(captured.chat[0].content).toContain("Порог: <b>65</b>");
+  });
+});
+
+// Психотест — такой же тест конвейера, как бросок навыка и атака: правила с
+// областью `power:` должны доходить и до окна манифестации, и до броска.
+// Правило подставляется своим источником, как в test/rules/collect.test.mjs.
+describe("правила реестра в психотесте", () => {
+  const DEFAULT_SOURCES = getRuleSources();
+
+  const withRule = (target, value = 10) => {
+    clearRuleSources();
+    registerRuleSource("тест", () => [{
+      id: "psy.test", label: "Правило силы",
+      effects: [{ kind: "rollBonus", target, value }]
+    }]);
+  };
+
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("правило области power доходит до окна манифестации", () => {
+    withRule("power");
+    showManifestDialog(actor(), item({ system: { testChar: "wp", powerType: "utility" } }));
+    expect(captured.dialog.content).toContain("Правило силы");
+    expect(captured.dialog.content).toContain('class="rule-mod"');
+  });
+
+  it("правило чужой силы в окно не попадает", () => {
+    withRule("power:smite");
+    showManifestDialog(actor(), item({ name: "Warp Sight / Взор Варпа" }));
+    expect(captured.dialog.content).not.toContain("Правило силы");
+  });
+
+  it("правило своей силы попадает по любой половине имени", () => {
+    withRule("power:порицание");
+    showManifestDialog(actor(), item({ name: "Smite / Порицание" }));
+    expect(captured.dialog.content).toContain("Правило силы");
+  });
+
+  it("отмеченная галочка меняет порог психотеста", async () => {
+    withRule("power", 10);
+    const a = actor();
+    showManifestDialog(a, item({ system: { testChar: "wp", powerType: "utility" } }));
+    captured.nextRoll = 30;
+
+    // W 40 + 5×эPR 2 = 50, плюс +10 отмеченного правила.
+    await captured.dialog.buttons.cast.callback(fakeHtml({
+      "#psy-pr": "2", "#psy-pr-mod": "0", "#psy-mode": "normal", "#psy-path": "",
+      "#psy-mod": "0", "#psy-push-bonus": "1", "#psy-pr-dmg": "0",
+      "#psy-pr-range": "0", "#psy-profile": "-1", "#psy-variant": "-1"
+    }, { ".rule-mod:checked": [{ dataset: { value: "10" } }] }));
+
+    expect(captured.chat[0].content).toContain("Порог: <b>60</b>");
+  });
+
+  it("неотмеченная галочка порог не трогает", async () => {
+    withRule("power", 10);
+    const a = actor();
+    showManifestDialog(a, item({ system: { testChar: "wp", powerType: "utility" } }));
+    captured.nextRoll = 30;
+
+    await captured.dialog.buttons.cast.callback(fakeHtml({
+      "#psy-pr": "2", "#psy-pr-mod": "0", "#psy-mode": "normal", "#psy-path": "",
+      "#psy-mod": "0", "#psy-push-bonus": "1", "#psy-pr-dmg": "0",
+      "#psy-pr-range": "0", "#psy-profile": "-1", "#psy-variant": "-1"
+    }));
+
+    expect(captured.chat[0].content).toContain("Порог: <b>50</b>");
+  });
+
+  it("галочка «ополовинить штраф» делит штрафы, округляя в пользу игрока", async () => {
+    withRule("power", 0);
+    const a = actor();
+    showManifestDialog(a, item({ system: { testChar: "wp", powerType: "utility" } }));
+    captured.nextRoll = 30;
+
+    // W 40 + 5×эPR 2 = 50, штраф −25 ополовинен до −12.
+    await captured.dialog.buttons.cast.callback(fakeHtml({
+      "#psy-pr": "2", "#psy-pr-mod": "0", "#psy-mode": "normal", "#psy-path": "",
+      "#psy-mod": "-25", "#psy-push-bonus": "1", "#psy-pr-dmg": "0",
+      "#psy-pr-range": "0", "#psy-profile": "-1", "#psy-variant": "-1"
+    }, { ".rule-mod:checked": [{ dataset: { value: "0", halve: "1" } }] }));
+
+    expect(captured.chat[0].content).toContain("Порог: <b>38</b>");
   });
 });
 

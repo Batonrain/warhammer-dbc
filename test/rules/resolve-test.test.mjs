@@ -210,8 +210,52 @@ describe("область атаки", () => {
     expect(rollModsFromRules([rule("char:ws")], melee)).toHaveLength(0);
   });
 
-  it("область психосил в атаку не попадает: она ждёт своего шага", () => {
+  it("область психосил в атаку не попадает", () => {
     expect(rollModsFromRules([rule("power:smite")], melee)).toHaveLength(0);
+  });
+});
+
+describe("область психосил", () => {
+  const rule = (target, value = 10) => ({
+    id: "r", label: "Правило", effects: [{ kind: "rollBonus", target, value }]
+  });
+  /** Контекст манифестации: вид теста «power», сила лежит целиком в ctx.power. */
+  const cast = (name, over = {}) => buildTestContext({
+    kind: "power", char: "wp",
+    power: { type: "psychicPower", name, system: { discipline: "biomancy" } },
+    ...over
+  });
+  const smite = cast("Smite / Порицание");
+
+  it("«power» попадает в любую манифестацию и только в неё", () => {
+    expect(rollModsFromRules([rule("power")], smite)).toHaveLength(1);
+    expect(rollModsFromRules([rule("power")], buildTestContext({ skill: "psyniscience" }))).toHaveLength(0);
+    expect(rollModsFromRules([rule("power")], buildTestContext({ kind: "attack", isMelee: true }))).toHaveLength(0);
+  });
+
+  it("«power:<имя>» попадает только в свою силу, по любой половине имени", () => {
+    expect(rollModsFromRules([rule("power:smite")], smite)).toHaveLength(1);
+    expect(rollModsFromRules([rule("power:порицание")], smite)).toHaveLength(1);
+    expect(rollModsFromRules([rule("power:smite")], cast("Warp Sight / Взор Варпа"))).toHaveLength(0);
+  });
+
+  it("специализация в скобках при сравнении отбрасывается — как у hasTalent", () => {
+    expect(rollModsFromRules([rule("power:smite")], cast("Smite (Greater) / Порицание (Большое)"))).toHaveLength(1);
+  });
+
+  it("«all» действует и в манифестации", () => {
+    expect(rollModsFromRules([rule("all")], smite)).toHaveLength(1);
+  });
+
+  it("char:<ключ> в психотест не подхватывается, хотя тест идёт по этой характеристике", () => {
+    // «+10 к тестам Воли» и «+10 к манифестациям» — два разных правила книги.
+    expect(rollModsFromRules([rule("char:wp")], smite)).toHaveLength(0);
+  });
+
+  it("skill:psyniscience в психотест не подхватывается даже у Прорицания", () => {
+    const divination = cast("Foresight / Предвидение", { skill: "psyniscience" });
+    expect(rollModsFromRules([rule("skill:psyniscience")], divination)).toHaveLength(0);
+    expect(rollModsFromRules([rule("power")], divination)).toHaveLength(1);
   });
 });
 
