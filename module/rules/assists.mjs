@@ -10,6 +10,7 @@
 // тестом без заглушки.
 
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
+import { hasRuleFlag } from "./flags.mjs";
 
 /**
  * Порядок рангов выводится из самой таблицы рангов, а не переписывается
@@ -24,6 +25,22 @@ export const MIN_ASSIST_RANK = "knows";
 
 /** Сколько помощников допускается. Пока число, а не поле — задел под предметы. */
 export const DEFAULT_ASSIST_MAX = 2;
+
+/** Возможность «помогаю сверх лимита» (Промышленный мир, «Ну-ка вместе»). */
+export const ASSIST_BEYOND_CAP_FLAG = "assist.beyondCap";
+
+/**
+ * Встаёт ли этот помощник СВЕРХ лимита. Такой слот не занимает и в максимум не
+ * упирается, но помогает как обычный: +10 к порогу и +1 степень.
+ */
+export function assistsBeyondCap(candidate) {
+  return hasRuleFlag(candidate, ASSIST_BEYOND_CAP_FLAG);
+}
+
+/** Сколько помощников занимают слоты — безлимитные в счёт не идут. */
+export function countedAssists(assistants = []) {
+  return assistants.filter(a => !a?.beyondCap).length;
+}
 
 const rankStep = rank => RANK_ORDER[String(rank ?? "")] ?? 0;
 const norm = s => String(s ?? "").toLowerCase().trim();
@@ -53,10 +70,14 @@ export function canAssist(candidate, ctx = {}) {
  * Почему помощника не берут. Возвращает текст отказа либо null, если можно.
  * Отдельной функцией, чтобы диалог не решал сам, что именно сказать игроку, а
  * причины проверялись тестом.
+ *
+ * Переполнение проверяется ПОСЛЕ права помогать сверх лимита: иначе такой
+ * помощник отсекался бы раньше, чем система успевала узнать, что он безлимитный.
  */
 export function assistRejection(candidate, { actor, assistants = [], max = DEFAULT_ASSIST_MAX, ctx = {} } = {}) {
   if (!candidate) return "Не удалось определить, кого перетащили.";
-  if (assistants.length >= max) return `Достигнут максимум помощников (${max}).`;
+  if (!assistsBeyondCap(candidate) && countedAssists(assistants) >= max)
+    return `Достигнут максимум помощников (${max}).`;
   if (actor && candidate.id === actor.id) return "Актор не может ассистировать самому себе.";
   if (assistants.some(a => a.uuid === candidate.uuid)) return `${candidate.name} уже в списке помощников.`;
   if (!canAssist(candidate, ctx))

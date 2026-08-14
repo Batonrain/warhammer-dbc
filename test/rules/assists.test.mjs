@@ -1,12 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
   canAssist, assistRejection, assistThresholdBonus, assistDegrees,
+  assistsBeyondCap, countedAssists,
   DEFAULT_ASSIST_MAX, MIN_ASSIST_RANK
 } from "../../module/rules/assists.mjs";
 
 /** Подставной актор-помощник: обычный литерал, никакого Foundry. */
-const helper = ({ id = "h1", name = "Помощник", skills = {}, groupSkills = {} } = {}) => ({
-  id, name, uuid: `Actor.${id}`, system: { skills, groupSkills }
+const helper = ({ id = "h1", name = "Помощник", skills = {}, groupSkills = {}, homeworld = null } = {}) => ({
+  id, name, uuid: `Actor.${id}`, system: { skills, groupSkills },
+  // Ключ Происхождения лежит на предмете-носителе — так его и ищет источник
+  // правил (rules/sources.mjs).
+  items: homeworld ? [{ type: "homeworld", system: { key: homeworld } }] : []
 });
 
 describe("canAssist", () => {
@@ -92,6 +96,39 @@ describe("assistRejection", () => {
   it("переполнение важнее прочих причин", () => {
     const full = [{ uuid: "Actor.a" }, { uuid: "Actor.b" }];
     expect(assistRejection(helper(), { actor, assistants: full, ctx: { skill: "medicae" } }))
+      .toMatch(/максимум/);
+  });
+});
+
+describe("помощник сверх лимита («Ну-ка вместе», Промышленный мир)", () => {
+  const actor = { id: "me", uuid: "Actor.me", name: "Я" };
+  const industrial = helper({ id: "ind", homeworld: "industrial" });
+  const full = [{ uuid: "Actor.a" }, { uuid: "Actor.b" }];
+
+  it("узнаётся по возможности из реестра правил", () => {
+    expect(assistsBeyondCap(industrial)).toBe(true);
+    expect(assistsBeyondCap(helper({ homeworld: "hive" }))).toBe(false);
+    expect(assistsBeyondCap(helper())).toBe(false);
+  });
+
+  it("встаёт в полный список — лимит его не отсекает", () => {
+    expect(assistRejection(industrial, { actor, assistants: full, ctx: {} })).toBeNull();
+  });
+
+  it("прочие причины отказа на него действуют как на всех", () => {
+    expect(assistRejection(industrial, { actor, assistants: full, ctx: { skill: "medicae" } }))
+      .toMatch(/Знает/);
+    expect(assistRejection(industrial, { actor, assistants: [{ uuid: industrial.uuid }], ctx: {} }))
+      .toMatch(/уже в списке/);
+  });
+
+  it("слот не занимает — лимит считает только обычных", () => {
+    expect(countedAssists([{ uuid: "a" }, { uuid: "b", beyondCap: true }])).toBe(1);
+    expect(countedAssists([])).toBe(0);
+    // Двое обычных плюс безлимитный — мест по-прежнему нет для третьего обычного.
+    const mixed = [{ uuid: "a" }, { uuid: "b" }, { uuid: "c", beyondCap: true }];
+    expect(countedAssists(mixed)).toBe(2);
+    expect(assistRejection(helper({ id: "x" }), { actor, assistants: mixed, ctx: {} }))
       .toMatch(/максимум/);
   });
 });

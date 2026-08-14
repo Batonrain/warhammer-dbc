@@ -37,6 +37,9 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
+import { hasRuleFlag }                from "./module/rules/flags.mjs";
+import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
+  from "./module/rules/fate-save.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
 import { openSystemsOverview, refreshSystemsOverview } from "./module/apps/systems-overview.mjs";
 import { openCraftWorkshop } from "./module/apps/craft-workshop.mjs";
@@ -1284,6 +1287,47 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
     const a = found?.actor ?? found; // на случай, если uuid указывал на Token
     if (a instanceof Actor) await reconcileCohesionForActor(a);
   }
+});
+
+// ── «Пламенная вера» (Мир-храм): шанс не потратить Очко ──────────────────────
+// Ловим ЛЮБОЕ уменьшение system.fate.value одним хуком, а не правим каждое из
+// мест списания (лист, hooks.mjs, Боль/Душа): так правило достанет и то место
+// траты, которое появится завтра. Счётная часть — rules/fate-save.mjs.
+//
+// Прежнее значение снимается в preUpdateActor: updateActor видит уже новое.
+Hooks.on("preUpdateActor", (doc, changes, options) => {
+  if (typeof changes.system?.fate?.value === "number") {
+    options.whFatePrev = doc.system.fate?.value ?? 0;
+  }
+});
+
+Hooks.on("updateActor", async (doc, changes, options, userId) => {
+  // Только у того клиента, кто сделал правку, иначе бросок случится у каждого.
+  if (game.user.id !== userId) return;
+  // Наш собственный возврат и осознанная цена способности («Вера в прошлое»)
+  // сюда не заходят: иначе зацикливание и бесплатные чудеса.
+  if (options?.whSkipFateSave) return;
+  if (typeof changes.system?.fate?.value !== "number") return;
+  const spent = fateSpent(options?.whFatePrev, changes.system.fate.value);
+  if (!spent || !hasRuleFlag(doc, FATE_SAVE_FLAG)) return;
+
+  const rolls = [];
+  for (let i = 0; i < spent; i++) {
+    rolls.push((await new Roll(FATE_SAVE_DIE).evaluate()).total);
+  }
+  const saved = fateSaved(rolls);
+  if (!saved) return;
+
+  await doc.update({ "system.fate.value": (doc.system.fate?.value ?? 0) + saved },
+    { whSkipFateSave: true });
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: doc }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">🔥 Пламенная вера — ${doc.name}</div>
+      <div class="roll-dice">${FATE_SAVE_DIE}: <b>${rolls.join(", ")}</b></div>
+      <div class="roll-outcome"><span class="roll-success">Очко ${fatePoolLabel(doc)} не потрачено${saved > 1 ? ` (×${saved})` : ""}</span></div>
+    </div>`
+  }, game.settings.get("core", "rollMode")));
 });
 
 Hooks.on("createItem", async (item, options, userId) => {

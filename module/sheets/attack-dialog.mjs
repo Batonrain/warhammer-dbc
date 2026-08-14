@@ -22,7 +22,7 @@ import { _executeAttackRoll }                 from "../combat/attack.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
-import { hasRuleFlag }                        from "../rules/flags.mjs";
+import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
 import { ruleRollModsHtml }                   from "../rules/roll-mods.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 
@@ -223,9 +223,22 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { label: "Цель лежит",    value: isMelee ?  20 : -20 },
     { label: "Цель бежит",    value: isMelee ?  20 : -20 },
     { label: "Цель Оглушена", value: 20 },
-    { label: "Цель Врасплох", value: 30 },
+    { label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune" },
     { label: "Скрытая атака", value: 30, note: "цель не знает" }
   ];
+  // Возможности ЦЕЛИ, гасящие модификатор атакующего (Мир смерти, «Паранойя
+  // Выжившего»: по нему не работает бонус за Неожиданность). Цель — тот же
+  // attackCtx.targetActor, что и у правил; нет цели — нечего гасить.
+  for (const m of commonMods) {
+    if (!m.immuneFlag || !attackCtx.targetActor) continue;
+    // Контекст не передаём: он описывает бросок АТАКУЮЩЕГО, а спрашиваем мы
+    // возможность цели — правило цели про чужое оружие ничего не знает.
+    const why = ruleFlagLabels(attackCtx.targetActor, m.immuneFlag);
+    if (!why.length) continue;
+    m.value  = 0;
+    m.immune = true;
+    m.note   = `${attackCtx.targetActor.name}: ${why[0]}`;
+  }
   const specificMods = isMelee ? [
     { label: "Трудный ландшафт",       value: -10 },
     { label: "Очень трудный ландшафт", value: -20 },
@@ -247,12 +260,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const makeMods = arr => arr.map(m => {
     const isAF      = m.autofail === true;
     const isChecked = m.autoCheck === true;
-    const dispVal   = isAF ? "провал" : (m.value >= 0 ? `+${m.value}` : `${m.value}`);
+    // Погашенный правилом цели модификатор не прячем: игрок должен видеть,
+    // ПОЧЕМУ бонуса нет, а не гадать, куда делся пункт списка.
+    const dispVal   = m.immune ? "иммунитет"
+                    : (isAF ? "провал" : (m.value >= 0 ? `+${m.value}` : `${m.value}`));
     const note      = m.note ? ` [${m.note}]` : "";
-    return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}">
+    return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}${m.immune ? " atk-mod-immune" : ""}">
       <input type="checkbox" class="atk-mod-cb"
              data-value="${isAF ? 0 : m.value}"
              ${isAF    ? 'data-autofail="true"' : ""}
+             ${m.immune ? "disabled" : ""}
              ${isChecked ? "checked" : ""}/>
       <span>${m.label} (${dispVal})${note}${isChecked ? " 😓" : ""}</span>
     </label>`;

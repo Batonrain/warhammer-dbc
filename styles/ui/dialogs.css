@@ -162,6 +162,11 @@
   accent-color: var(--wh-red);
 }
 
+/* Модификатор, погашенный правилом ЦЕЛИ (напр. Паранойя Выжившего Мира смерти).
+   Виден и зачёркнут, а не убран: игрок должен понимать, почему бонуса нет. */
+.attack-mod-check.atk-mod-immune { opacity: .55; cursor: not-allowed; }
+.attack-mod-check.atk-mod-immune span { text-decoration: line-through; }
+
 /* ── Итоговый порог ── */
 .atk-total-row {
   border-top: 1px solid var(--wh-border);
@@ -1245,6 +1250,10 @@ body.wh-aiming #board, body.wh-aiming canvas {
   background: var(--wh-bg);
   border: 1px solid var(--wh-border);
   border-radius: 3px;
+}
+/* Помощник сверх лимита (Промышленный мир) — пометка у самой фишки. */
+.wh-skill-roll-form .assist-chip-beyond {
+  font-size: .82em; opacity: .75; font-style: italic; color: #2f6b3f;
 }
 .wh-skill-roll-form .assist-chip-remove {
   width: auto; padding: 0 5px; background: none; border: none;

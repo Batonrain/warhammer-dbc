@@ -15,10 +15,12 @@
 //  тот же, что уже используется для остальной системы — см. warhammer-dbc.mjs).
 //
 //  Метка «разово за сцену/сессию» (flags.warhammer-dbc.usageLimit =
-//  {scope:"scene"|"session", used:bool}) — общий, ещё не подключённый ни к
-//  одному конкретному предмету примитив: эта панель лишь ОТКАТЫВАЕТ used→false
-//  по scope у всего, что когда-нибудь такую метку получит (будущая фича —
-//  где именно её проставлять, ещё не решено).
+//  {scope:"scene"|"session", used:bool}) — общий примитив для ПРЕДМЕТОВ: эта
+//  панель откатывает used→false по scope у всего, что такую метку носит.
+//  У возможностей из реестра правил предмета-носителя нет, поэтому у них своя
+//  метка на самом акторе — flags.warhammer-dbc.usageLimits.<возможность>,
+//  см. isRuleUsageUsed/markRuleUsageUsed ниже. Ею живёт «Абсолютная вера в
+//  прошлое» (Мир-кладбище): один раз за столкновение.
 // ════════════════════════════════════════════════════════════════════════
 
 const BANNER_TEXT = {
@@ -50,7 +52,30 @@ function broadcastBanner(text) {
   try { game.socket.emit("system.warhammer-dbc", { action: "sessionSceneBanner", text }); } catch (e) {}
 }
 
-/** Сбросить разовые-за-scope эффекты (usageLimit.used) у всех предметов на всех акторах мира. */
+// ── Разовые-за-сцену возможности актора ─────────────────────────────────────
+// Метка usageLimit выше лежит на ПРЕДМЕТЕ, и это годится, пока у способности
+// есть предмет-носитель. У возможности из реестра правил (grantFlag) носителя
+// нет: правило приходит от Происхождения, расы или книги, а не от предмета.
+// Поэтому вторая, такая же по смыслу метка живёт на самом акторе и ключуется
+// именем возможности. Точка в имени ключа флага Foundry означала бы вложенный
+// путь, поэтому она заменяется дефисом.
+const usageKey = flag => String(flag ?? "").replace(/\./g, "-");
+
+/** Израсходована ли разовая возможность актора в текущем scope. */
+export function isRuleUsageUsed(actor, flag) {
+  return actor?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`)?.used === true;
+}
+
+/** Отметить разовую возможность актора израсходованной до конца сцены/сессии. */
+export async function markRuleUsageUsed(actor, flag, scope = "scene") {
+  if (!actor) return;
+  await actor.setFlag("warhammer-dbc", `usageLimits.${usageKey(flag)}`, { scope, used: true });
+}
+
+/**
+ * Сбросить разовые-за-scope эффекты: метки usageLimit у предметов и метки
+ * usageLimits возможностей у самих акторов.
+ */
 async function resetUsageLimit(scope) {
   let n = 0;
   for (const actor of game.actors) {
@@ -62,6 +87,15 @@ async function resetUsageLimit(scope) {
     if (updates.length) {
       await actor.updateEmbeddedDocuments("Item", updates);
       n += updates.length;
+    }
+    const limits = actor.getFlag("warhammer-dbc", "usageLimits") || {};
+    const actorUpd = {};
+    for (const [key, ul] of Object.entries(limits)) {
+      if (ul?.scope === scope && ul?.used) actorUpd[`flags.warhammer-dbc.usageLimits.${key}.used`] = false;
+    }
+    if (Object.keys(actorUpd).length) {
+      await actor.update(actorUpd);
+      n += Object.keys(actorUpd).length;
     }
   }
   return n;

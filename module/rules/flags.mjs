@@ -35,3 +35,19 @@ export function hasRuleFlag(actor, flag, ctx = {}) {
   const name = nameOf(flag);
   return !!name && ruleFlags(actor, ctx).has(name);
 }
+
+/**
+ * Подписи правил, давших эту возможность. Нужны интерфейсу: игрок должен
+ * видеть, ЧТО именно погасило модификатор или откуда взялась кнопка, а не
+ * получать безымянное «нельзя». Правило без `label` называется своим `id` —
+ * пустая подпись хуже некрасивой.
+ */
+export function ruleFlagLabels(actor, flag, ctx = {}) {
+  const name = nameOf(flag);
+  if (!name) return [];
+  return collectRules(actor, ctx)
+    .filter(rule => (rule?.effects ?? []).some(
+      e => e?.kind === "grantFlag" && nameOf(e.target) === name))
+    .map(rule => rule.label || rule.id)
+    .filter(Boolean);
+}

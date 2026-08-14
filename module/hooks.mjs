@@ -1,6 +1,8 @@
 import { _performDodge, _performParry } from "./combat/defense.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
-import { _executeFearRoll }             from "./combat/fear.mjs";
+import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
+import { isRuleUsageUsed, markRuleUsageUsed } from "./apps/game-session.mjs";
+import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { showApplyDamageDialog }         from "./combat/damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
 import { CONDITION_LEVEL_FIELD }         from "./combat/weapon-properties.mjs";
@@ -101,6 +103,52 @@ export function registerHooks() {
         }
         ev.currentTarget.disabled = true;
         await _executeFearRoll(actor, ctx.ratingKey, ctx.type, ctx.infamy, ctx.mod, ctx.properties, { free: true });
+      });
+    });
+
+    // Блоки «только для владельца» в карточках чата: карточка одна на всех,
+    // поэтому прячем их на клиенте по фактическим правам на актора.
+    html.querySelectorAll(".wh-owner-only[data-actor-id]").forEach(el => {
+      if (!game.actors?.get(el.dataset.actorId)?.isOwner) el.style.display = "none";
+    });
+
+    // «Абсолютная вера в прошлое» (Мир-кладбище): тратит Очко Судьбы/Бесчестья,
+    // чтобы считать проваленный Страх пройденным с 1 успехом, и даёт 1 Порчи.
+    // Один раз за столкновение — метка на акторе (usageLimits), её сбрасывает
+    // кнопка «Новая сцена» в apps/game-session.mjs.
+    html.querySelectorAll(".wh-fear-faith-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ctx = message.flags?.["warhammer-dbc"]?.faithInThePast;
+        if (!ctx) return;
+        const actor = game.actors?.get(ctx.actorId);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Использовать может только владелец персонажа (или ГМ).");
+        }
+        if (isRuleUsageUsed(actor, FAITH_FLAG)) {
+          return ui.notifications.warn(`«${ctx.label}» уже использована в этом столкновении.`);
+        }
+        const fate = Number(actor.system.fate?.value) || 0;
+        if (fate <= 0) return ui.notifications.warn("Нет Очков Судьбы/Бесчестья.");
+        ev.currentTarget.disabled = true;
+
+        // Трата помечена whSkipFateSave: иначе её перехватила бы «Пламенная
+        // вера» (Мир-храм) и Очко могло бы «не потратиться». Здесь это
+        // осознанная цена способности, а не обычный расход.
+        await actor.update({
+          "system.fate.value": fate - 1,
+          "system.corruption.value": (Number(actor.system.corruption?.value) || 0) + 1
+        }, { whSkipFateSave: true });
+        await markRuleUsageUsed(actor, FAITH_FLAG, "scene");
+
+        await ChatMessage.create({
+          speaker: ChatMessage.getSpeaker({ actor }),
+          content: `<div class="wh-roll-result">
+            <div class="roll-header">🕯️ ${ctx.label} — ${actor.name}</div>
+            <div class="roll-outcome"><span class="roll-success">Тест Страха пройден с 1 степенью успеха</span></div>
+            <div class="roll-threshold">Потрачено Очко ${fatePoolLabel(actor)} · Порча +1</div>
+          </div>`
+        });
       });
     });
 

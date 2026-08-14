@@ -41,7 +41,8 @@ import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
-import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX }
+import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
+         assistsBeyondCap, countedAssists }
   from "../rules/assists.mjs";
 import { specOptions, matchSpec, specDef } from "../constants/skill-specializations.mjs";
 import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
@@ -949,7 +950,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       // «кто вправе помогать» и «во что это превращается в числах» лежат в
       // module/rules/assists.mjs и проверяются без Foundry.
       const assistMax = DEFAULT_ASSIST_MAX;
-      const assistants = [];   // { uuid, name }
+      const assistants = [];   // { uuid, name, beyondCap }
 
       const dialog = new Dialog({
         title: `Проверка: ${label}`,
@@ -1035,13 +1036,16 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
           const list  = html.find("#assist-list")[0];
           const count = html.find("#assist-count")[0];
           const renderAssists = () => {
-            count.textContent = `${assistants.length}/${assistMax}`;
+            // Помощник «сверх лимита» (Промышленный мир) слот не занимает —
+            // счётчик показывает его отдельной прибавкой, а не внутри X/Y.
+            const beyond = assistants.length - countedAssists(assistants);
+            count.textContent = `${countedAssists(assistants)}/${assistMax}${beyond ? ` +${beyond} сверх лимита` : ""}`;
             list.innerHTML = assistants.map(a => `
               <div class="assist-chip" data-uuid="${a.uuid}">
-                <span>${a.name}</span>
+                <span>${a.name}${a.beyondCap ? ' <em class="assist-chip-beyond">сверх лимита</em>' : ""}</span>
                 <button type="button" class="assist-chip-remove" title="Убрать">✕</button>
               </div>`).join("");
-            zone.classList.toggle("assist-dropzone-full", assistants.length >= assistMax);
+            zone.classList.toggle("assist-dropzone-full", countedAssists(assistants) >= assistMax);
             list.querySelectorAll(".assist-chip-remove").forEach(btn => {
               btn.addEventListener("click", () => {
                 const uuid = btn.closest(".assist-chip").dataset.uuid;
@@ -1071,7 +1075,10 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
               actor: this.actor, assistants, max: assistMax, ctx: rollCtx
             });
             if (why) return ui.notifications.warn(why);
-            assistants.push({ uuid: candidate.uuid, name: candidate.name });
+            assistants.push({
+              uuid: candidate.uuid, name: candidate.name,
+              beyondCap: assistsBeyondCap(candidate)
+            });
             renderAssists();
           });
         },
