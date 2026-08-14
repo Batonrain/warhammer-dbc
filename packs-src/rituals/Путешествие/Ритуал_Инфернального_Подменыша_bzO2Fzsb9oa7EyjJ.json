@@ -1,0 +1,44 @@
+{
+  "name": "Ритуал Инфернального Подменыша",
+  "type": "ritual",
+  "img": "icons/svg/book.svg",
+  "folder": "PCnGpOYRs43g0sed",
+  "system": {
+    "description": "",
+    "notes": "",
+    "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
+    "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
+    "ritualType": "travel",
+    "record": 2,
+    "assistMin": 4,
+    "assistMax": 4,
+    "procedure": "",
+    "result": "",
+    "cost": "",
+    "failureCost": "",
+    "testSkillScope": "group",
+    "testSkillKey": "forbiddenLore",
+    "testSpecialty": "Warp",
+    "testChar": "int",
+    "testMod": -40
+  },
+  "_id": "bzO2Fzsb9oa7EyjJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285534944,
+    "modifiedTime": 1786285534944,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!bzO2Fzsb9oa7EyjJ"
+}

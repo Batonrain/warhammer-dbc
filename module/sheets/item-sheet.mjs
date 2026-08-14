@@ -9,7 +9,7 @@ import { ARMOR_PROPERTIES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
          ARMOR_MOD_GROUPS, GEAR_CATEGORIES,
-         TOOL_CATEGORIES, RIG_COMFORT, RIG_SLOT_SIZES } from "../constants/items.mjs";
+         TOOL_CATEGORIES, RIG_COMFORT, RIG_SLOT_SIZES, ITEM_TYPES } from "../constants/items.mjs";
 import { qualityEffects, itemSpecificQuality }       from "../constants/quality.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
@@ -34,8 +34,10 @@ import { PSY_DISCIPLINES, TECH_DISCIPLINES,
 import { DW_GODS_MAP }                               from "../constants/demon-weapon.mjs";
 import { summarizeEffectChanges, expectedPhase }     from "../constants/effect-keys.mjs";
 import { createBlankEffect } from "../apps/effects.mjs";
-import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml, syncWeaponPropItemEffects, findMechGroup, findMechEntry } from "../apps/mechanics.mjs";
+import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml, syncWeaponPropItemEffects, findMechGroup, findMechEntry,
+         getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
+import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -64,9 +66,43 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
     const wpropZone = event.target?.closest?.(".wprop-drop-zone");
     if (wpropZone && data?.type === "Item") return this._onDropWeaponPropItem(event, data, wpropZone);
+    // ВАЖНО: зона требования несёт ОБА класса (.req-drop-zone .grant-drop-zone),
+    // поэтому проверяется РАНЬШЕ — иначе дроп ушёл бы в Механику.
+    const reqZone = event.target?.closest?.(".req-drop-zone");
+    if (reqZone && data?.type === "Item") return this._onDropReqItem(event, data, reqZone);
     const grantZone = event.target?.closest?.(".grant-drop-zone");
     if (grantZone && data?.type === "Item") return this._onDropGrantItem(event, data, grantZone);
     if (data?.type === "ActiveEffect") return this._onDropActiveEffect(event, data);
+  }
+
+  /**
+   * Драг-н-дроп Таланта/Черты на условие-требование. Пишет в набор групп,
+   * указанный в data-req (req — ритуалисту, assistReq — ассистентам).
+   */
+  async _onDropReqItem(event, data, dropZone) {
+    // Требования правит только Мастер: остальные элементы конструктора ему
+    // рисуются disabled, а зона дропа disabled не бывает — без проверки
+    // владелец-игрок переписал бы мастерское требование перетаскиванием.
+    if (!this.item.isOwner || !game.user.isGM) return;
+    const { req: reqKey, groupId, entryId } = dropZone.dataset;
+    const src = await Item.implementation.fromDropData(data);
+    if (!src) return;
+
+    const arr = foundry.utils.deepClone(getItemRequirements(this.item, reqKey));
+    const entry = arr.find(g => g.id === groupId)?.entries?.find(e => e.id === entryId);
+    if (!entry) return;
+
+    const want = entry.kind === "reqTalent" ? "talent" : "trait";
+    if (src.type !== want) {
+      const need = want === "talent" ? "Талант" : "Черту";
+      return ui.notifications.warn(
+        `Сюда нужно перетащить ${need}, а перетащено: ${ITEM_TYPES[src.type] || src.type}.`);
+    }
+    entry.sourceUuid = src.uuid;
+    entry.sourceName = src.name;
+    entry.sourceImg  = src.img;
+    entry.sourceHasRating = !!src.system?.hasRating;
+    await this.item.setFlag("warhammer-dbc", reqKey, arr);
   }
 
   async _onDropActiveEffect(event, data) {
@@ -592,6 +628,14 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     context.itemMechGroups   = getItemMechanics(this.item);
     context.itemMechanicsHtml = buildMechanicsTabHtml(this.item, context.isGM);
 
+    // Ритуал — контентные разделы книги (стр. 393-425) и два набора
+    // механических требований: к ритуалисту и к ассистентам.
+    if (this.item.type === "ritual") {
+      context.ritualItemTypes     = RITUAL_ITEM_TYPES;
+      context.ritualReqHtml       = buildRequirementsHtml(this.item, "req", context.isGM);
+      context.ritualAssistReqHtml = buildRequirementsHtml(this.item, "assistReq", context.isGM);
+    }
+
     return context;
   }
 
@@ -873,6 +917,82 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.code = ev.currentTarget.value; saveMech(arr); }
     });
+    // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
+    // Тот же приём read-mutate-clone-save, что и у Механики; какой набор
+    // групп правим — в data-req, поэтому один комплект обработчиков
+    // обслуживает оба блока сразу.
+    const reqKeyOf  = el => el.dataset.req;
+    const saveReq   = async (key, arr) => { await this.item.setFlag("warhammer-dbc", key, arr); };
+    const reqGroups = key => foundry.utils.deepClone(getItemRequirements(this.item, key));
+    const findReqGroup = (arr, id) => arr.find(g => g.id === id) || null;
+    const findReqEntry = (arr, gid, eid) => findReqGroup(arr, gid)?.entries?.find(e => e.id === eid) || null;
+    // Правка поля записи — общий помощник, чтобы не плодить одинаковый код.
+    const patchReq = (ev, fn) => {
+      const el = ev.currentTarget, key = reqKeyOf(el);
+      const arr = reqGroups(key);
+      const e = findReqEntry(arr, el.dataset.groupId, el.dataset.entryId);
+      if (!e) return;
+      fn(e, el);
+      saveReq(key, arr);
+    };
+
+    html.find(".req-group-add").on("click", ev => {
+      const key = reqKeyOf(ev.currentTarget);
+      const arr = reqGroups(key);
+      arr.push(blankReqGroup(ev.currentTarget.dataset.op === "OR" ? "OR" : "AND"));
+      saveReq(key, arr);
+    });
+    html.find(".req-group-remove").on("click", ev => {
+      const el = ev.currentTarget, key = reqKeyOf(el);
+      saveReq(key, reqGroups(key).filter(g => g.id !== el.dataset.groupId));
+    });
+    html.find(".req-op-toggle").on("click", ev => {
+      const el = ev.currentTarget, key = reqKeyOf(el);
+      const arr = reqGroups(key);
+      const g = findReqGroup(arr, el.dataset.groupId);
+      if (g) { g.operator = g.operator === "OR" ? "AND" : "OR"; saveReq(key, arr); }
+    });
+    html.find(".req-entry-add").on("click", ev => {
+      const el = ev.currentTarget, key = reqKeyOf(el);
+      const arr = reqGroups(key);
+      const g = findReqGroup(arr, el.dataset.groupId);
+      if (g) { g.entries.push(blankReqEntry()); saveReq(key, arr); }
+    });
+    html.find(".req-entry-remove").on("click", ev => {
+      const el = ev.currentTarget, key = reqKeyOf(el);
+      const arr = reqGroups(key);
+      const g = findReqGroup(arr, el.dataset.groupId);
+      if (g) { g.entries = g.entries.filter(e => e.id !== el.dataset.entryId); saveReq(key, arr); }
+    });
+    html.find(".req-entry-kind").on("change", ev => patchReq(ev, (e, el) => {
+      // Смена вида условия обнуляет поля прежнего — иначе на записи висели
+      // бы чужие данные (напр. навык у требования по расе).
+      Object.assign(e, blankReqEntry(el.value), { id: e.id, kind: el.value });
+    }));
+    html.find(".req-skillref").on("change", ev => patchReq(ev, (e, el) => {
+      const [scope, key] = String(el.value || "").split(":");
+      e.skillScope = scope === "group" ? "group" : "plain";
+      e.skillKey = key || "";
+      e.specKey = ""; e.specialty = "";
+    }));
+    html.find(".req-rank").on("change",      ev => patchReq(ev, (e, el) => { e.rank = el.value; }));
+    html.find(".req-spec").on("change",      ev => patchReq(ev, (e, el) => {
+      const spec = el.value ? specOptions(e.skillKey).find(s => s.key === el.value) : null;
+      e.specKey = el.value;
+      // Сверку ведёт specKey, поэтому в specialty кладём русское имя — оно
+      // идёт в текст требования на листе (AGENTS.md: интерфейс русский).
+      e.specialty = spec ? (spec.ru || spec.label) : "";
+    }));
+    html.find(".req-rating").on("change",    ev => patchReq(ev, (e, el) => {
+      e.rating = el.value === "" ? "" : (parseInt(el.value) || 0);
+    }));
+    html.find(".req-race").on("change",      ev => patchReq(ev, (e, el) => { e.raceKey = el.value; }));
+    html.find(".req-archetype").on("change", ev => patchReq(ev, (e, el) => { e.archetypeName = el.value; }));
+    html.find(".req-patron").on("change",    ev => patchReq(ev, (e, el) => { e.patronKey = el.value; }));
+    html.find(".req-drop-clear").on("click", ev => patchReq(ev, e => {
+      Object.assign(e, { sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false });
+    }));
+
     // Черта / Талант (драг-н-дроп резолвится в _onDropGrantItem)
     html.find(".grant-drop-clear").on("click", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));

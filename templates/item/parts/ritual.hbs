@@ -1,0 +1,85 @@
+{{!-- Ритуал (корбук стр. 393-425). Разметка на общих классах weapon-row,
+      как у остальных партиалов предметов. Требования — не текст, а
+      механические группы И/ИЛИ (тот же конструктор, что в «Механике»):
+      отдельно для ритуалиста и отдельно для ассистентов. --}}
+
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ РИТУАЛА</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Источник</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Core, стр. 400"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Тип</label>
+    <select name="system.ritualType" class="wr-select-md">
+      {{#each ritualItemTypes as |t|}}
+      <option value="{{t.key}}" {{#if (eq t.key ../system.ritualType)}}selected{{/if}}>{{t.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label" title="Уровень Записи — сколько нужно продвинуться, чтобы ритуал стал доступен">Запись</label>
+    <input type="number" name="system.record" value="{{system.record}}" min="0" class="wr-input-sm"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label" title="Ассистенты по правилам стр. 25">Ассистенты</label>
+    <input type="number" name="system.assistMin" value="{{system.assistMin}}" min="0" class="wr-input-sm" title="Минимум"/>
+    <span class="wr-sep">—</span>
+    <input type="number" name="system.assistMax" value="{{system.assistMax}}" min="0" class="wr-input-sm" title="Максимум"/>
+  </div>
+</div>
+
+{{!-- Требования ритуалиста: механические группы И/ИЛИ --}}
+<div class="item-section">
+  <div class="item-section-title">
+    ТРЕБОВАНИЯ
+    {{#if isGM}}<span class="effects-tab-actions">
+      <button type="button" class="req-group-add" data-req="req" data-op="AND" title="Новая группа — нужны ВСЕ условия">➕ И-группа</button>
+      <button type="button" class="req-group-add" data-req="req" data-op="OR" title="Новая группа — достаточно ОДНОГО условия">➕ ИЛИ-группа</button>
+    </span>{{/if}}
+  </div>
+  <div class="trait-fx-hint">Кто может проводить ритуал: Навык нужного ранга, Талант/Черта нужного рейтинга, Раса, Элитный архетип или Покровительство Бога.</div>
+  <div class="req-groups" data-req="req">{{{ritualReqHtml}}}</div>
+</div>
+
+{{!-- Требования к ассистентам: тот же конструктор, отдельный набор групп --}}
+<div class="item-section">
+  <div class="item-section-title">
+    ТРЕБОВАНИЯ К АССИСТЕНТАМ
+    {{#if isGM}}<span class="effects-tab-actions">
+      <button type="button" class="req-group-add" data-req="assistReq" data-op="AND" title="Новая группа — нужны ВСЕ условия">➕ И-группа</button>
+      <button type="button" class="req-group-add" data-req="assistReq" data-op="OR" title="Новая группа — достаточно ОДНОГО условия">➕ ИЛИ-группа</button>
+    </span>{{/if}}
+  </div>
+  <div class="trait-fx-hint">Кого можно взять в помощники. Пусто — годится любой (кроме общего правила стр. 25: тот же Навык хотя бы на «Знает»).</div>
+  <div class="req-groups" data-req="assistReq">{{{ritualAssistReqHtml}}}</div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">РИТУАЛ</div>
+  <textarea name="system.procedure" class="item-textarea"
+            placeholder="Как проводится ритуал...">{{system.procedure}}</textarea>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">РЕЗУЛЬТАТ</div>
+  <textarea name="system.result" class="item-textarea"
+            placeholder="Что происходит при успехе...">{{system.result}}</textarea>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЦЕНА</div>
+  <textarea name="system.cost" class="item-textarea"
+            placeholder="Чего стоит проведение ритуала...">{{system.cost}}</textarea>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ЦЕНА ОШИБКИ</div>
+  <textarea name="system.failureCost" class="item-textarea"
+            placeholder="Что происходит при провале...">{{system.failureCost}}</textarea>
+</div>

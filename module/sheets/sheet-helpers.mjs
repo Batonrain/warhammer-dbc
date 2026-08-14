@@ -41,6 +41,7 @@ import { condIconHTML, CONDITION_ICONS }            from "../constants/condition
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor, classifyImplant }         from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE }                   from "../constants/vitals.mjs";
+import { ritualsContext }                            from "./tabs/rituals.mjs";
 
 // ── Определение всех состояний ────────────────────────────────────────────────
 export const CONDITIONS_DEF = {
@@ -767,6 +768,9 @@ export function buildGetData(actor) {
     name:    i.name,
     benefit: i.system.benefit || ""
   }));
+
+  // ── Ритуалы (стр. 393-425) ──────────────────────────────────────────────
+  context.rituals = ritualsContext(actor);
 
   // ── Черты (трейты) ──────────────────────────────────────────────────────
   context.traits = allItems.filter(i => i.type === "trait").map(i => {

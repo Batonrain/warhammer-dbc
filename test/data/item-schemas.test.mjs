@@ -450,6 +450,18 @@ const TYPES = {
       isSpecialRating: false, equipped: false, status: "inactive",
       quality: "common", availability: 2, weight: 0, drukhari: false
     }
+  },
+
+  // ── Ритуалы (wdbc-5ed, контент — wdbc-qg1) ─────────────────────────────────
+  ritual: {
+    pack: "rituals",
+    defaults: {
+      description: "", notes: "", source: "", bookSource: "",
+      ritualType: "summon", record: 0, assistMin: 0, assistMax: 0,
+      procedure: "", result: "", cost: "", failureCost: "",
+      testSkillScope: "", testSkillKey: "", testSpecialty: "",
+      testChar: "int", testMod: 0
+    }
   }
 };
 

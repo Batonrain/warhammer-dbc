@@ -23,6 +23,28 @@ export const RITUAL_TYPES = [
 ];
 export const RITUAL_TYPES_MAP = Object.fromEntries(RITUAL_TYPES.map(t => [t.key, t]));
 
+// ── Типы предмета-Ритуала (стр. 393-425) ─────────────────────────────────
+// КОНТЕНТНАЯ классификация: раздел книги, к которому ритуал относится. Не
+// путать с RITUAL_TYPES выше — там движковый тип, определяющий ВИД Цены
+// Ошибки при провале (Отвращение/Феномен/Проклятье). Предмет хранит только
+// контентный; движковый подставляет пресет проведения.
+export const RITUAL_ITEM_TYPES = [
+  { key: "summon",       label: "Призыв" },
+  { key: "circle",       label: "Круг" },
+  { key: "exorcism",     label: "Экзорцизм" },
+  { key: "curse",        label: "Проклятье" },
+  { key: "darkPrayer",   label: "Тёмная молитва" },
+  { key: "alchymantia",  label: "Алхимантия" },
+  { key: "observation",  label: "Наблюдение" },
+  { key: "connection",   label: "Связь" },
+  { key: "travel",       label: "Путешествие" },
+  { key: "control",      label: "Контроль" },
+  { key: "witchWard",    label: "Ведьмограждение" },
+  { key: "necromancy",   label: "Некромантия" },
+  { key: "archetype",    label: "Архетипа" }
+];
+export const RITUAL_ITEM_TYPES_MAP = Object.fromEntries(RITUAL_ITEM_TYPES.map(t => [t.key, t]));
+
 // Характеристика теста (Символизм → I, Вера → W, Геометрия → A и т.п.).
 export const TEST_CHARS = [
   { key: "int", abbr: "I",  label: "Интеллект (символизм)" },

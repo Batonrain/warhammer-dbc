@@ -1,0 +1,44 @@
+{
+  "name": "Ритуал Тысячи Глаз",
+  "type": "ritual",
+  "img": "icons/svg/book.svg",
+  "folder": "xqEzwdcxuCq5GezQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
+    "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
+    "ritualType": "summon",
+    "record": 3,
+    "assistMin": 0,
+    "assistMax": 4,
+    "procedure": "",
+    "result": "",
+    "cost": "",
+    "failureCost": "",
+    "testSkillScope": "group",
+    "testSkillKey": "forbiddenLore",
+    "testSpecialty": "Daemons",
+    "testChar": "int",
+    "testMod": -30
+  },
+  "_id": "7BzliB4S6f8DkRCF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285534944,
+    "modifiedTime": 1786285534944,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!7BzliB4S6f8DkRCF"
+}

@@ -141,6 +141,9 @@ import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } fr
 import { AVAILABILITY }                       from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive }                       from "./effects.mjs";
+import { RACES }                              from "../constants/races.mjs";
+import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
+import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 
 const FLAG = "warhammer-dbc";
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
@@ -1334,4 +1337,276 @@ function buildGroupHtml(grp, isGM, depth = 1, nested = false) {
 /** Собирает HTML всех групп механики предмета — идёт в контекст листа предмета. */
 export function buildMechanicsTabHtml(item, isGM) {
   return getItemMechanics(item).map(g => buildGroupHtml(g, isGM)).join("");
+}
+
+// ══════════════════ ТРЕБОВАНИЯ (условия-предпосылки) ══════════════════
+//
+// Второй конструктор рядом с Механикой: те же группы И/ИЛИ, но записи не
+// ЧТО-ТО ДЕЛАЮТ, а ПРОВЕРЯЮТСЯ на акторе. Заведён ради предмета-Ритуала
+// (требования к ритуалисту и отдельно к ассистентам, стр. 393-425), но сам
+// движок ни к чему ритуальному не привязан — годится любому предмету.
+//
+// Хранение: flags.warhammer-dbc.<flagKey> — массив групп той же формы, что и
+// mechanics: { id, operator:"AND"|"OR", entries:[...] }. Вложенных подгрупп
+// здесь сознательно нет: двух уровней хватает на любое требование книги, а
+// плоский список читается легче.
+
+export const REQ_KIND_LABELS = {
+  reqSkill:      "Навык",
+  reqTalent:     "Талант",
+  reqTrait:      "Черта",
+  reqRace:       "Раса",
+  reqArchetype:  "Элитный архетип",
+  reqPatron:     "Покровительство Бога"
+};
+
+/** Сравнение имён: регистр и лишние пробелы значения не имеют. */
+const normReq = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+/** Пустая запись-требование. */
+export function blankReqEntry(kind = "reqSkill") {
+  return {
+    id: foundry.utils.randomID(), kind,
+    // reqSkill
+    skillScope: "plain", skillKey: "", specKey: "", specialty: "", rank: "knows",
+    // reqTalent / reqTrait — источник перетаскивается, рейтинг необязателен
+    sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "",
+    // reqRace / reqArchetype / reqPatron
+    raceKey: "", archetypeName: "", patronKey: ""
+  };
+}
+
+export function blankReqGroup(operator = "AND") {
+  return { id: foundry.utils.randomID(), operator, entries: [blankReqEntry()] };
+}
+
+/** Нормализованный список групп-требований предмета (только чтение). */
+export function getItemRequirements(item, flagKey) {
+  const arr = item.getFlag(FLAG, flagKey);
+  return Array.isArray(arr) ? arr : [];
+}
+
+/** Человекочитаемое описание требования — для превью и строки на листе. */
+export function describeReqEntry(e) {
+  switch (e.kind) {
+    case "reqSkill": {
+      if (!e.skillKey) return "Навык: (не выбран)";
+      const def = e.skillScope === "group" ? GROUP_SKILLS_DEF[e.skillKey] : SKILLS_DEF[e.skillKey];
+      const spec = e.skillScope === "group" && e.specialty ? ` (${e.specialty})` : "";
+      const rank = SKILL_RANKS[e.rank]?.label || e.rank;
+      return `Навык: ${def?.label || e.skillKey}${spec} — не ниже «${rank}»`;
+    }
+    case "reqTalent":
+    case "reqTrait": {
+      const what = e.kind === "reqTalent" ? "Талант" : "Черта";
+      if (!e.sourceName) return `${what}: (перетащите)`;
+      const r = (e.kind === "reqTrait" && e.rating !== "" && e.rating != null)
+        ? ` — рейтинг не ниже ${e.rating}` : "";
+      return `${what}: ${e.sourceName || "?"}${r}`;
+    }
+    case "reqRace":
+      return e.raceKey ? `Раса: ${RACES[e.raceKey]?.label || e.raceKey}` : "Раса: (не выбрана)";
+    case "reqArchetype":
+      return e.archetypeName ? `Элитный архетип: ${e.archetypeName}` : "Элитный архетип: (не выбран)";
+    case "reqPatron":
+      return e.patronKey
+        ? `Покровительство: ${WARP_GODS_MAP[e.patronKey]?.label || e.patronKey}`
+        : "Покровительство: (не выбрано)";
+    default:
+      return "(неизвестное требование)";
+  }
+}
+
+/** Заполнено ли требование настолько, чтобы его можно было проверять. */
+export function isReqComplete(e) {
+  switch (e.kind) {
+    case "reqSkill":     return !!e.skillKey;
+    // Сверка идёт по имени, поэтому один только UUID проверять нечем.
+    case "reqTalent":
+    case "reqTrait":     return !!e.sourceName;
+    case "reqRace":      return !!e.raceKey;
+    case "reqArchetype": return !!e.archetypeName;
+    case "reqPatron":    return !!e.patronKey;
+    default:             return false;
+  }
+}
+
+/** Выполняет ли актор ОДНО требование. */
+export function actorMeetsReq(actor, e) {
+  if (!actor) return false;
+  switch (e.kind) {
+    case "reqSkill": {
+      const need = SKILL_RANK_STEPS[e.rank] ?? 0;
+      if (e.skillScope === "group") {
+        const arr = actor.system.groupSkills?.[e.skillKey] || [];
+        // Специализация не задана — годится любая специализация группы.
+        if (!e.specKey && !e.specialty)
+          return arr.some(x => (SKILL_RANK_STEPS[x.rank] ?? 0) >= need);
+        // Задана — ищем её общим сопоставителем: в данных специализация
+        // лежит то ключом, то английской меткой, то русской (Конструктор
+        // персонажа пишет русскую), и сравнение строк напрямую не сходится.
+        // Ранг спрашивается у НАЙДЕННОЙ записи: «Запретные знания (Демоны)
+        // на Ветеране» не закрываются Ветераном по Варпу.
+        const hit = findGroupEntry(actor, e.skillKey, e.specKey || e.specialty);
+        return !!hit && (SKILL_RANK_STEPS[hit.rank] ?? 0) >= need;
+      }
+      return (SKILL_RANK_STEPS[actor.system.skills?.[e.skillKey]?.rank] ?? 0) >= need;
+    }
+    case "reqTalent":
+    case "reqTrait": {
+      const type = e.kind === "reqTalent" ? "talent" : "trait";
+      const want = normReq(e.sourceName);
+      // Пустое имя не выполняется ничем: сверка вхождением сделала бы пустую
+      // строку подходящей к любому предмету.
+      if (!want) return false;
+      // Сверяем по ИМЕНИ целиком: перетащенный из компендиума образец и
+      // лежащий на акторе предмет — разные документы, общее у них только
+      // name. Вхождением сверять нельзя — «Железная Воля» закрыла бы «Волю».
+      // Специализацию в скобках у имени предмета при этом отбрасываем, как
+      // это делает hasTalent (constants/talent-requirements.mjs).
+      const bare = s => normReq(s).replace(/\s*\([^)]*\)\s*$/, "");
+      const hits = actor.items.filter(i =>
+        i.type === type && (normReq(i.name) === want || bare(i.name) === want));
+      if (!hits.length) return false;
+      // Рейтинг есть только у Черты: в схеме Таланта поля rating нет, и
+      // требование по нему было бы невыполнимо навсегда.
+      if (e.kind !== "reqTrait" || e.rating === "" || e.rating == null) return true;
+      const need = Number(e.rating) || 0;
+      return hits.some(i => (Number(i.system?.rating) || 0) >= need);
+    }
+    case "reqRace":
+      return actor.system.race === e.raceKey;
+    case "reqArchetype": {
+      const want = normReq(e.archetypeName);
+      // Элитные архетипы лежат и в поле актора, и списком «дополнительных».
+      const own = [actor.system.eliteArchetype, ...(actor.system.eliteArchetypesExtra || [])];
+      return own.some(a => normReq(a) === want);
+    }
+    case "reqPatron":
+      return actor.system.patronGod === e.patronKey;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Проверка всех групп требований. И-группа — нужны ВСЕ её записи, ИЛИ-группа
+ * — хотя бы одна; между группами всегда И, как и в Механике. Незаполненные
+ * записи игнорируются, пустой список требований = «годится любой».
+ * @returns {{ok:boolean, failed:string[]}}
+ */
+export function checkRequirements(actor, groups) {
+  const failed = [];
+  for (const g of groups || []) {
+    const entries = (g.entries || []).filter(isReqComplete);
+    if (!entries.length) continue;
+    const ok = g.operator === "OR"
+      ? entries.some(e => actorMeetsReq(actor, e))
+      : entries.every(e => actorMeetsReq(actor, e));
+    if (!ok) {
+      failed.push(g.operator === "OR"
+        ? `одно из: ${entries.map(describeReqEntry).join(" / ")}`
+        : entries.filter(e => !actorMeetsReq(actor, e)).map(describeReqEntry).join("; "));
+    }
+  }
+  return { ok: failed.length === 0, failed };
+}
+
+/** Поля одной записи-требования. reqKey — какой набор групп правим (data-req). */
+function buildReqFieldsHtml(reqKey, groupId, e, dis) {
+  const d = `data-req="${reqKey}" data-group-id="${groupId}" data-entry-id="${e.id}"`;
+  switch (e.kind) {
+    case "reqSkill": {
+      const cur = e.skillKey ? `${e.skillScope}:${e.skillKey}` : "";
+      const plain = Object.entries(SKILLS_DEF).map(([k, def]) => optHtml(`plain:${k}`, def.label, cur === `plain:${k}`)).join("");
+      const grp   = Object.entries(GROUP_SKILLS_DEF).map(([k, def]) => optHtml(`group:${k}`, def.label, cur === `group:${k}`)).join("");
+      const ranks = Object.entries(SKILL_RANKS).map(([k, def]) => optHtml(k, def.label, (e.rank || "knows") === k)).join("");
+      let out = `<select class="req-skillref" ${d} ${dis}>
+        <option value="">— выберите навык —</option>
+        <optgroup label="Обычные">${plain}</optgroup>
+        <optgroup label="Групповые">${grp}</optgroup>
+      </select>
+      <select class="req-rank" ${d} ${dis}>${ranks}</select>`;
+      if (e.skillScope === "group" && e.skillKey) {
+        const specs = specOptions(e.skillKey).map(s => optHtml(s.key, s.display, e.specKey === s.key)).join("");
+        out += `<select class="req-spec" ${d} ${dis}>
+          <option value="">— любая специализация —</option>${specs}
+        </select>`;
+      }
+      return out;
+    }
+    case "reqTalent":
+    case "reqTrait": {
+      const what = e.kind === "reqTalent" ? "Талант" : "Черту";
+      const inner = (e.sourceUuid || e.sourceName)
+        ? `<img src="${esc(e.sourceImg || "icons/svg/aura.svg")}" class="grant-drop-img"/>
+           <span class="grant-drop-name">${esc(e.sourceName || "?")}</span>
+           ${dis ? "" : `<button type="button" class="req-drop-clear" ${d} title="Убрать">✕</button>`}`
+        : `<span class="grant-drop-placeholder">${dis ? "—" : `Перетащите ${what} сюда`}</span>`;
+      let out = `<div class="grant-drop-zone req-drop-zone" ${d}>${inner}</div>`;
+      // Рейтинг только у Черты. У Таланта поля rating в схеме нет
+      // (module/data/item/talent.mjs), и требование по нему нельзя было бы
+      // выполнить никогда — поле не показываем, чтобы не заводить ловушку.
+      // Внутри Черты спрашиваем всегда: у перетащенного из компендиума
+      // образца hasRating может быть не выставлен.
+      if (e.kind === "reqTrait") {
+        out += `<input type="number" class="req-rating" ${d} value="${esc(e.rating ?? "")}"
+                       placeholder="рейтинг ≥" title="Минимальный рейтинг (пусто — не важен)" ${dis}/>`;
+      }
+      return out;
+    }
+    case "reqRace": {
+      const opts = Object.entries(RACES).map(([k, r]) => optHtml(k, r.label || k, e.raceKey === k)).join("");
+      return `<select class="req-race" ${d} ${dis}><option value="">— выберите расу —</option>${opts}</select>`;
+    }
+    case "reqArchetype": {
+      const names = [...new Set(ELITE_ARCHETYPES.map(a => a.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ru"));
+      const opts = names.map(n => optHtml(n, n, e.archetypeName === n)).join("");
+      return `<select class="req-archetype" ${d} ${dis}><option value="">— выберите архетип —</option>${opts}</select>`;
+    }
+    case "reqPatron": {
+      const opts = WARP_GODS.map(g => optHtml(g.key, g.label, e.patronKey === g.key)).join("");
+      return `<select class="req-patron" ${d} ${dis}><option value="">— выберите Бога —</option>${opts}</select>`;
+    }
+    default:
+      return "";
+  }
+}
+
+/** Одна группа требований. */
+function buildReqGroupHtml(reqKey, grp, isGM) {
+  const dis = isGM ? "" : "disabled";
+  const d = `data-req="${reqKey}" data-group-id="${grp.id}"`;
+  const entries = (grp.entries || []).map(e => {
+    const kindOpts = Object.entries(REQ_KIND_LABELS).map(([k, l]) => optHtml(k, l, e.kind === k)).join("");
+    return `<div class="grant-entry" data-req="${reqKey}" data-group-id="${grp.id}" data-entry-id="${e.id}">
+      <div class="grant-entry-row">
+        <select class="req-entry-kind" data-req="${reqKey}" data-group-id="${grp.id}" data-entry-id="${e.id}" ${dis}>${kindOpts}</select>
+        ${buildReqFieldsHtml(reqKey, grp.id, e, dis)}
+        ${isGM ? `<button type="button" class="req-entry-remove" data-req="${reqKey}" data-group-id="${grp.id}" data-entry-id="${e.id}" title="Удалить условие">✕</button>` : ""}
+      </div>
+      <div class="grant-entry-preview">${esc(describeReqEntry(e))}</div>
+    </div>`;
+  }).join("") || `<div class="grant-empty-hint"><em>Условий нет</em></div>`;
+
+  const opHint = grp.operator === "OR" ? "достаточно одного условия" : "нужны все условия";
+  return `<div class="grant-group" data-req="${reqKey}" data-group-id="${grp.id}">
+    <div class="grant-group-head">
+      <span class="grant-op-badge grant-op-${grp.operator}">${grp.operator === "OR" ? "ИЛИ" : "И"}</span>
+      <span class="grant-op-hint">${opHint}</span>
+      ${isGM ? `<button type="button" class="req-op-toggle" ${d} title="Переключить И/ИЛИ">⇄</button>` : ""}
+      ${isGM ? `<button type="button" class="req-group-remove" ${d} title="Удалить группу">✕</button>` : ""}
+    </div>
+    <div class="grant-entries">${entries}</div>
+    ${isGM ? `<div class="mech-group-add-row">
+      <button type="button" class="req-entry-add" ${d}>➕ Условие</button>
+    </div>` : ""}
+  </div>`;
+}
+
+/** Собирает HTML всех групп требований предмета — идёт в контекст листа. */
+export function buildRequirementsHtml(item, flagKey, isGM) {
+  const groups = getItemRequirements(item, flagKey);
+  if (!groups.length) return `<div class="grant-empty-hint"><em>Требований нет — доступно всем</em></div>`;
+  return groups.map(g => buildReqGroupHtml(flagKey, g, isGM)).join("");
 }

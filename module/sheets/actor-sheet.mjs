@@ -25,6 +25,7 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners } from "./tabs/gear.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
+import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
@@ -686,6 +687,9 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     // ── Стремления и Пути Аэльдари ─────────────────────────────────────────
     activateAspirationListeners(html, this.actor);
     activatePathListeners(html, this.actor);
+
+    // ── Ритуалы (стр. 393-425) ─────────────────────────────────────────────
+    activateRitualListeners(html, this.actor);
 
     // Сворачивание панели Путей (состояние держится между перерисовками)
     if (this._pathsOpen === false) {

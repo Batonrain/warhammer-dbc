@@ -69,6 +69,18 @@
       }
     },
     {
+      "name": "rituals",
+      "label": "Ритуалы — Библиотека (DBC)",
+      "path": "packs/rituals",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
       "name": "implants",
       "label": "Импланты — Библиотека (DBC)",
       "path": "packs/implants",
@@ -561,7 +573,8 @@
               "sorting": "m",
               "packs": [
                 "traits",
-                "talents"
+                "talents",
+                "rituals"
               ]
             },
             {
