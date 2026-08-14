@@ -89,11 +89,16 @@ export function locationForHit(index, { label, hitsCount, targetIsVehicle = fals
   return (hitsCount > 1 && index >= 2) ? "Торс" : label;
 }
 
-/** Бонус Силы в рукопашной: Могучее ×2, Сдержанное — ноль (стр. 168). */
-export function meleeStrengthBonus({ sb, wp }) {
-  if (wp.mightySB)    return sb * 2;
-  if (wp.containedSB) return 0;
-  return sb;
+/**
+ * Бонус Силы в рукопашной: Могучее ×2, Сдержанное — ноль (стр. 168).
+ * `sbHalf` — хват, у которого S.b в расчёте урона считается как ½ (Обратный):
+ * половина берётся от того, что иначе ушло бы в урон, и округляется вверх.
+ */
+export function meleeStrengthBonus({ sb, wp, sbHalf = false }) {
+  let bonus = sb;
+  if (wp.mightySB)    bonus = sb * 2;
+  if (wp.containedSB) bonus = 0;
+  return sbHalf ? Math.ceil(bonus / 2) : bonus;
 }
 
 /**

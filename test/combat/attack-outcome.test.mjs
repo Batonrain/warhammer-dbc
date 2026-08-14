@@ -142,6 +142,16 @@ describe("meleeStrengthBonus", () => {
     expect(meleeStrengthBonus({ sb: 4, wp: withProps({ mightySB: true }) })).toBe(8);
     expect(meleeStrengthBonus({ sb: 4, wp: withProps({ containedSB: true }) })).toBe(0);
   });
+
+  it("хват с ½S.b берёт половину с округлением вверх", () => {
+    expect(meleeStrengthBonus({ sb: 5, wp: noProps, sbHalf: true })).toBe(3);
+    expect(meleeStrengthBonus({ sb: 4, wp: noProps, sbHalf: true })).toBe(2);
+  });
+
+  it("½ считается после Могучего и не воскрешает Сдержанное", () => {
+    expect(meleeStrengthBonus({ sb: 5, wp: withProps({ mightySB: true }), sbHalf: true })).toBe(5);
+    expect(meleeStrengthBonus({ sb: 5, wp: withProps({ containedSB: true }), sbHalf: true })).toBe(0);
+  });
 });
 
 describe("attackPenetration", () => {

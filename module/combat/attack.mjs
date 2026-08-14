@@ -224,8 +224,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const dtLabel = DAMAGE_TYPES[ammoDmgType || effDmgType] || ammoDmgType || effDmgType;
   const sb      = chars.s?.bonus ?? 0;
 
-  // Бонус Силы в рукопашной: Могучее ×2, Сдержанное = 0
-  const sbEff = meleeStrengthBonus({ sb, wp });
+  // Бонус Силы в рукопашной: Могучее ×2, Сдержанное = 0, Обратный хват ½
+  const sbHalf = !!opts.gripSbHalf;
+  const sbEff  = meleeStrengthBonus({ sb, wp, sbHalf });
   // Порча: +Cor.b владельца к урону
   const taintedAdd = wp.taintedCorB ? (actor.system.corruptionBonus ?? 0) : 0;
 
@@ -454,7 +455,7 @@ const applyDmgSection = applyDmgButtons ? `
     ? `<div class="roll-aim-note">Прицел: <b>${aimTarget.label.replace(/\s*\(.*\)/, "")}</b></div>`
     : "";
   const sbNote = isMelee
-    ? `, S.b +${sbEff}${wp.mightySB ? " (Могучее ×2)" : wp.containedSB ? " (Сдержанное)" : ""}`
+    ? `, S.b +${sbEff}${wp.mightySB ? " (Могучее ×2)" : wp.containedSB ? " (Сдержанное)" : ""}${sbHalf ? " (½ хват)" : ""}`
     : "";
   const taintedNote = taintedAdd ? `, Порча +${taintedAdd}` : "";
   const damageSection = damageRolls.length > 0 ? `
