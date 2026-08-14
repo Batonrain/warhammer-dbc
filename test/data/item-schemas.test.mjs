@@ -218,6 +218,9 @@ const TYPES = {
       description: "", notes: "", benefit: "", bookSource: "", tier: 1,
       requirement: "", aptitudes: [], aptSource: "", aspirations: [], god: "",
       specialization: "", cost: 0, purchased: false, granted: false,
+      // Уровень (Enemy 1-3) и цели (Hatred/Peer/Enemy/Good Reputation) —
+      // добавлены вместе с деревом фракций, в template.json их не было.
+      hasRating: false, rating: 0, targets: [],
       effects: { initMod: 0, fearRating: 0, speedMod: 0 }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]

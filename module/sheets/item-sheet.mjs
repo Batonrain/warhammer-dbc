@@ -38,6 +38,9 @@ import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml
          getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
+import { openCompendiumBrowser }                     from "../apps/compendium-browser.mjs";
+import { factionTarget, actorTypeTarget, allTarget,
+         addTarget, removeTargetAt }                 from "../rules/talent-targets.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -70,9 +73,32 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     // поэтому проверяется РАНЬШЕ — иначе дроп ушёл бы в Механику.
     const reqZone = event.target?.closest?.(".req-drop-zone");
     if (reqZone && data?.type === "Item") return this._onDropReqItem(event, data, reqZone);
+    const targetZone = event.target?.closest?.(".talent-target-drop");
+    if (targetZone && data?.type === "Item") return this._onDropTalentTarget(event, data);
     const grantZone = event.target?.closest?.(".grant-drop-zone");
     if (grantZone && data?.type === "Item") return this._onDropGrantItem(event, data, grantZone);
     if (data?.type === "ActiveEffect") return this._onDropActiveEffect(event, data);
+  }
+
+  /**
+   * Драг-н-дроп Фракции в список целей Таланта (Hatred, Peer, Enemy, Good
+   * Reputation). Тот же приём, что у зоны требования выше: цели правит только
+   * Мастер, а зона дропа disabled не бывает.
+   */
+  async _onDropTalentTarget(event, data) {
+    if (!this.item.isOwner || !game.user.isGM) return;
+    const src = await Item.implementation.fromDropData(data);
+    if (!src) return;
+    if (src.type !== "faction") {
+      return ui.notifications.warn(
+        `Сюда нужно перетащить Фракцию, а перетащено: ${ITEM_TYPES[src.type] || src.type}.`);
+    }
+    const target = factionTarget(src);
+    if (!target) return ui.notifications.warn(`У фракции «${src.name}» не задан ключ — ссылаться не на что.`);
+    const before = this.item.system.targets || [];
+    const after = addTarget(before, target);
+    if (after.length === before.length) return ui.notifications.info(`«${src.name}» уже в списке целей.`);
+    await this.item.update({ "system.targets": after });
   }
 
   /**
@@ -103,6 +129,42 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     entry.sourceImg  = src.img;
     entry.sourceHasRating = !!src.system?.hasRating;
     await this.item.setFlag("warhammer-dbc", reqKey, arr);
+  }
+
+  /**
+   * Какого вида цель добавляем. Один список вместо трёх кнопок: видов немного,
+   * а типы акторов всё равно нужно показать перечнем.
+   *
+   * @returns {Promise<?string>} "faction" | "all" | ключ типа актора; null — отмена.
+   */
+  _askTargetKind() {
+    // Типы акторов берутся у Foundry, а подписи — из lang/ru.json (TYPES.Actor.*):
+    // свой список разъехался бы с системой при добавлении типа.
+    const actorTypes = (game.documentTypes?.Actor ?? []).filter(t => t !== "base");
+    const opts = [
+      `<option value="faction">Фракция…</option>`,
+      `<option value="all">Все! (без разбора)</option>`,
+      ...actorTypes.map(t =>
+        `<option value="${t}">Тип существа: ${game.i18n.localize(`TYPES.Actor.${t}`)}</option>`)
+    ].join("");
+
+    return new Promise(resolve => {
+      let done = false;
+      const finish = v => { if (!done) { done = true; resolve(v); } };
+      new Dialog({
+        title: "Добавить цель",
+        content: `<div class="wh-holo-dialog">
+          <p>Против кого действует талант?</p>
+          <select class="talent-target-kind" style="width:100%">${opts}</select>
+        </div>`,
+        buttons: {
+          ok:     { label: "Далее",  callback: html => finish(html.find(".talent-target-kind").val()) },
+          cancel: { label: "Отмена", callback: () => finish(null) }
+        },
+        default: "ok",
+        close: () => finish(null)
+      }, { classes: ["dialog", "warhammer-dbc", "wh-holo"] }).render(true);
+    });
   }
 
   async _onDropActiveEffect(event, data) {
@@ -678,6 +740,47 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       }));
 
     super.activateListeners(html);
+
+    // ── Цели Таланта (Hatred, Peer, Enemy, Good Reputation) ─────────────────
+    // Цель добавляется тремя путями, потому что и природа у целей разная:
+    // фракция выбирается в Обозревателе (там дерево и поиск), тип существа —
+    // из короткого списка типов акторов, «Все!» — просто есть.
+    html.find(".talent-target-add").on("click", async ev => {
+      ev.preventDefault();
+      if (!game.user.isGM) return;
+      const kind = await this._askTargetKind();
+      if (!kind) return;
+
+      let target = null;
+      if (kind === "faction") {
+        const uuid = await openCompendiumBrowser(false, {
+          filters: { type: "faction" },
+          prompt: "Выберите фракцию — правило сработает и на любую нижестоящую"
+        });
+        if (!uuid) return;
+        const doc = await fromUuid(uuid).catch(() => null);
+        if (!doc) return ui.notifications.warn("Фракция не найдена — возможно, компендиум изменился.");
+        target = factionTarget(doc);
+        if (!target) return ui.notifications.warn(`У фракции «${doc.name}» не задан ключ.`);
+      } else if (kind === "all") {
+        target = allTarget();
+      } else {
+        target = actorTypeTarget(kind, game.i18n.localize(`TYPES.Actor.${kind}`));
+      }
+
+      const before = this.item.system.targets || [];
+      const after = addTarget(before, target);
+      if (after.length === before.length) return ui.notifications.info("Такая цель уже есть.");
+      await this.item.update({ "system.targets": after });
+    });
+
+    html.find(".talent-target-remove").on("click", async ev => {
+      ev.preventDefault();
+      if (!game.user.isGM) return;
+      await this.item.update({
+        "system.targets": removeTargetAt(this.item.system.targets || [], ev.currentTarget.dataset.index)
+      });
+    });
 
     // ── Фракция: список «других названий» одним полем ───────────────────────
     // system.aliases — ArrayField, и авто-submit формы строку в массив не
