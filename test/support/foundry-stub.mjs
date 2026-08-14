@@ -106,7 +106,20 @@ class ObjectFieldStub extends DataFieldStub {
  * структуру и умолчания, а не валидацию (см. шапку файла).
  */
 class SchemaFieldStub extends DataFieldStub {
-  constructor(fields = {}, options = {}) { super(options); this.fields = fields; }
+  constructor(fields = {}, options = {}) {
+    super(options);
+    // Настоящий SchemaField проставляет полю parent и отказывается принимать
+    // поле, у которого parent уже есть: «The "head" field already belongs to
+    // some other parent and may not be reused». Один и тот же экземпляр,
+    // подставленный в две схемы (armor и armorBonus), валит систему при
+    // загрузке — заглушка обязана ловить это в тестах, а не браузер в игре.
+    for (const [key, field] of Object.entries(fields)) {
+      if (field.parent)
+        throw new Error(`The "${key}" field already belongs to some other parent and may not be reused.`);
+      field.parent = this;
+    }
+    this.fields = fields;
+  }
 
   get initial() {
     const out = {};

@@ -81,8 +81,10 @@ export function creatureSchema({ granted = false } = {}) {
   for (const [key, def] of Object.entries(GROUP_SKILLS_DEF))
     groupSkillFields[key] = objList(def.label);
 
-  const armorFields = {};
-  for (const loc of HIT_LOCATIONS) armorFields[loc] = num(0, loc);
+  // Каждый вызов отдаёт СВОИ экземпляры полей: поле принадлежит ровно одной
+  // схеме, и подстановка одного набора и в armor, и в armorBonus валит систему
+  // при загрузке («field already belongs to some other parent»).
+  const armorFields = () => Object.fromEntries(HIT_LOCATIONS.map(loc => [loc, num(0, loc)]));
 
   const conditionFields = {};
   for (const flag of CONDITION_FLAGS) {
@@ -140,10 +142,10 @@ export function creatureSchema({ granted = false } = {}) {
     charDamage:      new SchemaField(charDamageFields, { label: "Урон характеристикам" }),
     skills:          new SchemaField(skillFields, { label: "Навыки" }),
     groupSkills:     new SchemaField(groupSkillFields, { label: "Групповые навыки" }),
-    armor:      new SchemaField({ ...armorFields }, { label: "Броня" }),
+    armor:      new SchemaField(armorFields(), { label: "Броня" }),
     // Складываемая надбавка AP от эффектов (constants/effect-keys.mjs) —
     // отдельно от `armor`, который берётся по максимуму, а не суммируется.
-    armorBonus: new SchemaField({ ...armorFields }, { label: "Надбавка брони" }),
+    armorBonus: new SchemaField(armorFields(), { label: "Надбавка брони" }),
     movement: new SchemaField({
       halfMove: num(0, "Полуход"), move: num(0, "Ход"),
       charge:   num(0, "Натиск"),  run:  num(0, "Бег"),
