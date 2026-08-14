@@ -18,7 +18,8 @@ import { WEAPON_PROPERTIES }          from "./module/constants/weapon-properties
 
 import { WarhammerActor }             from "./module/documents/actor.mjs";
 import { WarhammerItem }              from "./module/documents/item.mjs";
-import { ITEM_DATA_MODELS }           from "./module/data/index.mjs";
+import { ITEM_DATA_MODELS,
+         ACTOR_DATA_MODELS }          from "./module/data/index.mjs";
 
 import { WarhammerCharacterSheet }    from "./module/sheets/actor-sheet.mjs";
 import { WarhammerShipSheet }         from "./module/sheets/ship-sheet.mjs";
@@ -141,9 +142,10 @@ Hooks.once("init", () => {
   CONFIG.Actor.documentClass = WarhammerActor;
   CONFIG.Item.documentClass  = WarhammerItem;
 
-  // Типы данных предметов. Перечисленные здесь типы читают схему из
+  // Типы данных документов. Перечисленные здесь типы читают схему из
   // module/data/, а не из template.json: там их записи пусты (см. index.mjs).
   Object.assign(CONFIG.Item.dataModels, ITEM_DATA_MODELS);
+  Object.assign(CONFIG.Actor.dataModels, ACTOR_DATA_MODELS);
 
   CONFIG.Combat.initiative = {
     formula: "1d10 + @initiative + @initiativeMod",

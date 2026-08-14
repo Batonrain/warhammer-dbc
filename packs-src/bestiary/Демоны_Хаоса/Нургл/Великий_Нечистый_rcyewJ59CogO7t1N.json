@@ -15,10 +15,7 @@
     "eliteArchetype": "",
     "eliteArchetypesExtra": [],
     "alignment": "heretic",
-    "isPsyker": [
-      true,
-      true
-    ],
+    "isPsyker": true,
     "isTechpriest": false,
     "isRogueTrader": false,
     "meleeStance": "standard",
@@ -466,8 +463,7 @@
     "trueName": "",
     "trueNameKnown": false,
     "portfolio": "Владыка Разложения",
-    "isDaemon": true,
-    "bodyType": "male"
+    "isDaemon": true
   },
   "items": [
     {

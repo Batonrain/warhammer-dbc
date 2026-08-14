@@ -14,10 +14,7 @@
     "archetype": "",
     "eliteArchetype": "",
     "alignment": "heretic",
-    "isPsyker": [
-      false,
-      false
-    ],
+    "isPsyker": false,
     "isTechpriest": false,
     "isRogueTrader": false,
     "meleeStance": "standard",

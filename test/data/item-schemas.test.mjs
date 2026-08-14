@@ -16,6 +16,7 @@ import fs   from "node:fs";
 import path from "node:path";
 
 import { ITEM_DATA_MODELS } from "../../module/data/index.mjs";
+import { packDocuments, leaves, isEmpty } from "../support/pack-docs.mjs";
 
 /**
  * По типу: папка packs-src с его документами, умолчания прежнего template.json
@@ -312,6 +313,135 @@ const TYPES = {
       special: ""
     }
   },
+  // ── Силы (wdbc-ff4.1.4) ────────────────────────────────────────────────────
+  psychicPower: {
+    pack: "psychic-powers",
+    defaults: {
+      description: "", notes: "", cost: 0, discipline: "", subtype: "",
+      powerType: "attack", extraTypes: [], shootSubtype: "", prRequired: 1,
+      testChar: "wp", testMod: 0, action: "half", range: "",
+      sustainable: false, sustainCost: 1, sustainAction: "free",
+      damage: "", damageType: "energy", penetration: 0, weaponProps: [],
+      charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
+      effect: "", isSustained: false,
+      effects: {
+        charBonusStat: "", charBonusValue: 0, charBonuses: [],
+        armourAll: 0, fearRating: 0, sizeMod: 0, grantedTraits: "",
+        weaponBuff: {
+          enabled: false, scope: "equipped",
+          damageMod: 0, penMod: 0, rangeMod: 0, addProps: []
+        }
+      }
+    }
+  },
+  techPower: {
+    pack: "tech-powers",
+    defaults: {
+      description: "", notes: "", discipline: "", subtype: "",
+      miracleType: "imperative", extraTypes: [], iron: "", cost: 0, rating: 1,
+      cognitionCost: 1, energyCost: 0, sustainCost: 0, sustainAction: "free",
+      testSkill: "techUse", testMod: 0, action: "full", sustained: false,
+      compiled: false, range: "", damage: "", damageType: "energy",
+      penetration: 0, effect: "",
+      effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] }
+    }
+  },
+  navigatorPower: {
+    // Предметов этого типа в паках нет — силы Навигатора заводит сам ГМ.
+    pack: null,
+    defaults: {
+      description: "", notes: "", xpCost: 0, requirement: "", action: "half",
+      sustainable: false, isSustained: false, testChar: "wp", testMod: 0,
+      opposed: false, range: "", powerKind: "Концентрация, Ментальное",
+      damage: "", damageType: "energy", penetration: 0, effect: ""
+    }
+  },
+
+  // ── Корабль и техника (wdbc-ff4.1.6) ───────────────────────────────────────
+  component: {
+    pack: "ship-components",
+    defaults: {
+      kind: "supplemental", power: 0, space: 0, sp: 0, rarity: 0,
+      quality: "common", qualityPicks: [], qualityCustom: false,
+      hulls: "", aspects: "", description: "", notes: "",
+      essential: false, external: false, damaged: false, status: "intact",
+      lcBonus: 0, pcBonus: 0, modChar: "", modValue: 0, shipProps: [],
+      hull:  { spaceMax: 0, powerGen: 0, turnArc: "90°", weaponCapacity: "", hullIntegrity: 0 },
+      chars: { speed: 0, manoeuvrability: 0, detection: 0, voidShields: 0, armour: 0, turretRating: 0 },
+      weapon: { wType: "macrobattery", strength: 0, damage: "", crit: 0, range: 0, arc: "" }
+    }
+  },
+  cargo: {
+    pack: "ship-components",
+    defaults: {
+      cargoType: "minerals", lc: 1, quantity: 1, quality: "common", rarity: 0,
+      baseRarity: "", shipSupply: false, rarityManual: false, xenos: false,
+      astartes: false, inHold: false, price: 0, origin: "", consignee: "",
+      description: "",
+      // В template.json объявлено не было, но лежит у четырёх грузов пака.
+      notes: ""
+    }
+  },
+  torpedo: {
+    // Предметов этого типа в паках нет — торпеды заводит сам ГМ.
+    pack: null,
+    defaults: { warhead: "plasma", navSystem: "standard", quantity: 0, description: "" }
+  },
+  celestialBody: {
+    // Небесные тела лежат предметами в акторах starSystem, отдельного пака нет.
+    pack: null,
+    defaults: {
+      description: "", notes: "", bodyType: "planet", zone: "", parentId: "",
+      starClass: "", starGroup: 0, exotic: false, bodySize: "", gravity: "",
+      atmospherePresence: "", atmosphereType: "", climate: "", habitability: "",
+      worldClass: "", worldEnv: "", tithe: "", titheExempt: [],
+      orbitalFeatures: "", territories: "", government: "", threat: "",
+      stationType: "", presence: "", allegiance: "", xenosSpecies: "",
+      xenosCustom: "", gmNotes: "", signal: false, scouted: false,
+      revealed: false, dynasty: "", extractiums: [],
+      defense:    { weapons: "", garrison: "", patrols: "", strength: "", notes: "" },
+      population: { species: "", size: "", notes: "" },
+      improvements: [],
+      resources: {
+        ore: 0, promethium: 0, adamantium: 0, phlogiston: 0, organics: 0,
+        plasteel: 0, weapons: 0, tech: 0, provisions: 0, manpower: 0,
+        archeotech: 0, xenotech: 0, heretek: 0, notes: ""
+      }
+    }
+  },
+  vehicleGear: {
+    pack: "vehicle-equipment",
+    defaults: { description: "", notes: "", availability: 0, quality: "common", active: true }
+  },
+  vehicleTrait: {
+    pack: "vehicle-traits",
+    defaults: {
+      description: "", notes: "", benefit: "", availability: 0,
+      hasRating: false, rating: 0, hasRating2: false, rating2: 0,
+      hasRating3: false, rating3: 0,
+      // Пять последних флагов в template.json объявлены не были: они появились
+      // в библиотеке Черт позже и лежат у всех предметов пака. Умолчание берётся
+      // из самой библиотеки (VEHICLE_TRAIT_EFFECTS).
+      effects: {
+        openTopped: false, manoeuvreMod: 0, spdMod: 0, spdDamageReduce: 0,
+        noMove: false, swerveDisabled: false, fullMoveSpdMult: 0,
+        smallMoveOnly: false, ignoreDifficultTerrain: false, critHalved: false,
+        trackHitsToHull: false, siege: false, reloadRapid: false,
+        commandBonus: 0, repairBonus: 0,
+        deflectorShield: false, deflectorDaemonic: false, ignoreCrewCrits: false,
+        autonomous: false, flickerfield: false
+      }
+    }
+  },
+  smallCraft: {
+    pack: "small-craft",
+    defaults: {
+      description: "", notes: "", craftKind: "fighter", faction: "", cr: 0,
+      crAlt: 0, spd: 0, squadronSize: 0, props: "", rarity: 0, qty: 1,
+      state: "stored", strength: "full", turnsOut: 0, role: "independent"
+    }
+  },
+
   forcefield: {
     pack: "shields",
     defaults: {
@@ -323,41 +453,14 @@ const TYPES = {
   }
 };
 
-const PACKS_SRC = path.resolve(import.meta.dirname, "../../packs-src");
-
-/** Документы пака (или нескольких): по файлу на предмет, папки — папки компендиума. */
-function packDocuments(pack, type) {
-  if (Array.isArray(pack)) return pack.flatMap(p => packDocuments(p, type));
-  const out = [];
-  const walk = dir => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) { walk(full); continue; }
-      if (!entry.name.endsWith(".json") || entry.name.startsWith("_")) continue;
-      const doc = JSON.parse(fs.readFileSync(full, "utf8"));
-      if (doc.type === type) out.push({ file: path.relative(PACKS_SRC, full), doc });
-    }
-  };
-  walk(path.join(PACKS_SRC, pack));
-  return out;
-}
-
-/** Значения по путям: «effects.sizeMod» → 1. Массивы сравниваются целиком. */
-function leaves(value, prefix = "") {
-  if (Array.isArray(value)) return [[prefix, JSON.stringify(value)]];
-  if (value && typeof value === "object")
-    return Object.entries(value).flatMap(([key, v]) => leaves(v, prefix ? `${prefix}.${key}` : key));
-  return [[prefix, value]];
-}
-
-/** Пусто — значит терять нечего: пустая строка, пустой список, пустой объект. */
-function isEmpty(value) {
-  return value === "" || value === "[]" || value === "{}" || value === undefined;
-}
-
 describe("типы данных предметов", () => {
-  it("переведены ровно те типы, что перечислены в тесте", () => {
-    expect(Object.keys(ITEM_DATA_MODELS).sort()).toEqual(Object.keys(TYPES).sort());
+  // Полей в template.json больше нет вовсе, остался только перечень типов:
+  // тип, попавший в этот перечень без схемы, не получит ни одного поля.
+  it("у каждого типа из template.json есть схема, и каждая проверена", () => {
+    const declared = JSON.parse(fs.readFileSync(
+      path.resolve(import.meta.dirname, "../../template.json"), "utf8")).Item.types;
+    expect(Object.keys(ITEM_DATA_MODELS).sort()).toEqual([...declared].sort());
+    expect(Object.keys(TYPES).sort()).toEqual([...declared].sort());
   });
 
   for (const [type, { pack, defaults, migratedAway = [] }] of Object.entries(TYPES)) {

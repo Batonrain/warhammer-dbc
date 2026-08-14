@@ -19,6 +19,7 @@ import path from "node:path";
 
 import { EFFECT_KEY_LABELS, EFFECT_KEY_WHITELIST, expectedPhase,
          legacyEffectsToChanges } from "../../module/constants/effect-keys.mjs";
+import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
 const template = JSON.parse(
   fs.readFileSync(path.resolve(import.meta.dirname, "../../template.json"), "utf8"));
@@ -27,10 +28,16 @@ const LOCATIONS = ["head", "body", "leftArm", "rightArm", "leftLeg", "rightLeg"]
 /** Типы актора, чей лист считает броню по зонам (одна ветка prepareDerivedData). */
 const ARMORED_ACTORS = ["character", "daemon", "demonPrince"];
 
+/** Схема типа: у переведённых — класс данных, у остальных ещё template.json. */
+function armorBonusOf(type) {
+  const Model = ACTOR_DATA_MODELS[type];
+  return Model ? new Model({}).armorBonus : template.Actor[type]?.armorBonus;
+}
+
 describe("ключ складываемой брони", () => {
   it("armorBonus объявлен в схеме каждого носящего броню актора", () => {
     for (const type of ARMORED_ACTORS) {
-      const bonus = template.Actor[type]?.armorBonus;
+      const bonus = armorBonusOf(type);
       expect(bonus, type).toBeDefined();
       expect(Object.keys(bonus).sort(), type).toEqual([...LOCATIONS].sort());
     }

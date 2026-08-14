@@ -181,7 +181,12 @@ export const DRUKHARI_BESTIARY = [
       fate:   { value: 0, max: 0 },
       corruption: { value: 0, threshold: 0 }, insanity: { value: 0, threshold: 0 },
       skills: SK({ acrobatics: "trained", awareness: "trained", dodge: "trained",
-                   operateAeronautica: "trained", survival: "knows" }),
+                   survival: "knows" }),
+      // «Управление (Аэронавтика)» — специальность группового навыка, а не
+      // отдельный навык: плоского operateAeronautica в SKILLS_DEF нет, и такая
+      // запись просто не доезжала до листа. Характеристика не указана — берётся
+      // умолчание группы (Ловкость).
+      groupSkills: { operate: [{ specialty: "Aeronautica", rank: "trained", total: 0, cost: 0 }] },
       notes: "<p><b>Низший миньон Укротителя.</b> Необученный — предмет R1, обученный — R2.</p>"
            + "<p>Крупная хищная птица с размахом крыльев почти четыре метра. Дрейфует на тепловых "
            + "потоках, пока не увидит добычу, затем ныряет так, что побег невозможен. Нападает стаей, "

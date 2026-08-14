@@ -1,0 +1,114 @@
+// test/data/actor-schemas.test.mjs
+//
+// Перевод типа актора с template.json на схему проверяется теми же двумя
+// вопросами, что и у предметов (см. item-schemas.test.mjs): умолчания и
+// сохранность данных пака.
+//
+// Разница в одном: умолчания актора не переписаны в тест руками, а сняты с
+// прежнего template.json в legacy-actor-templates.json. У Демона таких полей
+// больше двух сотен, и список, набранный заново, проверял бы не схему, а
+// внимательность набиравшего. Всё, чем схема НАМЕРЕННО отличается от старого
+// описания, перечислено ниже в DEVIATIONS — молча разойтись они не могут.
+
+import "../support/foundry-stub.mjs";
+
+import { describe, it, expect } from "vitest";
+import fs   from "node:fs";
+import path from "node:path";
+
+import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
+import { packDocuments, leaves, isEmpty } from "../support/pack-docs.mjs";
+
+const LEGACY = JSON.parse(fs.readFileSync(
+  path.resolve(import.meta.dirname, "legacy-actor-templates.json"), "utf8"));
+
+/** Пак с документами этого типа; null — таких акторов в паках нет. */
+const PACKS = {
+  daemon:      "bestiary",
+  demonPrince: null,
+  horde:       null,
+  vehicle:     "vehicles",
+  squad:       null,
+  formation:   null,
+  ship:        null,
+  starSystem:  null,
+  character:   "bestiary"
+};
+
+/** Намеренные расхождения схемы с прежним template.json: поле → почему. */
+const DEVIATIONS = {
+  vehicle: {
+    // Объявлена не была, но лежит у всех 56 машин пака.
+    availability: 0
+  }
+};
+
+/**
+ * Поля прошлого формата: значение не теряется, а переезжает в другое поле
+ * силами migrateData, и проверяет переезд отдельный тест.
+ */
+const MIGRATED_AWAY = {
+  vehicle: ["crew"]   // → stations
+};
+
+describe("типы данных акторов", () => {
+  // Полей в template.json больше нет вовсе, остался только перечень типов:
+  // тип, попавший в этот перечень без схемы, не получит ни одного поля.
+  it("у каждого типа из template.json есть схема, и каждая проверена", () => {
+    const declared = JSON.parse(fs.readFileSync(
+      path.resolve(import.meta.dirname, "../../template.json"), "utf8")).Actor.types;
+    expect(Object.keys(ACTOR_DATA_MODELS).sort()).toEqual([...declared].sort());
+    expect(Object.keys(PACKS).sort()).toEqual([...declared].sort());
+  });
+
+  for (const [type, pack] of Object.entries(PACKS)) {
+    describe(type, () => {
+      const Model = ACTOR_DATA_MODELS[type];
+
+      it("пустой актор получает умолчания прежнего template.json", () => {
+        expect(new Model({}).toObject()).toEqual({ ...LEGACY[type], ...(DEVIATIONS[type] ?? {}) });
+      });
+
+      it.skipIf(!pack)("документы пака проходят через схему без потерь", () => {
+        const docs = packDocuments(pack, type);
+        expect(docs.length).toBeGreaterThan(0);
+
+        const migrated = MIGRATED_AWAY[type] ?? [];
+        const lost = [];
+        for (const { file, doc } of docs) {
+          const after = new Map(leaves(new Model(doc.system).toObject()));
+          for (const [key, value] of leaves(doc.system)) {
+            if (isEmpty(value) || migrated.some(m => key === m || key.startsWith(`${m}.`))) continue;
+            if (after.get(key) !== value) lost.push(`${file}: ${key} = ${JSON.stringify(value)}`);
+          }
+        }
+        expect(lost).toEqual([]);
+      });
+    });
+  }
+
+  describe("разовые переезды", () => {
+    it("ростер экипажа техники переезжает из crew в stations", () => {
+      const vehicle = new ACTOR_DATA_MODELS.vehicle({
+        crew: [{ role: "driver", uuid: "Actor.abc", name: "Гвардеец", img: "a.webp" }]
+      });
+      expect(vehicle.stations).toEqual([
+        { id: expect.any(String), role: "driver", uuid: "Actor.abc", name: "Гвардеец", img: "a.webp" }
+      ]);
+      expect(vehicle.crew).toBeUndefined();
+    });
+
+    it("занятые места экипажа переезд не трогает", () => {
+      const vehicle = new ACTOR_DATA_MODELS.vehicle({
+        crew: [{ role: "driver" }],
+        stations: [{ id: "s1", role: "gunner", uuid: "", name: "", img: "" }]
+      });
+      expect(vehicle.stations).toEqual([{ id: "s1", role: "gunner", uuid: "", name: "", img: "" }]);
+    });
+
+    it("список isPsyker сворачивается в флаг, а не считается правдой целиком", () => {
+      expect(new ACTOR_DATA_MODELS.daemon({ isPsyker: [false, false] }).isPsyker).toBe(false);
+      expect(new ACTOR_DATA_MODELS.daemon({ isPsyker: [true, true] }).isPsyker).toBe(true);
+    });
+  });
+});

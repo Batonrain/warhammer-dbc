@@ -1,0 +1,1578 @@
+{
+  "daemon": {
+    "race": "",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "eliteArchetypesExtra": [],
+    "alignment": "heretic",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 0,
+      "max": 0,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 0
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 0,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "bs": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "s": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "t": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "ag": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "int": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "per": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "wp": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "fel": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "inf": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "athletics": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "awareness": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "charm": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "dodge": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "logic": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "survival": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "techUse": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "armorBonus": {
+      "head": 0,
+      "body": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0,
+      "spdBonus": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "effectiveCurrent": 0,
+      "gravity": 1,
+      "max": 0,
+      "carry": 0,
+      "lift": 0,
+      "push": 0,
+      "indexBonus": {
+        "all": 0,
+        "carry": 0,
+        "lift": 0,
+        "push": 0
+      }
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "",
+    "craftAvailable": false,
+    "possessed": false,
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "reactions": "",
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "allegiance": "undivided",
+    "rank": "lesser",
+    "form": "trueForm",
+    "instabilityRating": 1,
+    "trueName": "",
+    "trueNameKnown": false,
+    "portfolio": "",
+    "isDaemon": true
+  },
+  "demonPrince": {
+    "race": "",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "eliteArchetypesExtra": [],
+    "alignment": "heretic",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 0,
+      "max": 0,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 0
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 0,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "bs": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "s": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "t": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "ag": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "int": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "per": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "wp": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "fel": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "inf": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "athletics": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "awareness": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "charm": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "dodge": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "logic": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "survival": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "techUse": {
+        "rank": "untrained",
+        "cost": 0,
+        "total": -20
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "armorBonus": {
+      "head": 0,
+      "body": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0,
+      "spdBonus": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "effectiveCurrent": 0,
+      "gravity": 1,
+      "max": 0,
+      "carry": 0,
+      "lift": 0,
+      "push": 0,
+      "indexBonus": {
+        "all": 0,
+        "carry": 0,
+        "lift": 0,
+        "push": 0
+      }
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "",
+    "craftAvailable": false,
+    "possessed": false,
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "reactions": "",
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "allegiance": "undivided",
+    "rank": "prince",
+    "form": "trueForm",
+    "instabilityRating": 1,
+    "trueName": "",
+    "trueNameKnown": false,
+    "portfolio": "",
+    "isDaemon": true,
+    "dp": {
+      "favor": 0,
+      "syllables": 5,
+      "gifts": [],
+      "banished": false,
+      "trueFormDesc": "",
+      "anointed": "",
+      "retinueNotes": "",
+      "mortalName": "",
+      "ascended": false,
+      "ip": 0
+    }
+  },
+  "horde": {
+    "speciesName": "",
+    "faction": "",
+    "descriptor": "",
+    "characteristics": {
+      "ws": {
+        "base": 0,
+        "advance": 0,
+        "total": 0,
+        "bonus": 0
+      },
+      "bs": {
+        "base": 0,
+        "advance": 0,
+        "total": 0,
+        "bonus": 0
+      },
+      "s": {
+        "base": 0,
+        "advance": 0,
+        "total": 0,
+        "bonus": 0
+      },
+      "t": {
+        "base": 0,
+        "advance": 0,
+        "total": 0,
+        "bonus": 0
+      },
+      "ag": {
+        "base": 0,
+        "advance": 0,
+        "total": 0,
+        "bonus": 0
+      },
+      "int": {
+        "base": 0,
+        "advance": 0,
+        "total": 0,
+        "bonus": 0
+      },
+      "per": {
+        "base": 0,
+        "advance": 0,
+        "total": 0,
+        "bonus": 0
+      },
+      "wp": {
+        "base": 0,
+        "advance": 0,
+        "total": 0,
+        "bonus": 0
+      },
+      "fel": {
+        "base": 0,
+        "advance": 0,
+        "total": 0,
+        "bonus": 0
+      }
+    },
+    "magnitude": {
+      "value": 0,
+      "start": 0
+    },
+    "psychDamage": 0,
+    "absorption": 0,
+    "sizeMod": 0,
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0
+    },
+    "enemiesInMelee": 0,
+    "immuneFear": false,
+    "traits": "",
+    "notes": "",
+    "gmNotes": ""
+  },
+  "vehicle": {
+    "vehicleClass": "",
+    "vehicleType": "tank",
+    "origin": "",
+    "commander": "",
+    "manoeuvrability": 0,
+    "operate": 0,
+    "size": 4,
+    "chassis": {
+      "type": "tracked",
+      "spd": 4,
+      "spdDamage": 0,
+      "manoeuvreDamage": 0,
+      "strength": 0,
+      "unnaturalS": 0
+    },
+    "armour": {
+      "front": 0,
+      "side": 0,
+      "rear": 0
+    },
+    "structure": {
+      "value": 0,
+      "max": 0,
+      "critical": 0
+    },
+    "ammoReloads": 10,
+    "openTopped": false,
+    "traits": "",
+    "stations": [],
+    "damageStates": [],
+    "notes": "",
+    "gmNotes": ""
+  },
+  "squad": {
+    "designation": "",
+    "faction": "",
+    "mission": "",
+    "deployment": "",
+    "delegated": false,
+    "risk": 3,
+    "cohesion": {
+      "base": 0,
+      "start": 0,
+      "value": 0
+    },
+    "posts": {
+      "leader": {
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      "commander": {
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      "coordinator": {
+        "uuid": "",
+        "name": "",
+        "img": ""
+      }
+    },
+    "members": [],
+    "presence": {
+      "active": false,
+      "benefit": "extreme"
+    },
+    "shortCommand": {
+      "active": false,
+      "key": "inspire",
+      "successes": 0,
+      "note": ""
+    },
+    "detailCommand": {
+      "active": false,
+      "successes": 0,
+      "picks": []
+    },
+    "briefing": {
+      "successes": 0
+    },
+    "notes": "",
+    "gmNotes": ""
+  },
+  "formation": {
+    "troopType": "mediumInfantry",
+    "size": "battalion",
+    "techLevel": "advanced",
+    "training": "tithe",
+    "gearQuality": "standard",
+    "terrain": "open",
+    "homeworld": "",
+    "allegiance": "",
+    "commanderName": "",
+    "headcount": 0,
+    "astartes": false,
+    "strengthMod": 0,
+    "strengthOverride": "",
+    "speedOverride": "",
+    "numbers": {
+      "value": 0,
+      "max": 0
+    },
+    "morale": {
+      "value": 0,
+      "max": 0,
+      "gearRoll": 0
+    },
+    "cover": {
+      "dugIn": 0,
+      "aa": 0,
+      "mod": 0
+    },
+    "order": {
+      "key": "",
+      "note": ""
+    },
+    "status": {
+      "surprised": false,
+      "engaged": false,
+      "fled": false,
+      "exhausted": false,
+      "disorder": 0,
+      "flankRounds": 0,
+      "feintRounds": 0,
+      "reconRounds": 0,
+      "keyEventBonus": false
+    },
+    "posts": {
+      "commander": {
+        "uuid": "",
+        "name": "",
+        "img": ""
+      }
+    },
+    "attached": [],
+    "initiativeMod": 0,
+    "notes": "",
+    "gmNotes": ""
+  },
+  "ship": {
+    "shipClass": "",
+    "shipType": "transport",
+    "shipRelation": "neutral",
+    "voidShieldsDown": false,
+    "origin": "",
+    "captain": "",
+    "influence": 0,
+    "spMax": 0,
+    "passengersAboard": 0,
+    "supplies": {
+      "value": 6
+    },
+    "defilement": 0,
+    "crewIsChaos": false,
+    "distortions": [],
+    "hull": {
+      "spaceMax": 0,
+      "powerGen": 0,
+      "sp": 0,
+      "turnArc": "90°",
+      "weaponCapacity": ""
+    },
+    "chars": {
+      "speed": 0,
+      "manoeuvrability": 0,
+      "detection": 0,
+      "voidShields": 0,
+      "armour": 0,
+      "turretRating": 0
+    },
+    "hullIntegrity": {
+      "value": 0,
+      "max": 0
+    },
+    "crew": {
+      "population": 100,
+      "morale": 100,
+      "moraleMax": 100,
+      "rating": ""
+    },
+    "officers": [],
+    "notes": ""
+  },
+  "starSystem": {
+    "description": "",
+    "sector": "",
+    "region": "",
+    "warpRoutes": "",
+    "dominantStar": "",
+    "starConfig": "",
+    "systemFeatures": [],
+    "inhabitants": [],
+    "xenosSpecies": "",
+    "gmNotes": "",
+    "journalUuid": "",
+    "discovered": false,
+    "inProtectorate": false,
+    "derived": {}
+  },
+  "character": {
+    "bodyType": "male",
+    "race": "",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "eliteArchetypesExtra": [],
+    "alignment": "loyalist",
+    "patronGod": "undivided",
+    "patronFavor": {
+      "undivided": 0,
+      "khorne": 0,
+      "nurgle": 0,
+      "slaanesh": 0,
+      "tzeentch": 0
+    },
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 0,
+      "max": 0,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 0
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 0
+    },
+    "insanity": {
+      "value": 0,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 0,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "bs": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "s": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "t": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "ag": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "int": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "per": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "wp": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "fel": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      },
+      "inf": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "athletics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "awareness": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "charm": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "commerce": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "dodge": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "logic": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "survival": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "techUse": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      }
+    },
+    "groupSkills": {
+      "commonLore": [],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "armorBonus": {
+      "head": 0,
+      "body": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0,
+      "spdBonus": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 0,
+      "effectiveCurrent": 0,
+      "gravity": 1,
+      "max": 0,
+      "carry": 0,
+      "lift": 0,
+      "push": 0,
+      "indexBonus": {
+        "all": 0,
+        "carry": 0,
+        "lift": 0,
+        "push": 0
+      }
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "",
+    "craftAvailable": false,
+    "possessed": false,
+    "haemonculus": {
+      "stage": 0,
+      "flesh": [],
+      "warp": [],
+      "splitPools": false,
+      "notes": ""
+    },
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "reactions": "",
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "vitals": {
+      "hunger": 0,
+      "thirst": 0,
+      "sleep": 0
+    },
+    "helmetOff": false
+  }
+}

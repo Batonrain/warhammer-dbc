@@ -304,11 +304,6 @@
         "grantedRank": "untrained",
         "cost": 0,
         "total": -20
-      },
-      "operateAeronautica": {
-        "rank": "trained",
-        "cost": 0,
-        "total": 0
       }
     },
     "groupSkills": {
@@ -317,7 +312,14 @@
       "scholasticLore": [],
       "linguistics": [],
       "navigation": [],
-      "operate": [],
+      "operate": [
+        {
+          "specialty": "Aeronautica",
+          "rank": "trained",
+          "total": 0,
+          "cost": 0
+        }
+      ],
       "trade": []
     },
     "armor": {

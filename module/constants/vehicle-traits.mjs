@@ -4,7 +4,9 @@
 
 const IMG = "systems/warhammer-dbc/assets/actor-icons/vehicle.svg";
 
-const DEF_FX = {
+// Тот же набор — умолчание поля `system.effects` в схеме типа
+// (module/data/item/vehicle-trait.mjs), второй копии списка быть не должно.
+export const VEHICLE_TRAIT_EFFECTS = {
   openTopped: false, manoeuvreMod: 0, spdMod: 0, spdDamageReduce: 0, noMove: false,
   swerveDisabled: false, fullMoveSpdMult: 0, smallMoveOnly: false, ignoreDifficultTerrain: false,
   critHalved: false, trackHitsToHull: false, siege: false, reloadRapid: false,
@@ -28,7 +30,7 @@ const T = (name, benefit, description, o = {}) => ({
     hasRating:  !!o.r1, rating:  0,
     hasRating2: !!o.r2, rating2: 0,
     hasRating3: !!o.r3, rating3: 0,
-    effects: Object.assign({}, DEF_FX, o.fx || {})
+    effects: Object.assign({}, VEHICLE_TRAIT_EFFECTS, o.fx || {})
   }
 });
 

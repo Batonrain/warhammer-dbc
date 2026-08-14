@@ -261,19 +261,6 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
     return ok;
   }
 
-  /** Разовая миграция старого ростера system.crew → system.stations. */
-  async _migrateCrew() {
-    const old = this.actor.system.crew;
-    if (!Array.isArray(old) || !old.length) return false;
-    if ((this.actor.system.stations || []).length) return false;
-    const stations = old.map(c => ({
-      id: foundry.utils.randomID(), role: c.role || "passenger",
-      uuid: c.uuid || "", name: c.name || "", img: c.img || ""
-    }));
-    await this.actor.update({ "system.stations": stations, "system.crew": [] });
-    return true;
-  }
-
   activateListeners(html) {
     super.activateListeners(html);
 
@@ -311,9 +298,6 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
       } catch (e) { console.warn("Warhammer DBC | vehicle DnD bind:", e); }
       return;
     }
-
-    // Разовая миграция старого ростера (перерисует лист).
-    if (this._migrateCrew) this._migrateCrew().then(did => { if (did) this.render(false); });
 
     const idOf = (ev) => ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
 
