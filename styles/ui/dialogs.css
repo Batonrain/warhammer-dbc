@@ -1174,6 +1174,36 @@ body.wh-aiming #board, body.wh-aiming canvas {
   background: linear-gradient(180deg, #4dffa6, #2f9e6a); color: #04120b; font-weight: 700; border-color: transparent;
 }
 
+/* Шапка требования в режиме выбора: что нужно выбрать и сколько уже выбрано.
+   Липкая, как и панель вкладок, и на том же уровне — вкладок в режиме выбора
+   нет, поэтому за место они не спорят. */
+.wh-item-picker .cbrowse-pick-head {
+  position: sticky; top: 34px; z-index: 4; display: flex; flex-direction: column; gap: 4px;
+  padding: 6px 8px; background: #06120c; border-bottom: 1px solid var(--wh-border, #1f6f4a);
+}
+.wh-item-picker:has(.cbrowse-pick-head) .pick-group-head { top: 68px; }
+.wh-item-picker .cbrowse-pick-prompt { font-size: .86em; color: #d6ffe9; }
+.wh-item-picker .cbrowse-pick-state {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: .82em; color: #9fd8bb;
+}
+.wh-item-picker .cbrowse-pick-n { font-weight: 700; color: #4dffa6; }
+.wh-item-picker .cbrowse-pick-confirm {
+  flex: 0 0 auto; width: auto; padding: 3px 14px; cursor: pointer; font-size: .82em; line-height: 1.4;
+  border: 1px solid transparent; border-radius: 12px; font-weight: 700;
+  background: linear-gradient(180deg, #4dffa6, #2f9e6a); color: #04120b;
+}
+.wh-item-picker .cbrowse-pick-confirm:disabled {
+  background: none; border-color: var(--wh-border, #1f6f4a); color: #5f8f78; cursor: default;
+}
+/* Отметка выбранного при выборе нескольких. Идёт после :hover, иначе наведение
+   на уже выбранный предмет стирало бы отметку. */
+.wh-item-picker .cbrowse-item.cbrowse-picked,
+.wh-item-picker .cbrowse-item.cbrowse-picked:hover {
+  background: rgba(77,255,166,.18); color: #4dffa6; font-weight: 700;
+}
+.wh-item-picker .cbrowse-item.cbrowse-picked .cbrowse-item-name::after { content: " ✓"; }
+
 /* Кнопка в шапке вкладки компендиумов (Hooks.on("renderCompendiumDirectory")). */
 .wh-compendium-browser-btn {
   display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
