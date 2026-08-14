@@ -1,0 +1,163 @@
+// module/migrations/item-effects.mjs
+// ════════════════════════════════════════════════════════════════════════════
+//  Миграция: system.effects.* существующих предметов → embedded ActiveEffect.
+//  Переводит старые числовые эффекты в реальный, работающий Active Effect —
+//  единственный источник правды для этих 10 типов отныне. Сам system.effects НЕ
+//  стираем (легаси/справка), только перестаём его читать в prepareDerivedData и
+//  показывать для редактирования (см. партиалы листов).
+//
+//  Признаком «уже перенесено» служит сама механика в эффектах (по ключам, см.
+//  carriedKeys), а НЕ флаг `migratedEffect`: флаг ставила и прошлая версия
+//  миграции, и он же стоит у предметов, чью механику перенесли в Конструктор.
+//  Актор старое поле у помеченного предмета не читает (documents/actor.mjs),
+//  поэтому предмет с флагом, но без эффекта, механику теряет вовсе — так в паках
+//  лежат 4 органа Геносемени (Бископея — +2 к бонусу Силы Астартес). Флаг
+//  остаётся: он и говорит актору не складывать старое поле поверх эффектов.
+//
+//  Обратная сторона признака по механике: эффект, удалённый вручную, вернётся
+//  при следующем запуске. Чтобы механику выключить, эффект гасят (disabled) —
+//  погашенный ключ остаётся занятым.
+// ════════════════════════════════════════════════════════════════════════════
+
+import { hasLegacyEffects, legacyEffectsToChanges } from "../constants/effect-keys.mjs";
+import { isItemActive }                             from "../apps/effects.mjs";
+
+const SYSTEM = "warhammer-dbc";
+
+export const MIGRATE_EFFECT_TYPES = new Set([
+  "talent", "trait", "implant", "mutation", "psychicPower", "techPower",
+  "homeworld", "divination", "armorMod", "weaponMod"
+]);
+const MIGRATE_COMPENDIA = [
+  "warhammer-dbc.traits", "warhammer-dbc.talents", "warhammer-dbc.implants",
+  "warhammer-dbc.mutations", "warhammer-dbc.psychic-powers", "warhammer-dbc.tech-powers",
+  "warhammer-dbc.homeworlds", "warhammer-dbc.divinations",
+  "warhammer-dbc.armor-mods", "warhammer-dbc.weapon-mods"
+];
+
+// Поля старого формата, которым в ActiveEffect соответствия нет: AP против
+// конкретного типа урона и потолок Ловкости считает combat/armor-mods.mjs, и
+// гасит он их по тому же флагу. Пока такое поле заполнено, помечать предмет
+// перенесённым нельзя — механика исчезла бы с обеих сторон. Так уже стоят 6
+// модификаций брони в паках (Дефлективная, Керамит, Открытые Сочленения и др.):
+// их разбор — отдельная задача, здесь важно не добавлять к ним новых.
+const LEGACY_ONLY_KEYS = ["apVsEnergy", "apVsImpact", "apVsRending", "apVsBlast", "maxAgilityMod"];
+
+/**
+ * Ключи, механику которых предмет уже несёт.
+ *
+ * Свои эффекты — прошлый перенос (в том числе переименованный) либо ручной
+ * эффект GM на то же поле. Сравниваем по ключам, а не по имени эффекта: имя
+ * правится в UI одним кликом, ключ — нет.
+ *
+ * Записи Конструктора (`flags.mechanics`, apps/mechanics.mjs) — свои эффекты он
+ * заводит сам, когда предмет попадает к актору, поэтому в компендиуме их ещё
+ * нет и читать приходится сами записи. Ключ строится ровно как в applyMechEntry.
+ * У всех 13 Родных миров и 8 Предсказаний в паках он совпадает со старым полем:
+ * перенести их значило бы удвоить бонусы.
+ */
+function carriedKeys(item) {
+  const keys = new Set();
+  for (const effect of item.effects ?? [])
+    for (const c of effect.system?.changes ?? []) keys.add(c.key);
+  for (const group of item.getFlag(SYSTEM, "mechanics") ?? [])
+    for (const entry of group.entries ?? [])
+      if (entry.kind === "characteristic")
+        keys.add(`system.characteristics.${entry.charKey}.${entry.field}`);
+  return keys;
+}
+
+/** Переносит механику одного предмета. true — если эффект создан. */
+export async function migrateItemEffects(item) {
+  if (!MIGRATE_EFFECT_TYPES.has(item.type)) return false;
+  const fx = item.system?.effects;
+  if (LEGACY_ONLY_KEYS.some(k => fx?.[k])) return false;
+
+  const carried = carriedKeys(item);
+  const changes = hasLegacyEffects(fx)
+    ? legacyEffectsToChanges(fx).filter(c => !carried.has(c.key))
+    : [];
+
+  if (!changes.length) {
+    // Переносить нечего или уже перенесено. Флаг всё равно ставим: это он велит
+    // актору не складывать старое поле поверх эффектов.
+    if (!item.getFlag(SYSTEM, "migratedEffect")) await item.setFlag(SYSTEM, "migratedEffect", true);
+    return false;
+  }
+
+  // Старый расчёт пропускал предметы в неактивном состоянии (неустановленный или
+  // неисправный имплант, неподдерживаемая психосила) — эффект рождается в том же
+  // состоянии и тем же предикатом, каким его ведут дальше (isItemActive и
+  // syncItemEffectsDisabled в apps/effects.mjs). Совпадение не полное: у
+  // модификаций брони старый расчёт смотрел ещё и на надетость носителя
+  // (combat/armor-mods.mjs), а isItemActive — только на установку и включение.
+  await item.createEmbeddedDocuments("ActiveEffect", [{
+    name: `${item.name} (перенесено)`, icon: item.img,
+    disabled: !isItemActive(item),
+    system: { changes }
+  }]);
+  await item.setFlag(SYSTEM, "migratedEffect", true);
+  return true;
+}
+
+// Починка бага ранней версии миграции: charValueBonuses (обычные +X к
+// характеристике — Родные миры, импланты и т.п.) переводились в
+// system.characteristics.<стат>.value — поля, которого не существует ни в
+// схеме, ни в коде листа (сравните с prepareDerivedData: считается .total).
+// Эффект тихо создавался, но ни на что не влиял. Верный путь — .total, он
+// пересчитывается заново из base/advance/... каждый цикл, поэтому
+// "final"-эффект безопасно ложится поверх (тот же приём, что и у .bonus).
+// Идемпотентно само по себе — почищенных .value-ключей просто не останется.
+export async function repairCharValueEffectKeys(item) {
+  let fixed = 0;
+  for (const effect of item.effects ?? []) {
+    const changes = effect.system?.changes ?? [];
+    if (!changes.some(c => /^system\.characteristics\.\w+\.value$/.test(c.key))) continue;
+    const newChanges = changes.map(c => /^system\.characteristics\.\w+\.value$/.test(c.key)
+      ? { ...c, key: c.key.replace(/\.value$/, ".total") } : c);
+    await effect.update({ "system.changes": newChanges });
+    fixed++;
+  }
+  return fixed;
+}
+
+/** Весь мир: предметы акторов и компендиумы библиотек. */
+export async function migrateAllItemEffects() {
+  let migrated = 0, repaired = 0;
+
+  // Акторы мира — каждый их предмет с непустыми старыми эффектами. Починка
+  // идёт первой: эффект ранней миграции с ключом `.value` иначе не узнать по
+  // ключу (перенос ищет `.total`), и рядом лёг бы второй — тот же бонус дважды.
+  for (const actor of game.actors) {
+    for (const item of actor.items) {
+      repaired += await repairCharValueEffectKeys(item);
+      if (await migrateItemEffects(item)) migrated++;
+    }
+  }
+
+  // Компендиумы библиотек — та же логика, с разблокировкой пака.
+  for (const packId of MIGRATE_COMPENDIA) {
+    const pack = game.packs.get(packId);
+    if (!pack) continue;
+    try {
+      if (pack.locked) await pack.configure({ locked: false });
+      const docs = await pack.getDocuments();
+      for (const doc of docs) {
+        repaired += await repairCharValueEffectKeys(doc);
+        if (await migrateItemEffects(doc)) migrated++;
+      }
+    } catch (e) {
+      console.error(`Warhammer DBC | Миграция эффектов '${packId}':`, e);
+    }
+  }
+
+  if (migrated) {
+    console.log(`Warhammer DBC | Миграция эффектов: перенесено ${migrated} предм. в Active Effect.`);
+    ui.notifications?.info(`Warhammer DBC: перенесено в новую систему эффектов — ${migrated}.`);
+  }
+  if (repaired) {
+    console.log(`Warhammer DBC | Починка эффектов: исправлено ${repaired} эффект(ов) с ключом .value → .total.`);
+    ui.notifications?.info(`Warhammer DBC: исправлены неработавшие бонусы характеристик — ${repaired}.`);
+  }
+  return { migrated, repaired };
+}

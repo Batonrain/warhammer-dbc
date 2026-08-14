@@ -755,7 +755,7 @@ export class WarhammerActor extends Actor {
         }
       }
       // Мигрированные предметы несут ту же механику как embedded ActiveEffect
-      // (см. warhammer-dbc.mjs, _migrateItemEffects) — читать старое поле тоже
+      // (см. migrations/item-effects.mjs) — читать старое поле тоже
       // означало бы посчитать бонус дважды.
       const e = item.getFlag("warhammer-dbc", "migratedEffect") ? {} : (item.system.effects || {});
       // Одиночный бонус (legacy)
