@@ -422,3 +422,51 @@
   color: #1b5e20;
   border-color: #2e7d32;
 }
+/* ── Поле «Фракция» в шапке ──────────────────────────────────────────────────
+   Один блок на девять разных шапок (партиал actor/parts/faction-field.hbs),
+   поэтому оформление самодостаточное и не опирается на классы конкретного
+   листа: только собственная сетка и пунктир зоны дропа. */
+.warhammer-dbc .wh-faction-field,
+.wh-horde .wh-faction-field {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 3px; font-size: .82em; min-width: 0;
+}
+.warhammer-dbc .wh-faction-label,
+.wh-horde .wh-faction-label { flex: 0 0 auto; opacity: .8; white-space: nowrap; }
+.warhammer-dbc .wh-faction-list,
+.wh-horde .wh-faction-list {
+  flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+  min-height: 22px; padding: 2px 5px;
+  border: 1px dashed var(--wh-border, #1f6f4a); border-radius: 4px;
+}
+/* Подсветка во время перетаскивания: без неё непонятно, куда именно бросать. */
+.warhammer-dbc .wh-faction-list.faction-drop-over,
+.wh-horde .wh-faction-list.faction-drop-over {
+  border-style: solid; background: rgba(77, 255, 166, .08);
+}
+.warhammer-dbc .wh-faction-chip,
+.wh-horde .wh-faction-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 4px 1px 6px; border-radius: 10px;
+  background: var(--wh-panel-mid, rgba(0,0,0,.25));
+  border: 1px solid var(--wh-border, #1f6f4a);
+  cursor: help;
+}
+.warhammer-dbc .wh-faction-img,
+.wh-horde .wh-faction-img { width: 16px; height: 16px; border: none; border-radius: 2px; }
+.warhammer-dbc .wh-faction-empty,
+.wh-horde .wh-faction-empty { opacity: .55; }
+.warhammer-dbc .wh-faction-remove,
+.wh-horde .wh-faction-remove {
+  width: 14px; height: 14px; padding: 0; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%; cursor: pointer; font-size: .72em;
+  background: var(--wh-red, #8b1a1a); color: #fff;
+}
+.warhammer-dbc .wh-faction-add,
+.wh-horde .wh-faction-add {
+  width: auto; flex: 0 0 auto; padding: 0 6px; line-height: 1.4;
+  border: 1px solid #2f9e6a; border-radius: 3px;
+  background: rgba(77,255,166,.1); color: #d6ffe9; cursor: pointer; font-size: .9em;
+}
+.warhammer-dbc .wh-faction-add:hover { background: #4dffa6; color: #05291a; }

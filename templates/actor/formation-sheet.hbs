@@ -27,6 +27,7 @@
             {{#each sizes as |s|}}<option value="{{s.key}}" {{#if s.selected}}selected{{/if}} title="{{s.headcount}}">{{s.label}} · {{s.dice}}к10</option>{{/each}}
           </select>
         </div>
+        {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
 
         {{!-- Численность — главный «хит-пул» формирования --}}
         <div class="header-cell fate-cell fm-res-cell">

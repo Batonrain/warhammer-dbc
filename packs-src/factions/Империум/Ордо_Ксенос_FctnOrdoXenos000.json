@@ -1,0 +1,37 @@
+{
+  "name": "Ордо Ксенос",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "bcyJ8PgZ6Way7XvC",
+  "system": {
+    "key": "ordo-xenos",
+    "parentKey": "inquisition",
+    "alsoIn": [],
+    "aliases": [
+      "Ordo Xenos"
+    ],
+    "isLore": true,
+    "description": "Орден Инквизиции, чьё дело — чужие расы и всё, что они приносят.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnOrdoXenos000",
+  "effects": [],
+  "sort": 3200000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnOrdoXenos000"
+}

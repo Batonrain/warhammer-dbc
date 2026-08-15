@@ -1,23 +1,23 @@
 {
-  "name": "Несущие Слово",
+  "name": "Ангелы Искупления",
   "type": "faction",
   "img": "icons/svg/aura.svg",
-  "folder": null,
+  "folder": "5VFQG4e4cZyybRoZ",
   "system": {
-    "key": "word-bearers",
-    "parent": "traitor-legions",
+    "key": "angels-of-absolution",
+    "parentKey": "dark-angels",
+    "alsoIn": [],
     "aliases": [
-      "Word Bearers",
-      "XVII легион"
+      "Angels of Absolution"
     ],
     "isLore": true,
-    "description": "XVII легион, первым принявший веру в Тёмных Богов.",
+    "description": "",
     "notes": "",
-    "bookSource": "DoomBC — Основная книга"
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
   },
-  "_id": "FctnWordBearer01",
+  "_id": "FctnAngelsOfAbso",
   "effects": [],
-  "sort": 300000,
+  "sort": 4022000,
   "ownership": {
     "default": 0
   },
@@ -33,5 +33,5 @@
     "duplicateSource": null,
     "exportSource": null
   },
-  "_key": "!items!FctnWordBearer01"
+  "_key": "!items!FctnAngelsOfAbso"
 }

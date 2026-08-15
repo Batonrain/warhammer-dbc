@@ -52,6 +52,7 @@ import { activateRaceListeners } from "../apps/races.mjs";
 import { grantAstartesImplants } from "../apps/astartes-implants.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
@@ -118,6 +119,8 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
   getData() {
     const context = super.getData();
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
 
     // Контекст шаблона собирают два модуля: sheet-helpers.mjs — списки вкладок,
     // character-context.mjs — самого персонажа. Здесь остаётся только то, что
@@ -441,6 +444,8 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   activateListeners(html) {
     requestAnimationFrame(() => { this._restoreScrollPositions(); });
     super.activateListeners(html);
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(html, this.actor);
 
     // ── Элитный архетип в шапке ───────────────────────────────────────────
     activateEliteListeners(html, this.actor);

@@ -40,7 +40,8 @@
         </select> </div> </div> {{/if}} {{#if divination}}
       <div class="header-cell header-cell-homeworld"> <label title="Предсказание судьбы: эффект по таблице к100">Предсказание</label> <div class="hw-controls"> <select class="dv-select"> <option value="">— не выбрано —</option> <option value="random">🎲 Бросить к100</option> {{#each divination.options as |o|}}
           <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option> {{/each}}
-        </select> </div> </div> {{/if}} </div>
+        </select> </div> </div> {{/if}}
+      {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}} </div>
     <div class="header-row-fixed header-row-aspir"> {{#each aspirationSlots as |a|}}
       <div class="header-cell header-cell-readonly" title="{{#if a.mods}}{{a.mods}}{{else}}Редактируется на вкладке «Заметки»{{/if}}"> <label>{{a.label}}</label> <div class="header-readonly-val">{{#if a.name}}{{a.name}}{{else}}—{{/if}}</div> </div>
       {{/each}} </div>

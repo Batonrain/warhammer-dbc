@@ -18,6 +18,7 @@
       <div class="ship-head-row">
         <label>Главная звезда <input type="text" name="system.dominantStar" value="{{system.dominantStar}}"/></label>
       </div>
+      {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
       <div class="ss-summary">
         Тел: <b>{{derived.total}}</b> · Звёзд: <b>{{derived.stars}}</b>{{#if system.starConfig}} (<b>{{system.starConfig}}</b>){{/if}} · Обитаемых: <b>{{derived.habitable}}</b>
         {{#if typeCounts.length}} · {{#each typeCounts}}<span class="ss-count" title="{{label}}">{{icon}}{{count}}</span> {{/each}}{{/if}}

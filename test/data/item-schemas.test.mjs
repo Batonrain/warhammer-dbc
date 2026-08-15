@@ -480,7 +480,10 @@ const TYPES = {
   faction: {
     pack: "factions",
     defaults: {
-      key: "", parent: "", aliases: [], isLore: false,
+      // Поле называется parentKey, а не parent: имя `parent` у любого
+      // DataModel занято ссылкой на документ-владелец и схему им закрывало —
+      // см. шапку module/data/item/faction.mjs.
+      key: "", parentKey: "", alsoIn: [], aliases: [], isLore: false,
       description: "", notes: "", bookSource: ""
     }
   }
@@ -522,4 +525,31 @@ describe("типы данных предметов", () => {
       });
     });
   }
+
+  // ── Разовые переезды ──────────────────────────────────────────────────────
+  describe("Фракция: parent → parentKey", () => {
+    const Faction = ITEM_DATA_MODELS.faction;
+
+    it("строковый ключ переезжает в новое поле", () => {
+      expect(new Faction({ parent: "chaos" }).parentKey).toBe("chaos");
+    });
+
+    // Прежнее имя поля закрывалось свойством DataModel, и первое же сохранение
+    // клало в него документ целиком. Последнее верное значение осталось внутри
+    // этого документа — оттуда его и достаём, иначе собранное вручную дерево
+    // развалилось бы при обновлении.
+    it("документ вместо ключа не теряет прежнее значение", () => {
+      const broken = { name: "Несущие Слово", system: { parent: "traitor-legions" } };
+      expect(new Faction({ parent: broken }).parentKey).toBe("traitor-legions");
+    });
+
+    it("мусор без прежнего значения гасится, а не остаётся объектом", () => {
+      expect(new Faction({ parent: { name: "Пусто" } }).parentKey).toBe("");
+      expect(new Faction({ parent: {} }).toObject().parent).toBeUndefined();
+    });
+
+    it("уже переехавшее поле переезд не трогает", () => {
+      expect(new Faction({ parent: "chaos", parentKey: "imperium" }).parentKey).toBe("imperium");
+    });
+  });
 });

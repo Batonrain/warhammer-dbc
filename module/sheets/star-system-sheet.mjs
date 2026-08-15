@@ -1,3 +1,4 @@
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { BODY_TYPES, ZONES, STAR_CLASSES, STAR_CONFIGS, SYSTEM_FEATURES, BODY_SIZES, CLIMATE,
          HABITABILITY, ALLEGIANCE, XENOS_SPECIES, RESOURCE_TYPES, RESOURCE_ICONS, INHABITANTS,
          WORLD_CLASSES, WORLD_ENVIRONMENTS, TITHE_GRADES,
@@ -127,6 +128,8 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
 
   getData() {
     const context = super.getData();
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
     context.system  = sys;
     context.derived = sys.derived || {};
@@ -262,6 +265,8 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
 
   activateListeners(html) {
     super.activateListeners(html);
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(html, this.actor);
 
     // ── Только-чтение (доступно и наблюдателям, не только владельцу) ──
     // Свернуть/развернуть группу звезды.

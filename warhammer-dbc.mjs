@@ -84,6 +84,7 @@ Hooks.once("init", () => {
   foundry.applications.handlebars.loadTemplates([
     // Актор
     "systems/warhammer-dbc/templates/actor/parts/header.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs",
     "systems/warhammer-dbc/templates/apps/nexus-card.hbs",
     "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs",
@@ -129,6 +130,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/aspiration.hbs",           // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/archetype.hbs",            // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/faction.hbs",
+    "systems/warhammer-dbc/templates/item/parts/faction-roster.hbs",
     // Звёздная система
     "systems/warhammer-dbc/templates/item/parts/celestial-body.hbs",
     "systems/warhammer-dbc/templates/actor/star-system-sheet.hbs",

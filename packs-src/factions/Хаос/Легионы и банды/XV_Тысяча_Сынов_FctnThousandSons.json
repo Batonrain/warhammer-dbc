@@ -1,0 +1,37 @@
+{
+  "name": "XV – Тысяча Сынов",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "jGHG1Q1rkY3fSkfV",
+  "system": {
+    "key": "thousand-sons",
+    "parentKey": "traitor-legions",
+    "alsoIn": [],
+    "aliases": [
+      "Thousand Sons"
+    ],
+    "isLore": true,
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnThousandSons",
+  "effects": [],
+  "sort": 4013000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnThousandSons"
+}

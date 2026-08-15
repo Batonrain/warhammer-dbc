@@ -6,23 +6,65 @@
 <div class="item-section">
   <div class="item-section-title">ФРАКЦИЯ</div>
   <div class="trait-fx-hint">
-    Узел дерева принадлежностей: Хаос → Легионы-предатели → Несущие Слово →
-    VI воинство → III рота. Уровень нигде не хранится — его задаёт поле
-    «Входит в состав», и глубина считается по цепочке. Правило, нацеленное на
-    эту фракцию, срабатывает и на любую нижестоящую: Ненависть к Хаосу достаёт
-    и роту, но Ненависть к роте не достаёт весь Хаос.
+    Узел дерева принадлежностей: от крупной силы вниз к её подразделениям,
+    сколько бы ступеней их ни разделяло. Уровень нигде не хранится — его задаёт
+    поле «Входит в состав», а глубина считается по цепочке, поэтому лестницы
+    разной природы уживаются рядом и заранее перечислять их не нужно.
+    Правило, нацеленное на эту фракцию, срабатывает и на любую нижестоящую;
+    обратное неверно — правило против отдельного подразделения не достаёт всю
+    силу целиком.
   </div>
 
   <div class="weapon-row">
-    <label class="wr-label" title="Устойчивый идентификатор: на него ссылаются другие фракции и Таланты. Переименование подписи его не трогает.">Ключ</label>
-    <input type="text" name="system.key" value="{{system.key}}"
-           class="wr-input-md" placeholder="напр. word-bearers"/>
+    <label class="wr-label" title="Устойчивый идентификатор: на него ссылаются другие фракции и Таланты. Выдаётся при создании и не меняется — переименование подписи его не трогает.">Ключ</label>
+    <input type="text" class="faction-key wr-input-md" value="{{system.key}}" readonly
+           title="Ключ можно выделить и скопировать, но не изменить: на него уже могут ссылаться."/>
+    <button type="button" class="faction-key-copy" title="Скопировать ключ">⧉</button>
   </div>
 
-  <div class="weapon-row">
-    <label class="wr-label" title="Ключ вышестоящей фракции. Пусто — это корень дерева.">Входит в состав</label>
-    <input type="text" name="system.parent" value="{{system.parent}}"
-           class="wr-input-md" placeholder="ключ вышестоящей, пусто — корень"/>
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label" title="Вышестоящая фракция. Пусто — это корень дерева.">Входит в состав</label>
+      <button type="button" class="faction-parent-add" title="Выбрать вышестоящую фракцию в Обозревателе компендиумов">＋ фракция…</button>
+    </div>
+    <div class="trait-fx-hint">
+      Перетащите сюда вышестоящую фракцию или выберите кнопкой «＋».
+      Пусто означает корень дерева.
+    </div>
+    <div class="weapon-props-list faction-parent-drop">
+      {{#if factionParent}}
+      <div class="wprop-chip">
+        {{#if factionParent.img}}<img src="{{factionParent.img}}" class="grant-drop-img"/>{{/if}}
+        <span class="wprop-name">{{factionParent.name}}</span>
+        <button type="button" class="wprop-remove faction-parent-remove" title="Сделать корнем дерева">✕</button>
+      </div>
+      {{else}}
+      <span class="grant-drop-placeholder">Корень дерева — перетащите сюда вышестоящую фракцию</span>
+      {{/if}}
+    </div>
+  </div>
+
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label" title="Кому фракция служит, не будучи её частью по устройству. В дереве не участвует, но правила достают и через неё.">Также состоит в</label>
+      <button type="button" class="faction-also-add" title="Добавить дополнительную принадлежность">＋ фракция…</button>
+    </div>
+    <div class="trait-fx-hint">
+      Для двойной принадлежности: Караул Смерти по составу — Адептус Астартес,
+      а по службе — Ордо Ксенос. Дерево строится по «Входит в состав», а
+      правило, нацеленное на указанное здесь, срабатывает тоже.
+    </div>
+    <div class="weapon-props-list faction-also-drop">
+      {{#each factionAlso as |a|}}
+      <div class="wprop-chip" data-key="{{a.key}}">
+        {{#if a.img}}<img src="{{a.img}}" class="grant-drop-img"/>{{/if}}
+        <span class="wprop-name">{{a.name}}</span>
+        <button type="button" class="wprop-remove faction-also-remove" data-key="{{a.key}}" title="Убрать принадлежность">✕</button>
+      </div>
+      {{else}}
+      <span class="grant-drop-placeholder">Нет — перетащите фракцию сюда или нажмите «＋»</span>
+      {{/each}}
+    </div>
   </div>
 
   <div class="weapon-row">
@@ -33,7 +75,7 @@
 
   <div class="weapon-row">
     <label class="drug-fx-cb-label"
-           title="Верхние уровни годятся как специализация Общих/Запретных/Академических Знаний, отделение — нет.">
+           title="Верхние уровни годятся как специализация Общих/Запретных/Академических Знаний, мелкое подразделение — нет.">
       <input type="checkbox" name="system.isLore" {{#if system.isLore}}checked{{/if}}/>
       Годится как специализация Знаний
     </label>
@@ -45,5 +87,38 @@
            class="wr-input-md" placeholder="напр. Core, стр. 166"/>
   </div>
 </div>
+
+{{!-- Происхождение: путь вверх по дереву, свёрнут по умолчанию. --}}
+<details class="item-section faction-origin-tree" {{#if originTreeOpen}}open{{/if}}>
+  <summary class="item-section-title">ПРОИСХОЖДЕНИЕ</summary>
+  {{#if originTreeSolo}}
+  <div class="trait-fx-hint">
+    Фракция ни в кого не входит — это корень дерева. Путь появится, когда в
+    поле «Входит в состав» окажется вышестоящая.
+  </div>
+  {{else}}
+  <div class="trait-fx-hint">
+    Путь от корня вниз к этой фракции. Клик по названию открывает лист предка,
+    «глазом» узел гасится на схеме — только на схеме: в дереве и в правилах он
+    остаётся.
+  </div>
+  <div class="origin-tree">
+    {{#each originTree as |n|}}
+    <div class="origin-node{{#if n.hidden}} origin-node-hidden{{/if}}{{#if n.isSelf}} origin-node-self{{/if}}"
+         data-key="{{n.key}}" data-uuid="{{n.uuid}}" style="--depth:{{n.depth}}">
+      <span class="origin-node-branch"></span>
+      {{#if n.img}}<img class="origin-node-img" src="{{n.img}}"/>{{/if}}
+      <span class="origin-node-name {{#unless n.isSelf}}origin-node-open{{/unless}}"
+            title="{{#if n.isSelf}}Эта фракция{{else}}Открыть лист{{/if}}">{{n.name}}</span>
+      {{#unless n.isSelf}}
+      <a class="origin-node-toggle" title="{{#if n.hidden}}Вернуть узел на схему{{else}}Убрать узел со схемы{{/if}}">
+        <i class="fas {{#if n.hidden}}fa-eye-slash{{else}}fa-eye{{/if}}"></i>
+      </a>
+      {{/unless}}
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</details>
 
 {{/if}}

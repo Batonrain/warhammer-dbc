@@ -28,6 +28,7 @@
           <input type="number" name="system.instabilityRating" value="{{daemon.instability}}" min="0"/>
         </label>
       </div>
+      {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
     </div>
     <div class="daemon-vitals">
       <div class="daemon-vrow"><span>Раны</span><b>{{system.wounds.value}}/{{system.wounds.max}}</b></div>

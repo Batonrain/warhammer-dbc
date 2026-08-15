@@ -12,6 +12,7 @@ import { CREW_POP_TABLE, CREW_MORALE_TABLE, CREW_RATING_TABLE, crewActiveRows, O
          MUTINY_APPROACHES, MUTINY_WIN_DOS } from "../constants/ship.mjs";
 import { SHIP_RELATIONS } from "../constants/ship-tokens.mjs";
 import { CRAFT_KINDS } from "../constants/small-craft.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 const CRAFT_STATE = { stored: "На борту", prepared: "Подготовлена", launched: "В вылете", returning: "Возврат (топливо!)", rearming: "Перевооружение" };
 const CRAFT_STRENGTH = { full: "Полная", half: "Полусильная", destroyed: "Уничтожена" };
@@ -66,6 +67,8 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
 
   getData() {
     const context = super.getData();
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
     context.system    = sys;
     context.derived   = sys.derived || {};
@@ -316,6 +319,8 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
 
   activateListeners(html) {
     super.activateListeners(html);
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(html, this.actor);
 
     // Доступно всем: открыть лист офицера и освободить своё место.
     html.find(".ship-officer-open").on("click", async ev => {

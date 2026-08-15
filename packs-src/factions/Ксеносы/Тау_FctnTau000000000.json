@@ -1,20 +1,23 @@
 {
-  "name": "VI воинство",
+  "name": "Тау",
   "type": "faction",
   "img": "icons/svg/aura.svg",
-  "folder": null,
+  "folder": "pf8bDeHXX50Ey4zj",
   "system": {
-    "key": "word-bearers-host-6",
-    "parent": "word-bearers",
-    "aliases": [],
-    "isLore": false,
-    "description": "Одно из воинств Несущих Слово.",
+    "key": "tau",
+    "aliases": [
+      "T'au"
+    ],
+    "isLore": true,
+    "description": "Молодая империя Высшего Блага и её касты.",
     "notes": "",
-    "bookSource": "DoomBC — Основная книга"
+    "bookSource": "DoomBC — Основная книга",
+    "parentKey": "xenos",
+    "alsoIn": []
   },
-  "_id": "FctnWBHostVI0001",
+  "_id": "FctnTau000000000",
   "effects": [],
-  "sort": 400000,
+  "sort": 3100000,
   "ownership": {
     "default": 0
   },
@@ -30,5 +33,5 @@
     "duplicateSource": null,
     "exportSource": null
   },
-  "_key": "!items!FctnWBHostVI0001"
+  "_key": "!items!FctnTau000000000"
 }

@@ -1,0 +1,39 @@
+{
+  "name": "Караул Смерти",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "bcyJ8PgZ6Way7XvC",
+  "system": {
+    "key": "deathwatch",
+    "parentKey": "adeptus-astartes",
+    "alsoIn": [
+      "ordo-xenos"
+    ],
+    "aliases": [
+      "Deathwatch"
+    ],
+    "isLore": true,
+    "description": "Астартес, откомандированные Инквизиции для войны с чужими: по устройству — Ордена, по службе — Ордо Ксенос.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnDeathwatch00",
+  "effects": [],
+  "sort": 3500000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnDeathwatch00"
+}

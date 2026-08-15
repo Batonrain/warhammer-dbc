@@ -1,0 +1,37 @@
+{
+  "name": "Осквернители",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "jGHG1Q1rkY3fSkfV",
+  "system": {
+    "key": "violators",
+    "parentKey": "emperors-children",
+    "alsoIn": [],
+    "aliases": [
+      "Violators"
+    ],
+    "isLore": true,
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnViolators000",
+  "effects": [],
+  "sort": 4024000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnViolators000"
+}

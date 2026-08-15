@@ -1,22 +1,25 @@
 {
-  "name": "Хаос",
+  "name": "Серые Рыцари",
   "type": "faction",
   "img": "icons/svg/aura.svg",
-  "folder": null,
+  "folder": "bcyJ8PgZ6Way7XvC",
   "system": {
-    "key": "chaos",
-    "parent": "",
+    "key": "grey-knights",
+    "parentKey": "adeptus-astartes",
+    "alsoIn": [
+      "ordo-malleus"
+    ],
     "aliases": [
-      "Chaos"
+      "Grey Knights"
     ],
     "isLore": true,
-    "description": "Силы Изменения, Разложения, Крови и Излишеств и всё, что им служит. Корень дерева: правило, нацеленное сюда, достаёт любую нижестоящую фракцию.",
+    "description": "Тайный орден Астартес, обученный биться с демонами и подчинённый Ордо Маллеус.",
     "notes": "",
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "FctnChaosRoot001",
+  "_id": "FctnGreyKnights0",
   "effects": [],
-  "sort": 100000,
+  "sort": 3600000,
   "ownership": {
     "default": 0
   },
@@ -32,5 +35,5 @@
     "duplicateSource": null,
     "exportSource": null
   },
-  "_key": "!items!FctnChaosRoot001"
+  "_key": "!items!FctnGreyKnights0"
 }

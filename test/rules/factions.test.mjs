@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   indexFactions, factionChain, factionDepth,
-  isSameOrDescendant, anySameOrDescendant, factionKey
+  isSameOrDescendant, anySameOrDescendant, factionKey, factionKeyFromName, factionChildren,
+  factionParentKey, factionAlsoKeys, factionAncestors, factionServants
 } from "../../module/rules/factions.mjs";
 
 /**
@@ -139,5 +140,152 @@ describe("anySameOrDescendant", () => {
   it("не подходит, если не подошла ни одна", () => {
     expect(anySameOrDescendant(["империум"], "chaos", byKey)).toBe(false);
     expect(anySameOrDescendant([], "chaos", byKey)).toBe(false);
+  });
+});
+
+// Двойная принадлежность: Караул Смерти по устройству — Астартес, по службе —
+// Ордо Ксенос, и правило обязано доставать его с обеих сторон.
+describe("дополнительные принадлежности (alsoIn)", () => {
+  const map = indexFactions([
+    { key: "imperium", name: "Империум" },
+    { key: "adeptus-astartes", parent: "imperium", name: "Адептус Астартес" },
+    { key: "inquisition", parent: "imperium", name: "Инквизиция" },
+    { key: "ordo-xenos", parent: "inquisition", name: "Ордо Ксенос" },
+    { key: "deathwatch", parent: "adeptus-astartes", alsoIn: ["ordo-xenos"], name: "Караул Смерти" }
+  ]);
+
+  it("читаются только строки, мусор отбрасывается", () => {
+    expect(factionAlsoKeys({ system: { alsoIn: [" ordo-xenos ", "", 5, null] } })).toEqual(["ordo-xenos"]);
+    expect(factionAlsoKeys({})).toEqual([]);
+  });
+
+  it("предки собираются по обеим линиям", () => {
+    expect([...factionAncestors("deathwatch", map)].sort()).toEqual(
+      ["adeptus-astartes", "deathwatch", "imperium", "inquisition", "ordo-xenos"]);
+  });
+
+  it("правило по службе срабатывает так же, как по составу", () => {
+    expect(isSameOrDescendant("deathwatch", "adeptus-astartes", map)).toBe(true);
+    expect(isSameOrDescendant("deathwatch", "inquisition", map)).toBe(true);
+    expect(isSameOrDescendant("deathwatch", "ordo-xenos", map)).toBe(true);
+  });
+
+  it("отбор по-прежнему односторонний", () => {
+    expect(isSameOrDescendant("ordo-xenos", "deathwatch", map)).toBe(false);
+    expect(isSameOrDescendant("adeptus-astartes", "deathwatch", map)).toBe(false);
+  });
+
+  // Дерево обязано остаться деревом: схема происхождения и глубина идут по
+  // основной линии, иначе лесенку пришлось бы превращать в граф.
+  it("дерево и глубина считают только основную линию", () => {
+    expect(factionChain("deathwatch", map)).toEqual(["deathwatch", "adeptus-astartes", "imperium"]);
+    expect(factionDepth("deathwatch", map)).toBe(3);
+  });
+
+  it("служащие — обратная сторона связи, вассалами они не считаются", () => {
+    expect(factionServants("ordo-xenos", map).map(f => f.name)).toEqual(["Караул Смерти"]);
+    expect(factionChildren("ordo-xenos", map)).toEqual([]);
+    expect(factionChildren("adeptus-astartes", map).map(f => f.key)).toEqual(["deathwatch"]);
+  });
+
+  it("кольцо из дополнительных ссылок обход не роняет", () => {
+    const loop = indexFactions([
+      { key: "a", alsoIn: ["b"] },
+      { key: "b", alsoIn: ["a"] }
+    ]);
+    expect([...factionAncestors("a", loop)].sort()).toEqual(["a", "b"]);
+  });
+});
+
+describe("factionParentKey", () => {
+  it("читает ключ родителя у предмета и у литерала", () => {
+    expect(factionParentKey({ system: { parent: "chaos" } })).toBe("chaos");
+    expect(factionParentKey({ parent: " chaos " })).toBe("chaos");
+  });
+
+  // В старой записи в поле мог оказаться объект: строкой он превращается в
+  // «[object Object]», и показывать это принадлежностью нельзя — сослаться на
+  // такой ключ всё равно не на что.
+  it("мусор вместо ключа считается пустотой", () => {
+    expect(factionParentKey({ system: { parent: {} } })).toBe("");
+    expect(factionParentKey({ system: { parent: "[object Object]" } })).toBe("");
+    expect(factionParentKey({ system: { parent: null } })).toBe("");
+    expect(factionParentKey(null)).toBe("");
+  });
+
+  it("такой родитель не строит цепочку", () => {
+    const map = indexFactions([{ key: "orphan", parent: "[object Object]" }, f("chaos")]);
+    expect(factionChain("orphan", map)).toEqual(["orphan"]);
+  });
+});
+
+describe("factionChildren", () => {
+  it("отдаёт только следующую ступень, без внуков", () => {
+    expect(factionChildren("chaos", byKey).map(f => f.key)).toEqual(["traitor-legions"]);
+    expect(factionChildren("traitor-legions", byKey).map(f => f.key)).toEqual(["word-bearers"]);
+  });
+
+  it("у листа дерева вассалов нет", () => {
+    expect(factionChildren("word-bearers-host-6-company-3", byKey)).toEqual([]);
+  });
+
+  it("пустой ключ и неизвестная фракция дают пустой список", () => {
+    expect(factionChildren("", byKey)).toEqual([]);
+    expect(factionChildren("imperium", byKey)).toEqual([]);
+  });
+
+  // Порядок — по ПОДПИСИ, а не по ключу: список читает человек, и ключ у него
+  // перед глазами не стоит.
+  it("несколько вассалов идут по алфавиту подписей", () => {
+    const map = indexFactions([
+      f("traitor-legions", "chaos"),
+      { key: "world-eaters",  parent: "traitor-legions", name: "Пожиратели Миров" },
+      { key: "night-lords",   parent: "traitor-legions", name: "Повелители Ночи" },
+      { key: "word-bearers",  parent: "traitor-legions", name: "Несущие Слово" }
+    ]);
+    expect(factionChildren("traitor-legions", map).map(f => f.name))
+      .toEqual(["Несущие Слово", "Повелители Ночи", "Пожиратели Миров"]);
+  });
+});
+
+describe("factionKeyFromName", () => {
+  it("переводит русскую подпись в латинский ключ", () => {
+    expect(factionKeyFromName("Несущие Слово")).toBe("nesuschie-slovo");
+    expect(factionKeyFromName("Инквизиция")).toBe("inkviziciya");
+  });
+
+  it("латиница и цифры остаются как есть", () => {
+    expect(factionKeyFromName("Word Bearers")).toBe("word-bearers");
+    expect(factionKeyFromName("VI воинство")).toBe("vi-voinstvo");
+  });
+
+  it("знаки препинания и лишние пробелы схлопываются в один дефис", () => {
+    expect(factionKeyFromName("  Легионы — предатели!  ")).toBe("legiony-predateli");
+    // «ё» приравнена к «е»: ключ читается, а различать их незачем — он не
+    // подпись, а идентификатор.
+    expect(factionKeyFromName("Адептус Механикус / Тёмный")).toBe("adeptus-mehanikus-temnyi");
+  });
+
+  // Два узла с одним ключом означают потерянную ветку дерева: indexFactions
+  // оставит первый и пожалуется, поэтому повтор разводится номером.
+  it("занятый ключ получает номер", () => {
+    expect(factionKeyFromName("Хаос", ["haos"])).toBe("haos-2");
+    expect(factionKeyFromName("Хаос", ["haos", "haos-2"])).toBe("haos-3");
+  });
+
+  it("свободный ключ номера не получает", () => {
+    expect(factionKeyFromName("Хаос", ["chaos", "imperium"])).toBe("haos");
+  });
+
+  it("от названия может ничего не остаться — тогда общий запасной ключ", () => {
+    expect(factionKeyFromName("")).toBe("faction");
+    expect(factionKeyFromName("«…»")).toBe("faction");
+    expect(factionKeyFromName(null)).toBe("faction");
+  });
+
+  it("длинное название обрезается и не заканчивается дефисом", () => {
+    const key = factionKeyFromName("Орден ".repeat(20));
+    expect(key.length).toBeLessThanOrEqual(48);
+    expect(key.endsWith("-")).toBe(false);
   });
 });

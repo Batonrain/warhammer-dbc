@@ -1,0 +1,37 @@
+{
+  "name": "Звёздные Фантомы",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "5VFQG4e4cZyybRoZ",
+  "system": {
+    "key": "star-phantoms",
+    "parentKey": "adeptus-astartes",
+    "alsoIn": [],
+    "aliases": [
+      "Star Phantoms"
+    ],
+    "isLore": true,
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnStarPhantoms",
+  "effects": [],
+  "sort": 4082000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnStarPhantoms"
+}

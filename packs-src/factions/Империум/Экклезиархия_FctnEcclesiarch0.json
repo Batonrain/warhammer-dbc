@@ -1,0 +1,37 @@
+{
+  "name": "Экклезиархия",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "bcyJ8PgZ6Way7XvC",
+  "system": {
+    "key": "ecclesiarchy",
+    "aliases": [
+      "Ecclesiarchy"
+    ],
+    "isLore": true,
+    "description": "Имперская Церковь: культ Бога-Императора и его проповедники.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга",
+    "parentKey": "imperium",
+    "alsoIn": []
+  },
+  "_id": "FctnEcclesiarch0",
+  "effects": [],
+  "sort": 1100000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnEcclesiarch0"
+}

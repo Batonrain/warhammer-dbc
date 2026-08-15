@@ -7,6 +7,7 @@ import { CHASSIS_TYPES, CHASSIS_NOTES, VEHICLE_TYPES, CREW_ROLES,
 import { _executeAttackRoll } from "../combat/attack.mjs";
 import { showRamDialog, showTerrainDialog, showRepairDialog } from "../combat/vehicle.mjs";
 import { VEHICLE_WEAPONS } from "../constants/vehicle-weapons-library.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 const ROLE_ORDER = ["commander", "driver", "gunner", "loader", "pilot", "passenger"];
 
@@ -23,6 +24,8 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
 
   getData() {
     const context = super.getData();
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
     context.system  = sys;
     context.derived = sys.derived || {};
@@ -263,6 +266,8 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
 
   activateListeners(html) {
     super.activateListeners(html);
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(html, this.actor);
 
     // ── Доступно всем (в т.ч. игроку-не-владельцу техники) ──
     // Открыть лист сидящего персонажа.

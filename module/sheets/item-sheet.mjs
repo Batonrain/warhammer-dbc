@@ -39,8 +39,16 @@ import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
 import { openCompendiumBrowser }                     from "../apps/compendium-browser.mjs";
-import { factionTarget, actorTypeTarget, allTarget,
-         addTarget, removeTargetAt }                 from "../rules/talent-targets.mjs";
+import { factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, patronTarget,
+         TARGET_FEATURES, PATRON_ANY, addTarget, removeTargetAt } from "../rules/talent-targets.mjs";
+import { RACES, SUBRACES }                           from "../constants/races.mjs";
+import { WARP_GODS }                                 from "../constants/veil.mjs";
+import { disabledRaceKeys }                          from "../constants/features.mjs";
+import { factionKey, factionAncestors, factionParentKey, factionAlsoKeys,
+         getFactionIndex }                           from "../rules/factions.mjs";
+import { factionRosterContext, originTreeContext,
+         activateFactionRosterListeners, activateOriginTreeListeners }
+                                                     from "../apps/faction-roster.mjs";
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
@@ -103,6 +111,78 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
   }
 
   /**
+   * Записать вышестоящую Фракцию в «Входит в состав».
+   *
+   * В поле уезжает КЛЮЧ, а не ссылка на документ (см. причину в шапке
+   * module/data/item/faction.mjs). Общая часть для перетаскивания и кнопки
+   * «＋»: оба пути обязаны одинаково отсеять чужой тип и кольцо в дереве.
+   */
+  async _setFactionParent(src) {
+    if (!src) return;
+    if (src.type !== "faction") {
+      return ui.notifications.warn(
+        `Сюда нужно перетащить Фракцию, а перетащено: ${ITEM_TYPES[src.type] || src.type}.`);
+    }
+    const parentKey = factionKey(src);
+    if (!parentKey) return ui.notifications.warn(`У фракции «${src.name}» нет ключа — ссылаться не на что.`);
+
+    // Сама себе вышестоящей быть не может, и нижестоящая тоже: получилось бы
+    // кольцо, а дерево обходится вверх до корня. Обход такой цикл переживает
+    // (factionChain обрывает и жалуется), но данные всё равно были бы врущими.
+    const myKey = factionKey(this.item);
+    if (parentKey === myKey) return ui.notifications.warn("Фракция не может входить в саму себя.");
+    if (myKey && factionAncestors(parentKey, getFactionIndex()).has(myKey)) {
+      return ui.notifications.warn(
+        `«${src.name}» уже входит в состав этой фракции — кольца в дереве не бывает.`);
+    }
+    await this._updateFaction({ "system.parentKey": parentKey });
+  }
+
+  /**
+   * Добавить дополнительную принадлежность («Также состоит в»).
+   *
+   * Кольцо проверяем по ОБЪЕДИНЕНИЮ связей: дополнительные ссылки образуют не
+   * дерево, а сеть, и «служу тому, кто служит мне» так же бессмысленно, как
+   * вассал собственного вассала.
+   */
+  async _addFactionAlso(src) {
+    if (!src) return;
+    if (src.type !== "faction") {
+      return ui.notifications.warn(
+        `Сюда нужно перетащить Фракцию, а перетащено: ${ITEM_TYPES[src.type] || src.type}.`);
+    }
+    const key = factionKey(src);
+    if (!key) return ui.notifications.warn(`У фракции «${src.name}» нет ключа — ссылаться не на что.`);
+    const myKey = factionKey(this.item);
+    if (key === myKey) return ui.notifications.warn("Фракция не может состоять в самой себе.");
+
+    const already = factionAlsoKeys(this.item);
+    if (already.includes(key)) return ui.notifications.info(`«${src.name}» уже указана.`);
+    if (myKey && factionAncestors(key, getFactionIndex()).has(myKey)) {
+      return ui.notifications.warn(
+        `«${src.name}» сама подпадает под эту фракцию — кольца не бывает.`);
+    }
+    await this._updateFaction({ "system.alsoIn": [...already, key] });
+  }
+
+  /**
+   * Правка самой Фракции с понятным отказом.
+   *
+   * Лист фракции чаще всего открыт из компендиума, а закрытый пак Foundry
+   * править не даёт — молчаливое «ничего не произошло» выглядит как поломка,
+   * поэтому объясняем причину.
+   */
+  async _updateFaction(changes) {
+    const pack = this.item.pack ? game.packs.get(this.item.pack) : null;
+    if (pack?.locked) {
+      return ui.notifications.warn(
+        "Компендиум закрыт для правки — включите «Разрешить правку компендиумов» в настройках системы.");
+    }
+    if (!game.user.isGM) return ui.notifications.warn("Править фракции может только Мастер.");
+    await this.item.update(changes);
+  }
+
+  /**
    * Драг-н-дроп Таланта/Черты на условие-требование. Пишет в набор групп,
    * указанный в data-req (req — ритуалисту, assistReq — ассистентам).
    */
@@ -136,7 +216,8 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
    * Какого вида цель добавляем. Один список вместо трёх кнопок: видов немного,
    * а типы акторов всё равно нужно показать перечнем.
    *
-   * @returns {Promise<?string>} "faction" | "all" | ключ типа актора; null — отмена.
+   * @returns {Promise<?string>} "faction" | "race" | "all" | ключ типа актора;
+   *   null — отмена.
    */
   _askTargetKind() {
     // Типы акторов берутся у Foundry, а подписи — из lang/ru.json (TYPES.Actor.*):
@@ -144,6 +225,9 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     const actorTypes = (game.documentTypes?.Actor ?? []).filter(t => t !== "base");
     const opts = [
       `<option value="faction">Фракция…</option>`,
+      `<option value="race">Раса…</option>`,
+      `<option value="feature">Признак…</option>`,
+      `<option value="patron">Покровительство…</option>`,
       `<option value="all">Все! (без разбора)</option>`,
       ...actorTypes.map(t =>
         `<option value="${t}">Тип существа: ${game.i18n.localize(`TYPES.Actor.${t}`)}</option>`)
@@ -160,6 +244,113 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         </div>`,
         buttons: {
           ok:     { label: "Далее",  callback: html => finish(html.find(".talent-target-kind").val()) },
+          cancel: { label: "Отмена", callback: () => finish(null) }
+        },
+        default: "ok",
+        close: () => finish(null)
+      }, { classes: ["dialog", "warhammer-dbc", "wh-holo"] }).render(true);
+    });
+  }
+
+  /**
+   * Выбор расы для цели-расы. Расы и субрасы в одном списке двумя группами:
+   * ключи у них не пересекаются, а игроку важно только имя породы.
+   *
+   * Расы выключенных подсистем не показываем — как и в шапке листа персонажа.
+   *
+   * @returns {Promise<?{key: string, label: string}>} null — отмена.
+   */
+  _askRace() {
+    const off = disabledRaceKeys();
+    const group = (label, pairs) => {
+      const opts = pairs
+        .filter(([key]) => !off.includes(key))
+        .sort((a, b) => a[1].localeCompare(b[1], "ru"))
+        .map(([key, name]) => `<option value="${key}">${name}</option>`).join("");
+      return opts ? `<optgroup label="${label}">${opts}</optgroup>` : "";
+    };
+    const html = group("Расы", Object.entries(RACES).map(([k, d]) => [k, d.label || d.name || k]))
+               + group("Субрасы", Object.entries(SUBRACES));
+
+    return new Promise(resolve => {
+      let done = false;
+      const finish = v => { if (!done) { done = true; resolve(v); } };
+      new Dialog({
+        title: "Цель: раса",
+        content: `<div class="wh-holo-dialog">
+          <p>Против какой породы работает талант?</p>
+          <select class="talent-target-race" style="width:100%">${html}</select>
+        </div>`,
+        buttons: {
+          ok: {
+            label: "Добавить",
+            callback: h => {
+              const sel = h.find(".talent-target-race")[0];
+              finish(sel?.value ? { key: sel.value, label: sel.selectedOptions[0].textContent } : null);
+            }
+          },
+          cancel: { label: "Отмена", callback: () => finish(null) }
+        },
+        default: "ok",
+        close: () => finish(null)
+      }, { classes: ["dialog", "warhammer-dbc", "wh-holo"] }).render(true);
+    });
+  }
+
+  /**
+   * Выбор признака для цели-признака: список берётся из реестра
+   * (rules/talent-targets.mjs), свой перечень здесь разошёлся бы с проверкой.
+   *
+   * @returns {Promise<?string>} ключ признака; null — отмена.
+   */
+  _askFeature() {
+    const opts = Object.entries(TARGET_FEATURES)
+      .map(([key, def]) => `<option value="${key}">${def.label}</option>`).join("");
+    return new Promise(resolve => {
+      let done = false;
+      const finish = v => { if (!done) { done = true; resolve(v); } };
+      new Dialog({
+        title: "Цель: признак",
+        content: `<div class="wh-holo-dialog">
+          <p>По какому свойству существа работает талант?</p>
+          <select class="talent-target-feature" style="width:100%">${opts}</select>
+        </div>`,
+        buttons: {
+          ok:     { label: "Добавить", callback: h => finish(h.find(".talent-target-feature").val()) },
+          cancel: { label: "Отмена",   callback: () => finish(null) }
+        },
+        default: "ok",
+        close: () => finish(null)
+      }, { classes: ["dialog", "warhammer-dbc", "wh-holo"] }).render(true);
+    });
+  }
+
+  /**
+   * Выбор покровителя. «Любой покровитель» стоит первым: Ненависть к служащим
+   * Губительным Силам вообще встречается не реже, чем к конкретному богу.
+   *
+   * @returns {Promise<?{key: string, label: string}>} null — отмена.
+   */
+  _askPatron() {
+    const opts = [`<option value="${PATRON_ANY}">Любой покровитель</option>`]
+      .concat(WARP_GODS.map(g => `<option value="${g.key}">${g.label}</option>`)).join("");
+    return new Promise(resolve => {
+      let done = false;
+      const finish = v => { if (!done) { done = true; resolve(v); } };
+      new Dialog({
+        title: "Цель: покровительство",
+        content: `<div class="wh-holo-dialog">
+          <p>Кому служит тот, против кого работает талант?</p>
+          <select class="talent-target-patron" style="width:100%">${opts}</select>
+        </div>`,
+        buttons: {
+          ok: {
+            label: "Добавить",
+            callback: h => {
+              const sel = h.find(".talent-target-patron")[0];
+              finish(sel?.value ? { key: sel.value, label: sel.selectedOptions[0].textContent } : null);
+            }
+          },
           cancel: { label: "Отмена", callback: () => finish(null) }
         },
         default: "ok",
@@ -235,7 +426,10 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     await syncWeaponPropItemEffects(this.item);
   }
 
-  getData() {
+  // Асинхронный: вкладке «Состав» Фракции нужны акторы компендиумов, а они
+  // приходят загрузкой документов. Foundry ждёт getData() при отрисовке, для
+  // остальных типов предметов ничего не меняется.
+  async getData() {
     const context  = super.getData();
     // Истории силовой брони — только для брони Астартес и при включённом расширении.
     context.armourHistory = armourHistoryContext(this.item);
@@ -422,6 +616,29 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         .map(k => ({ key: k, def: WEAPON_PROPERTIES[k] }))
         .filter(p => p.def);
       context.modRemovePropsAvailable = WEAPON_PROPERTIES_LIST.filter(d => !remKeys.has(d.key));
+    }
+
+    // ── Фракция: вышестоящая, показанная фишкой ─────────────────────────────
+    // В поле лежит КЛЮЧ (см. module/data/item/faction.mjs), а игроку нужна
+    // подпись — берём её из каталога фракций. Каталога может не быть (мир ещё
+    // грузится, фракция заведена не в компендиуме) — тогда показываем сам
+    // ключ: «ссылка есть, но на что — сказать нечем» честнее пустоты.
+    if (this.item.type === "faction") {
+      // Ключ — только строка. Мусор («[object Object]» от старой записи
+      // объектом) показываем как пустое поле, а не как фишку с этим текстом:
+      // ссылки на такой ключ всё равно нет.
+      const parentKey = factionParentKey(this.item);
+      const known = parentKey ? getFactionIndex().get(parentKey) : null;
+      context.factionParent = parentKey
+        ? { key: parentKey, name: known?.name || parentKey, img: known?.img || "" }
+        : null;
+      // Дополнительные принадлежности — фишками, как цели Таланта.
+      context.factionAlso = factionAlsoKeys(this.item).map(key => {
+        const doc = getFactionIndex().get(key);
+        return { key, name: doc?.name || key, img: doc?.img || "" };
+      });
+      // Вкладка «Состав» и схема происхождения — apps/faction-roster.mjs.
+      Object.assign(context, await factionRosterContext(this.item), originTreeContext(this.item));
     }
 
     // ── Талант: склонности ───────────────────────────────────────────────────────
@@ -764,6 +981,18 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         if (!doc) return ui.notifications.warn("Фракция не найдена — возможно, компендиум изменился.");
         target = factionTarget(doc);
         if (!target) return ui.notifications.warn(`У фракции «${doc.name}» не задан ключ.`);
+      } else if (kind === "race") {
+        const race = await this._askRace();
+        if (!race) return;
+        target = raceTarget(race.key, race.label);
+      } else if (kind === "feature") {
+        const feature = await this._askFeature();
+        if (!feature) return;
+        target = featureTarget(feature);
+      } else if (kind === "patron") {
+        const patron = await this._askPatron();
+        if (!patron) return;
+        target = patronTarget(patron.key, patron.label);
       } else if (kind === "all") {
         target = allTarget();
       } else {
@@ -783,6 +1012,107 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         "system.targets": removeTargetAt(this.item.system.targets || [], ev.currentTarget.dataset.index)
       });
     });
+
+    // ── Фракция: ключ и вышестоящая ─────────────────────────────────────────
+    // Ключ выдаётся при создании (module/documents/item.mjs) и правке не
+    // подлежит: на него ссылаются другие фракции и цели Талантов. Поле только
+    // показывает его, поэтому рядом кнопка «скопировать» — иначе значение
+    // остаётся видимым, но неудобным в переносе.
+    html.find(".faction-key-copy").on("click", async ev => {
+      ev.preventDefault();
+      const key = this.item.system.key || "";
+      if (!key) return ui.notifications.warn("Ключа нет — выдайте его кнопкой рядом.");
+      try {
+        await game.clipboard.copyPlainText(key);
+        ui.notifications.info(`Ключ «${key}» скопирован.`);
+      } catch {
+        // Буфер обмена доступен не в каждом окружении — значение всё равно
+        // видно в поле, поэтому это не ошибка, а подсказка.
+        ui.notifications.warn(`Не удалось скопировать. Ключ: ${key}`);
+      }
+    });
+
+    // «Входит в состав»: перетаскивание и кнопка «＋». Дроп ловим сами, а не
+    // штатным dragDrop листа: тот отключается вместе с редактируемостью, а
+    // лист фракции почти всегда открыт из компендиума — и перетаскивание
+    // молча переставало работать.
+    const parentZone = html.find(".faction-parent-drop")[0];
+    if (parentZone) {
+      parentZone.addEventListener("dragover", ev => {
+        ev.preventDefault();
+        parentZone.classList.add("faction-drop-over");
+      });
+      parentZone.addEventListener("dragleave", () => parentZone.classList.remove("faction-drop-over"));
+      parentZone.addEventListener("drop", async ev => {
+        parentZone.classList.remove("faction-drop-over");
+        const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(ev);
+        if (data?.type !== "Item") return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        await this._setFactionParent(await Item.implementation.fromDropData(data));
+      });
+    }
+
+    html.find(".faction-parent-add").on("click", async ev => {
+      ev.preventDefault();
+      const uuid = await openCompendiumBrowser(false, {
+        filters: { type: "faction" },
+        prompt: "Выберите вышестоящую фракцию — эта войдёт в её состав"
+      });
+      if (!uuid) return;
+      const doc = await fromUuid(uuid).catch(() => null);
+      if (!doc) return ui.notifications.warn("Фракция не найдена — возможно, компендиум изменился.");
+      await this._setFactionParent(doc);
+    });
+
+    html.find(".faction-parent-remove").on("click", async ev => {
+      ev.preventDefault();
+      await this._updateFaction({ "system.parentKey": "" });
+    });
+
+    // «Также состоит в» — то же самое, но список: зона дропа, «＋» и крестик
+    // у каждой фишки.
+    const alsoZone = html.find(".faction-also-drop")[0];
+    if (alsoZone) {
+      alsoZone.addEventListener("dragover", ev => {
+        ev.preventDefault();
+        alsoZone.classList.add("faction-drop-over");
+      });
+      alsoZone.addEventListener("dragleave", () => alsoZone.classList.remove("faction-drop-over"));
+      alsoZone.addEventListener("drop", async ev => {
+        alsoZone.classList.remove("faction-drop-over");
+        const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(ev);
+        if (data?.type !== "Item") return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        await this._addFactionAlso(await Item.implementation.fromDropData(data));
+      });
+    }
+
+    html.find(".faction-also-add").on("click", async ev => {
+      ev.preventDefault();
+      const uuid = await openCompendiumBrowser(false, {
+        filters: { type: "faction" },
+        prompt: "Выберите фракцию, которой эта служит, не входя в неё по устройству"
+      });
+      if (!uuid) return;
+      const doc = await fromUuid(uuid).catch(() => null);
+      if (!doc) return ui.notifications.warn("Фракция не найдена — возможно, компендиум изменился.");
+      await this._addFactionAlso(doc);
+    });
+
+    html.find(".faction-also-remove").on("click", async ev => {
+      ev.preventDefault();
+      const key = ev.currentTarget.dataset.key;
+      await this._updateFaction({
+        "system.alsoIn": factionAlsoKeys(this.item).filter(k => k !== key)
+      });
+    });
+
+    if (this.item.type === "faction") {
+      activateFactionRosterListeners(html, this.item);
+      activateOriginTreeListeners(html, this.item);
+    }
 
     // ── Фракция: список «других названий» одним полем ───────────────────────
     // system.aliases — ArrayField, и авто-submit формы строку в массив не

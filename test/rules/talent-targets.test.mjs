@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
-  factionTarget, actorTypeTarget, allTarget, sameTarget,
-  addTarget, removeTargetAt, targetLabel, factionRefs
+  factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, sameTarget,
+  addTarget, removeTargetAt, targetLabel, factionRefs, targetMatches, anyTargetMatches,
+  TARGET_FEATURES, patronTarget, actorPatronKey, PATRON_ANY
 } from "../../module/rules/talent-targets.mjs";
+import { indexFactions } from "../../module/rules/factions.mjs";
 
 const faction = (key, name = "Несущие Слово") => ({
   name, img: "icons/svg/aura.svg", system: { key }
@@ -39,6 +41,141 @@ describe("actorTypeTarget", () => {
 
   it("пустой тип — не цель", () => {
     expect(actorTypeTarget("")).toBeNull();
+  });
+});
+
+// Ненависть бывает не к организации, а к породе: «Hatred (Наги)» у Гарпии.
+// Фракцией это не выразить — наг не вступает в наг, он ими рождается.
+describe("raceTarget", () => {
+  const map = indexFactions([]);
+  const target = raceTarget("naga", "Нага");
+
+  it("хранит ключ расы и подпись", () => {
+    expect(target).toMatchObject({ kind: "race", value: "naga", name: "Нага", ref: "" });
+  });
+
+  it("без ключа цели нет", () => {
+    expect(raceTarget("")).toBeNull();
+    expect(raceTarget(null)).toBeNull();
+  });
+
+  it("срабатывает по расе актора цели", () => {
+    expect(targetMatches(target, { targetActor: { system: { race: "naga" } } }, map)).toBe(true);
+    expect(targetMatches(target, { targetActor: { system: { race: "human" } } }, map)).toBe(false);
+  });
+
+  // Ключи рас и субрас не пересекаются, поэтому одна цель проверяет оба поля:
+  // «Ненависть к Париям» пишется так же, как «Ненависть к Нагам».
+  it("срабатывает и по субрасе", () => {
+    const pariah = raceTarget("pariah", "Пария");
+    expect(targetMatches(pariah, { targetActor: { system: { race: "human", subrace: "pariah" } } }, map)).toBe(true);
+    expect(targetMatches(pariah, { targetActor: { system: { race: "human" } } }, map)).toBe(false);
+  });
+
+  it("без цели броска не срабатывает", () => {
+    expect(targetMatches(target, {}, map)).toBe(false);
+  });
+
+  it("цели соединены через «или»: раса рядом с фракцией", () => {
+    const targets = [factionTarget(faction("word-bearers")), target];
+    expect(anyTargetMatches(targets, { targetActor: { system: { race: "naga" }, items: [] } }, map)).toBe(true);
+  });
+
+  it("две расы различаются, одинаковые — нет", () => {
+    expect(sameTarget(target, raceTarget("naga", "Другая подпись"))).toBe(true);
+    expect(sameTarget(target, raceTarget("harpy"))).toBe(false);
+    expect(sameTarget(target, actorTypeTarget("naga"))).toBe(false);
+  });
+});
+
+// «Hatred (Psykers)» — не про организацию и не про породу, а про свойство.
+describe("featureTarget", () => {
+  const map = indexFactions([]);
+  const psyker = featureTarget("psyker");
+
+  it("берёт подпись из реестра, а не из вызова", () => {
+    expect(psyker).toMatchObject({ kind: "feature", value: "psyker", name: TARGET_FEATURES.psyker.label });
+  });
+
+  it("незнакомый признак целью не становится", () => {
+    expect(featureTarget("несуществующий")).toBeNull();
+    expect(featureTarget("")).toBeNull();
+  });
+
+  it("срабатывает по полю листа", () => {
+    expect(targetMatches(psyker, { targetActor: { system: { isPsyker: true } } }, map)).toBe(true);
+    expect(targetMatches(psyker, { targetActor: { system: { isPsyker: false } } }, map)).toBe(false);
+    expect(targetMatches(psyker, { targetActor: { system: {} } }, map)).toBe(false);
+  });
+
+  it("каждый признак реестра проверяет своё поле", () => {
+    expect(targetMatches(featureTarget("possessed"), { targetActor: { system: { possessed: true } } }, map)).toBe(true);
+    expect(targetMatches(featureTarget("techpriest"), { targetActor: { system: { isTechpriest: true } } }, map)).toBe(true);
+    expect(targetMatches(featureTarget("rogueTrader"), { targetActor: { system: { isRogueTrader: true } } }, map)).toBe(true);
+    // Признаки не путаются между собой.
+    expect(targetMatches(featureTarget("possessed"), { targetActor: { system: { isPsyker: true } } }, map)).toBe(false);
+  });
+
+  it("без цели броска не срабатывает", () => {
+    expect(targetMatches(psyker, {}, map)).toBe(false);
+  });
+
+  it("у каждого признака реестра есть подпись и проверка", () => {
+    for (const [key, def] of Object.entries(TARGET_FEATURES)) {
+      expect(def.label, key).toBeTruthy();
+      expect(typeof def.test, key).toBe("function");
+      expect(def.test(undefined), key).toBe(false);
+    }
+  });
+});
+
+// «Hatred (Khorne)» — не фракция: кхорнит из легиона и кхорнит-культист не
+// состоят вместе нигде, кроме самого покровительства.
+describe("patronTarget", () => {
+  const map = indexFactions([]);
+  const khorne = patronTarget("khorne", "Кхорн");
+  const любой = patronTarget(PATRON_ANY);
+
+  const демон = (key) => ({ type: "daemon", system: { allegiance: key } });
+  const хаосит = (key) => ({ type: "character", system: { alignment: "heretic", patronGod: key } });
+  const лоялист = () => ({ type: "character", system: { alignment: "loyalist", patronGod: "undivided" } });
+
+  it("хранит ключ бога и подпись", () => {
+    expect(khorne).toMatchObject({ kind: "patron", value: "khorne", name: "Кхорн" });
+    expect(любой.name).toBe("Любой покровитель");
+    expect(patronTarget("")).toBeNull();
+  });
+
+  it("срабатывает на демона и на хаосита с тем же покровителем", () => {
+    expect(targetMatches(khorne, { targetActor: демон("khorne") }, map)).toBe(true);
+    expect(targetMatches(khorne, { targetActor: хаосит("khorne") }, map)).toBe(true);
+  });
+
+  it("чужой бог не подходит", () => {
+    expect(targetMatches(khorne, { targetActor: демон("nurgle") }, map)).toBe(false);
+    expect(targetMatches(khorne, { targetActor: хаосит("tzeentch") }, map)).toBe(false);
+  });
+
+  // В схеме персонажа patronGod по умолчанию «Неделимый» у КАЖДОГО, поэтому
+  // покровитель читается только при хаоситском мировоззрении — иначе Ненависть
+  // к Неделимому срабатывала бы на всю Гвардию.
+  it("у лоялиста покровителя нет, хотя поле заполнено", () => {
+    expect(actorPatronKey(лоялист())).toBe("");
+    expect(targetMatches(любой, { targetActor: лоялист() }, map)).toBe(false);
+    expect(targetMatches(patronTarget("undivided", "Неделимый"), { targetActor: лоялист() }, map)).toBe(false);
+  });
+
+  it("«любой покровитель» ловит всякого, у кого он есть", () => {
+    expect(targetMatches(любой, { targetActor: демон("slaanesh") }, map)).toBe(true);
+    expect(targetMatches(любой, { targetActor: хаосит("undivided") }, map)).toBe(true);
+    expect(targetMatches(любой, { targetActor: { system: {} } }, map)).toBe(false);
+    expect(targetMatches(любой, {}, map)).toBe(false);
+  });
+
+  it("покровители различаются между собой и не путаются с признаком", () => {
+    expect(sameTarget(khorne, patronTarget("khorne", "иначе подписан"))).toBe(true);
+    expect(sameTarget(khorne, patronTarget("nurgle"))).toBe(false);
+    expect(sameTarget(khorne, featureTarget("psyker"))).toBe(false);
   });
 });
 

@@ -22,6 +22,7 @@ import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -121,6 +122,8 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
 
   getData(options) {
     const context = super.getData(options);
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
     context.system  = sys;
     context.derived = sys.derived || {};
@@ -302,6 +305,8 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
 
   activateListeners(html) {
     super.activateListeners(html);
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(html, this.actor);
 
     html.find(".fm-open").on("click", async ev => {
       const uuid = ev.currentTarget.closest("[data-uuid]")?.dataset.uuid;

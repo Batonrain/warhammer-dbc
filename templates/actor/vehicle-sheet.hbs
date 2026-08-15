@@ -18,6 +18,7 @@
         <label>Командир <input type="text" name="system.commander" value="{{system.commander}}"/></label>
         <label>Происхождение <input type="text" name="system.origin" value="{{system.origin}}"/></label>
       </div>
+      {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
     </div>
     <div class="veh-structure-box veh-gauge sl-{{structLevel}}{{#if derived.halfWrecked}} veh-wrecked{{/if}}">
       <div class="veh-struct-label">СТРУКТУРА</div>

@@ -1,22 +1,23 @@
 {
-  "name": "Легионы-предатели",
+  "name": "Экскориаторы",
   "type": "faction",
   "img": "icons/svg/aura.svg",
-  "folder": null,
+  "folder": "5VFQG4e4cZyybRoZ",
   "system": {
-    "key": "traitor-legions",
-    "parent": "chaos",
+    "key": "excoriators",
+    "parentKey": "imperial-fists",
+    "alsoIn": [],
     "aliases": [
-      "Traitor Legions"
+      "Excoriators"
     ],
     "isLore": true,
-    "description": "Девять легионов Астартес, преступивших клятву Императору.",
+    "description": "",
     "notes": "",
-    "bookSource": "DoomBC — Основная книга"
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
   },
-  "_id": "FctnTraitorLeg01",
+  "_id": "FctnExcoriators0",
   "effects": [],
-  "sort": 200000,
+  "sort": 4040000,
   "ownership": {
     "default": 0
   },
@@ -32,5 +33,5 @@
     "duplicateSource": null,
     "exportSource": null
   },
-  "_key": "!items!FctnTraitorLeg01"
+  "_key": "!items!FctnExcoriators0"
 }

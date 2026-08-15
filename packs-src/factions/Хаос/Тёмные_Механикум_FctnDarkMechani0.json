@@ -1,0 +1,37 @@
+{
+  "name": "Тёмные Механикум",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "ZW3y0AfCVRJL3r5P",
+  "system": {
+    "key": "dark-mechanicum",
+    "aliases": [
+      "Dark Mechanicum"
+    ],
+    "isLore": true,
+    "description": "Техножрецы, отдавшие знание Машины Губительным Силам.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга",
+    "parentKey": "chaos",
+    "alsoIn": []
+  },
+  "_id": "FctnDarkMechani0",
+  "effects": [],
+  "sort": 2600000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnDarkMechani0"
+}

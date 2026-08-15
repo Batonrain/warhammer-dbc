@@ -19,8 +19,45 @@ import { isSameOrDescendant, anySameOrDescendant, actorFactionKeys, getFactionIn
 /** Виды цели и их подписи для интерфейса. */
 export const TARGET_KINDS = {
   faction:   "Фракция",
+  race:      "Раса",
+  feature:   "Признак",
+  patron:    "Покровительство",
   actorType: "Тип существа",
   all:       "Все!"
+};
+
+/** Значение цели-покровительства «всё равно чьё, лишь бы было». */
+export const PATRON_ANY = "any";
+
+/**
+ * Кому существо покровительствуется. Поле разное у разных типов, и это не
+ * прихоть: у Демона и Принца покровитель есть всегда (`allegiance`), а у
+ * персонажа он значит что-то только при хаоситском мировоззрении — в схеме
+ * `patronGod` по умолчанию стоит «Неделимый» у КАЖДОГО, включая лоялиста, и
+ * без этой оговорки Ненависть к Неделимому срабатывала бы на всю Гвардию.
+ *
+ * @returns {string} ключ бога либо пустая строка, если покровителя нет.
+ */
+export function actorPatronKey(actor) {
+  const sys = actor?.system ?? {};
+  const raw = sys.allegiance ?? (sys.alignment === "heretic" ? sys.patronGod : "");
+  return String(raw ?? "").trim();
+}
+
+/**
+ * Признаки существа, по которым книга тоже нацеливает Ненависть и Связи:
+ * «Hatred (Psykers)» — не про организацию и не про породу, а про свойство.
+ *
+ * Реестр, а не перечисление в коде отбора: новый признак заводится строкой
+ * здесь и сразу появляется и в диалоге выбора, и в проверке. Проверка —
+ * чистая функция от актора, потому что цели отбираются там же, где правила, и
+ * обязаны работать без запуска Foundry.
+ */
+export const TARGET_FEATURES = {
+  psyker:      { label: "Псайкер",           test: a => !!a?.system?.isPsyker },
+  possessed:   { label: "Одержимый",         test: a => !!a?.system?.possessed },
+  techpriest:  { label: "Техножрец",         test: a => !!a?.system?.isTechpriest },
+  rogueTrader: { label: "Вольный торговец",  test: a => !!a?.system?.isRogueTrader }
 };
 
 /** Пустая цель нужного вида — остальные поля добираются ниже. */
@@ -51,6 +88,51 @@ export function actorTypeTarget(type, label = "") {
   return { ...blank("actorType"), value, name: String(label || value) };
 }
 
+/**
+ * Цель-раса: ненависть бывает не к организации, а к породе.
+ *
+ * Книга пишет так прямо — «Hatred (Наги)» у Гарпии, — и фракцией это не
+ * выразить: наг не вступает в наг, он ими рождается. Принадлежность живёт
+ * предметом и её можно снять, раса стоит полем на листе и держится за
+ * персонажа сама.
+ *
+ * Ключ берётся общий и для расы, и для субрасы: списки не пересекаются
+ * (constants/races.mjs), а «Ненависть к Париям» — такое же законное правило
+ * книги, как «Ненависть к Нагам», и заводить ради него второй вид цели незачем.
+ */
+export function raceTarget(key, label = "") {
+  const value = String(key ?? "").trim();
+  if (!value) return null;
+  return { ...blank("race"), value, name: String(label || value) };
+}
+
+/**
+ * Цель-признак: свойство существа, а не его происхождение или подчинение.
+ * Незнакомый ключ целью не становится — иначе правило молча не срабатывало бы,
+ * а виноватой выглядела бы механика отбора.
+ */
+export function featureTarget(key) {
+  const value = String(key ?? "").trim();
+  const def = TARGET_FEATURES[value];
+  if (!def) return null;
+  return { ...blank("feature"), value, name: def.label };
+}
+
+/**
+ * Цель-покровительство: против тех, кто служит Губительным Силам.
+ *
+ * Книга нацеливает Ненависть прямо на бога — «Hatred (Khorne)», — и это не
+ * фракция: кхорнит из легиона-предателя и кхорнит-культист не состоят вместе
+ * нигде, кроме самого покровительства. Ключ `any` означает «любой покровитель»:
+ * есть — значит подходит.
+ */
+export function patronTarget(key, label = "") {
+  const value = String(key ?? "").trim();
+  if (!value) return null;
+  const name = label || (value === PATRON_ANY ? "Любой покровитель" : value);
+  return { ...blank("patron"), value, name: String(name) };
+}
+
 /** «Все!» — вариант Hatred без разбора, кого именно. */
 export function allTarget() {
   return { ...blank("all"), name: TARGET_KINDS.all };
@@ -59,8 +141,8 @@ export function allTarget() {
 /** Одна и та же цель? Сравнение по сути, а не по подписи: имя правится в UI. */
 export function sameTarget(a, b) {
   if (a?.kind !== b?.kind) return false;
-  if (a.kind === "faction")   return a.ref === b.ref;
-  if (a.kind === "actorType") return a.value === b.value;
+  if (a.kind === "faction") return a.ref === b.ref;
+  if (["actorType", "race", "feature", "patron"].includes(a.kind)) return a.value === b.value;
   return true;                       // «Все!» бывает только одно
 }
 
@@ -117,6 +199,21 @@ export function targetMatches(target, ctx = {}, byKey = getFactionIndex()) {
   if (!target) return false;
   if (target.kind === "all") return true;
   if (target.kind === "actorType") return ctx?.targetActor?.type === target.value;
+  // Раса и субраса — два поля листа, ключи в них из разных списков, поэтому
+  // одна цель проверяет оба: «Ненависть к Нагам» и «Ненависть к Париям»
+  // записываются одинаково.
+  if (target.kind === "race") {
+    const sys = ctx?.targetActor?.system ?? {};
+    return sys.race === target.value || sys.subrace === target.value;
+  }
+  if (target.kind === "feature") {
+    return !!TARGET_FEATURES[target.value]?.test(ctx?.targetActor);
+  }
+  if (target.kind === "patron") {
+    const patron = actorPatronKey(ctx?.targetActor);
+    if (!patron) return false;
+    return target.value === PATRON_ANY || target.value === patron;
+  }
   if (target.kind !== "faction") return false;
 
   if (ctx?.socialFaction) return isSameOrDescendant(ctx.socialFaction, target.ref, byKey);

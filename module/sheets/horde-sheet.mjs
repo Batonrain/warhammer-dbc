@@ -11,6 +11,7 @@ import { resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { meleeStrengthBonus } from "../combat/attack-outcome.mjs";
 import { attachItemPicker } from "./item-picker.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
@@ -44,6 +45,8 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
 
   async getData(options) {
     const context = await super.getData(options);
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const system = this.actor.system;
     context.system = system;
 
@@ -70,6 +73,8 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
 
   activateListeners(html) {
     super.activateListeners(html);
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(html, this.actor);
     const el = html[0] ?? html;
     if (!this.isEditable) return;
 
