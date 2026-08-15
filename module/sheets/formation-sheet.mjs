@@ -432,7 +432,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         <div class="roll-outcome"><span class="roll-success">Предел боевого духа: <b>${max}</b></span></div>
       </div>`,
       rolls
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   // ── Приказы ───────────────────────────────────────────────────────────────
@@ -596,7 +596,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         ${extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""}
       </div>`,
       rolls, sound: CONFIG.sounds.dice
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   // ── Атака ─────────────────────────────────────────────────────────────────
@@ -739,7 +739,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         ${applied}
       </div>`,
       rolls, sound: CONFIG.sounds.dice
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   /** Приём урона вручную (когда бьёт не формирование, а обстрел или ГМ). */
@@ -806,7 +806,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         ${note ? `<div class="fm-chat-note">${note}</div>` : ""}
       </div>`,
       rolls
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   // ── Боевой дух ────────────────────────────────────────────────────────────
@@ -855,7 +855,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
               ${ok ? `<div class="fm-chat-note">Следующий тест — при падении боевого духа до 25% от изначального (${d.quarterMorale}).</div>` : ""}
             </div>`,
             rolls: [roll], sound: CONFIG.sounds.dice
-          }, { rollMode: game.settings.get("core", "rollMode") }));
+          }, game.settings.get("core", "rollMode")));
         }},
         cancel: { label: "Отмена" }
       },
@@ -1025,6 +1025,6 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         ${extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""}
       </div>`,
       rolls, sound: CONFIG.sounds.dice
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 }

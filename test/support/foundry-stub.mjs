@@ -223,7 +223,15 @@ globalThis.CONST = {
 
 globalThis.CONFIG = { sounds: { dice: "dice.wav" }, Actor: { dataModels: {} }, Item: { dataModels: {} } };
 globalThis.Hooks  = { on: () => {}, once: () => {}, callAll: () => {} };
-globalThis.game   = { settings: { get: () => undefined, register: () => {} }, i18n: { localize: s => s }, user: {}, users: [] };
+globalThis.game   = {
+  settings: {
+    // core/rollMode в Foundry — всегда строка режима. Заглушка отдавала
+    // undefined на всё, и строгую проверку applyRollMode было не поставить.
+    get: (scope, key) => (scope === "core" && key === "rollMode") ? "roll" : undefined,
+    register: () => {}
+  },
+  i18n: { localize: s => s }, user: {}, users: []
+};
 // warn копится: выдача стартовых навыков сообщает им о нераспознанных записях.
 globalThis.ui     = { notifications: { warn: m => captured.warnings.push(String(m)), info: () => {}, error: () => {} } };
 
@@ -314,7 +322,17 @@ globalThis.Roll = class {
 };
 
 globalThis.ChatMessage = class {
-  static applyRollMode(data) { return data; }
+  /**
+   * Второй аргумент — СТРОКА режима ("roll"/"gmroll"/…), а не объект: Foundry
+   * лезет в CONFIG.Dice.rollModes[rollMode].handler и на объекте падает
+   * «Cannot read properties of undefined (reading 'handler')». Заглушка молча
+   * возвращала data и восемнадцать таких вызовов доехали до игры незамеченными.
+   */
+  static applyRollMode(data, rollMode) {
+    if (typeof rollMode !== "string")
+      throw new TypeError(`applyRollMode ждёт строку режима, получено ${JSON.stringify(rollMode)}`);
+    return data;
+  }
   static getSpeaker() { return { alias: "stub" }; }
   static async create(data) { captured.chat.push(data); return data; }
 };
