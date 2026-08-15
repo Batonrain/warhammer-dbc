@@ -19,7 +19,9 @@
  * Пока она null, бросок ведёт себя по-старому: любая формула даёт `nextRoll`.
  */
 export const captured = { dialog: null, rolls: [], chat: [], created: [], nextRoll: 50, dice: null,
-  confirmAnswer: true, warnings: [] };
+  confirmAnswer: true, warnings: [],
+  // Ручки открытого DialogV2 — их ставит заглушка wait (см. ниже).
+  press: null, dismiss: null, rerender: null };
 
 export function resetCaptured() {
   captured.dialog = null;
@@ -30,6 +32,9 @@ export function resetCaptured() {
   captured.dice = null;
   captured.confirmAnswer = true;
   captured.warnings = [];
+  captured.press = null;
+  captured.dismiss = null;
+  captured.rerender = null;
 }
 
 class ApplicationStub {
@@ -182,6 +187,28 @@ globalThis.foundry = {
       // captured.dialog — по нему проверяют текст.
       DialogV2: class {
         static async confirm(config) { captured.dialog = config; return captured.confirmAnswer; }
+        /**
+         * Окно не рендерится, а запоминается — как и у globalThis.Dialog. Тест
+         * жмёт кнопку через captured.press(действие, форма), закрывает окно
+         * через captured.dismiss() и вызывает живой пересчёт через
+         * captured.rerender(форма). Форму даёт fakeForm (внизу файла).
+         *
+         * Возвращает то же, что настоящий wait: значение колбэка нажатой
+         * кнопки, а при закрытии — null (rejectClose: false).
+         */
+        static async wait(config) {
+          captured.dialog = config;
+          const self = { element: { querySelector: () => self.form }, setPosition: () => {} };
+          captured.rerender = form => { self.form = form; config.render?.(null, self); };
+          captured.press = async (action, form) => {
+            const btn = config.buttons.find(b => b.action === action);
+            captured.settle(await btn.callback?.(null, { form }, self) ?? null);
+          };
+          return new Promise(resolve => {
+            captured.settle = resolve;
+            captured.dismiss = () => resolve(null);
+          });
+        }
       }
     },
     sheets: { ActorSheetV2: ApplicationStub, DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub }
@@ -398,6 +425,25 @@ export function fakeHtml(fields = {}, checks = {}) {
       on:   () => {},
       each: fn => (checks[selector] ?? []).forEach((cb, i) => fn(i, cb))
     })
+  };
+}
+
+/**
+ * Подставная форма для DialogV2 — то же, чем fakeHtml был для jQuery, но на
+ * двух методах, которыми диалог читает форму: `fields` отдаёт элемент по
+ * селектору, `checks` — список элементов.
+ *
+ * Значение задаётся строкой (`value`), `true` (отмеченный флажок) или готовым
+ * объектом. Объект возвращается как есть — так живой пересчёт может писать в
+ * него `textContent`, и тест увидит написанное.
+ */
+export function fakeForm(fields = {}, checks = {}) {
+  const el = v => (v !== null && typeof v === "object")
+    ? v : { value: v, checked: v === true, dataset: {} };
+  return {
+    addEventListener: () => {},
+    querySelector:    sel => (sel in fields) ? el(fields[sel]) : (checks[sel]?.[0] ?? null),
+    querySelectorAll: sel => checks[sel] ?? ((sel in fields) ? [el(fields[sel])] : [])
   };
 }
 

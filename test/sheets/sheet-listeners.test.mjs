@@ -460,7 +460,7 @@ describe("вкладка БОЙ", () => {
     handlers[".technique-btn:click"](ev({ technique: "sweep" }));
     await flush();                                           // окно атаки собирается асинхронно
 
-    expect(captured.dialog.title).toBe("Атака: Цепной меч");
+    expect(captured.dialog.window.title).toBe("Атака: Цепной меч");
   });
 
   it("приём без оружия сразу бросает и сообщает в чат", async () => {
@@ -478,7 +478,7 @@ describe("вкладка БОЙ", () => {
 
     handlers[".weapon-attack-roll:click"](ev({ itemId: "w-1" }));
 
-    expect(captured.dialog.title).toBe("Атака: Цепной меч");
+    expect(captured.dialog.window.title).toBe("Атака: Цепной меч");
   });
 
   it("кнопка лечения открывает диалог Первой Помощи", () => {
