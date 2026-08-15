@@ -96,6 +96,10 @@ export function activateRitualListeners(html, actor) {
   // «＋» открывает Обозреватель сразу на паке ритуалов. Перетаскивание
   // предмета-ритуала на лист обрабатывает штатный _onDropItem — своего
   // обработчика дропа разделу не нужно.
+  //
+  // Больше здесь ничего и нет: открытие листа ритуала и удаление ведёт общее
+  // контекстное меню строки предмета (activateItemContextMenu), которое висит
+  // на всякой .item-row — так же, как у Талантов и Черт (wdbc-5qk).
   html.find(".ritual-add-btn").on("click", async ev => {
     ev.preventDefault();
     const uuid = await openCompendiumBrowser(false, { pack: "rituals" });
@@ -105,14 +109,5 @@ export function activateRitualListeners(html, actor) {
     const data = src.toObject();
     delete data._id;
     await actor.createEmbeddedDocuments("Item", [data]);
-  });
-
-  html.find(".ritual-name-link").on("click", ev => {
-    actor.items.get(ev.currentTarget.dataset.itemId)?.sheet?.render(true);
-  });
-
-  html.find(".ritual-remove-btn").on("click", async ev => {
-    ev.preventDefault();
-    await actor.items.get(ev.currentTarget.dataset.itemId)?.delete();
   });
 }
