@@ -11,7 +11,7 @@ import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { DP_GODS, dpGodMeta, DP_ASCENSION, DP_IMMORTALITY, DP_RETINUE,
          DP_FAVOR_RULES, dpGiftsFor, dpGiftCost, DP_GIFT_NOTE,
          dpDivineTrait, DEMON_FORMS, DEMON_KEY_TRAITS, DEMON_WEAPON_PROPS,
-         DP_NATURE_TRAITS, DP_MIGHT, DP_MANIFEST_STEPS, dpManifest } from "../constants/demon-prince.mjs";
+         DP_NATURE_TRAITS, DP_MIGHT, dpManifest } from "../constants/demon-prince.mjs";
 import { veilTotal } from "../constants/veil.mjs";
 import { infamyContext } from "../apps/infamy-points.mjs";
 import { esc } from "../helpers/utils.mjs";

@@ -9,7 +9,7 @@ import { showRamDialog, showTerrainDialog, showRepairDialog } from "../combat/ve
 import { VEHICLE_WEAPONS } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
-import { whenEditable, onTab } from "./v2-helpers.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 
 const ROLE_ORDER = ["commander", "driver", "gunner", "loader", "pilot", "passenger"];
 
@@ -17,9 +17,18 @@ const ROLE_ORDER = ["commander", "driver", "gunner", "loader", "pilot", "passeng
 // Тот же приём, что на листе Орды (wdbc-ff4.10.1): ApplicationV2 зовёт
 // обработчик [data-action] с this = лист и элементом-источником вторым
 // аргументом. Обычные функции — чтобы карта действий сверялась с шаблоном тестом.
-// Общая обвязка (whenEditable, onTab) — в v2-helpers.mjs.
+// Общая обвязка (whenEditable, onTab, filePicker) — в v2-helpers.mjs.
 
 const itemIdOf = target => target.closest("[data-item-id]")?.dataset.itemId;
+// Портрет: в V1 клик по data-edit="img" обрабатывал ActorSheet сам, у V2 такого
+// обработчика нет — нужен свой (wdbc-bg0).
+function onPortrait() {
+  const FP = filePicker();
+  return new FP({
+    type: "image", current: this.actor.img || "",
+    callback: path => this.actor.update({ img: path })
+  }).render(true);
+}
 
 function onStationOpen(event, target) {
   const uuid = target.closest("[data-uuid]")?.dataset.uuid;
@@ -114,6 +123,7 @@ export class WarhammerVehicleSheet
       // Открыть лист сидящего и освободить место доступны и игроку-не-владельцу:
       // права проверяются внутри, чтобы он мог выйти из чужой техники.
       tab: onTab,
+      portrait:     whenEditable(onPortrait),
       stationOpen:  onStationOpen,
       stationClear: onStationClear,
       stationsAdd:    whenEditable(onStationsAdd),

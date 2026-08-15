@@ -2,10 +2,10 @@ import { BODY_TYPES, ZONES, STAR_CLASSES, STAR_CONFIGS, SYSTEM_FEATURES, BODY_SI
          HABITABILITY, ALLEGIANCE, XENOS_SPECIES, RESOURCE_TYPES, RESOURCE_ICONS, INHABITANTS,
          WORLD_CLASSES, WORLD_ENVIRONMENTS, TITHE_GRADES,
          generateSystem, generateAnomaly, generateEncounter,
-         colonizeUpdate, ruinUpdate, genImprovements, IMP_CATEGORIES, improvementUpkeep, improvementOutput, improvementFlow } from "../constants/star-system.mjs";
+         colonizeUpdate, ruinUpdate, genImprovements, IMP_CATEGORIES, improvementOutput, improvementFlow } from "../constants/star-system.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu } from "./context-menu.mjs";
-import { whenEditable, onTab } from "./v2-helpers.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 
 // Видно ли улучшение зрителю: secret → после раскрытия, hidden → после разведки, иначе всегда.
 function impVisible(im, isGM, scouted, revealed) {
@@ -121,7 +121,17 @@ function worldNames() {
 // Как на листах Орды и техники (wdbc-ff4.10.1, wdbc-ff4.10.4): ApplicationV2
 // зовёт обработчик [data-action] с this = лист и элементом-источником вторым
 // аргументом. Обычные функции — чтобы карта действий сверялась с шаблоном тестом.
-// Общая обвязка (whenEditable, onTab) — в v2-helpers.mjs.
+// Общая обвязка (whenEditable, onTab, filePicker) — в v2-helpers.mjs.
+
+// Портрет: в V1 клик по data-edit="img" обрабатывал ActorSheet сам, у V2 такого
+// обработчика нет — нужен свой (wdbc-bg0).
+function onPortrait() {
+  const FP = filePicker();
+  return new FP({
+    type: "image", current: this.actor.img || "",
+    callback: path => this.actor.update({ img: path })
+  }).render(true);
+}
 
 // Свернуть/развернуть группу звезды и досье тела — чистая разметка, доступна
 // и наблюдателю: смотреть систему может тот, кто её не правит.
@@ -158,6 +168,7 @@ export class WarhammerStarSystemSheet
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       tab: onTab,
+      portrait: whenEditable(onPortrait),
       // Свернуть группу и раскрыть досье — только разметка, права не нужны.
       starToggle: onStarToggle,
       bodyToggle: onBodyToggle,

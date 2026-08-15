@@ -865,15 +865,10 @@ export class WarhammerItemSheet
     if (this.item.type === "implant" || this.item.type === "trait") {
       const sys = context.system;
       if (!sys.effects) sys.effects = {};
-      if (!Array.isArray(sys.effects.charBonuses))      sys.effects.charBonuses = [];
-      if (!Array.isArray(sys.effects.charValueBonuses)) sys.effects.charValueBonuses = [];
+      if (!Array.isArray(sys.effects.charBonuses)) sys.effects.charBonuses = [];
       context.charBonusOptions = Object.entries(CHARACTERISTICS)
         .map(([k, m]) => ({ key: k, abbr: m.abbr, label: m.label }));
       context.charBonusesActive = sys.effects.charBonuses.map(cb => ({
-        stat: cb.stat, value: cb.value ?? 0, abbr: CHARACTERISTICS[cb.stat]?.abbr ?? cb.stat
-      }));
-      // Бонусы к ЗНАЧЕНИЮ характеристики (обычный +X, не Unnatural)
-      context.charValueBonusesActive = sys.effects.charValueBonuses.map(cb => ({
         stat: cb.stat, value: cb.value ?? 0, abbr: CHARACTERISTICS[cb.stat]?.abbr ?? cb.stat
       }));
     }
@@ -1586,29 +1581,6 @@ export class WarhammerItemSheet
       const arr  = foundry.utils.deepClone(this.item.system.effects?.charBonuses || []);
       const c    = arr.find(x => x.stat === stat);
       if (c) { c.value = val; await this.item.update({ "system.effects.charBonuses": arr }); }
-    });
-
-    // ── Бонусы к ЗНАЧЕНИЮ характеристики (обычный +X, не Unnatural) ──────────────
-    on(".cvbonus-add", "change", async ev => {
-      const stat = ev.currentTarget.value;
-      if (!stat) return;
-      const arr = foundry.utils.deepClone(this.item.system.effects?.charValueBonuses || []);
-      if (!arr.some(c => c.stat === stat)) {
-        arr.push({ stat, value: 0 });
-        await this.item.update({ "system.effects.charValueBonuses": arr });
-      }
-    });
-    on(".cvbonus-remove", "click", async ev => {
-      const stat = ev.currentTarget.dataset.stat;
-      const arr  = (this.item.system.effects?.charValueBonuses || []).filter(c => c.stat !== stat);
-      await this.item.update({ "system.effects.charValueBonuses": arr });
-    });
-    on(".cvbonus-value", "change", async ev => {
-      const stat = ev.currentTarget.dataset.stat;
-      const val  = parseInt(ev.currentTarget.value) || 0;
-      const arr  = foundry.utils.deepClone(this.item.system.effects?.charValueBonuses || []);
-      const c    = arr.find(x => x.stat === stat);
-      if (c) { c.value = val; await this.item.update({ "system.effects.charValueBonuses": arr }); }
     });
 
     // ── Доп. типы психосилы / техночуда ────────────────────────────────────────

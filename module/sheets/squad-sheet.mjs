@@ -17,7 +17,6 @@ import { SQUAD_LEAD_TYPES, SQUAD_MEMBER_TYPES, SQUAD_TYPE_LABEL,
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
-import { findGroupEntry } from "../constants/skill-specializations.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 
 /** Экранирование пользовательского текста для вставки в HTML чата. */

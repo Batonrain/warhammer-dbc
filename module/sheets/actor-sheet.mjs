@@ -4,12 +4,12 @@ import { openItemPicker, talentCategory } from "./item-picker.mjs";
 import { openGearPicker } from "./gear-picker.mjs";
 // module/sheets/actor-sheet.mjs
 
-import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
+import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES } from "../constants/items.mjs";
 import { _degWord, splitTopLevel, esc } from "../helpers/utils.mjs";
 import { showCreationWizard, ruSpec } from "../apps/creation.mjs";
-import { buildSkillDisplay, buildGetData } from "./sheet-helpers.mjs";
+import { buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog, showAttackDialogNoWeapon } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
@@ -33,7 +33,6 @@ import { activatePossessionListeners } from "./tabs/possession.mjs";
 import { activateAdvanceListeners } from "./tabs/advance.mjs";
 import { activateItemContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
-import { _performDodge, _performParry }    from "../combat/defense.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
@@ -41,7 +40,7 @@ import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
-import { specOptions, matchSpec, specDef } from "../constants/skill-specializations.mjs";
+import { specOptions, specDef } from "../constants/skill-specializations.mjs";
 import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
 import { activateRaceListeners } from "../apps/races.mjs";
@@ -170,6 +169,18 @@ async function onStatAdd(event, target) {
   }
 }
 
+// ── Инициатива ──
+// Бросок идёт в трекер, поэтому вне боя он невозможен: без комбатанта результат
+// некуда положить. initiativeMod уже учтён формулой через @initiativeMod
+// (см. CONFIG.Combat.initiative).
+async function onInitiativeRoll() {
+  if (!this.actor.inCombat) {
+    ui.notifications.warn(`${this.actor.name} не участвует в бою — добавьте токен в трекер инициативы.`);
+    return;
+  }
+  await this.actor.rollInitiative({ createCombatants: false, rerollInitiative: true });
+}
+
 // ── Броски характеристики и навыка ──
 function onCharRoll(event, target) {
   const key = target.dataset.char;
@@ -251,6 +262,7 @@ export class WarhammerCharacterSheet
       geneToggle: whenEditable(onGeneToggle),
       pathsToggle: whenEditable(onPathsToggle),
       statAdd: whenEditable(onStatAdd),
+      initiativeRoll: whenEditable(onInitiativeRoll),
       charRoll: whenEditable(onCharRoll),
       skillRoll: whenEditable(onSkillRoll),
       itemAdd: whenEditable(onItemAdd),
@@ -724,17 +736,6 @@ export class WarhammerCharacterSheet
         this._rollCharacteristic(label, abbr, threshold, charKey)
     });
     activateDiseaseListeners(html, this.actor);
-
-    // ── Инициатива ────────────────────────────────────────────────────────
-    // Разметки под кнопку в шаблонах нет — обработчик мёртв (wdbc-aj1).
-    on(".initiative-roll-btn", "click", async () => {
-      // initiativeMod уже учтён формулой через @initiativeMod (см. CONFIG.Combat.initiative)
-      if (!this.actor.inCombat) {
-        ui.notifications.warn(`${this.actor.name} не участвует в бою — добавьте токен в трекер инициативы.`);
-        return;
-      }
-      await this.actor.rollInitiative({ createCombatants: false, rerollInitiative: true });
-    });
 
     // ── Вкладка РАЗВИТИЕ ──────────────────────────────────────────────────
     // Выбор специализации остаётся тут: пикер — часть листа, а не вкладки.

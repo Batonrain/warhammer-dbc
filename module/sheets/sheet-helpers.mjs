@@ -1,8 +1,8 @@
 // module/sheets/sheet-helpers.mjs
 
-import { CHARACTERISTICS, SKILL_RANKS, APTITUDES }   from "../constants/characteristics.mjs";
+import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
-import { WEAPON_CLASSES, DAMAGE_TYPES, ITEM_TYPES,
+import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
          ARMOR_MOD_GROUPS }                          from "../constants/items.mjs";
@@ -39,7 +39,7 @@ import { _buildAmmoModString }                       from "../helpers/utils.mjs"
 import { SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { condIconHTML, CONDITION_ICONS }            from "../constants/condition-icons.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
-         implantCatColor, classifyImplant }         from "../constants/body-map.mjs";
+         implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE }                   from "../constants/vitals.mjs";
 import { ritualsContext }                            from "./tabs/rituals.mjs";
 

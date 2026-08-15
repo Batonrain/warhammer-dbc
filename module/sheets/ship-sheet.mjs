@@ -1,11 +1,11 @@
-import { effectiveWeapon, shipQualityMods, qualityOptionsFor, QUALITY_LABELS } from "../constants/ship-quality.mjs";
+import { effectiveWeapon, shipQualityMods, QUALITY_LABELS } from "../constants/ship-quality.mjs";
 import { SHIP_CHARS, SHIP_TYPES, getCargoType, CARGO_QUALITY, SHIP_WEAPON_ARCS,
          buildCargoTypeOptions, CARGO_TYPES, CARGO_TRADE, CARGO_DAMAGE,
          CARGO_HOLD_BONUS, cargoRarity } from "../constants/ship.mjs";
 import { SHIP_PROPERTIES } from "../constants/ship-properties.mjs";
 import { SHIP_DEFILEMENT_THRESHOLDS, findDistortion, findSubmutation } from "../constants/ship-corruption.mjs";
 import { getShipCrit, SHIP_MANEUVERS, SHIP_LONG_ACTIONS,
-         TORPEDO_WARHEADS, getTorpedoWarhead, TORPEDO_NAV_SYSTEMS, NODE_STATES,
+         TORPEDO_NAV_SYSTEMS, NODE_STATES,
          torpedoProfile } from "../constants/ship-combat.mjs";
 import { CREW_POP_TABLE, CREW_MORALE_TABLE, CREW_RATING_TABLE, crewActiveRows, OFFICER_POSTS,
          crewActionsPerSR, moralePerInfluence, SHORE_LEAVE, CREW_RECRUIT,
@@ -14,7 +14,7 @@ import { SHIP_RELATIONS } from "../constants/ship-tokens.mjs";
 import { CRAFT_KINDS } from "../constants/small-craft.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
-import { whenEditable, onTab } from "./v2-helpers.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 
 const CRAFT_STATE = { stored: "На борту", prepared: "Подготовлена", launched: "В вылете", returning: "Возврат (топливо!)", rearming: "Перевооружение" };
 const CRAFT_STRENGTH = { full: "Полная", half: "Полусильная", destroyed: "Уничтожена" };
@@ -59,10 +59,20 @@ function propLabel(p) {
 // ── Действия листа ───────────────────────────────────────────────────────────
 // ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
 // источником вторым аргументом. Обычные функции — чтобы карта действий
-// сверялась с шаблоном тестом. Общая обвязка (whenEditable, onTab) — в
-// v2-helpers.mjs.
+// сверялась с шаблоном тестом. Общая обвязка (whenEditable, onTab, filePicker)
+// — в v2-helpers.mjs.
 
 const itemIdOf = target => target.closest("[data-item-id]")?.dataset.itemId;
+
+// Портрет: в V1 клик по data-edit="img" обрабатывал ActorSheet сам, у V2 такого
+// обработчика нет — нужен свой (wdbc-bg0).
+function onPortrait() {
+  const FP = filePicker();
+  return new FP({
+    type: "image", current: this.actor.img || "",
+    callback: path => this.actor.update({ img: path })
+  }).render(true);
+}
 const officerIdOf = target => target.closest("[data-officer-id]")?.dataset.officerId;
 
 // ── Доступно и тому, кто кораблём не владеет ──
@@ -310,6 +320,7 @@ export class WarhammerShipSheet
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       tab: onTab,
+      portrait: whenEditable(onPortrait),
       // Открыть лист офицера и освободить своё место доступны и игроку-не-
       // владельцу: права проверяются внутри, иначе он не вышел бы с поста
       // на чужом корабле.
