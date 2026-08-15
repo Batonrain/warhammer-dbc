@@ -9,6 +9,7 @@ import { resolveCharFormula, _degWord } from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
          buildPropertyChatBlock, buildTargetEffectButtons } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
+import { meleeStrengthBonus } from "../combat/attack-outcome.mjs";
 import { attachItemPicker } from "./item-picker.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
@@ -252,7 +253,9 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
     // Урон: база + S.b (рукопашная) + кубы Магнитуды (только при попадании).
     const pen = (sys.penetration || 0) + (modFx.penMod || 0);
     const sb  = chars.s?.bonus ?? 0;
-    let sbEff = sb; if (wp.mightySB) sbEff = sb * 2; if (wp.containedSB) sbEff = 0;
+    // Могучее ×2, Сдержанное 0 — общее правило с обычной атакой. Хватов у Орды
+    // нет, поэтому sbHalf не передаётся.
+    const sbEff = meleeStrengthBonus({ sb, wp });
     const flat = (isMelee ? sbEff : 0) + (modFx.damageMod || 0);
     const rawDmg = String(sys.damage || "").replace(/\s+[REIXРЕИ](?:\([^)]*\))?\s*$/i, "").trim();
     const baseDmg = rawDmg || (isMelee ? "0" : "1d10");

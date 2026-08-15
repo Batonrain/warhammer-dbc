@@ -8,6 +8,8 @@
 //   группа: "fl" (Запретные знания) | "sl" (Учёные знания) | "flat:<ключ>"
 //   харктест: i=Int, w=WP, a=Ag, p=Per, f=Fel, inf=Inf
 
+import { specMatches } from "./rituals.mjs";
+
 export const RITUAL_PRESETS = [
   // ─────────────── ПРИЗЫВ ───────────────
   { n: "Призыв Низшего Демона", cat: "Призыв", type: "summon", rec: 0, a: [0, 4], pf: 5,
@@ -222,20 +224,7 @@ export const RITUAL_PRESETS = [
   { n: "Ритуал Оруженосца", cat: "Элитные архетипы", type: "blessing", rec: 4, a: [0, 0], pf: 5, sk: [["fl", "Heresy", "w", 0]] }
 ];
 
-// Синонимы специализаций (англ. пресета → возможные написания у актёра).
-const SPEC_SYN = {
-  daemons: ["daemon", "демон"], heresy: ["heres", "ерес"], warp: ["warp", "варп"],
-  psykers: ["psyker", "псайк"], occult: ["occult", "оккульт"],
-  "imperial creed": ["creed", "имперск", "крид", "вер"]
-};
 const CH = { i: "int", w: "wp", a: "ag", p: "per", f: "fel", inf: "inf" };
-
-function specMatches(label, spec) {
-  const l = (label || "").toLowerCase();
-  const s = (spec || "").toLowerCase();
-  if (l.includes(s)) return true;
-  return (SPEC_SYN[s] || []).some(syn => l.includes(syn));
-}
 
 // Пресеты, сгруппированные по категориям (для optgroup).
 export function ritualPresetGroups() {

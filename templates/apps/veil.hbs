@@ -161,6 +161,23 @@
               {{#each actors as |a|}}<option value="{{a.id}}" {{#if (eq a.id @root.ritual.ritualistId)}}selected{{/if}}>{{a.name}}</option>{{/each}}
             </select>
           </div>
+          {{!-- Ритуалы, лежащие на Ритуалисте: путь проведения берётся из самого
+                предмета, а его Требования гейтят проведение. --}}
+          {{#if hasRitualItems}}
+          <div class="wv-rit-row">
+            <label class="wv-rit-lbl" title="Ритуалы на листе Ритуалиста: подставят навык, характеристику и сложность">Его ритуал</label>
+            <select name="ritItem" class="wv-rit-wide">
+              <option value="">— вести вручную —</option>
+              {{#each ritualItems as |r|}}<option value="{{r.id}}" {{#if r.selected}}selected{{/if}}>{{r.name}}</option>{{/each}}
+            </select>
+          </div>
+          {{/if}}
+          {{#unless reqOk}}
+          <div class="wv-rit-unmet">
+            <b>Требования не выполнены:</b>
+            {{#each reqFailed}}<div>{{this}}</div>{{/each}}
+          </div>
+          {{/unless}}
           <div class="wv-rit-row">
             <label class="wv-rit-lbl">Название</label>
             <input type="text" name="ritName" class="wv-rit-wide" value="{{name}}" placeholder="напр. Призыв Низшего Демона"/>

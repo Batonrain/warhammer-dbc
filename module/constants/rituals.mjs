@@ -166,6 +166,55 @@ export function buildRitualSkills(actor) {
 }
 export function ritualSkillOption(available, value) { return available.find(o => o.value === value) || null; }
 
+// Синонимы специализаций (написание книги → написания у актёра). В данных
+// специализация лежит то английской меткой пресета/предмета, то русской у
+// актора, и сравнение строк напрямую не сходится.
+const SPEC_SYN = {
+  daemons: ["daemon", "демон"], heresy: ["heres", "ерес"], warp: ["warp", "варп"],
+  psykers: ["psyker", "псайк"], occult: ["occult", "оккульт"],
+  "imperial creed": ["creed", "имперск", "крид", "вер"]
+};
+
+/** Похожа ли строка навыка актора на специализацию из книги. */
+export function specMatches(label, spec) {
+  const l = (label || "").toLowerCase();
+  const s = (spec || "").toLowerCase();
+  if (l.includes(s)) return true;
+  return (SPEC_SYN[s] || []).some(syn => l.includes(syn));
+}
+
+/**
+ * Путь проведения предмета-ритуала → поля формы консоли. Тот же приём, что у
+ * applyRitualPreset: список навыков подаётся снаружи, поэтому функция чистая.
+ *
+ * Движковый тип (Цена Ошибки при провале) НЕ подставляется: предмет хранит
+ * контентный раздел книги, а у пресетов одного раздела встречаются и
+ * blessing, и summon, и binding. Угадывать за ГМа нельзя.
+ */
+export function applyRitualItem(actor, item, buildSkills) {
+  const s = item?.system || {};
+  const skills = buildSkills(actor);
+
+  let skillValue = "";
+  if (s.testSkillScope === "group" && s.testSkillKey) {
+    const pref = `group:${s.testSkillKey}:`;
+    const match = skills.find(o => o.value.startsWith(pref) && specMatches(o.label, s.testSpecialty));
+    // Нужной специализации у актора может не быть — тогда любая из той же
+    // группы ближе к правде, чем первый навык списка.
+    skillValue = (match || skills.find(o => o.value.startsWith(pref)))?.value || "";
+  } else if (s.testSkillKey) {
+    skillValue = skills.find(o => o.value === `skill:${s.testSkillKey}`)?.value || "";
+  }
+
+  return {
+    itemId: item?.id || "",
+    name: item?.name || "",
+    skillValue,
+    testChar: s.testChar || "int",
+    gmMod: Number(s.testMod) || 0
+  };
+}
+
 // Степени успеха d100 vs target.
 export function ritualDegrees(roll, target) {
   if (roll <= target) return 1 + Math.floor((target - roll) / 10);

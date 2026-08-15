@@ -60,10 +60,18 @@ Object.assign(EFFECT_KEY_LABELS, {
 /** Все пути, куда разрешено целиться эффектам (используется тестами/миграцией). */
 export const EFFECT_KEY_WHITELIST = Object.freeze(Object.keys(EFFECT_KEY_LABELS));
 
-/** type change (Foundry ActiveEffect) → короткая русская подпись для сводки. */
+/**
+ * type change (Foundry ActiveEffect) → короткая русская подпись для сводки.
+ *
+ * Первые шесть — штатные типы ядра. Деление своё: у Foundry его нет, и
+ * divideUp/divideDown применяет хук "applyActiveEffect" в warhammer-dbc.mjs.
+ * Без подписи сводка на листе предмета печатала бы «divideUp2» — единственное
+ * место, где эти два типа выглядели чужими.
+ */
 export const EFFECT_TYPE_LABELS = {
   add: "+", subtract: "−", multiply: "×", override: "=",
-  upgrade: "↑ (не меньше)", downgrade: "↓ (не больше)"
+  upgrade: "↑ (не меньше)", downgrade: "↓ (не больше)",
+  divideUp: "÷↑ (вверх)", divideDown: "÷↓ (вниз)"
 };
 
 // Ключи, которые обязаны применяться ДО расчёта листа: это ХРАНИМЫЕ поля, из

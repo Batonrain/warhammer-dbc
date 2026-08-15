@@ -1,0 +1,157 @@
+// test/combat/attack-card.test.mjs
+//
+// Фаза 7 конвейера: сборка карточки чата. Модуль ничего не считает и не знает
+// про Foundry — на вход приходят уже посчитанные числа, на выход идёт HTML.
+// Поэтому проверяется он напрямую, без заглушки и без броска кубов.
+//
+// Числа карточки как таковые проверяет test/combat/attack-parity.test.mjs
+// (сквозной прогон настоящей атаки); здесь — что из этих чисел собирается.
+
+import { describe, it, expect } from "vitest";
+import { attackCard, jamCard } from "../../module/combat/attack-card.mjs";
+
+/** Минимальная карточка: попадание болтера в торс. */
+const base = {
+  actorName: "Стрелок", weaponName: "Болтер", wp: {},
+  threshold: 45, rv: 23, modeLine: "Одиночный", hit: true, deg: 3,
+  hitsCount: 1, hits: [{ total: 11, loc: "Торс" }],
+  hitLocLabel: "Торс", locRoll: 32, dtLabel: "Взрывной", pen: 4
+};
+
+const card = extra => attackCard({ ...base, ...extra });
+
+describe("карточка атаки", () => {
+  it("шапка, порог, бросок и исход", () => {
+    const html = card();
+    expect(html).toContain("Болтер");
+    expect(html).toContain("<b>45</b>");
+    expect(html).toContain("<b>23</b>");
+    expect(html).toContain("Попадание — 3 степени");
+    expect(html).toContain("Место попадания: <b>Торс</b> (32)");
+  });
+
+  it("промах не печатает ни места попадания, ни защиты, ни урона", () => {
+    const html = card({ hit: false, deg: 2, hits: [], hitsCount: 0 });
+    expect(html).toContain("Промах — 2 степени");
+    expect(html).not.toContain("Место попадания");
+    expect(html).not.toContain("Защита цели");
+    expect(html).not.toContain("Применить урон");
+  });
+
+  it("строка попадания печатает добавочные кубы, выгорание и штраф мульти-удара", () => {
+    const html = card({
+      hitsCount: 2,
+      hits: [
+        { total: 15, loc: "Торс", bonusNote: 4 },
+        { total: 9, loc: "Голова", deflagrateNote: 6, msPenalty: 3 }
+      ]
+    });
+    expect(html).toContain("(2 попадания)");
+    expect(html).toContain("+4 доп.");
+    expect(html).toContain("+6 выгор.");
+    expect(html).toContain("−3 мульти-удар");
+  });
+
+  it("Экстремальный урон печатает d5 и эффект таблицы", () => {
+    const html = card({
+      hits: [{ total: 20, loc: "Голова", hasExtreme: true, extremeLevel: 3, critEffect: "Оглушён" }]
+    });
+    expect(html).toContain("Экстремальный урон");
+    expect(html).toContain("d5: 3");
+    expect(html).toContain("Оглушён");
+  });
+
+  it("бонус Силы подписывается только в рукопашной и помечает Могучее и хват", () => {
+    expect(card({ isMelee: true, sbEff: 8, wp: { mightySB: true } }))
+      .toContain("S.b +8 (Могучее ×2)");
+    expect(card({ isMelee: true, sbEff: 2, sbHalf: true })).toContain("S.b +2 (½ хват)");
+    expect(card({ isMelee: false, sbEff: 4 })).not.toContain("S.b");
+  });
+
+  it("кнопка урона несёт число, место и свойства оружия", () => {
+    const html = card({ pen: 6, dtLabel: "Взрывной", damageType: "explosive",
+      wp: { fellingRating: 2, primitive: true } });
+    expect(html).toContain('data-damage="11"');
+    expect(html).toContain('data-penetration="6"');
+    expect(html).toContain('data-damage-type="explosive"');
+    expect(html).toContain('data-hit-location="Торс"');
+    expect(html).toContain('data-felling="2"');
+    expect(html).toContain('data-primitive="1"');
+    expect(html).toContain("Применить урон 1: <b>11</b> → Торс");
+  });
+
+  it("Гибкое оружие запрещает Парирование, но не Уклонение", () => {
+    const html = card({ wp: { flexible: true } });
+    expect(html).toContain("Парирование (невозможно — Гибкое)");
+    expect(html).toContain('class="wh-dodge-btn"');
+  });
+
+  it("приём с запретом Уклонения гасит кнопку", () => {
+    const html = card({ defense: { dodgeMod: -999, parryMod: -10, note: "Обманный манёвр" } });
+    expect(html).toContain("Уклонение (невозможно)");
+    expect(html).toContain("Парирование (-10)");
+    expect(html).toContain("Обманный манёвр");
+  });
+
+  it("по технике предлагается Вираж", () => {
+    expect(card({ defense: { targetIsVehicle: true } })).toContain("Вираж");
+    expect(card()).not.toContain("Вираж");
+  });
+
+  it("сдвиг места попадания даёт кнопки ±A.b и гасит текущую", () => {
+    const html = card({ locShift: { max: 2, current: -1 } });
+    expect(html).toContain("Сдвинуть место попадания (±2, A.b) — только Стрелок");
+    expect(html).toContain('data-shift="-2"');
+    expect(html).toContain('data-shift="-1" disabled');
+    expect(html).toContain('data-shift="2"');
+  });
+
+  it("блок боеприпасов печатается только для стрелкового", () => {
+    const html = card({ ammo: { name: "Кракен", mods: "Пробитие +3", magCur: 23, magMax: 24, spent: 1 } });
+    expect(html).toContain("Кракен");
+    expect(html).toContain("<b>23/24</b>");
+    expect(html).toContain("(израсходовано: 1)");
+    expect(card({ isMelee: true })).not.toContain("Магазин");
+  });
+
+  it("Подавление печатает число попаданий и штраф теста", () => {
+    expect(card({ suppression: { pen: "−20", hits: 2, cap: 4 } }))
+      .toContain("ГМ распределяет <b>2</b> попадания в торс");
+  });
+
+  it("Порча печатает только доступные при текущей Cor эффекты", () => {
+    const html = card({ corVal: 30, corEffects: [
+      { cor: 10, text: "Пьёт кровь" }, { cor: 60, text: "Говорит" }
+    ] });
+    expect(html).toContain("Порча 10+: Пьёт кровь");
+    expect(html).not.toContain("Говорит");
+  });
+
+  it("готовые блоки вставляются как есть", () => {
+    const html = card({ blocks: {
+      props: "<div>СВОЙСТВА</div>", quality: "<div>КАЧЕСТВО</div>",
+      splinter: "<div>ОСКОЛОК</div>", targetEffects: "<div>ЭФФЕКТЫ</div>",
+      dice: "<div>КУБЫ</div>"
+    } });
+    for (const block of ["СВОЙСТВА", "КАЧЕСТВО", "ОСКОЛОК", "ЭФФЕКТЫ", "КУБЫ"]) {
+      expect(html).toContain(block);
+    }
+    expect(html).toContain("Показать кубы");          // обёртка «коробочек» — на карточке
+    expect(card()).not.toContain("Показать кубы");    // кубов нет — нет и пустой обёртки
+  });
+
+  it("Выжигание Души предлагается только с id атакующего", () => {
+    expect(card({ soulBurnActorId: "actor-1" })).toContain('data-attacker-id="actor-1"');
+    expect(card()).not.toContain("wh-soulburn-btn");
+  });
+});
+
+describe("карточка заклинившего оружия", () => {
+  it("печатает бросок и требование устранить Клин", () => {
+    const html = jamCard({ weaponName: "Лазган", rv: 96, blocks: { props: "<div>СВОЙСТВА</div>" } });
+    expect(html).toContain("Лазган");
+    expect(html).toContain("<b>96</b>");
+    expect(html).toContain("Оружие заклинило!");
+    expect(html).toContain("СВОЙСТВА");
+  });
+});

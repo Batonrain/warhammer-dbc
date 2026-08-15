@@ -11,10 +11,10 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { ritualsContext } from "../../module/sheets/tabs/rituals.mjs";
+import { ritualsContext, ritualTestContext } from "../../module/sheets/tabs/rituals.mjs";
 
-/** Актор с произвольным набором предметов. */
-const actorWith = (...items) => ({ items });
+/** Актор с произвольным набором предметов. Раса нужна проверке требований. */
+const actorWith = (...items) => ({ items, system: { race: "human" } });
 
 /** Ритуал. flags — то, что вернёт getFlag: наборы групп-требований. */
 const ritual = (id, name, system = {}, flags = {}) => ({
@@ -133,6 +133,85 @@ describe("раздел Ритуалов", () => {
     ));
 
     expect(ctx[0].hasAnyText).toBe(true);
+  });
+
+  // Требования не только ПОКАЗЫВАЛИСЬ, но и ничего не гейтили: ритуал ложился
+  // на актора, не проходящего ни одного условия, молча (wdbc-j13). Теперь строка
+  // отмечает выполнение и называет невыполненное — тем же checkRequirements,
+  // которым гейтит консоль Завесы, чтобы отметка и запрет не разъехались.
+  describe("отметка выполнения требований", () => {
+    it("требований нет — ритуал доступен", () => {
+      const ctx = ritualsContext(actorWith(ritual("r1", "Без условий", {})));
+
+      expect(ctx[0].meetsReq).toBe(true);
+      expect(ctx[0].reqFailed).toEqual([]);
+    });
+
+    it("условие выполнено — отметка стоит", () => {
+      const ctx = ritualsContext(actorWith(
+        ritual("r1", "Для людей", {}, { req: [raceGroup("AND", "human")] })));
+
+      expect(ctx[0].meetsReq).toBe(true);
+    });
+
+    it("условие не выполнено — отметки нет и названо, чего не хватает", () => {
+      const ctx = ritualsContext(actorWith(
+        ritual("r1", "Для друкхари", {}, { req: [raceGroup("AND", "drukhari")] })));
+
+      expect(ctx[0].meetsReq).toBe(false);
+      expect(ctx[0].reqFailed).toEqual(["Раса: Друкхари"]);
+    });
+
+    it("ИЛИ-группа: хватает одной подходящей альтернативы", () => {
+      const ctx = ritualsContext(actorWith(
+        ritual("r1", "Или то, или это", {}, { req: [raceGroup("OR", "drukhari", "human")] })));
+
+      expect(ctx[0].meetsReq).toBe(true);
+    });
+
+    // Требования к ассистентам проверяются по КАЖДОМУ помощнику отдельно, а
+    // помощников на листе ритуалиста нет. Отметка строки — только про него.
+    it("требования к ассистентам на отметку не влияют", () => {
+      const ctx = ritualsContext(actorWith(
+        ritual("r1", "С помощниками", {}, { assistReq: [raceGroup("AND", "drukhari")] })));
+
+      expect(ctx[0].meetsReq).toBe(true);
+    });
+  });
+
+  // Путь проведения лежал в схеме с настоящими данными пресетов, но лист его
+  // не рисовал: игрок не видел, каким Навыком кидается ритуал и что у него
+  // −20, а Мастер не мог исправить ошибку (wdbc-lla). Список навыков зависит
+  // от вида: обычный и групповой — разные наборы, и один список на оба дал бы
+  // ключ, которого у актора не бывает.
+  describe("поля теста на листе предмета", () => {
+    it("вид «групповой» даёт групповые навыки и отмечает выбранный", () => {
+      const ctx = ritualTestContext(ritual("r1", "Зов", {
+        testSkillScope: "group", testSkillKey: "forbiddenLore", testChar: "wp"
+      }));
+
+      expect(ctx.isGroupSkill).toBe(true);
+      expect(ctx.skills.find(s => s.key === "forbiddenLore")?.selected).toBe(true);
+      expect(ctx.skills.some(s => s.key === "awareness")).toBe(false);
+    });
+
+    it("вид «обычный» даёт обычные навыки", () => {
+      const ctx = ritualTestContext(ritual("r1", "Круг", {
+        testSkillScope: "plain", testSkillKey: "awareness"
+      }));
+
+      expect(ctx.isGroupSkill).toBe(false);
+      expect(ctx.skills.find(s => s.key === "awareness")?.selected).toBe(true);
+      expect(ctx.skills.some(s => s.key === "forbiddenLore")).toBe(false);
+    });
+
+    it("характеристика теста отмечается, по умолчанию Интеллект", () => {
+      const chosen = ritualTestContext(ritual("r1", "Зов", { testChar: "wp" }));
+      expect(chosen.chars.find(c => c.key === "wp")?.selected).toBe(true);
+
+      const empty = ritualTestContext(ritual("r1", "Зов", {}));
+      expect(empty.chars.find(c => c.key === "int")?.selected).toBe(true);
+    });
   });
 
   it("общее Описание предмета тоже показывается и считается содержимым", () => {

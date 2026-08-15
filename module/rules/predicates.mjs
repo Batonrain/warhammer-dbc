@@ -17,8 +17,13 @@ const norm = s => String(s ?? "").trim().toLowerCase();
  * Имена Талантов и Черт в системе двуязычные: «Gene-Seed / Геносемя».
  * Сравниваем по любой половине; специализация в скобках на конце
  * («Resistance (Cold)») при сравнении отбрасывается.
+ *
+ * Тем же сравнением область `power:<имя>` находит психосилу
+ * (rules/resolve-test.mjs): имена сил двуязычны ровно так же, и правило «у
+ * астартес Порицание бьёт иначе» не должно зависеть от того, какой половиной
+ * имени его записали.
  */
-function itemHasName(item, wanted) {
+export function itemHasName(item, wanted) {
   const w = norm(wanted);
   if (!w) return false;
   return norm(item?.name).split("/").some(part => {

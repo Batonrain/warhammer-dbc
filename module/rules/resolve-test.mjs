@@ -17,6 +17,7 @@
 import { gatherRules, selectRules } from "./collect.mjs";
 import { isKnownEffectKind } from "./effects.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
+import { itemHasName } from "./predicates.mjs";
 
 /**
  * Социальный ли навык. Своего перечня здесь нет намеренно: признак уже лежит
@@ -72,6 +73,19 @@ function attackScopeApplies(scope, ctx) {
 }
 
 /**
+ * Область манифестации: `power` — любая психосила, `power:<имя>` — конкретная.
+ *
+ * Имя сравнивается тем же способом, что имена Талантов и Черт в условиях
+ * (`hasTalent`): по любой половине двуязычного имени, со снятой специализацией
+ * в скобках. Иначе «Smite / Порицание» и «Порицание» были бы разными силами.
+ */
+function powerScopeApplies(scope, ctx) {
+  if (scope === "power") return true;
+  if (!scope.startsWith("power:")) return false;
+  return itemHasName(ctx.power, scope.slice("power:".length));
+}
+
+/**
  * Область действия эффекта: `target` записывается с двоеточием
  * (`skill:medicae`, `char:wp`, `weapon:melee`, `initiative`), `all` или пустой —
  * «в любом тесте».
@@ -84,8 +98,9 @@ function attackScopeApplies(scope, ctx) {
  * `char:ws`: «+10 к тестам Оружейного Мастерства» и «+10 ко всем ударам» — два
  * разных правила книги, и различает их область.
  *
- * Область психосил (`power:`) не совпадает ни с чем: психосилы на конвейер ещё
- * не переведены.
+ * Манифестация — третья такая ветка: психотест идёт по Воле, а у Прорицания по
+ * Псинауке, но «+10 к тестам Воли» и «+10 к манифестациям» — снова два разных
+ * правила книги.
  */
 function effectAppliesTo(target, ctx) {
   const scope = String(target ?? "all").trim().toLowerCase();
@@ -93,6 +108,7 @@ function effectAppliesTo(target, ctx) {
   if (scope === "initiative") return ctx.kind === "initiative";
   if (scope === "social") return isSocialSkill(ctx.skill);
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
+  if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
   if (ctx.char)  return scope === `char:${String(ctx.char).toLowerCase()}`;
   return false;

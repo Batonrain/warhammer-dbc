@@ -74,9 +74,12 @@
     </tr> </thead> <tbody>
       {{#if rituals.length}}
         {{#each rituals as |r|}}
-        <tr class="item-row" data-item-id="{{r.id}}">
+        <tr class="item-row{{#unless r.meetsReq}} ritual-row-unmet{{/unless}}" data-item-id="{{r.id}}">
           <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{r.id}}" title="Показать/скрыть описание">▸</button></td>
-          <td class="item-name-cell ritual-name-link" data-item-id="{{r.id}}">{{r.name}}</td>
+          <td class="item-name-cell ritual-name-link" data-item-id="{{r.id}}">
+            {{#if r.meetsReq}}<span class="ritual-req-ok" title="Требования выполнены">✓</span>
+            {{else}}<span class="ritual-req-fail" title="Требования не выполнены">✗</span>{{/if}}
+            {{r.name}}</td>
           <td>{{r.typeLabel}}</td>
           <td>{{r.record}}</td>
           <td>{{r.assistLabel}}</td>
@@ -87,6 +90,7 @@
             {{!-- Каждая группа — своя строка: у ИЛИ-группы текст уже начинается
                   с «одно из: …», склеивать группы между собой нельзя. --}}
             {{#if r.reqLines.length}}<div><b>Требования:</b> {{#each r.reqLines}}<span>{{this}}</span>{{#unless @last}}, {{/unless}}{{/each}}</div>{{/if}}
+            {{#if r.reqFailed.length}}<div class="ritual-req-fail"><b>Не выполнено:</b> {{#each r.reqFailed}}<span>{{this}}</span>{{#unless @last}}, {{/unless}}{{/each}}</div>{{/if}}
             {{#if r.assistReqLines.length}}<div><b>Требования к ассистентам:</b> {{#each r.assistReqLines}}<span>{{this}}</span>{{#unless @last}}, {{/unless}}{{/each}}</div>{{/if}}
             {{#if r.description}}<div>{{r.description}}</div>{{/if}}
             {{#if r.procedure}}<div><b>Ритуал:</b> {{r.procedure}}</div>{{/if}}

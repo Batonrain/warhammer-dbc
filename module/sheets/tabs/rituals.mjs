@@ -10,9 +10,11 @@
 //  Foundry.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { RITUAL_ITEM_TYPES_MAP } from "../../constants/rituals.mjs";
+import { RITUAL_ITEM_TYPES_MAP, TEST_CHARS } from "../../constants/rituals.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 import { openCompendiumBrowser } from "../../apps/compendium-browser.mjs";
-import { getItemRequirements, isReqComplete, describeReqEntry } from "../../apps/mechanics.mjs";
+import { getItemRequirements, isReqComplete, describeReqEntry,
+         checkRequirements } from "../../apps/mechanics.mjs";
 
 /**
  * Требования набора — по строке на группу. Оператор группы обязан дожить до
@@ -37,9 +39,17 @@ export function ritualsContext(actor) {
     // листа они показываются разобранным текстом, а не полем system.
     const reqLines = reqLinesOf(i, "req");
     const assistReqLines = reqLinesOf(i, "assistReq");
+    // Проходит ли САМ носитель требования ритуалиста. Требования к ассистентам
+    // сюда не входят: их проверяют по каждому помощнику отдельно, а помощников
+    // на листе ритуалиста нет. Отметка считается тем же checkRequirements,
+    // которым гейтит проведение в консоли Завесы, — иначе строка и запрет
+    // разъехались бы.
+    const req = checkRequirements(actor, getItemRequirements(i, "req"));
     return {
       reqLines,
       assistReqLines,
+      meetsReq:  req.ok,
+      reqFailed: req.failed,
       id: i.id,
       name: i.name,
       typeLabel: RITUAL_ITEM_TYPES_MAP[s.ritualType]?.label || s.ritualType || "—",
@@ -62,6 +72,24 @@ export function ritualsContext(actor) {
         || reqLines.length || assistReqLines.length)
     };
   });
+}
+
+/**
+ * Поля пути проведения для листа предмета-ритуала: каким Навыком и от какой
+ * характеристики он кидается. Набор навыков зависит от вида — обычные и
+ * групповые не смешиваются, иначе в `testSkillKey` попал бы ключ, которого у
+ * актора не бывает, и подстановка в консоли Завесы молча промахнулась бы.
+ */
+export function ritualTestContext(item) {
+  const s = item?.system || {};
+  const isGroupSkill = s.testSkillScope === "group";
+  const defs = isGroupSkill ? GROUP_SKILLS_DEF : SKILLS_DEF;
+  return {
+    isGroupSkill,
+    skills: Object.entries(defs)
+      .map(([key, def]) => ({ key, label: def.label, selected: key === s.testSkillKey })),
+    chars: TEST_CHARS.map(c => ({ ...c, selected: c.key === (s.testChar || "int") }))
+  };
 }
 
 export function activateRitualListeners(html, actor) {
