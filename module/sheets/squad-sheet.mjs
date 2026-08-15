@@ -18,23 +18,17 @@ import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { findGroupEntry } from "../constants/skill-specializations.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 
 /** Экранирование пользовательского текста для вставки в HTML чата. */
 /** Степени успеха/провала по правилу системы: |порог − бросок| / 10 + 1. */
 const degrees = (threshold, roll) => Math.floor(Math.abs(threshold - roll) / 10) + 1;
 
-// В v13 FilePicker переехал в namespace, глобальный помечен устаревшим.
-const filePicker = () => foundry.applications?.apps?.FilePicker?.implementation || globalThis.FilePicker;
-
 // ── Действия листа ───────────────────────────────────────────────────────────
 // Как на листах Орды, техники и звёздной системы: ApplicationV2 зовёт обработчик
 // [data-action] с this = лист и элементом-источником вторым аргументом. Обычные
-// функции — чтобы карта действий сверялась с шаблоном тестом.
-
-/** Правящие действия — только для того, кто может править лист. */
-const whenEditable = fn => function (event, target) {
-  if (this.isEditable) return fn.call(this, event, target);
-};
+// функции — чтобы карта действий сверялась с шаблоном тестом. Общая обвязка
+// (whenEditable, onTab, filePicker) — в v2-helpers.mjs.
 
 const memberIdOf = target => target.closest("[data-member-id]")?.dataset.memberId;
 
@@ -124,7 +118,7 @@ export class WarhammerSquadSheet
     window: { resizable: true },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
-      tab: function (event, target) { this.changeTab(target.dataset.tab, target.dataset.group); },
+      tab: onTab,
       // Без whenEditable: игрок-не-владелец должен уметь открыть лист товарища,
       // снять с поста и вывести из отряда СВОЕГО персонажа.
       open:         onOpen,

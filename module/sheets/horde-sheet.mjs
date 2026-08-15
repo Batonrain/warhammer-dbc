@@ -11,6 +11,7 @@ import { resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { meleeStrengthBonus } from "../combat/attack-outcome.mjs";
 import { attachItemPicker } from "./item-picker.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
@@ -31,19 +32,13 @@ const HORDE_RANGED_MODS = [
   { label: "Экстрем. дистанция (−30)", value: -30 }
 ];
 
-// В v13 FilePicker переехал в namespace, глобальный помечен устаревшим.
-const filePicker = () => foundry.applications?.apps?.FilePicker?.implementation || globalThis.FilePicker;
-
 // ── Действия листа ───────────────────────────────────────────────────────────
 // ApplicationV2 зовёт обработчик [data-action] с this = лист и вторым аргументом
 // — элементом, на котором действие объявлено. Обычные функции, а не приватные
 // методы: так их видно из DEFAULT_OPTIONS.actions, и тест сверяет карту действий
-// с шаблоном.
-
-/** У V1 весь блок activateListeners стоял под if (!this.isEditable) return. */
-const whenEditable = fn => function (event, target) {
-  if (this.isEditable) return fn.call(this, event, target);
-};
+// с шаблоном. Общая обвязка (whenEditable, onTab, filePicker) — в v2-helpers.mjs;
+// whenEditable здесь стоит почти везде: у V1 весь блок activateListeners был под
+// if (!this.isEditable) return.
 
 /** Кнопка → сколько снять/добавить Магнитуды и психологического урона. */
 const MAG_STEPS = {
@@ -52,10 +47,6 @@ const MAG_STEPS = {
   psych:     step => [-step, step],
   psychheal: step => [ step, -step]
 };
-
-function onTab(event, target) {
-  this.changeTab(target.dataset.tab, target.dataset.group);
-}
 
 function onEditImage() {
   return new (filePicker())({

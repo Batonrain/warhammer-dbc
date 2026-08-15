@@ -9,6 +9,7 @@ import { showRamDialog, showTerrainDialog, showRepairDialog } from "../combat/ve
 import { VEHICLE_WEAPONS } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
+import { whenEditable, onTab } from "./v2-helpers.mjs";
 
 const ROLE_ORDER = ["commander", "driver", "gunner", "loader", "pilot", "passenger"];
 
@@ -16,11 +17,7 @@ const ROLE_ORDER = ["commander", "driver", "gunner", "loader", "pilot", "passeng
 // Тот же приём, что на листе Орды (wdbc-ff4.10.1): ApplicationV2 зовёт
 // обработчик [data-action] с this = лист и элементом-источником вторым
 // аргументом. Обычные функции — чтобы карта действий сверялась с шаблоном тестом.
-
-/** Правящие действия — только для того, кто может править лист. */
-const whenEditable = fn => function (event, target) {
-  if (this.isEditable) return fn.call(this, event, target);
-};
+// Общая обвязка (whenEditable, onTab) — в v2-helpers.mjs.
 
 const itemIdOf = target => target.closest("[data-item-id]")?.dataset.itemId;
 
@@ -116,7 +113,7 @@ export class WarhammerVehicleSheet
     actions: {
       // Открыть лист сидящего и освободить место доступны и игроку-не-владельцу:
       // права проверяются внутри, чтобы он мог выйти из чужой техники.
-      tab: function (event, target) { this.changeTab(target.dataset.tab, target.dataset.group); },
+      tab: onTab,
       stationOpen:  onStationOpen,
       stationClear: onStationClear,
       stationsAdd:    whenEditable(onStationsAdd),

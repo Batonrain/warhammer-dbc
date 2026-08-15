@@ -5,6 +5,7 @@ import { BODY_TYPES, ZONES, STAR_CLASSES, STAR_CONFIGS, SYSTEM_FEATURES, BODY_SI
          colonizeUpdate, ruinUpdate, genImprovements, IMP_CATEGORIES, improvementUpkeep, improvementOutput, improvementFlow } from "../constants/star-system.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu } from "./context-menu.mjs";
+import { whenEditable, onTab } from "./v2-helpers.mjs";
 
 // Видно ли улучшение зрителю: secret → после раскрытия, hidden → после разведки, иначе всегда.
 function impVisible(im, isGM, scouted, revealed) {
@@ -120,11 +121,7 @@ function worldNames() {
 // Как на листах Орды и техники (wdbc-ff4.10.1, wdbc-ff4.10.4): ApplicationV2
 // зовёт обработчик [data-action] с this = лист и элементом-источником вторым
 // аргументом. Обычные функции — чтобы карта действий сверялась с шаблоном тестом.
-
-/** Правящие действия — только для того, кто может править лист. */
-const whenEditable = fn => function (event, target) {
-  if (this.isEditable) return fn.call(this, event, target);
-};
+// Общая обвязка (whenEditable, onTab) — в v2-helpers.mjs.
 
 // Свернуть/развернуть группу звезды и досье тела — чистая разметка, доступна
 // и наблюдателю: смотреть систему может тот, кто её не правит.
@@ -160,7 +157,7 @@ export class WarhammerStarSystemSheet
     window: { resizable: true },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
-      tab: function (event, target) { this.changeTab(target.dataset.tab, target.dataset.group); },
+      tab: onTab,
       // Свернуть группу и раскрыть досье — только разметка, права не нужны.
       starToggle: onStarToggle,
       bodyToggle: onBodyToggle,
