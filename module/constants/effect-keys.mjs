@@ -41,8 +41,8 @@ const AP_VS_TYPES = {
 export const EFFECT_KEY_LABELS = {};
 for (const [key, def] of Object.entries(CHARACTERISTICS)) {
   if (key === "inf") continue; // Инф — не характеристика с бонусом/значением на листе
-  EFFECT_KEY_LABELS[`system.characteristics.${key}.bonus`] = `${def.abbr} (бонус, Unnatural)`;
-  EFFECT_KEY_LABELS[`system.characteristics.${key}.total`] = `${def.abbr} (значение)`;
+  EFFECT_KEY_LABELS[`system.characteristics.${key}.bonusFx`] = `${def.abbr} (бонус, Unnatural)`;
+  EFFECT_KEY_LABELS[`system.characteristics.${key}.totalFx`] = `${def.abbr} (значение)`;
 }
 for (const [key, label] of Object.entries(AP_LOCATIONS)) {
   EFFECT_KEY_LABELS[`system.armorBonus.${key}`] = `AP: ${label}`;
@@ -86,6 +86,11 @@ const INITIAL_PHASE_KEYS = [
 
 /** Фаза, в которой ключ обязан применяться. */
 export function expectedPhase(key = "") {
+  // Надбавки характеристики — своё поле у каждой (bonusFx/totalFx), поэтому
+  // по хвосту, а не по началу. Они ХРАНИМЫЕ и входят в расчёт Значения и
+  // Бонуса (documents/actor.mjs): фаза "final" легла бы поверх готового числа
+  // и не дошла бы ни до брони, ни до навыков.
+  if (key.endsWith(".bonusFx") || key.endsWith(".totalFx")) return "initial";
   return INITIAL_PHASE_KEYS.some(p => key.startsWith(p)) ? "initial" : "final";
 }
 
@@ -121,7 +126,8 @@ const apChange = (loc, value) => change(`system.armorBonus.${loc}`, "add", value
  * миграцией (warhammer-dbc.mjs), чтобы правила перевода не разъезжались.
  *
  * Семантика 1:1 со старым потребителем в actor.mjs (prepareDerivedData):
- *  - charBonusStat/charBonusValue, charBonuses[] → .bonus, "add" (Unnatural).
+ *  - charBonusStat/charBonusValue, charBonuses[] → .bonusFx, "add" (Unnatural;
+ *    хранимое поле в фазе "initial" — см. addChar ниже).
  *  - charValueBonuses[]                          → .total, "add" (обычный +X к значению
  *    характеристики — .total пересчитывается заново из base/advance/... каждый цикл
  *    prepareDerivedData, так что "final"-эффект безопасно ложится поверх; ставить
@@ -149,13 +155,20 @@ export function hasLegacyEffects(effects) {
 
 export function legacyEffectsToChanges(effects = {}) {
   const out = [];
-  const addChar = (stat, value, path = "bonus") => {
+  // Надбавка к Бонусу целится в ХРАНИМОЕ bonusFx в фазе "initial": .bonus
+  // считается расчётом листа, и эффект поверх готового числа менял бы лист,
+  // но не броню и не навыки (wdbc-5wm).
+  const addChar = (stat, value, path = "bonusFx") => {
     if (!stat || !value) return;
-    out.push(change(`system.characteristics.${stat}.${path}`, "add", value));
+    const key = `system.characteristics.${stat}.${path}`;
+    out.push(change(key, "add", value, expectedPhase(key)));
   };
-  addChar(effects.charBonusStat, effects.charBonusValue, "bonus");
-  for (const cb of effects.charBonuses ?? []) addChar(cb?.stat, cb?.value, "bonus");
-  for (const cb of effects.charValueBonuses ?? []) addChar(cb?.stat, cb?.value, "total");
+  addChar(effects.charBonusStat, effects.charBonusValue, "bonusFx");
+  for (const cb of effects.charBonuses ?? []) addChar(cb?.stat, cb?.value, "bonusFx");
+  // …и то же для надбавки к ЗНАЧЕНИЮ: `total` расчёт собирает заново из
+  // base/advance/..., так что эффект поверх него не поднимал ни Бонус, ни
+  // навыки — только показанную цифру.
+  for (const cb of effects.charValueBonuses ?? []) addChar(cb?.stat, cb?.value, "totalFx");
 
   if (effects.armourAll) for (const loc of AP_ALL_KEYS) out.push(apChange(loc, effects.armourAll));
   if (effects.apAll)     for (const loc of AP_ALL_KEYS) out.push(apChange(loc, effects.apAll));

@@ -30,8 +30,10 @@ import path from "node:path";
 
 import { legacyEffectsToChanges } from "../../module/constants/effect-keys.mjs";
 import { migrateItemEffects, repairCharValueEffectKeys, dropMechanicsDuplicates,
-         repairDeadArmourKeys, migrateAllItemEffects, MIGRATE_EFFECT_TYPES,
+         repairCharBonusEffectKeys, repairDeadArmourKeys, migrateAllItemEffects,
+         adoptMechanicsEffects, MIGRATE_EFFECT_TYPES,
          legacyOnlyKeys } from "../../module/migrations/item-effects.mjs";
+import { describeMechEntry, characteristicEffectKey } from "../../module/apps/mechanics.mjs";
 
 const PACKS_SRC = path.resolve(import.meta.dirname, "../../packs-src");
 const CHAR_BONUS = { charBonuses: [{ stat: "s", value: 2 }] };
@@ -48,6 +50,10 @@ function itemDoc({ type = "trait", name = "Черта", effects = {},
       effect.id = effect._id ?? `fx-${i}`;
       // Починка правит только этот ключ — больше заглушке знать нечего.
       effect.update = async data => { effect.system.changes = data["system.changes"]; return effect; };
+      // Пометка эффекта записью Конструктора (adoptMechanicsEffects).
+      const own = { ...(effect.flags?.["warhammer-dbc"] ?? {}) };
+      effect.getFlag = (_scope, key) => own[key];
+      effect.setFlag = async (_scope, key, value) => { own[key] = value; return effect; };
       return effect;
     }),
     getFlag: (_scope, key) => own[key],
@@ -140,7 +146,7 @@ describe("перенос system.effects в ActiveEffect", () => {
 
     // Бонус Силы приехал, Рейтинг Страха вторым источником не стал.
     expect(changesOf(item).map(c => c.key))
-      .toEqual(["system.fearRating", "system.characteristics.s.bonus"]);
+      .toEqual(["system.fearRating", "system.characteristics.s.bonusFx"]);
   });
 
   it("AP против типа урона переносится в absorption.vsType", async () => {
@@ -247,6 +253,33 @@ describe("починка ключа характеристики .value → .tot
 // актора нет (в схеме system.armor, и это ручной блок через Math.max). AP всех
 // перенесённых предметов был мёртв: старое поле актор у помеченного не читает,
 // а эффект писал в никуда.
+// Ранняя миграция (и Конструктор) целились в system.characteristics.<k>.bonus.
+// Это поле СЧИТАЕТСЯ расчётом листа, и эффект фазы "final" ложился поверх
+// готового числа: на листе Бонус менялся, а до брони, навыков и перемещений не
+// доходил (wdbc-5wm). Цель — хранимое .bonusFx в фазе "initial"; у миров, где
+// миграция уже прошла, ключ надо починить, иначе рядом ляжет второй эффект.
+describe("починка ключей характеристики → надбавки bonusFx/totalFx", () => {
+  it("правит оба ключа, ставит фазу initial и второй раз ничего не делает", async () => {
+    const item = itemDoc({ fx: [{ name: "Черта (перенесено)", system: { changes: [
+      { key: "system.characteristics.t.bonus", type: "add", value: 2, phase: "final", priority: 0 },
+      { key: "system.characteristics.s.total", type: "add", value: 3, phase: "final", priority: 0 }
+    ] } }] });
+
+    expect(await repairCharBonusEffectKeys(item)).toBe(1);
+    expect(changesOf(item)[0]).toMatchObject({
+      key: "system.characteristics.t.bonusFx", phase: "initial", value: 2
+    });
+    // Значение чинится по той же причине: «считается заново каждый проход»
+    // означает лишь, что эффект не затирается. Ложится он ПОСЛЕ расчёта, и
+    // Бонус с навыками выведены из старого значения — до них не доходило.
+    expect(changesOf(item)[1]).toMatchObject({
+      key: "system.characteristics.s.totalFx", phase: "initial"
+    });
+
+    expect(await repairCharBonusEffectKeys(item)).toBe(0);
+  });
+});
+
 describe("починка мёртвого ключа брони", () => {
   const deadFx = (name, ...locs) => ({ name, system: { changes: locs.map(loc =>
     ({ key: `system.armour.${loc}`, type: "add", value: 2, phase: "final", priority: 0 })) } });
@@ -318,6 +351,32 @@ describe("починка мёртвого ключа брони", () => {
 // заводит свой при получении предмета — бонус удваивается. Побеждает
 // Конструктор: он и есть штатное место механики, эффект «(перенесено)» — след
 // миграции.
+// Пересборка эффектов (wdbc-473) узнаёт свои по метке mechEntry. У живых миров
+// эффекты Конструктора её не несут: их завела прежняя разовая выдача. Без метки
+// первая же правка завела бы рядом второй эффект — бонус дважды.
+describe("пометка эффектов Конструктора", () => {
+  const mech = [{ id: "g1", operator: "AND", entries: [
+    { id: "e1", kind: "characteristic", charKey: "t", field: "bonus", op: "add", value: 2 }] }];
+
+  it("эффект с именем записи получает её метку, второй раз ничего не делает", async () => {
+    const name = describeMechEntry(mech[0].entries[0]);
+    const item = itemDoc({ flags: { mechanics: mech }, fx: [{ name, system: { changes: [
+      { key: "system.characteristics.t.bonusFx", type: "add", value: 2, phase: "initial", priority: 0 }] } }] });
+
+    expect(await adoptMechanicsEffects(item)).toBe(1);
+    expect(item.effects[0].getFlag("warhammer-dbc", "mechEntry")).toBe("e1");
+
+    expect(await adoptMechanicsEffects(item)).toBe(0);
+  });
+
+  it("чужой эффект метки не получает", async () => {
+    const item = itemDoc({ flags: { mechanics: mech }, fx: [{ name: "Ручной ГМа", system: { changes: [
+      { key: "system.fearRating", type: "upgrade", value: 2, phase: "final", priority: 0 }] } }] });
+
+    expect(await adoptMechanicsEffects(item)).toBe(0);
+  });
+});
+
 describe("снятие механики, задвоенной Конструктором", () => {
   /** Группа Конструктора с записями характеристик — как в packs-src. */
   const mechanics = (...entries) => [{ id: "g1", operator: "AND",
@@ -327,11 +386,24 @@ describe("снятие механики, задвоенной Конструкт
   const migrated = (name, ...keys) => ({ name: `${name} (перенесено)`, system: {
     changes: keys.map(key => ({ key, type: "add", value: 3, phase: "final", priority: 0 })) } });
 
+  // Запись «Бонус» Конструктора целится в .bonusFx (wdbc-5wm), а перенос легаси —
+  // туда же. Если снятие дублей строит ключ своей копией кода, оно перестаёт
+  // узнавать такую пару, и бонус считается дважды.
+  it("надбавка к Бонусу от Конструктора узнаётся в перенесённом эффекте", async () => {
+    const item = itemDoc({ type: "trait", name: "Могучий",
+      flags: { mechanics: [{ id: "g1", operator: "AND", entries: [
+        { id: "e0", kind: "characteristic", charKey: "s", field: "bonus", op: "add", value: 2 }] }] },
+      fx: [migrated("Могучий", "system.characteristics.s.bonusFx")] });
+
+    expect(await dropMechanicsDuplicates(item)).toBe(1);
+    expect(item.effects).toEqual([]);
+  });
+
   it("перенесённый эффект, чью механику ведёт Конструктор, снимается целиком", async () => {
     const item = itemDoc({ type: "homeworld", name: "Добывающий мир",
       flags: { mechanics: mechanics(["s", 3], ["t", 3], ["fel", -3]) },
-      fx: [migrated("Добывающий", "system.characteristics.s.total",
-        "system.characteristics.t.total", "system.characteristics.fel.total")] });
+      fx: [migrated("Добывающий", "system.characteristics.s.totalFx",
+        "system.characteristics.t.totalFx", "system.characteristics.fel.totalFx")] });
 
     expect(await dropMechanicsDuplicates(item)).toBe(3);
     expect(item.effects).toEqual([]);
@@ -340,7 +412,7 @@ describe("снятие механики, задвоенной Конструкт
   it("часть, которой в Конструкторе нет, остаётся", async () => {
     const item = itemDoc({ type: "trait", name: "Черта",
       flags: { mechanics: mechanics(["s", 3]) },
-      fx: [migrated("Черта", "system.characteristics.s.total", "system.size")] });
+      fx: [migrated("Черта", "system.characteristics.s.totalFx", "system.size")] });
 
     expect(await dropMechanicsDuplicates(item)).toBe(1);
     expect(changesOf(item).map(c => c.key)).toEqual(["system.size"]);
@@ -394,7 +466,8 @@ describe("миграция мира", () => {
 
     const { migrated, repaired } = await migrateAllItemEffects();
 
-    expect([migrated, repaired]).toEqual([0, 1]);
+    // Починок две: ключ (.value → .total) и цель (.total → хранимое .totalFx).
+    expect([migrated, repaired]).toEqual([0, 2]);
     expect(changesOf(item)).toEqual(legacyEffectsToChanges(effects));
   });
 
@@ -579,10 +652,13 @@ describe("предметы packs-src", () => {
   });
 
   /** Ключи характеристик, которые правит Конструктор этого предмета (как в applyMechEntry). */
+  // Ключ строит та же функция, что и Конструктор: своя копия правила здесь
+  // разошлась бы с ним молча — так и вышло, когда цель уехала на надбавки
+  // bonusFx/totalFx, а тест продолжал ждать .bonus/.total.
   function mechanicsKeys(doc) {
     return (doc.flags?.["warhammer-dbc"]?.mechanics ?? [])
       .flatMap(g => g.entries ?? [])
       .filter(e => e.kind === "characteristic")
-      .map(e => `system.characteristics.${e.charKey}.${e.field}`);
+      .map(characteristicEffectKey);
   }
 });

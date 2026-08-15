@@ -1,0 +1,174 @@
+// test/apps/mechanics-sync.test.mjs
+//
+// Отчёт игроков (wdbc-gak, симптом 1): Черта, добавленная из библиотеки, механику
+// не применяет; работает только предмет, настроенный ВНЕ листа и брошенный на
+// актора, а после броска правки в нём ничего не меняют.
+//
+// Причина одна на оба случая: applyItemMechanics висела на хуке createItem и
+// защищалась флагом mechanicsApplied — механика отыгрывалась РАЗ, в момент
+// получения предмета. Настройка же происходит позже, на листе.
+//
+// Долговечные записи (характеристика, вес, перемещение) — не разовое действие, а
+// живая конфигурация: их эффекты пересобираются при каждой правке. Тем же
+// приёмом уже жил kind:"weaponProp" (syncWeaponPropItemEffects).
+//
+// Разовые записи (Порча, Раны, выдача предмета, Код) повторять нельзя — бросок
+// кубика и выданное снаряжение задвоились бы. Их sync не трогает.
+
+import "../support/foundry-stub.mjs";
+
+import { describe, it, expect } from "vitest";
+import { syncMechanicsEffects, describeMechEntry } from "../../module/apps/mechanics.mjs";
+
+const FLAG = "warhammer-dbc";
+
+/** Предмет с механикой и списком эффектов: столько, сколько читает sync. */
+function itemDoc({ mechanics = [], fx = [] } = {}) {
+  const flags = { mechanics };
+  const item = {
+    id: "item-1", type: "trait", name: "Черта", img: "icons/svg/aura.svg",
+    system: {},
+    effects: fx.map((f, i) => ({
+      id: f.id ?? `fx-${i}`, name: f.name, system: f.system,
+      getFlag: (_s, k) => f.flags?.[k]
+    })),
+    getFlag: (_scope, key) => flags[key],
+    async createEmbeddedDocuments(_type, docs) {
+      item.effects.push(...docs.map((d, i) => ({
+        id: `new-${i}`, name: d.name, system: d.system,
+        getFlag: (_s, k) => d.flags?.[FLAG]?.[k]
+      })));
+      return docs;
+    },
+    async deleteEmbeddedDocuments(_type, ids) {
+      item.effects = item.effects.filter(e => !ids.includes(e.id));
+      return ids;
+    }
+  };
+  return item;
+}
+
+/** Группа И с записями характеристик. */
+const andGroup = (...entries) => ({ id: "g1", operator: "AND", entries });
+const charEntry = (id, charKey, value, field = "bonus") =>
+  ({ id, kind: "characteristic", charKey, field, op: "add", value });
+
+/** Эффект, отыгрывающий запись: как его заводит Конструктор. */
+const fxFor = (entryId, key, value, name = "эффект") => ({
+  id: `fx-${entryId}`, name,
+  system: { changes: [{ key, type: "add", value, phase: "initial", priority: 0 }] },
+  flags: { mechEntry: entryId }
+});
+
+const keysOf = item => item.effects.flatMap(e => e.system.changes.map(c => c.key));
+const valuesOf = item => item.effects.flatMap(e => e.system.changes.map(c => c.value));
+
+describe("пересборка эффектов Конструктора", () => {
+  it("запись без эффекта — эффект заводится", async () => {
+    const item = itemDoc({ mechanics: [andGroup(charEntry("e1", "t", 2))] });
+
+    await syncMechanicsEffects(item);
+
+    expect(keysOf(item)).toEqual(["system.characteristics.t.bonusFx"]);
+    expect(valuesOf(item)).toEqual([2]);
+  });
+
+  it("правка значения доходит до эффекта", async () => {
+    const item = itemDoc({
+      mechanics: [andGroup(charEntry("e1", "t", 3))],
+      fx: [fxFor("e1", "system.characteristics.t.bonusFx", 2)]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toHaveLength(1);
+    expect(valuesOf(item)).toEqual([3]);
+  });
+
+  it("смена цели переносит эффект на новую характеристику", async () => {
+    const item = itemDoc({
+      mechanics: [andGroup(charEntry("e1", "s", 2))],
+      fx: [fxFor("e1", "system.characteristics.t.bonusFx", 2)]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(keysOf(item)).toEqual(["system.characteristics.s.bonusFx"]);
+  });
+
+  it("удалённая запись уносит свой эффект", async () => {
+    const item = itemDoc({
+      mechanics: [andGroup(charEntry("e1", "t", 2))],
+      fx: [fxFor("e1", "system.characteristics.t.bonusFx", 2),
+           fxFor("e2", "system.characteristics.s.bonusFx", 4)]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(keysOf(item)).toEqual(["system.characteristics.t.bonusFx"]);
+  });
+
+  it("ничего не изменилось — ничего не пишется", async () => {
+    const item = itemDoc({
+      mechanics: [andGroup(charEntry("e1", "t", 2))],
+      fx: [fxFor("e1", "system.characteristics.t.bonusFx", 2,
+                 describeMechEntry(charEntry("e1", "t", 2)))]
+    });
+    const before = item.effects[0];
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects[0]).toBe(before);   // тот же объект: не пересоздавали
+  });
+
+  // Чужой эффект — ручной у ГМа или след миграции. Метки записи на нём нет, и
+  // пересборка его не трогает: иначе правка Конструктора стирала бы ручную.
+  it("эффект без метки записи не трогается", async () => {
+    const item = itemDoc({
+      mechanics: [andGroup(charEntry("e1", "t", 2))],
+      fx: [{ id: "manual", name: "Ручной", system: { changes: [
+        { key: "system.fearRating", type: "upgrade", value: 2, phase: "final", priority: 0 }] } }]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects.find(e => e.id === "manual")).toBeDefined();
+  });
+
+  // Выбор в ИЛИ-группе делается ОДИН РАЗ диалогом при получении предмета.
+  // Пересборка обязана обойти её стороной, иначе выбор переигрывался бы или,
+  // хуже, отыгрывались бы сразу все альтернативы.
+  it("ИЛИ-группу пересборка не трогает", async () => {
+    const item = itemDoc({
+      mechanics: [{ id: "g1", operator: "OR",
+        entries: [charEntry("e1", "t", 2), charEntry("e2", "s", 2)] }],
+      fx: [fxFor("e1", "system.characteristics.t.bonusFx", 2)]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(keysOf(item)).toEqual(["system.characteristics.t.bonusFx"]);
+  });
+
+  // Разовые записи — побочные действия (бросок Порчи, выдача предмета): у них
+  // эффекта нет вовсе, и пересборка не должна ничего заводить.
+  it("разовые записи эффектов не порождают", async () => {
+    const item = itemDoc({ mechanics: [andGroup(
+      { id: "e1", kind: "corruption", op: "add", corruptionValue: "2d10" },
+      { id: "e2", kind: "wounds", op: "add", woundsValue: "3" }
+    )] });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toEqual([]);
+  });
+
+  it("вложенная И-подгруппа тоже пересобирается", async () => {
+    const item = itemDoc({ mechanics: [andGroup(
+      { id: "g2", kind: "group", group: andGroup(charEntry("e1", "t", 2)) })] });
+
+    await syncMechanicsEffects(item);
+
+    expect(keysOf(item)).toEqual(["system.characteristics.t.bonusFx"]);
+  });
+});

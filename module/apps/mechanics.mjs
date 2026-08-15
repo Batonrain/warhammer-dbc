@@ -141,6 +141,7 @@ import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } fr
 import { AVAILABILITY }                       from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive }                       from "./effects.mjs";
+import { expectedPhase }                      from "../constants/effect-keys.mjs";
 import { RACES }                              from "../constants/races.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
@@ -148,12 +149,16 @@ import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 const FLAG = "warhammer-dbc";
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
 const higherRank = (a, b) => (SKILL_RANK_STEPS[a] ?? 0) >= (SKILL_RANK_STEPS[b] ?? 0) ? a : b;
+// Операции записи «± Характеристика» — только складываемые. Её эффект целится
+// в ХРАНИМУЮ надбавку (characteristicEffectKey → bonusFx/totalFx): только
+// оттуда число доходит до брони, навыков и перемещений, которые считаются тем
+// же проходом. Надбавка начинается с нуля, поэтому «×2» дало бы ровно ноль —
+// пункт в списке был, а механики за ним никакой. Умножение осталось там, где
+// работает: Раны и Слаженность (FOUR_OP_OPTIONS) — разовые правки хранимого
+// числа, их applyFourOp считает от текущего значения.
 const OP_OPTIONS = [
   { value: "add",        label: "+ прибавить" },
-  { value: "subtract",   label: "− вычесть" },
-  { value: "multiply",   label: "× умножить" },
-  { value: "divideUp",   label: "÷ разделить (вверх)" },
-  { value: "divideDown", label: "÷ разделить (вниз)" }
+  { value: "subtract",   label: "− вычесть" }
 ];
 const OP_SIGN = { add: "+", subtract: "−", multiply: "×", divide: "÷", divideUp: "÷↑", divideDown: "÷↓" };
 const CORRUPTION_OP_OPTIONS = [
@@ -247,6 +252,19 @@ function applyFourOp(cur, op, amount) {
     default:         result = cur + amount; break; // "add" и незнакомые значения
   }
   return Math.floor(result);
+}
+
+/**
+ * Ключ эффекта для записи «± Характеристика».
+ *
+ * «Бонус (÷10)» целится не в `.bonus`, а в хранимое `.bonusFx`: `.bonus`
+ * считается расчётом листа (documents/actor.mjs), и эффект поверх готового
+ * числа менял бы лист, но не броню, навыки и перемещения, которые считаются
+ * тем же проходом ниже (wdbc-5wm). Фазу к ключу подбирает expectedPhase.
+ */
+export function characteristicEffectKey(entry) {
+  const field = (entry.field || "total") === "bonus" ? "bonusFx" : "totalFx";
+  return `system.characteristics.${entry.charKey}.${field}`;
 }
 
 /** Нормализованный список групп механики предмета (только чтение). */
@@ -673,7 +691,21 @@ async function resolveEntrySpecChoice(entry) {
 }
 
 /** Применяет одну запись механики: создаёт ActiveEffect/предмет, правит навык, либо исполняет код. */
-async function applyMechEntry(actor, entry, sourceItem) {
+async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, applied = new Set()) {
+  // Подгруппа — не запись, а узел И/ИЛИ: отыгрываются её листья, отметку
+  // получают тоже они.
+  if (entry.kind === "group") {
+    await applyGroupEntries(actor, entry.group, sourceItem, applied);
+    return;
+  }
+
+  // Каждая запись отыгрывается по одному разу — Порча не бросается дважды,
+  // выданная Черта не приезжает второй копией. Долговечные записи при этом
+  // ничего не делают (их эффекты ведёт syncMechanicsEffects), но отметку
+  // получают тоже: по ней видно, какая ветка ИЛИ-группы уже выбрана.
+  if (applied.has(entry.id)) return;
+  applied.add(entry.id);
+
   if (entry.kind === "skill" || entry.kind === "rollmod") {
     const resolved = await resolveEntrySpecChoice(entry);
     if (!resolved) return;
@@ -729,56 +761,17 @@ async function applyMechEntry(actor, entry, sourceItem) {
     return;
   }
 
-  if (entry.kind === "group") {
-    // Вложенная подгруппа — та же логика И/ИЛИ, что и у группы верхнего
-    // уровня (applyGroupEntries), рекурсивно на любую глубину.
-    await applyGroupEntries(actor, entry.group, sourceItem);
-    return;
-  }
-
-  if (entry.kind === "characteristic") {
-    const key = `system.characteristics.${entry.charKey}.${entry.field}`;
-    await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-      name: describeMechEntry(entry), img: sourceItem.img,
-      system: { changes: [{ key, type: entry.op, value: Number(entry.value) || 0, phase: "final", priority: 0 }] }
-    }]);
+  // Характеристика/вес/перемещение — долговечные записи: их эффект заводит и
+  // потом ведёт syncMechanicsEffects, чтобы правка на листе доходила до актора
+  // (wdbc-473). Здесь остаётся только ИЛИ-ветка: выбранная в диалоге запись в
+  // пересборку не попадает, и эффект ей нужен прямо сейчас.
+  if (DURABLE_MECH_KINDS.has(entry.kind)) {
+    if (fromChoice) await sourceItem.createEmbeddedDocuments("ActiveEffect", [mechEffectData(entry, sourceItem)]);
     return;
   }
 
   if (entry.kind === "script") {
     await executeItemCode(sourceItem, entry.code, null);
-    return;
-  }
-
-  if (entry.kind === "weight") {
-    const value = Number(entry.weightValue) || 0;
-    let key;
-    if (entry.weightMode === "index") {
-      key = `system.encumbrance.indexBonus.${entry.weightScope}`;
-      // initial-фаза: должно быть на месте ДО пересчёта в actor.mjs (сдвигает
-      // входной индекс, а не готовый результат) — см. комментарий в шапке файла.
-      await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-        name: describeMechEntry(entry), img: sourceItem.img,
-        system: { changes: [{ key, type: "add", value, phase: "initial", priority: 0 }] }
-      }]);
-    } else {
-      const targets = entry.weightScope === "all" ? ["carry", "lift", "push"] : [entry.weightScope];
-      const changes = targets.map(t => ({ key: `system.encumbrance.${t}`, type: "add", value, phase: "final", priority: 0 }));
-      await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-        name: describeMechEntry(entry), img: sourceItem.img, system: { changes }
-      }]);
-    }
-    return;
-  }
-
-  if (entry.kind === "movement") {
-    const isSpd = entry.movementTarget === "spd";
-    const key   = isSpd ? "system.movement.spdBonus" : `system.movement.${entry.movementTarget}`;
-    await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-      name: describeMechEntry(entry), img: sourceItem.img,
-      system: { changes: [{ key, type: entry.op, value: Number(entry.movementValue) || 0,
-        phase: isSpd ? "initial" : "final", priority: 0 }] }
-    }]);
     return;
   }
 
@@ -830,14 +823,6 @@ async function applyMechEntry(actor, entry, sourceItem) {
     const cur = foundry.utils.deepClone(sourceItem.getFlag(FLAG, "rollMods") || []);
     cur.push({ when, value: Number(entry.value) || 0, label: entry.label || describeMechEntry(entry) });
     await sourceItem.setFlag(FLAG, "rollMods", cur);
-    return;
-  }
-
-  if (entry.kind === "poolMax") {
-    await sourceItem.createEmbeddedDocuments("ActiveEffect", [{
-      name: describeMechEntry(entry), img: sourceItem.img,
-      system: { changes: [{ key: "system.fate.max", type: "add", value: Number(entry.value) || 0, phase: "final", priority: 0 }] }
-    }]);
     return;
   }
 
@@ -1036,37 +1021,169 @@ export async function syncGrantedEquipment(sourceItem) {
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
 }
 
+// ── Живая пересборка эффектов ───────────────────────────────────────────────
+//
+// Долговечные записи — не разовое действие «получил предмет → применили», а
+// конфигурация: их эффекты пересобираются при КАЖДОЙ правке Механики, иначе
+// настройка предмета, уже лежащего на акторе, никуда не доходит (wdbc-473).
+// Тем же приёмом живёт kind:"weaponProp" (syncWeaponPropItemEffects выше).
+//
+// Разовых записей (Порча, Раны, Слаженность, выдача предмета/Черты/Таланта,
+// Код) это не касается: повтор бросил бы кубик заново и выдал второй предмет.
+export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax"]);
+
+/** Эффект, отыгрывающий одну долговечную запись. Метка — id самой записи. */
+function mechEffectData(entry, sourceItem) {
+  const changes = [];
+  if (entry.kind === "characteristic") {
+    const key = characteristicEffectKey(entry);
+    changes.push({ key, type: entry.op, value: Number(entry.value) || 0,
+                   phase: expectedPhase(key), priority: 0 });
+  } else if (entry.kind === "weight") {
+    const value = Number(entry.weightValue) || 0;
+    if (entry.weightMode === "index") {
+      const key = `system.encumbrance.indexBonus.${entry.weightScope}`;
+      changes.push({ key, type: "add", value, phase: expectedPhase(key), priority: 0 });
+    } else {
+      const targets = entry.weightScope === "all" ? ["carry", "lift", "push"] : [entry.weightScope];
+      for (const t of targets) {
+        const key = `system.encumbrance.${t}`;
+        changes.push({ key, type: "add", value, phase: expectedPhase(key), priority: 0 });
+      }
+    }
+  } else if (entry.kind === "movement") {
+    const key = entry.movementTarget === "spd"
+      ? "system.movement.spdBonus" : `system.movement.${entry.movementTarget}`;
+    changes.push({ key, type: entry.op, value: Number(entry.movementValue) || 0,
+                   phase: expectedPhase(key), priority: 0 });
+  } else if (entry.kind === "poolMax") {
+    const key = "system.fate.max";
+    changes.push({ key, type: "add", value: Number(entry.value) || 0,
+                   phase: expectedPhase(key), priority: 0 });
+  }
+  return {
+    name: describeMechEntry(entry), img: sourceItem.img,
+    system: { changes },
+    flags: { [FLAG]: { mechEntry: entry.id } }
+  };
+}
+
+/**
+ * Долговечные записи И-цепочек и id ВСЕХ записей предмета.
+ *
+ * ИЛИ-ветки пропускаются намеренно, как и в collectDirectEquipmentEntries:
+ * выбор в них делается ОДИН РАЗ диалогом при получении предмета, и пересборка
+ * либо переиграла бы его, либо отыграла бы сразу все альтернативы.
+ */
+function collectMechEntries(groups) {
+  const durable = [], allIds = new Set();
+  const walk = (entries, operator) => {
+    for (const e of entries || []) {
+      allIds.add(e.id);
+      if (e.kind === "group" && e.group) { walk(e.group.entries, e.group.operator); continue; }
+      if (operator !== "OR" && DURABLE_MECH_KINDS.has(e.kind) && isEntryComplete(e)) durable.push(e);
+    }
+  };
+  for (const g of groups || []) walk(g.entries, g.operator);
+  return { durable, allIds };
+}
+
+/**
+ * Приводит эффекты предмета в соответствие с его Механикой. Идемпотентна:
+ * совпало — не пишет. Трогает только СВОИ эффекты (метка mechEntry): ручной
+ * эффект ГМа и след миграции остаются на месте.
+ */
+export async function syncMechanicsEffects(item) {
+  const { durable, allIds } = collectMechEntries(getItemMechanics(item));
+  const wanted = new Map(durable.map(e => [e.id, mechEffectData(e, item)]));
+
+  const toDelete = [], toCreate = [];
+  const seen = new Set();
+  for (const fx of item.effects ?? []) {
+    const entryId = fx.getFlag?.(FLAG, "mechEntry");
+    if (!entryId) continue;
+    // Запись убрали с листа — уносим и её эффект.
+    if (!allIds.has(entryId)) { toDelete.push(fx.id); continue; }
+    const want = wanted.get(entryId);
+    if (!want) continue;                       // ИЛИ-ветка либо разовая запись
+    seen.add(entryId);
+    const same = fx.name === want.name
+      && JSON.stringify(fx.system?.changes ?? []) === JSON.stringify(want.system.changes);
+    if (!same) { toDelete.push(fx.id); toCreate.push(want); }
+  }
+  for (const [id, want] of wanted) if (!seen.has(id)) toCreate.push(want);
+
+  if (toDelete.length) await item.deleteEmbeddedDocuments("ActiveEffect", toDelete);
+  if (toCreate.length) await item.createEmbeddedDocuments("ActiveEffect", toCreate);
+}
+
 /**
  * Применяет ОДНУ группу (И — все записи, ИЛИ с >1 завершённой записью —
  * диалог выбора одной) — общая для верхнеуровневых групп И ВЛОЖЕННЫХ
  * подгрупп (kind:"group"), рекурсия идёт через applyMechEntry ⇄ здесь.
  */
-async function applyGroupEntries(actor, group, sourceItem) {
+async function applyGroupEntries(actor, group, sourceItem, applied) {
   const entries = (group?.entries || []).filter(isEntryComplete);
   if (!entries.length) return;
   if (group.operator === "OR" && entries.length > 1) {
+    // Выбор делается ОДИН раз: если одна из веток уже отыграна, вопрос задан и
+    // отвечен — переспрашивать на каждой правке Механики нельзя.
+    if (entries.some(e => applied.has(e.id))) return;
     const chosen = await showMechChoiceDialog(sourceItem, entries);
-    if (chosen) await applyMechEntry(actor, chosen, sourceItem);
+    if (chosen) await applyMechEntry(actor, chosen, sourceItem, true, applied);
   } else {
-    for (const e of entries) await applyMechEntry(actor, e, sourceItem);
+    for (const e of entries) await applyMechEntry(actor, e, sourceItem, false, applied);
   }
 }
 
-/** Применяет ВСЕ группы механики предмета к актору — вызывается из createItem хука. */
+/**
+ * id записей, чьё РАЗОВОЕ применение уже состоялось.
+ *
+ * Флаг был булевым «предмет свою механику отработал» — этого хватало, пока
+ * применение случалось единственный раз, на createItem. Но настраивают предмет
+ * и уже лежащим на акторе (Черта из библиотеки приезжает пустой), и вопрос
+ * стоит поштучно: какая ИМЕННО запись уже сработала. Старое `true` читается как
+ * «всё, что тогда лежало», иначе первый же прогон на живом мире переиграл бы
+ * Порчу, Раны и выдачи по второму разу.
+ */
+function appliedEntryIds(item) {
+  const flag = item.getFlag(FLAG, "mechanicsApplied");
+  if (Array.isArray(flag)) return new Set(flag);
+  // Читать `true` как «всё, что лежит СЕЙЧАС» можно только один раз, и делает
+  // это миграция (materializeMechanicsApplied) — при загрузке мира, когда
+  // ничего дописать ещё не успели. Здесь такая же догадка проглотила бы
+  // запись, дописанную до первого прогона.
+  if (flag === true) return allMechEntryIds(item);
+  return new Set();
+}
+
+/** id всех записей механики предмета, включая вложенные подгруппы. */
+export function allMechEntryIds(item) {
+  return collectMechEntries(getItemMechanics(item)).allIds;
+}
+
+/**
+ * Применяет механику предмета к актору. Зовётся из хуков createItem и
+ * updateItem (warhammer-dbc.mjs): дописать запись на предмет, который УЖЕ у
+ * актора, — обычный сценарий, и он обязан работать так же, как настройка
+ * предмета в списке мира до броска на лист.
+ */
 export async function applyItemMechanics(item) {
-  const groups = getItemMechanics(item);
-  if (!groups.length) return;
-  if (item.getFlag(FLAG, "mechanicsApplied")) return;
   const actor = item.parent;
   if (!(actor instanceof Actor)) return;
 
-  for (const group of groups) await applyGroupEntries(actor, group, item);
+  const applied = appliedEntryIds(item);
+  const before  = applied.size;
+  for (const group of getItemMechanics(item)) await applyGroupEntries(actor, group, item, applied);
+  await syncMechanicsEffects(item);
   await syncWeaponPropItemEffects(item);
   // Источник мог родиться неактивным (напр. Имплант создан ещё не
   // установленным) — откатывает то, что applyMechEntry(equipment) уже
   // успел выдать выше, чтобы конечное состояние сразу было верным.
   await syncGrantedEquipment(item);
-  await item.setFlag(FLAG, "mechanicsApplied", true);
+  // Пишем, только если что-то действительно отыгралось: иначе каждый прогон
+  // правил бы предмет и будил хук updateItem по кругу.
+  if (applied.size !== before) await item.setFlag(FLAG, "mechanicsApplied", [...applied]);
 }
 
 // ── HTML-разметка вкладки (собирается в JS, не в .hbs — см. обоснование в
