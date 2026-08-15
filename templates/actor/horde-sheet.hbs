@@ -1,179 +1,175 @@
-<form class="wh-horde {{#if isGM}}is-gm{{/if}}" autocomplete="off">
-
-  {{!-- ── Шапка ── --}}
-  <header class="horde-head">
-    <div class="horde-portrait-wrap" title="Кликните, чтобы выбрать изображение">
-      <img class="horde-portrait" src="{{actor.img}}" alt="{{actor.name}}"/>
-    </div>
-    <div class="horde-head-main">
-      <input type="text" name="name" value="{{actor.name}}" class="horde-name" placeholder="Название орды"/>
-      <div class="horde-head-sub">
-        <input type="text" name="system.speciesName" value="{{system.speciesName}}" placeholder="Вид / существа"/>
-        <input type="text" name="system.faction" value="{{system.faction}}" placeholder="Фракция"/>
-        <input type="text" name="system.descriptor" value="{{system.descriptor}}" class="horde-descriptor" placeholder="Краткое описание"/>
-      </div>
-    </div>
-    <div class="horde-state horde-state-{{d.state}}">
-      <div class="horde-state-label">{{stateLabel}}</div>
-      <div class="horde-state-pct">{{d.pct}}% боеготовности</div>
-    </div>
-  </header>
-
-  <nav class="horde-tabs tabs">
-    <a class="item" data-tab="battle">БОЙ</a>
-    <a class="item" data-tab="traits">ЧЕРТЫ</a>
-    <a class="item" data-tab="notes">ЗАМЕТКИ</a>
-    <a class="item" data-tab="rules">ПРАВИЛА</a>
-  </nav>
-
-  <div class="horde-body">
-
-    {{!-- ── БОЙ ── --}}
-    <div class="tab" data-tab="battle">
-
-      {{!-- Магнитуда --}}
-      <section class="horde-panel">
-        <div class="horde-panel-title">МАГНИТУДА <span class="dim">— вместо Ран</span></div>
-        <div class="horde-mag-main">
-          <div class="horde-mag-big">
-            <input type="number" name="system.magnitude.value" value="{{system.magnitude.value}}" class="horde-mag-val" min="0" data-tooltip="Текущая Магнитуда"/>
-            <span class="horde-mag-slash">/</span>
-            <input type="number" name="system.magnitude.start" value="{{system.magnitude.start}}" class="horde-mag-start" min="0" data-tooltip="Стартовая Магнитуда"/>
-          </div>
-          <div class="horde-mag-btns">
-            <button type="button" data-mag="dmg" class="hbtn hbtn-dmg" data-tooltip="Урон в Магнитуду (Shift ×5)"><span class="hi hi-arrow-down"></span></button>
-            <button type="button" data-mag="psych" class="hbtn hbtn-dmg" data-tooltip="Психологический урон (Shift ×5)"><span class="hi hi-skull"></span></button>
-            <button type="button" data-mag="psychheal" class="hbtn hbtn-heal" data-tooltip="Лечить психологический урон"><span class="hi hi-skull"></span><i class="hbtn-sign">+</i></button>
-            <button type="button" data-mag="heal" class="hbtn hbtn-heal" data-tooltip="Восстановить Магнитуду"><span class="hi hi-arrow-up"></span></button>
-            <button type="button" data-mag="reset" class="hbtn" data-tooltip="Сброс к стартовой"><span class="hi hi-reset"></span></button>
-          </div>
-        </div>
-        <div class="horde-mag-meta">
-          <span class="horde-chip" data-tooltip="Лечится тестами Командования/социалки"><span class="hi hi-skull"></span> Псих: <b>{{d.psychDamage}}</b></span>
-          <span class="horde-chip"><span class="hi hi-arrow-down"></span> Потери: <b>{{d.lost}}</b></span>
-          <span class="horde-chip" data-tooltip="Ослаблена при потере >50%">50%: <b>{{d.halfThreshold}}</b></span>
-          <span class="horde-chip" data-tooltip="Сломлена при 25% и ниже">25%: <b>{{d.quarterThreshold}}</b></span>
-          {{#if d.immune}}<span class="horde-chip immune">✦ Несломляема</span>{{/if}}
-          <label class="horde-immune-toggle" data-tooltip="Иммунна к псих. урону, не может быть Сломлена"><input type="checkbox" name="system.immuneFear" {{checked system.immuneFear}}/> авто-Страх</label>
-        </div>
-      </section>
-
-      {{!-- Размер и боевые показатели --}}
-      <section class="horde-panel">
-        <div class="horde-panel-title">РАЗМЕР И БОЙ</div>
-        <div class="horde-stats-grid">
-          <div class="horde-stat"><span class="horde-stat-lbl">Размер</span><b class="horde-stat-val">{{d.magSize}}</b></div>
-          <div class="horde-stat"><span class="horde-stat-lbl">Бонус урона</span><b class="horde-stat-val">{{d.magDamageStr}}</b></div>
-          <div class="horde-stat"><span class="horde-stat-lbl">Целей (бл.)</span><b class="horde-stat-val">{{d.meleeTargets}}</b></div>
-          <div class="horde-stat"><span class="horde-stat-lbl">Выстрелов</span><b class="horde-stat-val">{{d.rangedShots}}</b></div>
-          <div class="horde-stat"><span class="horde-stat-lbl">Бонус W/Страх</span><b class="horde-stat-val">+{{d.psychTestBonus}}</b></div>
-          <div class="horde-stat"><span class="horde-stat-lbl">Врагов в бл.</span><input type="number" name="system.enemiesInMelee" value="{{system.enemiesInMelee}}" min="0" class="horde-stat-input" data-tooltip="Уменьшает число выстрелов"/></div>
-        </div>
-        <div class="horde-size-note">{{d.magSizeLabel}}</div>
-      </section>
-
-      {{!-- Характеристики --}}
-      <section class="horde-panel">
-        <div class="horde-panel-title">ХАРАКТЕРИСТИКИ <span class="dim">— база / продвиж. · клик = бросок</span></div>
-        <div class="horde-chars">
-          {{#each chars as |c|}}
-          <div class="horde-char">
-            <span class="horde-char-abbr">{{c.abbr}}</span>
-            <input type="number" name="system.characteristics.{{c.key}}.base" value="{{c.base}}" class="horde-char-in" data-tooltip="База"/>
-            <input type="number" name="system.characteristics.{{c.key}}.advance" value="{{c.advance}}" class="horde-char-in adv" data-tooltip="Продвижение"/>
-            <span class="horde-char-total">{{c.total}}<i>{{c.bonus}}</i></span>
-            <button type="button" class="hbtn horde-char-roll" data-char-roll="{{c.key}}" data-tooltip="Бросок {{c.label}}"><span class="hi hi-die"></span></button>
-          </div>
-          {{/each}}
-        </div>
-      </section>
-
-      {{!-- Защита и движение --}}
-      <section class="horde-panel">
-        <div class="horde-panel-title">ЗАЩИТА И ДВИЖЕНИЕ</div>
-        <div class="horde-defmove">
-          <label class="horde-field"><span>Поглощение</span><input type="number" name="system.absorption" value="{{system.absorption}}" min="0" data-tooltip="Броня + бонус Стойкости. Попадания — в торс."/></label>
-          <label class="horde-field"><span>Размер существа</span><input type="number" name="system.sizeMod" value="{{system.sizeMod}}" data-tooltip="Для SPD: 0 = человек"/></label>
-          <div class="horde-field"><span>Движение ½ / Ш / Нат / Бег</span><b class="horde-move">{{system.movement.halfMove}} / {{system.movement.move}} / {{system.movement.charge}} / {{system.movement.run}}</b></div>
-        </div>
-        <p class="horde-hint">Попадания — в торс. Пробившее Поглощение = 1 урона в Магнитуду. Доп. попадания: Blast(X) +X · Flame/Power Field +1 · Spray +Rng/5.</p>
-      </section>
-
-      {{!-- Оружие --}}
-      <section class="horde-panel">
-        <div class="horde-panel-title">ОРУЖИЕ <button type="button" class="horde-add" data-item-create="weapon">＋</button></div>
-        {{#if weapons.length}}
-        <div class="horde-list">
-          {{#each weapons as |w|}}
-          <div class="horde-row">
-            <button type="button" class="hbtn horde-roll-btn" data-weapon-roll="{{w.id}}" data-tooltip="Атака"><span class="hi hi-die"></span></button>
-            <span class="horde-row-name">{{w.name}}</span>
-            <span class="horde-row-dmg">{{w.sys.damage}}{{#if w.sys.penetration}} · Пб {{w.sys.penetration}}{{/if}}</span>
-            <span class="horde-row-tools">
-              <a class="hbtn" data-item-edit="{{w.id}}" data-tooltip="Открыть"><span class="hi hi-pencil"></span></a>
-              <a class="hbtn hbtn-del" data-item-delete="{{w.id}}" data-tooltip="Удалить"><span class="hi hi-x"></span></a>
-            </span>
-          </div>
-          {{/each}}
-        </div>
-        {{else}}<div class="horde-empty">Оружия нет.</div>{{/if}}
-      </section>
-    </div>
-
-    {{!-- ── ЧЕРТЫ ── --}}
-    <div class="tab" data-tab="traits">
-      <section class="horde-panel">
-        <div class="horde-panel-title">ЧЕРТЫ И ТАЛАНТЫ <button type="button" class="horde-add horde-pick-talent" title="Выбрать талант из библиотеки">Талант</button> <button type="button" class="horde-add horde-pick-trait" title="Выбрать черту из библиотеки">Черта</button> <button type="button" class="horde-add" data-item-create="talent" title="Создать пустой талант">＋</button></div>
-        {{#if talents.length}}
-        <div class="horde-list">
-          {{#each talents as |t|}}
-          <div class="horde-row">
-            <span class="horde-row-name">{{t.name}}</span>
-            <span class="horde-row-desc">{{t.summary}}</span>
-            <span class="horde-row-tools">
-              <a class="hbtn" data-item-edit="{{t.id}}" data-tooltip="Открыть"><span class="hi hi-pencil"></span></a>
-              <a class="hbtn hbtn-del" data-item-delete="{{t.id}}" data-tooltip="Удалить"><span class="hi hi-x"></span></a>
-            </span>
-          </div>
-          {{/each}}
-        </div>
-        {{else}}<div class="horde-empty">Черт нет.</div>{{/if}}
-      </section>
-      <section class="horde-panel">
-        <div class="horde-panel-title">ОСОБЫЕ ПРАВИЛА ОРДЫ</div>
-        <textarea name="system.traits" class="horde-textarea" placeholder="Особые правила этой орды…">{{system.traits}}</textarea>
-      </section>
-    </div>
-
-    {{!-- ── ЗАМЕТКИ ── --}}
-    <div class="tab" data-tab="notes">
-      <section class="horde-panel">
-        <div class="horde-panel-title">ЗАМЕТКИ</div>
-        <textarea name="system.notes" class="horde-textarea tall" placeholder="Описание, тактика, лор…">{{system.notes}}</textarea>
-      </section>
-      {{#if isGM}}
-      <section class="horde-panel horde-gm">
-        <div class="horde-panel-title">ЗАМЕТКИ ГМА <span class="dim">— только Мастер</span></div>
-        <textarea name="system.gmNotes" class="horde-textarea" placeholder="Секреты, условия восстановления Магнитуды…">{{system.gmNotes}}</textarea>
-      </section>
-      {{/if}}
-    </div>
-
-    {{!-- ── ПРАВИЛА ── --}}
-    <div class="tab" data-tab="rules">
-      <section class="horde-panel horde-rules">
-        <div class="horde-panel-title">ПРАВИЛА ОРД</div>
-        <p><b>Действия.</b> Орда действует как один персонаж: обычный запас ОД и действия, но большая площадь. Не может Избегать, но имеет Реакции (тратит только в свой Ход на особые действия). Характеристики — как у членов; вместо Ран — Магнитуда.</p>
-        <p><b>Магнитуда</b> — размер и боеготовность, не буквальное число существ. Задаёт Размер (для атак по орде и Stealth, но не SPD): 10–29→2, 30–59→3, 60–89→4, 90–119→5, 120+→6.</p>
-        <p><b>Урон.</b> Все попадания — в торс. Пробившее Поглощение = 1 урона в Магнитуду (мощный одиночный урон неэффективен). Доп. попадания: Blast(X) +X, Flame +1, Power Field +1, Spray +Rng/5. Размер 1+ против существ Размера ≤0: +1 попадание за успешное рукопашное. Обездвиживающие/оглушающие эффекты могут наносить урон в Магнитуду по решению ГМа.</p>
-        <p><b>Психологический урон.</b> Эффекты, подрывающие волю, наносят урон в Магнитуду. Массивный урон за раунд (25%+ стартовой) → тест <b>W+Магнитуда</b>, иначе Провалы×3 урона. Провалы Страха ×2, Запугивания ×1 (бонус к тестам = Магнитуда). Flame + провал A+0 → доп. психологический урон вместо Горения. Лечится тестами Командования/социалки. Авто-проходящие Страх/Запугивание — иммунны.</p>
-        <p><b>Сломленная Орда.</b> Потеря >50% → −10 к тестам W и 10−W.b часов без лечения псих. урона. 25% и ниже → Орда Сломлена и рассыпается. Несломляемые сражаются до последнего.</p>
-        <p><b>Контроль.</b> Орда получает лишь эффекты 1 и 3 Командного Присутствия; тесты Командования лишь лечат псих. урон. Смещающие эффекты не действуют. Подавление работает с бонусом = Магнитуда.</p>
-        <p><b>Атаки.</b> В ближнем — до Магн./5 (мин.1) целей в контакте обычным числом атак; без бонусов за численность; только Обычная Атака / Стандартная Стойка / Базовый Хват. Стрельба — до (Магн./10) − (враги в бл./2), можно стрелять и бить одним действием. От атак Орды нельзя Избегать. Нет Прицеливания/Избирательных, игнор Крит. Провалов. Магн. 10–19 → +1d10 урона, 20+ → +2d10. Промах = попадание без бонусных кубов (можно Избегать). Мощное оружие (расчёты) стреляет отдельно и вычитается из Магнитуды.</p>
-        <p><b>Орда vs Орда.</b> В ближнем считает врага как число персонажей = клеткам контакта. Стрельба — по обычным правилам.</p>
-        <p><b>Прячась в Орде.</b> Не-избирательный выстрел в персонажа в союзной орде: чётный бросок — в персонажа, нечётный — в Орду. Очередь: каждое нечётное попадание (1,3,5…) — в Орду.</p>
-      </section>
-    </div>
-
+{{!-- ── Шапка ── --}}
+<header class="horde-head">
+  <div class="horde-portrait-wrap" title="Кликните, чтобы выбрать изображение">
+    <img class="horde-portrait" src="{{actor.img}}" alt="{{actor.name}}" data-action="editImage"/>
   </div>
-</form>
+  <div class="horde-head-main">
+    <input type="text" name="name" value="{{actor.name}}" class="horde-name" placeholder="Название орды"/>
+    <div class="horde-head-sub">
+      <input type="text" name="system.speciesName" value="{{system.speciesName}}" placeholder="Вид / существа"/>
+      <input type="text" name="system.faction" value="{{system.faction}}" placeholder="Фракция"/>
+      <input type="text" name="system.descriptor" value="{{system.descriptor}}" class="horde-descriptor" placeholder="Краткое описание"/>
+    </div>
+  </div>
+  <div class="horde-state horde-state-{{d.state}}">
+    <div class="horde-state-label">{{stateLabel}}</div>
+    <div class="horde-state-pct">{{d.pct}}% боеготовности</div>
+  </div>
+</header>
+
+<nav class="horde-tabs tabs" data-group="primary">
+  {{#each tabs as |t|}}
+  <a class="item {{#if (eq ../tab t.id)}}active{{/if}}" data-action="tab" data-group="primary" data-tab="{{t.id}}">{{t.label}}</a>
+  {{/each}}
+</nav>
+
+<div class="horde-body">
+
+  {{!-- ── БОЙ ── --}}
+  <div class="tab {{#if (eq tab "battle")}}active{{/if}}" data-group="primary" data-tab="battle">
+
+    {{!-- Магнитуда --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">МАГНИТУДА <span class="dim">— вместо Ран</span></div>
+      <div class="horde-mag-main">
+        <div class="horde-mag-big">
+          <input type="number" name="system.magnitude.value" value="{{system.magnitude.value}}" class="horde-mag-val" min="0" data-tooltip="Текущая Магнитуда"/>
+          <span class="horde-mag-slash">/</span>
+          <input type="number" name="system.magnitude.start" value="{{system.magnitude.start}}" class="horde-mag-start" min="0" data-tooltip="Стартовая Магнитуда"/>
+        </div>
+        <div class="horde-mag-btns">
+          <button type="button" data-action="mag" data-mag="dmg" class="hbtn hbtn-dmg" data-tooltip="Урон в Магнитуду (Shift ×5)"><span class="hi hi-arrow-down"></span></button>
+          <button type="button" data-action="mag" data-mag="psych" class="hbtn hbtn-dmg" data-tooltip="Психологический урон (Shift ×5)"><span class="hi hi-skull"></span></button>
+          <button type="button" data-action="mag" data-mag="psychheal" class="hbtn hbtn-heal" data-tooltip="Лечить психологический урон"><span class="hi hi-skull"></span><i class="hbtn-sign">+</i></button>
+          <button type="button" data-action="mag" data-mag="heal" class="hbtn hbtn-heal" data-tooltip="Восстановить Магнитуду"><span class="hi hi-arrow-up"></span></button>
+          <button type="button" data-action="mag" data-mag="reset" class="hbtn" data-tooltip="Сброс к стартовой"><span class="hi hi-reset"></span></button>
+        </div>
+      </div>
+      <div class="horde-mag-meta">
+        <span class="horde-chip" data-tooltip="Лечится тестами Командования/социалки"><span class="hi hi-skull"></span> Псих: <b>{{d.psychDamage}}</b></span>
+        <span class="horde-chip"><span class="hi hi-arrow-down"></span> Потери: <b>{{d.lost}}</b></span>
+        <span class="horde-chip" data-tooltip="Ослаблена при потере >50%">50%: <b>{{d.halfThreshold}}</b></span>
+        <span class="horde-chip" data-tooltip="Сломлена при 25% и ниже">25%: <b>{{d.quarterThreshold}}</b></span>
+        {{#if d.immune}}<span class="horde-chip immune">✦ Несломляема</span>{{/if}}
+        <label class="horde-immune-toggle" data-tooltip="Иммунна к псих. урону, не может быть Сломлена"><input type="checkbox" name="system.immuneFear" {{checked system.immuneFear}}/> авто-Страх</label>
+      </div>
+    </section>
+
+    {{!-- Размер и боевые показатели --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">РАЗМЕР И БОЙ</div>
+      <div class="horde-stats-grid">
+        <div class="horde-stat"><span class="horde-stat-lbl">Размер</span><b class="horde-stat-val">{{d.magSize}}</b></div>
+        <div class="horde-stat"><span class="horde-stat-lbl">Бонус урона</span><b class="horde-stat-val">{{d.magDamageStr}}</b></div>
+        <div class="horde-stat"><span class="horde-stat-lbl">Целей (бл.)</span><b class="horde-stat-val">{{d.meleeTargets}}</b></div>
+        <div class="horde-stat"><span class="horde-stat-lbl">Выстрелов</span><b class="horde-stat-val">{{d.rangedShots}}</b></div>
+        <div class="horde-stat"><span class="horde-stat-lbl">Бонус W/Страх</span><b class="horde-stat-val">+{{d.psychTestBonus}}</b></div>
+        <div class="horde-stat"><span class="horde-stat-lbl">Врагов в бл.</span><input type="number" name="system.enemiesInMelee" value="{{system.enemiesInMelee}}" min="0" class="horde-stat-input" data-tooltip="Уменьшает число выстрелов"/></div>
+      </div>
+      <div class="horde-size-note">{{d.magSizeLabel}}</div>
+    </section>
+
+    {{!-- Характеристики --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">ХАРАКТЕРИСТИКИ <span class="dim">— база / продвиж. · клик = бросок</span></div>
+      <div class="horde-chars">
+        {{#each chars as |c|}}
+        <div class="horde-char">
+          <span class="horde-char-abbr">{{c.abbr}}</span>
+          <input type="number" name="system.characteristics.{{c.key}}.base" value="{{c.base}}" class="horde-char-in" data-tooltip="База"/>
+          <input type="number" name="system.characteristics.{{c.key}}.advance" value="{{c.advance}}" class="horde-char-in adv" data-tooltip="Продвижение"/>
+          <span class="horde-char-total">{{c.total}}<i>{{c.bonus}}</i></span>
+          <button type="button" class="hbtn horde-char-roll" data-action="rollChar" data-char="{{c.key}}" data-tooltip="Бросок {{c.label}}"><span class="hi hi-die"></span></button>
+        </div>
+        {{/each}}
+      </div>
+    </section>
+
+    {{!-- Защита и движение --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">ЗАЩИТА И ДВИЖЕНИЕ</div>
+      <div class="horde-defmove">
+        <label class="horde-field"><span>Поглощение</span><input type="number" name="system.absorption" value="{{system.absorption}}" min="0" data-tooltip="Броня + бонус Стойкости. Попадания — в торс."/></label>
+        <label class="horde-field"><span>Размер существа</span><input type="number" name="system.sizeMod" value="{{system.sizeMod}}" data-tooltip="Для SPD: 0 = человек"/></label>
+        <div class="horde-field"><span>Движение ½ / Ш / Нат / Бег</span><b class="horde-move">{{system.movement.halfMove}} / {{system.movement.move}} / {{system.movement.charge}} / {{system.movement.run}}</b></div>
+      </div>
+      <p class="horde-hint">Попадания — в торс. Пробившее Поглощение = 1 урона в Магнитуду. Доп. попадания: Blast(X) +X · Flame/Power Field +1 · Spray +Rng/5.</p>
+    </section>
+
+    {{!-- Оружие --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">ОРУЖИЕ <button type="button" class="horde-add" data-action="itemCreate" data-type="weapon">＋</button></div>
+      {{#if weapons.length}}
+      <div class="horde-list">
+        {{#each weapons as |w|}}
+        <div class="horde-row">
+          <button type="button" class="hbtn horde-roll-btn" data-action="weaponRoll" data-item-id="{{w.id}}" data-tooltip="Атака"><span class="hi hi-die"></span></button>
+          <span class="horde-row-name">{{w.name}}</span>
+          <span class="horde-row-dmg">{{w.sys.damage}}{{#if w.sys.penetration}} · Пб {{w.sys.penetration}}{{/if}}</span>
+          <span class="horde-row-tools">
+            <a class="hbtn" data-action="itemEdit" data-item-id="{{w.id}}" data-tooltip="Открыть"><span class="hi hi-pencil"></span></a>
+            <a class="hbtn hbtn-del" data-action="itemDelete" data-item-id="{{w.id}}" data-tooltip="Удалить"><span class="hi hi-x"></span></a>
+          </span>
+        </div>
+        {{/each}}
+      </div>
+      {{else}}<div class="horde-empty">Оружия нет.</div>{{/if}}
+    </section>
+  </div>
+
+  {{!-- ── ЧЕРТЫ ── --}}
+  <div class="tab {{#if (eq tab "traits")}}active{{/if}}" data-group="primary" data-tab="traits">
+    <section class="horde-panel">
+      <div class="horde-panel-title">ЧЕРТЫ И ТАЛАНТЫ <button type="button" class="horde-add" data-action="pick" data-kind="talent" title="Выбрать талант из библиотеки">Талант</button> <button type="button" class="horde-add" data-action="pick" data-kind="trait" title="Выбрать черту из библиотеки">Черта</button> <button type="button" class="horde-add" data-action="itemCreate" data-type="talent" title="Создать пустой талант">＋</button></div>
+      {{#if talents.length}}
+      <div class="horde-list">
+        {{#each talents as |t|}}
+        <div class="horde-row">
+          <span class="horde-row-name">{{t.name}}</span>
+          <span class="horde-row-desc">{{t.summary}}</span>
+          <span class="horde-row-tools">
+            <a class="hbtn" data-action="itemEdit" data-item-id="{{t.id}}" data-tooltip="Открыть"><span class="hi hi-pencil"></span></a>
+            <a class="hbtn hbtn-del" data-action="itemDelete" data-item-id="{{t.id}}" data-tooltip="Удалить"><span class="hi hi-x"></span></a>
+          </span>
+        </div>
+        {{/each}}
+      </div>
+      {{else}}<div class="horde-empty">Черт нет.</div>{{/if}}
+    </section>
+    <section class="horde-panel">
+      <div class="horde-panel-title">ОСОБЫЕ ПРАВИЛА ОРДЫ</div>
+      <textarea name="system.traits" class="horde-textarea" placeholder="Особые правила этой орды…">{{system.traits}}</textarea>
+    </section>
+  </div>
+
+  {{!-- ── ЗАМЕТКИ ── --}}
+  <div class="tab {{#if (eq tab "notes")}}active{{/if}}" data-group="primary" data-tab="notes">
+    <section class="horde-panel">
+      <div class="horde-panel-title">ЗАМЕТКИ</div>
+      <textarea name="system.notes" class="horde-textarea tall" placeholder="Описание, тактика, лор…">{{system.notes}}</textarea>
+    </section>
+    {{#if isGM}}
+    <section class="horde-panel horde-gm">
+      <div class="horde-panel-title">ЗАМЕТКИ ГМА <span class="dim">— только Мастер</span></div>
+      <textarea name="system.gmNotes" class="horde-textarea" placeholder="Секреты, условия восстановления Магнитуды…">{{system.gmNotes}}</textarea>
+    </section>
+    {{/if}}
+  </div>
+
+  {{!-- ── ПРАВИЛА ── --}}
+  <div class="tab {{#if (eq tab "rules")}}active{{/if}}" data-group="primary" data-tab="rules">
+    <section class="horde-panel horde-rules">
+      <div class="horde-panel-title">ПРАВИЛА ОРД</div>
+      <p><b>Действия.</b> Орда действует как один персонаж: обычный запас ОД и действия, но большая площадь. Не может Избегать, но имеет Реакции (тратит только в свой Ход на особые действия). Характеристики — как у членов; вместо Ран — Магнитуда.</p>
+      <p><b>Магнитуда</b> — размер и боеготовность, не буквальное число существ. Задаёт Размер (для атак по орде и Stealth, но не SPD): 10–29→2, 30–59→3, 60–89→4, 90–119→5, 120+→6.</p>
+      <p><b>Урон.</b> Все попадания — в торс. Пробившее Поглощение = 1 урона в Магнитуду (мощный одиночный урон неэффективен). Доп. попадания: Blast(X) +X, Flame +1, Power Field +1, Spray +Rng/5. Размер 1+ против существ Размера ≤0: +1 попадание за успешное рукопашное. Обездвиживающие/оглушающие эффекты могут наносить урон в Магнитуду по решению ГМа.</p>
+      <p><b>Психологический урон.</b> Эффекты, подрывающие волю, наносят урон в Магнитуду. Массивный урон за раунд (25%+ стартовой) → тест <b>W+Магнитуда</b>, иначе Провалы×3 урона. Провалы Страха ×2, Запугивания ×1 (бонус к тестам = Магнитуда). Flame + провал A+0 → доп. психологический урон вместо Горения. Лечится тестами Командования/социалки. Авто-проходящие Страх/Запугивание — иммунны.</p>
+      <p><b>Сломленная Орда.</b> Потеря >50% → −10 к тестам W и 10−W.b часов без лечения псих. урона. 25% и ниже → Орда Сломлена и рассыпается. Несломляемые сражаются до последнего.</p>
+      <p><b>Контроль.</b> Орда получает лишь эффекты 1 и 3 Командного Присутствия; тесты Командования лишь лечат псих. урон. Смещающие эффекты не действуют. Подавление работает с бонусом = Магнитуда.</p>
+      <p><b>Атаки.</b> В ближнем — до Магн./5 (мин.1) целей в контакте обычным числом атак; без бонусов за численность; только Обычная Атака / Стандартная Стойка / Базовый Хват. Стрельба — до (Магн./10) − (враги в бл./2), можно стрелять и бить одним действием. От атак Орды нельзя Избегать. Нет Прицеливания/Избирательных, игнор Крит. Провалов. Магн. 10–19 → +1d10 урона, 20+ → +2d10. Промах = попадание без бонусных кубов (можно Избегать). Мощное оружие (расчёты) стреляет отдельно и вычитается из Магнитуды.</p>
+      <p><b>Орда vs Орда.</b> В ближнем считает врага как число персонажей = клеткам контакта. Стрельба — по обычным правилам.</p>
+      <p><b>Прячась в Орде.</b> Не-избирательный выстрел в персонажа в союзной орде: чётный бросок — в персонажа, нечётный — в Орду. Очередь: каждое нечётное попадание (1,3,5…) — в Орду.</p>
+    </section>
+  </div>
+
+</div>

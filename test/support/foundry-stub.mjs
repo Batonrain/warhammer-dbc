@@ -39,6 +39,8 @@ class ApplicationStub {
   getData() { return {}; }
   /** Базовые слушатели Foundry (вкладки, свёртки) тестам не нужны. */
   activateListeners() {}
+  /** То же для ApplicationV2: базовый контекст пустой, лист дополняет его сам. */
+  async _prepareContext() { return {}; }
 }
 
 // Лист восстанавливает прокрутку следующим кадром; в node кадров нет.
