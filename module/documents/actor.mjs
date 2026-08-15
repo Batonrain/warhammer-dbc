@@ -732,20 +732,16 @@ export class WarhammerActor extends Actor {
         if (k === "arm") traitArmorLoc[side === "left" ? "leftArm" : "rightArm"] += 2;
         else if (k === "leg") traitArmorLoc[side === "left" ? "leftLeg" : "rightLeg"] += 2;
       }
-      // Роспись механик: авто-числовое (Unnatural/бонусы х-к, броня по локациям).
+      // Роспись механик Техночудес. Числовое (un/val/ap) отсюда ушло: его
+      // складывали по ИМЕНИ предмета, мимо эффектов и Конструктора, так что на
+      // листе импланта не было ни значения, ни способа поправить (wdbc-cy2).
+      // Теперь эти числа лежат в самом предмете (packs-src → system.effects →
+      // эффект миграцией, см. migrations/item-effects.mjs) и приходят сюда
+      // общей дорогой ниже. У трёх имплантов пака та же надбавка лежала в обоих
+      // местах разом, и бонус выходил двойным: Крукс Механикус давал S.b +4.
       if (t === "implant") {
         const mech = implantMech(item.name);
         if (mech) {
-          if (mech.un)  for (const [k, v] of Object.entries(mech.un))  traitCharBonus[k]      = (traitCharBonus[k]      || 0) + v;
-          if (mech.val) for (const [k, v] of Object.entries(mech.val)) traitCharValueBonus[k] = (traitCharValueBonus[k] || 0) + v;
-          if (mech.ap) {
-            if (mech.ap.all)  for (const kk of Object.keys(traitArmorLoc)) traitArmorLoc[kk] += mech.ap.all;
-            if (mech.ap.head) traitArmorLoc.head += mech.ap.head;
-            if (mech.ap.body) traitArmorLoc.body += mech.ap.body;
-            if (mech.ap.arms) { traitArmorLoc.leftArm += mech.ap.arms; traitArmorLoc.rightArm += mech.ap.arms; }
-            if (mech.ap.legs) { traitArmorLoc.leftLeg += mech.ap.legs; traitArmorLoc.rightLeg += mech.ap.legs; }
-          }
-          // Кибернетика Механикум — Техночудеса
           const q = item.system.quality || "common";
           if (mech.energyMax) implantEnergyMax += mech.energyMax;
           if (mech.compensator && (mech.compensator[q] ?? 0) > implantCompBonus)

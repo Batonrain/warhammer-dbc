@@ -37,9 +37,6 @@
 {{#if implantMech.any}}
 <div class="item-section implant-mech">
   <div class="item-section-title">МЕХАНИКА <span class="implant-mech-tag">роспись</span></div>
-  {{#if implantMech.auto.length}}
-  <div class="implant-mech-auto"> <span class="implant-mech-lbl">Авто:</span> {{#each implantMech.auto as |a|}}<span class="implant-mech-chip">{{a}}</span>{{/each}}
-  </div> {{/if}}
   {{#if implantMech.traits.length}}
   <div class="implant-mech-row"> <span class="implant-mech-lbl">Трейты:</span> {{#each implantMech.traits as |t|}}<span class="implant-mech-chip is-trait">{{t}}</span>{{/each}}
   </div> {{/if}}
