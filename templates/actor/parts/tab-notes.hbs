@@ -1,4 +1,4 @@
-<div class="tab notes-cog" data-tab="notes" data-group="primary">
+<div class="tab notes-cog {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
 
   {{!-- Телосложение задаёт набор PNG-масок фигуры на вкладке «ТЕЛО». --}}
   <div class="notes-section-panel body-type-panel">
@@ -25,7 +25,7 @@
         <span class="chaos-patron-name">{{p.label}}</span>
         <span class="chaos-patron-favor">
           <span class="chaos-patron-favor-val" title="Благосклонность — {{p.label}}">{{p.favor}}</span>
-          <button type="button" class="stat-add-btn patron-favor-add" data-stat="patronFavor" data-god="{{p.key}}" title="Добавить Благосклонность — {{p.label}}">＋</button>
+          <button type="button" class="stat-add-btn patron-favor-add" data-action="statAdd" data-stat="patronFavor" data-god="{{p.key}}" title="Добавить Благосклонность — {{p.label}}">＋</button>
         </span>
       </label>
       {{/each}}

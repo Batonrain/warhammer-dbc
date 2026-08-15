@@ -7,19 +7,55 @@ import { WarhammerCharacterSheet } from "./actor-sheet.mjs";
 import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_KEY_TRAITS,
          allegianceMeta, formDuration } from "../constants/demon-mechanics.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
+
+// Действия листа демона; всё общее — от листа персонажа: ApplicationV2 склеивает
+// DEFAULT_OPTIONS по цепочке классов, поэтому его карта действий здесь в силе.
+function onInstability() { return this._rollInstability(); }
+function onInfamy()      { return this._rollInfamy(); }
+function onAvatar()      { return this._pickAvatar(); }
 
 export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "sheet", "actor", "daemon", "wh-holo", "wh-daemon"],
-      template: "systems/warhammer-dbc/templates/actor/daemon-sheet.hbs",
-      width: 820, height: 880,
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "stats" }]
-    });
-  }
+  static DEFAULT_OPTIONS = {
+    classes: ["warhammer-dbc", "sheet", "actor", "daemon", "wh-holo", "wh-daemon"],
+    position: { width: 820, height: 880 },
+    actions: {
+      // Навигация по вкладкам — своя разметка, общий обработчик.
+      tab: onTab,
+      daemonInstability: whenEditable(onInstability),
+      daemonInfamy:      whenEditable(onInfamy),
+      daemonAvatar:      whenEditable(onAvatar)
+    }
+  };
 
-  getData() {
-    const context = super.getData();
+  static PARTS = {
+    body: {
+      template: "systems/warhammer-dbc/templates/actor/daemon-sheet.hbs",
+      root: true,
+      scrollable: [".sheet-body", ".skills-advance-scroll"]
+    }
+  };
+
+  // Вкладок меньше, чем у персонажа: ни Тела, ни Одержимости, ни Гемункула,
+  // зато своя — справочник демонических механик.
+  static TABS = {
+    primary: {
+      initial: "stats",
+      tabs: [
+        { id: "stats",      label: "ПОКАЗАТЕЛИ" },
+        { id: "combat",     label: "БОЙ" },
+        { id: "abilities",  label: "СПОСОБНОСТИ" },
+        { id: "psy",        label: "ПСИ" },
+        { id: "gear",       label: "СНАРЯЖЕНИЕ" },
+        { id: "advance",    label: "РАЗВИТИЕ" },
+        { id: "daemonlore", label: "ДЕМОНОЛОГИЯ" },
+        { id: "notes",      label: "ЗАПИСИ" }
+      ]
+    }
+  };
+
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
     const s = this.actor.system;
 
     // У демонов Inf — это Бесчестие (независимо от alignment).
@@ -57,18 +93,18 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     return context;
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
+  _onRender(context, options) {
+    super._onRender(context, options);
     if (!this.isEditable) return;
-    html.find(".daemon-instability-btn").click(() => this._rollInstability());
-    html.find(".daemon-infamy-btn").click(() => this._rollInfamy());
-    // Аватар: клик — выбрать своё изображение; ПКМ — вернуть сигил бога.
-    html.find(".daemon-sigil").on("click", () => this._pickAvatar());
-    html.find(".daemon-sigil").on("contextmenu", ev => { ev.preventDefault(); this._resetAvatar(); });
+    // Клик по аватару — действие daemonAvatar; ПКМ действием не выражается:
+    // у ApplicationV2 действие — это клик.
+    this.element?.querySelectorAll(".daemon-sigil").forEach(n =>
+      n.addEventListener("contextmenu", ev => { ev.preventDefault(); this._resetAvatar(); }));
   }
 
   _pickAvatar() {
-    new FilePicker({ type: "image", current: this.actor.img, callback: p => this._setAvatar(p) }).render(true);
+    const FP = filePicker();
+    new FP({ type: "image", current: this.actor.img, callback: p => this._setAvatar(p) }).render(true);
   }
   _resetAvatar() {
     this._setAvatar(allegianceMeta(this.actor.system.allegiance || "undivided").sigil);

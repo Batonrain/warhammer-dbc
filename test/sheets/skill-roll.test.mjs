@@ -2,12 +2,12 @@
 // сложение галочек в диалоге, бонус снятого шлема, штраф Усталости и итоговый
 // порог броска.
 //
-// Единственный тест в проекте, которому нужна заглушка Foundry: лист персонажа
-// наследует класс из foundry.appv1 при загрузке модуля. Сама проверяемая логика
-// заглушку не задействует — см. test/support/foundry-stub.mjs.
+// Заглушка Foundry нужна дважды: лист наследует класс приложения при загрузке
+// модуля, а диалог броска — это DialogV2, кнопку которого тест жмёт через
+// captured.press. Сам расчёт порога заглушку не задействует.
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { captured, resetCaptured, sheetOf, fakeHtml, checkbox } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, sheetOf, fakeForm, checkbox } from "../support/foundry-stub.mjs";
 
 // Динамический импорт: глобали Foundry должны быть на месте раньше листа.
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
@@ -21,7 +21,7 @@ const sheet = system => sheetOf(WarhammerCharacterSheet, {
 /** Открыть диалог броска и нажать «Бросок» с заданными полями и галочками. */
 async function pressRoll(system, fields = {}, checks = {}) {
   const promise = sheet(system)._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" });
-  captured.dialog.buttons.roll.callback(fakeHtml({
+  await captured.press("roll", fakeForm({
     "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": "0", ...fields
   }, checks));
   return promise;
@@ -127,7 +127,7 @@ describe("итоговый порог броска", () => {
     const s = sheet(system);
     const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" });
     captured.nextRoll = roll;
-    captured.dialog.buttons.roll.callback(fakeHtml({
+    await captured.press("roll", fakeForm({
       "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": modifier
     }));
     await promise;

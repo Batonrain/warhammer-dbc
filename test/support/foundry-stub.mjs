@@ -378,10 +378,11 @@ globalThis.renderTemplate = async () => "";
 globalThis.fromUuid = async () => null;
 globalThis.fromUuidSync = () => null;
 /** jQuery-обёртка над элементом: диалог атаки читает галочки через $(cb).data(). */
-globalThis.$ = el => ({
+const elementJq = el => ({
   data:    key => el?.dataset?.[key],
   closest: () => ({ text: () => "" })
 });
+globalThis.$ = elementJq;
 
 /**
  * Лист без Foundry: объект с прототипом класса и подставным актором. Конструктор
@@ -464,7 +465,13 @@ export function listenerRoot(nodes = {}, handlers = {}) {
   });
   return {
     handlers,
-    querySelectorAll: selector => (nodes[selector]?.length ? nodes[selector] : [{}])
+    // Классы темы листа (раса/мировоззрение/класс) заглушка проглатывает, как и
+    // остальное оформление: тесты проверяют поведение обработчиков.
+    classList: Object.assign([], { add() {}, remove() {}, toggle() {}, contains: () => false }),
+    addEventListener: (event, fn) => { handlers[`:${event}`] = fn; },
+    // Селектор без объявленных узлов отдаёт один пустой — с dataset, как у
+    // настоящего элемента: обработчик читает из него данные строки.
+    querySelectorAll: selector => (nodes[selector]?.length ? nodes[selector] : [{ dataset: {} }])
       .map(el => bind(selector, el)),
     querySelector:    selector => nodes[selector]?.[0] ?? null
   };
@@ -478,7 +485,7 @@ export function listenerRoot(nodes = {}, handlers = {}) {
  */
 export function listenerHtml(nodes = {}) {
   const handlers = {};
-  return {
+  const html = {
     handlers,
     // html[0] — корень DOM для модулей, уже снятых с jQuery (wdbc-z0z).
     // Обработчики ложатся в тот же handlers, поэтому тесты не различают,
@@ -497,6 +504,11 @@ export function listenerHtml(nodes = {}) {
       return node;
     }
   };
+  // Лист V2 оборачивает свой корень сам — $(this.element). Отдаём на этот
+  // корень ту же обёртку, иначе модули вкладок, ещё не снятые с jQuery (wdbc-z0z),
+  // ничего не найдут и обработчики не попадут в handlers.
+  globalThis.$ = el => (el === html[0] ? html : elementJq(el));
+  return html;
 }
 
 /** Отмеченная галочка модификатора — как её читает диалог из data-атрибутов. */

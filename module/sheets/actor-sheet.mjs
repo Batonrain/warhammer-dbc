@@ -48,6 +48,7 @@ import { activateRaceListeners } from "../apps/races.mjs";
 import { grantAstartesImplants } from "../apps/astartes-implants.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
@@ -61,18 +62,238 @@ const TALENT_ALIAS = {
 // Разделители вариантов выбора в данных: « или » и «/».
 const TALENT_CHOICE_SEP = /\s+или\s+|\s*\/\s*/i;
 
-export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
+// ── Действия листа ───────────────────────────────────────────────────────────
+// ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
+// источником вторым аргументом. Здесь только СВОИ кнопки листа: всё, что уже
+// вынесено во вкладки (module/sheets/tabs/), навешивают их модули, и в карту
+// действий оно не попадает. Общая обвязка — в v2-helpers.mjs.
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc","sheet","actor","character","wh-holo"],
-      template: "systems/warhammer-dbc/templates/actor/character-sheet.hbs",
-      width: 840, height: 920,
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "stats" }]
-    });
+function onPortrait() {
+  const FP = filePicker();
+  return new FP({
+    type: "image", current: this.actor.img || "",
+    callback: path => this.actor.update({ img: path })
+  }).render(true);
+}
+
+// ── Очки Бесчестия (общая полоса infamy-strip) ──
+function onInfamyMinus()   { return this._ipChange(-1); }
+function onInfamyPlus()    { return this._ipChange(+1); }
+function onInfamyRestore() { return this._ipRestore(); }
+function onInfamySpend(event, target) { return this._ipSpend(target.dataset.ability); }
+
+// ── Свёртки: состояние ОКНА, а не актора — без ре-рендера ──
+function onCombatCollapse(event, target) {
+  const key = target.dataset.collapse;
+  this._combatCollapse[key] = !this._combatCollapse[key];
+  target.closest(".combat-collapsible")?.classList.toggle("collapsed", this._combatCollapse[key]);
+}
+
+function onGearCat(event, target) {
+  if (event.target.closest("button, select, input, a")) return;   // не по контролам внутри
+  const key = target.dataset.gearCat;
+  this._gearCollapse[key] = !this._gearCollapse[key];
+  target.closest(".gear-cat")?.classList.toggle("collapsed", this._gearCollapse[key]);
+}
+
+function onGearModsToggle(event, target) {
+  event.preventDefault(); event.stopPropagation();
+  const hid = target.dataset.hostId;
+  if (this._gearHostCollapse.has(hid)) this._gearHostCollapse.delete(hid);
+  else this._gearHostCollapse.add(hid);
+  this._applyGearHostCollapse(hid);
+}
+
+function onGeneToggle(event, target) {
+  event.preventDefault();
+  this._geneSeedOpen = !this._geneSeedOpen;
+  this.element?.querySelectorAll(".gene-organs")
+    .forEach(n => n.classList.toggle("collapsed", !this._geneSeedOpen));
+  target.textContent = (this._geneSeedOpen ? "▾" : "▸") + " Импланты";
+}
+
+function onPathsToggle(event, target) {
+  event.preventDefault();
+  const nowOpen = this._pathsOpen === false;             // был свёрнут → разворачиваем
+  this._pathsOpen = nowOpen;
+  this.element?.querySelectorAll(".paths-collapse")
+    .forEach(n => n.classList.toggle("collapsed", !nowOpen));
+  target.textContent = (nowOpen ? "▾" : "▸") + " Пути";
+}
+
+// Раскрытие описания таланта/черты/мутации в выпадающей строке под основной.
+// Строка описания всегда идёт СЛЕДУЮЩИМ <tr> сразу за строкой с кнопкой — берём
+// её так, а не поиском по data-item-id: на одном листе таблицы талантов, черт,
+// имплантов и органов Геносемени независимы, и если бы где-то совпал id,
+// раскрытие по атрибуту открыло бы сразу все совпадения.
+function onAbilityDetail(event, target) {
+  event.preventDefault(); event.stopPropagation();
+  const tr  = target.closest("tr");
+  const row = tr?.nextElementSibling;
+  if (!row?.classList.contains("ability-detail-row")) return;
+  const shown = row.style.display === "none";
+  row.style.display = shown ? "" : "none";
+  target.textContent = shown ? "▾" : "▸";
+  tr.classList.toggle("ability-row-open", shown);
+}
+
+// ── Мастер создания персонажа (только по кнопке) ──
+// Черты, стартовые таланты и тема листа остаются на листе: их зовут и кнопки
+// «Применить расу»/«Применить легион». Органы Геносемени переехали к своему
+// синку в apps/astartes-implants.mjs, но приходят тем же колбэком.
+function onCharWizard(event) {
+  event.preventDefault();
+  showCreationWizard(this.actor, {
+    createTraits:          (list, source) => this._createTraitsFromList(list, source),
+    applyStartingTalents:  (raw, source)  => this._applyStartingTalents(raw, source),
+    grantAstartesImplants: ()             => grantAstartesImplants(this.actor),
+    applyTheme:            ()             => this._applyThemeClasses()
+  });
+}
+
+// ── Кнопки «+» показателей: Безумие/Порча (число или XdY+Z), Опыт,
+//    Благосклонность Бога-покровителя (ЗАПИСИ) — общий диалог+лог в чат ──
+async function onStatAdd(event, target) {
+  event.preventDefault();
+  event.stopPropagation();
+  const stat = target.dataset.stat;
+  if (stat === "insanity") {
+    await promptStatAdd(this.actor, { label: "Безумие", path: "system.insanity.value", allowDice: true });
+  } else if (stat === "corruption") {
+    await promptStatAdd(this.actor, { label: "Порча", path: "system.corruption.value", allowDice: true });
+  } else if (stat === "xpTotal") {
+    await promptStatAdd(this.actor, { label: "Опыт (Всего)", path: "system.experience.total" });
+  } else if (stat === "patronFavor") {
+    const god = target.dataset.god;
+    const meta = chaosPatronMeta(god);
+    await promptStatAdd(this.actor, { label: `Благосклонность — ${meta.label}`, path: `system.patronFavor.${god}` });
   }
+}
 
-  _savedScrollTops = {};
+// ── Броски характеристики и навыка ──
+function onCharRoll(event, target) {
+  const key = target.dataset.char;
+  if (key === "pf") {                       // Фактор Прибыли — не характеристика
+    const pf = Number(this.actor.system.aspirations?.profitFactor) || 0;
+    return this._rollCharacteristic("Фактор Прибыли", "PF", pf, "pf", true);
+  }
+  const meta  = CHARACTERISTICS[key];
+  const total = this.actor.system.characteristics[key]?.total ?? 0;
+  return this._rollCharacteristic(charLabel(key, this.actor.system.alignment), meta.abbr, total, key);
+}
+
+function onSkillRoll(event, target) {
+  if (target.dataset.group === "true") {
+    const groupKey = target.dataset.groupkey;
+    const idx      = parseInt(target.dataset.index);
+    const entry    = this.actor.system.groupSkills?.[groupKey]?.[idx];
+    const def      = GROUP_SKILLS_DEF[groupKey];
+    if (!entry || !def) return;
+    return this._rollSkill(`${def.label}: ${entry.specialty}`, entry.total ?? -20, entry.char || def.char,
+      { group: groupKey, specialty: entry.specialty });
+  }
+  const key = target.dataset.skill;
+  const def = SKILLS_DEF[key];
+  const sk  = this.actor.system.skills?.[key];
+  return this._rollSkill(def?.label ?? key, sk?.total ?? -20, def?.char ?? "ag", { skill: key });
+}
+
+// ── Снаряжение и пикеры ──
+function onItemAdd() { return this._showAddItemDialog(); }
+function onRigOpen()  { return openRigManager(this.actor); }
+function onGearLib(event) { event.preventDefault(); return this._openGearPicker(); }
+
+// Добавление Черт/Талантов — через пикер с листа (группировка по типам, поиск,
+// описание по стрелке). ПКМ — создать пустую (для своих/книжных), см. _onRender.
+function onTraitAdd(event)  { event.preventDefault(); return this._openItemPicker("trait"); }
+function onTalentAdd(event) { event.preventDefault(); return this._openItemPicker("talent"); }
+
+// ＋ Мутация/Дар — общий пул (см. tabs/mutations.mjs): выбор ЛЮБОЙ записи из
+// Общих Мутаций ИЛИ Даров любого Бога, не только покровителя.
+async function onMutgiftAdd(event) {
+  event.preventDefault();
+  if (event.shiftKey) {   // Shift — пустая мутация с нуля
+    const item = await Item.create({ name: "Новая мутация", type: "mutation" }, { parent: this.actor });
+    return item?.sheet?.render(true);
+  }
+  return openMutationPicker(this.actor);
+}
+
+// 🎲 Бросок по общему пулу (Общие Мутации ИЛИ Дар Бога — тип выбирается в
+// диалоге). Бросок можно сдвинуть на ±Inf.b (если результат не от Провала).
+function onMutgiftRoll(event) {
+  event.preventDefault();
+  return rollMutationOrGift(this.actor);
+}
+
+export class WarhammerCharacterSheet
+  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+
+  static DEFAULT_OPTIONS = {
+    classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
+    position: { width: 840, height: 920 },
+    window: { resizable: true },
+    form: { submitOnChange: true, closeOnSubmit: false },
+    actions: {
+      // Вкладки и свёртки доступны и тому, кто лист только смотрит.
+      tab: onTab,
+      combatCollapse: onCombatCollapse,
+      gearCat: onGearCat,
+      gearModsToggle: onGearModsToggle,
+      // Ниже — то, что в V1 стояло после общей проверки isEditable.
+      portrait: whenEditable(onPortrait),
+      infamyMinus: whenEditable(onInfamyMinus),
+      infamyPlus: whenEditable(onInfamyPlus),
+      infamyRestore: whenEditable(onInfamyRestore),
+      infamySpend: whenEditable(onInfamySpend),
+      charWizard: whenEditable(onCharWizard),
+      abilityDetail: whenEditable(onAbilityDetail),
+      geneToggle: whenEditable(onGeneToggle),
+      pathsToggle: whenEditable(onPathsToggle),
+      statAdd: whenEditable(onStatAdd),
+      charRoll: whenEditable(onCharRoll),
+      skillRoll: whenEditable(onSkillRoll),
+      itemAdd: whenEditable(onItemAdd),
+      rigOpen: whenEditable(onRigOpen),
+      gearLib: whenEditable(onGearLib),
+      traitAdd: whenEditable(onTraitAdd),
+      talentAdd: whenEditable(onTalentAdd),
+      mutgiftAdd: whenEditable(onMutgiftAdd),
+      mutgiftRoll: whenEditable(onMutgiftRoll)
+    }
+  };
+
+  // Прокрутку вкладок и таблицы Развития между перерисовками держит сам
+  // ApplicationV2 (scrollable) — этим и заменена ручная пара
+  // _saveScrollPositions/_restoreScrollPositions.
+  static PARTS = {
+    body: {
+      template: "systems/warhammer-dbc/templates/actor/character-sheet.hbs",
+      root: true,
+      scrollable: [".sheet-body", ".skills-advance-scroll"]
+    }
+  };
+
+  static TABS = {
+    primary: {
+      initial: "stats",
+      tabs: [
+        { id: "stats",       label: "ПОКАЗАТЕЛИ" },
+        { id: "combat",      label: "БОЙ" },
+        { id: "effects",     label: "ТЕЛО" },
+        { id: "possession",  label: "ОДЕРЖИМОСТЬ" },
+        { id: "haemonculus", label: "ГЕМУНКУЛ" },
+        { id: "abilities",   label: "СПОСОБНОСТИ" },
+        { id: "psy",         label: "ПСИ" },
+        { id: "tech",        label: "ТЕХ" },
+        { id: "nav",         label: "НАВ" },
+        { id: "gear",        label: "СНАРЯЖЕНИЕ" },
+        { id: "advance",     label: "РАЗВИТИЕ" },
+        { id: "notes",       label: "ЗАПИСИ" }
+      ]
+    }
+  };
+
   _geneSeedOpen = false;
   _combatCollapse = { stance: false, tech: false };
   // Свёрнутые категории вкладки снаряжения (ключ категории → свёрнута?).
@@ -81,39 +302,28 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   _gearHostCollapse = new Set();
   _wizardPrompted = false;
 
-  _saveScrollPositions() {
-    if (!this.element?.length) return;
-    this.element.find(".sheet-body, .skills-advance-scroll").each((i, el) => {
-      this._savedScrollTops[i] = el.scrollTop;
-    });
-  }
-
-  _restoreScrollPositions() {
-    if (!this.element?.length) return;
-    this.element.find(".sheet-body, .skills-advance-scroll").each((i, el) => {
-      if (this._savedScrollTops[i] !== undefined) el.scrollTop = this._savedScrollTops[i];
-    });
-  }
-
-  async render(force = false, options = {}) {
-    this._saveScrollPositions();
-    return super.render(force, options);
-  }
-
   // Показать/скрыть под-строки установленных улучшений конкретного носителя
   // (оружия/брони) на вкладке снаряжения. Строки-описания при сворачивании
   // прячутся; при разворачивании остаются скрытыми (раскрываются кнопкой ▸).
-  _applyGearHostCollapse(html, hid) {
+  _applyGearHostCollapse(hid) {
+    const el = this.element;
+    if (!el) return;
     const collapsed = !!this._gearHostCollapse?.has(hid);
-    html.find(`.gear-modsub-row[data-host-id="${hid}"]`).css("display", collapsed ? "none" : "");
-    if (collapsed) html.find(`.ability-detail-row[data-host-id="${hid}"]`).css("display", "none");
-    html.find(`.gear-mods-toggle[data-host-id="${hid}"]`).toggleClass("collapsed", collapsed);
+    el.querySelectorAll(`.gear-modsub-row[data-host-id="${hid}"]`)
+      .forEach(n => { n.style.display = collapsed ? "none" : ""; });
+    if (collapsed) el.querySelectorAll(`.ability-detail-row[data-host-id="${hid}"]`)
+      .forEach(n => { n.style.display = "none"; });
+    el.querySelectorAll(`.gear-mods-toggle[data-host-id="${hid}"]`)
+      .forEach(n => n.classList.toggle("collapsed", collapsed));
   }
 
-  // ── getData ───────────────────────────────────────────────────────────────
+  // ── Контекст шаблона ──────────────────────────────────────────────────────
 
-  getData() {
-    const context = super.getData();
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+    context.actor = this.actor;
+    // this.constructor, а не свой класс: у Демона и Демон-Принца вкладки свои.
+    context.tab   = this.tabGroups?.primary ?? this.constructor.TABS.primary.initial;
 
     // Контекст шаблона собирают два модуля: sheet-helpers.mjs — списки вкладок,
     // character-context.mjs — самого персонажа. Здесь остаётся только то, что
@@ -215,11 +425,12 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
    */
   _applyThemeClasses() {
     const root = this.element;
-    if (!root?.length) return;
+    if (!root) return;
     const sys = this.actor.system;
     const cls = sys.isTechpriest ? "techpriest" : (sys.isPsyker ? "psyker" : "adept");
-    root.removeClass((i, c) => (c.match(/wh-(align|race|class)-\S+/g) || []).join(" "));
-    root.addClass(`wh-align-${sys.alignment || "loyalist"} wh-race-${sys.race || "none"} wh-class-${cls}`);
+    root.classList.remove(...[...root.classList].filter(c => /^wh-(align|race|class)-/.test(c)));
+    root.classList.add(`wh-align-${sys.alignment || "loyalist"}`,
+      `wh-race-${sys.race || "none"}`, `wh-class-${cls}`);
   }
 
   /** Создаёт Черты из списка {name,benefit,rating,hasRating,effects}, пропуская существующие по имени. */
@@ -368,29 +579,27 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       return `<div class="atk-dlg-row wtc-row"><label class="wtc-lbl">${nameOf(c.base)} <span class="wtc-x">×${c.count}</span></label><div class="wtc-inputs">${inputs}</div></div>`;
     }).join("");
 
-    return new Promise(resolve => {
-      new Dialog({
-        title: "Выбор стартовых талантов",
-        content: `<form class="wh-talent-choices"><p class="wtc-hint">Уточните таланты-выборы:</p>${rows}</form>`,
-        buttons: {
-          ok: {
-            label: "Применить",
-            callback: html => {
-              const result = [];
-              html.find("[data-ci]").each((_, el) => {
-                const c = choices[Number(el.dataset.ci)];
-                const v = String(el.value || "").trim();
-                if (!v) return;
-                result.push(c.type === "wild" ? `${c.base} (${v})` : v);
-              });
-              resolve(result);
-            }
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Выбор стартовых талантов" },
+      classes: ["warhammer-dbc", "wh-holo", "wh-talent-dialog"],
+      position: { width: 480 },
+      content: `<div class="wh-talent-choices"><p class="wtc-hint">Уточните таланты-выборы:</p>${rows}</div>`,
+      buttons: [{
+        action: "ok", label: "Применить", default: true,
+        callback: (event, button) => {
+          const result = [];
+          for (const el of button.form.querySelectorAll("[data-ci]")) {
+            const c = choices[Number(el.dataset.ci)];
+            const v = String(el.value || "").trim();
+            if (!v) continue;
+            result.push(c.type === "wild" ? `${c.base} (${v})` : v);
           }
-        },
-        default: "ok",
-        close: () => resolve([])
-      }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-talent-dialog"], width: 480 }).render(true);
-    });
+          return result;
+        }
+      }],
+      // Закрыли окно, не выбрав, — считаем, что таланты-выборы пропущены.
+      rejectClose: false
+    }).then(res => res ?? []);
   }
 
 
@@ -419,26 +628,28 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
   // ── Слушатели ─────────────────────────────────────────────────────────────
   //
-  // Расчёт отсюда вынесен: остались вызовы `activate*Listeners` модулей и три
-  // вещи, которым место именно здесь.
+  // Кнопки листа переехали в карту действий выше. Здесь осталось то, что
+  // действием не выражается:
   //
-  // 1. Состояние ОКНА, а не актора: прокрутка, свёртка Стоек/Приёмов, категорий
-  //    Снаряжения, улучшений под носителем, гайда имплантов и Путей, тема листа,
-  //    раскрытие строки описания, зрачок Третьего Глаза, драг предметов. Всё это
-  //    живёт до закрытия листа и в актора не пишется.
-  // 2. Точки входа диалогов листа: Мастер создания, пикеры, броски
-  //    характеристики и навыка, «+» показателей, Очки Бесчестия. Диалог —
-  //    часть листа; модулю он приходит колбэком (так же его зовёт HUD).
-  // 3. Одна строка на источник бонусов: Родной мир, Архетип, Прорицание — сам
-  //    расчёт в apps/.
+  // 1. Вызовы `activate*Listeners` модулей вкладок. Те, что уже сняты с jQuery
+  //    (wdbc-z0z), получают корень DOM; остальным по-прежнему нужна обёртка —
+  //    её и делаем одну на весь метод.
+  // 2. Изменение полей (`change`) и ПКМ: у ApplicationV2 действие — это клик.
+  // 3. Состояние ОКНА, а не актора: тема листа, восстановление свёрток,
+  //    зрачок Третьего Глаза, драг предметов с листа.
 
-  activateListeners(html) {
-    requestAnimationFrame(() => { this._restoreScrollPositions(); });
-    super.activateListeners(html);
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
+    if (!el) return;
 
-    // Модули, уже снятые с jQuery (wdbc-z0z), получают корень DOM, а не
-    // обёртку. Лист остаётся на первом поколении, пока их не станет большинство.
-    const root = html[0] ?? html;
+    // Модулям вкладок, ещё не снятым с jQuery (wdbc-z0z), нужна обёртка; тем,
+    // что уже сняты, — корень DOM. Одна обёртка на весь метод, а не на модуль.
+    const html = globalThis.$(el);
+    const root = el;
+
+    /** Слушатель на все узлы по селектору — замена jQuery-обхода из V1. */
+    const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
 
     // ── Элитный архетип в шапке ───────────────────────────────────────────
     activateEliteListeners(html, this.actor);
@@ -446,31 +657,22 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     // ── Происхождение (Родные миры) ───────────────────────────────────────
     // Смена мира снимает всё, что дал прежний, и выдаёт новое (с диалогом
     // выбора, если мир его требует). Сам <select> не привязан к system.*.
-    html.find(".hw-select").on("change", ev => applyHomeworld(this.actor, ev.currentTarget.value));
-    html.find(".arch-select").on("change", ev => applyArchetype(this.actor, ev.currentTarget.value));
-    html.find(".dv-select").on("change", ev => applyDivination(this.actor, ev.currentTarget.value));
+    on(".hw-select", "change", ev => applyHomeworld(this.actor, ev.currentTarget.value));
+    on(".arch-select", "change", ev => applyArchetype(this.actor, ev.currentTarget.value));
+    on(".dv-select", "change", ev => applyDivination(this.actor, ev.currentTarget.value));
 
     // ── Вкладка ГЕМУНКУЛ ──────────────────────────────────────────────────
     activateHaemonculusListeners(html, this.actor);
-
-    // Очки Бесчестия (общая полоса infamy-strip)
-    if (this.isEditable) {
-      html.find(".dp-ip-minus").click(() => this._ipChange(-1));
-      html.find(".dp-ip-plus").click(() => this._ipChange(+1));
-      html.find(".dp-ip-restore").click(() => this._ipRestore());
-      html.find(".dp-ip-spend").click(ev => this._ipSpend(ev.currentTarget.dataset.ability));
-    }
 
     // ── Визуальная темизация листа по расе / мировоззрению / классу ─────────
     this._applyThemeClasses();
 
     // ── Третий Глаз навигатора: зрачок следит за курсором ──────────────────
-    const eyeMove = html.find(".nav-eye-move")[0];
-    const eyeSvg  = html.find(".nav-eye")[0];
+    const eyeMove = el.querySelector(".nav-eye-move");
+    const eyeSvg  = el.querySelector(".nav-eye");
     if (eyeMove && eyeSvg) {
-      const rootEl = this.element?.[0] || html[0];
       const MAX = 11; // user-units (svg)
-      const onEye = (ev) => {
+      el.addEventListener("mousemove", ev => {
         const r = eyeSvg.getBoundingClientRect();
         if (!r.width) return;
         let dx = (ev.clientX - (r.left + r.width / 2)) / (r.width / 2);
@@ -478,47 +680,26 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
         const len = Math.hypot(dx, dy);
         if (len > 1) { dx /= len; dy /= len; }
         eyeMove.style.transform = `translate(${(dx * MAX).toFixed(2)}px, ${(dy * MAX).toFixed(2)}px)`;
-      };
-      rootEl?.addEventListener("mousemove", onEye);
+      });
     }
 
-    // ── Бой: свернуть/развернуть Стойки и Приёмы (без ре-рендера) ──────────
-    html.find(".combat-collapse-head[data-collapse]").on("click", ev => {
-      const key = ev.currentTarget.dataset.collapse;
-      if (!this._combatCollapse) this._combatCollapse = {};
-      this._combatCollapse[key] = !this._combatCollapse[key];
-      ev.currentTarget.closest(".combat-collapsible")?.classList.toggle("collapsed", this._combatCollapse[key]);
-    });
-
-    // ── Снаряжение: свернуть/развернуть категорию (без ре-рендера; доступно и
-    //    наблюдателям — потому размещено до проверки прав редактирования) ─────
-    html.find(".gear-cat-head[data-gear-cat]").on("click", ev => {
-      if (ev.target.closest("button, select, input, a")) return; // не по контролам внутри
-      const key = ev.currentTarget.dataset.gearCat;
-      if (!this._gearCollapse) this._gearCollapse = {};
-      this._gearCollapse[key] = !this._gearCollapse[key];
-      ev.currentTarget.closest(".gear-cat")?.classList.toggle("collapsed", this._gearCollapse[key]);
-    });
-
-    // ── Снаряжение: свернуть/развернуть улучшения под носителем ──────────────
-    if (!this._gearHostCollapse) this._gearHostCollapse = new Set();
-    // Восстанавливаем состояние после ре-рендера.
-    for (const hid of this._gearHostCollapse) this._applyGearHostCollapse(html, hid);
-    html.find(".gear-mods-toggle[data-host-id]").on("click", ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      const hid = ev.currentTarget.dataset.hostId;
-      if (this._gearHostCollapse.has(hid)) this._gearHostCollapse.delete(hid);
-      else this._gearHostCollapse.add(hid);
-      this._applyGearHostCollapse(html, hid);
-    });
+    // ── Восстановление свёрток после ре-рендера ────────────────────────────
+    for (const hid of this._gearHostCollapse) this._applyGearHostCollapse(hid);
+    if (this._geneSeedOpen) {
+      el.querySelectorAll(".gene-organs").forEach(n => n.classList.remove("collapsed"));
+      el.querySelectorAll(".gene-toggle-btn").forEach(n => { n.textContent = "▾ Импланты"; });
+    }
+    if (this._pathsOpen === false) {
+      el.querySelectorAll(".paths-collapse").forEach(n => n.classList.add("collapsed"));
+      el.querySelectorAll(".paths-toggle-btn").forEach(n => { n.textContent = "▸ Пути"; });
+    }
 
     // ── Драг предметов из листа (напр. оружие → «Осквернение» в Завесе) ─────
-    html.find(".item-row[data-item-id]").each((i, el) => {
-      const id = el.dataset.itemId;
-      const item = this.actor.items.get(id);
+    el.querySelectorAll(".item-row[data-item-id]").forEach(n => {
+      const item = this.actor.items.get(n.dataset.itemId);
       if (!item) return;
-      el.setAttribute("draggable", "true");
-      el.addEventListener("dragstart", ev => {
+      n.setAttribute("draggable", "true");
+      n.addEventListener("dragstart", ev => {
         ev.stopPropagation();
         ev.dataTransfer.setData("text/plain", JSON.stringify({ type: "Item", uuid: item.uuid }));
         ev.dataTransfer.effectAllowed = "copy";
@@ -527,51 +708,12 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
     if (!this.isEditable) return;
 
-    // ── Мастер создания персонажа (только по кнопке) ────────────────────────
-    // Черты, стартовые таланты и тема листа остаются здесь: их зовут и кнопки
-    // «Применить расу»/«Применить легион». Органы Геносемени переехали к своему
-    // синку в apps/astartes-implants.mjs, но приходят тем же колбэком.
-    html.find(".char-wizard-btn").click(ev => {
-      ev.preventDefault();
-      showCreationWizard(this.actor, {
-        createTraits:          (list, source) => this._createTraitsFromList(list, source),
-        applyStartingTalents:  (raw, source)  => this._applyStartingTalents(raw, source),
-        grantAstartesImplants: ()             => grantAstartesImplants(this.actor),
-        applyTheme:            ()             => this._applyThemeClasses()
-      });
-    });
-
-    // Раскрытие описания таланта/черты/мутации в выпадающей строке под основной.
-    // Строка описания всегда идёт СЛЕДУЮЩИМ <tr> сразу за строкой с кнопкой —
-    // берём её так, а не поиском по data-item-id: на одном листе таблицы
-    // талантов, черт, имплантов и органов Геносемени независимы, и если бы
-    // где-то совпал id, раскрытие по атрибуту открыло бы сразу все совпадения.
-    html.find(".ability-detail-toggle").on("click", ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      const row = $(ev.currentTarget).closest("tr").next(".ability-detail-row");
-      const shown = row.toggle().is(":visible");
-      ev.currentTarget.textContent = shown ? "▾" : "▸";
-      ev.currentTarget.closest("tr")?.classList.toggle("ability-row-open", shown);
-    });
-
     // ── Раса, Прошлое и легион ──────────────────────────────────────────────
     // Разбор строк книг остаётся на листе и уходит в модуль колбэками: те же
     // две функции зовёт Мастер создания персонажа.
     activateRaceListeners(html, this.actor, {
       createTraits:         (list, source) => this._createTraitsFromList(list, source),
       applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source)
-    });
-
-    // Сворачивание гайда имплантов (состояние держится между перерисовками)
-    if (this._geneSeedOpen) {
-      html.find(".gene-organs").removeClass("collapsed");
-      html.find(".gene-toggle-btn").text("▾ Импланты");
-    }
-    html.find(".gene-toggle-btn").click(ev => {
-      ev.preventDefault();
-      this._geneSeedOpen = !this._geneSeedOpen;
-      html.find(".gene-organs").toggleClass("collapsed", !this._geneSeedOpen);
-      ev.currentTarget.textContent = (this._geneSeedOpen ? "▾" : "▸") + " Импланты";
     });
 
     // Длительность теперь бросается автоматически при применении препарата.
@@ -583,27 +725,9 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     });
     activateDiseaseListeners(html, this.actor);
 
-    // ── Кнопки «+» показателей: Безумие/Порча (число или XdY+Z), Опыт,
-    //    Благосклонность Бога-покровителя (ЗАПИСИ) — общий диалог+лог в чат ──
-    html.find(".stat-add-btn").click(async ev => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      const stat = ev.currentTarget.dataset.stat;
-      if (stat === "insanity") {
-        await promptStatAdd(this.actor, { label: "Безумие", path: "system.insanity.value", allowDice: true });
-      } else if (stat === "corruption") {
-        await promptStatAdd(this.actor, { label: "Порча", path: "system.corruption.value", allowDice: true });
-      } else if (stat === "xpTotal") {
-        await promptStatAdd(this.actor, { label: "Опыт (Всего)", path: "system.experience.total" });
-      } else if (stat === "patronFavor") {
-        const god = ev.currentTarget.dataset.god;
-        const meta = chaosPatronMeta(god);
-        await promptStatAdd(this.actor, { label: `Благосклонность — ${meta.label}`, path: `system.patronFavor.${god}` });
-      }
-    });
-
     // ── Инициатива ────────────────────────────────────────────────────────
-    html.find(".initiative-roll-btn").click(async () => {
+    // Разметки под кнопку в шаблонах нет — обработчик мёртв (wdbc-aj1).
+    on(".initiative-roll-btn", "click", async () => {
       // initiativeMod уже учтён формулой через @initiativeMod (см. CONFIG.Combat.initiative)
       if (!this.actor.inCombat) {
         ui.notifications.warn(`${this.actor.name} не участвует в бою — добавьте токен в трекер инициативы.`);
@@ -612,83 +736,22 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       await this.actor.rollInitiative({ createCombatants: false, rerollInitiative: true });
     });
 
-    // ── Бросок характеристики ─────────────────────────────────────────────
-    html.find(".char-roll").click(ev => {
-      const key   = ev.currentTarget.dataset.char;
-      if (key === "pf") {                       // Фактор Прибыли — не характеристика
-        const pf = Number(this.actor.system.aspirations?.profitFactor) || 0;
-        this._rollCharacteristic("Фактор Прибыли", "PF", pf, "pf", true);
-        return;
-      }
-      const meta  = CHARACTERISTICS[key];
-      const total = this.actor.system.characteristics[key]?.total ?? 0;
-      this._rollCharacteristic(charLabel(key, this.actor.system.alignment), meta.abbr, total, key);
-    });
-
-    // ── Навыки ────────────────────────────────────────────────────────────
-    html.find(".skill-roll").click(ev => {
-      const isGroup = ev.currentTarget.dataset.group === "true";
-      if (isGroup) {
-        const groupKey = ev.currentTarget.dataset.groupkey;
-        const idx      = parseInt(ev.currentTarget.dataset.index);
-        const entry    = this.actor.system.groupSkills?.[groupKey]?.[idx];
-        const def      = GROUP_SKILLS_DEF[groupKey];
-        if (!entry || !def) return;
-        this._rollSkill(`${def.label}: ${entry.specialty}`, entry.total ?? -20, entry.char || def.char,
-          { group: groupKey, specialty: entry.specialty });
-      } else {
-        const key = ev.currentTarget.dataset.skill;
-        const def = SKILLS_DEF[key];
-        const sk  = this.actor.system.skills?.[key];
-        this._rollSkill(def?.label ?? key, sk?.total ?? -20, def?.char ?? "ag", { skill: key });
-      }
-    });
-
     // ── Вкладка РАЗВИТИЕ ──────────────────────────────────────────────────
     // Выбор специализации остаётся тут: пикер — часть листа, а не вкладки.
     activateAdvanceListeners(html, this.actor, {
       addGroupSkill: groupKey => this._addGroupSkill(groupKey)
     });
 
-    // ── Снаряжение ────────────────────────────────────────────────────────
-    html.find(".add-item-btn").click(() => { this._showAddItemDialog(); });
-    html.find(".rig-open-btn").click(() => { openRigManager(this.actor); });
-
-    // Добавление Черт/Талантов — через пикер с листа (группировка по типам,
-    // поиск, описание по стрелке). ПКМ — создать пустую (для своих/книжных).
-    html.find(".trait-add-btn").on("click", ev => { ev.preventDefault(); this._openItemPicker("trait"); });
-    html.find(".trait-add-btn").on("contextmenu", async ev => {
+    // ПКМ на «＋» Черты/Таланта — создать пустую (для своих/книжных).
+    on(".trait-add-btn", "contextmenu", async ev => {
       ev.preventDefault();
       const item = await Item.create({ name: "Новая черта", type: "trait" }, { parent: this.actor });
       item?.sheet?.render(true);
     });
-    html.find(".talent-add-btn").on("click", ev => { ev.preventDefault(); this._openItemPicker("talent"); });
-    html.find(".talent-add-btn").on("contextmenu", async ev => {
+    on(".talent-add-btn", "contextmenu", async ev => {
       ev.preventDefault();
       const item = await Item.create({ name: "Новый талант", type: "talent" }, { parent: this.actor });
       item?.sheet?.render(true);
-    });
-
-    // ＋ мутация / ＋ Дар — выбор КОНКРЕТНОЙ записи из таблиц книги.
-    html.find(".gear-lib-btn").click(ev => { ev.preventDefault(); this._openGearPicker(); });
-
-    // ＋ Мутация/Дар — общий пул (см. tabs/mutations.mjs): выбор ЛЮБОЙ
-    // записи из Общих Мутаций ИЛИ Даров любого Бога, не только покровителя.
-    html.find(".mutgift-add-btn").click(async ev => {
-      ev.preventDefault();
-      if (ev.shiftKey) {   // Shift — пустая мутация с нуля
-        const item = await Item.create({ name: "Новая мутация", type: "mutation" }, { parent: this.actor });
-        return item?.sheet?.render(true);
-      }
-      openMutationPicker(this.actor);
-    });
-
-    // 🎲 Бросок по общему пулу (Общие Мутации ИЛИ Дар Бога — тип выбирается в
-    // диалоге). Бросок можно сдвинуть на ±Inf.b (если результат не от
-    // Провала) — спрашиваем модификатор.
-    html.find(".mutgift-roll-btn").click(async ev => {
-      ev.preventDefault();
-      await rollMutationOrGift(this.actor);
     });
 
     // ── Стремления и Пути Аэльдари ─────────────────────────────────────────
@@ -697,19 +760,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
     // ── Ритуалы (стр. 393-425) ─────────────────────────────────────────────
     activateRitualListeners(html, this.actor);
-
-    // Сворачивание панели Путей (состояние держится между перерисовками)
-    if (this._pathsOpen === false) {
-      html.find(".paths-collapse").addClass("collapsed");
-      html.find(".paths-toggle-btn").text("▸ Пути");
-    }
-    html.find(".paths-toggle-btn").click(ev => {
-      ev.preventDefault();
-      const nowOpen = this._pathsOpen === false; // был свёрнут → разворачиваем
-      this._pathsOpen = nowOpen;
-      html.find(".paths-collapse").toggleClass("collapsed", !nowOpen);
-      ev.currentTarget.textContent = (nowOpen ? "▾" : "▸") + " Пути";
-    });
 
     activatePsychicListeners(html, this.actor, {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts),
@@ -760,26 +810,28 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     // Только снаряжение — без талантов/черт/психосил/расстройств и пр.
     const options = GEAR_ITEM_TYPES
       .map(type => `<option value="${type}">${ITEM_TYPES[type]}</option>`).join("");
-    new Dialog({
-      title: "Добавить предмет",
-      content: `<form style="padding:8px;">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Добавить предмет" },
+      classes: ["wh-add-item-dialog", "warhammer-dbc", "wh-holo"],
+      position: { width: 320 },
+      content: `<div style="padding:8px;">
         <select id="new-item-type" class="wh-add-item-select" style="width:100%;padding:5px 6px;
           background:#0c2418;color:#d8ffe8;border:1px solid #2f9e6a;
           font-family:inherit;font-size:1em;">${options}</select>
-      </form>`,
-      buttons: {
-        create: {
-          icon: '<i class="fas fa-plus"></i>', label: "Создать",
-          callback: async html => {
-            const type  = html.find("#new-item-type").val();
+      </div>`,
+      buttons: [
+        {
+          action: "create", icon: "fas fa-plus", label: "Создать", default: true,
+          callback: async (event, button) => {
+            const type  = button.form.querySelector("#new-item-type").value;
             const label = ITEM_TYPES[type] || "Новый предмет";
             await Item.create({ name: `New ${label}`, type }, { parent: this.actor });
           }
         },
-        cancel: { label: "Отмена" }
-      },
-      default: "create"
-    }, { classes: ["dialog","wh-add-item-dialog","warhammer-dbc","wh-holo"], width: 320 }).render(true);
+        { action: "cancel", label: "Отмена" }
+      ],
+      rejectClose: false
+    });
   }
 
   // ── Диалоги броска ────────────────────────────────────────────────────────
@@ -811,11 +863,11 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     const rows = opts.map(o =>
       `<option value="${esc(o.key)}" data-free="${o.free ? 1 : 0}">${esc(o.display)}</option>`).join("");
 
-    return new Promise(resolve => {
-      let done = false;
-      new Dialog({
-        title: `${def.label}: специализация`,
-        content: `<form class="wh-spec-picker">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `${def.label}: специализация` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-spec-dialog"],
+      position: { width: 460 },
+      content: `<div class="wh-spec-picker">
           <div class="spec-row"><label>Из книги</label>
             <select id="spec-key"><option value="">— своя —</option>${rows}</select></div>
           <div class="spec-row" id="spec-fill-row" style="display:none;">
@@ -824,43 +876,42 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
           <div class="spec-row" id="spec-own-row"><label>Своя</label>
             <input type="text" id="spec-own" placeholder="Название специализации"/></div>
           <div class="spec-hint" id="spec-hint"></div>
-        </form>`,
-        buttons: {
-          ok: { icon: '<i class="fas fa-check"></i>', label: "Добавить", callback: h => {
-            if (done) return; done = true;
-            const key = String(h.find("#spec-key").val() || "");
-            if (!key) return resolve({ specialty: String(h.find("#spec-own").val() || "").trim() });
-            const sd = specDef(groupKey, key);
-            let specialty = sd?.label || key;
-            if (sd?.free) {
-              const fill = String(h.find("#spec-fill").val() || "").trim();
-              // «Xenos (<Раса>)» + «Eldar» → «Xenos (Eldar)»
-              specialty = fill ? specialty.replace(/<[^>]*>/, fill) : specialty.replace(/\s*\(<[^>]*>\)/, "");
-            }
-            resolve({ specialty, specKey: key });
-          }},
-          cancel: { label: "Отмена", callback: () => { if (!done) { done = true; resolve(null); } } }
-        },
-        default: "ok",
-        render: h => {
-          const upd = () => {
-            const opt = h.find("#spec-key")[0].selectedOptions[0];
-            const key = String(h.find("#spec-key").val() || "");
-            const free = opt?.dataset.free === "1";
-            h.find("#spec-fill-row").toggle(free);
-            h.find("#spec-own-row").toggle(!key);
-            const sd = key ? specDef(groupKey, key) : null;
-            const bits = [];
-            if (sd?.char)  bits.push(`Характеристика: ${CHARACTERISTICS[sd.char]?.abbr || sd.char}`);
-            if (sd?.chars) bits.push(`Часто используемые: ${sd.chars.map(c => CHARACTERISTICS[c]?.abbr || c).join(", ")}`);
-            if (sd?.psykerOnly) bits.push("Только для псайкеров");
-            if (sd?.combines)   bits.push("Заменяет каждое из входящих знаний и двигается как одно");
-            h.find("#spec-hint").text(bits.join(" · "));
-          };
-          h.find("#spec-key").on("change", upd); upd();
-        },
-        close: () => { if (!done) { done = true; resolve(null); } }
-      }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-spec-dialog"], width: 460 }).render(true);
+        </div>`,
+      buttons: [
+        { action: "ok", icon: "fas fa-check", label: "Добавить", default: true, callback: (event, button) => {
+          const val = sel => String(button.form.querySelector(sel)?.value || "");
+          const key = val("#spec-key");
+          if (!key) return { specialty: val("#spec-own").trim() };
+          const sd = specDef(groupKey, key);
+          let specialty = sd?.label || key;
+          if (sd?.free) {
+            const fill = val("#spec-fill").trim();
+            // «Xenos (<Раса>)» + «Eldar» → «Xenos (Eldar)»
+            specialty = fill ? specialty.replace(/<[^>]*>/, fill) : specialty.replace(/\s*\(<[^>]*>\)/, "");
+          }
+          return { specialty, specKey: key };
+        }},
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        const root = dialog.element;
+        const sel  = root.querySelector("#spec-key");
+        const upd = () => {
+          const key  = String(sel.value || "");
+          const free = sel.selectedOptions[0]?.dataset.free === "1";
+          root.querySelector("#spec-fill-row").style.display = free ? "" : "none";
+          root.querySelector("#spec-own-row").style.display  = key ? "none" : "";
+          const sd = key ? specDef(groupKey, key) : null;
+          const bits = [];
+          if (sd?.char)  bits.push(`Характеристика: ${CHARACTERISTICS[sd.char]?.abbr || sd.char}`);
+          if (sd?.chars) bits.push(`Часто используемые: ${sd.chars.map(c => CHARACTERISTICS[c]?.abbr || c).join(", ")}`);
+          if (sd?.psykerOnly) bits.push("Только для псайкеров");
+          if (sd?.combines)   bits.push("Заменяет каждое из входящих знаний и двигается как одно");
+          root.querySelector("#spec-hint").textContent = bits.join(" · ");
+        };
+        sel.addEventListener("change", upd); upd();
+      },
+      rejectClose: false
     });
   }
 
@@ -934,23 +985,23 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   }
 
   _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null) {
-    return new Promise(resolve => {
-      let resolved = false;
-      const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
-      const hw = this._homeworldModsHtml(rollCtx);
-      const im = this._itemRollModsHtml(rollCtx);
-      const rl = this._ruleRollModsHtml(rollCtx);
-      const defaultCharTotal = this.actor.system.characteristics[defaultChar]?.total ?? 0;
-      const rankBonus        = baseTotal - defaultCharTotal;
-      const charOptions = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
-        const v = this.actor.system.characteristics[key]?.total ?? 0;
-        return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>${meta.abbr} — ${meta.label} (${v})</option>`;
-      }).join("");
+    const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
+    const hw = this._homeworldModsHtml(rollCtx);
+    const im = this._itemRollModsHtml(rollCtx);
+    const rl = this._ruleRollModsHtml(rollCtx);
+    const defaultCharTotal = this.actor.system.characteristics[defaultChar]?.total ?? 0;
+    const rankBonus        = baseTotal - defaultCharTotal;
+    const charOptions = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
+      const v = this.actor.system.characteristics[key]?.total ?? 0;
+      return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>${meta.abbr} — ${meta.label} (${v})</option>`;
+    }).join("");
 
-      const dialog = new Dialog({
-        title: `Проверка: ${label}`,
-        content: `
-          <form class="wh-skill-roll-form">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Проверка: ${label}` },
+      classes: ["wh-roll-dialog-window"],
+      position: { width: 340 },
+      content: `
+          <div class="wh-skill-roll-form">
             <div class="roll-dlg-header"><span>${label}</span></div>
             ${hideCharSelect ? "" : `<div class="roll-dlg-row">
               <label>Бросок с:</label>
@@ -967,57 +1018,41 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
             ${hw.html}
             ${im.html}
             ${rl.html}
-          </form>`,
-        buttons: {
-          roll: {
-            icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок",
-            callback: html => {
-              if (!resolved) {
-                resolved = true;
-                let modifier = parseInt(html.find("#skill-modifier").val()) || 0;
-                // Особенности родного мира: плюсы складываются, «Закалка»
-                // Схолы Прогениум ополовинивает итоговый штраф.
-                let halve = false;
-                html.find(".hw-mod:checked").each((_, cb) => {
-                  modifier += parseInt(cb.dataset.value) || 0;
-                  if (cb.dataset.halve === "1") halve = true;
-                });
-                // Ситуативные модификаторы предметов (Черты/Таланты/etc. со
-                // скрипт-записанным flags.warhammer-dbc.rollMods) — та же логика.
-                html.find(".item-mod:checked").each((_, cb) => {
-                  modifier += parseInt(cb.dataset.value) || 0;
-                  if (cb.dataset.halve === "1") halve = true;
-                });
-                // Реестр правил (module/rules/) — та же логика.
-                html.find(".rule-mod:checked").each((_, cb) => {
-                  modifier += parseInt(cb.dataset.value) || 0;
-                  if (cb.dataset.halve === "1") halve = true;
-                });
-                if (halve && modifier < 0) modifier = -Math.floor(Math.abs(modifier) / 2);
-                resolve({
-                  charKey:  html.find("#skill-char-select").val(),
-                  target:   parseInt(html.find("#skill-target").val())   || 0,
-                  modifier
-                });
+          </div>`,
+      buttons: [
+        {
+          action: "roll", icon: "fas fa-dice-d10", label: "Бросок", default: true,
+          callback: (event, button) => {
+            const form = button.form;
+            let modifier = parseInt(form.querySelector("#skill-modifier").value) || 0;
+            // Особенности родного мира: плюсы складываются, «Закалка» Схолы
+            // Прогениум ополовинивает итоговый штраф. Ситуативные модификаторы
+            // предметов (flags.warhammer-dbc.rollMods) и реестр правил
+            // (module/rules/) считаются по той же логике.
+            let halve = false;
+            for (const sel of [".hw-mod:checked", ".item-mod:checked", ".rule-mod:checked"]) {
+              for (const cb of form.querySelectorAll(sel)) {
+                modifier += parseInt(cb.dataset.value) || 0;
+                if (cb.dataset.halve === "1") halve = true;
               }
             }
-          },
-          cancel: {
-            label: "Отмена",
-            callback: () => { if (!resolved) { resolved = true; resolve(null); } }
+            if (halve && modifier < 0) modifier = -Math.floor(Math.abs(modifier) / 2);
+            return {
+              charKey:  form.querySelector("#skill-char-select")?.value,
+              target:   parseInt(form.querySelector("#skill-target").value) || 0,
+              modifier
+            };
           }
         },
-        default: "roll",
-        render: html => {
-          html.find("#skill-char-select").on("change", ev => {
-            html.find("#skill-target").val(
-              (this.actor.system.characteristics[ev.currentTarget.value]?.total ?? 0) + rankBonus
-            );
-          });
-        },
-        close: () => { if (!resolved) { resolved = true; resolve(null); } }
-      }, { classes: ["dialog","wh-roll-dialog-window"], width: 340 });
-      dialog.render(true);
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        dialog.element.querySelector("#skill-char-select")?.addEventListener("change", ev => {
+          dialog.element.querySelector("#skill-target").value =
+            (this.actor.system.characteristics[ev.currentTarget.value]?.total ?? 0) + rankBonus;
+        });
+      },
+      rejectClose: false
     });
   }
 

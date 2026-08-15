@@ -1,4 +1,4 @@
-<div class="tab gear-cog" data-tab="gear" data-group="primary">
+<div class="tab gear-cog {{#if (eq tab "gear")}}active{{/if}}" data-tab="gear" data-group="primary">
 
   {{!-- ═══ Сенсор нагрузки (всегда виден) ═══ --}}
   <div class="gear-section-panel gear-load-panel">
@@ -25,14 +25,14 @@
 
   {{!-- Панель действий --}}
   <div class="gear-add-row">
-    <button type="button" class="add-item-btn gear-add-btn">Добавить предмет</button>
-    <button type="button" class="gear-lib-btn gear-add-btn" title="Выбрать оружие, броню или снаряжение из библиотеки">📚 Из библиотеки</button>
-    <button type="button" class="rig-open-btn gear-add-btn" title="Разместить предметы по слотам разгрузок">Разгрузка</button>
+    <button type="button" class="add-item-btn gear-add-btn" data-action="itemAdd">Добавить предмет</button>
+    <button type="button" class="gear-lib-btn gear-add-btn" data-action="gearLib" title="Выбрать оружие, броню или снаряжение из библиотеки">📚 Из библиотеки</button>
+    <button type="button" class="rig-open-btn gear-add-btn" data-action="rigOpen" title="Разместить предметы по слотам разгрузок">Разгрузка</button>
   </div>
 
   {{!-- ═══════════════════ ОРУЖИЕ ═══════════════════ --}}
   <section class="gear-cat {{#if gearCollapse.weapons}}collapsed{{/if}}" data-cat="weapons">
-    <div class="gear-cat-head" data-gear-cat="weapons">
+    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="weapons">
       <span class="gear-cat-chevron">▾</span>
       <span class="gear-cat-title">ОРУЖИЕ</span>
       <span class="gear-cat-count">{{gearWeapons.length}}</span>
@@ -48,7 +48,7 @@
             {{#each gearWeapons as |w|}}
             <tr class="item-row gear-host-row {{#if w.mods.length}}has-mods{{/if}}" data-item-id="{{w.id}}">
               <td class="gear-equip-cell"><input type="checkbox" class="weapon-equip-cb" data-item-id="{{w.id}}" {{#if w.equipped}}checked{{/if}}/></td>
-              <td class="item-name-cell">{{w.name}}{{#if w.mods.length}} <button type="button" class="gear-mods-toggle" data-host-id="{{w.id}}" title="Свернуть/развернуть улучшения"><span class="gmt-chevron">▾</span>⚙{{w.mods.length}}</button>{{/if}}</td>
+              <td class="item-name-cell">{{w.name}}{{#if w.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{w.id}}" title="Свернуть/развернуть улучшения"><span class="gmt-chevron">▾</span>⚙{{w.mods.length}}</button>{{/if}}</td>
               <td>{{w.weaponClass}}</td><td>{{w.weaponType}}</td>
               <td>{{w.damage}}</td><td>{{w.damageType}}</td>
               <td>{{w.magazineCur}}/{{w.magazineMax}}</td><td>{{w.weight}}</td>
@@ -57,7 +57,7 @@
             <tr class="item-row gear-modsub-row" data-item-id="{{m.id}}" data-host-id="{{w.id}}">
               <td class="gear-modsub-arrow">↳</td>
               <td class="gear-modsub-main" colspan="6">
-                <button type="button" class="ability-detail-toggle gear-modsub-toggle" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button>
+                <button type="button" class="ability-detail-toggle gear-modsub-toggle" data-action="abilityDetail" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button>
                 <span class="gear-modsub-name">{{m.name}}</span>
                 {{#if m.groupLabel}}<span class="gear-modsub-group">{{m.groupLabel}}</span>{{/if}}
                 <button type="button" class="gear-mod-uninstall" data-item-id="{{m.id}}" title="Снять модификацию">✕ снять</button>
@@ -81,7 +81,7 @@
           <tbody>
             {{#each gearWeaponModsFree as |m|}}
             <tr class="item-row gear-free-row" data-item-id="{{m.id}}">
-              <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button></td>
+              <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button></td>
               <td class="item-name-cell">{{m.name}}</td>
               <td class="gear-free-group">{{m.groupLabel}}</td>
               <td class="gear-free-install">
@@ -103,7 +103,7 @@
 
   {{!-- ═══════════════════ БРОНЯ ═══════════════════ --}}
   <section class="gear-cat {{#if gearCollapse.armor}}collapsed{{/if}}" data-cat="armor">
-    <div class="gear-cat-head" data-gear-cat="armor">
+    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="armor">
       <span class="gear-cat-chevron">▾</span>
       <span class="gear-cat-title">БРОНЯ И СИСТЕМЫ</span>
       <span class="gear-cat-count">{{gearArmor.length}}</span>
@@ -121,7 +121,7 @@
             {{#each gearArmor as |a|}}
             <tr class="item-row gear-host-row {{#if a.equipped}}item-row-equipped{{/if}} {{#if a.mods.length}}has-mods{{/if}}" data-item-id="{{a.id}}">
               <td class="gear-equip-cell"><input type="checkbox" class="armor-equip-cb" data-item-id="{{a.id}}" {{#if a.equipped}}checked{{/if}}/></td>
-              <td class="item-name-cell">{{a.name}}{{#if a.mods.length}} <button type="button" class="gear-mods-toggle" data-host-id="{{a.id}}" title="Свернуть/развернуть модификации и системы"><span class="gmt-chevron">▾</span>⚙{{a.mods.length}}</button>{{/if}}</td>
+              <td class="item-name-cell">{{a.name}}{{#if a.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{a.id}}" title="Свернуть/развернуть модификации и системы"><span class="gmt-chevron">▾</span>⚙{{a.mods.length}}</button>{{/if}}</td>
               <td class="gear-armor-type">
                 {{#if (eq a.armorType "simple")}}Простая{{/if}}
                 {{#if (eq a.armorType "flak")}}Флак{{/if}}
@@ -142,7 +142,7 @@
             <tr class="item-row gear-modsub-row {{#if m.activatable}}{{#unless m.active}}gear-modsub-off{{/unless}}{{/if}}" data-item-id="{{m.id}}" data-host-id="{{a.id}}">
               <td class="gear-modsub-arrow">↳</td>
               <td class="gear-modsub-main" colspan="8">
-                <button type="button" class="ability-detail-toggle gear-modsub-toggle" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button>
+                <button type="button" class="ability-detail-toggle gear-modsub-toggle" data-action="abilityDetail" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button>
                 <span class="gear-modsub-name">{{m.name}}</span>
                 {{#if m.powerSystem}}<span class="gear-sys-badge" title="Система силовой брони">⚡</span>{{/if}}
                 {{#if m.groupLabel}}<span class="gear-modsub-group">{{m.groupLabel}}</span>{{/if}}
@@ -170,7 +170,7 @@
           <tbody>
             {{#each gearArmorModsFree as |m|}}
             <tr class="item-row gear-free-row" data-item-id="{{m.id}}">
-              <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button></td>
+              <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button></td>
               <td class="item-name-cell">{{m.name}}{{#if m.powerSystem}} <span class="gear-sys-badge" title="Система силовой брони">⚡</span>{{/if}}</td>
               <td class="gear-free-group">{{m.groupLabel}}</td>
               <td class="gear-free-install">
@@ -196,7 +196,7 @@
 
   {{!-- ═══════════════════ СИЛОВЫЕ ПОЛЯ ═══════════════════ --}}
   <section class="gear-cat {{#if gearCollapse.shields}}collapsed{{/if}}" data-cat="shields">
-    <div class="gear-cat-head" data-gear-cat="shields">
+    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="shields">
       <span class="gear-cat-chevron">▾</span>
       <span class="gear-cat-title">СИЛОВЫЕ ПОЛЯ</span>
       <span class="gear-cat-count">{{gearForcefields.length}}</span>
@@ -247,7 +247,7 @@
 
   {{!-- ═══════════════════ БОЕПРИПАСЫ ═══════════════════ --}}
   <section class="gear-cat {{#if gearCollapse.ammo}}collapsed{{/if}}" data-cat="ammo">
-    <div class="gear-cat-head" data-gear-cat="ammo">
+    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="ammo">
       <span class="gear-cat-chevron">▾</span>
       <span class="gear-cat-title">БОЕПРИПАСЫ</span>
       <span class="gear-cat-count">{{gearAmmo.length}}</span>
@@ -270,7 +270,7 @@
 
   {{!-- ═══════════════════ СНАРЯЖЕНИЕ ═══════════════════ --}}
   <section class="gear-cat {{#if gearCollapse.gear}}collapsed{{/if}}" data-cat="gear">
-    <div class="gear-cat-head" data-gear-cat="gear">
+    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="gear">
       <span class="gear-cat-chevron">▾</span>
       <span class="gear-cat-title">СНАРЯЖЕНИЕ</span>
       <span class="gear-cat-count">{{gearGear.length}}</span>
@@ -293,7 +293,7 @@
 
   {{!-- ═══════════════════ ПРЕПАРАТЫ ═══════════════════ --}}
   <section class="gear-cat {{#if gearCollapse.drugs}}collapsed{{/if}}" data-cat="drugs">
-    <div class="gear-cat-head" data-gear-cat="drugs">
+    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="drugs">
       <span class="gear-cat-chevron">▾</span>
       <span class="gear-cat-title">ПРЕПАРАТЫ</span>
       <span class="gear-cat-count">{{gearDrugs.length}}</span>
@@ -316,7 +316,7 @@
 
   {{!-- ═══════════════════ ИНСТРУМЕНТЫ ═══════════════════ --}}
   <section class="gear-cat {{#if gearCollapse.tools}}collapsed{{/if}}" data-cat="tools">
-    <div class="gear-cat-head" data-gear-cat="tools">
+    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="tools">
       <span class="gear-cat-chevron">▾</span>
       <span class="gear-cat-title">ИНСТРУМЕНТЫ</span>
       <span class="gear-cat-count">{{gearTools.length}}</span>
@@ -339,7 +339,7 @@
 
   {{!-- ═══════════════════ ИМПЛАНТЫ ═══════════════════ --}}
   <section class="gear-cat {{#if gearCollapse.implants}}collapsed{{/if}}" data-cat="implants">
-    <div class="gear-cat-head" data-gear-cat="implants">
+    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="implants">
       <span class="gear-cat-chevron">▾</span>
       <span class="gear-cat-title">ИМПЛАНТЫ</span>
       <span class="gear-cat-count">{{gearImplants.length}}</span>

@@ -4,9 +4,10 @@
 // с сигилом патрона, Фавором и Истинным Именем, вкладка АПОФЕОЗ с реестром
 // Демонических Даров (корбук 462–464). Тема окрашивается под Бога (--gc/--gc2).
 
-import { applyHomeworld, homeworldSheetContext } from "../apps/homeworlds.mjs";
-import { applyDivination, divinationSheetContext } from "../apps/divinations.mjs";
+import { homeworldSheetContext } from "../apps/homeworlds.mjs";
+import { divinationSheetContext } from "../apps/divinations.mjs";
 import { WarhammerCharacterSheet } from "./actor-sheet.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { DP_GODS, dpGodMeta, DP_ASCENSION, DP_IMMORTALITY, DP_RETINUE,
          DP_FAVOR_RULES, dpGiftsFor, dpGiftCost, DP_GIFT_NOTE,
          dpDivineTrait, DEMON_FORMS, DEMON_KEY_TRAITS, DEMON_WEAPON_PROPS,
@@ -36,18 +37,73 @@ function dpVeilSteps(actor) {
   return t + anchors;
 }
 
-export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "sheet", "actor", "demon-prince", "wh-dp"],
-      template: "systems/warhammer-dbc/templates/actor/demon-prince-sheet.hbs",
-      width: 860, height: 920,
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "stats" }]
-    });
-  }
+// Действия листа Демон-Принца; общие — от листа персонажа (ApplicationV2
+// склеивает DEFAULT_OPTIONS по цепочке классов).
+function onFavorPlus()   { return this._changeFavor(+1); }
+function onFavorMinus()  { return this._changeFavor(-1); }
+function onAvatar() {
+  const FP = filePicker();
+  return new FP({ type: "image", current: this.actor.img, callback: p => this._setAvatar(p) }).render(true);
+}
+function onInstability()  { return this._rollInstability(); }
+function onFavorInfamy()  { return this._favorToInfamy(); }
+function onFavorEscape()  { return this._favorEscape(); }
+function onAscendFavor()  { return this._ascensionFavor(); }
+function onGiftBuy(event, target)       { return this._buyGift(target); }
+function onGiftSacrifice(event, target) { return this._sacrificeGift(target); }
+function onManifest()     { return this._rollManifestation(); }
+function onAscend()       { return this._performAscension(); }
+function onUnascend()     { return this._undoAscension(); }
 
-  getData() {
-    const context = super.getData();
+export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
+  static DEFAULT_OPTIONS = {
+    classes: ["warhammer-dbc", "sheet", "actor", "demon-prince", "wh-dp"],
+    position: { width: 860, height: 920 },
+    actions: {
+      // Навигация по вкладкам — своя разметка, общий обработчик.
+      tab: onTab,
+      dpFavorPlus:     whenEditable(onFavorPlus),
+      dpFavorMinus:    whenEditable(onFavorMinus),
+      dpAvatar:        whenEditable(onAvatar),
+      dpInstability:   whenEditable(onInstability),
+      dpFavorInfamy:   whenEditable(onFavorInfamy),
+      dpFavorEscape:   whenEditable(onFavorEscape),
+      dpAscendFavor:   whenEditable(onAscendFavor),
+      dpGiftBuy:       whenEditable(onGiftBuy),
+      dpGiftSacrifice: whenEditable(onGiftSacrifice),
+      dpManifest:      whenEditable(onManifest),
+      dpAscend:        whenEditable(onAscend),
+      dpUnascend:      whenEditable(onUnascend)
+    }
+  };
+
+  static PARTS = {
+    body: {
+      template: "systems/warhammer-dbc/templates/actor/demon-prince-sheet.hbs",
+      root: true,
+      scrollable: [".sheet-body", ".skills-advance-scroll"]
+    }
+  };
+
+  // Вместо Тела/Одержимости/Гемункула — своя вкладка АПОФЕОЗ с реестром Даров.
+  static TABS = {
+    primary: {
+      initial: "stats",
+      tabs: [
+        { id: "stats",      label: "ПОКАЗАТЕЛИ" },
+        { id: "combat",     label: "БОЙ" },
+        { id: "abilities",  label: "СПОСОБНОСТИ" },
+        { id: "psy",        label: "ПСИ" },
+        { id: "gear",       label: "СНАРЯЖЕНИЕ" },
+        { id: "advance",    label: "РАЗВИТИЕ" },
+        { id: "apotheosis", label: "АПОФЕОЗ" },
+        { id: "notes",      label: "ЗАПИСИ" }
+      ]
+    }
+  };
+
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
     const s = this.actor.system;
     // Родные миры — опциональное расширение (дропдаун «Происхождение»).
     context.homeworld = homeworldSheetContext(this.actor);
@@ -130,27 +186,18 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
     return context;
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-
-    // Происхождение: смена мира откатывает прежний и выдаёт новый.
-    html.find(".hw-select").on("change", ev => applyHomeworld(this.actor, ev.currentTarget.value));
-    html.find(".dv-select").on("change", ev => applyDivination(this.actor, ev.currentTarget.value));
+  // Происхождение (.hw-select/.dv-select) навешивает лист персонажа — своя
+  // разметка Принца попадает под тот же селектор. В V1 обе привязки стояли
+  // разом, и смена мира применялась дважды.
+  _onRender(context, options) {
+    super._onRender(context, options);
     if (!this.isEditable) return;
-    html.find(".dp-favor-plus").click(() => this._changeFavor(+1));
-    html.find(".dp-favor-minus").click(() => this._changeFavor(-1));
-    // Аватар: клик — своё изображение (без заливки); ПКМ — вернуть сигил бога.
-    html.find(".dp-sigil").on("click", () => new FilePicker({ type: "image", current: this.actor.img, callback: p => this._setAvatar(p) }).render(true));
-    html.find(".dp-sigil").on("contextmenu", ev => { ev.preventDefault(); this._setAvatar(dpGodMeta(this.actor.system.allegiance || "undivided").sigil); });
-    html.find(".dp-instability-btn").click(() => this._rollInstability());
-    html.find(".dp-favor-infamy-btn").click(() => this._favorToInfamy());
-    html.find(".dp-favor-escape-btn").click(() => this._favorEscape());
-    html.find(".dp-ascend-favor-btn").click(() => this._ascensionFavor());
-    html.find(".dp-gift-buy").click(ev => this._buyGift(ev));
-    html.find(".dp-gift-sacrifice").click(ev => this._sacrificeGift(ev));
-    html.find(".dp-manifest-btn").click(() => this._rollManifestation());
-    html.find(".dp-ascend-btn").click(() => this._performAscension());
-    html.find(".dp-unascend-btn").click(() => this._undoAscension());
+    // Клик по аватару — действие dpAvatar; ПКМ возвращает сигил бога.
+    this.element?.querySelectorAll(".dp-sigil").forEach(n =>
+      n.addEventListener("contextmenu", ev => {
+        ev.preventDefault();
+        this._setAvatar(dpGodMeta(this.actor.system.allegiance || "undivided").sigil);
+      }));
   }
 
   // Очки Бесчестия у Принца: хранятся в system.dp.ip (макс = Inf.b), свой
@@ -254,8 +301,8 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
   }
 
   // Взятие Демонического Дара.
-  async _buyGift(ev) {
-    const key = ev.currentTarget.closest("[data-gift]")?.dataset.gift;
+  async _buyGift(target) {
+    const key = target.closest("[data-gift]")?.dataset.gift;
     const godKey = this.actor.system.allegiance || "undivided";
     const def = dpGiftsFor(godKey).find(g => g.key === key);
     if (!def) return;
@@ -426,8 +473,8 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
   }
 
   // Жертвование даром: возврат половины (окр.▼), текущий Фавор не выше 5.
-  async _sacrificeGift(ev) {
-    const id = ev.currentTarget.closest("[data-gift-id]")?.dataset.giftId;
+  async _sacrificeGift(target) {
+    const id = target.closest("[data-gift-id]")?.dataset.giftId;
     const gifts = foundry.utils.deepClone(this.actor.system.dp?.gifts || []);
     const idx = gifts.findIndex(g => g.id === id);
     if (idx < 0) return;
