@@ -6,12 +6,13 @@
 
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { computeWoundDamage } from "./wounds.mjs";
+import { esc } from "../../helpers/utils.mjs";
 
 /** Краткое сообщение о Боли в чат. */
 export async function painChatMsg(actor, text) {
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("bolt","#c98bff")}Очки Боли — ${actor.name}</div><div class="roll-threshold">${text}</div></div>`
+    content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("bolt","#c98bff")}Очки Боли — ${esc(actor.name)}</div><div class="roll-threshold">${text}</div></div>`
   }, game.settings.get("core", "rollMode")));
 }
 

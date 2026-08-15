@@ -214,7 +214,7 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-dp-card" style="--gc:${g.color};--gc2:${g.gc2};">
-          <div class="wh-dp-card-h">🌀 Тест Нестабильности — ${this.actor.name}</div>
+          <div class="wh-dp-card-h">🌀 Тест Нестабильности — ${esc(this.actor.name)}</div>
           <div class="wh-dp-card-r">Сила Воли: <b>${wp}</b> · Warp Instability (${rating})</div>
           <div class="wh-dp-card-r">Бросок: <b>${roll.total}</b> — ${success
             ? `<span class="ok">Реальность держится — ${deg} ст.</span>`
@@ -488,7 +488,7 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-dp-card" style="--gc:${g.color};--gc2:${g.gc2};">
-          <div class="wh-dp-card-h"><span class="wh-dp-card-sigil" style="-webkit-mask:url('${g.sigil}') center/contain no-repeat;mask:url('${g.sigil}') center/contain no-repeat"></span>🌀 Проявление — ${this.actor.name}</div>
+          <div class="wh-dp-card-h"><span class="wh-dp-card-sigil" style="-webkit-mask:url('${g.sigil}') center/contain no-repeat;mask:url('${g.sigil}') center/contain no-repeat"></span>🌀 Проявление — ${esc(this.actor.name)}</div>
           <div class="wh-dp-card-r">${man.formula} + (2×${wb} − ${infb}) = <b>${total}</b> ${man.unit} (мин. ${man.min}).</div>
           <div class="wh-dp-card-r">${thinLine}</div>
           <div class="wh-dp-card-r" style="font-size:0.85em;opacity:0.85;">${man.note}</div>

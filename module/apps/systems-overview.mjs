@@ -21,7 +21,7 @@ function _resFmt(obj) {
 }
 // HTML-подсказка улучшения (для data-tooltip): категория, описание, НЕТТО «даёт / тратит».
 function _impTooltip(imp, cat) {
-  const lines = [`<b>${imp.name}</b>${cat ? ` — <i>${cat.label}</i>` : ""}`];
+  const lines = [`<b>${esc(imp.name)}</b>${cat ? ` — <i>${cat.label}</i>` : ""}`];
   if (imp.desc) lines.push(imp.desc);
   const { gives, spends } = improvementFlow(imp);
   const g = _resFmt(gives), s = _resFmt(spends);
@@ -437,7 +437,7 @@ export class StarSystemsOverview extends Application {
     const menu = document.createElement("div");
     menu.className = "wh-extr-menu";
     menu.style.cssText = `position:fixed;top:${ev.clientY}px;left:${ev.clientX}px;z-index:10001;`;
-    menu.innerHTML = `<div class="wh-extr-head">${item.name}</div>`;
+    menu.innerHTML = `<div class="wh-extr-head">${esc(item.name)}</div>`;
 
     // Экстракциумы
     if (avail.length) {
@@ -464,7 +464,7 @@ export class StarSystemsOverview extends Application {
         const it = document.createElement("div");
         it.className = "wh-extr-item wh-imp-row";
         it.setAttribute("data-tooltip", _impTooltip(imp, cat));
-        it.innerHTML = `<span class="wh-imp-name">${cat ? `<img src="${cat.svg}"/>` : ""}<span class="wh-imp-txt">${imp.name}</span></span><span class="wh-imp-tools"><b class="wh-imp-edit" title="Изменить улучшение">✎</b><b class="wh-imp-del" title="Удалить" style="color:#f66;">✕</b></span>`;
+        it.innerHTML = `<span class="wh-imp-name">${cat ? `<img src="${cat.svg}"/>` : ""}<span class="wh-imp-txt">${esc(imp.name)}</span></span><span class="wh-imp-tools"><b class="wh-imp-edit" title="Изменить улучшение">✎</b><b class="wh-imp-del" title="Удалить" style="color:#f66;">✕</b></span>`;
         it.querySelector(".wh-imp-edit").addEventListener("click", ev => {
           ev.stopPropagation(); menu.remove(); this._editImprovementDialog(actor, item, imp);
         });

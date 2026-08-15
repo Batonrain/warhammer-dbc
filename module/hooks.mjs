@@ -4,7 +4,7 @@ import { _executeFearRoll }             from "./combat/fear.mjs";
 import { showApplyDamageDialog }         from "./combat/damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
 import { CONDITION_LEVEL_FIELD }         from "./combat/weapon-properties.mjs";
-import { fateTerm }                      from "./helpers/utils.mjs";
+import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 
 export function registerHooks() {
@@ -294,7 +294,7 @@ async function _applyWeaponPropEffect(ds) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${label} → ${actor.name}</div>
+        <div class="roll-header">${label} → ${esc(actor.name)}</div>
         ${rollHtml}
         ${appliedNote}
         ${dmgNote}
@@ -386,7 +386,7 @@ async function _executeSoulBurn(attacker, target) {
     speaker: ChatMessage.getSpeaker({ actor: attacker }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("fire","#ff8a3a")}Выжигание Души → ${target.name}</div>
+        <div class="roll-header">${rollIcon("fire","#ff8a3a")}Выжигание Души → ${esc(target.name)}</div>
         <div class="roll-threshold">Псайкер W+tPR×5 → Порог <b>${pEff}</b> | Бросок <b>${pRv}</b>
           ${pSucc ? `<span class="roll-success">(успех, ${pDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>
         <div class="roll-threshold">Цель W+tPR×5 → Порог <b>${tEff}</b> | Бросок <b>${tRv}</b>

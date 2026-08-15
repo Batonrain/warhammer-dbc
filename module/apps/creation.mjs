@@ -634,7 +634,7 @@ function updateWizardNote(html) {
     if (arch.infRoll)      parts.push(`<b>Влияние:</b> ${arch.infRoll}`);
     if (arch.requiredPath) parts.push(`<b>Требуемый Путь:</b> ${arch.requiredPath}`);
     if (arch.wounds)       parts.push(`<b>Раны:</b> ${arch.wounds}`);
-    if (arch.trait) parts.push(`<b>Трейт:</b> ${arch.trait.name}`);
+    if (arch.trait) parts.push(`<b>Трейт:</b> ${esc(arch.trait.name)}`);
   }
   html.find("#wiz-note").html(parts.join("<br/>"));
 }
@@ -765,7 +765,7 @@ export function showCreationWizard(actor, deps) {
         for (const [k, a] of archEntries) (grouped[a.group || ""] ??= []).push([k, a]);
         const archOpts = archEntries.length
           ? Object.entries(grouped).map(([g, list]) => {
-              const opts = list.map(([k, a]) => `<option value="${k}">${a.name}</option>`).join("");
+              const opts = list.map(([k, a]) => `<option value="${k}">${esc(a.name)}</option>`).join("");
               return g ? `<optgroup label="${g}">${opts}</optgroup>` : opts;
             }).join("")
           : '<option value="">— нет (Аэльдари используют Пути; Сслиты — без архетипа) —</option>';

@@ -1,6 +1,6 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
 import { MELEE_STANCES, BALANCE_PARRY_MOD } from "../constants/combat.mjs";
-import { _degWord }       from "../helpers/utils.mjs";
+import { _degWord, esc }       from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
@@ -51,7 +51,7 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("run")}Уклонение — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("run")}Уклонение — ${esc(actor.name)}</div>
         <div class="roll-threshold">
           Ag: <b>${agTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
           → Порог: <b>${threshold}</b>
@@ -90,7 +90,7 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null) {
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("sword")}Парирование — ${actor.name}</div>
+          <div class="roll-header">${rollIcon("sword")}Парирование — ${esc(actor.name)}</div>
           ${meleeWeapon
             ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">
                  Оружие: ${meleeWeapon.name} (Баланс ${balance >= 0 ? "+" : ""}${balance})
@@ -170,7 +170,7 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("sword")}Парирование — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("sword")}Парирование — ${esc(actor.name)}</div>
         <div class="roll-threshold">
           WS: <b>${wsTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
           → Порог: <b>${threshold}</b>

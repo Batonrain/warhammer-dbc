@@ -12,7 +12,7 @@ import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
 import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
 import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
-import { _degWord, resolveCharFormula } from "../../helpers/utils.mjs";
+import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock } from "../../combat/weapon-properties.mjs";
 import { attackThreshold } from "../../combat/attack-threshold.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
@@ -112,7 +112,7 @@ export function showManifestDialog(actor, item) {
         <div class="pm-header">
           <span class="pm-sigil">✨</span>
           <div class="pm-titles">
-            <div class="pm-name">${item.name}</div>
+            <div class="pm-name">${esc(item.name)}</div>
             <div class="pm-sub">${[discLabel, typeLabel].filter(Boolean).join(" · ")}${dmgLabel}</div>
           </div>
           <span class="pm-nature" title="Природа Дара">${NATx.label || nature}</span>
@@ -581,7 +581,7 @@ export async function executePsychotest(actor, item, opts) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("spark","#c98bff")}${item.name}</div>
+          <div class="roll-header">${rollIcon("spark","#c98bff")}${esc(item.name)}</div>
           <div class="roll-threshold">
             Природа: <b>${NAT.label}</b> | Режим: <b>${MODE.label}</b>${pathLabel ? ` | Путь: <b>${pathLabel}</b>` : ""}
           </div>
@@ -696,7 +696,7 @@ export async function activateNavigatorPower(actor, item) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("spark","#8b78ff")}Сила навигатора: ${item.name}</div>
+          <div class="roll-header">${rollIcon("spark","#8b78ff")}Сила навигатора: ${esc(item.name)}</div>
           ${sys.powerKind ? `<div class="roll-threshold" style="font-size:0.85em;">${sys.powerKind}</div>` : ""}
           <div class="roll-threshold">
             ${meta?.abbr ?? charKey}: <b>${charVal}</b>${sys.testMod ? ` ${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : ""}${fatigue ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b>${sys.opposed ? " <span style='font-size:0.85em;'>(встречный — цель бросает свою хар-ку)</span>" : ""}

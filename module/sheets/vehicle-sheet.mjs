@@ -7,6 +7,7 @@ import { CHASSIS_TYPES, CHASSIS_NOTES, VEHICLE_TYPES, CREW_ROLES,
 import { _executeAttackRoll } from "../combat/attack.mjs";
 import { showRamDialog, showTerrainDialog, showRepairDialog } from "../combat/vehicle.mjs";
 import { VEHICLE_WEAPONS } from "../constants/vehicle-weapons-library.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const ROLE_ORDER = ["commander", "driver", "gunner", "loader", "pilot", "passenger"];
 
@@ -466,7 +467,7 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result">
-        <div class="roll-header">🔄 Перезарядка — ${item.name}</div>
+        <div class="roll-header">🔄 Перезарядка — ${esc(item.name)}</div>
         <div class="roll-outcome"><span class="roll-success">Магазин <b>${magMax}/${magMax}</b> · Боекомплект осталось: <b>${reloads - 1}</b></span></div>
         ${reloads - 1 === 0 ? `<div class="roll-allout-note">Боекомплект этого орудия исчерпан — перезарядка возможна только снаружи/в снабжении.</div>` : ""}
       </div>`
@@ -536,7 +537,7 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
 
     const content = `
       <form class="wh-vehicle-dialog" style="padding:6px;">
-        <div class="atk-dlg-header"><span class="atk-weapon-name">${item.name}</span>
+        <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(item.name)}</span>
           <span style="opacity:.7">(${sys.damage || "—"}, Проб. ${sys.penetration || 0}, ${MOUNT_TYPES[vm.mount] || "—"})</span></div>
         <div class="atk-dlg-row"><label>BS оператора${opName ? ` (${opName})` : ""}:</label><input id="vf-bs" type="number" value="${opBS}"/></div>
         <div class="atk-dlg-row"><label>Установленная модификация к попаданию:</label><input id="vf-atkbonus" type="number" value="${sys.attackBonus || 0}"/></div>

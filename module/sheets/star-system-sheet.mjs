@@ -14,7 +14,7 @@ function visibleImps(s, isGM) {
 }
 // HTML-подсказка улучшения (для data-tooltip): категория, описание, НЕТТО «даёт / тратит».
 function impTooltip(im, cat) {
-  const lines = [`<b>${im.name}</b>${cat ? ` — <i>${cat.label}</i>` : ""}`];
+  const lines = [`<b>${esc(im.name)}</b>${cat ? ` — <i>${cat.label}</i>` : ""}`];
   if (im.desc) lines.push(im.desc);
   const fmt = (obj) => Object.entries(obj || {}).filter(([, v]) => Number(v))
     .map(([k, v]) => `${RESOURCE_TYPES[k]?.label || k} +${v}`).join(", ");
@@ -466,7 +466,7 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
         .map(([k, v]) => `${v.label} +${im.res[k]}`).join(", ");
       return `<div class="ss-imp-row" data-id="${im.id}">
         <div class="ss-imp-head">
-          <b>${im.name}</b>
+          <b>${esc(im.name)}</b>
           <span class="ss-imp-tools">
             <button type="button" class="imp-flag${im.hidden ? " on" : ""}" data-flag="hidden" title="Скрыт до разведки">🕵</button>
             <button type="button" class="imp-flag${im.secret ? " on" : ""}" data-flag="secret" title="Тайное (видно после раскрытия)">🔒</button>
@@ -539,7 +539,7 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
     const opts = Object.entries(BODY_TYPES).map(([k, v]) => `<option value="${k}">${v.icon} ${v.label}</option>`).join("");
     const zopts = `<option value="">— без зоны —</option>` + Object.entries(ZONES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
     const popts = `<option value="">— звезда / система —</option>` +
-      this.actor.items.filter(i => i.type === "celestialBody").map(i => `<option value="${i.id}">${i.name}</option>`).join("");
+      this.actor.items.filter(i => i.type === "celestialBody").map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join("");
     const xopts = `<option value="">—</option>` + Object.entries(XENOS_SPECIES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
     new Dialog({
       title: "Добавить небесное тело",
@@ -702,7 +702,7 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
       // Флаг связывает пин с актёром — двойной клик по заметке откроет лист напрямую.
       flags: { "warhammer-dbc": { systemActorUuid: this.actor.uuid } },
       pages: [{ name: "Система", type: "text", text: { content:
-        `<h2>${this.actor.name}</h2>${sectorLine}<p>Лист системы: ${link}</p>
+        `<h2>${esc(this.actor.name)}</h2>${sectorLine}<p>Лист системы: ${link}</p>
          <p><i>Перетащите эту запись на карту сектора (слой «Заметки»), чтобы получить кликабельный пин.</i></p>` } }]
     });
     await this.actor.update({ "system.journalUuid": entry.uuid });

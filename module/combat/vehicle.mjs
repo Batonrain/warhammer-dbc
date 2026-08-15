@@ -3,7 +3,7 @@
 // урона по Структуре (броня по стороне). Интеграция с чат-карточками — в том
 // же стиле, что Уклонение/Парирование и Применение урона для персонажей.
 
-import { _degWord }        from "../helpers/utils.mjs";
+import { _degWord, esc }        from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
@@ -59,7 +59,7 @@ export async function _performSwerve(actor, extraMod = 0, attackDeg = null) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("warp","#8fd0ff")}Вираж — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("warp","#8fd0ff")}Вираж — ${esc(actor.name)}</div>
         <div class="roll-threshold">
           Operate: <b>${operate}</b> (${modParts.join(", ")}) → Порог: <b>${threshold}</b>
         </div>
@@ -81,7 +81,7 @@ export async function showTerrainDialog(actor) {
   if (der.traitFlags?.ignoreDifficultTerrain) {
     return ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${actor.name}</div>
+      content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
         <div class="roll-outcome"><span class="roll-success">Сверхтяжёлая — игнорирует Трудный Ландшафт, тест не требуется.</span></div></div>`
     });
   }
@@ -127,7 +127,7 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod) {
     return ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
         <div class="roll-outcome"><span class="roll-success">Суммарный штраф ${sgn(totalMod)} ≥ 0 — проезд безопасен без теста.</span></div>
       </div>`
     });
@@ -162,7 +162,7 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
         <div class="roll-threshold">Operate <b>${operate}</b> ${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${manMod ? `, манёвр ${sgn(manMod)}` : ""}${extraMod ? `, мод ${sgn(extraMod)}` : ""}) → Порог <b>${threshold}</b></div>
         <div class="roll-dice">${rollIcon("dice","#6fe6ff")}1d100: <b>${rv}</b></div>
         ${body}
@@ -182,7 +182,7 @@ export async function showRamDialog(actor) {
     title: "Таран",
     content: `
       <form class="wh-vehicle-dialog" style="padding:6px;">
-        <div class="atk-dlg-header"><span class="atk-weapon-name">${actor.name}</span> <span style="opacity:.7">(Лоб. AP ${frontAP})</span></div>
+        <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(actor.name)}</span> <span style="opacity:.7">(Лоб. AP ${frontAP})</span></div>
         <div class="atk-dlg-row"><label>Прошла ≥ 1,5 SPD?</label>
           <select id="ram-fast"><option value="1">Да (+1d10)</option><option value="0">Нет</option></select>
         </div>
@@ -241,7 +241,7 @@ async function _resolveRam(actor, fast, targetBigger) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst","#ff8a3a")}Таран — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("burst","#ff8a3a")}Таран — ${esc(actor.name)}</div>
         <div class="roll-threshold">Урон I(Cr): Лоб.AP <b>${frontAP}</b> + <b>${roll.total}</b>${fast ? " (1d10+1d10)" : " (1d10)"} = <b>${dmg}</b></div>
         <div class="roll-dice">${rollIcon("dice","#6fe6ff")}${fast ? "2×1d10" : "1d10"}: <b>${roll.total}</b></div>
         ${bigNote}
@@ -315,7 +315,7 @@ export async function applyDamageToVehicle(actor, damageData) {
     speaker: { alias: "Система" },
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">Урон → ${actor.name}</div>
+        <div class="roll-header">Урон → ${esc(actor.name)}</div>
         <div class="roll-damage-meta">
           Источник: <b>${attackerName || "?"}</b>${weaponName ? ` (${weaponName})` : ""}
           · Часть: <b>${vehicleLocation}</b> · Сторона: <b>${ARMOUR_SIDES[side] || side}</b> · Тип: <b>${dtLabel}</b> · Урон: <b>${rawDamage}</b>
@@ -443,7 +443,7 @@ async function _resolveRepair(actor, { skill, cond, pace, mod, per, stateId }) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("dice","#6fe6ff")}Ремонт — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("dice","#6fe6ff")}Ремонт — ${esc(actor.name)}</div>
         <div class="roll-threshold">Навык <b>${skill}</b> ${sgn(totalMod)} (условия ${sgn(cond)}${pace ? `, темп ${sgn(pace)}` : ""}${mod ? `, мод ${sgn(mod)}` : ""}) → Порог <b>${threshold}</b></div>
         <div class="roll-dice">${rollIcon("dice","#6fe6ff")}1d100: <b>${rv}</b></div>
         ${body}

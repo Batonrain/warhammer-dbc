@@ -186,7 +186,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ammoDialogHtml = `
       <div class="atk-ammo-block">
         <span class="atk-ammo-label">${rollIcon("spark","#8fd0ff")}Боеприпасы:</span>
-        <span class="atk-ammo-name">${loadedAmmo ? loadedAmmo.name : "стандартные"}</span>
+        <span class="atk-ammo-name">${loadedAmmo ? esc(loadedAmmo.name) : "стандартные"}</span>
         ${ammoMods ? `<span class="atk-ammo-mods">(${ammoMods})</span>` : ""}
         <span class="atk-ammo-mag ${magCls}">Магазин: <b>${magCur}/${magMax}</b></span>
       </div>`;
@@ -394,7 +394,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       </div>` : ""}
 
       <div class="av-header">
-        <span class="av-name">${item.name}</span>
+        <span class="av-name">${esc(item.name)}</span>
         <span class="av-class">${forceMelee ? "в упор / приклад" : (WEAPON_CLASSES[sys.weaponClass] || "")}</span>
         <span class="av-badges">${stanceBonusNote}${ammoBadge}${fatigueBadge}${drugAtkBadge}</span>
       </div>
@@ -478,7 +478,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               await ChatMessage.create({
                 speaker: ChatMessage.getSpeaker({ actor: actor }),
                 content: `<div class="wh-roll-result">
-                  <div class="roll-header">${rollIcon("sword")}${item.name}</div>
+                  <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
                   <div class="roll-outcome">
                     <span class="roll-failure">Автоматический провал (Ослеплён)</span>
                   </div></div>`

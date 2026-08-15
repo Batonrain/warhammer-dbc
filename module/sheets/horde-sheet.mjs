@@ -147,7 +147,7 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result">
-        <div class="roll-header">${this.actor.name} — ${meta?.label || key}</div>
+        <div class="roll-header">${esc(this.actor.name)} — ${meta?.label || key}</div>
         <div class="roll-threshold">${meta?.abbr || key}: Порог <b>${val}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${success
@@ -189,7 +189,7 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
           <div class="atk-range-grid"><span class="atr-zone atr-pb">В упор →+30</span><span class="atr-zone atr-sh">Кор. →+10</span><span class="atr-zone atr-cb">Боевая →±0</span><span class="atr-zone atr-lg">Дальняя →−10</span><span class="atr-zone atr-ex">Экстр. →−30</span></div></div>` : "";
 
     const content = `<form class="wh-attack-form wh-horde-attack">
-      <div class="atk-dlg-header"><span class="atk-weapon-name">${w.name}</span><span class="atk-weapon-class">${WEAPON_CLASSES[sys.weaponClass] || ""}</span></div>
+      <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(w.name)}</span><span class="atk-weapon-class">${WEAPON_CLASSES[sys.weaponClass] || ""}</span></div>
       <div class="atk-horde-info">Орда · целей: <b>${targets}</b> · Магнитуда даёт <b>${d.magDamageStr}</b> к урону при попадании. Прицеливания и Избирательных атак у Орд нет.</div>
       ${wpBadges ? `<div class="atk-dlg-modifiers"><div class="atk-mods-title">Свойства оружия</div><div class="atk-wprops-list">${wpBadges}</div></div>` : ""}
       ${rangeInfo}
@@ -293,7 +293,7 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result horde-atk">
         ${buildPropertyChatBlock(wProps)}
-        <div class="roll-header">${actor.name} — ${w.name}</div>
+        <div class="roll-header">${esc(actor.name)} — ${esc(w.name)}</div>
         <div class="roll-threshold">${meta?.abbr || key}: Порог <b>${threshold}</b> · целей: <b>${targets}</b> · бросок <b>${rv}</b></div>
         <div class="roll-outcome">${hit
           ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}, шквал накрывает цель</span>`

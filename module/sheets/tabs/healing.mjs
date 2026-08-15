@@ -6,6 +6,7 @@
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
+import { esc } from "../../helpers/utils.mjs";
 
 export function woundLevel(system) {
   const value = system.wounds?.value ?? 0;
@@ -49,8 +50,8 @@ export function showHealingDialog(medic) {
       <div class="atk-dlg-header"><span class="atk-weapon-name">${rollIcon("heart","#ff8a8a")}Лечение</span></div>
       <div class="atk-dlg-row"><label>Пациент:</label>
         <select id="heal-patient">
-          <option value="self">${medic.name} (себя)</option>
-          ${hasTgt ? `<option value="target" selected>${tgt.name} (цель)</option>` : ""}
+          <option value="self">${esc(medic.name)} (себя)</option>
+          ${hasTgt ? `<option value="target" selected>${esc(tgt.name)} (цель)</option>` : ""}
         </select>
       </div>
       <div class="atk-dlg-row"><label>Режим:</label>
@@ -73,7 +74,7 @@ export function showHealingDialog(medic) {
     if (!patient) return;
     const lvl = woundLevel(patient.system);
     const parts = [
-      `<b>Пациент:</b> ${patient.name}`,
+      `<b>Пациент:</b> ${esc(patient.name)}`,
       `<b>Уровень ранения:</b> ${lvl.label} (потеряно ${lvl.lost}${lvl.crit ? `, крит ${lvl.crit}` : ""}, T.b ${lvl.tb})`
     ];
     if (hasRuleFlag(patient, "healing.astartes")) parts.push("<i>Физиология Астартес: всегда считается отдыхающим.</i>");
@@ -204,7 +205,7 @@ export async function applyHealing(medic, patient, { mode, care, mod, bonus }) {
   const rollMode = game.settings.get("core", "rollMode");
   const msg = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: medic }),
-    content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("heart","#ff8a8a")}Лечение — ${patient.name}</div><div class="roll-threshold">${lines.join("<br/>")}</div></div>`,
+    content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("heart","#ff8a8a")}Лечение — ${esc(patient.name)}</div><div class="roll-threshold">${lines.join("<br/>")}</div></div>`,
     rolls,
     sound: rolls.length ? CONFIG.sounds.dice : undefined
   }, rollMode);

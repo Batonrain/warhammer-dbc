@@ -10,6 +10,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { DP_INFAMY_ABILITIES, DP_PATRON_ABILITIES, DP_PATRONAGE } from "../constants/demon-prince.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 // Контекст для общего партиала infamy-strip.hbs.
 export function infamyContext(actor, godKey, { ip, ipMax, showCounter = true }) {
@@ -49,7 +50,7 @@ export async function restoreInfamy(actor, ipFullPath, ipMax, meta) {
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
-    content: ipCard(meta, `⚜ Очки Бесчестия восстановлены — ${actor.name}`,
+    content: ipCard(meta, `⚜ Очки Бесчестия восстановлены — ${esc(actor.name)}`,
       [`Пул полон: <b>${ipMax}</b> Очков Бесчестия.`])
   }, rollMode));
 }
@@ -105,7 +106,7 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
-    content: ipCard(meta, `${ability.icon || "⚜"} ${ability.label} — ${actor.name}`,
+    content: ipCard(meta, `${ability.icon || "⚜"} ${ability.label} — ${esc(actor.name)}`,
       [...lines, `<span style="font-size:0.82em;opacity:0.8;">Осталось Очков Бесчестия: <b>${ip - 1}</b> / ${ipMax}.</span>`]),
     rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined
   }, rollMode));

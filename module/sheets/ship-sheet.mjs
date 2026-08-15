@@ -171,7 +171,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       const crossedNow = SHIP_DEFILEMENT_THRESHOLDS.filter(x => dpNow >= x.dp).pop();
       const sel = crossedNow && crossedNow.level === t.level ? " selected" : "";
       const mod = `${t.mod >= 0 ? "+" : ""}${t.mod}`;
-      return `<option value="${t.level}"${sel}>${t.name} — ${t.dp} DP (мод ${mod})</option>`;
+      return `<option value="${t.level}"${sel}>${esc(t.name)} — ${t.dp} DP (мод ${mod})</option>`;
     }).join("");
 
     // Журнал искажений осквернения (для вкладки «Записи»).
@@ -515,7 +515,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
           allRolls.push(sub);
           const sm = findSubmutation(dist.submut, sub.total);
           submutText = sm ? `${sm.name}` : "";
-          descBlock += `<div class="roll-threshold" style="margin-top:5px;">${dist.submut.label}: <b>${sub.total}</b>${sm ? ` — <b>${sm.name}</b>` : ""}</div>`;
+          descBlock += `<div class="roll-threshold" style="margin-top:5px;">${dist.submut.label}: <b>${sub.total}</b>${sm ? ` — <b>${esc(sm.name)}</b>` : ""}</div>`;
           if (sm) descBlock += `<div class="roll-distort-desc">${sm.desc}</div>`;
         }
       }
@@ -527,7 +527,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
         content: `
           <div class="wh-roll-result">
             <div class="roll-header">Осквернение корабля — Искажение</div>
-            <div class="roll-threshold">Порог: <b>${thr.name}</b> (${thr.dp} DP, мод ${sgn(thr.mod)} → реверс ${sgn(applied)})</div>
+            <div class="roll-threshold">Порог: <b>${esc(thr.name)}</b> (${thr.dp} DP, мод ${sgn(thr.mod)} → реверс ${sgn(applied)})</div>
             <div class="roll-dice">1d100: <b>${raw}</b>${applied ? ` ${sgn(applied)} → <b>${total}</b>` : ""}</div>
             <div class="roll-outcome"><span class="roll-success">Искажение${range ? ` (${range})` : ""}: ${distName}</span></div>
             ${descBlock}
@@ -737,7 +737,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     const warheadRow = isTorpedo ? `
         <div class="atk-dlg-row"><label>Торпеда (боезапас):</label>
           <select id="sf-torp">
-            ${torps.map(t => { const p = torpedoProfile(t.system.warhead, t.system.navSystem); return `<option value="${t.id}">${t.name} — ${p?.label || ""} ×${t.system.quantity}</option>`; }).join("")}
+            ${torps.map(t => { const p = torpedoProfile(t.system.warhead, t.system.navSystem); return `<option value="${t.id}">${esc(t.name)} — ${p?.label || ""} ×${t.system.quantity}</option>`; }).join("")}
           </select>
         </div>
         <div class="atk-dlg-row"><label>Запустить торпед (≤ S ${w.strength || 0}):</label><input id="sf-count" type="number" value="1" min="1"/></div>` : "";
@@ -747,12 +747,12 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     const tgtVS  = tgt ? (Number(tgt.system.derived?.chars?.voidShields) || 0) : 0;
     const tgtArm = tgt ? (Number(tgt.system.derived?.chars?.armour) || 0) : 0;
     const tgtNote = tgt
-      ? `Цель: <b>${tgt.name}</b> — Пуст. щиты <b>${tgtVS}</b>, Броня <b>${tgtArm}</b> (подставлено).`
+      ? `Цель: <b>${esc(tgt.name)}</b> — Пуст. щиты <b>${tgtVS}</b>, Броня <b>${tgtArm}</b> (подставлено).`
       : `Отметьте (target) корабль-цель — щиты и броня подставятся автоматически.`;
 
     const content = `
       <form class="wh-ship-fire" style="padding:6px;">
-        <div class="atk-dlg-header"><span class="atk-weapon-name">${item.name}</span> <span style="opacity:.7">(${wtLabel}, S ${w.strength||0}, Урон ${w.damage||"—"}, Крит ${w.crit||0})</span></div>
+        <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(item.name)}</span> <span style="opacity:.7">(${wtLabel}, S ${w.strength||0}, Урон ${w.damage||"—"}, Крит ${w.crit||0})</span></div>
         <div class="atk-range-info" style="font-size:0.84em;">${tgtNote}</div>
         ${warheadRow}
         <div class="atk-dlg-row"><label>BS канонира${gunName ? ` (${gunName})` : ""}:</label><input id="sf-bs" type="number" value="${gunBS}"/></div>
@@ -872,7 +872,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
         critRollVal = cr.total;
         const ce = getShipCrit(critRollVal);
         const extra = critByNova > 1 ? ` (×${critByNova} крит. — для нова/торпед бросьте отдельно)` : "";
-        critSection = `<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ! 1d5 = <b>${critRollVal}</b> — ${ce?.name || ""}${extra}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`;
+        critSection = `<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ! 1d5 = <b>${critRollVal}</b> — ${esc(ce?.name)}${extra}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`;
       }
       // Крит без урона Прочности всё равно наносит 1 очко Прочности.
       if ((critHappens || critByNova > 0) && totalHI === 0) totalHI = 1;
@@ -896,7 +896,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${ICO.torp} ${item.name} — Стрельба</div>
+          <div class="roll-header">${ICO.torp} ${esc(item.name)} — Стрельба</div>
           <div class="roll-threshold">${subline}</div>
           <div class="roll-threshold">BS ${o.bs}${o.aim ? ` +${o.aim} приц.` : ""}${o.range ? ` ${o.range > 0 ? "+" : ""}${o.range} дальн.` : ""}${o.mod ? ` ${o.mod > 0 ? "+" : ""}${o.mod}` : ""}${novaPenalty ? ` ${novaPenalty} нова` : ""} → Порог <b>${threshold}</b></div>
           <div class="roll-dice">${ICO.dice} 1d100: <b>${rv}</b></div>
@@ -984,7 +984,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     }
     if (upd.length) await this.actor.updateEmbeddedDocuments("Item", upd);
     if (del.length) await this.actor.deleteEmbeddedDocuments("Item", del);
-    await this._chat(`<div class="roll-header">${ICO.dice} СХ носителя — ${this.actor.name}</div>
+    await this._chat(`<div class="roll-header">${ICO.dice} СХ носителя — ${esc(this.actor.name)}</div>
       <div class="roll-threshold">Обновление эскадрилий: топливо вылетевших, возврат перевооружённых.</div>
       ${notes.length ? notes.map(n => `<div class="roll-threshold" style="font-size:0.82em;">• ${n}</div>`).join("") : `<div class="roll-outcome"><span class="roll-success">Нет активных эскадрилий.</span></div>`}`);
   }
@@ -1006,7 +1006,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
         const r = await new Roll("1d100").evaluate();
         const dos = this._dos(r.total, thr);
         const kills = dos > 0 ? Math.min(inc, 1 + Math.floor((dos-1)/2)) : 0;
-        await this._chat(`<div class="roll-header">${ICO.shield} Турели — ${this.actor.name}</div>
+        await this._chat(`<div class="roll-header">${ICO.shield} Турели — ${esc(this.actor.name)}</div>
           <div class="roll-threshold">BS ${bs} + TR×5 ${trv*5}${md?` ${md>=0?"+":""}${md}`:""} → Порог <b>${thr}</b></div>
           <div class="roll-dice">${ICO.dice} 1d100: <b>${r.total}</b> (${dos} ст.)</div>
           <div class="roll-outcome">${kills>0?`<span class="roll-success">Сбито: <b>${kills}</b> из ${inc} — уменьшите залп/волну.</span>`:`<span class="roll-failure">Турели промахнулись.</span>`}</div>`, [r]);
@@ -1023,7 +1023,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     const tgtArm = tgt ? (Number(tgt.system.derived?.chars?.armour) || 0) : 0;
     new Dialog({ title: isBomber ? "Запуск бомбардировщиков" : "Запуск штурмовых лодок",
       content: `<form class="wh-ship-fire" style="padding:6px;">
-        <div class="atk-range-info" style="font-size:0.82em;">${tgt?`Цель: <b>${tgt.name}</b> (мин. броня ${tgtArm}).`:"Отметьте (target) цель."} ${isBomber?"Тест Command + CR. Каждый успех — попадание (макс. 2 + 1×эскадрилья), 1d10+4 урона, щиты не спасают, 4+ усп. — крит.":"Тест Command(F) + CR. Каждый успех — 1 лодка (макс. 6) пробила корпус; 5+ усп. — крит; +10 к Ударил-отступил за каждую лодку."}</div>
+        <div class="atk-range-info" style="font-size:0.82em;">${tgt?`Цель: <b>${esc(tgt.name)}</b> (мин. броня ${tgtArm}).`:"Отметьте (target) цель."} ${isBomber?"Тест Command + CR. Каждый успех — попадание (макс. 2 + 1×эскадрилья), 1d10+4 урона, щиты не спасают, 4+ усп. — крит.":"Тест Command(F) + CR. Каждый успех — 1 лодка (макс. 6) пробила корпус; 5+ усп. — крит; +10 к Ударил-отступил за каждую лодку."}</div>
         <div class="atk-dlg-row"><label>Command ведущего:</label><input id="cf-cmd" type="number" value="40"/></div>
         <div class="atk-dlg-row"><label>CR судна:</label><input id="cf-cr" type="number" value="${cCR}"/></div>
         <div class="atk-dlg-row"><label>Эскадрилий (крыло):</label><input id="cf-sq" type="number" value="${cQty}" min="1"/></div>
@@ -1057,7 +1057,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
           body = `<div class="roll-outcome"><span class="roll-success">Лодок пробило корпус: <b>${boats}</b> (макс 6)${crit?` — <b>КРИТ</b>`:""}</span></div>
             <div class="roll-threshold" style="font-size:0.85em;">Ведущий абордажа начинает Ударил-отступил (без теста Operate), бонус <b>+${boats*10}</b> (+10 за лодку).</div>`;
         }
-        await this._chat(`<div class="roll-header">${isBomber?ICO.dmg:ICO.hit} ${isBomber?"Бомбардировщики":"Штурмовые лодки"} — ${this.actor.name}${tgt?` → ${tgt.name}`:""}</div>
+        await this._chat(`<div class="roll-header">${isBomber?ICO.dmg:ICO.hit} ${isBomber?"Бомбардировщики":"Штурмовые лодки"} — ${esc(this.actor.name)}${tgt?` → ${esc(tgt.name)}`:""}</div>
           <div class="roll-threshold">Command ${cmd} + CR ${cr}${wing?` + крыло ${wing}`:""}${md?` ${md>=0?"+":""}${md}`:""} → Порог <b>${thr}</b> (цель защищается турелями!)</div>
           <div class="roll-dice">${ICO.dice} 1d100: <b>${r.total}</b> (${dos} ст.)</div>${body}`, rolls);
       } }, cancel: { label: "Отмена" } }, default: "roll"
@@ -1082,10 +1082,10 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
         const net = d1 - d2;
         const myLoss = (d2 - d1 >= 4) ? 0 : Math.max(0, d2 - d1);
         const tgLoss = (d1 - d2 >= 4) ? 0 : Math.max(0, d1 - d2);
-        await this._chat(`<div class="roll-header">${ICO.hit} Бой истребителей — ${this.actor.name}</div>
+        await this._chat(`<div class="roll-header">${ICO.hit} Бой истребителей — ${esc(this.actor.name)}</div>
           <div class="roll-threshold">Мы: порог ${myThr}, бросок <b>${r1.total}</b> (${d1} ст.)</div>
           <div class="roll-threshold">Враг: порог ${tgThr}, бросок <b>${r2.total}</b> (${d2} ст.)</div>
-          <div class="roll-outcome">${net===0?`<span class="roll-failure">Ничья — можно продолжить в следующем СХ.</span>`:`<span class="roll-success">Перевес: <b>${net>0?this.actor.name:"враг"}</b></span>`}</div>
+          <div class="roll-outcome">${net===0?`<span class="roll-failure">Ничья — можно продолжить в следующем СХ.</span>`:`<span class="roll-success">Перевес: <b>${net>0?esc(this.actor.name):"враг"}</b></span>`}</div>
           <div class="roll-threshold" style="font-size:0.85em;">Врагу выведено эскадрилий: <b>${tgLoss}</b>; нам: <b>${myLoss}</b>. (Победа на 4+ — без потерь у победителя.)</div>`, [r1, r2]);
       } }, cancel: { label: "Отмена" } }, default: "roll"
     }, { classes: ["dialog","wh-attack-dialog"], width: 430 }).render(true);
@@ -1112,11 +1112,11 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     const list = macros.map(m => {
       const w = m.system.weapon || {};
       const own = (m.system.shipProps || []).filter(p => p.key === "aimer").reduce((a, p) => a + (Number(p.rating) || 0), 0);
-      return `<label class="salvo-row"><input type="checkbox" class="salvo-w" value="${m.id}" checked/> <b>${m.name}</b> — S ${w.strength || 0}, ${w.damage || "—"}, крит ${w.crit || 0}${own ? `, приц +${own}` : ""}</label>`;
+      return `<label class="salvo-row"><input type="checkbox" class="salvo-w" value="${m.id}" checked/> <b>${esc(m.name)}</b> — S ${w.strength || 0}, ${w.damage || "—"}, крит ${w.crit || 0}${own ? `, приц +${own}` : ""}</label>`;
     }).join("");
 
     const content = `<form class="wh-ship-fire" style="padding:6px;">
-      <div class="atk-range-info" style="font-size:0.82em;">${tgt ? `Цель: <b>${tgt.name}</b> — щиты ${tgtVS}, броня ${tgtArm}.` : "Отметьте (target) корабль-цель."} Залп: макробатареи бьют одну цель, попадания и урон складываются, щиты гасят слабейшие попадания, броня вычитается из суммы, крит один на весь залп.</div>
+      <div class="atk-range-info" style="font-size:0.82em;">${tgt ? `Цель: <b>${esc(tgt.name)}</b> — щиты ${tgtVS}, броня ${tgtArm}.` : "Отметьте (target) корабль-цель."} Залп: макробатареи бьют одну цель, попадания и урон складываются, щиты гасят слабейшие попадания, броня вычитается из суммы, крит один на весь залп.</div>
       <div class="salvo-list">${list}</div>
       <div class="atk-dlg-row"><label>BS канонира${gunName ? ` (${gunName})` : ""}:</label><input id="sv-bs" type="number" value="${gunBS}"/></div>
       <div class="atk-dlg-row"><label>Прицел / Aimer (+):</label><input id="sv-aim" type="number" value="${aimer}"/></div>
@@ -1150,13 +1150,13 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       const own = (it.system.shipProps || []).filter(p => p.key === "aimer").reduce((a, p) => a + (Number(p.rating) || 0), 0);
       const thr = o.bs + o.aim + o.range + o.mod + own;
       const roll = await new Roll("1d100").evaluate(); allRolls.push(roll);
-      if (roll.total > thr) { lines.push(`<div class="roll-threshold" style="font-size:0.82em;opacity:.8;">${it.name}: ${roll.total} > ${thr} — промах</div>`); continue; }
+      if (roll.total > thr) { lines.push(`<div class="roll-threshold" style="font-size:0.82em;opacity:.8;">${esc(it.name)}: ${roll.total} > ${thr} — промах</div>`); continue; }
       const deg = Math.floor((thr - roll.total) / 10) + 1;
       const wHits = Math.min(deg, S);
       if (critN && deg >= critN) critEligible = true;
       const dmgF = cleanDmg(w.damage); const wDmgs = [];
       for (let i = 0; i < wHits; i++) { let dr; try { dr = await new Roll(dmgF).evaluate(); } catch (e) { dr = await new Roll("1d10").evaluate(); } allRolls.push(dr); wDmgs.push(dr.total); hits.push(dr.total); }
-      lines.push(`<div class="roll-threshold" style="font-size:0.82em;">${it.name}: ${deg} ст. → ${wHits} поп. [${wDmgs.join("+")}]${(critN && deg >= critN) ? ` <b>крит!</b>` : ""}</div>`);
+      lines.push(`<div class="roll-threshold" style="font-size:0.82em;">${esc(it.name)}: ${deg} ст. → ${wHits} поп. [${wDmgs.join("+")}]${(critN && deg >= critN) ? ` <b>крит!</b>` : ""}</div>`);
     }
     hits.sort((a, b) => a - b);
     const shieldsUsed = Math.min(o.shields, hits.length);
@@ -1168,14 +1168,14 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       const cr = await new Roll("1d5").evaluate(); allRolls.push(cr);
       const ce = getShipCrit(cr.total);
       if (totalHI === 0) totalHI = 1;
-      critSection = `<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ! 1d5 = <b>${cr.total}</b> — ${ce?.name || ""}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`;
+      critSection = `<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ! 1d5 = <b>${cr.total}</b> — ${esc(ce?.name)}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`;
     }
     const overloaded = o.shields > 0 && hits.length >= o.shields;
     const vsNote = overloaded ? `<div class="roll-threshold" style="font-size:0.82em;color:#c07000;">Щиты перегружены (${hits.length} ≥ ${o.shields}) — схлопнулись.${o.tgt ? ` <button class="wh-ship-vs-btn" type="button">Отметить щиты цели схлопнутыми</button>` : ""}</div>` : "";
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result">
-        <div class="roll-header">${ICO.crit} Залп макробатарей — ${this.actor.name}${o.tgt ? ` → ${o.tgt.name}` : ""}</div>
+        <div class="roll-header">${ICO.crit} Залп макробатарей — ${esc(this.actor.name)}${o.tgt ? ` → ${esc(o.tgt.name)}` : ""}</div>
         <div class="roll-threshold">BS ${o.bs}${o.aim ? ` +${o.aim} приц.` : ""}${o.range ? ` ${o.range > 0 ? "+" : ""}${o.range} дальн.` : ""}${o.mod ? ` ${o.mod > 0 ? "+" : ""}${o.mod}` : ""}</div>
         ${lines.join("")}
         <div class="roll-threshold">Всего попаданий: <b>${hits.length}</b>${shieldsUsed ? ` ${ICO.shield} −щиты ${shieldsUsed} = <b>${passed.length}</b>` : ""} · броня −${o.armour}</div>
@@ -1202,7 +1202,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     new Dialog({
       title: "Таран",
       content: `<form class="wh-ship-fire" style="padding:6px;">
-        <div class="atk-range-info" style="font-size:0.82em;">${tgt ? `Цель: <b>${tgt.name}</b> (броня ${tgtArm}).` : "Отметьте (target) корабль-цель."} Урон тарана: ${dice} + Лоб. броня ${prowArm} (щиты не спасают). Таранящий получает 1d5 + броня цели (сквозь щиты).</div>
+        <div class="atk-range-info" style="font-size:0.82em;">${tgt ? `Цель: <b>${esc(tgt.name)}</b> (броня ${tgtArm}).` : "Отметьте (target) корабль-цель."} Урон тарана: ${dice} + Лоб. броня ${prowArm} (щиты не спасают). Таранящий получает 1d5 + броня цели (сквозь щиты).</div>
         <div class="atk-dlg-row"><label>Operate (Voidship) рулевого:</label><input id="rm-op" type="number" value="35"/></div>
         <div class="atk-dlg-row"><label>Манёвренность (MN):</label><input id="rm-mn" type="number" value="${mn}"/></div>
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="rm-mod" type="number" value="0"/></div>
@@ -1250,7 +1250,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result">
-        <div class="roll-header">Таран — ${this.actor.name}${tgt ? ` → ${tgt.name}` : ""}</div>
+        <div class="roll-header">Таран — ${esc(this.actor.name)}${tgt ? ` → ${esc(tgt.name)}` : ""}</div>
         <div class="roll-threshold">Operate+MN−20: <b>${op}</b> +${mn} −20${mod ? ` ${mod>=0?"+":""}${mod}` : ""} → Порог <b>${threshold}</b></div>
         <div class="roll-dice">${ICO.dice} 1d100: <b>${roll.total}</b></div>
         ${body}</div>`,
@@ -1329,7 +1329,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result"><div class="roll-header">Критическое попадание (корабль)</div>
         <div class="roll-dice">1d5 = <b>${r.total}</b></div>
-        <div class="roll-outcome"><span class="roll-success">${ce?.name || ""}</span></div>
+        <div class="roll-outcome"><span class="roll-success">${esc(ce?.name)}</span></div>
         <div class="roll-distort-desc">${ce?.text || ""}</div>
         <div class="roll-threshold" style="font-size:0.8em;">У полуразрушенного корабля эффект = пробившему броню урону (1–11).</div></div>`,
       rolls: [r], sound: CONFIG.sounds.dice

@@ -7,6 +7,7 @@
 import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
 import { HOMEWORLD_BY_KEY } from "../../constants/homeworlds.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
+import { esc } from "../../helpers/utils.mjs";
 
 function fatigueThreshold(actor) {
   const system = actor.system || {};
@@ -50,7 +51,7 @@ export async function addFatigue(actor, amount = 1) {
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("warn","#ff6b6b")}${actor.name} — Потеря сознания!</div>
+        <div class="roll-header">${rollIcon("warn","#ff6b6b")}${esc(actor.name)} — Потеря сознания!</div>
         <div class="roll-threshold">
           Усталость: <b>${newVal}</b> ≥ порог T.b + W.b (<b>${threshold}</b>) — превышен.
         </div>
@@ -105,7 +106,7 @@ export async function fatiguePeriodRest(actor) {
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("spark","#4dffa6")}${actor.name} — Час отдыха</div>
+      <div class="roll-header">${rollIcon("spark","#4dffa6")}${esc(actor.name)} — Час отдыха</div>
       <div class="roll-outcome">
         <span class="roll-success">Снята 1 Усталость. Осталось: <b>${Math.max(0, current - 1)}</b></span>
       </div>
@@ -127,7 +128,7 @@ export async function fatigueSleep(actor) {
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("spark","#4dffa6")}${actor.name} — Полноценный сон</div>
+      <div class="roll-header">${rollIcon("spark","#4dffa6")}${esc(actor.name)} — Полноценный сон</div>
       <div class="roll-outcome">
         <span class="roll-success">Вся Усталость снята (было: <b>${current}</b>).</span>
       </div>

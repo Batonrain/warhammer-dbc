@@ -51,7 +51,7 @@ export function openElitePicker(actor, extraIndex = null) {
   const card = (e, dim) => `
     <button type="button" class="ep-item ${dim ? "dim" : ""} ${e.name === cur ? "on" : ""}"
             data-name="${e.name}">
-      <span class="ep-name">${e.name}</span>
+      <span class="ep-name">${esc(e.name)}</span>
       <span class="ep-meta">${e.race}${e.god ? " · " + e.god : ""}</span>
       <span class="ep-req">${e.req || ""}</span>
     </button>`;

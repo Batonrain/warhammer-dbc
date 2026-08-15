@@ -917,7 +917,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
           <span>${m.label}${sign ? ` <b>(${sign})</b>` : ""}</span></label>`;
       }).join("");
       return `<div class="atk-dlg-modifiers item-mods">
-        <div class="atk-mods-title">${g.item.name}</div>
+        <div class="atk-mods-title">${esc(g.item.name)}</div>
         <div class="atk-mods-list">${rows}</div></div>`;
     }).join("");
     return { mods: allMods, html: blocks };
