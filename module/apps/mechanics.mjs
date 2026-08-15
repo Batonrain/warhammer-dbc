@@ -1368,16 +1368,29 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
   return "";
 }
 
-/** Дроплисты выбора навыка (+специализации, для групповых) — общие для kind:"skill" и kind:"rollmod". */
-function buildSkillSelectorHtml(groupId, ent, dis) {
+/**
+ * <select> выбора навыка: обычные и групповые двумя optgroup, значение
+ * кодируется как «scope:key». Один и тот же список нужен обоим конструкторам
+ * предмета — Механике и Требованиям, — а различаются они только классом и
+ * набором data-атрибутов, поэтому и те и другие приходят параметром
+ * (wdbc-c4o). Специализация сюда не входит: у Механики в ней есть «Своя…» и
+ * «По выбору при получении…», у Требований — «любая», и это разные списки.
+ */
+function skillRefSelectHtml(cls, dataAttrs, ent, dis) {
   const curVal = ent.skillKey ? `${ent.skillScope}:${ent.skillKey}` : "";
   const plainOpts = Object.entries(SKILLS_DEF).map(([k, d]) => optHtml(`plain:${k}`, d.label, curVal === `plain:${k}`)).join("");
   const groupOpts = Object.entries(GROUP_SKILLS_DEF).map(([k, d]) => optHtml(`group:${k}`, d.label, curVal === `group:${k}`)).join("");
-  let out = `<select class="grant-entry-skillref" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+  return `<select class="${cls}" ${dataAttrs} ${dis}>
     <option value="">— выберите навык —</option>
     <optgroup label="Обычные">${plainOpts}</optgroup>
     <optgroup label="Групповые">${groupOpts}</optgroup>
   </select>`;
+}
+
+/** Дроплисты выбора навыка (+специализации, для групповых) — общие для kind:"skill" и kind:"rollmod". */
+function buildSkillSelectorHtml(groupId, ent, dis) {
+  let out = skillRefSelectHtml("grant-entry-skillref",
+    `data-group-id="${groupId}" data-entry-id="${ent.id}"`, ent, dis);
   if (ent.skillScope === "group" && ent.skillKey) {
     const specs = specOptions(ent.skillKey);
     const isChoice = ent.specKey === "__choice__";
@@ -1634,16 +1647,9 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
   const d = `data-req="${reqKey}" data-group-id="${groupId}" data-entry-id="${e.id}"`;
   switch (e.kind) {
     case "reqSkill": {
-      const cur = e.skillKey ? `${e.skillScope}:${e.skillKey}` : "";
-      const plain = Object.entries(SKILLS_DEF).map(([k, def]) => optHtml(`plain:${k}`, def.label, cur === `plain:${k}`)).join("");
-      const grp   = Object.entries(GROUP_SKILLS_DEF).map(([k, def]) => optHtml(`group:${k}`, def.label, cur === `group:${k}`)).join("");
       const ranks = Object.entries(SKILL_RANKS).map(([k, def]) => optHtml(k, def.label, (e.rank || "knows") === k)).join("");
-      let out = `<select class="req-skillref" ${d} ${dis}>
-        <option value="">— выберите навык —</option>
-        <optgroup label="Обычные">${plain}</optgroup>
-        <optgroup label="Групповые">${grp}</optgroup>
-      </select>
-      <select class="req-rank" ${d} ${dis}>${ranks}</select>`;
+      let out = skillRefSelectHtml("req-skillref", d, e, dis)
+        + `<select class="req-rank" ${d} ${dis}>${ranks}</select>`;
       if (e.skillScope === "group" && e.skillKey) {
         const specs = specOptions(e.skillKey).map(s => optHtml(s.key, s.display, e.specKey === s.key)).join("");
         out += `<select class="req-spec" ${d} ${dis}>

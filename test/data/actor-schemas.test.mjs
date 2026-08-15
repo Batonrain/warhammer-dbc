@@ -36,6 +36,13 @@ const PACKS = {
   character:   "bestiary"
 };
 
+/** Расхождения сверх общих для трёх типов с характеристиками. */
+const OWN_DEVIATIONS = {
+  // Пусто = Бог не выбран. Умолчание "undivided" делало «Покровительство:
+  // Неделимый» выполненным у любого, кто не трогал выбор (wdbc-osz).
+  character: { patronGod: "" }
+};
+
 /** Намеренные расхождения схемы с прежним template.json: путь → почему. */
 const DEVIATIONS = {
   vehicle: {
@@ -46,9 +53,11 @@ const DEVIATIONS = {
   // хранимые поля. Бонус — потому что «Сверхъестественное» редактируемый ввод
   // на листе; Значение — потому что `total` расчёт собирает заново, и эффект
   // поверх него не поднимал ни Бонус, ни навыки (wdbc-5wm).
-  ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type,
-    Object.fromEntries(Object.keys(CHARACTERISTICS)
-      .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]]))]))
+  ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type, {
+    ...Object.fromEntries(Object.keys(CHARACTERISTICS)
+      .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
+    ...OWN_DEVIATIONS[type]
+  }]))
 };
 
 /** Вписать значение по пути «characteristics.t.bonusFx» в копию объекта. */

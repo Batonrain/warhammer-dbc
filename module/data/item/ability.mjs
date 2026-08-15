@@ -12,6 +12,9 @@ export class AbilityData extends foundry.abstract.TypeDataModel {
     return {
       description: new StringField({ initial: "", label: "Описание" }),
       notes:       new StringField({ initial: "", label: "Заметки" }),
+      // Лист рисуется talent.hbs, где строка «Источник» есть давно; без поля
+      // в схеме Foundry молча выбрасывал введённое (wdbc-fl3).
+      bookSource:  new StringField({ initial: "", label: "Книга-источник" }),
       benefit:     new StringField({ initial: "", label: "Действие" })
     };
   }

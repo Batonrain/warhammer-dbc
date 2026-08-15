@@ -13,6 +13,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import { actorMeetsReq, checkRequirements, isReqComplete, describeReqEntry }
   from "../../module/apps/mechanics.mjs";
+import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
 /** Требование заданного вида: недостающие поля добираются пустыми. */
 const req = (kind, over = {}) => ({
@@ -150,6 +151,23 @@ describe("движок Требований", () => {
 
     it("актора нет — не выполнено ничего", () => {
       expect(actorMeetsReq(null, req("reqRace", { raceKey: "human" }))).toBe(false);
+    });
+
+    // Умолчание схемы ставило новому персонажу patronGod: "undivided", и
+    // «Покровительство: Неделимый» проходило у любого, кто просто не трогал
+    // выбор Бога, — включая имперцев (wdbc-osz). Неделимый — осмысленное
+    // Покровительство, отбирать его у требования нельзя; пустым должно быть
+    // умолчание поля.
+    it("нетронутый выбор Бога не выполняет требование Покровительства", () => {
+      const fresh = new ACTOR_DATA_MODELS.character({}).toObject();
+
+      expect(fresh.patronGod).toBe("");
+      expect(actorMeetsReq(actorOf(fresh), req("reqPatron", { patronKey: "undivided" }))).toBe(false);
+    });
+
+    it("выбранный Неделимый требование выполняет", () => {
+      expect(actorMeetsReq(actorOf({ patronGod: "undivided" }),
+                           req("reqPatron", { patronKey: "undivided" }))).toBe(true);
     });
   });
 
