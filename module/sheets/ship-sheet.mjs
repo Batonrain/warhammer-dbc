@@ -13,6 +13,8 @@ import { CREW_POP_TABLE, CREW_MORALE_TABLE, CREW_RATING_TABLE, crewActiveRows, O
 import { SHIP_RELATIONS } from "../constants/ship-tokens.mjs";
 import { CRAFT_KINDS } from "../constants/small-craft.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
+import { whenEditable, onTab } from "./v2-helpers.mjs";
 
 const CRAFT_STATE = { stored: "На борту", prepared: "Подготовлена", launched: "В вылете", returning: "Возврат (топливо!)", rearming: "Перевооружение" };
 const CRAFT_STRENGTH = { full: "Полная", half: "Полусильная", destroyed: "Уничтожена" };
@@ -54,20 +56,330 @@ function propLabel(p) {
   return s;
 }
 
-export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
+// ── Действия листа ───────────────────────────────────────────────────────────
+// ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
+// источником вторым аргументом. Обычные функции — чтобы карта действий
+// сверялась с шаблоном тестом. Общая обвязка (whenEditable, onTab) — в
+// v2-helpers.mjs.
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "sheet", "actor", "ship", "wh-holo"],
-      template: "systems/warhammer-dbc/templates/actor/ship-sheet.hbs",
-      width: 780, height: 760,
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "overview" }]
-    });
+const itemIdOf = target => target.closest("[data-item-id]")?.dataset.itemId;
+const officerIdOf = target => target.closest("[data-officer-id]")?.dataset.officerId;
+
+// ── Доступно и тому, кто кораблём не владеет ──
+
+/** Открыть лист офицера, сидящего на должности. */
+async function onOfficerOpen(event, target) {
+  const uuid = target.closest("[data-uuid]")?.dataset.uuid;
+  if (!uuid) return;
+  const doc = await fromUuid(uuid);
+  (doc?.actor ?? doc)?.sheet?.render(true);
+}
+
+/** Освободить должность: владелец корабля — любую, игрок — только свою. */
+async function onOfficerClear(event, target) {
+  const id = officerIdOf(target);
+  const officers = foundry.utils.deepClone(this.actor.system.officers || []);
+  const o = officers.find(x => x.id === id);
+  if (!o) return;
+  if (!this.actor.isOwner) {
+    const occ = o.uuid ? await fromUuid(o.uuid) : null;
+    const occActor = occ?.actor ?? occ;
+    if (!occActor?.isOwner) return ui.notifications.warn("Освободить можно только своё место.");
+  }
+  o.uuid = ""; o.name = ""; o.img = "";
+  await this._persistOfficers(officers);
+}
+
+// ── Правящие действия ──
+
+/** Добавить должность (название — из выпадающего списка рядом с кнопкой). */
+async function onOfficerAdd() {
+  const title = this.element.querySelector(".ship-officer-select")?.value || "Офицер";
+  const officers = foundry.utils.deepClone(this.actor.system.officers || []);
+  officers.push({ id: foundry.utils.randomID(), title, uuid: "", name: "", img: "" });
+  await this.actor.update({ "system.officers": officers });
+}
+
+function onOfficerRemove(event, target) {
+  const id = officerIdOf(target);
+  return this.actor.update({ "system.officers": (this.actor.system.officers || []).filter(o => o.id !== id) });
+}
+
+/** Создать узел/торпеду прямо на корабле и открыть его лист. */
+const creator = doc => async function () {
+  const [it] = await this.actor.createEmbeddedDocuments("Item", [doc]);
+  it?.sheet.render(true);
+};
+
+const onCreateComponent = creator({ name: "Новый узел", type: "component", system: { kind: "supplemental" } });
+const onCreateTorpedo   = creator({ name: "Новая торпеда", type: "torpedo",
+  system: { warhead: "plasma", navSystem: "standard", quantity: 1 } });
+
+// Взять груз на борт: сперва выбор типа — партия сразу называется по типу
+// («Роскошь», «Топливо»), переименовать её можно потом.
+function onCreateCargo() { return this._showCargoPicker(); }
+
+/** Левый клик по названию — открыть лист узла / груза / торпеды. */
+function onItemOpen(event, target) {
+  this.actor.items.get(itemIdOf(target))?.sheet.render(true);
+}
+
+// Броски по грузам (порча, воровство, повреждение) и пассажирам.
+function onCargoRoll(event, target) { return this._rollCargoEvent(target.dataset.kind); }
+
+/** Сворачивание категории груза (состояние живёт до перерисовки листа). */
+function onCargoGroupHead(event, target) {
+  const key = target.dataset.groupKey;
+  if (!key) return;
+  this._cargoCollapse[key] = !this._cargoCollapse[key];
+  this.render(false);
+}
+
+// Количество: кнопка «−» не опускается ниже 1, иначе авто-очистка
+// израсходованных грузов удалила бы партию с одного клика; убрать её
+// целиком — кнопкой выгрузки.
+function onCargoQtyStep(event, target) {
+  event.stopPropagation();
+  const it = this.actor.items.get(itemIdOf(target));
+  if (!it) return;
+  const d = Number(target.dataset.step) || 0;
+  return it.update({ "system.quantity": Math.max(1, (Number(it.system.quantity) || 0) + d) });
+}
+
+/** Пометка «для обслуживания корабля» — такой груз не занимает трюм. */
+function onCargoSupply(event, target) {
+  event.stopPropagation();
+  const it = this.actor.items.get(itemIdOf(target));
+  if (it) return it.update({ "system.shipSupply": !it.system.shipSupply });
+}
+
+/** Сбросить партию за борт / выгрузить. */
+async function onCargoJettison(event, target) {
+  event.stopPropagation();
+  const it = this.actor.items.get(itemIdOf(target));
+  if (!it) return;
+  const ok = await foundry.applications.api.DialogV2.confirm({
+    window: { title: "Выгрузить партию" },
+    content: `<p>Убрать «<b>${esc(it.name)}</b>» из трюма?</p>`
+  }).catch(() => false);
+  if (ok) await it.delete();
+}
+
+// Запасы путешествия: месяц прошёл / пополнение до максимума.
+function onSuppliesStep(event, target) {
+  const d   = Number(target.dataset.step) || 0;
+  const max = this.actor.system.derived?.supplies?.max ?? 6;
+  const now = Number(this.actor.system.supplies?.value) || 0;
+  return this.actor.update({ "system.supplies.value": Math.max(0, Math.min(max, now + d)) });
+}
+
+function onSuppliesFull() {
+  return this.actor.update({ "system.supplies.value": this.actor.system.derived?.supplies?.max ?? 6 });
+}
+
+/** Бросок Искажения осквернения (1d100 + модификатор порога с реверсом знака). */
+async function onRollDistortion() {
+  const lvl = this.element.querySelector(".ship-distort-threshold")?.value;
+  const thr = SHIP_DEFILEMENT_THRESHOLDS.find(t => String(t.level) === String(lvl))
+              || SHIP_DEFILEMENT_THRESHOLDS[2];
+  const applied = -thr.mod;                       // реверс знака модификатора порога
+  const roll  = await (new Roll("1d100")).evaluate();
+  const raw   = roll.total;
+  const total = Math.max(1, Math.min(100, raw + applied));
+  const dist  = findDistortion(total);
+  const sgn   = (n) => `${n >= 0 ? "+" : ""}${n}`;
+  const allRolls = [roll];
+
+  const range = dist ? (dist.min === dist.max ? `${dist.min === 100 ? "00" : dist.min}` : `${dist.min}–${dist.max}`) : "";
+  const distName = dist ? dist.name : "—";
+  let descBlock = "";
+  let submutText = "";
+  if (dist) {
+    descBlock = dist.desc
+      ? `<div class="roll-distort-desc">${dist.desc}</div>`
+      : `<div class="roll-distort-desc"><i>(описание не занесено — см. справочник)</i></div>`;
+    if (dist.submut) {
+      const sub = await (new Roll("1d10")).evaluate();
+      allRolls.push(sub);
+      const sm = findSubmutation(dist.submut, sub.total);
+      submutText = sm ? `${sm.name}` : "";
+      descBlock += `<div class="roll-threshold" style="margin-top:5px;">${dist.submut.label}: <b>${sub.total}</b>${sm ? ` — <b>${esc(sm.name)}</b>` : ""}</div>`;
+      if (sm) descBlock += `<div class="roll-distort-desc">${sm.desc}</div>`;
+    }
   }
 
-  getData() {
-    const context = super.getData();
+  // Чат — в стиле броска листа персонажа (wh-roll-result).
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Осквернение корабля — Искажение</div>
+        <div class="roll-threshold">Порог: <b>${esc(thr.name)}</b> (${thr.dp} DP, мод ${sgn(thr.mod)} → реверс ${sgn(applied)})</div>
+        <div class="roll-dice">1d100: <b>${raw}</b>${applied ? ` ${sgn(applied)} → <b>${total}</b>` : ""}</div>
+        <div class="roll-outcome"><span class="roll-success">Искажение${range ? ` (${range})` : ""}: ${distName}</span></div>
+        ${descBlock}
+      </div>`,
+    rolls: allRolls,
+    sound: CONFIG.sounds.dice
+  }, rollMode));
+
+  // Записываем искажение в журнал осквернения на листе корабля.
+  const arr = foundry.utils.deepClone(this.actor.system.distortions || []);
+  arr.push({
+    id: foundry.utils.randomID(), name: distName, range,
+    threshold: thr.name, roll: raw, total,
+    submut: submutText, desc: dist?.desc || "", ts: Date.now()
+  });
+  await this.actor.update({ "system.distortions": arr });
+}
+
+/** Удалить запись искажения из журнала. */
+function onDistortDel(event, target) {
+  const arr = (this.actor.system.distortions || []).filter(d => d.id !== target.dataset.id);
+  return this.actor.update({ "system.distortions": arr });
+}
+
+// ── Космический бой ──
+
+/** Инициатива: 1d10 + бонус DT корабля. */
+async function onInitRoll() {
+  const dt = this.actor.system.derived?.chars?.detection || 0;
+  const r  = await (new Roll(`1d10 + ${dt}`)).evaluate();
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `<div class="wh-roll-result"><div class="roll-header">Инициатива корабля</div>
+      <div class="roll-dice">1d10 + DT ${dt} = <b>${r.total}</b></div></div>`,
+    rolls: [r], sound: CONFIG.sounds.dice
+  }, rollMode));
+}
+
+/** Стрельба из орудия — открыть лист атаки. */
+function onFireWeapon(event, target) {
+  const it = this.actor.items.get(target.dataset.itemId);
+  if (it) this._showFireDialog(it);
+}
+
+// ── Ангар: эскадрильи (МЛА) ──
+
+const onCraftAdd = creator({ name: "Новая эскадрилья", type: "smallCraft",
+  img: "systems/warhammer-dbc/assets/item-icons/small-craft.svg" });
+
+function onCraftOpen(event, target) { this.actor.items.get(itemIdOf(target))?.sheet.render(true); }
+function onCraftDel(event, target)  { return this.actor.items.get(itemIdOf(target))?.delete(); }
+
+function onCraftLoss(event, target) {
+  const it = this.actor.items.get(itemIdOf(target)); if (!it) return;
+  const next = (it.system.strength || "full") === "full" ? "half" : "destroyed";
+  return it.update({ "system.strength": next,
+    ...(next === "destroyed" ? { "system.state": "stored", "system.turnsOut": 0 } : {}) });
+}
+
+// Жизненный цикл: подготовить → запуск → возврат (перевооружение).
+function onCraftPrepare(event, target) {
+  const it = this.actor.items.get(itemIdOf(target));
+  if (it) return this._prepareCraft(it);
+}
+
+function onCraftLaunch(event, target) {
+  const it = this.actor.items.get(itemIdOf(target)); if (!it) return;
+  if (it.system.strength === "destroyed") return ui.notifications.warn("Уничтоженная эскадрилья не может вылетать.");
+  const kind = target.dataset.kind;
+  it.update({ "system.state": "launched", "system.turnsOut": 0 });
+  if (kind === "fighter") this._showFighterDialog(it);
+  else if (kind) this._showCraftAttack(kind, it);
+}
+
+function onCraftReturn(event, target) {
+  const it = this.actor.items.get(itemIdOf(target));
+  if (it) return it.update({ "system.state": "rearming", "system.turnsOut": 0 });
+}
+
+function onCrewRecover(event, target) { return this._showCrewRecovery(target.dataset.kind); }
+
+export class WarhammerShipSheet
+  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+
+  static DEFAULT_OPTIONS = {
+    // ship-sheet — на самой форме листа: CSS цепляется за
+    // «.warhammer-dbc.ship-sheet», а у V1 этот класс нёс <form> в шаблоне.
+    classes: ["warhammer-dbc", "sheet", "actor", "ship", "wh-holo", "ship-sheet"],
+    position: { width: 780, height: 760 },
+    window: { resizable: true },
+    form: { submitOnChange: true, closeOnSubmit: false },
+    actions: {
+      tab: onTab,
+      // Открыть лист офицера и освободить своё место доступны и игроку-не-
+      // владельцу: права проверяются внутри, иначе он не вышел бы с поста
+      // на чужом корабле.
+      officerOpen:  onOfficerOpen,
+      officerClear: onOfficerClear,
+
+      officerAdd:      whenEditable(onOfficerAdd),
+      officerRemove:   whenEditable(onOfficerRemove),
+      createComponent: whenEditable(onCreateComponent),
+      createCargo:     whenEditable(onCreateCargo),
+      createTorpedo:   whenEditable(onCreateTorpedo),
+      itemOpen:        whenEditable(onItemOpen),
+      cargoRoll:       whenEditable(onCargoRoll),
+      cargoGroupHead:  whenEditable(onCargoGroupHead),
+      cargoQtyStep:    whenEditable(onCargoQtyStep),
+      cargoSupply:     whenEditable(onCargoSupply),
+      cargoJettison:   whenEditable(onCargoJettison),
+      suppliesStep:    whenEditable(onSuppliesStep),
+      suppliesFull:    whenEditable(onSuppliesFull),
+      rollDistortion:  whenEditable(onRollDistortion),
+      distortDel:      whenEditable(onDistortDel),
+      initRoll:        whenEditable(onInitRoll),
+      fireWeapon:      whenEditable(onFireWeapon),
+      critRoll:        whenEditable(function () { return this._rollShipCrit(); }),
+      ramRoll:         whenEditable(function () { return this._showRamDialog(); }),
+      boardRoll:       whenEditable(function () { return this._showBoardingDialog(); }),
+      salvoRoll:       whenEditable(function () { return this._showSalvoDialog(); }),
+      turretRoll:      whenEditable(function () { return this._showTurretDialog(); }),
+      bomberRoll:      whenEditable(function () { return this._showCraftAttack("bomber"); }),
+      assaultRoll:     whenEditable(function () { return this._showCraftAttack("assault"); }),
+      fighterRoll:     whenEditable(function () { return this._showFighterDialog(); }),
+      craftAdd:        whenEditable(onCraftAdd),
+      craftOpen:       whenEditable(onCraftOpen),
+      craftDel:        whenEditable(onCraftDel),
+      craftLoss:       whenEditable(onCraftLoss),
+      craftPrepare:    whenEditable(onCraftPrepare),
+      craftLaunch:     whenEditable(onCraftLaunch),
+      craftReturn:     whenEditable(onCraftReturn),
+      hangarAdvance:   whenEditable(function () { return this._craftAdvanceTurn(); }),
+      mutinyRoll:      whenEditable(function () { return this._rollMutiny(); }),
+      mutinyQuell:     whenEditable(function () { return this._showMutinyQuell(); }),
+      crewRecover:     whenEditable(onCrewRecover)
+    }
+  };
+
+  static PARTS = {
+    body: { template: "systems/warhammer-dbc/templates/actor/ship-sheet.hbs", root: true }
+  };
+
+  static TABS = {
+    primary: {
+      initial: "overview",
+      tabs: [
+        { id: "overview",   label: "Обзор" },
+        { id: "components", label: "Узлы" },
+        { id: "combat",     label: "Бой" },
+        { id: "hangar",     label: "Ангар" },
+        { id: "crew",       label: "Экипаж" },
+        { id: "cargo",      label: "Грузы" },
+        { id: "notes",      label: "Записи" }
+      ]
+    }
+  };
+
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
     const sys = this.actor.system;
+    context.actor = this.actor;
+    context.tab = this.tabGroups?.primary ?? WarhammerShipSheet.TABS.primary.initial;
+    context.editable = this.isEditable;
     context.system    = sys;
     context.derived   = sys.derived || {};
     const _down = (s) => !!s.damaged || (s.status && s.status !== "intact");
@@ -278,9 +590,10 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     if (data && (data.type === "Token" || data.type === "Actor")) return this._onDropActor(event, data);
     return super._onDrop(event);
   }
-  async _onDropItem(event, data) {
+  // В V2 сюда приходит документ предмета, а не данные перетаскивания (V1).
+  async _onDropItem(event, item) {
     if (!this.actor.isOwner) { ui.notifications.warn("Добавлять узлы на корабль может только его владелец или ГМ."); return false; }
-    return super._onDropItem(event, data);
+    return super._onDropItem(event, item);
   }
   async _persistOfficers(officers) {
     if (this.actor.isOwner) { await this.actor.update({ "system.officers": officers }); return true; }
@@ -315,76 +628,45 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     return ok;
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
+    if (!el) return;
+    // Перетаскивание привязывает сам ActorSheetV2, а права спрашивает у
+    // _canDragDrop — он здесь всегда true: игрок-не-владелец должен уметь
+    // посадить своего персонажа на чужой корабль (запись идёт через активного
+    // ГМа по сокету, см. _persistOfficers).
 
-    // Доступно всем: открыть лист офицера и освободить своё место.
-    html.find(".ship-officer-open").on("click", async ev => {
-      const uuid = ev.currentTarget.closest("[data-uuid]")?.dataset.uuid;
-      if (!uuid) return;
-      const doc = await fromUuid(uuid); (doc?.actor ?? doc)?.sheet?.render(true);
-    });
-    html.find(".ship-officer-clear").on("click", async ev => {
-      const id = ev.currentTarget.closest("[data-officer-id]")?.dataset.officerId;
-      const officers = foundry.utils.deepClone(this.actor.system.officers || []);
-      const o = officers.find(x => x.id === id);
-      if (!o) return;
-      if (!this.actor.isOwner) {
-        const occ = o.uuid ? await fromUuid(o.uuid) : null;
-        const occActor = occ?.actor ?? occ;
-        if (!occActor?.isOwner) return ui.notifications.warn("Освободить можно только своё место.");
-      }
-      o.uuid = ""; o.name = ""; o.img = "";
-      await this._persistOfficers(officers);
-    });
+    /** Слушатель на все узлы по селектору — замена jQuery-обхода из V1. */
+    const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
 
-    if (!this.isEditable) {
-      try {
-        const el  = html[0] ?? html;
-        const DDC = foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
-        if (DDC && el) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
-      } catch (e) { console.warn("Warhammer DBC | ship DnD bind:", e); }
-      return;
-    }
+    if (!this.isEditable) return;
 
-    // Добавить должность (из списка или свою).
-    html.find(".ship-officer-add").on("click", async () => {
-      const title = html.find(".ship-officer-select").val() || "Офицер";
-      const officers = foundry.utils.deepClone(this.actor.system.officers || []);
-      officers.push({ id: foundry.utils.randomID(), title, uuid: "", name: "", img: "" });
-      await this.actor.update({ "system.officers": officers });
+    // Перестановка должностей перетаскиванием (за «ручку»). Своё перетаскивание
+    // помечаем флагом: без него дроп актора на строку принял бы обработчик
+    // перестановки, а перестановку — посадка.
+    let dragOfficer = null;
+    on(".ship-officer-grip", "dragstart", ev => {
+      dragOfficer = officerIdOf(ev.currentTarget);
+      ev.dataTransfer.effectAllowed = "move";
+      ev.dataTransfer.setData("text/plain", "wh-officer-reorder");
     });
-    html.find(".ship-officer-title").on("change", async ev => {
-      const id = ev.currentTarget.closest("[data-officer-id]")?.dataset.officerId;
-      const officers = foundry.utils.deepClone(this.actor.system.officers || []);
-      const o = officers.find(x => x.id === id);
-      if (o) { o.title = ev.currentTarget.value; await this.actor.update({ "system.officers": officers }); }
+    on(".ship-officer-grip", "dragend", () => {
+      dragOfficer = null;
+      el.querySelectorAll(".ship-officer-row").forEach(r => r.classList.remove("wh-drag-over"));
     });
-    html.find(".ship-officer-remove").on("click", async ev => {
-      const id = ev.currentTarget.closest("[data-officer-id]")?.dataset.officerId;
-      const officers = (this.actor.system.officers || []).filter(o => o.id !== id);
-      await this.actor.update({ "system.officers": officers });
-    });
-    // Перестановка должностей перетаскиванием (за «ручку»).
-    let _dragOfficer = null;
-    html.find(".ship-officer-grip").on("dragstart", ev => {
-      _dragOfficer = ev.currentTarget.closest("[data-officer-id]")?.dataset.officerId;
-      const dt = ev.originalEvent?.dataTransfer;
-      if (dt) { dt.effectAllowed = "move"; dt.setData("text/plain", "wh-officer-reorder"); }
-    });
-    html.find(".ship-officer-grip").on("dragend", () => { _dragOfficer = null; html.find(".ship-officer-row").removeClass("wh-drag-over"); });
-    html.find(".ship-officer-row").on("dragover", ev => {
-      if (!_dragOfficer) return;               // не наша перестановка — не мешаем посадке
+    on(".ship-officer-row", "dragover", ev => {
+      if (!dragOfficer) return;               // не наша перестановка — не мешаем посадке
       ev.preventDefault();
-      if (ev.originalEvent?.dataTransfer) ev.originalEvent.dataTransfer.dropEffect = "move";
+      ev.dataTransfer.dropEffect = "move";
     });
-    html.find(".ship-officer-row").on("dragenter", ev => { if (_dragOfficer) ev.currentTarget.classList.add("wh-drag-over"); });
-    html.find(".ship-officer-row").on("dragleave", ev => { ev.currentTarget.classList.remove("wh-drag-over"); });
-    html.find(".ship-officer-row").on("drop", async ev => {
-      if (!_dragOfficer) return;               // дроп актора — пусть обработает посадка
+    on(".ship-officer-row", "dragenter", ev => { if (dragOfficer) ev.currentTarget.classList.add("wh-drag-over"); });
+    on(".ship-officer-row", "dragleave", ev => { ev.currentTarget.classList.remove("wh-drag-over"); });
+    on(".ship-officer-row", "drop", async ev => {
+      if (!dragOfficer) return;               // дроп актора — пусть обработает посадка
       ev.preventDefault(); ev.stopPropagation();
       const overId = ev.currentTarget.dataset.officerId;
-      const dragId = _dragOfficer; _dragOfficer = null;
+      const dragId = dragOfficer; dragOfficer = null;
       if (!overId || dragId === overId) return;
       const officers = foundry.utils.deepClone(this.actor.system.officers || []);
       const from = officers.findIndex(o => o.id === dragId);
@@ -393,6 +675,12 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       const [moved] = officers.splice(from, 1);
       officers.splice(to, 0, moved);
       await this.actor.update({ "system.officers": officers });
+    });
+
+    on(".ship-officer-title", "change", async ev => {
+      const officers = foundry.utils.deepClone(this.actor.system.officers || []);
+      const o = officers.find(x => x.id === officerIdOf(ev.currentTarget));
+      if (o) { o.title = ev.currentTarget.value; await this.actor.update({ "system.officers": officers }); }
     });
 
     // Авто-удаление израсходованных грузов (количество 0) — например потраченных
@@ -408,284 +696,54 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       .map(i => ({ _id: i.id, "system.weapon.damage": "" }));
     if (badTorp.length) { this.actor.updateEmbeddedDocuments("Item", badTorp); return; }
 
-    // Создать новый узел прямо на корабле
-    html.find(".ship-create-component").click(async () => {
-      const [it] = await this.actor.createEmbeddedDocuments("Item", [
-        { name: "Новый узел", type: "component", system: { kind: "supplemental" } }
-      ]);
-      it?.sheet.render(true);
-    });
-
-    // Взять груз на борт: сперва выбор типа — партия сразу называется по типу
-    // («Роскошь», «Топливо»), переименовать её можно потом.
-    html.find(".ship-create-cargo").click(() => this._showCargoPicker());
-
-    // Броски по грузам (порча, воровство, повреждение) и пассажирам.
-    html.find(".cargo-roll").click(ev => this._rollCargoEvent(ev.currentTarget.dataset.kind));
-
-    // ── Трюм: работа с партиями прямо в списке ──────────────────────────
-    const cargoOf = (ev) => this.actor.items.get($(ev.currentTarget).closest("[data-item-id]").data("itemId"));
-
-    // Сворачивание категории груза (состояние живёт до перерисовки листа).
-    html.find(".cargo-group-head").click(ev => {
-      const key = ev.currentTarget.dataset.groupKey;
-      if (!key) return;
-      this._cargoCollapse[key] = !this._cargoCollapse[key];
-      this.render(false);
-    });
-
-    // Количество: −/+ и прямой ввод. Кнопка «−» не опускается ниже 1, иначе
-    // авто-очистка израсходованных грузов удалила бы партию с одного клика;
-    // убрать её целиком — кнопкой выгрузки.
-    html.find(".cargo-qty-step").click(async ev => {
-      ev.stopPropagation();
-      const it = cargoOf(ev);
-      if (!it) return;
-      const d = Number(ev.currentTarget.dataset.step) || 0;
-      const q = Math.max(1, (Number(it.system.quantity) || 0) + d);
-      await it.update({ "system.quantity": q });
-    });
-    html.find(".cargo-qty-input").change(async ev => {
-      const it = cargoOf(ev);
+    // Количество партии прямым вводом (ноль оставляем: авто-очистка выше уберёт
+    // израсходованное при следующей перерисовке).
+    on(".cargo-qty-input", "change", async ev => {
+      const it = this.actor.items.get(itemIdOf(ev.currentTarget));
       if (it) await it.update({ "system.quantity": Math.max(0, Number(ev.currentTarget.value) || 0) });
     });
 
-    // Пометка «для обслуживания корабля» — такой груз не занимает трюм.
-    html.find(".cargo-supply-toggle").click(async ev => {
-      ev.stopPropagation();
-      const it = cargoOf(ev);
-      if (it) await it.update({ "system.shipSupply": !it.system.shipSupply });
-    });
-
-    // Сбросить партию за борт / выгрузить.
-    html.find(".cargo-jettison").click(async ev => {
-      ev.stopPropagation();
-      const it = cargoOf(ev);
-      if (!it) return;
-      const ok = await Dialog.confirm({
-        title: "Выгрузить партию",
-        content: `<p>Убрать «<b>${esc(it.name)}</b>» из трюма?</p>`
-      });
-      if (ok) await it.delete();
-    });
-
-    // Запасы путешествия: месяц прошёл / пополнение до максимума.
-    html.find(".ship-supplies-step").click(async ev => {
-      const d   = Number(ev.currentTarget.dataset.step) || 0;
-      const max = this.actor.system.derived?.supplies?.max ?? 6;
-      const now = Number(this.actor.system.supplies?.value) || 0;
-      await this.actor.update({ "system.supplies.value": Math.max(0, Math.min(max, now + d)) });
-    });
-    html.find(".ship-supplies-full").click(async () => {
-      const max = this.actor.system.derived?.supplies?.max ?? 6;
-      await this.actor.update({ "system.supplies.value": max });
-    });
-
-    // Создать новую торпеду (боеголовка + наведение)
-    html.find(".ship-create-torpedo").click(async () => {
-      const [it] = await this.actor.createEmbeddedDocuments("Item", [
-        { name: "Новая торпеда", type: "torpedo", system: { warhead: "plasma", navSystem: "standard", quantity: 1 } }
-      ]);
-      it?.sheet.render(true);
-    });
-
-    // Бросок Искажения осквернения (1d100 + модификатор порога с реверсом знака).
-    html.find(".ship-roll-distortion").click(async () => {
-      const lvl = html.find(".ship-distort-threshold").val();
-      const thr = SHIP_DEFILEMENT_THRESHOLDS.find(t => String(t.level) === String(lvl))
-                  || SHIP_DEFILEMENT_THRESHOLDS[2];
-      const applied = -thr.mod;                       // реверс знака модификатора порога
-      const roll  = await (new Roll("1d100")).evaluate();
-      const raw   = roll.total;
-      const total = Math.max(1, Math.min(100, raw + applied));
-      const dist  = findDistortion(total);
-      const sgn   = (n) => `${n >= 0 ? "+" : ""}${n}`;
-      const allRolls = [roll];
-
-      const range = dist ? (dist.min === dist.max ? `${dist.min === 100 ? "00" : dist.min}` : `${dist.min}–${dist.max}`) : "";
-      let distName = dist ? dist.name : "—";
-      let descBlock = "";
-      let submutText = "";
-      if (dist) {
-        descBlock = dist.desc
-          ? `<div class="roll-distort-desc">${dist.desc}</div>`
-          : `<div class="roll-distort-desc"><i>(описание не занесено — см. справочник)</i></div>`;
-        if (dist.submut) {
-          const sub = await (new Roll("1d10")).evaluate();
-          allRolls.push(sub);
-          const sm = findSubmutation(dist.submut, sub.total);
-          submutText = sm ? `${sm.name}` : "";
-          descBlock += `<div class="roll-threshold" style="margin-top:5px;">${dist.submut.label}: <b>${sub.total}</b>${sm ? ` — <b>${esc(sm.name)}</b>` : ""}</div>`;
-          if (sm) descBlock += `<div class="roll-distort-desc">${sm.desc}</div>`;
-        }
-      }
-
-      // Чат — в стиле броска листа персонажа (wh-roll-result).
-      const rollMode = game.settings.get("core", "rollMode");
-      await ChatMessage.create(ChatMessage.applyRollMode({
-        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-        content: `
-          <div class="wh-roll-result">
-            <div class="roll-header">Осквернение корабля — Искажение</div>
-            <div class="roll-threshold">Порог: <b>${esc(thr.name)}</b> (${thr.dp} DP, мод ${sgn(thr.mod)} → реверс ${sgn(applied)})</div>
-            <div class="roll-dice">1d100: <b>${raw}</b>${applied ? ` ${sgn(applied)} → <b>${total}</b>` : ""}</div>
-            <div class="roll-outcome"><span class="roll-success">Искажение${range ? ` (${range})` : ""}: ${distName}</span></div>
-            ${descBlock}
-          </div>`,
-        rolls: allRolls,
-        sound: CONFIG.sounds.dice
-      }, rollMode));
-
-      // Записываем искажение в журнал осквернения на листе корабля.
-      const entry = {
-        id: foundry.utils.randomID(), name: distName, range,
-        threshold: thr.name, roll: raw, total,
-        submut: submutText,
-        desc: dist?.desc || "",
-        ts: Date.now()
-      };
-      const arr = foundry.utils.deepClone(this.actor.system.distortions || []);
-      arr.push(entry);
-      await this.actor.update({ "system.distortions": arr });
-    });
-
-    // Удалить запись искажения из журнала.
-    html.find(".ship-distort-del").click(async ev => {
-      const id  = ev.currentTarget.dataset.id;
-      const arr = (this.actor.system.distortions || []).filter(d => d.id !== id);
-      await this.actor.update({ "system.distortions": arr });
-    });
-
-    const idOf = (ev) => ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
-
-    // Левый клик по названию — открыть лист узла / груза / торпеды.
-    html.find(".ship-comp-open, .ship-cargo-open, .ship-torpedo-open").click(ev => this.actor.items.get(idOf(ev))?.sheet.render(true));
-
     // Назначение позиции орудия (Оснащённость).
-    html.find(".ship-arc-select").on("change", ev => {
+    on(".ship-arc-select", "change", ev => {
       const id = ev.currentTarget.dataset.itemId;
       if (id) this.actor.items.get(id)?.update({ "system.weapon.arc": ev.currentTarget.value });
     });
 
     // Быстрые переключатели «Внешний» / «Повреждён».
-    html.find(".ship-comp-toggle").change(ev => {
-      const el = ev.currentTarget;
-      const id = idOf(ev);
-      if (id) this.actor.items.get(id)?.update({ [`system.${el.dataset.flag}`]: el.checked });
+    on(".ship-comp-toggle", "change", ev => {
+      const t  = ev.currentTarget;
+      const id = itemIdOf(t);
+      if (id) this.actor.items.get(id)?.update({ [`system.${t.dataset.flag}`]: t.checked });
     });
 
-    // Правый клик по строке узла — контекстное меню (Редактировать / Удалить),
-    // как у предметов на листе персонажа.
-    html.find(".ship-comp-row, .cargo-row, .torpedo-row").on("contextmenu", ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      $(".wh-context-menu").remove();
-      const id   = $(ev.currentTarget).data("item-id");
-      const item = this.actor.items.get(id);
-      if (!item) return;
-      const menu = $(`
-        <div class="wh-context-menu">
-          <div class="wh-ctx-item wh-ctx-edit">Редактировать</div>
-          <div class="wh-ctx-item wh-ctx-delete">Удалить</div>
-        </div>
-      `).css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });
-      $("body").append(menu);
-      setTimeout(() => { $(document).one("click.wh-ctx", () => menu.remove()); }, 50);
-      menu.find(".wh-ctx-edit").on("click", ev2 => {
-        ev2.stopPropagation(); menu.remove(); $(document).off("click.wh-ctx");
-        item.sheet.render(true);
-      });
-      menu.find(".wh-ctx-delete").on("click", ev2 => {
-        ev2.stopPropagation(); menu.remove(); $(document).off("click.wh-ctx");
-        item.delete();
-      });
-    });
-
-    // ── Космический бой ───────────────────────────────────────────────────────
-    // Инициатива: 1d10 + бонус DT корабля.
-    html.find(".ship-init-roll").click(async () => {
-      const dt = this.actor.system.derived?.chars?.detection || 0;
-      const r  = await (new Roll(`1d10 + ${dt}`)).evaluate();
-      const rollMode = game.settings.get("core", "rollMode");
-      await ChatMessage.create(ChatMessage.applyRollMode({
-        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-        content: `<div class="wh-roll-result"><div class="roll-header">Инициатива корабля</div>
-          <div class="roll-dice">1d10 + DT ${dt} = <b>${r.total}</b></div></div>`,
-        rolls: [r], sound: CONFIG.sounds.dice
-      }, rollMode));
-    });
-
-    // Стрельба из орудия — открыть лист атаки.
-    html.find(".ship-fire-weapon").click(ev => {
-      const it = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (it) this._showFireDialog(it);
-    });
-
-    // Бросок по таблице критических попаданий.
-    html.find(".ship-crit-roll").click(() => this._rollShipCrit());
-    html.find(".ship-ram-roll").click(() => this._showRamDialog());
-    html.find(".ship-board-roll").click(() => this._showBoardingDialog());
-    html.find(".ship-salvo-roll").click(() => this._showSalvoDialog());
-    html.find(".ship-turret-roll").click(() => this._showTurretDialog());
-    html.find(".ship-bomber-roll").click(() => this._showCraftAttack("bomber"));
-    html.find(".ship-assault-roll").click(() => this._showCraftAttack("assault"));
-    html.find(".ship-fighter-roll").click(() => this._showFighterDialog());
-
-    // ── Ангар: эскадрильи (МЛА) ──
-    const craftId = ev => ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
-    html.find(".ship-craft-add").click(async () => {
-      const [it] = await this.actor.createEmbeddedDocuments("Item", [
-        { name: "Новая эскадрилья", type: "smallCraft", img: "systems/warhammer-dbc/assets/item-icons/small-craft.svg" }
-      ]);
-      it?.sheet.render(true);
-    });
-    html.find(".ship-craft-open").click(ev => this.actor.items.get(craftId(ev))?.sheet.render(true));
-    html.find(".ship-craft-del").click(ev => this.actor.items.get(craftId(ev))?.delete());
-    html.find(".ship-craft-qty-inp").on("change", ev => {
-      const it = this.actor.items.get(craftId(ev));
+    on(".ship-craft-qty-inp", "change", ev => {
+      const it = this.actor.items.get(itemIdOf(ev.currentTarget));
       if (it) it.update({ "system.qty": Math.max(1, parseInt(ev.currentTarget.value) || 1) });
     });
-    html.find(".ship-craft-loss").click(ev => {
-      const it = this.actor.items.get(craftId(ev)); if (!it) return;
-      const cur = it.system.strength || "full";
-      const next = cur === "full" ? "half" : "destroyed";
-      it.update({ "system.strength": next, ...(next === "destroyed" ? { "system.state": "stored", "system.turnsOut": 0 } : {}) });
-    });
-    // Жизненный цикл: подготовить → запуск → возврат (перевооружение).
-    html.find(".ship-craft-prepare").click(ev => {
-      const it = this.actor.items.get(craftId(ev)); if (it) this._prepareCraft(it);
-    });
-    html.find(".ship-craft-launch").click(ev => {
-      const it = this.actor.items.get(craftId(ev)); if (!it) return;
-      if (it.system.strength === "destroyed") return ui.notifications.warn("Уничтоженная эскадрилья не может вылетать.");
-      const kind = ev.currentTarget.dataset.kind;
-      it.update({ "system.state": "launched", "system.turnsOut": 0 });
-      if (kind === "fighter") this._showFighterDialog(it);
-      else if (kind) this._showCraftAttack(kind, it);
-    });
-    html.find(".ship-craft-return").click(ev => {
-      const it = this.actor.items.get(craftId(ev)); if (!it) return;
-      it.update({ "system.state": "rearming", "system.turnsOut": 0 });
-    });
-    // СХ носителя: топливо −1 у вылетевших (по исчерпании — обязательный возврат);
-    // перевооружающиеся возвращаются на борт.
-    html.find(".ship-hangar-advance").click(() => this._craftAdvanceTurn());
 
-    // Тест бунта (Command капитана).
-    html.find(".ship-mutiny-roll").click(() => this._rollMutiny());
-    html.find(".ship-mutiny-quell").click(() => this._showMutinyQuell());
-    html.find(".ship-crew-recover").click(ev => this._showCrewRecovery(ev.currentTarget.dataset.kind));
+    // ПКМ по строке узла / груза / торпеды — то же меню, что у предметов на
+    // листе персонажа. Со своей копией удаление шло молча (wdbc-9z9).
+    on(".ship-comp-row, .cargo-row, .torpedo-row", "contextmenu", ev => {
+      ev.preventDefault(); ev.stopPropagation();
+      const item = this.actor.items.get(itemIdOf(ev.currentTarget));
+      if (!item) return;
+      openContextMenu(ev, itemContextEntries(item));
+    });
   }
 
   _rollMutiny() {
-    new Dialog({
-      title: "Тест бунта (Command)",
-      content: `<form style="padding:6px;"><div class="atk-dlg-row"><label>Command капитана:</label><input id="mut-cmd" type="number" value="40"/></div>
-        <div class="atk-range-info" style="font-size:0.84em;">Тест Command +0 при падении CM до 70/40/10. Провал → часть экипажа бунтует.</div></form>`,
-      buttons: {
-        roll: {
-          label: "Бросок!",
-          callback: async html => {
-            const cmd = parseInt(html.find("#mut-cmd").val()) || 0;
+    // Не <form>: содержимое DialogV2 уже внутри его формы, вложенная сломала бы
+    // button.form, через который читаются поля.
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Тест бунта (Command)" },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      content: `<div style="padding:6px;"><div class="atk-dlg-row"><label>Command капитана:</label><input id="mut-cmd" type="number" value="40"/></div>
+        <div class="atk-range-info" style="font-size:0.84em;">Тест Command +0 при падении CM до 70/40/10. Провал → часть экипажа бунтует.</div></div>`,
+      buttons: [
+        {
+          action: "roll", label: "Бросок!", default: true,
+          callback: async (event, button) => {
+            const cmd = parseInt(button.form.querySelector("#mut-cmd").value) || 0;
             const r = await (new Roll("1d100")).evaluate();
             const ok = r.total <= cmd;
             const rollMode = game.settings.get("core", "rollMode");
@@ -699,10 +757,9 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
             }, rollMode));
           }
         },
-        cancel: { label: "Отмена" }
-      },
-      default: "roll"
-    }).render(true);
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   // Диалог стрельбы (в стиле атаки персонажа).
@@ -750,8 +807,10 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       ? `Цель: <b>${esc(tgt.name)}</b> — Пуст. щиты <b>${tgtVS}</b>, Броня <b>${tgtArm}</b> (подставлено).`
       : `Отметьте (target) корабль-цель — щиты и броня подставятся автоматически.`;
 
+    // Не <form>: содержимое DialogV2 уже внутри его формы, вложенная сломала бы
+    // button.form, через который читаются поля.
     const content = `
-      <form class="wh-ship-fire" style="padding:6px;">
+      <div class="wh-ship-fire" style="padding:6px;">
         <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(item.name)}</span> <span style="opacity:.7">(${wtLabel}, S ${w.strength||0}, Урон ${w.damage||"—"}, Крит ${w.crit||0})</span></div>
         <div class="atk-range-info" style="font-size:0.84em;">${tgtNote}</div>
         ${warheadRow}
@@ -771,31 +830,35 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
           ${isNova ? "Нова-орудие: −20 к попаданию (учтено). " : ""}Пуст. щиты гасят до <b>своей мощности</b> попаданий из залпа, затем схлопываются (остальные проходят). Макробатареи: попадания = СУ (до S), урон складывается, броня вычитается из суммы.
           Лэнсы: 1 попадание +1 за каждые 3 СУ, игнор брони. Торпеды: щиты не спасают, броня — по каждой.
         </div>
-      </form>`;
+      </div>`;
 
-    new Dialog({
-      title: `Стрельба: ${item.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Стрельба: ${item.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      position: { width: 400 },
       content,
-      buttons: {
-        fire: {
-          icon: '<i class="fas fa-crosshairs"></i>', label: "Огонь!",
-          callback: async html => {
+      buttons: [
+        {
+          action: "fire", icon: "fas fa-crosshairs", label: "Огонь!", default: true,
+          callback: async (event, button) => {
+            const form = button.form;
+            const num = (id, dflt = 0) => parseInt(form.querySelector(id)?.value) || dflt;
             await this._resolveShipAttack(item, {
-              bs:     parseInt(html.find("#sf-bs").val())  || 0,
-              aim:    parseInt(html.find("#sf-aim").val()) || 0,
-              range:  parseInt(html.find("#sf-range").val()) || 0,
-              mod:    parseInt(html.find("#sf-mod").val())  || 0,
-              shields:parseInt(html.find("#sf-vs").val())   || 0,
-              armour: parseInt(html.find("#sf-arm").val())  || 0,
-              torpedoItemId: html.find("#sf-torp").val()    || "",
-              launchCount:   parseInt(html.find("#sf-count").val()) || 1
+              bs:      num("#sf-bs"),
+              aim:     num("#sf-aim"),
+              range:   num("#sf-range"),
+              mod:     num("#sf-mod"),
+              shields: num("#sf-vs"),
+              armour:  num("#sf-arm"),
+              // Строка торпеды есть только у торпедных аппаратов.
+              torpedoItemId: form.querySelector("#sf-torp")?.value || "",
+              launchCount:   num("#sf-count", 1)
             });
           }
         },
-        cancel: { label: "Отмена" }
-      },
-      default: "fire"
-    }, { classes: ["dialog", "wh-attack-dialog"], width: 400 }).render(true);
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   async _resolveShipAttack(item, o) {
@@ -949,11 +1012,17 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
 
     if (qty <= 1) return apply(1);
     const max = Math.min(qty, free);
-    new Dialog({ title: `Подготовить: ${item.name}`,
-      content: `<form style="padding:8px;"><div class="atk-dlg-row"><label>Сколько эскадрилий подготовить (1–${max}):</label><input id="prep-n" type="number" value="${max}" min="1" max="${max}"/></div><div class="atk-range-info" style="font-size:0.82em;">В стопке: ${qty}. Свободно к подготовке: ${free} (S ангаров ${cap}).</div></form>`,
-      buttons: { ok: { label: "Подготовить", callback: async html => { await apply(parseInt(html.find("#prep-n").val()) || 1); } }, cancel: { label: "Отмена" } },
-      default: "ok"
-    }, { classes: ["dialog", "wh-attack-dialog"], width: 380 }).render(true);
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Подготовить: ${item.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      position: { width: 380 },
+      content: `<div style="padding:8px;"><div class="atk-dlg-row"><label>Сколько эскадрилий подготовить (1–${max}):</label><input id="prep-n" type="number" value="${max}" min="1" max="${max}"/></div><div class="atk-range-info" style="font-size:0.82em;">В стопке: ${qty}. Свободно к подготовке: ${free} (S ангаров ${cap}).</div></div>`,
+      buttons: [
+        { action: "ok", label: "Подготовить", default: true,
+          callback: async (event, button) => { await apply(parseInt(button.form.querySelector("#prep-n").value) || 1); } },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   // СХ носителя для эскадрилий: расход топлива у вылетевших, возврат перевооружённых.
@@ -992,16 +1061,21 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
   // ── Турели: защита от торпед / малых судов ──────────────────────────────────
   _showTurretDialog() {
     const tr = Number(this.actor.system.derived?.chars?.turretRating) || 0;
-    new Dialog({ title: "Турели — защита", content: `<form class="wh-ship-fire" style="padding:6px;">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Турели — защита" },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      position: { width: 400 },
+      content: `<div class="wh-ship-fire" style="padding:6px;">
         <div class="atk-range-info" style="font-size:0.82em;">Бросок BS + 5×TR. Успех = 1 сбитие + 1 за каждые 2 доп. успеха. Каждое сбитие уничтожает 1 торпеду или 1 судно эскадрильи. Эскорт-истребители дают −10 к BS.</div>
         <div class="atk-dlg-row"><label>BS (CR корабля):</label><input id="tr-bs" type="number" value="30"/></div>
         <div class="atk-dlg-row"><label>Оснащённость турелями (TR):</label><input id="tr-tr" type="number" value="${tr}"/></div>
         <div class="atk-dlg-row"><label>Доп. модификатор (эскорт и т.п.):</label><input id="tr-mod" type="number" value="0"/></div>
         <div class="atk-dlg-row"><label>Входящих (торпед/судов):</label><input id="tr-in" type="number" value="1" min="1"/></div>
-      </form>`,
-      buttons: { roll: { label: "Огонь турелей!", callback: async html => {
-        const bs = parseInt(html.find("#tr-bs").val())||0, trv = parseInt(html.find("#tr-tr").val())||0;
-        const md = parseInt(html.find("#tr-mod").val())||0, inc = parseInt(html.find("#tr-in").val())||1;
+      </div>`,
+      buttons: [{ action: "roll", label: "Огонь турелей!", default: true, callback: async (event, button) => {
+        const v = id => parseInt(button.form.querySelector(id).value) || 0;
+        const bs = v("#tr-bs"), trv = v("#tr-tr");
+        const md = v("#tr-mod"), inc = v("#tr-in") || 1;
         const thr = bs + trv*5 + md;
         const r = await new Roll("1d100").evaluate();
         const dos = this._dos(r.total, thr);
@@ -1010,8 +1084,8 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
           <div class="roll-threshold">BS ${bs} + TR×5 ${trv*5}${md?` ${md>=0?"+":""}${md}`:""} → Порог <b>${thr}</b></div>
           <div class="roll-dice">${ICO.dice} 1d100: <b>${r.total}</b> (${dos} ст.)</div>
           <div class="roll-outcome">${kills>0?`<span class="roll-success">Сбито: <b>${kills}</b> из ${inc} — уменьшите залп/волну.</span>`:`<span class="roll-failure">Турели промахнулись.</span>`}</div>`, [r]);
-      } }, cancel: { label: "Отмена" } }, default: "roll"
-    }, { classes: ["dialog","wh-attack-dialog"], width: 400 }).render(true);
+      } }, { action: "cancel", label: "Отмена" }]
+    });
   }
 
   // ── Запуск бомбардировщиков / штурмовых лодок ───────────────────────────────
@@ -1021,19 +1095,23 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     const cQty = craft ? Math.max(1, Number(craft.system.qty) || 1) : 1;
     const tgt = [...(game.user?.targets ?? [])].map(t => t.actor ?? t.document?.actor).find(a => a?.type === "ship" && a.id !== this.actor.id);
     const tgtArm = tgt ? (Number(tgt.system.derived?.chars?.armour) || 0) : 0;
-    new Dialog({ title: isBomber ? "Запуск бомбардировщиков" : "Запуск штурмовых лодок",
-      content: `<form class="wh-ship-fire" style="padding:6px;">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: isBomber ? "Запуск бомбардировщиков" : "Запуск штурмовых лодок" },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      position: { width: 430 },
+      content: `<div class="wh-ship-fire" style="padding:6px;">
         <div class="atk-range-info" style="font-size:0.82em;">${tgt?`Цель: <b>${esc(tgt.name)}</b> (мин. броня ${tgtArm}).`:"Отметьте (target) цель."} ${isBomber?"Тест Command + CR. Каждый успех — попадание (макс. 2 + 1×эскадрилья), 1d10+4 урона, щиты не спасают, 4+ усп. — крит.":"Тест Command(F) + CR. Каждый успех — 1 лодка (макс. 6) пробила корпус; 5+ усп. — крит; +10 к Ударил-отступил за каждую лодку."}</div>
         <div class="atk-dlg-row"><label>Command ведущего:</label><input id="cf-cmd" type="number" value="40"/></div>
         <div class="atk-dlg-row"><label>CR судна:</label><input id="cf-cr" type="number" value="${cCR}"/></div>
         <div class="atk-dlg-row"><label>Эскадрилий (крыло):</label><input id="cf-sq" type="number" value="${cQty}" min="1"/></div>
         <div class="atk-dlg-row"><label>Доп. мод (эскорт −турели и т.п.):</label><input id="cf-mod" type="number" value="0"/></div>
         ${isBomber?`<div class="atk-dlg-row"><label>Мин. броня цели:</label><input id="cf-arm" type="number" value="${tgtArm}" min="0"/></div>`:""}
-      </form>`,
-      buttons: { roll: { label: isBomber?"Заход!":"Абордажный заход!", callback: async html => {
-        const cmd = parseInt(html.find("#cf-cmd").val())||0, cr = parseInt(html.find("#cf-cr").val())||0;
-        const sq = parseInt(html.find("#cf-sq").val())||1, md = parseInt(html.find("#cf-mod").val())||0;
-        const arm = parseInt(html.find("#cf-arm").val())||0;
+      </div>`,
+      buttons: [{ action: "roll", label: isBomber?"Заход!":"Абордажный заход!", default: true, callback: async (event, button) => {
+        const v = id => parseInt(button.form.querySelector(id)?.value) || 0;
+        const cmd = v("#cf-cmd"), cr = v("#cf-cr");
+        const sq = v("#cf-sq") || 1, md = v("#cf-mod");
+        const arm = v("#cf-arm");   // строки брони нет у штурмовых лодок
         const wing = (sq-1)*5;   // +5 за каждую доп. эскадрилью (крыло)
         const thr = cmd + cr + md + wing;
         const r = await new Roll("1d100").evaluate();
@@ -1060,22 +1138,26 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
         await this._chat(`<div class="roll-header">${isBomber?ICO.dmg:ICO.hit} ${isBomber?"Бомбардировщики":"Штурмовые лодки"} — ${esc(this.actor.name)}${tgt?` → ${esc(tgt.name)}`:""}</div>
           <div class="roll-threshold">Command ${cmd} + CR ${cr}${wing?` + крыло ${wing}`:""}${md?` ${md>=0?"+":""}${md}`:""} → Порог <b>${thr}</b> (цель защищается турелями!)</div>
           <div class="roll-dice">${ICO.dice} 1d100: <b>${r.total}</b> (${dos} ст.)</div>${body}`, rolls);
-      } }, cancel: { label: "Отмена" } }, default: "roll"
-    }, { classes: ["dialog","wh-attack-dialog"], width: 430 }).render(true);
+      } }, { action: "cancel", label: "Отмена" }]
+    });
   }
 
   // ── Бой истребителей (встречный) ────────────────────────────────────────────
   _showFighterDialog(craft = null) {
     const cCR = craft ? (Number(craft.system.cr) || 0) : 5;
-    new Dialog({ title: "Бой истребителей", content: `<form class="wh-ship-fire" style="padding:6px;">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Бой истребителей" },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      position: { width: 430 },
+      content: `<div class="wh-ship-fire" style="padding:6px;">
         <div class="atk-range-info" style="font-size:0.82em;">Встречный Command + CR. +5 за присутствие бомб./штурм. эскадрилий и +5 за каждые 2 доп. За каждый чистый успех — 1 эскадрилья врага выведена из боя. Победа на 4+ успехов — без потерь у победителя.</div>
         <div class="atk-dlg-row"><label>Наши Command + CR:</label><input id="fg-mc" type="number" value="40"/> + <input id="fg-mcr" type="number" value="${cCR}" style="width:50px"/></div>
         <div class="atk-dlg-row"><label>Наш бонус эскадрилий:</label><input id="fg-mb" type="number" value="0"/></div>
         <div class="atk-dlg-row"><label>Враг Command + CR:</label><input id="fg-tc" type="number" value="40"/> + <input id="fg-tcr" type="number" value="5" style="width:50px"/></div>
         <div class="atk-dlg-row"><label>Бонус эскадрилий врага:</label><input id="fg-tb" type="number" value="0"/></div>
-      </form>`,
-      buttons: { roll: { label: "Схватка!", callback: async html => {
-        const v = id => parseInt(html.find(id).val())||0;
+      </div>`,
+      buttons: [{ action: "roll", label: "Схватка!", default: true, callback: async (event, button) => {
+        const v = id => parseInt(button.form.querySelector(id).value) || 0;
         const myThr = v("#fg-mc")+v("#fg-mcr")+v("#fg-mb"), tgThr = v("#fg-tc")+v("#fg-tcr")+v("#fg-tb");
         const r1 = await new Roll("1d100").evaluate(), r2 = await new Roll("1d100").evaluate();
         const d1 = this._dos(r1.total, myThr), d2 = this._dos(r2.total, tgThr);
@@ -1087,8 +1169,8 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
           <div class="roll-threshold">Враг: порог ${tgThr}, бросок <b>${r2.total}</b> (${d2} ст.)</div>
           <div class="roll-outcome">${net===0?`<span class="roll-failure">Ничья — можно продолжить в следующем СХ.</span>`:`<span class="roll-success">Перевес: <b>${net>0?esc(this.actor.name):"враг"}</b></span>`}</div>
           <div class="roll-threshold" style="font-size:0.85em;">Врагу выведено эскадрилий: <b>${tgLoss}</b>; нам: <b>${myLoss}</b>. (Победа на 4+ — без потерь у победителя.)</div>`, [r1, r2]);
-      } }, cancel: { label: "Отмена" } }, default: "roll"
-    }, { classes: ["dialog","wh-attack-dialog"], width: 430 }).render(true);
+      } }, { action: "cancel", label: "Отмена" }]
+    });
   }
 
   // ── Залп макробатарей (объединённый огонь) ──────────────────────────────────
@@ -1115,7 +1197,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       return `<label class="salvo-row"><input type="checkbox" class="salvo-w" value="${m.id}" checked/> <b>${esc(m.name)}</b> — S ${w.strength || 0}, ${w.damage || "—"}, крит ${w.crit || 0}${own ? `, приц +${own}` : ""}</label>`;
     }).join("");
 
-    const content = `<form class="wh-ship-fire" style="padding:6px;">
+    const content = `<div class="wh-ship-fire" style="padding:6px;">
       <div class="atk-range-info" style="font-size:0.82em;">${tgt ? `Цель: <b>${esc(tgt.name)}</b> — щиты ${tgtVS}, броня ${tgtArm}.` : "Отметьте (target) корабль-цель."} Залп: макробатареи бьют одну цель, попадания и урон складываются, щиты гасят слабейшие попадания, броня вычитается из суммы, крит один на весь залп.</div>
       <div class="salvo-list">${list}</div>
       <div class="atk-dlg-row"><label>BS канонира${gunName ? ` (${gunName})` : ""}:</label><input id="sv-bs" type="number" value="${gunBS}"/></div>
@@ -1124,19 +1206,27 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sv-mod" type="number" value="0"/></div>
       <div class="atk-dlg-row"><label>Пустотные щиты цели:</label><input id="sv-vs" type="number" value="${tgtVS}" min="0"/></div>
       <div class="atk-dlg-row"><label>Броня цели:</label><input id="sv-arm" type="number" value="${tgtArm}" min="0"/></div>
-    </form>`;
+    </div>`;
 
-    new Dialog({ title: "Залп макробатарей", content, buttons: {
-      fire: { icon: '<i class="fas fa-bahai"></i>', label: "Залп!", callback: async html => {
-        const ids = html.find(".salvo-w:checked").map((_, e) => e.value).get();
-        if (!ids.length) return ui.notifications.warn("Выберите орудия для залпа.");
-        await this._resolveSalvo(ids, {
-          bs: parseInt(html.find("#sv-bs").val()) || 0, aim: parseInt(html.find("#sv-aim").val()) || 0,
-          range: parseInt(html.find("#sv-range").val()) || 0, mod: parseInt(html.find("#sv-mod").val()) || 0,
-          shields: parseInt(html.find("#sv-vs").val()) || 0, armour: parseInt(html.find("#sv-arm").val()) || 0, tgt
-        });
-      } }, cancel: { label: "Отмена" } }, default: "fire"
-    }, { classes: ["dialog", "wh-attack-dialog"], width: 440 }).render(true);
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Залп макробатарей" },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      position: { width: 440 },
+      content,
+      buttons: [
+        { action: "fire", icon: "fas fa-bahai", label: "Залп!", default: true, callback: async (event, button) => {
+          const form = button.form;
+          const ids = [...form.querySelectorAll(".salvo-w:checked")].map(e => e.value);
+          if (!ids.length) return ui.notifications.warn("Выберите орудия для залпа.");
+          const v = id => parseInt(form.querySelector(id).value) || 0;
+          await this._resolveSalvo(ids, {
+            bs: v("#sv-bs"), aim: v("#sv-aim"), range: v("#sv-range"),
+            mod: v("#sv-mod"), shields: v("#sv-vs"), armour: v("#sv-arm"), tgt
+          });
+        } },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   async _resolveSalvo(ids, o) {
@@ -1199,25 +1289,25 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     const dice = RAM_DICE[this.actor.system.shipType] || "2d10";
     const prowArm = Number(der.chars?.armour) || 0;
 
-    new Dialog({
-      title: "Таран",
-      content: `<form class="wh-ship-fire" style="padding:6px;">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Таран" },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      position: { width: 400 },
+      content: `<div class="wh-ship-fire" style="padding:6px;">
         <div class="atk-range-info" style="font-size:0.82em;">${tgt ? `Цель: <b>${esc(tgt.name)}</b> (броня ${tgtArm}).` : "Отметьте (target) корабль-цель."} Урон тарана: ${dice} + Лоб. броня ${prowArm} (щиты не спасают). Таранящий получает 1d5 + броня цели (сквозь щиты).</div>
         <div class="atk-dlg-row"><label>Operate (Voidship) рулевого:</label><input id="rm-op" type="number" value="35"/></div>
         <div class="atk-dlg-row"><label>Манёвренность (MN):</label><input id="rm-mn" type="number" value="${mn}"/></div>
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="rm-mod" type="number" value="0"/></div>
-      </form>`,
-      buttons: {
-        ram: { icon: '<i class="fas fa-crosshairs"></i>', label: "Таранить!",
-          callback: async html => {
-            const op  = parseInt(html.find("#rm-op").val()) || 0;
-            const mnv = parseInt(html.find("#rm-mn").val()) || 0;
-            const md  = parseInt(html.find("#rm-mod").val()) || 0;
-            await this._resolveRam(op, mnv, md, dice, prowArm, tgt, tgtArm);
+      </div>`,
+      buttons: [
+        { action: "ram", icon: "fas fa-crosshairs", label: "Таранить!", default: true,
+          callback: async (event, button) => {
+            const v = id => parseInt(button.form.querySelector(id).value) || 0;
+            await this._resolveRam(v("#rm-op"), v("#rm-mn"), v("#rm-mod"), dice, prowArm, tgt, tgtArm);
           } },
-        cancel: { label: "Отмена" }
-      }, default: "ram"
-    }, { classes: ["dialog", "wh-attack-dialog"], width: 400 }).render(true);
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   async _resolveRam(op, mn, mod, dice, prowArm, tgt, tgtArm) {
@@ -1264,27 +1354,29 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     const tgt = [...(game.user?.targets ?? [])].map(t => t.actor ?? t.document?.actor).find(a => a?.type === "ship" && a.id !== this.actor.id);
     const tDer = tgt?.system.derived || {};
     const g = (o, p, d = 0) => Number(foundry.utils.getProperty(o, p)) || d;
-    new Dialog({
-      title: "Абордаж — встречный Command",
-      content: `<form class="wh-ship-fire" style="padding:6px;">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Абордаж — встречный Command" },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      position: { width: 420 },
+      content: `<div class="wh-ship-fire" style="padding:6px;">
         <div class="atk-range-info" style="font-size:0.82em;">Сначала сцепка: Operate(Voidship)+MN−20. Затем встречный Command. Модификаторы: защитник +10×TR; +10 за каждые 10 разницы CP; +10 за каждые 10 разницы Прочности; разница CR — бонус большему. За каждый чистый успех: −1d5 CP и −1d5 CM ИЛИ −1 Прочности проигравшему.</div>
         <div class="atk-dlg-row"><label>Мой Command:</label><input id="bd-mc" type="number" value="40"/></div>
         <div class="atk-dlg-row"><label>Command цели:</label><input id="bd-tc" type="number" value="40"/></div>
         <div class="atk-dlg-row"><label>Мой CP / Прочность / TR:</label><input id="bd-mcp" type="number" value="${g(my,'crew.population')}" style="width:60px"/> <input id="bd-mhi" type="number" value="${g(my,'hullIntegrity.value')}" style="width:60px"/> <input id="bd-mtr" type="number" value="${g(myDer,'chars.turretRating')}" style="width:50px"/></div>
         <div class="atk-dlg-row"><label>CP / Прочн. / TR цели:</label><input id="bd-tcp" type="number" value="${tgt ? g(tgt.system,'crew.population') : 0}" style="width:60px"/> <input id="bd-thi" type="number" value="${tgt ? g(tgt.system,'hullIntegrity.value') : 0}" style="width:60px"/> <input id="bd-ttr" type="number" value="${tgt ? g(tDer,'chars.turretRating') : 0}" style="width:50px"/></div>
-      </form>`,
-      buttons: {
-        board: { icon: '<i class="fas fa-users"></i>', label: "Абордаж!",
-          callback: async html => {
-            const v = id => parseInt(html.find(id).val()) || 0;
+      </div>`,
+      buttons: [
+        { action: "board", icon: "fas fa-users", label: "Абордаж!", default: true,
+          callback: async (event, button) => {
+            const v = id => parseInt(button.form.querySelector(id).value) || 0;
             await this._resolveBoarding({
               mc: v("#bd-mc"), tc: v("#bd-tc"), mcp: v("#bd-mcp"), tcp: v("#bd-tcp"),
               mhi: v("#bd-mhi"), thi: v("#bd-thi"), mtr: v("#bd-mtr"), ttr: v("#bd-ttr"), tgt
             });
           } },
-        cancel: { label: "Отмена" }
-      }, default: "board"
-    }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   async _resolveBoarding(o) {
@@ -1352,17 +1444,18 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
           </button>`).join("")}</div>
       </div>`).join("");
 
-    const dlg = new Dialog({
-      title: "Взять груз на борт",
-      content: `<form class="wh-cargo-picker">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Взять груз на борт" },
+      classes: ["warhammer-dbc", "wh-holo"],
+      position: { width: 640, height: 560 },
+      content: `<div class="wh-cargo-picker">
         <div class="cp-hint">Выберите тип груза. Партия получит имя типа и его базовую редкость —
         переименовать и уточнить («Вооружение (Стаб-дробовики)») можно на её листе.</div>
         ${cards}
-      </form>`,
-      buttons: { close: { label: "Закрыть" } },
-      default: "close",
-      render: html => {
-        html.find(".cp-item").click(async ev => {
+      </div>`,
+      buttons: [{ action: "close", label: "Закрыть", default: true }],
+      render: (event, dialog) => {
+        dialog.element.querySelectorAll(".cp-item").forEach(btn => btn.addEventListener("click", async ev => {
           const key = ev.currentTarget.dataset.key;
           const t   = getCargoType(key);
           if (!t) return;
@@ -1375,12 +1468,11 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
               baseRarity: t.rarity, description: t.examples
             }
           }]);
-          dlg.close();
+          dialog.close();
           it?.sheet.render(true);
-        });
+        }));
       }
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 640, height: 560 });
-    dlg.render(true);
+    });
   }
 
   /**
@@ -1528,14 +1620,18 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
         </div>
       </div>`;
 
-    const dlg = new Dialog({
-      title: kind === "morale" ? "Восстановление морали (CM)" : "Восстановление численности (CP)",
-      content: `<form class="wh-crew-recovery">${kind === "morale" ? moraleForm : popForm}</form>`,
-      buttons: { close: { label: "Закрыть" } },
-      default: "close",
-      render: html => html.find(".cr-go").click(ev => this._runRecovery(ev.currentTarget.dataset.way, html))
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 560 });
-    dlg.render(true);
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: kind === "morale" ? "Восстановление морали (CM)" : "Восстановление численности (CP)" },
+      classes: ["warhammer-dbc", "wh-holo"],
+      position: { width: 560 },
+      content: `<div class="wh-crew-recovery">${kind === "morale" ? moraleForm : popForm}</div>`,
+      buttons: [{ action: "close", label: "Закрыть", default: true }],
+      render: (event, dialog) => {
+        const form = dialog.element;
+        form.querySelectorAll(".cr-go").forEach(b => b.addEventListener("click",
+          ev => this._runRecovery(ev.currentTarget.dataset.way, form)));
+      }
+    });
   }
 
   /** Степени успеха: по десяткам разницы, как в основных правилах. */
@@ -1543,7 +1639,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     return roll <= target ? Math.max(1, Math.floor((target - roll) / 10) + 1) : 0;
   }
 
-  async _runRecovery(way, html) {
+  async _runRecovery(way, form) {
     const caps = this._crewCaps();
     const say = (title, body, rolls = []) => ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -1552,7 +1648,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
     }, game.settings.get("core", "rollMode")));
 
     if (way === "inf") {
-      const n = Math.max(1, parseInt(html.find("#cr-inf").val()) || 1);
+      const n = Math.max(1, parseInt(form.querySelector("#cr-inf").value) || 1);
       const die = moralePerInfluence(this.actor.system.shipType);
       const r = await new Roll(`${n}${die}`).evaluate();
       await this._adjustCrew({ cm: r.total });
@@ -1561,8 +1657,8 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
          <div class="roll-threshold">Предел CM: ${caps.cmMax}.</div>`, [r]);
 
     } else if (way === "rally") {
-      const sk = html.find("#cr-rally-skill").val();
-      const tv = (parseInt(html.find("#cr-rally").val()) || 0) - 10;
+      const sk = form.querySelector("#cr-rally-skill").value;
+      const tv = (parseInt(form.querySelector("#cr-rally").value) || 0) - 10;
       const r  = await new Roll("1d100").evaluate();
       const dos = this._dos(r.total, tv);
       const gain = dos * 2;
@@ -1575,7 +1671,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
          <div class="roll-threshold">Применить можно лишь раз за игровую встречу.</div>`, [r]);
 
     } else if (way === "shore") {
-      const x = SHORE_LEAVE.find(o => o.key === html.find("#cr-shore").val());
+      const x = SHORE_LEAVE.find(o => o.key === form.querySelector("#cr-shore").value);
       const cur = Number(this.actor.system.crew?.morale) || 0;
       await this._adjustCrew({ cm: caps.cmMax - cur });
       await say("Увольнение на берег",
@@ -1583,9 +1679,9 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
          <div class="roll-outcome"><span class="roll-success">CM восстановлена до предела: <b>${caps.cmMax}</b>.</span></div>`);
 
     } else if (way === "recruit") {
-      const opt = html.find("#cr-place option:selected");
-      const av  = parseInt(opt.attr("data-avail")) || 0;
-      const inf = parseInt(html.find("#cr-recruit").val()) || 0;
+      const opt = form.querySelector("#cr-place").selectedOptions[0];
+      const av  = parseInt(opt?.dataset.avail) || 0;
+      const inf = parseInt(form.querySelector("#cr-recruit").value) || 0;
       const tv  = inf + av;
       const r   = await new Roll("1d100").evaluate();
       const ok  = r.total <= tv;
@@ -1625,29 +1721,31 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
         <span class="mq-way-note">${a.note}</span>
       </label>`).join("");
 
-    new Dialog({
-      title: "Подавление бунта",
-      content: `<form class="wh-mutiny-quell">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Подавление бунта" },
+      classes: ["warhammer-dbc", "wh-holo"],
+      position: { width: 540 },
+      content: `<div class="wh-mutiny-quell">
         <div class="mq-row">Навык персонажа: <input id="mq-skill" type="number" value="40"/>
           · Навык бунтовщиков: <input id="mq-rebels" type="number" value="30"/></div>
         ${ways}
         <div class="mq-note">Побеждают бунтовщики — можно пробовать снова. Но если они выиграют
           встречный тест на <b>${MUTINY_WIN_DOS}+ степеней успеха</b>, бунт удался: власть над
           кораблём потеряна.</div>
-      </form>`,
-      buttons: {
-        roll:   { label: "Встречный тест", callback: html => this._rollMutinyQuell(html) },
-        cancel: { label: "Отмена" }
-      },
-      default: "roll"
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 540 }).render(true);
+      </div>`,
+      buttons: [
+        { action: "roll", label: "Встречный тест", default: true,
+          callback: (event, button) => this._rollMutinyQuell(button.form) },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
-  async _rollMutinyQuell(html) {
-    const key = html.find("input[name=mq-way]:checked").val() || "command";
+  async _rollMutinyQuell(form) {
+    const key = form.querySelector("input[name=mq-way]:checked")?.value || "command";
     const a   = MUTINY_APPROACHES.find(x => x.key === key);
-    const tv  = parseInt(html.find("#mq-skill").val()) || 0;
-    const rv  = parseInt(html.find("#mq-rebels").val()) || 0;
+    const tv  = parseInt(form.querySelector("#mq-skill").value) || 0;
+    const rv  = parseInt(form.querySelector("#mq-rebels").value) || 0;
 
     const rp = await new Roll("1d100").evaluate();
     const rr = await new Roll("1d100").evaluate();

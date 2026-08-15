@@ -1,679 +1,677 @@
-<form class="warhammer-dbc ship-sheet" autocomplete="off">
 
-  <header class="ship-header">
-    <img class="ship-portrait" src="{{actor.img}}" data-edit="img" title="Портрет корабля"/>
-    <div class="ship-head-fields">
-      <input class="ship-name" type="text" name="name" value="{{actor.name}}" placeholder="Название корабля"/>
-      <div class="ship-head-row">
-        <label>Класс корпуса <input type="text" name="system.shipClass" value="{{system.shipClass}}" placeholder="напр. Иерихон"/></label>
-        <label>Тип
-          <select name="system.shipType">
-            {{#each shipTypes as |l k|}}<option value="{{k}}" {{#if (eq @root.system.shipType k)}}selected{{/if}}>{{l}}</option>{{/each}}
-          </select>
+<header class="ship-header">
+  <img class="ship-portrait" src="{{actor.img}}" data-edit="img" title="Портрет корабля"/>
+  <div class="ship-head-fields">
+    <input class="ship-name" type="text" name="name" value="{{actor.name}}" placeholder="Название корабля"/>
+    <div class="ship-head-row">
+      <label>Класс корпуса <input type="text" name="system.shipClass" value="{{system.shipClass}}" placeholder="напр. Иерихон"/></label>
+      <label>Тип
+        <select name="system.shipType">
+          {{#each shipTypes as |l k|}}<option value="{{k}}" {{#if (eq @root.system.shipType k)}}selected{{/if}}>{{l}}</option>{{/each}}
+        </select>
+      </label>
+    </div>
+    <div class="ship-head-row">
+      <label>Капитан <input type="text" name="system.captain" value="{{system.captain}}"/></label>
+      <label>Происхождение <input type="text" name="system.origin" value="{{system.origin}}"/></label>
+    </div>
+    {{!-- Сводка состояния: видна с любой вкладки, без перехода в «Обзор». --}}
+    <div class="ship-status-strip">
+      <span class="ship-stat hi {{#if derived.crippled}}crit{{/if}}" title="Прочность корпуса">
+        <b>{{system.hullIntegrity.value}}</b>/{{derived.hullIntegrityMax}} HI
+      </span>
+      <span class="ship-stat {{#if derived.voidShieldsDown}}off{{/if}}" title="Пустотные щиты">
+        {{derived.chars.voidShields}} VS
+      </span>
+      <span class="ship-stat" title="Броня">{{derived.chars.armour}} ARM</span>
+      <span class="ship-stat" title="Скорость / Манёвренность">{{derived.chars.speed}} SPD · {{derived.chars.manoeuvrability}} MN</span>
+      <span class="ship-stat" title="Экипаж: численность и мораль">{{system.crew.population}} CP · {{system.crew.morale}} CM</span>
+      {{#if system.defilement}}<span class="ship-stat dp {{#if derived.defilement.isDaemon}}crit{{/if}}" title="Очки Осквернения">{{system.defilement}} DP</span>{{/if}}
+      {{#if derived.overBudget}}<span class="ship-stat crit" title="Превышен бюджет энергии, пространства или очков">ПЕРЕГРУЗ</span>{{/if}}
+    </div>
+  </div>
+</header>
+
+<nav class="sheet-tabs ship-tabs tabs" data-group="primary">
+  <a class="item {{#if (eq tab "overview")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="overview">Обзор</a>
+  <a class="item {{#if (eq tab "components")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="components">Узлы</a>
+  <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">Бой</a>
+  {{#if hasHangar}}<a class="item {{#if (eq tab "hangar")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="hangar">Ангар</a>{{/if}}
+  <a class="item {{#if (eq tab "crew")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="crew">Экипаж</a>
+  <a class="item {{#if (eq tab "cargo")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="cargo">Грузы</a>
+  <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="notes">Записи</a>
+</nav>
+
+<section class="sheet-body">
+
+  {{!-- ───────────── ОБЗОР ───────────── --}}
+  <div class="tab ship-tab {{#if (eq tab "overview")}}active{{/if}}" data-tab="overview" data-group="primary">
+    <div class="ship-overview-grid">
+
+    <div class="ship-panel ship-col-full">
+      <div class="ship-panel-title">ХАРАКТЕРИСТИКИ</div>
+      <div class="ship-chars-grid">
+        {{#each shipChars as |def key|}}
+        <div class="ship-char">
+          <div class="ship-char-abbr">{{def.abbr}}</div>
+          <div class="ship-char-val">{{lookup @root.derived.chars key}}</div>
+          <div class="ship-char-label">{{def.label}}</div>
+        </div>
+        {{/each}}
+      </div>
+      <div class="ship-chars-extra">
+        <span class="ship-char-extra"><span class="ship-char-extra-k">Поворот (T)</span><b>{{derived.turnArc}}</b></span>
+        <span class="ship-char-extra"><span class="ship-char-extra-k">Оснащённость (WC)</span><b>{{derived.weaponCapacity}}</b></span>
+        <span class="ship-char-extra ship-hi-extra" title="Прочность корпуса — макс. от корпуса и узлов">
+          <span class="ship-char-extra-k">Прочность (HI)</span>
+          <span class="ship-hi-inline"><input type="number" name="system.hullIntegrity.value" value="{{system.hullIntegrity.value}}"/> / <b>{{derived.hullIntegrityMax}}</b></span>
+        </span>
+      </div>
+    </div>
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">БЮДЖЕТЫ</div>
+      <div class="ship-budgets">
+        <div class="ship-budget {{#if (lt derived.power.free 0)}}over{{/if}}">Энергия <b>{{derived.power.used}}</b> / {{derived.power.generated}} <span>своб. {{derived.power.free}}</span></div>
+        <div class="ship-budget {{#if (lt derived.space.free 0)}}over{{/if}}">Пространство <b>{{derived.space.used}}</b> / {{derived.space.max}} <span>своб. {{derived.space.free}}</span></div>
+        <div class="ship-budget {{#if (lt derived.sp.free 0)}}over{{/if}}">Очки Корабля <b>{{derived.sp.spent}}</b> / {{derived.sp.budget}} <span>своб. {{derived.sp.free}}</span></div>
+      </div>
+    </div>
+
+    <div class="ship-panel {{#if derived.defilement.isDaemon}}ship-daemon{{/if}}">
+      <div class="ship-panel-title">
+        ОСКВЕРНЕНИЕ (DP)
+        <button type="button" class="ship-roll-distortion btn-add-small" data-action="rollDistortion">Бросить искажение</button>
+      </div>
+      <div class="ship-two-col">
+        <label>Очки Осквернения (DP) <input type="number" name="system.defilement" value="{{system.defilement}}" min="0"/></label>
+        <label>Порог для броска
+          <select class="ship-distort-threshold">{{{defileThresholdOptions}}}</select>
+        </label>
+        <label class="ship-check-label">Экипаж — хаоситы
+          <input type="checkbox" name="system.crewIsChaos" {{#if system.crewIsChaos}}checked{{/if}}/>
         </label>
       </div>
-      <div class="ship-head-row">
-        <label>Капитан <input type="text" name="system.captain" value="{{system.captain}}"/></label>
-        <label>Происхождение <input type="text" name="system.origin" value="{{system.origin}}"/></label>
+      <div class="ship-defile-status">
+        <span class="ship-defile-chip">Пройдено порогов: <b>{{derived.defilement.crossed}}</b>{{#if derived.defilement.levels.length}} ({{#each derived.defilement.levels}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}){{/if}}</span>
+        {{#if derived.defilement.weakSpirit}}<span class="ship-defile-chip warn">Weak Spirit (5) ×{{derived.defilement.weakSpirit}}</span>{{/if}}
+        {{#if derived.defilement.nextDp}}<span class="ship-defile-chip">Следующий порог: {{derived.defilement.nextDp}} DP</span>{{/if}}
       </div>
-      {{!-- Сводка состояния: видна с любой вкладки, без перехода в «Обзор». --}}
-      <div class="ship-status-strip">
-        <span class="ship-stat hi {{#if derived.crippled}}crit{{/if}}" title="Прочность корпуса">
-          <b>{{system.hullIntegrity.value}}</b>/{{derived.hullIntegrityMax}} HI
-        </span>
-        <span class="ship-stat {{#if derived.voidShieldsDown}}off{{/if}}" title="Пустотные щиты">
-          {{derived.chars.voidShields}} VS
-        </span>
-        <span class="ship-stat" title="Броня">{{derived.chars.armour}} ARM</span>
-        <span class="ship-stat" title="Скорость / Манёвренность">{{derived.chars.speed}} SPD · {{derived.chars.manoeuvrability}} MN</span>
-        <span class="ship-stat" title="Экипаж: численность и мораль">{{system.crew.population}} CP · {{system.crew.morale}} CM</span>
-        {{#if system.defilement}}<span class="ship-stat dp {{#if derived.defilement.isDaemon}}crit{{/if}}" title="Очки Осквернения">{{system.defilement}} DP</span>{{/if}}
-        {{#if derived.overBudget}}<span class="ship-stat crit" title="Превышен бюджет энергии, пространства или очков">ПЕРЕГРУЗ</span>{{/if}}
-      </div>
-    </div>
-  </header>
-
-  <nav class="sheet-tabs ship-tabs tabs" data-group="primary">
-    <a class="item" data-tab="overview">Обзор</a>
-    <a class="item" data-tab="components">Узлы</a>
-    <a class="item" data-tab="combat">Бой</a>
-    {{#if hasHangar}}<a class="item" data-tab="hangar">Ангар</a>{{/if}}
-    <a class="item" data-tab="crew">Экипаж</a>
-    <a class="item" data-tab="cargo">Грузы</a>
-    <a class="item" data-tab="notes">Записи</a>
-  </nav>
-
-  <section class="sheet-body">
-
-    {{!-- ───────────── ОБЗОР ───────────── --}}
-    <div class="tab ship-tab" data-tab="overview" data-group="primary">
-      <div class="ship-overview-grid">
-
-      <div class="ship-panel ship-col-full">
-        <div class="ship-panel-title">ХАРАКТЕРИСТИКИ</div>
-        <div class="ship-chars-grid">
-          {{#each shipChars as |def key|}}
-          <div class="ship-char">
-            <div class="ship-char-abbr">{{def.abbr}}</div>
-            <div class="ship-char-val">{{lookup @root.derived.chars key}}</div>
-            <div class="ship-char-label">{{def.label}}</div>
-          </div>
-          {{/each}}
-        </div>
-        <div class="ship-chars-extra">
-          <span class="ship-char-extra"><span class="ship-char-extra-k">Поворот (T)</span><b>{{derived.turnArc}}</b></span>
-          <span class="ship-char-extra"><span class="ship-char-extra-k">Оснащённость (WC)</span><b>{{derived.weaponCapacity}}</b></span>
-          <span class="ship-char-extra ship-hi-extra" title="Прочность корпуса — макс. от корпуса и узлов">
-            <span class="ship-char-extra-k">Прочность (HI)</span>
-            <span class="ship-hi-inline"><input type="number" name="system.hullIntegrity.value" value="{{system.hullIntegrity.value}}"/> / <b>{{derived.hullIntegrityMax}}</b></span>
-          </span>
-        </div>
-      </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">БЮДЖЕТЫ</div>
-        <div class="ship-budgets">
-          <div class="ship-budget {{#if (lt derived.power.free 0)}}over{{/if}}">Энергия <b>{{derived.power.used}}</b> / {{derived.power.generated}} <span>своб. {{derived.power.free}}</span></div>
-          <div class="ship-budget {{#if (lt derived.space.free 0)}}over{{/if}}">Пространство <b>{{derived.space.used}}</b> / {{derived.space.max}} <span>своб. {{derived.space.free}}</span></div>
-          <div class="ship-budget {{#if (lt derived.sp.free 0)}}over{{/if}}">Очки Корабля <b>{{derived.sp.spent}}</b> / {{derived.sp.budget}} <span>своб. {{derived.sp.free}}</span></div>
-        </div>
-      </div>
-
-      <div class="ship-panel {{#if derived.defilement.isDaemon}}ship-daemon{{/if}}">
-        <div class="ship-panel-title">
-          ОСКВЕРНЕНИЕ (DP)
-          <button type="button" class="ship-roll-distortion btn-add-small">Бросить искажение</button>
-        </div>
-        <div class="ship-two-col">
-          <label>Очки Осквернения (DP) <input type="number" name="system.defilement" value="{{system.defilement}}" min="0"/></label>
-          <label>Порог для броска
-            <select class="ship-distort-threshold">{{{defileThresholdOptions}}}</select>
-          </label>
-          <label class="ship-check-label">Экипаж — хаоситы
-            <input type="checkbox" name="system.crewIsChaos" {{#if system.crewIsChaos}}checked{{/if}}/>
-          </label>
-        </div>
-        <div class="ship-defile-status">
-          <span class="ship-defile-chip">Пройдено порогов: <b>{{derived.defilement.crossed}}</b>{{#if derived.defilement.levels.length}} ({{#each derived.defilement.levels}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}){{/if}}</span>
-          {{#if derived.defilement.weakSpirit}}<span class="ship-defile-chip warn">Weak Spirit (5) ×{{derived.defilement.weakSpirit}}</span>{{/if}}
-          {{#if derived.defilement.nextDp}}<span class="ship-defile-chip">Следующий порог: {{derived.defilement.nextDp}} DP</span>{{/if}}
-        </div>
-        {{#if derived.defilement.isDaemon}}
-        <div class="ship-warn">100+ DP — ДЕМОНИЧЕСКИЙ КОРАБЛЬ. Поле Геллера не работает; судно получает Искажение «Оскверненный дух» (или случайную мутацию, если уже имело его) и собственный непокорный разум.</div>
-        {{/if}}
-        <details class="ship-note"><summary>Как работает осквернение</summary>Пороги 10/30/50/70/90 дают Искажение. Бросок 1d100 + модификатор порога (с реверсом знака). Лоялисты и не почитающие Богов ксеносы игнорируют первые два порога. За каждый пройденный порог судно получает Weak Spirit (5), если экипаж не хаоситы.</details>
-      </div>
-
-      </div>{{!-- /ship-overview-grid --}}
-
+      {{#if derived.defilement.isDaemon}}
+      <div class="ship-warn">100+ DP — ДЕМОНИЧЕСКИЙ КОРАБЛЬ. Поле Геллера не работает; судно получает Искажение «Оскверненный дух» (или случайную мутацию, если уже имело его) и собственный непокорный разум.</div>
+      {{/if}}
+      <details class="ship-note"><summary>Как работает осквернение</summary>Пороги 10/30/50/70/90 дают Искажение. Бросок 1d100 + модификатор порога (с реверсом знака). Лоялисты и не почитающие Богов ксеносы игнорируют первые два порога. За каждый пройденный порог судно получает Weak Spirit (5), если экипаж не хаоситы.</details>
     </div>
 
-    {{!-- ───────────── УЗЛЫ ───────────── --}}
-    <div class="tab ship-tab" data-tab="components" data-group="primary">
+    </div>{{!-- /ship-overview-grid --}}
 
-      {{#unless derived.hasHull}}
-      <div class="ship-panel ship-warn">Нет узла «Корпус». Перетащите или создайте узел типа «Корпус» — он задаёт Пространство, Выработку, характеристики, Прочность, Поворот и Орудийную оснащённость.</div>
-      {{/unless}}
+  </div>
 
-      <div class="ship-panel">
-        <div class="ship-panel-title">
-          УЗЛЫ (КОМПОНЕНТЫ)
-          <button type="button" class="ship-create-component btn-add-small">+ узел</button>
-        </div>
-        <div class="ship-budgets compact">
-          <div class="ship-budget {{#if (lt derived.power.free 0)}}over{{/if}}">Энергия {{derived.power.used}}/{{derived.power.generated}}</div>
-          <div class="ship-budget {{#if (lt derived.space.free 0)}}over{{/if}}">Простр. {{derived.space.used}}/{{derived.space.max}}</div>
-          <div class="ship-budget {{#if (lt derived.sp.free 0)}}over{{/if}}">Очки {{derived.sp.spent}}/{{derived.sp.budget}}</div>
-        </div>
-        <details class="ship-note"><summary>Как добавлять узлы</summary>Узлы — это Предметы. Перетащите узел из компендиума сюда или нажмите «+ узел». Левый клик по названию — открыть лист узла; правый клик по строке — редактировать/удалить.</details>
+  {{!-- ───────────── УЗЛЫ ───────────── --}}
+  <div class="tab ship-tab {{#if (eq tab "components")}}active{{/if}}" data-tab="components" data-group="primary">
 
-        <table class="ship-comp-table">
-          <thead><tr>
-            <th class="cc-name">Название</th><th class="cc-cat">Тип</th>
-            <th class="cc-num" title="Энергия: >0 потребляет, <0 вырабатывает">P</th>
-            <th class="cc-num">SPC</th><th class="cc-num">SP</th>
-            <th class="cc-dmg" title="Внешний — снаружи корпуса">Внеш</th>
-            <th class="cc-dmg" title="Повреждён — не работает">Повр</th>
-          </tr></thead>
-          <tbody>
-          {{#each components as |c|}}
-          <tr class="ship-comp-row {{#if c.damaged}}comp-damaged{{/if}} {{#if c.isHull}}comp-hull{{/if}}" data-item-id="{{c.id}}">
-            <td class="cc-name"><a class="ship-comp-open"><img class="cc-img" src="{{c.img}}"/> {{c.name}}</a></td>
-            <td class="cc-cat">{{c.kindLabel}}</td>
-            <td class="cc-num">{{c.power}}</td>
-            <td class="cc-num">{{c.space}}</td>
-            <td class="cc-num">{{c.sp}}</td>
-            <td class="cc-dmg">{{#unless c.isHull}}<input class="ship-comp-toggle" type="checkbox" data-flag="external" {{#if c.external}}checked{{/if}}/>{{/unless}}</td>
-            <td class="cc-dmg">{{#unless c.isHull}}<input class="ship-comp-toggle" type="checkbox" data-flag="damaged" {{#if c.damaged}}checked{{/if}}/>{{/unless}}</td>
-          </tr>
-          {{#if c.aspects}}<tr class="ship-comp-special {{#if c.damaged}}comp-damaged{{/if}}" data-item-id="{{c.id}}"><td colspan="7">{{c.aspects}}</td></tr>{{/if}}
-          {{/each}}
-          </tbody>
-        </table>
-        {{#unless components.length}}<div class="ship-empty">Узлов нет.</div>{{/unless}}
+    {{#unless derived.hasHull}}
+    <div class="ship-panel ship-warn">Нет узла «Корпус». Перетащите или создайте узел типа «Корпус» — он задаёт Пространство, Выработку, характеристики, Прочность, Поворот и Орудийную оснащённость.</div>
+    {{/unless}}
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">
+        УЗЛЫ (КОМПОНЕНТЫ)
+        <button type="button" class="ship-create-component btn-add-small" data-action="createComponent">+ узел</button>
       </div>
+      <div class="ship-budgets compact">
+        <div class="ship-budget {{#if (lt derived.power.free 0)}}over{{/if}}">Энергия {{derived.power.used}}/{{derived.power.generated}}</div>
+        <div class="ship-budget {{#if (lt derived.space.free 0)}}over{{/if}}">Простр. {{derived.space.used}}/{{derived.space.max}}</div>
+        <div class="ship-budget {{#if (lt derived.sp.free 0)}}over{{/if}}">Очки {{derived.sp.spent}}/{{derived.sp.budget}}</div>
+      </div>
+      <details class="ship-note"><summary>Как добавлять узлы</summary>Узлы — это Предметы. Перетащите узел из компендиума сюда или нажмите «+ узел». Левый клик по названию — открыть лист узла; правый клик по строке — редактировать/удалить.</details>
 
+      <table class="ship-comp-table">
+        <thead><tr>
+          <th class="cc-name">Название</th><th class="cc-cat">Тип</th>
+          <th class="cc-num" title="Энергия: >0 потребляет, <0 вырабатывает">P</th>
+          <th class="cc-num">SPC</th><th class="cc-num">SP</th>
+          <th class="cc-dmg" title="Внешний — снаружи корпуса">Внеш</th>
+          <th class="cc-dmg" title="Повреждён — не работает">Повр</th>
+        </tr></thead>
+        <tbody>
+        {{#each components as |c|}}
+        <tr class="ship-comp-row {{#if c.damaged}}comp-damaged{{/if}} {{#if c.isHull}}comp-hull{{/if}}" data-item-id="{{c.id}}">
+          <td class="cc-name"><a class="ship-comp-open" data-action="itemOpen"><img class="cc-img" src="{{c.img}}"/> {{c.name}}</a></td>
+          <td class="cc-cat">{{c.kindLabel}}</td>
+          <td class="cc-num">{{c.power}}</td>
+          <td class="cc-num">{{c.space}}</td>
+          <td class="cc-num">{{c.sp}}</td>
+          <td class="cc-dmg">{{#unless c.isHull}}<input class="ship-comp-toggle" type="checkbox" data-flag="external" {{#if c.external}}checked{{/if}}/>{{/unless}}</td>
+          <td class="cc-dmg">{{#unless c.isHull}}<input class="ship-comp-toggle" type="checkbox" data-flag="damaged" {{#if c.damaged}}checked{{/if}}/>{{/unless}}</td>
+        </tr>
+        {{#if c.aspects}}<tr class="ship-comp-special {{#if c.damaged}}comp-damaged{{/if}}" data-item-id="{{c.id}}"><td colspan="7">{{c.aspects}}</td></tr>{{/if}}
+        {{/each}}
+        </tbody>
+      </table>
+      {{#unless components.length}}<div class="ship-empty">Узлов нет.</div>{{/unless}}
     </div>
 
-    {{!-- ───────────── БОЙ ───────────── --}}
-    <div class="tab ship-tab" data-tab="combat" data-group="primary">
+  </div>
 
-      <div class="ship-panel">
-        <div class="ship-panel-title">БОЕВЫЕ ПОКАЗАТЕЛИ
-          <button type="button" class="ship-init-roll btn-add-small">Инициатива</button>
-          <button type="button" class="ship-crit-roll btn-add-small">Крит. таблица</button>
-        </div>
-        <div class="ship-chars-grid" style="grid-template-columns: repeat(4, 1fr);">
-          <div class="ship-char"><div class="ship-char-abbr">VS</div><div class="ship-char-val">{{derived.chars.voidShields}}</div><div class="ship-char-label">Пуст. щиты</div></div>
-          <div class="ship-char"><div class="ship-char-abbr">ARM</div><div class="ship-char-val">{{derived.chars.armour}}</div><div class="ship-char-label">Броня</div></div>
-          <div class="ship-char"><div class="ship-char-abbr">TR</div><div class="ship-char-val">{{derived.chars.turretRating}}</div><div class="ship-char-label">Турели</div></div>
-          <div class="ship-char"><div class="ship-char-abbr">HI</div><div class="ship-char-val">{{system.hullIntegrity.value}}/{{derived.hullIntegrityMax}}</div><div class="ship-char-label">Прочность</div></div>
-        </div>
-        {{#if halfWrecked}}<div class="ship-warn">⚠️ ПОЛУРАЗРУШЕН (Прочность 0): −10 к MN и DT, SPD вдвое, S всех орудий вдвое (округление вверх). Любое пробивающее броню попадание = Критическое (эффект = пробившему урону, 1–11).</div>{{/if}}
-        {{#if derived.aimer}}<div class="ship-hint">🎯 Целеуказатель корабля: +{{derived.aimer}} к BS всех орудий.</div>{{/if}}
+  {{!-- ───────────── БОЙ ───────────── --}}
+  <div class="tab ship-tab {{#if (eq tab "combat")}}active{{/if}}" data-tab="combat" data-group="primary">
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">БОЕВЫЕ ПОКАЗАТЕЛИ
+        <button type="button" class="ship-init-roll btn-add-small" data-action="initRoll">Инициатива</button>
+        <button type="button" class="ship-crit-roll btn-add-small" data-action="critRoll">Крит. таблица</button>
       </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">ОРУДИЙНАЯ ОСНАЩЁННОСТЬ (WC)</div>
-        {{#if wc.positions.length}}
-        <div class="ship-wc-grid">
-          {{#each wc.positions as |p|}}
-          <div class="ship-wc-slot{{#if p.over}} ship-wc-over{{/if}}">
-            <div class="ship-wc-pos">{{p.label}}</div>
-            <div class="ship-wc-count"><b>{{p.used}}</b> / {{p.max}}</div>
-            <div class="ship-wc-pips">
-              {{#each p.pips as |pip|}}<span class="ship-wc-pip{{#if pip.on}} ship-wc-pip-on{{/if}}{{#if pip.over}} ship-wc-pip-over{{/if}}"></span>{{/each}}
-            </div>
-          </div>
-          {{/each}}
-        </div>
-        {{#if wc.unassigned}}<div class="ship-wc-warn">⚠ Орудий без позиции: <b>{{wc.unassigned}}</b> — назначьте им позицию (столбец «Дуга»).</div>{{/if}}
-        {{#if wc.over}}<div class="ship-wc-warn">⚠ Превышена оснащённость по некоторым позициям — корпус не вмещает столько орудий.</div>{{/if}}
-        {{else}}
-        <div class="ship-comp-empty">Оснащённость корпуса не задана (WC). Установите корпус или впишите WC в его лист.</div>
-        {{/if}}
-        <div class="ship-attack-actions">
-          <button type="button" class="ship-salvo-roll ship-attack-btn"><i class="fas fa-bahai"></i> Залп макробатарей</button>
-          <button type="button" class="ship-ram-roll ship-attack-btn"><i class="fas fa-crosshairs"></i> Таран</button>
-          <button type="button" class="ship-board-roll ship-attack-btn"><i class="fas fa-users"></i> Абордаж</button>
-        </div>
-        <label class="ship-vs-toggle{{#if system.voidShieldsDown}} ship-vs-down{{/if}}">
-          <input type="checkbox" name="system.voidShieldsDown" {{#if system.voidShieldsDown}}checked{{/if}}/>
-          Пустотные щиты схлопнуты (VS = 0 до восстановления)
-        </label>
+      <div class="ship-chars-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="ship-char"><div class="ship-char-abbr">VS</div><div class="ship-char-val">{{derived.chars.voidShields}}</div><div class="ship-char-label">Пуст. щиты</div></div>
+        <div class="ship-char"><div class="ship-char-abbr">ARM</div><div class="ship-char-val">{{derived.chars.armour}}</div><div class="ship-char-label">Броня</div></div>
+        <div class="ship-char"><div class="ship-char-abbr">TR</div><div class="ship-char-val">{{derived.chars.turretRating}}</div><div class="ship-char-label">Турели</div></div>
+        <div class="ship-char"><div class="ship-char-abbr">HI</div><div class="ship-char-val">{{system.hullIntegrity.value}}/{{derived.hullIntegrityMax}}</div><div class="ship-char-label">Прочность</div></div>
       </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">ОРУДИЯ <button type="button" class="ship-create-component btn-add-small">+ узел</button></div>
-        {{#if weapons.length}}
-        <table class="ship-comp-table">
-          <thead><tr>
-            <th class="cc-name">Орудие</th><th class="cc-cat">Тип</th>
-            <th class="cc-num" title="Сила — макс. попаданий">S</th>
-            <th class="cc-num">Урон</th><th class="cc-num">Крит</th>
-            <th class="cc-num">Дальн.</th><th class="cc-cat">Дуга</th>
-            <th class="cc-num" title="Бонус к BS (Целеуказатель)">BS+</th>
-            <th class="cc-fire"></th>
-          </tr></thead>
-          <tbody>
-          {{#each weapons as |w|}}
-          <tr class="ship-comp-row {{#if w.damaged}}comp-damaged{{/if}}" data-item-id="{{w.id}}">
-            <td class="cc-name"><a class="ship-comp-open">{{w.name}}</a></td>
-            <td class="cc-cat">{{w.wType}}</td>
-            <td class="cc-num">{{w.strength}}</td>
-            <td class="cc-num">{{w.damage}}</td>
-            <td class="cc-num">{{w.crit}}</td>
-            <td class="cc-num">{{w.range}}</td>
-            <td class="cc-cat">
-              <select class="ship-arc-select" data-item-id="{{w.id}}" title="Позиция орудия (Оснащённость)">
-                <option value="" {{#unless w.arcKey}}selected{{/unless}}>— не назнач. —</option>
-                {{#each @root.shipArcs as |l k|}}<option value="{{k}}" {{#if (eq w.arcKey k)}}selected{{/if}}>{{l}}</option>{{/each}}
-              </select>
-            </td>
-            <td class="cc-num">{{#if w.bsBonus}}+{{w.bsBonus}}{{else}}—{{/if}}</td>
-            <td class="cc-fire">{{#unless w.damaged}}<button type="button" class="ship-fire-weapon ship-fire-btn" data-item-id="{{w.id}}">Огонь</button>{{/unless}}</td>
-          </tr>
-          {{#if w.props}}<tr class="ship-comp-special" data-item-id="{{w.id}}"><td colspan="9">{{w.props}}</td></tr>{{/if}}
-          {{/each}}
-          </tbody>
-        </table>
-        {{else}}
-        <div class="ship-empty">Орудий нет. Добавьте узел типа «Орудие» (макробатарея/лэнс/нова/торпеды/ангар) и задайте Силу/Урон/Крит/Дальность/Дугу на его листе.</div>
-        {{/if}}
-        <details class="ship-note"><summary>Как считается стрельба</summary>«Огонь» открывает лист стрельбы: вводите BS канонира, прицел, дальность, щиты/броню цели — попадания, урон, броня, щиты и крит считаются автоматически. Готовый урон применяется к выбранному токену-кораблю кнопкой в чате.</details>
-      </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">🚀 ТОРПЕДЫ (БОЕЗАПАС)
-          <button type="button" class="ship-create-torpedo btn-add-small">+ торпеда</button>
-        </div>
-        {{#if torpedoes.length}}
-        <table class="ship-comp-table">
-          <thead><tr>
-            <th class="cc-name">Торпеда</th><th class="cc-cat">Сборка</th>
-            <th class="cc-num">Урон</th><th class="cc-num">Крит</th>
-            <th class="cc-num" title="Рейтинг наведения к BS">Навед.</th>
-            <th class="cc-num" title="Остаток в боезапасе">Кол-во</th>
-          </tr></thead>
-          <tbody>
-          {{#each torpedoes as |t|}}
-          <tr class="torpedo-row {{#if (lt t.quantity 1)}}comp-damaged{{/if}}" data-item-id="{{t.id}}">
-            <td class="cc-name"><a class="ship-torpedo-open">{{t.name}}</a></td>
-            <td class="cc-cat">{{t.label}}</td>
-            <td class="cc-num">{{t.dmg}}</td>
-            <td class="cc-num">{{#if t.crit}}{{t.crit}}+{{else}}—{{/if}}</td>
-            <td class="cc-num">+{{t.navTR}}</td>
-            <td class="cc-num"><b>{{t.quantity}}</b></td>
-          </tr>
-          {{/each}}
-          </tbody>
-        </table>
-        {{else}}
-        <div class="ship-empty">Торпед нет. «+ торпеда» — собрать торпеду (боеголовка + система наведения) и задать количество. Торпедные аппараты расходуют торпеды как боезапас при стрельбе.</div>
-        {{/if}}
-        <details class="ship-note"><summary>Как работают торпеды</summary>Левый клик — открыть лист торпеды; правый клик по строке — редактировать/удалить. При стрельбе из торпедного аппарата выберите торпеду и число к запуску — урон/крит/наведение берутся из её сборки, боезапас уменьшается.</details>
-      </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">МЛА И ТУРЕЛИ</div>
-        <div class="ship-attack-actions ship-craft-actions">
-          <button type="button" class="ship-turret-roll ship-attack-btn"><i class="fas fa-shield-halved"></i> Турели</button>
-          <button type="button" class="ship-bomber-roll ship-attack-btn"><i class="fas fa-bomb"></i> Бомбардировщики</button>
-          <button type="button" class="ship-assault-roll ship-attack-btn"><i class="fas fa-anchor"></i> Штурм. лодки</button>
-          <button type="button" class="ship-fighter-roll ship-attack-btn"><i class="fas fa-fighter-jet"></i> Бой истребителей</button>
-        </div>
-        <details class="ship-note"><summary>Малые суда и турели</summary>Турели: защита от торпед/малых судов (BS + 5×TR). Запуск бомбардировщиков/лодок: Command + CR, цель защищается турелями. Бой истребителей: встречный Command + CR. Профили МЛА — в компендиуме «Малые суда».</details>
-      </div>
-
-      <details class="ship-panel ship-ref-panel">
-        <summary class="ship-panel-title">МАНЁВРЫ (СПРАВКА)</summary>
-        <div class="ship-ref-list">
-          {{#each shipManeuvers as |m|}}
-          <div class="ship-ref-row">
-            <span class="ship-ref-name">{{m.name}}</span>
-            <span class="ship-ref-test">{{m.test}}</span>
-            <span class="ship-ref-desc">{{m.desc}}</span>
-          </div>
-          {{/each}}
-        </div>
-      </details>
-
-      <details class="ship-panel ship-ref-panel">
-        <summary class="ship-panel-title">ДЛИТЕЛЬНЫЕ ДЕЙСТВИЯ (СПРАВКА)</summary>
-        <div class="ship-ref-list">
-          {{#each shipLongActions as |a|}}
-          <div class="ship-ref-row">
-            <span class="ship-ref-name">{{a.name}}</span>
-            <span class="ship-ref-test">{{a.test}}</span>
-            <span class="ship-ref-desc">{{a.desc}}</span>
-          </div>
-          {{/each}}
-        </div>
-      </details>
-
-      <details class="ship-panel ship-ref-panel">
-        <summary class="ship-panel-title">СОСТОЯНИЯ УЗЛОВ И УНИЧТОЖЕНИЕ (СПРАВКА)</summary>
-        <div class="ship-ref-list">
-          {{#each nodeStates as |n|}}
-          <div class="ship-ref-row"><span class="ship-ref-name">{{n.name}}</span><span class="ship-ref-desc" style="grid-column:2">{{n.desc}}</span></div>
-          {{/each}}
-          <div class="ship-ref-row"><span class="ship-ref-name">Прочность 0</span><span class="ship-ref-desc" style="grid-column:2">Полуразрушен (см. баннер). Любое пробившее броню/крит-орудие попадание = Крит; эффект = пробившему урону (1–11).</span></div>
-          <div class="ship-ref-row"><span class="ship-ref-name">Упрощение для НИП</span><span class="ship-ref-desc" style="grid-column:2">(опц.) При Прочности 0: крит 1–9 — бесполезный остов; 10–12 — катастрофический взрыв.</span></div>
-          <div class="ship-ref-row"><span class="ship-ref-name">Системы наведения торпед</span><span class="ship-ref-desc" style="grid-column:2">{{#each torpedoNav as |t|}}{{t.label}} (TR {{t.tr}}, R {{t.r}}){{#unless @last}}; {{/unless}}{{/each}}</span></div>
-        </div>
-      </details>
-
+      {{#if halfWrecked}}<div class="ship-warn">⚠️ ПОЛУРАЗРУШЕН (Прочность 0): −10 к MN и DT, SPD вдвое, S всех орудий вдвое (округление вверх). Любое пробивающее броню попадание = Критическое (эффект = пробившему урону, 1–11).</div>{{/if}}
+      {{#if derived.aimer}}<div class="ship-hint">🎯 Целеуказатель корабля: +{{derived.aimer}} к BS всех орудий.</div>{{/if}}
     </div>
 
-    {{!-- ───────────── АНГАР ───────────── --}}
-    {{#if hasHangar}}
-    <div class="tab ship-tab" data-tab="hangar" data-group="primary">
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">ЗАПУСК И ЗАЩИТА</div>
-        <div class="ship-attack-actions">
-          <button type="button" class="ship-turret-roll ship-attack-btn"><i class="fas fa-shield-halved"></i> Турели</button>
-          <button type="button" class="ship-bomber-roll ship-attack-btn"><i class="fas fa-bomb"></i> Бомбардировщики</button>
-          <button type="button" class="ship-assault-roll ship-attack-btn"><i class="fas fa-anchor"></i> Штурм. лодки</button>
-          <button type="button" class="ship-fighter-roll ship-attack-btn"><i class="fas fa-fighter-jet"></i> Бой истребителей</button>
-        </div>
-      </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">АНГАРНЫЕ ОТСЕКИ</div>
-        <div class="ship-hangar-summary">
-          <span>Подготовка/запуск за СХ: <b>{{hangar.prepared}}</b> / {{hangar.capacity}}{{#if hangar.prepOver}} <span class="ship-wc-warn" style="display:inline;">превышено!</span>{{/if}}</span>
-          <span>Хранилище эскадрилий: <b>{{hangar.stored}}</b> / {{hangar.storageMax}}{{#if hangar.storageOver}} <span class="ship-wc-warn" style="display:inline;">переполнено!</span>{{/if}}</span>
-        </div>
-        <div class="ship-hangar-bays">
-          {{#each hangar.bays as |b|}}
-          <div class="ship-hangar-bay{{#if b.damaged}} comp-damaged{{/if}}"><span class="ship-hangar-bay-name">{{b.name}}</span> <span class="ship-hangar-bay-s">S {{b.s}}</span></div>
-          {{/each}}
-        </div>
-        <details class="ship-note"><summary>Ёмкость ангара</summary>Каждое очко S отсека: 1 подготовленная эскадрилья к запуску за СХ и хранение до 3 эскадрилий. «Подготовить»/«Запуск» — на строках эскадрилий.</details>
-      </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">ЭСКАДРИЛЬИ (МЛА)
-          <button type="button" class="ship-hangar-advance btn-add-small" title="Расход топлива вылетевших + возврат перевооружённых">Ход эскадрилий</button>
-          <button type="button" class="ship-craft-add btn-add-small">+ эскадрилья</button>
-        </div>
-        <details class="ship-note"><summary>Цикл эскадрилий</summary>Цикл: <b>Подготовить</b> (лимит = S ангаров) → <b>Запуск</b> (открывает бой, топливо СХ) → по исчерпании топлива обязательный <b>Возврат</b> → перевооружение (1 СХ) → снова на борту. «Ход эскадрилий» продвигает СХ носителя.</details>
-        <div class="ship-craft-list">
-          {{#each squadrons as |c|}}
-          <div class="ship-craft-row ship-craft-{{c.state}}{{#if c.destroyed}} ship-craft-dead{{/if}}" data-item-id="{{c.id}}">
-            <img class="ship-craft-img ship-craft-open" src="{{c.img}}"/>
-            <div class="ship-craft-main">
-              <div class="ship-craft-title ship-craft-open">{{c.name}} <span class="ship-craft-kind">{{c.kind}}</span></div>
-              <div class="ship-craft-stats">CR {{c.cr}}{{#if c.crAlt}}({{c.crAlt}}){{/if}} · SPD {{c.spd}} · Разм {{c.size}} · <span class="ship-craft-str ship-craft-str-{{c.strength}}">{{c.strengthLabel}}</span>
-                · <span class="ship-craft-state-lbl">{{c.stateLabel}}</span>{{#if c.isOut}} <span class="ship-craft-fuel{{#if c.fuelLow}} ship-craft-fuel-low{{/if}}" title="Топливо/кислород (СХ)">⛽ {{c.turns}}/{{c.fuel}}</span>{{/if}}</div>
-            </div>
-            <label class="ship-craft-qty" title="Число эскадрилий">×<input type="number" class="ship-craft-qty-inp" value="{{c.qty}}" min="1"/></label>
-            <div class="ship-craft-btns">
-              {{#if c.isStored}}<button type="button" class="ship-craft-prepare" title="Подготовить к вылету"><i class="fas fa-plane-departure"></i></button>{{/if}}
-              {{#if c.isPrepared}}{{#if c.launchKind}}<button type="button" class="ship-craft-launch" data-kind="{{c.launchKind}}" title="Запуск (бой)"><i class="fas fa-rocket"></i></button>{{/if}}{{/if}}
-              {{#if c.isOut}}<button type="button" class="ship-craft-return" title="Вернуть на носитель (перевооружение)"><i class="fas fa-plane-arrival"></i></button>{{/if}}
-              <button type="button" class="ship-craft-loss" title="Отметить потери (полная → полусильная → уничтожена)"><i class="fas fa-heart-crack"></i></button>
-              <a class="ship-craft-del" title="Удалить"><i class="fas fa-times"></i></a>
-            </div>
+    <div class="ship-panel">
+      <div class="ship-panel-title">ОРУДИЙНАЯ ОСНАЩЁННОСТЬ (WC)</div>
+      {{#if wc.positions.length}}
+      <div class="ship-wc-grid">
+        {{#each wc.positions as |p|}}
+        <div class="ship-wc-slot{{#if p.over}} ship-wc-over{{/if}}">
+          <div class="ship-wc-pos">{{p.label}}</div>
+          <div class="ship-wc-count"><b>{{p.used}}</b> / {{p.max}}</div>
+          <div class="ship-wc-pips">
+            {{#each p.pips as |pip|}}<span class="ship-wc-pip{{#if pip.on}} ship-wc-pip-on{{/if}}{{#if pip.over}} ship-wc-pip-over{{/if}}"></span>{{/each}}
           </div>
-          {{else}}
-          <div class="ship-comp-empty">Эскадрилий нет. Перетащите МЛА из компендиума или нажмите «+ эскадрилья».</div>
-          {{/each}}
         </div>
+        {{/each}}
       </div>
-
+      {{#if wc.unassigned}}<div class="ship-wc-warn">⚠ Орудий без позиции: <b>{{wc.unassigned}}</b> — назначьте им позицию (столбец «Дуга»).</div>{{/if}}
+      {{#if wc.over}}<div class="ship-wc-warn">⚠ Превышена оснащённость по некоторым позициям — корпус не вмещает столько орудий.</div>{{/if}}
+      {{else}}
+      <div class="ship-comp-empty">Оснащённость корпуса не задана (WC). Установите корпус или впишите WC в его лист.</div>
+      {{/if}}
+      <div class="ship-attack-actions">
+        <button type="button" class="ship-salvo-roll ship-attack-btn" data-action="salvoRoll"><i class="fas fa-bahai"></i> Залп макробатарей</button>
+        <button type="button" class="ship-ram-roll ship-attack-btn" data-action="ramRoll"><i class="fas fa-crosshairs"></i> Таран</button>
+        <button type="button" class="ship-board-roll ship-attack-btn" data-action="boardRoll"><i class="fas fa-users"></i> Абордаж</button>
+      </div>
+      <label class="ship-vs-toggle{{#if system.voidShieldsDown}} ship-vs-down{{/if}}">
+        <input type="checkbox" name="system.voidShieldsDown" {{#if system.voidShieldsDown}}checked{{/if}}/>
+        Пустотные щиты схлопнуты (VS = 0 до восстановления)
+      </label>
     </div>
-    {{/if}}
 
-    {{!-- ───────────── ЭКИПАЖ ───────────── --}}
-    <div class="tab ship-tab" data-tab="crew" data-group="primary">
-
-      <details class="ship-panel" open>
-        <summary class="ship-panel-title">ОФИЦЕРЫ (КОМАНДНЫЙ СОСТАВ)</summary>
-        <div class="ship-officer-help">Создайте должности, затем перетащите персонажа/токен на нужную. Название можно менять. Стрельба берёт BS Мастера-канонира (или впишите вручную).</div>
-        <div class="ship-officer-add-bar">
-          <select class="ship-officer-select">
-            {{#each officerPosts as |p|}}<option value="{{p}}">{{p}}</option>{{/each}}
-            <option value="Офицер">— своя должность —</option>
-          </select>
-          <button type="button" class="ship-officer-add btn-add-small">+ должность</button>
-        </div>
-        <div class="ship-officer-list">
-          {{#each officers as |o|}}
-          <div class="ship-officer-row{{#if o.missing}} ship-officer-missing{{/if}}{{#if o.occupied}} ship-officer-filled{{/if}}" data-officer-id="{{o.id}}" data-uuid="{{o.uuid}}">
-            <span class="ship-officer-grip" draggable="true" title="Перетащите, чтобы поменять местами"><i class="fas fa-grip-vertical"></i></span>
-            <input class="ship-officer-title" type="text" value="{{o.title}}" title="Название должности"/>
-            {{#if o.occupied}}
-              <img class="ship-officer-img ship-officer-open" src="{{o.img}}" title="Открыть лист"/>
-              <span class="ship-officer-name ship-officer-open">{{o.name}}</span>
-              <a class="ship-officer-clear" title="Освободить"><i class="fas fa-user-minus"></i></a>
-            {{else}}
-              <span class="ship-officer-empty">— перетащите персонажа —</span>
-            {{/if}}
-            <a class="ship-officer-remove" title="Удалить должность"><i class="fas fa-times"></i></a>
-          </div>
-          {{else}}
-          <div class="ship-comp-empty">Должностей нет. Добавьте их выше и перетащите персонажей.</div>
-          {{/each}}
-        </div>
-      </details>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">ПОКАЗАТЕЛИ ЭКИПАЖА
-          <button type="button" class="ship-mutiny-roll btn-add-small">Тест бунта</button>
-        </div>
-        <div class="ship-two-col">
-          <label>Численность (CP) <input type="number" name="system.crew.population" value="{{system.crew.population}}" min="0" max="100"/></label>
-          <label>Мораль (CM)
-            <span class="ship-morale-row"><input type="number" name="system.crew.morale" value="{{system.crew.morale}}"/><span class="ship-morale-sep">/</span><input type="number" name="system.crew.moraleMax" value="{{system.crew.moraleMax}}"/></span>
-          </label>
-        </div>
-        <div class="ship-two-col">
-          <label>Выучка (CR) — уровень
-            <select name="system.crew.rating">
-              <option value="" {{#if (eq system.crew.rating "")}}selected{{/if}}>— не задан —</option>
-              {{#each crewRatingTable as |r|}}
-              <option value="{{r.label}}" {{#if (eq @root.system.crew.rating r.label)}}selected{{/if}}>{{r.label}} ({{r.skill}})</option>
-              {{/each}}
+    <div class="ship-panel">
+      <div class="ship-panel-title">ОРУДИЯ <button type="button" class="ship-create-component btn-add-small" data-action="createComponent">+ узел</button></div>
+      {{#if weapons.length}}
+      <table class="ship-comp-table">
+        <thead><tr>
+          <th class="cc-name">Орудие</th><th class="cc-cat">Тип</th>
+          <th class="cc-num" title="Сила — макс. попаданий">S</th>
+          <th class="cc-num">Урон</th><th class="cc-num">Крит</th>
+          <th class="cc-num">Дальн.</th><th class="cc-cat">Дуга</th>
+          <th class="cc-num" title="Бонус к BS (Целеуказатель)">BS+</th>
+          <th class="cc-fire"></th>
+        </tr></thead>
+        <tbody>
+        {{#each weapons as |w|}}
+        <tr class="ship-comp-row {{#if w.damaged}}comp-damaged{{/if}}" data-item-id="{{w.id}}">
+          <td class="cc-name"><a class="ship-comp-open" data-action="itemOpen">{{w.name}}</a></td>
+          <td class="cc-cat">{{w.wType}}</td>
+          <td class="cc-num">{{w.strength}}</td>
+          <td class="cc-num">{{w.damage}}</td>
+          <td class="cc-num">{{w.crit}}</td>
+          <td class="cc-num">{{w.range}}</td>
+          <td class="cc-cat">
+            <select class="ship-arc-select" data-item-id="{{w.id}}" title="Позиция орудия (Оснащённость)">
+              <option value="" {{#unless w.arcKey}}selected{{/unless}}>— не назнач. —</option>
+              {{#each @root.shipArcs as |l k|}}<option value="{{k}}" {{#if (eq w.arcKey k)}}selected{{/if}}>{{l}}</option>{{/each}}
             </select>
-          </label>
-          <label>Действий НИП за СР
-            <input type="text" value="{{#if crewActions}}{{crewActions}}{{else}}—{{/if}}" readonly
-                   title="Равно бонусу Выучки (CR/10). Альтернативное правило книги — жёсткий потолок в 3 действия."/>
-          </label>
-        </div>
-
-        {{!-- Восстановление и бунт (разделы «Восстановление» и «Бунт») --}}
-        <div class="crew-acts">
-          <button type="button" class="ship-crew-recover" data-kind="morale"
-                  title="Дары за Inf, сплочение, увольнение на берег">Поднять мораль</button>
-          <button type="button" class="ship-crew-recover" data-kind="population"
-                  title="Вербовка, каторжники, отряды вербовщиков">Пополнить экипаж</button>
-          <button type="button" class="ship-mutiny-quell"
-                  title="Встречный тест Command / Charm / Intimidation">Подавить бунт</button>
-        </div>
-
-        <details class="ship-note"><summary>Что означают CP, CM и Выучка</summary>CP — % от полного экипажа (старт 100). CM — мораль (старт 100). Чем выше — тем лучше. Бунт: тест Command при падении CM до 70/40/10. Выучка задаёт навык НИП и число их действий за СР.</details>
-      </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">⚠️ АКТИВНЫЕ ЭФФЕКТЫ (CP {{crewPopVal}} · CM {{crewMoraleVal}})</div>
-        {{#if crewPopActive.length}}
-        <div class="crew-fx-group"><div class="crew-fx-head">От Численности (CP):</div>
-          {{#each crewPopActive as |r|}}<div class="crew-fx-row {{#if r.mutiny}}crew-fx-mutiny{{/if}}"><span class="crew-fx-t">≤{{r.t}}</span> {{r.fx}}</div>{{/each}}
-        </div>
-        {{/if}}
-        {{#if crewMoraleActive.length}}
-        <div class="crew-fx-group"><div class="crew-fx-head">От Морали (CM):</div>
-          {{#each crewMoraleActive as |r|}}<div class="crew-fx-row {{#if r.mutiny}}crew-fx-mutiny{{/if}}"><span class="crew-fx-t">≤{{r.t}}</span> {{r.fx}}</div>{{/each}}
-        </div>
-        {{/if}}
-        {{#unless crewPopActive.length}}{{#unless crewMoraleActive.length}}<div class="ship-hint">Экипаж в порядке — активных штрафов нет.</div>{{/unless}}{{/unless}}
-      </div>
-
-      <details class="ship-panel ship-ref-panel">
-        <summary class="ship-panel-title">ТАБЛИЦА ЧИСЛЕННОСТИ (CP)</summary>
-        <div class="ship-ref-list">
-          {{#each crewPop as |r|}}<div class="ship-ref-row"><span class="ship-ref-name">≤ {{r.t}}</span><span class="ship-ref-desc" style="grid-column:2">{{r.fx}}</span></div>{{/each}}
-        </div>
-      </details>
-
-      <details class="ship-panel ship-ref-panel">
-        <summary class="ship-panel-title">ТАБЛИЦА МОРАЛИ (CM)</summary>
-        <div class="ship-ref-list">
-          {{#each crewMorale as |r|}}<div class="ship-ref-row"><span class="ship-ref-name">≤ {{r.t}}</span><span class="ship-ref-desc" style="grid-column:2">{{r.fx}}</span></div>{{/each}}
-        </div>
-      </details>
-
-      <details class="ship-panel ship-ref-panel">
-        <summary class="ship-panel-title">БУНТ И ВОССТАНОВЛЕНИЕ (СПРАВКА)</summary>
-        <div class="ship-ref-list" style="display:block;">
-          <p><b>Бунт.</b> При CM ≤ 70/40/10 — тест Command +0; провал → часть экипажа бунтует (в бою бросок откладывается до конца боя; несколько порогов за бой — один тест). Подавление: встречный Command / Charm / Intimidation. Command: победа → CP и CM −1d5. Charm/Intimidation: победа → CM −1d10. Бунтовщики победили на 4+ СУ — бунт удался, потеря корабля.</p>
-          <p><b>Мораль.</b> Траты Inf: фрегаты/транспорты/рейдеры +1d10 CM за единицу, тяжёлые +1d5. Charm −10 / Intimidation −10: +2 CM за успех (раз за встречу). Высадка: необитаемая планета — 3 недели до предела; населённая — 2 недели; с тратой денег (Inf +20) — 1 неделя.</p>
-          <p><b>Численность.</b> Пополнение только на населённой людьми планете: тест реквизиции (Доступность +20, зависит от мира). Вербовка из трущоб: Common Lore (Sump) / Forbidden Lore (Underworld) + Commerce. Каторжники: бесплатно, но CM −1d10+10 (не восстановить, пока корабль здесь). Выше предела восстановить нельзя.</p>
-        </div>
-      </details>
-
+          </td>
+          <td class="cc-num">{{#if w.bsBonus}}+{{w.bsBonus}}{{else}}—{{/if}}</td>
+          <td class="cc-fire">{{#unless w.damaged}}<button type="button" class="ship-fire-weapon ship-fire-btn" data-action="fireWeapon" data-item-id="{{w.id}}">Огонь</button>{{/unless}}</td>
+        </tr>
+        {{#if w.props}}<tr class="ship-comp-special" data-item-id="{{w.id}}"><td colspan="9">{{w.props}}</td></tr>{{/if}}
+        {{/each}}
+        </tbody>
+      </table>
+      {{else}}
+      <div class="ship-empty">Орудий нет. Добавьте узел типа «Орудие» (макробатарея/лэнс/нова/торпеды/ангар) и задайте Силу/Урон/Крит/Дальность/Дугу на его листе.</div>
+      {{/if}}
+      <details class="ship-note"><summary>Как считается стрельба</summary>«Огонь» открывает лист стрельбы: вводите BS канонира, прицел, дальность, щиты/броню цели — попадания, урон, броня, щиты и крит считаются автоматически. Готовый урон применяется к выбранному токену-кораблю кнопкой в чате.</details>
     </div>
 
-    {{!-- ───────────── ГРУЗЫ ───────────── --}}
-    <div class="tab ship-tab" data-tab="cargo" data-group="primary">
-
-      {{!-- Трюм, пассажиры и запасы — тремя мерными шкалами --}}
-      <div class="ship-hold-meters">
-        <div class="ship-meter {{#if derived.lc.over}}over{{/if}}">
-          <div class="ship-meter-head"><span>ТРЮМ (LC)</span><b>{{derived.lc.used}} / {{derived.lc.max}}</b></div>
-          <div class="ship-meter-bar"><i style="width:{{derived.lc.pct}}%"></i></div>
-          <div class="ship-meter-foot">
-            свободно {{derived.lc.free}}
-            {{#if derived.lc.supply}} · припасы {{derived.lc.supply}} вне трюма{{/if}}
-            {{#if derived.lc.bonus}} · из узлов +{{derived.lc.bonus}}{{/if}}
-          </div>
-        </div>
-
-        <div class="ship-meter {{#if derived.pc.over}}over{{/if}}">
-          <div class="ship-meter-head"><span>ПАССАЖИРЫ (PC)</span>
-            <span class="ship-meter-edit"><input type="number" name="system.passengersAboard" value="{{system.passengersAboard}}" min="0"/> / {{derived.pc.max}}</span>
-          </div>
-          <div class="ship-meter-bar"><i style="width:{{derived.pc.pct}}%"></i></div>
-          <div class="ship-meter-foot">
-            свободно {{derived.pc.free}}
-            {{#if derived.pc.bonus}} · из узлов +{{derived.pc.bonus}}{{/if}}
-            {{#if derived.pc.weakSpirit}} · <span class="warn">Weak Spirit ({{derived.pc.weakSpirit}})</span>{{/if}}
-          </div>
-        </div>
-
-        <div class="ship-meter supplies {{#if derived.supplies.empty}}over{{else if derived.supplies.low}}low{{/if}}">
-          <div class="ship-meter-head"><span>ЗАПАСЫ</span><b>{{derived.supplies.value}} / {{derived.supplies.max}} мес.</b></div>
-          <div class="ship-meter-bar"><i style="width:{{derived.supplies.pct}}%"></i></div>
-          <div class="ship-meter-foot">
-            <button type="button" class="ship-supplies-step mini" data-step="-1" title="Прошёл месяц">−1 мес</button>
-            <button type="button" class="ship-supplies-step mini" data-step="1" title="Пополнить на месяц">+1 мес</button>
-            <button type="button" class="ship-supplies-full mini" title="Пополнить до максимума">полный</button>
-            {{#if derived.supplies.empty}}<span class="warn">запасы кончились</span>{{/if}}
-          </div>
-        </div>
+    <div class="ship-panel">
+      <div class="ship-panel-title">🚀 ТОРПЕДЫ (БОЕЗАПАС)
+        <button type="button" class="ship-create-torpedo btn-add-small" data-action="createTorpedo">+ торпеда</button>
       </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">
-          ТРЮМ
-          <span class="ship-hold-sum">
-            {{derived.lc.entries}} партий · {{derived.lc.units}} ед.
-            {{#if derived.lc.value}} · стоимость {{derived.lc.value}}{{/if}}
-          </span>
-          <button type="button" class="ship-create-cargo btn-add-small">+ груз</button>
-        </div>
-
-        {{!-- Броски событий по грузам и пассажирам (раздел «Грузы» корбука). --}}
-        <div class="cargo-rolls">
-          <button type="button" class="cargo-roll" data-kind="spoil"
-                  title="Trade (Voidfarer) — грамотно ли крепили и хранили груз">Сохранность</button>
-          <button type="button" class="cargo-roll" data-kind="theft"
-                  title="CM / Inf / Command (F) — не разворовал ли экипаж">Воровство</button>
-          <button type="button" class="cargo-roll" data-kind="damage"
-                  title="Повреждение узла или падение INT — порог 51+">Урон грузу</button>
-          <button type="button" class="cargo-roll" data-kind="crit"
-                  title="Критический эффект (кроме 3, 4 и 7) — порог 76+">От крита</button>
-          <button type="button" class="cargo-roll" data-kind="passengers"
-                  title="Падение CP — порог 75+, по 1 PC за провал">Пассажиры</button>
-          <span class="cargo-trade-hint" title="Каждая LC ≈ 101–1000 предметов по таблице Количества">
-            торговля: продажа +{{cargoTrade.sell}} · покупка {{cargoTrade.buy}}
-          </span>
-        </div>
-
-        {{#if cargoGroups.length}}
-          {{#each cargoGroups as |g|}}
-          <div class="cargo-group {{#if g.collapsed}}collapsed{{/if}}">
-            <div class="cargo-group-head" data-group-key="{{g.key}}" title="{{g.examples}}">
-              <i class="fas fa-caret-{{#if g.collapsed}}right{{else}}down{{/if}}"></i>
-              <span class="cargo-group-name">{{g.typeLabel}}</span>
-              <span class="cargo-group-tag">{{g.group}}</span>
-              <span class="cargo-group-meta">
-                R {{g.rarity}} · {{g.units}} ед.
-                {{#if g.lcTotal}} · LC {{g.lcTotal}}{{/if}}
-                {{#if g.valueTotal}} · {{g.valueTotal}}{{/if}}
-              </span>
-            </div>
-            {{#unless g.collapsed}}
-            <div class="cargo-list">
-              {{#each g.items as |c|}}
-              <div class="cargo-row {{#if c.shipSupply}}is-supply{{/if}}" data-item-id="{{c.id}}">
-                <img class="cargo-img" src="{{c.img}}"/>
-                <div class="cargo-main">
-                  <a class="ship-cargo-open cargo-row-name">{{c.name}}</a>
-                  <div class="cargo-row-tags">
-                    <span title="Объём одной единицы">LC {{c.unitLc}}/ед</span>
-                    {{#unless c.shipSupply}}<span class="strong" title="Занято в трюме">= {{c.volume}}</span>{{/unless}}
-                    <span>{{c.qualityLabel}}</span>
-                    <span title="Итоговая редкость: тип + качество + пометки">R {{c.rarity}}</span>
-                    {{#if c.xenos}}<span class="cq-mark" title="Ксенотовар: +1 к R">ксено</span>{{/if}}
-                    {{#if c.astartes}}<span class="cq-mark" title="Снаряжение Астартес: +1 к R">астартес</span>{{/if}}
-                    {{#if c.price}}<span title="Цена за единицу">{{c.price}}/ед · {{c.value}}</span>{{/if}}
-                    {{#if c.origin}}<span title="Откуда груз">из: {{c.origin}}</span>{{/if}}
-                    {{#if c.consignee}}<span title="Кому предназначен">кому: {{c.consignee}}</span>{{/if}}
-                  </div>
-                  {{#if c.description}}<div class="cargo-row-desc">{{c.description}}</div>{{/if}}
-                </div>
-                <div class="cargo-qty">
-                  <button type="button" class="cargo-qty-step" data-step="-1" title="Убавить">−</button>
-                  <input type="number" class="cargo-qty-input" value="{{c.quantity}}" min="0" title="Количество единиц"/>
-                  <button type="button" class="cargo-qty-step" data-step="1" title="Прибавить">+</button>
-                </div>
-                <div class="cargo-acts">
-                  <button type="button" class="cargo-supply-toggle {{#if c.shipSupply}}on{{/if}}"
-                          title="Груз для обслуживания корабля — не занимает трюм"><i class="fas fa-wrench"></i></button>
-                  <button type="button" class="cargo-jettison" title="Выгрузить партию"><i class="fas fa-times"></i></button>
-                </div>
-              </div>
-              {{/each}}
-            </div>
-            {{/unless}}
-          </div>
-          {{/each}}
-        {{else}}
-          <div class="ship-empty">Трюм пуст. «+ груз» или перетащите партию сюда.</div>
-        {{/if}}
-
-        <details class="ship-note">
-          <summary>Как считается трюм</summary>
-          Базовая LC = полный SPC корпуса ({{derived.lc.base}}); базовая PC = 1 за каждую полную
-          десятку SPC ({{derived.pc.base}}). Специализированные узлы добавляют LC/PC. LC у партии —
-          объём одной единицы, занятое место = объём × количество. Груз с меткой
-          <i class="fas fa-wrench"></i> идёт на обслуживание корабля (припасы, запчасти, боеприпасы,
-          плазма) и трюм не занимает. Каждое занятое базовое место пассажира даёт Weak Spirit (1).
-          Запасы: базово полгода, свойство Travel Supplies (X) задаёт свой максимум.
-        </details>
-      </div>
-
+      {{#if torpedoes.length}}
+      <table class="ship-comp-table">
+        <thead><tr>
+          <th class="cc-name">Торпеда</th><th class="cc-cat">Сборка</th>
+          <th class="cc-num">Урон</th><th class="cc-num">Крит</th>
+          <th class="cc-num" title="Рейтинг наведения к BS">Навед.</th>
+          <th class="cc-num" title="Остаток в боезапасе">Кол-во</th>
+        </tr></thead>
+        <tbody>
+        {{#each torpedoes as |t|}}
+        <tr class="torpedo-row {{#if (lt t.quantity 1)}}comp-damaged{{/if}}" data-item-id="{{t.id}}">
+          <td class="cc-name"><a class="ship-torpedo-open" data-action="itemOpen">{{t.name}}</a></td>
+          <td class="cc-cat">{{t.label}}</td>
+          <td class="cc-num">{{t.dmg}}</td>
+          <td class="cc-num">{{#if t.crit}}{{t.crit}}+{{else}}—{{/if}}</td>
+          <td class="cc-num">+{{t.navTR}}</td>
+          <td class="cc-num"><b>{{t.quantity}}</b></td>
+        </tr>
+        {{/each}}
+        </tbody>
+      </table>
+      {{else}}
+      <div class="ship-empty">Торпед нет. «+ торпеда» — собрать торпеду (боеголовка + система наведения) и задать количество. Торпедные аппараты расходуют торпеды как боезапас при стрельбе.</div>
+      {{/if}}
+      <details class="ship-note"><summary>Как работают торпеды</summary>Левый клик — открыть лист торпеды; правый клик по строке — редактировать/удалить. При стрельбе из торпедного аппарата выберите торпеду и число к запуску — урон/крит/наведение берутся из её сборки, боезапас уменьшается.</details>
     </div>
 
-    {{!-- ───────────── ЗАПИСИ ───────────── --}}
-    <div class="tab ship-tab" data-tab="notes" data-group="primary">
+    <div class="ship-panel">
+      <div class="ship-panel-title">МЛА И ТУРЕЛИ</div>
+      <div class="ship-attack-actions ship-craft-actions">
+        <button type="button" class="ship-turret-roll ship-attack-btn" data-action="turretRoll"><i class="fas fa-shield-halved"></i> Турели</button>
+        <button type="button" class="ship-bomber-roll ship-attack-btn" data-action="bomberRoll"><i class="fas fa-bomb"></i> Бомбардировщики</button>
+        <button type="button" class="ship-assault-roll ship-attack-btn" data-action="assaultRoll"><i class="fas fa-anchor"></i> Штурм. лодки</button>
+        <button type="button" class="ship-fighter-roll ship-attack-btn" data-action="fighterRoll"><i class="fas fa-fighter-jet"></i> Бой истребителей</button>
+      </div>
+      <details class="ship-note"><summary>Малые суда и турели</summary>Турели: защита от торпед/малых судов (BS + 5×TR). Запуск бомбардировщиков/лодок: Command + CR, цель защищается турелями. Бой истребителей: встречный Command + CR. Профили МЛА — в компендиуме «Малые суда».</details>
+    </div>
 
-      <div class="ship-panel">
-        <div class="ship-panel-title">ОСКВЕРНЕНИЕ — ЖУРНАЛ ИСКАЖЕНИЙ</div>
-        {{#if distortions.length}}
-        <div class="ship-distort-log">
-          {{#each distortions as |d|}}
-          <div class="ship-distort-entry" data-id="{{d.id}}">
-            <div class="ship-distort-entry-head">
-              <span class="ship-distort-name">{{d.name}}{{#if d.range}} ({{d.range}}){{/if}}{{#if d.submut}} · {{d.submut}}{{/if}}</span>
-              <span class="ship-distort-meta">{{d.threshold}} · бросок {{d.roll}}→{{d.total}}{{#if d.when}} · {{d.when}}{{/if}}</span>
-              <button type="button" class="ship-distort-del" data-id="{{d.id}}" title="Удалить запись">✕</button>
-            </div>
-            {{#if d.desc}}<div class="ship-distort-entry-desc">{{d.desc}}</div>{{/if}}
+    <details class="ship-panel ship-ref-panel">
+      <summary class="ship-panel-title">МАНЁВРЫ (СПРАВКА)</summary>
+      <div class="ship-ref-list">
+        {{#each shipManeuvers as |m|}}
+        <div class="ship-ref-row">
+          <span class="ship-ref-name">{{m.name}}</span>
+          <span class="ship-ref-test">{{m.test}}</span>
+          <span class="ship-ref-desc">{{m.desc}}</span>
+        </div>
+        {{/each}}
+      </div>
+    </details>
+
+    <details class="ship-panel ship-ref-panel">
+      <summary class="ship-panel-title">ДЛИТЕЛЬНЫЕ ДЕЙСТВИЯ (СПРАВКА)</summary>
+      <div class="ship-ref-list">
+        {{#each shipLongActions as |a|}}
+        <div class="ship-ref-row">
+          <span class="ship-ref-name">{{a.name}}</span>
+          <span class="ship-ref-test">{{a.test}}</span>
+          <span class="ship-ref-desc">{{a.desc}}</span>
+        </div>
+        {{/each}}
+      </div>
+    </details>
+
+    <details class="ship-panel ship-ref-panel">
+      <summary class="ship-panel-title">СОСТОЯНИЯ УЗЛОВ И УНИЧТОЖЕНИЕ (СПРАВКА)</summary>
+      <div class="ship-ref-list">
+        {{#each nodeStates as |n|}}
+        <div class="ship-ref-row"><span class="ship-ref-name">{{n.name}}</span><span class="ship-ref-desc" style="grid-column:2">{{n.desc}}</span></div>
+        {{/each}}
+        <div class="ship-ref-row"><span class="ship-ref-name">Прочность 0</span><span class="ship-ref-desc" style="grid-column:2">Полуразрушен (см. баннер). Любое пробившее броню/крит-орудие попадание = Крит; эффект = пробившему урону (1–11).</span></div>
+        <div class="ship-ref-row"><span class="ship-ref-name">Упрощение для НИП</span><span class="ship-ref-desc" style="grid-column:2">(опц.) При Прочности 0: крит 1–9 — бесполезный остов; 10–12 — катастрофический взрыв.</span></div>
+        <div class="ship-ref-row"><span class="ship-ref-name">Системы наведения торпед</span><span class="ship-ref-desc" style="grid-column:2">{{#each torpedoNav as |t|}}{{t.label}} (TR {{t.tr}}, R {{t.r}}){{#unless @last}}; {{/unless}}{{/each}}</span></div>
+      </div>
+    </details>
+
+  </div>
+
+  {{!-- ───────────── АНГАР ───────────── --}}
+  {{#if hasHangar}}
+  <div class="tab ship-tab {{#if (eq tab "hangar")}}active{{/if}}" data-tab="hangar" data-group="primary">
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">ЗАПУСК И ЗАЩИТА</div>
+      <div class="ship-attack-actions">
+        <button type="button" class="ship-turret-roll ship-attack-btn" data-action="turretRoll"><i class="fas fa-shield-halved"></i> Турели</button>
+        <button type="button" class="ship-bomber-roll ship-attack-btn" data-action="bomberRoll"><i class="fas fa-bomb"></i> Бомбардировщики</button>
+        <button type="button" class="ship-assault-roll ship-attack-btn" data-action="assaultRoll"><i class="fas fa-anchor"></i> Штурм. лодки</button>
+        <button type="button" class="ship-fighter-roll ship-attack-btn" data-action="fighterRoll"><i class="fas fa-fighter-jet"></i> Бой истребителей</button>
+      </div>
+    </div>
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">АНГАРНЫЕ ОТСЕКИ</div>
+      <div class="ship-hangar-summary">
+        <span>Подготовка/запуск за СХ: <b>{{hangar.prepared}}</b> / {{hangar.capacity}}{{#if hangar.prepOver}} <span class="ship-wc-warn" style="display:inline;">превышено!</span>{{/if}}</span>
+        <span>Хранилище эскадрилий: <b>{{hangar.stored}}</b> / {{hangar.storageMax}}{{#if hangar.storageOver}} <span class="ship-wc-warn" style="display:inline;">переполнено!</span>{{/if}}</span>
+      </div>
+      <div class="ship-hangar-bays">
+        {{#each hangar.bays as |b|}}
+        <div class="ship-hangar-bay{{#if b.damaged}} comp-damaged{{/if}}"><span class="ship-hangar-bay-name">{{b.name}}</span> <span class="ship-hangar-bay-s">S {{b.s}}</span></div>
+        {{/each}}
+      </div>
+      <details class="ship-note"><summary>Ёмкость ангара</summary>Каждое очко S отсека: 1 подготовленная эскадрилья к запуску за СХ и хранение до 3 эскадрилий. «Подготовить»/«Запуск» — на строках эскадрилий.</details>
+    </div>
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">ЭСКАДРИЛЬИ (МЛА)
+        <button type="button" class="ship-hangar-advance btn-add-small" data-action="hangarAdvance" title="Расход топлива вылетевших + возврат перевооружённых">Ход эскадрилий</button>
+        <button type="button" class="ship-craft-add btn-add-small" data-action="craftAdd">+ эскадрилья</button>
+      </div>
+      <details class="ship-note"><summary>Цикл эскадрилий</summary>Цикл: <b>Подготовить</b> (лимит = S ангаров) → <b>Запуск</b> (открывает бой, топливо СХ) → по исчерпании топлива обязательный <b>Возврат</b> → перевооружение (1 СХ) → снова на борту. «Ход эскадрилий» продвигает СХ носителя.</details>
+      <div class="ship-craft-list">
+        {{#each squadrons as |c|}}
+        <div class="ship-craft-row ship-craft-{{c.state}}{{#if c.destroyed}} ship-craft-dead{{/if}}" data-item-id="{{c.id}}">
+          <img class="ship-craft-img ship-craft-open" data-action="craftOpen" src="{{c.img}}"/>
+          <div class="ship-craft-main">
+            <div class="ship-craft-title ship-craft-open" data-action="craftOpen">{{c.name}} <span class="ship-craft-kind">{{c.kind}}</span></div>
+            <div class="ship-craft-stats">CR {{c.cr}}{{#if c.crAlt}}({{c.crAlt}}){{/if}} · SPD {{c.spd}} · Разм {{c.size}} · <span class="ship-craft-str ship-craft-str-{{c.strength}}">{{c.strengthLabel}}</span>
+              · <span class="ship-craft-state-lbl">{{c.stateLabel}}</span>{{#if c.isOut}} <span class="ship-craft-fuel{{#if c.fuelLow}} ship-craft-fuel-low{{/if}}" title="Топливо/кислород (СХ)">⛽ {{c.turns}}/{{c.fuel}}</span>{{/if}}</div>
           </div>
-          {{/each}}
+          <label class="ship-craft-qty" title="Число эскадрилий">×<input type="number" class="ship-craft-qty-inp" value="{{c.qty}}" min="1"/></label>
+          <div class="ship-craft-btns">
+            {{#if c.isStored}}<button type="button" class="ship-craft-prepare" data-action="craftPrepare" title="Подготовить к вылету"><i class="fas fa-plane-departure"></i></button>{{/if}}
+            {{#if c.isPrepared}}{{#if c.launchKind}}<button type="button" class="ship-craft-launch" data-action="craftLaunch" data-kind="{{c.launchKind}}" title="Запуск (бой)"><i class="fas fa-rocket"></i></button>{{/if}}{{/if}}
+            {{#if c.isOut}}<button type="button" class="ship-craft-return" data-action="craftReturn" title="Вернуть на носитель (перевооружение)"><i class="fas fa-plane-arrival"></i></button>{{/if}}
+            <button type="button" class="ship-craft-loss" data-action="craftLoss" title="Отметить потери (полная → полусильная → уничтожена)"><i class="fas fa-heart-crack"></i></button>
+            <a class="ship-craft-del" data-action="craftDel" title="Удалить"><i class="fas fa-times"></i></a>
+          </div>
         </div>
         {{else}}
-        <div class="ship-empty">Искажений пока нет. Они записываются сюда автоматически при броске «Бросить искажение» на вкладке «Обзор».</div>
-        {{/if}}
+        <div class="ship-comp-empty">Эскадрилий нет. Перетащите МЛА из компендиума или нажмите «+ эскадрилья».</div>
+        {{/each}}
       </div>
+    </div>
 
-      <div class="ship-panel">
-        <div class="ship-panel-title">ПАРАМЕТРЫ</div>
-        <label class="ship-spmax-field">Очки Корабля (макс.)
-          <input type="number" name="system.spMax" value="{{system.spMax}}" min="0" title="Бюджет Очков Корабля"/>
+  </div>
+  {{/if}}
+
+  {{!-- ───────────── ЭКИПАЖ ───────────── --}}
+  <div class="tab ship-tab {{#if (eq tab "crew")}}active{{/if}}" data-tab="crew" data-group="primary">
+
+    <details class="ship-panel" open>
+      <summary class="ship-panel-title">ОФИЦЕРЫ (КОМАНДНЫЙ СОСТАВ)</summary>
+      <div class="ship-officer-help">Создайте должности, затем перетащите персонажа/токен на нужную. Название можно менять. Стрельба берёт BS Мастера-канонира (или впишите вручную).</div>
+      <div class="ship-officer-add-bar" data-action="officerAdd">
+        <select class="ship-officer-select">
+          {{#each officerPosts as |p|}}<option value="{{p}}">{{p}}</option>{{/each}}
+          <option value="Офицер">— своя должность —</option>
+        </select>
+        <button type="button" class="ship-officer-add btn-add-small" data-action="officerAdd">+ должность</button>
+      </div>
+      <div class="ship-officer-list">
+        {{#each officers as |o|}}
+        <div class="ship-officer-row{{#if o.missing}} ship-officer-missing{{/if}}{{#if o.occupied}} ship-officer-filled{{/if}}" data-officer-id="{{o.id}}" data-uuid="{{o.uuid}}">
+          <span class="ship-officer-grip" draggable="true" title="Перетащите, чтобы поменять местами"><i class="fas fa-grip-vertical"></i></span>
+          <input class="ship-officer-title" type="text" value="{{o.title}}" title="Название должности"/>
+          {{#if o.occupied}}
+            <img class="ship-officer-img ship-officer-open" data-action="officerOpen" src="{{o.img}}" title="Открыть лист"/>
+            <span class="ship-officer-name ship-officer-open" data-action="officerOpen">{{o.name}}</span>
+            <a class="ship-officer-clear" data-action="officerClear" title="Освободить"><i class="fas fa-user-minus"></i></a>
+          {{else}}
+            <span class="ship-officer-empty">— перетащите персонажа —</span>
+          {{/if}}
+          <a class="ship-officer-remove" data-action="officerRemove" title="Удалить должность"><i class="fas fa-times"></i></a>
+        </div>
+        {{else}}
+        <div class="ship-comp-empty">Должностей нет. Добавьте их выше и перетащите персонажей.</div>
+        {{/each}}
+      </div>
+    </details>
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">ПОКАЗАТЕЛИ ЭКИПАЖА
+        <button type="button" class="ship-mutiny-roll btn-add-small" data-action="mutinyRoll">Тест бунта</button>
+      </div>
+      <div class="ship-two-col">
+        <label>Численность (CP) <input type="number" name="system.crew.population" value="{{system.crew.population}}" min="0" max="100"/></label>
+        <label>Мораль (CM)
+          <span class="ship-morale-row"><input type="number" name="system.crew.morale" value="{{system.crew.morale}}"/><span class="ship-morale-sep">/</span><input type="number" name="system.crew.moraleMax" value="{{system.crew.moraleMax}}"/></span>
         </label>
       </div>
-
-      <div class="ship-panel">
-        <div class="ship-panel-title">ОТНОШЕНИЕ (ЦВЕТ ТОКЕНА)</div>
-        <label class="ship-relation-field ship-relation-{{system.shipRelation}}">Отношение корабля
-          <select name="system.shipRelation">
-            {{#each shipRelations as |r k|}}<option value="{{k}}" {{#if (eq @root.system.shipRelation k)}}selected{{/if}}>{{r.label}}</option>{{/each}}
+      <div class="ship-two-col">
+        <label>Выучка (CR) — уровень
+          <select name="system.crew.rating">
+            <option value="" {{#if (eq system.crew.rating "")}}selected{{/if}}>— не задан —</option>
+            {{#each crewRatingTable as |r|}}
+            <option value="{{r.label}}" {{#if (eq @root.system.crew.rating r.label)}}selected{{/if}}>{{r.label}} ({{r.skill}})</option>
+            {{/each}}
           </select>
         </label>
-        <details class="ship-note"><summary>Про иконку токена</summary>Иконка и цвет токена ставятся автоматически по классу корпуса и отношению; меняются при смене корпуса или этого поля.</details>
+        <label>Действий НИП за СР
+          <input type="text" value="{{#if crewActions}}{{crewActions}}{{else}}—{{/if}}" readonly
+                 title="Равно бонусу Выучки (CR/10). Альтернативное правило книги — жёсткий потолок в 3 действия."/>
+        </label>
       </div>
 
-      <div class="ship-panel">
-        <div class="ship-panel-title">ЗАПИСИ</div>
-        <textarea name="system.notes" class="ship-notes" placeholder="История корабля, странности, экипаж…">{{system.notes}}</textarea>
+      {{!-- Восстановление и бунт (разделы «Восстановление» и «Бунт») --}}
+      <div class="crew-acts">
+        <button type="button" class="ship-crew-recover" data-action="crewRecover" data-kind="morale"
+                title="Дары за Inf, сплочение, увольнение на берег">Поднять мораль</button>
+        <button type="button" class="ship-crew-recover" data-action="crewRecover" data-kind="population"
+                title="Вербовка, каторжники, отряды вербовщиков">Пополнить экипаж</button>
+        <button type="button" class="ship-mutiny-quell" data-action="mutinyQuell"
+                title="Встречный тест Command / Charm / Intimidation">Подавить бунт</button>
+      </div>
+
+      <details class="ship-note"><summary>Что означают CP, CM и Выучка</summary>CP — % от полного экипажа (старт 100). CM — мораль (старт 100). Чем выше — тем лучше. Бунт: тест Command при падении CM до 70/40/10. Выучка задаёт навык НИП и число их действий за СР.</details>
+    </div>
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">⚠️ АКТИВНЫЕ ЭФФЕКТЫ (CP {{crewPopVal}} · CM {{crewMoraleVal}})</div>
+      {{#if crewPopActive.length}}
+      <div class="crew-fx-group"><div class="crew-fx-head">От Численности (CP):</div>
+        {{#each crewPopActive as |r|}}<div class="crew-fx-row {{#if r.mutiny}}crew-fx-mutiny{{/if}}"><span class="crew-fx-t">≤{{r.t}}</span> {{r.fx}}</div>{{/each}}
+      </div>
+      {{/if}}
+      {{#if crewMoraleActive.length}}
+      <div class="crew-fx-group"><div class="crew-fx-head">От Морали (CM):</div>
+        {{#each crewMoraleActive as |r|}}<div class="crew-fx-row {{#if r.mutiny}}crew-fx-mutiny{{/if}}"><span class="crew-fx-t">≤{{r.t}}</span> {{r.fx}}</div>{{/each}}
+      </div>
+      {{/if}}
+      {{#unless crewPopActive.length}}{{#unless crewMoraleActive.length}}<div class="ship-hint">Экипаж в порядке — активных штрафов нет.</div>{{/unless}}{{/unless}}
+    </div>
+
+    <details class="ship-panel ship-ref-panel">
+      <summary class="ship-panel-title">ТАБЛИЦА ЧИСЛЕННОСТИ (CP)</summary>
+      <div class="ship-ref-list">
+        {{#each crewPop as |r|}}<div class="ship-ref-row"><span class="ship-ref-name">≤ {{r.t}}</span><span class="ship-ref-desc" style="grid-column:2">{{r.fx}}</span></div>{{/each}}
+      </div>
+    </details>
+
+    <details class="ship-panel ship-ref-panel">
+      <summary class="ship-panel-title">ТАБЛИЦА МОРАЛИ (CM)</summary>
+      <div class="ship-ref-list">
+        {{#each crewMorale as |r|}}<div class="ship-ref-row"><span class="ship-ref-name">≤ {{r.t}}</span><span class="ship-ref-desc" style="grid-column:2">{{r.fx}}</span></div>{{/each}}
+      </div>
+    </details>
+
+    <details class="ship-panel ship-ref-panel">
+      <summary class="ship-panel-title">БУНТ И ВОССТАНОВЛЕНИЕ (СПРАВКА)</summary>
+      <div class="ship-ref-list" style="display:block;">
+        <p><b>Бунт.</b> При CM ≤ 70/40/10 — тест Command +0; провал → часть экипажа бунтует (в бою бросок откладывается до конца боя; несколько порогов за бой — один тест). Подавление: встречный Command / Charm / Intimidation. Command: победа → CP и CM −1d5. Charm/Intimidation: победа → CM −1d10. Бунтовщики победили на 4+ СУ — бунт удался, потеря корабля.</p>
+        <p><b>Мораль.</b> Траты Inf: фрегаты/транспорты/рейдеры +1d10 CM за единицу, тяжёлые +1d5. Charm −10 / Intimidation −10: +2 CM за успех (раз за встречу). Высадка: необитаемая планета — 3 недели до предела; населённая — 2 недели; с тратой денег (Inf +20) — 1 неделя.</p>
+        <p><b>Численность.</b> Пополнение только на населённой людьми планете: тест реквизиции (Доступность +20, зависит от мира). Вербовка из трущоб: Common Lore (Sump) / Forbidden Lore (Underworld) + Commerce. Каторжники: бесплатно, но CM −1d10+10 (не восстановить, пока корабль здесь). Выше предела восстановить нельзя.</p>
+      </div>
+    </details>
+
+  </div>
+
+  {{!-- ───────────── ГРУЗЫ ───────────── --}}
+  <div class="tab ship-tab {{#if (eq tab "cargo")}}active{{/if}}" data-tab="cargo" data-group="primary">
+
+    {{!-- Трюм, пассажиры и запасы — тремя мерными шкалами --}}
+    <div class="ship-hold-meters">
+      <div class="ship-meter {{#if derived.lc.over}}over{{/if}}">
+        <div class="ship-meter-head"><span>ТРЮМ (LC)</span><b>{{derived.lc.used}} / {{derived.lc.max}}</b></div>
+        <div class="ship-meter-bar"><i style="width:{{derived.lc.pct}}%"></i></div>
+        <div class="ship-meter-foot">
+          свободно {{derived.lc.free}}
+          {{#if derived.lc.supply}} · припасы {{derived.lc.supply}} вне трюма{{/if}}
+          {{#if derived.lc.bonus}} · из узлов +{{derived.lc.bonus}}{{/if}}
+        </div>
+      </div>
+
+      <div class="ship-meter {{#if derived.pc.over}}over{{/if}}">
+        <div class="ship-meter-head"><span>ПАССАЖИРЫ (PC)</span>
+          <span class="ship-meter-edit"><input type="number" name="system.passengersAboard" value="{{system.passengersAboard}}" min="0"/> / {{derived.pc.max}}</span>
+        </div>
+        <div class="ship-meter-bar"><i style="width:{{derived.pc.pct}}%"></i></div>
+        <div class="ship-meter-foot">
+          свободно {{derived.pc.free}}
+          {{#if derived.pc.bonus}} · из узлов +{{derived.pc.bonus}}{{/if}}
+          {{#if derived.pc.weakSpirit}} · <span class="warn">Weak Spirit ({{derived.pc.weakSpirit}})</span>{{/if}}
+        </div>
+      </div>
+
+      <div class="ship-meter supplies {{#if derived.supplies.empty}}over{{else if derived.supplies.low}}low{{/if}}">
+        <div class="ship-meter-head"><span>ЗАПАСЫ</span><b>{{derived.supplies.value}} / {{derived.supplies.max}} мес.</b></div>
+        <div class="ship-meter-bar"><i style="width:{{derived.supplies.pct}}%"></i></div>
+        <div class="ship-meter-foot">
+          <button type="button" class="ship-supplies-step mini" data-action="suppliesStep" data-step="-1" title="Прошёл месяц">−1 мес</button>
+          <button type="button" class="ship-supplies-step mini" data-action="suppliesStep" data-step="1" title="Пополнить на месяц">+1 мес</button>
+          <button type="button" class="ship-supplies-full mini" data-action="suppliesFull" title="Пополнить до максимума">полный</button>
+          {{#if derived.supplies.empty}}<span class="warn">запасы кончились</span>{{/if}}
+        </div>
       </div>
     </div>
 
-  </section>
-</form>
+    <div class="ship-panel">
+      <div class="ship-panel-title">
+        ТРЮМ
+        <span class="ship-hold-sum">
+          {{derived.lc.entries}} партий · {{derived.lc.units}} ед.
+          {{#if derived.lc.value}} · стоимость {{derived.lc.value}}{{/if}}
+        </span>
+        <button type="button" class="ship-create-cargo btn-add-small" data-action="createCargo">+ груз</button>
+      </div>
+
+      {{!-- Броски событий по грузам и пассажирам (раздел «Грузы» корбука). --}}
+      <div class="cargo-rolls">
+        <button type="button" class="cargo-roll" data-action="cargoRoll" data-kind="spoil"
+                title="Trade (Voidfarer) — грамотно ли крепили и хранили груз">Сохранность</button>
+        <button type="button" class="cargo-roll" data-action="cargoRoll" data-kind="theft"
+                title="CM / Inf / Command (F) — не разворовал ли экипаж">Воровство</button>
+        <button type="button" class="cargo-roll" data-action="cargoRoll" data-kind="damage"
+                title="Повреждение узла или падение INT — порог 51+">Урон грузу</button>
+        <button type="button" class="cargo-roll" data-action="cargoRoll" data-kind="crit"
+                title="Критический эффект (кроме 3, 4 и 7) — порог 76+">От крита</button>
+        <button type="button" class="cargo-roll" data-action="cargoRoll" data-kind="passengers"
+                title="Падение CP — порог 75+, по 1 PC за провал">Пассажиры</button>
+        <span class="cargo-trade-hint" title="Каждая LC ≈ 101–1000 предметов по таблице Количества">
+          торговля: продажа +{{cargoTrade.sell}} · покупка {{cargoTrade.buy}}
+        </span>
+      </div>
+
+      {{#if cargoGroups.length}}
+        {{#each cargoGroups as |g|}}
+        <div class="cargo-group {{#if g.collapsed}}collapsed{{/if}}">
+          <div class="cargo-group-head" data-action="cargoGroupHead" data-group-key="{{g.key}}" title="{{g.examples}}">
+            <i class="fas fa-caret-{{#if g.collapsed}}right{{else}}down{{/if}}"></i>
+            <span class="cargo-group-name">{{g.typeLabel}}</span>
+            <span class="cargo-group-tag">{{g.group}}</span>
+            <span class="cargo-group-meta">
+              R {{g.rarity}} · {{g.units}} ед.
+              {{#if g.lcTotal}} · LC {{g.lcTotal}}{{/if}}
+              {{#if g.valueTotal}} · {{g.valueTotal}}{{/if}}
+            </span>
+          </div>
+          {{#unless g.collapsed}}
+          <div class="cargo-list">
+            {{#each g.items as |c|}}
+            <div class="cargo-row {{#if c.shipSupply}}is-supply{{/if}}" data-item-id="{{c.id}}">
+              <img class="cargo-img" src="{{c.img}}"/>
+              <div class="cargo-main">
+                <a class="ship-cargo-open cargo-row-name" data-action="itemOpen">{{c.name}}</a>
+                <div class="cargo-row-tags">
+                  <span title="Объём одной единицы">LC {{c.unitLc}}/ед</span>
+                  {{#unless c.shipSupply}}<span class="strong" title="Занято в трюме">= {{c.volume}}</span>{{/unless}}
+                  <span>{{c.qualityLabel}}</span>
+                  <span title="Итоговая редкость: тип + качество + пометки">R {{c.rarity}}</span>
+                  {{#if c.xenos}}<span class="cq-mark" title="Ксенотовар: +1 к R">ксено</span>{{/if}}
+                  {{#if c.astartes}}<span class="cq-mark" title="Снаряжение Астартес: +1 к R">астартес</span>{{/if}}
+                  {{#if c.price}}<span title="Цена за единицу">{{c.price}}/ед · {{c.value}}</span>{{/if}}
+                  {{#if c.origin}}<span title="Откуда груз">из: {{c.origin}}</span>{{/if}}
+                  {{#if c.consignee}}<span title="Кому предназначен">кому: {{c.consignee}}</span>{{/if}}
+                </div>
+                {{#if c.description}}<div class="cargo-row-desc">{{c.description}}</div>{{/if}}
+              </div>
+              <div class="cargo-qty">
+                <button type="button" class="cargo-qty-step" data-action="cargoQtyStep" data-step="-1" title="Убавить">−</button>
+                <input type="number" class="cargo-qty-input" value="{{c.quantity}}" min="0" title="Количество единиц"/>
+                <button type="button" class="cargo-qty-step" data-action="cargoQtyStep" data-step="1" title="Прибавить">+</button>
+              </div>
+              <div class="cargo-acts">
+                <button type="button" class="cargo-supply-toggle {{#if c.shipSupply}}on{{/if}}" data-action="cargoSupply"
+                        title="Груз для обслуживания корабля — не занимает трюм"><i class="fas fa-wrench"></i></button>
+                <button type="button" class="cargo-jettison" data-action="cargoJettison" title="Выгрузить партию"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+            {{/each}}
+          </div>
+          {{/unless}}
+        </div>
+        {{/each}}
+      {{else}}
+        <div class="ship-empty">Трюм пуст. «+ груз» или перетащите партию сюда.</div>
+      {{/if}}
+
+      <details class="ship-note">
+        <summary>Как считается трюм</summary>
+        Базовая LC = полный SPC корпуса ({{derived.lc.base}}); базовая PC = 1 за каждую полную
+        десятку SPC ({{derived.pc.base}}). Специализированные узлы добавляют LC/PC. LC у партии —
+        объём одной единицы, занятое место = объём × количество. Груз с меткой
+        <i class="fas fa-wrench"></i> идёт на обслуживание корабля (припасы, запчасти, боеприпасы,
+        плазма) и трюм не занимает. Каждое занятое базовое место пассажира даёт Weak Spirit (1).
+        Запасы: базово полгода, свойство Travel Supplies (X) задаёт свой максимум.
+      </details>
+    </div>
+
+  </div>
+
+  {{!-- ───────────── ЗАПИСИ ───────────── --}}
+  <div class="tab ship-tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">ОСКВЕРНЕНИЕ — ЖУРНАЛ ИСКАЖЕНИЙ</div>
+      {{#if distortions.length}}
+      <div class="ship-distort-log">
+        {{#each distortions as |d|}}
+        <div class="ship-distort-entry" data-id="{{d.id}}">
+          <div class="ship-distort-entry-head">
+            <span class="ship-distort-name">{{d.name}}{{#if d.range}} ({{d.range}}){{/if}}{{#if d.submut}} · {{d.submut}}{{/if}}</span>
+            <span class="ship-distort-meta">{{d.threshold}} · бросок {{d.roll}}→{{d.total}}{{#if d.when}} · {{d.when}}{{/if}}</span>
+            <button type="button" class="ship-distort-del" data-action="distortDel" data-id="{{d.id}}" title="Удалить запись">✕</button>
+          </div>
+          {{#if d.desc}}<div class="ship-distort-entry-desc">{{d.desc}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{else}}
+      <div class="ship-empty">Искажений пока нет. Они записываются сюда автоматически при броске «Бросить искажение» на вкладке «Обзор».</div>
+      {{/if}}
+    </div>
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">ПАРАМЕТРЫ</div>
+      <label class="ship-spmax-field">Очки Корабля (макс.)
+        <input type="number" name="system.spMax" value="{{system.spMax}}" min="0" title="Бюджет Очков Корабля"/>
+      </label>
+    </div>
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">ОТНОШЕНИЕ (ЦВЕТ ТОКЕНА)</div>
+      <label class="ship-relation-field ship-relation-{{system.shipRelation}}">Отношение корабля
+        <select name="system.shipRelation">
+          {{#each shipRelations as |r k|}}<option value="{{k}}" {{#if (eq @root.system.shipRelation k)}}selected{{/if}}>{{r.label}}</option>{{/each}}
+        </select>
+      </label>
+      <details class="ship-note"><summary>Про иконку токена</summary>Иконка и цвет токена ставятся автоматически по классу корпуса и отношению; меняются при смене корпуса или этого поля.</details>
+    </div>
+
+    <div class="ship-panel">
+      <div class="ship-panel-title">ЗАПИСИ</div>
+      <textarea name="system.notes" class="ship-notes" placeholder="История корабля, странности, экипаж…">{{system.notes}}</textarea>
+    </div>
+  </div>
+
+</section>
