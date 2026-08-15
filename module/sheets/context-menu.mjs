@@ -19,14 +19,15 @@ export function closeContextMenus(jq = globalThis.$) {
  * Показать меню у курсора.
  *
  * @param {object} ev      событие contextmenu (нужны clientX/clientY)
- * @param {Array}  entries пункты: { cls, label, onClick }
+ * @param {Array}  entries пункты: { cls, label, onClick } либо разделитель { sep: true }
  * @param {Function} jq    jQuery (подменяется в тестах)
  */
 export function openContextMenu(ev, entries, jq = globalThis.$) {
   jq(".wh-context-menu").remove();
 
   const items = entries
-    .map(e => `<div class="wh-ctx-item ${e.cls}">${e.label}</div>`)
+    .map(e => e.sep ? `<div class="wh-ctx-sep"></div>`
+                    : `<div class="wh-ctx-item ${e.cls}">${e.label}</div>`)
     .join("");
   const menu = jq(`<div class="wh-context-menu">${items}</div>`)
     .css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });
@@ -37,6 +38,7 @@ export function openContextMenu(ev, entries, jq = globalThis.$) {
   setTimeout(() => { jq(globalThis.document).one("click.wh-ctx", () => menu.remove()); }, 50);
 
   for (const entry of entries) {
+    if (entry.sep) continue;
     menu.find(`.${entry.cls}`).on("click", ev2 => {
       ev2.stopPropagation();
       menu.remove();
