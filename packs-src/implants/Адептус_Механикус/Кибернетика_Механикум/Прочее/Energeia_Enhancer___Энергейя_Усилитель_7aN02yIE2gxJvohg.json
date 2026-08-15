@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "При выстреле из лаз/плазма/оружия Механикум, интегрированного в бионику: потратить 1/2/3 ⚡ (по RoF) — +1 кубик урона и −1 Надёжность на выстрел (Quad/Maximal/Storm/Twin-Linked умножают расход). Poor.Q: −2 Надёжность, +1 ⚡; Good.Q: без −Надёжности; Best.Q: + свойство Extreme (9/−1).",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

@@ -89,7 +89,7 @@ const TYPES = {
     pack: "implants",
     defaults: {
       description: "", notes: "", category: "mechanicus", quality: "common",
-      effect: "", installed: "", geneSeedOrder: 0, linkedWeapon: "", bookSource: "",
+      effect: "", installed: "", linkedWeapon: "", bookSource: "",
       effects: {
         charBonuses: [], charValueBonuses: [], armourAll: 0,
         apHead: 0, apBody: 0, apArms: 0, apLegs: 0,

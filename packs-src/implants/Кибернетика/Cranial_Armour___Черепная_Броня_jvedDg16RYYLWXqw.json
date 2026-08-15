@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "+1 AP к голове (складывается с бронёй). Poor.Q −1 Характеристике; Best.Q без Оглушения от критэффекта в голову 1 Раунд.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

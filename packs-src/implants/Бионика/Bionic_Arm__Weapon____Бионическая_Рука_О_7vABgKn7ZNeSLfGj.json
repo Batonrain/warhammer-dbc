@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Встроенное интегрированное оружие (Compact); +10 на использование этого оружия; нельзя выбить из руки.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

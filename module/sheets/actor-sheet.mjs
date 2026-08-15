@@ -49,7 +49,6 @@ import { specOptions, matchSpec, specDef } from "../constants/skill-specializati
 import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
 import { activateRaceListeners } from "../apps/races.mjs";
-import { grantAstartesImplants } from "../apps/astartes-implants.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
@@ -78,7 +77,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   }
 
   _savedScrollTops = {};
-  _geneSeedOpen = false;
   _combatCollapse = { stance: false, tech: false };
   // Свёрнутые категории вкладки снаряжения (ключ категории → свёрнута?).
   _gearCollapse = {};
@@ -536,22 +534,20 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
 
     // ── Мастер создания персонажа (только по кнопке) ────────────────────────
     // Черты, стартовые таланты и тема листа остаются здесь: их зовут и кнопки
-    // «Применить расу»/«Применить легион». Органы Геносемени переехали к своему
-    // синку в apps/astartes-implants.mjs, но приходят тем же колбэком.
+    // «Применить расу»/«Применить легион».
     html.find(".char-wizard-btn").click(ev => {
       ev.preventDefault();
       showCreationWizard(this.actor, {
-        createTraits:          (list, source) => this._createTraitsFromList(list, source),
-        applyStartingTalents:  (raw, source)  => this._applyStartingTalents(raw, source),
-        grantAstartesImplants: ()             => grantAstartesImplants(this.actor),
-        applyTheme:            ()             => this._applyThemeClasses()
+        createTraits:         (list, source) => this._createTraitsFromList(list, source),
+        applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source),
+        applyTheme:           ()             => this._applyThemeClasses()
       });
     });
 
     // Раскрытие описания таланта/черты/мутации в выпадающей строке под основной.
     // Строка описания всегда идёт СЛЕДУЮЩИМ <tr> сразу за строкой с кнопкой —
     // берём её так, а не поиском по data-item-id: на одном листе таблицы
-    // талантов, черт, имплантов и органов Геносемени независимы, и если бы
+    // талантов, черт и имплантов независимы, и если бы
     // где-то совпал id, раскрытие по атрибуту открыло бы сразу все совпадения.
     html.find(".ability-detail-toggle").on("click", ev => {
       ev.preventDefault(); ev.stopPropagation();
@@ -567,18 +563,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     activateRaceListeners(html, this.actor, {
       createTraits:         (list, source) => this._createTraitsFromList(list, source),
       applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source)
-    });
-
-    // Сворачивание гайда имплантов (состояние держится между перерисовками)
-    if (this._geneSeedOpen) {
-      html.find(".gene-organs").removeClass("collapsed");
-      html.find(".gene-toggle-btn").text("▾ Импланты");
-    }
-    html.find(".gene-toggle-btn").click(ev => {
-      ev.preventDefault();
-      this._geneSeedOpen = !this._geneSeedOpen;
-      html.find(".gene-organs").toggleClass("collapsed", !this._geneSeedOpen);
-      ev.currentTarget.textContent = (this._geneSeedOpen ? "▾" : "▸") + " Импланты";
     });
 
     // Длительность теперь бросается автоматически при применении препарата.

@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Длинные хватательные когти в ногах (подтип: Ноги).\n• Атака ногами: Когти.Р, Rng 0–1, Dmg 1d10+2 R, Pen 4, Reinforced.\n• Ногами можно хватать врагов, предметы и поверхности, а также атаковать в Борьбе.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

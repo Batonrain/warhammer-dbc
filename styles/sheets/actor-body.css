@@ -660,29 +660,3 @@
   fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round;
 }
 .warhammer-dbc .body-implants .imp-bone-j { fill: currentColor; opacity: 0.8; }
-
-/* ═══════════════ РЕЕСТР ОРГАНОВ ГЕНОСЕМЕНИ ═══════════════ */
-/* Цвет строк совпадает с цветом категории "geneseed" на био-скане (#e04a4a),
-   чтобы реестр и фигура читались как одно целое. */
-.warhammer-dbc .geneseed-subsection { --gs-col: #e04a4a; }
-.warhammer-dbc .geneseed-subsection .panel-title { color: var(--gs-col); }
-.warhammer-dbc .geneseed-count {
-  margin-left: 8px; font-size: 0.78em; letter-spacing: 0.5px; opacity: 0.75;
-  padding: 0 5px; border: 1px solid currentColor; border-radius: 2px;
-}
-.warhammer-dbc .geneseed-name-link { cursor: pointer; }
-.warhammer-dbc .geneseed-name-link:hover { color: var(--gs-col); }
-.warhammer-dbc .geneseed-where { white-space: nowrap; opacity: 0.75; font-size: 0.9em; }
-.warhammer-dbc .geneseed-weapon { color: var(--bc-amber); margin-left: 4px; }
-.warhammer-dbc .geneseed-weapon-note { margin-top: 4px; color: var(--bc-amber); font-size: 0.92em; }
-/* Ручной статус органа: не вживлён (тускло), вживлён (как обычно),
-   не работает — орган на месте, но неисправен (янтарный акцент, как и
-   прочие "требует внимания" индикаторы на этой вкладке). */
-.warhammer-dbc .geneseed-row-off { opacity: 0.55; }
-.warhammer-dbc .geneseed-row-disabled .item-name-cell { color: var(--bc-amber); }
-.warhammer-dbc .geneseed-state-select {
-  font-size: 0.85em; background: var(--wh-panel-mid); color: inherit;
-  border: 1px solid var(--bc-line); border-radius: 2px; padding: 1px 3px;
-}
-.warhammer-dbc .geneseed-row-off .geneseed-state-select { color: var(--bc-flesh); }
-.warhammer-dbc .geneseed-row-disabled .geneseed-state-select { color: var(--bc-amber); border-color: var(--bc-amber); }

@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Ступни заменены когтями (Когти.Р, Rng 0-1, 1d10+2 R, Pen 4, Reinforced): атаки ногами, захват ногами/атаки в Борьбе, но −2 SPD пешком. Качество = качество рукопашного оружия.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "Когти Птераксии (имплант)",
     "effects": {
       "charBonusStat": "",

@@ -16,7 +16,7 @@
  * вается (или пассивна), имплант — когда хирургически установлен И не
  * неисправен (flags.warhammer-dbc.installed/disabled — те же флаги, что
  * читает gate в module/documents/actor.mjs для старой системы эффектов, и
- * что переключает .geneseed-state-select в actor-sheet.mjs). Прочие типы
+ * что ставит Хирургеон). Прочие типы
  * (таланты, черты и т.п.) эффектов не выключают в принципе — там нет
  * отдельного «активен ли предмет», эффект действует всегда, пока предмет
  * на акторе.
@@ -49,9 +49,8 @@ export function isItemActive(item) {
 /**
  * Синхронизирует `disabled` у ВСЕХ эффектов предмета с его текущим активным
  * состоянием (экипировка/установка/sustain — см. isItemActive). Вызывается
- * после любого update, меняющего это состояние. Импланты Геносемени решают
- * это отдельно через свой собственный флаг "disabled" (см. actor-sheet.mjs,
- * .geneseed-state-select) — тоже через эту функцию, но с явным override.
+ * после любого update, меняющего это состояние. Явный override нужен там, где
+ * состояние ставится не флагом предмета, а вызывающим кодом.
  */
 export async function syncItemEffectsDisabled(item, activeOverride) {
   const active = activeOverride !== undefined ? activeOverride : isItemActive(item);

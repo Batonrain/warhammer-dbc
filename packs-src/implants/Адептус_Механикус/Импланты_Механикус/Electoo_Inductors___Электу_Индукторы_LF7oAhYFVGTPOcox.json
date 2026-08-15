@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Подзарядка от внешних источников электричества; полное действие — зарядить батарею через Tech-Use.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

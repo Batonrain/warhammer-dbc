@@ -12,8 +12,6 @@
 
 import { RACES } from "../constants/races.mjs";
 import { getLegion, getChapter, resolveCulture } from "../constants/legions.mjs";
-import { ASTARTES_RACE } from "../constants/astartes-implants.mjs";
-import { grantAstartesImplants } from "./astartes-implants.mjs";
 
 /** Применяет расовые бонусы: характеристики только в пустые поля + расовые Черты. */
 export async function applyRaceData(actor, raceKey, { createTraits, applyStartingTalents }) {
@@ -27,10 +25,8 @@ export async function applyRaceData(actor, raceKey, { createTraits, applyStartin
   if (Object.keys(upd).length) await actor.update(upd);
   const n  = await createTraits(race.traits || [], race.label || raceKey);
   const nt = await applyStartingTalents(race.talents || [], race.label || raceKey);
-  // Космодесантнику органы Геносемени положены по умолчанию.
-  const ng = raceKey === ASTARTES_RACE ? await grantAstartesImplants(actor) : 0;
   ui.notifications.info(`🧬 ${race.label}: характеристик ${Object.keys(upd).length}, `
-    + `Черт ${n}, Талантов ${nt}${ng ? `, органов Геносемени ${ng}` : ""}.`);
+    + `Черт ${n}, Талантов ${nt}.`);
 }
 
 /** Иннари: бонусы Прошлого (бывшей расы) + Черты Иннари. */
@@ -119,7 +115,7 @@ export function activateRaceListeners(html, actor, callbacks) {
   // Кнопка геносемени применяет расу Астартес.
   html.find(".gene-apply-btn").click(async ev => {
     ev.preventDefault();
-    await applyRaceData(actor, ASTARTES_RACE, callbacks);
+    await applyRaceData(actor, "astartes", callbacks);
   });
 
   html.find(".legion-apply-btn").click(async ev => {

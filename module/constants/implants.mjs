@@ -1,5 +1,4 @@
 // module/constants/implants.mjs
-import { ASTARTES_IMPLANTS } from "./astartes-implants.mjs";
 // Импланты: Механикус / Бионика / Кибернетика. Базовые импланты Механикум
 // выдаются механикус-архетипам автоматически. Все наполняют компендиум
 // "implants" (раскладываются по папкам категорий).
@@ -495,5 +494,5 @@ export const MECHADENDRITES = [
 export const IMPLANT_LIBRARY = [
   ...MECHANICUS_IMPLANTS, ...BIONICS, ...CYBERNETICS, ...PSYBERNETICS,
   ...SKITARII_CYBER, ...MECH_ENERGY, ...MECH_FOCUS, ...MECH_OTHER, ...MECHADENDRITES,
-  ...DRUKHARI_BIOIMPLANTS, ...ASTARTES_IMPLANTS
+  ...DRUKHARI_BIOIMPLANTS
 ];

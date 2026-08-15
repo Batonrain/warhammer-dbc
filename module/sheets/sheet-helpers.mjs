@@ -9,7 +9,6 @@ import { WEAPON_CLASSES, DAMAGE_TYPES, ITEM_TYPES,
 import { MELEE_STANCES }                             from "../constants/combat.mjs";
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { AELDARI_RACES }                             from "../constants/races.mjs";
-import { GENE_SEED_ORGANS }                          from "../constants/gene-seed.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
 import { buildLegionOptions, getLegion,
          buildChapterOptions, getChapter,
@@ -647,7 +646,7 @@ export function buildGetData(actor) {
   }));
 
   // ── Импланты (Механикус/Бионика/Кибернетика) ────────────────────────────────
-  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", geneseed: "Геносемя" };
+  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант" };
   const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
   context.gearImplants = allItems.filter(i => i.type === "implant").map(i => ({
     id: i.id, name: i.name,
@@ -825,31 +824,6 @@ export function buildGetData(actor) {
     benefit:  i.system.benefit || i.system.description || ""
   }));
 
-  // ── Органы Геносемени (Астартес) ────────────────────────────────────────
-  // Каждый орган — отдельный предмет-имплант категории "geneseed". На вкладке
-  // ТЕЛО показываем их реестром в каноническом порядке. Состояние органа —
-  // ручной тумблер поверх флагов "installed"/"disabled":
-  //   off      — не вживлён: на карте тела нет, эффектов нет;
-  //   on       — вживлён: на карте тела есть, эффекты считаются;
-  //   disabled — не работает: на карте тела есть (орган на месте), но
-  //              эффекты не считаются (см. gate в actor.mjs).
-  context.geneSeedOrgans = allItems
-    .filter(i => i.type === "implant" && i.system.category === "geneseed")
-    .map(i => {
-      const inBody = !!i.getFlag?.("warhammer-dbc", "installed");
-      const state = !inBody ? "off" : (i.getFlag?.("warhammer-dbc", "disabled") ? "disabled" : "on");
-      return {
-        id:        i.id,
-        name:      i.name,
-        order:     Number(i.system.geneSeedOrder) || 99,
-        installed: i.system.installed || "",
-        inBody, state,
-        weapon:    i.system.linkedWeapon || "",
-        effect:    i.system.effect || i.system.description || ""
-      };
-    })
-    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ru"));
-
   context.abilityPsychicPowers = allItems.filter(i => i.type === "psychicPower").map(i => ({
     id:   i.id,
     name: i.name,
@@ -910,7 +884,6 @@ export function buildGetData(actor) {
 
   // ── Геносемя (для Астартес) ─────────────────────────────────────────────────
   context.isAstartes      = system.race === "astartes";
-  context.geneSeedOrgans  = GENE_SEED_ORGANS;
   context.geneSeedOrigin  = system.geneSeed?.origin || "";
   context.legionOptions   = buildLegionOptions(system.geneSeed?.legion || "");
   context.selectedLegion  = getLegion(system.geneSeed?.legion || "");

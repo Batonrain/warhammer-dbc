@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Протез слуха. Poor.Q −20 слух; Good.Q норма + встроенная вокс-бусина; Best.Q бонусы.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

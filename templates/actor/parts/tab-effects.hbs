@@ -51,21 +51,6 @@
   {{!-- ══════════════ МЕХАНИЧЕСКИЕ ПАНЕЛИ (без изменения логики) ══════════════ --}}
   <div class="bc-panels"> <div class="effects-section-panel">
 
-  {{!-- ── ОРГАНЫ ГЕНОСЕМЕНИ (Астартес) ───────────────────────────────────── --}}
-  {{#if geneSeedOrgans.length}}
-  <div class="effects-subsection geneseed-subsection"> <div class="panel-title"> ОРГАНЫ ГЕНОСЕМЕНИ
-      <span class="geneseed-count">{{geneSeedOrgans.length}}/19</span> </div>
-    <table class="items-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th>Орган</th> <th class="col-narrow">Расположение</th> <th class="col-narrow">Состояние</th> </tr> </thead> <tbody> {{#each geneSeedOrgans as |o|}}
-        <tr class="item-row geneseed-row geneseed-row-{{o.state}}" data-item-id="{{o.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{o.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell geneseed-name-link" data-item-id="{{o.id}}">{{o.name}}{{#if o.weapon}} <span class="geneseed-weapon" title="Даёт боевой профиль: {{o.weapon}}">⚔</span>{{/if}}</td> <td class="geneseed-where">{{o.installed}}</td> <td class="geneseed-state-cell">
-            <select class="geneseed-state-select" data-item-id="{{o.id}}" title="не вживлён — органа нет; вживлён — орган работает; не работает — орган на месте, но его эффекты не считаются">
-              <option value="off" {{#if (eq o.state "off")}}selected{{/if}}>не вживлён</option>
-              <option value="on" {{#if (eq o.state "on")}}selected{{/if}}>вживлён</option>
-              <option value="disabled" {{#if (eq o.state "disabled")}}selected{{/if}}>не работает</option>
-            </select>
-          </td> </tr>
-        <tr class="ability-detail-row" data-item-id="{{o.id}}" style="display:none;"> <td colspan="4"><div class="ability-detail-text">{{#if o.effect}}{{o.effect}}{{else}}—{{/if}}{{#if o.weapon}}<div class="geneseed-weapon-note">Боевой профиль: <b>{{o.weapon}}</b> — бросок со вкладки БОЙ.</div>{{/if}}</div></td> </tr> {{/each}}
-      </tbody> </table> </div> {{/if}}
-
   {{!-- ── АКТИВНЫЕ ПРЕПАРАТЫ ────────────────────────────────────────────── --}}
   {{#if activeDrugs.length}}
   <div class="effects-subsection"> <div class="panel-title">АКТИВНЫЕ ПРЕПАРАТЫ</div> {{#each activeDrugs as |drug|}}

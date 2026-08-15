@@ -56,7 +56,6 @@ const CAT_COLORS = {
   archeotech:   "#ffd24d",
   skitarii:     "#ff6b3c",
   bioimplant:   "#ff5a8a",   // биоимпланты Друкхари
-  geneseed:     "#e04a4a",   // органы Геносемени Астартес
 };
 export function implantCatColor(cat) { return CAT_COLORS[cat] || "#7fe0a8"; }
 
