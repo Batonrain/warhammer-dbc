@@ -51,6 +51,43 @@ export function openContextMenu(ev, entries, jq = globalThis.$) {
   return menu;
 }
 
+/**
+ * Пункты меню строки предмета: открыть лист и удалить с подтверждением.
+ * Отдельно от activateItemContextMenu, потому что листы на ApplicationV2
+ * вешают contextmenu сами (jQuery у них нет), а меню нужно то же самое —
+ * со своей копией лист техники удалял орудие молча (wdbc-ff4.10.4).
+ */
+export function itemContextEntries(item) {
+  return [
+    {
+      cls: "wh-ctx-edit",
+      label: "✏️ Редактировать",
+      onClick: () => {
+        const sheet = item.sheet;
+        if (sheet) sheet.render(true);
+        else new WarhammerItemSheet(item).render(true);
+      }
+    },
+    {
+      cls: "wh-ctx-delete",
+      label: "🗑️ Удалить",
+      // Меню открывается по ПКМ прямо под курсором, и «Удалить» стоит вплотную
+      // к «Редактировать»: без вопроса промах стирал предмет молча, откатить
+      // его нечем (wdbc-9z9).
+      onClick: async () => {
+        // Имя экранируем: его задаёт игрок на своём акторе, а content диалога
+        // разбирается как HTML — «<img src=x onerror=…>» в названии предмета
+        // исполнился бы у того, кто это удаление подтверждает.
+        const ok = await foundry.applications.api.DialogV2.confirm({
+          window: { title: "Удалить предмет" },
+          content: `<p>Удалить «${esc(item.name)}»? Вернуть его будет нечем.</p>`
+        }).catch(() => false);
+        if (ok) await item.delete();
+      }
+    }
+  ];
+}
+
 /** ПКМ по строке предмета: открыть лист предмета или удалить его. */
 export function activateItemContextMenu(html, actor, jq = globalThis.$) {
   html.find(".item-row").on("contextmenu", ev => {
@@ -60,33 +97,6 @@ export function activateItemContextMenu(html, actor, jq = globalThis.$) {
     jq(".wh-context-menu").remove();
     const item = actor.items.get(jq(ev.currentTarget).data("item-id"));
     if (!item) return;
-    openContextMenu(ev, [
-      {
-        cls: "wh-ctx-edit",
-        label: "✏️ Редактировать",
-        onClick: () => {
-          const sheet = item.sheet;
-          if (sheet) sheet.render(true);
-          else new WarhammerItemSheet(item).render(true);
-        }
-      },
-      {
-        cls: "wh-ctx-delete",
-        label: "🗑️ Удалить",
-        // Меню открывается по ПКМ прямо под курсором, и «Удалить» стоит вплотную
-        // к «Редактировать»: без вопроса промах стирал предмет молча, откатить
-        // его нечем (wdbc-9z9).
-        onClick: async () => {
-          // Имя экранируем: его задаёт игрок на своём акторе, а content диалога
-          // разбирается как HTML — «<img src=x onerror=…>» в названии предмета
-          // исполнился бы у того, кто это удаление подтверждает.
-          const ok = await foundry.applications.api.DialogV2.confirm({
-            window: { title: "Удалить предмет" },
-            content: `<p>Удалить «${esc(item.name)}»? Вернуть его будет нечем.</p>`
-          }).catch(() => false);
-          if (ok) await item.delete();
-        }
-      }
-    ], jq);
+    openContextMenu(ev, itemContextEntries(item), jq);
   });
 }
