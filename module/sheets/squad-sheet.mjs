@@ -23,16 +23,151 @@ import { findGroupEntry } from "../constants/skill-specializations.mjs";
 /** Степени успеха/провала по правилу системы: |порог − бросок| / 10 + 1. */
 const degrees = (threshold, roll) => Math.floor(Math.abs(threshold - roll) / 10) + 1;
 
-export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
+// В v13 FilePicker переехал в namespace, глобальный помечен устаревшим.
+const filePicker = () => foundry.applications?.apps?.FilePicker?.implementation || globalThis.FilePicker;
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "sheet", "actor", "squad-sheet", "wh-holo"],
-      template: "systems/warhammer-dbc/templates/actor/squad-sheet.hbs",
-      width: 840, height: 900, resizable: true,
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "roster" }]
-    });
+// ── Действия листа ───────────────────────────────────────────────────────────
+// Как на листах Орды, техники и звёздной системы: ApplicationV2 зовёт обработчик
+// [data-action] с this = лист и элементом-источником вторым аргументом. Обычные
+// функции — чтобы карта действий сверялась с шаблоном тестом.
+
+/** Правящие действия — только для того, кто может править лист. */
+const whenEditable = fn => function (event, target) {
+  if (this.isEditable) return fn.call(this, event, target);
+};
+
+const memberIdOf = target => target.closest("[data-member-id]")?.dataset.memberId;
+
+// ── Доступно всем, включая игрока без прав на отряд ──
+// Открыть лист своего товарища, сойти с поста и выйти из отряда должен уметь и
+// тот, кому сам отряд не принадлежит: права проверяются внутри обработчиков.
+
+async function onOpen(event, target) {
+  const uuid = target.closest("[data-uuid]")?.dataset.uuid;
+  if (!uuid) return;
+  const doc = await fromUuid(uuid);
+  (doc?.actor ?? doc)?.sheet?.render(true);
+}
+
+async function onPostClear(event, target) {
+  const key = target.closest("[data-post-slot]")?.dataset.postSlot;
+  if (!key) return;
+  const posts = foundry.utils.deepClone(this.actor.system.posts || {});
+  if (!this.actor.isOwner) {
+    const occ = posts[key]?.uuid ? (await fromUuid(posts[key].uuid)) : null;
+    if (!((occ?.actor ?? occ)?.isOwner)) return ui.notifications.warn("Снять с поста можно только своего персонажа.");
   }
+  posts[key] = { uuid: "", name: "", img: "" };
+  await this._persistSquad({ "system.posts": posts });
+}
+
+async function onMemberRemove(event, target) {
+  const id = memberIdOf(target);
+  const members = foundry.utils.deepClone(this.actor.system.members || []);
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  if (!this.actor.isOwner) {
+    const occ = m.uuid ? await fromUuid(m.uuid) : null;
+    if (!((occ?.actor ?? occ)?.isOwner)) return ui.notifications.warn("Вывести из отряда можно только своего персонажа.");
+  }
+  await this._persistSquad({ "system.members": members.filter(x => x.id !== id) });
+}
+
+// ── Слаженность ──
+// Shift/Ctrl удваивают шаг: обычное событие двигает на ±5, впечатляющее — на ±10.
+const cohStep = event => (event.shiftKey || event.ctrlKey) ? 10 : 5;
+
+function onCohUp(event)   { return this._changeCohesion(cohStep(event)); }
+function onCohDown(event) { return this._changeCohesion(-cohStep(event)); }
+function onCohEvent(event, target) {
+  return this._changeCohesion(Number(target.dataset.delta) || 0, target.dataset.label);
+}
+function onCohMission() { return this._startMission(); }
+
+function onPortrait() {
+  const FP = filePicker();
+  return new FP({
+    type: "image", current: this.actor.img || "",
+    callback: path => this.actor.update({ img: path })
+  }).render(true);
+}
+
+// ── Команды ──
+function onPresenceRoll() { return this._commandRoll("presence"); }
+function onShortRoll()    { return this._commandRoll("short"); }
+function onDetailRoll()   { return this._commandRoll("detail"); }
+function onBriefingRoll() { return this._briefingRoll(); }
+function onOrderRoll()    { return this._orderRoll(); }
+function onHeroicRoll()   { return this._heroicRoll(); }
+
+function onPresenceOff() { return this.actor.update({ "system.presence.active": false }); }
+function onShortOff()    { return this.actor.update({ "system.shortCommand.active": false }); }
+function onDetailOff()   {
+  return this.actor.update({ "system.detailCommand.active": false, "system.detailCommand.picks": [] });
+}
+function onDetailPick(event, target) { return this._toggleDetailPick(target.dataset.key); }
+
+// ── Мораль ──
+function onMemberMorale(event, target) { return this._memberTest(memberIdOf(target), "morale"); }
+function onMemberBroken(event, target) { return this._memberTest(memberIdOf(target), "broken"); }
+function onMemberFlag(event, target)   { return this._toggleMoraleFlag(memberIdOf(target)); }
+function onMoraleReset()               { return this._resetMoraleFlags(); }
+
+export class WarhammerSquadSheet
+  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+
+  static DEFAULT_OPTIONS = {
+    // squad-sheet-form — на самой форме листа: CSS цепляется за
+    // «.warhammer-dbc.squad-sheet-form», а у V1 этот класс нёс <form> в шаблоне.
+    classes: ["warhammer-dbc", "sheet", "actor", "squad-sheet", "wh-holo", "squad-sheet-form"],
+    position: { width: 840, height: 900 },
+    window: { resizable: true },
+    form: { submitOnChange: true, closeOnSubmit: false },
+    actions: {
+      tab: function (event, target) { this.changeTab(target.dataset.tab, target.dataset.group); },
+      // Без whenEditable: игрок-не-владелец должен уметь открыть лист товарища,
+      // снять с поста и вывести из отряда СВОЕГО персонажа.
+      open:         onOpen,
+      postClear:    onPostClear,
+      memberRemove: onMemberRemove,
+      cohUp:        whenEditable(onCohUp),
+      cohDown:      whenEditable(onCohDown),
+      cohEvent:     whenEditable(onCohEvent),
+      cohMission:   whenEditable(onCohMission),
+      portrait:     whenEditable(onPortrait),
+      presenceRoll: whenEditable(onPresenceRoll),
+      presenceOff:  whenEditable(onPresenceOff),
+      shortRoll:    whenEditable(onShortRoll),
+      shortOff:     whenEditable(onShortOff),
+      detailRoll:   whenEditable(onDetailRoll),
+      detailOff:    whenEditable(onDetailOff),
+      detailPick:   whenEditable(onDetailPick),
+      briefingRoll: whenEditable(onBriefingRoll),
+      orderRoll:    whenEditable(onOrderRoll),
+      heroicRoll:   whenEditable(onHeroicRoll),
+      memberMorale: whenEditable(onMemberMorale),
+      memberBroken: whenEditable(onMemberBroken),
+      memberFlag:   whenEditable(onMemberFlag),
+      moraleReset:  whenEditable(onMoraleReset)
+    }
+  };
+
+  static PARTS = {
+    body: { template: "systems/warhammer-dbc/templates/actor/squad-sheet.hbs", root: true }
+  };
+
+  static TABS = {
+    primary: {
+      initial: "roster",
+      tabs: [
+        { id: "roster",    label: "ОТРЯД" },
+        { id: "commands",  label: "КОМАНДЫ" },
+        { id: "morale",    label: "МОРАЛЬ" },
+        { id: "reference", label: "СПРАВОЧНИК" },
+        { id: "notes",     label: "ЗАПИСИ" }
+      ]
+    }
+  };
 
   // ── Чтение связанных акторов ──────────────────────────────────────────────
 
@@ -99,8 +234,10 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
     };
   }
 
-  getData(options) {
-    const context = super.getData(options);
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+    context.actor = this.actor;
+    context.tab = this.tabGroups?.primary ?? WarhammerSquadSheet.TABS.primary.initial;
     const sys = this.actor.system;
     context.system  = sys;
     context.derived = sys.derived || {};
@@ -193,6 +330,44 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
     context.memberTypesLabel = SQUAD_MEMBER_TYPES.map(t => SQUAD_TYPE_LABEL[t]).join(", ");
 
     return context;
+  }
+
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
+    if (!el) return;
+
+    // Дроп привязываем всегда, а не только на редактируемом листе: игрок без
+    // прав на отряд приводит в него своего персонажа, запись идёт через ГМа.
+    try {
+      const DDC = foundry.applications?.ux?.DragDrop?.implementation
+               ?? foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
+      if (DDC) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
+    } catch (e) { console.warn("Warhammer DBC | squad DnD bind:", e); }
+
+    if (!this.isEditable) return;
+
+    // Подсветка слота при наведении перетаскиваемого актора.
+    el.querySelectorAll("[data-post-slot], .sq-member-dropzone").forEach(slot => {
+      slot.addEventListener("dragover", ev => { ev.preventDefault(); slot.classList.add("sq-drop-hover"); });
+      slot.addEventListener("dragleave", () => slot.classList.remove("sq-drop-hover"));
+      slot.addEventListener("drop",      () => slot.classList.remove("sq-drop-hover"));
+    });
+
+    // Поле Слаженности в шапке — без name (иначе дубль имени в форме), пишем вручную.
+    el.querySelectorAll(".sq-coh-live").forEach(f => f.addEventListener("change", ev => {
+      const v = Math.max(-COHESION_LIMIT, Math.min(COHESION_LIMIT, parseInt(ev.currentTarget.value) || 0));
+      this.actor.update({ "system.cohesion.value": v });
+    }));
+
+    // Заметка участника — сохраняем по потере фокуса.
+    el.querySelectorAll(".sq-member-note").forEach(f => f.addEventListener("change", ev => {
+      const id = memberIdOf(ev.currentTarget);
+      const members = foundry.utils.deepClone(this.actor.system.members || []);
+      const m = members.find(x => x.id === id); if (!m) return;
+      m.note = ev.currentTarget.value;
+      this.actor.update({ "system.members": members });
+    }));
   }
 
   // ── Перетаскивание акторов на посты и в состав ────────────────────────────
@@ -303,118 +478,6 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
     return ok;
   }
 
-  // ── Обработчики листа ─────────────────────────────────────────────────────
-
-  activateListeners(html) {
-    super.activateListeners(html);
-
-    // Доступно всем (в т.ч. игроку без прав на отряд): открыть лист и выйти самому.
-    html.find(".sq-open").on("click", async ev => {
-      const uuid = ev.currentTarget.closest("[data-uuid]")?.dataset.uuid;
-      if (!uuid) return;
-      const doc = await fromUuid(uuid);
-      (doc?.actor ?? doc)?.sheet?.render(true);
-    });
-
-    html.find(".sq-post-clear").on("click", async ev => {
-      const key = ev.currentTarget.closest("[data-post-slot]")?.dataset.postSlot;
-      if (!key) return;
-      const posts = foundry.utils.deepClone(this.actor.system.posts || {});
-      if (!this.actor.isOwner) {
-        const occ = posts[key]?.uuid ? (await fromUuid(posts[key].uuid)) : null;
-        if (!((occ?.actor ?? occ)?.isOwner)) return ui.notifications.warn("Снять с поста можно только своего персонажа.");
-      }
-      posts[key] = { uuid: "", name: "", img: "" };
-      await this._persistSquad({ "system.posts": posts });
-    });
-
-    html.find(".sq-member-remove").on("click", async ev => {
-      const id = ev.currentTarget.closest("[data-member-id]")?.dataset.memberId;
-      const members = foundry.utils.deepClone(this.actor.system.members || []);
-      const m = members.find(x => x.id === id);
-      if (!m) return;
-      if (!this.actor.isOwner) {
-        const occ = m.uuid ? await fromUuid(m.uuid) : null;
-        if (!((occ?.actor ?? occ)?.isOwner)) return ui.notifications.warn("Вывести из отряда можно только своего персонажа.");
-      }
-      await this._persistSquad({ "system.members": members.filter(x => x.id !== id) });
-    });
-
-    if (!this.isEditable) {
-      // Ядро appv1 вешает Drag&Drop только на редактируемый лист. Для игрока-
-      // не-владельца привязываем дроп сами — запись пойдёт через ГМа по сокету.
-      try {
-        const el  = html[0] ?? html;
-        const DDC = foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
-        if (DDC && el) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
-      } catch (e) { console.warn("Warhammer DBC | squad DnD bind:", e); }
-      return;
-    }
-
-    // Подсветка слота при наведении перетаскиваемого актора.
-    html.find("[data-post-slot], .sq-member-dropzone").each((_, el) => {
-      el.addEventListener("dragover", ev => { ev.preventDefault(); el.classList.add("sq-drop-hover"); });
-      el.addEventListener("dragleave", () => el.classList.remove("sq-drop-hover"));
-      el.addEventListener("drop",      () => el.classList.remove("sq-drop-hover"));
-    });
-
-    // ── Слаженность ──
-    const step = ev => (ev.shiftKey || ev.ctrlKey) ? 10 : 5;
-    html.find(".sq-coh-up").on("click",   ev => this._changeCohesion(step(ev)));
-    html.find(".sq-coh-down").on("click", ev => this._changeCohesion(-step(ev)));
-    html.find(".sq-coh-event").on("click", ev =>
-      this._changeCohesion(Number(ev.currentTarget.dataset.delta) || 0, ev.currentTarget.dataset.label));
-    // Поле Слаженности в шапке — без name (иначе дубль имени в форме), пишем вручную.
-    html.find(".sq-coh-live").on("change", ev => {
-      const v = Math.max(-COHESION_LIMIT, Math.min(COHESION_LIMIT, parseInt(ev.currentTarget.value) || 0));
-      this.actor.update({ "system.cohesion.value": v });
-    });
-    html.find(".sq-coh-mission").on("click", () => this._startMission());
-
-    // ── Портрет отряда ──
-    html.find(".sq-portrait").on("click", () => {
-      new FilePicker({
-        type: "image", current: this.actor.img || "",
-        callback: path => this.actor.update({ img: path })
-      }).render(true);
-    });
-
-    // ── Командное Присутствие ──
-    html.find(".sq-presence-roll").on("click", () => this._commandRoll("presence"));
-    html.find(".sq-presence-off").on("click", () => this.actor.update({ "system.presence.active": false }));
-
-    // ── Короткая / Детальная Команда, Брифинг, приказ, Героический Конец ──
-    html.find(".sq-short-roll").on("click",  () => this._commandRoll("short"));
-    html.find(".sq-detail-roll").on("click", () => this._commandRoll("detail"));
-    html.find(".sq-briefing-roll").on("click", () => this._briefingRoll());
-    html.find(".sq-order-roll").on("click",  () => this._orderRoll());
-    html.find(".sq-heroic-roll").on("click", () => this._heroicRoll());
-    html.find(".sq-short-off").on("click",   () => this.actor.update({ "system.shortCommand.active": false }));
-    html.find(".sq-detail-off").on("click",  () =>
-      this.actor.update({ "system.detailCommand.active": false, "system.detailCommand.picks": [] }));
-
-    // Покупка эффектов Детальной Команды за Успехи.
-    html.find(".sq-detail-pick").on("click", ev => this._toggleDetailPick(ev.currentTarget.dataset.key));
-
-    // ── Мораль участников ──
-    html.find(".sq-member-morale").on("click", ev =>
-      this._memberTest(ev.currentTarget.closest("[data-member-id]")?.dataset.memberId, "morale"));
-    html.find(".sq-member-broken").on("click", ev =>
-      this._memberTest(ev.currentTarget.closest("[data-member-id]")?.dataset.memberId, "broken"));
-    html.find(".sq-member-flag").on("click", ev =>
-      this._toggleMoraleFlag(ev.currentTarget.closest("[data-member-id]")?.dataset.memberId));
-    html.find(".sq-morale-reset").on("click", () => this._resetMoraleFlags());
-
-    // Заметка участника — сохраняем по потере фокуса.
-    html.find(".sq-member-note").on("change", ev => {
-      const id = ev.currentTarget.closest("[data-member-id]")?.dataset.memberId;
-      const members = foundry.utils.deepClone(this.actor.system.members || []);
-      const m = members.find(x => x.id === id); if (!m) return;
-      m.note = ev.currentTarget.value;
-      this.actor.update({ "system.members": members });
-    });
-  }
-
   // ── Слаженность ───────────────────────────────────────────────────────────
 
   /** Изменение текущей Слаженности с записью события в чат. */
@@ -442,8 +505,8 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
   /** Начало миссии: текущая и стартовая Слаженность приравниваются базовой. */
   async _startMission() {
     const base = Number(this.actor.system.cohesion?.base) || 0;
-    const ok = await Dialog.confirm({
-      title: "Начало миссии",
+    const ok = await foundry.applications.api.DialogV2.confirm({
+      window: { title: "Начало миссии" },
       content: `<p>Сбросить Слаженность отряда к базовой (<b>${base >= 0 ? "+" : ""}${base}</b>) и снять отметки потери Командования?</p>`
     });
     if (!ok) return;
@@ -516,7 +579,9 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
     const riskInfo = RISK_LEVELS.find(r => r.level === eRisk.value);
     const capTxt   = riskInfo?.max == null ? "без предела" : String(riskInfo.max);
 
-    const content = `<form class="wh-attack-form sq-cmd-form">
+    // Не <form>: содержимое DialogV2 уже внутри его формы, вложенная сломала бы
+    // button.form, через который читаются поля.
+    const content = `<div class="wh-attack-form sq-cmd-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(title)}</span><span class="atk-weapon-class">${esc(this.actor.name)}</span></div>
       <div class="atk-dlg-row"><label>Отдаёт:</label>
         <select id="sq-roller">${rollerOpts}</select></div>
@@ -527,43 +592,50 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sq-mod" type="number" value="0"/></div>
       <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="sq-total">0</span></div>
       <div class="sq-cmd-risk">Риск ${eRisk.value}${eRisk.bonus ? ` (${eRisk.base} +1 — шлем снят)` : ""} — максимум Успехов: <b id="sq-cap">${capTxt}</b></div>
-    </form>`;
+    </div>`;
 
-    const dlg = new Dialog({
-      title: `${title}: ${this.actor.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `${title}: ${this.actor.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "sq-cmd-dialog"],
+      position: { width: 400 },
       content,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async h => {
-          const key   = String(h.find("#sq-roller").val() || "commander");
-          const base  = parseInt(h.find("#sq-base").val()) || 0;
-          const mod   = parseInt(h.find("#sq-mod").val()) || 0;
-          const isCo  = key === "coordinator";
-          const extra = { benefit: h.find("#sq-benefit").val(), shortKey: h.find("#sq-kind").val() };
-          await this._executeCommand(kind, key, base + cohesionBonus(coh, isCo) + mod, extra);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll",
-      render: h => {
+      buttons: [
+        {
+          action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
+          callback: async (event, button) => {
+            const form  = button.form;
+            const key   = String(form.querySelector("#sq-roller")?.value || "commander");
+            const base  = parseInt(form.querySelector("#sq-base").value) || 0;
+            const mod   = parseInt(form.querySelector("#sq-mod").value) || 0;
+            const isCo  = key === "coordinator";
+            const extra = { benefit: form.querySelector("#sq-benefit")?.value,
+                            shortKey: form.querySelector("#sq-kind")?.value };
+            await this._executeCommand(kind, key, base + cohesionBonus(coh, isCo) + mod, extra);
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        const form = dialog.element.querySelector("form") ?? dialog.element;
+        const roller = form.querySelector("#sq-roller");
+        const baseIn = form.querySelector("#sq-base");
+        const modIn  = form.querySelector("#sq-mod");
         const upd = () => {
-          const key  = String(h.find("#sq-roller").val() || "commander");
-          const isCo = key === "coordinator";
+          const isCo = String(roller?.value || "commander") === "coordinator";
           const cb   = cohesionBonus(coh, isCo);
-          h.find("#sq-coh").text(`${cb >= 0 ? "+" : ""}${cb}`);
-          const base = parseInt(h.find("#sq-base").val()) || 0;
-          const mod  = parseInt(h.find("#sq-mod").val()) || 0;
-          h.find("#sq-total").text(base + cb + mod);
+          form.querySelector("#sq-coh").textContent = `${cb >= 0 ? "+" : ""}${cb}`;
+          const base = parseInt(baseIn.value) || 0;
+          const mod  = parseInt(modIn.value) || 0;
+          form.querySelector("#sq-total").textContent = base + cb + mod;
         };
-        h.find("#sq-roller").on("change", ev => {
-          const opt = ev.currentTarget.selectedOptions[0];
-          h.find("#sq-base").val(opt?.dataset.base ?? -20);
+        roller?.addEventListener("change", ev => {
+          baseIn.value = ev.currentTarget.selectedOptions[0]?.dataset.base ?? -20;
           upd();
         });
-        h.find("#sq-base, #sq-mod").on("input", upd);
+        [baseIn, modIn].forEach(i => i.addEventListener("input", upd));
         upd();
       }
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "sq-cmd-dialog"], width: 400 });
-    dlg.render(true);
+    });
   }
 
   /** Исполнение Команды: бросок, Успехи с учётом Риска, эффект и запись состояния. */
@@ -687,53 +759,58 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
     const cmdTarget = intTotal + cmdRank - 10;
     const logTarget = intTotal + logRank - 10;
 
-    const content = `<form class="wh-attack-form sq-cmd-form">
+    const content = `<div class="wh-attack-form sq-cmd-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">Брифинг</span><span class="atk-weapon-class">${esc(cmd.name)}</span></div>
       <div class="sq-cmd-hint">Комбинированный тест: обе части бросаются одним d100, Успехи — по худшей из них.</div>
       <div class="atk-dlg-row"><label>Command(I)−10:</label><input id="sq-b1" type="number" value="${cmdTarget}"/></div>
       <div class="atk-dlg-row"><label>Logic(I)−10:</label><input id="sq-b2" type="number" value="${logTarget}"/></div>
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sq-mod" type="number" value="0"/></div>
-    </form>`;
+    </div>`;
 
-    new Dialog({
-      title: `Брифинг: ${this.actor.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Брифинг: ${this.actor.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "sq-cmd-dialog"],
+      position: { width: 400 },
       content,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async h => {
-          const mod = parseInt(h.find("#sq-mod").val()) || 0;
-          const t1  = (parseInt(h.find("#sq-b1").val()) || 0) + mod;
-          const t2  = (parseInt(h.find("#sq-b2").val()) || 0) + mod;
-          const roll = await new Roll("1d100").evaluate();
-          const rv = roll.total;
-          const ok1 = rv <= t1, ok2 = rv <= t2;
-          const ok  = ok1 && ok2;
-          // Комбинированный тест: Успехи — по худшему порогу.
-          const worst = Math.min(t1, t2);
-          const deg   = degrees(worst, rv);
-          const sux   = ok ? deg : 0;
-          const power = Math.floor(Math.floor((cmd.int ?? 0) / 10) / 2);
+      buttons: [
+        {
+          action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
+          callback: async (event, button) => {
+            const form = button.form;
+            const mod = parseInt(form.querySelector("#sq-mod").value) || 0;
+            const t1  = (parseInt(form.querySelector("#sq-b1").value) || 0) + mod;
+            const t2  = (parseInt(form.querySelector("#sq-b2").value) || 0) + mod;
+            const roll = await new Roll("1d100").evaluate();
+            const rv = roll.total;
+            const ok1 = rv <= t1, ok2 = rv <= t2;
+            const ok  = ok1 && ok2;
+            // Комбинированный тест: Успехи — по худшему порогу.
+            const worst = Math.min(t1, t2);
+            const deg   = degrees(worst, rv);
+            const sux   = ok ? deg : 0;
+            const power = Math.floor(Math.floor((cmd.int ?? 0) / 10) / 2);
 
-          if (ok) await this.actor.update({ "system.briefing.successes": sux });
+            if (ok) await this.actor.update({ "system.briefing.successes": sux });
 
-          await ChatMessage.create(ChatMessage.applyRollMode({
-            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: `<div class="wh-roll-result sq-chat">
-              <div class="roll-header">${rollIcon("chart", "#4dffa6")}Брифинг — ${esc(this.actor.name)}</div>
-              <div class="roll-threshold">${esc(cmd.name)} · Command(I)−10: <b>${t1}</b> · Logic(I)−10: <b>${t2}</b></div>
-              <div class="roll-dice">Бросок: <b>${rv}</b></div>
-              <div class="roll-outcome">${ok
-                ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-                : `<span class="roll-failure">Провал${!ok1 ? " (Command)" : ""}${!ok2 ? " (Logic)" : ""}</span>`}</div>
-              ${ok ? `<div class="sq-chat-effect">Подчинённые получают <b>${sux}</b> Ход(ов) в следующем бою с преимуществами
-                Короткой Команды силой <b>${power}</b> Успехов (½ I.b, окр.▼), по выбору их Лидера.</div>` : ""}
-            </div>`,
-            rolls: [roll], sound: CONFIG.sounds.dice
-          }, game.settings.get("core", "rollMode")));
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll"
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "sq-cmd-dialog"], width: 400 }).render(true);
+            await ChatMessage.create(ChatMessage.applyRollMode({
+              speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+              content: `<div class="wh-roll-result sq-chat">
+                <div class="roll-header">${rollIcon("chart", "#4dffa6")}Брифинг — ${esc(this.actor.name)}</div>
+                <div class="roll-threshold">${esc(cmd.name)} · Command(I)−10: <b>${t1}</b> · Logic(I)−10: <b>${t2}</b></div>
+                <div class="roll-dice">Бросок: <b>${rv}</b></div>
+                <div class="roll-outcome">${ok
+                  ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
+                  : `<span class="roll-failure">Провал${!ok1 ? " (Command)" : ""}${!ok2 ? " (Logic)" : ""}</span>`}</div>
+                ${ok ? `<div class="sq-chat-effect">Подчинённые получают <b>${sux}</b> Ход(ов) в следующем бою с преимуществами
+                  Короткой Команды силой <b>${power}</b> Успехов (½ I.b, окр.▼), по выбору их Лидера.</div>` : ""}
+              </div>`,
+              rolls: [roll], sound: CONFIG.sounds.dice
+            }, game.settings.get("core", "rollMode")));
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   /** Приказ подчинённому: встречный тест Command(F)+0 vs W+0. */
@@ -747,7 +824,7 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
     const opts = members.map((m, i) =>
       `<option value="${m.id}" ${i === 0 ? "selected" : ""} data-wp="${m.wp ?? 0}">${esc(m.name)} — W ${m.wp ?? "—"}</option>`).join("");
 
-    const content = `<form class="wh-attack-form sq-cmd-form">
+    const content = `<div class="wh-attack-form sq-cmd-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">Приказ</span><span class="atk-weapon-class">Command(F)+0 vs W+0</span></div>
       <div class="sq-cmd-hint">Свободное действие. При победе Командира подчинённый вынужден следовать приказу.</div>
       <div class="atk-dlg-row"><label>Подчинённый:</label><select id="sq-target">${opts}</select></div>
@@ -755,51 +832,58 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
       <div class="atk-dlg-row"><label>Слаженность:</label><span class="sq-cmd-coh">${coh >= 0 ? "+" : ""}${coh}</span></div>
       <div class="atk-dlg-row"><label>Порог подчинённого (W):</label><input id="sq-wp" type="number" value="${members[0].wp ?? 0}"/></div>
       <div class="atk-dlg-row"><label>Приказ:</label><input id="sq-text" type="text" placeholder="Что приказано"/></div>
-    </form>`;
+    </div>`;
 
-    new Dialog({
-      title: `Приказ: ${this.actor.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Приказ: ${this.actor.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "sq-cmd-dialog"],
+      position: { width: 400 },
       content,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async h => {
-          const tgtId = String(h.find("#sq-target").val() || "");
-          const tgt   = members.find(m => m.id === tgtId);
-          const cTgt  = (parseInt(h.find("#sq-base").val()) || 0) + coh;
-          const wTgt  = parseInt(h.find("#sq-wp").val()) || 0;
-          const text  = String(h.find("#sq-text").val() || "");
+      buttons: [
+        {
+          action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
+          callback: async (event, button) => {
+            const form  = button.form;
+            const tgtId = String(form.querySelector("#sq-target").value || "");
+            const tgt   = members.find(m => m.id === tgtId);
+            const cTgt  = (parseInt(form.querySelector("#sq-base").value) || 0) + coh;
+            const wTgt  = parseInt(form.querySelector("#sq-wp").value) || 0;
+            const text  = String(form.querySelector("#sq-text").value || "");
 
-          const rc = await new Roll("1d100").evaluate();
-          const rw = await new Roll("1d100").evaluate();
-          const okC = rc.total <= cTgt, okW = rw.total <= wTgt;
-          const degC = okC ? degrees(cTgt, rc.total) : 0;
-          const degW = okW ? degrees(wTgt, rw.total) : 0;
-          // Встречный тест: побеждает успешный с бо́льшим числом Успехов;
-          // при равенстве — сопротивляющийся (приказ не продавлен).
-          const cmdWins = okC && (!okW || degC > degW);
+            const rc = await new Roll("1d100").evaluate();
+            const rw = await new Roll("1d100").evaluate();
+            const okC = rc.total <= cTgt, okW = rw.total <= wTgt;
+            const degC = okC ? degrees(cTgt, rc.total) : 0;
+            const degW = okW ? degrees(wTgt, rw.total) : 0;
+            // Встречный тест: побеждает успешный с бо́льшим числом Успехов;
+            // при равенстве — сопротивляющийся (приказ не продавлен).
+            const cmdWins = okC && (!okW || degC > degW);
 
-          await ChatMessage.create(ChatMessage.applyRollMode({
-            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: `<div class="wh-roll-result sq-chat">
-              <div class="roll-header">${rollIcon("shield", "#4dffa6")}Приказ — ${esc(cmd.name)} → ${esc(tgt?.name || "")}</div>
-              ${text ? `<div class="sq-chat-order">«${esc(text)}»</div>` : ""}
-              <div class="roll-threshold">Command(F) <b>${cTgt}</b> → бросок <b>${rc.total}</b>${okC ? ` (${degC} ${_degWord(degC)})` : " — провал"}</div>
-              <div class="roll-threshold">W подчинённого <b>${wTgt}</b> → бросок <b>${rw.total}</b>${okW ? ` (${degW} ${_degWord(degW)})` : " — провал"}</div>
-              <div class="roll-outcome">${cmdWins
-                ? `<span class="roll-success">Командир побеждает — подчинённый вынужден следовать приказу</span>`
-                : `<span class="roll-failure">Подчинённый устоял — приказ не продавлен</span>`}</div>
-              <div class="sq-chat-note">Игровой персонаж получает преимущества Команд только если признаёт авторитет Командира; иначе его Команды считаются как от Координатора.</div>
-            </div>`,
-            rolls: [rc, rw], sound: CONFIG.sounds.dice
-          }, game.settings.get("core", "rollMode")));
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll",
-      render: h => {
-        h.find("#sq-target").on("change", ev =>
-          h.find("#sq-wp").val(ev.currentTarget.selectedOptions[0]?.dataset.wp ?? 0));
+            await ChatMessage.create(ChatMessage.applyRollMode({
+              speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+              content: `<div class="wh-roll-result sq-chat">
+                <div class="roll-header">${rollIcon("shield", "#4dffa6")}Приказ — ${esc(cmd.name)} → ${esc(tgt?.name || "")}</div>
+                ${text ? `<div class="sq-chat-order">«${esc(text)}»</div>` : ""}
+                <div class="roll-threshold">Command(F) <b>${cTgt}</b> → бросок <b>${rc.total}</b>${okC ? ` (${degC} ${_degWord(degC)})` : " — провал"}</div>
+                <div class="roll-threshold">W подчинённого <b>${wTgt}</b> → бросок <b>${rw.total}</b>${okW ? ` (${degW} ${_degWord(degW)})` : " — провал"}</div>
+                <div class="roll-outcome">${cmdWins
+                  ? `<span class="roll-success">Командир побеждает — подчинённый вынужден следовать приказу</span>`
+                  : `<span class="roll-failure">Подчинённый устоял — приказ не продавлен</span>`}</div>
+                <div class="sq-chat-note">Игровой персонаж получает преимущества Команд только если признаёт авторитет Командира; иначе его Команды считаются как от Координатора.</div>
+              </div>`,
+              rolls: [rc, rw], sound: CONFIG.sounds.dice
+            }, game.settings.get("core", "rollMode")));
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        const form = dialog.element.querySelector("form") ?? dialog.element;
+        form.querySelector("#sq-target").addEventListener("change", ev => {
+          form.querySelector("#sq-wp").value = ev.currentTarget.selectedOptions[0]?.dataset.wp ?? 0;
+        });
       }
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "sq-cmd-dialog"], width: 400 }).render(true);
+    });
   }
 
   /** Героический Конец: Command(W)+0 vs Intimidate(W)+0 того, кто вывел из боя. */
@@ -810,49 +894,54 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
     // Command(W): ранговый бонус навыка ложится на Волю вместо Товарищества.
     const cmdW = (cmd.wp ?? 0) + ((cmd.command ?? -20) - (cmd.fel ?? 0));
 
-    const content = `<form class="wh-attack-form sq-cmd-form">
+    const content = `<div class="wh-attack-form sq-cmd-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">Героический Конец</span><span class="atk-weapon-class">${esc(cmd.name)}</span></div>
       <div class="sq-cmd-hint">Command(W)+0 против Intimidate(W)+0 того, кто вывел командира из боя.</div>
       <div class="atk-dlg-row"><label>Command(W):</label><input id="sq-base" type="number" value="${cmdW}"/></div>
       <div class="atk-dlg-row"><label>Intimidate(W) врага:</label><input id="sq-enemy" type="number" value="30"/></div>
-    </form>`;
+    </div>`;
 
-    new Dialog({
-      title: `Героический Конец: ${this.actor.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Героический Конец: ${this.actor.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "sq-cmd-dialog"],
+      position: { width: 400 },
       content,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async h => {
-          const t1 = parseInt(h.find("#sq-base").val()) || 0;
-          const t2 = parseInt(h.find("#sq-enemy").val()) || 0;
-          const r1 = await new Roll("1d100").evaluate();
-          const r2 = await new Roll("1d100").evaluate();
-          const ok1 = r1.total <= t1, ok2 = r2.total <= t2;
-          const d1 = ok1 ? degrees(t1, r1.total) : 0;
-          const d2 = ok2 ? degrees(t2, r2.total) : 0;
-          const wins = ok1 && (!ok2 || d1 > d2);
+      buttons: [
+        {
+          action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
+          callback: async (event, button) => {
+            const form = button.form;
+            const t1 = parseInt(form.querySelector("#sq-base").value) || 0;
+            const t2 = parseInt(form.querySelector("#sq-enemy").value) || 0;
+            const r1 = await new Roll("1d100").evaluate();
+            const r2 = await new Roll("1d100").evaluate();
+            const ok1 = r1.total <= t1, ok2 = r2.total <= t2;
+            const d1 = ok1 ? degrees(t1, r1.total) : 0;
+            const d2 = ok2 ? degrees(t2, r2.total) : 0;
+            const wins = ok1 && (!ok2 || d1 > d2);
 
-          if (!wins) await this.actor.update({
-            "system.presence.active": false, "system.shortCommand.active": false,
-            "system.detailCommand.active": false
-          });
+            if (!wins) await this.actor.update({
+              "system.presence.active": false, "system.shortCommand.active": false,
+              "system.detailCommand.active": false
+            });
 
-          await ChatMessage.create(ChatMessage.applyRollMode({
-            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: `<div class="wh-roll-result sq-chat">
-              <div class="roll-header">${rollIcon("skull", "#ff8a8a")}Героический Конец — ${esc(cmd.name)}</div>
-              <div class="roll-threshold">Command(W) <b>${t1}</b> → <b>${r1.total}</b>${ok1 ? ` (${d1} ${_degWord(d1)})` : " — провал"}</div>
-              <div class="roll-threshold">Intimidate(W) врага <b>${t2}</b> → <b>${r2.total}</b>${ok2 ? ` (${d2} ${_degWord(d2)})` : " — провал"}</div>
-              <div class="roll-outcome">${wins
-                ? `<span class="roll-success">Командование держится ещё ${d1} Раунд(ов)${d1 >= 5 ? " — и он отдаёт Короткую Команду как Подвигом (через W)" : ""}</span>`
-                : `<span class="roll-failure">Командование потеряно немедленно</span>`}</div>
-            </div>`,
-            rolls: [r1, r2], sound: CONFIG.sounds.dice
-          }, game.settings.get("core", "rollMode")));
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll"
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "sq-cmd-dialog"], width: 400 }).render(true);
+            await ChatMessage.create(ChatMessage.applyRollMode({
+              speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+              content: `<div class="wh-roll-result sq-chat">
+                <div class="roll-header">${rollIcon("skull", "#ff8a8a")}Героический Конец — ${esc(cmd.name)}</div>
+                <div class="roll-threshold">Command(W) <b>${t1}</b> → <b>${r1.total}</b>${ok1 ? ` (${d1} ${_degWord(d1)})` : " — провал"}</div>
+                <div class="roll-threshold">Intimidate(W) врага <b>${t2}</b> → <b>${r2.total}</b>${ok2 ? ` (${d2} ${_degWord(d2)})` : " — провал"}</div>
+                <div class="roll-outcome">${wins
+                  ? `<span class="roll-success">Командование держится ещё ${d1} Раунд(ов)${d1 >= 5 ? " — и он отдаёт Короткую Команду как Подвигом (через W)" : ""}</span>`
+                  : `<span class="roll-failure">Командование потеряно немедленно</span>`}</div>
+              </div>`,
+              rolls: [r1, r2], sound: CONFIG.sounds.dice
+            }, game.settings.get("core", "rollMode")));
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   // ── Мораль участников ─────────────────────────────────────────────────────
