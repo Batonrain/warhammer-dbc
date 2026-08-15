@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { resetCaptured } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   activateItemContextMenu,
   closeContextMenus,
@@ -50,9 +50,10 @@ function contextEvent(dataset = {}) {
   };
 }
 
-function item(id = "item-1") {
+function item(id = "item-1", name = "Болт-пистолет") {
   const it = {
     id,
+    name,
     deleted: false,
     sheet: { rendered: 0, render: () => { it.sheet.rendered += 1; } },
     delete: async () => { it.deleted = true; }
@@ -139,6 +140,45 @@ describe("activateItemContextMenu", () => {
     handler(contextEvent({ itemId: "gun-1" }));
     await jq.state.appended[1].handlers[".wh-ctx-delete:click"]({ stopPropagation: () => {} });
     expect(gun.deleted).toBe(true);
+  });
+
+  // Меню открывается по ПКМ и стоит прямо под курсором: промах мимо
+  // «Редактировать» стирал предмет молча и без отката (wdbc-9z9).
+  it("удаление спрашивает подтверждение и называет предмет", async () => {
+    const jq = fakeJq();
+    const gun = item("gun-1", "Болтер «Годвин»");
+    const handler = wire(actor([gun]), jq);
+
+    handler(contextEvent({ itemId: "gun-1" }));
+    await jq.state.appended[0].handlers[".wh-ctx-delete:click"]({ stopPropagation: () => {} });
+
+    expect(captured.dialog, "подтверждения не спросили").not.toBeNull();
+    expect(captured.dialog.content).toContain("Болтер «Годвин»");
+    expect(gun.deleted).toBe(true);
+  });
+
+  it("отказ оставляет предмет на месте", async () => {
+    const jq = fakeJq();
+    const gun = item("gun-1");
+    const handler = wire(actor([gun]), jq);
+    captured.confirmAnswer = false;
+
+    handler(contextEvent({ itemId: "gun-1" }));
+    await jq.state.appended[0].handlers[".wh-ctx-delete:click"]({ stopPropagation: () => {} });
+
+    expect(gun.deleted).toBe(false);
+  });
+
+  it("«Редактировать» ничего не спрашивает", () => {
+    const jq = fakeJq();
+    const gun = item("gun-1");
+    const handler = wire(actor([gun]), jq);
+
+    handler(contextEvent({ itemId: "gun-1" }));
+    jq.state.appended[0].handlers[".wh-ctx-edit:click"]({ stopPropagation: () => {} });
+
+    expect(captured.dialog).toBeNull();
+    expect(gun.sheet.rendered).toBe(1);
   });
 
   it("не строит меню, если предмета уже нет", () => {
