@@ -36,19 +36,34 @@ const PACKS = {
   character:   "bestiary"
 };
 
+// Миньоны (стр. 111-113) — поля заведены уже после того, как template.json
+// перестал описывать поля, поэтому в снимке прежних умолчаний их нет. Миньоном
+// бывает Персонаж и Демон, Хозяином — они же и Принц Демонов, и набор полей у
+// всех троих один (module/data/actor/_creature.mjs).
+const MINION_FIELDS = {
+  masterUuid: "", minionType: "", minionTier: "", loyalty: { value: 0, max: 0 }
+};
+
 /** Намеренные расхождения схемы с прежним template.json: путь → почему. */
 const DEVIATIONS = {
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
     "availability": 0
   },
-  // Цель эффектов, добавляющих к Бонусу и к Значению характеристики: свои
-  // хранимые поля. Бонус — потому что «Сверхъестественное» редактируемый ввод
-  // на листе; Значение — потому что `total` расчёт собирает заново, и эффект
-  // поверх него не поднимал ни Бонус, ни навыки (wdbc-5wm).
-  ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type,
-    Object.fromEntries(Object.keys(CHARACTERISTICS)
-      .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]]))]))
+  // У трёх существ два набора расхождений сразу, и записаны они по-разному:
+  // поля миньонов — обычными именами, надбавки характеристик — путями внутрь
+  // characteristics. withDeviations ниже разбирает и то, и другое, поэтому
+  // держать их врозь незачем.
+  //
+  // Надбавки — цель эффектов, добавляющих к Бонусу и к Значению
+  // характеристики: свои хранимые поля. Бонус — потому что «Сверхъестественное»
+  // редактируемый ввод на листе; Значение — потому что `total` расчёт собирает
+  // заново, и эффект поверх него не поднимал ни Бонус, ни навыки (wdbc-5wm).
+  ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type, {
+    ...MINION_FIELDS,
+    ...Object.fromEntries(Object.keys(CHARACTERISTICS)
+      .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]]))
+  }]))
 };
 
 /** Вписать значение по пути «characteristics.t.bonusFx» в копию объекта. */
