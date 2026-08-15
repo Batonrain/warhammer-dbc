@@ -17,6 +17,7 @@ import fs   from "node:fs";
 import path from "node:path";
 
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
+import { CHARACTERISTICS }   from "../../module/constants/characteristics.mjs";
 import { packDocuments, leaves, isEmpty } from "../support/pack-docs.mjs";
 
 const LEGACY = JSON.parse(fs.readFileSync(
@@ -35,13 +36,32 @@ const PACKS = {
   character:   "bestiary"
 };
 
-/** Намеренные расхождения схемы с прежним template.json: поле → почему. */
+/** Намеренные расхождения схемы с прежним template.json: путь → почему. */
 const DEVIATIONS = {
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
-    availability: 0
-  }
+    "availability": 0
+  },
+  // Цель эффектов, добавляющих к Бонусу и к Значению характеристики: свои
+  // хранимые поля. Бонус — потому что «Сверхъестественное» редактируемый ввод
+  // на листе; Значение — потому что `total` расчёт собирает заново, и эффект
+  // поверх него не поднимал ни Бонус, ни навыки (wdbc-5wm).
+  ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type,
+    Object.fromEntries(Object.keys(CHARACTERISTICS)
+      .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]]))]))
 };
+
+/** Вписать значение по пути «characteristics.t.bonusFx» в копию объекта. */
+function withDeviations(base, deviations = {}) {
+  const out = structuredClone(base);
+  for (const [path, value] of Object.entries(deviations)) {
+    const keys = path.split(".");
+    let cur = out;
+    for (const k of keys.slice(0, -1)) cur = (cur[k] ??= {});
+    cur[keys.at(-1)] = value;
+  }
+  return out;
+}
 
 /**
  * Поля прошлого формата: значение не теряется, а переезжает в другое поле
@@ -66,7 +86,7 @@ describe("типы данных акторов", () => {
       const Model = ACTOR_DATA_MODELS[type];
 
       it("пустой актор получает умолчания прежнего template.json", () => {
-        expect(new Model({}).toObject()).toEqual({ ...LEGACY[type], ...(DEVIATIONS[type] ?? {}) });
+        expect(new Model({}).toObject()).toEqual(withDeviations(LEGACY[type], DEVIATIONS[type]));
       });
 
       it.skipIf(!pack)("документы пака проходят через схему без потерь", () => {

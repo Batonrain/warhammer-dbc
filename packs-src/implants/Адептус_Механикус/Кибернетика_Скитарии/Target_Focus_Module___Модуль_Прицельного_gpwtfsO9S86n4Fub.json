@@ -53,10 +53,10 @@
       "system": {
         "changes": [
           {
-            "key": "system.characteristics.bs.bonus",
+            "key": "system.characteristics.bs.bonusFx",
             "type": "add",
             "value": 2,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           }
         ]
