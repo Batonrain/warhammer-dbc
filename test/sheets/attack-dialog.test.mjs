@@ -9,7 +9,7 @@
 // вышло в порог и что дошло до карточки броска.
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { captured, resetCaptured, fakeHtml, checkbox } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, fakeForm, checkbox } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor, ammoFor, setTargets } from "../support/combat-fixtures.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { showAttackDialog, showAttackDialogWithTechnique,
@@ -25,9 +25,9 @@ function attacker({ items = [], ...system } = {}) {
   return a;
 }
 
-/** Значение скрытого поля порога — то, с чем окно открылось. */
+/** Число, с которым окно открылось, — то самое, что видит игрок. */
 function dialogThreshold() {
-  const m = (captured.dialog?.content ?? "").match(/id="atk-threshold" type="hidden" value="(-?\d+)"/);
+  const m = (captured.dialog?.content ?? "").match(/id="atk-total-display">(-?\d+)</);
   return m ? Number(m[1]) : null;
 }
 
@@ -37,41 +37,25 @@ function thresholdInCard() {
   return m ? Number(m[1]) : null;
 }
 
-/** Открыть диалог и нажать «Бросок!» с заданными полями и галочками. */
+/** Форма открытого окна с полями по умолчанию — то, что вернёт button.form. */
+function attackForm(fields = {}, checks = {}) {
+  return fakeForm({ "#atk-char": "bs", "#atk-modifier": "0", "#atk-aim": "", ...fields }, checks);
+}
+
+/** Нажать «Бросок!» с заданными полями и галочками. */
 async function pressRoll(promise, fields = {}, checks = {}) {
-  await captured.dialog.buttons.roll.callback(fakeHtml({
-    "#atk-char": "bs", "#atk-threshold": String(dialogThreshold() ?? 0),
-    "#atk-modifier": "0", "#atk-aim": "", ...fields
-  }, checks));
+  await captured.press("roll", attackForm(fields, checks));
   return promise;
 }
 
-/**
- * Живой jQuery для колбэка `render`: пересчёт порога в открытом окне пишет
- * текст и читает галочки. Без него слепой остаётся половина диалога — та, где
- * игрок видит число до броска, и оно обязано совпасть с брошенным.
- */
-function liveHtml(fields = {}, checks = {}) {
-  const shown = {};
-  const node = sel => {
-    const self = {
-      val: v => (v === undefined ? fields[sel] : ((fields[sel] = String(v)), self)),
-      is: () => fields[sel] === true,
-      data: key => (typeof fields[sel] === "object" && fields[sel] !== null)
-        ? fields[sel][key] : undefined,
-      on: () => self,
-      each: fn => { (checks[sel] ?? []).forEach((cb, i) => fn(i, cb)); return self; },
-      text: t => (t === undefined ? (shown[sel] ?? "") : ((shown[sel] = String(t)), self)),
-      css: () => self,
-      addClass: () => self,
-      removeClass: () => self,
-      map: fn => ({ get: () => (checks[sel] ?? []).map((cb, i) => fn(i, cb)) }),
-      closest: () => ({ text: () => "" }),
-      length: (checks[sel] ?? []).length
-    };
-    return self;
+/** Узел окна, который стрингует запись в textContent — как настоящий DOM. */
+function textNode() {
+  let text = "";
+  return {
+    get textContent() { return text; },
+    set textContent(v) { text = String(v); },
+    style: {}, classList: { add: () => {}, remove: () => {} }
   };
-  return { find: node, 0: { querySelector: () => null }, shown, fields };
 }
 
 beforeEach(() => {
@@ -273,7 +257,7 @@ describe("бросок из диалога", () => {
     const actor  = attacker({ items: [weapon] });
     const p = showAttackDialog(actor, weapon);
     await pressRoll(p,
-      { "#atk-modifier": "-5", "input[name='atk-rof']:checked": { bonus: "10" } },
+      { "#atk-modifier": "-5", "input[name='atk-rof']:checked": { dataset: { bonus: "10" } } },
       { ".atk-mod-cb:not([data-autofail]):checked": [checkbox(20), checkbox(-10)] });
 
     expect(thresholdInCard()).toBe(60);        // 45 − 5 + 10 + 20 − 10
@@ -299,17 +283,20 @@ describe("бросок из диалога", () => {
   it("отмена не бросает кубы и не пишет в чат", async () => {
     const weapon = weaponFor();
     const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
-    captured.dialog.buttons.cancel.callback();
+    await captured.press("cancel", attackForm());
 
     await expect(p).resolves.toBeNull();
     expect(captured.chat).toHaveLength(0);
     expect(captured.rolls).toHaveLength(0);
   });
 
-  it("закрытие окна равнозначно отмене", async () => {
+  it("закрытие окна равнозначно отмене, а не ошибке", async () => {
     const weapon = weaponFor();
     const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
-    captured.dialog.close();
+    // rejectClose по умолчанию true: без этой строки закрытое окно роняло бы
+    // необработанным отказом каждого, кто ждёт результата атаки.
+    expect(captured.dialog.rejectClose).toBe(false);
+    captured.dismiss();
 
     await expect(p).resolves.toBeNull();
     expect(captured.chat).toHaveLength(0);
@@ -317,26 +304,39 @@ describe("бросок из диалога", () => {
 });
 
 describe("пересчёт порога в открытом окне", () => {
-  it("показанное число совпадает с тем, что уйдёт в бросок", async () => {
+  it("показанное число — ровно то, что уйдёт в бросок", async () => {
     const weapon = weaponFor();
-    const actor  = attacker({ items: [weapon] });
-    const p = showAttackDialog(actor, weapon);
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
 
-    const html = liveHtml(
-      { "#atk-char": "bs", "#atk-modifier": "-5",
-        "input[name='atk-rof']:checked": { bonus: "10" },
-        "input[name='atk-aiming']:checked": { bonus: "0" } },
+    // Одна и та же форма: сперва её читает живой пересчёт, потом — сам бросок.
+    // Разъедься эти два чтения, игрок увидел бы одно число, а кинул другое.
+    const display = textNode();
+    const form = attackForm(
+      { "#atk-modifier": "-5",
+        "input[name='atk-rof']:checked": { dataset: { bonus: "10" } },
+        "#atk-total-display": display, ".av-adv-hint": textNode() },
       { ".atk-mod-cb:not([data-autofail]):checked": [checkbox(20)],
         ".atk-mod-cb:checked": [checkbox(20)] });
-    captured.dialog.render(html);
 
-    expect(html.shown["#atk-total-display"]).toBe("70");   // 45 − 5 + 10 + 20
-    expect(html.shown[".av-adv-hint"]).toContain("активно 1");
+    captured.rerender(form);
+    expect(display.textContent).toBe("70");                 // 45 − 5 + 10 + 20
 
-    await pressRoll(p,
-      { "#atk-modifier": "-5", "input[name='atk-rof']:checked": { bonus: "10" } },
-      { ".atk-mod-cb:not([data-autofail]):checked": [checkbox(20)] });
-    expect(thresholdInCard()).toBe(70);
+    await captured.press("roll", form);
+    expect(thresholdInCard()).toBe(Number(display.textContent));
+    await p;
+  });
+
+  it("сводка в заголовке считает отмеченные ситуативные", () => {
+    const weapon = weaponFor();
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    const hint = textNode();
+    captured.rerender(attackForm(
+      { "#atk-total-display": textNode(), ".av-adv-hint": hint },
+      { ".atk-mod-cb:not([data-autofail]):checked": [checkbox(20)],
+        ".atk-mod-cb:checked": [checkbox(20)] }));
+
+    expect(hint.textContent).toContain("активно 1");
   });
 
   it("Ослеплён у стрелкового — автоматический провал вместо броска", async () => {
@@ -344,12 +344,13 @@ describe("пересчёт порога в открытом окне", () => {
     const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
     expect(captured.dialog.content).toContain('data-autofail="true"');
 
-    const html = liveHtml({ "#atk-char": "bs", "#atk-modifier": "0" },
-      { ".atk-mod-cb[data-autofail='true']:checked": [checkbox(0)] });
-    captured.dialog.render(html);
-    expect(html.shown["#atk-total-display"]).toBe("ПРОВАЛ");
+    const display = textNode();
+    const form = attackForm({ "#atk-total-display": display, ".av-adv-hint": textNode() },
+      { ".atk-mod-cb[data-autofail]:checked": [checkbox(0)] });
+    captured.rerender(form);
+    expect(display.textContent).toBe("ПРОВАЛ");
 
-    await pressRoll(p);
+    await captured.press("roll", form);
     expect(captured.chat.at(-1).content).toContain("Автоматический провал (Ослеплён)");
     expect(captured.rolls).toHaveLength(0);
     await expect(p).resolves.toBeNull();

@@ -363,12 +363,15 @@
 /* Чекбоксы/радио — зелёный акцент */
 .wh-attack-dialog input[type="checkbox"],
 .wh-attack-dialog input[type="radio"] { accent-color: #4dffa6 !important; }
-/* Кнопки и выпадашки */
+/* Кнопки и выпадашки. Окно атаки — DialogV2: кнопки лежат в .form-footer,
+   а не в .dialog-buttons первого поколения (см. attack-dialog.mjs). */
 .wh-attack-dialog .dialog-buttons button,
+.wh-attack-dialog .form-footer button,
 .wh-rename-dialog .dialog-button {
   background: #0e2a1c !important; color: #d8ffe8 !important; border: 1px solid #2f9e6a !important;
 }
 .wh-attack-dialog .dialog-buttons button:hover,
+.wh-attack-dialog .form-footer button:hover,
 .wh-rename-dialog .dialog-button:hover { background: #15492f !important; box-shadow: 0 0 7px rgba(77,255,166,0.4); }
 .wh-attack-dialog option,
 .wh-roll-dialog-window option,
@@ -651,6 +654,7 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-atk-v2 .atk-mod-auto span { color: #ffb84d; }
 
 /* Кнопка «Бросок!» — зелёный акцент */
+.wh-atk-dialog .form-footer .roll,
 .wh-atk-dialog .dialog-buttons .roll, .wh-atk-dialog .dialog-button.roll {
   background: linear-gradient(180deg, #4dffa6, #2f9e6a); color: #04100a; border: 1px solid #1f6f4a; font-weight: 700;
 }
