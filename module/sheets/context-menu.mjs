@@ -40,7 +40,10 @@ export function openContextMenu(ev, entries, jq = globalThis.$) {
       ev2.stopPropagation();
       menu.remove();
       jq(globalThis.document).off("click.wh-ctx");
-      entry.onClick(ev2);
+      // Результат возвращаем: пункт меню бывает асинхронным (спросить
+      // подтверждение, потом удалить), и без этого его никто не дожидается.
+      // jQuery возвращённым промисом не пользуется, а вызывающему он нужен.
+      return entry.onClick(ev2);
     });
   }
 
@@ -66,7 +69,24 @@ export function activateItemContextMenu(html, actor, jq = globalThis.$) {
           else new WarhammerItemSheet(item).render(true);
         }
       },
-      { cls: "wh-ctx-delete", label: "🗑️ Удалить", onClick: () => item.delete() }
+      {
+        cls: "wh-ctx-delete",
+        label: "🗑️ Удалить",
+        // Меню открывается по ПКМ прямо под курсором, и «Удалить» стоит вплотную
+        // к «Редактировать»: без вопроса промах стирал предмет молча, откатить
+        // его нечем (wdbc-9z9).
+        onClick: async () => {
+          // Имя экранируем: его задаёт игрок на своём акторе, а content диалога
+          // разбирается как HTML — «<img src=x onerror=…>» в названии предмета
+          // исполнился бы у того, кто это удаление подтверждает.
+          const name = foundry.utils.escapeHTML(item.name ?? "");
+          const ok = await foundry.applications.api.DialogV2.confirm({
+            window: { title: "Удалить предмет" },
+            content: `<p>Удалить «${name}»? Вернуть его будет нечем.</p>`
+          }).catch(() => false);
+          if (ok) await item.delete();
+        }
+      }
     ], jq);
   });
 }

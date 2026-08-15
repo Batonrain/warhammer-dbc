@@ -173,7 +173,15 @@ globalThis.foundry = {
     sheets: { ActorSheet: class extends ApplicationStub {}, ItemSheet: class extends ApplicationStub {} }
   },
   applications: {
-    api: { HandlebarsApplicationMixin: base => base, ApplicationV2: ApplicationStub },
+    api: {
+      HandlebarsApplicationMixin: base => base, ApplicationV2: ApplicationStub,
+      // «Да/Нет» второго поколения: как и у globalThis.Dialog, ответ задаёт
+      // тест через captured.confirmAnswer, а сам запрос остаётся в
+      // captured.dialog — по нему проверяют текст.
+      DialogV2: class {
+        static async confirm(config) { captured.dialog = config; return captured.confirmAnswer; }
+      }
+    },
     sheets: { ActorSheetV2: ApplicationStub, DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub }
   },
   utils: {
@@ -181,6 +189,9 @@ globalThis.foundry = {
     duplicate: x => structuredClone(x),
     deepClone: x => structuredClone(x),
     randomID: () => "stubid",
+    // Как у Foundry v13: & < > " '. Настоящий тоже ничего сверх этого не делает.
+    escapeHTML: v => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;"),
     getProperty: () => undefined,
     setProperty: () => true
   },
