@@ -48,10 +48,10 @@
       "system": {
         "changes": [
           {
-            "key": "system.characteristics.s.bonus",
+            "key": "system.characteristics.s.bonusFx",
             "type": "add",
             "value": 4,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           }
         ]

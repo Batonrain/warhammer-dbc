@@ -897,13 +897,22 @@ export class WarhammerActor extends Actor {
       char.drugMod    = drugMod;
       char.charDamage = dmgMod;
       char.vitalMod   = vitalMod;
-      // База не трогается; урон и потребности — отдельные временные модификаторы
-      char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod - dmgMod - vitalMod;
+      // База не трогается; урон и потребности — отдельные временные модификаторы.
+      // totalFx — надбавка к ЗНАЧЕНИЮ от эффектов, парная к bonusFx ниже:
+      // хранимое поле, фаза "initial", входит в расчёт ДО вывода Бонуса,
+      // потолка Ловкости и навыков.
+      char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod
+                   + (char.totalFx || 0) - dmgMod - vitalMod;
       // Потолок брони режет готовое значение Ловкости — и Бонус ниже считается
       // уже от урезанного. Сверхъестественная Ловкость потолком не ограничена:
       // она прибавляется к Бонусу отдельным слагаемым, а не к значению.
       if (key === "ag" && agilityCap !== null) char.total = Math.min(char.total, agilityCap);
-      char.bonus   = Math.floor(char.total / 10) + (char.supernatural || 0) + traitMod + pathMod;
+      // bonusFx — надбавка от эффектов (Конструктор, миграция легаси). Хранимое
+      // поле, эффекты целятся в него в фазе "initial", то есть попадают сюда до
+      // расчёта: иначе число меняло бы лист, но не доходило бы до брони, навыков
+      // и перемещений, которые считаются ниже по этому же проходу.
+      char.bonus   = Math.floor(char.total / 10) + (char.supernatural || 0) + (char.bonusFx || 0)
+                   + traitMod + pathMod;
     }
 
     // Гемункул, Стадия 1 (Идеал Плоти): +I.b к максимуму Ран и Regeneration

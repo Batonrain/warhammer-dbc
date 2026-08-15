@@ -21,6 +21,8 @@
 
 import { hasLegacyEffects, legacyEffectsToChanges } from "../constants/effect-keys.mjs";
 import { isItemActive }                             from "../apps/effects.mjs";
+import { characteristicEffectKey, describeMechEntry, allMechEntryIds,
+         DURABLE_MECH_KINDS }                       from "../apps/mechanics.mjs";
 
 const SYSTEM = "warhammer-dbc";
 
@@ -72,14 +74,15 @@ const MIGRATED_SUFFIX = " (перенесено)";
  * Ключи характеристик, которые правят записи Конструктора (`flags.mechanics`,
  * apps/mechanics.mjs). Свои эффекты он заводит сам, когда предмет попадает к
  * актору, поэтому в компендиуме их ещё нет и читать приходится сами записи.
- * Ключ строится ровно как в applyMechEntry.
+ * Ключ строит та же функция, что и сам Конструктор: своя копия правила
+ * («Бонус» целится в .bonusFx) перестала бы узнавать пару при первой же
+ * правке цели.
  */
 function mechanicsKeys(item) {
   const keys = new Set();
   for (const group of item.getFlag(SYSTEM, "mechanics") ?? [])
     for (const entry of group.entries ?? [])
-      if (entry.kind === "characteristic")
-        keys.add(`system.characteristics.${entry.charKey}.${entry.field}`);
+      if (entry.kind === "characteristic") keys.add(characteristicEffectKey(entry));
   return keys;
 }
 
@@ -216,6 +219,78 @@ export async function repairDeadArmourKeys(item) {
 // пересчитывается заново из base/advance/... каждый цикл, поэтому
 // "final"-эффект безопасно ложится поверх (тот же приём, что и у .bonus).
 // Идемпотентно само по себе — почищенных .value-ключей просто не останется.
+/**
+ * Ключ надбавки к Бонусу характеристики: `.bonus` → `.bonusFx`, фаза "initial".
+ *
+ * `.bonus` считается расчётом листа (documents/actor.mjs), поэтому эффект фазы
+ * "final" менял на листе число, но не доходил ни до брони, ни до навыков, ни до
+ * перемещений. Цель — хранимое `.bonusFx`, которое входит в сам расчёт
+ * (wdbc-5wm). Чинить надо и уже перенесённые миры: перенос сверяет несомую
+ * механику по ключу, и рядом со старым лёг бы второй эффект — тот же бонус
+ * дважды, причём работающий только наполовину.
+ */
+/**
+ * Метит эффекты, заведённые Конструктором до появления пересборки: без метки
+ * `mechEntry` она их не узнает и при первой же правке заведёт рядом второй —
+ * бонус посчитается дважды (wdbc-473).
+ *
+ * Признак — имя: эффектам Конструктор даёт describeMechEntry(запись), и до
+ * первой правки оно совпадает. Правки же и не было: пока метки нет, правка
+ * никуда не доходила — тем и была беда.
+ */
+export async function adoptMechanicsEffects(item) {
+  const byName = new Map();
+  for (const group of item.getFlag(SYSTEM, "mechanics") ?? [])
+    for (const entry of group.entries ?? [])
+      if (DURABLE_MECH_KINDS.has(entry.kind)) byName.set(describeMechEntry(entry), entry.id);
+  if (!byName.size) return 0;
+
+  let tagged = 0;
+  for (const effect of item.effects ?? []) {
+    if (effect.getFlag?.(SYSTEM, "mechEntry")) continue;
+    const entryId = byName.get(effect.name);
+    if (!entryId) continue;
+    await effect.setFlag(SYSTEM, "mechEntry", entryId);
+    tagged++;
+  }
+  return tagged;
+}
+
+/**
+ * `mechanicsApplied: true` → список id записей, которые тогда лежали.
+ *
+ * Флаг был булевым «предмет свою механику отработал», пока применение
+ * случалось единственный раз, при получении предмета. Теперь оно поштучное
+ * (запись, дописанную на листе актора, надо отыграть, а соседнюю — нет), и
+ * старому флагу нужен ровно один перевод. Делать его на лету, в самом
+ * применении, нельзя: там «всё, что лежит сейчас» уже включало бы только что
+ * дописанную запись, и она молча считалась бы отыгранной.
+ *
+ * Идемпотентно: у переведённого предмета флаг уже массив.
+ */
+export async function materializeMechanicsApplied(item) {
+  if (item.getFlag(SYSTEM, "mechanicsApplied") !== true) return 0;
+  await item.setFlag(SYSTEM, "mechanicsApplied", [...allMechEntryIds(item)]);
+  return 1;
+}
+
+export async function repairCharBonusEffectKeys(item) {
+  // И `.bonus`, и `.total`: оба поля расчёт листа собирает заново, так что
+  // эффект поверх любого из них правил только показанное число. Целью стали
+  // хранимые надбавки — bonusFx и totalFx соответственно.
+  const dead = /^system\.characteristics\.(\w+)\.(bonus|total)$/;
+  let fixed = 0;
+  for (const effect of item.effects ?? []) {
+    const changes = effect.system?.changes ?? [];
+    if (!changes.some(c => dead.test(c.key))) continue;
+    const newChanges = changes.map(c => dead.test(c.key)
+      ? { ...c, key: `${c.key}Fx`, phase: "initial" } : c);
+    await effect.update({ "system.changes": newChanges });
+    fixed++;
+  }
+  return fixed;
+}
+
 export async function repairCharValueEffectKeys(item) {
   let fixed = 0;
   for (const effect of item.effects ?? []) {
@@ -231,7 +306,7 @@ export async function repairCharValueEffectKeys(item) {
 
 /** Весь мир: предметы акторов и компендиумы библиотек. */
 export async function migrateAllItemEffects() {
-  let migrated = 0, repaired = 0, deduped = 0;
+  let migrated = 0, repaired = 0, deduped = 0, adopted = 0;
 
   /** Порядок шагов важен — см. комментарии внутри. */
   async function pass(item) {
@@ -240,6 +315,14 @@ export async function migrateAllItemEffects() {
     // бонус дважды. Она же приводит ключ к тому виду, в каком его сверяет
     // снятие дублей.
     repaired += await repairCharValueEffectKeys(item);
+    // И эта до переноса, по той же причине: перенос ищет ключ надбавки к
+    // Бонусу в его нынешнем виде (.bonusFx), а старый эффект несёт .bonus —
+    // рядом лёг бы второй, и бонус посчитался бы дважды.
+    repaired += await repairCharBonusEffectKeys(item);
+    // До пересборки: неметенный эффект Конструктора она примет за чужой.
+    adopted  += await adoptMechanicsEffects(item);
+    // Тем же проходом — перевод булева mechanicsApplied в список id записей.
+    adopted  += await materializeMechanicsApplied(item);
     // И эта тоже до переноса: мёртвый ключ брони перенос за уже несомую
     // механику не считает (carriedKeys сверяет по ключу), и рядом лёг бы
     // второй — тот же AP дважды. У модификаций она, наоборот, снимает флаг,
@@ -275,12 +358,13 @@ export async function migrateAllItemEffects() {
     ui.notifications?.info(`Warhammer DBC: перенесено в новую систему эффектов — ${migrated}.`);
   }
   if (repaired) {
-    console.log(`Warhammer DBC | Починка эффектов: исправлено ${repaired} эффект(ов) с ключом .value → .total.`);
+    console.log(`Warhammer DBC | Починка эффектов: исправлено ${repaired} — мёртвые ключи и цель надбавок характеристик.`);
     ui.notifications?.info(`Warhammer DBC: исправлены неработавшие бонусы характеристик — ${repaired}.`);
   }
   if (deduped) {
     console.log(`Warhammer DBC | Снято правок, задвоенных Конструктором: ${deduped}.`);
     ui.notifications?.info(`Warhammer DBC: убраны задвоенные бонусы — ${deduped}.`);
   }
-  return { migrated, repaired, deduped };
+  if (adopted) console.log(`Warhammer DBC | Помечено эффектов Конструктора: ${adopted}.`);
+  return { migrated, repaired, deduped, adopted };
 }

@@ -86,10 +86,46 @@ describe("ключ складываемой брони", () => {
 describe("подписи типов изменения", () => {
   it("свои типы деления подписаны, а не печатаются как есть", () => {
     const summary = summarizeEffectChanges([
-      { key: "system.characteristics.ag.total", type: "divideUp", value: 2 },
-      { key: "system.characteristics.s.total",  type: "divideDown", value: 2 }
+      { key: "system.characteristics.ag.totalFx", type: "divideUp", value: 2 },
+      { key: "system.characteristics.s.totalFx",  type: "divideDown", value: 2 }
     ]);
     expect(summary).toBe("Ag (значение) ÷↑ (вверх)2, S (значение) ÷↓ (вниз)2");
+  });
+});
+
+// Надбавка к Бонусу характеристики целилась в system.characteristics.<k>.bonus
+// в фазе "final". Но Бонус СЧИТАЕТСЯ расчётом листа, и эффект ложился поверх
+// готового числа: лист показывал новый T.b, а броня, навыки и перемещения
+// считались по старому (wdbc-5wm). Цель — хранимое .bonusFx, фаза "initial".
+describe("надбавка к Бонусу характеристики", () => {
+  it("старый ключ .bonus в вайтлисте не остался", () => {
+    expect(EFFECT_KEY_WHITELIST.filter(k => /^system\.characteristics\.\w+\.bonus$/.test(k)))
+      .toEqual([]);
+  });
+
+  it("у нового ключа есть подпись, и она та же", () => {
+    expect(EFFECT_KEY_LABELS["system.characteristics.t.bonusFx"]).toBe("T (бонус, Unnatural)");
+  });
+
+  it("перенос легаси целится в него в фазе initial", () => {
+    const changes = legacyEffectsToChanges({ charBonusStat: "t", charBonusValue: 2 });
+    expect(changes).toEqual([{ key: "system.characteristics.t.bonusFx", type: "add",
+                               value: 2, phase: "initial", priority: 0 }]);
+  });
+
+  it("бонус к ЗНАЧЕНИЮ целится в .totalFx — по той же причине", () => {
+    // Считалось, что .total пересчитывается заново каждый проход и потому
+    // эффект поверх него «работает». Он и правда не затирается — но ложится
+    // ПОСЛЕ расчёта, а Бонус, навыки и броня выведены из старого значения
+    // раньше. Проверено на живом prepareDerivedData: запись 10 в .total не
+    // меняет ни Бонус, ни поглощение (test/documents/char-bonus-reaches-armor).
+    const changes = legacyEffectsToChanges({ charValueBonuses: [{ stat: "s", value: 3 }] });
+    expect(changes[0]).toMatchObject({ key: "system.characteristics.s.totalFx", phase: "initial" });
+  });
+
+  it("старый ключ .total в вайтлисте тоже не остался", () => {
+    expect(EFFECT_KEY_WHITELIST.filter(k => /^system\.characteristics\.\w+\.total$/.test(k)))
+      .toEqual([]);
   });
 });
 
@@ -97,12 +133,14 @@ describe("какая фаза какому ключу положена", () => {
   it("хранимым полям — initial", () => {
     for (const key of ["system.armorBonus.head",
                        "system.encumbrance.indexBonus.all",
-                       "system.movement.spdBonus"])
+                       "system.movement.spdBonus",
+                       "system.characteristics.t.bonusFx"])
       expect(expectedPhase(key), key).toBe("initial");
   });
 
   it("производным — final", () => {
     for (const key of ["system.characteristics.s.total",
+                       "system.characteristics.s.bonus",   // мёртвый ключ: чинится миграцией
                        "system.absorption.vsType.energy",
                        "system.encumbrance.carry",
                        "system.fearRating"])

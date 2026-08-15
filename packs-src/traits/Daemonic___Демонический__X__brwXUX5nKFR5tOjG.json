@@ -31,10 +31,10 @@
       "system": {
         "changes": [
           {
-            "key": "system.characteristics.t.bonus",
+            "key": "system.characteristics.t.bonusFx",
             "type": "add",
             "value": 1,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           }
         ]

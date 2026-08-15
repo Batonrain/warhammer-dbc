@@ -35,7 +35,7 @@ import { WarhammerActiveEffectConfig } from "./module/sheets/active-effect-confi
 import { refreshCalendarWidget, initTimeFlow } from "./module/apps/imperial-calendar.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
-import { applyItemMechanics, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
+import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
@@ -1171,6 +1171,31 @@ Hooks.on("createItem", async (item, options, userId) => {
   if (!(actor instanceof Actor)) return;
   await runAutoScripts(item);
   await applyItemMechanics(item);
+});
+
+// Механику правят и на предмете, который УЖЕ лежит у актора: Черта из
+// библиотеки приезжает пикером пустой, и настраивают её прямо на листе. Это
+// ЕДИНСТВЕННАЯ точка, реагирующая на правку Механики, — лист предмета сам
+// пересборку не зовёт: ядро зовёт хук синхронно, ещё до того как setFlag на
+// листе вернёт управление, и два прогона успели бы завести по эффекту на одну
+// запись.
+//
+// У предмета на акторе идёт полное применение: долговечные записи
+// пересобираются, РАЗОВЫЕ (Порча, Раны, выдача Черты/снаряжения, Код)
+// отыгрываются по одной, каждая свой первый раз. Предмету в списке мира актора
+// нет — там только пересборка эффектов, чтобы вкладка «Эффекты» показывала то,
+// что настроено, ещё до броска на лист.
+//
+// Условие — именно `!== undefined`, а не проверка на правду: снятие последней
+// группы приходит как mechanics: [] и обязано дойти до пересборки, а не быть
+// принятым за «механику не трогали». Собственные записи Конструктора
+// (mechanicsApplied, rollMods, system.effects от weaponProp) ключа mechanics не
+// несут и сюда не возвращаются — рекурсии нет.
+Hooks.on("updateItem", async (item, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (changed?.flags?.["warhammer-dbc"]?.mechanics === undefined) return;
+  if (item.parent instanceof Actor) await applyItemMechanics(item);
+  else await syncMechanicsEffects(item);
 });
 
 // Откат перманентных правок характеристик/пулов, выданных шаблонами старого

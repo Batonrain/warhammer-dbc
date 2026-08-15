@@ -34,7 +34,8 @@ import { PSY_DISCIPLINES, TECH_DISCIPLINES,
 import { DW_GODS_MAP }                               from "../constants/demon-weapon.mjs";
 import { summarizeEffectChanges, expectedPhase }     from "../constants/effect-keys.mjs";
 import { createBlankEffect } from "../apps/effects.mjs";
-import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml, syncWeaponPropItemEffects, findMechGroup, findMechEntry,
+import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml,
+         syncWeaponPropItemEffects, findMechGroup, findMechEntry,
          getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
@@ -1146,6 +1147,11 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     // Досчитываем system.effects.mechAddProps/mechRemoveProps при КАЖДОМ сохранении,
     // не только из полей weaponProp — иначе смена kind/удаление группы или записи
     // не подчистили бы то, что раньше построил kind:"weaponProp" (см. mechanics.mjs).
+    // Пересборку эффектов отсюда НЕ зовём: на неё уже подписан хук updateItem
+    // (warhammer-dbc.mjs) — он ловит любую правку Механики, не только с этого
+    // листа. Два вызова разом гонялись бы: хук ядро зовёт синхронно, ещё до
+    // того как setFlag ниже вернёт управление, и оба прогона успели бы увидеть
+    // «эффекта нет» и завести по своему.
     const saveMech = async arr => {
       await this.item.setFlag("warhammer-dbc", "mechanics", arr);
       await syncWeaponPropItemEffects(this.item);
