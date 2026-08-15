@@ -73,7 +73,7 @@ const TYPES = {
       description: "", notes: "", quantity: 1, weight: 0, availability: 0,
       quality: "common", toolCategory: "general", linkedWeapon: "", effect: "",
       reminder: "", qualityEffects: { poor: "", good: "", best: "" },
-      bonuses: [], drukhari: false
+      bonuses: [], drukhari: false, bookSource: ""
     }
   },
   cybernetic: {
@@ -82,7 +82,7 @@ const TYPES = {
     pack: null,
     defaults: {
       description: "", notes: "", installed: "", linkedWeapon: "",
-      quality: "common", availability: 0, weight: 0
+      quality: "common", availability: 0, weight: 0, bookSource: ""
     }
   },
   implant: {
@@ -225,7 +225,7 @@ const TYPES = {
   ability: {
     // Предметов этого типа в паках нет — способности заводит сам ГМ.
     pack: null,
-    defaults: { description: "", notes: "", benefit: "" }
+    defaults: { description: "", notes: "", benefit: "", bookSource: "" }
   },
   mutation: {
     pack: "mutations",
@@ -253,7 +253,7 @@ const TYPES = {
   mentalDisorder: {
     // Предметов этого типа в паках нет — расстройства заводит сам ГМ.
     pack: null,
-    defaults: { description: "", notes: "", testChar: "wp", testMod: 0 }
+    defaults: { description: "", notes: "", testChar: "wp", testMod: 0, bookSource: "" }
   },
 
   // ── Оружие и броня (wdbc-ff4.1.2) ──────────────────────────────────────────

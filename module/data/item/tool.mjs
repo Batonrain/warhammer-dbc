@@ -14,6 +14,8 @@ export class ToolData extends foundry.abstract.TypeDataModel {
     return {
       description:  new StringField({ initial: "", label: "Описание" }),
       notes:        new StringField({ initial: "", label: "Заметки" }),
+      // Инструмент рисуется тем же gear.hbs, что и Снаряжение (wdbc-fl3).
+      bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       quantity:     new NumberField({ initial: 1, integer: true, nullable: false, label: "Количество" }),
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
       availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
