@@ -15,7 +15,12 @@
       "charBonusStat": "",
       "charBonusValue": 0,
       "charBonuses": [],
-      "charValueBonuses": [],
+      "charValueBonuses": [
+        {
+          "stat": "t",
+          "value": 1
+        }
+      ],
       "armourAll": 0,
       "apHead": 0,
       "apBody": 0,
