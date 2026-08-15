@@ -31,21 +31,115 @@ const HORDE_RANGED_MODS = [
   { label: "Экстрем. дистанция (−30)", value: -30 }
 ];
 
-export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
+// В v13 FilePicker переехал в namespace, глобальный помечен устаревшим.
+const filePicker = () => foundry.applications?.apps?.FilePicker?.implementation || globalThis.FilePicker;
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "sheet", "actor", "horde", "wh-holo"],
-      template: "systems/warhammer-dbc/templates/actor/horde-sheet.hbs",
-      width: 720, height: 820, resizable: true,
-      tabs: [{ navSelector: ".horde-tabs", contentSelector: ".horde-body", initial: "battle" }]
-    });
-  }
+// ── Действия листа ───────────────────────────────────────────────────────────
+// ApplicationV2 зовёт обработчик [data-action] с this = лист и вторым аргументом
+// — элементом, на котором действие объявлено. Обычные функции, а не приватные
+// методы: так их видно из DEFAULT_OPTIONS.actions, и тест сверяет карту действий
+// с шаблоном.
 
-  async getData(options) {
-    const context = await super.getData(options);
+/** У V1 весь блок activateListeners стоял под if (!this.isEditable) return. */
+const whenEditable = fn => function (event, target) {
+  if (this.isEditable) return fn.call(this, event, target);
+};
+
+/** Кнопка → сколько снять/добавить Магнитуды и психологического урона. */
+const MAG_STEPS = {
+  dmg:       step => [-step, 0],
+  heal:      step => [ step, 0],
+  psych:     step => [-step, step],
+  psychheal: step => [ step, -step]
+};
+
+function onTab(event, target) {
+  this.changeTab(target.dataset.tab, target.dataset.group);
+}
+
+function onEditImage() {
+  return new (filePicker())({
+    type: "image",
+    current: this.actor.img || "",
+    callback: path => this.actor.update({ img: path })
+  }).render(true);
+}
+
+function onMag(event, target) {
+  const kind = target.dataset.mag;
+  if (kind === "reset") return this._magReset();
+  // Shift/Ctrl — шаг ×5.
+  const [dMag, dPsych] = MAG_STEPS[kind]((event.shiftKey || event.ctrlKey) ? 5 : 1);
+  return this._magChange(dMag, dPsych);
+}
+
+/** Итоговый порог атаки Орды: база + доп. модификатор + отмеченные галочки. */
+function hordeThreshold(form) {
+  const num = sel => parseInt(form.querySelector(sel)?.value) || 0;
+  let sum = 0;
+  form.querySelectorAll(".h-mod:checked").forEach(cb => { sum += parseInt(cb.dataset.value) || 0; });
+  return num("#h-threshold") + num("#h-modifier") + sum;
+}
+
+function onRollChar(event, target)  { return this._rollChar(target.dataset.char); }
+function onItemCreate(event, target){ return this._createItem(target.dataset.type); }
+function onItemEdit(event, target)  { this.actor.items.get(target.dataset.itemId)?.sheet.render(true); }
+function onItemDelete(event, target){ return this._deleteItem(target.dataset.itemId); }
+function onWeaponRoll(event, target){ return this._hordeAttackDialog(target.dataset.itemId); }
+function onPick(event, target)      { return this._openItemPicker(target.dataset.kind); }
+
+export class WarhammerHordeSheet
+  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+
+  static DEFAULT_OPTIONS = {
+    // wh-horde — на самой форме листа: у V1 её нёс <form> в шаблоне, и вся
+    // вёрстка (.wh-horde { height: 100% }) считает этот элемент корнем.
+    classes: ["warhammer-dbc", "sheet", "actor", "horde", "wh-holo", "wh-horde"],
+    position: { width: 720, height: 820 },
+    window: { resizable: true },
+    // Как у V1 ActorSheet: правка поля сразу уходит в документ, окно не закрывается.
+    form: { submitOnChange: true, closeOnSubmit: false },
+    actions: {
+      // Переключение вкладок доступно и тем, кто лист только смотрит.
+      tab: onTab,
+      editImage:  whenEditable(onEditImage),
+      mag:        whenEditable(onMag),
+      rollChar:   whenEditable(onRollChar),
+      itemCreate: whenEditable(onItemCreate),
+      itemEdit:   whenEditable(onItemEdit),
+      itemDelete: whenEditable(onItemDelete),
+      weaponRoll: whenEditable(onWeaponRoll),
+      pick:       whenEditable(onPick)
+    }
+  };
+
+  // Один шаблон целиком: лист небольшой, дробить его на части нечего.
+  // root: содержимое кладётся прямо в форму, без промежуточной обёртки — иначе
+  // между .wh-horde и её потомками появляется div, и height: 100% рвётся.
+  static PARTS = {
+    body: { template: "systems/warhammer-dbc/templates/actor/horde-sheet.hbs", root: true }
+  };
+
+  static TABS = {
+    primary: {
+      initial: "battle",
+      tabs: [
+        { id: "battle", label: "БОЙ" },
+        { id: "traits", label: "ЧЕРТЫ" },
+        { id: "notes",  label: "ЗАМЕТКИ" },
+        { id: "rules",  label: "ПРАВИЛА" }
+      ]
+    }
+  };
+
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
     const system = this.actor.system;
+    context.actor = this.actor;
     context.system = system;
+    // Активная вкладка: changeTab дальше сам переставляет .active по DOM, отсюда
+    // берётся только состояние на первый рендер и на перерисовку.
+    context.tab = this.tabGroups?.primary ?? WarhammerHordeSheet.TABS.primary.initial;
 
     context.chars = CHAR_ORDER.map(k => ({
       key: k, abbr: CHARACTERISTICS[k]?.abbr || k.toUpperCase(),
@@ -66,47 +160,6 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
     context.stateLabel = { steady: "Боеспособна", weakened: "Ослаблена потерями", broken: "Сломлена — рассыпается" }[context.d.state] || "";
     context.isGM = game.user.isGM;
     return context;
-  }
-
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
-    if (!this.isEditable) return;
-
-    // Портрет отряда: выбор изображения через файл-пикер.
-    el.querySelector(".horde-portrait")?.addEventListener("click", () => {
-      new FilePicker({
-        type: "image",
-        current: this.actor.img || "",
-        callback: path => this.actor.update({ img: path })
-      }).render(true);
-    });
-
-    // Бросок характеристики (d100 vs total).
-    el.querySelectorAll("[data-char-roll]").forEach(b =>
-      b.addEventListener("click", () => this._rollChar(b.dataset.charRoll)));
-
-    // Управление Магнитудой (Shift/Ctrl — шаг ×5).
-    const stp = (ev) => (ev.shiftKey || ev.ctrlKey) ? 5 : 1;
-    el.querySelector("[data-mag='dmg']")?.addEventListener("click", (ev) => this._magChange(-stp(ev), 0));
-    el.querySelector("[data-mag='heal']")?.addEventListener("click", (ev) => this._magChange(stp(ev), 0));
-    el.querySelector("[data-mag='psych']")?.addEventListener("click", (ev) => this._magChange(-stp(ev), stp(ev)));
-    el.querySelector("[data-mag='psychheal']")?.addEventListener("click", (ev) => this._magChange(stp(ev), -stp(ev)));
-    el.querySelector("[data-mag='reset']")?.addEventListener("click", () => this._magReset());
-
-    // Предметы: создать / открыть / удалить.
-    el.querySelectorAll("[data-item-create]").forEach(b =>
-      b.addEventListener("click", () => this._createItem(b.dataset.itemCreate)));
-    el.querySelectorAll("[data-item-edit]").forEach(b =>
-      b.addEventListener("click", () => this.actor.items.get(b.dataset.itemEdit)?.sheet.render(true)));
-    el.querySelectorAll("[data-item-delete]").forEach(b =>
-      b.addEventListener("click", () => this._deleteItem(b.dataset.itemDelete)));
-    el.querySelectorAll("[data-weapon-roll]").forEach(b =>
-      b.addEventListener("click", () => this._hordeAttackDialog(b.dataset.weaponRoll)));
-
-    // Выбор Талантов и Черт из библиотеки — то же окно, что у персонажа.
-    el.querySelector(".horde-pick-talent")?.addEventListener("click", () => this._openItemPicker("talent"));
-    el.querySelector(".horde-pick-trait")?.addEventListener("click", () => this._openItemPicker("trait"));
   }
 
   async _magChange(dMag, dPsych) {
@@ -188,7 +241,9 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
       ? `<div class="atk-range-info"><div class="atk-range-title">Дистанции (Rng = ${sys.range}м)</div>
           <div class="atk-range-grid"><span class="atr-zone atr-pb">В упор →+30</span><span class="atr-zone atr-sh">Кор. →+10</span><span class="atr-zone atr-cb">Боевая →±0</span><span class="atr-zone atr-lg">Дальняя →−10</span><span class="atr-zone atr-ex">Экстр. →−30</span></div></div>` : "";
 
-    const content = `<form class="wh-attack-form wh-horde-attack">
+    // Без <form>: DialogV2 сам оборачивает содержимое в форму, и вложенная
+    // ломала бы button.form, через который читаются поля.
+    const content = `<div class="wh-attack-form wh-horde-attack">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(w.name)}</span><span class="atk-weapon-class">${WEAPON_CLASSES[sys.weaponClass] || ""}</span></div>
       <div class="atk-horde-info">Орда · целей: <b>${targets}</b> · Магнитуда даёт <b>${d.magDamageStr}</b> к урону при попадании. Прицеливания и Избирательных атак у Орд нет.</div>
       ${wpBadges ? `<div class="atk-dlg-modifiers"><div class="atk-mods-title">Свойства оружия</div><div class="atk-wprops-list">${wpBadges}</div></div>` : ""}
@@ -199,34 +254,32 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
       ${!isMelee ? `<div class="atk-dlg-modifiers"><div class="atk-mods-title">Дистанция</div><div class="atk-mods-list">${rangedModsHtml}</div></div>` : ""}
       <div class="atk-dlg-modifiers"><div class="atk-mods-title">Модификаторы</div><div class="atk-mods-list">${commonModsHtml}</div></div>
       <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="h-total">${charVal}</span></div>
-    </form>`;
+    </div>`;
 
-    const dlg = new Dialog({
-      title: `Атака Орды: ${w.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      // Без esc: заголовок окна рисуется текстом, экранированное имя показало
+      // бы в шапке сам «&amp;».
+      window: { title: `Атака Орды: ${w.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
+      position: { width: 380 },
       content,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async html => {
-          const base = parseInt(html.find("#h-threshold").val()) || 0;
-          const mod  = parseInt(html.find("#h-modifier").val()) || 0;
-          let sum = 0;
-          html.find(".h-mod:checked").each((_, cb) => { sum += parseInt(cb.dataset.value) || 0; });
-          await this._executeHordeAttack(w, key, base + mod + sum, isMelee, targets);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll",
-      render: html => {
-        const upd = () => {
-          const base = parseInt(html.find("#h-threshold").val()) || 0;
-          const mod  = parseInt(html.find("#h-modifier").val()) || 0;
-          let sum = 0; html.find(".h-mod:checked").each((_, cb) => { sum += parseInt(cb.dataset.value) || 0; });
-          html.find("#h-total").text(base + mod + sum);
-        };
-        html.find("#h-threshold, #h-modifier").on("input", upd);
-        html.find(".h-mod").on("change", upd); upd();
+      buttons: [
+        {
+          action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
+          callback: (event, button) =>
+            this._executeHordeAttack(w, key, hordeThreshold(button.form), isMelee, targets)
+        },
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        const form = dialog.element.querySelector("form") ?? dialog.element;
+        const total = form.querySelector("#h-total");
+        const upd = () => { total.textContent = hordeThreshold(form); };
+        form.querySelectorAll("#h-threshold, #h-modifier").forEach(i => i.addEventListener("input", upd));
+        form.querySelectorAll(".h-mod").forEach(i => i.addEventListener("change", upd));
+        upd();
       }
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"], width: 380 });
-    dlg.render(true);
+    }).catch(() => null);
   }
 
   // ── Исполнение атаки Орды: попадание, урон (+кубы Магнитуды), карточка с защитой ──
