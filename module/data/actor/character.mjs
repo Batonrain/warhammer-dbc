@@ -22,7 +22,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     return {
       ...creatureSchema({ granted: true }),
       bodyType:    new StringField({ initial: "male", label: "Телосложение" }),
-      patronGod:   new StringField({ initial: "undivided", label: "Покровитель" }),
+      // Пусто = Бог не выбран. Умолчанием стоял "undivided", и требование
+      // «Покровительство: Неделимый» проходило у любого, кто просто не трогал
+      // выбор, — включая имперцев (wdbc-osz). Тему и сигил листа пустое
+      // значение не ломает: там своя подстановка Неделимого.
+      patronGod:   new StringField({ initial: "", label: "Покровитель" }),
       patronFavor: new SchemaField({
         undivided: favor("Неделимый"),
         khorne:    favor("Кхорн"),

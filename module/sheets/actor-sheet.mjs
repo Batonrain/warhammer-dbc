@@ -133,7 +133,11 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       context.infamy = infamyContext(this.actor, this._infamyKey,
         { ip, ipMax: this._infamyMax, showCounter: this._infamyShowCounter });
       context.chaosPatron = chaosPatronMeta(this._infamyKey);
-      context.chaosPatrons = CHAOS_PATRONS.map(p => ({ ...p, selected: p.key === this._infamyKey,
+      // Отметка радиокнопки — по ХРАНИМОМУ полю, а не по _infamyKey: тот
+      // подставляет Неделимого, когда Бог не выбран, и селектор показывал бы
+      // выбранным то, чего в акторе нет (wdbc-osz).
+      const patronChosen = this.actor.system.patronGod || "";
+      context.chaosPatrons = CHAOS_PATRONS.map(p => ({ ...p, selected: p.key === patronChosen,
         favor: Number(foundry.utils.getProperty(this.actor, `system.patronFavor.${p.key}`)) || 0 }));
       // Селектор Бога в ЗАПИСЯХ — только там, где патрон не выбирается иначе.
       // У Демон-Принца патрон = «Патрон» в шапке (allegiance) → селектор скрыт.
