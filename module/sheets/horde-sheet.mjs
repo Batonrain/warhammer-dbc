@@ -5,7 +5,7 @@
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES } from "../constants/items.mjs";
 import { HIT_LOCATIONS } from "../constants/combat.mjs";
-import { resolveCharFormula, _degWord } from "../helpers/utils.mjs";
+import { resolveCharFormula, _degWord, esc } from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
          buildPropertyChatBlock, buildTargetEffectButtons } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
@@ -134,7 +134,7 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
 
   async _deleteItem(id) {
     const it = this.actor.items.get(id); if (!it) return;
-    const ok = await Dialog.confirm({ title: "Удалить", content: `<p>Удалить «${it.name}»?</p>` });
+    const ok = await Dialog.confirm({ title: "Удалить", content: `<p>Удалить «${esc(it.name)}»?</p>` });
     if (ok) await it.delete();
   }
 
@@ -174,7 +174,7 @@ export class WarhammerHordeSheet extends foundry.appv1.sheets.ActorSheet {
     const wProps = resolveWeaponPropsList(mergeWeaponPropEntries(w, modFx));
     const wpBadges = wProps.map(p => {
       const r = p.def.rating ? ` (${p.rating ?? 0})` : "";
-      return `<span class="atk-wprop-badge" title="${(p.def.desc || "").replace(/"/g, "&quot;")}">${p.def.label}${r}</span>`;
+      return `<span class="atk-wprop-badge" title="${esc(p.def.desc)}">${p.def.label}${r}</span>`;
     }).join("");
 
     const rangedModsHtml = !isMelee ? HORDE_RANGED_MODS.map((m, i) =>

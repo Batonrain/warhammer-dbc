@@ -7,7 +7,7 @@ import { openGearPicker } from "./gear-picker.mjs";
 import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES } from "../constants/items.mjs";
-import { _degWord, splitTopLevel } from "../helpers/utils.mjs";
+import { _degWord, splitTopLevel, esc } from "../helpers/utils.mjs";
 import { showCreationWizard, ruSpec } from "../apps/creation.mjs";
 import { buildSkillDisplay, buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
@@ -350,7 +350,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
   /** Диалог выбора для «или»/«любые N». Резолвится массивом строк-имён талантов. */
   _promptTalentChoices(choices, nameOf = (s => String(s))) {
     if (!choices || !choices.length) return Promise.resolve([]);
-    const esc = s => String(s).replace(/"/g, "&quot;");
     const rows = choices.map((c, i) => {
       if (c.type === "or") {
         const opts = c.options.map(o => `<option value="${esc(o)}">${esc(nameOf(o))}</option>`).join("");
@@ -360,7 +359,7 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       let inputs = "";
       for (let j = 0; j < c.count; j++) {
         if (c.opts) {
-          const opts = c.opts.map(o => `<option value="${esc(o)}">${o}</option>`).join("");
+          const opts = c.opts.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join("");
           inputs += `<select class="wtc-sel wtc-mini" data-ci="${i}" data-cj="${j}">${opts}</select>`;
         } else {
           inputs += `<input type="text" class="wtc-inp" data-ci="${i}" data-cj="${j}" placeholder="специализация"/>`;
@@ -805,8 +804,6 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
    */
   _showSpecPicker(groupKey, def) {
     const opts = specOptions(groupKey);
-    const esc = x => String(x ?? "").replace(/[&<>"]/g, c =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     const rows = opts.map(o =>
       `<option value="${esc(o.key)}" data-free="${o.free ? 1 : 0}">${esc(o.display)}</option>`).join("");
 

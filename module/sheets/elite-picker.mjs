@@ -8,6 +8,7 @@
 // и субрасы, поэтому проверяется без Foundry.
 
 import { ELITE_ARCHETYPES } from "../constants/elite-archetypes.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 // Метки рас из книги → ключи рас и субрас листа.
 const RACE_LABELS = {
@@ -65,7 +66,7 @@ export function openElitePicker(actor, extraIndex = null) {
         <div class="ep-list">${rest.map(e => card(e, true)).join("")}</div></details>` : ""}
       <div class="ep-custom">
         <label>Свой архетип</label>
-        <input type="text" class="ep-own" value="${cur.replace(/"/g, "&quot;")}" placeholder="Название своего элитного архетипа"/>
+        <input type="text" class="ep-own" value="${esc(cur)}" placeholder="Название своего элитного архетипа"/>
         <button type="button" class="ep-own-set">Записать</button>
       </div>
     </form>`,

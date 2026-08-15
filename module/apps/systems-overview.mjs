@@ -8,6 +8,7 @@
 
 import { RESOURCE_TYPES, RESOURCE_ICONS, improvementPool, makeImprovement, improvementUpkeep,
   improvementOutput, improvementFlow, IMP_CATEGORIES, TITHE_GRADES, TITHE_RATES, titheRate, PRODUCTION_INPUTS } from "../constants/star-system.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const { Application } = foundry.appv1.api;
 
@@ -388,10 +389,10 @@ export class StarSystemsOverview extends Application {
     new Dialog({
       title: contract ? `Контракт — ${c.name || ""}` : "Новый контракт",
       content: `${style}<form class="ss-gen">
-        <label class="ss-gen-field"><span>Название контракта</span><input type="text" id="contract-name" value="${(c.name || "").replace(/"/g, "&quot;")}" placeholder="напр. Поставка провизии Гильдии"/></label>
+        <label class="ss-gen-field"><span>Название контракта</span><input type="text" id="contract-name" value="${esc(c.name)}" placeholder="напр. Поставка провизии Гильдии"/></label>
         <div class="ss-gen-field"><span>Отдаёшь — ресурсы (в расход)</span><div class="ss-contract-grid">${grid("contract-cost", cost)}</div></div>
         <div class="ss-gen-field"><span>Получаешь — ресурсы (в доход)</span><div class="ss-contract-grid">${grid("contract-income", incomeR)}</div></div>
-        <label class="ss-gen-field"><span>Получаешь — услуги / договорённости (текст)</span><textarea id="contract-gain" rows="3" placeholder="Впишите вручную: наёмный флот, право прохода, покровительство…">${(c.gain || "").replace(/</g, "&lt;")}</textarea></label>
+        <label class="ss-gen-field"><span>Получаешь — услуги / договорённости (текст)</span><textarea id="contract-gain" rows="3" placeholder="Впишите вручную: наёмный флот, право прохода, покровительство…">${esc(c.gain)}</textarea></label>
       </form>`,
       buttons: {
         ok: { icon: '<i class="fas fa-file-signature"></i>', label: contract ? "Сохранить" : "Заключить", callback: async html => {
@@ -617,9 +618,9 @@ export class StarSystemsOverview extends Application {
     new Dialog({
       title: `Изменить улучшение — ${imp.name}`,
       content: `${style}<form class="ss-gen">
-        <label class="ss-gen-field"><span>Название</span><input type="text" id="imp-name" value="${(imp.name || "").replace(/"/g, "&quot;")}"/></label>
+        <label class="ss-gen-field"><span>Название</span><input type="text" id="imp-name" value="${esc(imp.name)}"/></label>
         <label class="ss-gen-field"><span>Тип улучшения</span><select id="imp-cat">${catOpts}</select></label>
-        <label class="ss-gen-field"><span>Описание</span><input type="text" id="imp-cdesc" value="${(imp.desc || "").replace(/"/g, "&quot;")}"/></label>
+        <label class="ss-gen-field"><span>Описание</span><input type="text" id="imp-cdesc" value="${esc(imp.desc)}"/></label>
         <div class="ss-imp-chks" style="display:flex; gap:14px; margin-top:6px;">
           <label><input type="checkbox" id="imp-hidden" ${imp.hidden ? "checked" : ""}/> Скрыт до разведки</label>
           <label><input type="checkbox" id="imp-secret" ${imp.secret ? "checked" : ""}/> Тайное</label>

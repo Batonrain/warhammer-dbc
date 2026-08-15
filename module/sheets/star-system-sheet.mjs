@@ -3,6 +3,7 @@ import { BODY_TYPES, ZONES, STAR_CLASSES, STAR_CONFIGS, SYSTEM_FEATURES, BODY_SI
          WORLD_CLASSES, WORLD_ENVIRONMENTS, TITHE_GRADES,
          generateSystem, generateAnomaly, generateEncounter,
          colonizeUpdate, ruinUpdate, genImprovements, IMP_CATEGORIES, improvementUpkeep, improvementOutput, improvementFlow } from "../constants/star-system.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 // Видно ли улучшение зрителю: secret → после раскрытия, hidden → после разведки, иначе всегда.
 function impVisible(im, isGM, scouted, revealed) {
@@ -446,7 +447,7 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
     if (!up) { ui.notifications.warn("На этом объекте нет цивилизации, которую можно уничтожить."); return; }
     const ok = await Dialog.confirm({
       title: "Уничтожить цивилизацию",
-      content: `<p>Уничтожить всё население и инфраструктуру на <b>${item.name}</b>? Объект превратится в руины. Действие необратимо.</p>`
+      content: `<p>Уничтожить всё население и инфраструктуру на <b>${esc(item.name)}</b>? Объект превратится в руины. Действие необратимо.</p>`
     });
     if (ok) { await item.update(up); ui.notifications.info(`«${item.name}»: цивилизация уничтожена.`); }
   }

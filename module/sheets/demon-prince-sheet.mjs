@@ -13,6 +13,7 @@ import { DP_GODS, dpGodMeta, DP_ASCENSION, DP_IMMORTALITY, DP_RETINUE,
          DP_NATURE_TRAITS, DP_MIGHT, DP_MANIFEST_STEPS, dpManifest } from "../constants/demon-prince.mjs";
 import { veilTotal } from "../constants/veil.mjs";
 import { infamyContext } from "../apps/infamy-points.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 // Дары с полной автоматизацией (создают предметы / меняют числа при взятии).
 const DP_AUTO_GIFTS = new Set([
@@ -435,7 +436,7 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
 
     const ok = await foundry.applications.api.DialogV2.confirm({
       window: { title: "Жертвование даром" },
-      content: `<p>Пожертвовать даром <b>${gift.name}</b>? Вернётся половина (окр.▼) потраченного Фавора (${Math.floor((gift.paid || 0) / 2)}), но Фавор не поднимется выше 5.</p>`
+      content: `<p>Пожертвовать даром <b>${esc(gift.name)}</b>? Вернётся половина (окр.▼) потраченного Фавора (${Math.floor((gift.paid || 0) / 2)}), но Фавор не поднимется выше 5.</p>`
     }).catch(() => false);
     if (!ok) return;
 

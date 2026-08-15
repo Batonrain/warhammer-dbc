@@ -15,8 +15,7 @@
 import { formatImperialDateParts, formatClock, currentWatch, currentEnabledPhases, HOURS24_WATCHES, DEFAULT_CALENDAR_CONFIG, WATCH_PRESETS, checkDigitTooltip, DATE_PART_TOOLTIPS }
   from "../constants/imperial-calendar.mjs";
 import { triggerNewScene, triggerSessionEnd } from "./game-session.mjs";
-
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+import { esc } from "../helpers/utils.mjs";
 
 // ── Авто-течение времени (Старт/Пауза + множитель скорости) ────────────────
 // Состояние — мировая настройка {running, speed}, правит только ГМ. Тикает

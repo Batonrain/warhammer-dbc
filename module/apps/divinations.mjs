@@ -11,6 +11,7 @@ import { DIVINATIONS, DIVINATION_BY_KEY, DIVINATION_SOURCE,
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { promptGrantChoices, applyGrants, clearGrantedBy,
          registerPackCache, packEntries, charBonusesToMechanics } from "./origin-shared.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const PACK = "warhammer-dbc.divinations";
 const FLAG = "warhammer-dbc";
@@ -141,9 +142,6 @@ async function grantDivination(actor, key, def, entry, picks, rolled) {
 
   await postSummary(actor, def, { charBonuses, chosen, summary, extra, rolled });
 }
-
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function postSummary(actor, def, { charBonuses, chosen, summary, extra, rolled }) {
   const lines = [];

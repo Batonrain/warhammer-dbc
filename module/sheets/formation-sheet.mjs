@@ -20,11 +20,8 @@ import { findGroupEntry } from "../constants/skill-specializations.mjs";
 import { FEATURES, isFeatureEnabled } from "../constants/features.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
-import { _degWord } from "../helpers/utils.mjs";
+import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /** Степени успеха/провала: |порог − бросок| / 10 + 1. */
 const degrees = (threshold, roll) => Math.floor(Math.abs(threshold - roll) / 10) + 1;

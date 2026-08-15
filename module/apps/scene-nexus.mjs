@@ -17,12 +17,11 @@ import {
 } from "../constants/scene-nexus.mjs";
 import { openVeilMystic } from "./veil.mjs";
 import { openEnvironment } from "./environment.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const { Application } = foundry.appv1.api;
 
 // ── Телепорт токенов (исполняется активным ГМ; для ГМ — локально) ──────────
-const _esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
 // Уведомить инициатора: себе — тост; игроку — через флаг его User (document-sync,
 // надёжнее сырого сокета). Игрок ловит флаг в хуке updateUser (warhammer-dbc.mjs).
 function _nexusNotify(requester, kind, text) {
@@ -261,8 +260,8 @@ export class SceneNexus extends Application {
     const CAP = 24;
     const rows = toks.slice(0, CAP).map(t => {
       const img = t.texture?.src || t.actor?.img || "";
-      const nm  = _esc(t.name || t.actor?.name || "—");
-      const ic  = img ? `<img src="${_esc(img)}" loading="lazy"/>` : `<span class="wh-nx-tip-noimg">◈</span>`;
+      const nm  = esc(t.name || t.actor?.name || "—");
+      const ic  = img ? `<img src="${esc(img)}" loading="lazy"/>` : `<span class="wh-nx-tip-noimg">◈</span>`;
       return `<div class="wh-nx-tip-tok${t.hidden ? " hidden" : ""}">${ic}<span class="wh-nx-tip-nm">${nm}</span></div>`;
     }).join("");
     const more = toks.length > CAP ? `<div class="wh-nx-tip-more">…и ещё ${toks.length - CAP}</div>` : "";
@@ -370,7 +369,7 @@ export class SceneNexus extends Application {
     el.querySelectorAll("[data-gdown]").forEach(b => b.addEventListener("click", async () => { await moveGroup(b.dataset.gdown, 1); this.render(); }));
     el.querySelectorAll("[data-gdel]").forEach(b => b.addEventListener("click", async () => {
       const g = getGroup(b.dataset.gdel); if (!g) return;
-      const ok = await Dialog.confirm({ title: "Удалить группу", content: `<p>Удалить группу «${g.name}»? Сцены и их Завеса-флаги останутся, удалится только группа (и её общая Завеса).</p>` });
+      const ok = await Dialog.confirm({ title: "Удалить группу", content: `<p>Удалить группу «${esc(g.name)}»? Сцены и их Завеса-флаги останутся, удалится только группа (и её общая Завеса).</p>` });
       if (ok) { await deleteGroup(b.dataset.gdel); this.render(); }
     }));
     el.querySelectorAll("[data-gveil]").forEach(b => b.addEventListener("click", async () => {
@@ -441,7 +440,7 @@ export class SceneNexus extends Application {
   _promptText(title, value, cb) {
     new Dialog({
       title,
-      content: `<form class="ss-gen"><label class="ss-gen-field"><span>${title}</span><input type="text" id="nx-txt" value="${String(value || "").replace(/"/g, "&quot;")}"/></label></form>`,
+      content: `<form class="ss-gen"><label class="ss-gen-field"><span>${title}</span><input type="text" id="nx-txt" value="${esc(value)}"/></label></form>`,
       buttons: {
         ok: { icon: '<i class="fas fa-check"></i>', label: "OK", callback: h => cb((h.find("#nx-txt").val() || "").trim()) },
         cancel: { label: "Отмена" }

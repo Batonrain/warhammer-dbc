@@ -11,12 +11,10 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { matchSpec } from "../constants/skill-specializations.mjs";
 import { blankMechEntry } from "./mechanics.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const FLAG = "warhammer-dbc";
 const GRANT = "originGrant";           // помечает всё выданное (для отката)
-
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /**
  * [{stat, value}, ...] → одна И-группа Конструктора (kind:"characteristic",

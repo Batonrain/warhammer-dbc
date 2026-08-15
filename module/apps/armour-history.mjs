@@ -8,9 +8,7 @@
 import { PA_TABLES, PA_TABLE_ORDER, PA_TABLE_PICK, PA_SHIFT_RULE, PA_ZONES,
          entryByRoll, rangeLabel, shiftOptions } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
-
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+import { esc } from "../helpers/utils.mjs";
 
 /** Истории есть только у силовой брони Астартес. */
 export function supportsHistory(item) {

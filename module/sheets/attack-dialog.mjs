@@ -17,7 +17,7 @@ import { MELEE_STANCES, GRIPS, parseGrips, gripEffects } from "../constants/comb
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { rollIcon }                           from "../constants/roll-icons.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
-import { _degWord, _buildAmmoModString, resolveCharFormula } from "../helpers/utils.mjs";
+import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpers/utils.mjs";
 import { _executeAttackRoll }                 from "../combat/attack.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
@@ -289,24 +289,23 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Безусловно применять нельзя (зависит от цели), поэтому даём галочки —
   // и НЕ прячем в свёрнутый блок: их легко упустить, а они крупные.
   const ammoConds = (!isMelee && Array.isArray(ammoSys?.condMods)) ? ammoSys.condMods : [];
-  const escAC = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const ammoCondHtml = ammoConds.length ? `
       <div class="av-ammo-cond">
-        <div class="av-sec-lbl">${rollIcon("spark","#8fd0ff")}Боеприпас: ${escAC(loadedAmmo?.name || "")}</div>
+        <div class="av-sec-lbl">${rollIcon("spark","#8fd0ff")}Боеприпас: ${esc(loadedAmmo?.name || "")}</div>
         ${ammoConds.map((c, i) => {
           const parts = [];
           if (c.atk) parts.push(`${c.atk > 0 ? "+" : ""}${c.atk}`);
           if (c.dmg) parts.push(`${c.dmg > 0 ? "+" : ""}${c.dmg} урона`);
           for (const k of (c.wp || [])) parts.push(WEAPON_PROPERTIES[k]?.label || k);
           const val = parts.length ? `<span class="avc-val">${parts.join(", ")}</span>` : "";
-          const note = c.note ? `<span class="avc-note">${escAC(c.note)}</span>` : "";
+          const note = c.note ? `<span class="avc-note">${esc(c.note)}</span>` : "";
           // Пункты без числовых эффектов — просто памятка, без галочки.
           const isNote = !c.atk && !c.dmg && !(c.wp || []).length;
           return isNote
-            ? `<div class="avc-row avc-row-note">${escAC(c.label)} ${note}</div>`
+            ? `<div class="avc-row avc-row-note">${esc(c.label)} ${note}</div>`
             : `<label class="avc-row"><input type="checkbox" class="atk-ammo-cond"
                  data-idx="${i}" data-atk="${c.atk || 0}"/>
-                 <span class="avc-lbl">${escAC(c.label)}</span> ${val} ${note}</label>`;
+                 <span class="avc-lbl">${esc(c.label)}</span> ${val} ${note}</label>`;
         }).join("")}
       </div>` : "";
   const fatigueBadge = hasFatigue
@@ -321,7 +320,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Свойства оружия — напоминание + чекбокс короткой дистанции + перезарядка
   const wpDialogList = wProps.map(p => {
     const r = p.def.rating ? ` (${p.rating ?? 0}${p.def.rating2 ? "/" + (p.rating2 ?? 0) : ""})` : "";
-    const tip = (p.def.desc || "").replace(/"/g, "&quot;");
+    const tip = esc(p.def.desc);
     return `<span class="atk-wprop-badge" title="${tip}">${p.def.label}${r}</span>`;
   }).join("");
   const wpDialogHtml = wProps.length ? `

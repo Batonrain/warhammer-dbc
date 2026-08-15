@@ -12,6 +12,7 @@ import { CREW_POP_TABLE, CREW_MORALE_TABLE, CREW_RATING_TABLE, crewActiveRows, O
          MUTINY_APPROACHES, MUTINY_WIN_DOS } from "../constants/ship.mjs";
 import { SHIP_RELATIONS } from "../constants/ship-tokens.mjs";
 import { CRAFT_KINDS } from "../constants/small-craft.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const CRAFT_STATE = { stored: "На борту", prepared: "Подготовлена", launched: "В вылете", returning: "Возврат (топливо!)", rearming: "Перевооружение" };
 const CRAFT_STRENGTH = { full: "Полная", half: "Полусильная", destroyed: "Уничтожена" };
@@ -463,7 +464,7 @@ export class WarhammerShipSheet extends foundry.appv1.sheets.ActorSheet {
       if (!it) return;
       const ok = await Dialog.confirm({
         title: "Выгрузить партию",
-        content: `<p>Убрать «<b>${it.name}</b>» из трюма?</p>`
+        content: `<p>Убрать «<b>${esc(it.name)}</b>» из трюма?</p>`
       });
       if (ok) await it.delete();
     });

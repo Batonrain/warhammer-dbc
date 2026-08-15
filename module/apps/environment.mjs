@@ -10,10 +10,9 @@ import {
   WEATHER, WEATHER_GROUPS, RAD_TABLE, RAD_PROTECTION, envView, defaultEnv
 } from "../constants/environment.mjs";
 import { resolveEnvContainer, readEnvForScene, primaryGroupForScene, envSceneHasOverride } from "../constants/scene-nexus.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const { Application } = foundry.appv1.api;
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
 function currentScene() { return canvas?.scene ?? game.scenes?.current ?? null; }
 
 const CATS = [
