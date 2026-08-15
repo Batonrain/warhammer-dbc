@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Безоружные атаки: +8 Pen, Flame, тип урона E. В Борьбе противник получает в начале своего хода авто 2d10+4 E, Pen 6, Flame. Best.Q + эффект: Луч тепловой смерти (20 м, 2d10+5 E, Pen 10, Melta) / иммунитет к E(Fl) + 4 AP / контроль направления тепла.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Имплант мозга/спины: игнорирует Критические Эффекты от боли; авто-проходит панику и тесты по Горению.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

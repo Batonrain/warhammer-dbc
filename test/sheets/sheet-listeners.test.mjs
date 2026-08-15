@@ -613,7 +613,6 @@ describe("Применение расы, Прошлого и легиона", ()
     const upd = sheet.actor.updates[0];
     expect(upd["system.characteristics.ws.base"]).toBeUndefined();   // занято — не трогаем
     expect(upd["system.characteristics.bs.base"]).toBe(30);
-    expect(captured.created.some(d => d.type === "implant")).toBe(true);  // органы Геносемени
   });
 
   it("Иннари получает Черты Иннари поверх бонусов Прошлого", async () => {

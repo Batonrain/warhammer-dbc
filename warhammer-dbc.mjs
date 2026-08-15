@@ -56,6 +56,8 @@ import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
+import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
+import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
@@ -268,6 +270,11 @@ Hooks.once("init", () => {
 
   // Версия проставленных хватов рукопашному оружию (одноразовая миграция)
   game.settings.register("warhammer-dbc", "weaponGripsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия чистки остатков старой системы Органов Геносемени (одноразовая)
+  game.settings.register("warhammer-dbc", "geneSeedCleanupVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -565,7 +572,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, runActorSetup });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -578,6 +585,18 @@ Hooks.once("ready", async () => {
     await migrateWeaponGrips();
     await game.settings.set("warhammer-dbc", "weaponGripsVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Авто-миграция хватов:", e); }
+});
+
+// ── Одноразовая чистка: остатки снятой системы Органов Геносемени ─────────────
+// Ручной перезапуск: game.warhammerDBC.migrateRemoveGeneSeed()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "geneSeedCleanupVersion") || 0) >= VERSION) return;
+  try {
+    await migrateRemoveGeneSeed();
+    await game.settings.set("warhammer-dbc", "geneSeedCleanupVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Чистка Геносемени:", e); }
 });
 
 // ── Боевой HUD (панель внизу вместо хотбара) ──────────────────────────────────
@@ -944,24 +963,6 @@ Hooks.on("preCreateItem", (doc, data) => {
     if (!isGenericImg(doc.img)) return;
     const icon = itemIconFor(data?.type ?? doc.type, doc.system ?? {});
     if (icon) doc.updateSource({ img: icon });
-  } catch (e) { /* не мешаем созданию предмета */ }
-});
-
-// Органы Геносемени Астартес (system.category "geneseed") — не хирургическая
-// операция, а часть тела космодесантника: откуда бы орган ни появился на
-// акторе (автовыдача при создании персонажа, перетаскивание из компендиума
-// «Импланты», ручное добавление GM'ом), он сразу считается вживлённым и
-// попадает на био-скан вкладки ТЕЛО, а не только когда выдан через
-// grantAstartesImplants (module/apps/astartes-implants.mjs).
-Hooks.on("preCreateItem", (doc, data) => {
-  try {
-    if ((data?.type ?? doc.type) !== "implant") return;
-    if ((data?.system?.category ?? doc.system?.category) !== "geneseed") return;
-    if (doc.getFlag("warhammer-dbc", "installed")) return;
-    doc.updateSource({
-      "flags.warhammer-dbc.installed": true,
-      "flags.warhammer-dbc.geneSeed": true
-    });
   } catch (e) { /* не мешаем созданию предмета */ }
 });
 

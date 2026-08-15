@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Дублирует функции руки. Poor.Q −5 тонкая работа; Good.Q +10 на манипуляции; Best.Q +10 + бонус.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

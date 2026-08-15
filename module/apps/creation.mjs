@@ -15,7 +15,6 @@ import { RACES, SUBRACES, SUBRACE_DATA,
 import { buildLegionOptions, buildChapterOptions,
          buildCultureLegionOptions, resolveCultureFx } from "../constants/legions.mjs";
 import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
-import { ASTARTES_RACE }                from "../constants/astartes-implants.mjs";
 import { disabledRaceKeys }             from "../constants/features.mjs";
 import { archetypeEntries, archetypesForRace } from "./archetypes.mjs";
 import { splitTopLevel, esc }           from "../helpers/utils.mjs";
@@ -519,11 +518,11 @@ async function grantSkitariiWarPlate(actor) {
  * недостающие. Безопасно при повторном запуске.
  *
  * deps — то, что осталось на листе: createTraits, applyStartingTalents,
- * grantAstartesImplants, applyTheme.
+ * applyTheme.
  */
 export async function applyCreation(actor,
   { raceKey, subraceKey, alignment, archKey, ynnariPast, harlequinPast, charRolls = null, geneSeed = null },
-  { createTraits, applyStartingTalents, grantAstartesImplants, applyTheme }) {
+  { createTraits, applyStartingTalents, applyTheme }) {
   const { race, arch, sub, past, pastKey } =
     resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harlequinPast });
   const chars = actor.system.characteristics;
@@ -586,8 +585,6 @@ export async function applyCreation(actor,
   let implants = 0;
   if (arch?.grantsImplants) implants = await grantMechanicusImplants(actor);
   else if (arch?.grantsWarPlate) implants = await grantSkitariiWarPlate(actor);
-  // Органы Геносемени — космодесантнику при создании.
-  if (raceKey === ASTARTES_RACE) implants += await grantAstartesImplants();
 
   // Стартовые таланты: раса + Прошлое + субраса + архетип (выборы — через диалог)
   // Культура легиона выдаёт свои Таланты (стр. 489-506). Культура может быть

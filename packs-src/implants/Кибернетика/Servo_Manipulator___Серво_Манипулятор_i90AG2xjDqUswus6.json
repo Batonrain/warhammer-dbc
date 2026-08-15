@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Полу-автономный манипулятор с оружием/инструментом: доп. полудействие. Можно ставить поверх другой бионики.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

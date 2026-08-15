@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Наномашины ускоряют исцеление. Poor.Q регенерация ×2 (24ч); Good.Q ×1.5 (8ч); Best.Q ×1 (4ч). Раны лечатся быстрее.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Сегментированные пластины: Трейт Natural Armour(4). Дефект (до Best.Q): −20 Acrobatics, −5 A.\nPoor.Q: NA(3), −30 Acrobatics, −10 A; при крите хитин трескается (1d5 непогл. X себе).\nGood.Q: −10 Acrobatics, штраф A убран.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Регенерация покрова (Regeneration(1)); 2) Хитиновые когти (Deadly Natural Weapons(3, Когти)); 3) Камуфляжные пластины (+20 Stealth неподвижно, +10 в медленном движении).",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

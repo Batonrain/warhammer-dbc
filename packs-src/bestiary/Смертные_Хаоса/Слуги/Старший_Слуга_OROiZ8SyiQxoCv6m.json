@@ -1129,7 +1129,83 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Старший Слуга",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Управляющий свитой без специализации."
+              },
+              {
+                "key": "pilot",
+                "label": "Пилот",
+                "hint": "Navigate (Surface) +10, Operate (Surface) +20, имплант Interface Port.",
+                "groupSkills": [
+                  {
+                    "group": "navigation",
+                    "specialty": "Surface",
+                    "rank": "trained"
+                  },
+                  {
+                    "group": "operate",
+                    "specialty": "Surface",
+                    "rank": "veteran"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.implants.TS9x1btFMIrS1jbU"
+                ]
+              },
+              {
+                "key": "overseer",
+                "label": "Надсмотрщик",
+                "hint": "Intimidate/Command/Logic +20, C.L. (War) +20, Талант Iron Discipline.",
+                "system": {
+                  "skills.intimidate.rank": "veteran",
+                  "skills.command.rank": "veteran",
+                  "skills.logic.rank": "veteran"
+                },
+                "groupSkills": [
+                  {
+                    "group": "commonLore",
+                    "specialty": "War",
+                    "rank": "veteran"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.cZSwCrYZhZkt18iF"
+                ]
+              },
+              {
+                "key": "spy",
+                "label": "Шпион",
+                "hint": "Inquiry/Stealth/Deceive +20, Талант Mimic, мульти-ключ и маскировочный комплект.",
+                "system": {
+                  "skills.inquiry.rank": "veteran",
+                  "skills.stealth.rank": "veteran",
+                  "skills.deceive.rank": "veteran"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.talents.XDrQdNmw2L2rIqXa",
+                  "Compendium.warhammer-dbc.tools.Jt9L6Db9UgNmSElz",
+                  "Compendium.warhammer-dbc.tools.qI7plq2Kqn66eb1K"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

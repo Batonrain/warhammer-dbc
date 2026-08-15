@@ -1,6 +1,8 @@
 <div class="tab notes-cog {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
 
-  {{!-- Телосложение задаёт набор PNG-масок фигуры на вкладке «ТЕЛО». --}}
+  {{!-- Телосложение задаёт набор PNG-масок фигуры на вкладке «ТЕЛО».
+        У Астартес выбора нет: они всегда мужчины, блок для них скрыт. --}}
+  {{#unless isAstartes}}
   <div class="notes-section-panel body-type-panel">
     <div class="panel-title">ТЕЛОСЛОЖЕНИЕ</div>
     <div class="body-type-grid">
@@ -14,6 +16,7 @@
     <div class="body-type-note">Определяет силуэт на вкладке «ТЕЛО» и в Хирургиконе. «Другое» использует
       нейтральный набор — отдельной графики под него нет.</div>
   </div>
+  {{/unless}}
   {{#if showPatronPicker}}
   <div class="notes-section-panel chaos-patron-panel">
     <div class="panel-title">ПОКРОВИТЕЛЬ ХАОСА</div>

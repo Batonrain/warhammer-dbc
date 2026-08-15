@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Споровики в лёгких/гортани: 1/день атака-выдох 30 м, Hallucinogenic(1), Spray. Дефект (до Best.Q): −20 T против респираторных болезней.\nPoor.Q: дальность 10 м, Hallucinogenic(−1); −30 T; при кашле/чихании неконтролируемый выброс.\nGood.Q: −5 T.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Избирательное действие (убрать Spray, Hallucinogenic до 3); 2) Токсичные споры (Toxic(0)); 3) Двойной эффект (два броска Hallucinogenic, страдает от обоих); 4) Регенеративные споры (раз в 48−T.b ч Blast(T.b) на 1 мин — органики внутри +1 рана/10 с, но Hallucinogenic(7)).",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Внутренняя фабрика ядов/вирусов: считается Best.Q Camp Crystallizer (со всеми улучшениями), Medkit, Surgical Kit, Chemical Laboratory и Chemistry Analyzer. Производит яды и наркотики до R2 без компонентов; крафт остальных — за ½ времени.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

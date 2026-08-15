@@ -48,7 +48,6 @@ import { specOptions, specDef } from "../constants/skill-specializations.mjs";
 import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
 import { activateRaceListeners } from "../apps/races.mjs";
-import { grantAstartesImplants } from "../apps/astartes-implants.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
@@ -108,14 +107,6 @@ function onGearModsToggle(event, target) {
   this._applyGearHostCollapse(hid);
 }
 
-function onGeneToggle(event, target) {
-  event.preventDefault();
-  this._geneSeedOpen = !this._geneSeedOpen;
-  this.element?.querySelectorAll(".gene-organs")
-    .forEach(n => n.classList.toggle("collapsed", !this._geneSeedOpen));
-  target.textContent = (this._geneSeedOpen ? "▾" : "▸") + " Импланты";
-}
-
 function onPathsToggle(event, target) {
   event.preventDefault();
   const nowOpen = this._pathsOpen === false;             // был свёрнут → разворачиваем
@@ -143,15 +134,13 @@ function onAbilityDetail(event, target) {
 
 // ── Мастер создания персонажа (только по кнопке) ──
 // Черты, стартовые таланты и тема листа остаются на листе: их зовут и кнопки
-// «Применить расу»/«Применить легион». Органы Геносемени переехали к своему
-// синку в apps/astartes-implants.mjs, но приходят тем же колбэком.
+// «Применить расу»/«Применить легион».
 function onCharWizard(event) {
   event.preventDefault();
   showCreationWizard(this.actor, {
-    createTraits:          (list, source) => this._createTraitsFromList(list, source),
-    applyStartingTalents:  (raw, source)  => this._applyStartingTalents(raw, source),
-    grantAstartesImplants: ()             => grantAstartesImplants(this.actor),
-    applyTheme:            ()             => this._applyThemeClasses()
+    createTraits:         (list, source) => this._createTraitsFromList(list, source),
+    applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source),
+    applyTheme:           ()             => this._applyThemeClasses()
   });
 }
 
@@ -264,7 +253,6 @@ export class WarhammerCharacterSheet
       infamySpend: whenEditable(onInfamySpend),
       charWizard: whenEditable(onCharWizard),
       abilityDetail: whenEditable(onAbilityDetail),
-      geneToggle: whenEditable(onGeneToggle),
       pathsToggle: whenEditable(onPathsToggle),
       statAdd: whenEditable(onStatAdd),
       initiativeRoll: whenEditable(onInitiativeRoll),
@@ -311,7 +299,7 @@ export class WarhammerCharacterSheet
     }
   };
 
-  _geneSeedOpen = false;
+  _savedScrollTops = {};
   _combatCollapse = { stance: false, tech: false };
   // Свёрнутые категории вкладки снаряжения (ключ категории → свёрнута?).
   _gearCollapse = {};
@@ -711,10 +699,6 @@ export class WarhammerCharacterSheet
 
     // ── Восстановление свёрток после ре-рендера ────────────────────────────
     for (const hid of this._gearHostCollapse) this._applyGearHostCollapse(hid);
-    if (this._geneSeedOpen) {
-      el.querySelectorAll(".gene-organs").forEach(n => n.classList.remove("collapsed"));
-      el.querySelectorAll(".gene-toggle-btn").forEach(n => { n.textContent = "▾ Импланты"; });
-    }
     if (this._pathsOpen === false) {
       el.querySelectorAll(".paths-collapse").forEach(n => n.classList.add("collapsed"));
       el.querySelectorAll(".paths-toggle-btn").forEach(n => { n.textContent = "▸ Пути"; });

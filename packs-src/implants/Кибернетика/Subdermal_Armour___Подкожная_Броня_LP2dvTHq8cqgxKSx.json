@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Сетка брони под кожей: +2 AP к торсу, рукам и ногам. Poor.Q −10 A; Good.Q без минусов; Best.Q −2 любой критэффект в торс, −2 в руки/ноги.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

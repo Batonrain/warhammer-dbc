@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Зашитый курс действий: при попытке нарушить — тест W+0 (Хаосит W−10), иначе мучительная боль 1d5−T.b Раундов или сопротивление вводит в бессознательное.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

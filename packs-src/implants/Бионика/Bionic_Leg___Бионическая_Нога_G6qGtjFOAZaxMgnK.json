@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Протез ноги. Варианты: Гусеница, Дигитигрейд (+1 SPD, +10 Acrobatics), Вездеход (+30 vs Трудный Ландшафт), Легион (Unnatural S). Best.Q бонусы Группирования/Athletics.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

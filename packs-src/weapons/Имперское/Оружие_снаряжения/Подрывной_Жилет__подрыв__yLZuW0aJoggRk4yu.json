@@ -1,43 +1,40 @@
 {
-  "name": "Кислотный плевок (Железа Бетчера)",
+  "name": "Подрывной Жилет (подрыв)",
   "type": "weapon",
   "folder": "LAGXh4UW064d3EbF",
   "system": {
-    "description": "",
+    "description": "Подрыв жилета смертника (Книга Хаоса, Культист Демагог — Исповедник).",
     "notes": "",
-    "weaponClass": "ranged",
-    "weaponType": "exotic",
-    "range": 3,
+    "weaponClass": "thrown",
+    "weaponType": "explosive",
+    "range": 0,
     "balance": 0,
     "grips": "",
     "profileLabel": "",
     "profiles": [],
     "reload": "–",
-    "magazineCur": 0,
-    "magazineMax": 0,
-    "rof_single": 1,
+    "magazineCur": 1,
+    "magazineMax": 1,
+    "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "1d5",
-    "damageType": "chemical",
-    "penetration": 4,
+    "damage": "3d10+6",
+    "damageType": "blast",
+    "penetration": 6,
     "quality": "common",
-    "availability": 0,
-    "weight": 0,
+    "availability": 2,
+    "weight": 3,
     "attackBonus": 0,
-    "special": "Плевок кислотой Железы Бетчера. Работает, только если рот не закрыт шлемом, респиратором или ребризером. При попадании в глаза плевок получает ещё и Ослепляющее (3).",
+    "special": "Активируется на себе свободным действием. Бросить или установить на цель нельзя — жилет взрывается там, где стоит носитель.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "corrosive",
-        "rating": 3
+        "key": "blast",
+        "rating": 6
       },
       {
-        "key": "independent"
-      },
-      {
-        "key": "precise"
+        "key": "tearing"
       }
     ],
     "needsRecharge": false,
@@ -66,10 +63,11 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "rangeBands": []
   },
-  "_id": "wdbcBetcherSpit1",
-  "img": "systems/warhammer-dbc/assets/item-icons/weapon-ranged.svg",
+  "_id": "yLZuW0aJoggRk4yu",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -84,9 +82,9 @@
     "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 0,
-    "modifiedTime": 0,
+    "createdTime": 1785255155964,
+    "modifiedTime": 1785255155964,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!wdbcBetcherSpit1"
+  "_key": "!items!yLZuW0aJoggRk4yu"
 }

@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "+5 (или больше) на тесты управления машинами; интерфейс через нейро-порты. Poor.Q +5, Good.Q +5, Best.Q +10.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

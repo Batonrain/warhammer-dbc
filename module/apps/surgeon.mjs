@@ -11,7 +11,6 @@ import { buildBodyState, buildBodyLayers, buildImplantsSvg,
          classifyImplant, implantCatColor } from "../constants/body-map.mjs";
 import { syncItemEffectsDisabled } from "./effects.mjs";
 import { syncGrantedEquipment } from "./mechanics.mjs";
-import { syncAstartesImplantWeapon } from "./astartes-implants.mjs";
 
 const { Application } = foundry.appv1.api;
 const NS = "warhammer-dbc";
@@ -21,7 +20,7 @@ const IMPL_CAT = {
   mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус",
   mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика",
   cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех",
-  skitarii: "Скитарии", bioimplant: "Биоимплант", geneseed: "Геносемя",
+  skitarii: "Скитарии", bioimplant: "Биоимплант",
 };
 
 // SVG-иконки систем (без эмодзи).
@@ -180,7 +179,6 @@ export class SurgeonWindow extends Application {
           // Установлен — довыдаём его Механику (эффекты + связанные атаки/снаряжение).
           await syncItemEffectsDisabled(item, true);
           await syncGrantedEquipment(item);
-          await syncAstartesImplantWeapon(item);
           ui.notifications?.info(`🔧 Имплантировано: ${item.name}`);
         }
       } else if (src === "lib") {
@@ -189,10 +187,7 @@ export class SurgeonWindow extends Application {
         foundry.utils.setProperty(obj, `flags.${NS}.${NS_INST}`, true);
         const side = freeSide();
         if (side) foundry.utils.setProperty(obj, `flags.${NS}.bodySide`, side);
-        const [created] = await this.actor.createEmbeddedDocuments("Item", [obj]);
-        // Родился сразу установленным — довыдать связанный боевой профиль (createItem-хук
-        // сам применит Механику, но связка linkedWeapon у Геносемени идёт мимо неё).
-        if (created) await syncAstartesImplantWeapon(created);
+        await this.actor.createEmbeddedDocuments("Item", [obj]);
         ui.notifications?.info(`🔧 Имплантировано: ${doc.name}${side ? (side === "left" ? " (левый)" : " (правый)") : ""}`);
       }
       this.render(false);
@@ -202,11 +197,10 @@ export class SurgeonWindow extends Application {
     el.querySelectorAll("[data-remove]").forEach(b => b.addEventListener("click", async () => {
       const item = this.actor.items.get(b.dataset.remove); if (!item) return;
       await item.unsetFlag(NS, NS_INST);
-      // Извлечён — гасим его Механику: эффекты и всё, что он выдавал (Кислотный
-      // плевок Железы Бетчера и т.п.) уходят вместе с ним, пока не установят обратно.
+      // Извлечён — гасим его Механику: эффекты и всё, что он выдавал, уходят
+      // вместе с ним, пока не установят обратно.
       await syncItemEffectsDisabled(item, false);
       await syncGrantedEquipment(item);
-      await syncAstartesImplantWeapon(item);
       ui.notifications?.info(`Имплант извлечён (в снаряжении): ${item.name}`);
       this.render(false);
     }));

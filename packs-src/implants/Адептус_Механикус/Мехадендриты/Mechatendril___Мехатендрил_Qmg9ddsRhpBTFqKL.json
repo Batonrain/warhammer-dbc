@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "S 40 (Unn 2), Дл. 3м, Rng 0-8. Профиль рукопашной 1d10+6 R, Flexible, Primitive. Дополнительная рука (инструменты, но не оружие). +5 на любые тесты Крафта за каждый мехатендрил.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

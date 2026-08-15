@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Выпускает феромоны: +20 на встречные тесты социальных взаимодействий (вентиляция вдвое, обычно −20). Poor.Q −5; Good.Q −15; Best.Q −20.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

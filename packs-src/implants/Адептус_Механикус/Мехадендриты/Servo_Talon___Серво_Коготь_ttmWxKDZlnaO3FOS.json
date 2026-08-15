@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "S 75 (Unn 7), Дл. 1.5м, Rng 1-5. Удар 2d10+18 E, Pen 10, Imprecise, Power Field, Bl −2. Боевая версия Серво-Руки с генератором силового поля (защита от вражеского силового оружия). Занимает 2 порта Кибер-Мантии.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

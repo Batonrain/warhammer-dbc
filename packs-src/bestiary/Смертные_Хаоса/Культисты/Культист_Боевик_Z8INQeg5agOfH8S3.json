@@ -1181,7 +1181,74 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Боевик",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Лазган и автопистолет."
+              },
+              {
+                "key": "specialist",
+                "label": "Специалист",
+                "hint": "Специальное оружие вместо винтовки.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Лазган"
+                  }
+                ],
+                "pick": [
+                  {
+                    "label": "Спец-оружие",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.RZM4H5CnG79Bgj59",
+                      "Compendium.warhammer-dbc.weapons.uvbJ3nqq2vOxEFOI",
+                      "Compendium.warhammer-dbc.weapons.QQNCRFd7FbLNlimn",
+                      "Compendium.warhammer-dbc.weapons.K9vaicJsXsLPN8bb",
+                      "Compendium.warhammer-dbc.weapons.WXGFfR4pGgTIOCdw"
+                    ]
+                  }
+                ]
+              },
+              {
+                "key": "heavy",
+                "label": "Тяжёлый Расчёт",
+                "hint": "Тяжёлое оружие вместо винтовки; нужен помощник-переносчик.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Лазган"
+                  }
+                ],
+                "pick": [
+                  {
+                    "label": "Тяжёлое оружие",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.3i6lBCbkMyzgElUX",
+                      "Compendium.warhammer-dbc.weapons.HGI7BIP4ZR1MD8IG",
+                      "Compendium.warhammer-dbc.weapons.dZA66trZiQc5D1Vd",
+                      "Compendium.warhammer-dbc.weapons.MGdHJMgLawQGqOcM",
+                      "Compendium.warhammer-dbc.weapons.XvejIKa4CEmTgxqh"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

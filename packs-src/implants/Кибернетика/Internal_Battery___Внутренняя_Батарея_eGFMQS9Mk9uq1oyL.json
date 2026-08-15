@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Питает импланты: 1 заряд = телепортатор/энерг. оружие; +10 vs жара. Poor.Q зарядка 24ч; Good.Q 4ч; Best.Q 1ч.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

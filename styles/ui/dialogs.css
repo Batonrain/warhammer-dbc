@@ -1264,3 +1264,30 @@ body.wh-aiming #board, body.wh-aiming canvas {
   color: var(--wh-red); cursor: pointer; font-size: 1em;
 }
 
+
+/* ══ Диалог Вариаций бестиария (версия существа из книги) ════════════════ */
+.wh-actor-setup { padding: 6px 8px; display: flex; flex-direction: column; gap: 8px; }
+.wh-actor-setup .was-lead { margin: 0; font-size: .84em; opacity: .85; }
+.wh-actor-setup .was-group {
+  margin: 0; padding: 6px 8px 8px; border-radius: 5px;
+  border: 1px solid rgba(77,255,166,.22); background: rgba(0,0,0,.18);
+}
+.wh-actor-setup .was-group-title {
+  padding: 0 5px; font-size: .82em; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; color: #b8ffd8;
+}
+.wh-actor-setup .was-row { padding: 3px 2px; }
+.wh-actor-setup .was-row + .was-row { border-top: 1px solid rgba(77,255,166,.10); }
+.wh-actor-setup .was-opt-lbl { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+.wh-actor-setup .was-opt { accent-color: #4dffa6; flex: 0 0 auto; }
+.wh-actor-setup .was-opt-name { font-size: .9em; font-weight: 600; }
+/* Пояснение книги под строкой варианта: почему он отличается от базового. */
+.wh-actor-setup .was-hint { margin: 1px 0 0 24px; font-size: .8em; opacity: .75; font-style: italic; }
+.wh-actor-setup .was-pick { display: flex; align-items: center; gap: 8px; margin: 4px 0 2px 24px; }
+.wh-actor-setup .was-pick-lbl { flex: 0 0 auto; min-width: 120px; font-size: .82em; color: #b8ffd8; }
+.wh-actor-setup .was-pick-sel {
+  flex: 1 1 auto; min-width: 0; padding: 3px 6px; font-size: .86em; font-family: inherit;
+  background: var(--wh-input-bg, #0c2418); border: 1px solid var(--wh-border, #1f6f4a);
+  color: var(--wh-text, #b8ffd8); border-radius: 3px;
+}
+.wh-actor-setup .was-source { font-size: .78em; opacity: .6; text-align: right; }

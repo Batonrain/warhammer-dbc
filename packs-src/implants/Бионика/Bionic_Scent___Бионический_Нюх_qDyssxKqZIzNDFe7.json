@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Протез нюха. Poor.Q регистрирует ядовитые газы; Good.Q +10 нюх; Best.Q +20 Survival по запаху, отслеживание.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

@@ -652,6 +652,10 @@ export class WarhammerActor extends Actor {
 
     const chars  = system.characteristics;
 
+    // Астартес бывают только мужчинами — Телосложение у них принудительно
+    // мужское (блок выбора на вкладке «Записи» для этой расы скрыт).
+    if (this.type === "character" && system.race === "astartes") system.bodyType = "male";
+
     // Защита: списки должны быть массивами (могли стать объектом из-за старого бага ввода)
     if (system.aptitudes && !Array.isArray(system.aptitudes)) {
       system.aptitudes = Object.values(system.aptitudes);

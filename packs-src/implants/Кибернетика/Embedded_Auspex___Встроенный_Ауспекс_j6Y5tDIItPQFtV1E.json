@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Ауспекс в теле, передаёт данные в мозг: бонус как обычный ауспекс соответствующего Качества.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",
