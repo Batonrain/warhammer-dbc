@@ -40,6 +40,7 @@ import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
+import { onTab }                                     from "./v2-helpers.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -47,17 +48,38 @@ function _typeLabel(map, key) {
   return typeof v === "string" ? v : (v?.label ?? key);
 }
 
-export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
+export class WarhammerItemSheet
+  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ItemSheetV2) {
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc","sheet","item","wh-holo"],
-      template: "systems/warhammer-dbc/templates/item/item-sheet.hbs",
-      width: 600, height: 640,
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "info" }],
-      dragDrop: [{ dragSelector: null, dropSelector: ".effects-drop-target, .grant-drop-zone, .wprop-drop-zone" }]
-    });
-  }
+  static DEFAULT_OPTIONS = {
+    // item-sheet — на самой форме листа: CSS цепляется за «.warhammer-dbc.item-sheet»,
+    // а у V1 этот класс нёс <form> в шаблоне. Класс по типу предмета
+    // («weapon-sheet» и т.п.) добавляется в _onRender: он динамический.
+    classes: ["warhammer-dbc", "sheet", "item", "wh-holo", "item-sheet"],
+    position: { width: 600, height: 640 },
+    window: { resizable: true },
+    form: { submitOnChange: true, closeOnSubmit: false },
+    dragDrop: [{ dragSelector: null, dropSelector: ".effects-drop-target, .grant-drop-zone, .wprop-drop-zone" }],
+    actions: {
+      tab: onTab
+    }
+  };
+
+  static PARTS = {
+    body: { template: "systems/warhammer-dbc/templates/item/item-sheet.hbs", root: true }
+  };
+
+  static TABS = {
+    "item-primary": {
+      initial: "info",
+      tabs: [
+        { id: "info",      label: "ИНФО" },
+        { id: "effects",   label: "ЭФФЕКТЫ" },
+        { id: "mechanics", label: "МЕХАНИКА" },
+        { id: "notes",     label: "ЗАПИСИ" }
+      ]
+    }
+  };
 
   /**
    * Перетаскивание готового эффекта с другого предмета/актора прямо на
@@ -174,8 +196,11 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     await syncWeaponPropItemEffects(this.item);
   }
 
-  getData() {
-    const context  = super.getData();
+  async _prepareContext(options) {
+    const context  = await super._prepareContext(options);
+    context.item   = this.item;
+    context.editable = this.isEditable;
+    context.tab = this.tabGroups?.["item-primary"] ?? WarhammerItemSheet.TABS["item-primary"].initial;
     // Истории силовой брони — только для брони Астартес и при включённом расширении.
     context.armourHistory = armourHistoryContext(this.item);
     context.system = this.item.system;
@@ -670,27 +695,34 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     ui.notifications.info(`Собрано торпед: ${n}. Списано из грузов: ${whLabel} ×${n}${navNeeded ? `, ${navLabel} ×${n}` : ""}.`);
   }
 
-  activateListeners(html) {
-    // Режим поля друкхарийской брони — ровно один активный.
-    (html[0] ?? html).querySelectorAll("[data-field-mode]").forEach(n =>
-      n.addEventListener("click", ev => {
-        const key = ev.currentTarget.dataset.fieldMode || "";
-        this.item.update({ "system.fieldMode": key });
-      }));
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
+    if (!el) return;
+    // Класс по типу предмета динамический, в DEFAULT_OPTIONS.classes его не
+    // положить: CSS частей цепляется за .weapon-sheet, .armor-sheet и т.п.
+    el.classList.add(`${this.item.type}-sheet`);
 
-    super.activateListeners(html);
+    /** Слушатель на все узлы по селектору — замена jQuery-обхода из V1. */
+    const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
+
+    // Режим поля друкхарийской брони — ровно один активный.
+    on("[data-field-mode]", "click", ev => {
+      const key = ev.currentTarget.dataset.fieldMode || "";
+      this.item.update({ "system.fieldMode": key });
+    });
 
     // ── Эффекты (Active Effect Foundry) — общая вкладка для всех типов ──────────
-    html.find(".effect-create-btn").on("click", ev => { ev.preventDefault(); createBlankEffect(this.item); });
-    html.find(".effect-name-link, .effect-edit-btn").on("click", ev => {
+    on(".effect-create-btn", "click", ev => { ev.preventDefault(); createBlankEffect(this.item); });
+    on(".effect-name-link, .effect-edit-btn", "click", ev => {
       const fx = this.item.effects.get(ev.currentTarget.dataset.effectId);
       fx?.sheet?.render(true);
     });
-    html.find(".effect-delete-btn").on("click", async ev => {
+    on(".effect-delete-btn", "click", async ev => {
       const fx = this.item.effects.get(ev.currentTarget.dataset.effectId);
       if (fx) await fx.delete();
     });
-    html.find(".effect-disabled-toggle").on("change", async ev => {
+    on(".effect-disabled-toggle", "change", async ev => {
       const fx = this.item.effects.get(ev.currentTarget.dataset.effectId);
       if (fx) await fx.update({ disabled: !ev.currentTarget.checked });
     });
@@ -713,31 +745,31 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     };
     // Рекурсивный поиск (учитывает вложенные подгруппы kind:"group", см. mechanics.mjs).
     const findEntry = findMechEntry;
-    html.find(".grant-group-add").on("click", ev => {
+    on(".grant-group-add", "click", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       arr.push(blankMechGroup(ev.currentTarget.dataset.op === "OR" ? "OR" : "AND"));
       saveMech(arr);
     });
-    html.find(".grant-group-remove").on("click", ev => {
+    on(".grant-group-remove", "click", ev => {
       const id = ev.currentTarget.dataset.groupId;
       saveMech(getItemMechanics(this.item).filter(g => g.id !== id));
     });
-    html.find(".grant-op-toggle").on("click", ev => {
+    on(".grant-op-toggle", "click", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const g = findMechGroup(arr, ev.currentTarget.dataset.groupId);
       if (g) { g.operator = g.operator === "OR" ? "AND" : "OR"; saveMech(arr); }
     });
-    html.find(".grant-entry-add").on("click", ev => {
+    on(".grant-entry-add", "click", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const g = findMechGroup(arr, ev.currentTarget.dataset.groupId);
       if (g) { g.entries.push(blankMechEntry()); saveMech(arr); }
     });
-    html.find(".grant-entry-remove").on("click", ev => {
+    on(".grant-entry-remove", "click", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const g = findMechGroup(arr, ev.currentTarget.dataset.groupId);
       if (g) { g.entries = g.entries.filter(e => e.id !== ev.currentTarget.dataset.entryId); saveMech(arr); }
     });
-    html.find(".grant-entry-kind").on("change", ev => {
+    on(".grant-entry-kind", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (!e) return;
@@ -749,98 +781,98 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       saveMech(arr);
     });
     // Порча (kind:"corruption")
-    html.find(".mech-corruption-op").on("change", ev => {
+    on(".mech-corruption-op", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-corruption-value").on("change", ev => {
+    on(".mech-corruption-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.corruptionValue = ev.currentTarget.value; saveMech(arr); }
     });
     // Раны (kind:"wounds")
-    html.find(".mech-wounds-op").on("change", ev => {
+    on(".mech-wounds-op", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-wounds-value").on("change", ev => {
+    on(".mech-wounds-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.woundsValue = ev.currentTarget.value; saveMech(arr); }
     });
     // Слаженность отряда (kind:"cohesion")
-    html.find(".mech-cohesion-role").on("change", ev => {
+    on(".mech-cohesion-role", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.cohesionRole = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-cohesion-op").on("change", ev => {
+    on(".mech-cohesion-op", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-cohesion-value").on("change", ev => {
+    on(".mech-cohesion-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.cohesionValue = ev.currentTarget.value; saveMech(arr); }
     });
     // Характеристика
-    html.find(".mech-char-key").on("change", ev => {
+    on(".mech-char-key", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.charKey = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-char-field").on("change", ev => {
+    on(".mech-char-field", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.field = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-char-op").on("change", ev => {
+    on(".mech-char-op", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-char-value").on("change", ev => {
+    on(".mech-char-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.value = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
     });
     // Вес (kind:"weight")
-    html.find(".mech-weight-scope").on("change", ev => {
+    on(".mech-weight-scope", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weightScope = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-weight-mode").on("change", ev => {
+    on(".mech-weight-mode", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weightMode = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-weight-value").on("change", ev => {
+    on(".mech-weight-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weightValue = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
     });
     // Движение (kind:"movement")
-    html.find(".mech-move-target").on("change", ev => {
+    on(".mech-move-target", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.movementTarget = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-move-op").on("change", ev => {
+    on(".mech-move-op", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-move-value").on("change", ev => {
+    on(".mech-move-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.movementValue = ev.currentTarget.value === "" ? "" : (parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
     });
     // Ландшафт — игнорирование свойств (kind:"terrainIgnore")
-    html.find(".mech-terrain-ignore").on("change", ev => {
+    on(".mech-terrain-ignore", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (!e) return;
@@ -848,12 +880,12 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       saveMech(arr);
     });
     // Снаряжение (kind:"equipment")
-    html.find(".mech-equip-mode").on("change", ev => {
+    on(".mech-equip-mode", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipMode = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-equip-source").on("change", ev => {
+    on(".mech-equip-source", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (!e) return;
@@ -861,7 +893,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       e.equipSourceName = ev.currentTarget.selectedOptions[0]?.textContent || "";
       saveMech(arr);
     });
-    html.find(".mech-equip-cat").on("change", ev => {
+    on(".mech-equip-cat", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (!e) return;
@@ -869,56 +901,56 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       e.equipWeaponType = ""; e.equipWeaponProp = ""; e.equipArmorType = "";
       saveMech(arr);
     });
-    html.find(".mech-equip-wtype").on("change", ev => {
+    on(".mech-equip-wtype", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipWeaponType = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-equip-wprop").on("change", ev => {
+    on(".mech-equip-wprop", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipWeaponProp = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-equip-atype").on("change", ev => {
+    on(".mech-equip-atype", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipArmorType = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-equip-avail").on("change", ev => {
+    on(".mech-equip-avail", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipMaxAvailability = parseInt(ev.currentTarget.value); saveMech(arr); }
     });
-    html.find(".mech-equip-qty").on("change", ev => {
+    on(".mech-equip-qty", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipQty = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
     });
     // Модификатор броска (kind:"rollmod") — навык/специализация переиспользуют
     // .grant-entry-skillref/.grant-entry-specialty/-spec-custom (см. ниже).
-    html.find(".mech-rollmod-label").on("change", ev => {
+    on(".mech-rollmod-label", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.label = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-rollmod-value").on("change", ev => {
+    on(".mech-rollmod-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.value = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
     });
     // Очки Судьбы или Бесчестья (kind:"poolMax")
-    html.find(".mech-poolmax-value").on("change", ev => {
+    on(".mech-poolmax-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.value = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
     });
     // Код (kind:"script")
-    html.find(".mech-script-label").on("change", ev => {
+    on(".mech-script-label", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.label = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".mech-script-code").on("change", ev => {
+    on(".mech-script-code", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.code = ev.currentTarget.value; saveMech(arr); }
@@ -942,83 +974,83 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       saveReq(key, arr);
     };
 
-    html.find(".req-group-add").on("click", ev => {
+    on(".req-group-add", "click", ev => {
       const key = reqKeyOf(ev.currentTarget);
       const arr = reqGroups(key);
       arr.push(blankReqGroup(ev.currentTarget.dataset.op === "OR" ? "OR" : "AND"));
       saveReq(key, arr);
     });
-    html.find(".req-group-remove").on("click", ev => {
+    on(".req-group-remove", "click", ev => {
       const el = ev.currentTarget, key = reqKeyOf(el);
       saveReq(key, reqGroups(key).filter(g => g.id !== el.dataset.groupId));
     });
-    html.find(".req-op-toggle").on("click", ev => {
+    on(".req-op-toggle", "click", ev => {
       const el = ev.currentTarget, key = reqKeyOf(el);
       const arr = reqGroups(key);
       const g = findReqGroup(arr, el.dataset.groupId);
       if (g) { g.operator = g.operator === "OR" ? "AND" : "OR"; saveReq(key, arr); }
     });
-    html.find(".req-entry-add").on("click", ev => {
+    on(".req-entry-add", "click", ev => {
       const el = ev.currentTarget, key = reqKeyOf(el);
       const arr = reqGroups(key);
       const g = findReqGroup(arr, el.dataset.groupId);
       if (g) { g.entries.push(blankReqEntry()); saveReq(key, arr); }
     });
-    html.find(".req-entry-remove").on("click", ev => {
+    on(".req-entry-remove", "click", ev => {
       const el = ev.currentTarget, key = reqKeyOf(el);
       const arr = reqGroups(key);
       const g = findReqGroup(arr, el.dataset.groupId);
       if (g) { g.entries = g.entries.filter(e => e.id !== el.dataset.entryId); saveReq(key, arr); }
     });
-    html.find(".req-entry-kind").on("change", ev => patchReq(ev, (e, el) => {
+    on(".req-entry-kind", "change", ev => patchReq(ev, (e, el) => {
       // Смена вида условия обнуляет поля прежнего — иначе на записи висели
       // бы чужие данные (напр. навык у требования по расе).
       Object.assign(e, blankReqEntry(el.value), { id: e.id, kind: el.value });
     }));
-    html.find(".req-skillref").on("change", ev => patchReq(ev, (e, el) => {
+    on(".req-skillref", "change", ev => patchReq(ev, (e, el) => {
       const [scope, key] = String(el.value || "").split(":");
       e.skillScope = scope === "group" ? "group" : "plain";
       e.skillKey = key || "";
       e.specKey = ""; e.specialty = "";
     }));
-    html.find(".req-rank").on("change",      ev => patchReq(ev, (e, el) => { e.rank = el.value; }));
-    html.find(".req-spec").on("change",      ev => patchReq(ev, (e, el) => {
+    on(".req-rank", "change",      ev => patchReq(ev, (e, el) => { e.rank = el.value; }));
+    on(".req-spec", "change",      ev => patchReq(ev, (e, el) => {
       const spec = el.value ? specOptions(e.skillKey).find(s => s.key === el.value) : null;
       e.specKey = el.value;
       // Сверку ведёт specKey, поэтому в specialty кладём русское имя — оно
       // идёт в текст требования на листе (AGENTS.md: интерфейс русский).
       e.specialty = spec ? (spec.ru || spec.label) : "";
     }));
-    html.find(".req-rating").on("change",    ev => patchReq(ev, (e, el) => {
+    on(".req-rating", "change",    ev => patchReq(ev, (e, el) => {
       e.rating = el.value === "" ? "" : (parseInt(el.value) || 0);
     }));
-    html.find(".req-race").on("change",      ev => patchReq(ev, (e, el) => { e.raceKey = el.value; }));
-    html.find(".req-archetype").on("change", ev => patchReq(ev, (e, el) => { e.archetypeName = el.value; }));
-    html.find(".req-patron").on("change",    ev => patchReq(ev, (e, el) => { e.patronKey = el.value; }));
-    html.find(".req-drop-clear").on("click", ev => patchReq(ev, e => {
+    on(".req-race", "change",      ev => patchReq(ev, (e, el) => { e.raceKey = el.value; }));
+    on(".req-archetype", "change", ev => patchReq(ev, (e, el) => { e.archetypeName = el.value; }));
+    on(".req-patron", "change",    ev => patchReq(ev, (e, el) => { e.patronKey = el.value; }));
+    on(".req-drop-clear", "click", ev => patchReq(ev, e => {
       Object.assign(e, { sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false });
     }));
 
     // Черта / Талант (драг-н-дроп резолвится в _onDropGrantItem)
-    html.find(".grant-drop-clear").on("click", ev => {
+    on(".grant-drop-clear", "click", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (!e) return;
       Object.assign(e, { sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "", specialization: "" });
       saveMech(arr);
     });
-    html.find(".grant-entry-rating").on("change", ev => {
+    on(".grant-entry-rating", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.rating = ev.currentTarget.value === "" ? "" : (parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
     });
-    html.find(".grant-entry-spec").on("change", ev => {
+    on(".grant-entry-spec", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.specialization = ev.currentTarget.value; saveMech(arr); }
     });
     // Навык
-    html.find(".grant-entry-skillref").on("change", ev => {
+    on(".grant-entry-skillref", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (!e) return;
@@ -1028,7 +1060,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       e.specKey = ""; e.specialty = "";
       saveMech(arr);
     });
-    html.find(".grant-entry-specialty").on("change", ev => {
+    on(".grant-entry-specialty", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (!e) return;
@@ -1041,14 +1073,14 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       } else { e.specKey = ""; e.specialty = ""; e.specChoiceKeys = []; }
       saveMech(arr);
     });
-    html.find(".grant-entry-spec-custom").on("change", ev => {
+    on(".grant-entry-spec-custom", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.specialty = ev.currentTarget.value; saveMech(arr); }
     });
     // «По выбору» — несколько кандидатов-чекбоксов, актор выбирает один
     // диалогом при получении предмета (resolveEntrySpecChoice в mechanics.mjs).
-    html.find(".grant-entry-spec-choice").on("change", ev => {
+    on(".grant-entry-spec-choice", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (!e) return;
@@ -1058,7 +1090,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       e.specChoiceKeys = [...set];
       saveMech(arr);
     });
-    html.find(".grant-entry-rank").on("change", ev => {
+    on(".grant-entry-rank", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.rank = ev.currentTarget.value; saveMech(arr); }
@@ -1067,32 +1099,32 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     // Оружие: Свойство (kind:"weaponProp") — драг-н-дроп резолвится в
     // _onDropWeaponPropItem; здесь только действие/значения/сброс зон
     // (saveMech сам досчитывает system.effects.mechAddProps/mechRemoveProps).
-    html.find(".wprop-action").on("change", ev => {
+    on(".wprop-action", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weaponPropAction = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".wprop-value").on("change", ev => {
+    on(".wprop-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weaponPropValue = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".wprop-value2").on("change", ev => {
+    on(".wprop-value2", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weaponPropValue2 = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".wprop-new-value").on("change", ev => {
+    on(".wprop-new-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weaponPropNewValue = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".wprop-new-value2").on("change", ev => {
+    on(".wprop-new-value2", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weaponPropNewValue2 = ev.currentTarget.value; saveMech(arr); }
     });
-    html.find(".wprop-drop-clear").on("click", ev => {
+    on(".wprop-drop-clear", "click", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (!e) return;
@@ -1105,24 +1137,24 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     });
 
     // ── Особенность комплекта силовой брони ──
-    html.find(".pa-roll-table").on("click", () => rollArmourTable(this.item));
-    html.find(".pa-roll-entry").on("click", () =>
-      rollArmourEntry(this.item, html.find(".pa-table-select").val() || this.item.system.history?.table));
-    html.find(".pa-roll-zones").on("click", () => rollArmourZones(this.item));
-    html.find(".pa-clear").on("click", () => clearArmourHistory(this.item));
-    html.find(".pa-table-select").on("change", ev =>
+    on(".pa-roll-table", "click", () => rollArmourTable(this.item));
+    on(".pa-roll-entry", "click", () =>
+      rollArmourEntry(this.item, el.querySelector(".pa-table-select")?.value || this.item.system.history?.table));
+    on(".pa-roll-zones", "click", () => rollArmourZones(this.item));
+    on(".pa-clear", "click", () => clearArmourHistory(this.item));
+    on(".pa-table-select", "change", ev =>
       this.item.update({ "system.history.table": ev.currentTarget.value }));
-    html.find(".pa-entry-select").on("change", ev => {
-      const table = html.find(".pa-table-select").val() || this.item.system.history?.table;
+    on(".pa-entry-select", "change", ev => {
+      const table = el.querySelector(".pa-table-select")?.value || this.item.system.history?.table;
       if (ev.currentTarget.value) setArmourEntry(this.item, table, ev.currentTarget.value);
     });
 
     // Качество узла: галочки модификаторов. Лишние сверх лимита сбрасываем —
     // иначе тихо применились бы только первые, а вид говорил бы обратное.
-    html.find(".comp-quality-pick").change(async ev => {
+    on(".comp-quality-pick", "change", async ev => {
       const def  = qualityOptionsFor(this.item.system);
       const lim  = def.pick || 0;
-      const keys = Array.from(html.find(".comp-quality-pick"))
+      const keys = [...el.querySelectorAll(".comp-quality-pick")]
         .filter(el => el.checked).map(el => el.dataset.key);
       if (keys.length > lim) {
         const key = ev.currentTarget.dataset.key;
@@ -1134,17 +1166,16 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       }
     });
     // Голо-тема для листа небесного тела (планеты/станции).
-    if (this.item.type === "celestialBody") this.element?.addClass?.("wh-holo");
     if (!this.isEditable) return;
 
     // ── Сборка торпеды из грузов корабля ───────────────────────────────────────
-    html.find(".torpedo-assemble-btn").on("click", async () => {
-      const n = parseInt(html.find(".torpedo-assemble-n").val()) || 1;
+    on(".torpedo-assemble-btn", "click", async () => {
+      const n = parseInt(el.querySelector(".torpedo-assemble-n")?.value) || 1;
       await this._assembleTorpedo(n);
     });
 
     // ── Баланс ────────────────────────────────────────────────────────────────
-    html.find(".balance-select").on("change", ev => {
+    on(".balance-select", "change", ev => {
       this.item.update({ "system.balance": parseInt(ev.currentTarget.value) });
     });
 
@@ -1152,12 +1183,12 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     // Для drug селект имеет name="system.availability" и Foundry сам сохраняет.
     // Для других предметов — ручной handler через класс .availability-select
     if (this.item.type !== "drug") {
-      html.find(".availability-select").on("change", ev => {
+      on(".availability-select", "change", ev => {
         this.item.update({ "system.availability": parseInt(ev.currentTarget.value) });
       });
     } else {
       // Для drug: принудительно конвертируем строку в число при сохранении
-      html.find("[name='system.availability']").on("change", ev => {
+      on("[name='system.availability']", "change", ev => {
         ev.preventDefault();
         ev.stopPropagation();
         this.item.update({ "system.availability": parseInt(ev.currentTarget.value) || 0 });
@@ -1165,12 +1196,12 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     }
 
     // ── Тип брони ─────────────────────────────────────────────────────────────
-    html.find(".armor-type-select").on("change", ev => {
+    on(".armor-type-select", "change", ev => {
       this.item.update({ "system.armorType": ev.currentTarget.value });
     });
 
     // ── Особые свойства оружия ─────────────────────────────────────────────────
-    html.find(".wprop-add-select").on("change", async ev => {
+    on(".wprop-add-select", "change", async ev => {
       const key = ev.currentTarget.value;
       if (!key) return;
       const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
@@ -1179,17 +1210,16 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         await this.item.update({ "system.weaponProps": props });
       }
     });
-    html.find(".wprop-remove").on("click", async ev => {
+    on(".wprop-remove", "click", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const props = (this.item.system.weaponProps || []).filter(p => p.key !== key);
       await this.item.update({ "system.weaponProps": props });
     });
 
     // ── Освободить демона: снять осквернение (стать Руническим Оружием) ──────
-    html.find(".wms-release").on("click", async () => {
+    on(".wms-release", "click", async () => {
       const dw = this.item.system.daemonWeapon || {};
       const hasSnap = Array.isArray(dw.preProps);
-      const Dialog = foundry.appv1?.api?.Dialog || globalThis.Dialog;
       const doRelease = async () => {
         // d10: 1-6 оружие уничтожено, 7-10 → Руническое Оружие. В обоих случаях
         // демоническое усиление снимается — восстанавливаем ИСХОДНЫЕ свойства
@@ -1223,12 +1253,14 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         await this.item.update(update);
         ChatMessage.create({ content: `<div class="wh-poss-card" style="--gc:#b477ff"><div class="wh-poss-card-h">Освобождение демона — d10: ${r}</div><div class="wh-poss-card-r">${runic ? "<b>7-10:</b> оружие стало <b>Руническим</b> (родные свойства + Reinforced + Tainted, эхо силы)." : "<b>1-6:</b> оружие <b>уничтожено</b>, оставив искорёженные куски (демоническое усиление снято)."}</div></div>` });
       };
-      if (Dialog) {
-        new Dialog({ title: "Освободить демона", content: "<p>Демон вырывается из оружия. Бросок d10 определит судьбу оружия (1-6 уничтожено, 7-10 → Руническое). Демоническое усиление снимается, родные свойства оружия сохраняются.</p>",
-          buttons: { ok: { label: "Освободить", callback: doRelease }, cancel: { label: "Отмена" } }, default: "ok" }).render(true);
-      } else { await doRelease(); }
+      const ok = await foundry.applications.api.DialogV2.confirm({
+        window: { title: "Освободить демона" },
+        content: "<p>Демон вырывается из оружия. Бросок d10 определит судьбу оружия (1-6 уничтожено, 7-10 → Руническое). Демоническое усиление снимается, родные свойства оружия сохраняются.</p>",
+        yes: { label: "Освободить" }, no: { label: "Отмена" }
+      });
+      if (ok) await doRelease();
     });
-    html.find(".wprop-rating").on("change", async ev => {
+    on(".wprop-rating", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
       const val   = parseInt(ev.currentTarget.value) || 0;
@@ -1237,7 +1269,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       if (p) { p[field] = val; await this.item.update({ "system.weaponProps": props }); }
     });
     // Рейтинг-бросок (например, Дуга/Arc: 2-е значение — формула кубика, напр. «2d10»).
-    html.find(".wprop-rating-dice").on("change", async ev => {
+    on(".wprop-rating-dice", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
       const val   = ev.currentTarget.value.trim();
@@ -1247,17 +1279,17 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     });
 
     // ── Психосила: доп. профили атаки ───────────────────────────────────────────
-    html.find(".psy-profile-add").on("click", async () => {
+    on(".psy-profile-add", "click", async () => {
       const arr = foundry.utils.deepClone(this.item.system.profiles || []);
       arr.push({ label: "", damage: "", damageType: "energy", penetration: 0, propsText: "", charDamageStat: "", charDamageFormula: "" });
       await this.item.update({ "system.profiles": arr });
     });
-    html.find(".psy-profile-remove").on("click", async ev => {
+    on(".psy-profile-remove", "click", async ev => {
       const i = Number(ev.currentTarget.dataset.index);
       const arr = (this.item.system.profiles || []).filter((_, idx) => idx !== i);
       await this.item.update({ "system.profiles": arr });
     });
-    html.find(".psy-profile-field").on("change", async ev => {
+    on(".psy-profile-field", "change", async ev => {
       const i = Number(ev.currentTarget.dataset.index);
       const field = ev.currentTarget.dataset.field;
       const arr = foundry.utils.deepClone(this.item.system.profiles || []);
@@ -1267,17 +1299,17 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     });
 
     // ── Психосила: вариации броска (разные модификаторы/цели) ────────────────────
-    html.find(".psy-variant-add").on("click", async () => {
+    on(".psy-variant-add", "click", async () => {
       const arr = foundry.utils.deepClone(this.item.system.variants || []);
       arr.push({ label: "", testMod: 0, note: "" });
       await this.item.update({ "system.variants": arr });
     });
-    html.find(".psy-variant-remove").on("click", async ev => {
+    on(".psy-variant-remove", "click", async ev => {
       const i = Number(ev.currentTarget.dataset.index);
       const arr = (this.item.system.variants || []).filter((_, idx) => idx !== i);
       await this.item.update({ "system.variants": arr });
     });
-    html.find(".psy-variant-field").on("change", async ev => {
+    on(".psy-variant-field", "change", async ev => {
       const i = Number(ev.currentTarget.dataset.index);
       const field = ev.currentTarget.dataset.field;
       const arr = foundry.utils.deepClone(this.item.system.variants || []);
@@ -1288,17 +1320,17 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
 
     // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──────────────────────
     const profIdxOf = el => Number(el.closest(".wprofile-card")?.dataset.idx);
-    html.find(".wprofile-add").on("click", async () => {
+    on(".wprofile-add", "click", async () => {
       const arr = foundry.utils.deepClone(this.item.system.profiles || []);
       arr.push({ label: "", damage: "", damageType: "rending", penetration: 0, range: "", weaponProps: [] });
       await this.item.update({ "system.profiles": arr });
     });
-    html.find(".wprofile-del").on("click", async ev => {
+    on(".wprofile-del", "click", async ev => {
       const i = profIdxOf(ev.currentTarget);
       const arr = (this.item.system.profiles || []).filter((_, idx) => idx !== i);
       await this.item.update({ "system.profiles": arr });
     });
-    html.find(".wprofile-field").on("change", async ev => {
+    on(".wprofile-field", "change", async ev => {
       const i = profIdxOf(ev.currentTarget);
       const field = ev.currentTarget.dataset.field;
       const arr = foundry.utils.deepClone(this.item.system.profiles || []);
@@ -1307,7 +1339,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       await this.item.update({ "system.profiles": arr });
     });
     // Свойства конкретного профиля (свой блок Devastating/Primitive и т.п.)
-    html.find(".wprofile-prop-add").on("change", async ev => {
+    on(".wprofile-prop-add", "change", async ev => {
       const key = ev.currentTarget.value;
       if (!key) return;
       const i = profIdxOf(ev.currentTarget);
@@ -1318,7 +1350,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         arr[i].weaponProps.push({ key, rating: 0, rating2: 0 });
       await this.item.update({ "system.profiles": arr });
     });
-    html.find(".wprofile-prop-remove").on("click", async ev => {
+    on(".wprofile-prop-remove", "click", async ev => {
       const i = profIdxOf(ev.currentTarget);
       const key = ev.currentTarget.dataset.key;
       const arr = foundry.utils.deepClone(this.item.system.profiles || []);
@@ -1326,7 +1358,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       arr[i].weaponProps = (arr[i].weaponProps || []).filter(p => p.key !== key);
       await this.item.update({ "system.profiles": arr });
     });
-    html.find(".wprofile-prop-rating").on("change", async ev => {
+    on(".wprofile-prop-rating", "change", async ev => {
       const i = profIdxOf(ev.currentTarget);
       const key = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
@@ -1341,7 +1373,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     });
 
     // ── Усиление оружия психосилой: особые свойства (тот же список) ──────────────
-    html.find(".wbuff-add-select").on("change", async ev => {
+    on(".wbuff-add-select", "change", async ev => {
       const key = ev.currentTarget.value;
       if (!key) return;
       const props = foundry.utils.deepClone(this.item.system.effects?.weaponBuff?.addProps || []);
@@ -1350,12 +1382,12 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         await this.item.update({ "system.effects.weaponBuff.addProps": props });
       }
     });
-    html.find(".wbuff-remove").on("click", async ev => {
+    on(".wbuff-remove", "click", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const props = (this.item.system.effects?.weaponBuff?.addProps || []).filter(p => p.key !== key);
       await this.item.update({ "system.effects.weaponBuff.addProps": props });
     });
-    html.find(".wbuff-rating").on("change", async ev => {
+    on(".wbuff-rating", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
       const val   = parseInt(ev.currentTarget.value) || 0;
@@ -1363,7 +1395,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       const p     = props.find(x => x.key === key);
       if (p) { p[field] = val; await this.item.update({ "system.effects.weaponBuff.addProps": props }); }
     });
-    html.find(".wbuff-rating-dice").on("change", async ev => {
+    on(".wbuff-rating-dice", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
       const val   = ev.currentTarget.value.trim();
@@ -1373,7 +1405,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     });
 
     // ── Свойства узла корабля ───────────────────────────────────────────────────
-    html.find(".shipprop-add-select").on("change", async ev => {
+    on(".shipprop-add-select", "change", async ev => {
       const key = ev.currentTarget.value;
       if (!key) return;
       const props = foundry.utils.deepClone(this.item.system.shipProps || []);
@@ -1382,12 +1414,12 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         await this.item.update({ "system.shipProps": props });
       }
     });
-    html.find(".shipprop-remove").on("click", async ev => {
+    on(".shipprop-remove", "click", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const props = (this.item.system.shipProps || []).filter(p => p.key !== key);
       await this.item.update({ "system.shipProps": props });
     });
-    html.find(".shipprop-rating").on("change", async ev => {
+    on(".shipprop-rating", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
       const val   = parseInt(ev.currentTarget.value) || 0;
@@ -1397,7 +1429,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     });
 
     // ── Бонусы характеристик (множественные) психосилы / техночуда ──────────────
-    html.find(".cbonus-add").on("change", async ev => {
+    on(".cbonus-add", "change", async ev => {
       const stat = ev.currentTarget.value;
       if (!stat) return;
       const arr = foundry.utils.deepClone(this.item.system.effects?.charBonuses || []);
@@ -1406,12 +1438,12 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         await this.item.update({ "system.effects.charBonuses": arr });
       }
     });
-    html.find(".cbonus-remove").on("click", async ev => {
+    on(".cbonus-remove", "click", async ev => {
       const stat = ev.currentTarget.dataset.stat;
       const arr  = (this.item.system.effects?.charBonuses || []).filter(c => c.stat !== stat);
       await this.item.update({ "system.effects.charBonuses": arr });
     });
-    html.find(".cbonus-value").on("change", async ev => {
+    on(".cbonus-value", "change", async ev => {
       const stat = ev.currentTarget.dataset.stat;
       const val  = parseInt(ev.currentTarget.value) || 0;
       const arr  = foundry.utils.deepClone(this.item.system.effects?.charBonuses || []);
@@ -1420,7 +1452,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     });
 
     // ── Бонусы к ЗНАЧЕНИЮ характеристики (обычный +X, не Unnatural) ──────────────
-    html.find(".cvbonus-add").on("change", async ev => {
+    on(".cvbonus-add", "change", async ev => {
       const stat = ev.currentTarget.value;
       if (!stat) return;
       const arr = foundry.utils.deepClone(this.item.system.effects?.charValueBonuses || []);
@@ -1429,12 +1461,12 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         await this.item.update({ "system.effects.charValueBonuses": arr });
       }
     });
-    html.find(".cvbonus-remove").on("click", async ev => {
+    on(".cvbonus-remove", "click", async ev => {
       const stat = ev.currentTarget.dataset.stat;
       const arr  = (this.item.system.effects?.charValueBonuses || []).filter(c => c.stat !== stat);
       await this.item.update({ "system.effects.charValueBonuses": arr });
     });
-    html.find(".cvbonus-value").on("change", async ev => {
+    on(".cvbonus-value", "change", async ev => {
       const stat = ev.currentTarget.dataset.stat;
       const val  = parseInt(ev.currentTarget.value) || 0;
       const arr  = foundry.utils.deepClone(this.item.system.effects?.charValueBonuses || []);
@@ -1443,7 +1475,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     });
 
     // ── Доп. типы психосилы / техночуда ────────────────────────────────────────
-    html.find(".xtype-add-select").on("change", async ev => {
+    on(".xtype-add-select", "change", async ev => {
       const type = ev.currentTarget.value;
       if (!type) return;
       const arr = foundry.utils.deepClone(this.item.system.extraTypes || []);
@@ -1452,12 +1484,12 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         await this.item.update({ "system.extraTypes": arr });
       }
     });
-    html.find(".xtype-remove").on("click", async ev => {
+    on(".xtype-remove", "click", async ev => {
       const type = ev.currentTarget.dataset.type;
       const arr  = (this.item.system.extraTypes || []).filter(e => e.type !== type);
       await this.item.update({ "system.extraTypes": arr });
     });
-    html.find(".xtype-x").on("change", async ev => {
+    on(".xtype-x", "change", async ev => {
       const type = ev.currentTarget.dataset.type;
       const val  = parseInt(ev.currentTarget.value) || 0;
       const arr  = foundry.utils.deepClone(this.item.system.extraTypes || []);
@@ -1466,7 +1498,7 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
     });
 
     // ── Модификация оружия: даруемые/убираемые свойства ────────────────────────
-    html.find(".modprop-add").on("change", async ev => {
+    on(".modprop-add", "change", async ev => {
       const key = ev.currentTarget.value;
       if (!key) return;
       const arr = foundry.utils.deepClone(this.item.system.effects?.addProps || []);
@@ -1475,12 +1507,12 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         await this.item.update({ "system.effects.addProps": arr });
       }
     });
-    html.find(".modprop-remove").on("click", async ev => {
+    on(".modprop-remove", "click", async ev => {
       const key = ev.currentTarget.dataset.key;
       const arr = (this.item.system.effects?.addProps || []).filter(p => p.key !== key);
       await this.item.update({ "system.effects.addProps": arr });
     });
-    html.find(".modprop-rating").on("change", async ev => {
+    on(".modprop-rating", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
       const val   = parseInt(ev.currentTarget.value) || 0;
@@ -1488,40 +1520,40 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       const p     = arr.find(x => x.key === key);
       if (p) { p[field] = val; await this.item.update({ "system.effects.addProps": arr }); }
     });
-    html.find(".modrem-add").on("change", async ev => {
+    on(".modrem-add", "change", async ev => {
       const key = ev.currentTarget.value;
       if (!key) return;
       const arr = foundry.utils.deepClone(this.item.system.effects?.removeProps || []);
       if (!arr.includes(key)) { arr.push(key); await this.item.update({ "system.effects.removeProps": arr }); }
     });
-    html.find(".modrem-remove").on("click", async ev => {
+    on(".modrem-remove", "click", async ev => {
       const key = ev.currentTarget.dataset.key;
       const arr = (this.item.system.effects?.removeProps || []).filter(k => k !== key);
       await this.item.update({ "system.effects.removeProps": arr });
     });
 
     // ── Талант: склонности ─────────────────────────────────────────────────────
-    html.find(".apt-add").on("change", async ev => {
+    on(".apt-add", "change", async ev => {
       const key = ev.currentTarget.value;
       if (!key) return;
       const arr = foundry.utils.deepClone(this.item.system.aptitudes || []);
       if (!arr.includes(key)) { arr.push(key); await this.item.update({ "system.aptitudes": arr }); }
     });
-    html.find(".apt-remove").on("click", async ev => {
+    on(".apt-remove", "click", async ev => {
       const key = ev.currentTarget.dataset.key;
       const arr = (this.item.system.aptitudes || []).filter(k => k !== key);
       await this.item.update({ "system.aptitudes": arr });
     });
 
     // ── Модификация брони: даруемые свойства (чекбоксы) ────────────────────────
-    html.find(".armormod-prop-cb").on("change", () => {
+    on(".armormod-prop-cb", "change", () => {
       const props = [];
-      html.find(".armormod-prop-cb:checked").each((_, cb) => props.push(cb.dataset.prop));
+      [...el.querySelectorAll(".armormod-prop-cb:checked")].forEach(cb => props.push(cb.dataset.prop));
       this.item.update({ "system.effects.addProps": props });
     });
 
     // ── Особенности брони (как у оружия: добавление чипами) ────────────────────
-    html.find(".aprop-add-select").on("change", async ev => {
+    on(".aprop-add-select", "change", async ev => {
       const key = ev.currentTarget.value;
       if (!key) return;
       const props = [...(this.item.system.properties || [])];
@@ -1530,38 +1562,38 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
         await this.item.update({ "system.properties": props });
       }
     });
-    html.find(".aprop-remove").on("click", async ev => {
+    on(".aprop-remove", "click", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const props = (this.item.system.properties || []).filter(p => p !== key);
       await this.item.update({ "system.properties": props });
     });
 
     // ── Типы боеприпасов ──────────────────────────────────────────────────────
-    html.find(".ammo-type-cb").on("change", () => {
+    on(".ammo-type-cb", "change", () => {
       const types = [];
-      html.find(".ammo-type-cb:checked").each((_, cb) => types.push(cb.dataset.type));
+      [...el.querySelectorAll(".ammo-type-cb:checked")].forEach(cb => types.push(cb.dataset.type));
       this.item.update({ "system.weaponTypes": types });
     });
 
     // ── Силовой щит ───────────────────────────────────────────────────────────
-    html.find(".shield-nature-select").on("change", ev => {
+    on(".shield-nature-select", "change", ev => {
       this.item.update({ "system.shieldNature": ev.currentTarget.value });
     });
-    html.find(".shield-type-select").on("change", ev => {
+    on(".shield-type-select", "change", ev => {
       this.item.update({ "system.shieldType": ev.currentTarget.value });
     });
-    html.find(".shield-special-rating-cb").on("change", ev => {
+    on(".shield-special-rating-cb", "change", ev => {
       this.item.update({ "system.isSpecialRating": ev.currentTarget.checked });
     });
     // ── Яд: чекбоксы вектора доставки ────────────────────────────────────────
-    html.find(".poison-vector-cb").on("change", () => {
+    on(".poison-vector-cb", "change", () => {
       const vectors = [];
-      html.find(".poison-vector-cb:checked").each((_, cb) => vectors.push(cb.dataset.vector));
+      [...el.querySelectorAll(".poison-vector-cb:checked")].forEach(cb => vectors.push(cb.dataset.vector));
       this.item.update({ "system.poisonVector": vectors });
     });
 
     // ── Зависимость: показать/скрыть блок ────────────────────────────────────
-    html.find(".drug-addiction-toggle").on("change", ev => {
+    on(".drug-addiction-toggle", "change", ev => {
       this.item.update({ "system.addiction.hasAddiction": ev.currentTarget.checked });
     });
   }

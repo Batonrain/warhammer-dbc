@@ -211,7 +211,8 @@ globalThis.foundry = {
         }
       }
     },
-    sheets: { ActorSheetV2: ApplicationStub, DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub }
+    sheets: { ActorSheetV2: ApplicationStub, ItemSheetV2: ApplicationStub,
+              DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub }
   },
   utils: {
     mergeObject: (a, b) => ({ ...a, ...b }),
