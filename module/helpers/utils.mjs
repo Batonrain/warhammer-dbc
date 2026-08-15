@@ -1,3 +1,26 @@
+/**
+ * Экранировать текст перед вставкой в HTML: & < > " ' — всё, чем можно выйти
+ * из текста или из атрибута. Имена предметов и акторов задаёт игрок у себя на
+ * листе, а собранная строками разметка разбирается как HTML, — без этого
+ * «<img src=x onerror=…>» в названии исполняется у того, кто её видит.
+ *
+ * Работу делает foundry.utils.escapeHTML, своей замены ему не нужно. Обёртка
+ * здесь ради двух вещей: пустое значение даёт пустую строку, а не слово
+ * «null», и на проект остаётся одна точка вызова вместо двух десятков
+ * разошедшихся копий (wdbc-84g).
+ */
+export const esc = v => foundry.utils.escapeHTML(v ?? "");
+
+/**
+ * Навесить обработчик на все узлы под корнем — замена `html.find(sel).on(ev, fn)`
+ * при снятии листов с jQuery (wdbc-z0z). Та же форма записи, что у jQuery,
+ * поэтому переезд модуля читается построчно, а не как переписывание.
+ *
+ * @param {ParentNode} root  корень листа или окна
+ */
+export const on = (root, selector, event, handler) =>
+  root.querySelectorAll(selector).forEach(el => el.addEventListener(event, handler));
+
 export function _getAmmoSpent(weapon, rofMode) {
   const sys = weapon.system;
   switch (rofMode) {

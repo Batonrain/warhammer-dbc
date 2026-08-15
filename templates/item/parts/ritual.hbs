@@ -80,8 +80,8 @@
   <div class="item-section-title">
     ТРЕБОВАНИЯ
     {{#if isGM}}<span class="effects-tab-actions">
-      <button type="button" class="req-group-add" data-req="req" data-op="AND" title="Новая группа — нужны ВСЕ условия">➕ И-группа</button>
-      <button type="button" class="req-group-add" data-req="req" data-op="OR" title="Новая группа — достаточно ОДНОГО условия">➕ ИЛИ-группа</button>
+      <button type="button" class="req-group-add" data-action="reqGroupAdd" data-req="req" data-op="AND" title="Новая группа — нужны ВСЕ условия">➕ И-группа</button>
+      <button type="button" class="req-group-add" data-action="reqGroupAdd" data-req="req" data-op="OR" title="Новая группа — достаточно ОДНОГО условия">➕ ИЛИ-группа</button>
     </span>{{/if}}
   </div>
   <div class="trait-fx-hint">Кто может проводить ритуал: Навык нужного ранга, Талант/Черта нужного рейтинга, Раса, Элитный архетип или Покровительство Бога.</div>
@@ -93,8 +93,8 @@
   <div class="item-section-title">
     ТРЕБОВАНИЯ К АССИСТЕНТАМ
     {{#if isGM}}<span class="effects-tab-actions">
-      <button type="button" class="req-group-add" data-req="assistReq" data-op="AND" title="Новая группа — нужны ВСЕ условия">➕ И-группа</button>
-      <button type="button" class="req-group-add" data-req="assistReq" data-op="OR" title="Новая группа — достаточно ОДНОГО условия">➕ ИЛИ-группа</button>
+      <button type="button" class="req-group-add" data-action="reqGroupAdd" data-req="assistReq" data-op="AND" title="Новая группа — нужны ВСЕ условия">➕ И-группа</button>
+      <button type="button" class="req-group-add" data-action="reqGroupAdd" data-req="assistReq" data-op="OR" title="Новая группа — достаточно ОДНОГО условия">➕ ИЛИ-группа</button>
     </span>{{/if}}
   </div>
   <div class="trait-fx-hint">Кого можно взять в помощники. Пусто — годится любой (кроме общего правила стр. 25: тот же Навык хотя бы на «Знает»).</div>

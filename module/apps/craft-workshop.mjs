@@ -18,6 +18,7 @@ import { VAT_QUALITY, BIO_TARGET_QUALITY, BIO_TEST_SKILLS, BIO_OUTCOMES,
          templateSuccesses } from "../constants/bio-lab.mjs";
 import { DRUKHARI_BIOIMPLANTS } from "../constants/drukhari-bio.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const { Application } = foundry.appv1.api;
 
@@ -310,7 +311,7 @@ export class CraftWorkshop extends Application {
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor: crafter }),
       content: `<div class="wh-craft-msg wh-bio-msg">
-        <div class="wh-craft-msg-head">${craftIcon("bio")}Цикл роста — ${crafter.name}</div>
+        <div class="wh-craft-msg-head">${craftIcon("bio")}Цикл роста — ${esc(crafter.name)}</div>
         <div class="wh-bio-msg-what">${proj.bioImplant} · цель ${vm.targets.find(t => t.selected)?.label || ""}</div>
         <div class="wh-craft-msg-roll">1d100 = <b>${rv}</b> против <b>${limit}</b>
           (${skillDef.label} ${vm.modSign}${vm.mod})</div>
@@ -357,7 +358,7 @@ export class CraftWorkshop extends Application {
       speaker: ChatMessage.getSpeaker({ actor: crafter }),
       content: `
         <div class="wh-craft-msg">
-          <div class="wh-craft-msg-head">${rollIcon("wrench","#6fe6ff")}${proj.mode === "research" ? "Смена исследования" : "Смена крафта"} — ${crafter.name}</div>
+          <div class="wh-craft-msg-head">${rollIcon("wrench","#6fe6ff")}${proj.mode === "research" ? "Смена исследования" : "Смена крафта"} — ${esc(crafter.name)}</div>
           <div class="wh-craft-roll-line">${skillList}</div>
           <div class="wh-craft-roll-line ${dos > 0 ? "ok" : "fail"}">Комбинированный тест: <b>${rv}</b> vs Предел ${limit} → ${dos > 0 ? `+${dos} успеха` : `${dos} (провал)`}</div>
           ${assist ? `<div class="wh-craft-roll-line ok">Ассистенты (${assist}): +${assistBonus} к тесту, +${assist} успеха</div>` : ""}

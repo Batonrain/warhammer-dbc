@@ -1,561 +1,555 @@
-<form class="warhammer-dbc formation-sheet-form" autocomplete="off">
-
-  {{!-- ═══════════════ ШАПКА (по образцу листа персонажа) ═══════════════ --}}
-  <header class="sheet-header fm-header">
-    <div class="portrait-block">
-      <img class="profile-img fm-portrait" src="{{actor.img}}" title="{{actor.name}}"/>
+{{!-- ═══════════════ ШАПКА (по образцу листа персонажа) ═══════════════ --}}
+<header class="sheet-header fm-header">
+  <div class="portrait-block">
+    <img class="profile-img fm-portrait" data-action="portrait" src="{{actor.img}}" title="{{actor.name}}"/>
+  </div>
+  <div class="header-main">
+    <div class="header-name-row">
+      <label class="header-label">Часть</label>
+      <input class="actor-name" name="name" type="text" value="{{actor.name}}" placeholder="Название формирования"/>
     </div>
-    <div class="header-main">
-      <div class="header-name-row">
-        <label class="header-label">Часть</label>
-        <input class="actor-name" name="name" type="text" value="{{actor.name}}" placeholder="Название формирования"/>
+    <div class="header-grid">
+      <div class="header-cell">
+        <label>Род войск</label>
+        <select name="system.troopType">
+          {{#each troopGroups as |g|}}
+          <optgroup label="{{g.label}}{{#unless g.allowed}} — недоступен на этом мире{{/unless}}">
+            {{#each g.types as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}
+          </optgroup>
+          {{/each}}
+        </select>
       </div>
-      <div class="header-grid">
-        <div class="header-cell">
-          <label>Род войск</label>
-          <select name="system.troopType">
-            {{#each troopGroups as |g|}}
-            <optgroup label="{{g.label}}{{#unless g.allowed}} — недоступен на этом мире{{/unless}}">
-              {{#each g.types as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}
-            </optgroup>
-            {{/each}}
-          </select>
-        </div>
-        <div class="header-cell">
-          <label>Размер</label>
-          <select name="system.size">
-            {{#each sizes as |s|}}<option value="{{s.key}}" {{#if s.selected}}selected{{/if}} title="{{s.headcount}}">{{s.label}} · {{s.dice}}к10</option>{{/each}}
-          </select>
-        </div>
-        {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
+      <div class="header-cell">
+        <label>Размер</label>
+        <select name="system.size">
+          {{#each sizes as |s|}}<option value="{{s.key}}" {{#if s.selected}}selected{{/if}} title="{{s.headcount}}">{{s.label}} · {{s.dice}}к10</option>{{/each}}
+        </select>
+      </div>
+      {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
 
-        {{!-- Численность — главный «хит-пул» формирования --}}
-        <div class="header-cell fate-cell fm-res-cell">
-          <label title="10% от общего количества людей в составе">Численность</label>
-          <div class="fate-values">
-            <input type="number" name="system.numbers.value" value="{{system.numbers.value}}" min="0" class="fm-num-input"/>
-            <span>/</span>
-            <input type="number" name="system.numbers.max" value="{{system.numbers.max}}" min="0"/>
-          </div>
-          <div class="fm-bar" title="Численность {{derived.numbersPct}}%">
-            <div class="fm-bar-fill fm-bar-num" style="width:{{derived.numbersPct}}%;"></div>
-          </div>
+      {{!-- Численность — главный «хит-пул» формирования --}}
+      <div class="header-cell fate-cell fm-res-cell">
+        <label title="10% от общего количества людей в составе">Численность</label>
+        <div class="fate-values">
+          <input type="number" name="system.numbers.value" value="{{system.numbers.value}}" min="0" class="fm-num-input"/>
+          <span>/</span>
+          <input type="number" name="system.numbers.max" value="{{system.numbers.max}}" min="0"/>
         </div>
-
-        <div class="header-cell">
-          <label>Мир</label>
-          <select name="system.techLevel">
-            {{#each techLevels as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}} title="{{t.allows}}">{{t.label}} · S {{signedNum t.s}}</option>{{/each}}
-          </select>
-        </div>
-        <div class="header-cell">
-          <label>Подготовка</label>
-          <select name="system.training">
-            {{#each trainings as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}} title="{{t.desc}}">{{t.label}} · Выучка {{t.skill}}</option>{{/each}}
-          </select>
-        </div>
-
-        {{!-- Боевой дух --}}
-        <div class="header-cell fate-cell fm-res-cell">
-          <label title="Готовность солдат сражаться; падает вместе с потерями">Боевой дух</label>
-          <div class="fate-values">
-            <input type="number" name="system.morale.value" value="{{system.morale.value}}" min="0"
-                   class="fm-mor-input{{#if derived.atQuarter}} fm-crit{{else}}{{#if derived.atHalf}} fm-warn{{/if}}{{/if}}"/>
-            <span>/</span>
-            <input type="number" name="system.morale.max" value="{{system.morale.max}}" min="0"/>
-          </div>
-          <div class="fm-bar" title="Боевой дух {{derived.moralePct}}%">
-            <div class="fm-bar-fill fm-bar-mor{{#if derived.atQuarter}} fm-bar-crit{{else}}{{#if derived.atHalf}} fm-bar-warn{{/if}}{{/if}}" style="width:{{derived.moralePct}}%;"></div>
-          </div>
-        </div>
-
-        <div class="header-cell">
-          <label>Снаряжение</label>
-          <select name="system.gearQuality">
-            {{#each gearLevels as |g|}}<option value="{{g.key}}" {{#if g.selected}}selected{{/if}} title="{{g.examples}}">{{g.label}} · S {{signedNum g.s}} {{g.moraleDie}}</option>{{/each}}
-          </select>
-        </div>
-        <div class="header-cell">
-          <label>Ландшафт</label>
-          <select name="system.terrain">
-            {{#each terrains as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}} title="{{t.desc}}">{{t.label}} · укр. {{t.cover}}</option>{{/each}}
-          </select>
-        </div>
-        <div class="header-cell fate-cell fm-res-cell">
-          <label title="Урон = кости по размеру + Сила">Урон</label>
-          <div class="fm-dmg-display">{{derived.damageFormula}}</div>
+        <div class="fm-bar" title="Численность {{derived.numbersPct}}%">
+          <div class="fm-bar-fill fm-bar-num" style="width:{{derived.numbersPct}}%;"></div>
         </div>
       </div>
 
-      <div class="header-checks fm-header-checks">
-        <div class="fm-stat-strip">
-          <span class="fm-stat" title="Сила: род войск + технический уровень + качество снаряжения">Сила <b>{{derived.strength}}</b></span>
-          <span class="fm-stat" title="Оборона равна удвоенной Силе и работает как броня">Об. <b>{{derived.defence}}</b></span>
-          <span class="fm-stat" title="Ландшафт + окопы + прикрытие ПВО">Укр. <b>{{derived.cover}}</b></span>
-          <span class="fm-stat" title="Километров за стратегический раунд (с учётом ландшафта и приказа)">Скор. <b>{{derived.speed}}</b> км</span>
-          <span class="fm-stat" title="Дальность поражения. «С» — обычное соприкосновение в 1 км{{#if derived.rangeNote}} · {{derived.rangeNote}}{{/if}}">Дальн. <b>{{derived.rangeLabel}}</b></span>
-          <span class="fm-stat" title="1к10 + бонус характеристики войск (Выучка/10)">Иниц. <b>+{{system.initiative}}</b></span>
+      <div class="header-cell">
+        <label>Мир</label>
+        <select name="system.techLevel">
+          {{#each techLevels as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}} title="{{t.allows}}">{{t.label}} · S {{signedNum t.s}}</option>{{/each}}
+        </select>
+      </div>
+      <div class="header-cell">
+        <label>Подготовка</label>
+        <select name="system.training">
+          {{#each trainings as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}} title="{{t.desc}}">{{t.label}} · Выучка {{t.skill}}</option>{{/each}}
+        </select>
+      </div>
+
+      {{!-- Боевой дух --}}
+      <div class="header-cell fate-cell fm-res-cell">
+        <label title="Готовность солдат сражаться; падает вместе с потерями">Боевой дух</label>
+        <div class="fate-values">
+          <input type="number" name="system.morale.value" value="{{system.morale.value}}" min="0"
+                 class="fm-mor-input{{#if derived.atQuarter}} fm-crit{{else}}{{#if derived.atHalf}} fm-warn{{/if}}{{/if}}"/>
+          <span>/</span>
+          <input type="number" name="system.morale.max" value="{{system.morale.max}}" min="0"/>
         </div>
-        <div class="fm-header-chips">
-          {{#if currentOrder}}<span class="fm-chip fm-chip-on" title="Приказ на этот стратегический ход">{{currentOrder.label}}</span>{{/if}}
-          {{#if derived.penalty}}<span class="fm-chip fm-chip-warn" title="За каждые 20 потерянных очков боевого духа — −5 к тестам">Истощение {{derived.penalty}}</span>{{/if}}
-          {{#if status.surprised}}<span class="fm-chip fm-chip-bad">Внезапность</span>{{/if}}
-          {{#if derived.routed}}<span class="fm-chip fm-chip-bad">Бегство</span>{{/if}}
-          {{#if derived.broken}}<span class="fm-chip fm-chip-bad">Разбито</span>{{/if}}
-          {{#if derived.fearless}}<span class="fm-chip fm-chip-on" title="Богомашины неспособны удариться в панику">Без боевого духа</span>{{/if}}
+        <div class="fm-bar" title="Боевой дух {{derived.moralePct}}%">
+          <div class="fm-bar-fill fm-bar-mor{{#if derived.atQuarter}} fm-bar-crit{{else}}{{#if derived.atHalf}} fm-bar-warn{{/if}}{{/if}}" style="width:{{derived.moralePct}}%;"></div>
         </div>
+      </div>
+
+      <div class="header-cell">
+        <label>Снаряжение</label>
+        <select name="system.gearQuality">
+          {{#each gearLevels as |g|}}<option value="{{g.key}}" {{#if g.selected}}selected{{/if}} title="{{g.examples}}">{{g.label}} · S {{signedNum g.s}} {{g.moraleDie}}</option>{{/each}}
+        </select>
+      </div>
+      <div class="header-cell">
+        <label>Ландшафт</label>
+        <select name="system.terrain">
+          {{#each terrains as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}} title="{{t.desc}}">{{t.label}} · укр. {{t.cover}}</option>{{/each}}
+        </select>
+      </div>
+      <div class="header-cell fate-cell fm-res-cell">
+        <label title="Урон = кости по размеру + Сила">Урон</label>
+        <div class="fm-dmg-display">{{derived.damageFormula}}</div>
       </div>
     </div>
-  </header>
 
-  {{!-- ═══════════════ ВКЛАДКИ ═══════════════ --}}
-  <nav class="sheet-tabs tabs" data-group="primary">
-    <a class="item" data-tab="unit">ЧАСТЬ</a>
-    <a class="item" data-tab="orders">ПРИКАЗЫ</a>
-    <a class="item" data-tab="battle">БОЙ</a>
-    <a class="item" data-tab="events">СОБЫТИЯ</a>
-    <a class="item" data-tab="reference">СПРАВОЧНИК</a>
-    <a class="item" data-tab="notes">ЗАПИСИ</a>
-  </nav>
-
-  <div class="sheet-body">
-
-    {{!-- ───────────────── ЧАСТЬ ───────────────── --}}
-    <div class="tab fm-tab" data-tab="unit" data-group="primary">
-
-      {{#if featureOff}}
-      <div class="fm-feature-off">
-        Подсистема <b>{{featureName}}</b> выключена в Настройках Игры → Warhammer DBC.
-        Это формирование продолжает работать, но создавать новые нельзя, пока подсистема не включена.
+    <div class="header-checks fm-header-checks">
+      <div class="fm-stat-strip">
+        <span class="fm-stat" title="Сила: род войск + технический уровень + качество снаряжения">Сила <b>{{derived.strength}}</b></span>
+        <span class="fm-stat" title="Оборона равна удвоенной Силе и работает как броня">Об. <b>{{derived.defence}}</b></span>
+        <span class="fm-stat" title="Ландшафт + окопы + прикрытие ПВО">Укр. <b>{{derived.cover}}</b></span>
+        <span class="fm-stat" title="Километров за стратегический раунд (с учётом ландшафта и приказа)">Скор. <b>{{derived.speed}}</b> км</span>
+        <span class="fm-stat" title="Дальность поражения. «С» — обычное соприкосновение в 1 км{{#if derived.rangeNote}} · {{derived.rangeNote}}{{/if}}">Дальн. <b>{{derived.rangeLabel}}</b></span>
+        <span class="fm-stat" title="1к10 + бонус характеристики войск (Выучка/10)">Иниц. <b>+{{system.initiative}}</b></span>
       </div>
-      {{/if}}
+      <div class="fm-header-chips">
+        {{#if currentOrder}}<span class="fm-chip fm-chip-on" title="Приказ на этот стратегический ход">{{currentOrder.label}}</span>{{/if}}
+        {{#if derived.penalty}}<span class="fm-chip fm-chip-warn" title="За каждые 20 потерянных очков боевого духа — −5 к тестам">Истощение {{derived.penalty}}</span>{{/if}}
+        {{#if status.surprised}}<span class="fm-chip fm-chip-bad">Внезапность</span>{{/if}}
+        {{#if derived.routed}}<span class="fm-chip fm-chip-bad">Бегство</span>{{/if}}
+        {{#if derived.broken}}<span class="fm-chip fm-chip-bad">Разбито</span>{{/if}}
+        {{#if derived.fearless}}<span class="fm-chip fm-chip-on" title="Богомашины неспособны удариться в панику">Без боевого духа</span>{{/if}}
+      </div>
+    </div>
+  </div>
+</header>
 
-      {{#if troopBlocked}}
-      <div class="fm-warn">Этот род войск недоступен на мире выбранного технического уровня. Книга допускает здесь: {{#each techLevels as |t|}}{{#if t.selected}}{{t.allows}}{{/if}}{{/each}}.</div>
-      {{/if}}
+{{!-- ═══════════════ ВКЛАДКИ ═══════════════ --}}
+<nav class="sheet-tabs tabs" data-group="primary">
+  {{#each tabs as |t|}}
+  <a class="item {{#if (eq ../tab t.id)}}active{{/if}}" data-action="tab" data-group="primary" data-tab="{{t.id}}">{{t.label}}</a>
+  {{/each}}
+</nav>
 
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">КОМАНДОВАНИЕ</div>
-        <div class="panel-body">
-          <div class="fm-hint">Перетащите актора на слот командира — его умения и характеристики заменят Выучку войск во всех тестах приказов и событий. Придать формированию можно: {{heroTypesLabel}}.</div>
+<div class="sheet-body">
 
-          <div class="fm-command-row">
-            <div class="fm-commander{{#if commander.filled}} fm-commander-filled{{/if}}{{#if commander.missing}} fm-missing{{/if}}"
-                 data-post-slot="commander" data-uuid="{{commander.uuid}}">
-              <div class="fm-slot-head"><i class="fas fa-star"></i>Приданный командир
-                {{#if commander.filled}}<a class="fm-commander-clear" title="Снять с должности"><i class="fas fa-user-minus"></i></a>{{/if}}
-              </div>
-              {{#if commander.filled}}
-              <div class="fm-slot-body">
-                <img class="fm-slot-img fm-open" src="{{commander.img}}" title="Открыть лист"/>
-                <div class="fm-slot-info">
-                  <div class="fm-slot-name fm-open">{{commander.name}}</div>
-                  <div class="fm-slot-stats">
-                    <span title="Командование">Cmd {{#if commander.command}}{{commander.command}}{{else}}—{{/if}}</span>
-                    <span title="Товарищество">F {{#if commander.fel}}{{commander.fel}}{{else}}—{{/if}}</span>
-                    <span title="Интеллект">I {{#if commander.int}}{{commander.int}}{{else}}—{{/if}}</span>
-                  </div>
+  {{!-- ───────────────── ЧАСТЬ ───────────────── --}}
+  <div class="tab fm-tab" data-tab="unit" data-group="primary">
+
+    {{#if featureOff}}
+    <div class="fm-feature-off">
+      Подсистема <b>{{featureName}}</b> выключена в Настройках Игры → Warhammer DBC.
+      Это формирование продолжает работать, но создавать новые нельзя, пока подсистема не включена.
+    </div>
+    {{/if}}
+
+    {{#if troopBlocked}}
+    <div class="fm-warn">Этот род войск недоступен на мире выбранного технического уровня. Книга допускает здесь: {{#each techLevels as |t|}}{{#if t.selected}}{{t.allows}}{{/if}}{{/each}}.</div>
+    {{/if}}
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">КОМАНДОВАНИЕ</div>
+      <div class="panel-body">
+        <div class="fm-hint">Перетащите актора на слот командира — его умения и характеристики заменят Выучку войск во всех тестах приказов и событий. Придать формированию можно: {{heroTypesLabel}}.</div>
+
+        <div class="fm-command-row">
+          <div class="fm-commander{{#if commander.filled}} fm-commander-filled{{/if}}{{#if commander.missing}} fm-missing{{/if}}"
+               data-post-slot="commander" data-uuid="{{commander.uuid}}">
+            <div class="fm-slot-head"><i class="fas fa-star"></i>Приданный командир
+              {{#if commander.filled}}<a class="fm-commander-clear" data-action="commanderClear" title="Снять с должности"><i class="fas fa-user-minus"></i></a>{{/if}}
+            </div>
+            {{#if commander.filled}}
+            <div class="fm-slot-body">
+              <img class="fm-slot-img fm-open" data-action="open" src="{{commander.img}}" title="Открыть лист"/>
+              <div class="fm-slot-info">
+                <div class="fm-slot-name fm-open" data-action="open">{{commander.name}}</div>
+                <div class="fm-slot-stats">
+                  <span title="Командование">Cmd {{#if commander.command}}{{commander.command}}{{else}}—{{/if}}</span>
+                  <span title="Товарищество">F {{#if commander.fel}}{{commander.fel}}{{else}}—{{/if}}</span>
+                  <span title="Интеллект">I {{#if commander.int}}{{commander.int}}{{else}}—{{/if}}</span>
                 </div>
               </div>
-              {{else}}
-              <div class="fm-slot-empty">— перетащите сюда —</div>
-              {{/if}}
-            </div>
-
-            <div class="fm-command-info">
-              <div class="fm-info-row"><span>Выучка войск</span><b>{{derived.skillValue}}</b></div>
-              <div class="fm-info-row"><span>Тесты без командира</span><b>{{derived.testValue}}</b></div>
-              <div class="fm-info-row"><span>Модификатор Доступности</span><b>{{signedNum derived.availability}}</b></div>
-              {{#if heroPenalty}}
-              <div class="fm-info-note">Истощение бьёт и по приданному герою: {{heroPenalty}} к его тестам Command и Общительности.</div>
-              {{/if}}
-              <div class="fm-info-note">Приказы, отдаваемые удалённо, исполняют офицеры и унтер-офицеры — тогда используются показатели самого формирования.</div>
-            </div>
-          </div>
-
-          <div class="fm-subtitle">Приданные авантюристы</div>
-          <div class="fm-attached-dropzone">
-            {{#each attached as |a|}}
-            <div class="fm-attached{{#if a.missing}} fm-missing{{/if}}" data-attached-id="{{a.id}}" data-uuid="{{a.uuid}}">
-              <img class="fm-slot-img fm-open" src="{{a.img}}" title="Открыть лист"/>
-              <div class="fm-attached-main">
-                <div class="fm-slot-name fm-open">{{a.name}}</div>
-                <input type="text" class="fm-attached-note" value="{{a.note}}" placeholder="Роль в бою"/>
-              </div>
-              <a class="fm-event-count" title="Ключевых событий за игровой день (не больше двух на авантюриста)">
-                <span class="fm-event-pips fm-events-{{a.events}}">{{a.events}}/2</span>
-              </a>
-              <a class="fm-attached-remove" title="Отозвать"><i class="fas fa-times"></i></a>
             </div>
             {{else}}
-            <div class="fm-empty">Никто не придан. Перетащите сюда персонажей — они смогут проводить ключевые события.</div>
-            {{/each}}
+            <div class="fm-slot-empty">— перетащите сюда —</div>
+            {{/if}}
+          </div>
+
+          <div class="fm-command-info">
+            <div class="fm-info-row"><span>Выучка войск</span><b>{{derived.skillValue}}</b></div>
+            <div class="fm-info-row"><span>Тесты без командира</span><b>{{derived.testValue}}</b></div>
+            <div class="fm-info-row"><span>Модификатор Доступности</span><b>{{signedNum derived.availability}}</b></div>
+            {{#if heroPenalty}}
+            <div class="fm-info-note">Истощение бьёт и по приданному герою: {{heroPenalty}} к его тестам Command и Общительности.</div>
+            {{/if}}
+            <div class="fm-info-note">Приказы, отдаваемые удалённо, исполняют офицеры и унтер-офицеры — тогда используются показатели самого формирования.</div>
           </div>
         </div>
-      </div>
 
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">СОСТАВ И СНАБЖЕНИЕ</div>
-        <div class="panel-body">
-          <div class="fm-grid">
-            <div class="fm-field"><label>Родной мир</label>
-              <input type="text" name="system.homeworld" value="{{system.homeworld}}" placeholder="Откуда набраны"/></div>
-            <div class="fm-field"><label>Кому служит</label>
-              <input type="text" name="system.allegiance" value="{{system.allegiance}}" placeholder="Династия, полк, легион"/></div>
-            <div class="fm-field"><label>Офицер (NPC)</label>
-              <input type="text" name="system.commanderName" value="{{system.commanderName}}" placeholder="Имя командира части"/></div>
-          </div>
-
-          <div class="fm-grid fm-grid-calc">
-            <div class="fm-field"><label title="Реальное число бойцов">Людей в составе</label>
-              <input type="number" name="system.headcount" value="{{system.headcount}}" min="0"/></div>
-            <label class="fm-check" title="Каждый астартес стоит множества обычных солдат — численность впятеро выше">
-              <input type="checkbox" name="system.astartes" {{checked system.astartes}}/><span>Астартес (×5)</span></label>
-            <button type="button" class="fm-btn fm-calc-numbers"><i class="fas fa-calculator"></i> Численность = 10%</button>
-            <button type="button" class="fm-btn fm-roll-morale-max"><i class="fas fa-dice-d10"></i> Бросить предел духа</button>
-            <button type="button" class="fm-btn fm-full-strength"><i class="fas fa-flag-checkered"></i> Полный состав</button>
-          </div>
-
-          <div class="fm-grid">
-            <div class="fm-field"><label title="Ручная поправка к итоговой Силе">Мод. Силы</label>
-              <input type="number" name="system.strengthMod" value="{{system.strengthMod}}"/></div>
-            <div class="fm-field"><label title="Задать Силу напрямую — для астартес (20), титанов и особых частей">Сила вручную</label>
-              <input type="number" name="system.strengthOverride" value="{{system.strengthOverride}}" placeholder="авто"/></div>
-            <div class="fm-field"><label title="Задать скорость напрямую">Скорость вручную</label>
-              <input type="number" name="system.speedOverride" value="{{system.speedOverride}}" placeholder="{{derived.baseSpeed}}"/></div>
-          </div>
-
-          <div class="fm-troop-card">
-            <div class="fm-troop-name">{{troop.label}} <span class="fm-troop-r" title="Значение колонки «R» из таблицы родов войск. Книга не описывает его применение — используйте по договорённости с ГМом (как редкость или затратность при наборе).">R {{derived.rating}}</span></div>
-            <div class="fm-troop-examples">{{troop.examples}}</div>
-            {{#if troop.rngNote}}<div class="fm-troop-note">Дальность: {{troop.rngNote}}</div>{{/if}}
-            {{#if derived.isAA}}<div class="fm-troop-note">Зенитное прикрытие: {{derived.aaGrant}} очков укрытия против воздушных атак всем дружественным формированиям в радиусе {{derived.aaRadius}} км.</div>{{/if}}
-          </div>
-        </div>
-      </div>
-
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">УКРЫТИЕ</div>
-        <div class="panel-body">
-          <div class="fm-grid">
-            <div class="fm-field"><label title="Определяется ландшафтом, в котором стоит формирование">От ландшафта</label>
-              <div class="fm-readonly">{{#each terrains as |t|}}{{#if t.selected}}{{t.cover}}{{/if}}{{/each}}</div></div>
-            <div class="fm-field"><label title="Приказ «Окапывание»: 10 при успехе, 5 при провале, +1к10 бронетехнике">Окопы</label>
-              <input type="number" name="system.cover.dugIn" value="{{system.cover.dugIn}}" min="0"/></div>
-            <div class="fm-field"><label title="Прикрытие зенитных частей против воздушных атак">От ПВО</label>
-              <input type="number" name="system.cover.aa" value="{{system.cover.aa}}" min="0"/></div>
-            <div class="fm-field"><label>Прочее</label>
-              <input type="number" name="system.cover.mod" value="{{system.cover.mod}}"/></div>
-            <div class="fm-field"><label>Итого</label><div class="fm-readonly fm-readonly-total">{{derived.cover}}</div></div>
-          </div>
-          <div class="fm-hint">Очки укрытия складываются с Обороной при вычете входящего урона. Ландшафт также замедляет передвижение — итоговая скорость в шапке уже учитывает это.</div>
-        </div>
-      </div>
-    </div>
-
-    {{!-- ───────────────── ПРИКАЗЫ ───────────────── --}}
-    <div class="tab fm-tab" data-tab="orders" data-group="primary">
-
-      <div class="stat-panel fm-panel{{#if currentOrder}} fm-panel-on{{/if}}">
-        <div class="panel-title">ПРИКАЗ НА СТРАТЕГИЧЕСКИЙ ХОД{{#if currentOrder}} — {{currentOrder.label}}{{/if}}</div>
-        <div class="panel-body">
-          <div class="fm-hint">В один стратегический ход формирование исполняет один приказ. Стратегический раунд длится примерно четыре часа и завершается, когда все формирования сделают ход.</div>
-          <div class="fm-row">
-            <label>Уточнение</label>
-            <input type="text" name="system.order.note" value="{{currentOrder.note}}" placeholder="Куда, против кого, с какой целью"/>
-            {{#if currentOrder}}<button type="button" class="fm-btn fm-order-clear"><i class="fas fa-times"></i> Снять приказ</button>{{/if}}
-          </div>
-        </div>
-      </div>
-
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">ПРИКАЗЫ</div>
-        <div class="panel-body">
-          <div class="fm-order-list">
-            {{#each orders as |o|}}
-            <div class="fm-order-card{{#if o.current}} fm-order-current{{/if}}{{#if o.unavailable}} fm-order-off{{/if}}">
-              <div class="fm-order-head">
-                <span class="fm-order-name">{{o.label}}</span>
-                <span class="fm-order-en">{{o.en}}</span>
-                <span class="fm-order-test">{{o.testLabel}}</span>
-                {{#unless o.unavailable}}
-                <button type="button" class="fm-btn fm-btn-roll fm-order" data-order="{{o.key}}">
-                  {{#if o.hasTest}}<i class="fas fa-dice-d10"></i> Отдать{{else}}<i class="fas fa-flag"></i> Отдать{{/if}}
-                </button>
-                {{else}}
-                <span class="fm-order-block">недоступен этому роду войск</span>
-                {{/unless}}
-              </div>
-              <div class="fm-order-desc">{{o.desc}}</div>
+        <div class="fm-subtitle">Приданные авантюристы</div>
+        <div class="fm-attached-dropzone">
+          {{#each attached as |a|}}
+          <div class="fm-attached{{#if a.missing}} fm-missing{{/if}}" data-attached-id="{{a.id}}" data-uuid="{{a.uuid}}">
+            <img class="fm-slot-img fm-open" data-action="open" src="{{a.img}}" title="Открыть лист"/>
+            <div class="fm-attached-main">
+              <div class="fm-slot-name fm-open" data-action="open">{{a.name}}</div>
+              <input type="text" class="fm-attached-note" value="{{a.note}}" placeholder="Роль в бою"/>
             </div>
-            {{/each}}
+            <a class="fm-event-count" data-action="eventCount" title="Ключевых событий за игровой день (не больше двух на авантюриста)">
+              <span class="fm-event-pips fm-events-{{a.events}}">{{a.events}}/2</span>
+            </a>
+            <a class="fm-attached-remove" data-action="attachedRemove" title="Отозвать"><i class="fas fa-times"></i></a>
           </div>
-        </div>
-      </div>
-    </div>
-
-    {{!-- ───────────────── БОЙ ───────────────── --}}
-    <div class="tab fm-tab" data-tab="battle" data-group="primary">
-
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">БОЕВЫЕ ДЕЙСТВИЯ</div>
-        <div class="panel-body">
-          <div class="fm-actions fm-actions-wide">
-            <button type="button" class="fm-btn fm-btn-roll fm-attack"><i class="fas fa-burst"></i> Атаковать формирование</button>
-            <button type="button" class="fm-btn fm-btn-roll fm-take-damage"><i class="fas fa-shield-halved"></i> Получить урон</button>
-            <button type="button" class="fm-btn fm-btn-roll fm-morale-test"><i class="fas fa-heart-pulse"></i> Тест боевого духа</button>
-            <button type="button" class="fm-btn fm-round-tick"><i class="fas fa-forward"></i> Конец раунда</button>
-          </div>
-          <div class="fm-hint">{{contactNote}}</div>
-          <div class="fm-note">{{airHalfNote}}</div>
-        </div>
-      </div>
-
-      <div class="stat-panel fm-panel{{#if derived.broken}} fm-panel-bad{{/if}}">
-        <div class="panel-title">ИСТОЩЕНИЕ И БОЕСПОСОБНОСТЬ</div>
-        <div class="panel-body">
-          <div class="fm-attrition">
-            <div class="fm-attr-cell">
-              <div class="fm-attr-label">Потеряно численности</div>
-              <div class="fm-attr-value">{{derived.numbersLost}}</div>
-              <div class="fm-attr-note">за каждые {{attrition.moralePerNumbers}} — 1к10 боевого духа</div>
-            </div>
-            <div class="fm-attr-cell">
-              <div class="fm-attr-label">Потеряно боевого духа</div>
-              <div class="fm-attr-value">{{derived.moraleLost}}</div>
-              <div class="fm-attr-note">за каждые {{attrition.penaltyPerMorale}} — {{attrition.penaltyStep}} к тестам</div>
-            </div>
-            <div class="fm-attr-cell{{#if derived.penalty}} fm-attr-bad{{/if}}">
-              <div class="fm-attr-label">Штраф истощения</div>
-              <div class="fm-attr-value">{{#if derived.penalty}}{{derived.penalty}}{{else}}—{{/if}}</div>
-              <div class="fm-attr-note">и столько же приданному герою на Command и Общительность</div>
-            </div>
-            <div class="fm-attr-cell{{#if derived.atHalf}} fm-attr-warn{{/if}}">
-              <div class="fm-attr-label">Порог теста духа</div>
-              <div class="fm-attr-value">{{derived.halfMorale}} / {{derived.quarterMorale}}</div>
-              <div class="fm-attr-note">тесты при 50% и 25% от предела</div>
-            </div>
-          </div>
-
-          {{#if derived.fearless}}
-          <div class="fm-note">Показателя боевого духа у этого рода войск нет — все тесты боевого духа проходятся автоматически.</div>
           {{else}}
-            {{#if derived.atQuarter}}
-            <div class="fm-warn">Боевой дух упал до четверти предела — нужен второй тест боевого духа против его изначальной величины.</div>
-            {{else}}{{#if derived.atHalf}}
-            <div class="fm-warn">Боевой дух упал до половины предела — нужен тест боевого духа против его изначальной величины.</div>
-            {{/if}}{{/if}}
-          {{/if}}
-          {{#if derived.broken}}
-          <div class="fm-warn">Численность на нуле: формирование разбито и не может вести бой, пока не будет пополнено людьми, оружием и снаряжением. Это не значит, что все солдаты убиты — это полное падение боеспособности.</div>
-          {{/if}}
-        </div>
-      </div>
-
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">СОСТОЯНИЕ</div>
-        <div class="panel-body">
-          <div class="fm-flags">
-            {{#each statusFlags as |f|}}
-            <button type="button" class="fm-flag{{#if f.on}} fm-flag-on{{/if}} fm-status-toggle" data-flag="{{f.key}}" title="{{f.hint}}">
-              {{f.label}}
-            </button>
-            {{/each}}
-          </div>
-
-          <div class="fm-timed">
-            {{#each timedFlags as |t|}}
-            <div class="fm-timed-row{{#if t.value}} fm-timed-on{{/if}}">
-              <span class="fm-timed-label">{{t.label}}</span>
-              <input type="number" name="system.status.{{t.key}}" value="{{t.value}}" min="0" class="fm-timed-input" title="Осталось стратегических раундов"/>
-            </div>
-            {{/each}}
-            <div class="fm-timed-row{{#if status.disorder}} fm-timed-on{{/if}}">
-              <span class="fm-timed-label">Беспорядок после провала выхода из боя</span>
-              <input type="number" name="system.status.disorder" value="{{status.disorder}}" max="0" class="fm-timed-input" title="Штраф ко всем тестам"/>
-            </div>
-          </div>
-
-          <div class="fm-actions">
-            <button type="button" class="fm-btn fm-status-reset"><i class="fas fa-rotate-left"></i> Сбросить состояние</button>
-          </div>
+          <div class="fm-empty">Никто не придан. Перетащите сюда персонажей — они смогут проводить ключевые события.</div>
+          {{/each}}
         </div>
       </div>
     </div>
 
-    {{!-- ───────────────── СОБЫТИЯ ───────────────── --}}
-    <div class="tab fm-tab" data-tab="events" data-group="primary">
-
-      <div class="stat-panel fm-panel{{#if status.keyEventBonus}} fm-panel-on{{/if}}">
-        <div class="panel-title">КЛЮЧЕВЫЕ СОБЫТИЯ{{#if status.keyEventBonus}} — БОНУС АКТИВЕН{{/if}}</div>
-        <div class="panel-body">
-          <div class="fm-hint">Мгновения сражения, в которые авантюристы прямо влияют на его ход. Награда за успех: {{eventReward}}</div>
-          <ul class="fm-rules">
-            {{#each eventLimits as |l|}}<li>{{l}}</li>{{/each}}
-          </ul>
-          <div class="fm-tiers">
-            {{#each eventTiers as |t|}}
-            <div class="fm-tier"><span class="fm-tier-name">{{t.label}}</span><span class="fm-tier-desc">{{t.desc}}</span></div>
-            {{/each}}
-          </div>
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">СОСТАВ И СНАБЖЕНИЕ</div>
+      <div class="panel-body">
+        <div class="fm-grid">
+          <div class="fm-field"><label>Родной мир</label>
+            <input type="text" name="system.homeworld" value="{{system.homeworld}}" placeholder="Откуда набраны"/></div>
+          <div class="fm-field"><label>Кому служит</label>
+            <input type="text" name="system.allegiance" value="{{system.allegiance}}" placeholder="Династия, полк, легион"/></div>
+          <div class="fm-field"><label>Офицер (NPC)</label>
+            <input type="text" name="system.commanderName" value="{{system.commanderName}}" placeholder="Имя командира части"/></div>
         </div>
-      </div>
 
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">СОБЫТИЯ</div>
-        <div class="panel-body">
-          <div class="fm-event-list">
-            {{#each keyEvents as |e|}}
-            <div class="fm-event fm-event-{{e.tier}}">
-              <div class="fm-event-head">
-                <span class="fm-event-name">{{e.label}}</span>
-                <span class="fm-event-tier">{{e.tierLabel}}</span>
-                <span class="fm-event-test">{{e.testLabel}}</span>
-                <button type="button" class="fm-btn fm-btn-roll fm-event-roll" data-event="{{e.key}}"><i class="fas fa-dice-d10"></i> Бросок</button>
-              </div>
-              <div class="fm-event-desc">{{e.desc}}</div>
-            </div>
-            {{/each}}
-          </div>
+        <div class="fm-grid fm-grid-calc">
+          <div class="fm-field"><label title="Реальное число бойцов">Людей в составе</label>
+            <input type="number" name="system.headcount" value="{{system.headcount}}" min="0"/></div>
+          <label class="fm-check" title="Каждый астартес стоит множества обычных солдат — численность впятеро выше">
+            <input type="checkbox" name="system.astartes" {{checked system.astartes}}/><span>Астартес (×5)</span></label>
+          <button type="button" class="fm-btn fm-calc-numbers" data-action="calcNumbers"><i class="fas fa-calculator"></i> Численность = 10%</button>
+          <button type="button" class="fm-btn fm-roll-morale-max" data-action="rollMoraleMax"><i class="fas fa-dice-d10"></i> Бросить предел духа</button>
+          <button type="button" class="fm-btn fm-full-strength" data-action="fullStrength"><i class="fas fa-flag-checkered"></i> Полный состав</button>
         </div>
-      </div>
-    </div>
 
-    {{!-- ───────────────── СПРАВОЧНИК ───────────────── --}}
-    <div class="tab fm-tab" data-tab="reference" data-group="primary">
-
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">ТИПЫ ПОДРАЗДЕЛЕНИЙ</div>
-        <div class="panel-body">
-          <div class="fm-table-scroll">
-            <table class="items-table fm-troop-table">
-              <thead><tr>
-                <th class="col-wide">Род войск</th><th>RNG</th><th>S</th><th>ONS</th><th>DEF</th><th>SPD</th><th>R</th>
-              </tr></thead>
-              <tbody>
-                {{#each troopTable as |t|}}
-                <tr class="{{#if t.current}}fm-row-current{{/if}}">
-                  <td class="col-wide"><b>{{t.label}}</b><div class="fm-row-examples">{{t.examples}}</div></td>
-                  <td>{{t.rngLabel}}</td><td>{{t.s}}</td><td>4к10 +{{t.s}}</td>
-                  <td>{{multiply t.s 2}}</td><td>{{t.spd}}</td><td>{{t.r}}</td>
-                </tr>
-                {{/each}}
-              </tbody>
-            </table>
-          </div>
-          <div class="fm-hint">Сила задаётся родом войск и модифицируется типом мира и качеством снаряжения. Наступление (ONS) — кости по размеру формирования плюс Сила; Оборона (DEF) равна удвоенной Силе.</div>
+        <div class="fm-grid">
+          <div class="fm-field"><label title="Ручная поправка к итоговой Силе">Мод. Силы</label>
+            <input type="number" name="system.strengthMod" value="{{system.strengthMod}}"/></div>
+          <div class="fm-field"><label title="Задать Силу напрямую — для астартес (20), титанов и особых частей">Сила вручную</label>
+            <input type="number" name="system.strengthOverride" value="{{system.strengthOverride}}" placeholder="авто"/></div>
+          <div class="fm-field"><label title="Задать скорость напрямую">Скорость вручную</label>
+            <input type="number" name="system.speedOverride" value="{{system.speedOverride}}" placeholder="{{derived.baseSpeed}}"/></div>
         </div>
-      </div>
 
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">МИРЫ, ПОДГОТОВКА, СНАРЯЖЕНИЕ</div>
-        <div class="panel-body">
-          <table class="items-table">
-            <thead><tr><th class="col-wide">Мир</th><th>Подразделения</th><th>S</th><th>Доступн.</th></tr></thead>
-            <tbody>
-              {{#each techLevels as |t|}}
-              <tr class="{{#if t.selected}}fm-row-current{{/if}}">
-                <td class="col-wide"><b>{{t.label}}</b></td><td class="col-wide">{{t.allows}}</td>
-                <td>{{signedNum t.s}}</td><td>{{signedNum t.avail}}</td>
-              </tr>
-              {{/each}}
-            </tbody>
-          </table>
-
-          <table class="items-table fm-table-gap">
-            <thead><tr><th class="col-wide">Качество войск</th><th>Доступн.</th><th>Выучка</th><th>Боевой дух</th></tr></thead>
-            <tbody>
-              {{#each trainings as |t|}}
-              <tr class="{{#if t.selected}}fm-row-current{{/if}}">
-                <td class="col-wide"><b>{{t.label}}</b><div class="fm-row-examples">{{t.desc}}</div></td>
-                <td>{{signedNum t.avail}}</td><td>{{t.skill}}</td><td>{{t.morale}}</td>
-              </tr>
-              {{/each}}
-            </tbody>
-          </table>
-
-          <table class="items-table fm-table-gap">
-            <thead><tr><th class="col-wide">Качество снаряжения</th><th>S</th><th>Боевой дух</th></tr></thead>
-            <tbody>
-              {{#each gearLevels as |g|}}
-              <tr class="{{#if g.selected}}fm-row-current{{/if}}">
-                <td class="col-wide"><b>{{g.label}}</b><div class="fm-row-examples">{{g.examples}}</div></td>
-                <td>{{signedNum g.s}}</td><td>{{#if g.moraleDie}}{{g.moraleDie}}{{else}}+0{{/if}}</td>
-              </tr>
-              {{/each}}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">ЛАНДШАФТ</div>
-        <div class="panel-body">
-          <table class="items-table">
-            <thead><tr><th class="col-wide">Тип местности</th><th>Укрытие</th><th>Скорость</th></tr></thead>
-            <tbody>
-              {{#each terrains as |t|}}
-              <tr class="{{#if t.selected}}fm-row-current{{/if}}">
-                <td class="col-wide"><b>{{t.label}}</b><div class="fm-row-examples">{{t.desc}}</div></td>
-                <td>{{t.cover}}</td><td>{{multiply t.speed 100}}%</td>
-              </tr>
-              {{/each}}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">ОБСТРЕЛЫ ПЛАНЕТ</div>
-        <div class="panel-body">
-          <table class="items-table">
-            <thead><tr><th class="col-wide">Оружие</th><th>Крупные цели</th><th>Отдельные цели</th></tr></thead>
-            <tbody>
-              {{#each orbital as |o|}}
-              <tr>
-                <td class="col-wide"><b>{{o.label}}</b><div class="fm-row-examples">{{o.area}}</div></td>
-                <td>{{o.bulk}}</td><td>{{o.single}}</td>
-              </tr>
-              {{/each}}
-            </tbody>
-          </table>
-          <div class="fm-note">{{orbitalNote}}</div>
-          <div class="fm-hint">{{#each orbital as |o|}}{{o.note}} {{/each}}</div>
-        </div>
-      </div>
-
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">ОСОБЫЕ ФОРМИРОВАНИЯ И СБОР ВОЙСК</div>
-        <div class="panel-body">
-          <div class="fm-ref-list">
-            {{#each specialForms as |s|}}
-            <div class="fm-ref"><div class="fm-ref-head">{{s.label}}</div><div class="fm-ref-desc">{{s.desc}}</div></div>
-            {{/each}}
-            {{#each recruitPaths as |p|}}
-            <div class="fm-ref fm-ref-alt"><div class="fm-ref-head">{{p.label}}</div><div class="fm-ref-desc">{{p.desc}}</div></div>
-            {{/each}}
-          </div>
+        <div class="fm-troop-card">
+          <div class="fm-troop-name">{{troop.label}} <span class="fm-troop-r" title="Значение колонки «R» из таблицы родов войск. Книга не описывает его применение — используйте по договорённости с ГМом (как редкость или затратность при наборе).">R {{derived.rating}}</span></div>
+          <div class="fm-troop-examples">{{troop.examples}}</div>
+          {{#if troop.rngNote}}<div class="fm-troop-note">Дальность: {{troop.rngNote}}</div>{{/if}}
+          {{#if derived.isAA}}<div class="fm-troop-note">Зенитное прикрытие: {{derived.aaGrant}} очков укрытия против воздушных атак всем дружественным формированиям в радиусе {{derived.aaRadius}} км.</div>{{/if}}
         </div>
       </div>
     </div>
 
-    {{!-- ───────────────── ЗАПИСИ ───────────────── --}}
-    <div class="tab fm-tab" data-tab="notes" data-group="primary">
-      <div class="stat-panel fm-panel">
-        <div class="panel-title">ЗАПИСИ О ЧАСТИ</div>
-        <div class="panel-body">
-          <textarea name="system.notes" class="fm-textarea" placeholder="Боевой путь, репутация, знамёна, отношения с командованием…">{{system.notes}}</textarea>
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">УКРЫТИЕ</div>
+      <div class="panel-body">
+        <div class="fm-grid">
+          <div class="fm-field"><label title="Определяется ландшафтом, в котором стоит формирование">От ландшафта</label>
+            <div class="fm-readonly">{{#each terrains as |t|}}{{#if t.selected}}{{t.cover}}{{/if}}{{/each}}</div></div>
+          <div class="fm-field"><label title="Приказ «Окапывание»: 10 при успехе, 5 при провале, +1к10 бронетехнике">Окопы</label>
+            <input type="number" name="system.cover.dugIn" value="{{system.cover.dugIn}}" min="0"/></div>
+          <div class="fm-field"><label title="Прикрытие зенитных частей против воздушных атак">От ПВО</label>
+            <input type="number" name="system.cover.aa" value="{{system.cover.aa}}" min="0"/></div>
+          <div class="fm-field"><label>Прочее</label>
+            <input type="number" name="system.cover.mod" value="{{system.cover.mod}}"/></div>
+          <div class="fm-field"><label>Итого</label><div class="fm-readonly fm-readonly-total">{{derived.cover}}</div></div>
         </div>
+        <div class="fm-hint">Очки укрытия складываются с Обороной при вычете входящего урона. Ландшафт также замедляет передвижение — итоговая скорость в шапке уже учитывает это.</div>
       </div>
-      {{#if isGM}}
-      <div class="stat-panel fm-panel fm-panel-gm">
-        <div class="panel-title">ЗАМЕТКИ ГМА</div>
-        <div class="panel-body">
-          <textarea name="system.gmNotes" class="fm-textarea" placeholder="Скрытые приказы, реальная численность, планы предательства…">{{system.gmNotes}}</textarea>
-        </div>
-      </div>
-      {{/if}}
     </div>
-
   </div>
-</form>
+
+  {{!-- ───────────────── ПРИКАЗЫ ───────────────── --}}
+  <div class="tab fm-tab" data-tab="orders" data-group="primary">
+
+    <div class="stat-panel fm-panel{{#if currentOrder}} fm-panel-on{{/if}}">
+      <div class="panel-title">ПРИКАЗ НА СТРАТЕГИЧЕСКИЙ ХОД{{#if currentOrder}} — {{currentOrder.label}}{{/if}}</div>
+      <div class="panel-body">
+        <div class="fm-hint">В один стратегический ход формирование исполняет один приказ. Стратегический раунд длится примерно четыре часа и завершается, когда все формирования сделают ход.</div>
+        <div class="fm-row">
+          <label>Уточнение</label>
+          <input type="text" name="system.order.note" value="{{currentOrder.note}}" placeholder="Куда, против кого, с какой целью"/>
+          {{#if currentOrder}}<button type="button" class="fm-btn fm-order-clear" data-action="orderClear"><i class="fas fa-times"></i> Снять приказ</button>{{/if}}
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">ПРИКАЗЫ</div>
+      <div class="panel-body">
+        <div class="fm-order-list">
+          {{#each orders as |o|}}
+          <div class="fm-order-card{{#if o.current}} fm-order-current{{/if}}{{#if o.unavailable}} fm-order-off{{/if}}">
+            <div class="fm-order-head">
+              <span class="fm-order-name">{{o.label}}</span>
+              <span class="fm-order-en">{{o.en}}</span>
+              <span class="fm-order-test">{{o.testLabel}}</span>
+              {{#unless o.unavailable}}
+              <button type="button" class="fm-btn fm-btn-roll fm-order" data-action="order" data-order="{{o.key}}">
+                {{#if o.hasTest}}<i class="fas fa-dice-d10"></i> Отдать{{else}}<i class="fas fa-flag"></i> Отдать{{/if}}
+              </button>
+              {{else}}
+              <span class="fm-order-block">недоступен этому роду войск</span>
+              {{/unless}}
+            </div>
+            <div class="fm-order-desc">{{o.desc}}</div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- ───────────────── БОЙ ───────────────── --}}
+  <div class="tab fm-tab" data-tab="battle" data-group="primary">
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">БОЕВЫЕ ДЕЙСТВИЯ</div>
+      <div class="panel-body">
+        <div class="fm-actions fm-actions-wide">
+          <button type="button" class="fm-btn fm-btn-roll fm-attack" data-action="attack"><i class="fas fa-burst"></i> Атаковать формирование</button>
+          <button type="button" class="fm-btn fm-btn-roll fm-take-damage" data-action="takeDamage"><i class="fas fa-shield-halved"></i> Получить урон</button>
+          <button type="button" class="fm-btn fm-btn-roll fm-morale-test" data-action="moraleTest"><i class="fas fa-heart-pulse"></i> Тест боевого духа</button>
+          <button type="button" class="fm-btn fm-round-tick" data-action="roundTick"><i class="fas fa-forward"></i> Конец раунда</button>
+        </div>
+        <div class="fm-hint">{{contactNote}}</div>
+        <div class="fm-note">{{airHalfNote}}</div>
+      </div>
+    </div>
+
+    <div class="stat-panel fm-panel{{#if derived.broken}} fm-panel-bad{{/if}}">
+      <div class="panel-title">ИСТОЩЕНИЕ И БОЕСПОСОБНОСТЬ</div>
+      <div class="panel-body">
+        <div class="fm-attrition">
+          <div class="fm-attr-cell">
+            <div class="fm-attr-label">Потеряно численности</div>
+            <div class="fm-attr-value">{{derived.numbersLost}}</div>
+            <div class="fm-attr-note">за каждые {{attrition.moralePerNumbers}} — 1к10 боевого духа</div>
+          </div>
+          <div class="fm-attr-cell">
+            <div class="fm-attr-label">Потеряно боевого духа</div>
+            <div class="fm-attr-value">{{derived.moraleLost}}</div>
+            <div class="fm-attr-note">за каждые {{attrition.penaltyPerMorale}} — {{attrition.penaltyStep}} к тестам</div>
+          </div>
+          <div class="fm-attr-cell{{#if derived.penalty}} fm-attr-bad{{/if}}">
+            <div class="fm-attr-label">Штраф истощения</div>
+            <div class="fm-attr-value">{{#if derived.penalty}}{{derived.penalty}}{{else}}—{{/if}}</div>
+            <div class="fm-attr-note">и столько же приданному герою на Command и Общительность</div>
+          </div>
+          <div class="fm-attr-cell{{#if derived.atHalf}} fm-attr-warn{{/if}}">
+            <div class="fm-attr-label">Порог теста духа</div>
+            <div class="fm-attr-value">{{derived.halfMorale}} / {{derived.quarterMorale}}</div>
+            <div class="fm-attr-note">тесты при 50% и 25% от предела</div>
+          </div>
+        </div>
+
+        {{#if derived.fearless}}
+        <div class="fm-note">Показателя боевого духа у этого рода войск нет — все тесты боевого духа проходятся автоматически.</div>
+        {{else}}
+          {{#if derived.atQuarter}}
+          <div class="fm-warn">Боевой дух упал до четверти предела — нужен второй тест боевого духа против его изначальной величины.</div>
+          {{else}}{{#if derived.atHalf}}
+          <div class="fm-warn">Боевой дух упал до половины предела — нужен тест боевого духа против его изначальной величины.</div>
+          {{/if}}{{/if}}
+        {{/if}}
+        {{#if derived.broken}}
+        <div class="fm-warn">Численность на нуле: формирование разбито и не может вести бой, пока не будет пополнено людьми, оружием и снаряжением. Это не значит, что все солдаты убиты — это полное падение боеспособности.</div>
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">СОСТОЯНИЕ</div>
+      <div class="panel-body">
+        <div class="fm-flags">
+          {{#each statusFlags as |f|}}
+          <button type="button" class="fm-flag{{#if f.on}} fm-flag-on{{/if}} fm-status-toggle" data-action="statusToggle" data-flag="{{f.key}}" title="{{f.hint}}">
+            {{f.label}}
+          </button>
+          {{/each}}
+        </div>
+
+        <div class="fm-timed">
+          {{#each timedFlags as |t|}}
+          <div class="fm-timed-row{{#if t.value}} fm-timed-on{{/if}}">
+            <span class="fm-timed-label">{{t.label}}</span>
+            <input type="number" name="system.status.{{t.key}}" value="{{t.value}}" min="0" class="fm-timed-input" title="Осталось стратегических раундов"/>
+          </div>
+          {{/each}}
+          <div class="fm-timed-row{{#if status.disorder}} fm-timed-on{{/if}}">
+            <span class="fm-timed-label">Беспорядок после провала выхода из боя</span>
+            <input type="number" name="system.status.disorder" value="{{status.disorder}}" max="0" class="fm-timed-input" title="Штраф ко всем тестам"/>
+          </div>
+        </div>
+
+        <div class="fm-actions">
+          <button type="button" class="fm-btn fm-status-reset" data-action="statusReset"><i class="fas fa-rotate-left"></i> Сбросить состояние</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- ───────────────── СОБЫТИЯ ───────────────── --}}
+  <div class="tab fm-tab" data-tab="events" data-group="primary">
+
+    <div class="stat-panel fm-panel{{#if status.keyEventBonus}} fm-panel-on{{/if}}">
+      <div class="panel-title">КЛЮЧЕВЫЕ СОБЫТИЯ{{#if status.keyEventBonus}} — БОНУС АКТИВЕН{{/if}}</div>
+      <div class="panel-body">
+        <div class="fm-hint">Мгновения сражения, в которые авантюристы прямо влияют на его ход. Награда за успех: {{eventReward}}</div>
+        <ul class="fm-rules">
+          {{#each eventLimits as |l|}}<li>{{l}}</li>{{/each}}
+        </ul>
+        <div class="fm-tiers">
+          {{#each eventTiers as |t|}}
+          <div class="fm-tier"><span class="fm-tier-name">{{t.label}}</span><span class="fm-tier-desc">{{t.desc}}</span></div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">СОБЫТИЯ</div>
+      <div class="panel-body">
+        <div class="fm-event-list">
+          {{#each keyEvents as |e|}}
+          <div class="fm-event fm-event-{{e.tier}}">
+            <div class="fm-event-head">
+              <span class="fm-event-name">{{e.label}}</span>
+              <span class="fm-event-tier">{{e.tierLabel}}</span>
+              <span class="fm-event-test">{{e.testLabel}}</span>
+              <button type="button" class="fm-btn fm-btn-roll fm-event-roll" data-action="eventRoll" data-event="{{e.key}}"><i class="fas fa-dice-d10"></i> Бросок</button>
+            </div>
+            <div class="fm-event-desc">{{e.desc}}</div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- ───────────────── СПРАВОЧНИК ───────────────── --}}
+  <div class="tab fm-tab" data-tab="reference" data-group="primary">
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">ТИПЫ ПОДРАЗДЕЛЕНИЙ</div>
+      <div class="panel-body">
+        <div class="fm-table-scroll">
+          <table class="items-table fm-troop-table">
+            <thead><tr>
+              <th class="col-wide">Род войск</th><th>RNG</th><th>S</th><th>ONS</th><th>DEF</th><th>SPD</th><th>R</th>
+            </tr></thead>
+            <tbody>
+              {{#each troopTable as |t|}}
+              <tr class="{{#if t.current}}fm-row-current{{/if}}">
+                <td class="col-wide"><b>{{t.label}}</b><div class="fm-row-examples">{{t.examples}}</div></td>
+                <td>{{t.rngLabel}}</td><td>{{t.s}}</td><td>4к10 +{{t.s}}</td>
+                <td>{{multiply t.s 2}}</td><td>{{t.spd}}</td><td>{{t.r}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+        <div class="fm-hint">Сила задаётся родом войск и модифицируется типом мира и качеством снаряжения. Наступление (ONS) — кости по размеру формирования плюс Сила; Оборона (DEF) равна удвоенной Силе.</div>
+      </div>
+    </div>
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">МИРЫ, ПОДГОТОВКА, СНАРЯЖЕНИЕ</div>
+      <div class="panel-body">
+        <table class="items-table">
+          <thead><tr><th class="col-wide">Мир</th><th>Подразделения</th><th>S</th><th>Доступн.</th></tr></thead>
+          <tbody>
+            {{#each techLevels as |t|}}
+            <tr class="{{#if t.selected}}fm-row-current{{/if}}">
+              <td class="col-wide"><b>{{t.label}}</b></td><td class="col-wide">{{t.allows}}</td>
+              <td>{{signedNum t.s}}</td><td>{{signedNum t.avail}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+
+        <table class="items-table fm-table-gap">
+          <thead><tr><th class="col-wide">Качество войск</th><th>Доступн.</th><th>Выучка</th><th>Боевой дух</th></tr></thead>
+          <tbody>
+            {{#each trainings as |t|}}
+            <tr class="{{#if t.selected}}fm-row-current{{/if}}">
+              <td class="col-wide"><b>{{t.label}}</b><div class="fm-row-examples">{{t.desc}}</div></td>
+              <td>{{signedNum t.avail}}</td><td>{{t.skill}}</td><td>{{t.morale}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+
+        <table class="items-table fm-table-gap">
+          <thead><tr><th class="col-wide">Качество снаряжения</th><th>S</th><th>Боевой дух</th></tr></thead>
+          <tbody>
+            {{#each gearLevels as |g|}}
+            <tr class="{{#if g.selected}}fm-row-current{{/if}}">
+              <td class="col-wide"><b>{{g.label}}</b><div class="fm-row-examples">{{g.examples}}</div></td>
+              <td>{{signedNum g.s}}</td><td>{{#if g.moraleDie}}{{g.moraleDie}}{{else}}+0{{/if}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">ЛАНДШАФТ</div>
+      <div class="panel-body">
+        <table class="items-table">
+          <thead><tr><th class="col-wide">Тип местности</th><th>Укрытие</th><th>Скорость</th></tr></thead>
+          <tbody>
+            {{#each terrains as |t|}}
+            <tr class="{{#if t.selected}}fm-row-current{{/if}}">
+              <td class="col-wide"><b>{{t.label}}</b><div class="fm-row-examples">{{t.desc}}</div></td>
+              <td>{{t.cover}}</td><td>{{multiply t.speed 100}}%</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">ОБСТРЕЛЫ ПЛАНЕТ</div>
+      <div class="panel-body">
+        <table class="items-table">
+          <thead><tr><th class="col-wide">Оружие</th><th>Крупные цели</th><th>Отдельные цели</th></tr></thead>
+          <tbody>
+            {{#each orbital as |o|}}
+            <tr>
+              <td class="col-wide"><b>{{o.label}}</b><div class="fm-row-examples">{{o.area}}</div></td>
+              <td>{{o.bulk}}</td><td>{{o.single}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+        <div class="fm-note">{{orbitalNote}}</div>
+        <div class="fm-hint">{{#each orbital as |o|}}{{o.note}} {{/each}}</div>
+      </div>
+    </div>
+
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">ОСОБЫЕ ФОРМИРОВАНИЯ И СБОР ВОЙСК</div>
+      <div class="panel-body">
+        <div class="fm-ref-list">
+          {{#each specialForms as |s|}}
+          <div class="fm-ref"><div class="fm-ref-head">{{s.label}}</div><div class="fm-ref-desc">{{s.desc}}</div></div>
+          {{/each}}
+          {{#each recruitPaths as |p|}}
+          <div class="fm-ref fm-ref-alt"><div class="fm-ref-head">{{p.label}}</div><div class="fm-ref-desc">{{p.desc}}</div></div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- ───────────────── ЗАПИСИ ───────────────── --}}
+  <div class="tab fm-tab" data-tab="notes" data-group="primary">
+    <div class="stat-panel fm-panel">
+      <div class="panel-title">ЗАПИСИ О ЧАСТИ</div>
+      <div class="panel-body">
+        <textarea name="system.notes" class="fm-textarea" placeholder="Боевой путь, репутация, знамёна, отношения с командованием…">{{system.notes}}</textarea>
+      </div>
+    </div>
+    {{#if isGM}}
+    <div class="stat-panel fm-panel fm-panel-gm">
+      <div class="panel-title">ЗАМЕТКИ ГМА</div>
+      <div class="panel-body">
+        <textarea name="system.gmNotes" class="fm-textarea" placeholder="Скрытые приказы, реальная численность, планы предательства…">{{system.gmNotes}}</textarea>
+      </div>
+    </div>
+    {{/if}}
+  </div>
+
+</div>

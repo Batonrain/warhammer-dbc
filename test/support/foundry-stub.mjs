@@ -19,7 +19,9 @@
  * Пока она null, бросок ведёт себя по-старому: любая формула даёт `nextRoll`.
  */
 export const captured = { dialog: null, rolls: [], chat: [], created: [], nextRoll: 50, dice: null,
-  confirmAnswer: true, warnings: [] };
+  confirmAnswer: true, warnings: [],
+  // Ручки открытого DialogV2 — их ставит заглушка wait (см. ниже).
+  press: null, dismiss: null, rerender: null };
 
 export function resetCaptured() {
   captured.dialog = null;
@@ -30,6 +32,9 @@ export function resetCaptured() {
   captured.dice = null;
   captured.confirmAnswer = true;
   captured.warnings = [];
+  captured.press = null;
+  captured.dismiss = null;
+  captured.rerender = null;
 }
 
 class ApplicationStub {
@@ -39,6 +44,8 @@ class ApplicationStub {
   getData() { return {}; }
   /** Базовые слушатели Foundry (вкладки, свёртки) тестам не нужны. */
   activateListeners() {}
+  /** То же для ApplicationV2: базовый контекст пустой, лист дополняет его сам. */
+  async _prepareContext() { return {}; }
 }
 
 // Лист восстанавливает прокрутку следующим кадром; в node кадров нет.
@@ -173,14 +180,48 @@ globalThis.foundry = {
     sheets: { ActorSheet: class extends ApplicationStub {}, ItemSheet: class extends ApplicationStub {} }
   },
   applications: {
-    api: { HandlebarsApplicationMixin: base => base, ApplicationV2: ApplicationStub },
-    sheets: { ActorSheetV2: ApplicationStub, DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub }
+    api: {
+      HandlebarsApplicationMixin: base => base, ApplicationV2: ApplicationStub,
+      // «Да/Нет» второго поколения: как и у globalThis.Dialog, ответ задаёт
+      // тест через captured.confirmAnswer, а сам запрос остаётся в
+      // captured.dialog — по нему проверяют текст.
+      DialogV2: class {
+        static async confirm(config) { captured.dialog = config; return captured.confirmAnswer; }
+        /**
+         * Окно не рендерится, а запоминается — как и у globalThis.Dialog. Тест
+         * жмёт кнопку через captured.press(действие, форма), закрывает окно
+         * через captured.dismiss() и вызывает живой пересчёт через
+         * captured.rerender(форма). Форму даёт fakeForm (внизу файла).
+         *
+         * Возвращает то же, что настоящий wait: значение колбэка нажатой
+         * кнопки, а при закрытии — null (rejectClose: false).
+         */
+        static async wait(config) {
+          captured.dialog = config;
+          const self = { element: { querySelector: () => self.form }, setPosition: () => {} };
+          captured.rerender = form => { self.form = form; config.render?.(null, self); };
+          captured.press = async (action, form) => {
+            const btn = config.buttons.find(b => b.action === action);
+            captured.settle(await btn.callback?.(null, { form }, self) ?? null);
+          };
+          return new Promise(resolve => {
+            captured.settle = resolve;
+            captured.dismiss = () => resolve(null);
+          });
+        }
+      }
+    },
+    sheets: { ActorSheetV2: ApplicationStub, ItemSheetV2: ApplicationStub,
+              DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub }
   },
   utils: {
     mergeObject: (a, b) => ({ ...a, ...b }),
     duplicate: x => structuredClone(x),
     deepClone: x => structuredClone(x),
     randomID: () => "stubid",
+    // Как у Foundry v13: & < > " '. Настоящий тоже ничего сверх этого не делает.
+    escapeHTML: v => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;"),
     getProperty: () => undefined,
     setProperty: () => true
   },
@@ -210,7 +251,15 @@ globalThis.CONST = {
 
 globalThis.CONFIG = { sounds: { dice: "dice.wav" }, Actor: { dataModels: {} }, Item: { dataModels: {} } };
 globalThis.Hooks  = { on: () => {}, once: () => {}, callAll: () => {} };
-globalThis.game   = { settings: { get: () => undefined, register: () => {} }, i18n: { localize: s => s }, user: {}, users: [] };
+globalThis.game   = {
+  settings: {
+    // core/rollMode в Foundry — всегда строка режима. Заглушка отдавала
+    // undefined на всё, и строгую проверку applyRollMode было не поставить.
+    get: (scope, key) => (scope === "core" && key === "rollMode") ? "roll" : undefined,
+    register: () => {}
+  },
+  i18n: { localize: s => s }, user: {}, users: []
+};
 // warn копится: выдача стартовых навыков сообщает им о нераспознанных записях.
 globalThis.ui     = { notifications: { warn: m => captured.warnings.push(String(m)), info: () => {}, error: () => {} } };
 
@@ -301,7 +350,17 @@ globalThis.Roll = class {
 };
 
 globalThis.ChatMessage = class {
-  static applyRollMode(data) { return data; }
+  /**
+   * Второй аргумент — СТРОКА режима ("roll"/"gmroll"/…), а не объект: Foundry
+   * лезет в CONFIG.Dice.rollModes[rollMode].handler и на объекте падает
+   * «Cannot read properties of undefined (reading 'handler')». Заглушка молча
+   * возвращала data и восемнадцать таких вызовов доехали до игры незамеченными.
+   */
+  static applyRollMode(data, rollMode) {
+    if (typeof rollMode !== "string")
+      throw new TypeError(`applyRollMode ждёт строку режима, получено ${JSON.stringify(rollMode)}`);
+    return data;
+  }
   static getSpeaker() { return { alias: "stub" }; }
   static async create(data) { captured.chat.push(data); return data; }
 };
@@ -319,10 +378,11 @@ globalThis.renderTemplate = async () => "";
 globalThis.fromUuid = async () => null;
 globalThis.fromUuidSync = () => null;
 /** jQuery-обёртка над элементом: диалог атаки читает галочки через $(cb).data(). */
-globalThis.$ = el => ({
+const elementJq = el => ({
   data:    key => el?.dataset?.[key],
   closest: () => ({ text: () => "" })
 });
+globalThis.$ = elementJq;
 
 /**
  * Лист без Foundry: объект с прототипом класса и подставным актором. Конструктор
@@ -371,6 +431,53 @@ export function fakeHtml(fields = {}, checks = {}) {
 }
 
 /**
+ * Подставная форма для DialogV2 — то же, чем fakeHtml был для jQuery, но на
+ * двух методах, которыми диалог читает форму: `fields` отдаёт элемент по
+ * селектору, `checks` — список элементов.
+ *
+ * Значение задаётся строкой (`value`), `true` (отмеченный флажок) или готовым
+ * объектом. Объект возвращается как есть — так живой пересчёт может писать в
+ * него `textContent`, и тест увидит написанное.
+ */
+export function fakeForm(fields = {}, checks = {}) {
+  const el = v => (v !== null && typeof v === "object")
+    ? v : { value: v, checked: v === true, dataset: {} };
+  return {
+    addEventListener: () => {},
+    querySelector:    sel => (sel in fields) ? el(fields[sel]) : (checks[sel]?.[0] ?? null),
+    querySelectorAll: sel => checks[sel] ?? ((sel in fields) ? [el(fields[sel])] : [])
+  };
+}
+
+/**
+ * Подставной корень листа для модулей на чистом DOM: querySelectorAll отдаёт
+ * узлы по селектору, а навешенный обработчик ложится в handlers под ключом
+ * «селектор:событие» — тем же, каким его кладёт listenerHtml.
+ *
+ * Селектор без объявленных узлов всё равно отдаёт один пустой: в игре он просто
+ * не дал бы слушателя, а тесту нужен сам обработчик, чтобы его дёрнуть. Так же
+ * вела себя и jQuery-заглушка — find() всегда возвращала узел.
+ */
+export function listenerRoot(nodes = {}, handlers = {}) {
+  const bind = (selector, el) => ({
+    ...el,
+    addEventListener: (event, fn) => { handlers[`${selector}:${event}`] = fn; }
+  });
+  return {
+    handlers,
+    // Классы темы листа (раса/мировоззрение/класс) заглушка проглатывает, как и
+    // остальное оформление: тесты проверяют поведение обработчиков.
+    classList: Object.assign([], { add() {}, remove() {}, toggle() {}, contains: () => false }),
+    addEventListener: (event, fn) => { handlers[`:${event}`] = fn; },
+    // Селектор без объявленных узлов отдаёт один пустой — с dataset, как у
+    // настоящего элемента: обработчик читает из него данные строки.
+    querySelectorAll: selector => (nodes[selector]?.length ? nodes[selector] : [{ dataset: {} }])
+      .map(el => bind(selector, el)),
+    querySelector:    selector => nodes[selector]?.[0] ?? null
+  };
+}
+
+/**
  * Подставной jQuery для activateListeners: запоминает обработчики под ключом
  * «селектор:событие» в html.handlers, а всё остальное (классы, текст,
  * видимость) молча проглатывает — тесты проверяют поведение обработчика, а не
@@ -378,8 +485,12 @@ export function fakeHtml(fields = {}, checks = {}) {
  */
 export function listenerHtml(nodes = {}) {
   const handlers = {};
-  return {
+  const html = {
     handlers,
+    // html[0] — корень DOM для модулей, уже снятых с jQuery (wdbc-z0z).
+    // Обработчики ложатся в тот же handlers, поэтому тесты не различают,
+    // какой из двух путей навесил слушателя.
+    0: listenerRoot(nodes, handlers),
     find(selector) {
       const node = {
         click:  fn => { handlers[`${selector}:click`]  = fn; return node; },
@@ -393,6 +504,11 @@ export function listenerHtml(nodes = {}) {
       return node;
     }
   };
+  // Лист V2 оборачивает свой корень сам — $(this.element). Отдаём на этот
+  // корень ту же обёртку, иначе модули вкладок, ещё не снятые с jQuery (wdbc-z0z),
+  // ничего не найдут и обработчики не попадут в handlers.
+  globalThis.$ = el => (el === html[0] ? html : elementJq(el));
+  return html;
 }
 
 /** Отмеченная галочка модификатора — как её читает диалог из data-атрибутов. */

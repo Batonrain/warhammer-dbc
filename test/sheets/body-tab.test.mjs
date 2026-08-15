@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { resetCaptured } from "../support/foundry-stub.mjs";
+import { listenerRoot, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   activateBodyListeners,
   adjustVital,
@@ -153,22 +153,15 @@ describe("реестр органов Геносемени", () => {
 
 describe("body tab listeners", () => {
   it("activateBodyListeners привязывает обработчики с actor-only API", async () => {
-    const handlers = {};
-    const html = {
-      find: selector => {
-        const api = {
-          click: fn => { handlers[`${selector}:click`] = fn; },
-          change: fn => { handlers[`${selector}:change`] = fn; },
-          on: (eventName, fn) => { handlers[`${selector}:${eventName}`] = fn; }
-        };
-        return api; // [0] === undefined: .bc-figure-panel нет, подсказки не вешаются
-      }
-    };
+    // Узлы не объявлены, поэтому .bc-figure-panel не найдётся и подсказки
+    // не навешиваются — проверяются обработчики, а не DOM.
+    const root = listenerRoot();
+    const handlers = root.handlers;
     const eye = item({ id: "eye-1" });
     const a = actor({ vitals: { hunger: 1 }, items: [eye] });
     const surgeonCalls = [];
 
-    activateBodyListeners(html, a, { openSurgeonWindow: actorArg => surgeonCalls.push(actorArg) });
+    activateBodyListeners(root, a, { openSurgeonWindow: actorArg => surgeonCalls.push(actorArg) });
 
     const ev = (dataset, value) => ({
       preventDefault: () => {},

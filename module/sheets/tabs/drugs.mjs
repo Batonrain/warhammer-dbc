@@ -5,7 +5,7 @@
 
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
-import { _degWord, resolveCharFormula } from "../../helpers/utils.mjs";
+import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
 import { computeWoundHealing, computeWoundDamage } from "./wounds.mjs";
 import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
@@ -266,10 +266,10 @@ export async function applyDrug(owner, item, recipient = null) {
   }
 
   let chatContent = `<div class="wh-roll-result">
-    <div class="roll-header">${categoryIcon} ${item.name}</div>`;
+    <div class="roll-header">${categoryIcon} ${esc(item.name)}</div>`;
 
   if (applyToOther) {
-    chatContent += `<div class="roll-threshold">${rollIcon("target","#4dffa6")}Применил: <b>${owner.name}</b> → <b>${actor.name}</b></div>`;
+    chatContent += `<div class="roll-threshold">${rollIcon("target","#4dffa6")}Применил: <b>${esc(owner.name)}</b> → <b>${esc(actor.name)}</b></div>`;
   }
   if (sys.deliveryMethod) {
     chatContent += `<div class="roll-threshold">Приём: <b>${DELIVERY_RU[sys.deliveryMethod] ?? sys.deliveryMethod}</b></div>`;
@@ -409,7 +409,7 @@ export async function triggerAfterEffect(actor, item) {
 
   const categoryIcon = DRUG_CATEGORY_ICON[sys.drugCategory] || "💊";
   let chatContent = `<div class="wh-roll-result">
-    <div class="roll-header">${rollIcon("warn","#ffb84d")}Пост-эффект: ${categoryIcon} ${item.name}</div>`;
+    <div class="roll-header">${rollIcon("warn","#ffb84d")}Пост-эффект: ${categoryIcon} ${esc(item.name)}</div>`;
 
   const afterStatMods = sys.afterEffectStatMods || {};
   const afterModParts = [];

@@ -3,7 +3,10 @@ import { BODY_TYPES, ZONES, STAR_CLASSES, STAR_CONFIGS, SYSTEM_FEATURES, BODY_SI
          HABITABILITY, ALLEGIANCE, XENOS_SPECIES, RESOURCE_TYPES, RESOURCE_ICONS, INHABITANTS,
          WORLD_CLASSES, WORLD_ENVIRONMENTS, TITHE_GRADES,
          generateSystem, generateAnomaly, generateEncounter,
-         colonizeUpdate, ruinUpdate, genImprovements, IMP_CATEGORIES, improvementUpkeep, improvementOutput, improvementFlow } from "../constants/star-system.mjs";
+         colonizeUpdate, ruinUpdate, genImprovements, IMP_CATEGORIES, improvementOutput, improvementFlow } from "../constants/star-system.mjs";
+import { esc } from "../helpers/utils.mjs";
+import { openContextMenu } from "./context-menu.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 
 // Видно ли улучшение зрителю: secret → после раскрытия, hidden → после разведки, иначе всегда.
 function impVisible(im, isGM, scouted, revealed) {
@@ -14,7 +17,7 @@ function visibleImps(s, isGM) {
 }
 // HTML-подсказка улучшения (для data-tooltip): категория, описание, НЕТТО «даёт / тратит».
 function impTooltip(im, cat) {
-  const lines = [`<b>${im.name}</b>${cat ? ` — <i>${cat.label}</i>` : ""}`];
+  const lines = [`<b>${esc(im.name)}</b>${cat ? ` — <i>${cat.label}</i>` : ""}`];
   if (im.desc) lines.push(im.desc);
   const fmt = (obj) => Object.entries(obj || {}).filter(([, v]) => Number(v))
     .map(([k, v]) => `${RESOURCE_TYPES[k]?.label || k} +${v}`).join(", ");
@@ -115,19 +118,89 @@ function worldNames() {
   return set;
 }
 
-export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
+// ── Действия листа ───────────────────────────────────────────────────────────
+// Как на листах Орды и техники (wdbc-ff4.10.1, wdbc-ff4.10.4): ApplicationV2
+// зовёт обработчик [data-action] с this = лист и элементом-источником вторым
+// аргументом. Обычные функции — чтобы карта действий сверялась с шаблоном тестом.
+// Общая обвязка (whenEditable, onTab, filePicker) — в v2-helpers.mjs.
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "sheet", "actor", "star-system", "wh-holo"],
-      template: "systems/warhammer-dbc/templates/actor/star-system-sheet.hbs",
-      width: 740, height: 740,
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "overview" }]
-    });
-  }
+// Портрет: в V1 клик по data-edit="img" обрабатывал ActorSheet сам, у V2 такого
+// обработчика нет — нужен свой (wdbc-bg0).
+function onPortrait() {
+  const FP = filePicker();
+  return new FP({
+    type: "image", current: this.actor.img || "",
+    callback: path => this.actor.update({ img: path })
+  }).render(true);
+}
 
-  getData() {
-    const context = super.getData();
+// Свернуть/развернуть группу звезды и досье тела — чистая разметка, доступна
+// и наблюдателю: смотреть систему может тот, кто её не правит.
+function onStarToggle(event, target) {
+  target.closest(".ss-star-group")?.classList.toggle("ss-collapsed");
+}
+function onBodyToggle(event, target) {
+  target.classList.toggle("ss-open");
+}
+
+// Переключатель «показать игрокам» (только ГМ; кнопка и рисуется только ему).
+function onBodyReveal(event, target) {
+  const id = target.closest("[data-item-id]")?.dataset.itemId;
+  const item = this.actor.items.get(id);
+  if (item) return item.update({ "system.revealed": !item.system.revealed });
+}
+
+function onBodyCreate()      { return this._createBodyDialog(); }
+function onSystemGenerate()  { return this._generateDialog(); }
+function onSystemAnomaly()   { return this._addAnomaly(); }
+function onSystemEncounter() { return this._addEncounter(); }
+function onSystemJournal()   { return this._journalPin(); }
+function onSystemClear()     { return this._clearBodies(); }
+
+export class WarhammerStarSystemSheet
+  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+
+  static DEFAULT_OPTIONS = {
+    // star-system-sheet — на самой форме листа: CSS цепляется за
+    // «.warhammer-dbc.star-system-sheet», а у V1 этот класс нёс <form> в шаблоне.
+    classes: ["warhammer-dbc", "sheet", "actor", "star-system", "wh-holo", "star-system-sheet"],
+    position: { width: 740, height: 740 },
+    window: { resizable: true },
+    form: { submitOnChange: true, closeOnSubmit: false },
+    actions: {
+      tab: onTab,
+      portrait: whenEditable(onPortrait),
+      // Свернуть группу и раскрыть досье — только разметка, права не нужны.
+      starToggle: onStarToggle,
+      bodyToggle: onBodyToggle,
+      bodyReveal:      whenEditable(onBodyReveal),
+      bodyCreate:      whenEditable(onBodyCreate),
+      systemGenerate:  whenEditable(onSystemGenerate),
+      systemAnomaly:   whenEditable(onSystemAnomaly),
+      systemEncounter: whenEditable(onSystemEncounter),
+      systemJournal:   whenEditable(onSystemJournal),
+      systemClear:     whenEditable(onSystemClear)
+    }
+  };
+
+  static PARTS = {
+    body: { template: "systems/warhammer-dbc/templates/actor/star-system-sheet.hbs", root: true }
+  };
+
+  static TABS = {
+    primary: {
+      initial: "overview",
+      tabs: [
+        { id: "overview", label: "Обзор",   icon: "fas fa-solar-panel" },
+        { id: "notes",    label: "Записи",  icon: "fas fa-file-lines" }
+      ]
+    }
+  };
+
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+    context.actor = this.actor;
+    context.tab = this.tabGroups?.primary ?? WarhammerStarSystemSheet.TABS.primary.initial;
     // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
     Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
@@ -263,90 +336,67 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
     return context;
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
+    if (!el) return;
     // Поле «Фракция» в шапке — общее для всех листов.
-    activateFactionFieldListeners(html, this.actor);
+    activateFactionFieldListeners(el, this.actor);
 
-    // ── Только-чтение (доступно и наблюдателям, не только владельцу) ──
-    // Свернуть/развернуть группу звезды.
-    html.on("click", ".ss-star-toggle", ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      $(ev.currentTarget).closest(".ss-star-group").toggleClass("ss-collapsed");
-    });
-    // ЛКМ по строке тела — развернуть/свернуть досье.
-    html.on("click", ".ss-body-row", ev => {
-      if ($(ev.target).closest(".body-reveal").length) return;
-      $(ev.currentTarget).toggleClass("ss-open");
-    });
-    // Открытие листа тела по ПКМ (наблюдатель увидит его в режиме чтения).
-    if (!this.isEditable) {
-      html.on("contextmenu", ".ss-body-row, .ss-star-line", ev => {
+    // ПКМ по строке тела. Наблюдателю — только «открыть лист»: полное меню
+    // правит документы, и до перевода на V2 оно так же гасилось isEditable.
+    el.querySelectorAll(".ss-body-row, .ss-star-line").forEach(row => {
+      row.addEventListener("contextmenu", ev => {
         ev.preventDefault();
-        const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-        item?.sheet.render(true);
+        ev.stopPropagation();
+        const item = this.actor.items.get(row.dataset.itemId);
+        if (!item) return;
+        if (!this.isEditable) return void item.sheet.render(true);
+        openContextMenu(ev, this._bodyMenuEntries(item));
       });
-      return;
-    }
+    });
 
-    // ── Редактирование (только владелец / ГМ) ──
-    html.find(".system-feature-cb").change(ev => {
+    if (!this.isEditable) return;
+
+    // Особенности системы — набор галок, а не действие: [data-action] сработал
+    // бы и по клику мимо галки, а нужно именно новое состояние checkbox.
+    el.querySelectorAll(".system-feature-cb").forEach(cb => cb.addEventListener("change", ev => {
       const key = ev.currentTarget.dataset.key;
       const set = new Set(this.actor.system.systemFeatures || []);
       ev.currentTarget.checked ? set.add(key) : set.delete(key);
       this.actor.update({ "system.systemFeatures": [...set] });
-    });
+    }));
+  }
 
-    html.find(".body-create").click(() => this._createBodyDialog());
+  /** Пункты меню строки тела: состав зависит от прав и типа тела. */
+  _bodyMenuEntries(item) {
+    const isGM = game.user.isGM;
+    // Экстракциумы может ставить ГМ или игрок с персонажем-Вольным Торговцем
+    const canExtr = isGM || game.actors.some(a => a.type === "character" && a.isOwner && a.system?.isRogueTrader);
+    const bt = item.system.bodyType;
+    const extrBody = ["planet", "gasGiant", "moon", "station", "asteroid", "belt"].includes(bt);
+    const scoutLbl  = item.system.scouted  ? "Скрыть разведку"   : "Разведать планету";
+    const revealLbl = item.system.revealed ? "Скрыть тайны от игроков" : "Раскрыть тайны игрокам";
 
-    // Переключатель «показать игрокам» (только ГМ).
-    html.on("click", ".body-reveal", ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      const id = ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
-      const item = this.actor.items.get(id);
-      if (item) item.update({ "system.revealed": !item.system.revealed });
-    });
-
-    html.on("contextmenu", ".ss-body-row, .ss-star-line", ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      $(".wh-context-menu").remove();
-      const item = this.actor.items.get(ev.currentTarget.dataset.itemId);
-      if (!item) return;
-      const isGM = game.user.isGM;
-      // Экстракциумы может ставить ГМ или игрок с персонажем-Вольным Торговцем
-      const canExtr = isGM || game.actors.some(a => a.type === "character" && a.isOwner && a.system?.isRogueTrader);
-      const bt = item.system.bodyType;
-      const extrBody = ["planet", "gasGiant", "moon", "station", "asteroid", "belt"].includes(bt);
-      const scoutLbl  = item.system.scouted  ? "Скрыть разведку"   : "Разведать планету";
-      const revealLbl = item.system.revealed ? "Скрыть тайны от игроков" : "Раскрыть тайны игрокам";
-      const menu = $(`<div class="wh-context-menu">
-          <div class="wh-ctx-item wh-ctx-edit">📖 Открыть лист</div>
-          ${isGM ? `<div class="wh-ctx-item wh-ctx-scout">${item.system.scouted ? "🙈" : "🔭"} ${scoutLbl}</div>` : ""}
-          ${isGM ? `<div class="wh-ctx-item wh-ctx-reveal">${item.system.revealed ? "🔒" : "👁"} ${revealLbl}</div>` : ""}
-          ${(canExtr && extrBody) ? `<div class="wh-ctx-sep"></div><div class="wh-ctx-item wh-ctx-extractium">⛏ Мобильные Экстракциумы…</div>` : ""}
-          ${isGM ? `<div class="wh-ctx-sep"></div>` : ""}
-          ${isGM ? `<div class="wh-ctx-item wh-ctx-colony">🏗 Развитие колонии</div>` : ""}
-          ${isGM ? `<div class="wh-ctx-item wh-ctx-colonize">👥 Заселить…</div>` : ""}
-          ${isGM ? `<div class="wh-ctx-item wh-ctx-destroy">💥 Уничтожить цивилизацию</div>` : ""}
-          ${isGM ? `<div class="wh-ctx-item wh-ctx-delete">🗑 Удалить</div>` : ""}
-        </div>`).css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });
-      $("body").append(menu);
-      setTimeout(() => $(document).one("click.wh-ctx", () => menu.remove()), 50);
-      menu.find(".wh-ctx-edit").on("click", e2 => { e2.stopPropagation(); menu.remove(); item.sheet.render(true); });
-      menu.find(".wh-ctx-scout").on("click", e2 => { e2.stopPropagation(); menu.remove(); item.update({ "system.scouted": !item.system.scouted }); });
-      menu.find(".wh-ctx-reveal").on("click", e2 => { e2.stopPropagation(); menu.remove(); item.update({ "system.revealed": !item.system.revealed }); });
-      menu.find(".wh-ctx-extractium").on("click", e2 => { e2.stopPropagation(); menu.remove(); this._extractiumDialog(item); });
-      menu.find(".wh-ctx-colony").on("click", e2 => { e2.stopPropagation(); menu.remove(); this._colonyDevDialog(item); });
-      menu.find(".wh-ctx-colonize").on("click", e2 => { e2.stopPropagation(); menu.remove(); this._colonizeDialog(item); });
-      menu.find(".wh-ctx-destroy").on("click", e2 => { e2.stopPropagation(); menu.remove(); this._destroyCivilization(item); });
-      menu.find(".wh-ctx-delete").on("click", e2 => { e2.stopPropagation(); menu.remove(); item.delete(); });
-    });
-
-    html.find(".system-generate").click(() => this._generateDialog());
-    html.find(".system-anomaly").click(() => this._addAnomaly());
-    html.find(".system-encounter").click(() => this._addEncounter());
-    html.find(".system-journal").click(() => this._journalPin());
-    html.find(".system-clear").click(() => this._clearBodies());
+    const entries = [{ cls: "wh-ctx-edit", label: "📖 Открыть лист", onClick: () => item.sheet.render(true) }];
+    if (isGM) entries.push(
+      { cls: "wh-ctx-scout", label: `${item.system.scouted ? "🙈" : "🔭"} ${scoutLbl}`,
+        onClick: () => item.update({ "system.scouted": !item.system.scouted }) },
+      { cls: "wh-ctx-reveal", label: `${item.system.revealed ? "🔒" : "👁"} ${revealLbl}`,
+        onClick: () => item.update({ "system.revealed": !item.system.revealed }) }
+    );
+    if (canExtr && extrBody) entries.push(
+      { sep: true },
+      { cls: "wh-ctx-extractium", label: "⛏ Мобильные Экстракциумы…", onClick: () => this._extractiumDialog(item) }
+    );
+    if (isGM) entries.push(
+      { sep: true },
+      { cls: "wh-ctx-colony",   label: "🏗 Развитие колонии",      onClick: () => this._colonyDevDialog(item) },
+      { cls: "wh-ctx-colonize", label: "👥 Заселить…",             onClick: () => this._colonizeDialog(item) },
+      { cls: "wh-ctx-destroy",  label: "💥 Уничтожить цивилизацию", onClick: () => this._destroyCivilization(item) },
+      { cls: "wh-ctx-delete",   label: "🗑 Удалить",               onClick: () => item.delete() }
+    );
+    return entries;
   }
 
   async _addAnomaly() {
@@ -378,9 +428,13 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
     const wcopts = `<option value="">— авто (по фракции/жизни) —</option>` +
       Object.entries(WORLD_CLASSES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
     const isPlanet = (item.system.bodyType || "planet") === "planet";
-    new Dialog({
-      title: `Заселить: ${item.name}`,
-      content: `<form class="ss-gen">
+    // Не <form>: содержимое DialogV2 уже лежит внутри его собственной формы,
+    // вложенная сломала бы button.form, через который читаются поля.
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Заселить: ${item.name}` },
+      classes: ["warhammer-dbc", "wh-holo"],
+      position: { width: 420 },
+      content: `<div class="ss-gen">
         <section class="ss-gen-cols">
           <label class="ss-gen-field"><span>Фракция</span><select id="col-fac">${fopts}</select></label>
           <label class="ss-gen-field"><span>Вид ксеносов</span><select id="col-xeno">${xopts}</select></label>
@@ -388,30 +442,38 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
           ${isPlanet ? `<label class="ss-gen-field ss-col-wc" style="grid-column:1 / -1;"><span>Класс мира</span><select id="col-wc">${wcopts}</select></label>` : ""}
         </section>
         <p class="ss-gen-hint">Присутствие подбирается по фракции автоматически (у Друкхари, Стиксис и Азуриан колоний не бывает — будет опорная точка). Класс мира задаётся вручную только для имперских ветвей (Империум/Механикус/Астартес/Вольный Торговец). Оборона перегенерируется.</p>
-      </form>`,
-      buttons: {
-        ok: { icon: '<i class="fas fa-users"></i>', label: "Заселить", callback: async html => {
-          const key = html.find("#col-fac").val();
-          const sp = key === "xenos" ? html.find("#col-xeno").val() : "";
-          const wc = html.find("#col-wc").val() || "";
-          const upd = colonizeUpdate(key, sp, item.system, wc);
-          if (key === "rogueTrader") upd["system.dynasty"] = html.find("#col-dyn").val() || "";
-          await item.update(upd);
-          ui.notifications.info(`«${item.name}» заселено: ${INHABITANTS[key]}.`);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "ok",
-      render: html => {
+      </div>`,
+      buttons: [
+        {
+          action: "ok", label: "Заселить", icon: "fas fa-users", default: true,
+          callback: async (event, button) => {
+            const form = button.form;
+            const key = form.querySelector("#col-fac").value;
+            const sp = key === "xenos" ? form.querySelector("#col-xeno").value : "";
+            const wc = form.querySelector("#col-wc")?.value || "";
+            const upd = colonizeUpdate(key, sp, item.system, wc);
+            if (key === "rogueTrader") upd["system.dynasty"] = form.querySelector("#col-dyn").value || "";
+            await item.update(upd);
+            ui.notifications.info(`«${item.name}» заселено: ${INHABITANTS[key]}.`);
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        const form = dialog.element.querySelector("form") ?? dialog.element;
         const impBranch = ["imperium", "mechanicus", "astartes", "rogueTrader"];
+        const fac = form.querySelector("#col-fac");
         const toggle = () => {
-          const k = html.find("#col-fac").val();
-          html.find(".ss-col-dyn").css("display", k === "rogueTrader" ? "" : "none");
-          html.find(".ss-col-wc").css("display", impBranch.includes(k) ? "" : "none");
+          const k = fac.value;
+          const dyn = form.querySelector(".ss-col-dyn");
+          const wc  = form.querySelector(".ss-col-wc");
+          if (dyn) dyn.style.display = k === "rogueTrader" ? "" : "none";
+          if (wc)  wc.style.display  = impBranch.includes(k) ? "" : "none";
         };
-        html.find("#col-fac").on("change", toggle); toggle();
+        fac.addEventListener("change", toggle);
+        toggle();
       }
-    }, { width: 420, classes: ["warhammer-dbc", "wh-holo"] }).render(true);
+    });
   }
 
   // Мобильные Экстракциумы: какие добываемые ресурсы качать в доход протектората.
@@ -429,29 +491,32 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
       return `<label class="ss-extr-row"><input type="checkbox" class="ss-extr-cb" data-res="${k}" ${inst.includes(k) ? "checked" : ""}/>
         <img src="${RESOURCE_ICONS[k]}"/> <span>${RESOURCE_TYPES[k].label}</span> <b>${v}</b></label>`;
     }).join("");
-    new Dialog({
-      title: `Мобильные Экстракциумы — ${item.name}`,
-      content: `<form class="ss-extr-form"><p class="ss-gen-hint">Отмеченные ресурсы добываются Экстракциумом и идут в доход протектората.</p>${rows}</form>`,
-      buttons: {
-        ok: { icon: '<i class="fas fa-gears"></i>', label: "Сохранить", callback: async html => {
-          const next = [];
-          html.find(".ss-extr-cb:checked").each((_, cb) => next.push(cb.dataset.res));
-          await item.update({ "system.extractiums": next });
-          ui.notifications.info(`«${item.name}»: Экстракциумы обновлены (${next.length}).`);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "ok"
-    }, { width: 360, classes: ["warhammer-dbc", "wh-holo"] }).render(true);
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Мобильные Экстракциумы — ${item.name}` },
+      classes: ["warhammer-dbc", "wh-holo"],
+      position: { width: 360 },
+      content: `<div class="ss-extr-form"><p class="ss-gen-hint">Отмеченные ресурсы добываются Экстракциумом и идут в доход протектората.</p>${rows}</div>`,
+      buttons: [
+        {
+          action: "ok", label: "Сохранить", icon: "fas fa-gears", default: true,
+          callback: async (event, button) => {
+            const next = [...button.form.querySelectorAll(".ss-extr-cb:checked")].map(cb => cb.dataset.res);
+            await item.update({ "system.extractiums": next });
+            ui.notifications.info(`«${item.name}»: Экстракциумы обновлены (${next.length}).`);
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   // Уничтожить цивилизацию на теле → руины (если масштаб предполагает).
   async _destroyCivilization(item) {
     const up = ruinUpdate(item.system);
     if (!up) { ui.notifications.warn("На этом объекте нет цивилизации, которую можно уничтожить."); return; }
-    const ok = await Dialog.confirm({
-      title: "Уничтожить цивилизацию",
-      content: `<p>Уничтожить всё население и инфраструктуру на <b>${item.name}</b>? Объект превратится в руины. Действие необратимо.</p>`
+    const ok = await foundry.applications.api.DialogV2.confirm({
+      window: { title: "Уничтожить цивилизацию" },
+      content: `<p>Уничтожить всё население и инфраструктуру на <b>${esc(item.name)}</b>? Объект превратится в руины. Действие необратимо.</p>`
     });
     if (ok) { await item.update(up); ui.notifications.info(`«${item.name}»: цивилизация уничтожена.`); }
   }
@@ -470,7 +535,7 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
         .map(([k, v]) => `${v.label} +${im.res[k]}`).join(", ");
       return `<div class="ss-imp-row" data-id="${im.id}">
         <div class="ss-imp-head">
-          <b>${im.name}</b>
+          <b>${esc(im.name)}</b>
           <span class="ss-imp-tools">
             <button type="button" class="imp-flag${im.hidden ? " on" : ""}" data-flag="hidden" title="Скрыт до разведки">🕵</button>
             <button type="button" class="imp-flag${im.secret ? " on" : ""}" data-flag="secret" title="Тайное (видно после раскрытия)">🔒</button>
@@ -486,15 +551,17 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
     const catOpts = `<option value="">— без категории —</option>` +
       Object.entries(IMP_CATEGORIES).map(([k, def]) => `<option value="${k}">${def.label}</option>`).join("");
 
-    const dlg = new Dialog({
-      title: `Развитие колонии — ${item.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Развитие колонии — ${item.name}`, resizable: true },
+      classes: ["warhammer-dbc", "wh-holo"],
+      position: { width: 620, height: 600 },
       content: `<div class="ss-colony">
         <div class="ss-imp-list">${rowsHtml}</div>
         <div class="ss-imp-actions">
           <button type="button" class="imp-add" title="Добавить своё улучшение">＋ Улучшение</button>
           <button type="button" class="imp-gen" title="Сгенерировать по типу объекта">🎲 Сгенерировать</button>
         </div>
-        <form class="ss-imp-form" style="display:none;">
+        <div class="ss-imp-form" style="display:none;">
           <div class="weapon-row"><input type="text" class="imp-name" placeholder="Название (указ, закон, здание, объект…)"/></div>
           <div class="weapon-row"><select class="imp-cat">${catOpts}</select></div>
           <div class="weapon-row"><input type="text" class="imp-desc" placeholder="Что оно даёт объекту"/></div>
@@ -504,66 +571,81 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
           </div>
           <div class="ss-imp-grid">${resInputs}</div>
           <div class="ss-imp-form-foot"><button type="button" class="imp-save">Добавить</button></div>
-        </form>
+        </div>
       </div>`,
-      buttons: { close: { label: "Закрыть" } },
-      default: "close",
-      render: html => {
-        const reopen = async (update) => { await item.update(update); dlg.close(); this._colonyDevDialog(item); };
-        html.find(".imp-del").on("click", ev => {
-          const id = ev.currentTarget.closest(".ss-imp-row").dataset.id;
-          reopen({ "system.improvements": imps.filter(i => i.id !== id) });
-        });
-        html.find(".imp-flag").on("click", ev => {
-          const id = ev.currentTarget.closest(".ss-imp-row").dataset.id;
+      buttons: [{ action: "close", label: "Закрыть", default: true }],
+      render: (event, dialog) => {
+        const form = dialog.element.querySelector("form") ?? dialog.element;
+        // Список перерисовывается пересозданием окна: строк немного, а вручную
+        // сшивать разметку с флагами — тот самый дубль, из-за которого правки
+        // и расходились с данными.
+        const reopen = async (update) => { await item.update(update); dialog.close(); this._colonyDevDialog(item); };
+        const idOf = el => el.closest(".ss-imp-row").dataset.id;
+
+        form.querySelectorAll(".imp-del").forEach(b => b.addEventListener("click", ev =>
+          reopen({ "system.improvements": imps.filter(i => i.id !== idOf(ev.currentTarget)) })));
+
+        form.querySelectorAll(".imp-flag").forEach(b => b.addEventListener("click", ev => {
+          const id = idOf(ev.currentTarget);
           const flag = ev.currentTarget.dataset.flag;
           reopen({ "system.improvements": imps.map(i => i.id === id ? { ...i, [flag]: !i[flag] } : i) });
+        }));
+
+        const impForm = form.querySelector(".ss-imp-form");
+        form.querySelector(".imp-add").addEventListener("click", () => {
+          impForm.style.display = impForm.style.display === "none" ? "" : "none";
         });
-        html.find(".imp-add").on("click", () => html.find(".ss-imp-form").toggle());
-        html.find(".imp-gen").on("click", () => {
+
+        form.querySelector(".imp-gen").addEventListener("click", () => {
           const add = genImprovements({ worldClass: item.system.worldClass, key: this._colonyDevKey(item.system), sp: item.system.xenosSpecies, bodyType: item.system.bodyType, size: item.system.bodySize, count: 1 });
           reopen({ "system.improvements": [...imps, ...add] });
         });
-        html.find(".imp-save").on("click", () => {
-          const name = (html.find(".imp-name").val() || "").trim();
+
+        form.querySelector(".imp-save").addEventListener("click", () => {
+          const name = (form.querySelector(".imp-name").value || "").trim();
           if (!name) { ui.notifications.warn("Введите название улучшения."); return; }
           const res = {};
-          html.find("[data-res]").each((i, el) => { const v = Number(el.value) || 0; if (v) res[el.dataset.res] = v; });
-          const imp = { id: foundry.utils.randomID(), name, desc: (html.find(".imp-desc").val() || "").trim(), res,
-            cat: html.find(".imp-cat").val() || "",
-            hidden: html.find(".imp-hidden").is(":checked"), secret: html.find(".imp-secret").is(":checked") };
+          form.querySelectorAll("[data-res]").forEach(el => { const v = Number(el.value) || 0; if (v) res[el.dataset.res] = v; });
+          const imp = { id: foundry.utils.randomID(), name, desc: (form.querySelector(".imp-desc").value || "").trim(), res,
+            cat: form.querySelector(".imp-cat").value || "",
+            hidden: form.querySelector(".imp-hidden").checked, secret: form.querySelector(".imp-secret").checked };
           reopen({ "system.improvements": [...imps, imp] });
         });
       }
-    }, { width: 620, height: 600, resizable: true, classes: ["warhammer-dbc", "wh-holo"] });
-    dlg.render(true);
+    });
   }
 
   _createBodyDialog() {
     const opts = Object.entries(BODY_TYPES).map(([k, v]) => `<option value="${k}">${v.icon} ${v.label}</option>`).join("");
     const zopts = `<option value="">— без зоны —</option>` + Object.entries(ZONES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
     const popts = `<option value="">— звезда / система —</option>` +
-      this.actor.items.filter(i => i.type === "celestialBody").map(i => `<option value="${i.id}">${i.name}</option>`).join("");
+      this.actor.items.filter(i => i.type === "celestialBody").map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join("");
     const xopts = `<option value="">—</option>` + Object.entries(XENOS_SPECIES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
-    new Dialog({
-      title: "Добавить небесное тело",
-      content: `<form class="wh-wizard-form" style="padding:6px;">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Добавить небесное тело" },
+      classes: ["warhammer-dbc", "wh-holo"],
+      content: `<div class="wh-wizard-form" style="padding:6px;">
         <div class="atk-dlg-row"><label>Тип:</label><select id="cb-type">${opts}</select></div>
         <div class="atk-dlg-row"><label>Зона:</label><select id="cb-zone">${zopts}</select></div>
         <div class="atk-dlg-row"><label>Орбита:</label><select id="cb-parent">${popts}</select></div>
         <div class="atk-dlg-row"><label>Ксеносы:</label><select id="cb-xeno">${xopts}</select></div>
-      </form>`,
-      buttons: {
-        add: { icon: '<i class="fas fa-plus"></i>', label: "Добавить", callback: async html => {
-          const bodyType = html.find("#cb-type").val();
-          const system = { bodyType, zone: html.find("#cb-zone").val(), parentId: html.find("#cb-parent").val(), xenosSpecies: html.find("#cb-xeno").val() };
-          const [it] = await this.actor.createEmbeddedDocuments("Item", [{ name: BODY_TYPES[bodyType]?.label || "Тело", type: "celestialBody", system }]);
-          it?.sheet.render(true);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "add"
-    }, { classes: ["warhammer-dbc", "wh-holo"] }).render(true);
+      </div>`,
+      buttons: [
+        {
+          action: "add", label: "Добавить", icon: "fas fa-plus", default: true,
+          callback: async (event, button) => {
+            const form = button.form;
+            const bodyType = form.querySelector("#cb-type").value;
+            const system = { bodyType, zone: form.querySelector("#cb-zone").value,
+                             parentId: form.querySelector("#cb-parent").value,
+                             xenosSpecies: form.querySelector("#cb-xeno").value };
+            const [it] = await this.actor.createEmbeddedDocuments("Item", [{ name: BODY_TYPES[bodyType]?.label || "Тело", type: "celestialBody", system }]);
+            it?.sheet.render(true);
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   _generateDialog() {
@@ -578,9 +660,11 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
     const dopts = `<option value="">— без династии —</option>` +
       [...dynSet].map(d => `<option value="${d}" ${d === playerDyn ? "selected" : ""}>${d}</option>`).join("");
     const wcList = [];   // очередь гарантированных классов миров
-    new Dialog({
-      title: "Генератор звёздной системы",
-      content: `<form class="ss-gen">
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Генератор звёздной системы" },
+      classes: ["warhammer-dbc", "wh-holo"],
+      position: { width: 460 },
+      content: `<div class="ss-gen">
         <section class="ss-gen-sec">
           <h4>Заселённость <em>комбинируется</em></h4>
           <div class="ss-gen-grid">${inhRows}</div>
@@ -616,69 +700,83 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
           <label class="ss-gen-check" style="align-self:end;"><input type="checkbox" id="gen-names" checked/><span>Лорные названия</span></label>
         </section>
         <p class="ss-gen-hint"><b>«Новооткрытая»</b> — планеты названы по звезде (Джокарис&nbsp;I, II…). Жизнь возникает только в Первичной Биосфере (вне её — редкая экзотика). Тела <b>добавляются</b> к текущим. Обязательные миры при необходимости подселяются как Империум.</p>
-      </form>`,
-      buttons: {
-        go: { icon: '<i class="fas fa-dice"></i>', label: "Сгенерировать", callback: async html => {
-          const inhabitants = html.find(".gen-inh:checked").map((i, e) => e.value).get();
-          const xenosSpecies = html.find("#gen-xeno").val();
-          const density = html.find("#gen-dens").val();
-          const stars = Number(html.find("#gen-stars").val()) || 0;
-          const starClass = html.find("#gen-starclass").val() || null;
-          const life = html.find("#gen-life").val();
-          const lifeType = html.find("#gen-lifetype").val();
-          const anomalies = html.find("#gen-anom").val();
-          const encounters = html.find("#gen-enc").val();
-          const useNames = html.find("#gen-names").is(":checked");
-          const dynasty = inhabitants.includes("rogueTrader") ? (html.find("#gen-dyn").val() || "") : "";
-          const worldClasses = [...wcList];
-          const avoid = worldNames();
-          const { features, baseName, config, bodies } = generateSystem({ inhabitants, xenosSpecies, density, stars, starClass, life, lifeType, anomalies, encounters, useNames, avoid, dynasty, worldClasses });
-          const starName = bodies.find(b => b.system.bodyType === "star")?.name || baseName;
-          const update = {
-            "system.dominantStar": starName,
-            "system.starConfig": STAR_CONFIGS[config] || "",
-            "system.inhabitants": inhabitants,
-            "system.xenosSpecies": inhabitants.includes("xenos") ? xenosSpecies : this.actor.system.xenosSpecies,
-            "system.systemFeatures": [...new Set([...(this.actor.system.systemFeatures || []), ...features])]
-          };
-          // Переименовать актора по базовому имени, если оно ещё дефолтное.
-          const cur = (this.actor.name || "").trim();
-          if (useNames && baseName && (!cur || /^(Звёздная система|Новый Актор|New Actor|Unnamed)/i.test(cur)))
-            update.name = baseName;
-          await this.actor.update(update);
-          await this.actor.createEmbeddedDocuments("Item", bodies, { keepId: true });
-          ui.notifications.info(`Сгенерировано тел: ${bodies.length}.`);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "go",
-      render: html => {
+      </div>`,
+      buttons: [
+        {
+          action: "go", label: "Сгенерировать", icon: "fas fa-dice", default: true,
+          callback: async (event, button) => {
+            const form = button.form;
+            const val = sel => form.querySelector(sel).value;
+            const inhabitants = [...form.querySelectorAll(".gen-inh:checked")].map(e => e.value);
+            const xenosSpecies = val("#gen-xeno");
+            const density = val("#gen-dens");
+            const stars = Number(val("#gen-stars")) || 0;
+            const starClass = val("#gen-starclass") || null;
+            const life = val("#gen-life");
+            const lifeType = val("#gen-lifetype");
+            const anomalies = val("#gen-anom");
+            const encounters = val("#gen-enc");
+            const useNames = form.querySelector("#gen-names").checked;
+            const dynasty = inhabitants.includes("rogueTrader") ? (val("#gen-dyn") || "") : "";
+            const worldClasses = [...wcList];
+            const avoid = worldNames();
+            const { features, baseName, config, bodies } = generateSystem({ inhabitants, xenosSpecies, density, stars, starClass, life, lifeType, anomalies, encounters, useNames, avoid, dynasty, worldClasses });
+            const starName = bodies.find(b => b.system.bodyType === "star")?.name || baseName;
+            const update = {
+              "system.dominantStar": starName,
+              "system.starConfig": STAR_CONFIGS[config] || "",
+              "system.inhabitants": inhabitants,
+              "system.xenosSpecies": inhabitants.includes("xenos") ? xenosSpecies : this.actor.system.xenosSpecies,
+              "system.systemFeatures": [...new Set([...(this.actor.system.systemFeatures || []), ...features])]
+            };
+            // Переименовать актора по базовому имени, если оно ещё дефолтное.
+            const cur = (this.actor.name || "").trim();
+            if (useNames && baseName && (!cur || /^(Звёздная система|Новый Актор|New Actor|Unnamed)/i.test(cur)))
+              update.name = baseName;
+            await this.actor.update(update);
+            await this.actor.createEmbeddedDocuments("Item", bodies, { keepId: true });
+            ui.notifications.info(`Сгенерировано тел: ${bodies.length}.`);
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        const form = dialog.element.querySelector("form") ?? dialog.element;
         // Династия ВТ — только когда отмечены Вольные Торговцы.
-        const toggleDyn = () => html.find(".ss-gen-dyn").css("display",
-          html.find('.gen-inh[value="rogueTrader"]').is(":checked") ? "" : "none");
-        html.find('.gen-inh[value="rogueTrader"]').on("change", toggleDyn); toggleDyn();
+        const rt = form.querySelector('.gen-inh[value="rogueTrader"]');
+        const dynBox = form.querySelector(".ss-gen-dyn");
+        const toggleDyn = () => { dynBox.style.display = rt.checked ? "" : "none"; };
+        rt.addEventListener("change", toggleDyn); toggleDyn();
         // Список обязательных миров (чипы с удалением).
+        const box = form.querySelector("#gen-wc-list");
         const renderWc = () => {
-          const box = html.find("#gen-wc-list");
-          box.empty();
+          box.replaceChildren();
           wcList.forEach((wc, idx) => {
-            const chip = $(`<span class="ss-gen-wc-chip">${WORLD_CLASSES[wc]}<button type="button" title="Убрать">✕</button></span>`);
-            chip.find("button").on("click", () => { wcList.splice(idx, 1); renderWc(); });
+            const chip = document.createElement("span");
+            chip.className = "ss-gen-wc-chip";
+            chip.textContent = WORLD_CLASSES[wc];
+            const del = document.createElement("button");
+            del.type = "button"; del.title = "Убрать"; del.textContent = "✕";
+            del.addEventListener("click", () => { wcList.splice(idx, 1); renderWc(); });
+            chip.append(del);
             box.append(chip);
           });
         };
-        html.find("#gen-wc-add").on("click", () => {
-          const wc = html.find("#gen-wc-pick").val();
+        form.querySelector("#gen-wc-add").addEventListener("click", () => {
+          const wc = form.querySelector("#gen-wc-pick").value;
           if (wc) { wcList.push(wc); renderWc(); }
         });
       }
-    }, { width: 460, classes: ["warhammer-dbc", "wh-holo"] }).render(true);
+    });
   }
 
   async _clearBodies() {
     const ids = this.actor.items.filter(i => i.type === "celestialBody").map(i => i.id);
     if (!ids.length) return;
-    const ok = await Dialog.confirm({ title: "Очистить систему", content: `<p>Удалить все небесные тела (${ids.length})?</p>` });
+    const ok = await foundry.applications.api.DialogV2.confirm({
+      window: { title: "Очистить систему" },
+      content: `<p>Удалить все небесные тела (${ids.length})?</p>`
+    });
     if (ok) await this.actor.deleteEmbeddedDocuments("Item", ids);
   }
 
@@ -706,7 +804,7 @@ export class WarhammerStarSystemSheet extends foundry.appv1.sheets.ActorSheet {
       // Флаг связывает пин с актёром — двойной клик по заметке откроет лист напрямую.
       flags: { "warhammer-dbc": { systemActorUuid: this.actor.uuid } },
       pages: [{ name: "Система", type: "text", text: { content:
-        `<h2>${this.actor.name}</h2>${sectorLine}<p>Лист системы: ${link}</p>
+        `<h2>${esc(this.actor.name)}</h2>${sectorLine}<p>Лист системы: ${link}</p>
          <p><i>Перетащите эту запись на карту сектора (слой «Заметки»), чтобы получить кликабельный пин.</i></p>` } }]
     });
     await this.actor.update({ "system.journalUuid": entry.uuid });

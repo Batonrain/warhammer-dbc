@@ -79,7 +79,7 @@
         <span class="wprop-name">{{t.label}}</span>
         <span class="wprop-slash">X:</span>
         <input type="number" class="xtype-x" data-type="{{t.type}}" value="{{t.x}}" title="Значение X для этого типа"/>
-        <button type="button" class="wprop-remove xtype-remove" data-type="{{t.type}}" title="Убрать тип">✕</button>
+        <button type="button" class="wprop-remove xtype-remove" data-action="xtypeRemove" data-type="{{t.type}}" title="Убрать тип">✕</button>
       </div>
       {{/each}}
     </div>
@@ -201,7 +201,7 @@
         <input type="number" class="wprop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
         {{/if}}
         {{/if}}
-        <button type="button" class="wprop-remove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+        <button type="button" class="wprop-remove" data-action="wpropRemove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
       </div>
       {{/each}}
     </div>
@@ -212,14 +212,14 @@
 {{!-- Доп. профили атаки --}}
 <div class="item-section">
   <div class="item-section-title">ДОП. ПРОФИЛИ АТАКИ
-    <button type="button" class="psy-profile-add btn-add-small" title="Добавить профиль">＋ профиль</button>
+    <button type="button" class="psy-profile-add btn-add-small" data-action="psyProfileAdd" title="Добавить профиль">＋ профиль</button>
   </div>
   {{#if psyProfiles.length}}
   {{#each psyProfiles as |pf|}}
   <div class="psy-profile-block">
     <div class="weapon-row">
       <input type="text" class="psy-profile-field wr-input-md" data-index="{{pf.idx}}" data-field="label" value="{{pf.label}}" placeholder="Название профиля"/>
-      <button type="button" class="psy-profile-remove wprop-remove" data-index="{{pf.idx}}" title="Удалить профиль">✕</button>
+      <button type="button" class="psy-profile-remove wprop-remove" data-action="psyProfileRemove" data-index="{{pf.idx}}" title="Удалить профиль">✕</button>
     </div>
     <div class="weapon-row">
       <label class="wr-label">Урон</label>
@@ -258,7 +258,7 @@
 {{!-- Вариации броска (разные модификаторы/цели) --}}
 <div class="item-section">
   <div class="item-section-title">ВАРИАЦИИ БРОСКА
-    <button type="button" class="psy-variant-add btn-add-small" title="Добавить вариацию">＋ вариация</button>
+    <button type="button" class="psy-variant-add btn-add-small" data-action="psyVariantAdd" title="Добавить вариацию">＋ вариация</button>
   </div>
   {{#if psyVariants.length}}
   {{#each psyVariants as |v|}}
@@ -267,7 +267,7 @@
     <label class="wr-label">Мод. теста</label>
     <input type="number" class="psy-variant-field wr-input-xs" data-index="{{v.idx}}" data-field="testMod" value="{{v.testMod}}"/>
     <input type="text" class="psy-variant-field wr-input-lg" data-index="{{v.idx}}" data-field="note" value="{{v.note}}" placeholder="памятка к вариации"/>
-    <button type="button" class="psy-variant-remove wprop-remove" data-index="{{v.idx}}" title="Удалить">✕</button>
+    <button type="button" class="psy-variant-remove wprop-remove" data-action="psyVariantRemove" data-index="{{v.idx}}" title="Удалить">✕</button>
   </div>
   {{/each}}
   {{else}}
@@ -294,7 +294,7 @@
       <div class="wprop-chip">
         <span class="wprop-name">{{cb.abbr}}</span>
         <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}" title="Прибавка к бонусу характеристики"/>
-        <button type="button" class="wprop-remove cbonus-remove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
+        <button type="button" class="wprop-remove cbonus-remove" data-action="cbonusRemove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
       </div>
       {{/each}}
     </div>
@@ -372,7 +372,7 @@
         <input type="number" class="wbuff-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
         {{/if}}
         {{/if}}
-        <button type="button" class="wbuff-remove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+        <button type="button" class="wbuff-remove" data-action="wbuffRemove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
       </div>
       {{/each}}
     </div>

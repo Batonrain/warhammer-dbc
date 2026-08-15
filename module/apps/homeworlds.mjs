@@ -14,6 +14,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { registerPackCache, packEntries, clearGrantedBy, charBonusesToMechanics } from "./origin-shared.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const PACK = "warhammer-dbc.homeworlds";
 const FLAG = "warhammer-dbc";
@@ -23,9 +24,6 @@ const TAG   = "homeworld";
 // Список в дропдауне берётся из компендиума: запись, заведённая ГМом руками,
 // появляется в нём наравне с книжными.
 registerPackCache(PACK, TAG);
-
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 // ── Чтение состояния актора ──────────────────────────────────────────────
 
@@ -415,6 +413,6 @@ async function postSummary(actor, hw, { charBonuses, grants, chosenLabels, corru
       ${lines.length ? `<div class="hw-chat-grants">${lines.join("<br/>")}</div>` : ""}
     </div>`,
     rolls
-  }, { rollMode: game.settings.get("core", "rollMode") }));
+  }, game.settings.get("core", "rollMode")));
 }
 

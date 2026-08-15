@@ -20,26 +20,146 @@ import { findGroupEntry } from "../constants/skill-specializations.mjs";
 import { FEATURES, isFeatureEnabled } from "../constants/features.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
-import { _degWord } from "../helpers/utils.mjs";
+import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
-
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /** Степени успеха/провала: |порог − бросок| / 10 + 1. */
 const degrees = (threshold, roll) => Math.floor(Math.abs(threshold - roll) / 10) + 1;
 
-export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
+// ── Действия листа ───────────────────────────────────────────────────────────
+// ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
+// источником вторым аргументом. Обычные функции — чтобы карта действий
+// сверялась с шаблоном тестом.
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "sheet", "actor", "formation-sheet", "wh-holo"],
-      template: "systems/warhammer-dbc/templates/actor/formation-sheet.hbs",
-      width: 860, height: 920, resizable: true,
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "unit" }]
-    });
+const attachedIdOf = target => target.closest("[data-attached-id]")?.dataset.attachedId;
+
+// ── Доступно и тому, у кого нет прав на формирование ──
+// Придав формированию своего героя, игрок должен уметь открыть его лист и
+// отозвать обратно; права на конкретного актора проверяются внутри.
+
+async function onOpen(event, target) {
+  const uuid = target.closest("[data-uuid]")?.dataset.uuid;
+  if (!uuid) return;
+  const doc = await fromUuid(uuid);
+  (doc?.actor ?? doc)?.sheet?.render(true);
+}
+
+async function onCommanderClear() {
+  const posts = foundry.utils.deepClone(this.actor.system.posts || {});
+  if (!this.actor.isOwner) {
+    const occ = posts.commander?.uuid ? await fromUuid(posts.commander.uuid) : null;
+    if (!((occ?.actor ?? occ)?.isOwner)) return ui.notifications.warn("Снять с должности можно только своего персонажа.");
   }
+  posts.commander = { uuid: "", name: "", img: "" };
+  await this._persistFormation({ "system.posts": posts });
+}
+
+async function onAttachedRemove(event, target) {
+  const id = attachedIdOf(target);
+  const attached = foundry.utils.deepClone(this.actor.system.attached || []);
+  const a = attached.find(x => x.id === id); if (!a) return;
+  if (!this.actor.isOwner) {
+    const occ = a.uuid ? await fromUuid(a.uuid) : null;
+    if (!((occ?.actor ?? occ)?.isOwner)) return ui.notifications.warn("Отозвать можно только своего персонажа.");
+  }
+  await this._persistFormation({ "system.attached": attached.filter(x => x.id !== id) });
+}
+
+// ── Правящие действия ──
+
+function onPortrait() {
+  const FP = filePicker();
+  return new FP({ type: "image", current: this.actor.img || "",
+    callback: path => this.actor.update({ img: path }) }).render(true);
+}
+
+function onCalcNumbers()   { return this._calcNumbers(); }
+function onRollMoraleMax() { return this._rollMoraleMax(); }
+function onFullStrength()  {
+  return this.actor.update({
+    "system.numbers.value": Number(this.actor.system.numbers?.max) || 0,
+    "system.morale.value":  Number(this.actor.system.morale?.max)  || 0
+  });
+}
+
+function onOrder(event, target) { return this._executeOrder(target.dataset.order); }
+function onOrderClear() { return this.actor.update({ "system.order.key": "", "system.order.note": "" }); }
+
+function onAttack()     { return this._attackDialog(); }
+function onMoraleTest() { return this._moraleTest(); }
+function onTakeDamage() { return this._takeDamageDialog(); }
+
+function onStatusToggle(event, target) {
+  const k = target.dataset.flag;
+  return this.actor.update({ [`system.status.${k}`]: !this.actor.system.status?.[k] });
+}
+function onRoundTick()   { return this._advanceRound(); }
+function onStatusReset() { return this._resetStatus(); }
+
+function onEventRoll(event, target) { return this._keyEventRoll(target.dataset.event); }
+
+/** Счётчик ключевых событий героя за игровой день: 0→1→2→0. */
+function onEventCount(event, target) {
+  const id = attachedIdOf(target);
+  const attached = foundry.utils.deepClone(this.actor.system.attached || []);
+  const a = attached.find(x => x.id === id); if (!a) return;
+  a.events = ((Number(a.events) || 0) + 1) % 3;
+  return this.actor.update({ "system.attached": attached });
+}
+
+export class WarhammerFormationSheet
+  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+
+  static DEFAULT_OPTIONS = {
+    // formation-sheet-form — на самой форме листа: CSS цепляется за
+    // «.warhammer-dbc.formation-sheet-form», а у V1 этот класс нёс <form>.
+    classes: ["warhammer-dbc", "sheet", "actor", "formation-sheet", "wh-holo", "formation-sheet-form"],
+    position: { width: 860, height: 920 },
+    window: { resizable: true },
+    form: { submitOnChange: true, closeOnSubmit: false },
+    actions: {
+      tab: onTab,
+      // Без whenEditable: игрок, придавший формированию своего героя, должен
+      // уметь открыть его лист и отозвать обратно.
+      open:            onOpen,
+      commanderClear:  onCommanderClear,
+      attachedRemove:  onAttachedRemove,
+      portrait:        whenEditable(onPortrait),
+      calcNumbers:     whenEditable(onCalcNumbers),
+      rollMoraleMax:   whenEditable(onRollMoraleMax),
+      fullStrength:    whenEditable(onFullStrength),
+      order:           whenEditable(onOrder),
+      orderClear:      whenEditable(onOrderClear),
+      attack:          whenEditable(onAttack),
+      moraleTest:      whenEditable(onMoraleTest),
+      takeDamage:      whenEditable(onTakeDamage),
+      statusToggle:    whenEditable(onStatusToggle),
+      roundTick:       whenEditable(onRoundTick),
+      statusReset:     whenEditable(onStatusReset),
+      eventRoll:       whenEditable(onEventRoll),
+      eventCount:      whenEditable(onEventCount)
+    }
+  };
+
+  static PARTS = {
+    body: { template: "systems/warhammer-dbc/templates/actor/formation-sheet.hbs", root: true }
+  };
+
+  static TABS = {
+    primary: {
+      initial: "unit",
+      tabs: [
+        { id: "unit",      label: "ЧАСТЬ" },
+        { id: "orders",    label: "ПРИКАЗЫ" },
+        { id: "battle",    label: "БОЙ" },
+        { id: "events",    label: "СОБЫТИЯ" },
+        { id: "reference", label: "СПРАВОЧНИК" },
+        { id: "notes",     label: "ЗАПИСИ" }
+      ]
+    }
+  };
 
   // ── Связанные акторы ──────────────────────────────────────────────────────
 
@@ -120,8 +240,10 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
     return parts.join(" / ");
   }
 
-  getData(options) {
-    const context = super.getData(options);
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+    context.actor = this.actor;
+    context.tab = this.tabGroups?.primary ?? WarhammerFormationSheet.TABS.primary.initial;
     // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
     Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
@@ -303,104 +425,38 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
 
   // ── Обработчики ───────────────────────────────────────────────────────────
 
-  activateListeners(html) {
-    super.activateListeners(html);
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
+    if (!el) return;
     // Поле «Фракция» в шапке — общее для всех листов.
-    activateFactionFieldListeners(html, this.actor);
+    activateFactionFieldListeners(el, this.actor);
 
-    html.find(".fm-open").on("click", async ev => {
-      const uuid = ev.currentTarget.closest("[data-uuid]")?.dataset.uuid;
-      if (!uuid) return;
-      const doc = await fromUuid(uuid);
-      (doc?.actor ?? doc)?.sheet?.render(true);
-    });
+    // Дроп привязываем всегда, а не только на редактируемом листе: игрок без
+    // прав на формирование придаёт ему своего героя, запись идёт через ГМа.
+    try {
+      const DDC = foundry.applications?.ux?.DragDrop?.implementation
+               ?? foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
+      if (DDC) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
+    } catch (e) { console.warn("Warhammer DBC | formation DnD bind:", e); }
 
-    html.find(".fm-commander-clear").on("click", async () => {
-      const posts = foundry.utils.deepClone(this.actor.system.posts || {});
-      if (!this.actor.isOwner) {
-        const occ = posts.commander?.uuid ? await fromUuid(posts.commander.uuid) : null;
-        if (!((occ?.actor ?? occ)?.isOwner)) return ui.notifications.warn("Снять с должности можно только своего персонажа.");
-      }
-      posts.commander = { uuid: "", name: "", img: "" };
-      await this._persistFormation({ "system.posts": posts });
-    });
-
-    html.find(".fm-attached-remove").on("click", async ev => {
-      const id = ev.currentTarget.closest("[data-attached-id]")?.dataset.attachedId;
-      const attached = foundry.utils.deepClone(this.actor.system.attached || []);
-      const a = attached.find(x => x.id === id); if (!a) return;
-      if (!this.actor.isOwner) {
-        const occ = a.uuid ? await fromUuid(a.uuid) : null;
-        if (!((occ?.actor ?? occ)?.isOwner)) return ui.notifications.warn("Отозвать можно только своего персонажа.");
-      }
-      await this._persistFormation({ "system.attached": attached.filter(x => x.id !== id) });
-    });
-
-    if (!this.isEditable) {
-      try {
-        const el  = html[0] ?? html;
-        const DDC = foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
-        if (DDC && el) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
-      } catch (e) { console.warn("Warhammer DBC | formation DnD bind:", e); }
-      return;
-    }
+    if (!this.isEditable) return;
 
     // Подсветка зон дропа.
-    html.find("[data-post-slot], .fm-attached-dropzone").each((_, el) => {
-      el.addEventListener("dragover", ev => { ev.preventDefault(); el.classList.add("fm-drop-hover"); });
-      el.addEventListener("dragleave", () => el.classList.remove("fm-drop-hover"));
-      el.addEventListener("drop",      () => el.classList.remove("fm-drop-hover"));
+    el.querySelectorAll("[data-post-slot], .fm-attached-dropzone").forEach(slot => {
+      slot.addEventListener("dragover", ev => { ev.preventDefault(); slot.classList.add("fm-drop-hover"); });
+      slot.addEventListener("dragleave", () => slot.classList.remove("fm-drop-hover"));
+      slot.addEventListener("drop",      () => slot.classList.remove("fm-drop-hover"));
     });
 
-    // Портрет.
-    html.find(".fm-portrait").on("click", () => {
-      new FilePicker({ type: "image", current: this.actor.img || "",
-        callback: path => this.actor.update({ img: path }) }).render(true);
-    });
-
-    // Численность из числа людей + бросок предела боевого духа.
-    html.find(".fm-calc-numbers").on("click", () => this._calcNumbers());
-    html.find(".fm-roll-morale-max").on("click", () => this._rollMoraleMax());
-    html.find(".fm-full-strength").on("click", () => this.actor.update({
-      "system.numbers.value": Number(this.actor.system.numbers?.max) || 0,
-      "system.morale.value":  Number(this.actor.system.morale?.max)  || 0
-    }));
-
-    // Приказы.
-    html.find(".fm-order").on("click", ev => this._executeOrder(ev.currentTarget.dataset.order));
-    html.find(".fm-order-clear").on("click", () => this.actor.update({ "system.order.key": "", "system.order.note": "" }));
-
-    // Бой.
-    html.find(".fm-attack").on("click", () => this._attackDialog());
-    html.find(".fm-morale-test").on("click", () => this._moraleTest());
-    html.find(".fm-take-damage").on("click", () => this._takeDamageDialog());
-
-    // Состояние.
-    html.find(".fm-status-toggle").on("click", ev => {
-      const k = ev.currentTarget.dataset.flag;
-      this.actor.update({ [`system.status.${k}`]: !this.actor.system.status?.[k] });
-    });
-    html.find(".fm-round-tick").on("click", () => this._advanceRound());
-    html.find(".fm-status-reset").on("click", () => this._resetStatus());
-
-    // Ключевые события.
-    html.find(".fm-event-roll").on("click", ev => this._keyEventRoll(ev.currentTarget.dataset.event));
-    html.find(".fm-event-count").on("click", ev => {
-      const id = ev.currentTarget.closest("[data-attached-id]")?.dataset.attachedId;
-      const attached = foundry.utils.deepClone(this.actor.system.attached || []);
-      const a = attached.find(x => x.id === id); if (!a) return;
-      a.events = ((Number(a.events) || 0) + 1) % 3;      // 0→1→2→0 за игровой день
-      this.actor.update({ "system.attached": attached });
-    });
-
-    // Заметка приданного героя.
-    html.find(".fm-attached-note").on("change", ev => {
-      const id = ev.currentTarget.closest("[data-attached-id]")?.dataset.attachedId;
+    // Заметка приданного героя — сохраняем по потере фокуса.
+    el.querySelectorAll(".fm-attached-note").forEach(f => f.addEventListener("change", ev => {
+      const id = attachedIdOf(ev.currentTarget);
       const attached = foundry.utils.deepClone(this.actor.system.attached || []);
       const a = attached.find(x => x.id === id); if (!a) return;
       a.note = ev.currentTarget.value;
       this.actor.update({ "system.attached": attached });
-    });
+    }));
   }
 
   // ── Численность и боевой дух ──────────────────────────────────────────────
@@ -440,7 +496,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         <div class="roll-outcome"><span class="roll-success">Предел боевого духа: <b>${max}</b></span></div>
       </div>`,
       rolls
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   // ── Приказы ───────────────────────────────────────────────────────────────
@@ -478,7 +534,9 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
     const cmd = this._commanderData();
     const pen = d.penalty || 0;
 
-    const content = `<form class="wh-attack-form fm-order-form">
+    // Не <form>: содержимое DialogV2 уже внутри его формы, вложенная сломала бы
+    // button.form, через который читаются поля.
+    const content = `<div class="wh-attack-form fm-order-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(o.label)}</span><span class="atk-weapon-class">${esc(this.actor.name)}</span></div>
       <div class="fm-dlg-hint">${esc(o.desc)}</div>
       <div class="atk-dlg-row"><label>Тест:</label><select id="fm-variant">${opts}</select></div>
@@ -489,33 +547,41 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
       <div class="fm-dlg-src">${cmd.filled
         ? `Командует <b>${esc(cmd.name)}</b> — используются его умения и характеристики.`
         : `Командира нет: используется Выучка войск <b>${d.skillValue ?? 0}</b>.`}</div>
-    </form>`;
+    </div>`;
 
-    new Dialog({
-      title: `Приказ: ${o.label}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Приказ: ${o.label}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"],
+      position: { width: 430 },
       content,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async h => {
-          const base = parseInt(h.find("#fm-base").val()) || 0;
-          const mod  = parseInt(h.find("#fm-mod").val()) || 0;
-          await this._resolveOrder(key, base + pen + mod);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll",
-      render: h => {
+      buttons: [
+        {
+          action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
+          callback: async (event, button) => {
+            const form = button.form;
+            const base = parseInt(form.querySelector("#fm-base").value) || 0;
+            const mod  = parseInt(form.querySelector("#fm-mod").value) || 0;
+            await this._resolveOrder(key, base + pen + mod);
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        const form   = dialog.element.querySelector("form") ?? dialog.element;
+        const baseIn = form.querySelector("#fm-base");
+        const modIn  = form.querySelector("#fm-mod");
         const upd = () => {
-          const base = parseInt(h.find("#fm-base").val()) || 0;
-          const mod  = parseInt(h.find("#fm-mod").val()) || 0;
-          h.find("#fm-total").text(base + pen + mod);
+          const base = parseInt(baseIn.value) || 0;
+          const mod  = parseInt(modIn.value) || 0;
+          form.querySelector("#fm-total").textContent = base + pen + mod;
         };
-        h.find("#fm-variant").on("change", ev => {
-          h.find("#fm-base").val(ev.currentTarget.selectedOptions[0]?.dataset.target ?? 0); upd();
+        form.querySelector("#fm-variant").addEventListener("change", ev => {
+          baseIn.value = ev.currentTarget.selectedOptions[0]?.dataset.target ?? 0; upd();
         });
-        h.find("#fm-base, #fm-mod").on("input", upd);
+        [baseIn, modIn].forEach(i => i.addEventListener("input", upd));
         upd();
       }
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"], width: 430 }).render(true);
+    });
   }
 
   /** Бросок приказа и применение его последствий к состоянию формирования. */
@@ -604,7 +670,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         ${extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""}
       </div>`,
       rolls, sound: CONFIG.sounds.dice
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   // ── Атака ─────────────────────────────────────────────────────────────────
@@ -642,7 +708,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         data-dice="${m.dice || 0}" ${preset.has(m.key) ? "checked" : ""}/><span>${esc(m.label)} (${bits.join(", ")})</span></label>`;
     }).join("");
 
-    const content = `<form class="wh-attack-form fm-attack-form">
+    const content = `<div class="wh-attack-form fm-attack-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">Атака формирования</span><span class="atk-weapon-class">${esc(this.actor.name)}</span></div>
       <div class="fm-dlg-hint">Тестов не требуется — формирования просто должны находиться в дальности поражения. Урон уменьшается на Оборону и укрытие цели, остаток бьёт по её численности.</div>
       <div class="atk-dlg-row"><label>Цель:</label>
@@ -654,37 +720,43 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
       <label class="attack-mod-check fm-dlg-air"><input type="checkbox" id="fm-vs-air" ${targeted?.system?.derived?.isAir ? "checked" : ""}/>
         <span>Цель — авиация${d.isAA ? " (мы ПВО — урон полный)" : " (наземные части наносят половину урона)"}</span></label>
       <div class="atk-dlg-row"><label>Ручной модификатор:</label><input id="fm-manual" type="number" value="0"/></div>
-    </form>`;
+    </div>`;
 
-    new Dialog({
-      title: `Атака: ${this.actor.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Атака: ${this.actor.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"],
+      position: { width: 440 },
       content,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Атака!", callback: async h => {
-          const tgtId  = String(h.find("#fm-target").val() || "");
-          const def    = parseInt(h.find("#fm-def").val()) || 0;
-          const cover  = parseInt(h.find("#fm-cover").val()) || 0;
-          const manual = parseInt(h.find("#fm-manual").val()) || 0;
-          const vsAir  = h.find("#fm-vs-air").is(":checked");
-          let flat = manual, diceMod = 0;
-          h.find(".fm-dmg-mod:checked").each((_, cb) => {
-            flat    += parseInt(cb.dataset.value) || 0;
-            diceMod += parseInt(cb.dataset.dice)  || 0;
-          });
-          await this._executeAttack({ targetId: tgtId, def, cover, flat, diceMod, vsAir });
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll",
-      render: h => {
-        h.find("#fm-target").on("change", ev => {
+      buttons: [
+        {
+          action: "roll", label: "Атака!", icon: "fas fa-dice-d10", default: true,
+          callback: async (event, button) => {
+            const form   = button.form;
+            const tgtId  = String(form.querySelector("#fm-target")?.value || "");
+            const def    = parseInt(form.querySelector("#fm-def").value) || 0;
+            const cover  = parseInt(form.querySelector("#fm-cover").value) || 0;
+            const manual = parseInt(form.querySelector("#fm-manual").value) || 0;
+            const vsAir  = form.querySelector("#fm-vs-air").checked;
+            let flat = manual, diceMod = 0;
+            for (const cb of form.querySelectorAll(".fm-dmg-mod:checked")) {
+              flat    += parseInt(cb.dataset.value) || 0;
+              diceMod += parseInt(cb.dataset.dice)  || 0;
+            }
+            await this._executeAttack({ targetId: tgtId, def, cover, flat, diceMod, vsAir });
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        const form = dialog.element.querySelector("form") ?? dialog.element;
+        form.querySelector("#fm-target")?.addEventListener("change", ev => {
           const o = ev.currentTarget.selectedOptions[0];
-          h.find("#fm-def").val(o?.dataset.def ?? 0);
-          h.find("#fm-cover").val(o?.dataset.cover ?? 0);
-          h.find("#fm-vs-air").prop("checked", o?.dataset.air === "1");
+          form.querySelector("#fm-def").value   = o?.dataset.def ?? 0;
+          form.querySelector("#fm-cover").value = o?.dataset.cover ?? 0;
+          form.querySelector("#fm-vs-air").checked = o?.dataset.air === "1";
         });
       }
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"], width: 440 }).render(true);
+    });
   }
 
   /** Бросок урона, вычет Обороны и укрытия, применение к численности и духу цели. */
@@ -747,35 +819,40 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         ${applied}
       </div>`,
       rolls, sound: CONFIG.sounds.dice
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   /** Приём урона вручную (когда бьёт не формирование, а обстрел или ГМ). */
   async _takeDamageDialog() {
     const d = this.actor.system.derived || {};
-    const content = `<form class="wh-attack-form fm-attack-form">
+    const content = `<div class="wh-attack-form fm-attack-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">Получить урон</span><span class="atk-weapon-class">${esc(this.actor.name)}</span></div>
       <div class="fm-dlg-hint">Оборона (${d.defence}) и укрытие (${d.cover}) вычитаются автоматически. За каждые полные 10 потерянной численности формирование теряет 1к10 боевого духа.</div>
       <div class="atk-dlg-row"><label>Входящий урон:</label><input id="fm-raw" type="number" value="0"/></div>
       <label class="attack-mod-check"><input type="checkbox" id="fm-ignore-soak"/><span>Игнорировать Оборону и укрытие (обстрел с орбиты)</span></label>
       <div class="atk-dlg-row"><label>Источник:</label><input id="fm-src" type="text" placeholder="Кто бьёт"/></div>
-    </form>`;
+    </div>`;
 
-    new Dialog({
-      title: `Урон: ${this.actor.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Урон: ${this.actor.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"],
+      position: { width: 420 },
       content,
-      buttons: {
-        apply: { icon: '<i class="fas fa-burst"></i>', label: "Применить", callback: async h => {
-          const raw    = parseInt(h.find("#fm-raw").val()) || 0;
-          const ignore = h.find("#fm-ignore-soak").is(":checked");
-          const src    = String(h.find("#fm-src").val() || "");
-          const soak   = ignore ? 0 : (d.defence || 0) + (d.cover || 0);
-          await this._applyDamage(Math.max(0, raw - soak), src, ignore ? 0 : soak, raw);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "apply"
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"], width: 420 }).render(true);
+      buttons: [
+        {
+          action: "apply", label: "Применить", icon: "fas fa-burst", default: true,
+          callback: async (event, button) => {
+            const form   = button.form;
+            const raw    = parseInt(form.querySelector("#fm-raw").value) || 0;
+            const ignore = form.querySelector("#fm-ignore-soak").checked;
+            const src    = String(form.querySelector("#fm-src").value || "");
+            const soak   = ignore ? 0 : (d.defence || 0) + (d.cover || 0);
+            await this._applyDamage(Math.max(0, raw - soak), src, ignore ? 0 : soak, raw);
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   /** Применение урона к себе: численность, затем боевой дух за потери. */
@@ -814,7 +891,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         ${note ? `<div class="fm-chat-note">${note}</div>` : ""}
       </div>`,
       rolls
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   // ── Боевой дух ────────────────────────────────────────────────────────────
@@ -827,23 +904,28 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
     const max = Number(sys.morale?.max) || 0;
     const cmd = this._commanderData();
     // Приданный герой может сплотить бойцов тестом Command(F)+0 — это +10 к тесту.
-    const content = `<form class="wh-attack-form fm-order-form">
+    const content = `<div class="wh-attack-form fm-order-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">Тест боевого духа</span><span class="atk-weapon-class">${esc(this.actor.name)}</span></div>
       <div class="fm-dlg-hint">Бросок против изначальной величины боевого духа. Тест нужен при падении до половины предела и повторно — при падении до 25%.</div>
       <div class="atk-dlg-row"><label>Порог (изнач. дух):</label><input id="fm-base" type="number" value="${max}"/></div>
       <label class="attack-mod-check"><input type="checkbox" id="fm-rally" ${cmd.filled ? "" : "disabled"}/>
         <span>Приданный герой сплотил бойцов (Command(F)+0) — +${ATTRITION.rallyBonus}</span></label>
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="fm-mod" type="number" value="0"/></div>
-    </form>`;
+    </div>`;
 
-    new Dialog({
-      title: `Боевой дух: ${this.actor.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Боевой дух: ${this.actor.name}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"],
+      position: { width: 420 },
       content,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async h => {
-          const base  = parseInt(h.find("#fm-base").val()) || 0;
-          const mod   = parseInt(h.find("#fm-mod").val()) || 0;
-          const rally = h.find("#fm-rally").is(":checked") ? ATTRITION.rallyBonus : 0;
+      buttons: [
+        {
+          action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
+          callback: async (event, button) => {
+          const form  = button.form;
+          const base  = parseInt(form.querySelector("#fm-base").value) || 0;
+          const mod   = parseInt(form.querySelector("#fm-mod").value) || 0;
+          const rally = form.querySelector("#fm-rally").checked ? ATTRITION.rallyBonus : 0;
           const target = base + mod + rally;
 
           const roll = await new Roll("1d100").evaluate();
@@ -863,12 +945,12 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
               ${ok ? `<div class="fm-chat-note">Следующий тест — при падении боевого духа до 25% от изначального (${d.quarterMorale}).</div>` : ""}
             </div>`,
             rolls: [roll], sound: CONFIG.sounds.dice
-          }, { rollMode: game.settings.get("core", "rollMode") }));
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll"
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"], width: 420 }).render(true);
+          }, game.settings.get("core", "rollMode")));
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ]
+    });
   }
 
   // ── Состояние и раунды ────────────────────────────────────────────────────
@@ -918,7 +1000,7 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         ${esc(this._testLabel({ ...v, alt: null, alt2: null, alt3: null }))} → ${target} (${esc(t.source)})</option>`;
     }).join("");
 
-    const content = `<form class="wh-attack-form fm-order-form">
+    const content = `<div class="wh-attack-form fm-order-form">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(e.label)}</span>
         <span class="atk-weapon-class">${esc(EVENT_TIERS[e.tier]?.label || "")}</span></div>
       <div class="fm-dlg-hint">${esc(e.desc)}</div>
@@ -928,25 +1010,32 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
       <div class="fm-dlg-src">${cmd.filled
         ? `Тест проходит <b>${esc(cmd.name)}</b>.`
         : `Командира нет — используется Выучка войск <b>${d.skillValue ?? 0}</b>.`}</div>
-    </form>`;
+    </div>`;
 
-    new Dialog({
-      title: `Ключевое событие: ${e.label}`,
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: `Ключевое событие: ${e.label}` },
+      classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"],
+      position: { width: 440 },
       content,
-      buttons: {
-        roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!", callback: async h => {
-          const base = parseInt(h.find("#fm-base").val()) || 0;
-          const mod  = parseInt(h.find("#fm-mod").val()) || 0;
-          await this._resolveKeyEvent(key, base + mod);
-        }},
-        cancel: { label: "Отмена" }
-      },
-      default: "roll",
-      render: h => {
-        h.find("#fm-variant").on("change", ev =>
-          h.find("#fm-base").val(ev.currentTarget.selectedOptions[0]?.dataset.target ?? 0));
+      buttons: [
+        {
+          action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
+          callback: async (event, button) => {
+            const form = button.form;
+            const base = parseInt(form.querySelector("#fm-base").value) || 0;
+            const mod  = parseInt(form.querySelector("#fm-mod").value) || 0;
+            await this._resolveKeyEvent(key, base + mod);
+          }
+        },
+        { action: "cancel", label: "Отмена" }
+      ],
+      render: (event, dialog) => {
+        const form = dialog.element.querySelector("form") ?? dialog.element;
+        form.querySelector("#fm-variant").addEventListener("change", ev => {
+          form.querySelector("#fm-base").value = ev.currentTarget.selectedOptions[0]?.dataset.target ?? 0;
+        });
       }
-    }, { classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "fm-dialog"], width: 440 }).render(true);
+    });
   }
 
   /** Разрешение ключевого события с применением его эффектов к формированию. */
@@ -1033,6 +1122,6 @@ export class WarhammerFormationSheet extends foundry.appv1.sheets.ActorSheet {
         ${extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""}
       </div>`,
       rolls, sound: CONFIG.sounds.dice
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 }

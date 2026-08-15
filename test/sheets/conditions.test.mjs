@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { captured, fakeHtml, resetCaptured } from "../support/foundry-stub.mjs";
+import { captured, fakeForm, listenerRoot, resetCaptured } from "../support/foundry-stub.mjs";
 import { activateConditionsListeners, addFatigue, removeCondition, removeFatigue,
          fatigueSleep, setConditionLevel, fatiguePenalty,
          showAddConditionDialog } from "../../module/sheets/tabs/conditions.mjs";
@@ -117,7 +117,7 @@ describe("showAddConditionDialog", () => {
     const a = makeActor();
     showAddConditionDialog(a);
 
-    await captured.dialog.buttons.add.callback(fakeHtml({}, {
+    await captured.press("add", fakeForm({}, {
       ".add-cond-cb:checked": [{ dataset: { condition: "stunned" } }]
     }));
 
@@ -161,15 +161,9 @@ describe("condition rows", () => {
 
 describe("activateConditionsListeners", () => {
   function wire(actor) {
-    const handlers = {};
-    const html = {
-      find: selector => ({
-        click:  fn => { handlers[`${selector}:click`] = fn; },
-        change: fn => { handlers[`${selector}:change`] = fn; }
-      })
-    };
-    activateConditionsListeners(html, actor);
-    return handlers;
+    const root = listenerRoot();
+    activateConditionsListeners(root, actor);
+    return root.handlers;
   }
 
   const ev = (dataset = {}, value) => ({
@@ -213,6 +207,6 @@ describe("activateConditionsListeners", () => {
 
     handlers[".conditions-add-btn:click"](ev());
 
-    expect(captured.dialog.title).toBe("Добавить состояние");
+    expect(captured.dialog.window.title).toBe("Добавить состояние");
   });
 });

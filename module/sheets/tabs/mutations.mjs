@@ -12,6 +12,7 @@
 import { mutationByRoll, giftByRoll, mutationCatalog,
          mutationItemData, GOD_GIFTS } from "../../constants/mutations.mjs";
 import { centerPicker, pickerPos }     from "../picker-ui.mjs";
+import { esc } from "../../helpers/utils.mjs";
 
 /**
  * Бросок 1d100 по ОБЩЕМУ ПУЛУ — либо таблица Общих Мутаций (стр. 440), либо
@@ -110,7 +111,6 @@ export async function rollMutationOrGift(actor) {
  */
 export async function openMutationPicker(actor) {
   const cat = mutationCatalog();
-  const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const row = (x) => `
     <div class="pick-row" data-name="${esc(x.name.toLowerCase())}">
       <div class="pick-head">

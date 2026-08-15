@@ -12,6 +12,8 @@ export class CyberneticData extends foundry.abstract.TypeDataModel {
     return {
       description:  new StringField({ initial: "", label: "Описание" }),
       notes:        new StringField({ initial: "", label: "Заметки" }),
+      // Кибернетика рисуется тем же gear.hbs, что и Снаряжение (wdbc-fl3).
+      bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       installed:    new StringField({ initial: "", label: "Куда установлено" }),
       linkedWeapon: new StringField({ initial: "", label: "Связанное оружие" }),
       quality:      new StringField({ initial: "common", label: "Качество" }),

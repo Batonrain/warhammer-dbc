@@ -23,12 +23,12 @@
     <div class="wr-field-list">
       {{#each fieldModes as |m|}}
       <button type="button" class="wr-field-mode{{#if m.active}} is-on{{/if}}{{#if m.locked}} is-locked{{/if}}"
-              data-field-mode="{{m.key}}" title="{{m.text}}" {{#if m.locked}}disabled{{/if}}>
+              data-action="fieldMode" data-field-mode="{{m.key}}" title="{{m.text}}" {{#if m.locked}}disabled{{/if}}>
         <span class="wr-field-name">{{m.label}}</span>
         {{#if m.locked}}<span class="wr-field-need">нужно {{m.need}}.Q</span>{{/if}}
       </button>
       {{/each}}
-      <button type="button" class="wr-field-mode wr-field-off" data-field-mode="">Выключить</button>
+      <button type="button" class="wr-field-mode wr-field-off" data-action="fieldMode" data-field-mode="">Выключить</button>
     </div>
   </div>
   {{/if}}
@@ -99,7 +99,7 @@
       {{#each armorPropsActive as |p|}}
       <div class="wprop-chip" title="{{p.def.desc}}">
         <span class="wprop-name">{{p.def.label}}</span>
-        <button type="button" class="aprop-remove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+        <button type="button" class="aprop-remove" data-action="apropRemove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
       </div>
       {{/each}}
     </div>
@@ -300,7 +300,7 @@
       <div class="wprop-chip">
         <span class="wprop-name">{{cb.abbr}}</span>
         <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}"/>
-        <button type="button" class="wprop-remove cbonus-remove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
+        <button type="button" class="wprop-remove cbonus-remove" data-action="cbonusRemove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
       </div>
       {{/each}}
     </div>
@@ -368,9 +368,9 @@
       <option value="">— особенность —</option>
       {{#each armourHistory.tables as |t|}}{{#if t.selected}}{{#each t.entries as |e|}}<option value="{{e.key}}" {{#if e.selected}}selected{{/if}}>{{e.label}}</option>{{/each}}{{/if}}{{/each}}
     </select>
-    <button type="button" class="pa-btn pa-roll-table" title="1к5 — какая таблица используется"><i class="fas fa-dice-d6"></i> к5 таблица</button>
-    <button type="button" class="pa-btn pa-roll-entry" title="1к10 по выбранной таблице"><i class="fas fa-dice-d10"></i> к10 особенность</button>
-    {{#if armourHistory.name}}<button type="button" class="pa-btn pa-clear" title="Снять особенность"><i class="fas fa-times"></i></button>{{/if}}
+    <button type="button" class="pa-btn pa-roll-table" data-action="paRollTable" title="1к5 — какая таблица используется"><i class="fas fa-dice-d6"></i> к5 таблица</button>
+    <button type="button" class="pa-btn pa-roll-entry" data-action="paRollEntry" title="1к10 по выбранной таблице"><i class="fas fa-dice-d10"></i> к10 особенность</button>
+    {{#if armourHistory.name}}<button type="button" class="pa-btn pa-clear" data-action="paClear" title="Снять особенность"><i class="fas fa-times"></i></button>{{/if}}
   </div>
 
   {{#if armourHistory.name}}
@@ -386,7 +386,7 @@
     {{/if}}
     {{#if armourHistory.zoneRoll}}
     <div class="pa-hist-zones">
-      <button type="button" class="pa-btn pa-roll-zones"><i class="fas fa-dice-d10"></i> Бросить к10 по зонам</button>
+      <button type="button" class="pa-btn pa-roll-zones" data-action="paRollZones"><i class="fas fa-dice-d10"></i> Бросить к10 по зонам</button>
       {{#if armourHistory.hasZones}}
       <div class="pa-zone-list">
         {{#each armourHistory.zones as |z|}}<span class="pa-zone{{#if z.value}} pa-zone-set{{/if}}">{{z.label}}: {{#if z.value}}{{signedNum z.value}}{{else}}0{{/if}}</span>{{/each}}

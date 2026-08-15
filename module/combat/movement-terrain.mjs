@@ -8,7 +8,7 @@
 //  в module/combat/vehicle.mjs (своя таблица штрафов, своя механика урона).
 // ════════════════════════════════════════════════════════════════════════
 
-import { _degWord } from "../helpers/utils.mjs";
+import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { getTerrainInfoForToken } from "../regions/difficult-terrain.mjs";
 import { getItemMechanics } from "../apps/mechanics.mjs";
@@ -106,7 +106,7 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
         <div class="roll-threshold">
           Ag <b>${ag}</b> ${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${labels.length ? `: ${labels.join(", ")}` : ""}${extraMod ? `, доп. мод ${sgn(extraMod)}` : ""}) → Порог <b>${threshold}</b>
         </div>

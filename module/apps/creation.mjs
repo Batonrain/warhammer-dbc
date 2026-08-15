@@ -18,7 +18,7 @@ import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.m
 import { ASTARTES_RACE }                from "../constants/astartes-implants.mjs";
 import { disabledRaceKeys }             from "../constants/features.mjs";
 import { archetypeEntries, archetypesForRace } from "./archetypes.mjs";
-import { splitTopLevel }                from "../helpers/utils.mjs";
+import { splitTopLevel, esc }           from "../helpers/utils.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
 // Влияние (inf) сюда не входит — оно от arch.infRoll.
@@ -99,9 +99,8 @@ export async function grantCreationGear(actor, { race, past, sub, arch, isAstart
   } catch (e) { console.warn("warhammer-dbc | grant gear", e); }
 
   // Карта в чат: итоговый список (что создано / что выдать вручную) + системы брони Астартес.
-  const esc = s => String(s).replace(/</g,"&lt;");
   const rows = resolved.map(r => {
-    const done = created.some(c => esc(r).toLowerCase().includes(c.toLowerCase().split("/")[0].trim()));
+    const done = created.some(c => String(r).toLowerCase().includes(c.toLowerCase().split("/")[0].trim()));
     return `<li${done ? ' style="color:#4dffa6;"' : ''}>${done ? "✓ " : "▫ "}${esc(r)}</li>`;
   }).join("");
   const astartes = isAstartes
@@ -120,7 +119,6 @@ export async function grantCreationGear(actor, { race, past, sub, arch, isAstart
 /** Диалог выбора «на выбор» снаряжения. choiceDefs — массивы строк; возвращает выбранные[]. */
 function promptGearChoices(choiceDefs) {
   if (!choiceDefs?.length) return Promise.resolve([]);
-  const esc = s => String(s).replace(/"/g,"&quot;").replace(/</g,"&lt;");
   const rows = choiceDefs.map((opts,i) =>
     `<div class="atk-dlg-row wtc-row"><label class="wtc-lbl">Снаряжение:</label><select class="wtc-sel" data-i="${i}">${opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join("")}</select></div>`
   ).join("");
@@ -373,7 +371,6 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
 /** Диалог выбора «или»-навыков. choices — массивы {value,label}; возвращает value[]. */
 function promptSkillChoices(choices) {
   if (!choices?.length) return Promise.resolve([]);
-  const esc = s => String(s).replace(/"/g,"&quot;").replace(/</g,"&lt;");
   const rows = choices.map((opts,i) =>
     `<div class="atk-dlg-row wtc-row"><label class="wtc-lbl">Навык:</label><select class="wtc-sel" data-i="${i}">${opts.map(o=>`<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("")}</select></div>`
   ).join("");
@@ -637,7 +634,7 @@ function updateWizardNote(html) {
     if (arch.infRoll)      parts.push(`<b>Влияние:</b> ${arch.infRoll}`);
     if (arch.requiredPath) parts.push(`<b>Требуемый Путь:</b> ${arch.requiredPath}`);
     if (arch.wounds)       parts.push(`<b>Раны:</b> ${arch.wounds}`);
-    if (arch.trait) parts.push(`<b>Трейт:</b> ${arch.trait.name}`);
+    if (arch.trait) parts.push(`<b>Трейт:</b> ${esc(arch.trait.name)}`);
   }
   html.find("#wiz-note").html(parts.join("<br/>"));
 }
@@ -768,7 +765,7 @@ export function showCreationWizard(actor, deps) {
         for (const [k, a] of archEntries) (grouped[a.group || ""] ??= []).push([k, a]);
         const archOpts = archEntries.length
           ? Object.entries(grouped).map(([g, list]) => {
-              const opts = list.map(([k, a]) => `<option value="${k}">${a.name}</option>`).join("");
+              const opts = list.map(([k, a]) => `<option value="${k}">${esc(a.name)}</option>`).join("");
               return g ? `<optgroup label="${g}">${opts}</optgroup>` : opts;
             }).join("")
           : '<option value="">— нет (Аэльдари используют Пути; Сслиты — без архетипа) —</option>';

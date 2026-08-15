@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { resetCaptured } from "../support/foundry-stub.mjs";
+import { listenerRoot, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   activateGearListeners,
   equipItem,
@@ -166,21 +166,15 @@ describe("gear tab helpers", () => {
 
 describe("gear tab listeners", () => {
   it("activateGearListeners привязывает обработчики с actor-only API", async () => {
-    const handlers = {};
-    const html = {
-      find: selector => ({
-        change: fn => { handlers[`${selector}:change`] = fn; },
-        click: fn => { handlers[`${selector}:click`] = fn; },
-        on: (eventName, fn) => { handlers[`${selector}:${eventName}`] = fn; }
-      })
-    };
+    const root = listenerRoot();
+    const handlers = root.handlers;
     const weapon = item({ id: "weapon-1" });
     const armor = item({ id: "armor-1" });
     const shield = item({ id: "shield-1" });
     const a = actor([weapon, armor, shield]);
     const calls = [];
 
-    activateGearListeners(html, a, {
+    activateGearListeners(root, a, {
       reloadWeapon: (...args) => calls.push(["reload", ...args]),
       toggleShield: (...args) => calls.push(["toggle", ...args]),
       rollShieldActivation: (...args) => calls.push(["roll", ...args]),

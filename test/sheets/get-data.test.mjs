@@ -315,13 +315,13 @@ describe("Одержимый", () => {
 });
 
 describe("лист собирает контекст целиком", () => {
-  it("вкладки, характеристики и состояние окна попадают в один контекст", () => {
+  it("вкладки, характеристики и состояние окна попадают в один контекст", async () => {
     const sheet = sheetOf(WarhammerCharacterSheet, { characteristics: {}, skills: {}, groupSkills: {} });
     sheet.actor.items.contents = sheet.actor.items;
     sheet._combatCollapse = { stance: true, tech: false };
     sheet._gearCollapse = { weapon: true };
 
-    const ctx = sheet.getData();
+    const ctx = await sheet._prepareContext({});
     expect(ctx.skillsCol1.length).toBeGreaterThan(0);      // из buildGetData
     expect(ctx.chars.length).toBeGreaterThan(0);           // из сборки характеристик
     expect(ctx.combatStanceCollapsed).toBe(true);          // состояние окна, не актора

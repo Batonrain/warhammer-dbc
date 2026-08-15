@@ -1,8 +1,9 @@
-<form class="warhammer-dbc daemon-sheet daemon-god-{{daemon.alg.key}}" autocomplete="off" style="--gc:{{daemon.alg.color}}; --gc2:{{daemon.alg.gc2}}; --glow:{{daemon.alg.glow}}; --dp-hue:{{daemon.alg.hue}};">
+{{!-- Обёртка — <div>: форма теперь корневой элемент окна (ApplicationV2). --}}
+<div class="warhammer-dbc daemon-sheet daemon-god-{{daemon.alg.key}}" style="--gc:{{daemon.alg.color}}; --gc2:{{daemon.alg.gc2}}; --glow:{{daemon.alg.glow}}; --dp-hue:{{daemon.alg.hue}};">
   {{!-- ── ДЕМОНИЧЕСКАЯ ШАПКА ──────────────────────────────────────────────── --}}
   <header class="daemon-header">
     <div class="daemon-warp-layer"></div><div class="daemon-warp-layer daemon-warp-b"></div>
-    <div class="daemon-sigil" title="{{daemon.alg.label}} — клик, чтобы сменить аватар (ПКМ — вернуть сигил)">
+    <div class="daemon-sigil" data-action="daemonAvatar" title="{{daemon.alg.label}} — клик, чтобы сменить аватар (ПКМ — вернуть сигил)">
       {{#if daemon.customImg}}
       <img class="daemon-avatar" src="{{daemon.img}}" alt=""/>
       {{else}}
@@ -36,8 +37,8 @@
       <div class="daemon-vrow"><span>T.b</span><b>{{system.characteristics.t.bonus}}</b></div>
       <div class="daemon-vrow small" title="Длительность до изгнания">{{daemon.formDur}}</div>
       <div class="daemon-btns">
-        <button type="button" class="daemon-instability-btn" title="Тест Варп-Нестабильности (W)">Нестабильность</button>
-        <button type="button" class="daemon-infamy-btn" title="Сгенерировать Бесчестие по рангу">Бесчестие</button>
+        <button type="button" class="daemon-instability-btn" data-action="daemonInstability" title="Тест Варп-Нестабильности (W)">Нестабильность</button>
+        <button type="button" class="daemon-infamy-btn" data-action="daemonInfamy" title="Сгенерировать Бесчестие по рангу">Бесчестие</button>
       </div>
     </div>
   </header>
@@ -61,14 +62,14 @@
 
   {{!-- ── ВКЛАДКИ (переиспользуют части листа персонажа) ──────────────────── --}}
   <nav class="sheet-tabs tabs" data-group="primary">
-    <a class="item" data-tab="stats">ПОКАЗАТЕЛИ</a>
-    <a class="item" data-tab="combat">БОЙ</a>
-    <a class="item" data-tab="abilities">СПОСОБНОСТИ</a>
-    {{#if daemon.showPsy}}<a class="item" data-tab="psy">ПСИ</a>{{/if}}
-    <a class="item" data-tab="gear">СНАРЯЖЕНИЕ</a>
-    <a class="item" data-tab="advance">РАЗВИТИЕ</a>
-    <a class="item" data-tab="daemonlore">ДЕМОНОЛОГИЯ</a>
-    <a class="item" data-tab="notes">ЗАПИСИ</a>
+    <a class="item {{#if (eq tab "stats")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="stats">ПОКАЗАТЕЛИ</a>
+    <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a>
+    <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a>
+    {{#if daemon.showPsy}}<a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">ПСИ</a>{{/if}}
+    <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a>
+    <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a>
+    <a class="item {{#if (eq tab "daemonlore")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="daemonlore">ДЕМОНОЛОГИЯ</a>
+    <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="notes">ЗАПИСИ</a>
   </nav>
   <div class="sheet-body">
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
@@ -79,7 +80,7 @@
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}
 
     {{!-- Вкладка Демонология: справочник механик --}}
-    <div class="tab daemon-lore-tab" data-tab="daemonlore" data-group="primary">
+    <div class="tab daemon-lore-tab {{#if (eq tab "daemonlore")}}active{{/if}}" data-tab="daemonlore" data-group="primary">
       <div class="stat-panel">
         <div class="panel-title">ФОРМА МАНИФЕСТАЦИИ — {{daemon.formMeta.label}}</div>
         <div class="daemon-note">Изгнание через {{daemon.formDur}}. {{daemon.formMeta.note}}</div>
@@ -109,4 +110,4 @@
 
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
   </div>
-</form>
+</div>

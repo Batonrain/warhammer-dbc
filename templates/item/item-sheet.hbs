@@ -1,26 +1,26 @@
-<form class="warhammer-dbc item-sheet {{item.type}}-sheet" autocomplete="off">
 
-  <header class="item-sheet-header">
-    <img class="profile-img item-img" src="{{item.img}}"
-         data-edit="img" title="{{item.name}}"/>
-    <div class="item-header-info">
-      <label class="item-name-label">Название</label>
-      <input name="name" type="text" value="{{item.name}}"
-             placeholder="Название предмета" class="item-name-input"/>
-    </div>
-  </header>
+<header class="item-sheet-header">
+  <img class="profile-img item-img" src="{{item.img}}"
+       data-edit="img" title="{{item.name}}"/>
+  <div class="item-header-info">
+    <label class="item-name-label">Название</label>
+    <input name="name" type="text" value="{{item.name}}"
+           placeholder="Название предмета" class="item-name-input"/>
+  </div>
+</header>
 
-  <nav class="sheet-tabs tabs" data-group="item-primary">
-    <a class="item active" data-tab="info">ИНФО</a>
-    <a class="item" data-tab="effects">ЭФФЕКТЫ{{#if itemEffects.length}} <span class="effects-tab-count">{{itemEffects.length}}</span>{{/if}}</a>
-    <a class="item" data-tab="mechanics">МЕХАНИКА{{#if itemMechGroups.length}} <span class="effects-tab-count">{{itemMechGroups.length}}</span>{{/if}}</a>
-    {{#if (eq item.type "faction")}}<a class="item" data-tab="roster">СОСТАВ</a>{{/if}}
-    <a class="item" data-tab="notes">ЗАПИСИ</a>
-  </nav>
+{{!-- Навигация не собирается циклом по TABS: у двух вкладок в подписи счётчик. --}}
+<nav class="sheet-tabs tabs" data-group="item-primary">
+  <a class="item {{#if (eq tab "info")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="info">ИНФО</a>
+  <a class="item {{#if (eq tab "effects")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="effects">ЭФФЕКТЫ{{#if itemEffects.length}} <span class="effects-tab-count">{{itemEffects.length}}</span>{{/if}}</a>
+  <a class="item {{#if (eq tab "mechanics")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="mechanics">МЕХАНИКА{{#if itemMechGroups.length}} <span class="effects-tab-count">{{itemMechGroups.length}}</span>{{/if}}</a>
+  {{#if (eq item.type "faction")}}<a class="item {{#if (eq tab "roster")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="roster">СОСТАВ</a>{{/if}}
+  <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="notes">ЗАПИСИ</a>
+</nav>
 
-  <div class="sheet-body">
+<div class="sheet-body">
 
-    <div class="tab active" data-tab="info" data-group="item-primary">
+  <div class="tab {{#if (eq tab "info")}}active{{/if}}" data-tab="info" data-group="item-primary">
 
 {{#if (eq item.type "weapon")}}
 {{> "systems/warhammer-dbc/templates/item/parts/weapon.hbs"}}
@@ -65,9 +65,6 @@
 {{> "systems/warhammer-dbc/templates/item/parts/talent.hbs"}}
 {{/if}}
 {{#if (eq item.type "mentalDisorder")}}
-{{> "systems/warhammer-dbc/templates/item/parts/talent.hbs"}}
-{{/if}}
-{{#if (eq item.type "mentalTrauma")}}
 {{> "systems/warhammer-dbc/templates/item/parts/talent.hbs"}}
 {{/if}}
 {{#if (eq item.type "trait")}}
@@ -121,100 +118,96 @@
 {{#if (eq item.type "archetype")}}
 {{> "systems/warhammer-dbc/templates/item/parts/archetype.hbs"}}
 {{/if}}
-{{#if (eq item.type "faction")}}
-{{> "systems/warhammer-dbc/templates/item/parts/faction.hbs"}}
-{{/if}}
 
-      <div class="item-section">
-        <div class="item-section-title">ОПИСАНИЕ</div>
-        <textarea name="system.description" class="item-textarea"
-                  placeholder="Описание...">{{system.description}}</textarea>
-      </div>
-
-    </div>
-
-    <div class="tab" data-tab="effects" data-group="item-primary">
-      <div class="item-section">
-        <div class="item-section-title">
-          ЭФФЕКТЫ
-          <span class="effects-tab-actions">
-            <button type="button" class="effect-create-btn" title="Создать новый эффект на этом предмете (ручной ввод ключа)">➕ Создать</button>
-          </span>
-        </div>
-        <div class="trait-fx-hint">Здесь — уже действующие эффекты этого конкретного предмета (в т.ч. созданные вкладкой «Механика», когда предмет получает актор). Чтобы настроить НОВУЮ характеристику/Черту/Талант/Навык/код без ручного ввода ключей — вкладка «Механика».</div>
-        <table class="items-table effects-table">
-          <thead>
-            <tr>
-              <th class="col-narrow" title="Включён/выключен"></th>
-              <th>Название</th>
-              <th>Изменения</th>
-              <th class="col-narrow"></th>
-              <th class="col-narrow"></th>
-            </tr>
-          </thead>
-          <tbody class="effects-drop-target">
-            {{#if itemEffects.length}}
-              {{#each itemEffects as |fx|}}
-              <tr class="item-row effect-row {{#if fx.disabled}}effect-row-off{{/if}}" data-effect-id="{{fx.id}}">
-                <td class="effect-toggle-cell">
-                  <input type="checkbox" class="effect-disabled-toggle" data-effect-id="{{fx.id}}" {{#unless fx.disabled}}checked{{/unless}}/>
-                </td>
-                <td class="item-name-cell effect-name-link" data-effect-id="{{fx.id}}">{{fx.name}}</td>
-                <td class="effect-changes-cell">{{#if fx.summary}}{{fx.summary}}{{else}}<em>нет изменений</em>{{/if}}</td>
-                <td class="effect-phase-cell">
-                  {{#if fx.hasWrongPhase}}
-                  <span class="effect-phase-warn" title="Фаза строки не совпадает с той, которой требует её ключ: производное поле правят в «final» (расчёт листа считает его заново), хранимое — в «initial» (расчёт читает его как вход). Иначе правка либо ни на что не влияет, либо будет переписана">⚠ фаза</span>
-                  {{/if}}
-                </td>
-                <td class="effect-row-actions">
-                  <button type="button" class="effect-edit-btn" data-effect-id="{{fx.id}}" title="Редактировать">✏</button>
-                  <button type="button" class="effect-delete-btn" data-effect-id="{{fx.id}}" title="Удалить">✕</button>
-                </td>
-              </tr>
-              {{/each}}
-            {{else}}
-              <tr class="items-empty"><td colspan="5"><em>Нет эффектов — создайте новый или перетащите эффект с другого предмета/актора</em></td></tr>
-            {{/if}}
-          </tbody>
-        </table>
-        <div class="trait-fx-hint">Каждый эффект — стандартный Active Effect Foundry. Обычный числовой бонус (характеристика, AP, Страх, Размер и т.п.) должен быть в фазе «final» — она считается ПОСЛЕ полного авто-расчёта листа; для новых эффектов фаза выставляется автоматически. «⚠ initial» — эта строка сработает раньше расчёта и будет им переписана, если её не поправить в редакторе.</div>
-      </div>
-    </div>
-
-    <div class="tab" data-tab="mechanics" data-group="item-primary">
-      <div class="item-section">
-        <div class="item-section-title">
-          МЕХАНИКА (при получении предмета)
-        </div>
-        <div class="trait-fx-hint">Единый конструктор того, что предмет делает при получении актором — без кода: ± Порчу и ± максимум Ран (число или бросок XdY, разово и навсегда), ± Слаженность отряда (если актор состоит в Отряде и его роль там подходит — держится «живым», откатывается при выходе/смене роли), ± Характеристику, Черту/Талант/Навык, ± Вес, Модификатор броска (галочка в диалоге броска нужного навыка), ± максимум Очков Судьбы или Бесчестья, а для нестандартных случаев — свободный код («Код»).<br/><br/>«И»-группа применяет все свои записи сразу; «ИЛИ»-группа при получении предмета показывает диалог выбора одной из своих записей.<br/><br/>«Вложенная группа» — вид записи, позволяющий предложить выбор между НАБОРАМИ из нескольких записей сразу, а не между одиночными: напр. ИЛИ-группа с двумя вложенными И-подгруппами «Болтер + 4 обоймы» и «Болт-пистолет + 4 обоймы» даст выбрать один набор целиком. До 5 уровней вложенности.<br/><br/>Черту/Талант — перетащите из компендиума или с листа актора прямо в поле записи.<br/><br/>Выданные Талант/Навык отмечаются как бесплатные (★ на вкладке «Развитие» листа актора).</div>
-
-        {{#if isGM}}
-        <div class="mech-group-add-row">
-          <button type="button" class="grant-group-add" data-op="AND" title="Новая группа — применяются ВСЕ записи">➕ И-группа</button>
-          <button type="button" class="grant-group-add" data-op="OR" title="Новая группа — актор выбирает ОДНУ запись">➕ ИЛИ-группа</button>
-        </div>
-        {{/if}}
-
-        <div class="grant-groups">{{{itemMechanicsHtml}}}</div>
-        {{#unless itemMechGroups.length}}
-        <div class="trait-fx-hint"><em>Записей нет{{#if isGM}} — добавьте группу кнопкой выше{{/if}}.</em></div>
-        {{/unless}}
-      </div>
-    </div>
-
-    {{#if (eq item.type "faction")}}
-    <div class="tab" data-tab="roster" data-group="item-primary">
-      {{> "systems/warhammer-dbc/templates/item/parts/faction-roster.hbs"}}
-    </div>
-    {{/if}}
-
-    <div class="tab" data-tab="notes" data-group="item-primary">
-      <div class="item-section">
-        <div class="item-section-title">ЗАМЕТКИ</div>
-        <textarea name="system.notes" class="item-textarea item-textarea-tall"
-                  placeholder="Заметки...">{{system.notes}}</textarea>
-      </div>
+    <div class="item-section">
+      <div class="item-section-title">ОПИСАНИЕ</div>
+      <textarea name="system.description" class="item-textarea"
+                placeholder="Описание...">{{system.description}}</textarea>
     </div>
 
   </div>
-</form>
+
+  <div class="tab {{#if (eq tab "effects")}}active{{/if}}" data-tab="effects" data-group="item-primary">
+    <div class="item-section">
+      <div class="item-section-title">
+        ЭФФЕКТЫ
+        <span class="effects-tab-actions">
+          <button type="button" class="effect-create-btn" data-action="effectCreate" title="Создать новый эффект на этом предмете (ручной ввод ключа)">➕ Создать</button>
+        </span>
+      </div>
+      <div class="trait-fx-hint">Здесь — уже действующие эффекты этого конкретного предмета (в т.ч. созданные вкладкой «Механика», когда предмет получает актор). Чтобы настроить НОВУЮ характеристику/Черту/Талант/Навык/код без ручного ввода ключей — вкладка «Механика».</div>
+      <table class="items-table effects-table">
+        <thead>
+          <tr>
+            <th class="col-narrow" title="Включён/выключен"></th>
+            <th>Название</th>
+            <th>Изменения</th>
+            <th class="col-narrow"></th>
+            <th class="col-narrow"></th>
+          </tr>
+        </thead>
+        <tbody class="effects-drop-target">
+          {{#if itemEffects.length}}
+            {{#each itemEffects as |fx|}}
+            <tr class="item-row effect-row {{#if fx.disabled}}effect-row-off{{/if}}" data-effect-id="{{fx.id}}">
+              <td class="effect-toggle-cell">
+                <input type="checkbox" class="effect-disabled-toggle" data-effect-id="{{fx.id}}" {{#unless fx.disabled}}checked{{/unless}}/>
+              </td>
+              <td class="item-name-cell effect-name-link" data-action="effectEdit" data-effect-id="{{fx.id}}">{{fx.name}}</td>
+              <td class="effect-changes-cell">{{#if fx.summary}}{{fx.summary}}{{else}}<em>нет изменений</em>{{/if}}</td>
+              <td class="effect-phase-cell">
+                {{#if fx.hasWrongPhase}}
+                <span class="effect-phase-warn" title="Фаза строки не совпадает с той, которой требует её ключ: производное поле правят в «final» (расчёт листа считает его заново), хранимое — в «initial» (расчёт читает его как вход). Иначе правка либо ни на что не влияет, либо будет переписана">⚠ фаза</span>
+                {{/if}}
+              </td>
+              <td class="effect-row-actions">
+                <button type="button" class="effect-edit-btn" data-action="effectEdit" data-effect-id="{{fx.id}}" title="Редактировать">✏</button>
+                <button type="button" class="effect-delete-btn" data-action="effectDelete" data-effect-id="{{fx.id}}" title="Удалить">✕</button>
+              </td>
+            </tr>
+            {{/each}}
+          {{else}}
+            <tr class="items-empty"><td colspan="5"><em>Нет эффектов — создайте новый или перетащите эффект с другого предмета/актора</em></td></tr>
+          {{/if}}
+        </tbody>
+      </table>
+      <div class="trait-fx-hint">Каждый эффект — стандартный Active Effect Foundry. Обычный числовой бонус (характеристика, AP, Страх, Размер и т.п.) должен быть в фазе «final» — она считается ПОСЛЕ полного авто-расчёта листа; для новых эффектов фаза выставляется автоматически. «⚠ initial» — эта строка сработает раньше расчёта и будет им переписана, если её не поправить в редакторе.</div>
+    </div>
+  </div>
+
+  <div class="tab {{#if (eq tab "mechanics")}}active{{/if}}" data-tab="mechanics" data-group="item-primary">
+    <div class="item-section">
+      <div class="item-section-title">
+        МЕХАНИКА (при получении предмета)
+      </div>
+      <div class="trait-fx-hint">Единый конструктор того, что предмет делает при получении актором — без кода: ± Порчу и ± максимум Ран (число или бросок XdY, разово и навсегда), ± Слаженность отряда (если актор состоит в Отряде и его роль там подходит — держится «живым», откатывается при выходе/смене роли), ± Характеристику, Черту/Талант/Навык, ± Вес, Модификатор броска (галочка в диалоге броска нужного навыка), ± максимум Очков Судьбы или Бесчестья, а для нестандартных случаев — свободный код («Код»).<br/><br/>«И»-группа применяет все свои записи сразу; «ИЛИ»-группа при получении предмета показывает диалог выбора одной из своих записей.<br/><br/>«Вложенная группа» — вид записи, позволяющий предложить выбор между НАБОРАМИ из нескольких записей сразу, а не между одиночными: напр. ИЛИ-группа с двумя вложенными И-подгруппами «Болтер + 4 обоймы» и «Болт-пистолет + 4 обоймы» даст выбрать один набор целиком. До 5 уровней вложенности.<br/><br/>Черту/Талант — перетащите из компендиума или с листа актора прямо в поле записи.<br/><br/>Выданные Талант/Навык отмечаются как бесплатные (★ на вкладке «Развитие» листа актора).</div>
+
+      {{#if isGM}}
+      <div class="mech-group-add-row">
+        <button type="button" class="grant-group-add" data-action="grantGroupAdd" data-op="AND" title="Новая группа — применяются ВСЕ записи">➕ И-группа</button>
+        <button type="button" class="grant-group-add" data-action="grantGroupAdd" data-op="OR" title="Новая группа — актор выбирает ОДНУ запись">➕ ИЛИ-группа</button>
+      </div>
+      {{/if}}
+
+      <div class="grant-groups">{{{itemMechanicsHtml}}}</div>
+      {{#unless itemMechGroups.length}}
+      <div class="trait-fx-hint"><em>Записей нет{{#if isGM}} — добавьте группу кнопкой выше{{/if}}.</em></div>
+      {{/unless}}
+    </div>
+  </div>
+
+  {{#if (eq item.type "faction")}}
+  <div class="tab {{#if (eq tab "roster")}}active{{/if}}" data-tab="roster" data-group="item-primary">
+    {{> "systems/warhammer-dbc/templates/item/parts/faction-roster.hbs"}}
+  </div>
+  {{/if}}
+
+  <div class="tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="item-primary">
+    <div class="item-section">
+      <div class="item-section-title">ЗАМЕТКИ</div>
+      <textarea name="system.notes" class="item-textarea item-textarea-tall"
+                placeholder="Заметки...">{{system.notes}}</textarea>
+    </div>
+  </div>
+
+</div>

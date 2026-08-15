@@ -7,6 +7,7 @@
 //  • buildEcg()         — кардиограмма, зависящая от текущих Ран.
 //  Механику эта модель НЕ трогает — только визуализирует.
 // ════════════════════════════════════════════════════════════════════════
+import { esc } from "../helpers/utils.mjs";
 
 // ── Ключевые слова → тип импланта (ru + en) ─────────────────────────────────
 const IMPLANT_KINDS = [
@@ -896,9 +897,8 @@ const SPECIAL_LIB = [
   { re: /reconstructor|реконструктор/i,                a: [250, 98],  fn: gMaskFace },
 ];
 
-const _esc = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 // Обёртка глифа для тултипа при наведении.
-const tipWrap = (tip, inner) => (tip && inner) ? `<g class="imp-tipwrap" data-tip="${_esc(tip)}">${inner}</g>` : inner;
+const tipWrap = (tip, inner) => (tip && inner) ? `<g class="imp-tipwrap" data-tip="${esc(tip)}">${inner}</g>` : inner;
 
 /** SVG-оверлеи визуала имплантов: {back} — за телом, {front} — поверх тела. */
 export function buildImplantsSvg(state, bodyType = "male") {

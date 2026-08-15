@@ -6,7 +6,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { FEAR_RATINGS, SHOCK_TABLE, TRAUMA_TABLE, lookupTable } from "../constants/fear-tables.mjs";
-import { _degWord }                               from "../helpers/utils.mjs";
+import { _degWord, esc }                               from "../helpers/utils.mjs";
 import { rollIcon }                                from "../constants/roll-icons.mjs";
 import { ruleFlagLabels }                          from "../rules/flags.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
@@ -148,7 +148,7 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${header} — ${actor.name}</div>
+        <div class="roll-header">${header} — ${esc(actor.name)}</div>
         <div class="roll-threshold">${sub} | W: <b>${wp}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог: <b>${eff}</b></div>
         ${propsHtml}
         <div class="roll-dice">Бросок: <b>${rv}</b></div>

@@ -2,7 +2,7 @@
 
 import { HIT_LOCATIONS }  from "../constants/combat.mjs";
 import { DAMAGE_TYPES }   from "../constants/items.mjs";
-import { _degWord }       from "../helpers/utils.mjs";
+import { _degWord, esc }       from "../helpers/utils.mjs";
 import { getCriticalEffect } from "../../critical-tables.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
@@ -277,7 +277,7 @@ export async function applyDamageToActor(actor, damageData) {
     speaker: { alias: "Система" },
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">Урон → ${actor.name}</div>
+        <div class="roll-header">Урон → ${esc(actor.name)}</div>
         <div class="roll-damage-meta">
           Источник: <b>${attackerName || "?"}</b>${weaponName ? ` (${weaponName})` : ""}
           · Место: <b>${hitLocation}</b> · Тип: <b>${dtLabel}</b> · Урон: <b>${rawDamage}</b>

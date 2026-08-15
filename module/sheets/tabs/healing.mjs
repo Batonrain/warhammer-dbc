@@ -6,6 +6,7 @@
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
+import { esc } from "../../helpers/utils.mjs";
 
 export function woundLevel(system) {
   const value = system.wounds?.value ?? 0;
@@ -44,13 +45,14 @@ export function showHealingDialog(medic) {
       </div>
     </details>`;
 
+  // Не <form>: содержимое DialogV2 уже внутри его формы, вложенная недопустима.
   const content = `
-    <form class="wh-wizard-form" style="padding:6px;">
+    <div class="wh-wizard-form" style="padding:6px;">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${rollIcon("heart","#ff8a8a")}Лечение</span></div>
       <div class="atk-dlg-row"><label>Пациент:</label>
         <select id="heal-patient">
-          <option value="self">${medic.name} (себя)</option>
-          ${hasTgt ? `<option value="target" selected>${tgt.name} (цель)</option>` : ""}
+          <option value="self">${esc(medic.name)} (себя)</option>
+          ${hasTgt ? `<option value="target" selected>${esc(tgt.name)} (цель)</option>` : ""}
         </select>
       </div>
       <div class="atk-dlg-row"><label>Режим:</label>
@@ -66,50 +68,59 @@ export function showHealingDialog(medic) {
       <div class="atk-dlg-row"><label title="Напр. Мастер-Хирургеон +2">Доп. Раны:</label><input type="number" id="heal-bonus" value="0" style="width:60px;"/></div>
       <div id="heal-note" class="atk-range-info" style="font-size:0.84em;"></div>
       ${refHtml}
-    </form>`;
+    </div>`;
 
-  const updateNote = html => {
-    const patient = html.find("#heal-patient").val() === "target" ? tgt : medic;
+  /** Кого лечим: выбор в окне, а не догадка — его читают и справка, и кнопка. */
+  const patientOf = form =>
+    (form.querySelector("#heal-patient")?.value === "target" ? tgt : medic);
+
+  const updateNote = form => {
+    const patient = patientOf(form);
     if (!patient) return;
     const lvl = woundLevel(patient.system);
     const parts = [
-      `<b>Пациент:</b> ${patient.name}`,
+      `<b>Пациент:</b> ${esc(patient.name)}`,
       `<b>Уровень ранения:</b> ${lvl.label} (потеряно ${lvl.lost}${lvl.crit ? `, крит ${lvl.crit}` : ""}, T.b ${lvl.tb})`
     ];
     if (hasRuleFlag(patient, "healing.astartes")) parts.push("<i>Физиология Астартес: всегда считается отдыхающим.</i>");
     if (patient.system.wounds?.firstAidUsed) parts.push('<span style="color:#a33;">⚠ Первая Помощь уже оказана (нужен новый урон).</span>');
-    html.find("#heal-note").html(parts.join("<br/>"));
+    form.querySelector("#heal-note").innerHTML = parts.join("<br/>");
   };
 
-  new Dialog({
-    title: "Лечение",
+  return foundry.applications.api.DialogV2.wait({
+    window: { title: "Лечение" },
+    classes: ["wh-attack-dialog", "warhammer-dbc"],
+    position: { width: 440 },
     content,
-    buttons: {
-      go: {
-        icon: '<i class="fas fa-heart"></i>',
-        label: "Выполнить",
-        callback: async html => {
-          const patient = html.find("#heal-patient").val() === "target" ? tgt : medic;
+    rejectClose: false,
+    buttons: [
+      {
+        action: "go", label: "Выполнить", icon: "fas fa-heart", default: true,
+        callback: async (event, button) => {
+          const form    = button.form;
+          const patient = patientOf(form);
           if (!patient) {
             ui.notifications.warn("Нет выбранной цели — наведите таргет (T) на токен пациента.");
             return;
           }
+          const num = sel => parseInt(form.querySelector(sel)?.value) || 0;
           await applyHealing(medic, patient, {
-            mode: html.find("#heal-mode").val(),
-            care: html.find("#heal-care").is(":checked"),
-            mod: parseInt(html.find("#heal-mod").val()) || 0,
-            bonus: parseInt(html.find("#heal-bonus").val()) || 0
+            mode:  form.querySelector("#heal-mode")?.value,
+            care:  !!form.querySelector("#heal-care")?.checked,
+            mod:   num("#heal-mod"),
+            bonus: num("#heal-bonus")
           });
         }
       },
-      cancel: { label: "Отмена" }
-    },
-    default: "go",
-    render: html => {
-      updateNote(html);
-      html.find("#heal-patient, #heal-mode").on("change", () => updateNote(html));
+      { action: "cancel", label: "Отмена" }
+    ],
+    render: (event, dialog) => {
+      const form = dialog.element.querySelector("form");
+      // Один слушатель на форму: справка обновляется от любого выбора в окне.
+      form.addEventListener("change", () => updateNote(form));
+      updateNote(form);
     }
-  }, { classes: ["dialog", "wh-attack-dialog"], width: 440 }).render(true);
+  });
 }
 
 /** Расчёт и применение лечения к пациенту + сообщение в чат. */
@@ -204,7 +215,7 @@ export async function applyHealing(medic, patient, { mode, care, mod, bonus }) {
   const rollMode = game.settings.get("core", "rollMode");
   const msg = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: medic }),
-    content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("heart","#ff8a8a")}Лечение — ${patient.name}</div><div class="roll-threshold">${lines.join("<br/>")}</div></div>`,
+    content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("heart","#ff8a8a")}Лечение — ${esc(patient.name)}</div><div class="roll-threshold">${lines.join("<br/>")}</div></div>`,
     rolls,
     sound: rolls.length ? CONFIG.sounds.dice : undefined
   }, rollMode);

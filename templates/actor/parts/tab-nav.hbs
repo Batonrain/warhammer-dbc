@@ -1,4 +1,4 @@
-<div class="tab nav-tab" data-tab="nav" data-group="primary">
+<div class="tab nav-tab {{#if (eq tab "nav")}}active{{/if}}" data-tab="nav" data-group="primary">
 
   {{!-- звёздное поле / варп-течения --}}
   <div class="nav-starfield" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -70,7 +70,7 @@
         {{#if navigatorPowers.length}}
           {{#each navigatorPowers as |p|}}
           <tr class="item-row {{#if p.isSustained}}nav-row-sustained{{/if}}" data-item-id="{{p.id}}">
-            <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{p.id}}" title="Показать/скрыть описание">▸</button></td>
+            <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{p.id}}" title="Показать/скрыть описание">▸</button></td>
             <td class="item-name-cell"><span class="nav-power-name">{{p.name}}</span>
               {{#if p.powerKind}}<div class="nav-power-kind">{{p.powerKind}}</div>{{/if}}
             </td>

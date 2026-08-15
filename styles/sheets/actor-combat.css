@@ -756,6 +756,20 @@
   color: var(--wh-text);
 }
 
+/* Бросок Инициативы в трекер — рядом с базой и модификатором (wdbc-aj1). */
+.warhammer-dbc .initiative-roll-btn {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+  padding: 0;
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  background: var(--wh-input-bg);
+  cursor: pointer;
+}
+.warhammer-dbc .initiative-roll-btn:hover { border-color: var(--wh-accent, #7a2a2a); }
+
 /* ═══════════════════════════════════════════════════════════════
    СИЛОВОЕ ПОЛЕ — вкладка Бой
    ═══════════════════════════════════════════════════════════════ */

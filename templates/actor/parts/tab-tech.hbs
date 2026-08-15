@@ -1,4 +1,4 @@
-<div class="tab tech-tab" data-tab="tech" data-group="primary">
+<div class="tab tech-tab {{#if (eq tab "tech")}}active{{/if}}" data-tab="tech" data-group="primary">
 
   {{!-- бегущий машинный код (ноосфера) --}}
   <div class="tech-binary" aria-hidden="true"><span>01001101 01000101 01000011 01001000 00101111 11000010 10101111 01000001 01010110 01000101 00100000 01001111 01001101 01001110 01001001 01010011 01010011 01001001 01000001 01001000</span><span>01001101 01000101 01000011 01001000 00101111 11000010 10101111 01000001 01010110 01000101 00100000 01001111 01001101 01001110 01001001 01010011 01010011 01001001 01000001 01001000</span></div>
@@ -96,7 +96,7 @@
         {{#if techMiracles.length}}
           {{#each techMiracles as |m|}}
           <tr class="item-row {{#if m.sustained}}tech-row-sustained{{/if}}" data-item-id="{{m.id}}">
-            <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button></td>
+            <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button></td>
             <td class="item-name-cell"><span class="tech-power-name">{{m.name}}</span>
               {{#if m.disciplineLabel}}<div class="tech-discipline-sub">{{m.disciplineLabel}}{{#if m.subtype}} · {{m.subtype}}{{/if}}</div>{{/if}}
             </td>

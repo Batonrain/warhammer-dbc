@@ -6,12 +6,9 @@
 //  allowDice: значение может быть не только int, но и формулой XdY(+Z)
 //  (Безумие/Порча — «можно бросить кости порчи/безумия»).
 // ════════════════════════════════════════════════════════════════════════
+import { esc } from "../helpers/utils.mjs";
 
 const DICE_RE = /^(\d+)d(\d+)\s*([+-]\s*\d+)?$/i;
-
-function esc(t) {
-  return String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
 
 function parseDelta(raw, allowDice) {
   const s = String(raw ?? "").trim();

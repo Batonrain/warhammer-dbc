@@ -94,7 +94,7 @@
       <span class="wprofiles-title" title="Профили ББ (Крюк/Посох и т.п.). Профиль №1 — это статы выше; ниже — альтернативные. В HUD переключаются на лету.">
         <i class="fas fa-layer-group"></i> ПРОФИЛИ БЛИЖНЕГО БОЯ
       </span>
-      <a class="wprofile-add" title="Добавить альтернативный профиль"><i class="fas fa-plus"></i> профиль</a>
+      <a class="wprofile-add" data-action="wprofileAdd" title="Добавить альтернативный профиль"><i class="fas fa-plus"></i> профиль</a>
     </div>
 
     {{!-- Профиль №1 — основной (статы выше); здесь только его имя --}}
@@ -111,7 +111,7 @@
       <div class="wprofile-card-head">
         <span class="wprofile-badge">№{{prof.num}}</span>
         <input type="text" class="wprofile-name wprofile-field" data-field="label" value="{{prof.label}}" placeholder="Имя (Посох)"/>
-        <a class="wprofile-del" title="Удалить профиль"><i class="fas fa-trash"></i></a>
+        <a class="wprofile-del" data-action="wprofileDel" title="Удалить профиль"><i class="fas fa-trash"></i></a>
       </div>
       <div class="wprofile-grid">
         <label>Урон<input type="text" class="wprofile-field" data-field="damage" value="{{prof.damage}}" placeholder="1d10-2"/></label>
@@ -145,7 +145,7 @@
             <span class="wprop-slash">/</span>
             <input type="{{#if p.def.rating2Dice}}text{{else}}number{{/if}}" class="wprofile-prop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y" style="width:44px;"/>
             {{/if}}
-            <button type="button" class="wprofile-prop-remove" data-key="{{p.key}}" title="Удалить">✕</button>
+            <button type="button" class="wprofile-prop-remove" data-action="wprofilePropRemove" data-key="{{p.key}}" title="Удалить">✕</button>
           </span>
           {{/each}}
         </div>
@@ -223,7 +223,7 @@
                value="{{p.rating2}}" title="Рейтинг Y"/>
         {{/if}}
         {{/if}}
-        <button type="button" class="wprop-remove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+        <button type="button" class="wprop-remove" data-action="wpropRemove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
       </div>
       {{/each}}
     </div>
@@ -260,7 +260,7 @@
         {{/each}}
       </div>
       {{/if}}
-      <button type="button" class="wms-release" title="Освободить демона из оружия (снять осквернение)">✖ Освободить демона</button>
+      <button type="button" class="wms-release" data-action="wmsRelease" title="Освободить демона из оружия (снять осквернение)">✖ Освободить демона</button>
     </div>
     {{/if}}
   </div>
@@ -415,7 +415,7 @@
         <span class="wprop-slash">/</span>
         <input type="number" class="modprop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
         {{/if}}
-        <button type="button" class="wprop-remove modprop-remove" data-key="{{p.key}}" title="Убрать">✕</button>
+        <button type="button" class="wprop-remove modprop-remove" data-action="modpropRemove" data-key="{{p.key}}" title="Убрать">✕</button>
       </div>
       {{/each}}
     </div>
@@ -437,7 +437,7 @@
       {{#each modRemovePropsActive as |p|}}
       <div class="wprop-chip" title="Это свойство будет убрано у оружия">
         <span class="wprop-name">− {{p.def.label}}</span>
-        <button type="button" class="wprop-remove modrem-remove" data-key="{{p.key}}" title="Не убирать">✕</button>
+        <button type="button" class="wprop-remove modrem-remove" data-action="modremRemove" data-key="{{p.key}}" title="Не убирать">✕</button>
       </div>
       {{/each}}
     </div>

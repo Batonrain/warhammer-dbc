@@ -44,16 +44,23 @@ const MINION_FIELDS = {
   masterUuid: "", minionType: "", minionTier: "", loyalty: { value: 0, max: 0 }
 };
 
+/** Расхождения сверх общих для трёх типов с характеристиками. */
+const OWN_DEVIATIONS = {
+  // Пусто = Бог не выбран. Умолчание "undivided" делало «Покровительство:
+  // Неделимый» выполненным у любого, кто не трогал выбор (wdbc-osz).
+  character: { patronGod: "" }
+};
+
 /** Намеренные расхождения схемы с прежним template.json: путь → почему. */
 const DEVIATIONS = {
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
     "availability": 0
   },
-  // У трёх существ два набора расхождений сразу, и записаны они по-разному:
-  // поля миньонов — обычными именами, надбавки характеристик — путями внутрь
-  // characteristics. withDeviations ниже разбирает и то, и другое, поэтому
-  // держать их врозь незачем.
+  // У трёх существ три набора расхождений сразу, и записаны они по-разному:
+  // поля Миньонов и свои поля типа — обычными именами, надбавки характеристик —
+  // путями внутрь characteristics. withDeviations ниже разбирает и то, и
+  // другое, поэтому держать их врозь незачем.
   //
   // Надбавки — цель эффектов, добавляющих к Бонусу и к Значению
   // характеристики: свои хранимые поля. Бонус — потому что «Сверхъестественное»
@@ -62,7 +69,8 @@ const DEVIATIONS = {
   ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type, {
     ...MINION_FIELDS,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
-      .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]]))
+      .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
+    ...OWN_DEVIATIONS[type]
   }]))
 };
 

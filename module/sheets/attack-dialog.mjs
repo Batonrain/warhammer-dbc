@@ -17,7 +17,7 @@ import { MELEE_STANCES, GRIPS, parseGrips, gripEffects } from "../constants/comb
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { rollIcon }                           from "../constants/roll-icons.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
-import { _degWord, _buildAmmoModString, resolveCharFormula } from "../helpers/utils.mjs";
+import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpers/utils.mjs";
 import { _executeAttackRoll }                 from "../combat/attack.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
@@ -25,6 +25,64 @@ import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
 import { ruleRollModsHtml }                   from "../rules/roll-mods.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
+
+/**
+ * Всё, что игрок отметил в окне, — одним чтением формы.
+ *
+ * Читатель намеренно ровно один. Раньше пересчёт в открытом окне и сам бросок
+ * складывали модификаторы порознь, и расхождение между ними означало бы, что
+ * игрок видит одно число, а кидается другое. Теперь это верно по построению.
+ *
+ * @param {HTMLFormElement} form       форма окна (DialogV2 отдаёт её в button.form)
+ * @param {object[]}        ammoConds  условные эффекты боеприпаса, стр. 203
+ */
+function readAttackForm(form, ammoConds) {
+  const el   = sel => form.querySelector(sel);
+  const all  = sel => [...form.querySelectorAll(sel)];
+  const on   = sel => !!el(sel)?.checked;
+  const attr = (sel, key) => parseInt(el(sel)?.dataset?.[key]) || 0;
+
+  const ROF = "input[name='atk-rof']:checked";
+  const AIM = "input[name='atk-aiming']:checked";
+
+  const ammoSel = all(".atk-ammo-cond:checked")
+    .map(cb => ammoConds[parseInt(cb.dataset.idx)]).filter(Boolean);
+
+  // Галочки от реестра правил — тот же формат, что у Особенностей Происхождения
+  // и предметных rollMods в диалоге броска навыка.
+  let ruleMods = 0, halvePenalty = false;
+  for (const cb of all(".rule-mod:checked")) {
+    ruleMods += parseInt(cb.dataset.value) || 0;
+    if (cb.dataset.halve === "1") halvePenalty = true;
+  }
+
+  const swift = on("#atk-swift"), lightning = on("#atk-lightning"), allOut = on("#atk-allout");
+
+  return {
+    autoFail:   all(".atk-mod-cb[data-autofail]:checked").length > 0,
+    char:       el("#atk-char")?.value,
+    modifier:   parseInt(el("#atk-modifier")?.value) || 0,
+    rofMode:    el(ROF)?.value,
+    rofBonus:   attr(ROF, "bonus"),
+    aimVal:     el("#atk-aim")?.value,
+    aimPenalty: attr("#atk-aim option:checked", "penalty"),
+    aiming:     el(AIM)?.value || "none",
+    aimBonus:   attr(AIM, "bonus"),
+    // Отмеченные ситуативные: сумма — в порог, список — в сводку заголовка.
+    sitPicked:  all(".atk-mod-cb:checked"),
+    sitMods:    all(".atk-mod-cb:not([data-autofail]):checked")
+      .reduce((n, cb) => n + (parseInt(cb.dataset.value) || 0), 0),
+    ammoSel,
+    ammoMods:   ammoSel.reduce((n, c) => n + (c.atk || 0), 0),
+    ruleMods, halvePenalty,
+    swift, lightning, allOut,
+    extraBonus: (swift ? 10 : 0) + (lightning ? 10 : 0) + (allOut ? 20 : 0),
+    shortRange: on("#atk-shortrange"),
+    weaponOff:  on("#atk-weaponoff"),
+    maximal:    on("#atk-maximal"),
+    bandIdx:    Number(el("#atk-band")?.value ?? -1)
+  };
+}
 
 export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const sys     = item.system;
@@ -186,7 +244,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ammoDialogHtml = `
       <div class="atk-ammo-block">
         <span class="atk-ammo-label">${rollIcon("spark","#8fd0ff")}Боеприпасы:</span>
-        <span class="atk-ammo-name">${loadedAmmo ? loadedAmmo.name : "стандартные"}</span>
+        <span class="atk-ammo-name">${loadedAmmo ? esc(loadedAmmo.name) : "стандартные"}</span>
         ${ammoMods ? `<span class="atk-ammo-mods">(${ammoMods})</span>` : ""}
         <span class="atk-ammo-mag ${magCls}">Магазин: <b>${magCur}/${magMax}</b></span>
       </div>`;
@@ -306,24 +364,23 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Безусловно применять нельзя (зависит от цели), поэтому даём галочки —
   // и НЕ прячем в свёрнутый блок: их легко упустить, а они крупные.
   const ammoConds = (!isMelee && Array.isArray(ammoSys?.condMods)) ? ammoSys.condMods : [];
-  const escAC = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const ammoCondHtml = ammoConds.length ? `
       <div class="av-ammo-cond">
-        <div class="av-sec-lbl">${rollIcon("spark","#8fd0ff")}Боеприпас: ${escAC(loadedAmmo?.name || "")}</div>
+        <div class="av-sec-lbl">${rollIcon("spark","#8fd0ff")}Боеприпас: ${esc(loadedAmmo?.name || "")}</div>
         ${ammoConds.map((c, i) => {
           const parts = [];
           if (c.atk) parts.push(`${c.atk > 0 ? "+" : ""}${c.atk}`);
           if (c.dmg) parts.push(`${c.dmg > 0 ? "+" : ""}${c.dmg} урона`);
           for (const k of (c.wp || [])) parts.push(WEAPON_PROPERTIES[k]?.label || k);
           const val = parts.length ? `<span class="avc-val">${parts.join(", ")}</span>` : "";
-          const note = c.note ? `<span class="avc-note">${escAC(c.note)}</span>` : "";
+          const note = c.note ? `<span class="avc-note">${esc(c.note)}</span>` : "";
           // Пункты без числовых эффектов — просто памятка, без галочки.
           const isNote = !c.atk && !c.dmg && !(c.wp || []).length;
           return isNote
-            ? `<div class="avc-row avc-row-note">${escAC(c.label)} ${note}</div>`
+            ? `<div class="avc-row avc-row-note">${esc(c.label)} ${note}</div>`
             : `<label class="avc-row"><input type="checkbox" class="atk-ammo-cond"
                  data-idx="${i}" data-atk="${c.atk || 0}"/>
-                 <span class="avc-lbl">${escAC(c.label)}</span> ${val} ${note}</label>`;
+                 <span class="avc-lbl">${esc(c.label)}</span> ${val} ${note}</label>`;
         }).join("")}
       </div>` : "";
   const fatigueBadge = hasFatigue
@@ -338,7 +395,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Свойства оружия — напоминание + чекбокс короткой дистанции + перезарядка
   const wpDialogList = wProps.map(p => {
     const r = p.def.rating ? ` (${p.rating ?? 0}${p.def.rating2 ? "/" + (p.rating2 ?? 0) : ""})` : "";
-    const tip = (p.def.desc || "").replace(/"/g, "&quot;");
+    const tip = esc(p.def.desc);
     return `<span class="atk-wprop-badge" title="${tip}">${p.def.label}${r}</span>`;
   }).join("");
   const wpDialogHtml = wProps.length ? `
@@ -401,8 +458,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const gripProfileNote = (atkProfile || gripHasEffect || gripList.length > 1) ? `
       <div class="av-gripnote">${rollIcon("sword","#6fe6ff")}${attackNote}</div>` : "";
 
+  // Не <form>: содержимое DialogV2 уже лежит внутри его собственной формы, а
+  // вложенная форма недопустима — браузер её выбросит вместе с оформлением.
   const content = `
-    <form class="wh-attack-form wh-atk-v2">
+    <div class="wh-attack-form wh-atk-v2">
       ${techniqueOpts.techniqueLabel ? `
       <div class="atk-technique-note">
         ${rollIcon("sword")}Приём: <b>${techniqueOpts.techniqueLabel}</b>
@@ -412,7 +471,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       </div>` : ""}
 
       <div class="av-header">
-        <span class="av-name">${item.name}</span>
+        <span class="av-name">${esc(item.name)}</span>
         <span class="av-class">${forceMelee ? "в упор / приклад" : (WEAPON_CLASSES[sys.weaponClass] || "")}</span>
         <span class="av-badges">${stanceBonusNote}${ammoBadge}${fatigueBadge}${drugAtkBadge}</span>
       </div>
@@ -420,7 +479,6 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="av-preview">
         <div class="av-prev-lbl">Итоговый порог теста</div>
         <div class="av-prev-total" id="atk-total-display">${charVal}</div>
-        <input id="atk-threshold" type="hidden" value="${charVal}"/>
       </div>
 
       ${ammoDialogHtml}${rechargeWarnHtml}${wpDialogHtml}
@@ -476,188 +534,115 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           </div>
         </div>
       </details>
-    </form>`;
+    </div>`;
 
-  return new Promise(resolve => {
-    let resolved = false;
-    let autoFail = false;
+  /**
+   * Порог теста по прочитанной форме. Мод хвата (gripWs) и мод препаратов
+   * (в char.total) уже внутри базы; характеристику игрок может сменить в окне,
+   * поэтому база считается здесь, а не берётся из charVal.
+   */
+  const thresholdOf = f => attackThreshold({
+    base: (actor.system.characteristics[f.char]?.total ?? 0)
+          + (sys.attackBonus || 0) + wpAttackMod + techBonus + stanceBonus + ammoAtkMod + gripWs
+          + (wp.noAim ? 0 : f.aimBonus),
+    mods: [f.modifier, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty, f.extraBonus],
+    halvePenalty: f.halvePenalty
+  });
 
-    const dialog = new Dialog({
-      title: `Атака: ${item.name}`,
-      content,
-      buttons: {
-        roll: {
-          icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!",
-          callback: async html => {
-            if (resolved) return;
-            resolved = true;
+  return foundry.applications.api.DialogV2.wait({
+    window: { title: `Атака: ${item.name}` },
+    classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "wh-atk-dialog"],
+    position: { width: 420 },
+    content,
+    // Закрыть окно — это отмена, а не ошибка: вызывающий ждёт null, а не бросок.
+    rejectClose: false,
+    buttons: [
+      {
+        action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", class: "roll", default: true,
+        callback: async (event, button) => {
+          const f = readAttackForm(button.form, ammoConds);
 
-            if (autoFail) {
-              await ChatMessage.create({
-                speaker: ChatMessage.getSpeaker({ actor: actor }),
-                content: `<div class="wh-roll-result">
-                  <div class="roll-header">${rollIcon("sword")}${item.name}</div>
-                  <div class="roll-outcome">
-                    <span class="roll-failure">Автоматический провал (Ослеплён)</span>
-                  </div></div>`
-              });
-              resolve(null); return;
-            }
-
-            const selectedChar = html.find("#atk-char").val();
-            const threshold    = parseInt(html.find("#atk-threshold").val()) || 0;
-            const modifier     = parseInt(html.find("#atk-modifier").val())  || 0;
-            const rofMode      = html.find("input[name='atk-rof']:checked").val() || rofModes[0]?.value;
-            const rofBonus     = parseInt(html.find("input[name='atk-rof']:checked").data("bonus")) || 0;
-            const aimVal       = html.find("#atk-aim").val();
-            const aimPenalty   = parseInt(html.find("#atk-aim option:selected").data("penalty")) || 0;
-            const aimTarget    = aimTargets.find(t => t.value === aimVal);
-            const newAiming    = html.find("input[name='atk-aiming']:checked").val() || "none";
-
-            let modSum = 0;
-            html.find(".atk-mod-cb:not([data-autofail]):checked").each((_, cb) => {
-              modSum += parseInt($(cb).data("value")) || 0;
+          if (f.autoFail) {
+            await ChatMessage.create({
+              speaker: ChatMessage.getSpeaker({ actor: actor }),
+              content: `<div class="wh-roll-result">
+                <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
+                <div class="roll-outcome">
+                  <span class="roll-failure">Автоматический провал (Ослеплён)</span>
+                </div></div>`
             });
-            // Отмеченные условные эффекты боеприпаса (стр. 203): бонус к тесту
-            // плюс урон и свойства, которые нужно передать в сам бросок.
-            const ammoCondSel = [];
-            html.find(".atk-ammo-cond:checked").each((_, cb) => {
-              modSum += parseInt(cb.dataset.atk) || 0;
-              const c = ammoConds[parseInt(cb.dataset.idx)];
-              if (c) ammoCondSel.push(c);
-            });
-            const ammoCondDmg = ammoCondSel.reduce((n, c) => n + (c.dmg || 0), 0);
-            const ammoCondProps = ammoCondSel.flatMap(c => c.wp || []);
-
-            // Галочки от реестра правил — тот же формат, что у Особенностей
-            // Происхождения и предметных rollMods в диалоге броска навыка.
-            let halveRulePenalty = false;
-            html.find(".rule-mod:checked").each((_, cb) => {
-              modSum += parseInt(cb.dataset.value) || 0;
-              if (cb.dataset.halve === "1") halveRulePenalty = true;
-            });
-
-            const isSwift     = html.find("#atk-swift").is(":checked");
-            const isLightning = html.find("#atk-lightning").is(":checked");
-            const isAllOut    = html.find("#atk-allout").is(":checked");
-            const extraBonus  = (isSwift ? 10 : 0) + (isLightning ? 10 : 0) + (isAllOut ? 20 : 0);
-            // Мод хвата (gripWs) уже вошёл в charBase/threshold; мод препаратов — в char.total.
-            const finalThreshold = attackThreshold({
-              base: threshold,
-              mods: [modifier, modSum, rofBonus, aimPenalty, extraBonus],
-              halvePenalty: halveRulePenalty
-            });
-
-            await actor.update({ "system.aiming": "none" });
-
-            const shortRange = html.find("#atk-shortrange").is(":checked");
-            const bandIdx    = Number(html.find("#atk-band").val() ?? -1);
-            const weaponOff  = html.find("#atk-weaponoff").is(":checked");
-            const maximal    = html.find("#atk-maximal").is(":checked");
-
-            // Профиль атаки + хват выбраны в HUD (см. начало метода): применяем молча.
-            await _executeAttackRoll(
-              actor, item, selectedChar, finalThreshold, rofMode, aimTarget,
-              {
-                isSwift, isLightning, isAllOut,
-                techniqueOpts,
-                shortRange, maximal, bandIdx,
-                profile: atkProfile, attackNote,
-                weaponOff, gripKey,
-                gripProps: gripDef ? gripDef.addProps : [],
-                gripDmgFlat: gripDef ? gripDef.dmgFlat : 0,
-                gripSbHalf: gripDef ? gripDef.sbHalf : false,
-                // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
-                ammoCondProps, ammoCondDmg,
-                ammoCondLabels: ammoCondSel.map(c => c.label),
-                aimingLabel: (newAiming !== "none" && !wp.noAim)
-                  ? (newAiming === "half" ? "Полу-прицеливание (+10)" : "Полное прицеливание (+20)")
-                  : ""
-              }
-            );
-            resolve(true);
+            return null;
           }
-        },
-        cancel: {
-          label: "Отмена",
-          callback: () => { if (!resolved) { resolved = true; resolve(null); } }
+
+          await actor.update({ "system.aiming": "none" });
+
+          // Профиль атаки + хват выбраны в HUD (см. начало метода): применяем молча.
+          await _executeAttackRoll(
+            actor, item, f.char, thresholdOf(f),
+            f.rofMode || rofModes[0]?.value,
+            aimTargets.find(t => t.value === f.aimVal),
+            {
+              isSwift: f.swift, isLightning: f.lightning, isAllOut: f.allOut,
+              techniqueOpts,
+              shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
+              profile: atkProfile, attackNote,
+              weaponOff: f.weaponOff, gripKey,
+              gripProps: gripDef ? gripDef.addProps : [],
+              gripDmgFlat: gripDef ? gripDef.dmgFlat : 0,
+              gripSbHalf: gripDef ? gripDef.sbHalf : false,
+              // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
+              ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
+              ammoCondDmg:    f.ammoSel.reduce((n, c) => n + (c.dmg || 0), 0),
+              ammoCondLabels: f.ammoSel.map(c => c.label),
+              aimingLabel: (f.aiming !== "none" && !wp.noAim)
+                ? (f.aiming === "half" ? "Полу-прицеливание (+10)" : "Полное прицеливание (+20)")
+                : ""
+            }
+          );
+          return true;
         }
       },
-      default: "roll",
-      render: html => {
-        const updateTotal = () => {
-          autoFail = false;
-          html.find(".atk-mod-cb[data-autofail='true']:checked").each(() => { autoFail = true; });
-          if (autoFail) {
-            html.find("#atk-total-display").text("ПРОВАЛ").css("color", "#8b0000");
-            return;
-          }
-          const ck     = html.find("#atk-char").val();
-          const base   = (actor.system.characteristics[ck]?.total ?? 0)
-                         + (sys.attackBonus || 0) + wpAttackMod + techBonus + stanceBonus + ammoAtkMod + gripWs;
-          const mod    = parseInt(html.find("#atk-modifier").val())  || 0;
-          const rofBon = parseInt(html.find("input[name='atk-rof']:checked").data("bonus")) || 0;
-          const aimPen = parseInt(html.find("#atk-aim option:selected").data("penalty"))    || 0;
-          const aimBon = wp.noAim ? 0
-                       : (parseInt(html.find("input[name='atk-aiming']:checked").data("bonus")) || 0);
-          const extra  = (html.find("#atk-swift").is(":checked")     ? 10 : 0)
-                       + (html.find("#atk-lightning").is(":checked") ? 10 : 0)
-                       + (html.find("#atk-allout").is(":checked")    ? 20 : 0);
-          let modsSit = 0;
-          html.find(".atk-mod-cb:not([data-autofail]):checked").each((_, cb) => {
-            modsSit += parseInt($(cb).data("value")) || 0;
-          });
-          // Условные модификаторы боеприпаса (стр. 203) — считаем отдельно,
-          // чтобы сводка ситуативных не приписывала себе патронные бонусы.
-          let modsAmmo = 0;
-          html.find(".atk-ammo-cond:checked").each((_, cb) => {
-            modsAmmo += parseInt(cb.dataset.atk) || 0;
-          });
-          // Правила реестра — считаем тем же кодом, что и сам бросок ниже:
-          // иначе игрок увидит в окне одно число, а бросится другое.
-          let modsRule = 0, halveRule = false;
-          html.find(".rule-mod:checked").each((_, cb) => {
-            modsRule += parseInt(cb.dataset.value) || 0;
-            if (cb.dataset.halve === "1") halveRule = true;
-          });
-          const mods = modsSit + modsAmmo + modsRule;
-          html.find("#atk-threshold").val(base + aimBon);
-          html.find("#atk-total-display")
-              .text(attackThreshold({
-                base: base + aimBon,
-                mods: [mod, mods, rofBon, aimPen, extra],
-                halvePenalty: halveRule
-              }))
-              .css("color", "");
-          // Блок ситуативных свёрнут по умолчанию, поэтому его сводка должна
-          // быть видна в заголовке — иначе авто-отметки (Усталость, Ослеплён)
-          // молча уходят в порог, и непонятно, откуда взялся модификатор.
-          const picked = html.find(".atk-mod-cb:checked");
-          const names  = picked.map((_, cb) =>
-            ($(cb).closest("label").text() || "").trim().replace(/\s+/g, " ")).get();
-          const $hint = html.find(".av-adv-hint");
-          if (picked.length) {
-            const sign = modsSit > 0 ? "+" : "";
-            $hint.addClass("is-active")
-                 .text(`— активно ${picked.length}${modsSit ? ` (${sign}${modsSit})` : ""}: ${names.join(", ")}`);
-          } else {
-            $hint.removeClass("is-active").text("— разверни, если нужны");
-          }
-        };
-        html.find("#atk-char, #atk-aim").on("change", updateTotal);
-        html.find("#atk-modifier").on("input", updateTotal);
-        html.find(".atk-mod-cb, .atk-ammo-cond, .rule-mod, input[name='atk-rof'], input[name='atk-aiming'], #atk-swift, #atk-lightning, #atk-allout")
-            .on("change", updateTotal);
-        // Сворачивание «Ситуативные модификаторы» — подгоняем высоту окна.
-        const el0 = html[0] ?? html;
-        const det = el0?.querySelector(".av-adv");
-        if (det) det.addEventListener("toggle", () => dialog.setPosition?.({ height: "auto" }));
-        updateTotal();
-      },
-      close: () => { if (!resolved) { resolved = true; resolve(null); } }
-    }, { classes: ["dialog","wh-attack-dialog","warhammer-dbc","wh-holo","wh-atk-dialog"], width: 420 });
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    render: (event, dialog) => {
+      const form    = dialog.element.querySelector("form");
+      const display = form.querySelector("#atk-total-display");
+      const hint    = form.querySelector(".av-adv-hint");
 
-    dialog.render(true);
+      const updateTotal = () => {
+        const f = readAttackForm(form, ammoConds);
+        if (f.autoFail) {
+          display.textContent = "ПРОВАЛ";
+          display.style.color = "#8b0000";
+          return;
+        }
+        display.textContent = thresholdOf(f);
+        display.style.color = "";
+        // Блок ситуативных свёрнут по умолчанию, поэтому его сводка должна быть
+        // видна в заголовке — иначе авто-отметки (Усталость, Ослеплён) молча
+        // уходят в порог, и непонятно, откуда взялся модификатор.
+        if (f.sitPicked.length) {
+          const names = f.sitPicked.map(cb =>
+            (cb.closest?.("label")?.textContent ?? "").trim().replace(/\s+/g, " "));
+          const sign  = f.sitMods > 0 ? "+" : "";
+          hint.classList.add("is-active");
+          hint.textContent =
+            `— активно ${f.sitPicked.length}${f.sitMods ? ` (${sign}${f.sitMods})` : ""}: ${names.join(", ")}`;
+        } else {
+          hint.classList.remove("is-active");
+          hint.textContent = "— разверни, если нужны";
+        }
+      };
+
+      // Один слушатель на форму вместо списка селекторов: события всплывают,
+      // и новая галочка в разметке не требует правки этого места.
+      form.addEventListener("change", updateTotal);
+      form.addEventListener("input",  updateTotal);
+      // Сворачивание «Ситуативные модификаторы» — подгоняем высоту окна.
+      form.querySelector(".av-adv")
+          ?.addEventListener("toggle", () => dialog.setPosition({ height: "auto" }));
+      updateTotal();
+    }
   });
 }
 

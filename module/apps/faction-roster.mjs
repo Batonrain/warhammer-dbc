@@ -205,33 +205,37 @@ export function originTreeContext(item) {
 }
 
 /** Обработчики схемы происхождения. */
-export function activateOriginTreeListeners(html, item) {
+export function activateOriginTreeListeners(root, item) {
+  const el = root?.[0] ?? root;
+  if (!el?.querySelectorAll) return;
   // Свёрнутость — состояние окна, а не предмета: у каждого мастера своё.
-  html.find(".faction-origin-tree").on("toggle", ev => {
+  el.querySelectorAll(".faction-origin-tree").forEach(n => n.addEventListener("toggle", ev => {
     if (item?.sheet) item.sheet._originTreeOpen = ev.currentTarget.open;
-  });
+  }));
 
-  html.find(".origin-node-open").on("click", async ev => {
+  el.querySelectorAll(".origin-node-open").forEach(n => n.addEventListener("click", async ev => {
     ev.preventDefault();
     const uuid = ev.currentTarget.closest("[data-uuid]")?.dataset.uuid;
     if (!uuid) return ui.notifications.warn("Эта фракция не найдена в каталоге — открывать нечего.");
     const doc = await fromUuid(uuid).catch(() => null);
     doc?.sheet?.render(true);
-  });
+  }));
 
-  html.find(".origin-node-toggle").on("click", async ev => {
+  el.querySelectorAll(".origin-node-toggle").forEach(n => n.addEventListener("click", async ev => {
     ev.preventDefault();
     const key = ev.currentTarget.closest("[data-key]")?.dataset.key;
     if (!key) return;
     const hidden = hiddenKeys(item);
     if (hidden.has(key)) hidden.delete(key); else hidden.add(key);
     await item.setFlag("warhammer-dbc", TREE_HIDDEN_FLAG, [...hidden]);
-  });
+  }));
 }
 
 /** Обработчики вкладки. Item здесь — сама Фракция, чей лист открыт. */
-export function activateFactionRosterListeners(html, item) {
-  html.find(".faction-roster-zone").each((_, zone) => {
+export function activateFactionRosterListeners(root, item) {
+  const el = root?.[0] ?? root;
+  if (!el?.querySelectorAll) return;
+  el.querySelectorAll(".faction-roster-zone").forEach(zone => {
     zone.addEventListener("dragover", ev => {
       ev.preventDefault();
       zone.classList.add("sq-drop-hover");
@@ -261,14 +265,14 @@ export function activateFactionRosterListeners(html, item) {
     });
   });
 
-  html.find(".faction-roster-open").on("click", async ev => {
+  el.querySelectorAll(".faction-roster-open").forEach(n => n.addEventListener("click", async ev => {
     ev.preventDefault();
     const uuid = ev.currentTarget.closest("[data-uuid]")?.dataset.uuid;
     const doc = uuid ? await fromUuid(uuid).catch(() => null) : null;
     doc?.sheet?.render(true);
-  });
+  }));
 
-  html.find(".faction-roster-remove").on("click", async ev => {
+  el.querySelectorAll(".faction-roster-remove").forEach(n => n.addEventListener("click", async ev => {
     ev.preventDefault();
     const row = ev.currentTarget.closest("[data-uuid]");
     const doc = await fromUuid(row?.dataset.uuid).catch(() => null);
@@ -280,5 +284,5 @@ export function activateFactionRosterListeners(html, item) {
     } else {
       await doc.update({ "system.parentKey": "" });
     }
-  });
+  }));
 }

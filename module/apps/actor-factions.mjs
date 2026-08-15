@@ -77,11 +77,17 @@ async function addFaction(actor, src) {
 }
 
 /**
- * Обработчики поля. Вызывается из activateListeners каждого листа актора —
- * шапки у листов свои, а поведение поля одно.
+ * Обработчики поля. Зовётся из отрисовки каждого листа актора — шапки у листов
+ * свои, а поведение поля одно.
+ *
+ * На входе принимается и корневой DOM-узел (листы на ApplicationV2), и
+ * jQuery-обёртка (те, что ещё не сняты с V1): своей разметки у поля одна, и
+ * заводить ради этого две функции незачем.
  */
-export function activateFactionFieldListeners(html, actor) {
-  const zone = html.find(".faction-drop-zone")[0];
+export function activateFactionFieldListeners(root, actor) {
+  const el = root?.[0] ?? root;
+  if (!el?.querySelector) return;
+  const zone = el.querySelector(".faction-drop-zone");
   if (zone) {
     zone.addEventListener("dragover", ev => {
       ev.preventDefault();
@@ -101,7 +107,7 @@ export function activateFactionFieldListeners(html, actor) {
     });
   }
 
-  html.find(".wh-faction-add").on("click", async ev => {
+  el.querySelector(".wh-faction-add")?.addEventListener("click", async ev => {
     ev.preventDefault();
     if (!actor.isOwner) return;
     const uuid = await openCompendiumBrowser(false, {
@@ -114,10 +120,12 @@ export function activateFactionFieldListeners(html, actor) {
     await addFaction(actor, doc);
   });
 
-  html.find(".wh-faction-remove").on("click", async ev => {
-    ev.preventDefault();
-    if (!actor.isOwner) return;
-    const id = ev.currentTarget.dataset.itemId;
-    if (id) await actor.deleteEmbeddedDocuments("Item", [id]);
+  el.querySelectorAll(".wh-faction-remove").forEach(btn => {
+    btn.addEventListener("click", async ev => {
+      ev.preventDefault();
+      if (!actor.isOwner) return;
+      const id = ev.currentTarget.dataset.itemId;
+      if (id) await actor.deleteEmbeddedDocuments("Item", [id]);
+    });
   });
 }

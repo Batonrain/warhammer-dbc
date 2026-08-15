@@ -26,6 +26,7 @@ import { ROUTE_STABILITY, JOURNEY_DURATION, GUIDE_ESTIMATE, ENTRY_LOCATIONS, jum
 import { veilIcon } from "../constants/veil-icons.mjs";
 import { refreshVeilOverlay } from "./veil-overlay.mjs";
 import { resolveVeilContainer } from "../constants/scene-nexus.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 function _newJourney() {
   return {
@@ -83,8 +84,6 @@ function _newDefile() {
 const { Application } = foundry.appv1.api;
 const FLAG_SCOPE = "warhammer-dbc";
 const FLAG_KEY   = "veil";
-const escHtml = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
 // ── Доступ к состоянию завесы текущей сцены ───────────────────────────────
 function currentScene() { return canvas?.scene ?? game.scenes?.current ?? null; }
 
@@ -415,21 +414,21 @@ export class VeilMystic extends Application {
     const rows = sp.positions.map((pos, i) => {
       const sl = s.slots[i];
       const sig = pos.signal ? ` <span class="tc-sig">знаковая</span>` : "";
-      if (!sl.cardN) return `<div class="wh-tarot-card empty"><div class="tc-pos">${escHtml(pos.name)}${sig}</div><div class="tc-empty">— не вытянута —</div></div>`;
+      if (!sl.cardN) return `<div class="wh-tarot-card empty"><div class="tc-pos">${esc(pos.name)}${sig}</div><div class="tc-empty">— не вытянута —</div></div>`;
       const c = cardByN(sl.cardN), rev = sl.reversed, img = cardImgSrc(c);
-      const imgHtml = img ? `<div class="tc-frame"><img class="tc-art" src="${img}" data-title="${escHtml(cardTitle(c))}" alt="" title="Открыть карту"/></div>` : "";
-      return `<div class="wh-tarot-card${rev ? " reversed" : ""}"><div class="tc-pos">${escHtml(pos.name)}${sig}</div>${imgHtml}<div class="tc-text"><div class="tc-name">${c.n}. ${escHtml(cardTitle(c))} <span class="tc-suit">(${escHtml(cardSuitLine(c))})</span></div><div class="tc-orient">${rev ? "⭮ Перевёрнутая" : "⭯ Прямая"}</div><div class="tc-mean">${escHtml(rev ? c.rev : c.up)}</div><div class="tc-change">${escHtml(c.ch)}</div></div></div>`;
+      const imgHtml = img ? `<div class="tc-frame"><img class="tc-art" src="${img}" data-title="${esc(cardTitle(c))}" alt="" title="Открыть карту"/></div>` : "";
+      return `<div class="wh-tarot-card${rev ? " reversed" : ""}"><div class="tc-pos">${esc(pos.name)}${sig}</div>${imgHtml}<div class="tc-text"><div class="tc-name">${c.n}. ${esc(cardTitle(c))} <span class="tc-suit">(${esc(cardSuitLine(c))})</span></div><div class="tc-orient">${rev ? "⭮ Перевёрнутая" : "⭯ Прямая"}</div><div class="tc-mean">${esc(rev ? c.rev : c.up)}</div><div class="tc-change">${esc(c.ch)}</div></div></div>`;
     }).join("");
     const meta = [];
-    if (s.teomant) meta.push(`<span class="tr-meta-i"><b>Теомант:</b> ${escHtml(s.teomant)}</span>`);
-    if (s.quirit)  meta.push(`<span class="tr-meta-i"><b>Квирит:</b> ${escHtml(s.quirit)}</span>`);
+    if (s.teomant) meta.push(`<span class="tr-meta-i"><b>Теомант:</b> ${esc(s.teomant)}</span>`);
+    if (s.quirit)  meta.push(`<span class="tr-meta-i"><b>Квирит:</b> ${esc(s.quirit)}</span>`);
     const metaHtml = meta.length ? `<div class="tr-meta">${meta.join("")}</div>` : "";
-    const qHtml = s.question ? `<div class="tr-question">«${escHtml(s.question)}»</div>` : "";
+    const qHtml = s.question ? `<div class="tr-question">«${esc(s.question)}»</div>` : "";
     const hint = this._tarotHint();
-    const hintHtml = hint ? `<div class="tr-hint">${escHtml(hint)}</div>` : "";
+    const hintHtml = hint ? `<div class="tr-hint">${esc(hint)}</div>` : "";
     ChatMessage.create({
       speaker: { alias: s.teomant ? `Теомант — ${s.teomant}` : "Таро Императора" },
-      content: `<div class="wh-tarot-reading"><div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${escHtml(sp.label)} ✦</div>${qHtml}${metaHtml}<div class="tr-cards">${rows}</div>${hintHtml}</div>`
+      content: `<div class="wh-tarot-reading"><div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${esc(sp.label)} ✦</div>${qHtml}${metaHtml}<div class="tr-cards">${rows}</div>${hintHtml}</div>`
     });
   }
 
@@ -538,7 +537,7 @@ export class VeilMystic extends Application {
     const godMeta = data.godMeta;
 
     let body = `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
-      <div class="roll-header">⚒ Ритуал Создания Демонического Оружия — ${escHtml(item.name)}</div>
+      <div class="roll-header">⚒ Ритуал Создания Демонического Оружия — ${esc(item.name)}</div>
       <div class="roll-outcome"><b>${rv}</b> vs Порог <b>${data.thresholdSigned}</b> → ${success
         ? `<span class="roll-success">Успех (${dos} ст.)</span>` : `<span class="roll-fail">Провал</span>`}</div>`;
     if (success) {
@@ -604,11 +603,11 @@ export class VeilMystic extends Application {
       }
     });
 
-    const propHtml = generated.map(g => `<div class="dc-prop"><span class="dc-prop-god" style="color:${(DW_GODS_MAP[g.god]?.color)||'#b477ff'}">${(DW_GODS_MAP[g.god]?.label)||'Неделимый'}</span> <b>${escHtml(g.name)}</b> — ${escHtml(g.text)}</div>`).join("");
+    const propHtml = generated.map(g => `<div class="dc-prop"><span class="dc-prop-god" style="color:${(DW_GODS_MAP[g.god]?.color)||'#b477ff'}">${(DW_GODS_MAP[g.god]?.label)||'Неделимый'}</span> <b>${esc(g.name)}</b> — ${esc(g.text)}</div>`).join("");
     ChatMessage.create({
       speaker: { alias: "Кузница Душ" },
       content: `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
-        <div class="roll-header">⛧ ${escHtml(item.name)} осквернено — Демоническое Оружие</div>
+        <div class="roll-header">⛧ ${esc(item.name)} осквернено — Демоническое Оружие</div>
         <div class="dc-line">Связывание ${binding} · W.b демона ${wb} · +${wb} к Dmg/Pen · Reinforced · теряет Primitive/Sanctified.</div>
         <div class="dc-props">${propHtml}</div>
         <div class="dc-foot">Игнорирует T.b и иммунитеты Daemonic/Stuff of Nightmares; не тратит боеприпасы; игнорирует Haywire.</div>
@@ -838,7 +837,7 @@ export class VeilMystic extends Application {
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${veilIcon("compass")} Навигация в Варпе — ${escHtml(actor.name)}</div>
+          <div class="roll-header">${veilIcon("compass")} Навигация в Варпе — ${esc(actor.name)}</div>
           <div class="roll-threshold">Навигация: <b>${base}</b> ${mod >= 0 ? "+" : ""}${mod} (завеса ${info.label}) → Порог: <b>${eff}</b></div>
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           <div class="roll-outcome">${success
@@ -858,9 +857,9 @@ export class VeilMystic extends Application {
     ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result">
-        <div class="roll-header">${veilIcon("eye")} Сила Навигатора: ${escHtml(item.name)}</div>
-        ${s.action ? `<div class="roll-threshold">Действие: <b>${escHtml(s.action)}</b>${s.range ? ` · Дальность: ${escHtml(s.range)}` : ""}</div>` : ""}
-        ${s.effect ? `<div class="roll-threshold">${escHtml(s.effect)}</div>` : ""}
+        <div class="roll-header">${veilIcon("eye")} Сила Навигатора: ${esc(item.name)}</div>
+        ${s.action ? `<div class="roll-threshold">Действие: <b>${esc(s.action)}</b>${s.range ? ` · Дальность: ${esc(s.range)}` : ""}</div>` : ""}
+        ${s.effect ? `<div class="roll-threshold">${esc(s.effect)}</div>` : ""}
       </div>`
     }, game.settings.get("core", "rollMode")));
   }
@@ -902,8 +901,8 @@ export class VeilMystic extends Application {
     const row = lookupTable(ROUTE_STABILITY, r.total);
     Object.assign(this.journey, { stability: row.name, stabilityMult: row.durMult, psyMod: row.psyMod || 0, beaconHidden: !!row.beaconHidden });
     this.render(false);
-    await this._jPost(`${veilIcon("die")} Стабильность маршрута — ${escHtml(row.name)}`, "stable",
-      `<div class="roll-dice">1d10: <b>${r.total}</b> → длительность ×${row.durMult}</div><div class="roll-threshold">${escHtml(row.effect)}</div>`, [r]);
+    await this._jPost(`${veilIcon("die")} Стабильность маршрута — ${esc(row.name)}`, "stable",
+      `<div class="roll-dice">1d10: <b>${r.total}</b> → длительность ×${row.durMult}</div><div class="roll-threshold">${esc(row.effect)}</div>`, [r]);
   }
   async _rollDuration() {
     const r = await new Roll("1d10").evaluate();
@@ -914,7 +913,7 @@ export class VeilMystic extends Application {
     this.journey.baseDuration = base;
     this.render(false);
     await this._jPost(`${veilIcon("hourglass")} Длительность странствия`, "stable",
-      `<div class="roll-dice">1d10: <b>${r.total}</b> — ${escHtml(row.ex)}</div><div class="roll-threshold">${row.formula} = ${dRoll.total}${mult > 1 ? ` × ${mult}` : ""} = <b>${base}</b> дн. (исходное)</div><div class="roll-threshold" style="font-size:0.8em;opacity:0.8;">МИ не оглашает игрокам.</div>`, [r, dRoll]);
+      `<div class="roll-dice">1d10: <b>${r.total}</b> — ${esc(row.ex)}</div><div class="roll-threshold">${row.formula} = ${dRoll.total}${mult > 1 ? ` × ${mult}` : ""} = <b>${base}</b> дн. (исходное)</div><div class="roll-threshold" style="font-size:0.8em;opacity:0.8;">МИ не оглашает игрокам.</div>`, [r, dRoll]);
   }
   async _readOmens() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника на сцене."); return; }
@@ -923,20 +922,20 @@ export class VeilMystic extends Application {
     const res = await this._roll(base + mod);
     let body = `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
     if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Знамения ясны — ${res.deg} ${degWord(res.deg)}. Судно готово ко входу.</span></div>`;
-    else { const g = GUIDE_ESTIMATE[Math.floor(Math.random() * 5)]; body += `<div class="roll-outcome"><span class="roll-failure">Знамения смутны.</span></div><div class="roll-threshold">Оценка Проводника: длительность ${g.mult}, Астрономикон: ${escHtml(g.astro)}</div>`; }
-    await this._jPost(`${veilIcon("eye")} Чтение знамений — ${escHtml(a.name)}`, "stable", body, [res.roll]);
+    else { const g = GUIDE_ESTIMATE[Math.floor(Math.random() * 5)]; body += `<div class="roll-outcome"><span class="roll-failure">Знамения смутны.</span></div><div class="roll-threshold">Оценка Проводника: длительность ${g.mult}, Астрономикон: ${esc(g.astro)}</div>`; }
+    await this._jPost(`${veilIcon("eye")} Чтение знамений — ${esc(a.name)}`, "stable", body, [res.roll]);
   }
   async _enterWarp() {
     const loc = ENTRY_LOCATIONS.find(l => l.key === this.journey.entryLoc) || ENTRY_LOCATIONS[5];
-    if (loc.key === "mandeville") { await this._jPost(`${veilIcon("spiral")} Вход в варп — ${escHtml(loc.label)}`, "stable", `<div class="roll-outcome"><span class="roll-success">${escHtml(loc.success)}</span></div>`); return; }
-    if (loc.mod === null) { await this._jPost(`${veilIcon("spiral")} Вход в варп — ${escHtml(loc.label)}`, "torn", `<div class="roll-outcome"><span class="roll-failure">Авто-провал.</span></div><div class="roll-threshold">${escHtml(loc.fail)}</div>`); return; }
+    if (loc.key === "mandeville") { await this._jPost(`${veilIcon("spiral")} Вход в варп — ${esc(loc.label)}`, "stable", `<div class="roll-outcome"><span class="roll-success">${esc(loc.success)}</span></div>`); return; }
+    if (loc.mod === null) { await this._jPost(`${veilIcon("spiral")} Вход в варп — ${esc(loc.label)}`, "torn", `<div class="roll-outcome"><span class="roll-failure">Авто-провал.</span></div><div class="roll-threshold">${esc(loc.fail)}</div>`); return; }
     const a = this._journeyNav();
     const base = this._jSkillTotal(a, this.journey.helmSkill) ?? 30;
     const res = await this._roll(base + loc.mod);
     let body = `<div class="roll-threshold">Operate (Voidship): ${base} ${loc.mod} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
-    if (res.success) body += `<div class="roll-outcome"><span class="roll-success">${escHtml(loc.success)}</span></div>`;
-    else { this.journey.emergency = true; this.render(false); body += `<div class="roll-outcome"><span class="roll-failure">${escHtml(loc.fail)}</span></div>`; }
-    await this._jPost(`${veilIcon("spiral")} Вход в варп — ${escHtml(loc.label)}`, res.success ? "stable" : "torn", body, [res.roll]);
+    if (res.success) body += `<div class="roll-outcome"><span class="roll-success">${esc(loc.success)}</span></div>`;
+    else { this.journey.emergency = true; this.render(false); body += `<div class="roll-outcome"><span class="roll-failure">${esc(loc.fail)}</span></div>`; }
+    await this._jPost(`${veilIcon("spiral")} Вход в варп — ${esc(loc.label)}`, res.success ? "stable" : "torn", body, [res.roll]);
   }
   async _findBeacon() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
@@ -946,7 +945,7 @@ export class VeilMystic extends Application {
     const res = await this._roll(base + mod);
     const bm = (res.success ? 1 : -1) * Math.floor(Math.abs(res.deg) / 2) * 10;
     this.journey.beaconMod = bm; this.render(false);
-    await this._jPost(`${veilIcon("star")} Поиск Астрономикона — ${escHtml(a.name)}`, "stable",
+    await this._jPost(`${veilIcon("star")} Поиск Астрономикона — ${esc(a.name)}`, "stable",
       `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div><div class="roll-outcome">${res.success ? `<span class="roll-success">Маяк найден — ${res.deg} ${degWord(res.deg)}` : `<span class="roll-failure">Маяк тускл — ${Math.abs(res.deg)} ${degWord(res.deg)}`} → мод. навигации <b>${bm >= 0 ? "+" : ""}${bm}</b></span></div>`, [res.roll]);
   }
   async _directShip() {
@@ -956,15 +955,15 @@ export class VeilMystic extends Application {
     const res = await this._roll(base + mod);
     const mult = jumpDurationMult(res.deg);
     const real = this.journey.baseDuration != null ? `≈ ${Math.ceil(this.journey.baseDuration * ({ "×1/4": .25, "×1/2": .5, "×3/4": .75, "×1": 1, "×2": 2, "×3": 3, "×4": 4 }[mult] || 1))} дн.` : "";
-    await this._jPost(`${veilIcon("compass")} Направление корабля — ${escHtml(a.name)}`, "stable",
+    await this._jPost(`${veilIcon("compass")} Направление корабля — ${esc(a.name)}`, "stable",
       `<div class="roll-threshold">Navigation (Warp): ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b> → ${res.deg > 0 ? res.deg + " СУ" : Math.abs(res.deg) + " СП"}</div><div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка: <b>${mult}</b> ${real}</span></div>`, [res.roll]);
   }
   async _warpEncounter() {
     const r = await new Roll("1d100").evaluate();
     const row = lookupTable(WARP_ENCOUNTERS, r.total);
     const tier = r.total <= 20 ? "stable" : (r.total >= 71 ? "torn" : "thin");
-    await this._jPost(`${veilIcon("warning")} Варп-столкновение — ${escHtml(row.name)}`, tier,
-      `<div class="roll-dice">1d100: <b>${r.total}</b></div><div class="roll-threshold">${escHtml(row.text)}</div>`, [r]);
+    await this._jPost(`${veilIcon("warning")} Варп-столкновение — ${esc(row.name)}`, tier,
+      `<div class="roll-dice">1d100: <b>${r.total}</b></div><div class="roll-threshold">${esc(row.text)}</div>`, [r]);
   }
   async _warpInvasion() {
     const g = this.journey.gellar;
@@ -972,8 +971,8 @@ export class VeilMystic extends Application {
     const r = await new Roll("1d100").evaluate();
     const total = Math.max(1, Math.min(100, r.total + mod));
     const row = lookupTable(WARP_INVASIONS, total);
-    await this._jPost(`${veilIcon("demon")} Варп-вторжение — ${escHtml(row.name)}`, "torn",
-      `<div class="roll-dice">1d100: <b>${r.total}</b>${mod ? ` ${mod >= 0 ? "+" : ""}${mod} (Геллер) = ${total}` : ""}</div><div class="roll-threshold">${escHtml(row.text)}</div>`, [r]);
+    await this._jPost(`${veilIcon("demon")} Варп-вторжение — ${esc(row.name)}`, "torn",
+      `<div class="roll-dice">1d100: <b>${r.total}</b>${mod ? ` ${mod >= 0 ? "+" : ""}${mod} (Геллер) = ${total}` : ""}</div><div class="roll-threshold">${esc(row.text)}</div>`, [r]);
   }
   async _exitWarp() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
@@ -982,15 +981,15 @@ export class VeilMystic extends Application {
     const res = await this._roll(base + mod);
     let body = `<div class="roll-threshold">Navigation (Warp) −20: ${base} ${mod >= 0 ? "+" : ""}${mod} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
     if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Точный выход — ${res.deg} ${degWord(res.deg)}.</span></div>`;
-    else { const er = await new Roll("1d100").evaluate(); const row = lookupTable(INACCURATE_EXIT, er.total); body += `<div class="roll-outcome"><span class="roll-failure">Отклонение от курса.</span></div><div class="roll-threshold">Неаккуратный выход (1d100: ${er.total}): ${escHtml(row.text)}</div>`; await this._jPost(`${veilIcon("door")} Выход из варпа — ${escHtml(a.name)}`, "torn", body, [res.roll, er]); return; }
-    await this._jPost(`${veilIcon("door")} Выход из варпа — ${escHtml(a.name)}`, "stable", body, [res.roll]);
+    else { const er = await new Roll("1d100").evaluate(); const row = lookupTable(INACCURATE_EXIT, er.total); body += `<div class="roll-outcome"><span class="roll-failure">Отклонение от курса.</span></div><div class="roll-threshold">Неаккуратный выход (1d100: ${er.total}): ${esc(row.text)}</div>`; await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "torn", body, [res.roll, er]); return; }
+    await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "stable", body, [res.roll]);
   }
   async _warpStorm() {
     const r = await new Roll("1d5").evaluate();
     const row = WARP_STORMS[r.total - 1] || WARP_STORMS[0];
     if (game.user.isGM) veilShift(row.veil, `Варп-шторм (сила ${row.s})`);
     await this._jPost(`${veilIcon("storm")} Варп-шторм — сила ${row.s}`, "infernal",
-      `<div class="roll-dice">1d5: <b>${r.total}</b></div><div class="roll-threshold"><b>Астропатия:</b> ${escHtml(row.astro)}</div><div class="roll-threshold"><b>Путешествия:</b> ${escHtml(row.travel)}</div><div class="rf-veil">Завеса истончается на +${row.veil}.</div>`, [r]);
+      `<div class="roll-dice">1d5: <b>${r.total}</b></div><div class="roll-threshold"><b>Астропатия:</b> ${esc(row.astro)}</div><div class="roll-threshold"><b>Путешествия:</b> ${esc(row.travel)}</div><div class="rf-veil">Завеса истончается на +${row.veil}.</div>`, [r]);
   }
 
   // Применить пресет ритуала к текущему Ритуалисту.
@@ -1041,9 +1040,9 @@ export class VeilMystic extends Application {
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result wh-ritual-card">
-        <div class="roll-header">${veilIcon("ritual")} Ритуал: ${escHtml(R.name || typeLabel)}</div>
-        <div class="roll-threshold">${escHtml(actor.name)} · ${escHtml(typeLabel)} → Порог: <b>${threshold}</b></div>
-        <div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${escHtml(breakdown)}</div>
+        <div class="roll-header">${veilIcon("ritual")} Ритуал: ${esc(R.name || typeLabel)}</div>
+        <div class="roll-threshold">${esc(actor.name)} · ${esc(typeLabel)} → Порог: <b>${threshold}</b></div>
+        <div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${esc(breakdown)}</div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${success
           ? `<span class="roll-success">Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}</span>`
@@ -1059,8 +1058,8 @@ export class VeilMystic extends Application {
   async _confirmUnmet(actor, failed) {
     return Dialog.confirm({
       title: "Требования ритуала не выполнены",
-      content: `<p><b>${escHtml(actor.name)}</b> не проходит требования ритуала:</p>
-        <ul>${failed.map(f => `<li>${escHtml(f)}</li>`).join("")}</ul>
+      content: `<p><b>${esc(actor.name)}</b> не проходит требования ритуала:</p>
+        <ul>${failed.map(f => `<li>${esc(f)}</li>`).join("")}</ul>
         <p>Провести всё равно?</p>`,
       defaultYes: false
     });
@@ -1079,8 +1078,8 @@ export class VeilMystic extends Application {
       const a = lookupAversion(total);
       if (a.veil && game.user.isGM) veilShift(a.veil, `Отвращение Варпа: ${a.name}`);
       return `<div class="wh-ritual-fail wv-tier-torn">
-        <div class="rf-title">${veilIcon("spiral")} Отвращение Варпа: ${aRoll.total}${extraTxt} = <b>${total}</b> → ${escHtml(a.name)}</div>
-        <div class="rf-text">${escHtml(a.text)}</div>
+        <div class="rf-title">${veilIcon("spiral")} Отвращение Варпа: ${aRoll.total}${extraTxt} = <b>${total}</b> → ${esc(a.name)}</div>
+        <div class="rf-text">${esc(a.text)}</div>
         ${a.veil ? `<div class="rf-veil">Завеса истончается на +${a.veil}.</div>` : ""}</div>`;
     }
     if (kind === "curse") {
@@ -1097,8 +1096,8 @@ export class VeilMystic extends Application {
     const tx = obj.text || obj.effect || obj.desc || "";
     const failLabel = asBreach ? `${veilIcon("storm")} Варп-Прорыв` : `${veilIcon("star")} Психический Феномен`;
     return `<div class="wh-ritual-fail wv-tier-thin">
-      <div class="rf-title">${failLabel}: ${fRoll.total}${extraTxt} = <b>${total}</b> → ${escHtml(nm)}</div>
-      ${tx ? `<div class="rf-text">${escHtml(tx)}</div>` : ""}</div>`;
+      <div class="rf-title">${failLabel}: ${fRoll.total}${extraTxt} = <b>${total}</b> → ${esc(nm)}</div>
+      ${tx ? `<div class="rf-text">${esc(tx)}</div>` : ""}</div>`;
   }
 
   _announce() {
@@ -1109,18 +1108,18 @@ export class VeilMystic extends Application {
     const active = VEIL_FACTORS.filter(f => v.factors[f.key])
       .map(f => `${f.label} (${f.value > 0 ? "+" : ""}${f.value})`);
     const rituals = (v.rituals || []).filter(r => r.active)
-      .map(r => `${escHtml(r.name)} (${(Number(r.delta) || 0) > 0 ? "+" : ""}${Number(r.delta) || 0})`);
-    const factorsHtml = active.length ? `<div class="wv-chat-factors">${active.map(escHtml).join(" · ")}</div>` : "";
+      .map(r => `${esc(r.name)} (${(Number(r.delta) || 0) > 0 ? "+" : ""}${Number(r.delta) || 0})`);
+    const factorsHtml = active.length ? `<div class="wv-chat-factors">${active.map(esc).join(" · ")}</div>` : "";
     const ritualsHtml = rituals.length ? `<div class="wv-chat-factors">Ритуалы: ${rituals.join(" · ")}</div>` : "";
     ChatMessage.create(ChatMessage.applyRollMode({
       speaker: { alias: "Завеса" },
       content: `<div class="wh-veil-chat wv-tier-${info.tier}">
         <div class="wv-chat-head">◈ ИСТОНЧЕНИЕ ЗАВЕСЫ ◈</div>
-        <div class="wv-chat-scene">${escHtml(scene?.name || "")}</div>
+        <div class="wv-chat-scene">${esc(scene?.name || "")}</div>
         <div class="wv-chat-total">${total > 0 ? "+" : ""}${total}</div>
-        <div class="wv-chat-label">${escHtml(info.label)}</div>
+        <div class="wv-chat-label">${esc(info.label)}</div>
         ${factorsHtml}${ritualsHtml}
-        <div class="wv-chat-cons">${escHtml(info.consequence)}</div>
+        <div class="wv-chat-cons">${esc(info.consequence)}</div>
       </div>`
     }, game.settings.get("core", "rollMode")));
   }

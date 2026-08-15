@@ -1,4 +1,5 @@
-<form class="warhammer-dbc demon-prince-sheet dp-god-{{dp.godKey}}" autocomplete="off" style="--gc:{{dp.god.color}}; --gc2:{{dp.god.gc2}}; --glow:{{dp.god.glow}};">
+{{!-- Обёртка — <div>: форма теперь корневой элемент окна (ApplicationV2). --}}
+<div class="warhammer-dbc demon-prince-sheet dp-god-{{dp.godKey}}" style="--gc:{{dp.god.color}}; --gc2:{{dp.god.gc2}}; --glow:{{dp.god.glow}};">
 
   {{!-- ── ШАПКА-АПОФЕОЗ: чистый Варп ────────────────────────────────────── --}}
   <header class="dp-header">
@@ -6,7 +7,7 @@
     <div class="dp-warp-layer dp-warp-b"></div>
     <div class="dp-warp-veins"></div>
     <div class="dp-header-content">
-      <div class="dp-sigil" title="{{dp.god.label}} — {{dp.god.epithet}} · клик, чтобы сменить аватар (ПКМ — вернуть сигил)">
+      <div class="dp-sigil" data-action="dpAvatar" title="{{dp.god.label}} — {{dp.god.epithet}} · клик, чтобы сменить аватар (ПКМ — вернуть сигил)">
         <div class="dp-sigil-ring"></div>
         <div class="dp-sigil-ring dp-sigil-ring2"></div>
         {{#if dp.customImg}}
@@ -45,9 +46,9 @@
       <div class="dp-vitals">
         <div class="dp-favor" title="Фавор — милость патрона. Тратится на Демонические Дары.">
           <span class="dp-favor-label">ФАВОР</span>
-          <button type="button" class="dp-favor-minus" title="−1 Фавор">−</button>
+          <button type="button" class="dp-favor-minus" data-action="dpFavorMinus" title="−1 Фавор">−</button>
           <span class="dp-favor-value">{{dp.favor}}</span>
-          <button type="button" class="dp-favor-plus" title="+1 Фавор">+</button>
+          <button type="button" class="dp-favor-plus" data-action="dpFavorPlus" title="+1 Фавор">+</button>
         </div>
         <div class="dp-favor-pips">
           {{#each dp.favorPips as |on|}}<span class="dp-pip {{#if on}}on{{/if}}"></span>{{/each}}
@@ -55,8 +56,8 @@
         <div class="dp-vrow"><span>Раны</span><b>{{system.wounds.value}}/{{system.wounds.max}}</b></div>
         <div class="dp-vrow"><span>Размер</span><b>{{system.size}}</b></div>
         <div class="dp-btns">
-          <button type="button" class="dp-instability-btn" title="Тест Варп-Нестабильности (W)">Нестабильность</button>
-          <button type="button" class="dp-favor-escape-btn" title="1 Фавор: избежать изгнания в Варп">Спасение</button>
+          <button type="button" class="dp-instability-btn" data-action="dpInstability" title="Тест Варп-Нестабильности (W)">Нестабильность</button>
+          <button type="button" class="dp-favor-escape-btn" data-action="dpFavorEscape" title="1 Фавор: избежать изгнания в Варп">Спасение</button>
         </div>
       </div>
     </div>
@@ -80,14 +81,14 @@
 
   {{!-- ── ВКЛАДКИ ─────────────────────────────────────────────────────────── --}}
   <nav class="sheet-tabs tabs" data-group="primary">
-    <a class="item" data-tab="stats">ПОКАЗАТЕЛИ</a>
-    <a class="item" data-tab="combat">БОЙ</a>
-    <a class="item" data-tab="abilities">СПОСОБНОСТИ</a>
-    {{#if dp.showPsy}}<a class="item" data-tab="psy">ПСИ</a>{{/if}}
-    <a class="item" data-tab="gear">СНАРЯЖЕНИЕ</a>
-    <a class="item" data-tab="advance">РАЗВИТИЕ</a>
-    <a class="item dp-tab-apotheosis" data-tab="apotheosis">АПОФЕОЗ</a>
-    <a class="item" data-tab="notes">ЗАПИСИ</a>
+    <a class="item {{#if (eq tab "stats")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="stats">ПОКАЗАТЕЛИ</a>
+    <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a>
+    <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a>
+    {{#if dp.showPsy}}<a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">ПСИ</a>{{/if}}
+    <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a>
+    <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a>
+    <a class="item dp-tab-apotheosis {{#if (eq tab "apotheosis")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="apotheosis">АПОФЕОЗ</a>
+    <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="notes">ЗАПИСИ</a>
   </nav>
 
   <div class="sheet-body">
@@ -99,7 +100,7 @@
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}
 
     {{!-- ── АПОФЕОЗ: Фавор, Дары, Возвышение ──────────────────────────────── --}}
-    <div class="tab dp-apotheosis" data-tab="apotheosis" data-group="primary">
+    <div class="tab dp-apotheosis {{#if (eq tab "apotheosis")}}active{{/if}}" data-tab="apotheosis" data-group="primary">
 
       {{!-- Божественная пара трейтов --}}
       <div class="dp-panel dp-panel-god">
@@ -118,8 +119,8 @@
       {{!-- Возвышение: авто-применение Мощи и Природы --}}
       <div class="dp-panel dp-panel-ascend">
         <div class="dp-panel-title">ВОЗВЫШЕНИЕ В ДЕМОНИЧЕСТВО
-          {{#unless dp.ascended}}<button type="button" class="dp-ascend-btn" title="Применить Демоническую Мощь (+10 S/T, +20 Ран, +10 союзной) и Трейты Демонической Природы (Daemonic +4, Unnatural S/T +3, Size 2, Fear 3, …) — предметами, движок посчитает Поглощение сам.">⛧ Провести Возвышение</button>
-          {{else}}<span class="dp-ascended-badge">✦ Возвышён</span><button type="button" class="dp-unascend-btn" title="Удалить авто-Трейты Возвышения и вернуть −20 Ран.">Откатить</button>{{/unless}}
+          {{#unless dp.ascended}}<button type="button" class="dp-ascend-btn" data-action="dpAscend" title="Применить Демоническую Мощь (+10 S/T, +20 Ран, +10 союзной) и Трейты Демонической Природы (Daemonic +4, Unnatural S/T +3, Size 2, Fear 3, …) — предметами, движок посчитает Поглощение сам.">⛧ Провести Возвышение</button>
+          {{else}}<span class="dp-ascended-badge">✦ Возвышён</span><button type="button" class="dp-unascend-btn" data-action="dpUnascend" title="Удалить авто-Трейты Возвышения и вернуть −20 Ран.">Откатить</button>{{/unless}}
         </div>
         <div class="dp-note">Кнопка автоматически создаёт Трейты Мощи и Природы (видны на вкладке СПОСОБНОСТИ) и +20 к максимуму Ран. Поглощение (Daemonic→T.b), Unnatural S/T, Размер и Страх применяются движком.</div>
         <div class="dp-reflist" style="margin-top:6px;">
@@ -132,7 +133,7 @@
       {{!-- Проявление: форма и длительность --}}
       <div class="dp-panel dp-panel-manifest">
         <div class="dp-panel-title">ПРОЯВЛЕНИЕ В МАТЕРИУМЕ
-          <button type="button" class="dp-manifest-btn" title="Бросок длительности пребывания в текущей форме (с учётом Истончения Завесы и Якорей).">🌀 Проявиться</button>
+          <button type="button" class="dp-manifest-btn" data-action="dpManifest" title="Бросок длительности пребывания в текущей форме (с учётом Истончения Завесы и Якорей).">🌀 Проявиться</button>
         </div>
         <div class="dp-manifest-row">
           <label class="dp-form-sel">Форма
@@ -153,8 +154,8 @@
 
       {{!-- Фавор --}}
       <div class="dp-panel">
-        <div class="dp-panel-title">ФАВОР <button type="button" class="dp-ascend-favor-btn" title="Рассчитать стартовый Фавор: 1 за каждые полные 20 Бесчестия">⛧ Вознесение</button>
-          <button type="button" class="dp-favor-infamy-btn" title="1 Фавор → +10 Бесчестия (до 60)">Фавор → Бесчестие</button>
+        <div class="dp-panel-title">ФАВОР <button type="button" class="dp-ascend-favor-btn" data-action="dpAscendFavor" title="Рассчитать стартовый Фавор: 1 за каждые полные 20 Бесчестия">⛧ Вознесение</button>
+          <button type="button" class="dp-favor-infamy-btn" data-action="dpFavorInfamy" title="1 Фавор → +10 Бесчестия (до 60)">Фавор → Бесчестие</button>
         </div>
         {{#each dp.favorRules as |r|}}<div class="dp-note">• {{r}}</div>{{/each}}
       </div>
@@ -168,7 +169,7 @@
           <div class="dp-gift-owned" data-gift-id="{{g.id}}">
             <span class="dp-gift-owned-name">{{g.name}}{{g.xLabel}}</span>
             <span class="dp-gift-owned-cost" title="Потрачено Фавора">{{g.paid}}◆</span>
-            {{#unless g.noSacrifice}}<button type="button" class="dp-gift-sacrifice" title="Пожертвовать даром: вернуть половину Фавора (окр.▼, не выше 5)">🕯</button>{{/unless}}
+            {{#unless g.noSacrifice}}<button type="button" class="dp-gift-sacrifice" data-action="dpGiftSacrifice" title="Пожертвовать даром: вернуть половину Фавора (окр.▼, не выше 5)">🕯</button>{{/unless}}
           </div>
           {{/each}}
         </div>
@@ -188,7 +189,7 @@
               <span class="dp-gift-cost {{#unless g.affordable}}poor{{/unless}}"><span>{{g.costLabel}}</span></span>
               <span class="dp-gift-name">{{g.label}}{{#if g.auto}} <span class="dp-gift-auto" title="Автоматизирован: применяется движком при взятии">⚙</span>{{/if}}</span>
               {{#if g.owned}}<span class="dp-gift-badge">×{{g.owned}}</span>{{/if}}
-              <button type="button" class="dp-gift-buy" title="Взять дар за {{g.costLabel}} Фавора">Взять</button>
+              <button type="button" class="dp-gift-buy" data-action="dpGiftBuy" title="Взять дар за {{g.costLabel}} Фавора">Взять</button>
             </div>
             <div class="dp-gift-text">{{g.text}}</div>
           </div>
@@ -207,7 +208,7 @@
               <span class="dp-gift-cost {{#unless g.affordable}}poor{{/unless}}"><span>{{g.costLabel}}</span></span>
               <span class="dp-gift-name">{{g.label}}{{#if g.auto}} <span class="dp-gift-auto" title="Автоматизирован: применяется движком при взятии">⚙</span>{{/if}}</span>
               {{#if g.owned}}<span class="dp-gift-badge">×{{g.owned}}</span>{{/if}}
-              <button type="button" class="dp-gift-buy" title="Взять дар за {{g.costLabel}} Фавора">Взять</button>
+              <button type="button" class="dp-gift-buy" data-action="dpGiftBuy" title="Взять дар за {{g.costLabel}} Фавора">Взять</button>
             </div>
             <div class="dp-gift-text">{{g.text}}</div>
           </div>
@@ -258,4 +259,4 @@
 
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
   </div>
-</form>
+</div>

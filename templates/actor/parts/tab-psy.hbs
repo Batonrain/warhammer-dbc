@@ -1,4 +1,4 @@
-<div class="tab psy-tab psy-theme-{{psyker.themeKey}}" data-tab="psy" data-group="primary">
+<div class="tab psy-tab psy-theme-{{psyker.themeKey}} {{#if (eq tab "psy")}}active{{/if}}" data-tab="psy" data-group="primary">
 
   {{!-- анимированный варп-фон вкладки --}}
   <div class="psy-veil-bg" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -92,7 +92,7 @@
         {{#if psyPowers.length}}
           {{#each psyPowers as |p|}}
           <tr class="item-row {{#if p.isSustained}}psy-row-sustained{{/if}}" data-item-id="{{p.id}}">
-            <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-item-id="{{p.id}}" title="Показать/скрыть описание">▸</button></td>
+            <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{p.id}}" title="Показать/скрыть описание">▸</button></td>
             <td class="item-name-cell"><span class="psy-power-name">{{p.name}}</span>
               {{#if p.disciplineLabel}}<div class="psy-discipline-sub">{{p.disciplineLabel}}{{#if p.subtype}} · {{p.subtype}}{{/if}}{{#if p.damage}} · <span class="psy-dmg-sub">урон {{p.damage}}</span>{{/if}}</div>{{else}}{{#if p.damage}}<div class="psy-discipline-sub"><span class="psy-dmg-sub">урон {{p.damage}}</span></div>{{/if}}{{/if}}
             </td>

@@ -21,10 +21,8 @@
 //  Деревья кэшируются на сессию (_treeCache) — компендиумы меняются редко;
 //  кнопка «↻ Обновить» в шапке диалога форсирует пересборку.
 // ════════════════════════════════════════════════════════════════════════
-
 import { matchesFilters, normalizePick } from "./compendium-filters.mjs";
-
-const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+import { esc } from "../helpers/utils.mjs";
 
 const TAB_DEFS = [
   { key: "all",       label: "Все" },

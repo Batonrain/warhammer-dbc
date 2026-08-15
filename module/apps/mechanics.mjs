@@ -157,6 +157,7 @@ import { expectedPhase }                      from "../constants/effect-keys.mjs
 import { RACES }                              from "../constants/races.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const FLAG = "warhammer-dbc";
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
@@ -238,8 +239,6 @@ const WEAPON_PROP_ACTIONS = [
   ["add", "Добавить свойство"], ["remove", "Убрать свойство"], ["replace", "Заменить свойство"]
 ];
 const WEAPON_PROP_ACTIONS_RATED = [["increase", "Увеличить рейтинг"], ["decrease", "Уменьшить рейтинг"]];
-
-const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** Текст специализации для превью skill/rollmod — учитывает specKey:"__choice__". */
 function specChoiceLabel(entry) {
@@ -1291,7 +1290,7 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     const dropInner = ent.sourceUuid
       ? `<img src="${esc(ent.sourceImg || "icons/svg/item-bag.svg")}" class="grant-drop-img"/>
          <span class="grant-drop-name">${esc(ent.sourceName || "?")}</span>
-         ${isGM ? `<button type="button" class="grant-drop-clear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
+         ${isGM ? `<button type="button" class="grant-drop-clear" data-action="grantDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
       : `<span class="grant-drop-placeholder">${isGM ? `Перетащите ${ent.kind === "trait" ? "Черту" : "Талант"} сюда` : "—"}</span>`;
     let out = `<div class="grant-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}">${dropInner}</div>`;
     if (ent.kind === "trait" && ent.sourceHasRating) {
@@ -1420,7 +1419,7 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     const dropZone = (slot, key, label) => {
       const inner = key
         ? `<span class="grant-drop-name">${esc(label || key)}</span>
-           ${isGM ? `<button type="button" class="wprop-drop-clear" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}" title="Убрать">✕</button>` : ""}`
+           ${isGM ? `<button type="button" class="wprop-drop-clear" data-action="wpropDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}" title="Убрать">✕</button>` : ""}`
         : `<span class="grant-drop-placeholder">${isGM ? "Перетащите Свойство оружия сюда" : "—"}</span>`;
       return `<div class="grant-drop-zone wprop-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}">${inner}</div>`;
     };
@@ -1452,16 +1451,29 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
   return "";
 }
 
-/** Дроплисты выбора навыка (+специализации, для групповых) — общие для kind:"skill" и kind:"rollmod". */
-function buildSkillSelectorHtml(groupId, ent, dis) {
+/**
+ * <select> выбора навыка: обычные и групповые двумя optgroup, значение
+ * кодируется как «scope:key». Один и тот же список нужен обоим конструкторам
+ * предмета — Механике и Требованиям, — а различаются они только классом и
+ * набором data-атрибутов, поэтому и те и другие приходят параметром
+ * (wdbc-c4o). Специализация сюда не входит: у Механики в ней есть «Своя…» и
+ * «По выбору при получении…», у Требований — «любая», и это разные списки.
+ */
+function skillRefSelectHtml(cls, dataAttrs, ent, dis) {
   const curVal = ent.skillKey ? `${ent.skillScope}:${ent.skillKey}` : "";
   const plainOpts = Object.entries(SKILLS_DEF).map(([k, d]) => optHtml(`plain:${k}`, d.label, curVal === `plain:${k}`)).join("");
   const groupOpts = Object.entries(GROUP_SKILLS_DEF).map(([k, d]) => optHtml(`group:${k}`, d.label, curVal === `group:${k}`)).join("");
-  let out = `<select class="grant-entry-skillref" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+  return `<select class="${cls}" ${dataAttrs} ${dis}>
     <option value="">— выберите навык —</option>
     <optgroup label="Обычные">${plainOpts}</optgroup>
     <optgroup label="Групповые">${groupOpts}</optgroup>
   </select>`;
+}
+
+/** Дроплисты выбора навыка (+специализации, для групповых) — общие для kind:"skill" и kind:"rollmod". */
+function buildSkillSelectorHtml(groupId, ent, dis) {
+  let out = skillRefSelectHtml("grant-entry-skillref",
+    `data-group-id="${groupId}" data-entry-id="${ent.id}"`, ent, dis);
   if (ent.skillScope === "group" && ent.skillKey) {
     const specs = specOptions(ent.skillKey);
     const isChoice = ent.specKey === "__choice__";
@@ -1507,7 +1519,7 @@ function buildEntryHtml(groupId, ent, isGM, depth = 1) {
     <div class="grant-entry-row">
       <select class="grant-entry-kind" data-group-id="${groupId}" data-entry-id="${ent.id}" ${isGM ? "" : "disabled"}>${kindOpts}</select>
       ${buildEntryFieldsHtml(groupId, ent, isGM)}
-      ${isGM ? `<button type="button" class="grant-entry-remove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
+      ${isGM ? `<button type="button" class="grant-entry-remove" data-action="grantEntryRemove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
     </div>
     <div class="grant-entry-preview">${esc(describeMechEntry(ent))}</div>
     ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), isGM, depth + 1, true) : ""}
@@ -1527,11 +1539,11 @@ function buildGroupHtml(grp, isGM, depth = 1, nested = false) {
     <div class="grant-group-head">
       <span class="grant-op-badge grant-op-${grp.operator}">${grp.operator === "OR" ? "ИЛИ" : "И"}</span>
       <span class="grant-op-hint">${opHint}</span>
-      ${isGM ? `<button type="button" class="grant-op-toggle" data-group-id="${grp.id}" title="Переключить И/ИЛИ">⇄</button>` : ""}
-      ${isGM && !nested ? `<button type="button" class="grant-group-remove" data-group-id="${grp.id}" title="Удалить группу">✕</button>` : ""}
+      ${isGM ? `<button type="button" class="grant-op-toggle" data-action="grantOpToggle" data-group-id="${grp.id}" title="Переключить И/ИЛИ">⇄</button>` : ""}
+      ${isGM && !nested ? `<button type="button" class="grant-group-remove" data-action="grantGroupRemove" data-group-id="${grp.id}" title="Удалить группу">✕</button>` : ""}
     </div>
     <div class="grant-entries">${entriesHtml}</div>
-    ${isGM ? `<button type="button" class="grant-entry-add" data-group-id="${grp.id}">➕ Запись</button>` : ""}
+    ${isGM ? `<button type="button" class="grant-entry-add" data-action="grantEntryAdd" data-group-id="${grp.id}">➕ Запись</button>` : ""}
   </div>`;
 }
 
@@ -1718,16 +1730,9 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
   const d = `data-req="${reqKey}" data-group-id="${groupId}" data-entry-id="${e.id}"`;
   switch (e.kind) {
     case "reqSkill": {
-      const cur = e.skillKey ? `${e.skillScope}:${e.skillKey}` : "";
-      const plain = Object.entries(SKILLS_DEF).map(([k, def]) => optHtml(`plain:${k}`, def.label, cur === `plain:${k}`)).join("");
-      const grp   = Object.entries(GROUP_SKILLS_DEF).map(([k, def]) => optHtml(`group:${k}`, def.label, cur === `group:${k}`)).join("");
       const ranks = Object.entries(SKILL_RANKS).map(([k, def]) => optHtml(k, def.label, (e.rank || "knows") === k)).join("");
-      let out = `<select class="req-skillref" ${d} ${dis}>
-        <option value="">— выберите навык —</option>
-        <optgroup label="Обычные">${plain}</optgroup>
-        <optgroup label="Групповые">${grp}</optgroup>
-      </select>
-      <select class="req-rank" ${d} ${dis}>${ranks}</select>`;
+      let out = skillRefSelectHtml("req-skillref", d, e, dis)
+        + `<select class="req-rank" ${d} ${dis}>${ranks}</select>`;
       if (e.skillScope === "group" && e.skillKey) {
         const specs = specOptions(e.skillKey).map(s => optHtml(s.key, s.display, e.specKey === s.key)).join("");
         out += `<select class="req-spec" ${d} ${dis}>
@@ -1742,7 +1747,7 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
       const inner = (e.sourceUuid || e.sourceName)
         ? `<img src="${esc(e.sourceImg || "icons/svg/aura.svg")}" class="grant-drop-img"/>
            <span class="grant-drop-name">${esc(e.sourceName || "?")}</span>
-           ${dis ? "" : `<button type="button" class="req-drop-clear" ${d} title="Убрать">✕</button>`}`
+           ${dis ? "" : `<button type="button" class="req-drop-clear" data-action="reqDropClear" ${d} title="Убрать">✕</button>`}`
         : `<span class="grant-drop-placeholder">${dis ? "—" : `Перетащите ${what} сюда`}</span>`;
       let out = `<div class="grant-drop-zone req-drop-zone" ${d}>${inner}</div>`;
       // Рейтинг только у Черты. У Таланта поля rating в схеме нет
@@ -1784,7 +1789,7 @@ function buildReqGroupHtml(reqKey, grp, isGM) {
       <div class="grant-entry-row">
         <select class="req-entry-kind" data-req="${reqKey}" data-group-id="${grp.id}" data-entry-id="${e.id}" ${dis}>${kindOpts}</select>
         ${buildReqFieldsHtml(reqKey, grp.id, e, dis)}
-        ${isGM ? `<button type="button" class="req-entry-remove" data-req="${reqKey}" data-group-id="${grp.id}" data-entry-id="${e.id}" title="Удалить условие">✕</button>` : ""}
+        ${isGM ? `<button type="button" class="req-entry-remove" data-action="reqEntryRemove" data-req="${reqKey}" data-group-id="${grp.id}" data-entry-id="${e.id}" title="Удалить условие">✕</button>` : ""}
       </div>
       <div class="grant-entry-preview">${esc(describeReqEntry(e))}</div>
     </div>`;
@@ -1795,12 +1800,12 @@ function buildReqGroupHtml(reqKey, grp, isGM) {
     <div class="grant-group-head">
       <span class="grant-op-badge grant-op-${grp.operator}">${grp.operator === "OR" ? "ИЛИ" : "И"}</span>
       <span class="grant-op-hint">${opHint}</span>
-      ${isGM ? `<button type="button" class="req-op-toggle" ${d} title="Переключить И/ИЛИ">⇄</button>` : ""}
-      ${isGM ? `<button type="button" class="req-group-remove" ${d} title="Удалить группу">✕</button>` : ""}
+      ${isGM ? `<button type="button" class="req-op-toggle" data-action="reqOpToggle" ${d} title="Переключить И/ИЛИ">⇄</button>` : ""}
+      ${isGM ? `<button type="button" class="req-group-remove" data-action="reqGroupRemove" ${d} title="Удалить группу">✕</button>` : ""}
     </div>
     <div class="grant-entries">${entries}</div>
     ${isGM ? `<div class="mech-group-add-row">
-      <button type="button" class="req-entry-add" ${d}>➕ Условие</button>
+      <button type="button" class="req-entry-add" data-action="reqEntryAdd" ${d}>➕ Условие</button>
     </div>` : ""}
   </div>`;
 }

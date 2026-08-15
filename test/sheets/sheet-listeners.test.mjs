@@ -30,8 +30,9 @@ function applyPath(target, path, value) {
 }
 
 /**
- * Лист с записывающим актором. Конструктор ApplicationV1 не вызывается, поэтому
- * поля класса не инициализированы — слушатели заводят своё состояние сами.
+ * Лист с записывающим актором. Конструктор приложения не вызывается, поэтому
+ * поля класса (состояние свёрток окна) проставляем сами — в игре их заводит
+ * сам класс.
  */
 function sheetFor({ items = [], ...system } = {}) {
   const list = [...items];
@@ -61,7 +62,9 @@ function sheetFor({ items = [], ...system } = {}) {
 /** Навесить слушатели листа и вернуть их по ключу «селектор:событие». */
 function wire(sheet, nodes) {
   const html = listenerHtml(nodes);
-  sheet.activateListeners(html);
+  Object.defineProperty(sheet, "element", { value: html[0], configurable: true });
+  sheet._gearHostCollapse ??= new Set();
+  sheet._onRender({}, {});
   return html.handlers;
 }
 
@@ -333,7 +336,7 @@ describe("вкладка ЭФФЕКТЫ: Страх, Расстройства, �
 
     handlers[".corruption-roll:click"](ev());
 
-    expect(captured.dialog.title).toBe("Проверка: Воля (Порча)");
+    expect(captured.dialog.window.title).toBe("Проверка: Воля (Порча)");   // DialogV2
   });
 
   it("строка расстройства удаляется крестиком", async () => {
@@ -460,7 +463,7 @@ describe("вкладка БОЙ", () => {
     handlers[".technique-btn:click"](ev({ technique: "sweep" }));
     await flush();                                           // окно атаки собирается асинхронно
 
-    expect(captured.dialog.title).toBe("Атака: Цепной меч");
+    expect(captured.dialog.window.title).toBe("Атака: Цепной меч");
   });
 
   it("приём без оружия сразу бросает и сообщает в чат", async () => {
@@ -478,7 +481,7 @@ describe("вкладка БОЙ", () => {
 
     handlers[".weapon-attack-roll:click"](ev({ itemId: "w-1" }));
 
-    expect(captured.dialog.title).toBe("Атака: Цепной меч");
+    expect(captured.dialog.window.title).toBe("Атака: Цепной меч");
   });
 
   it("кнопка лечения открывает диалог Первой Помощи", () => {
@@ -486,7 +489,7 @@ describe("вкладка БОЙ", () => {
 
     handlers[".wounds-heal-btn:click"](ev());
 
-    expect(captured.dialog.title).toBe("Лечение");
+    expect(captured.dialog.window.title).toBe("Лечение");
   });
 
   it("Очки Боли впитываются и тратятся в пределах пула", async () => {

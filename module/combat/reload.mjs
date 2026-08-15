@@ -1,4 +1,4 @@
-import { _buildAmmoModString, _buildAmmoModDetails, _getAmmoSpent } from "../helpers/utils.mjs";
+import { _buildAmmoModString, _buildAmmoModDetails, _getAmmoSpent, esc } from "../helpers/utils.mjs";
 
 export function _getCompatibleAmmo(actor, weapon) {
   const sys        = weapon.system;
@@ -127,9 +127,9 @@ export async function _reloadWeapon(actor, weapon) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">Перезарядка — ${weapon.name}</div>
+        <div class="roll-header">Перезарядка — ${esc(weapon.name)}</div>
         <div class="roll-damage-meta">
-          Боеприпасы: <b>${preferredAmmo.name}</b>
+          Боеприпасы: <b>${esc(preferredAmmo.name)}</b>
         </div>
         <div class="roll-outcome">
           <span class="roll-success">
@@ -137,7 +137,7 @@ export async function _reloadWeapon(actor, weapon) {
           </span>
         </div>
         ${newQty === 0
-          ? `<div class="roll-allout-note">Боеприпасы <b>${preferredAmmo.name}</b> закончились!</div>`
+          ? `<div class="roll-allout-note">Боеприпасы <b>${esc(preferredAmmo.name)}</b> закончились!</div>`
           : ""}
       </div>`,
     rollMode

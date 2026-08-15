@@ -8,9 +8,7 @@
 import { PA_TABLES, PA_TABLE_ORDER, PA_TABLE_PICK, PA_SHIFT_RULE, PA_ZONES,
          entryByRoll, rangeLabel, shiftOptions } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
-
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+import { esc } from "../helpers/utils.mjs";
 
 /** Истории есть только у силовой брони Астартес. */
 export function supportsHistory(item) {
@@ -112,7 +110,7 @@ export async function rollArmourTable(item) {
 
   msg += "</div>";
   await ChatMessage.create(ChatMessage.applyRollMode(
-    { content: msg, rolls: [roll] }, { rollMode: game.settings.get("core", "rollMode") }));
+    { content: msg, rolls: [roll] }, game.settings.get("core", "rollMode")));
 }
 
 /**
@@ -145,7 +143,7 @@ export async function rollArmourEntry(item, table) {
         <div class="pa-chat-effect">${esc(e?.effect || "")}</div></div>
     </div>`,
     rolls: [roll]
-  }, { rollMode: game.settings.get("core", "rollMode") }));
+  }, game.settings.get("core", "rollMode")));
 }
 
 /** Диалог сдвига результата на ±½ Inf.b (окр.▲). */
@@ -192,5 +190,5 @@ export async function rollArmourZones(item) {
       <div class="pa-chat-zones">${lines.map(esc).join("<br/>")}</div>
     </div>`,
     rolls
-  }, { rollMode: game.settings.get("core", "rollMode") }));
+  }, game.settings.get("core", "rollMode")));
 }

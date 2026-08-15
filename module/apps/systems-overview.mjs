@@ -8,6 +8,7 @@
 
 import { RESOURCE_TYPES, RESOURCE_ICONS, improvementPool, makeImprovement, improvementUpkeep,
   improvementOutput, improvementFlow, IMP_CATEGORIES, TITHE_GRADES, TITHE_RATES, titheRate, PRODUCTION_INPUTS } from "../constants/star-system.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const { Application } = foundry.appv1.api;
 
@@ -20,7 +21,7 @@ function _resFmt(obj) {
 }
 // HTML-подсказка улучшения (для data-tooltip): категория, описание, НЕТТО «даёт / тратит».
 function _impTooltip(imp, cat) {
-  const lines = [`<b>${imp.name}</b>${cat ? ` — <i>${cat.label}</i>` : ""}`];
+  const lines = [`<b>${esc(imp.name)}</b>${cat ? ` — <i>${cat.label}</i>` : ""}`];
   if (imp.desc) lines.push(imp.desc);
   const { gives, spends } = improvementFlow(imp);
   const g = _resFmt(gives), s = _resFmt(spends);
@@ -388,10 +389,10 @@ export class StarSystemsOverview extends Application {
     new Dialog({
       title: contract ? `Контракт — ${c.name || ""}` : "Новый контракт",
       content: `${style}<form class="ss-gen">
-        <label class="ss-gen-field"><span>Название контракта</span><input type="text" id="contract-name" value="${(c.name || "").replace(/"/g, "&quot;")}" placeholder="напр. Поставка провизии Гильдии"/></label>
+        <label class="ss-gen-field"><span>Название контракта</span><input type="text" id="contract-name" value="${esc(c.name)}" placeholder="напр. Поставка провизии Гильдии"/></label>
         <div class="ss-gen-field"><span>Отдаёшь — ресурсы (в расход)</span><div class="ss-contract-grid">${grid("contract-cost", cost)}</div></div>
         <div class="ss-gen-field"><span>Получаешь — ресурсы (в доход)</span><div class="ss-contract-grid">${grid("contract-income", incomeR)}</div></div>
-        <label class="ss-gen-field"><span>Получаешь — услуги / договорённости (текст)</span><textarea id="contract-gain" rows="3" placeholder="Впишите вручную: наёмный флот, право прохода, покровительство…">${(c.gain || "").replace(/</g, "&lt;")}</textarea></label>
+        <label class="ss-gen-field"><span>Получаешь — услуги / договорённости (текст)</span><textarea id="contract-gain" rows="3" placeholder="Впишите вручную: наёмный флот, право прохода, покровительство…">${esc(c.gain)}</textarea></label>
       </form>`,
       buttons: {
         ok: { icon: '<i class="fas fa-file-signature"></i>', label: contract ? "Сохранить" : "Заключить", callback: async html => {
@@ -436,7 +437,7 @@ export class StarSystemsOverview extends Application {
     const menu = document.createElement("div");
     menu.className = "wh-extr-menu";
     menu.style.cssText = `position:fixed;top:${ev.clientY}px;left:${ev.clientX}px;z-index:10001;`;
-    menu.innerHTML = `<div class="wh-extr-head">${item.name}</div>`;
+    menu.innerHTML = `<div class="wh-extr-head">${esc(item.name)}</div>`;
 
     // Экстракциумы
     if (avail.length) {
@@ -463,7 +464,7 @@ export class StarSystemsOverview extends Application {
         const it = document.createElement("div");
         it.className = "wh-extr-item wh-imp-row";
         it.setAttribute("data-tooltip", _impTooltip(imp, cat));
-        it.innerHTML = `<span class="wh-imp-name">${cat ? `<img src="${cat.svg}"/>` : ""}<span class="wh-imp-txt">${imp.name}</span></span><span class="wh-imp-tools"><b class="wh-imp-edit" title="Изменить улучшение">✎</b><b class="wh-imp-del" title="Удалить" style="color:#f66;">✕</b></span>`;
+        it.innerHTML = `<span class="wh-imp-name">${cat ? `<img src="${cat.svg}"/>` : ""}<span class="wh-imp-txt">${esc(imp.name)}</span></span><span class="wh-imp-tools"><b class="wh-imp-edit" title="Изменить улучшение">✎</b><b class="wh-imp-del" title="Удалить" style="color:#f66;">✕</b></span>`;
         it.querySelector(".wh-imp-edit").addEventListener("click", ev => {
           ev.stopPropagation(); menu.remove(); this._editImprovementDialog(actor, item, imp);
         });
@@ -617,9 +618,9 @@ export class StarSystemsOverview extends Application {
     new Dialog({
       title: `Изменить улучшение — ${imp.name}`,
       content: `${style}<form class="ss-gen">
-        <label class="ss-gen-field"><span>Название</span><input type="text" id="imp-name" value="${(imp.name || "").replace(/"/g, "&quot;")}"/></label>
+        <label class="ss-gen-field"><span>Название</span><input type="text" id="imp-name" value="${esc(imp.name)}"/></label>
         <label class="ss-gen-field"><span>Тип улучшения</span><select id="imp-cat">${catOpts}</select></label>
-        <label class="ss-gen-field"><span>Описание</span><input type="text" id="imp-cdesc" value="${(imp.desc || "").replace(/"/g, "&quot;")}"/></label>
+        <label class="ss-gen-field"><span>Описание</span><input type="text" id="imp-cdesc" value="${esc(imp.desc)}"/></label>
         <div class="ss-imp-chks" style="display:flex; gap:14px; margin-top:6px;">
           <label><input type="checkbox" id="imp-hidden" ${imp.hidden ? "checked" : ""}/> Скрыт до разведки</label>
           <label><input type="checkbox" id="imp-secret" ${imp.secret ? "checked" : ""}/> Тайное</label>

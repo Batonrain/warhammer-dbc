@@ -8,7 +8,7 @@
 // который печатается в карточке атаки.
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { captured, resetCaptured, sheetOf, fakeHtml, checkbox } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, sheetOf, fakeForm, checkbox } from "../support/foundry-stub.mjs";
 import { weaponFor, setTargets } from "../support/combat-fixtures.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
@@ -32,8 +32,8 @@ function onlyRule(effects, rule = {}) {
 /** Открыть диалог атаки и нажать «Бросок!» с заданными галочками. */
 async function pressAttack(sheet, weapon, checks = {}) {
   const promise = sheet._showAttackDialog(weapon);
-  await captured.dialog.buttons.roll.callback(fakeHtml({
-    "#atk-char": "bs", "#atk-threshold": "45", "#atk-modifier": "0", "#atk-aim": ""
+  await captured.press("roll", fakeForm({
+    "#atk-char": "bs", "#atk-modifier": "0", "#atk-aim": ""
   }, checks));
   return promise;
 }
@@ -73,7 +73,7 @@ describe("правила в диалоге атаки", () => {
     const sheet  = sheetWith(weapon);
     const promise = sheet._showAttackDialog(weapon);
     expect(captured.dialog.content).toContain("Проверочное правило");
-    captured.dialog.buttons.cancel.callback();
+    await captured.press("cancel", fakeForm());
     await promise;
   });
 
@@ -83,7 +83,7 @@ describe("правила в диалоге атаки", () => {
     const sheet  = sheetWith(weapon);
     const promise = sheet._showAttackDialog(weapon);
     expect(captured.dialog.content).not.toContain("Проверочное правило");
-    captured.dialog.buttons.cancel.callback();
+    await captured.press("cancel", fakeForm());
     await promise;
   });
 

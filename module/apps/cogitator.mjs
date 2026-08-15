@@ -6,14 +6,13 @@
 //    кликабельные токены [1]/[0] в тексте; режимы Просмотр / Правка (ГМ).
 //  Фаза 2: пароль, вход по броску, скрапкод/повреждение, вид техножреца.
 // ════════════════════════════════════════════════════════════════════════
+import { esc } from "../helpers/utils.mjs";
 
 const { Application } = foundry.appv1.api;
 const NS = "warhammer-dbc";
 const FLAG = "cogitator";
 
 const rid = () => foundry.utils.randomID(8);
-const escHtml = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
 function newPage(name = "Новая страница") {
   return { id: rid(), name, title: name.toUpperCase(),
     body: "=========================================\n  " + name.toUpperCase() + "\n=========================================\n\n  Текст страницы...\n",
@@ -119,13 +118,13 @@ async function createCogitator(folderId) {
 
 // Обычный сегмент: экранируем; при clickable — легаси-токены links → кликабельные.
 function renderPlain(text, links, clickable) {
-  let html = escHtml(text);
+  let html = esc(text);
   if (clickable) {
     for (const link of links) {
       const tok = (link.token || "").trim();
       if (!tok || !link.target) continue;
-      const safe = escHtml(tok);
-      html = html.split(safe).join(`<a class="cog-link" data-target="${link.target}">${safe}</a>`);
+      const safe = esc(tok);
+      html = html.split(safe).join(`<a class="cog-link" data-target="${esc(link.target)}">${safe}</a>`);
     }
   }
   return html;
@@ -143,18 +142,18 @@ function renderBody(page, opts = {}) {
   while ((m = re.exec(raw))) {
     out += renderPlain(raw.slice(last, m.index), links, clickable);
     if (m[3] !== undefined) {                       // ссылка
-      const inner = escHtml(m[3]);
-      out += clickable ? `<a class="cog-link" data-target="${m[1]}">${inner}</a>` : inner;
+      const inner = esc(m[3]);
+      out += clickable ? `<a class="cog-link" data-target="${esc(m[1])}">${inner}</a>` : inner;
     } else if (m[4] !== undefined) {                // техножрец → бинарь
-      out += qualifies ? `<span class="cog-tp">${escHtml(m[4])}</span>`
-                       : `<span class="cog-binary" title="Бинарный Кант">${escHtml(toBinary(m[4]))}</span>`;
+      out += qualifies ? `<span class="cog-tp">${esc(m[4])}</span>`
+                       : `<span class="cog-binary" title="Бинарный Кант">${esc(toBinary(m[4]))}</span>`;
     } else if (m[5] !== undefined) {                // скрапкод (повреждение)
       const inner = m[5];
-      if (gmView) out += `<span class="cog-scrapcode cog-scrap-real">${escHtml(inner)}</span>`;
-      else { const L = Math.min(Math.max(inner.length, 24), 300); out += `<span class="cog-scrapcode" data-len="${L}">${escHtml(scrapText(L))}</span>`; }
+      if (gmView) out += `<span class="cog-scrapcode cog-scrap-real">${esc(inner)}</span>`;
+      else { const L = Math.min(Math.max(inner.length, 24), 300); out += `<span class="cog-scrapcode" data-len="${L}">${esc(scrapText(L))}</span>`; }
     } else {                                         // заблокировано (редакция)
       const inner = m[6];
-      out += gmView ? `<span class="cog-locked cog-locked-real" title="Виден только ГМ">${escHtml(inner)}</span>`
+      out += gmView ? `<span class="cog-locked cog-locked-real" title="Виден только ГМ">${esc(inner)}</span>`
                     : `<span class="cog-locked" title="Доступ закрыт">[ЗАБЛОКИРОВАНО]</span>`;
     }
     last = re.lastIndex;
@@ -226,7 +225,7 @@ export class CogitatorManager extends Application {
     });
     el.querySelectorAll("[data-delfolder]").forEach(b => b.addEventListener("click", async () => {
       const f = game.folders.get(b.dataset.delfolder); if (!f) return;
-      const ok = await Dialog.confirm({ title: "Удалить папку?", content: `<p>Удалить папку «${f.name}»? Когитаторы переместятся в корень.</p>` });
+      const ok = await Dialog.confirm({ title: "Удалить папку?", content: `<p>Удалить папку «${esc(f.name)}»? Когитаторы переместятся в корень.</p>` });
       if (ok) { await f.delete(); this.render(false); }
     }));
     el.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => openCogitator(b.dataset.open, false)));
@@ -240,7 +239,7 @@ export class CogitatorManager extends Application {
     }));
     el.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
       const j = game.journal.get(b.dataset.del); if (!j) return;
-      const ok = await Dialog.confirm({ title: "Удалить когитатор?", content: `<p>Удалить «${j.name}» безвозвратно?</p>` });
+      const ok = await Dialog.confirm({ title: "Удалить когитатор?", content: `<p>Удалить «${esc(j.name)}» безвозвратно?</p>` });
       if (ok) { await j.delete(); this.render(false); }
     }));
   }
@@ -259,7 +258,7 @@ export class CogitatorManager extends Application {
   _promptCreate(root) {
     const subs = cogSubfolders(root).sort((a, b) => a.name.localeCompare(b.name, "ru"));
     const opts = [`<option value="${root?.id || ""}">КОГИТАТОРЫ (корень)</option>`,
-      ...subs.map(f => `<option value="${f.id}">${escHtml(f.name)}</option>`)].join("");
+      ...subs.map(f => `<option value="${f.id}">${esc(f.name)}</option>`)].join("");
     return new Promise(resolve => {
       new Dialog({
         title: "Новый когитатор",
@@ -359,12 +358,12 @@ export class CogitatorConsole extends Application {
   }
   _linkDialog(ta, page, s, e) {
     const sel = ta.value.slice(s, e);
-    const opts = this.draft.pages.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join("");
+    const opts = this.draft.pages.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
     new Dialog({
       title: "Сделать ссылкой",
       content: `<div class="cog-dlg"><label>Переход на страницу<select name="tgt">${opts}</select></label>`
         + `<label>Команда для ввода (пусто = из текста)<input name="cmd" placeholder="напр. 1"/></label>`
-        + `<div class="cog-dlg-hint">Текст «${escHtml(sel)}» станет ссылкой (кликабельной при включённых токенах; команда работает всегда).</div></div>`,
+        + `<div class="cog-dlg-hint">Текст «${esc(sel)}» станет ссылкой (кликабельной при включённых токенах; команда работает всегда).</div></div>`,
       buttons: {
         ok: { label: "Создать", callback: h => {
           const q = h[0] ?? h;
@@ -378,7 +377,7 @@ export class CogitatorConsole extends Application {
     }).render(true);
   }
   _passwordDialog(page) {
-    const opts = this.draft.pages.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join("");
+    const opts = this.draft.pages.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
     new Dialog({
       title: "Пароль / скрытая команда",
       content: `<div class="cog-dlg"><label>Пароль / команда<input name="pw" placeholder="напр. ADMIN2847"/></label>`

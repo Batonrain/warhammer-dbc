@@ -8,6 +8,7 @@ import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
 import { HOMEWORLD_BY_KEY } from "../../constants/homeworlds.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { fatigueGraceForActor } from "../../rules/fatigue-grace.mjs";
+import { esc, on } from "../../helpers/utils.mjs";
 
 function fatigueThreshold(actor) {
   const system = actor.system || {};
@@ -56,7 +57,7 @@ export async function addFatigue(actor, amount = 1) {
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("warn","#ff6b6b")}${actor.name} — Потеря сознания!</div>
+        <div class="roll-header">${rollIcon("warn","#ff6b6b")}${esc(actor.name)} — Потеря сознания!</div>
         <div class="roll-threshold">
           Усталость: <b>${newVal}</b> ≥ порог T.b + W.b (<b>${threshold}</b>) — превышен.
         </div>
@@ -111,7 +112,7 @@ export async function fatiguePeriodRest(actor) {
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("spark","#4dffa6")}${actor.name} — Час отдыха</div>
+      <div class="roll-header">${rollIcon("spark","#4dffa6")}${esc(actor.name)} — Час отдыха</div>
       <div class="roll-outcome">
         <span class="roll-success">Снята 1 Усталость. Осталось: <b>${Math.max(0, current - 1)}</b></span>
       </div>
@@ -133,7 +134,7 @@ export async function fatigueSleep(actor) {
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("spark","#4dffa6")}${actor.name} — Полноценный сон</div>
+      <div class="roll-header">${rollIcon("spark","#4dffa6")}${esc(actor.name)} — Полноценный сон</div>
       <div class="roll-outcome">
         <span class="roll-success">Вся Усталость снята (было: <b>${current}</b>).</span>
       </div>
@@ -176,63 +177,61 @@ export function showAddConditionDialog(actor) {
     return;
   }
 
-  new Dialog({
-    title: "Добавить состояние",
+  // Не <form>: содержимое DialogV2 уже внутри его формы, вложенная недопустима.
+  return foundry.applications.api.DialogV2.wait({
+    window: { title: "Добавить состояние" },
+    classes: ["wh-add-condition-dialog", "warhammer-dbc", "wh-holo"],
+    position: { width: 360 },
     content: `
-      <form class="wh-add-condition-form">
+      <div class="wh-add-condition-form">
         <div class="add-cond-list">${inactive}</div>
-      </form>`,
-    buttons: {
-      add: {
-        icon: '<i class="fas fa-plus"></i>',
-        label: "Добавить",
-        callback: async html => {
+      </div>`,
+    rejectClose: false,
+    buttons: [
+      {
+        action: "add", label: "Добавить", icon: "fas fa-plus", default: true,
+        callback: async (event, button) => {
           const updates = {};
-          html.find(".add-cond-cb:checked").each((_, checkbox) => {
-            const key = checkbox.dataset.condition;
-            updates[`system.conditions.${key}`] = true;
-          });
-          if (Object.keys(updates).length > 0) {
-            await actor.update(updates);
-          }
+          for (const cb of button.form.querySelectorAll(".add-cond-cb:checked"))
+            updates[`system.conditions.${cb.dataset.condition}`] = true;
+          if (Object.keys(updates).length) await actor.update(updates);
         }
       },
-      cancel: { label: "Отмена" }
-    },
-    default: "add"
-  }, { classes: ["dialog", "wh-add-condition-dialog", "warhammer-dbc", "wh-holo"], width: 360 }).render(true);
+      { action: "cancel", label: "Отмена" }
+    ]
+  });
 }
 
-export function activateConditionsListeners(html, actor) {
-  html.find(".conditions-add-btn").click(ev => {
+export function activateConditionsListeners(root, actor) {
+  on(root, ".conditions-add-btn", "click", ev => {
     ev.preventDefault();
     showAddConditionDialog(actor);
   });
 
-  html.find(".condition-remove-btn").click(async ev => {
+  on(root, ".condition-remove-btn", "click", async ev => {
     ev.preventDefault();
     ev.stopPropagation();
     await removeCondition(actor, ev.currentTarget.dataset.condition);
   });
 
-  html.find(".condition-level-input").change(async ev => {
+  on(root, ".condition-level-input", "change", async ev => {
     ev.stopPropagation();
     await setConditionLevel(actor, ev.currentTarget.dataset.condition, ev.currentTarget.value);
   });
 
-  html.find(".fatigue-add-btn").click(async ev => {
+  on(root, ".fatigue-add-btn", "click", async ev => {
     ev.preventDefault();
     await addFatigue(actor, 1);
   });
-  html.find(".fatigue-remove-btn").click(async ev => {
+  on(root, ".fatigue-remove-btn", "click", async ev => {
     ev.preventDefault();
     await removeFatigue(actor, 1);
   });
-  html.find(".fatigue-rest-btn").click(async ev => {
+  on(root, ".fatigue-rest-btn", "click", async ev => {
     ev.preventDefault();
     await fatiguePeriodRest(actor);
   });
-  html.find(".fatigue-sleep-btn").click(async ev => {
+  on(root, ".fatigue-sleep-btn", "click", async ev => {
     ev.preventDefault();
     await fatigueSleep(actor);
   });

@@ -3,6 +3,7 @@
 //  + дочерние ордена/банды (chapters). Геносемя и Культура могут быть из
 //  разных легионов; проклятья — обычно по линии Геносемени.
 // ════════════════════════════════════════════════════════════════════════
+import { esc } from "../helpers/utils.mjs";
 
 function L(num, name, o) {
   return { id: num, num, name,
@@ -752,7 +753,7 @@ export function buildLegionOptions(selectedId) {
   let html = `<option value="">— не выбран —</option>`;
   for (const l of LEGIONS) {
     const sel = l.id === selectedId ? " selected" : "";
-    html += `<option value="${l.id}"${sel}>${l.num} — ${l.name}</option>`;
+    html += `<option value="${l.id}"${sel}>${l.num} — ${esc(l.name)}</option>`;
   }
   return html;
 }
@@ -761,7 +762,7 @@ export function buildChapterOptions(legionId, selectedId) {
   let html = `<option value="">— весь легион / своя банда —</option>`;
   if (lg) for (const c of lg.chapters) {
     const sel = c.id === selectedId ? " selected" : "";
-    html += `<option value="${c.id}"${sel}>${c.name}</option>`;
+    html += `<option value="${c.id}"${sel}>${esc(c.name)}</option>`;
   }
   return html;
 }
@@ -773,7 +774,7 @@ export function buildCultureLegionOptions(selectedId) {
   let html = `<option value="">— как у геносемени —</option>`;
   for (const l of LEGIONS) {
     const sel = l.id === selectedId ? " selected" : "";
-    html += `<option value="${l.id}"${sel}>${l.num} — ${l.name}</option>`;
+    html += `<option value="${l.id}"${sel}>${l.num} — ${esc(l.name)}</option>`;
   }
   return html;
 }
