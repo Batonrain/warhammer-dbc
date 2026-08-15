@@ -21,6 +21,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import { WarhammerActor } from "../../module/documents/actor.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
+import { SKILLS_DEF } from "../../module/constants/skills.mjs";
 
 /** Предмет на акторе: ровно то, что читает цикл надбавок в prepareDerivedData. */
 function itemFor({ type = "trait", name = "Черта", system = {}, flags = {} } = {}) {
@@ -91,5 +92,27 @@ describe("бонус характеристики доходит до произ
 
     expect(system.characteristics.t.bonus).toBe(7);
     expect(system.absorption.body).toBe(7);
+  });
+});
+
+// wdbc-o9c — тот же разрыв фаз, только полем правее. Навыки считаются из
+// chars[def.char].total внутри prepareDerivedData, поэтому эффект фазы "final"
+// на .total поднимал показанное Значение, а Навыки от него — нет. Цель та же:
+// хранимое totalFx, которое входит в сам расчёт раньше строки Навыков.
+describe("надбавка к ЗНАЧЕНИЮ доходит до навыков", () => {
+  /** Любой навык от Силы — какой именно, тесту всё равно. */
+  const STRENGTH_SKILL = Object.keys(SKILLS_DEF).find(k => SKILLS_DEF[k].char === "s");
+
+  it("totalFx поднимает навык на ту же величину", () => {
+    const base   = characterWith();
+    const withFx = characterWith();
+    withFx.characteristics.s.totalFx = 10;
+    WarhammerActor.prototype.prepareDerivedData.call({
+      type: "character", name: "Подставной", system: withFx,
+      items: Object.assign([], { get: () => null }), getFlag: () => undefined
+    });
+
+    expect(withFx.characteristics.s.total - base.characteristics.s.total).toBe(10);
+    expect(withFx.skills[STRENGTH_SKILL].total - base.skills[STRENGTH_SKILL].total).toBe(10);
   });
 });
