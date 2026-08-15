@@ -110,7 +110,7 @@ export async function rollArmourTable(item) {
 
   msg += "</div>";
   await ChatMessage.create(ChatMessage.applyRollMode(
-    { content: msg, rolls: [roll] }, { rollMode: game.settings.get("core", "rollMode") }));
+    { content: msg, rolls: [roll] }, game.settings.get("core", "rollMode")));
 }
 
 /**
@@ -143,7 +143,7 @@ export async function rollArmourEntry(item, table) {
         <div class="pa-chat-effect">${esc(e?.effect || "")}</div></div>
     </div>`,
     rolls: [roll]
-  }, { rollMode: game.settings.get("core", "rollMode") }));
+  }, game.settings.get("core", "rollMode")));
 }
 
 /** Диалог сдвига результата на ±½ Inf.b (окр.▲). */
@@ -190,5 +190,5 @@ export async function rollArmourZones(item) {
       <div class="pa-chat-zones">${lines.map(esc).join("<br/>")}</div>
     </div>`,
     rolls
-  }, { rollMode: game.settings.get("core", "rollMode") }));
+  }, game.settings.get("core", "rollMode")));
 }

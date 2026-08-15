@@ -413,6 +413,6 @@ async function postSummary(actor, hw, { charBonuses, grants, chosenLabels, corru
       ${lines.length ? `<div class="hw-chat-grants">${lines.join("<br/>")}</div>` : ""}
     </div>`,
     rolls
-  }, { rollMode: game.settings.get("core", "rollMode") }));
+  }, game.settings.get("core", "rollMode")));
 }
 

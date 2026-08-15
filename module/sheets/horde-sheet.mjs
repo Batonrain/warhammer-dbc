@@ -208,7 +208,7 @@ export class WarhammerHordeSheet
           : `<span class="roll-failure">Провал (${deg} ст.)</span>`}</div>
       </div>`,
       rolls: [roll]
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   // ── Диалог атаки Орды (по образцу атаки персонажа, с поправкой на правила Орд) ──
@@ -361,7 +361,7 @@ export class WarhammerHordeSheet
       </div>`,
       rolls: [roll, dmgRoll],
       sound: CONFIG.sounds.dice
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 }
 

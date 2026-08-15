@@ -638,7 +638,7 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
       </div>`,
       rolls: [roll],
       sound: CONFIG.sounds.dice
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   /** Покупка/отмена эффекта Детальной Команды за накопленные Успехи. */
@@ -728,7 +728,7 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
                 Короткой Команды силой <b>${power}</b> Успехов (½ I.b, окр.▼), по выбору их Лидера.</div>` : ""}
             </div>`,
             rolls: [roll], sound: CONFIG.sounds.dice
-          }, { rollMode: game.settings.get("core", "rollMode") }));
+          }, game.settings.get("core", "rollMode")));
         }},
         cancel: { label: "Отмена" }
       },
@@ -790,7 +790,7 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
               <div class="sq-chat-note">Игровой персонаж получает преимущества Команд только если признаёт авторитет Командира; иначе его Команды считаются как от Координатора.</div>
             </div>`,
             rolls: [rc, rw], sound: CONFIG.sounds.dice
-          }, { rollMode: game.settings.get("core", "rollMode") }));
+          }, game.settings.get("core", "rollMode")));
         }},
         cancel: { label: "Отмена" }
       },
@@ -847,7 +847,7 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
                 : `<span class="roll-failure">Командование потеряно немедленно</span>`}</div>
             </div>`,
             rolls: [r1, r2], sound: CONFIG.sounds.dice
-          }, { rollMode: game.settings.get("core", "rollMode") }));
+          }, game.settings.get("core", "rollMode")));
         }},
         cancel: { label: "Отмена" }
       },
@@ -907,7 +907,7 @@ export class WarhammerSquadSheet extends foundry.appv1.sheets.ActorSheet {
         ${kind === "broken" ? `<div class="sq-chat-note">Если боец под Запугиванием своего Лидера или Командира и набрал Провалов не больше, чем тот Успехов на Intimidate, тест считается пройденным.</div>` : ""}
       </div>`,
       rolls: [roll], sound: CONFIG.sounds.dice
-    }, { rollMode: game.settings.get("core", "rollMode") }));
+    }, game.settings.get("core", "rollMode")));
   }
 
   /** Ручная отметка «потерял Командование» у участника. */
