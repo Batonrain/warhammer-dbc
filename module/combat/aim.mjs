@@ -6,6 +6,7 @@
 //
 // Вся возня с канвасом и мышью здесь; боёвке про неё знать незачем — она
 // получает уже назначенную цель через game.user.targets.
+import { esc } from "../helpers/utils.mjs";
 
 const AIMING = "wh-aiming";
 const HINT_ID = "wh-aim-hint";
@@ -54,7 +55,7 @@ export function beginTargeting(actor, weapon, onPick, label = "") {
 
   const hint = document.createElement("div");
   hint.id = HINT_ID;
-  hint.innerHTML = `<b>${weapon?.name || label || "Атака"}</b> — выбери цель · `
+  hint.innerHTML = `<b>${esc(weapon?.name || label || "Атака")}</b> — выбери цель · `
     + `<button type="button" id="wh-aim-notarget">Без цели (Пробел)</button> · `
     + `<span>ПКМ или Esc — отмена</span>`;
   document.body.appendChild(hint);

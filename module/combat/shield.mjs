@@ -10,6 +10,7 @@
 import { SHIELD_STATUS } from "../constants/shields.mjs";
 import { applyShieldOverloadQuality } from "../constants/quality.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 // Источник состояния щита: у forcefield — прямо в system; у импланта (Боевые Латы
 // Скитарии и т.п. со встроенным дефлектором) — в system.shield. Возвращаем сам
@@ -96,7 +97,7 @@ export async function _toggleShield(actor, item) {
     } else {
       await _shieldChatMsg(actor, item,
         `${rollIcon("shield","#4dffa6")}Щит активирован`,
-        `${item.name} — рейтинг <b>1–${rating}</b>${sys.overloadThreshold > 0
+        `${esc(item.name)} — рейтинг <b>1–${rating}</b>${sys.overloadThreshold > 0
           ? `, перегрузка 1–${sys.overloadThreshold}` : ", без перегрузки"}. ` +
         `Тип: ${_shieldTypeLabel(sys.shieldType)}, природа: ${_shieldNatureLabel(sys.shieldNature)}.`,
         "shield-msg-active"

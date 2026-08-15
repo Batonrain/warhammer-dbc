@@ -8,7 +8,7 @@ import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { techIcon } from "../../constants/tech-icons.mjs";
 import { ironModForQuality, leastQuality } from "../../constants/implant-mechanics.mjs";
-import { _degWord, resolveCharFormula } from "../../helpers/utils.mjs";
+import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
 
@@ -33,7 +33,7 @@ export async function activateTechMiracle(actor, item) {
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `
           <div class="wh-roll-result">
-            <div class="roll-header">${rollIcon("chart","#8fd0ff")}Компиляция Славословия: ${item.name}</div>
+            <div class="roll-header">${rollIcon("chart","#8fd0ff")}Компиляция Славословия: ${esc(item.name)}</div>
             <div class="roll-threshold">Требуется компиляция <b>${x}×5 = ${x * 5}</b> минут. Держится как Процесс с Ценой ½X = <b>${Math.ceil(x / 2)}</b> Когниции.</div>
             <div class="roll-outcome"><span class="roll-success">Отметьте «Скомпилировано» на листе техночуда, затем активируйте.</span></div>
           </div>`
@@ -164,7 +164,7 @@ export async function activateTechMiracle(actor, item) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("gear","#8fd0ff")}Техночудо: ${item.name}</div>
+          <div class="roll-header">${rollIcon("gear","#8fd0ff")}Техночудо: ${esc(item.name)}</div>
           <div class="roll-threshold">
             ${skillLabel}: <b>${base}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${fatigue !== 0 ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b>
           </div>

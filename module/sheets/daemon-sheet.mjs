@@ -6,6 +6,7 @@
 import { WarhammerCharacterSheet } from "./actor-sheet.mjs";
 import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_KEY_TRAITS,
          allegianceMeta, formDuration } from "../constants/demon-mechanics.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
   static get defaultOptions() {
@@ -93,7 +94,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result wh-daemon-card">
-          <div class="roll-header">🌀 Тест Нестабильности — ${this.actor.name}</div>
+          <div class="roll-header">🌀 Тест Нестабильности — ${esc(this.actor.name)}</div>
           <div class="roll-threshold">Сила Воли: <b>${wp}</b> · Warp Instability (${rating})</div>
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           <div class="roll-outcome">${success
@@ -115,7 +116,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result wh-daemon-card">
-          <div class="roll-header">👑 Бесчестие демона — ${this.actor.name}</div>
+          <div class="roll-header">👑 Бесчестие демона — ${esc(this.actor.name)}</div>
           <div class="roll-threshold">${rank.label}: ${f}</div>
           <div class="roll-dice">Результат: <b>${roll.total}</b> Inf</div>
           <div class="roll-threshold" style="font-size:0.85em;">Впишите в характеристику Inf (при желании).</div>

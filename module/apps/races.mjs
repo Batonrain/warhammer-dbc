@@ -14,6 +14,7 @@ import { RACES } from "../constants/races.mjs";
 import { getLegion, getChapter, resolveCulture } from "../constants/legions.mjs";
 import { ASTARTES_RACE } from "../constants/astartes-implants.mjs";
 import { grantAstartesImplants } from "./astartes-implants.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 /** Применяет расовые бонусы: характеристики только в пустые поля + расовые Черты. */
 export async function applyRaceData(actor, raceKey, { createTraits, applyStartingTalents }) {
@@ -94,7 +95,7 @@ export async function applyLegion(actor, { createTraits }) {
     buttons.none = { label: "Без проклятья", callback: () => apply(null) };
     new Dialog({
       title: `Проклятье: ${effName}`,
-      content: `<div style="padding:6px;font-size:0.9em;">Выберите проклятье:<ul style="margin:6px 0 0;padding-left:16px;">${choices.map(ch => `<li><b>${ch.name}</b> — ${ch.text}</li>`).join("")}</ul></div>`,
+      content: `<div style="padding:6px;font-size:0.9em;">Выберите проклятье:<ul style="margin:6px 0 0;padding-left:16px;">${choices.map(ch => `<li><b>${esc(ch.name)}</b> — ${ch.text}</li>`).join("")}</ul></div>`,
       buttons, default: "c0"
     }, { width: 460 }).render(true);
     return;

@@ -80,9 +80,9 @@ export async function rollDisorder(actor) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("dice","#6fe6ff")}Ментальное Расстройство — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("dice","#6fe6ff")}Ментальное Расстройство — ${esc(actor.name)}</div>
         <div class="roll-dice">Бросок d100: <b>${roll.total}</b></div>
-        <div class="roll-outcome"><span class="roll-failure">${rollIcon("warn","#ffb84d")}${row?.name ?? "—"}</span></div>
+        <div class="roll-outcome"><span class="roll-failure">${rollIcon("warn","#ffb84d")}${esc(row?.name) ?? "—"}</span></div>
         ${row?.desc ? `<div class="roll-threshold">${row.desc}</div>` : ""}
         <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
       </div>`,
@@ -101,9 +101,12 @@ export function openDisorderPicker(actor) {
   const rows = DISORDER_LIBRARY.map((disorder, i) => {
     const rng = disorder.min === disorder.max ? String(disorder.min) : `${disorder.min}\u2013${disorder.max}`;
     const test = `W${disorder.testMod >= 0 ? "+" : ""}${disorder.testMod}`;
-    const own = have.has(disorder.name) ? '<span class="pick-owned">уже есть</span>' : "";
+    // Поиск по Set — вне разметки: в Set лежат сырые имена, и экранированное
+    // сюда подставлять нельзя. Заодно две одинаковые проверки становятся одной.
+    const owned = have.has(disorder.name);
+    const own = owned ? '<span class="pick-owned">уже есть</span>' : "";
     return `
-      <div class="pick-row${have.has(disorder.name) ? " pick-row-owned" : ""}" data-name="${esc(disorder.name.toLowerCase())}">
+      <div class="pick-row${owned ? " pick-row-owned" : ""}" data-name="${esc(disorder.name.toLowerCase())}">
         <div class="pick-head">
           <button type="button" class="pick-exp" title="Показать описание">▸</button>
           <span class="pick-name" title="Раскрыть">${esc(disorder.name)}</span>
@@ -186,7 +189,7 @@ export async function rollDisorderTest(actor, item) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("spark","#c98bff")}${item.name} — ${actor.name}</div>
+        <div class="roll-header">${rollIcon("spark","#c98bff")}${esc(item.name)} — ${esc(actor.name)}</div>
         <div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""} → Порог: <b>${eff}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${success
