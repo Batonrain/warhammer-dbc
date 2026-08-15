@@ -189,6 +189,9 @@ globalThis.foundry = {
     duplicate: x => structuredClone(x),
     deepClone: x => structuredClone(x),
     randomID: () => "stubid",
+    // Как у Foundry v13: & < > " '. Настоящий тоже ничего сверх этого не делает.
+    escapeHTML: v => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;"),
     getProperty: () => undefined,
     setProperty: () => true
   },

@@ -157,6 +157,21 @@ describe("activateItemContextMenu", () => {
     expect(gun.deleted).toBe(true);
   });
 
+  // content диалога разбирается как HTML, а имя предмета задаёт игрок на своём
+  // акторе: без экранирования разметка в названии исполнилась бы у того, кто
+  // подтверждает удаление.
+  it("имя предмета попадает в диалог экранированным", async () => {
+    const jq = fakeJq();
+    const gun = item("gun-1", `<img src=x onerror="alert(1)">`);
+    const handler = wire(actor([gun]), jq);
+
+    handler(contextEvent({ itemId: "gun-1" }));
+    await jq.state.appended[0].handlers[".wh-ctx-delete:click"]({ stopPropagation: () => {} });
+
+    expect(captured.dialog.content).not.toContain("<img");
+    expect(captured.dialog.content).toContain("&lt;img");
+  });
+
   it("отказ оставляет предмет на месте", async () => {
     const jq = fakeJq();
     const gun = item("gun-1");

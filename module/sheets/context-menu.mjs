@@ -76,9 +76,13 @@ export function activateItemContextMenu(html, actor, jq = globalThis.$) {
         // к «Редактировать»: без вопроса промах стирал предмет молча, откатить
         // его нечем (wdbc-9z9).
         onClick: async () => {
+          // Имя экранируем: его задаёт игрок на своём акторе, а content диалога
+          // разбирается как HTML — «<img src=x onerror=…>» в названии предмета
+          // исполнился бы у того, кто это удаление подтверждает.
+          const name = foundry.utils.escapeHTML(item.name ?? "");
           const ok = await foundry.applications.api.DialogV2.confirm({
             window: { title: "Удалить предмет" },
-            content: `<p>Удалить «${item.name}»? Вернуть его будет нечем.</p>`
+            content: `<p>Удалить «${name}»? Вернуть его будет нечем.</p>`
           }).catch(() => false);
           if (ok) await item.delete();
         }
