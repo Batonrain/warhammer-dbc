@@ -538,22 +538,20 @@ export class WarhammerItemSheet extends foundry.appv1.sheets.ItemSheet {
       context.diseaseGodOptions = DISEASE_GODS;
     }
 
-    // ── Имплант: роспись механик (авто-числовое + Качество + памятка) ────────────
+    // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
+    // Строки «Авто:» здесь больше нет: числовое (un/val/ap) переехало в сам
+    // предмет и видно на вкладке ЭФФЕКТЫ, где его и правят (wdbc-cy2). Чип
+    // рисовался по ИМЕНИ предмета и правку эффекта пережил бы — показывал бы
+    // одно, а работало бы другое.
     if (this.item.type === "implant") {
       const mech = implantMech(this.item.name);
       if (mech) {
-        const LOC = { head: "голова", body: "торс", arms: "руки", legs: "ноги", all: "всё тело" };
-        const auto = [];
-        if (mech.un)  for (const [k, v] of Object.entries(mech.un))  auto.push(`Unnatural ${k.toUpperCase()} (${v > 0 ? "+" : ""}${v})`);
-        if (mech.val) for (const [k, v] of Object.entries(mech.val)) auto.push(`${v > 0 ? "+" : ""}${v} к ${k.toUpperCase()}`);
-        if (mech.ap)  for (const [k, v] of Object.entries(mech.ap))  auto.push(`+${v} AP ${LOC[k] || k}`);
         context.implantMech = {
-          auto,
           traits: mech.traits || [],
           skills: mech.skills || [],
           q: (mech.q && Object.keys(mech.q).length) ? mech.q : null,
           note: mech.note || "",
-          any: auto.length || (mech.traits || []).length || (mech.skills || []).length || mech.note || (mech.q && Object.keys(mech.q).length),
+          any: (mech.traits || []).length || (mech.skills || []).length || mech.note || (mech.q && Object.keys(mech.q).length),
         };
       }
     }

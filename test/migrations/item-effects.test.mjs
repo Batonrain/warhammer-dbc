@@ -606,6 +606,22 @@ describe("предметы packs-src", () => {
     expect(doubled).toEqual([]);
   });
 
+  it("ни один имплант пака не получает от росписи ключ, который у него уже есть", async () => {
+    // Роспись IMPLANT_MECH подбирается по ИМЕНИ, поэтому её надбавка легко
+    // ложится поверх той же, записанной в самом предмете: так Крукс Механикус
+    // и давал S.b +4 (wdbc-cy2). После миграции каждый ключ должен быть один.
+    const doubled = [];
+    for (const doc of allPackDocs()) {
+      if (doc.type !== "implant") continue;
+      const item = packItem(doc);
+      await migrateItemEffects(item);
+      const keys = changesOf(item).map(c => c.key);
+      const twice = [...new Set(keys.filter(k => keys.filter(x => x === k).length > 1))];
+      if (twice.length) doubled.push(`${doc.name}: ${twice.join(", ")}`);
+    }
+    expect(doubled).toEqual([]);
+  });
+
   it("ни одна модификация брони не осталась с мёртвым AP против типа урона", async () => {
     // Помеченный перенесённым мод старое поле теряет: combat/armor-mods.mjs
     // читает его только у непомеченных. Значит у каждого apVs* в паке должен
@@ -661,4 +677,66 @@ describe("предметы packs-src", () => {
       .filter(e => e.kind === "characteristic")
       .map(characteristicEffectKey);
   }
+});
+
+// Числовая роспись IMPLANT_MECH (constants/implant-mechanics.mjs) — таблица
+// regex по ИМЕНИ импланта, которую prepareDerivedData складывал напрямую. На
+// листе её было не видно и не поправить, а у трёх имплантов пака та же надбавка
+// лежала и в system.effects: актор складывал обе (wdbc-cy2). Числа переехали в
+// packs-src, здесь таблица осталась источником переноса для розданных копий.
+describe("перенос числовой росписи имплантов", () => {
+  it("имплант, чьё число жило только в коде, получает эффект", async () => {
+    const item = itemDoc({ type: "implant", name: "Synthmuscle / Синтемускул" });
+
+    expect(await migrateItemEffects(item)).toBe(true);
+
+    expect(changesOf(item)).toEqual(
+      legacyEffectsToChanges({ charBonuses: [{ stat: "s", value: 2 }] }));
+  });
+
+  it("броня по локациям переносится тем же путём", async () => {
+    const item = itemDoc({ type: "implant", name: "Cranial Armour / Черепная Броня" });
+
+    expect(await migrateItemEffects(item)).toBe(true);
+
+    expect(changesOf(item)).toEqual(legacyEffectsToChanges({ apHead: 1 }));
+  });
+
+  it("надбавка, записанная и в таблице, и в system.effects, не задваивается", async () => {
+    const effects = { charBonuses: [{ stat: "s", value: 2 }, { stat: "t", value: 2 }] };
+    const item = itemDoc({ type: "implant", name: "Crux Mechanicus / Крукс Механикус", effects });
+
+    expect(await migrateItemEffects(item)).toBe(true);
+
+    expect(changesOf(item)).toEqual(legacyEffectsToChanges(effects));
+  });
+
+  it("занятая ключом локация брони второй раз не приезжает", async () => {
+    // Подкожная Броня: в паке armourAll 2 (все шесть зон), в таблице
+    // ap {body,arms,legs}. Ключи те же — добавлять нечего.
+    const effects = { armourAll: 2 };
+    const item = itemDoc({ type: "implant", name: "Subdermal Armour / Подкожная Броня", effects });
+
+    expect(await migrateItemEffects(item)).toBe(true);
+
+    expect(changesOf(item)).toEqual(legacyEffectsToChanges(effects));
+  });
+
+  it("повторный прогон ничего не добавляет", async () => {
+    const item = itemDoc({ type: "implant", name: "Synthmuscle / Синтемускул" });
+    await migrateItemEffects(item);
+    const first = changesOf(item);
+
+    expect(await migrateItemEffects(item)).toBe(false);
+
+    expect(changesOf(item)).toEqual(first);
+  });
+
+  it("предмет не-имплант таблицу не трогает", async () => {
+    const item = itemDoc({ type: "trait", name: "Synthmuscle / Синтемускул" });
+
+    expect(await migrateItemEffects(item)).toBe(false);
+
+    expect(changesOf(item)).toEqual([]);
+  });
 });

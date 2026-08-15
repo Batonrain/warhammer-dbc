@@ -1116,7 +1116,6 @@
 /* ── Роспись механик импланта ─────────────────────────────────── */
 .warhammer-dbc .implant-mech { border-top: 1px dashed var(--wh-border); padding-top: 4px; }
 .warhammer-dbc .implant-mech-tag { font-size: 0.68em; font-weight: normal; opacity: 0.7; letter-spacing: 0.5px; }
-.warhammer-dbc .implant-mech-auto,
 .warhammer-dbc .implant-mech-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 3px 0; }
 .warhammer-dbc .implant-mech-lbl { font-weight: bold; font-size: 0.82em; opacity: 0.8; }
 .warhammer-dbc .implant-mech-chip {

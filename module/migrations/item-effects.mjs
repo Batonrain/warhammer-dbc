@@ -20,6 +20,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { hasLegacyEffects, legacyEffectsToChanges } from "../constants/effect-keys.mjs";
+import { implantTableEffects }                      from "../constants/implant-mechanics.mjs";
 import { isItemActive }                             from "../apps/effects.mjs";
 import { characteristicEffectKey, describeMechEntry, allMechEntryIds,
          DURABLE_MECH_KINDS }                       from "../apps/mechanics.mjs";
@@ -134,6 +135,13 @@ export async function dropMechanicsDuplicates(item) {
   return dropped;
 }
 
+/** Changes числовой росписи импланта из IMPLANT_MECH (пусто у прочих типов). */
+function implantTableChanges(item) {
+  if (item.type !== "implant") return [];
+  const legacy = implantTableEffects(item.name);
+  return legacy ? legacyEffectsToChanges(legacy) : [];
+}
+
 /** Переносит механику одного предмета. true — если эффект создан. */
 export async function migrateItemEffects(item) {
   if (!MIGRATE_EFFECT_TYPES.has(item.type)) return false;
@@ -144,6 +152,14 @@ export async function migrateItemEffects(item) {
   const changes = hasLegacyEffects(fx)
     ? legacyEffectsToChanges(fx).filter(c => !carried.has(c.key))
     : [];
+
+  // Числовая роспись IMPLANT_MECH — то же старое поле, только лежавшее в коде и
+  // применявшееся по имени предмета (wdbc-cy2). Новые паки несут эти числа в
+  // самом предмете, а розданным копиям их даёт этот перенос. Ключ, который у
+  // предмета уже занят, не дублируем: у Крукса Механикуса, Сикарианских ЭФМ и
+  // Модуля Прицельного Фокуса надбавка была записана в обоих местах разом.
+  for (const c of implantTableChanges(item))
+    if (!carried.has(c.key) && !changes.some(x => x.key === c.key)) changes.push(c);
 
   if (!changes.length) {
     // Переносить нечего или уже перенесено. Флаг всё равно ставим: это он велит
