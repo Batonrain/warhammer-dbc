@@ -1231,7 +1231,7 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     const dropInner = ent.sourceUuid
       ? `<img src="${esc(ent.sourceImg || "icons/svg/item-bag.svg")}" class="grant-drop-img"/>
          <span class="grant-drop-name">${esc(ent.sourceName || "?")}</span>
-         ${isGM ? `<button type="button" class="grant-drop-clear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
+         ${isGM ? `<button type="button" class="grant-drop-clear" data-action="grantDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
       : `<span class="grant-drop-placeholder">${isGM ? `Перетащите ${ent.kind === "trait" ? "Черту" : "Талант"} сюда` : "—"}</span>`;
     let out = `<div class="grant-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}">${dropInner}</div>`;
     if (ent.kind === "trait" && ent.sourceHasRating) {
@@ -1335,7 +1335,7 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     const dropZone = (slot, key, label) => {
       const inner = key
         ? `<span class="grant-drop-name">${esc(label || key)}</span>
-           ${isGM ? `<button type="button" class="wprop-drop-clear" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}" title="Убрать">✕</button>` : ""}`
+           ${isGM ? `<button type="button" class="wprop-drop-clear" data-action="wpropDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}" title="Убрать">✕</button>` : ""}`
         : `<span class="grant-drop-placeholder">${isGM ? "Перетащите Свойство оружия сюда" : "—"}</span>`;
       return `<div class="grant-drop-zone wprop-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}">${inner}</div>`;
     };
@@ -1435,7 +1435,7 @@ function buildEntryHtml(groupId, ent, isGM, depth = 1) {
     <div class="grant-entry-row">
       <select class="grant-entry-kind" data-group-id="${groupId}" data-entry-id="${ent.id}" ${isGM ? "" : "disabled"}>${kindOpts}</select>
       ${buildEntryFieldsHtml(groupId, ent, isGM)}
-      ${isGM ? `<button type="button" class="grant-entry-remove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
+      ${isGM ? `<button type="button" class="grant-entry-remove" data-action="grantEntryRemove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
     </div>
     <div class="grant-entry-preview">${esc(describeMechEntry(ent))}</div>
     ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), isGM, depth + 1, true) : ""}
@@ -1455,11 +1455,11 @@ function buildGroupHtml(grp, isGM, depth = 1, nested = false) {
     <div class="grant-group-head">
       <span class="grant-op-badge grant-op-${grp.operator}">${grp.operator === "OR" ? "ИЛИ" : "И"}</span>
       <span class="grant-op-hint">${opHint}</span>
-      ${isGM ? `<button type="button" class="grant-op-toggle" data-group-id="${grp.id}" title="Переключить И/ИЛИ">⇄</button>` : ""}
-      ${isGM && !nested ? `<button type="button" class="grant-group-remove" data-group-id="${grp.id}" title="Удалить группу">✕</button>` : ""}
+      ${isGM ? `<button type="button" class="grant-op-toggle" data-action="grantOpToggle" data-group-id="${grp.id}" title="Переключить И/ИЛИ">⇄</button>` : ""}
+      ${isGM && !nested ? `<button type="button" class="grant-group-remove" data-action="grantGroupRemove" data-group-id="${grp.id}" title="Удалить группу">✕</button>` : ""}
     </div>
     <div class="grant-entries">${entriesHtml}</div>
-    ${isGM ? `<button type="button" class="grant-entry-add" data-group-id="${grp.id}">➕ Запись</button>` : ""}
+    ${isGM ? `<button type="button" class="grant-entry-add" data-action="grantEntryAdd" data-group-id="${grp.id}">➕ Запись</button>` : ""}
   </div>`;
 }
 
@@ -1663,7 +1663,7 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
       const inner = (e.sourceUuid || e.sourceName)
         ? `<img src="${esc(e.sourceImg || "icons/svg/aura.svg")}" class="grant-drop-img"/>
            <span class="grant-drop-name">${esc(e.sourceName || "?")}</span>
-           ${dis ? "" : `<button type="button" class="req-drop-clear" ${d} title="Убрать">✕</button>`}`
+           ${dis ? "" : `<button type="button" class="req-drop-clear" data-action="reqDropClear" ${d} title="Убрать">✕</button>`}`
         : `<span class="grant-drop-placeholder">${dis ? "—" : `Перетащите ${what} сюда`}</span>`;
       let out = `<div class="grant-drop-zone req-drop-zone" ${d}>${inner}</div>`;
       // Рейтинг только у Черты. У Таланта поля rating в схеме нет
@@ -1705,7 +1705,7 @@ function buildReqGroupHtml(reqKey, grp, isGM) {
       <div class="grant-entry-row">
         <select class="req-entry-kind" data-req="${reqKey}" data-group-id="${grp.id}" data-entry-id="${e.id}" ${dis}>${kindOpts}</select>
         ${buildReqFieldsHtml(reqKey, grp.id, e, dis)}
-        ${isGM ? `<button type="button" class="req-entry-remove" data-req="${reqKey}" data-group-id="${grp.id}" data-entry-id="${e.id}" title="Удалить условие">✕</button>` : ""}
+        ${isGM ? `<button type="button" class="req-entry-remove" data-action="reqEntryRemove" data-req="${reqKey}" data-group-id="${grp.id}" data-entry-id="${e.id}" title="Удалить условие">✕</button>` : ""}
       </div>
       <div class="grant-entry-preview">${esc(describeReqEntry(e))}</div>
     </div>`;
@@ -1716,12 +1716,12 @@ function buildReqGroupHtml(reqKey, grp, isGM) {
     <div class="grant-group-head">
       <span class="grant-op-badge grant-op-${grp.operator}">${grp.operator === "OR" ? "ИЛИ" : "И"}</span>
       <span class="grant-op-hint">${opHint}</span>
-      ${isGM ? `<button type="button" class="req-op-toggle" ${d} title="Переключить И/ИЛИ">⇄</button>` : ""}
-      ${isGM ? `<button type="button" class="req-group-remove" ${d} title="Удалить группу">✕</button>` : ""}
+      ${isGM ? `<button type="button" class="req-op-toggle" data-action="reqOpToggle" ${d} title="Переключить И/ИЛИ">⇄</button>` : ""}
+      ${isGM ? `<button type="button" class="req-group-remove" data-action="reqGroupRemove" ${d} title="Удалить группу">✕</button>` : ""}
     </div>
     <div class="grant-entries">${entries}</div>
     ${isGM ? `<div class="mech-group-add-row">
-      <button type="button" class="req-entry-add" ${d}>➕ Условие</button>
+      <button type="button" class="req-entry-add" data-action="reqEntryAdd" ${d}>➕ Условие</button>
     </div>` : ""}
   </div>`;
 }

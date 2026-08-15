@@ -10,9 +10,23 @@ import "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
 import { WarhammerItemSheet } from "../../module/sheets/item-sheet.mjs";
 
+// Части перечислены не все — только те, где есть кликабельные элементы: договор
+// сверяет действия, а не разметку целиком. Механику собирает строками
+// mechanics.mjs, поэтому её кнопки ищутся там же, где и в шаблонах.
 describeV2Sheet(WarhammerItemSheet, {
   sheet: "module/sheets/item-sheet.mjs",
-  template: "templates/item/item-sheet.hbs"
+  template: [
+    "templates/item/item-sheet.hbs",
+    "templates/item/parts/armor.hbs",
+    "templates/item/parts/component.hbs",
+    "templates/item/parts/psychic-power.hbs",
+    "templates/item/parts/ritual.hbs",
+    "templates/item/parts/talent.hbs",
+    "templates/item/parts/tech-power.hbs",
+    "templates/item/parts/torpedo.hbs",
+    "templates/item/parts/weapon.hbs",
+    "module/apps/mechanics.mjs"
+  ]
 });
 
 function item(type, system = {}) {

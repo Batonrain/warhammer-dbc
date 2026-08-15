@@ -131,7 +131,7 @@
       <div class="item-section-title">
         ЭФФЕКТЫ
         <span class="effects-tab-actions">
-          <button type="button" class="effect-create-btn" title="Создать новый эффект на этом предмете (ручной ввод ключа)">➕ Создать</button>
+          <button type="button" class="effect-create-btn" data-action="effectCreate" title="Создать новый эффект на этом предмете (ручной ввод ключа)">➕ Создать</button>
         </span>
       </div>
       <div class="trait-fx-hint">Здесь — уже действующие эффекты этого конкретного предмета (в т.ч. созданные вкладкой «Механика», когда предмет получает актор). Чтобы настроить НОВУЮ характеристику/Черту/Талант/Навык/код без ручного ввода ключей — вкладка «Механика».</div>
@@ -152,7 +152,7 @@
               <td class="effect-toggle-cell">
                 <input type="checkbox" class="effect-disabled-toggle" data-effect-id="{{fx.id}}" {{#unless fx.disabled}}checked{{/unless}}/>
               </td>
-              <td class="item-name-cell effect-name-link" data-effect-id="{{fx.id}}">{{fx.name}}</td>
+              <td class="item-name-cell effect-name-link" data-action="effectEdit" data-effect-id="{{fx.id}}">{{fx.name}}</td>
               <td class="effect-changes-cell">{{#if fx.summary}}{{fx.summary}}{{else}}<em>нет изменений</em>{{/if}}</td>
               <td class="effect-phase-cell">
                 {{#if fx.hasWrongPhase}}
@@ -160,8 +160,8 @@
                 {{/if}}
               </td>
               <td class="effect-row-actions">
-                <button type="button" class="effect-edit-btn" data-effect-id="{{fx.id}}" title="Редактировать">✏</button>
-                <button type="button" class="effect-delete-btn" data-effect-id="{{fx.id}}" title="Удалить">✕</button>
+                <button type="button" class="effect-edit-btn" data-action="effectEdit" data-effect-id="{{fx.id}}" title="Редактировать">✏</button>
+                <button type="button" class="effect-delete-btn" data-action="effectDelete" data-effect-id="{{fx.id}}" title="Удалить">✕</button>
               </td>
             </tr>
             {{/each}}
@@ -183,8 +183,8 @@
 
       {{#if isGM}}
       <div class="mech-group-add-row">
-        <button type="button" class="grant-group-add" data-op="AND" title="Новая группа — применяются ВСЕ записи">➕ И-группа</button>
-        <button type="button" class="grant-group-add" data-op="OR" title="Новая группа — актор выбирает ОДНУ запись">➕ ИЛИ-группа</button>
+        <button type="button" class="grant-group-add" data-action="grantGroupAdd" data-op="AND" title="Новая группа — применяются ВСЕ записи">➕ И-группа</button>
+        <button type="button" class="grant-group-add" data-action="grantGroupAdd" data-op="OR" title="Новая группа — актор выбирает ОДНУ запись">➕ ИЛИ-группа</button>
       </div>
       {{/if}}
 

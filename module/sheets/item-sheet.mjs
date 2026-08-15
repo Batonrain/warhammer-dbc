@@ -40,12 +40,339 @@ import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
-import { onTab }                                     from "./v2-helpers.mjs";
+import { onTab, whenEditable }                       from "./v2-helpers.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
   const v = map[key];
   return typeof v === "string" ? v : (v?.label ?? key);
+}
+
+// ── Сохранение Механики и Требований ────────────────────────────────────────
+// Приём один на оба блока: read-mutate-clone-save. Полагаемся на авто-рендер
+// листа после setFlag, а не на живую перестройку DOM вручную.
+//
+// Помощники живут на уровне модуля, потому что их зовут и действия
+// [data-action] (тоже модульные), и change-обработчики в _onRender — там
+// стоят однострочные переходники, подставляющие this.item.
+
+/**
+ * Досчитываем system.effects.mechAddProps/mechRemoveProps при КАЖДОМ
+ * сохранении, не только из полей weaponProp — иначе смена kind/удаление группы
+ * или записи не подчистили бы то, что раньше построил kind:"weaponProp"
+ * (см. mechanics.mjs).
+ *
+ * Пересборку эффектов отсюда НЕ зовём: на неё уже подписан хук updateItem
+ * (warhammer-dbc.mjs) — он ловит любую правку Механики, не только с этого
+ * листа. Два вызова разом гонялись бы: хук ядро зовёт синхронно, ещё до того
+ * как setFlag вернёт управление, и оба прогона успели бы увидеть «эффекта
+ * нет» и завести по своему.
+ */
+async function saveMechanics(item, arr) {
+  await item.setFlag("warhammer-dbc", "mechanics", arr);
+  await syncWeaponPropItemEffects(item);
+}
+
+// Какой набор групп требований правим («req» ритуалиста или «assistReq»
+// ассистентов) — в data-req, поэтому один комплект обработчиков обслуживает
+// оба блока сразу.
+const reqGroupsOf      = (item, key)      => foundry.utils.deepClone(getItemRequirements(item, key));
+const saveRequirements = (item, key, arr) => item.setFlag("warhammer-dbc", key, arr);
+const findReqGroup     = (arr, id)        => arr.find(g => g.id === id) || null;
+const findReqEntry     = (arr, gid, eid)  => findReqGroup(arr, gid)?.entries?.find(e => e.id === eid) || null;
+
+/** Правка поля записи требования — общий помощник, чтобы не плодить одинаковый код. */
+function patchReqEntry(item, el, fn) {
+  const key = el.dataset.req;
+  const arr = reqGroupsOf(item, key);
+  const e   = findReqEntry(arr, el.dataset.groupId, el.dataset.entryId);
+  if (!e) return;
+  fn(e, el);
+  return saveRequirements(item, key, arr);
+}
+
+// ── Действия листа ───────────────────────────────────────────────────────────
+// ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
+// источником вторым аргументом. Обычные функции — чтобы карта действий
+// сверялась с шаблоном тестом.
+
+// ── Доступно и тому, кто лист не правит ──
+// В V1 эти обработчики вешались до проверки isEditable; права на сам документ
+// проверяет ядро при update, а кнопки Механики и Требований рисуются только ГМ.
+
+/** Режим поля друкхарийской брони — ровно один активный. */
+function onFieldMode(event, target) {
+  return this.item.update({ "system.fieldMode": target.dataset.fieldMode || "" });
+}
+
+// ── Эффекты (Active Effect Foundry) — общая вкладка для всех типов ──
+function onEffectCreate() { return createBlankEffect(this.item); }
+
+function onEffectEdit(event, target) {
+  this.item.effects.get(target.dataset.effectId)?.sheet?.render(true);
+}
+
+function onEffectDelete(event, target) {
+  return this.item.effects.get(target.dataset.effectId)?.delete();
+}
+
+// ── МЕХАНИКА: группы И/ИЛИ и записи ──
+function onGrantGroupAdd(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  arr.push(blankMechGroup(target.dataset.op === "OR" ? "OR" : "AND"));
+  return saveMechanics(this.item, arr);
+}
+
+function onGrantGroupRemove(event, target) {
+  const id = target.dataset.groupId;
+  return saveMechanics(this.item, getItemMechanics(this.item).filter(g => g.id !== id));
+}
+
+function onGrantOpToggle(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  const g = findMechGroup(arr, target.dataset.groupId);
+  if (!g) return;
+  g.operator = g.operator === "OR" ? "AND" : "OR";
+  return saveMechanics(this.item, arr);
+}
+
+function onGrantEntryAdd(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  const g = findMechGroup(arr, target.dataset.groupId);
+  if (!g) return;
+  g.entries.push(blankMechEntry());
+  return saveMechanics(this.item, arr);
+}
+
+function onGrantEntryRemove(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  const g = findMechGroup(arr, target.dataset.groupId);
+  if (!g) return;
+  g.entries = g.entries.filter(e => e.id !== target.dataset.entryId);
+  return saveMechanics(this.item, arr);
+}
+
+/** Черта / Талант: сброс перетащенного (сам дроп резолвится в _onDropGrantItem). */
+function onGrantDropClear(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  const e = findMechEntry(arr, target.dataset.groupId, target.dataset.entryId);
+  if (!e) return;
+  Object.assign(e, { sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "", specialization: "" });
+  return saveMechanics(this.item, arr);
+}
+
+/** Оружие: Свойство — сброс зоны (saveMechanics сам досчитывает mechAddProps/mechRemoveProps). */
+function onWpropDropClear(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  const e = findMechEntry(arr, target.dataset.groupId, target.dataset.entryId);
+  if (!e) return;
+  const prefix = target.dataset.slot === "newProp" ? "weaponPropNew" : "weaponProp";
+  e[`${prefix}Key`] = ""; e[`${prefix}Label`] = ""; e[`${prefix}HasRating`] = false; e[`${prefix}HasRating2`] = false;
+  if (prefix === "weaponProp" && (e.weaponPropAction === "increase" || e.weaponPropAction === "decrease")) {
+    e.weaponPropAction = "add";
+  }
+  return saveMechanics(this.item, arr);
+}
+
+// ── ТРЕБОВАНИЯ (Ритуал) ──
+function onReqGroupAdd(event, target) {
+  const key = target.dataset.req;
+  const arr = reqGroupsOf(this.item, key);
+  arr.push(blankReqGroup(target.dataset.op === "OR" ? "OR" : "AND"));
+  return saveRequirements(this.item, key, arr);
+}
+
+function onReqGroupRemove(event, target) {
+  const key = target.dataset.req;
+  return saveRequirements(this.item, key,
+    reqGroupsOf(this.item, key).filter(g => g.id !== target.dataset.groupId));
+}
+
+function onReqOpToggle(event, target) {
+  const key = target.dataset.req;
+  const arr = reqGroupsOf(this.item, key);
+  const g = findReqGroup(arr, target.dataset.groupId);
+  if (!g) return;
+  g.operator = g.operator === "OR" ? "AND" : "OR";
+  return saveRequirements(this.item, key, arr);
+}
+
+function onReqEntryAdd(event, target) {
+  const key = target.dataset.req;
+  const arr = reqGroupsOf(this.item, key);
+  const g = findReqGroup(arr, target.dataset.groupId);
+  if (!g) return;
+  g.entries.push(blankReqEntry());
+  return saveRequirements(this.item, key, arr);
+}
+
+function onReqEntryRemove(event, target) {
+  const key = target.dataset.req;
+  const arr = reqGroupsOf(this.item, key);
+  const g = findReqGroup(arr, target.dataset.groupId);
+  if (!g) return;
+  g.entries = g.entries.filter(e => e.id !== target.dataset.entryId);
+  return saveRequirements(this.item, key, arr);
+}
+
+function onReqDropClear(event, target) {
+  return patchReqEntry(this.item, target, e => {
+    Object.assign(e, { sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false });
+  });
+}
+
+// ── Особенность комплекта силовой брони ──
+function onPaRollTable() { return rollArmourTable(this.item); }
+function onPaRollZones() { return rollArmourZones(this.item); }
+function onPaClear()     { return clearArmourHistory(this.item); }
+function onPaRollEntry() {
+  return rollArmourEntry(this.item,
+    this.element.querySelector(".pa-table-select")?.value || this.item.system.history?.table);
+}
+
+// ── Правящие действия ──
+
+/** Сборка торпеды из грузов корабля: сколько собрать — в поле рядом с кнопкой. */
+function onTorpedoAssemble() {
+  return this._assembleTorpedo(parseInt(this.element.querySelector(".torpedo-assemble-n")?.value) || 1);
+}
+
+function onWpropRemove(event, target) {
+  const props = (this.item.system.weaponProps || []).filter(p => p.key !== target.dataset.key);
+  return this.item.update({ "system.weaponProps": props });
+}
+
+/** Освободить демона: снять осквернение (стать Руническим Оружием). */
+async function onWmsRelease() {
+  const dw = this.item.system.daemonWeapon || {};
+  const hasSnap = Array.isArray(dw.preProps);
+  const doRelease = async () => {
+    // d10: 1-6 оружие уничтожено, 7-10 → Руническое Оружие. В обоих случаях
+    // демоническое усиление снимается — восстанавливаем ИСХОДНЫЕ свойства
+    // оружия (снимок при осквернении), НЕ трогая родные (немагические) свойства.
+    const r = (await new Roll("1d10").evaluate()).total;
+    const runic = r >= 7;
+    // База: снимок исходных свойств (если есть), иначе — текущие как есть
+    // (fallback для старых осквернённых предметов — чтобы не потерять родные).
+    let props = foundry.utils.deepClone(hasSnap ? dw.preProps : (this.item.system.weaponProps || []));
+    if (runic) {
+      // Руническое: исходные свойства + Tainted и Reinforced, теряет Primitive.
+      props = props.filter(p => p.key !== "primitive");
+      if (!props.some(p => p.key === "reinforced")) props.push({ key: "reinforced" });
+      if (!props.some(p => p.key === "tainted"))    props.push({ key: "tainted" });
+    }
+    const update = {
+      "system.weaponProps": props,
+      "system.daemonWeapon.bound": false,
+      "system.daemonWeapon.subdued": false,
+      "system.daemonWeapon.runic": runic,
+      "system.daemonWeapon.properties": []
+    };
+    // Возврат урона/пробивания (снимаем +W.b демона), если есть снимок.
+    if (hasSnap) {
+      update["system.damage"] = dw.preDamage ?? this.item.system.damage;
+      update["system.penetration"] = dw.prePen ?? this.item.system.penetration;
+      update["system.daemonWeapon.preProps"] = [];
+      update["system.daemonWeapon.preDamage"] = "";
+      update["system.daemonWeapon.prePen"] = 0;
+    }
+    await this.item.update(update);
+    ChatMessage.create({ content: `<div class="wh-poss-card" style="--gc:#b477ff"><div class="wh-poss-card-h">Освобождение демона — d10: ${r}</div><div class="wh-poss-card-r">${runic ? "<b>7-10:</b> оружие стало <b>Руническим</b> (родные свойства + Reinforced + Tainted, эхо силы)." : "<b>1-6:</b> оружие <b>уничтожено</b>, оставив искорёженные куски (демоническое усиление снято)."}</div></div>` });
+  };
+  const ok = await foundry.applications.api.DialogV2.confirm({
+    window: { title: "Освободить демона" },
+    content: "<p>Демон вырывается из оружия. Бросок d10 определит судьбу оружия (1-6 уничтожено, 7-10 → Руническое). Демоническое усиление снимается, родные свойства оружия сохраняются.</p>",
+    yes: { label: "Освободить" }, no: { label: "Отмена" }
+  });
+  if (ok) await doRelease();
+}
+
+// ── Психосила: доп. профили атаки и вариации броска ──
+function onPsyProfileAdd() {
+  const arr = foundry.utils.deepClone(this.item.system.profiles || []);
+  arr.push({ label: "", damage: "", damageType: "energy", penetration: 0, propsText: "", charDamageStat: "", charDamageFormula: "" });
+  return this.item.update({ "system.profiles": arr });
+}
+
+function onPsyProfileRemove(event, target) {
+  const i = Number(target.dataset.index);
+  return this.item.update({ "system.profiles": (this.item.system.profiles || []).filter((_, idx) => idx !== i) });
+}
+
+function onPsyVariantAdd() {
+  const arr = foundry.utils.deepClone(this.item.system.variants || []);
+  arr.push({ label: "", testMod: 0, note: "" });
+  return this.item.update({ "system.variants": arr });
+}
+
+function onPsyVariantRemove(event, target) {
+  const i = Number(target.dataset.index);
+  return this.item.update({ "system.variants": (this.item.system.variants || []).filter((_, idx) => idx !== i) });
+}
+
+// ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──
+/** Номер профиля — на карточке, а не на самой кнопке. */
+const profileIdx = el => Number(el.closest(".wprofile-card")?.dataset.idx);
+
+function onWprofileAdd() {
+  const arr = foundry.utils.deepClone(this.item.system.profiles || []);
+  arr.push({ label: "", damage: "", damageType: "rending", penetration: 0, range: "", weaponProps: [] });
+  return this.item.update({ "system.profiles": arr });
+}
+
+function onWprofileDel(event, target) {
+  const i = profileIdx(target);
+  return this.item.update({ "system.profiles": (this.item.system.profiles || []).filter((_, idx) => idx !== i) });
+}
+
+/** Свойства конкретного профиля (свой блок Devastating/Primitive и т.п.). */
+function onWprofilePropRemove(event, target) {
+  const i = profileIdx(target);
+  const arr = foundry.utils.deepClone(this.item.system.profiles || []);
+  if (!arr[i]) return;
+  arr[i].weaponProps = (arr[i].weaponProps || []).filter(p => p.key !== target.dataset.key);
+  return this.item.update({ "system.profiles": arr });
+}
+
+// ── Списки свойств и бонусов: удаление чипа ──
+function onWbuffRemove(event, target) {
+  const props = (this.item.system.effects?.weaponBuff?.addProps || []).filter(p => p.key !== target.dataset.key);
+  return this.item.update({ "system.effects.weaponBuff.addProps": props });
+}
+
+function onShippropRemove(event, target) {
+  const props = (this.item.system.shipProps || []).filter(p => p.key !== target.dataset.key);
+  return this.item.update({ "system.shipProps": props });
+}
+
+function onCbonusRemove(event, target) {
+  const arr = (this.item.system.effects?.charBonuses || []).filter(c => c.stat !== target.dataset.stat);
+  return this.item.update({ "system.effects.charBonuses": arr });
+}
+
+function onXtypeRemove(event, target) {
+  const arr = (this.item.system.extraTypes || []).filter(e => e.type !== target.dataset.type);
+  return this.item.update({ "system.extraTypes": arr });
+}
+
+function onModpropRemove(event, target) {
+  const arr = (this.item.system.effects?.addProps || []).filter(p => p.key !== target.dataset.key);
+  return this.item.update({ "system.effects.addProps": arr });
+}
+
+function onModremRemove(event, target) {
+  const arr = (this.item.system.effects?.removeProps || []).filter(k => k !== target.dataset.key);
+  return this.item.update({ "system.effects.removeProps": arr });
+}
+
+function onAptRemove(event, target) {
+  const arr = (this.item.system.aptitudes || []).filter(k => k !== target.dataset.key);
+  return this.item.update({ "system.aptitudes": arr });
+}
+
+function onApropRemove(event, target) {
+  const props = (this.item.system.properties || []).filter(p => p !== target.dataset.key);
+  return this.item.update({ "system.properties": props });
 }
 
 export class WarhammerItemSheet
@@ -61,7 +388,47 @@ export class WarhammerItemSheet
     form: { submitOnChange: true, closeOnSubmit: false },
     dragDrop: [{ dragSelector: null, dropSelector: ".effects-drop-target, .grant-drop-zone, .wprop-drop-zone" }],
     actions: {
-      tab: onTab
+      tab: onTab,
+      fieldMode: onFieldMode,
+      effectCreate: onEffectCreate,
+      effectEdit: onEffectEdit,
+      effectDelete: onEffectDelete,
+      grantGroupAdd: onGrantGroupAdd,
+      grantGroupRemove: onGrantGroupRemove,
+      grantOpToggle: onGrantOpToggle,
+      grantEntryAdd: onGrantEntryAdd,
+      grantEntryRemove: onGrantEntryRemove,
+      grantDropClear: onGrantDropClear,
+      wpropDropClear: onWpropDropClear,
+      reqGroupAdd: onReqGroupAdd,
+      reqGroupRemove: onReqGroupRemove,
+      reqOpToggle: onReqOpToggle,
+      reqEntryAdd: onReqEntryAdd,
+      reqEntryRemove: onReqEntryRemove,
+      reqDropClear: onReqDropClear,
+      paRollTable: onPaRollTable,
+      paRollEntry: onPaRollEntry,
+      paRollZones: onPaRollZones,
+      paClear: onPaClear,
+      // Ниже — то, что в V1 висело после общей проверки isEditable.
+      torpedoAssemble: whenEditable(onTorpedoAssemble),
+      wpropRemove: whenEditable(onWpropRemove),
+      wmsRelease: whenEditable(onWmsRelease),
+      psyProfileAdd: whenEditable(onPsyProfileAdd),
+      psyProfileRemove: whenEditable(onPsyProfileRemove),
+      psyVariantAdd: whenEditable(onPsyVariantAdd),
+      psyVariantRemove: whenEditable(onPsyVariantRemove),
+      wprofileAdd: whenEditable(onWprofileAdd),
+      wprofileDel: whenEditable(onWprofileDel),
+      wprofilePropRemove: whenEditable(onWprofilePropRemove),
+      wbuffRemove: whenEditable(onWbuffRemove),
+      shippropRemove: whenEditable(onShippropRemove),
+      cbonusRemove: whenEditable(onCbonusRemove),
+      xtypeRemove: whenEditable(onXtypeRemove),
+      modpropRemove: whenEditable(onModpropRemove),
+      modremRemove: whenEditable(onModremRemove),
+      aptRemove: whenEditable(onAptRemove),
+      apropRemove: whenEditable(onApropRemove)
     }
   };
 
@@ -706,69 +1073,18 @@ export class WarhammerItemSheet
     /** Слушатель на все узлы по селектору — замена jQuery-обхода из V1. */
     const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
 
-    // Режим поля друкхарийской брони — ровно один активный.
-    on("[data-field-mode]", "click", ev => {
-      const key = ev.currentTarget.dataset.fieldMode || "";
-      this.item.update({ "system.fieldMode": key });
-    });
-
     // ── Эффекты (Active Effect Foundry) — общая вкладка для всех типов ──────────
-    on(".effect-create-btn", "click", ev => { ev.preventDefault(); createBlankEffect(this.item); });
-    on(".effect-name-link, .effect-edit-btn", "click", ev => {
-      const fx = this.item.effects.get(ev.currentTarget.dataset.effectId);
-      fx?.sheet?.render(true);
-    });
-    on(".effect-delete-btn", "click", async ev => {
-      const fx = this.item.effects.get(ev.currentTarget.dataset.effectId);
-      if (fx) await fx.delete();
-    });
     on(".effect-disabled-toggle", "change", async ev => {
       const fx = this.item.effects.get(ev.currentTarget.dataset.effectId);
       if (fx) await fx.update({ disabled: !ev.currentTarget.checked });
     });
 
     // ── МЕХАНИКА (единый Конструктор: Характеристика/Черта/Талант/Навык/Код,
-    // группы И/ИЛИ) — общая вкладка для всех типов. Read-mutate-clone-save:
-    // полагаемся на авто-рендер листа после setFlag, а не на живую
-    // перестройку DOM вручную (тот же приём, что и у прежних Скриптов/Выдач).
-    // Досчитываем system.effects.mechAddProps/mechRemoveProps при КАЖДОМ сохранении,
-    // не только из полей weaponProp — иначе смена kind/удаление группы или записи
-    // не подчистили бы то, что раньше построил kind:"weaponProp" (см. mechanics.mjs).
-    // Пересборку эффектов отсюда НЕ зовём: на неё уже подписан хук updateItem
-    // (warhammer-dbc.mjs) — он ловит любую правку Механики, не только с этого
-    // листа. Два вызова разом гонялись бы: хук ядро зовёт синхронно, ещё до
-    // того как setFlag ниже вернёт управление, и оба прогона успели бы увидеть
-    // «эффекта нет» и завести по своему.
-    const saveMech = async arr => {
-      await this.item.setFlag("warhammer-dbc", "mechanics", arr);
-      await syncWeaponPropItemEffects(this.item);
-    };
+    // группы И/ИЛИ) — общая вкладка для всех типов. Кнопки групп и записей —
+    // действия [data-action] выше; здесь остались поля записи.
+    const saveMech = arr => saveMechanics(this.item, arr);
     // Рекурсивный поиск (учитывает вложенные подгруппы kind:"group", см. mechanics.mjs).
     const findEntry = findMechEntry;
-    on(".grant-group-add", "click", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      arr.push(blankMechGroup(ev.currentTarget.dataset.op === "OR" ? "OR" : "AND"));
-      saveMech(arr);
-    });
-    on(".grant-group-remove", "click", ev => {
-      const id = ev.currentTarget.dataset.groupId;
-      saveMech(getItemMechanics(this.item).filter(g => g.id !== id));
-    });
-    on(".grant-op-toggle", "click", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const g = findMechGroup(arr, ev.currentTarget.dataset.groupId);
-      if (g) { g.operator = g.operator === "OR" ? "AND" : "OR"; saveMech(arr); }
-    });
-    on(".grant-entry-add", "click", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const g = findMechGroup(arr, ev.currentTarget.dataset.groupId);
-      if (g) { g.entries.push(blankMechEntry()); saveMech(arr); }
-    });
-    on(".grant-entry-remove", "click", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const g = findMechGroup(arr, ev.currentTarget.dataset.groupId);
-      if (g) { g.entries = g.entries.filter(e => e.id !== ev.currentTarget.dataset.entryId); saveMech(arr); }
-    });
     on(".grant-entry-kind", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
@@ -956,52 +1272,9 @@ export class WarhammerItemSheet
       if (e) { e.code = ev.currentTarget.value; saveMech(arr); }
     });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
-    // Тот же приём read-mutate-clone-save, что и у Механики; какой набор
-    // групп правим — в data-req, поэтому один комплект обработчиков
-    // обслуживает оба блока сразу.
-    const reqKeyOf  = el => el.dataset.req;
-    const saveReq   = async (key, arr) => { await this.item.setFlag("warhammer-dbc", key, arr); };
-    const reqGroups = key => foundry.utils.deepClone(getItemRequirements(this.item, key));
-    const findReqGroup = (arr, id) => arr.find(g => g.id === id) || null;
-    const findReqEntry = (arr, gid, eid) => findReqGroup(arr, gid)?.entries?.find(e => e.id === eid) || null;
-    // Правка поля записи — общий помощник, чтобы не плодить одинаковый код.
-    const patchReq = (ev, fn) => {
-      const el = ev.currentTarget, key = reqKeyOf(el);
-      const arr = reqGroups(key);
-      const e = findReqEntry(arr, el.dataset.groupId, el.dataset.entryId);
-      if (!e) return;
-      fn(e, el);
-      saveReq(key, arr);
-    };
+    // Кнопки групп и условий — действия [data-action] выше; здесь поля записи.
+    const patchReq = (ev, fn) => patchReqEntry(this.item, ev.currentTarget, fn);
 
-    on(".req-group-add", "click", ev => {
-      const key = reqKeyOf(ev.currentTarget);
-      const arr = reqGroups(key);
-      arr.push(blankReqGroup(ev.currentTarget.dataset.op === "OR" ? "OR" : "AND"));
-      saveReq(key, arr);
-    });
-    on(".req-group-remove", "click", ev => {
-      const el = ev.currentTarget, key = reqKeyOf(el);
-      saveReq(key, reqGroups(key).filter(g => g.id !== el.dataset.groupId));
-    });
-    on(".req-op-toggle", "click", ev => {
-      const el = ev.currentTarget, key = reqKeyOf(el);
-      const arr = reqGroups(key);
-      const g = findReqGroup(arr, el.dataset.groupId);
-      if (g) { g.operator = g.operator === "OR" ? "AND" : "OR"; saveReq(key, arr); }
-    });
-    on(".req-entry-add", "click", ev => {
-      const el = ev.currentTarget, key = reqKeyOf(el);
-      const arr = reqGroups(key);
-      const g = findReqGroup(arr, el.dataset.groupId);
-      if (g) { g.entries.push(blankReqEntry()); saveReq(key, arr); }
-    });
-    on(".req-entry-remove", "click", ev => {
-      const el = ev.currentTarget, key = reqKeyOf(el);
-      const arr = reqGroups(key);
-      const g = findReqGroup(arr, el.dataset.groupId);
-      if (g) { g.entries = g.entries.filter(e => e.id !== el.dataset.entryId); saveReq(key, arr); }
-    });
     on(".req-entry-kind", "change", ev => patchReq(ev, (e, el) => {
       // Смена вида условия обнуляет поля прежнего — иначе на записи висели
       // бы чужие данные (напр. навык у требования по расе).
@@ -1027,18 +1300,8 @@ export class WarhammerItemSheet
     on(".req-race", "change",      ev => patchReq(ev, (e, el) => { e.raceKey = el.value; }));
     on(".req-archetype", "change", ev => patchReq(ev, (e, el) => { e.archetypeName = el.value; }));
     on(".req-patron", "change",    ev => patchReq(ev, (e, el) => { e.patronKey = el.value; }));
-    on(".req-drop-clear", "click", ev => patchReq(ev, e => {
-      Object.assign(e, { sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false });
-    }));
 
     // Черта / Талант (драг-н-дроп резолвится в _onDropGrantItem)
-    on(".grant-drop-clear", "click", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (!e) return;
-      Object.assign(e, { sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "", specialization: "" });
-      saveMech(arr);
-    });
     on(".grant-entry-rating", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
@@ -1124,24 +1387,8 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weaponPropNewValue2 = ev.currentTarget.value; saveMech(arr); }
     });
-    on(".wprop-drop-clear", "click", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (!e) return;
-      const prefix = ev.currentTarget.dataset.slot === "newProp" ? "weaponPropNew" : "weaponProp";
-      e[`${prefix}Key`] = ""; e[`${prefix}Label`] = ""; e[`${prefix}HasRating`] = false; e[`${prefix}HasRating2`] = false;
-      if (prefix === "weaponProp" && (e.weaponPropAction === "increase" || e.weaponPropAction === "decrease")) {
-        e.weaponPropAction = "add";
-      }
-      saveMech(arr);
-    });
 
     // ── Особенность комплекта силовой брони ──
-    on(".pa-roll-table", "click", () => rollArmourTable(this.item));
-    on(".pa-roll-entry", "click", () =>
-      rollArmourEntry(this.item, el.querySelector(".pa-table-select")?.value || this.item.system.history?.table));
-    on(".pa-roll-zones", "click", () => rollArmourZones(this.item));
-    on(".pa-clear", "click", () => clearArmourHistory(this.item));
     on(".pa-table-select", "change", ev =>
       this.item.update({ "system.history.table": ev.currentTarget.value }));
     on(".pa-entry-select", "change", ev => {
@@ -1165,14 +1412,8 @@ export class WarhammerItemSheet
         await this.item.update({ "system.qualityPicks": keys });
       }
     });
-    // Голо-тема для листа небесного тела (планеты/станции).
+    // Ниже — только для того, кто лист правит (действия проверяют это сами).
     if (!this.isEditable) return;
-
-    // ── Сборка торпеды из грузов корабля ───────────────────────────────────────
-    on(".torpedo-assemble-btn", "click", async () => {
-      const n = parseInt(el.querySelector(".torpedo-assemble-n")?.value) || 1;
-      await this._assembleTorpedo(n);
-    });
 
     // ── Баланс ────────────────────────────────────────────────────────────────
     on(".balance-select", "change", ev => {
@@ -1210,56 +1451,6 @@ export class WarhammerItemSheet
         await this.item.update({ "system.weaponProps": props });
       }
     });
-    on(".wprop-remove", "click", async ev => {
-      const key   = ev.currentTarget.dataset.key;
-      const props = (this.item.system.weaponProps || []).filter(p => p.key !== key);
-      await this.item.update({ "system.weaponProps": props });
-    });
-
-    // ── Освободить демона: снять осквернение (стать Руническим Оружием) ──────
-    on(".wms-release", "click", async () => {
-      const dw = this.item.system.daemonWeapon || {};
-      const hasSnap = Array.isArray(dw.preProps);
-      const doRelease = async () => {
-        // d10: 1-6 оружие уничтожено, 7-10 → Руническое Оружие. В обоих случаях
-        // демоническое усиление снимается — восстанавливаем ИСХОДНЫЕ свойства
-        // оружия (снимок при осквернении), НЕ трогая родные (немагические) свойства.
-        const r = (await new Roll("1d10").evaluate()).total;
-        const runic = r >= 7;
-        // База: снимок исходных свойств (если есть), иначе — текущие как есть
-        // (fallback для старых осквернённых предметов — чтобы не потерять родные).
-        let props = foundry.utils.deepClone(hasSnap ? dw.preProps : (this.item.system.weaponProps || []));
-        if (runic) {
-          // Руническое: исходные свойства + Tainted и Reinforced, теряет Primitive.
-          props = props.filter(p => p.key !== "primitive");
-          if (!props.some(p => p.key === "reinforced")) props.push({ key: "reinforced" });
-          if (!props.some(p => p.key === "tainted"))    props.push({ key: "tainted" });
-        }
-        const update = {
-          "system.weaponProps": props,
-          "system.daemonWeapon.bound": false,
-          "system.daemonWeapon.subdued": false,
-          "system.daemonWeapon.runic": runic,
-          "system.daemonWeapon.properties": []
-        };
-        // Возврат урона/пробивания (снимаем +W.b демона), если есть снимок.
-        if (hasSnap) {
-          update["system.damage"] = dw.preDamage ?? this.item.system.damage;
-          update["system.penetration"] = dw.prePen ?? this.item.system.penetration;
-          update["system.daemonWeapon.preProps"] = [];
-          update["system.daemonWeapon.preDamage"] = "";
-          update["system.daemonWeapon.prePen"] = 0;
-        }
-        await this.item.update(update);
-        ChatMessage.create({ content: `<div class="wh-poss-card" style="--gc:#b477ff"><div class="wh-poss-card-h">Освобождение демона — d10: ${r}</div><div class="wh-poss-card-r">${runic ? "<b>7-10:</b> оружие стало <b>Руническим</b> (родные свойства + Reinforced + Tainted, эхо силы)." : "<b>1-6:</b> оружие <b>уничтожено</b>, оставив искорёженные куски (демоническое усиление снято)."}</div></div>` });
-      };
-      const ok = await foundry.applications.api.DialogV2.confirm({
-        window: { title: "Освободить демона" },
-        content: "<p>Демон вырывается из оружия. Бросок d10 определит судьбу оружия (1-6 уничтожено, 7-10 → Руническое). Демоническое усиление снимается, родные свойства оружия сохраняются.</p>",
-        yes: { label: "Освободить" }, no: { label: "Отмена" }
-      });
-      if (ok) await doRelease();
-    });
     on(".wprop-rating", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
@@ -1279,16 +1470,6 @@ export class WarhammerItemSheet
     });
 
     // ── Психосила: доп. профили атаки ───────────────────────────────────────────
-    on(".psy-profile-add", "click", async () => {
-      const arr = foundry.utils.deepClone(this.item.system.profiles || []);
-      arr.push({ label: "", damage: "", damageType: "energy", penetration: 0, propsText: "", charDamageStat: "", charDamageFormula: "" });
-      await this.item.update({ "system.profiles": arr });
-    });
-    on(".psy-profile-remove", "click", async ev => {
-      const i = Number(ev.currentTarget.dataset.index);
-      const arr = (this.item.system.profiles || []).filter((_, idx) => idx !== i);
-      await this.item.update({ "system.profiles": arr });
-    });
     on(".psy-profile-field", "change", async ev => {
       const i = Number(ev.currentTarget.dataset.index);
       const field = ev.currentTarget.dataset.field;
@@ -1299,16 +1480,6 @@ export class WarhammerItemSheet
     });
 
     // ── Психосила: вариации броска (разные модификаторы/цели) ────────────────────
-    on(".psy-variant-add", "click", async () => {
-      const arr = foundry.utils.deepClone(this.item.system.variants || []);
-      arr.push({ label: "", testMod: 0, note: "" });
-      await this.item.update({ "system.variants": arr });
-    });
-    on(".psy-variant-remove", "click", async ev => {
-      const i = Number(ev.currentTarget.dataset.index);
-      const arr = (this.item.system.variants || []).filter((_, idx) => idx !== i);
-      await this.item.update({ "system.variants": arr });
-    });
     on(".psy-variant-field", "change", async ev => {
       const i = Number(ev.currentTarget.dataset.index);
       const field = ev.currentTarget.dataset.field;
@@ -1319,19 +1490,8 @@ export class WarhammerItemSheet
     });
 
     // ── Оружие: доп. профили ББ (Крюк/Посох, стр. 207-221) ──────────────────────
-    const profIdxOf = el => Number(el.closest(".wprofile-card")?.dataset.idx);
-    on(".wprofile-add", "click", async () => {
-      const arr = foundry.utils.deepClone(this.item.system.profiles || []);
-      arr.push({ label: "", damage: "", damageType: "rending", penetration: 0, range: "", weaponProps: [] });
-      await this.item.update({ "system.profiles": arr });
-    });
-    on(".wprofile-del", "click", async ev => {
-      const i = profIdxOf(ev.currentTarget);
-      const arr = (this.item.system.profiles || []).filter((_, idx) => idx !== i);
-      await this.item.update({ "system.profiles": arr });
-    });
     on(".wprofile-field", "change", async ev => {
-      const i = profIdxOf(ev.currentTarget);
+      const i = profileIdx(ev.currentTarget);
       const field = ev.currentTarget.dataset.field;
       const arr = foundry.utils.deepClone(this.item.system.profiles || []);
       if (!arr[i]) return;
@@ -1342,7 +1502,7 @@ export class WarhammerItemSheet
     on(".wprofile-prop-add", "change", async ev => {
       const key = ev.currentTarget.value;
       if (!key) return;
-      const i = profIdxOf(ev.currentTarget);
+      const i = profileIdx(ev.currentTarget);
       const arr = foundry.utils.deepClone(this.item.system.profiles || []);
       if (!arr[i]) return;
       arr[i].weaponProps = Array.isArray(arr[i].weaponProps) ? arr[i].weaponProps : [];
@@ -1350,16 +1510,8 @@ export class WarhammerItemSheet
         arr[i].weaponProps.push({ key, rating: 0, rating2: 0 });
       await this.item.update({ "system.profiles": arr });
     });
-    on(".wprofile-prop-remove", "click", async ev => {
-      const i = profIdxOf(ev.currentTarget);
-      const key = ev.currentTarget.dataset.key;
-      const arr = foundry.utils.deepClone(this.item.system.profiles || []);
-      if (!arr[i]) return;
-      arr[i].weaponProps = (arr[i].weaponProps || []).filter(p => p.key !== key);
-      await this.item.update({ "system.profiles": arr });
-    });
     on(".wprofile-prop-rating", "change", async ev => {
-      const i = profIdxOf(ev.currentTarget);
+      const i = profileIdx(ev.currentTarget);
       const key = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
       const raw = ev.currentTarget.value;
@@ -1381,11 +1533,6 @@ export class WarhammerItemSheet
         props.push({ key, rating: 0, rating2: 0 });
         await this.item.update({ "system.effects.weaponBuff.addProps": props });
       }
-    });
-    on(".wbuff-remove", "click", async ev => {
-      const key   = ev.currentTarget.dataset.key;
-      const props = (this.item.system.effects?.weaponBuff?.addProps || []).filter(p => p.key !== key);
-      await this.item.update({ "system.effects.weaponBuff.addProps": props });
     });
     on(".wbuff-rating", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
@@ -1414,11 +1561,6 @@ export class WarhammerItemSheet
         await this.item.update({ "system.shipProps": props });
       }
     });
-    on(".shipprop-remove", "click", async ev => {
-      const key   = ev.currentTarget.dataset.key;
-      const props = (this.item.system.shipProps || []).filter(p => p.key !== key);
-      await this.item.update({ "system.shipProps": props });
-    });
     on(".shipprop-rating", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
@@ -1437,11 +1579,6 @@ export class WarhammerItemSheet
         arr.push({ stat, value: 0 });
         await this.item.update({ "system.effects.charBonuses": arr });
       }
-    });
-    on(".cbonus-remove", "click", async ev => {
-      const stat = ev.currentTarget.dataset.stat;
-      const arr  = (this.item.system.effects?.charBonuses || []).filter(c => c.stat !== stat);
-      await this.item.update({ "system.effects.charBonuses": arr });
     });
     on(".cbonus-value", "change", async ev => {
       const stat = ev.currentTarget.dataset.stat;
@@ -1484,11 +1621,6 @@ export class WarhammerItemSheet
         await this.item.update({ "system.extraTypes": arr });
       }
     });
-    on(".xtype-remove", "click", async ev => {
-      const type = ev.currentTarget.dataset.type;
-      const arr  = (this.item.system.extraTypes || []).filter(e => e.type !== type);
-      await this.item.update({ "system.extraTypes": arr });
-    });
     on(".xtype-x", "change", async ev => {
       const type = ev.currentTarget.dataset.type;
       const val  = parseInt(ev.currentTarget.value) || 0;
@@ -1507,11 +1639,6 @@ export class WarhammerItemSheet
         await this.item.update({ "system.effects.addProps": arr });
       }
     });
-    on(".modprop-remove", "click", async ev => {
-      const key = ev.currentTarget.dataset.key;
-      const arr = (this.item.system.effects?.addProps || []).filter(p => p.key !== key);
-      await this.item.update({ "system.effects.addProps": arr });
-    });
     on(".modprop-rating", "change", async ev => {
       const key   = ev.currentTarget.dataset.key;
       const field = ev.currentTarget.dataset.field;
@@ -1526,11 +1653,6 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(this.item.system.effects?.removeProps || []);
       if (!arr.includes(key)) { arr.push(key); await this.item.update({ "system.effects.removeProps": arr }); }
     });
-    on(".modrem-remove", "click", async ev => {
-      const key = ev.currentTarget.dataset.key;
-      const arr = (this.item.system.effects?.removeProps || []).filter(k => k !== key);
-      await this.item.update({ "system.effects.removeProps": arr });
-    });
 
     // ── Талант: склонности ─────────────────────────────────────────────────────
     on(".apt-add", "change", async ev => {
@@ -1538,11 +1660,6 @@ export class WarhammerItemSheet
       if (!key) return;
       const arr = foundry.utils.deepClone(this.item.system.aptitudes || []);
       if (!arr.includes(key)) { arr.push(key); await this.item.update({ "system.aptitudes": arr }); }
-    });
-    on(".apt-remove", "click", async ev => {
-      const key = ev.currentTarget.dataset.key;
-      const arr = (this.item.system.aptitudes || []).filter(k => k !== key);
-      await this.item.update({ "system.aptitudes": arr });
     });
 
     // ── Модификация брони: даруемые свойства (чекбоксы) ────────────────────────
@@ -1561,11 +1678,6 @@ export class WarhammerItemSheet
         props.push(key);
         await this.item.update({ "system.properties": props });
       }
-    });
-    on(".aprop-remove", "click", async ev => {
-      const key   = ev.currentTarget.dataset.key;
-      const props = (this.item.system.properties || []).filter(p => p !== key);
-      await this.item.update({ "system.properties": props });
     });
 
     // ── Типы боеприпасов ──────────────────────────────────────────────────────

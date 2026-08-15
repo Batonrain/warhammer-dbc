@@ -51,7 +51,7 @@
       {{#each aptitudesActive as |a|}}
       <div class="wprop-chip">
         <span class="wprop-name">{{a.label}}</span>
-        <button type="button" class="wprop-remove apt-remove" data-key="{{a.key}}" title="Убрать">✕</button>
+        <button type="button" class="wprop-remove apt-remove" data-action="aptRemove" data-key="{{a.key}}" title="Убрать">✕</button>
       </div>
       {{/each}}
     </div>

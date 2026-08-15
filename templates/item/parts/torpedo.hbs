@@ -39,7 +39,7 @@
   <div class="weapon-row">
     <label class="wr-label">Собрать (шт.)</label>
     <input type="number" class="torpedo-assemble-n wr-input-xs" value="1" min="1"/>
-    <button type="button" class="torpedo-assemble-btn">Собрать из грузов</button>
+    <button type="button" class="torpedo-assemble-btn" data-action="torpedoAssemble">Собрать из грузов</button>
   </div>
   <div class="drug-stat-hint">Сборка спишет боеголовку{{#if torpedoStock.navNeeded}} и систему наведения{{/if}} из грузов корабля (×N) и добавит N к количеству торпед. Нужны грузы с именами «{{torpedoStock.whName}}»{{#if torpedoStock.navNeeded}} и «{{torpedoStock.navName}}»{{/if}} (как в библиотеке «Снаряжение»).</div>
   {{else}}

@@ -16,10 +16,12 @@ const read = p => fs.readFileSync(path.join(root, p), "utf8");
 /**
  * @param {Function} SheetClass  класс листа
  * @param {object}   files       { sheet: "module/...mjs", template: "templates/...hbs" }
+ *   template — один файл или список: у листа предмета разметка разложена по
+ *   частям на тип предмета, а вкладку Механики собирает строками mechanics.mjs.
  */
 export function describeV2Sheet(SheetClass, files) {
   const SOURCE = read(files.sheet);
-  const TEMPLATE = read(files.template);
+  const TEMPLATE = [files.template].flat().map(read).join("\n");
 
   describe(`${SheetClass.name}: перевод на ApplicationV2`, () => {
     // Ищем объявления и вызовы, а не слово: в комментариях V1 упоминается

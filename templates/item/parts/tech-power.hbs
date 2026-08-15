@@ -67,7 +67,7 @@
         <span class="wprop-name">{{t.label}}</span>
         <span class="wprop-slash">X:</span>
         <input type="number" class="xtype-x" data-type="{{t.type}}" value="{{t.x}}" title="Значение X для этого типа"/>
-        <button type="button" class="wprop-remove xtype-remove" data-type="{{t.type}}" title="Убрать тип">✕</button>
+        <button type="button" class="wprop-remove xtype-remove" data-action="xtypeRemove" data-type="{{t.type}}" title="Убрать тип">✕</button>
       </div>
       {{/each}}
     </div>
@@ -166,7 +166,7 @@
       <div class="wprop-chip">
         <span class="wprop-name">{{cb.abbr}}</span>
         <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}" title="Прибавка к бонусу характеристики"/>
-        <button type="button" class="wprop-remove cbonus-remove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
+        <button type="button" class="wprop-remove cbonus-remove" data-action="cbonusRemove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
       </div>
       {{/each}}
     </div>
