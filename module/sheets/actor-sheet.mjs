@@ -436,6 +436,10 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
     requestAnimationFrame(() => { this._restoreScrollPositions(); });
     super.activateListeners(html);
 
+    // Модули, уже снятые с jQuery (wdbc-z0z), получают корень DOM, а не
+    // обёртку. Лист остаётся на первом поколении, пока их не станет большинство.
+    const root = html[0] ?? html;
+
     // ── Элитный архетип в шапке ───────────────────────────────────────────
     activateEliteListeners(html, this.actor);
 
@@ -716,10 +720,10 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts)
     });
 
-    activateGearListeners(html, this.actor);
+    activateGearListeners(root, this.actor);
 
     // ── Вкладка БОЙ ───────────────────────────────────────────────────────
-    activateCombatListeners(html, this.actor);
+    activateCombatListeners(root, this.actor);
 
     // ── Контекстное меню предметов ────────────────────────────────────────
     activateItemContextMenu(html, this.actor);
@@ -729,10 +733,10 @@ export class WarhammerCharacterSheet extends foundry.appv1.sheets.ActorSheet {
       resolveOtherTargetActor: () => this._resolveOtherTargetActor()
     });
     // ── Состояния и Усталость ─────────────────────────────────────────────
-    activateConditionsListeners(html, this.actor);
+    activateConditionsListeners(root, this.actor);
 
     // ── Вкладка ТЕЛО ──────────────────────────────────────────────────────
-    activateBodyListeners(html, this.actor);
+    activateBodyListeners(root, this.actor);
 
     // ── Вкладка ОДЕРЖИМОСТЬ ───────────────────────────────────────────────
     activatePossessionListeners(html, this.actor);

@@ -11,6 +11,16 @@
  */
 export const esc = v => foundry.utils.escapeHTML(v ?? "");
 
+/**
+ * Навесить обработчик на все узлы под корнем — замена `html.find(sel).on(ev, fn)`
+ * при снятии листов с jQuery (wdbc-z0z). Та же форма записи, что у jQuery,
+ * поэтому переезд модуля читается построчно, а не как переписывание.
+ *
+ * @param {ParentNode} root  корень листа или окна
+ */
+export const on = (root, selector, event, handler) =>
+  root.querySelectorAll(selector).forEach(el => el.addEventListener(event, handler));
+
 export function _getAmmoSpent(weapon, rofMode) {
   const sys = weapon.system;
   switch (rofMode) {

@@ -9,6 +9,7 @@ import { openSurgeon } from "../../apps/surgeon.mjs";
 import { syncAstartesImplantWeapon } from "../../apps/astartes-implants.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { syncGrantedEquipment } from "../../apps/mechanics.mjs";
+import { on } from "../../helpers/utils.mjs";
 
 /** Переключить фигуру муж./жен. Значение приходит из data-атрибута кнопки. */
 export async function toggleBodyType(actor, current) {
@@ -101,47 +102,47 @@ function attachImplantTooltips(figPanel) {
   });
 }
 
-export function activateBodyListeners(html, actor, { openSurgeonWindow = openSurgeon } = {}) {
-  html.find(".bc-sex-toggle").click(async ev => {
+export function activateBodyListeners(root, actor, { openSurgeonWindow = openSurgeon } = {}) {
+  on(root, ".bc-sex-toggle", "click", async ev => {
     ev.preventDefault();
     await toggleBodyType(actor, ev.currentTarget.dataset.bodytype || "male");
   });
 
-  html.find(".bc-surgeon-btn").click(ev => {
+  on(root, ".bc-surgeon-btn", "click", ev => {
     ev.preventDefault();
     openSurgeonWindow(actor);
   });
 
-  html.find("[data-vital-adj]").on("click", ev => {
+  on(root, "[data-vital-adj]", "click", ev => {
     ev.preventDefault();
     const b = ev.currentTarget;
     adjustVital(actor, b.dataset.vitalAdj, b.dataset.dir);
   });
-  html.find("[data-vital-reset]").on("click", ev => {
+  on(root, "[data-vital-reset]", "click", ev => {
     ev.preventDefault();
     setVital(actor, ev.currentTarget.dataset.vitalReset, 0);
   });
 
-  const figPanel = html.find(".bc-figure-panel")[0];
+  const figPanel = root.querySelector(".bc-figure-panel");
   if (figPanel) attachImplantTooltips(figPanel);
 
   // Констатация смерти — останавливает кардиомонитор (плоская линия).
-  html.find(".bc-death-toggle").change(async ev => {
+  on(root, ".bc-death-toggle", "change", async ev => {
     await setDeceased(actor, ev.currentTarget.checked);
   });
 
-  html.find(".bc-side-btn").click(async ev => {
+  on(root, ".bc-side-btn", "click", async ev => {
     ev.preventDefault();
     ev.stopPropagation();
     const el = ev.currentTarget;
     await toggleImplantSide(actor.items.get(el.dataset.itemId), el.dataset.side);
   });
 
-  html.find(".geneseed-name-link").click(ev => {
+  on(root, ".geneseed-name-link", "click", ev => {
     openOrganSheet(actor, ev.currentTarget.dataset.itemId);
   });
 
-  html.find(".geneseed-state-select").change(async ev => {
+  on(root, ".geneseed-state-select", "change", async ev => {
     await setOrganState(actor, ev.currentTarget.dataset.itemId, ev.currentTarget.value);
   });
 }

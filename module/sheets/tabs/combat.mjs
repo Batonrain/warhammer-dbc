@@ -14,10 +14,11 @@ import { _showContestDialog } from "../../combat/techniques.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
+import { on } from "../../helpers/utils.mjs";
 
-export function activateCombatListeners(html, actor) {
+export function activateCombatListeners(root, actor) {
 
-  html.find(".weapon-attack-roll").click(ev => {
+  on(root, ".weapon-attack-roll", "click", ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (!item) return;
     // Стрельба по клику: у стрелкового/метательного оружия без уже выбранной
@@ -33,19 +34,19 @@ export function activateCombatListeners(html, actor) {
   });
 
   // ── Лечение и Очки Боли ──────────────────────────────────────────────────
-  html.find(".wounds-heal-btn").click(() => showHealingDialog(actor));
+  on(root, ".wounds-heal-btn", "click", () => showHealingDialog(actor));
 
-  html.find(".pain-absorb-btn").click(() => painChange(actor, +1, "absorb"));
-  html.find(".pain-spend-btn").click(() => painChange(actor, -1, "spend"));
-  html.find(".pain-soulburn-btn").click(() => openPainSoulBurnDialog(actor));
+  on(root, ".pain-absorb-btn", "click", () => painChange(actor, +1, "absorb"));
+  on(root, ".pain-spend-btn", "click", () => painChange(actor, -1, "spend"));
+  on(root, ".pain-soulburn-btn", "click", () => openPainSoulBurnDialog(actor));
 
   // ── Стойка ───────────────────────────────────────────────────────────────
-  html.find(".stance-radio").change(ev => {
+  on(root, ".stance-radio", "change", ev => {
     actor.update({ "system.meleeStance": ev.currentTarget.value });
   });
 
   // ── Приёмы ───────────────────────────────────────────────────────────────
-  html.find(".technique-btn").click(ev => {
+  on(root, ".technique-btn", "click", ev => {
     const tech    = ev.currentTarget.dataset.technique;
     const techDef = MELEE_TECHNIQUES[tech];
     if (!techDef) return;

@@ -486,7 +486,7 @@ describe("вкладка БОЙ", () => {
 
     handlers[".wounds-heal-btn:click"](ev());
 
-    expect(captured.dialog.title).toBe("Лечение");
+    expect(captured.dialog.window.title).toBe("Лечение");
   });
 
   it("Очки Боли впитываются и тратятся в пределах пула", async () => {

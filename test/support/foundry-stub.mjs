@@ -448,6 +448,28 @@ export function fakeForm(fields = {}, checks = {}) {
 }
 
 /**
+ * Подставной корень листа для модулей на чистом DOM: querySelectorAll отдаёт
+ * узлы по селектору, а навешенный обработчик ложится в handlers под ключом
+ * «селектор:событие» — тем же, каким его кладёт listenerHtml.
+ *
+ * Селектор без объявленных узлов всё равно отдаёт один пустой: в игре он просто
+ * не дал бы слушателя, а тесту нужен сам обработчик, чтобы его дёрнуть. Так же
+ * вела себя и jQuery-заглушка — find() всегда возвращала узел.
+ */
+export function listenerRoot(nodes = {}, handlers = {}) {
+  const bind = (selector, el) => ({
+    ...el,
+    addEventListener: (event, fn) => { handlers[`${selector}:${event}`] = fn; }
+  });
+  return {
+    handlers,
+    querySelectorAll: selector => (nodes[selector]?.length ? nodes[selector] : [{}])
+      .map(el => bind(selector, el)),
+    querySelector:    selector => nodes[selector]?.[0] ?? null
+  };
+}
+
+/**
  * Подставной jQuery для activateListeners: запоминает обработчики под ключом
  * «селектор:событие» в html.handlers, а всё остальное (классы, текст,
  * видимость) молча проглатывает — тесты проверяют поведение обработчика, а не
@@ -457,6 +479,10 @@ export function listenerHtml(nodes = {}) {
   const handlers = {};
   return {
     handlers,
+    // html[0] — корень DOM для модулей, уже снятых с jQuery (wdbc-z0z).
+    // Обработчики ложатся в тот же handlers, поэтому тесты не различают,
+    // какой из двух путей навесил слушателя.
+    0: listenerRoot(nodes, handlers),
     find(selector) {
       const node = {
         click:  fn => { handlers[`${selector}:click`]  = fn; return node; },
