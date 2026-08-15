@@ -8,22 +8,158 @@ import { _executeAttackRoll } from "../combat/attack.mjs";
 import { showRamDialog, showTerrainDialog, showRepairDialog } from "../combat/vehicle.mjs";
 import { VEHICLE_WEAPONS } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 
 const ROLE_ORDER = ["commander", "driver", "gunner", "loader", "pilot", "passenger"];
 
-export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
+// ── Действия листа ───────────────────────────────────────────────────────────
+// Тот же приём, что на листе Орды (wdbc-ff4.10.1): ApplicationV2 зовёт
+// обработчик [data-action] с this = лист и элементом-источником вторым
+// аргументом. Обычные функции — чтобы карта действий сверялась с шаблоном тестом.
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "sheet", "actor", "vehicle", "wh-holo"],
-      template: "systems/warhammer-dbc/templates/actor/vehicle-sheet.hbs",
-      width: 800, height: 780,
-      tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "overview" }]
-    });
+/** Правящие действия — только для того, кто может править лист. */
+const whenEditable = fn => function (event, target) {
+  if (this.isEditable) return fn.call(this, event, target);
+};
+
+const itemIdOf = target => target.closest("[data-item-id]")?.dataset.itemId;
+
+function onStationOpen(event, target) {
+  const uuid = target.closest("[data-uuid]")?.dataset.uuid;
+  if (!uuid) return;
+  return fromUuid(uuid).then(doc => (doc?.actor ?? doc)?.sheet?.render(true));
+}
+
+async function onStationClear(event, target) {
+  const id = target.closest("[data-station-id]")?.dataset.stationId;
+  const stations = foundry.utils.deepClone(this.actor.system.stations || []);
+  const s = stations.find(x => x.id === id);
+  if (!s) return;
+  // Владелец техники освобождает любое место, игрок — только своё.
+  if (!this.actor.isOwner) {
+    const occ = s.uuid ? await fromUuid(s.uuid) : null;
+    const occActor = occ?.actor ?? occ;
+    if (!occActor?.isOwner) return ui.notifications.warn("Освободить можно только своё место.");
   }
+  s.uuid = ""; s.name = ""; s.img = "";
+  await this._persistStations(stations);
+}
 
-  getData() {
-    const context = super.getData();
+async function onStationsAdd() {
+  const form = this.element;
+  const role  = form.querySelector(".veh-add-role")?.value || "gunner";
+  const count = Math.max(1, Math.min(20, parseInt(form.querySelector(".veh-add-count")?.value) || 1));
+  const stations = foundry.utils.deepClone(this.actor.system.stations || []);
+  for (let i = 0; i < count; i++)
+    stations.push({ id: foundry.utils.randomID(), role, uuid: "", name: "", img: "" });
+  await this.actor.update({ "system.stations": stations });
+}
+
+async function onStationRemove(event, target) {
+  const id = target.closest("[data-station-id]")?.dataset.stationId;
+  const stations = (this.actor.system.stations || []).filter(s => s.id !== id);
+  // Отвяжем орудия, привязанные к удалённому месту.
+  const upd = this.actor.items.filter(i => i.type === "weapon" && i.system.vehicleMount?.stationId === id)
+    .map(i => ({ _id: i.id, "system.vehicleMount.stationId": "" }));
+  await this.actor.update({ "system.stations": stations });
+  if (upd.length) await this.actor.updateEmbeddedDocuments("Item", upd);
+}
+
+/** Создать вложенный предмет и открыть его лист. */
+const creator = data => async function () {
+  const [it] = await this.actor.createEmbeddedDocuments("Item", [data]);
+  it?.sheet.render(true);
+};
+
+function onItemOpen(event, target) { this.actor.items.get(itemIdOf(target))?.sheet.render(true); }
+function onItemDelete(event, target) { return this.actor.items.get(itemIdOf(target))?.delete(); }
+function onFireWeapon(event, target) {
+  const it = this.actor.items.get(itemIdOf(target));
+  if (it) return this._showVehicleFireDialog(it);
+}
+function onReloadWeapon(event, target) {
+  const it = this.actor.items.get(itemIdOf(target));
+  if (it) return this._reloadVehicleWeapon(it);
+}
+
+function onRam()     { return showRamDialog(this.actor); }
+function onTerrain() { return showTerrainDialog(this.actor); }
+function onRepair()  { return showRepairDialog(this.actor); }
+
+async function onStateAdd() {
+  const val = this.element.querySelector(".veh-state-select")?.value;
+  if (!val) return;
+  const [kind, idxStr] = String(val).split(":");
+  const src = kind === "breakage" ? VEHICLE_BREAKAGES[parseInt(idxStr)] : VEHICLE_STATUS_EFFECTS[parseInt(idxStr)];
+  if (!src) return;
+  const states = foundry.utils.deepClone(this.actor.system.damageStates || []);
+  states.push({ id: foundry.utils.randomID(), kind, label: src.name, note: src.text });
+  await this.actor.update({ "system.damageStates": states });
+}
+
+async function onStateDel(event, target) {
+  const id = target.closest("[data-state-id]")?.dataset.stateId;
+  const states = (this.actor.system.damageStates || []).filter(s => s.id !== id);
+  await this.actor.update({ "system.damageStates": states });
+}
+
+export class WarhammerVehicleSheet
+  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+
+  static DEFAULT_OPTIONS = {
+    // vehicle-sheet — на самой форме листа: CSS цепляется за
+    // «.warhammer-dbc.vehicle-sheet», а у V1 этот класс нёс <form> в шаблоне.
+    classes: ["warhammer-dbc", "sheet", "actor", "vehicle", "wh-holo", "vehicle-sheet"],
+    position: { width: 800, height: 780 },
+    window: { resizable: true },
+    form: { submitOnChange: true, closeOnSubmit: false },
+    actions: {
+      // Открыть лист сидящего и освободить место доступны и игроку-не-владельцу:
+      // права проверяются внутри, чтобы он мог выйти из чужой техники.
+      tab: function (event, target) { this.changeTab(target.dataset.tab, target.dataset.group); },
+      stationOpen:  onStationOpen,
+      stationClear: onStationClear,
+      stationsAdd:    whenEditable(onStationsAdd),
+      stationRemove:  whenEditable(onStationRemove),
+      createWeapon:   whenEditable(creator({ name: "Новое орудие", type: "weapon",
+                        system: { weaponClass: "heavy", vehicleMount: { isMounted: true } } })),
+      createGear:     whenEditable(creator({ name: "Новое снаряжение", type: "vehicleGear",
+                        img: "systems/warhammer-dbc/assets/actor-icons/vehicle.svg" })),
+      createTrait:    whenEditable(creator({ name: "Новая черта", type: "vehicleTrait",
+                        img: "systems/warhammer-dbc/assets/actor-icons/vehicle.svg" })),
+      itemOpen:       whenEditable(onItemOpen),
+      itemDelete:     whenEditable(onItemDelete),
+      fireWeapon:     whenEditable(onFireWeapon),
+      reloadWeapon:   whenEditable(onReloadWeapon),
+      ram:            whenEditable(onRam),
+      terrain:        whenEditable(onTerrain),
+      repair:         whenEditable(onRepair),
+      stateAdd:       whenEditable(onStateAdd),
+      stateDel:       whenEditable(onStateDel)
+    }
+  };
+
+  static PARTS = {
+    body: { template: "systems/warhammer-dbc/templates/actor/vehicle-sheet.hbs", root: true }
+  };
+
+  static TABS = {
+    primary: {
+      initial: "overview",
+      tabs: [
+        { id: "overview", label: "Обзор",        icon: "fas fa-gauge-high" },
+        { id: "crew",     label: "Экипаж",       icon: "fas fa-users" },
+        { id: "combat",   label: "Бой",          icon: "fas fa-crosshairs" },
+        { id: "damage",   label: "Повреждения",  icon: "fas fa-car-burst" },
+        { id: "notes",    label: "Записи",       icon: "fas fa-file-lines" }
+      ]
+    }
+  };
+
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options);
+    context.actor = this.actor;
+    context.tab = this.tabGroups?.primary ?? WarhammerVehicleSheet.TABS.primary.initial;
     const sys = this.actor.system;
     context.system  = sys;
     context.derived = sys.derived || {};
@@ -262,191 +398,63 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
     return ok;
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
+  /**
+   * Здесь остаётся только то, что действиями [data-action] не выражается:
+   * события change, ПКМ по строке орудия и Drag&Drop. Клики живут в actions.
+   */
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
+    if (!el) return;
 
-    // ── Доступно всем (в т.ч. игроку-не-владельцу техники) ──
-    // Открыть лист сидящего персонажа.
-    html.find(".veh-station-open").on("click", async ev => {
-      const uuid = ev.currentTarget.closest("[data-uuid]")?.dataset.uuid;
-      if (!uuid) return;
-      const doc = await fromUuid(uuid);
-      (doc?.actor ?? doc)?.sheet?.render(true);
-    });
-    // Освободить место: владелец техники — любое; игрок — только своё.
-    html.find(".veh-station-clear").on("click", async ev => {
-      const id = ev.currentTarget.closest("[data-station-id]")?.dataset.stationId;
-      const stations = foundry.utils.deepClone(this.actor.system.stations || []);
-      const s = stations.find(x => x.id === id);
-      if (!s) return;
-      if (!this.actor.isOwner) {
-        const occ = s.uuid ? await fromUuid(s.uuid) : null;
-        const occActor = occ?.actor ?? occ;
-        if (!occActor?.isOwner) return ui.notifications.warn("Освободить можно только своё место.");
-      }
-      s.uuid = ""; s.name = ""; s.img = "";
-      await this._persistStations(stations);
-    });
+    // Drop привязываем всегда, а не только на редактируемом листе: игрок-не-
+    // владелец должен уметь перетащить своего персонажа в чужой транспорт
+    // (запись идёт через активного ГМа по сокету, см. _persistStations).
+    try {
+      const DDC = foundry.applications?.ux?.DragDrop?.implementation
+               ?? foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
+      if (DDC) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
+    } catch (e) { console.warn("Warhammer DBC | vehicle DnD bind:", e); }
 
-    if (!this.isEditable) {
-      // Core appv1 привязывает Drag&Drop только для редактируемого листа.
-      // Для игрока-не-владельца привязываем drop сами, чтобы он мог перетащить
-      // своего персонажа/токен в транспорт (запись идёт через ГМа по сокету).
-      try {
-        const el  = html[0] ?? html;
-        const DDC = foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
-        if (DDC && el) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
-      } catch (e) { console.warn("Warhammer DBC | vehicle DnD bind:", e); }
-      return;
-    }
-
-    const idOf = (ev) => ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
-
-    // ── Экипаж: управление МЕСТАМИ ──
-    // Добавить N мест выбранной роли.
-    html.find(".veh-add-stations").on("click", async () => {
-      const role  = html.find(".veh-add-role").val() || "gunner";
-      const count = Math.max(1, Math.min(20, parseInt(html.find(".veh-add-count").val()) || 1));
-      const stations = foundry.utils.deepClone(this.actor.system.stations || []);
-      for (let i = 0; i < count; i++)
-        stations.push({ id: foundry.utils.randomID(), role, uuid: "", name: "", img: "" });
-      await this.actor.update({ "system.stations": stations });
-    });
-    // Удалить место целиком.
-    html.find(".veh-station-remove").on("click", async ev => {
-      const id = ev.currentTarget.closest("[data-station-id]")?.dataset.stationId;
-      const stations = (this.actor.system.stations || []).filter(s => s.id !== id);
-      // Отвяжем орудия, привязанные к удалённому месту.
-      const upd = this.actor.items.filter(i => i.type === "weapon" && i.system.vehicleMount?.stationId === id)
-        .map(i => ({ _id: i.id, "system.vehicleMount.stationId": "" }));
-      await this.actor.update({ "system.stations": stations });
-      if (upd.length) await this.actor.updateEmbeddedDocuments("Item", upd);
-    });
-    // (Освобождение места и открытие листа — выше, доступны и игроку.)
-
-    // ── Орудия: создать / открыть / контекст ──
-    html.find(".veh-create-weapon").on("click", async () => {
-      const [it] = await this.actor.createEmbeddedDocuments("Item", [
-        { name: "Новое орудие", type: "weapon",
-          system: { weaponClass: "heavy", vehicleMount: { isMounted: true } } }
-      ]);
-      it?.sheet.render(true);
-    });
-    html.find(".veh-weapon-open").on("click", ev => this.actor.items.get(idOf(ev))?.sheet.render(true));
+    if (!this.isEditable) return;
 
     // Свап орудия на разъёме: подменяем профиль выбранным вариантом из
     // компендиума «Орудия техники», сохраняя данные установки (место/углы/опции).
-    html.find(".veh-weapon-swap").on("change", async ev => {
-      const id   = idOf(ev);
+    el.querySelectorAll(".veh-weapon-swap").forEach(sel => sel.addEventListener("change", async ev => {
+      const item = this.actor.items.get(itemIdOf(ev.currentTarget));
       const name = ev.currentTarget.value;
-      const item = this.actor.items.get(id);
       if (!item || item.name === name) return;
       const src = VEHICLE_WEAPONS.find(w => w.name === name);
       if (!src) return ui.notifications.warn(`Профиль «${name}» не найден в библиотеке орудий техники.`);
-      const vm  = foundry.utils.deepClone(item.system.vehicleMount || {});
       const sys = foundry.utils.deepClone(src.system);
-      sys.vehicleMount = vm;                 // сохраняем разъём/опции/место/углы/БК
+      sys.vehicleMount = foundry.utils.deepClone(item.system.vehicleMount || {}); // разъём/опции/место/углы/БК
       await item.update({ name: src.name, img: src.img, system: sys });
-    });
+    }));
 
     // Inline-редакторы установки орудия.
-    html.find(".veh-mount-field").on("change", ev => {
-      const id = idOf(ev);
-      const el = ev.currentTarget;
-      const val = el.type === "checkbox" ? el.checked
-                : el.type === "number"   ? (Math.max(0, parseInt(el.value) || 0))
-                : el.value;
-      if (id) this.actor.items.get(id)?.update({ [`system.vehicleMount.${el.dataset.field}`]: val });
-    });
+    el.querySelectorAll(".veh-mount-field").forEach(f => f.addEventListener("change", ev => {
+      const t = ev.currentTarget;
+      const val = t.type === "checkbox" ? t.checked
+                : t.type === "number"   ? Math.max(0, parseInt(t.value) || 0)
+                : t.value;
+      const id = itemIdOf(t);
+      if (id) this.actor.items.get(id)?.update({ [`system.vehicleMount.${t.dataset.field}`]: val });
+    }));
 
-    // Стрельба / перезарядка.
-    html.find(".veh-fire-weapon").on("click", ev => {
-      const it = this.actor.items.get(idOf(ev));
-      if (it) this._showVehicleFireDialog(it);
-    });
-    html.find(".veh-reload-weapon").on("click", ev => {
-      const it = this.actor.items.get(idOf(ev));
-      if (it) this._reloadVehicleWeapon(it);
-    });
+    el.querySelectorAll(".veh-gear-toggle").forEach(c => c.addEventListener("change", ev => {
+      this.actor.items.get(itemIdOf(ev.currentTarget))
+        ?.update({ "system.active": ev.currentTarget.checked });
+    }));
 
-    // ПКМ по строке орудия — контекстное меню (Редактировать / Удалить).
-    html.find(".veh-weapon-row").on("contextmenu", ev => {
+    // ПКМ по строке орудия — то же меню, что у прочих строк предметов. Своя
+    // копия здесь удаляла орудие молча, без вопроса (wdbc-9z9 чинил только
+    // общий обработчик).
+    el.querySelectorAll(".veh-weapon-row").forEach(row => row.addEventListener("contextmenu", ev => {
       ev.preventDefault(); ev.stopPropagation();
-      $(".wh-context-menu").remove();
-      const id = $(ev.currentTarget).data("item-id");
-      const item = this.actor.items.get(id);
+      const item = this.actor.items.get(itemIdOf(ev.currentTarget));
       if (!item) return;
-      const menu = $(`
-        <div class="wh-context-menu">
-          <div class="wh-ctx-item wh-ctx-edit">Редактировать</div>
-          <div class="wh-ctx-item wh-ctx-delete">Удалить</div>
-        </div>`).css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });
-      $("body").append(menu);
-      setTimeout(() => { $(document).one("click.wh-ctx", () => menu.remove()); }, 50);
-      menu.find(".wh-ctx-edit").on("click", e2 => { e2.stopPropagation(); menu.remove(); item.sheet.render(true); });
-      menu.find(".wh-ctx-delete").on("click", e2 => { e2.stopPropagation(); menu.remove(); item.delete(); });
-    });
-
-    // ── Снаряжение техники ──
-    html.find(".veh-create-gear").on("click", async () => {
-      const [it] = await this.actor.createEmbeddedDocuments("Item", [
-        { name: "Новое снаряжение", type: "vehicleGear",
-          img: "systems/warhammer-dbc/assets/actor-icons/vehicle.svg" }
-      ]);
-      it?.sheet.render(true);
-    });
-    html.find(".veh-gear-open").on("click", ev => {
-      const id = ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
-      this.actor.items.get(id)?.sheet.render(true);
-    });
-    html.find(".veh-gear-toggle").on("change", ev => {
-      const id = ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
-      this.actor.items.get(id)?.update({ "system.active": ev.currentTarget.checked });
-    });
-    html.find(".veh-gear-del").on("click", ev => {
-      const id = ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
-      this.actor.items.get(id)?.delete();
-    });
-
-    // ── Черты техники ──
-    html.find(".veh-create-trait").on("click", async () => {
-      const [it] = await this.actor.createEmbeddedDocuments("Item", [
-        { name: "Новая черта", type: "vehicleTrait",
-          img: "systems/warhammer-dbc/assets/actor-icons/vehicle.svg" }
-      ]);
-      it?.sheet.render(true);
-    });
-    html.find(".veh-trait-open").on("click", ev => {
-      const id = ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
-      this.actor.items.get(id)?.sheet.render(true);
-    });
-    html.find(".veh-trait-del").on("click", ev => {
-      const id = ev.currentTarget.closest("[data-item-id]")?.dataset.itemId;
-      this.actor.items.get(id)?.delete();
-    });
-
-    // ── Боевые действия ──
-    html.find(".veh-ram").on("click", () => showRamDialog(this.actor));
-    html.find(".veh-terrain").on("click", () => showTerrainDialog(this.actor));
-    html.find(".veh-repair").on("click", () => showRepairDialog(this.actor));
-
-    // ── Трекер состояний машины (поломки/эффекты) ──
-    html.find(".veh-state-add").on("click", async () => {
-      const val = html.find(".veh-state-select").val();
-      if (!val) return;
-      const [kind, idxStr] = String(val).split(":");
-      const idx = parseInt(idxStr);
-      const src = kind === "breakage" ? VEHICLE_BREAKAGES[idx] : VEHICLE_STATUS_EFFECTS[idx];
-      if (!src) return;
-      const states = foundry.utils.deepClone(this.actor.system.damageStates || []);
-      states.push({ id: foundry.utils.randomID(), kind, label: src.name, note: src.text });
-      await this.actor.update({ "system.damageStates": states });
-    });
-    html.find(".veh-state-del").on("click", async ev => {
-      const id = ev.currentTarget.closest("[data-state-id]")?.dataset.stateId;
-      const states = (this.actor.system.damageStates || []).filter(s => s.id !== id);
-      await this.actor.update({ "system.damageStates": states });
-    });
+      openContextMenu(ev, itemContextEntries(item));
+    }));
   }
 
 
@@ -535,8 +543,10 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
     const fixedNote = vm.mount === "fixed"
       ? `<div class="atk-range-info" style="font-size:0.82em;">Закреплённое: выстрел комбинирован с Operate +10 мехвода — поворачивайте корпусом.</div>` : "";
 
+    // Без <form>: DialogV2 сам оборачивает содержимое в форму, и вложенная
+    // ломала бы button.form, через который читаются поля.
     const content = `
-      <form class="wh-vehicle-dialog" style="padding:6px;">
+      <div class="wh-vehicle-dialog" style="padding:6px;">
         <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(item.name)}</span>
           <span style="opacity:.7">(${sys.damage || "—"}, Проб. ${sys.penetration || 0}, ${MOUNT_TYPES[vm.mount] || "—"})</span></div>
         <div class="atk-dlg-row"><label>BS оператора${opName ? ` (${opName})` : ""}:</label><input id="vf-bs" type="number" value="${opBS}"/></div>
@@ -554,23 +564,30 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="vf-mod" type="number" value="0"/></div>
         <label class="veh-check"><input type="checkbox" id="vf-short"/> Короткая дистанция (Мельта/Рассеивание)</label>
         ${fixedNote}
-      </form>`;
+      </div>`;
 
-    new Dialog({
-      title: `Стрельба: ${item.name}`,
+    return foundry.applications.api.DialogV2.wait({
+      // Без esc: заголовок окна рисуется текстом.
+      window: { title: `Стрельба: ${item.name}` },
+      classes: ["dialog", "wh-attack-dialog"],
+      position: { width: 440 },
       content,
-      buttons: {
-        fire: { icon: '<i class="fas fa-crosshairs"></i>', label: "Огонь!",
-          callback: async html => {
-            const bs      = parseInt(html.find("#vf-bs").val()) || 0;
-            const atkBon  = parseInt(html.find("#vf-atkbonus").val()) || 0;
-            const rofMode = html.find("input[name='vf-rof']:checked").val() || rofModes[0].value;
-            const rofBon  = parseInt(html.find("input[name='vf-rof']:checked").data("bonus")) || 0;
-            const aimVal  = html.find("#vf-aim").val();
-            const aimPen  = parseInt(html.find("#vf-aim option:selected").data("penalty")) || 0;
-            const range   = parseInt(html.find("#vf-range").val()) || 0;
-            const mod     = parseInt(html.find("#vf-mod").val()) || 0;
-            const shortRange = html.find("#vf-short").is(":checked");
+      buttons: [
+        { action: "fire", icon: "fas fa-crosshairs", label: "Огонь!", default: true,
+          callback: async (event, button) => {
+            const form = button.form;
+            const num = sel => parseInt(form.querySelector(sel)?.value) || 0;
+            const rofEl   = form.querySelector("input[name='vf-rof']:checked");
+            const bs      = num("#vf-bs");
+            const atkBon  = num("#vf-atkbonus");
+            const rofMode = rofEl?.value || rofModes[0].value;
+            const rofBon  = parseInt(rofEl?.dataset.bonus) || 0;
+            const aimSel  = form.querySelector("#vf-aim");
+            const aimVal  = aimSel?.value;
+            const aimPen  = parseInt(aimSel?.selectedOptions?.[0]?.dataset.penalty) || 0;
+            const range   = num("#vf-range");
+            const mod     = num("#vf-mod");
+            const shortRange = !!form.querySelector("#vf-short")?.checked;
             const chosen = aimTargets.find(t => t.value === aimVal);
             const aimMap = { head: "Голова", arm: "Рука", leg: "Нога", eye: "Глаз (Голова)" };
             // Для техники передаём часть машины (vehiclePart), для существ — часть тела.
@@ -579,13 +596,12 @@ export class WarhammerVehicleSheet extends foundry.appv1.sheets.ActorSheet {
                   ? { value: aimVal, label: chosen?.label || "", vehiclePart: chosen?.part || "" }
                   : { value: aimVal, label: aimMap[aimVal] || "Торс" })
               : null;
-            const vehicleSide = targetIsVehicle ? (html.find("#vf-side").val() || "side") : "";
+            const vehicleSide = targetIsVehicle ? (form.querySelector("#vf-side")?.value || "side") : "";
             const threshold = bs + atkBon + rofBon + aimPen + range + mod;
             await _executeAttackRoll(this.actor, item, "bs", threshold, rofMode, aimTarget, { shortRange, vehicleSide });
           } },
-        cancel: { label: "Отмена" }
-      },
-      default: "fire"
-    }, { classes: ["dialog", "wh-attack-dialog"], width: 440 }).render(true);
+        { action: "cancel", label: "Отмена" }
+      ]
+    }).catch(() => null);
   }
 }
