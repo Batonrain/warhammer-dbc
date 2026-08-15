@@ -973,7 +973,49 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Посвящённый",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Автоган и автопистолет."
+              },
+              {
+                "key": "support",
+                "label": "Огневая Поддержка",
+                "hint": "1–2 бойца в отряде несут тяжёлое оружие вместо автогана.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автоган"
+                  }
+                ],
+                "pick": [
+                  {
+                    "label": "Оружие поддержки",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.RZM4H5CnG79Bgj59",
+                      "Compendium.warhammer-dbc.weapons.3xh2TDQQ048MLPXL",
+                      "Compendium.warhammer-dbc.weapons.uvbJ3nqq2vOxEFOI"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

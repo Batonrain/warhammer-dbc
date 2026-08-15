@@ -1219,7 +1219,109 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Фанатик",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Автопистолет и рукопашное — как в статблоке."
+              },
+              {
+                "key": "berserk",
+                "label": "Берсерк",
+                "hint": "Заменяет пистолет ещё одним основным рукопашным оружием.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автопистолет"
+                  }
+                ],
+                "pick": [
+                  {
+                    "label": "Второе рукопашное",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.xiGYQuH43rL38Ww6",
+                      "Compendium.warhammer-dbc.weapons.AVKfqjQHadZpIT8n",
+                      "Compendium.warhammer-dbc.weapons.m2PGsSvckeZqPOpX",
+                      "Compendium.warhammer-dbc.weapons.pcGw5BXNa6babCXF",
+                      "Compendium.warhammer-dbc.weapons.Ka5brh3MV2wUKBpN",
+                      "Compendium.warhammer-dbc.weapons.NBfTELkUW2lopbDw",
+                      "Compendium.warhammer-dbc.weapons.4zlZFSoy2Rbr7Srx"
+                    ]
+                  }
+                ]
+              },
+              {
+                "key": "thresher",
+                "label": "Молотильщик",
+                "hint": "Двуручное оружие вместо пистолета.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автопистолет"
+                  }
+                ],
+                "pick": [
+                  {
+                    "label": "Двуручное",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.AVKfqjQHadZpIT8n",
+                      "Compendium.warhammer-dbc.weapons.FwJgjC1oniNJDYB8",
+                      "Compendium.warhammer-dbc.weapons.Ap5YcNQmlSr6B5bI"
+                    ]
+                  }
+                ]
+              },
+              {
+                "key": "bulwark",
+                "label": "Оплот",
+                "hint": "Заменяет пистолет щитом.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автопистолет"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.BHmDOjHS94YmUvR2"
+                ]
+              }
+            ]
+          },
+          {
+            "key": "chem",
+            "label": "Химия",
+            "mode": "many",
+            "options": [
+              {
+                "key": "stimm",
+                "label": "1× Stimm",
+                "add": [
+                  "Compendium.warhammer-dbc.chemistry.M0kMI1HfIJSJ6khc"
+                ]
+              },
+              {
+                "key": "spur",
+                "label": "1× Spur",
+                "add": [
+                  "Compendium.warhammer-dbc.chemistry.y5o3ig8ofSNpEM8d"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

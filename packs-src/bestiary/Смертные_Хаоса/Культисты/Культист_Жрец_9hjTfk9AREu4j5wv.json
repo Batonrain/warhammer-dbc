@@ -1191,7 +1191,90 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Жрец",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация (ритуалы)",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Младший оккультист без школы."
+              },
+              {
+                "key": "daemonologist",
+                "label": "Демонолог",
+                "hint": "For.Lore (Daemons) +20; Ад в Бутылке, Ритуал Цепей, Ритуал Одержимости.",
+                "groupSkills": [
+                  {
+                    "group": "forbiddenLore",
+                    "specialty": "Daemons",
+                    "rank": "veteran"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.rituals.i3AFM8sUjJXGvQv4",
+                  "Compendium.warhammer-dbc.rituals.NAj9S0F10jSVh94I",
+                  "Compendium.warhammer-dbc.rituals.4TGfWJyYBedrD9L2"
+                ]
+              },
+              {
+                "key": "punisher",
+                "label": "Каратель",
+                "hint": "Schol.Lore (Occult) +10; проклятья Куклы, Удушающей Тьмы и Кривой Руки.",
+                "groupSkills": [
+                  {
+                    "group": "scholasticLore",
+                    "specialty": "Occult",
+                    "rank": "trained"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.rituals.uXbc08TXJXT6GHm5",
+                  "Compendium.warhammer-dbc.rituals.cYyt0xNzl50zCjKx",
+                  "Compendium.warhammer-dbc.rituals.k7Id7n6rtVp7czkH"
+                ]
+              },
+              {
+                "key": "courtier",
+                "label": "Придворный",
+                "hint": "Charm +20 и Scrutiny +20; Ритуалы Неуязвимости, Котла Богов и Переполнения.",
+                "system": {
+                  "skills.charm.rank": "veteran",
+                  "skills.scrutiny.rank": "veteran"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.rituals.ThrSkKIFgbkB2hL2",
+                  "Compendium.warhammer-dbc.rituals.0Md7FTwx6Fmpo11k",
+                  "Compendium.warhammer-dbc.rituals.o4MR4o4HjeZcGoag"
+                ]
+              },
+              {
+                "key": "cryptomancer",
+                "label": "Криптомант",
+                "hint": "Logic +20 и Security; Проклятье Маяка, Ритуал Тёмного Письма, Ритуал Однодневки.",
+                "system": {
+                  "skills.logic.rank": "veteran",
+                  "skills.security.rank": "knows"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.rituals.V76xcIv9vS14SFuC",
+                  "Compendium.warhammer-dbc.rituals.fbJTaSuh9LCdX43t",
+                  "Compendium.warhammer-dbc.rituals.HnvJGrvOM0Y4XfNW"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

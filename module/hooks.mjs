@@ -8,8 +8,13 @@ import { _performSwerve }                from "./combat/vehicle.mjs";
 import { CONDITION_LEVEL_FIELD }         from "./combat/weapon-properties.mjs";
 import { fateTerm }                      from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
+import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 
 export function registerHooks() {
+
+  // ── Вариации существ бестиария ───────────────────────────────────────────
+  // Диалог выбора версии при создании актора В МИРЕ (см. apps/actor-setup.mjs).
+  registerActorSetupHook();
 
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {

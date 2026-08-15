@@ -1231,7 +1231,85 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Разведчик",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Нож и лазган."
+              },
+              {
+                "key": "saboteur",
+                "label": "Диверсант",
+                "hint": "Tech-Use +10, Trade (Technomat) +20, подрывной комплект и заряды.",
+                "system": {
+                  "skills.techUse.rank": "trained"
+                },
+                "groupSkills": [
+                  {
+                    "group": "trade",
+                    "specialty": "Technomat",
+                    "rank": "veteran"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.tools.Pbjm1z1Sdgm97IVI",
+                  "Compendium.warhammer-dbc.weapons.10VrR0XNukg7kVxg"
+                ]
+              },
+              {
+                "key": "headhunter",
+                "label": "Охотник за головами",
+                "hint": "Intimidate +10, Interrogate +10, наручники и пыточные инструменты.",
+                "system": {
+                  "skills.intimidate.rank": "trained",
+                  "skills.interrogate.rank": "trained"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.tools.p3SXXrxUIU6DJoIX",
+                  "Compendium.warhammer-dbc.tools.JiLAZo12j1rXCW28"
+                ]
+              },
+              {
+                "key": "sniper",
+                "label": "Снайпер",
+                "hint": "BS 38, вместо винтовки — дальнобойное оружие на выбор.",
+                "system": {
+                  "characteristics.bs.base": 38
+                },
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Лазган"
+                  }
+                ],
+                "pick": [
+                  {
+                    "label": "Дальнобойное",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.WXGFfR4pGgTIOCdw",
+                      "Compendium.warhammer-dbc.weapons.BGinyl1wQeuyXPms",
+                      "Compendium.warhammer-dbc.weapons.W2rJtFT1pjxELuCr",
+                      "Compendium.warhammer-dbc.weapons.nTBnw77Ifh3pCA6U"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

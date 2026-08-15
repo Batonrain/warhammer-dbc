@@ -1400,7 +1400,75 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Мутант",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Хитиновый панцирь и когти."
+              },
+              {
+                "key": "immortal",
+                "label": "Бессмертный",
+                "hint": "Трейты Regeneration (3) и Undying.",
+                "add": [
+                  "Compendium.warhammer-dbc.traits.6cf11ucGdzYt6ndt",
+                  "Compendium.warhammer-dbc.traits.8b4mPxEMAGOxh9ag"
+                ]
+              },
+              {
+                "key": "livingWeapon",
+                "label": "Живое Оружие",
+                "hint": "Ещё одно естественное оружие-мутация; обычным оружием и инструментами пользоваться не может.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Нож"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.traits.SvLCLe1hbxSaWy3s"
+                ]
+              },
+              {
+                "key": "brute",
+                "label": "Здоровяк",
+                "hint": "S 52, +5 Ран, Размер 1.",
+                "system": {
+                  "characteristics.s.base": 52,
+                  "wounds.max": "+5",
+                  "wounds.value": "+5",
+                  "size": 1
+                }
+              },
+              {
+                "key": "pseudodaemon",
+                "label": "Псевдодемон",
+                "hint": "Трейты Daemonic (3) и Warp Instability, +7 Ран.",
+                "add": [
+                  "Compendium.warhammer-dbc.traits.brwXUX5nKFR5tOjG",
+                  "Compendium.warhammer-dbc.traits.l4RbSuAxAyVFZCdS"
+                ],
+                "system": {
+                  "wounds.max": "+7",
+                  "wounds.value": "+7"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,
