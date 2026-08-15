@@ -7,14 +7,9 @@
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { FEAR_RATINGS, DISORDER_LIBRARY, rollDisorderEntry } from "../../constants/fear-tables.mjs";
 import { _executeFearRoll, _executeTraumaRoll } from "../../combat/fear.mjs";
-import { _degWord } from "../../helpers/utils.mjs";
+import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
-
-const esc = t => String(t ?? "")
-  .replace(/&/g, "&amp;")
-  .replace(/</g, "&lt;")
-  .replace(/"/g, "&quot;");
 
 /** Диалог теста Страха: форма живёт рядом с остальными кнопками безумия. */
 export function openFearDialog(actor) {

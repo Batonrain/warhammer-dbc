@@ -13,6 +13,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 import { cultureCat, resolveCultureFx } from "../../constants/legions.mjs";
 import { talentCategory } from "../item-picker.mjs";
 import { openContextMenu, closeContextMenus } from "../context-menu.mjs";
+import { esc } from "../../helpers/utils.mjs";
 
 // Шаги продвижения характеристики (+5..+25) и ранги навыка — индексы в таблицах цен.
 const CHAR_IMP_STEPS   = { none: 0, simple: 1, average: 2, trained: 3, significant: 4, expert: 5 };
@@ -242,7 +243,7 @@ export async function removePurchasedTalent(actor, itemId) {
   if (!item) return;
   const ok = await Dialog.confirm({
     title: "Удалить талант",
-    content: `<p>Удалить <b>${item.name}</b> с листа? Потраченный опыт (${parseInt(item.system?.cost) || 0}) вернётся.</p>`
+    content: `<p>Удалить <b>${esc(item.name)}</b> с листа? Потраченный опыт (${parseInt(item.system?.cost) || 0}) вернётся.</p>`
   });
   if (ok) await item.delete();
 }

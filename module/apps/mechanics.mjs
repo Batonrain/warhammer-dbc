@@ -145,6 +145,7 @@ import { expectedPhase }                      from "../constants/effect-keys.mjs
 import { RACES }                              from "../constants/races.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const FLAG = "warhammer-dbc";
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
@@ -219,8 +220,6 @@ const WEAPON_PROP_ACTIONS = [
   ["add", "Добавить свойство"], ["remove", "Убрать свойство"], ["replace", "Заменить свойство"]
 ];
 const WEAPON_PROP_ACTIONS_RATED = [["increase", "Увеличить рейтинг"], ["decrease", "Уменьшить рейтинг"]];
-
-const esc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** Текст специализации для превью skill/rollmod — учитывает specKey:"__choice__". */
 function specChoiceLabel(entry) {

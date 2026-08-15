@@ -13,6 +13,7 @@ import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 function cultFxOf(actor) {
   const gs = actor?.system?.geneSeed;
@@ -129,7 +130,6 @@ export function dynamicTalentCostRange(actor, doc, charApts, kind) {
  */
 export function promptDynamicAptTalent(actor, doc, kind, charApts) {
   const opts = dynamicTalentOptions(actor, doc, kind, charApts);
-  const esc  = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const what = kind === "char" ? "Характеристика" : "Навык";
   const rows = opts.map(o =>
     `<option value="${esc(o.key)}" data-cost="${o.cost}" data-cat="${o.cat}">
@@ -188,8 +188,6 @@ export async function openItemPicker(actor, kind) {
   const pack = game.packs.get(packName);
   if (!pack) return ui.notifications.warn(`Компендиум не найден: ${packName}`);
   const docs = await pack.getDocuments();
-  const esc  = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-
   // Группировка по папкам (учёт родителя) + порядок по folder.sort (порядок корбука).
   const groups = new Map();
   for (const d of docs) {

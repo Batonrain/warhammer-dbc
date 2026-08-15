@@ -7,6 +7,7 @@
 
 import { DAMAGE_TYPES } from "../constants/items.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const GEAR_PACKS = [
   { id: "warhammer-dbc.weapons",    label: "Оружие" },
@@ -16,11 +17,6 @@ const GEAR_PACKS = [
   { id: "warhammer-dbc.gear",       label: "Снаряжение" },
   { id: "warhammer-dbc.tools",      label: "Инструменты" }
 ];
-
-const esc = t => String(t ?? "")
-  .replace(/&/g, "&amp;")
-  .replace(/</g, "&lt;")
-  .replace(/"/g, "&quot;");
 
 // Краткая строка характеристик — чтобы выбирать, не открывая лист.
 function statLine(doc) {

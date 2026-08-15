@@ -14,15 +14,12 @@ import { SQUAD_LEAD_TYPES, SQUAD_MEMBER_TYPES, SQUAD_TYPE_LABEL,
          DETAIL_COMMANDS, TACTICS_TALENTS, COMMAND_REFERENCE,
          MORALE_RULES, BROKEN_SQUAD_RULE,
          cohesionBonus, riskCap } from "../constants/squad.mjs";
-import { _degWord } from "../helpers/utils.mjs";
+import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { findGroupEntry } from "../constants/skill-specializations.mjs";
 
 /** Экранирование пользовательского текста для вставки в HTML чата. */
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
 /** Степени успеха/провала по правилу системы: |порог − бросок| / 10 + 1. */
 const degrees = (threshold, roll) => Math.floor(Math.abs(threshold - roll) / 10) + 1;
 

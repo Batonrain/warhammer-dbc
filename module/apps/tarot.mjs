@@ -10,10 +10,9 @@
 
 import { TAROT_DECK, SUITS, SUIT_HINTS, TAROT_SPREADS, TAROT_GUIDE,
          cardByN, cardTitle, cardSuitLine, cardImgSrc } from "../constants/tarot.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 const { Application } = foundry.appv1.api;
-const escHtml = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
 function _emptySlots(spreadKey) {
   return (TAROT_SPREADS[spreadKey]?.positions || []).map(() => ({ cardN: null, reversed: false }));
 }
@@ -153,33 +152,33 @@ export class TarotReader extends Application {
     const rows = sp.positions.map((pos, i) => {
       const sl = s.slots[i];
       const sig = pos.signal ? ` <span class="tc-sig">знаковая</span>` : "";
-      if (!sl.cardN) return `<div class="wh-tarot-card empty"><div class="tc-pos">${escHtml(pos.name)}${sig}</div><div class="tc-empty">— не вытянута —</div></div>`;
+      if (!sl.cardN) return `<div class="wh-tarot-card empty"><div class="tc-pos">${esc(pos.name)}${sig}</div><div class="tc-empty">— не вытянута —</div></div>`;
       const c = cardByN(sl.cardN);
       const rev = sl.reversed;
       const img = cardImgSrc(c);
-      const imgHtml = img ? `<div class="tc-frame"><img class="tc-art" src="${img}" data-title="${escHtml(cardTitle(c))}" alt="" title="Открыть карту"/></div>` : "";
+      const imgHtml = img ? `<div class="tc-frame"><img class="tc-art" src="${img}" data-title="${esc(cardTitle(c))}" alt="" title="Открыть карту"/></div>` : "";
       return `<div class="wh-tarot-card${rev ? " reversed" : ""}">
-        <div class="tc-pos">${escHtml(pos.name)}${sig}</div>
+        <div class="tc-pos">${esc(pos.name)}${sig}</div>
         ${imgHtml}
         <div class="tc-text">
-          <div class="tc-name">${c.n}. ${escHtml(cardTitle(c))} <span class="tc-suit">(${escHtml(cardSuitLine(c))})</span></div>
+          <div class="tc-name">${c.n}. ${esc(cardTitle(c))} <span class="tc-suit">(${esc(cardSuitLine(c))})</span></div>
           <div class="tc-orient">${rev ? "⭮ Перевёрнутая" : "⭯ Прямая"}</div>
-          <div class="tc-mean">${escHtml(rev ? c.rev : c.up)}</div>
-          <div class="tc-change">${escHtml(c.ch)}</div>
+          <div class="tc-mean">${esc(rev ? c.rev : c.up)}</div>
+          <div class="tc-change">${esc(c.ch)}</div>
         </div>
       </div>`;
     }).join("");
 
     const meta = [];
-    if (s.teomant) meta.push(`<span class="tr-meta-i"><b>Теомант:</b> ${escHtml(s.teomant)}</span>`);
-    if (s.quirit)  meta.push(`<span class="tr-meta-i"><b>Квирит:</b> ${escHtml(s.quirit)}</span>`);
+    if (s.teomant) meta.push(`<span class="tr-meta-i"><b>Теомант:</b> ${esc(s.teomant)}</span>`);
+    if (s.quirit)  meta.push(`<span class="tr-meta-i"><b>Квирит:</b> ${esc(s.quirit)}</span>`);
     const metaHtml = meta.length ? `<div class="tr-meta">${meta.join("")}</div>` : "";
-    const qHtml = s.question ? `<div class="tr-question">«${escHtml(s.question)}»</div>` : "";
+    const qHtml = s.question ? `<div class="tr-question">«${esc(s.question)}»</div>` : "";
     const hint = this._readHint();
-    const hintHtml = hint ? `<div class="tr-hint">${escHtml(hint)}</div>` : "";
+    const hintHtml = hint ? `<div class="tr-hint">${esc(hint)}</div>` : "";
 
     const content = `<div class="wh-tarot-reading">
-      <div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${escHtml(sp.label)} ✦</div>
+      <div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${esc(sp.label)} ✦</div>
       ${qHtml}${metaHtml}
       <div class="tr-cards">${rows}</div>
       ${hintHtml}

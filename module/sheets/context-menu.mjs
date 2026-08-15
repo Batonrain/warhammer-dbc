@@ -7,6 +7,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { WarhammerItemSheet } from "./item-sheet.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 /** Убрать открытые меню и отвязать одноразовый обработчик закрытия. */
 export function closeContextMenus(jq = globalThis.$) {
@@ -79,10 +80,9 @@ export function activateItemContextMenu(html, actor, jq = globalThis.$) {
           // Имя экранируем: его задаёт игрок на своём акторе, а content диалога
           // разбирается как HTML — «<img src=x onerror=…>» в названии предмета
           // исполнился бы у того, кто это удаление подтверждает.
-          const name = foundry.utils.escapeHTML(item.name ?? "");
           const ok = await foundry.applications.api.DialogV2.confirm({
             window: { title: "Удалить предмет" },
-            content: `<p>Удалить «${name}»? Вернуть его будет нечем.</p>`
+            content: `<p>Удалить «${esc(item.name)}»? Вернуть его будет нечем.</p>`
           }).catch(() => false);
           if (ok) await item.delete();
         }
