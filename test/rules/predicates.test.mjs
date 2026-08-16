@@ -147,7 +147,9 @@ describe("общее требование к предикатам", () => {
   const value = {
     race: ["human"], subrace: ["navigator"], sizeMax: 1, charMin: { s: 40 },
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
-    targetHasTrait: "Daemonic"
+    targetHasTrait: "Daemonic",
+    // Принадлежность к фракции — своя и у цели (дерево фракций).
+    hasFaction: "chaos", targetHasFaction: "chaos"
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {
@@ -156,7 +158,7 @@ describe("общее требование к предикатам", () => {
     }
   });
 
-  it("реестр содержит все восемь условий этапа 1", () => {
+  it("реестр совпадает со справочником: ни лишних условий, ни забытых", () => {
     expect(Object.keys(PREDICATES).sort()).toEqual(Object.keys(value).sort());
   });
 });

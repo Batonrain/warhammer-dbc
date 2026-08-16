@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Бионические суставы: +10 A (макс. 1 Раунд перебросов выбраться из Захвата); двигается через узкие проходы. Poor.Q −15 vs −10; Good.Q −5 vs −10; Best.Q без штрафов.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "ag",

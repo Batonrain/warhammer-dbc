@@ -204,6 +204,44 @@ export async function rollDisorderTest(actor, item) {
 }
 
 /**
+ * Подавление активной Травмы или Расстройства (стр. 473).
+ *
+ * Одна запись — сразу тест, несколько — сперва выбор какую именно. Тест обоим
+ * типам катает один и тот же rollDisorderTest: порогом служит характеристика
+ * самой записи плюс её собственный модификатор, поэтому Расстройства с разным
+ * штрафом считаются каждое по-своему.
+ */
+export async function suppressMental(actor, type) {
+  const label = type === "mentalTrauma" ? "Травмы" : "Расстройства";
+  const items = actor.items.filter(i => i.type === type);
+  if (!items.length) return ui.notifications.info(`Подавлять нечего: активных записей ${label} нет.`);
+  if (items.length === 1) return rollDisorderTest(actor, items[0]);
+
+  const opts = items.map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join("");
+  return new Promise(resolve => {
+    new Dialog({
+      title: `Подавление ${label}: что именно?`,
+      content: `<form class="wh-attack-form" style="padding:6px;">
+        <div class="atk-dlg-row"><label>Запись:</label><select id="suppress-pick">${opts}</select></div>
+      </form>`,
+      buttons: {
+        roll: {
+          label: "Тест",
+          callback: async html => {
+            const item = actor.items.get(html.find("#suppress-pick").val());
+            if (item) await rollDisorderTest(actor, item);
+            resolve();
+          }
+        },
+        cancel: { label: "Отмена", callback: () => resolve() }
+      },
+      default: "roll",
+      close: () => resolve()
+    }, { classes: ["dialog", "wh-attack-dialog"], width: 340 }).render(true);
+  });
+}
+
+/**
  * Кнопки безумия на вкладке ЭФФЕКТЫ: тесты Страха, Травмы и Порчи, случайное
  * расстройство, пикер и строки уже полученных.
  * rollCharacteristic — бросок листа: диалог характеристики остаётся его частью.
@@ -211,6 +249,8 @@ export async function rollDisorderTest(actor, item) {
 export function activateDisorderListeners(html, actor, { rollCharacteristic } = {}) {
   html.find(".fear-roll").click(() => openFearDialog(actor));
   html.find(".trauma-roll").click(() => rollTrauma(actor));
+  html.find(".trauma-suppress").click(() => suppressMental(actor, "mentalTrauma"));
+  html.find(".disorder-suppress").click(() => suppressMental(actor, "mentalDisorder"));
   html.find(".disorder-roll, .disorder-roll-btn").click(() => rollDisorder(actor));
   html.find(".disorder-add-btn").click(() => openDisorderPicker(actor));
   html.find(".disorder-test-btn").click(ev => {

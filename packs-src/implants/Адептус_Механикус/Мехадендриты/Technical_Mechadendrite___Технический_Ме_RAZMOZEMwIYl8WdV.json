@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "S 30, Дл. 3м, Rng 0-8. Удар 1d5+3 R, Flexible, Precise, Reinforced, Bl 1. Комби-Инструмент + +10 на Tech-Use для ремонта/запуска (не Крафт). 5 ёмкостей под жидкость. Порты Электро-Графтов/Электу-Индукторов/Интерфейсных/МИУ (при наличии). Встроенное Кадило (без газа: цель −5 WS/BS на 1 Раунд).",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

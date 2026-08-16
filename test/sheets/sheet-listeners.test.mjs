@@ -366,30 +366,33 @@ describe("вкладка ЭФФЕКТЫ: Страх, Расстройства, �
   });
 });
 
+// Слоты живут в system.aspirations.slots. Само поле `aspirations` — объект (в
+// нём же Фактор Прибыли), и массив, записанный прямо в него, схема отбрасывала:
+// выбор Стремления не переживал перерисовку листа.
 describe("Стремления (три жёстких слота)", () => {
 
   it("выбор из списка и «Своё» пишутся в свой слот", async () => {
-    const sheet = sheetFor({ aspirations: [] });
+    const sheet = sheetFor({ aspirations: { slots: [] } });
     const handlers = wire(sheet);
 
     await handlers[".aspir-select:change"](ev({ index: "1" }, "shame-1"));
-    expect(sheet.actor.system.aspirations).toEqual([{ id: "" }, { id: "shame-1" }, { id: "" }]);
+    expect(sheet.actor.system.aspirations.slots).toEqual([{ id: "" }, { id: "shame-1" }, { id: "" }]);
 
     await handlers[".aspir-select:change"](ev({ index: "2" }, "__custom__"));
-    expect(sheet.actor.system.aspirations[2]).toEqual({ custom: true, name: "", mods: "", desc: "" });
+    expect(sheet.actor.system.aspirations.slots[2]).toEqual({ custom: true, name: "", mods: "", desc: "" });
   });
 
   it("крестик чистит слот, не сдвигая остальные", async () => {
-    const sheet = sheetFor({ aspirations: [{ id: "pride-1" }, { id: "shame-1" }, { id: "motive-1" }] });
+    const sheet = sheetFor({ aspirations: { slots: [{ id: "pride-1" }, { id: "shame-1" }, { id: "motive-1" }] } });
     const handlers = wire(sheet);
 
     await handlers[".aspir-remove:click"](ev({ index: "0" }));
 
-    expect(sheet.actor.system.aspirations).toEqual([{ id: "" }, { id: "shame-1" }, { id: "motive-1" }]);
+    expect(sheet.actor.system.aspirations.slots).toEqual([{ id: "" }, { id: "shame-1" }, { id: "motive-1" }]);
   });
 
   it("поля своего Стремления дописываются к слоту", async () => {
-    const sheet = sheetFor({ aspirations: [{ custom: true, name: "", mods: "" }] });
+    const sheet = sheetFor({ aspirations: { slots: [{ custom: true, name: "", mods: "" }] } });
     const handlers = wire(sheet);
 
     await handlers[".aspir-custom-name, .aspir-custom-mods:change"]({
@@ -397,7 +400,16 @@ describe("Стремления (три жёстких слота)", () => {
       currentTarget: { dataset: { index: "0" }, value: "Месть", classList: { contains: () => true } }
     });
 
-    expect(sheet.actor.system.aspirations[0]).toEqual({ custom: true, name: "Месть", mods: "" });
+    expect(sheet.actor.system.aspirations.slots[0]).toEqual({ custom: true, name: "Месть", mods: "" });
+  });
+
+  it("Фактор Прибыли рядом в том же поле не затирается", async () => {
+    const sheet = sheetFor({ aspirations: { profitFactor: 45, slots: [] } });
+    const handlers = wire(sheet);
+
+    await handlers[".aspir-select:change"](ev({ index: "0" }, "pride-1"));
+
+    expect(sheet.actor.system.aspirations.profitFactor).toBe(45);
   });
 });
 
@@ -621,7 +633,6 @@ describe("Применение расы, Прошлого и легиона", ()
     const upd = sheet.actor.updates.find(u => "system.characteristics.bs.base" in u);
     expect(upd["system.characteristics.ws.base"]).toBeUndefined();   // занято — не трогаем
     expect(upd["system.characteristics.bs.base"]).toBe(30);
-    expect(captured.created.some(d => d.type === "implant")).toBe(true);  // органы Геносемени
   });
 
   // Находка I1 общего ревью (wdbc-n1k): раньше applyRaceData выдавала и

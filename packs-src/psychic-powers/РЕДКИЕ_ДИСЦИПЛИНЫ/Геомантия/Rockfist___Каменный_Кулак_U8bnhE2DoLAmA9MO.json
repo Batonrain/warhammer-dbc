@@ -11,7 +11,7 @@
     "subtype": "",
     "powerType": "attack",
     "extraTypes": [],
-    "shootSubtype": "",
+    "shootSubtype": "projectile",
     "prRequired": 2,
     "testChar": "wp",
     "testMod": 10,

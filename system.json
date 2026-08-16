@@ -29,6 +29,11 @@
       "lang": "ru",
       "name": "Русский",
       "path": "lang/ru.json"
+    },
+    {
+      "lang": "en",
+      "name": "Russian (system is Russian-only)",
+      "path": "lang/en.json"
     }
   ],
   "packs": [
@@ -543,6 +548,18 @@
         "ASSISTANT": "OWNER",
         "GAMEMASTER": "OWNER"
       }
+    },
+    {
+      "name": "factions",
+      "label": "Фракции — Библиотека (DBC)",
+      "path": "packs/factions",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
     }
   ],
   "packFolders": [
@@ -555,7 +572,8 @@
           "name": "Основная книга",
           "sorting": "m",
           "packs": [
-            "book-core"
+            "book-core",
+            "factions"
           ],
           "folders": [
             {

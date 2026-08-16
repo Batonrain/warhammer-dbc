@@ -643,7 +643,61 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Отребье",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Безоружное",
+                "hint": "Живая волна без настоящего оружия."
+              },
+              {
+                "key": "armed",
+                "label": "Вооружённые",
+                "hint": "WS 26, BS 24 и два оружия из списка.",
+                "system": {
+                  "characteristics.ws.base": 26,
+                  "characteristics.bs.base": 24
+                },
+                "pick": [
+                  {
+                    "label": "Оружие 1",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.NBfTELkUW2lopbDw",
+                      "Compendium.warhammer-dbc.weapons.1OD13LhWJ3imWR0q",
+                      "Compendium.warhammer-dbc.weapons.0MNgLanD0hfHZ8mb",
+                      "Compendium.warhammer-dbc.weapons.b2fp8A2QjBmB0TGW",
+                      "Compendium.warhammer-dbc.weapons.THxo4ROy2xzYLfBd",
+                      "Compendium.warhammer-dbc.weapons.RGW2Xpu57blFInA8"
+                    ]
+                  },
+                  {
+                    "label": "Оружие 2",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.NBfTELkUW2lopbDw",
+                      "Compendium.warhammer-dbc.weapons.1OD13LhWJ3imWR0q",
+                      "Compendium.warhammer-dbc.weapons.0MNgLanD0hfHZ8mb",
+                      "Compendium.warhammer-dbc.weapons.b2fp8A2QjBmB0TGW",
+                      "Compendium.warhammer-dbc.weapons.THxo4ROy2xzYLfBd",
+                      "Compendium.warhammer-dbc.weapons.RGW2Xpu57blFInA8"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

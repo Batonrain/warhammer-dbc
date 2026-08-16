@@ -9,6 +9,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES } from "../constants/items.mjs";
 import { _degWord, splitTopLevel, esc } from "../helpers/utils.mjs";
 import { showCreationWizard, ruSpec } from "../apps/creation.mjs";
+import { onConvertToHorde } from "../apps/horde-convert.mjs";
 import { buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog, showAttackDialogNoWeapon } from "./attack-dialog.mjs";
@@ -25,6 +26,8 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners } from "./tabs/gear.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
+import { minionsContext, activateMinionListeners } from "../apps/minions.mjs";
+import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
@@ -40,6 +43,9 @@ import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
+import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
+         assistsBeyondCap, countedAssists }
+  from "../rules/assists.mjs";
 import { specOptions, specDef } from "../constants/skill-specializations.mjs";
 import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
@@ -48,10 +54,10 @@ import { applyRace, applySubrace, clearRace, clearSubrace,
          applyLegion, applyYnnari, applyHarlequin } from "../apps/races.mjs";
 import { raceDef, raceKeyOf } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
-import { grantAstartesImplants } from "../apps/astartes-implants.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
@@ -107,14 +113,6 @@ function onGearModsToggle(event, target) {
   this._applyGearHostCollapse(hid);
 }
 
-function onGeneToggle(event, target) {
-  event.preventDefault();
-  this._geneSeedOpen = !this._geneSeedOpen;
-  this.element?.querySelectorAll(".gene-organs")
-    .forEach(n => n.classList.toggle("collapsed", !this._geneSeedOpen));
-  target.textContent = (this._geneSeedOpen ? "▾" : "▸") + " Импланты";
-}
-
 function onPathsToggle(event, target) {
   event.preventDefault();
   const nowOpen = this._pathsOpen === false;             // был свёрнут → разворачиваем
@@ -140,19 +138,7 @@ function onAbilityDetail(event, target) {
   tr.classList.toggle("ability-row-open", shown);
 }
 
-// ── Мастер создания персонажа (только по кнопке) ──
-// Черты, стартовые таланты и тема листа остаются на листе: их зовут и кнопки
-// «Применить расу»/«Применить легион». Органы Геносемени переехали к своему
-// синку в apps/astartes-implants.mjs, но приходят тем же колбэком.
-function onCharWizard(event) {
-  event.preventDefault();
-  showCreationWizard(this.actor, {
-    createTraits:          (list, source) => this._createTraitsFromList(list, source),
-    applyStartingTalents:  (raw, source)  => this._applyStartingTalents(raw, source),
-    grantAstartesImplants: ()             => grantAstartesImplants(this.actor),
-    applyTheme:            ()             => this._applyThemeClasses()
-  });
-}
+
 
 // ── Кнопки «+» показателей: Безумие/Порча (число или XdY+Z), Опыт,
 //    Благосклонность Бога-покровителя (ЗАПИСИ) — общий диалог+лог в чат ──
@@ -294,9 +280,8 @@ export class WarhammerCharacterSheet
       infamyPlus: whenEditable(onInfamyPlus),
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
-      charWizard: whenEditable(onCharWizard),
+      convertToHorde: whenEditable(onConvertToHorde),
       abilityDetail: whenEditable(onAbilityDetail),
-      geneToggle: whenEditable(onGeneToggle),
       pathsToggle: whenEditable(onPathsToggle),
       statAdd: whenEditable(onStatAdd),
       initiativeRoll: whenEditable(onInitiativeRoll),
@@ -345,6 +330,7 @@ export class WarhammerCharacterSheet
         { id: "possession",  label: "ОДЕРЖИМОСТЬ" },
         { id: "haemonculus", label: "ГЕМУНКУЛ" },
         { id: "abilities",   label: "СПОСОБНОСТИ" },
+        { id: "social",      label: "СОЦИУМ" },
         { id: "psy",         label: "ПСИ" },
         { id: "tech",        label: "ТЕХ" },
         { id: "nav",         label: "НАВ" },
@@ -355,7 +341,7 @@ export class WarhammerCharacterSheet
     }
   };
 
-  _geneSeedOpen = false;
+  _savedScrollTops = {};
   _combatCollapse = { stance: false, tech: false };
   // Свёрнутые категории вкладки снаряжения (ключ категории → свёрнута?).
   _gearCollapse = {};
@@ -391,11 +377,23 @@ export class WarhammerCharacterSheet
     context.actor = this.actor;
     // this.constructor, а не свой класс: у Демона и Демон-Принца вкладки свои.
     context.tab   = this.tabGroups?.primary ?? this.constructor.TABS.primary.initial;
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
 
     // Контекст шаблона собирают два модуля: sheet-helpers.mjs — списки вкладок,
     // character-context.mjs — самого персонажа. Здесь остаётся только то, что
     // знает окно, а не актор.
     Object.assign(context, buildGetData(this.actor), characterContext(this.actor));
+
+    // Миньоны (стр. 111-113): панель на вкладке ЗАПИСИ, общая с листами Демона
+    // и Принца Демонов. Список акторов мира передаём сюда — сам расчёт про
+    // game ничего не знает и проверяется без Foundry.
+    Object.assign(context, minionsContext(this.actor, [...(game.actors ?? [])]));
+
+    // Вкладка СОЦИУМ: Навыки, Таланты, Особенности, Модификаторы, Назначения,
+    // Фракции, Миньоны и Отношения. Назначения ищутся по миру — привязка живёт
+    // у той стороны, к которой персонажа прицепили, а не у него самого.
+    Object.assign(context, socialContext(this.actor, [...(game.actors ?? [])]));
 
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
     context.combatStanceCollapsed = !!this._combatCollapse?.stance;
@@ -498,6 +496,20 @@ export class WarhammerCharacterSheet
     root.classList.remove(...[...root.classList].filter(c => /^wh-(align|race|class)-/.test(c)));
     root.classList.add(`wh-align-${sys.alignment || "loyalist"}`,
       `wh-race-${sys.race || "none"}`, `wh-class-${cls}`);
+  }
+
+  /**
+   * Мастер создания персонажа. Раньше его звала кнопка в шапке листа; теперь
+   * создание начинается кнопкой в панели «Актёры» (apps/character-start.mjs),
+   * а лист остаётся местом, где живут коллбеки: Черты, стартовые Таланты и
+   * тема листа — его же работа, их зовут и кнопки «Применить расу»/«…легион».
+   */
+  openCreationWizard() {
+    return showCreationWizard(this.actor, {
+      createTraits:         (list, source) => this._createTraitsFromList(list, source),
+      applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source),
+      applyTheme:           ()             => this._applyThemeClasses()
+    });
   }
 
   /** Создаёт Черты из списка {name,benefit,rating,hasRating,effects}, пропуская существующие по имени. */
@@ -740,6 +752,8 @@ export class WarhammerCharacterSheet
 
     /** Слушатель на все узлы по селектору — замена jQuery-обхода из V1. */
     const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(el, this.actor);
 
     // ── Элитный архетип в шапке ───────────────────────────────────────────
     activateEliteListeners(html, this.actor);
@@ -775,10 +789,6 @@ export class WarhammerCharacterSheet
 
     // ── Восстановление свёрток после ре-рендера ────────────────────────────
     for (const hid of this._gearHostCollapse) this._applyGearHostCollapse(hid);
-    if (this._geneSeedOpen) {
-      el.querySelectorAll(".gene-organs").forEach(n => n.classList.remove("collapsed"));
-      el.querySelectorAll(".gene-toggle-btn").forEach(n => { n.textContent = "▾ Импланты"; });
-    }
     if (this._pathsOpen === false) {
       el.querySelectorAll(".paths-collapse").forEach(n => n.classList.add("collapsed"));
       el.querySelectorAll(".paths-toggle-btn").forEach(n => { n.textContent = "▸ Пути"; });
@@ -835,6 +845,14 @@ export class WarhammerCharacterSheet
     // ── Стремления и Пути Аэльдари ─────────────────────────────────────────
     activateAspirationListeners(html, this.actor);
     activatePathListeners(html, this.actor);
+
+    // ── Миньоны (стр. 111-113) ─────────────────────────────────────────────
+    // Панель на вкладке ЗАПИСИ; листы Демона и Принца Демонов получают её
+    // вместе с этой отрисовкой — они наследуют лист персонажа.
+    activateMinionListeners(html, this.actor);
+
+    // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
+    activateSocialListeners(html, this.actor, { editable: this.isEditable });
 
     // ── Ритуалы (стр. 393-425) ─────────────────────────────────────────────
     activateRitualListeners(html, this.actor);
@@ -1069,6 +1087,14 @@ export class WarhammerCharacterSheet
     const rl = this._ruleRollModsHtml(rollCtx);
     const defaultCharTotal = this.actor.system.characteristics[defaultChar]?.total ?? 0;
     const rankBonus        = baseTotal - defaultCharTotal;
+
+    // Ассистенты (стр. 25). Список держится в замыкании диалога, а не на
+    // акторе: это выбор на ОДИН бросок, а не постоянное состояние. Правила
+    // «кто вправе помогать» и «во что это превращается в числах» лежат в
+    // module/rules/assists.mjs и проверяются без Foundry.
+    const assistMax = DEFAULT_ASSIST_MAX;
+    const assistants = [];   // { uuid, name, beyondCap }
+
     const charOptions = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
       const v = this.actor.system.characteristics[key]?.total ?? 0;
       return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>${meta.abbr} — ${meta.label} (${v})</option>`;
@@ -1093,6 +1119,12 @@ export class WarhammerCharacterSheet
               <label>Модификатор:</label>
               <input id="skill-modifier" type="number" value="0"/>
             </div>
+            <div class="roll-dlg-row assist-row">
+              <label>Ассистенты:</label>
+              <span id="assist-count">0/${assistMax}</span>
+            </div>
+            <div id="assist-dropzone" class="assist-dropzone">Перетащите актора-помощника сюда</div>
+            <div id="assist-list" class="assist-list"></div>
             ${hw.html}
             ${im.html}
             ${rl.html}
@@ -1115,19 +1147,79 @@ export class WarhammerCharacterSheet
               }
             }
             if (halve && modifier < 0) modifier = -Math.floor(Math.abs(modifier) / 2);
+            // Ассистенты: +10 к порогу за каждого идут в общий модификатор, а
+            // прибавка к степени — отдельным полем: она применяется только при
+            // успехе, и решать это должен вызывающий код.
+            modifier += assistThresholdBonus(assistants.length);
             return {
               charKey:  form.querySelector("#skill-char-select")?.value,
               target:   parseInt(form.querySelector("#skill-target").value) || 0,
-              modifier
+              modifier,
+              assistCount: assistants.length
             };
           }
         },
         { action: "cancel", label: "Отмена" }
       ],
       render: (event, dialog) => {
-        dialog.element.querySelector("#skill-char-select")?.addEventListener("change", ev => {
-          dialog.element.querySelector("#skill-target").value =
+        const root = dialog.element;
+        root.querySelector("#skill-char-select")?.addEventListener("change", ev => {
+          root.querySelector("#skill-target").value =
             (this.actor.system.characteristics[ev.currentTarget.value]?.total ?? 0) + rankBonus;
+        });
+
+        // ── Ассистенты: зона дропа, чипы, счётчик ──────────────────────────
+        const zone  = root.querySelector("#assist-dropzone");
+        const list  = root.querySelector("#assist-list");
+        const count = root.querySelector("#assist-count");
+        if (!zone || !list || !count) return;
+
+        const renderAssists = () => {
+          // Помощник «сверх лимита» (Промышленный мир) слот не занимает —
+          // счётчик показывает его отдельной прибавкой, а не внутри X/Y.
+          const beyond = assistants.length - countedAssists(assistants);
+          count.textContent = `${countedAssists(assistants)}/${assistMax}${beyond ? ` +${beyond} сверх лимита` : ""}`;
+          list.innerHTML = assistants.map(a => `
+            <div class="assist-chip" data-uuid="${esc(a.uuid)}">
+              <span>${esc(a.name)}${a.beyondCap ? ' <em class="assist-chip-beyond">сверх лимита</em>' : ""}</span>
+              <button type="button" class="assist-chip-remove" title="Убрать">✕</button>
+            </div>`).join("");
+          zone.classList.toggle("assist-dropzone-full", countedAssists(assistants) >= assistMax);
+          list.querySelectorAll(".assist-chip-remove").forEach(btn => {
+            btn.addEventListener("click", () => {
+              const uuid = btn.closest(".assist-chip").dataset.uuid;
+              const i = assistants.findIndex(a => a.uuid === uuid);
+              if (i >= 0) assistants.splice(i, 1);
+              renderAssists();
+            });
+          });
+        };
+
+        zone.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("assist-dropzone-over"); });
+        zone.addEventListener("dragleave", () => zone.classList.remove("assist-dropzone-over"));
+        zone.addEventListener("drop", async ev => {
+          ev.preventDefault();
+          zone.classList.remove("assist-dropzone-over");
+          let data = null;
+          try { data = JSON.parse(ev.dataTransfer.getData("text/plain")); } catch { /* не наш дроп */ }
+          if (!data || (data.type !== "Actor" && data.type !== "Token")) return;
+          const uuid = data.uuid
+            || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
+            || (data.type === "Token" && data.sceneId && data.tokenId
+                  ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null);
+          if (!uuid) return;
+          const doc = await fromUuid(uuid).catch(() => null);
+          const candidate = doc?.actor ?? doc;
+          // Почему нельзя — решают правила, диалог только показывает ответ.
+          const why = assistRejection(candidate, {
+            actor: this.actor, assistants, max: assistMax, ctx: rollCtx
+          });
+          if (why) return ui.notifications.warn(why);
+          assistants.push({
+            uuid: candidate.uuid, name: candidate.name,
+            beyondCap: assistsBeyondCap(candidate)
+          });
+          renderAssists();
         });
       },
       rejectClose: false
@@ -1139,7 +1231,7 @@ export class WarhammerCharacterSheet
   async _rollSkill(label, baseTotal, defaultChar, rollContext = null) {
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext);
     if (!result) return;
-    const { charKey, target, modifier } = result;
+    const { charKey, target, modifier, assistCount = 0 } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(defaultChar);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
@@ -1151,8 +1243,11 @@ export class WarhammerCharacterSheet
     const rv       = roll.total;
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
     const rollMode = game.settings.get("core", "rollMode");
-    const deg      = Math.floor(Math.abs(rv <= eff ? eff - rv : rv - eff) / 10) + 1;
-    const outcome  = rv <= eff
+    const success  = rv <= eff;
+    // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
+    const deg      = assistDegrees(
+      Math.floor(Math.abs(success ? eff - rv : rv - eff) / 10) + 1, assistCount, success);
+    const outcome  = success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
     const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
@@ -1168,6 +1263,7 @@ export class WarhammerCharacterSheet
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${eff}</b>
           </div>
+          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${success ? `, +${assistCount} к степени` : ""})</div>` : ""}
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           <div class="roll-outcome">${outcome}</div>
         </div>`,
@@ -1193,7 +1289,7 @@ export class WarhammerCharacterSheet
   async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false) {
     const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect);
     if (!result) return;
-    const { target, modifier } = result;
+    const { target, modifier, assistCount = 0 } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(charKey);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
@@ -1204,8 +1300,11 @@ export class WarhammerCharacterSheet
     const roll     = await new Roll("1d100").evaluate();
     const rv       = roll.total;
     const rollMode = game.settings.get("core", "rollMode");
-    const deg      = Math.floor(Math.abs(rv <= eff ? eff - rv : rv - eff) / 10) + 1;
-    const outcome  = rv <= eff
+    const success  = rv <= eff;
+    // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
+    const deg      = assistDegrees(
+      Math.floor(Math.abs(success ? eff - rv : rv - eff) / 10) + 1, assistCount, success);
+    const outcome  = success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
     const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
@@ -1221,6 +1320,7 @@ export class WarhammerCharacterSheet
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${eff}</b>
           </div>
+          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${success ? `, +${assistCount} к степени` : ""})</div>` : ""}
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           <div class="roll-outcome">${outcome}</div>
         </div>`,

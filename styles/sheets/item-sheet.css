@@ -1350,3 +1350,79 @@
 .warhammer-dbc .mech-script-code:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .wh-grant-choice .grant-choice-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: .9em; }
+
+/* ── Фракция ────────────────────────────────────────────────────────────────
+   Ключ выдаётся системой и правке не подлежит (module/documents/item.mjs),
+   поэтому поле выглядит неактивным, но текст в нём выделяется и копируется. */
+.warhammer-dbc .faction-key { opacity: .75; cursor: text; }
+.warhammer-dbc .faction-key-copy, .warhammer-dbc .faction-key-make {
+  width: auto; flex: 0 0 auto; padding: 1px 8px; font-size: .85em;
+  border: 1px solid #2f9e6a; background: rgba(77,255,166,.1); color: #d6ffe9;
+}
+.warhammer-dbc .faction-key-copy:hover, .warhammer-dbc .faction-key-make:hover {
+  background: #4dffa6; color: #05291a;
+}
+/* «Входит в состав» — зона дропа вышестоящей фракции: пунктир показывает, что
+   сюда можно перетаскивать, даже когда поле пустое. */
+.warhammer-dbc .faction-parent-drop {
+  min-height: 30px; align-items: center;
+  padding: 3px 6px; border: 1px dashed var(--wh-border, #1f6f4a); border-radius: 4px;
+}
+
+/* ── Фракция: вкладка «Состав» ───────────────────────────────────────────────
+   Разметка и оформление строк взяты у прикомандированных на листе Отряда
+   (sq-member*, styles/sheets/squad-sheet.css) — одна и та же вещь на двух
+   листах должна выглядеть одинаково, поэтому свои классы тут только на
+   заголовок блока и зону. */
+.warhammer-dbc .faction-roster-block { margin-bottom: 8px; }
+.warhammer-dbc .faction-roster-hint { font-weight: 400; font-size: .8em; opacity: .7; }
+.warhammer-dbc .faction-roster-zone { min-height: 44px; }
+
+/* ── Фракция: схема происхождения ────────────────────────────────────────────
+   Лесенка от корня вниз: отступ узла считается от его глубины, поэтому длина
+   цепочки ничем не ограничена и разметка не знает про уровни. */
+.warhammer-dbc .faction-origin-tree > summary { cursor: pointer; }
+.warhammer-dbc .origin-tree { display: flex; flex-direction: column; gap: 3px; padding: 4px 2px; }
+.warhammer-dbc .origin-node {
+  display: flex; align-items: center; gap: 6px; font-size: .85em;
+  margin-left: calc(var(--depth, 0) * 16px);
+}
+.warhammer-dbc .origin-node-branch {
+  flex: 0 0 auto; width: 10px; height: 10px;
+  border-left: 1px solid var(--wh-border); border-bottom: 1px solid var(--wh-border);
+}
+.warhammer-dbc .origin-node:first-child .origin-node-branch { visibility: hidden; }
+.warhammer-dbc .origin-node-img { width: 18px; height: 18px; border: none; border-radius: 2px; }
+.warhammer-dbc .origin-node-open { cursor: pointer; }
+.warhammer-dbc .origin-node-open:hover { color: var(--wh-accent); text-decoration: underline; }
+.warhammer-dbc .origin-node-self .origin-node-name { font-weight: bold; }
+/* Погашенный узел виден, но приглушён: он никуда не делся ни из дерева, ни из
+   правил — спрятан только на схеме. */
+.warhammer-dbc .origin-node-hidden { opacity: .4; }
+.warhammer-dbc .origin-node-hidden .origin-node-name { text-decoration: line-through; }
+.warhammer-dbc .origin-node-toggle { cursor: pointer; opacity: .6; padding: 0 3px; }
+.warhammer-dbc .origin-node-toggle:hover { opacity: 1; }
+
+/* «Входит в состав»: подсветка зоны во время перетаскивания и кнопка «＋». */
+.warhammer-dbc .faction-parent-drop.faction-drop-over {
+  border-style: solid; background: rgba(77, 255, 166, .08);
+}
+.warhammer-dbc .faction-parent-add {
+  width: auto; padding: 1px 8px; font-size: .85em;
+  border: 1px solid #2f9e6a; background: rgba(77,255,166,.1); color: #d6ffe9;
+}
+.warhammer-dbc .faction-parent-add:hover { background: #4dffa6; color: #05291a; }
+
+/* «Также состоит в» — тот же вид, что у поля «Входит в состав». */
+.warhammer-dbc .faction-also-drop {
+  min-height: 30px; align-items: center;
+  padding: 3px 6px; border: 1px dashed var(--wh-border, #1f6f4a); border-radius: 4px;
+}
+.warhammer-dbc .faction-also-drop.faction-drop-over {
+  border-style: solid; background: rgba(77, 255, 166, .08);
+}
+.warhammer-dbc .faction-also-add {
+  width: auto; padding: 1px 8px; font-size: .85em;
+  border: 1px solid #2f9e6a; background: rgba(77,255,166,.1); color: #d6ffe9;
+}
+.warhammer-dbc .faction-also-add:hover { background: #4dffa6; color: #05291a; }

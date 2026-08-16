@@ -41,17 +41,52 @@ export function fits(itemSize, slotSize) {
   return (i.w <= s.w && i.h <= s.h) || (i.h <= s.w && i.w <= s.h);
 }
 
+// Флаг предмета-разгрузки, где лежит выбранный вариант каждого слота:
+// { "<slotId>": "<variantKey>" }. Хранится на самой разгрузке, а не на акторе:
+// переставили Ремень другому персонажу — кобуры остались ножнами.
+export const RIG_VARIANT_FLAG = "rigVariants";
+
+/**
+ * Варианты одного слота: сам слот как он описан плюс его замены (e.variants).
+ * Ремень, Бандольер и подобные разрешают заменить слот на другой — ножны,
+ * неудобную петлю, ряд патронных петель, — и от замены меняется размер слота
+ * и удобство, поэтому вариант выбирается, а не описывается словами в тексте.
+ */
+export function slotVariants(entry) {
+  const base = { key: "", label: entry.note || entry.size, size: entry.size, awkward: false };
+  const rest = (entry.variants || []).map((v, i) => ({
+    key:     v.key || `v${i}`,
+    label:   v.label || v.size,
+    size:    v.size || entry.size,
+    awkward: !!v.awkward
+  }));
+  return [base, ...rest];
+}
+
 // Разворачивает конфиг разгрузки в плоский список слотов (с уникальными id).
+// Учитывает выбранный вариант слота: у него свой размер и своё удобство.
 export function expandSlots(rigItem) {
   const r = rigItem?.system?.rig || {};
+  const chosen = rigItem?.flags?.["warhammer-dbc"]?.[RIG_VARIANT_FLAG] || {};
   const out = [];
+  const push = (e, ei, c, isMag) => {
+    const id       = `${rigItem.id}:${isMag ? "m" : "s"}:${ei}:${c}`;
+    const variants = slotVariants(e);
+    const picked   = variants.find(v => v.key === (chosen[id] || "")) || variants[0];
+    out.push({
+      id, size: picked.size, note: e.note || "", isMag,
+      awkward: picked.awkward,
+      variantKey: picked.key,
+      // Список для выпадающего выбора — пустой, если замен у слота нет.
+      variants: variants.length > 1
+        ? variants.map(v => ({ ...v, selected: v.key === picked.key })) : []
+    });
+  };
   (r.slots || []).forEach((e, ei) => {
-    for (let c = 0; c < (e.count || 1); c++)
-      out.push({ id: `${rigItem.id}:s:${ei}:${c}`, size: e.size, note: e.note || "", isMag: false });
+    for (let c = 0; c < (e.count || 1); c++) push(e, ei, c, false);
   });
   (r.magLocks || []).forEach((e, ei) => {
-    for (let c = 0; c < (e.count || 1); c++)
-      out.push({ id: `${rigItem.id}:m:${ei}:${c}`, size: e.size, note: e.note || "", isMag: true });
+    for (let c = 0; c < (e.count || 1); c++) push(e, ei, c, true);
   });
   return out;
 }

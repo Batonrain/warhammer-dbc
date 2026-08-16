@@ -11,7 +11,7 @@
     "subtype": "Сокрушение",
     "powerType": "attack",
     "extraTypes": [],
-    "shootSubtype": "",
+    "shootSubtype": "blast",
     "prRequired": 7,
     "testChar": "wp",
     "testMod": -30,

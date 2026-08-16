@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "S 20, Дл. 2м, Rng 0-6. Удар 1d5+1 I(Cr), Flexible, Primitive. По умолчанию лаз-пистолет (Compact) — атака по правилам мехадендритов; заменяется любым пистолетом Compact/Combi. Батарейные/конденсаторные пистолеты не тратят боеприпасы. При перегреве — урон в торс, мехадендрит чинят ½ смены.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

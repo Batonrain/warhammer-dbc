@@ -1,13 +1,21 @@
 import { _performDodge, _performParry } from "./combat/defense.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
-import { _executeFearRoll }             from "./combat/fear.mjs";
+import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
+import { isRuleUsageUsed, markRuleUsageUsed } from "./apps/game-session.mjs";
+import { fatePoolLabel }                 from "./rules/fate-save.mjs";
+import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog }         from "./combat/damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
 import { CONDITION_LEVEL_FIELD }         from "./combat/weapon-properties.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
+import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 
 export function registerHooks() {
+
+  // ── Вариации существ бестиария ───────────────────────────────────────────
+  // Диалог выбора версии при создании актора В МИРЕ (см. apps/actor-setup.mjs).
+  registerActorSetupHook();
 
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {
@@ -101,6 +109,52 @@ export function registerHooks() {
         }
         ev.currentTarget.disabled = true;
         await _executeFearRoll(actor, ctx.ratingKey, ctx.type, ctx.infamy, ctx.mod, ctx.properties, { free: true });
+      });
+    });
+
+    // Блоки «только для владельца» в карточках чата: карточка одна на всех,
+    // поэтому прячем их на клиенте по фактическим правам на актора.
+    html.querySelectorAll(".wh-owner-only[data-actor-id]").forEach(el => {
+      if (!game.actors?.get(el.dataset.actorId)?.isOwner) el.style.display = "none";
+    });
+
+    // «Абсолютная вера в прошлое» (Мир-кладбище): тратит Очко Судьбы/Бесчестья,
+    // чтобы считать проваленный Страх пройденным с 1 успехом, и даёт 1 Порчи.
+    // Один раз за столкновение — метка на акторе (usageLimits), её сбрасывает
+    // кнопка «Новая сцена» в apps/game-session.mjs.
+    html.querySelectorAll(".wh-fear-faith-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ctx = message.flags?.["warhammer-dbc"]?.faithInThePast;
+        if (!ctx) return;
+        const actor = game.actors?.get(ctx.actorId);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Использовать может только владелец персонажа (или ГМ).");
+        }
+        if (isRuleUsageUsed(actor, FAITH_FLAG)) {
+          return ui.notifications.warn(`«${ctx.label}» уже использована в этом столкновении.`);
+        }
+        const fate = Number(actor.system.fate?.value) || 0;
+        if (fate <= 0) return ui.notifications.warn("Нет Очков Судьбы/Бесчестья.");
+        ev.currentTarget.disabled = true;
+
+        // Трата помечена whSkipFateSave: иначе её перехватила бы «Пламенная
+        // вера» (Мир-храм) и Очко могло бы «не потратиться». Здесь это
+        // осознанная цена способности, а не обычный расход.
+        await actor.update({
+          "system.fate.value": fate - 1,
+          "system.corruption.value": (Number(actor.system.corruption?.value) || 0) + 1
+        }, { whSkipFateSave: true });
+        await markRuleUsageUsed(actor, FAITH_FLAG, "scene");
+
+        await ChatMessage.create({
+          speaker: ChatMessage.getSpeaker({ actor }),
+          content: `<div class="wh-roll-result">
+            <div class="roll-header">🕯️ ${esc(ctx.label)} — ${esc(actor.name)}</div>
+            <div class="roll-outcome"><span class="roll-success">Тест Страха пройден с 1 степенью успеха</span></div>
+            <div class="roll-threshold">Потрачено Очко ${fatePoolLabel(actor)} · Порча +1</div>
+          </div>`
+        });
       });
     });
 
@@ -591,24 +645,24 @@ function _attachFateContextMenu(message, html) {
 
       if (!canSpend) return;
 
-      // Тратим очко судьбы
-      await actor.update({ "system.fate.value": fateVal - 1 });
-
       const roll = rolls[0];
       if (!roll) return;
 
-      const oldRv = roll.total;
+      const rv = roll.total;
 
-      // Если это была атака — повторяем атаку целиком с улучшенным на 10
-      // броском (меньше = лучше), сохраняя место попадания/урон/защиту.
+      // Если это была атака — переигрываем её тем же кубом, но с порогом
+      // выше на 10: место попадания и криты завязаны на выпавшее значение,
+      // поэтому куб не трогаем (см. rules/fate-bonus.mjs).
       const atkB = message.flags?.["warhammer-dbc"]?.attack;
       if (atkB) {
         const atkActor = game.actors?.get(atkB.actorId) ?? actor;
         const atkItem  = atkActor?.items?.get(atkB.itemId);
         if (atkItem) {
-          await _executeAttackRoll(atkActor, atkItem, atkB.charKey, atkB.threshold,
+          await actor.update({ "system.fate.value": fateVal - 1 });
+          await _executeAttackRoll(atkActor, atkItem, atkB.charKey,
+            (Number(atkB.threshold) || 0) + FATE_BONUS,
             atkB.rofMode, atkB.aimTarget,
-            { ...(atkB.opts || {}), forcedRoll: Math.max(1, oldRv - 10), skipAmmo: true });
+            { ...(atkB.opts || {}), forcedRoll: rv, skipAmmo: true });
           ui.notifications.info(
             `➕ ${actor.name} тратит ${ft.one}: +10 к атаке! Осталось: ${fateVal - 1}`);
           return;
@@ -617,32 +671,22 @@ function _attachFateContextMenu(message, html) {
 
       // Извлекаем порог из сообщения
       const thresholdMatch = message.content.match(/Порог.*?<b>(\d+)<\/b>/);
-      const threshold = thresholdMatch ? parseInt(thresholdMatch[1]) : null;
-
-      // Новый результат = старый − 10 (бросок стал лучше на 10)
-      // В d100 меньше = лучше, поэтому вычитаем 10
-      const newRv   = Math.max(1, oldRv - 10);
-      const rollMode = game.settings.get("core", "rollMode");
-
-      const hit = threshold !== null ? newRv <= threshold : null;
-      const deg = threshold !== null
-        ? Math.floor(Math.abs(newRv - threshold) / 10) + 1
+      const outcome = thresholdMatch
+        ? fateBonusOutcome({ rv, threshold: parseInt(thresholdMatch[1]) })
         : null;
 
-      let outcomeHtml = `
-        <div class="roll-dice">
-          Старый бросок: <b>${oldRv}</b> → Новый: <b>${newRv}</b>
-          <span style="font-size:0.82em;color:#3a7a3a;">(−10)</span>
-        </div>`;
-      if (threshold !== null && hit !== null) {
-        outcomeHtml += hit
-          ? `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span></div>`
-          : `<div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span></div>`;
+      // Без порога надбавку применять не к чему — Очко не тратим.
+      if (!outcome) {
+        return ui.notifications.warn(
+          "⚠️ В этом сообщении не виден Порог теста — +10 применить не к чему. Используйте переброс.");
       }
 
-      // Создаём фиктивный ролл с нужным значением для записи
-      const fakeRoll = new Roll(`${newRv}`);
-      await fakeRoll.evaluate();
+      await actor.update({ "system.fate.value": fateVal - 1 });
+
+      const rollMode = game.settings.get("core", "rollMode");
+      const outcomeHtml = outcome.success
+        ? `<div class="roll-outcome"><span class="roll-success">Успех — ${outcome.degrees} ${_degWord(outcome.degrees)}</span></div>`
+        : `<div class="roll-outcome"><span class="roll-failure">Провал — ${outcome.degrees} ${_degWord(outcome.degrees)}</span></div>`;
 
       const newMessageData = ChatMessage.applyRollMode({
         speaker: message.speaker,
@@ -652,13 +696,14 @@ function _attachFateContextMenu(message, html) {
             <div class="roll-damage-meta">
               ${ft.word} потрачена (осталось: ${fateVal - 1})
             </div>
-            ${threshold !== null
-              ? `<div class="roll-threshold">Порог: <b>${threshold}</b></div>`
-              : ""}
+            <div class="roll-threshold">
+              Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
+              <span style="font-size:0.82em;color:#3a7a3a;">(+${outcome.bonus})</span>
+            </div>
+            <div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>
             ${outcomeHtml}
           </div>`,
-        rolls: [fakeRoll],
-        sound: CONFIG.sounds.dice
+        rolls: [roll]
       }, rollMode);
 
       await ChatMessage.create(newMessageData);

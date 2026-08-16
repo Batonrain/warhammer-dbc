@@ -1,6 +1,8 @@
 <div class="tab notes-cog {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
 
-  {{!-- Телосложение задаёт набор PNG-масок фигуры на вкладке «ТЕЛО». --}}
+  {{!-- Телосложение задаёт набор PNG-масок фигуры на вкладке «ТЕЛО».
+        У Астартес выбора нет: они всегда мужчины, блок для них скрыт. --}}
+  {{#unless isAstartes}}
   <div class="notes-section-panel body-type-panel">
     <div class="panel-title">ТЕЛОСЛОЖЕНИЕ</div>
     <div class="body-type-grid">
@@ -14,6 +16,7 @@
     <div class="body-type-note">Определяет силуэт на вкладке «ТЕЛО» и в Хирургиконе. «Другое» использует
       нейтральный набор — отдельной графики под него нет.</div>
   </div>
+  {{/unless}}
   {{#if showPatronPicker}}
   <div class="notes-section-panel chaos-patron-panel">
     <div class="panel-title">ПОКРОВИТЕЛЬ ХАОСА</div>
@@ -74,6 +77,9 @@
       {{#if selectedDrukhariFaction}}<div class="origin-info"> <div class="origin-chars">{{selectedDrukhariFaction.chars}}</div> <div class="origin-special">{{selectedDrukhariFaction.special}}</div> </div>{{/if}}
       <div class="origin-row"> <label class="origin-label">Район Комморага</label> <select name="system.drukhariDistrict" class="origin-select">{{{drukhariDistrictOptions}}}</select> </div>
       {{#if selectedDrukhariDistrict}}<div class="origin-info"> <div class="origin-chars">{{selectedDrukhariDistrict.chars}}</div> <div class="origin-special">{{selectedDrukhariDistrict.special}}</div> </div>{{/if}}
+      {{!-- Корсарские банды — общие для Аэльдари и Друкхари: в банде ходят и те, и другие. --}}
+      <div class="origin-row"> <label class="origin-label">Корсарская Банда</label> <select name="system.band" class="origin-select">{{{bandOptions}}}</select> </div>
+      {{#if selectedBand}}<div class="origin-info"> <div class="origin-chars">{{selectedBand.chars}}</div> <div class="origin-special">{{selectedBand.special}}</div> </div>{{/if}}
     </div>
     <div class="gene-seed-hint">Выберите ОДНО из: Кабал, Культ Ведьм или Ковен Гемункулов — и отдельно Район Комморага (берётся вместе с фракцией). Модификаторы характеристик применяются в Базу при создании (вручную); особенность — справка.</div>
   </div> {{/if}}
@@ -85,28 +91,39 @@
     <div class="gene-seed-hint">Маска (труппа) определяет бонусы характеристик и особый эффект. Бонусы характеристик применяются в Базу вручную при создании; особенность — справка. Это не то же, что Мириада Масок (Света/Сумерек/Ночи) из Черты «Myriad Masks».</div>
   </div> {{/if}}
 
-  <div class="notes-section-panel"> <div class="panel-title">БИОГРАФИЯ</div> <div class="bio-grid"> <label>Пол<input type="text" name="system.bio.gender" value="{{system.bio.gender}}"/></label> <label>Возраст<input type="number" name="system.bio.age" value="{{system.bio.age}}"/></label> <label>Рост<input type="text" name="system.bio.height" value="{{system.bio.height}}"/></label> <label>Сложение<input type="text" name="system.bio.build" value="{{system.bio.build}}"/></label> <label>Волосы<input type="text" name="system.bio.hair" value="{{system.bio.hair}}"/></label> </div> </div> <div class="notes-section-panel"> <div class="panel-title">СТРЕМЛЕНИЯ <span class="aspir-hint">// по одному из Гордости, Позора и Мотивации — видны также в шапке листа</span> </div>
-    <table class="items-table aspir-table"> <tbody>
-      {{#each aspirationSlots as |a|}}
-      <tr class="aspir-row" data-index="{{a.idx}}">
-        <td class="aspir-label-cell">{{a.label}}</td>
-        <td class="aspir-sel-cell">
-          {{#if a.custom}}
-          <div class="aspir-custom"><input type="text" class="aspir-custom-name" data-index="{{a.idx}}" value="{{a.name}}" placeholder="Своё стремление"/><input type="text" class="aspir-custom-mods" data-index="{{a.idx}}" value="{{a.mods}}" placeholder="Модификаторы (+5 F, −5 W…)"/></div>
-          {{else}}
-          <select class="aspir-select" data-index="{{a.idx}}"> <option value="">— выбрать —</option>
-            {{#each a.options as |e|}}<option value="{{e.id}}" {{#if (eq e.id a.id)}}selected{{/if}}>{{e.name}} ({{e.mods}})</option>{{/each}}
-            <option value="__custom__" {{#if a.custom}}selected{{/if}}>Своё…</option>
-          </select>
-          {{/if}}
-        </td>
-        <td class="aspir-mods-cell">{{a.mods}}</td>
-        <td class="aspir-del-cell"><button type="button" class="aspir-remove" data-index="{{a.idx}}" title="Очистить">✕</button></td>
-      </tr>
-      {{/each}}
-    </tbody> </table>
-    <div class="gene-seed-hint" style="padding:3px 4px 0;">Модификаторы — справка (к Базе вручную; часто «или»/«по выбору»). «Своё…» — свой вариант.</div>
-  </div><div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <textarea name="system.notes" class="notes-textarea" placeholder="Записи...">{{system.notes}}</textarea> </div>
+  <div class="notes-section-panel"> <div class="panel-title">БИОГРАФИЯ</div> <div class="bio-grid"> <label>Пол<input type="text" name="system.bio.gender" value="{{system.bio.gender}}"/></label> <label>Возраст<input type="number" name="system.bio.age" value="{{system.bio.age}}"/></label> <label>Рост<input type="text" name="system.bio.height" value="{{system.bio.height}}"/></label> <label>Сложение<input type="text" name="system.bio.build" value="{{system.bio.build}}"/></label> <label>Волосы<input type="text" name="system.bio.hair" value="{{system.bio.hair}}"/></label> </div> </div>
+
+  {{#if isMinionCapable}}
+  <div class="notes-section-panel minion-panel">
+    <div class="panel-title">МИНЬОН <span class="gene-seed-hint" style="font-weight:400;">— если этот актор чей-то миньон (стр. 111-113)</span></div>
+    <div class="origin-grid">
+      <div class="origin-row"> <label class="origin-label">Хозяин</label>
+        <select name="system.masterUuid" class="origin-select"> <option value="">— нет —</option>
+          {{#each masterOptions as |m|}}<option value="{{m.uuid}}" {{#if m.selected}}selected{{/if}}>{{m.name}}</option>{{/each}}
+        </select> </div>
+      <div class="origin-row"> <label class="origin-label">Тип</label>
+        <select name="system.minionType" class="origin-select"> <option value="">— не выбран —</option>
+          {{#each minionTypeOptions as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}
+        </select> </div>
+      <div class="origin-row"> <label class="origin-label">Уровень</label>
+        <select name="system.minionTier" class="origin-select"> <option value="">— не выбран —</option>
+          {{#each minionTierOptions as |t|}}<option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>{{/each}}
+        </select> </div>
+      <div class="origin-row"> <label class="origin-label">Лояльность</label>
+        <input type="number" name="system.loyalty.value" value="{{minionLoyaltyValue}}" style="width:4em;"/> /
+        <input type="number" name="system.loyalty.max" value="{{minionLoyaltyMax}}" style="width:4em;"/>
+        <button type="button" class="minion-loyalty-sync-btn" title="Пересчитать от характеристики Хозяина">🔄</button>
+      </div>
+    </div>
+    <div class="gene-seed-hint" style="padding:3px 4px 0;">Базовая Лояльность — значение характеристики Хозяина: F у человека, P у зверя, I у машины, W у демона.</div>
+  </div>
+  {{/if}}
+
+  {{!-- Перечень миньонов переехал на вкладку СОЦИУМ: он там рядом с
+        Назначениями и Отношениями, а здесь дублировал бы их. Панель «МИНЬОН»
+        выше осталась — она о том, что этот актор сам чей-то миньон. --}}
+
+  <div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <textarea name="system.notes" class="notes-textarea" placeholder="Записи...">{{system.notes}}</textarea> </div>
   <div class="notes-section-panel"> <div class="panel-title">СТАТУС</div>
     <div class="status-checks">
       <label class="checkbox-label"> <input type="checkbox" name="system.isPsyker" {{#if system.isPsyker}}checked{{/if}}/> <span>Пси-Пробуждение</span> </label>

@@ -1,0 +1,163 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  СОЦИУМ — всё, чем персонаж действует на других: Навыки, Таланты,      --}}
+{{!--  Особенности, Модификаторы, Назначения, Фракции, Миньоны, Отношения.  --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+<div class="tab social-tab {{#if (eq tab "social")}}active{{/if}}" data-tab="social" data-group="primary">
+
+  {{!-- ── Фракции: перетащить сюда или «＋» (Обозреватель с фильтром) ── --}}
+  <div class="notes-section-panel social-factions">
+    <div class="panel-title">ФРАКЦИИ <span class="gene-seed-hint" style="font-weight:400;">— перетащите Фракцию сюда или нажмите ＋</span></div>
+    {{!-- Классы .faction-drop-zone / .wh-faction-add / .wh-faction-remove —
+          те же, что у прежнего поля шапки: их слушает
+          activateFactionFieldListeners (apps/actor-factions.mjs). --}}
+    <div class="faction-drop-zone social-faction-zone" data-tooltip="Перетащите предмет-Фракцию">
+      {{#each actorFactions as |f|}}
+      <div class="social-faction-card" title="{{f.hint}}">
+        <img class="social-faction-img" src="{{f.img}}" alt="{{f.name}}"/>
+        <div class="social-faction-main">
+          <a class="social-faction-name social-open-item" data-item-id="{{f.id}}" title="Открыть лист Фракции">{{f.name}}</a>
+          <div class="social-faction-hint">{{f.hint}}</div>
+        </div>
+        <button type="button" class="wh-faction-remove" data-item-id="{{f.id}}" title="Убрать принадлежность">✕</button>
+      </div>
+      {{else}}
+      <div class="gene-seed-hint">Фракций нет — перетащите сюда или нажмите ＋.</div>
+      {{/each}}
+      <button type="button" class="wh-faction-add social-faction-add" title="Выбрать фракцию в Обозревателе компендиумов">＋</button>
+    </div>
+  </div>
+
+  {{!-- ── Навыки: только социальные, бросок отсюда ── --}}
+  <div class="notes-section-panel">
+    <div class="panel-title">НАВЫКИ <span class="gene-seed-hint" style="font-weight:400;">— клик по названию бросает тест</span></div>
+    <div class="social-skills">
+      {{#each socialSkills as |sk|}}
+      <div class="social-skill">
+        <a class="social-skill-name skill-roll" data-skill="{{sk.key}}" title="Бросок: {{sk.label}}">{{sk.label}}</a>
+        <span class="social-skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span>
+      </div>
+      {{/each}}
+    </div>
+  </div>
+
+  {{!-- ── Таланты: только те, что про социальное ── --}}
+  <div class="notes-section-panel">
+    <div class="panel-title">ТАЛАНТЫ <span class="gene-seed-hint" style="font-weight:400;">— влияющие на социальные Навыки, Общительность, Лояльность или Сплочённость</span></div>
+    {{#if socialTalents.length}}
+    <table class="items-table"><tbody>
+      {{#each socialTalents as |t|}}
+      <tr class="item-row" title="{{t.summary}}">
+        <td class="item-name-cell social-open-item" data-item-id="{{t.id}}" title="Открыть">{{t.name}}</td>
+        <td class="godgift-god col-narrow">{{t.reasons}}</td>
+        <td class="social-summary">{{t.summary}}</td>
+      </tr>
+      {{/each}}
+    </tbody></table>
+    {{else}}<div class="gene-seed-hint">Талантов, влияющих на социальное, нет.</div>{{/if}}
+  </div>
+
+  {{!-- ── Особенности: Черты и Мутации, тоже по социальному следу ── --}}
+  <div class="notes-section-panel">
+    <div class="panel-title">ОСОБЕННОСТИ <span class="gene-seed-hint" style="font-weight:400;">— Черты и Мутации, влияющие на социальное</span></div>
+    {{#if socialFeatures.length}}
+    <table class="items-table"><tbody>
+      {{#each socialFeatures as |f|}}
+      <tr class="item-row" title="{{f.summary}}">
+        <td class="item-name-cell social-open-item" data-item-id="{{f.id}}" title="Открыть">{{f.name}}</td>
+        <td class="godgift-god col-narrow">{{f.kind}} · {{f.reasons}}</td>
+        <td class="social-summary">{{f.summary}}</td>
+      </tr>
+      {{/each}}
+    </tbody></table>
+    {{else}}<div class="gene-seed-hint">Черт и Мутаций, влияющих на социальное, нет.</div>{{/if}}
+  </div>
+
+  {{!-- ── Модификаторы: что правит социальные Навыки ── --}}
+  <div class="notes-section-panel">
+    <div class="panel-title">МОДИФИКАТОРЫ <span class="gene-seed-hint" style="font-weight:400;">— снаряжение, эффекты и силы, что двигают социальные Навыки, Общительность, Лояльность или Сплочённость</span></div>
+    {{#if socialModifiers.length}}
+    <table class="items-table"><tbody>
+      {{#each socialModifiers as |m|}}
+      <tr class="item-row">
+        <td class="item-name-cell social-open-item" data-item-id="{{m.id}}" data-uuid="{{m.uuid}}" title="Открыть">{{m.name}}</td>
+        <td class="godgift-god col-narrow">{{m.kind}}</td>
+        <td class="social-summary">{{m.effects}}</td>
+      </tr>
+      {{/each}}
+    </tbody></table>
+    {{else}}<div class="gene-seed-hint">Ничего, что двигало бы социальное, не найдено.</div>{{/if}}
+  </div>
+
+  {{!-- ── Назначения: где актор числится ── --}}
+  <div class="notes-section-panel">
+    <div class="panel-title">НАЗНАЧЕНИЯ <span class="gene-seed-hint" style="font-weight:400;">— Отряды, Формирования, должности на корабле и места в технике</span></div>
+    {{#if socialAssignments.length}}
+    <table class="items-table"><tbody>
+      {{#each socialAssignments as |a|}}
+      <tr class="item-row">
+        <td class="item-name-cell social-open-actor" data-uuid="{{a.uuid}}" title="Открыть лист">{{a.name}}</td>
+        <td class="godgift-god col-narrow">{{a.kind}}</td>
+        <td class="social-summary">{{a.role}}</td>
+      </tr>
+      {{/each}}
+    </tbody></table>
+    {{else}}<div class="gene-seed-hint">Ни в одном Отряде, Формировании, экипаже или расчёте не числится.</div>{{/if}}
+  </div>
+
+  {{!-- ── Миньоны ── --}}
+  {{#if canHaveMinions}}
+  <div class="notes-section-panel">
+    <div class="panel-title">МИНЬОНЫ</div>
+    {{#if myMinions.length}}
+    <table class="items-table">
+      <thead><tr><th>Имя</th><th class="col-narrow">Тип</th><th class="col-narrow">Уровень</th><th class="col-narrow">Лояльность</th></tr></thead>
+      <tbody>
+        {{#each myMinions as |m|}}
+        <tr class="item-row">
+          <td class="item-name-cell minion-open-link" data-uuid="{{m.uuid}}" title="Открыть лист">{{m.name}}</td>
+          <td class="godgift-god">{{m.typeLabel}}</td>
+          <td class="godgift-god">{{m.tierLabel}}</td>
+          <td class="godgift-god">{{m.loyaltyValue}}/{{m.loyaltyMax}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="gene-seed-hint">Миньонов нет. Привязка заводится на листе самого миньона — там выбирается Хозяин.</div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  {{!-- ── Отношения ── --}}
+  <div class="notes-section-panel social-relations">
+    <div class="panel-title">ОТНОШЕНИЯ <span class="gene-seed-hint" style="font-weight:400;">— перетащите сюда Персонажа, Орду, Демона или Принца Демонов</span></div>
+    <div class="social-relations-zone" data-tooltip="Перетащите актора сюда">
+      {{#each socialRelations as |r|}}
+      <div class="social-relation" data-index="{{r.idx}}">
+        <div class="social-relation-head">
+          <img class="social-relation-img" src="{{r.img}}" alt="{{r.name}}"/>
+          <a class="social-relation-name social-open-actor" data-uuid="{{r.uuid}}" title="Открыть лист">{{r.name}}</a>
+          <span class="godgift-god">{{r.kind}}</span>
+          <input type="text" class="social-relation-note" data-index="{{r.idx}}" value="{{r.note}}" placeholder="Заметка"/>
+          <button type="button" class="social-relation-remove" data-index="{{r.idx}}" title="Убрать">✕</button>
+        </div>
+        <table class="items-table social-relation-table">
+          <thead><tr>{{#each ../relationSkillCols as |c|}}<th>{{c.label}}</th>{{/each}}</tr></thead>
+          <tbody><tr>
+            {{#each r.mods as |m|}}
+            <td>
+              <select class="social-relation-mod" data-index="{{../r.idx}}" data-skill="{{m.key}}" title="{{m.title}}">
+                {{#each m.options as |o|}}<option value="{{o.value}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}
+              </select>
+            </td>
+            {{/each}}
+          </tr></tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="gene-seed-hint">Отношений нет — перетащите сюда актора.</div>
+      {{/each}}
+    </div>
+  </div>
+
+</div>

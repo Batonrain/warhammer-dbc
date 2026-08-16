@@ -10,6 +10,7 @@ import { VEHICLE_WEAPONS } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 const ROLE_ORDER = ["commander", "driver", "gunner", "loader", "pilot", "passenger"];
 
@@ -167,6 +168,8 @@ export class WarhammerVehicleSheet
     const context = await super._prepareContext(options);
     context.actor = this.actor;
     context.tab = this.tabGroups?.primary ?? WarhammerVehicleSheet.TABS.primary.initial;
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
     context.system  = sys;
     context.derived = sys.derived || {};
@@ -413,6 +416,8 @@ export class WarhammerVehicleSheet
     super._onRender?.(context, options);
     const el = this.element;
     if (!el) return;
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(el, this.actor);
 
     // Drop привязываем всегда, а не только на редактируемом листе: игрок-не-
     // владелец должен уметь перетащить своего персонажа в чужой транспорт

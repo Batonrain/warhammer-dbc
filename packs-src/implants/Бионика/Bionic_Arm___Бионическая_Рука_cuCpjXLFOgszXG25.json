@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Протез руки. Варианты: Рука-Оружие, Интегрированное Оружие, Универсальный Порт, Легион (Unnatural S 4). Poor.Q −5 тонкая работа; Good.Q +10 манипуляции; Best.Q +10 + бонус.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

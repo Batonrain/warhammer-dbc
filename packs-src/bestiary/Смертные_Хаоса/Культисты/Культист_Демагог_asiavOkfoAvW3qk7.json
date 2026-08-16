@@ -1132,7 +1132,89 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Демагог",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Оратор культа без специализации."
+              },
+              {
+                "key": "leader",
+                "label": "Предводитель",
+                "hint": "Command +20, C.L. (War) +10, Таланты Back to Back и Iron Discipline, флак-жилет.",
+                "system": {
+                  "skills.command.rank": "veteran"
+                },
+                "groupSkills": [
+                  {
+                    "group": "commonLore",
+                    "specialty": "War",
+                    "rank": "trained"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.CeSHyDCyO3Ic155Q",
+                  "Compendium.warhammer-dbc.talents.cZSwCrYZhZkt18iF",
+                  "Compendium.warhammer-dbc.armor.ir08P0cNdaoGH6V3"
+                ]
+              },
+              {
+                "key": "preacher",
+                "label": "Проповедник",
+                "hint": "F 48, For.Lore (Heresy) +20, Талант Good Reputation.",
+                "system": {
+                  "characteristics.fel.base": 48
+                },
+                "groupSkills": [
+                  {
+                    "group": "forbiddenLore",
+                    "specialty": "Heresy",
+                    "rank": "veteran"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.ETjtcpbJWGPYoiRM"
+                ]
+              },
+              {
+                "key": "confessor",
+                "label": "Исповедник",
+                "hint": "Подчинённым даёт Fearless; сам носит Подрывной Жилет (боевой профиль подрыва приходит вместе с ним).",
+                "add": [
+                  "Compendium.warhammer-dbc.talents.2NIBVdhh7K2QVaaD",
+                  "Compendium.warhammer-dbc.gear.rwWveZuVhInMLq8X"
+                ]
+              },
+              {
+                "key": "spy",
+                "label": "Шпион",
+                "hint": "A 37, Security/Stealth/Sleight of Hand +10, мульти-ключ.",
+                "system": {
+                  "characteristics.ag.base": 37,
+                  "skills.security.rank": "trained",
+                  "skills.stealth.rank": "trained",
+                  "skills.sleightOfHand.rank": "trained"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.tools.Jt9L6Db9UgNmSElz"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

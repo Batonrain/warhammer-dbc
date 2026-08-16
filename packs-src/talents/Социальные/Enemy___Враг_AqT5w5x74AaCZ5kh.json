@@ -16,6 +16,8 @@
     "aspirations": [],
     "god": "Неделимый",
     "specialization": "Любая организация",
+    "hasRating": true,
+    "rating": 1,
     "cost": 0,
     "purchased": false,
     "granted": false,

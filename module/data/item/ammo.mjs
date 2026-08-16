@@ -29,6 +29,9 @@ export class AmmoData extends foundry.abstract.TypeDataModel {
       rangeMultiplier:    num(1, "Дальность, множитель"),
       special:            new StringField({ initial: "", label: "Особенности" }),
       properties:         new ArrayField(new ObjectField(), { label: "Свойства" }),
+      // Свойства, которые боеприпас у оружия ОТНИМАЕТ: Инферно Тзинча гасит
+      // Tearing, и одним лишь текстом в «Особенностях» это не считалось.
+      removeProps:        new ArrayField(new StringField(), { label: "Убирает свойства" }),
       condMods:           new ArrayField(new ObjectField(), { label: "Условные модификаторы" }),
       drukhari:           new BooleanField({ initial: false, label: "Друкхари" })
     };

@@ -18,6 +18,7 @@ import path from "node:path";
 
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 import { CHARACTERISTICS }   from "../../module/constants/characteristics.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../module/constants/skills.mjs";
 import { packDocuments, leaves, isEmpty } from "../support/pack-docs.mjs";
 
 const LEGACY = JSON.parse(fs.readFileSync(
@@ -36,11 +37,22 @@ const PACKS = {
   character:   "bestiary"
 };
 
+// Миньоны (стр. 111-113) — поля заведены уже после того, как template.json
+// перестал описывать поля, поэтому в снимке прежних умолчаний их нет. Миньоном
+// бывает Персонаж и Демон, Хозяином — они же и Принц Демонов, и набор полей у
+// всех троих один (module/data/actor/_creature.mjs).
+const MINION_FIELDS = {
+  masterUuid: "", minionType: "", minionTier: "", loyalty: { value: 0, max: 0 }
+};
+
 /** Расхождения сверх общих для трёх типов с характеристиками. */
 const OWN_DEVIATIONS = {
   // Пусто = Бог не выбран. Умолчание "undivided" делало «Покровительство:
   // Неделимый» выполненным у любого, кто не трогал выбор (wdbc-osz).
-  character: { patronGod: "" }
+  character: { patronGod: "" },
+  // Вкладку «ТЕЛО» Принцу открыли позже: она общая с Персонажем, и её хранимые
+  // поля (фигура голо-скана и жизнеобеспечение) пришлось завести и здесь.
+  demonPrince: { bodyType: "male", vitals: { hunger: 0, thirst: 0, sleep: 0 } }
 };
 
 /** Намеренные расхождения схемы с прежним template.json: путь → почему. */
@@ -49,11 +61,31 @@ const DEVIATIONS = {
     // Объявлена не была, но лежит у всех 56 машин пака.
     "availability": 0
   },
-  // Цель эффектов, добавляющих к Бонусу и к Значению характеристики: свои
-  // хранимые поля. Бонус — потому что «Сверхъестественное» редактируемый ввод
-  // на листе; Значение — потому что `total` расчёт собирает заново, и эффект
-  // поверх него не поднимал ни Бонус, ни навыки (wdbc-5wm).
+  horde: {
+    // Навыки Орды заведены позже template.json (вкладка «ПОКАЗАТЕЛИ»): у Орды
+    // нет покупок за опыт, поэтому в записи только ранг и выведенное значение.
+    skills: Object.fromEntries(Object.keys(SKILLS_DEF)
+      .map(k => [k, { rank: "untrained", total: -20 }])),
+    // Групповые — записями со специализацией, как у существ.
+    groupSkills: Object.fromEntries(Object.keys(GROUP_SKILLS_DEF).map(k => [k, []]))
+  },
+  // У трёх существ три набора расхождений сразу, и записаны они по-разному:
+  // поля Миньонов и свои поля типа — обычными именами, надбавки характеристик —
+  // путями внутрь characteristics. withDeviations ниже разбирает и то, и
+  // другое, поэтому держать их врозь незачем.
+  //
+  // Надбавки — цель эффектов, добавляющих к Бонусу и к Значению
+  // характеристики: свои хранимые поля. Бонус — потому что «Сверхъестественное»
+  // редактируемый ввод на листе; Значение — потому что `total` расчёт собирает
+  // заново, и эффект поверх него не поднимал ни Бонус, ни навыки (wdbc-5wm).
   ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type, {
+    ...MINION_FIELDS,
+    // Три слота Стремлений. Раньше писались прямо в `aspirations`, но то поле
+    // объявлено объектом (там Фактор Прибыли), и массив схема отбрасывала —
+    // выбор не сохранялся вовсе. Теперь у слотов своё поле.
+    "aspirations.slots": [],
+    // Отношения (вкладка СОЦИУМ): к кому этот актор как относится.
+    relations: [],
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

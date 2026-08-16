@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Талант Frenzy, Избегания в Ярости без ограничений, авто-успех на выход из Ярости. Poor.Q: −10 I; Good.Q: + Таланты Cold Fury и Fire in Blood; Best.Q: + убирает штраф к BS в Ярости.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

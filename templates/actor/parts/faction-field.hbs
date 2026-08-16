@@ -1,0 +1,21 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  ФРАКЦИЯ — поле шапки, общее для всех типов акторов.                   --}}
+{{!--  Данные готовит actorFactionsContext (module/apps/actor-factions.mjs), --}}
+{{!--  обработчики — activateFactionFieldListeners там же.                   --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+<div class="wh-faction-field">
+  <label class="wh-faction-label"
+         title="Кому принадлежит. Правило, нацеленное на вышестоящую фракцию, срабатывает и здесь; на нижестоящую — нет.">Фракция</label>
+  <div class="wh-faction-list faction-drop-zone">
+    {{#each actorFactions as |f|}}
+    <span class="wh-faction-chip" title="{{f.hint}}">
+      {{#if f.img}}<img class="wh-faction-img" src="{{f.img}}"/>{{/if}}
+      <span class="wh-faction-name">{{f.name}}</span>
+      <button type="button" class="wh-faction-remove" data-item-id="{{f.id}}" title="Убрать принадлежность">✕</button>
+    </span>
+    {{else}}
+    <span class="wh-faction-empty">перетащите фракцию сюда</span>
+    {{/each}}
+    <button type="button" class="wh-faction-add" title="Выбрать фракцию в Обозревателе компендиумов">＋</button>
+  </div>
+</div>

@@ -26,6 +26,7 @@ import { AbilityData }        from "./item/ability.mjs";
 import { MutationData }       from "./item/mutation.mjs";
 import { DiseaseData }        from "./item/disease.mjs";
 import { MentalDisorderData } from "./item/mental-disorder.mjs";
+import { MentalTraumaData }   from "./item/mental-trauma.mjs";
 import { HomeworldData }      from "./item/homeworld.mjs";
 import { DivinationData }     from "./item/divination.mjs";
 import { ArchetypeData }      from "./item/archetype.mjs";
@@ -44,6 +45,7 @@ import { VehicleGearData }    from "./item/vehicle-gear.mjs";
 import { VehicleTraitData }   from "./item/vehicle-trait.mjs";
 import { SmallCraftData }     from "./item/small-craft.mjs";
 import { RitualData }         from "./item/ritual.mjs";
+import { FactionData }        from "./item/faction.mjs";
 
 import { DaemonData }      from "./actor/daemon.mjs";
 import { DemonPrinceData } from "./actor/demon-prince.mjs";
@@ -78,6 +80,7 @@ export const ITEM_DATA_MODELS = {
   mutation:       MutationData,
   disease:        DiseaseData,
   mentalDisorder: MentalDisorderData,
+  mentalTrauma:   MentalTraumaData,
   // Данные персонажа (wdbc-ff4.1.5)
   homeworld:          HomeworldData,
   divination:         DivinationData,
@@ -99,7 +102,9 @@ export const ITEM_DATA_MODELS = {
   vehicleTrait:  VehicleTraitData,
   smallCraft:    SmallCraftData,
   // Ритуалы (wdbc-5ed)
-  ritual:        RitualData
+  ritual:        RitualData,
+  // Дерево принадлежностей (фракции, шаг 1)
+  faction:       FactionData
 };
 
 /** Тип актора → класс схемы. Раскладывается в CONFIG.Actor.dataModels в init. */

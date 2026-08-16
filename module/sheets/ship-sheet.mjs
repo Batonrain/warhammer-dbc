@@ -15,6 +15,7 @@ import { CRAFT_KINDS } from "../constants/small-craft.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 const CRAFT_STATE = { stored: "На борту", prepared: "Подготовлена", launched: "В вылете", returning: "Возврат (топливо!)", rearming: "Перевооружение" };
 const CRAFT_STRENGTH = { full: "Полная", half: "Полусильная", destroyed: "Уничтожена" };
@@ -387,6 +388,8 @@ export class WarhammerShipSheet
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
     context.actor = this.actor;
     context.tab = this.tabGroups?.primary ?? WarhammerShipSheet.TABS.primary.initial;
@@ -647,6 +650,8 @@ export class WarhammerShipSheet
     // _canDragDrop — он здесь всегда true: игрок-не-владелец должен уметь
     // посадить своего персонажа на чужой корабль (запись идёт через активного
     // ГМа по сокету, см. _persistOfficers).
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(el, this.actor);
 
     /** Слушатель на все узлы по селектору — замена jQuery-обхода из V1. */
     const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));

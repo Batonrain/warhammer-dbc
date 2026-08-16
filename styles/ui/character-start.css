@@ -1,0 +1,39 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   «Начать создание персонажа» — кнопка в панели «Актёры» и диалог выбора
+   Уровня стартовой игры (стр. 23).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Кнопка стоит под «Create Actor» и занимает всю ширину шапки панели. */
+#sidebar .wh-start-character,
+.directory .wh-start-character {
+  display: block;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 0.86em;
+  color: #d8ffe8;
+  background: #123a26;
+  border: 1px solid #2f9e6a;
+  border-radius: 4px;
+}
+#sidebar .wh-start-character:hover,
+.directory .wh-start-character:hover { background: #1b5c3b; }
+
+/* ── Блок «Уровень стартовой игры» в Мастере создания ── */
+.wh-cstart .cstart-hint {
+  font-size: 0.78em; color: var(--wh-text-mid); line-height: 1.4; margin-bottom: 5px;
+}
+/* Колонка опыта своей расы подсвечена, чужая — приглушена: выбирать между ними
+   не нужно, значение берётся по расе из того же окна. */
+.wh-cstart.cstart-astartes .cstart-col-mortal,
+.wh-cstart:not(.cstart-astartes) .cstart-col-astartes { opacity: 0.35; }
+.wh-cstart .cstart-table th { font-size: 0.76em; text-align: center; }
+.wh-cstart .cstart-table td { text-align: center; font-size: 0.86em; }
+.wh-cstart .cstart-pick { width: 26px; }
+.wh-cstart .cstart-xp { white-space: nowrap; }
+.wh-cstart .cstart-bonus { color: var(--wh-accent); }
+/* Строка ручной добавки: отделена от таблицы, чтобы её не путали со строками. */
+.wh-cstart .cstart-extra td { border-top: 1px solid var(--wh-border); padding-top: 5px; }
+.wh-cstart .cstart-extra td:first-child { font-size: 0.76em; color: var(--wh-text-mid); text-align: right; }
+.wh-cstart .cstart-extra input { width: 100%; text-align: center; }

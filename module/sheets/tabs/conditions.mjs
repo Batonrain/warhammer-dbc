@@ -7,6 +7,7 @@
 import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
 import { HOMEWORLD_BY_KEY } from "../../constants/homeworlds.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
+import { fatigueGraceForActor } from "../../rules/fatigue-grace.mjs";
 import { esc, on } from "../../helpers/utils.mjs";
 
 function fatigueThreshold(actor) {
@@ -24,7 +25,12 @@ export function fatiguePenalty(actor, charKey) {
   const fatigueExempt = ["t", "inf", "cog", "pf"];
   // Добывающий мир, «Потом и кровью»: штрафы начинаются лишь после T.b Усталости.
   const hw = HOMEWORLD_BY_KEY[actorHomeworldKey(actor)];
-  const grace = hw?.fatigueGrace === "tBonus" ? (actor.system.characteristics?.t?.bonus ?? 0) : 0;
+  const hwGrace = hw?.fatigueGrace === "tBonus" ? (actor.system.characteristics?.t?.bonus ?? 0) : 0;
+  // То же самое, но заданное записью Конструктора kind:"fatigue" на предмете.
+  // Источники не суммируются — это терпимость к усталости, а не бонус,
+  // поэтому берётся максимум. Прежний захардкоженный путь оставлен работать
+  // рядом: Происхождения на новую запись не переводились.
+  const grace = Math.max(hwGrace, fatigueGraceForActor(actor));
   if ((actor.system.fatigue?.value ?? 0) < 1 + grace) return 0;
   if (fatigueExempt.includes((charKey ?? "").toLowerCase())) return 0;
   return -10;

@@ -125,7 +125,8 @@ export async function setAptitudes(actor, list) {
       const a = it.system.aptSource
         ? resolveTalentAptitudes(it.name, it.system.aptitudes || [], it.system.aptSource, defs)
         : (it.system.aptitudes || []);
-      return { _id: it.id, "system.cost": talentCostXP(it.system.tier, a, apts, talentCategory(actor, it.name)) };
+      return { _id: it.id, "system.cost": talentCostXP(it.system.tier, a, apts,
+        talentCategory(actor, it.name), { name: it.name, patron: actor.system.patronGod }) };
     });
   if (talUpd.length) await actor.updateEmbeddedDocuments("Item", talUpd);
 }
@@ -343,7 +344,8 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
         : (item.system.aptitudes || []);
       await item.update({
         "system.granted": false, "system.purchased": true,
-        "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name))
+        "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
+          { name: item.name, patron: actor.system.patronGod })
       });
     } else {
       await item.update({ "system.granted": true, "system.purchased": false, "system.cost": 0 });

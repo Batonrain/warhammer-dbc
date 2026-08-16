@@ -37,7 +37,8 @@ describe("правила Астартес", () => {
   it("Геносемя и физиология отдают флаги-возможности", () => {
     const flags = effectsOf(collectRules(actor()))
       .filter(e => e.kind === "grantFlag").map(e => e.target);
-    expect(flags).toEqual(["talents.geneSeed", "healing.astartes", "unarmed.astartesProfile"]);
+    expect(flags).toEqual(["talents.geneSeed", "healing.astartes", "unarmed.astartesProfile",
+      "weapons.legion"]);
   });
 
   it("у человека правил Астартес нет", () => {

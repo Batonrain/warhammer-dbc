@@ -49,17 +49,24 @@
       <div class="wr-slots">
         {{#each rig.slots as |sl|}}
         <div class="wr-slot {{#if sl.isMag}}mag{{/if}} {{#if sl.item}}filled{{/if}}">
-          <div class="wr-slot-top"><span class="wr-slot-size">{{sl.size}}</span>{{#if sl.isMag}}<span class="wr-badge mag">МАГ</span>{{/if}}</div>
+          <div class="wr-slot-top"><span class="wr-slot-size">{{sl.size}}</span>{{#if sl.isMag}}<span class="wr-badge mag">МАГ</span>{{/if}}{{#if sl.awkward}}<span class="wr-badge">неудобный</span>{{/if}}</div>
           {{#if sl.note}}<div class="wr-slot-note">{{sl.note}}</div>{{/if}}
+          {{#if sl.variants.length}}
+          {{!-- Слот с заменами: кобура ↔ ножны ↔ петля. Смена варианта освобождает слот. --}}
+          <select class="wr-add wr-variant" data-slot-variant="{{sl.id}}" title="Чем занят слот">
+            {{#each sl.variants as |v|}}<option value="{{v.key}}" {{#if v.selected}}selected{{/if}}>{{v.label}} ({{v.size}}){{#if v.awkward}} · неудобно{{/if}}</option>{{/each}}
+          </select>
+          {{/if}}
           {{#if sl.item}}
           <div class="wr-slot-item"><span class="wr-it-name">{{sl.item.name}}</span>
             <button type="button" class="wr-x" data-slot-clear="{{sl.id}}" title="Убрать">✕</button></div>
-          {{else}}
+          {{/if}}
+          {{#if sl.opts.length}}
           <select class="wr-add" data-slot-assign="{{sl.id}}">
-            <option value="">— пусто —</option>
+            <option value="">{{#if sl.item}}— заменить на…{{else}}— пусто —{{/if}}</option>
             {{#each sl.opts as |o|}}<option value="{{o.id}}">{{o.name}} ({{o.size}})</option>{{/each}}
           </select>
-          {{/if}}
+          {{else}}{{#unless sl.item}}<div class="wr-slot-empty">— пусто —</div>{{/unless}}{{/if}}
         </div>
         {{/each}}
       </div>

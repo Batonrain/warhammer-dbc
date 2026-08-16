@@ -26,7 +26,14 @@
         {
           "size": "1x1",
           "count": 4,
-          "note": "спереди"
+          "note": "спереди",
+          "variants": [
+            {
+              "key": "ammoLoops",
+              "label": "петли на 20 патронов/болтов",
+              "size": "1x1"
+            }
+          ]
         }
       ],
       "magLocks": []

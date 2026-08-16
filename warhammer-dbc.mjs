@@ -39,6 +39,9 @@ import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, in
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
+import { hasRuleFlag }                from "./module/rules/flags.mjs";
+import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
+  from "./module/rules/fate-save.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
 import { openSystemsOverview, refreshSystemsOverview } from "./module/apps/systems-overview.mjs";
 import { openCraftWorkshop } from "./module/apps/craft-workshop.mjs";
@@ -55,14 +58,18 @@ import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
+import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
+import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
+import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
 import { setSystemPackLocks }         from "./module/apps/pack-locks.mjs";
 import { importBooks }                from "./module/apps/books.mjs";
 import { registerHandlebarsHelpers }  from "./module/helpers/handlebars.mjs";
 import { registerHooks }              from "./module/hooks.mjs";
+import { registerCharacterStartButton } from "./module/apps/character-start.mjs";
 import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
@@ -82,11 +89,13 @@ Hooks.once("init", () => {
   foundry.applications.handlebars.loadTemplates([
     // Актор
     "systems/warhammer-dbc/templates/actor/parts/header.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs",
     "systems/warhammer-dbc/templates/apps/nexus-card.hbs",
     "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs",
@@ -126,6 +135,8 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/armour-history-entry.hbs", // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/aspiration.hbs",           // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/archetype.hbs",            // ← НОВОЕ
+    "systems/warhammer-dbc/templates/item/parts/faction.hbs",
+    "systems/warhammer-dbc/templates/item/parts/faction-roster.hbs",
     "systems/warhammer-dbc/templates/item/parts/race.hbs",
     "systems/warhammer-dbc/templates/item/parts/subrace.hbs",
     // Звёздная система
@@ -265,6 +276,11 @@ Hooks.once("init", () => {
 
   // Версия проставленных хватов рукопашному оружию (одноразовая миграция)
   game.settings.register("warhammer-dbc", "weaponGripsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия чистки остатков старой системы Органов Геносемени (одноразовая)
+  game.settings.register("warhammer-dbc", "geneSeedCleanupVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -429,6 +445,10 @@ Hooks.on("renderNoteConfig", (app, html) => {
 // Регистрируем hooks
 registerHooks();
 
+// Кнопка «Начать создание персонажа» в панели «Актёры» (apps/character-start.mjs):
+// с неё начинается новый персонаж — с выбора Уровня стартовой игры.
+registerCharacterStartButton();
+
 // ── Сокет: посадка игрока в чужую технику через активного ГМа ─────────────────
 // Игрок не может обновлять актора-технику, которым не владеет. Клиент игрока
 // шлёт запрос, активный ГМ применяет его — но только если игрок сажает/высаживает
@@ -562,7 +582,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, runActorSetup });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -575,6 +595,18 @@ Hooks.once("ready", async () => {
     await migrateWeaponGrips();
     await game.settings.set("warhammer-dbc", "weaponGripsVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Авто-миграция хватов:", e); }
+});
+
+// ── Одноразовая чистка: остатки снятой системы Органов Геносемени ─────────────
+// Ручной перезапуск: game.warhammerDBC.migrateRemoveGeneSeed()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "geneSeedCleanupVersion") || 0) >= VERSION) return;
+  try {
+    await migrateRemoveGeneSeed();
+    await game.settings.set("warhammer-dbc", "geneSeedCleanupVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Чистка Геносемени:", e); }
 });
 
 // ── Боевой HUD (панель внизу вместо хотбара) ──────────────────────────────────
@@ -944,24 +976,6 @@ Hooks.on("preCreateItem", (doc, data) => {
   } catch (e) { /* не мешаем созданию предмета */ }
 });
 
-// Органы Геносемени Астартес (system.category "geneseed") — не хирургическая
-// операция, а часть тела космодесантника: откуда бы орган ни появился на
-// акторе (автовыдача при создании персонажа, перетаскивание из компендиума
-// «Импланты», ручное добавление GM'ом), он сразу считается вживлённым и
-// попадает на био-скан вкладки ТЕЛО, а не только когда выдан через
-// grantAstartesImplants (module/apps/astartes-implants.mjs).
-Hooks.on("preCreateItem", (doc, data) => {
-  try {
-    if ((data?.type ?? doc.type) !== "implant") return;
-    if ((data?.system?.category ?? doc.system?.category) !== "geneseed") return;
-    if (doc.getFlag("warhammer-dbc", "installed")) return;
-    doc.updateSource({
-      "flags.warhammer-dbc.installed": true,
-      "flags.warhammer-dbc.geneSeed": true
-    });
-  } catch (e) { /* не мешаем созданию предмета */ }
-});
-
 Hooks.on("preCreateActor", (doc, data) => {
   // По умолчанию у всех акторов: отображаемое имя «При наведении всеми»,
   // а имя токена = имени актора.
@@ -1084,6 +1098,10 @@ Hooks.on("updateActor", async (doc, changes) => {
 
 // Кэш библиотек Происхождения и Предсказаний для дропдаунов в шапке листа.
 initPackCaches();
+
+// Дерево фракций для предикатов правил: каталог лежит в компендиуме, а разбор
+// цепочки предков обязан быть чистыми функциями — см. module/rules/factions.mjs.
+initFactionIndex();
 
 /** Просил ли ГМ открыть библиотеки (настройка protectCompendiumEdits выше). */
 function _libsUnlocked() {
@@ -1349,6 +1367,47 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
     const a = found?.actor ?? found; // на случай, если uuid указывал на Token
     if (a instanceof Actor) await reconcileCohesionForActor(a);
   }
+});
+
+// ── «Пламенная вера» (Мир-храм): шанс не потратить Очко ──────────────────────
+// Ловим ЛЮБОЕ уменьшение system.fate.value одним хуком, а не правим каждое из
+// мест списания (лист, hooks.mjs, Боль/Душа): так правило достанет и то место
+// траты, которое появится завтра. Счётная часть — rules/fate-save.mjs.
+//
+// Прежнее значение снимается в preUpdateActor: updateActor видит уже новое.
+Hooks.on("preUpdateActor", (doc, changes, options) => {
+  if (typeof changes.system?.fate?.value === "number") {
+    options.whFatePrev = doc.system.fate?.value ?? 0;
+  }
+});
+
+Hooks.on("updateActor", async (doc, changes, options, userId) => {
+  // Только у того клиента, кто сделал правку, иначе бросок случится у каждого.
+  if (game.user.id !== userId) return;
+  // Наш собственный возврат и осознанная цена способности («Вера в прошлое»)
+  // сюда не заходят: иначе зацикливание и бесплатные чудеса.
+  if (options?.whSkipFateSave) return;
+  if (typeof changes.system?.fate?.value !== "number") return;
+  const spent = fateSpent(options?.whFatePrev, changes.system.fate.value);
+  if (!spent || !hasRuleFlag(doc, FATE_SAVE_FLAG)) return;
+
+  const rolls = [];
+  for (let i = 0; i < spent; i++) {
+    rolls.push((await new Roll(FATE_SAVE_DIE).evaluate()).total);
+  }
+  const saved = fateSaved(rolls);
+  if (!saved) return;
+
+  await doc.update({ "system.fate.value": (doc.system.fate?.value ?? 0) + saved },
+    { whSkipFateSave: true });
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: doc }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">🔥 Пламенная вера — ${doc.name}</div>
+      <div class="roll-dice">${FATE_SAVE_DIE}: <b>${rolls.join(", ")}</b></div>
+      <div class="roll-outcome"><span class="roll-success">Очко ${fatePoolLabel(doc)} не потрачено${saved > 1 ? ` (×${saved})` : ""}</span></div>
+    </div>`
+  }, game.settings.get("core", "rollMode")));
 });
 
 Hooks.on("createItem", async (item, options, userId) => {

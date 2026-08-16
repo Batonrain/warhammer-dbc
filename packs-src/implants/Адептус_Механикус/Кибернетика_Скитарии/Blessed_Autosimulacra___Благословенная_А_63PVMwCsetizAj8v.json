@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Микро-дроны затягивают раны: Трейт Regeneration (1), не конфликтует с бионикой. Подавляет/замораживает лучевую болезнь от Рад Печи. Poor.Q: только при пропуске Хода; Good.Q: +20 T на регенерацию; Best.Q: Трейт до 2.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

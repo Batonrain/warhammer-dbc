@@ -8,6 +8,11 @@
 import { FEAR_RATINGS, SHOCK_TABLE, TRAUMA_TABLE, lookupTable } from "../constants/fear-tables.mjs";
 import { _degWord, esc }                               from "../helpers/utils.mjs";
 import { rollIcon }                                from "../constants/roll-icons.mjs";
+import { ruleFlagLabels }                          from "../rules/flags.mjs";
+import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
+
+/** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
+export const FAITH_FLAG = "fear.faithInThePast";
 
 /**
  * Тест Страха (1d100 + 10×Провалы−1 − Infamy → таблица Шока при провале).
@@ -45,9 +50,38 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     shockHtml += `<div class="roll-threshold" style="margin-top:4px;color:#9a0000;font-weight:bold;">5+ степеней провала — в конце сцены пройдите тест Ментальной Травмы (кнопка «Травма»).</div>`;
   }
 
+  // «Абсолютная вера в прошлое» (Мир-кладбище): при провале владелец может
+  // потратить Очко Судьбы/Бесчестья и считать тест пройденным с 1 успехом,
+  // получив 1 Порчи. Решение принимается ПОСЛЕ броска, поэтому это кнопка в
+  // карточке, а не галочка в диалоге. Один раз за столкновение — метку ставит
+  // обработчик в hooks.mjs, сбрасывает «Новая сцена» (apps/game-session.mjs).
+  const faithLabel = (!success && !isRuleUsageUsed(actor, FAITH_FLAG))
+    ? ruleFlagLabels(actor, FAITH_FLAG)[0] : null;
+  const faithCtx = faithLabel ? { actorId: actor.id, label: faithLabel } : null;
+
   const canReroll = !!properties.demon && !success && !opts.free;
   await _postFearMsg(actor, "Тест Страха", r.label, wp, ratingMod + mod, rv, eff, success, dof, shockHtml, allRolls,
-    properties, canReroll ? { ratingKey, type, infamy, mod } : null);
+    properties, canReroll ? { ratingKey, type, infamy, mod } : null, faithCtx);
+}
+
+/**
+ * Заводит след активной Травмы — предмет mentalTrauma, без дублей по тексту.
+ *
+ * Имя предмета обрезается: строка таблицы бывает в несколько предложений, а в
+ * списке нужна подпись. Полный текст лежит в описании.
+ */
+export async function createTraumaItem(actor, row) {
+  const text = String(row?.text ?? "").trim();
+  if (!text) return null;
+  if (actor.items.some(i => i.type === "mentalTrauma" && i.system?.description === text)) return null;
+  const label = text.length > 60 ? text.slice(0, 57) + "…" : text;
+  const [item] = await actor.createEmbeddedDocuments("Item", [{
+    name: label, type: "mentalTrauma",
+    // Всегда W+0: в таблице Травмы своего модификатора теста нет, в отличие
+    // от Расстройств.
+    system: { description: text, testChar: "wp", testMod: 0 }
+  }]);
+  return item;
 }
 
 /** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без Демона/переброса. */
@@ -66,6 +100,10 @@ export async function _executeTraumaRoll(actor) {
     traumaHtml = `<div class="roll-damage-section">
       <div class="roll-damage-label">Травма (${tRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""} = ${total}):</div>
       <div class="roll-threshold">${row?.text ?? "—"}</div></div>`;
+    // Провал оставляет постоянный след. Без него «Подавление Травмы» на
+    // вкладке Показатели не знало бы, что тестировать: раньше результат
+    // просто падал в чат и исчезал.
+    await createTraumaItem(actor, row);
   }
   await _postFearMsg(actor, "🧠 Ментальная Травма", "тест W+0", wp, 0, rv, wp, success, dof, traumaHtml, allRolls);
 }
@@ -75,7 +113,7 @@ export async function _executeTraumaRoll(actor) {
  * непройденном тесте с «Демон») добавляет кнопку и кладёт контекст в
  * flags.warhammer-dbc.fearTest — оттуда её читает обработчик в hooks.mjs.
  */
-export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls, properties = {}, rerollCtx = null) {
+export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls, properties = {}, rerollCtx = null, faithCtx = null) {
   const rollMode = game.settings.get("core", "rollMode");
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
@@ -89,6 +127,20 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
       <div class="roll-defense-title">Демон — доступен бесплатный переброс</div>
       <div class="roll-defense-btns">
         <button type="button" class="wh-fear-reroll-btn">🎲 Бесплатный переброс</button>
+      </div>
+    </div>` : "";
+  // Карточка в чате одна на всех, поэтому кнопку рисуем всем, а класс
+  // wh-owner-only прячет её у тех, кто не владеет актором (обработчик всё
+  // равно перепроверяет права). Неактивна, если тратить нечего.
+  const hasPoint = (Number(actor.system.fate?.value) || 0) > 0;
+  const faithHtml = faithCtx ? `
+    <div class="roll-defense-section roll-fear-faith wh-owner-only" data-actor-id="${actor.id}">
+      <div class="roll-defense-title">${faithCtx.label}</div>
+      <div class="roll-defense-btns">
+        <button type="button" class="wh-fear-faith-btn" ${hasPoint ? "" : "disabled"}
+                title="${hasPoint ? "Потратить Очко: тест пройден с 1 успехом, +1 Порчи" : "Нет Очков Судьбы/Бесчестья"}">
+          🕯️ Вера в прошлое
+        </button>
       </div>
     </div>` : "";
 
@@ -105,6 +157,7 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
           : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}</span>`}</div>
         ${extraHtml}
         ${rerollHtml}
+        ${faithHtml}
         <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
       </div>`,
     rolls: allRolls, sound: CONFIG.sounds.dice
@@ -113,6 +166,11 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
   if (rerollCtx) {
     messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
       "warhammer-dbc": { fearTest: { actorId: actor.id, properties, ...rerollCtx } }
+    });
+  }
+  if (faithCtx) {
+    messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
+      "warhammer-dbc": { faithInThePast: faithCtx }
     });
   }
   await ChatMessage.create(messageData);

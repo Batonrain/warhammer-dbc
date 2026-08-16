@@ -413,3 +413,13 @@
 }
 .wh-roll-result.sq-chat .sq-chat-afford { opacity: 1; border-color: #4dffa6; }
 .wh-roll-result.sq-chat .sq-chat-cost { font-weight: bold; color: #4dffa6; }
+
+/* Шапка: «Подразделение» и поле «Фракция» стоят одной колонкой — фракция
+   читается как уточнение к подразделению, а не как соседнее поле. */
+.warhammer-dbc .sq-head-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.warhammer-dbc .sq-head-col .wh-faction-field { margin-top: 0; }

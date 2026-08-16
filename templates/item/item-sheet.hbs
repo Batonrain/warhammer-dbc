@@ -14,6 +14,7 @@
   <a class="item {{#if (eq tab "info")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="info">ИНФО</a>
   <a class="item {{#if (eq tab "effects")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="effects">ЭФФЕКТЫ{{#if itemEffects.length}} <span class="effects-tab-count">{{itemEffects.length}}</span>{{/if}}</a>
   <a class="item {{#if (eq tab "mechanics")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="mechanics">МЕХАНИКА{{#if itemMechGroups.length}} <span class="effects-tab-count">{{itemMechGroups.length}}</span>{{/if}}</a>
+  {{#if (eq item.type "faction")}}<a class="item {{#if (eq tab "roster")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="roster">СОСТАВ</a>{{/if}}
   <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="item-primary" data-tab="notes">ЗАПИСИ</a>
 </nav>
 
@@ -200,6 +201,12 @@
       {{/unless}}
     </div>
   </div>
+
+  {{#if (eq item.type "faction")}}
+  <div class="tab {{#if (eq tab "roster")}}active{{/if}}" data-tab="roster" data-group="item-primary">
+    {{> "systems/warhammer-dbc/templates/item/parts/faction-roster.hbs"}}
+  </div>
+  {{/if}}
 
   <div class="tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="item-primary">
     <div class="item-section">

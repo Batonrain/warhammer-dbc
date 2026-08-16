@@ -18,6 +18,7 @@ import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 /** Экранирование пользовательского текста для вставки в HTML чата. */
 /** Степени успеха/провала по правилу системы: |порог − бросок| / 10 + 1. */
@@ -231,6 +232,8 @@ export class WarhammerSquadSheet
     const context = await super._prepareContext(options);
     context.actor = this.actor;
     context.tab = this.tabGroups?.primary ?? WarhammerSquadSheet.TABS.primary.initial;
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
     context.system  = sys;
     context.derived = sys.derived || {};
@@ -329,6 +332,9 @@ export class WarhammerSquadSheet
     super._onRender?.(context, options);
     const el = this.element;
     if (!el) return;
+
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(el, this.actor);
 
     // Дроп привязываем всегда, а не только на редактируемом листе: игрок без
     // прав на отряд приводит в него своего персонажа, запись идёт через ГМа.

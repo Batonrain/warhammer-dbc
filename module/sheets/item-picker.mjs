@@ -233,7 +233,8 @@ export async function openItemPicker(actor, kind) {
             const forced = talentCategory(actor, d.name, d.folder);
             const cat = forced === "ally" ? "ally" : aptitudeCat(charApts, d.system.aptitudes || []);
             const xp  = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
-              talentCategory(actor, d.name, d.folder));
+              talentCategory(actor, d.name, d.folder),
+              { name: d.name, patron: actor.system.patronGod });
             cost = `<span class="pick-cost cost-${cat}" title="${ALIGN_LABEL[cat]} — совпадений склонностей: ${(d.system.aptitudes||[]).filter(a=>charApts.has(a)).length}">${xp} XP</span>`;
           }
         }
@@ -324,7 +325,8 @@ export async function openItemPicker(actor, kind) {
             obj.system.cost           = pick.cost;
           } else {
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
-              talentCategory(actor, d.name, d.folder));
+              talentCategory(actor, d.name, d.folder),
+              { name: d.name, patron: actor.system.patronGod });
           }
           obj.system.purchased = true;
         }

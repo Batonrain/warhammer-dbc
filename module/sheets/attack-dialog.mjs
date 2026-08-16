@@ -22,7 +22,8 @@ import { _executeAttackRoll }                 from "../combat/attack.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
-import { hasRuleFlag }                        from "../rules/flags.mjs";
+import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
+import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { ruleRollModsHtml }                   from "../rules/roll-mods.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 
@@ -113,11 +114,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // ── Особые свойства оружия (+ модификации + боеприпас) ───────────────────
   const modFx       = getModEffects(actor, item);
-  const _entries    = mergeWeaponPropEntries(item, modFx);
+  let _entries      = mergeWeaponPropEntries(item, modFx);
   // Свойства заряженного боеприпаса (стр. 203) — чтобы порог и памятки в
   // диалоге совпадали с тем, что реально применит бросок.
   {
     const _ammo = sys.loadedAmmoId ? actor.items.get(sys.loadedAmmoId) : null;
+    // Боеприпас бывает и отнимает свойство (Инферно Тзинча гасит Tearing).
+    const _drop = new Set((_ammo?.system?.removeProps || []).map(k => String(k)));
+    if (_drop.size) _entries = _entries.filter(e => !_drop.has(e.key));
     for (const p of (_ammo?.system?.properties || [])) {
       const key = typeof p === "string" ? p : p.key;
       if (!key || _entries.some(x => x.key === key)) continue;
@@ -130,7 +134,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const wp           = aggregateAuto(wProps);
   // Качество: рукопашное даёт мод на тесты с оружием (Poor −10 / Good +5 / Best +10)
   const qTestMod     = isMelee ? (qualityEffects(item).auto.testMod || 0) : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod;
+  // Легион (стр. 179): своё оружие Астартес берут без штрафа, чужое — со
+  // штрафом, и наоборот — не-Астартес не сладит с легионным хватом.
+  const legionFit = legionAttackPenalty({
+    hasLegion:  _entries.some(e => e.key === "legion"),
+    fitsLegion: hasRuleFlag(actor, LEGION_FIT_FLAG),
+    size:       actor.system.size ?? 0,
+    sBonus:     actor.system.characteristics?.s?.bonus ?? 0,
+    isGrenade:  sys.weaponType === "grenade"
+  });
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total;
   const wantShortBox = !isMelee && (wp.meltaShort || wp.scatter);
   const wantMaximal  = !isMelee && wp.maximal;
 
@@ -202,8 +215,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { value: "joint",  label: "Сочленение/Шея",         penalty: -40, precise: true },
     { value: "eye",    label: "Глаз",                   penalty: -50, precise: true }
   ];
-  // Неточное / Взрывное (Imprecise): нельзя делать Избирательные попадания
-  if (wp.noCalledShot) aimTargets = [aimTargets[0]];
+  // Неточное / Взрывное (Imprecise): «не для прицельных атак в сочленения и
+  // глаза» — то есть закрыты ровно эти две цели, а по конечностям, торсу и
+  // голове бить прицельно можно.
+  if (wp.noCalledShot) aimTargets = aimTargets.filter(t => !t.precise);
   const aimHtml = aimTargets.map(t => {
     const pen = (t.precise && csMod) ? Math.min(0, t.penalty + csMod) : t.penalty;
     const lbl = t.value && !t.label.includes("(")
@@ -281,9 +296,22 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { label: "Цель лежит",    value: isMelee ?  20 : -20 },
     { label: "Цель бежит",    value: isMelee ?  20 : -20 },
     { label: "Цель Оглушена", value: 20 },
-    { label: "Цель Врасплох", value: 30 },
+    { label: "Цель Врасплох", value: 30, immuneFlag: "attack.surpriseImmune" },
     { label: "Скрытая атака", value: 30, note: "цель не знает" }
   ];
+  // Возможности ЦЕЛИ, гасящие модификатор атакующего (Мир смерти, «Паранойя
+  // Выжившего»: по нему не работает бонус за Неожиданность). Цель — тот же
+  // attackCtx.targetActor, что и у правил; нет цели — нечего гасить.
+  for (const m of commonMods) {
+    if (!m.immuneFlag || !attackCtx.targetActor) continue;
+    // Контекст не передаём: он описывает бросок АТАКУЮЩЕГО, а спрашиваем мы
+    // возможность цели — правило цели про чужое оружие ничего не знает.
+    const why = ruleFlagLabels(attackCtx.targetActor, m.immuneFlag);
+    if (!why.length) continue;
+    m.value  = 0;
+    m.immune = true;
+    m.note   = `${attackCtx.targetActor.name}: ${why[0]}`;
+  }
   const specificMods = isMelee ? [
     { label: "Трудный ландшафт",       value: -10 },
     { label: "Очень трудный ландшафт", value: -20 },
@@ -305,12 +333,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const makeMods = arr => arr.map(m => {
     const isAF      = m.autofail === true;
     const isChecked = m.autoCheck === true;
-    const dispVal   = isAF ? "провал" : (m.value >= 0 ? `+${m.value}` : `${m.value}`);
+    // Погашенный правилом цели модификатор не прячем: игрок должен видеть,
+    // ПОЧЕМУ бонуса нет, а не гадать, куда делся пункт списка.
+    const dispVal   = m.immune ? "иммунитет"
+                    : (isAF ? "провал" : (m.value >= 0 ? `+${m.value}` : `${m.value}`));
     const note      = m.note ? ` [${m.note}]` : "";
-    return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}">
+    return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}${m.immune ? " atk-mod-immune" : ""}">
       <input type="checkbox" class="atk-mod-cb"
              data-value="${isAF ? 0 : m.value}"
              ${isAF    ? 'data-autofail="true"' : ""}
+             ${m.immune ? "disabled" : ""}
              ${isChecked ? "checked" : ""}/>
       <span>${m.label} (${dispVal})${note}${isChecked ? " 😓" : ""}</span>
     </label>`;
@@ -381,11 +413,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const tip = esc(p.def.desc);
     return `<span class="atk-wprop-badge" title="${tip}">${p.def.label}${r}</span>`;
   }).join("");
-  const wpDialogHtml = wProps.length ? `
+  // Штраф Легиона уже сидит в пороге — здесь показываем, из чего он сложился.
+  const legionHtml = legionFit.parts.length ? `
+    <div class="atk-dlg-modifiers atk-legion-note">
+      <div class="atk-mods-title">${rollIcon("gear","#ffb84d")}Легион: ${legionFit.total} к тесту</div>
+      <div class="atk-wprops-list">${legionFit.parts
+        .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
+    </div>` : "";
+  const wpDialogHtml = (wProps.length ? `
     <div class="atk-dlg-modifiers">
       <div class="atk-mods-title">${rollIcon("gear","#8fd0ff")}Свойства оружия</div>
       <div class="atk-wprops-list">${wpDialogList}</div>
-    </div>` : "";
+    </div>` : "") + legionHtml;
   const shortRangeHtml = wantShortBox ? `
     <label class="attack-mod-check">
       <input type="checkbox" id="atk-shortrange" class="atk-mod-cb" data-value="${wp.scatter ? 10 : 0}"/>

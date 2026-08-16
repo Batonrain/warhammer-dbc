@@ -1,0 +1,37 @@
+{
+  "name": "Ордо Маллеус",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "bcyJ8PgZ6Way7XvC",
+  "system": {
+    "key": "ordo-malleus",
+    "parentKey": "inquisition",
+    "alsoIn": [],
+    "aliases": [
+      "Ordo Malleus"
+    ],
+    "isLore": true,
+    "description": "Орден Инквизиции, охотящийся на демонов и одержимых.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnOrdoMalleus0",
+  "effects": [],
+  "sort": 3300000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnOrdoMalleus0"
+}

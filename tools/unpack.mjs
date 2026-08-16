@@ -58,7 +58,10 @@ try {
       .map(f => JSON.parse(readFileSync(join(stage, f), "utf8")));
     const file = abs(`${SRC_ROOT}/books/${b.slug}.json`);
     const source = bookSource(JSON.parse(readFileSync(file, "utf8")), docs);
-    writeFileSync(file, JSON.stringify(source, null, 1), "utf8");
+    // Перевод строки в конце — как у extractPack (CLI пишет `JSON.stringify(...) + "\n"`,
+    // lib/package.mjs). Без него круговорот сборка → извлечение показывал правку в каждой
+    // книге, а тест ниже сверяет исходники именно с тем, что пишут инструменты.
+    writeFileSync(file, JSON.stringify(source, null, 1) + "\n", "utf8");
     const pages = source.entries.reduce((n, e) => n + e.pages.length, 0);
     console.log(`извлечена книга ${b.slug}: глав — ${source.entries.length}, разделов — ${pages}`);
     done++;

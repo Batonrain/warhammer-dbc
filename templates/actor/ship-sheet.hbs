@@ -15,6 +15,7 @@
       <label>Капитан <input type="text" name="system.captain" value="{{system.captain}}"/></label>
       <label>Происхождение <input type="text" name="system.origin" value="{{system.origin}}"/></label>
     </div>
+    {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
     {{!-- Сводка состояния: видна с любой вкладки, без перехода в «Обзор». --}}
     <div class="ship-status-strip">
       <span class="ship-stat hi {{#if derived.crippled}}crit{{/if}}" title="Прочность корпуса">

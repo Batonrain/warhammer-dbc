@@ -34,14 +34,13 @@ function actor({ skills = {}, groupSkills = {}, characteristics = {},
   return a;
 }
 
-/** Черты, таланты, органы и тема остаются на листе — сюда приходят колбэками. */
+/** Черты, таланты и тема остаются на листе — сюда приходят колбэками. */
 function sheetDeps() {
-  const calls = { traits: [], talents: [], astartes: 0, theme: 0 };
+  const calls = { traits: [], talents: [], theme: 0 };
   return {
     calls,
     createTraits: async (list, source) => { calls.traits.push({ list, source }); return (list || []).length; },
     applyStartingTalents: async (raw, source) => { calls.talents.push({ raw, source }); return (raw || []).length; },
-    grantAstartesImplants: async () => { calls.astartes++; return 3; },
     applyTheme: () => { calls.theme++; }
   };
 }
@@ -272,14 +271,13 @@ describe("применение создания", () => {
     expect(a.system.wounds).toMatchObject({ max: 13, value: 13 });
   });
 
-  it("Астартес: геносемя сохраняется, органы выдаёт лист", async () => {
+  it("Астартес: легион и культура сохраняются", async () => {
     const a = actor();
     const d = sheetDeps();
     await settle(applyCreation(a, { raceKey: "astartes", archKey: "sorcerer",
       geneSeed: { legion: "I", chapter: "vengeance",
                   cultureLegion: "I", cultureChapter: "vengeance" } }, d));
     expect(a.system.geneSeed.legion).toBe("I");
-    expect(d.calls.astartes).toBe(1);
     expect(a.system.isPsyker).toBe(true);                        // Чародей
     expect(d.calls.talents.at(-1).raw).toContain("Hatred (Fallen)");   // культура ордена
   });

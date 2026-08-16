@@ -35,6 +35,44 @@
            placeholder="напр. WS, BS, S… (для специализированных Талантов)"/>
   </div>
 
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label"
+           title="Талант, который берут несколько раз: Enemy (Враг) — уровни 1-3, и штраф считается за уровень.">
+      <input type="checkbox" name="system.hasRating" {{#if system.hasRating}}checked{{/if}}/>
+      Принимает уровень
+    </label>
+    {{#if system.hasRating}}
+    <label class="wr-label">Уровень</label>
+    <input type="number" name="system.rating" value="{{system.rating}}" class="wr-input-xs"/>
+    {{/if}}
+  </div>
+
+  {{!-- Цели: против кого действует талант (Ненависть, Связи, Враг, Репутация) --}}
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label"
+             title="Против кого талант работает. Правило срабатывает и на любую НИЖЕСТОЯЩУЮ фракцию: цель к Хаосу достаёт роту в его составе, но цель к роте не достаёт весь Хаос.">Цели</label>
+      <button type="button" class="talent-target-add">＋ цель…</button>
+    </div>
+    <div class="trait-fx-hint">
+      Поле для Талантов, работающих против кого-то: Hatred, Peer, Enemy, Good
+      Reputation. Целей может быть несколько и они разной природы — фракция,
+      тип существа (техника) или «Все!». Фракцию можно просто перетащить сюда
+      из Обозревателя компендиумов.
+    </div>
+    <div class="weapon-props-list talent-target-drop">
+      {{#each system.targets as |t i|}}
+      <div class="wprop-chip">
+        {{#if t.img}}<img src="{{t.img}}" class="grant-drop-img"/>{{/if}}
+        <span class="wprop-name">{{t.name}}</span>
+        <button type="button" class="wprop-remove talent-target-remove" data-index="{{i}}" title="Убрать цель">✕</button>
+      </div>
+      {{else}}
+      <span class="grant-drop-placeholder">Целей нет — перетащите Фракцию сюда или нажмите «＋ цель»</span>
+      {{/each}}
+    </div>
+  </div>
+
   {{!-- Склонности по характеристикам --}}
   <div class="weapon-props-section">
     <div class="weapon-props-head">

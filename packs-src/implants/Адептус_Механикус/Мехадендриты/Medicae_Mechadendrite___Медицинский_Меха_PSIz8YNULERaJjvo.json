@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "S 30, Дл. 3м, Rng 0-8. Удар 1d5+3 R, Flexible, Razor Sharp, Toxic(0). +10 к практическим Medicae и Interrogate (пытки). 6 инъекторов; инъекции как рукопашные атаки (всегда попадают по союзникам, можно Натиск на союзника). Полудействием вылечить Кровотечение или авто-успех фиксации/ампутации конечности.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

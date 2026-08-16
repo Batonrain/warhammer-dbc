@@ -1,0 +1,37 @@
+{
+  "name": "Империум",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "bcyJ8PgZ6Way7XvC",
+  "system": {
+    "key": "imperium",
+    "aliases": [
+      "Imperium"
+    ],
+    "isLore": true,
+    "description": "Владения Человечества под властью Терры: все его ведомства, флоты и армии.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга",
+    "parentKey": "",
+    "alsoIn": []
+  },
+  "_id": "FctnImperium0000",
+  "effects": [],
+  "sort": 100000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnImperium0000"
+}

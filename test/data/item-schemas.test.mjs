@@ -89,7 +89,7 @@ const TYPES = {
     pack: "implants",
     defaults: {
       description: "", notes: "", category: "mechanicus", quality: "common",
-      effect: "", installed: "", geneSeedOrder: 0, linkedWeapon: "", bookSource: "",
+      effect: "", installed: "", linkedWeapon: "", bookSource: "",
       effects: {
         charBonuses: [], charValueBonuses: [], armourAll: 0,
         apHead: 0, apBody: 0, apArms: 0, apLegs: 0,
@@ -234,6 +234,9 @@ const TYPES = {
       description: "", notes: "", benefit: "", bookSource: "", tier: 1,
       requirement: "", aptitudes: [], aptSource: "", aspirations: [], god: "",
       specialization: "", cost: 0, purchased: false, granted: false,
+      // Уровень (Enemy 1-3) и цели (Hatred/Peer/Enemy/Good Reputation) —
+      // добавлены вместе с деревом фракций, в template.json их не было.
+      hasRating: false, rating: 0, targets: [],
       effects: { initMod: 0, fearRating: 0, speedMod: 0 }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
@@ -308,6 +311,9 @@ const TYPES = {
       rarity: 0, quantity: 0, weight: 0, availability: 0, attackMod: 0,
       damageMod: 0, damageDiceMod: 0, damageTypeOverride: "", penetrationMod: 0,
       rangeMod: 0, rangeMultiplier: 1, special: "", properties: [], condMods: [],
+      // Свойства, которые боеприпас у оружия отнимает (Инферно Тзинча — Tearing):
+      // поля не было, и замена держалась на одном тексте «Особенностей».
+      removeProps: [],
       drukhari: false
     }
   },
@@ -478,6 +484,27 @@ const TYPES = {
       testSkillScope: "", testSkillKey: "", testSpecialty: "",
       testChar: "int", testMod: 0
     }
+  },
+
+  mentalTrauma: {
+    // Заводится провалом теста Травмы, в паках таких предметов нет.
+    pack: null,
+    defaults: { description: "", notes: "", testChar: "wp", testMod: 0 }
+  },
+
+  // ── Дерево принадлежностей ────────────────────────────────────────────────
+  // Тип заведён сразу схемой, в template.json его никогда не было, поэтому
+  // «умолчания прежнего template.json» здесь читаются как «умолчания, с
+  // которыми тип родился»: тест держит их от случайной смены ровно так же.
+  faction: {
+    pack: "factions",
+    defaults: {
+      // Поле называется parentKey, а не parent: имя `parent` у любого
+      // DataModel занято ссылкой на документ-владелец и схему им закрывало —
+      // см. шапку module/data/item/faction.mjs.
+      key: "", parentKey: "", alsoIn: [], aliases: [], isLore: false,
+      description: "", notes: "", bookSource: ""
+    }
   }
 };
 
@@ -517,4 +544,31 @@ describe("типы данных предметов", () => {
       });
     });
   }
+
+  // ── Разовые переезды ──────────────────────────────────────────────────────
+  describe("Фракция: parent → parentKey", () => {
+    const Faction = ITEM_DATA_MODELS.faction;
+
+    it("строковый ключ переезжает в новое поле", () => {
+      expect(new Faction({ parent: "chaos" }).parentKey).toBe("chaos");
+    });
+
+    // Прежнее имя поля закрывалось свойством DataModel, и первое же сохранение
+    // клало в него документ целиком. Последнее верное значение осталось внутри
+    // этого документа — оттуда его и достаём, иначе собранное вручную дерево
+    // развалилось бы при обновлении.
+    it("документ вместо ключа не теряет прежнее значение", () => {
+      const broken = { name: "Несущие Слово", system: { parent: "traitor-legions" } };
+      expect(new Faction({ parent: broken }).parentKey).toBe("traitor-legions");
+    });
+
+    it("мусор без прежнего значения гасится, а не остаётся объектом", () => {
+      expect(new Faction({ parent: { name: "Пусто" } }).parentKey).toBe("");
+      expect(new Faction({ parent: {} }).toObject().parent).toBeUndefined();
+    });
+
+    it("уже переехавшее поле переезд не трогает", () => {
+      expect(new Faction({ parent: "chaos", parentKey: "imperium" }).parentKey).toBe("imperium");
+    });
+  });
 });

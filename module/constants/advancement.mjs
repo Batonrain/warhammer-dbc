@@ -62,10 +62,35 @@ export function aptitudeCat(charApts, itemApts) {
 
 const clampIdx = (v, max) => Math.max(0, Math.min(max, (parseInt(v) || 0)));
 
+// ── Таланты с ценой из книги ────────────────────────────────────────────────
+// У некоторых Талантов книга называет цену прямо, и таблица склонностей к ним
+// не применяется: «Крепкое Телосложение — 100 ХР или 70 ХР при Покровительстве
+// Нургла». Считать его как обычный Талант 1 уровня (150/250/400) неверно в
+// любую сторону, поэтому такие цены перечислены здесь.
+export const FIXED_TALENT_COST = [
+  {
+    match:    /Sound Constitution|Крепкое Телосложение/i,
+    cost:     100,
+    byPatron: { nurgle: 70 }
+  }
+];
+
+/** Цена Таланта из книги или null, если у него обычная цена по склонностям. */
+export function fixedTalentCost(name, patron = "") {
+  const rule = FIXED_TALENT_COST.find(r => r.match.test(String(name ?? "")));
+  if (!rule) return null;
+  return rule.byPatron?.[String(patron || "")] ?? rule.cost;
+}
+
 // Культура легиона может объявить Навык или Талант дружественным/враждебным
 // «независимо от Покровительства» — это перебивает обычный подсчёт склонностей.
 // cultCat: "ally" | "enemy" | null (см. legions.mjs → cultureCat).
-export function talentCostXP(tier, itemApts, charApts, cultCat = null) {
+//
+// `opts` — имя Таланта и Покровитель персонажа: по ним берётся цена из книги,
+// если она у этого Таланта своя.
+export function talentCostXP(tier, itemApts, charApts, cultCat = null, opts = {}) {
+  const fixed = fixedTalentCost(opts.name, opts.patron);
+  if (fixed !== null) return fixed;
   const cat = cultCat || aptitudeCat(charApts, itemApts);
   return TALENT_COST[cat][clampIdx((parseInt(tier) || 1) - 1, 2)];
 }

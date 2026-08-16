@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Связывает разум животного с псайкером: животное подчинено (1-10), при манифестации видно его глазами; псайбер-матрица отмечена.",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

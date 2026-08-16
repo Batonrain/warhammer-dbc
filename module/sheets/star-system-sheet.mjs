@@ -1,3 +1,4 @@
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { BODY_TYPES, ZONES, STAR_CLASSES, STAR_CONFIGS, SYSTEM_FEATURES, BODY_SIZES, CLIMATE,
          HABITABILITY, ALLEGIANCE, XENOS_SPECIES, RESOURCE_TYPES, RESOURCE_ICONS, INHABITANTS,
          WORLD_CLASSES, WORLD_ENVIRONMENTS, TITHE_GRADES,
@@ -200,6 +201,8 @@ export class WarhammerStarSystemSheet
     const context = await super._prepareContext(options);
     context.actor = this.actor;
     context.tab = this.tabGroups?.primary ?? WarhammerStarSystemSheet.TABS.primary.initial;
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
     context.system  = sys;
     context.derived = sys.derived || {};
@@ -337,6 +340,8 @@ export class WarhammerStarSystemSheet
     super._onRender?.(context, options);
     const el = this.element;
     if (!el) return;
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(el, this.actor);
 
     // ПКМ по строке тела. Наблюдателю — только «открыть лист»: полное меню
     // правит документы, и до перевода на V2 оно так же гасилось isEditable.

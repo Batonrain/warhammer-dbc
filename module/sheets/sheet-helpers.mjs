@@ -9,7 +9,6 @@ import { WEAPON_CLASSES, DAMAGE_TYPES,
 import { MELEE_STANCES }                             from "../constants/combat.mjs";
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { isAeldariRace }                             from "../apps/race-library.mjs";
-import { GENE_SEED_ORGANS }                          from "../constants/gene-seed.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
 import { buildLegionOptions, getLegion,
          buildChapterOptions, getChapter,
@@ -588,6 +587,22 @@ export function buildGetData(actor) {
     };
   });
 
+  // ── Ментальные травмы ───────────────────────────────────────────────────────
+  // Форма записи та же, что у Расстройств, и тест им катает одна и та же
+  // функция: «Подавление Травмы» и «Подавление Расстройства» различаются
+  // только фильтром по типу предмета.
+  context.mentalTraumas = allItems.filter(i => i.type === "mentalTrauma").map(i => {
+    const abbr = CHARACTERISTICS[i.system.testChar]?.abbr ?? "W";
+    const mod  = i.system.testMod || 0;
+    return {
+      id: i.id, name: i.name,
+      desc: i.system.description || "",
+      testLabel: `${abbr}${mod >= 0 ? "+" : ""}${mod}`,
+      testCharKey: i.system.testChar || "wp",
+      testMod: mod
+    };
+  });
+
   // ── Болезни ─────────────────────────────────────────────────────────────────
   const DIS_GODS = { "": "", nurgle: "Нургл", tzeentch: "Тзинч", slaanesh: "Слаанеш", khorne: "Кхорн", other: "Иное" };
   const DIS_SEV  = { light: "Лёгкая", severe: "Тяжёлая", deadly: "Смертельная" };
@@ -631,7 +646,7 @@ export function buildGetData(actor) {
   }));
 
   // ── Импланты (Механикус/Бионика/Кибернетика) ────────────────────────────────
-  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", geneseed: "Геносемя" };
+  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант" };
   const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
   context.gearImplants = allItems.filter(i => i.type === "implant").map(i => ({
     id: i.id, name: i.name,
@@ -747,10 +762,13 @@ export function buildGetData(actor) {
 
   // Стремления (стр. 22): ЖЁСТКО фиксированные 3 слота, по одному на таблицу
   // (Гордыня/Позор/Мотивация) — раньше был свободный список до 3 из любой
-  // таблицы, но по месту решили закрепить по смыслу. system.aspirations
-  // остаётся МАССИВОМ (как и был), просто позиция теперь = категория:
+  // таблицы, но по месту решили закрепить по смыслу. Позиция = категория:
   // [0]=pride, [1]=disgrace, [2]=motivation.
-  const aspirRaw = Array.isArray(system.aspirations) ? system.aspirations : [];
+  //
+  // Лежат в system.aspirations.slots, а не в самом `aspirations`: то поле —
+  // объект (там же Фактор Прибыли), и записанный в него массив схема молча
+  // отбрасывала, то есть выбор не доживал до перерисовки листа.
+  const aspirRaw = Array.isArray(system.aspirations?.slots) ? system.aspirations.slots : [];
   context.aspirationSlots = ASPIRATION_TABLES.map((t, idx) => {
     const a = aspirRaw[idx];
     const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));
@@ -808,31 +826,6 @@ export function buildGetData(actor) {
     godLabel: i.system.god ? (GOD_LABEL[i.system.god] || i.system.god) : "",
     benefit:  i.system.benefit || i.system.description || ""
   }));
-
-  // ── Органы Геносемени (Астартес) ────────────────────────────────────────
-  // Каждый орган — отдельный предмет-имплант категории "geneseed". На вкладке
-  // ТЕЛО показываем их реестром в каноническом порядке. Состояние органа —
-  // ручной тумблер поверх флагов "installed"/"disabled":
-  //   off      — не вживлён: на карте тела нет, эффектов нет;
-  //   on       — вживлён: на карте тела есть, эффекты считаются;
-  //   disabled — не работает: на карте тела есть (орган на месте), но
-  //              эффекты не считаются (см. gate в actor.mjs).
-  context.geneSeedOrgans = allItems
-    .filter(i => i.type === "implant" && i.system.category === "geneseed")
-    .map(i => {
-      const inBody = !!i.getFlag?.("warhammer-dbc", "installed");
-      const state = !inBody ? "off" : (i.getFlag?.("warhammer-dbc", "disabled") ? "disabled" : "on");
-      return {
-        id:        i.id,
-        name:      i.name,
-        order:     Number(i.system.geneSeedOrder) || 99,
-        installed: i.system.installed || "",
-        inBody, state,
-        weapon:    i.system.linkedWeapon || "",
-        effect:    i.system.effect || i.system.description || ""
-      };
-    })
-    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ru"));
 
   context.abilityPsychicPowers = allItems.filter(i => i.type === "psychicPower").map(i => ({
     id:   i.id,
@@ -894,7 +887,6 @@ export function buildGetData(actor) {
 
   // ── Геносемя (для Астартес) ─────────────────────────────────────────────────
   context.isAstartes      = system.race === "astartes";
-  context.geneSeedOrgans  = GENE_SEED_ORGANS;
   context.geneSeedOrigin  = system.geneSeed?.origin || "";
   context.legionOptions   = buildLegionOptions(system.geneSeed?.legion || "");
   context.selectedLegion  = getLegion(system.geneSeed?.legion || "");

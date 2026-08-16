@@ -1,7 +1,7 @@
 import { IMPROVEMENT_BONUS, SKILL_RANKS } from "../constants/characteristics.mjs";
 import { HAEM_STAGES, isHaemonculus } from "../constants/haemonculus.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }   from "../constants/skills.mjs";
-import { _calcMaxCarry }                   from "../helpers/utils.mjs";
+import { carryRow }                        from "../helpers/utils.mjs";
 import { getArmorModEffects, armorModApForLocation, armorAgilityCap } from "../combat/armor-mods.mjs";
 import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
@@ -473,6 +473,26 @@ export class WarhammerActor extends Actor {
       char.total = (Number(char.base) || 0) + (Number(char.advance) || 0);
       char.bonus = Math.floor(char.total / 10);
     }
+    // Навыки: значение = характеристика навыка + надбавка ранга. Считается так
+    // же, как у существ, но без продвижений за опыт — у орды их нет.
+    for (const [key, sk] of Object.entries(system.skills || {})) {
+      const def     = SKILLS_DEF[key];
+      const charVal = def ? (system.characteristics?.[def.char]?.total ?? 0) : 0;
+      sk.total = charVal + (SKILL_RANKS[sk.rank]?.bonus ?? -20);
+    }
+
+    // Групповые навыки — те же правила, но характеристику может задавать сама
+    // запись (у Ремесла она своя у каждой специализации).
+    for (const [groupKey, entries] of Object.entries(system.groupSkills || {})) {
+      if (!Array.isArray(entries)) continue;
+      const def = GROUP_SKILLS_DEF[groupKey];
+      for (const entry of entries) {
+        const charKey = entry.char || def?.char;
+        const charVal = charKey ? (system.characteristics?.[charKey]?.total ?? 0) : 0;
+        entry.total = charVal + (SKILL_RANKS[entry.rank]?.bonus ?? -20);
+      }
+    }
+
     const mag   = system.magnitude || (system.magnitude = { value: 0, start: 0 });
     const value = Math.max(0, Number(mag.value) || 0);
     const start = Math.max(0, Number(mag.start) || 0);
@@ -499,9 +519,22 @@ export class WarhammerActor extends Actor {
     if (!immune && pct <= 0.25) state = "broken";        // Сломлена (рассыпается)
     else if (pct <= 0.50) state = "weakened";            // Ослаблена (−10 W)
 
+    // Броня Орды: все попадания идут в торс, поэтому считается AP тела, и не
+    // суммой, а по лучшему предмету — как у существ (несколько слоёв брони не
+    // складываются). Поле system.absorption мастер по-прежнему ставит руками:
+    // там сумма «броня + бонус Стойкости», как было до появления предметов.
+    let armourAP = 0;
+    for (const item of this.items ?? []) {
+      if (item.type !== "armor" || !item.system?.equipped) continue;
+      armourAP = Math.max(armourAP, Number(item.system.body) || 0);
+    }
+    const manualAbsorption = Math.max(0, Number(system.absorption) || 0);
+
     system.derived = {
       magSize,
       magSizeLabel: HORDE_SIZE_LABELS[magSize] || "",
+      armourAP,
+      absorptionTotal: manualAbsorption + armourAP,
       magDamageDice,
       magDamageStr: magDamageDice ? `+${magDamageDice}d10` : "—",
       meleeTargets,
@@ -651,6 +684,10 @@ export class WarhammerActor extends Actor {
     if (this.type === "formation") { this._prepareFormationData(system); return; }
 
     const chars  = system.characteristics;
+
+    // Астартес бывают только мужчинами — Телосложение у них принудительно
+    // мужское (блок выбора на вкладке «Записи» для этой расы скрыт).
+    if (this.type === "character" && system.race === "astartes") system.bodyType = "male";
 
     // Защита: списки должны быть массивами (могли стать объектом из-за старого бага ввода)
     if (system.aptitudes && !Array.isArray(system.aptitudes)) {
@@ -1114,23 +1151,22 @@ export class WarhammerActor extends Actor {
     // Феодальный мир, «Житие тяжкое»: +1 к S.b именно для грузоподъёмности.
     const hwCarry = HOMEWORLD_BY_KEY[this.items.find(i => i.type === "homeworld")?.system?.key]?.carryBonus || 0;
     // ── Ношение/Подъём/Толкание (стр. 27) ───────────────────────────────────
-    // Таблица _calcMaxCarry(idx) даёт Ношение; Подъём и Толкание — та же
-    // таблица со сдвигом индекса на +1/+2 строки (подтверждено построчным
-    // сравнением с таблицей книги: Ношение(idx+1) === Подъём(idx), и т.д.).
-    // indexBonus.all сдвигает БАЗОВЫЙ индекс — значит одинаково влияет на все
-    // три (за счёт того, что Подъём/Толкание уже определены через тот же
-    // базовый индекс), тогда как indexBonus.carry/.lift/.push бьёт только по
-    // своей категории поверх базы — так Конструктор («Механика», запись
-    // kind:"weight") реализует и «Общее», и точечные категории одним
-    // механизмом. indexBonus.* — обычные ХРАНИМЫЕ поля (см. template.json),
-    // безопасные целью для ActiveEffect в фазе "initial" (СТАВИТСЯ ДО этого
-    // расчёта, не после — в отличие от .carry/.lift/.push/.max, которые сами
-    // производные и берут "final").
+    // Все три числа берутся из ОДНОЙ строки таблицы Максимального Веса
+    // (helpers/utils.mjs, carryRow): у книги это три отдельных столбца, и
+    // прежний вывод Подъёма/Толкания сдвигом строки на +1/+2 совпадал с ней
+    // только у слабых персонажей.
+    // indexBonus.all сдвигает БАЗОВЫЙ индекс — значит влияет на все три сразу,
+    // тогда как indexBonus.carry/.lift/.push бьёт только по своей категории
+    // поверх базы: так Конструктор («Механика», запись kind:"weight")
+    // реализует и «Общее», и точечные категории одним механизмом.
+    // indexBonus.* — обычные ХРАНИМЫЕ поля, безопасные целью для ActiveEffect
+    // в фазе "initial" (СТАВИТСЯ ДО этого расчёта, не после — в отличие от
+    // .carry/.lift/.push/.max, которые сами производные и берут "final").
     const ib = system.encumbrance.indexBonus || {};
     const baseIdx = sb + tb + hwCarry + (ib.all || 0);
-    system.encumbrance.carry = _calcMaxCarry(baseIdx + (ib.carry || 0));
-    system.encumbrance.lift  = _calcMaxCarry(baseIdx + 1 + (ib.lift || 0));
-    system.encumbrance.push  = _calcMaxCarry(baseIdx + 2 + (ib.push || 0));
+    system.encumbrance.carry = carryRow(baseIdx + (ib.carry || 0)).carry;
+    system.encumbrance.lift  = carryRow(baseIdx + (ib.lift  || 0)).lift;
+    system.encumbrance.push  = carryRow(baseIdx + (ib.push  || 0)).push;
     system.encumbrance.max = system.encumbrance.carry;
     system.homeworldCarryBonus = hwCarry;
 

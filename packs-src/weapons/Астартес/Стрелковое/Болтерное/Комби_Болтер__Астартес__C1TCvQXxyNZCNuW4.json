@@ -21,7 +21,7 @@
     "magazineMax": 24,
     "rof_single": 1,
     "rof_semi": 3,
-    "rof_full": 6,
+    "rof_full": 0,
     "damage": "1d10+9",
     "damageType": "blast",
     "penetration": 4,

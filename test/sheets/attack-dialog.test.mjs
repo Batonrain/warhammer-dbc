@@ -178,12 +178,20 @@ describe("избирательные попадания", () => {
     expect(captured.dialog.content).toContain("Голова (−20)");           // не Точное — как в книге
   });
 
-  it("Неточное оружие вовсе не даёт целиться в часть тела", () => {
+  // «Не для прицельных атак в сочленения и глаза» — закрыты ровно эти две цели.
+  // Раньше Неточное убирало из списка все Избирательные разом, включая руки,
+  // ноги и голову, которых запрет не касается.
+  it("Неточное закрывает сочленения и глаза, но не конечности", () => {
     const weapon = weaponFor({ weaponProps: [{ key: "imprecise" }] });
     showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const html = captured.dialog.content;
 
-    expect(captured.dialog.content).toContain("— Без прицела —");
-    expect(captured.dialog.content).not.toContain("Голова");
+    expect(html).toContain("— Без прицела —");
+    expect(html).toContain("Нога (−15)");
+    expect(html).toContain("Рука (−20)");
+    expect(html).toContain("Голова (−20)");
+    expect(html).not.toContain("Сочленение");
+    expect(html).not.toContain("Глаз");
   });
 });
 

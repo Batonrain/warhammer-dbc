@@ -9,13 +9,18 @@
       <input class="actor-name" name="name" type="text" value="{{actor.name}}" placeholder="Название отряда"/>
     </div>
     <div class="header-grid">
-      <div class="header-cell">
-        <label>Подразделение</label>
-        <input type="text" name="system.designation" value="{{system.designation}}" placeholder="Полк / рота / банда"/>
+      {{!-- Подразделение и принадлежность — одна колонка: фракция читается
+            как уточнение к подразделению, а не как соседнее поле. --}}
+      <div class="sq-head-col">
+        <div class="header-cell">
+          <label>Подразделение</label>
+          <input type="text" name="system.designation" value="{{system.designation}}" placeholder="Полк / рота / банда"/>
+        </div>
+        {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
       </div>
       <div class="header-cell">
-        <label>Фракция</label>
-        <input type="text" name="system.faction" value="{{system.faction}}" placeholder="Кому служит"/>
+        <label>Кому служит</label>
+        <input type="text" name="system.faction" value="{{system.faction}}" placeholder="свободной строкой"/>
       </div>
 
       {{!-- Слаженность — главный ресурс отряда, справа как Судьба у персонажа --}}

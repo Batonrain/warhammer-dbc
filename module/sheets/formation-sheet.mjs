@@ -23,6 +23,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
+import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
 /** Степени успеха/провала: |порог − бросок| / 10 + 1. */
 const degrees = (threshold, roll) => Math.floor(Math.abs(threshold - roll) / 10) + 1;
@@ -243,6 +244,8 @@ export class WarhammerFormationSheet
     const context = await super._prepareContext(options);
     context.actor = this.actor;
     context.tab = this.tabGroups?.primary ?? WarhammerFormationSheet.TABS.primary.initial;
+    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
+    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
     context.system  = sys;
     context.derived = sys.derived || {};
@@ -426,6 +429,8 @@ export class WarhammerFormationSheet
     super._onRender?.(context, options);
     const el = this.element;
     if (!el) return;
+    // Поле «Фракция» в шапке — общее для всех листов.
+    activateFactionFieldListeners(el, this.actor);
 
     // Дроп привязываем всегда, а не только на редактируемом листе: игрок без
     // прав на формирование придаёт ему своего героя, запись идёт через ГМа.

@@ -21,6 +21,7 @@
 //  Деревья кэшируются на сессию (_treeCache) — компендиумы меняются редко;
 //  кнопка «↻ Обновить» в шапке диалога форсирует пересборку.
 // ════════════════════════════════════════════════════════════════════════
+import { matchesFilters, normalizePick } from "./compendium-filters.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const TAB_DEFS = [
@@ -67,6 +68,7 @@ export const CATEGORIES = [
   { label: "Болезни",                 sources: [{ pack: "diseases" }] },
   { label: "Родные миры",             sources: [{ pack: "homeworlds" }] },
   { label: "Предсказания",            sources: [{ pack: "divinations" }] },
+  { label: "Фракции",                 sources: [{ pack: "factions" }] },
   { label: "Корабельные узлы",        sources: [{ pack: "ship-components" }], tabs: ["voidcraft"] },
   { label: "Малые суда",              sources: [{ pack: "small-craft" }], tabs: ["voidcraft"] },
   { label: "Таланты — Книга Пустоты", sources: [{ pack: "talents", onlyFolder: "Книга Пустоты" }],
@@ -110,6 +112,13 @@ async function buildPackTree(pack) {
       folders: subFolders.map(f => ({ id: f.id, name: f.name, ...build(f.id) })),
       items: items.map(it => ({
         id: it._id, name: it.name, img: it.img, uuid: `Compendium.${pack.collection}.${it._id}`,
+        // type приходит в индексе компендиума сам, просить его полем не нужно;
+        // по нему работает фильтр «тип предмета» режима выбора.
+        type: it.type,
+        // Род документа пака: «Item» или «Actor». Перетаскивание наружу шлёт
+        // его в payload — Foundry по нему решает, что класть на сцену и в
+        // боковую панель, и с чужим родом дроп молча ничего не делает.
+        doc: pack.metadata?.type || "Item",
         folderId, armorType: it.system?.armorType,
         availability: it.system?.availability, properties: it.system?.properties || []
       }))
@@ -174,17 +183,38 @@ function findFolderByName(node, name) {
 
 let _treeCache = null;
 
+/**
+ * Паки, объявленные в system.json, но не упомянутые ни в одной категории.
+ *
+ * CATEGORIES — это кураторская раскладка: слитые источники, вырезки папок,
+ * привязка к вкладкам. Вывести её из манифеста нельзя, там этого нет. Зато
+ * можно не дать новому паку пропасть молча: он показывается отдельной
+ * категорией с меткой из манифеста, пока ему не назначили место руками.
+ *
+ * Книги (JournalEntry) сюда не попадают: обозреватель показывает предметы и
+ * акторов, а книги читаются своим окном.
+ */
+function orphanCategories() {
+  const known = new Set(CATEGORIES.flatMap(c => c.sources.map(s => s.pack)));
+  return (game.packs?.contents ?? [])
+    .filter(p => p.metadata?.packageName === "warhammer-dbc"
+      && p.metadata?.type !== "JournalEntry"
+      && !known.has(p.metadata?.name))
+    .map(p => ({ label: p.metadata.label || p.metadata.name, sources: [{ pack: p.metadata.name }] }));
+}
+
 async function buildAllTrees(force = false) {
   if (_treeCache && !force) return _treeCache;
+  const categories = [...CATEGORIES, ...orphanCategories()];
   // Полное дерево каждого упомянутого пака строится один раз и переиспользуется
   // всеми категориями/вырезками, которые на него ссылаются.
-  const packIds = [...new Set(CATEGORIES.flatMap(c => c.sources.map(s => s.pack)))];
+  const packIds = [...new Set(categories.flatMap(c => c.sources.map(s => s.pack)))];
   const packTrees = {};
   await Promise.all(packIds.map(async id => {
     const pack = game.packs.get(`warhammer-dbc.${id}`);
     packTrees[id] = pack ? await buildPackTree(pack) : { folders: [], items: [] };
   }));
-  const result = CATEGORIES.map(cat => {
+  const result = categories.map(cat => {
     const parts = cat.sources.map(src => {
       const full = packTrees[src.pack] || { folders: [], items: [] };
       return src.onlyFolder ? (findFolderByName(full, src.onlyFolder) || { folders: [], items: [] }) : full;
@@ -219,7 +249,7 @@ function pruneTree(node, pred) {
 
 function renderItemsHtml(items) {
   return items.map(it => `
-    <div class="cbrowse-item" data-uuid="${esc(it.uuid)}" data-name="${esc(it.name.toLowerCase())}">
+    <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}">
       <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
       <span class="cbrowse-item-name">${esc(it.name)}</span>
     </div>`).join("");
@@ -239,41 +269,53 @@ function renderNodeHtml(node) {
 }
 
 /**
- * @param {boolean} force        Пересобрать кэш деревьев.
- * @param {{pack:string, weaponFolderId?:string, weaponProp?:string, armorType?:string,
- *   maxAvailability?:number}|null} pickMode
- *   Если задан — окно сужается до ОДНОЙ категории (по packId, см. GRANTABLE_CATEGORIES),
- *   доп. фильтрует её предметы, клик по предмету не открывает лист, а РАЗРЕШАЕТ
- *   промис его uuid (закрытие/Отмена → null). Используется kind:"equipment" режима
- *   «Выбор» в Конструкторе (module/apps/mechanics.mjs) — тот же приём Promise+close-
- *   guard, что у showSpecChoiceDialog/showMechChoiceDialog там же.
- * @returns {Promise<string|null|undefined>} uuid выбранного предмета (pickMode) —
- *   иначе undefined (обычный просмотр, ничего выбирать не нужно).
+ * @param {boolean} force  Пересобрать кэш деревьев.
+ * @param {object|null} pickMode  Режим выбора. Поля:
+ *   pack     — сузить окно до ОДНОЙ категории по id пака (как раньше);
+ *   filters  — условия отбора, см. ITEM_FILTERS: {type, folderId, weaponProp,
+ *              armorType, maxAvailability}. Без `pack` фильтры применяются ко
+ *              всем категориям сразу — так «покажи только Фракции» работает
+ *              и без привязки к конкретному паку;
+ *   count    — сколько предметов требуется выбрать (по умолчанию 1);
+ *   prompt   — что именно требуется от игрока («Выберите 3 ордена»).
+ *
+ *   Понимается и прежняя плоская форма (weaponFolderId/weaponProp/armorType/
+ *   maxAvailability) — её шлёт kind:"equipment" Конструктора.
+ *
+ *   Неподходящие предметы не показываются вовсе: дерево обрезается по фильтрам
+ *   до отрисовки, поэтому выбрать не подходящее под условие нельзя в принципе.
+ *
+ * @returns {Promise<string|string[]|null|undefined>}
+ *   count = 1 — uuid выбранного (или null: отмена/закрытие), как было раньше;
+ *   count > 1 — массив uuid длиной count (или null);
+ *   без pickMode — undefined, обычный просмотр.
  */
 export function openCompendiumBrowser(force = false, pickMode = null) {
   return new Promise(async resolveFn => {
     let resolved = false;
     const finish = v => { if (!resolved) { resolved = true; resolveFn(v); } };
 
+    const pick = normalizePick(pickMode);
     const allCats = await buildAllTrees(force);
     let cats = allCats;
     let pickSuffix = "";
-    if (pickMode) {
-      const cat = allCats.find(c => c.packId === pickMode.pack);
-      if (!cat) { finish(null); return; }
-      const pred = it => {
-        if (pickMode.weaponFolderId && it.folderId !== pickMode.weaponFolderId) return false;
-        if (pickMode.weaponProp && !(it.properties || []).some(p => p?.key === pickMode.weaponProp)) return false;
-        if (pickMode.armorType && it.armorType !== pickMode.armorType) return false;
-        if (pickMode.maxAvailability != null && Number(it.availability ?? 0) > Number(pickMode.maxAvailability)) return false;
-        return true;
-      };
-      const tree = pruneTree(cat.tree, pred);
-      cats = [{ ...cat, tree, count: countNode(tree) }];
-      pickSuffix = ` — ${cat.label}`;
+    if (pick) {
+      const pred = it => matchesFilters(it, pick.filters);
+      // Пак задан — сужаем до его категории; не задан — фильтруем все и
+      // оставляем те, где после отбора что-то осталось.
+      const source = pick.pack ? allCats.filter(c => c.packId === pick.pack) : allCats;
+      cats = source
+        .map(c => { const tree = pruneTree(c.tree, pred); return { ...c, tree, count: countNode(tree) }; })
+        .filter(c => c.count > 0);
+      if (!cats.length) {
+        ui.notifications.warn("Под заданные условия не подошёл ни один предмет компендиумов.");
+        finish(null);
+        return;
+      }
+      pickSuffix = cats.length === 1 ? ` — ${cats[0].label}` : "";
     }
 
-    const tabsHtml = pickMode ? "" : TAB_DEFS
+    const tabsHtml = pick ? "" : TAB_DEFS
       .filter(t => t.key === "all" || allCats.some(c => c.tabs.includes(t.key)))
       .map(t => `<button type="button" class="cbrowse-tab${t.key === "all" ? " active" : ""}" data-tab="${t.key}">${esc(t.label)}</button>`)
       .join("");
@@ -287,30 +329,82 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
         <div class="pick-group-body">${renderNodeHtml(c.tree)}</div>
       </div>`).join("");
 
+    // Шапка требования: что нужно выбрать и сколько уже выбрано. Показывается
+    // только когда есть что сказать — при обычном выборе одного предмета без
+    // пояснения она лишняя.
+    const multi = !!pick && pick.count > 1;
+    const headHtml = (pick && (pick.prompt || multi)) ? `
+      <div class="cbrowse-pick-head">
+        ${pick.prompt ? `<div class="cbrowse-pick-prompt">${esc(pick.prompt)}</div>` : ""}
+        ${multi ? `<div class="cbrowse-pick-state">
+          <span>Выбрано <span class="cbrowse-pick-n">0</span> из ${pick.count}</span>
+          <button type="button" class="cbrowse-pick-confirm" disabled>Готово</button>
+        </div>` : ""}
+      </div>` : "";
+
     const dlg = new Dialog({
-      title: pickMode ? `📚 Выбор предмета${pickSuffix}` : "📚 Обозреватель компендиумов",
+      title: pick ? `📚 Выбор предмета${pickSuffix}` : "📚 Обозреватель компендиумов",
       content: `<div class="wh-item-picker cbrowse">
         <div class="pick-top">
           <input type="text" class="pick-search" placeholder="Поиск…"/>
-          ${pickMode ? "" : `<button type="button" class="cbrowse-refresh" title="Пересобрать (если что-то поменялось в компендиумах)">↻</button>`}
+          ${pick ? "" : `<button type="button" class="cbrowse-refresh" title="Пересобрать (если что-то поменялось в компендиумах)">↻</button>`}
         </div>
-        ${pickMode ? "" : `<div class="cbrowse-tabs">${tabsHtml}</div>`}
+        ${pick ? "" : `<div class="cbrowse-tabs">${tabsHtml}</div>`}
+        ${headHtml}
         <div class="pick-list">${body || "<em>Ничего не найдено под заданные фильтры.</em>"}</div>
       </div>`,
-      buttons: pickMode ? { cancel: { label: "Отмена", callback: () => finish(null) } } : { close: { label: "Закрыть" } },
-      default: pickMode ? "cancel" : "close",
+      buttons: pick ? { cancel: { label: "Отмена", callback: () => finish(null) } } : { close: { label: "Закрыть" } },
+      default: pick ? "cancel" : "close",
       close: () => finish(null),
       render: html => {
         let activeTab = "all";
+        // Выбранное при count > 1. Порядок сохраняется: он же порядок выдачи.
+        const chosen = [];
+        const syncPickState = () => {
+          html.find(".cbrowse-item").each((_, el) =>
+            el.classList.toggle("cbrowse-picked", chosen.includes(el.dataset.uuid)));
+          html.find(".cbrowse-pick-n").text(chosen.length);
+          html.find(".cbrowse-pick-confirm").prop("disabled", chosen.length !== pick.count);
+        };
 
         html.find(".cbrowse-item").on("click", async ev => {
           const uuid = ev.currentTarget.dataset.uuid;
-          if (pickMode) { finish(uuid); dlg.close(); return; }
+          if (pick && !multi) { finish(uuid); dlg.close(); return; }
+          if (multi) {
+            const at = chosen.indexOf(uuid);
+            if (at >= 0) chosen.splice(at, 1);
+            else if (chosen.length >= pick.count)
+              return ui.notifications.warn(`Уже выбрано ${pick.count} — снимите лишнее, чтобы выбрать другое.`);
+            else chosen.push(uuid);
+            return syncPickState();
+          }
           const doc = await fromUuid(uuid).catch(() => null);
           if (!doc) return ui.notifications.warn("Предмет не найден (возможно, компендиум изменился — нажмите ↻).");
           doc.sheet?.render(true);
         });
-        if (!pickMode) {
+
+        html.find(".cbrowse-pick-confirm").on("click", ev => {
+          ev.preventDefault();
+          if (chosen.length !== pick.count) return;
+          finish(chosen.slice());
+          dlg.close();
+        });
+        // Драг-н-дроп наружу — на лист актора (в инвентарь) или на дроп-зоны
+        // вкладки МЕХАНИКА листа предмета (Черта/Талант/Свойство оружия).
+        // Тот же payload-формат, что Foundry ждёт нативно (type:"Item", uuid) —
+        // см. actor-sheet.mjs:2950-2961, тот же приём для драга из инвентаря.
+        html.find(".cbrowse-item").each((_, el) => {
+          el.addEventListener("dragstart", ev => {
+            ev.stopPropagation();
+            // Род документа берём из самой записи: пак бывает и с акторами, а
+            // с жёстким «Item» дроп актора на сцену и в боковую панель молча
+            // ничего не делал.
+            ev.dataTransfer.setData("text/plain",
+              JSON.stringify({ type: el.dataset.doc || "Item", uuid: el.dataset.uuid }));
+            ev.dataTransfer.effectAllowed = "copy";
+          });
+        });
+        if (!pick) {
           html.find(".cbrowse-refresh").on("click", async ev => {
             ev.preventDefault();
             dlg.close();
@@ -341,13 +435,13 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
           });
           html.find(".pick-group").each((_, el) => {
             const tabs = (el.dataset.tabs || "").split(" ").filter(Boolean);
-            const inTab = pickMode ? true : (activeTab === "all" ? el.dataset.allTab !== "false" : tabs.includes(activeTab));
+            const inTab = pick ? true : (activeTab === "all" ? el.dataset.allTab !== "false" : tabs.includes(activeTab));
             if (!inTab) { el.style.display = "none"; return; }
             const hits = [...el.querySelectorAll(".cbrowse-item")].filter(i => !i.classList.contains("pick-hidden")).length;
             el.style.display = hits ? "" : "none";
-            el.classList.toggle("pick-collapsed", pickMode ? false : !q);
+            el.classList.toggle("pick-collapsed", pick ? false : !q);
             const caret = el.querySelector(":scope > .pick-group-head .pick-caret");
-            if (caret) caret.textContent = (pickMode || q) ? "▾" : "▸";
+            if (caret) caret.textContent = (pick || q) ? "▾" : "▸";
           });
           html.find(".cbrowse-folder").each((_, el) => {
             const hits = [...el.querySelectorAll(".cbrowse-item")].filter(i => !i.classList.contains("pick-hidden")).length;

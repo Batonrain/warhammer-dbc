@@ -1,0 +1,37 @@
+{
+  "name": "Адепта Сороритас",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "bcyJ8PgZ6Way7XvC",
+  "system": {
+    "key": "adepta-sororitas",
+    "aliases": [
+      "Adepta Sororitas"
+    ],
+    "isLore": true,
+    "description": "Сёстры Битвы — воинствующая длань Экклезиархии.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга",
+    "parentKey": "imperium",
+    "alsoIn": []
+  },
+  "_id": "FctnAdeptaSoro00",
+  "effects": [],
+  "sort": 700000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnAdeptaSoro00"
+}

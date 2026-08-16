@@ -79,4 +79,12 @@ export function registerHandlebarsHelpers() {
     const v = parseInt(n) || 0;
     return v >= 0 ? `+${v}` : `${v}`;
   });
+
+  // Список строк в одну строку через разделитель: поле-список схемы
+  // (system.aliases у Фракции) правится одним полем ввода, а обратно в
+  // массив его разбирает обработчик листа.
+  Handlebars.registerHelper("join", function(list, sep) {
+    const s = typeof sep === "string" ? sep : ", ";
+    return Array.isArray(list) ? list.join(s) : "";
+  });
 }

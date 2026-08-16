@@ -1,0 +1,37 @@
+{
+  "name": "Адептус Арбитрес",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "bcyJ8PgZ6Way7XvC",
+  "system": {
+    "key": "adeptus-arbites",
+    "aliases": [
+      "Adeptus Arbites"
+    ],
+    "isLore": true,
+    "description": "Блюстители Имперского Закона, судьи и каратели мятежа.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга",
+    "parentKey": "imperium",
+    "alsoIn": []
+  },
+  "_id": "FctnAdeptusArbi0",
+  "effects": [],
+  "sort": 300000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnAdeptusArbi0"
+}

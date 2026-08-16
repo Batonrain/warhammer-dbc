@@ -20,7 +20,7 @@ export class TalentData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
+    const { StringField, BooleanField, NumberField, ObjectField, ArrayField, SchemaField } = foundry.data.fields;
     return {
       description:    new StringField({ initial: "", label: "Описание" }),
       notes:          new StringField({ initial: "", label: "Заметки" }),
@@ -34,6 +34,33 @@ export class TalentData extends foundry.abstract.TypeDataModel {
       aspirations:    new ArrayField(new StringField(), { label: "Устремления" }),
       god:            new StringField({ initial: "", label: "Бог" }),
       specialization: new StringField({ initial: "", label: "Специализация" }),
+      // Уровень таланта, который берут несколько раз: Enemy (Враг) — 1-3, и
+      // штраф считается за уровень. Пара hasRating/rating повторяет Черту
+      // (data/item/trait.mjs): признак отдельно от значения, чтобы лист не
+      // показывал поле там, где рейтинга не бывает.
+      hasRating: new BooleanField({ initial: false, label: "Принимает уровень" }),
+      rating:    new NumberField({ initial: 0, integer: true, nullable: false, label: "Уровень" }),
+      // Против кого действует талант: Hatred, Peer, Enemy, Good Reputation.
+      // Список, а не одна ссылка, потому что книга требует именно списка —
+      // «Hatred (Dark Mechanicum, Adeptus Mechanicus, Vehicles)» это ОДИН
+      // талант с тремя целями, и цели разной природы.
+      //
+      //   kind:"faction"   — фракция и всё, что ниже неё в дереве (ref = ключ
+      //                      фракции, см. data/item/faction.mjs);
+      //   kind:"actorType" — тип актора (value = "vehicle" и т.п.): техника
+      //                      фракцией не является и деревом не описывается;
+      //   kind:"all"       — «Все!», вариант Hatred без разбора.
+      //
+      // name/img — подпись и значок на момент выбора: лист показывает их, не
+      // загружая предмет фракции. Тот же приём, что у драг-н-дропа в
+      // Конструкторе (apps/mechanics.mjs, sourceName/sourceImg).
+      targets: new ArrayField(new SchemaField({
+        kind:  new StringField({ initial: "faction", label: "Вид цели" }),
+        ref:   new StringField({ initial: "", label: "Ключ фракции" }),
+        value: new StringField({ initial: "", label: "Тип актора" }),
+        name:  new StringField({ initial: "", label: "Подпись" }),
+        img:   new StringField({ initial: "", label: "Значок" })
+      }), { label: "Цели" }),
       cost:           new NumberField({ initial: 0, integer: true, nullable: false, label: "Цена в опыте" }),
       purchased:      new BooleanField({ initial: false, label: "Куплен" }),
       granted:        new BooleanField({ initial: false, label: "Выдан генерацией" }),

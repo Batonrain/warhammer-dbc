@@ -1,0 +1,90 @@
+{
+  "name": "Подрывной Жилет (подрыв)",
+  "type": "weapon",
+  "folder": "LAGXh4UW064d3EbF",
+  "system": {
+    "description": "Подрыв жилета смертника (Книга Хаоса, Культист Демагог — Исповедник).",
+    "notes": "",
+    "weaponClass": "thrown",
+    "weaponType": "explosive",
+    "range": 0,
+    "balance": 0,
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 1,
+    "magazineMax": 1,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "3d10+6",
+    "damageType": "blast",
+    "penetration": 6,
+    "quality": "common",
+    "availability": 2,
+    "weight": 3,
+    "attackBonus": 0,
+    "special": "Активируется на себе свободным действием. Бросить или установить на цель нельзя — жилет взрывается там, где стоит носитель.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": 6
+      },
+      {
+        "key": "tearing"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    },
+    "rangeBands": []
+  },
+  "_id": "yLZuW0aJoggRk4yu",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785255155964,
+    "modifiedTime": 1785255155964,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!yLZuW0aJoggRk4yu"
+}

@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Костяной нарост с симбионтом: при атаке по носителю со спины/фланга Горб тратит 1 свою Реакцию и бьёт костяным щупальцем (WS 50, S 50, Трейты Deadly Natural Weapons(3, Щупальце), Unnatural S(2)). Дефект (до Best.Q): −15 A.\nPoor.Q: WS 40, S 30, без Unnatural S; −20 A; атакует всех, кто быстро приближается к спине.\nGood.Q: атака горба Tearing; −10 A.\nBest.Q: дефект устранён + 1 эффект (R +1 за каждый доп.): 1) Двойной удар (вторая Реакция, можно бить одну цель дважды); 2) Усиленные шипы (S 60, Unnatural S(4), DNW(5)); 3) Костяной защитник (пассивен: Parry+2, Таланты Bodyguard/Blade Reader/Deflect Shot/Blade Shield, T.b Реакций, но не атакует); 4) Боевой горб (Таланты Frenzy/Furious Assault/Reckless Charge/Overpower, ярость свободным действием).",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

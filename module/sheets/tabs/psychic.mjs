@@ -15,6 +15,7 @@ import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock } from "../../combat/weapon-properties.mjs";
 import { attackThreshold } from "../../combat/attack-threshold.mjs";
+import { psychicHitCount } from "../../combat/attack-outcome.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { computeWoundDamage } from "./wounds.mjs";
@@ -433,15 +434,17 @@ export async function executePsychotest(actor, item, opts) {
   if (success && isDamaging && atk.damage) {
     const chars = actor.system.characteristics;
     const dmgFormula = resolveCharFormula(String(atk.damage).replace(/\bPR\b/gi, damagePR), chars, actor.system.corruptionBonus ?? 0);
-    // Число попаданий по типу Психострельбы (стр. 290): Снаряд/Взрыв/Дыхание — 1;
-    // Обстрел (короткая очередь) — по 1 за нечётный Успех = ceil(deg/2);
-    // Шторм (длинная очередь) — по 1 за каждый Успех = deg.
+    // Число попаданий по подтипу Психострельбы (стр. 290). Считается по самому
+    // подтипу, а не по типу силы: в книге такие силы помечены «Атака ·
+    // Психический Шторм · Стрельба», то есть powerType у них «Атака».
     const shootType = sys.shootSubtype || "";
-    let hits = 1, hitsNote = "";
-    if (sys.powerType === "psychicShoot") {
-      if (shootType === "barrage") { hits = Math.max(1, Math.ceil(deg / 2)); hitsNote = `Психический Обстрел: <b>${hits}</b> попад. (по 1 за нечётный из ${deg} Успехов).`; }
-      else if (shootType === "storm") { hits = Math.max(1, deg); hitsNote = `Психический Шторм: <b>${hits}</b> попад. (по 1 за каждый из ${deg} Успехов).`; }
-    }
+    const shots = psychicHitCount(shootType, deg);
+    const hits  = shots.count;
+    const hitsNote = shots.label
+      ? `${shots.label}: <b>${hits}</b> попад. (${shootType === "storm"
+          ? `по 1 за каждый из ${deg} Успехов`
+          : `по 1 за нечётный из ${deg} Успехов`}).`
+      : "";
     try {
       const dtLabel = DAMAGE_TYPES[atk.damageType] || atk.damageType;
       const pen     = atk.pen;

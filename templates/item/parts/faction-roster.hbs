@@ -1,0 +1,38 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  СОСТАВ фракции. Данные — module/apps/faction-roster.mjs, список нигде --}}
+{{!--  не хранится: он считается по принадлежности акторов и ссылкам вверх.  --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#unless factionHasKey}}
+<div class="sq-empty">У фракции нет ключа — сослаться на неё нечем, состав не собрать.</div>
+{{/unless}}
+
+{{#each factionRoster as |b|}}
+<div class="item-section faction-roster-block">
+  <div class="item-section-title">{{b.label}} <span class="faction-roster-hint">({{b.hint}})</span></div>
+  <div class="sq-member-dropzone{{#unless b.readonly}} faction-roster-zone{{/unless}}" data-block="{{b.key}}">
+    {{#each b.members as |m|}}
+    <div class="sq-member" data-uuid="{{m.uuid}}" data-item-id="{{m.itemId}}">
+      <img class="sq-member-img faction-roster-open" src="{{m.img}}" title="Открыть лист"/>
+      <div class="sq-member-main">
+        <div class="sq-member-line">
+          <span class="sq-member-name faction-roster-open">{{m.name}}</span>
+          <span class="sq-member-type sq-type-{{m.type}}">{{m.typeLabel}}</span>
+          {{#if m.inPack}}<span class="sq-member-type" title="Заготовка из компендиума, а не игровой актор">компендиум</span>{{/if}}
+        </div>
+      </div>
+      {{#unless b.readonly}}
+      <div class="sq-member-acts">
+        <a class="faction-roster-remove" title="{{#if b.isFaction}}Вывести из состава — станет корнем дерева{{else}}Убрать принадлежность к фракции{{/if}}"><i class="fas fa-times"></i></a>
+      </div>
+      {{/unless}}
+    </div>
+    {{else}}
+    <div class="sq-empty">
+      {{#if b.readonly}}Никто не служит. Связь заводится на листе служащей фракции — полем «Также состоит в».
+      {{else if b.isFaction}}Вассалов нет — перетащите сюда фракцию, и она войдёт в состав этой.
+      {{else}}Пусто — перетащите сюда лист актора.{{/if}}
+    </div>
+    {{/each}}
+  </div>
+</div>
+{{/each}}

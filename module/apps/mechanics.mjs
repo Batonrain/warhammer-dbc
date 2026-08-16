@@ -94,6 +94,17 @@
 //      flags.warhammer-dbc.grantedByItem — общий deleteItem-откат подхватывает
 //      его так же, как Черты/Таланты. Отмена диалога выбора (choice) — просто
 //      ничего не выдаётся, без ошибки.
+//    loyalty: { loyaltyMinionType:""|"human"|"beast"|"machine"|"daemon",
+//               loyaltyOp:"add"|"subtract", loyaltyValue }
+//      → ОДНОРАЗОВАЯ ПЕРМАНЕНТНАЯ правка system.loyalty.value у ВСЕХ Миньонов
+//      владельца предмета (module/apps/minions.mjs: отдельные акторы
+//      character/daemon с system.masterUuid === actor.uuid), опционально
+//      суженная одним из четырёх типов миньона книги (стр. 111-113); "" —
+//      любой тип. Как corruption/wounds — хранимое состояние, а не
+//      производное, поэтому ActiveEffect тут не годится.
+//      Отката при снятии предмета НЕТ, и это осознанный пробел: правка
+//      нескольких ЧУЖИХ акторов сразу не укладывается в откат deleteItem,
+//      который работает по флагу на предмете владельца.
 //    group: { } — ВЛОЖЕННАЯ подгруппа И/ИЛИ (поле entry.group = {id,operator,
 //      entries:[...]}, та же форма, что и группа верхнего уровня). Даёт выбор
 //      между НАБОРАМИ из нескольких записей сразу — напр. ИЛИ: [И: Болтер +
@@ -133,6 +144,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF }      from "../constants/skills.mjs";
+import { MINION_TYPES, minionsOf, loyaltyAfterChange } from "./minions.mjs";
 import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics.mjs";
 import { specOptions, findGroupEntry }        from "../constants/skill-specializations.mjs";
 import { executeItemCode }                    from "./item-script.mjs";
@@ -205,7 +217,9 @@ const KIND_LABELS = {
   weight: "Вес", rollmod: "Модификатор броска", poolMax: "Очки Судьбы или Бесчестья",
   weaponProp: "Оружие: Свойство",
   movement: "Движение: Скорость", terrainIgnore: "Движение: Ландшафт (игнор)",
+  fatigue: "Усталость",
   equipment: "Снаряжение",
+  loyalty: "Лояльность миньонов",
   group: "Вложенная группа",
   script: "Код"
 };
@@ -213,6 +227,11 @@ const KIND_LABELS = {
 // вкладки МЕХАНИКА уже уровень 1, поэтому подгрупп-в-подгруппах допускается 4.
 const MAX_GROUP_DEPTH = 5;
 const WEIGHT_SCOPE_LABELS = { all: "Общее", carry: "Ношение", lift: "Подъём", push: "Толкание" };
+// «Усталость» (kind:"fatigue") — каскад «действие → уточнение». Действие пока
+// одно; список оставлен на вырост, чтобы будущее («Снять уровень», «Порог
+// потери сознания») не ломало уже сохранённые записи.
+const FATIGUE_ACTIONS = [["threshold", "Порог штрафа"]];
+const FATIGUE_THRESHOLD_CHARS = [["t", "Бонус Стойкости (T.b)"], ["wp", "Бонус Воли (WP.b)"]];
 // Действия над Свойством оружия (kind:"weaponProp"). increase/decrease появляются
 // в дропдауне только когда перетащенное свойство обладает рейтингом (см.
 // buildEntryFieldsHtml) — рейтинговых свойств большинство, но не все.
@@ -358,11 +377,15 @@ export function blankMechEntry(kind = "characteristic") {
     movementTarget: "spd", movementValue: 1,
     // terrainIgnore
     ignoreTerrainProps: [],
+    // fatigue — каскад: действие → характеристика (см. шапку файла)
+    fatigueAction: "threshold", fatigueThresholdChar: "t",
     // equipment
     equipMode: "direct", equipQty: 1,
     equipSourceUuid: "", equipSourceName: "", equipSourceImg: "",
     equipCategoryPack: "weapons", equipWeaponType: "", equipWeaponProp: "",
     equipArmorType: "", equipMaxAvailability: 5,
+    // loyalty — тип миньона ("" = любой), знак и величина (см. шапку файла)
+    loyaltyMinionType: "", loyaltyOp: "add", loyaltyValue: 1,
     // weaponProp — «Свойство» перетаскивается (weaponPropKey/Label/HasRating[2]),
     // «Новое свойство» — только при weaponPropAction:"replace".
     weaponPropAction: "add",
@@ -441,6 +464,11 @@ export function describeMechEntry(entry) {
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
       return `Ландшафт: игнорирует — ${labels.join(", ")}`;
     }
+    case "fatigue": {
+      if (entry.fatigueAction !== "threshold") return "Усталость: (действие не выбрано)";
+      const charLabel = entry.fatigueThresholdChar === "wp" ? "Воли" : "Стойкости";
+      return `Усталость: штраф начинается с Бонуса ${charLabel} (вместо 1)`;
+    }
     case "equipment": {
       const qty = Math.max(1, parseInt(entry.equipQty) || 1);
       if (entry.equipMode === "choice") {
@@ -457,6 +485,15 @@ export function describeMechEntry(entry) {
       }
       if (!entry.equipSourceUuid) return "Снаряжение: (выберите предмет)";
       return `Снаряжение: ${entry.equipSourceName || "?"} ×${qty}`;
+    }
+    case "loyalty": {
+      const typeLabel = entry.loyaltyMinionType
+        ? (MINION_TYPES[entry.loyaltyMinionType]?.label || entry.loyaltyMinionType)
+        : "любой тип";
+      if (entry.loyaltyValue === "" || entry.loyaltyValue == null)
+        return `Лояльность: (не задано) — миньоны (${typeLabel})`;
+      const sign = entry.loyaltyOp === "subtract" ? "−" : "+";
+      return `Лояльность: ${sign}${entry.loyaltyValue} миньонам (${typeLabel})`;
     }
     case "rollmod": {
       if (!entry.skillKey) return "Модификатор броска: (не выбран навык)";
@@ -532,9 +569,13 @@ function isEntryComplete(e) {
       return !!e.movementTarget && numOk(e.movementValue);
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
+    case "fatigue":
+      return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
     case "equipment":
       if (!numOk(e.equipQty) || Number(e.equipQty) <= 0) return false;
       return e.equipMode === "choice" ? !!e.equipCategoryPack : !!e.equipSourceUuid;
+    case "loyalty":
+      return numOk(e.loyaltyValue);
     case "rollmod":
       if (!e.skillKey) return false;
       if (e.skillScope === "group" && !groupSpecOk(e)) return false;
@@ -812,6 +853,12 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     return;
   }
 
+  if (entry.kind === "fatigue") {
+    // Тоже живой запрос: fatigueGraceForActor() (rules/fatigue-grace.mjs)
+    // читает Механику в момент теста, писать и откатывать нечего.
+    return;
+  }
+
   if (entry.kind === "equipment") {
     let uuid = entry.equipSourceUuid;
     if (entry.equipMode === "choice") {
@@ -840,6 +887,18 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     // при пересинхронизации по активности источника (импланты — installed/disabled).
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id, equipEntryId: entry.id } };
     await actor.createEmbeddedDocuments("Item", [data]);
+    return;
+  }
+
+  if (entry.kind === "loyalty") {
+    // Правим ЧУЖИХ акторов — миньонов владельца предмета. Ограничение по типу
+    // необязательно: пустое значение означает «любой тип».
+    const amount = (entry.loyaltyOp === "subtract" ? -1 : 1) * (Number(entry.loyaltyValue) || 0);
+    const targets = minionsOf(actor, [...(game.actors ?? [])])
+      .filter(m => !entry.loyaltyMinionType || m.system.minionType === entry.loyaltyMinionType);
+    for (const minion of targets) {
+      await minion.update({ "system.loyalty.value": loyaltyAfterChange(minion, amount) });
+    }
     return;
   }
 
@@ -1013,12 +1072,11 @@ function collectDirectEquipmentEntries(groups) {
  * не меняет уже существующее поведение (выдано один раз при createItem,
  * остаётся навсегда). А вот у Импланта есть собственное состояние —
  * хирургически установлен/снят, исправен/неисправен (installed/disabled) —
- * и выданное им оружие (напр. Кислотный плевок Железы Бетчера) должно
- * появляться и исчезать вместе с этим состоянием, а не жить вечно после
- * однократной выдачи. Вызывается и из applyItemMechanics (первая выдача —
- * если источник родился неактивным, тут же откатит лишнее), и из мест,
- * переключающих installed/disabled (surgeon.mjs, .geneseed-state-select
- * в actor-sheet.mjs) — тот же приём, что syncItemEffectsDisabled для
+ * и выданное им оружие должно появляться и исчезать вместе с этим
+ * состоянием, а не жить вечно после однократной выдачи. Вызывается и из
+ * applyItemMechanics (первая выдача — если источник родился неактивным, тут
+ * же откатит лишнее), и из мест, переключающих installed/disabled
+ * (surgeon.mjs) — тот же приём, что syncItemEffectsDisabled для
  * ActiveEffect-грантов (характеристики и т.п.), но для embedded-предметов.
  */
 export async function syncGrantedEquipment(sourceItem) {
@@ -1308,6 +1366,20 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     return `<select class="mech-terrain-ignore" multiple size="6" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>`;
   }
 
+  if (ent.kind === "fatigue") {
+    // Каскад: сначала ЧТО делать с Усталостью, потом уточнение. Действие пока
+    // одно, но выбор оставлен списком — чтобы будущие действия («Снять
+    // уровень» и т.п.) не потребовали переделки уже сохранённых записей.
+    const actionOpts = FATIGUE_ACTIONS
+      .map(([v, l]) => optHtml(v, l, (ent.fatigueAction || "threshold") === v)).join("");
+    const charOpts = FATIGUE_THRESHOLD_CHARS
+      .map(([v, l]) => optHtml(v, l, (ent.fatigueThresholdChar || "t") === v)).join("");
+    const charSelect = (ent.fatigueAction || "threshold") === "threshold"
+      ? `<select class="mech-fatigue-char" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${charOpts}</select>`
+      : "";
+    return `<select class="mech-fatigue-action" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${actionOpts}</select>${charSelect}`;
+  }
+
   if (ent.kind === "equipment") {
     const mode = ent.equipMode || "direct";
     const modeOpts = [["direct", "Непосредственно предмет"], ["choice", "Выбор (категория + фильтры)"]]
@@ -1344,6 +1416,17 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     }
     out += `<input type="number" class="mech-equip-qty" min="1" step="1" placeholder="Кол-во" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipQty ?? 1)}" ${dis}/>`;
     return out;
+  }
+
+  if (ent.kind === "loyalty") {
+    const typeOpts = [`<option value="">— любой тип —</option>`]
+      .concat(Object.entries(MINION_TYPES)
+        .map(([k, d]) => optHtml(k, d.label, (ent.loyaltyMinionType || "") === k))).join("");
+    const opOpts = CORRUPTION_OP_OPTIONS
+      .map(o => optHtml(o.value, o.label, (ent.loyaltyOp || "add") === o.value)).join("");
+    return `<select class="mech-loyalty-type" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${typeOpts}</select>
+      <select class="mech-loyalty-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
+      <input type="number" class="mech-loyalty-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.loyaltyValue ?? 1)}" ${dis}/>`;
   }
 
   if (ent.kind === "rollmod") {

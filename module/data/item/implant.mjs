@@ -32,7 +32,6 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
       quality:       new StringField({ initial: "common", label: "Качество" }),
       effect:        new StringField({ initial: "", label: "Эффект" }),
       installed:     new StringField({ initial: "", label: "Куда установлен" }),
-      geneSeedOrder: new NumberField({ initial: 0, integer: true, nullable: false, label: "Порядок вживления" }),
       linkedWeapon:  new StringField({ initial: "", label: "Связанное оружие" }),
       bookSource:    new StringField({ initial: "", label: "Книга-источник" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" }),

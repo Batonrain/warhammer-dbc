@@ -9,7 +9,6 @@
     "quality": "common",
     "effect": "Сенсоры жизненных показателей. Раз/Ход авто-снятие 1 Оглушения (не Ступора); встроенный электрошок (свободное действие).",
     "installed": "",
-    "geneSeedOrder": 0,
     "linkedWeapon": "",
     "effects": {
       "charBonusStat": "",

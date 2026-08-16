@@ -10,6 +10,7 @@
       <input type="text" name="system.faction" value="{{system.faction}}" placeholder="Фракция"/>
       <input type="text" name="system.descriptor" value="{{system.descriptor}}" class="horde-descriptor" placeholder="Краткое описание"/>
     </div>
+    {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
   </div>
   <div class="horde-state horde-state-{{d.state}}">
     <div class="horde-state-label">{{stateLabel}}</div>
@@ -89,11 +90,39 @@
     <section class="horde-panel">
       <div class="horde-panel-title">ЗАЩИТА И ДВИЖЕНИЕ</div>
       <div class="horde-defmove">
-        <label class="horde-field"><span>Поглощение</span><input type="number" name="system.absorption" value="{{system.absorption}}" min="0" data-tooltip="Броня + бонус Стойкости. Попадания — в торс."/></label>
+        <label class="horde-field"><span>Поглощение</span><input type="number" name="system.absorption" value="{{system.absorption}}" min="0" data-tooltip="Своё поглощение орды: броня без предмета + бонус Стойкости. Попадания — в торс."/></label>
         <label class="horde-field"><span>Размер существа</span><input type="number" name="system.sizeMod" value="{{system.sizeMod}}" data-tooltip="Для SPD: 0 = человек"/></label>
         <div class="horde-field"><span>Движение ½ / Ш / Нат / Бег</span><b class="horde-move">{{system.movement.halfMove}} / {{system.movement.move}} / {{system.movement.charge}} / {{system.movement.run}}</b></div>
       </div>
+      {{#if d.armourAP}}
+      <div class="horde-mag-meta">
+        <span class="horde-chip" data-tooltip="AP тела лучшей надетой брони — слои не складываются">Броня: <b>+{{d.armourAP}}</b></span>
+        <span class="horde-chip" data-tooltip="Поле «Поглощение» плюс AP надетой брони">Итого поглощение: <b>{{d.absorptionTotal}}</b></span>
+      </div>
+      {{/if}}
       <p class="horde-hint">Попадания — в торс. Пробившее Поглощение = 1 урона в Магнитуду. Доп. попадания: Blast(X) +X · Flame/Power Field +1 · Spray +Rng/5.</p>
+    </section>
+
+    {{!-- Броня --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">БРОНЯ <span class="dim">— AP тела; попадания идут в торс</span> <button type="button" class="horde-add" data-action="itemCreate" data-type="armor" title="Создать пустую броню">＋</button></div>
+      {{#if armors.length}}
+      <div class="horde-list">
+        {{#each armors as |a|}}
+        <div class="horde-row">
+          <label class="horde-equip" data-tooltip="Надета — AP идёт в Поглощение">
+            <input type="checkbox" data-action="itemEquip" data-item-id="{{a.id}}" {{#if a.equipped}}checked{{/if}}/>
+          </label>
+          <span class="horde-row-name">{{a.name}}</span>
+          <span class="horde-row-dmg">AP {{a.ap}}</span>
+          <span class="horde-row-tools">
+            <a class="hbtn" data-action="itemEdit" data-item-id="{{a.id}}" data-tooltip="Открыть"><span class="hi hi-pencil"></span></a>
+            <a class="hbtn hbtn-del" data-action="itemDelete" data-item-id="{{a.id}}" data-tooltip="Удалить"><span class="hi hi-x"></span></a>
+          </span>
+        </div>
+        {{/each}}
+      </div>
+      {{else}}<div class="horde-empty">Брони нет — перетащите её сюда или создайте ＋.</div>{{/if}}
     </section>
 
     {{!-- Оружие --}}
@@ -117,8 +146,65 @@
     </section>
   </div>
 
-  {{!-- ── ЧЕРТЫ ── --}}
+  {{!-- ── ПОКАЗАТЕЛИ ── --}}
   <div class="tab {{#if (eq tab "traits")}}active{{/if}}" data-group="primary" data-tab="traits">
+
+    {{!-- Навыки --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">НАВЫКИ <span class="dim">— ранг · клик по названию = бросок</span></div>
+      <div class="horde-skills">
+        {{#each skills as |sk|}}
+        <div class="horde-skill">
+          <button type="button" class="horde-skill-name" data-action="rollSkill" data-skill="{{sk.key}}"
+                  data-tooltip="Бросок: {{sk.label}}">{{sk.label}}</button>
+          <select name="system.skills.{{sk.key}}.rank" class="horde-skill-rank" data-tooltip="Ранг навыка">
+            {{!-- sk — блочный параметр внешнего цикла: он лексический, и путь
+                  «на уровень выше» к нему не применяется. С таким путём ранг
+                  терялся, и любой навык показывался Нетренированным. --}}
+            {{#each ../skillRanks as |r|}}
+            <option value="{{r.key}}" {{#if (eq r.key sk.rank)}}selected{{/if}}>{{r.label}}</option>
+            {{/each}}
+          </select>
+          <span class="horde-skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span>
+        </div>
+        {{/each}}
+      </div>
+    </section>
+
+    {{!-- Групповые навыки: Управление, Навигация, Знания, Лингвистика, Ремесло --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">ГРУППОВЫЕ НАВЫКИ <span class="dim">— со специализацией</span></div>
+      {{#if groupSkills.length}}
+      <div class="horde-skills">
+        {{#each groupSkills as |g|}}
+        <div class="horde-skill horde-gskill">
+          <button type="button" class="horde-skill-name" data-action="rollGroupSkill"
+                  data-group="{{g.groupKey}}" data-index="{{g.idx}}"
+                  data-tooltip="Бросок: {{g.groupLabel}}{{#if g.specialty}} ({{g.specialty}}){{/if}}">{{g.groupLabel}}</button>
+          <input type="text" class="horde-gskill-spec" data-gskill-field="specialty"
+                 data-group="{{g.groupKey}}" data-index="{{g.idx}}" value="{{g.specialty}}"
+                 placeholder="Специализация"/>
+          <select class="horde-skill-rank" data-gskill-field="rank"
+                  data-group="{{g.groupKey}}" data-index="{{g.idx}}" data-tooltip="Ранг навыка">
+            {{#each ../skillRanks as |r|}}
+            <option value="{{r.key}}" {{#if (eq r.key g.rank)}}selected{{/if}}>{{r.label}}</option>
+            {{/each}}
+          </select>
+          <span class="horde-skill-total {{#if (lt g.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{g.total}}</span>
+          <button type="button" class="hbtn hbtn-del" data-action="groupRemove"
+                  data-group="{{g.groupKey}}" data-index="{{g.idx}}" data-tooltip="Убрать"><span class="hi hi-x"></span></button>
+        </div>
+        {{/each}}
+      </div>
+      {{else}}<div class="horde-empty">Групповых навыков нет.</div>{{/if}}
+      <div class="horde-gskill-add">
+        <select class="horde-gskill-group" data-tooltip="Какую группу добавить">
+          {{#each groupSkillDefs as |d|}}<option value="{{d.key}}">{{d.label}}</option>{{/each}}
+        </select>
+        <button type="button" class="horde-add" data-action="groupAdd" title="Добавить специализацию">＋</button>
+      </div>
+    </section>
+
     <section class="horde-panel">
       <div class="horde-panel-title">ЧЕРТЫ И ТАЛАНТЫ <button type="button" class="horde-add" data-action="pick" data-kind="talent" title="Выбрать талант из библиотеки">Талант</button> <button type="button" class="horde-add" data-action="pick" data-kind="trait" title="Выбрать черту из библиотеки">Черта</button> <button type="button" class="horde-add" data-action="itemCreate" data-type="talent" title="Создать пустой талант">＋</button></div>
       {{#if talents.length}}

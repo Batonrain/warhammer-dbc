@@ -1,9 +1,6 @@
 <div class="tab abil-cog {{#if (eq tab "abilities")}}active{{/if}}" data-tab="abilities" data-group="primary"> {{#if isAstartes}}
-  <div class="ability-section-panel gene-seed-panel"> <div class="panel-title"> ГЕНОСЕМЯ
-      <button type="button" class="gene-toggle-btn" data-action="geneToggle" title="Свернуть/развернуть импланты">▸ Импланты</button> </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> <button type="button" class="gene-apply-btn" data-action="geneApply" title="Создать расовые Черты Астартес (Unnatural S/T, Size, Nimble, Amphibious, Gene-Seed) и базовые характеристики"> {{#if hasGeneSeedTrait}}↻ Обновить расовые бонусы{{else}}Применить расовые бонусы{{/if}}
-      </button> </div> <div class="gene-seed-hint">Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты — памятка (сворачивается).</div> <div class="gene-organs collapsed"> {{#each geneSeedOrgans as |o|}}
-      <div class="gene-organ"> <span class="gene-organ-name">{{o.name}}</span> <span class="gene-organ-effect">{{o.effect}}</span> </div> {{/each}}
-    </div> </div> {{/if}}
+  <div class="ability-section-panel gene-seed-panel"> <div class="panel-title"> ГЕНОСЕМЯ </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> <button type="button" class="gene-apply-btn" data-action="geneApply" title="Создать расовые Черты Астартес (Unnatural S/T, Size, Nimble, Amphibious, Gene-Seed) и базовые характеристики"> {{#if hasGeneSeedTrait}}↻ Обновить расовые бонусы{{else}}Применить расовые бонусы{{/if}}
+      </button> </div> <div class="gene-seed-hint">Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты.</div> </div> {{/if}}
 
   {{#if isYnnari}}
   <div class="ability-section-panel ynnari-panel"> <div class="panel-title"> ИННАРИ — ПЕРЕРОЖДЁННЫЕ </div>

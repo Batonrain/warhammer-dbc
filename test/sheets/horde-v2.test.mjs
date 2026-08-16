@@ -6,6 +6,8 @@
 // контекст. Само окно смотрится руками в Foundry, тест этого не заменяет.
 
 import { describe, it, expect, beforeEach } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
 import { WarhammerHordeSheet } from "../../module/sheets/horde-sheet.mjs";
@@ -40,6 +42,19 @@ describeV2Sheet(WarhammerHordeSheet, {
   template: "templates/actor/horde-sheet.hbs"
 });
 
+// Блочный параметр цикла (`as |sk|`) лексический, и `../` к нему не применяется:
+// с `../sk.rank` выбранный ранг терялся и КАЖДЫЙ навык показывался
+// Нетренированным, хотя значение рядом стояло верное.
+describe("селект ранга навыка", () => {
+  const template = fs.readFileSync(
+    path.resolve(import.meta.dirname, "../../templates/actor/horde-sheet.hbs"), "utf8");
+
+  it("сравнивает вариант с рангом самого навыка", () => {
+    expect(template).toContain("(eq r.key sk.rank)");
+    expect(template).not.toContain("../sk.rank");
+  });
+});
+
 // ── Контекст ─────────────────────────────────────────────────────────────────
 describe("_prepareContext", () => {
   it("даёт шаблону всё, что тот читает", async () => {
@@ -55,6 +70,19 @@ describe("_prepareContext", () => {
     expect(ctx.weapons).toEqual([{ id: "w1", name: "Автоган", img: "w.png", sys: { damage: "1d10+3" } }]);
     expect(ctx.talents.map(t => t.name)).toEqual(["Ярость"]);
     expect(ctx.chars.find(c => c.key === "ws")).toMatchObject({ total: 35, bonus: 3, base: 30, advance: 5 });
+  });
+
+  it("отдаёт Навыки со значением и список рангов для выпадающего списка", async () => {
+    const actor = hordeActor();
+    actor.system.skills = { dodge: { rank: "trained", total: 45 } };
+    const ctx = await WarhammerHordeSheet.prototype._prepareContext.call(sheetLike(actor), {});
+
+    // Все навыки, а не только заполненные: пустой берётся из умолчаний.
+    expect(ctx.skills.find(s => s.key === "dodge"))
+      .toEqual({ key: "dodge", label: "Уклонение", rank: "trained", total: 45 });
+    expect(ctx.skills.find(s => s.key === "awareness"))
+      .toEqual({ key: "awareness", label: "Бдительность", rank: "untrained", total: -20 });
+    expect(ctx.skillRanks.map(r => r.key)).toContain("veteran");
   });
 
   it("вкладка берётся из умолчания, пока её не переключали", async () => {

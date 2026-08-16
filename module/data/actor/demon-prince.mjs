@@ -15,6 +15,14 @@ export class DemonPrinceData extends DaemonData {
     return {
       ...super.defineSchema(),
       rank: new StringField({ initial: "prince", label: "Ранг" }),
+      // Вкладка «ТЕЛО» у Принца та же, что у Персонажа (голо-скан фигуры,
+      // Хирургикон, жизнеобеспечение), поэтому нужны и её хранимые поля.
+      bodyType: new StringField({ initial: "male", label: "Телосложение" }),
+      vitals: new SchemaField({
+        hunger: new NumberField({ initial: 0, nullable: false, label: "Голод" }),
+        thirst: new NumberField({ initial: 0, nullable: false, label: "Жажда" }),
+        sleep:  new NumberField({ initial: 0, nullable: false, label: "Сон" })
+      }, { label: "Потребности" }),
       dp: new SchemaField({
         favor:        new NumberField({ initial: 0, nullable: false, label: "Благосклонность" }),
         // Слогов истинного имени у принца пять — по одному на ступень восхождения.

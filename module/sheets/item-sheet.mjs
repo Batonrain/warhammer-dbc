@@ -39,6 +39,17 @@ import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml
          getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
+import { openCompendiumBrowser }                     from "../apps/compendium-browser.mjs";
+import { factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, patronTarget,
+         TARGET_FEATURES, PATRON_ANY, addTarget, removeTargetAt } from "../rules/talent-targets.mjs";
+import { RACES, SUBRACES }                           from "../constants/races.mjs";
+import { WARP_GODS }                                 from "../constants/veil.mjs";
+import { disabledRaceKeys }                          from "../constants/features.mjs";
+import { factionKey, factionAncestors, factionParentKey, factionAlsoKeys,
+         getFactionIndex }                           from "../rules/factions.mjs";
+import { factionRosterContext, originTreeContext,
+         activateFactionRosterListeners, activateOriginTreeListeners }
+                                                     from "../apps/faction-roster.mjs";
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
 import { onTab, whenEditable, linesToArray }         from "./v2-helpers.mjs";
 
@@ -375,6 +386,41 @@ function onApropRemove(event, target) {
   return this.item.update({ "system.properties": props });
 }
 
+/**
+ * Окно с одним выпадающим списком — общее для всех выборов цели Таланта.
+ *
+ * DialogV2, а не Dialog: лист предмета переведён на ApplicationV2, и jQuery в
+ * нём больше нет (контракт проверяется тестом v2-sheet-contract).
+ *
+ * @param {object} o title/prompt/options — заголовок, вопрос и готовый HTML
+ *   вариантов; withLabel просит вернуть не ключ, а пару {key, label}.
+ * @returns {Promise<?string|?{key: string, label: string}>} null — отмена.
+ */
+function pickFromList({ title, prompt, options, withLabel = false }) {
+  return foundry.applications.api.DialogV2.wait({
+    window: { title },
+    classes: ["warhammer-dbc", "wh-holo"],
+    content: `<div class="wh-holo-dialog">
+      <p>${prompt}</p>
+      <select class="wh-pick-select" style="width:100%">${options}</select>
+    </div>`,
+    buttons: [
+      {
+        action: "ok", label: "Далее", default: true,
+        callback: (event, button) => {
+          const sel = button.form.querySelector(".wh-pick-select");
+          if (!sel?.value) return null;
+          return withLabel
+            ? { key: sel.value, label: sel.selectedOptions[0].textContent }
+            : sel.value;
+        }
+      },
+      { action: "cancel", label: "Отмена" }
+    ],
+    rejectClose: false
+  });
+}
+
 export class WarhammerItemSheet
   extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ItemSheetV2) {
 
@@ -436,6 +482,10 @@ export class WarhammerItemSheet
     body: { template: "systems/warhammer-dbc/templates/item/item-sheet.hbs", root: true }
   };
 
+  // «СОСТАВ» объявлен для всех типов, а показывается только у Фракции (разметка
+  // вкладки под {{#if}}): список вкладок статический, а тип предмета известен
+  // лишь у экземпляра. Лишняя запись здесь безвредна — переключиться на неё
+  // можно только по кнопке, которой у прочих типов нет.
   static TABS = {
     "item-primary": {
       initial: "info",
@@ -443,6 +493,7 @@ export class WarhammerItemSheet
         { id: "info",      label: "ИНФО" },
         { id: "effects",   label: "ЭФФЕКТЫ" },
         { id: "mechanics", label: "МЕХАНИКА" },
+        { id: "roster",    label: "СОСТАВ" },
         { id: "notes",     label: "ЗАПИСИ" }
       ]
     }
@@ -461,9 +512,104 @@ export class WarhammerItemSheet
     // поэтому проверяется РАНЬШЕ — иначе дроп ушёл бы в Механику.
     const reqZone = event.target?.closest?.(".req-drop-zone");
     if (reqZone && data?.type === "Item") return this._onDropReqItem(event, data, reqZone);
+    const targetZone = event.target?.closest?.(".talent-target-drop");
+    if (targetZone && data?.type === "Item") return this._onDropTalentTarget(event, data);
     const grantZone = event.target?.closest?.(".grant-drop-zone");
     if (grantZone && data?.type === "Item") return this._onDropGrantItem(event, data, grantZone);
     if (data?.type === "ActiveEffect") return this._onDropActiveEffect(event, data);
+  }
+
+  /**
+   * Драг-н-дроп Фракции в список целей Таланта (Hatred, Peer, Enemy, Good
+   * Reputation). Тот же приём, что у зоны требования выше: цели правит только
+   * Мастер, а зона дропа disabled не бывает.
+   */
+  async _onDropTalentTarget(event, data) {
+    if (!this.item.isOwner || !game.user.isGM) return;
+    const src = await Item.implementation.fromDropData(data);
+    if (!src) return;
+    if (src.type !== "faction") {
+      return ui.notifications.warn(
+        `Сюда нужно перетащить Фракцию, а перетащено: ${ITEM_TYPES[src.type] || src.type}.`);
+    }
+    const target = factionTarget(src);
+    if (!target) return ui.notifications.warn(`У фракции «${src.name}» не задан ключ — ссылаться не на что.`);
+    const before = this.item.system.targets || [];
+    const after = addTarget(before, target);
+    if (after.length === before.length) return ui.notifications.info(`«${src.name}» уже в списке целей.`);
+    await this.item.update({ "system.targets": after });
+  }
+
+  /**
+   * Записать вышестоящую Фракцию в «Входит в состав».
+   *
+   * В поле уезжает КЛЮЧ, а не ссылка на документ (см. причину в шапке
+   * module/data/item/faction.mjs). Общая часть для перетаскивания и кнопки
+   * «＋»: оба пути обязаны одинаково отсеять чужой тип и кольцо в дереве.
+   */
+  async _setFactionParent(src) {
+    if (!src) return;
+    if (src.type !== "faction") {
+      return ui.notifications.warn(
+        `Сюда нужно перетащить Фракцию, а перетащено: ${ITEM_TYPES[src.type] || src.type}.`);
+    }
+    const parentKey = factionKey(src);
+    if (!parentKey) return ui.notifications.warn(`У фракции «${src.name}» нет ключа — ссылаться не на что.`);
+
+    // Сама себе вышестоящей быть не может, и нижестоящая тоже: получилось бы
+    // кольцо, а дерево обходится вверх до корня. Обход такой цикл переживает
+    // (factionChain обрывает и жалуется), но данные всё равно были бы врущими.
+    const myKey = factionKey(this.item);
+    if (parentKey === myKey) return ui.notifications.warn("Фракция не может входить в саму себя.");
+    if (myKey && factionAncestors(parentKey, getFactionIndex()).has(myKey)) {
+      return ui.notifications.warn(
+        `«${src.name}» уже входит в состав этой фракции — кольца в дереве не бывает.`);
+    }
+    await this._updateFaction({ "system.parentKey": parentKey });
+  }
+
+  /**
+   * Добавить дополнительную принадлежность («Также состоит в»).
+   *
+   * Кольцо проверяем по ОБЪЕДИНЕНИЮ связей: дополнительные ссылки образуют не
+   * дерево, а сеть, и «служу тому, кто служит мне» так же бессмысленно, как
+   * вассал собственного вассала.
+   */
+  async _addFactionAlso(src) {
+    if (!src) return;
+    if (src.type !== "faction") {
+      return ui.notifications.warn(
+        `Сюда нужно перетащить Фракцию, а перетащено: ${ITEM_TYPES[src.type] || src.type}.`);
+    }
+    const key = factionKey(src);
+    if (!key) return ui.notifications.warn(`У фракции «${src.name}» нет ключа — ссылаться не на что.`);
+    const myKey = factionKey(this.item);
+    if (key === myKey) return ui.notifications.warn("Фракция не может состоять в самой себе.");
+
+    const already = factionAlsoKeys(this.item);
+    if (already.includes(key)) return ui.notifications.info(`«${src.name}» уже указана.`);
+    if (myKey && factionAncestors(key, getFactionIndex()).has(myKey)) {
+      return ui.notifications.warn(
+        `«${src.name}» сама подпадает под эту фракцию — кольца не бывает.`);
+    }
+    await this._updateFaction({ "system.alsoIn": [...already, key] });
+  }
+
+  /**
+   * Правка самой Фракции с понятным отказом.
+   *
+   * Лист фракции чаще всего открыт из компендиума, а закрытый пак Foundry
+   * править не даёт — молчаливое «ничего не произошло» выглядит как поломка,
+   * поэтому объясняем причину.
+   */
+  async _updateFaction(changes) {
+    const pack = this.item.pack ? game.packs.get(this.item.pack) : null;
+    if (pack?.locked) {
+      return ui.notifications.warn(
+        "Компендиум закрыт для правки — включите «Разрешить правку компендиумов» в настройках системы.");
+    }
+    if (!game.user.isGM) return ui.notifications.warn("Править фракции может только Мастер.");
+    await this.item.update(changes);
   }
 
   /**
@@ -494,6 +640,88 @@ export class WarhammerItemSheet
     entry.sourceImg  = src.img;
     entry.sourceHasRating = !!src.system?.hasRating;
     await this.item.setFlag("warhammer-dbc", reqKey, arr);
+  }
+
+  /**
+   * Какого вида цель добавляем. Один список вместо трёх кнопок: видов немного,
+   * а типы акторов всё равно нужно показать перечнем.
+   *
+   * @returns {Promise<?string>} "faction" | "race" | "all" | ключ типа актора;
+   *   null — отмена.
+   */
+  _askTargetKind() {
+    // Типы акторов берутся у Foundry, а подписи — из lang/ru.json (TYPES.Actor.*):
+    // свой список разъехался бы с системой при добавлении типа.
+    const actorTypes = (game.documentTypes?.Actor ?? []).filter(t => t !== "base");
+    const opts = [
+      `<option value="faction">Фракция…</option>`,
+      `<option value="race">Раса…</option>`,
+      `<option value="feature">Признак…</option>`,
+      `<option value="patron">Покровительство…</option>`,
+      `<option value="all">Все! (без разбора)</option>`,
+      ...actorTypes.map(t =>
+        `<option value="${t}">Тип существа: ${game.i18n.localize(`TYPES.Actor.${t}`)}</option>`)
+    ].join("");
+
+    return pickFromList({
+      title: "Добавить цель", prompt: "Против кого действует талант?", options: opts
+    });
+  }
+
+  /**
+   * Выбор расы для цели-расы. Расы и субрасы в одном списке двумя группами:
+   * ключи у них не пересекаются, а игроку важно только имя породы.
+   *
+   * Расы выключенных подсистем не показываем — как и в шапке листа персонажа.
+   *
+   * @returns {Promise<?{key: string, label: string}>} null — отмена.
+   */
+  _askRace() {
+    const off = disabledRaceKeys();
+    const group = (label, pairs) => {
+      const opts = pairs
+        .filter(([key]) => !off.includes(key))
+        .sort((a, b) => a[1].localeCompare(b[1], "ru"))
+        .map(([key, name]) => `<option value="${key}">${name}</option>`).join("");
+      return opts ? `<optgroup label="${label}">${opts}</optgroup>` : "";
+    };
+    const html = group("Расы", Object.entries(RACES).map(([k, d]) => [k, d.label || d.name || k]))
+               + group("Субрасы", Object.entries(SUBRACES));
+
+    return pickFromList({
+      title: "Цель: раса", prompt: "Против какой породы работает талант?",
+      options: html, withLabel: true
+    });
+  }
+
+  /**
+   * Выбор признака для цели-признака: список берётся из реестра
+   * (rules/talent-targets.mjs), свой перечень здесь разошёлся бы с проверкой.
+   *
+   * @returns {Promise<?string>} ключ признака; null — отмена.
+   */
+  _askFeature() {
+    const opts = Object.entries(TARGET_FEATURES)
+      .map(([key, def]) => `<option value="${key}">${def.label}</option>`).join("");
+    return pickFromList({
+      title: "Цель: признак", prompt: "По какому свойству существа работает талант?",
+      options: opts
+    });
+  }
+
+  /**
+   * Выбор покровителя. «Любой покровитель» стоит первым: Ненависть к служащим
+   * Губительным Силам вообще встречается не реже, чем к конкретному богу.
+   *
+   * @returns {Promise<?{key: string, label: string}>} null — отмена.
+   */
+  _askPatron() {
+    const opts = [`<option value="${PATRON_ANY}">Любой покровитель</option>`]
+      .concat(WARP_GODS.map(g => `<option value="${g.key}">${g.label}</option>`)).join("");
+    return pickFromList({
+      title: "Цель: покровительство", prompt: "Кому служит тот, против кого работает талант?",
+      options: opts, withLabel: true
+    });
   }
 
   async _onDropActiveEffect(event, data) {
@@ -577,6 +805,8 @@ export class WarhammerItemSheet
     return super._processFormData(event, form, formData);
   }
 
+  // Асинхронный не только по требованию V2: вкладке «Состав» Фракции нужны
+  // акторы компендиумов, а они приходят загрузкой документов.
   async _prepareContext(options) {
     const context  = await super._prepareContext(options);
     context.item   = this.item;
@@ -765,6 +995,29 @@ export class WarhammerItemSheet
         .map(k => ({ key: k, def: WEAPON_PROPERTIES[k] }))
         .filter(p => p.def);
       context.modRemovePropsAvailable = WEAPON_PROPERTIES_LIST.filter(d => !remKeys.has(d.key));
+    }
+
+    // ── Фракция: вышестоящая, показанная фишкой ─────────────────────────────
+    // В поле лежит КЛЮЧ (см. module/data/item/faction.mjs), а игроку нужна
+    // подпись — берём её из каталога фракций. Каталога может не быть (мир ещё
+    // грузится, фракция заведена не в компендиуме) — тогда показываем сам
+    // ключ: «ссылка есть, но на что — сказать нечем» честнее пустоты.
+    if (this.item.type === "faction") {
+      // Ключ — только строка. Мусор («[object Object]» от старой записи
+      // объектом) показываем как пустое поле, а не как фишку с этим текстом:
+      // ссылки на такой ключ всё равно нет.
+      const parentKey = factionParentKey(this.item);
+      const known = parentKey ? getFactionIndex().get(parentKey) : null;
+      context.factionParent = parentKey
+        ? { key: parentKey, name: known?.name || parentKey, img: known?.img || "" }
+        : null;
+      // Дополнительные принадлежности — фишками, как цели Таланта.
+      context.factionAlso = factionAlsoKeys(this.item).map(key => {
+        const doc = getFactionIndex().get(key);
+        return { key, name: doc?.name || key, img: doc?.img || "" };
+      });
+      // Вкладка «Состав» и схема происхождения — apps/faction-roster.mjs.
+      Object.assign(context, await factionRosterContext(this.item), originTreeContext(this.item));
     }
 
     // ── Талант: склонности ───────────────────────────────────────────────────────
@@ -1088,6 +1341,170 @@ export class WarhammerItemSheet
     /** Слушатель на все узлы по селектору — замена jQuery-обхода из V1. */
     const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
 
+    // ── Цели Таланта (Hatred, Peer, Enemy, Good Reputation) ─────────────────
+    // Цель добавляется тремя путями, потому что и природа у целей разная:
+    // фракция выбирается в Обозревателе (там дерево и поиск), тип существа —
+    // из короткого списка типов акторов, «Все!» — просто есть.
+    on(".talent-target-add", "click", async ev => {
+      ev.preventDefault();
+      if (!game.user.isGM) return;
+      const kind = await this._askTargetKind();
+      if (!kind) return;
+
+      let target = null;
+      if (kind === "faction") {
+        const uuid = await openCompendiumBrowser(false, {
+          filters: { type: "faction" },
+          prompt: "Выберите фракцию — правило сработает и на любую нижестоящую"
+        });
+        if (!uuid) return;
+        const doc = await fromUuid(uuid).catch(() => null);
+        if (!doc) return ui.notifications.warn("Фракция не найдена — возможно, компендиум изменился.");
+        target = factionTarget(doc);
+        if (!target) return ui.notifications.warn(`У фракции «${doc.name}» не задан ключ.`);
+      } else if (kind === "race") {
+        const race = await this._askRace();
+        if (!race) return;
+        target = raceTarget(race.key, race.label);
+      } else if (kind === "feature") {
+        const feature = await this._askFeature();
+        if (!feature) return;
+        target = featureTarget(feature);
+      } else if (kind === "patron") {
+        const patron = await this._askPatron();
+        if (!patron) return;
+        target = patronTarget(patron.key, patron.label);
+      } else if (kind === "all") {
+        target = allTarget();
+      } else {
+        target = actorTypeTarget(kind, game.i18n.localize(`TYPES.Actor.${kind}`));
+      }
+
+      const before = this.item.system.targets || [];
+      const after = addTarget(before, target);
+      if (after.length === before.length) return ui.notifications.info("Такая цель уже есть.");
+      await this.item.update({ "system.targets": after });
+    });
+
+    on(".talent-target-remove", "click", async ev => {
+      ev.preventDefault();
+      if (!game.user.isGM) return;
+      await this.item.update({
+        "system.targets": removeTargetAt(this.item.system.targets || [], ev.currentTarget.dataset.index)
+      });
+    });
+
+    // ── Фракция: ключ и вышестоящая ─────────────────────────────────────────
+    // Ключ выдаётся при создании (module/documents/item.mjs) и правке не
+    // подлежит: на него ссылаются другие фракции и цели Талантов. Поле только
+    // показывает его, поэтому рядом кнопка «скопировать» — иначе значение
+    // остаётся видимым, но неудобным в переносе.
+    on(".faction-key-copy", "click", async ev => {
+      ev.preventDefault();
+      const key = this.item.system.key || "";
+      if (!key) return ui.notifications.warn("Ключа нет — выдайте его кнопкой рядом.");
+      try {
+        await game.clipboard.copyPlainText(key);
+        ui.notifications.info(`Ключ «${key}» скопирован.`);
+      } catch {
+        // Буфер обмена доступен не в каждом окружении — значение всё равно
+        // видно в поле, поэтому это не ошибка, а подсказка.
+        ui.notifications.warn(`Не удалось скопировать. Ключ: ${key}`);
+      }
+    });
+
+    // «Входит в состав»: перетаскивание и кнопка «＋». Дроп ловим сами, а не
+    // штатным dragDrop листа: тот отключается вместе с редактируемостью, а
+    // лист фракции почти всегда открыт из компендиума — и перетаскивание
+    // молча переставало работать.
+    const parentZone = el.querySelector(".faction-parent-drop");
+    if (parentZone) {
+      parentZone.addEventListener("dragover", ev => {
+        ev.preventDefault();
+        parentZone.classList.add("faction-drop-over");
+      });
+      parentZone.addEventListener("dragleave", () => parentZone.classList.remove("faction-drop-over"));
+      parentZone.addEventListener("drop", async ev => {
+        parentZone.classList.remove("faction-drop-over");
+        const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(ev);
+        if (data?.type !== "Item") return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        await this._setFactionParent(await Item.implementation.fromDropData(data));
+      });
+    }
+
+    on(".faction-parent-add", "click", async ev => {
+      ev.preventDefault();
+      const uuid = await openCompendiumBrowser(false, {
+        filters: { type: "faction" },
+        prompt: "Выберите вышестоящую фракцию — эта войдёт в её состав"
+      });
+      if (!uuid) return;
+      const doc = await fromUuid(uuid).catch(() => null);
+      if (!doc) return ui.notifications.warn("Фракция не найдена — возможно, компендиум изменился.");
+      await this._setFactionParent(doc);
+    });
+
+    on(".faction-parent-remove", "click", async ev => {
+      ev.preventDefault();
+      await this._updateFaction({ "system.parentKey": "" });
+    });
+
+    // «Также состоит в» — то же самое, но список: зона дропа, «＋» и крестик
+    // у каждой фишки.
+    const alsoZone = el.querySelector(".faction-also-drop");
+    if (alsoZone) {
+      alsoZone.addEventListener("dragover", ev => {
+        ev.preventDefault();
+        alsoZone.classList.add("faction-drop-over");
+      });
+      alsoZone.addEventListener("dragleave", () => alsoZone.classList.remove("faction-drop-over"));
+      alsoZone.addEventListener("drop", async ev => {
+        alsoZone.classList.remove("faction-drop-over");
+        const data = foundry.applications.ux.TextEditor.implementation.getDragEventData(ev);
+        if (data?.type !== "Item") return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        await this._addFactionAlso(await Item.implementation.fromDropData(data));
+      });
+    }
+
+    on(".faction-also-add", "click", async ev => {
+      ev.preventDefault();
+      const uuid = await openCompendiumBrowser(false, {
+        filters: { type: "faction" },
+        prompt: "Выберите фракцию, которой эта служит, не входя в неё по устройству"
+      });
+      if (!uuid) return;
+      const doc = await fromUuid(uuid).catch(() => null);
+      if (!doc) return ui.notifications.warn("Фракция не найдена — возможно, компендиум изменился.");
+      await this._addFactionAlso(doc);
+    });
+
+    on(".faction-also-remove", "click", async ev => {
+      ev.preventDefault();
+      const key = ev.currentTarget.dataset.key;
+      await this._updateFaction({
+        "system.alsoIn": factionAlsoKeys(this.item).filter(k => k !== key)
+      });
+    });
+
+    if (this.item.type === "faction") {
+      activateFactionRosterListeners(el, this.item);
+      activateOriginTreeListeners(el, this.item);
+    }
+
+    // ── Фракция: список «других названий» одним полем ───────────────────────
+    // system.aliases — ArrayField, и авто-submit формы строку в массив не
+    // превратит. Разбираем сами, тем же приёмом, что и прочие списки в этом
+    // файле: собрать значение и отдать одним update.
+    on(".faction-aliases", "change", ev => {
+      const list = String(ev.currentTarget.value || "")
+        .split(",").map(s => s.trim()).filter(Boolean);
+      this.item.update({ "system.aliases": list });
+    });
+
     // ── Эффекты (Active Effect Foundry) — общая вкладка для всех типов ──────────
     on(".effect-disabled-toggle", "change", async ev => {
       const fx = this.item.effects.get(ev.currentTarget.dataset.effectId);
@@ -1210,6 +1627,18 @@ export class WarhammerItemSheet
       e.ignoreTerrainProps = Array.from(ev.currentTarget.selectedOptions).map(o => o.value);
       saveMech(arr);
     });
+    // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
+    // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.
+    on(".mech-fatigue-action", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.fatigueAction = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-fatigue-char", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.fatigueThresholdChar = ev.currentTarget.value; saveMech(arr); }
+    });
     // Снаряжение (kind:"equipment")
     on(".mech-equip-mode", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -1256,6 +1685,22 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipQty = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
+    });
+    // Лояльность миньонов (kind:"loyalty")
+    on(".mech-loyalty-type", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.loyaltyMinionType = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-loyalty-op", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.loyaltyOp = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-loyalty-value", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.loyaltyValue = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
     });
     // Модификатор броска (kind:"rollmod") — навык/специализация переиспользуют
     // .grant-entry-skillref/.grant-entry-specialty/-spec-custom (см. ниже).

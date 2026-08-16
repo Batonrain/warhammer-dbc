@@ -40,6 +40,7 @@
             <input type="checkbox" name="system.isPsyker" {{#if dp.showPsy}}checked{{/if}}/> Псайкер
           </label>
         </div>
+        {{!-- Фракции переехали на вкладку СОЦИУМ: там карточка с аватаром, описанием и переходом на предмет. --}}
       </div>
 
       <div class="dp-vitals">
@@ -57,6 +58,7 @@
         <div class="dp-btns">
           <button type="button" class="dp-instability-btn" data-action="dpInstability" title="Тест Варп-Нестабильности (W)">Нестабильность</button>
           <button type="button" class="dp-favor-escape-btn" data-action="dpFavorEscape" title="1 Фавор: избежать изгнания в Варп">Спасение</button>
+          <button type="button" class="dp-instability-btn horde-convert-btn" data-action="convertToHorde" title="Создать копию этого Принца как Орду: Раны станут Магнитудой, Характеристики, Навыки, Таланты, Черты и снаряжение переедут">В Орду</button>
         </div>
       </div>
     </div>
@@ -82,7 +84,8 @@
   <nav class="sheet-tabs tabs" data-group="primary">
     <a class="item {{#if (eq tab "stats")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="stats">ПОКАЗАТЕЛИ</a>
     <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a>
-    <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a>
+    <a class="item {{#if (eq tab "effects")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="effects">ТЕЛО</a>
+    <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a> <a class="item {{#if (eq tab "social")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="social">СОЦИУМ</a>
     {{#if dp.showPsy}}<a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">ПСИ</a>{{/if}}
     <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a>
     <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a>
@@ -93,7 +96,9 @@
   <div class="sheet-body">
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs"}}
     {{#if dp.showPsy}}{{> "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs"}}{{/if}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}

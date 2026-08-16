@@ -12,7 +12,6 @@
 
 import { RACES } from "../constants/races.mjs";
 import { getLegion, getChapter, resolveCulture } from "../constants/legions.mjs";
-import { grantAstartesImplants } from "./astartes-implants.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { raceDef, subraceEntries } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
@@ -155,7 +154,6 @@ export async function applyRace(actor, key, { tag = "race", mirror = true } = {}
     ...raceCharsUpdate(actor, def?.chars || {})
   });
 
-  if (def?.hasGeneSeed) await grantAstartesImplants(actor);
   ui.notifications?.info(`🧬 ${mirror ? "Раса" : "Прошлое"}: ${def?.label || key}.`);
 }
 

@@ -11,7 +11,7 @@
     "subtype": "Порча",
     "powerType": "attack",
     "extraTypes": [],
-    "shootSubtype": "",
+    "shootSubtype": "breath",
     "prRequired": 3,
     "testChar": "cor",
     "testMod": 0,

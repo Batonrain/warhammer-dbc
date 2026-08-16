@@ -206,7 +206,12 @@ export function characterContext(actor) {
 
   // Происхождение Аэльдари: Мир-Корабль и Корсарская Банда (вкладка Записи)
   // У Друкхари вместо этого — Кабал/Культ Ведьм/Ковен.
-  context.isDrukhari     = system.race === "drukhari";
+  // Друкхари бывает не только по расе: Иннари и Арлекин выбирают «Прошлое», и
+  // выбравшему Друкхари полагается Кабал/Культ/Ковен, а не Мир-Корабль.
+  const pastRace = system.race === "ynnari"    ? system.ynnariPast
+                 : system.race === "harlequin" ? system.harlequinPast
+                 : "";
+  context.isDrukhari     = system.race === "drukhari" || pastRace === "drukhari";
   context.showWorldOrigin = context.isAeldari && !context.isDrukhari;
   context.worldOptions   = buildWorldSelectOptions(system.world || "");
   context.bandOptions    = buildBandSelectOptions(system.band || "");
