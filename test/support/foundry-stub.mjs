@@ -367,7 +367,7 @@ globalThis.ChatMessage = class {
   static async create(data) { captured.chat.push(data); return data; }
 };
 
-globalThis.Actor = class {};
+globalThis.Actor = class { prepareBaseData() {} };
 globalThis.Item = class {};
 globalThis.ActiveEffect = class {};
 globalThis.Folder = class {};
