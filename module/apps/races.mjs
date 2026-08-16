@@ -17,6 +17,7 @@ import { esc } from "../helpers/utils.mjs";
 import { raceDef, subraceEntries } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { applyItemMechanics } from "./mechanics.mjs";
 
 const FLAG  = "warhammer-dbc";
 const GRANT = "originGrant";
@@ -54,14 +55,25 @@ export function raceCharsUpdate(actor, chars) {
  * Снимает расу, всё ею выданное, субрасу и Прошлое: оба относились к прежней
  * расе и без неё теряют смысл (Прошлое существует только у Иннари/Арлекина,
  * которые сами и есть раса — см. Находку 2, wdbc-n1k, раунд правок 1).
+ *
+ * Обнуляет и ключ-зеркало (system.race/system.subrace): раньше крестик
+ * «Снять расу» удалял носителя, но ключ оставался, и всё, что читает ключ
+ * напрямую (предикаты правил, CSS-тема wh-race-*, подбор элитных архетипов,
+ * reqRace, вкладка Навигатора) продолжало считать персонажа этой расой —
+ * опустошить слот с листа было нельзя вообще (Находка C2 общего ревью,
+ * wdbc-n1k). Когда clearRace зовётся ПЕРЕД применением новой расы
+ * (applyRace), ключ всё равно перезаписывается следом её собственным
+ * update — двойная запись безвредна.
  */
 export async function clearRace(actor) {
   await clearSubrace(actor);
   await clearRacePast(actor);
   await clearGrantedBy(actor, "race", actorRaceItem(actor));
+  await actor.update({ "system.race": "" });
 }
 export async function clearSubrace(actor) {
   await clearGrantedBy(actor, "subrace", actorSubraceItem(actor));
+  await actor.update({ "system.subrace": "" });
 }
 export async function clearRacePast(actor) {
   await clearGrantedBy(actor, "racePast", actorRacePastItem(actor));
@@ -96,13 +108,26 @@ export async function applyRace(actor, key, { tag = "race", mirror = true } = {}
   const def = raceDef(key);
   // Пака в мире может не быть (свежий мир, отключённая библиотека): тогда
   // носителя не будет, но ключ и стартовые характеристики персонаж получит —
-  // лист продолжит работать по ключу, как до переезда.
+  // лист продолжит работать по ключу, как до переезда. Раньше это происходило
+  // молча (Находка I2, wdbc-n1k): без пака откат на константы даёт ключ и
+  // характеристики, но НОЛЬ расовых Черт, и игрок об этом не узнавал.
   const src = def?.uuid ? await fromUuid(def.uuid).catch(() => null) : null;
   if (src) {
     const data = src.toObject();
     delete data._id;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: tag } };
-    await actor.createEmbeddedDocuments("Item", [data]);
+    // Хук createItem применит Механику носителя асинхронно и Foundry его
+    // промис не ждёт — код, идущий следом (в Мастере создания это applySubrace
+    // с фильтром removesTraits), может пробежать по актору раньше, чем хук
+    // успел выдать расовые Черты (Находка I3, wdbc-n1k). Применяем Механику
+    // сами и синхронно ждём; хук всё равно сработает следом, но
+    // applyItemMechanics идемпотентна (mechanicsApplied) и повторно не сыграет.
+    const [created] = await actor.createEmbeddedDocuments("Item", [data]);
+    if (created) await applyItemMechanics(created);
+  } else {
+    ui.notifications?.warn(
+      `⚠️ Библиотека рас не загружена — Черты расы «${def?.label || key}» не выданы. `
+      + `Дождитесь полной загрузки мира и примените расу ещё раз.`);
   }
 
   await actor.update({
@@ -117,11 +142,14 @@ export async function applyRace(actor, key, { tag = "race", mirror = true } = {}
 /**
  * Субраса: только своей расе. Чужая — отказ с пояснением, лист не меняется:
  * молчаливое применение чужой субрасы испортило бы персонажа незаметно.
+ *
+ * Проверки идут ДО clearSubrace: clearSubrace теперь обнуляет и ключ
+ * (Находка C2, wdbc-n1k), а отказ обязан оставить лист как есть — иначе
+ * безобидная попытка кинуть чужую субрасу молча снимала бы уже стоящую.
  */
 export async function applySubrace(actor, key) {
   if (!actor) return;
-  await clearSubrace(actor);
-  if (!key) { await actor.update({ "system.subrace": "" }); return; }
+  if (!key) return clearSubrace(actor);
 
   const def  = subraceEntries()[key];
   const race = actor.system.race || "";
@@ -133,12 +161,21 @@ export async function applySubrace(actor, key) {
       `${def.label} — субраса расы «${parentLabel}», а у персонажа «${raceLabel}».`);
   }
 
+  await clearSubrace(actor);
+
   const src = def?.uuid ? await fromUuid(def.uuid).catch(() => null) : null;
   if (src) {
     const data = src.toObject();
     delete data._id;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: "subrace" } };
-    await actor.createEmbeddedDocuments("Item", [data]);
+    // Хук createItem применит Механику носителя асинхронно и Foundry его
+    // промис не ждёт (Hooks.callAll не await'ит колбэки) — фильтр removesTraits
+    // ниже читает actor.items СРАЗУ и может пробежать раньше хука, не увидев
+    // ещё не выданные субрасовые Черты (Находка I3, wdbc-n1k). Применяем
+    // Механику сами и синхронно ждём; хук всё равно сработает следом, но
+    // applyItemMechanics идемпотентна (mechanicsApplied) и повторно не сыграет.
+    const [created] = await actor.createEmbeddedDocuments("Item", [data]);
+    if (created) await applyItemMechanics(created);
   }
 
   // Субрасы друкхари отменяют часть расовых Черт. Имена в `removesTraits` и на

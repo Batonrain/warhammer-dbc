@@ -7,7 +7,8 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { raceCharsUpdate, actorRaceItem, actorRacePastItem, clearRace, applySubrace } from "../../module/apps/races.mjs";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+import { raceCharsUpdate, actorRaceItem, actorRacePastItem, clearRace, clearSubrace, applySubrace, applyRace } from "../../module/apps/races.mjs";
 
 const chars = over => ({
   ws: { base: 0 }, bs: { base: 0 }, s: { base: 0 }, t: { base: 0 }, ag: { base: 0 },
@@ -84,6 +85,30 @@ describe("предметы-носители расы и Прошлого не п
 
     expect(actor.deleted.sort()).toEqual(["past-1", "race-1"]);
   });
+
+  // Находка C2 общего ревью (wdbc-n1k): крестик «Снять расу» удалял носителя и
+  // выданное, но не трогал system.race/system.subrace — ключ оставался, и всё,
+  // что читает ключ (предикаты правил, CSS-тема wh-race-*, подбор элитных
+  // архетипов, reqRace, вкладка Навигатора), продолжало считать персонажа этой
+  // расой. Опустошить слот с листа было нельзя вообще.
+  it("clearRace обнуляет и ключ расы, и ключ субрасы", async () => {
+    const actor = actorStub([]);
+
+    await clearRace(actor);
+
+    const upd = actor.updates.find(u => "system.race" in u);
+    expect(upd["system.race"]).toBe("");
+    expect(actor.updates.some(u => u["system.subrace"] === "")).toBe(true);
+  });
+
+  it("clearSubrace обнуляет только ключ субрасы", async () => {
+    const actor = actorStub([]);
+
+    await clearSubrace(actor);
+
+    expect(actor.updates.some(u => u["system.subrace"] === "")).toBe(true);
+    expect(actor.updates.some(u => "system.race" in u)).toBe(false);
+  });
 });
 
 // Находка (раунд правок 1, ревью документации): removesTraits субрасы
@@ -125,5 +150,33 @@ describe("applySubrace снимает Черты по removesTraits", () => {
     await applySubrace(actor, "tzaangor");
 
     expect(actor.deleted).not.toContain("deadly-1");
+  });
+});
+
+// Находка I2 общего ревью (wdbc-n1k): без прочитанного пака (или без записи в
+// нём) raceFromConst даёт ключ и характеристики, но НОЛЬ расовых Черт — раньше
+// молча. Тесты идут вне Foundry (game.packs не заведён), поэтому библиотека
+// всегда на откате констант: applyRace(actor, "astartes") — как раз этот путь.
+describe("применение расы без прочитанной библиотеки предупреждает громко", () => {
+  function actorStub() {
+    const list = [];
+    list.get = id => list.find(i => i.id === id) ?? null;
+    const actor = {
+      system: { characteristics: chars(), skills: {}, groupSkills: {}, wounds: {} },
+      items: list, updates: [],
+      update: async data => { actor.updates.push(data); return data; },
+      createEmbeddedDocuments: async () => [],
+      deleteEmbeddedDocuments: async () => []
+    };
+    return actor;
+  }
+
+  it("предупреждает, что Черты не выданы, вместо тихого молчания", async () => {
+    resetCaptured();
+    const actor = actorStub();
+
+    await applyRace(actor, "astartes");
+
+    expect(captured.warnings.some(w => /библиотека рас/i.test(w) && /не выдан/i.test(w))).toBe(true);
   });
 });

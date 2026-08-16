@@ -8,7 +8,7 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
 import { RACES, SUBRACES, AELDARI_RACES } from "../../module/constants/races.mjs";
-import { raceEntries, raceDef, subracesOf, isAeldariRace, raceGroupList }
+import { raceEntries, raceDef, subracesOf, isAeldariRace, raceGroupList, raceKeyOf }
   from "../../module/apps/race-library.mjs";
 
 describe("библиотека рас", () => {
@@ -41,5 +41,26 @@ describe("библиотека рас", () => {
   it("группы сохраняют порядок для optgroup", () => {
     expect(raceGroupList().map(g => g.label))
       .toEqual(["Люди", "Отродия", "Аэльдари", "Другие Ксеносы"]);
+  });
+});
+
+// Находка C1 общего ревью (wdbc-n1k): дроп расы на лист брал ключ отдельно
+// (`system.key || ""`) и падал в пустую строку, если ГМ забыл заполнить
+// поле — а пустой ключ на пути применения означает «снять расу». Кэш выше
+// индексирует ту же запись под doc.id, поэтому раса без заполненного ключа
+// работала через пикер и стирала персонажа через дроп. raceKeyOf — единое
+// правило для обоих путей.
+describe("raceKeyOf — единое правило ключа для кэша и для дропа/хука", () => {
+  it("берёт system.key, если он заполнен", () => {
+    expect(raceKeyOf({ system: { key: "astartes" }, id: "abc123" })).toBe("astartes");
+  });
+
+  it("падает на id документа, если system.key пуст — как кэш выше", () => {
+    expect(raceKeyOf({ system: { key: "" }, id: "abc123" })).toBe("abc123");
+  });
+
+  it("без документа вовсе отдаёт пустую строку, а не бросает исключение", () => {
+    expect(raceKeyOf(null)).toBe("");
+    expect(raceKeyOf(undefined)).toBe("");
   });
 });

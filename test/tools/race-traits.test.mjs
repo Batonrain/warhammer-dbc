@@ -10,7 +10,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
-import { normTraitName, libraryTrait, missingRaceTraits, raceTraits } from "../../tools/race-traits.mjs";
+import { normTraitName, libraryTrait, missingRaceTraits, raceTraits, hasNumericTraitEffects } from "../../tools/race-traits.mjs";
 
 /** Нечисловые уточнения в скобках: «(4)», «(X)», «(+2)» из сравнения выбрасываются. */
 function bracketQualifiers(name) {
@@ -92,5 +92,29 @@ describe("сверка расовых Черт с библиотекой", () =>
     const keys  = files.map(f => normTraitName(JSON.parse(readFileSync(join(dir, f), "utf8")).name));
 
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+// Задел на будущее из общего ревью (wdbc-n1k): гейт needsNumbers в
+// missingRaceTraits смотрел только на charBonusStat/charBonuses — Черта с
+// одним sizeMod (Размер) под гейт не попадала, и связка с пустой заглушкой
+// в паке проходила сверку молча. Ровно так уже терялся Размер у пяти рас.
+describe("hasNumericTraitEffects покрывает все числовые виды эффекта Черты", () => {
+  it("charBonusStat/charBonuses/charValueBonuses — как и раньше", () => {
+    expect(hasNumericTraitEffects({ charBonusStat: "s" })).toBe(true);
+    expect(hasNumericTraitEffects({ charBonuses: [{ stat: "s", value: 1 }] })).toBe(true);
+    expect(hasNumericTraitEffects({ charValueBonuses: [{ stat: "s", value: 1 }] })).toBe(true);
+  });
+
+  it("sizeMod, armourAll, fearRating, initMod, speedMod тоже считаются числовыми", () => {
+    for (const key of ["sizeMod", "armourAll", "fearRating", "initMod", "speedMod"]) {
+      expect(hasNumericTraitEffects({ [key]: 1 })).toBe(true);
+    }
+  });
+
+  it("пустые или нулевые эффекты — не числовые", () => {
+    expect(hasNumericTraitEffects({})).toBe(false);
+    expect(hasNumericTraitEffects({ sizeMod: 0, armourAll: 0, charBonuses: [] })).toBe(false);
+    expect(hasNumericTraitEffects(undefined)).toBe(false);
   });
 });

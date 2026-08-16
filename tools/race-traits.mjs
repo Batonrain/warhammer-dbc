@@ -41,9 +41,28 @@ export function normTraitName(name) {
   return full.replace(/[^a-zа-яё]+/g, " ").trim();
 }
 
+// Виды числового бонуса, ради которых у Черты не может быть пары-заглушки:
+// список полей system.effects, которые считает актор (те же, что заводит run()
+// ниже и origin-shared.mjs). Раньше гейт needsNumbers смотрел только на
+// charBonusStat/charBonuses — Черта с одним sizeMod (Размер) под гейт не
+// попадала, и связка с пустой заглушкой проходила сверку молча: так уже
+// терялся Размер у пяти рас, пока usable() не проверял sizeMod вовсе.
+const NUMERIC_EFFECT_KEYS = [
+  "charBonusStat", "charBonuses", "charValueBonuses",
+  "armourAll", "fearRating", "sizeMod", "initMod", "speedMod"
+];
+
+/** Есть ли у effects хоть один числовой бонус, ради которого нужна рабочая пара. */
+export function hasNumericTraitEffects(effects) {
+  return NUMERIC_EFFECT_KEYS.some(k => {
+    const v = effects?.[k];
+    return Array.isArray(v) ? v.length > 0 : !!v;
+  });
+}
+
 /** Есть ли у документа чем считать: рейтинг и хоть один эффект. */
 const usable = doc => !!doc?.system?.hasRating && (Number(doc.system.rating) || 0) > 0
-  && ((doc.effects || []).length > 0 || !!doc.system.effects?.charBonusStat);
+  && ((doc.effects || []).length > 0 || hasNumericTraitEffects(doc.system?.effects));
 
 /**
  * Омонимы: имя из констант и документ библиотеки совпадают по ключу сверки
@@ -116,7 +135,7 @@ export function missingRaceTraits() {
     .filter(([name, t]) => {
       const doc = libraryTrait(name);
       if (!doc) return true;
-      const needsNumbers = !!(t.effects?.charBonusStat || (t.effects?.charBonuses || []).length);
+      const needsNumbers = hasNumericTraitEffects(t.effects);
       return needsNumbers && !usable(doc);
     })
     .map(([name]) => name);

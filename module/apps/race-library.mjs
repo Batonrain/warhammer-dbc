@@ -22,8 +22,21 @@ let SUB_CACHE  = null;      // { key: SubraceDef }
 /** Группа расы по константам — резерв, пока пак не прочитан. */
 const constGroup = key => RACE_GROUPS.find(g => g.races.includes(key))?.label || "";
 
+/**
+ * Единое правило ключа расы/субрасы: `system.key`, а если поле не заполнено —
+ * идентификатор документа. Тем же правилом читает кэш (ниже) — и им же обязан
+ * пользоваться КАЖДЫЙ потребитель, который вычисляет ключ у документа расы САМ
+ * (дроп на лист, страховочный хук createItem), а не берёт готовый из кэша.
+ * Раньше дроп на лист брал ключ отдельно (`system.key || ""`) и падал в пустую
+ * строку — а пустая строка на пути применения означает «снять расу», поэтому
+ * раса без заполненного `system.key` через дроп молча стирала персонажа
+ * (Находка C1 общего ревью, wdbc-n1k): в кэше та же запись индексируется под
+ * `doc.id` и через пикер работала нормально.
+ */
+export function raceKeyOf(doc) { return doc?.system?.key || doc?.id || ""; }
+
 const raceFromDoc = doc => ({
-  key: doc.system?.key || doc.id, label: doc.name,
+  key: raceKeyOf(doc), label: doc.name,
   group: doc.system?.group || "",
   chars: { ...(doc.system?.chars || {}) },
   bonusRolls: doc.system?.bonusRolls || 0,
@@ -44,7 +57,7 @@ const raceFromConst = (key, r) => ({
 });
 
 const subFromDoc = doc => ({
-  key: doc.system?.key || doc.id, label: doc.name,
+  key: raceKeyOf(doc), label: doc.name,
   parent: doc.system?.parent || "", cost: doc.system?.cost || 0,
   effect: doc.system?.effect || "", god: doc.system?.god || "",
   charMods: { ...(doc.system?.charMods || {}) },

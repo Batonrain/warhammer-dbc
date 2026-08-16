@@ -36,7 +36,7 @@ import { refreshCalendarWidget, initTimeFlow } from "./module/apps/imperial-cale
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
-import "./module/apps/race-library.mjs"; // хуки кэша рас (пак читается по готовности мира)
+import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace } from "./module/apps/races.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
@@ -1158,21 +1158,40 @@ async function _twinLookup(name) {
 // что и у пары боевых профилей ниже: createItem рассылается всем клиентам,
 // а выполнить/применить должен только клиент того, кто реально создал
 // документ (иначе выполнится у каждого).
+/**
+ * Раса/субраса, попавшая на актора мимо листа — макросом, скриптом,
+ * копированием. Флаг originGrant ставит сам applyRace, поэтому его
+ * собственная выдача сюда не возвращается и цикла не образует.
+ *
+ * Ключ — тем же правилом, что и кэш библиотеки (raceKeyOf: system.key или id
+ * документа), а не «system.key || ''»: пустая строка на пути применения
+ * означает «снять расу», и раса без заполненного ключа стирала бы персонажа
+ * тем же способом, что чинит Находка C1 у дропа на лист (wdbc-n1k). Если
+ * ключ не определился вовсе (документ без id — на практике не бывает, но
+ * отказ явный, а не тихое снятие) — предмет всё равно убираем с актора, но
+ * применение не зовём.
+ */
+export async function handleStrayRaceItem(item, actor) {
+  const key = raceKeyOf(item);
+  await item.delete();
+  if (!key) {
+    ui.notifications?.error(
+      `Не удалось определить ключ ${item.type === "race" ? "расы" : "субрасы"} у «${item.name}» — предмет снят с актора без применения.`);
+    return;
+  }
+  if (item.type === "race") await applyRace(actor, key);
+  else await applySubrace(actor, key);
+}
+
 Hooks.on("createItem", async (item, options, userId) => {
   if (game.user.id !== userId) return;
   const actor = item.parent;
   if (!(actor instanceof Actor)) return;
 
-  // Раса, попавшая на актора мимо листа — макросом, скриптом, копированием.
-  // Флаг originGrant ставит сам applyRace, поэтому его собственная выдача сюда
-  // не возвращается и цикла не образует. Свой clientId-фильтр выше уже не даёт
-  // каждому подключённому клиенту повторить удаление и применение самому.
+  // Свой clientId-фильтр выше уже не даёт каждому подключённому клиенту
+  // повторить удаление и применение самому.
   if (["race", "subrace"].includes(item.type) && !item.getFlag("warhammer-dbc", "originGrant")) {
-    const key = item.system?.key || "";
-    await item.delete();
-    if (item.type === "race") await applyRace(actor, key);
-    else await applySubrace(actor, key);
-    return;
+    return handleStrayRaceItem(item, actor);
   }
 
   await runAutoScripts(item);

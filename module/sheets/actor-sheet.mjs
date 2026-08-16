@@ -46,6 +46,7 @@ import { applyDivination } from "../apps/divinations.mjs";
 import { applyRace, applySubrace, clearRace, clearSubrace,
          actorRaceItem, actorSubraceItem,
          applyLegion, applyYnnari, applyHarlequin } from "../apps/races.mjs";
+import { raceDef, raceKeyOf } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
 import { grantAstartesImplants } from "../apps/astartes-implants.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
@@ -243,7 +244,18 @@ function onMutgiftRoll(event) {
 // ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
 // только разбор текстовых списков колбэком createTraits — его зовёт и Мастер
 // создания персонажа)
-function onGeneApply()      { return applyRace(this.actor, "astartes"); }
+//
+// Находка I1 общего ревью (wdbc-n1k): applyRace выдаёт только Черты
+// (Конструктором, с предмета-носителя) — поле talents в схеме расы читает
+// один потребитель, Мастер создания (apps/creation.mjs). Кнопка «Применить
+// расовые бонусы» раньше (applyRaceData) выдавала и таланты — без этого шага
+// она перестала бы выдавать 9 стартовых талантов Астартес. _applyStartingTalents
+// сама зовёт splitTopLevel — строку из библиотеки резать самим не нужно.
+async function onGeneApply() {
+  await applyRace(this.actor, "astartes");
+  const def = raceDef("astartes");
+  return this._applyStartingTalents(def?.talents ? [def.talents] : [], def?.label || "Астартес");
+}
 function onLegionApply()    { return applyLegion(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onYnnariApply()    { return applyYnnari(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onHarlequinApply() { return applyHarlequin(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
@@ -694,8 +706,19 @@ export class WarhammerCharacterSheet
    */
   async _onDropItem(event, data) {
     const src = await Item.implementation.fromDropData(data);
-    if (src?.type === "race")    return applyRace(this.actor, src.system?.key || "");
-    if (src?.type === "subrace") return applySubrace(this.actor, src.system?.key || "");
+    if (src?.type === "race" || src?.type === "subrace") {
+      // Ключ — тем же правилом, что и кэш библиотеки (raceKeyOf): пустой
+      // system.key нельзя молча читать как «снять расу» (Находка C1, wdbc-n1k) —
+      // на этом пути пустой ключ означает ошибку данных, а не команду игрока.
+      // «Снять» остаётся доступным только крестиком слота (raceClear/subraceClear).
+      const key = raceKeyOf(src);
+      if (!key) {
+        ui.notifications?.error(
+          `Не удалось определить ключ ${src.type === "race" ? "расы" : "субрасы"} у «${src.name}» — перетаскивание отменено.`);
+        return;
+      }
+      return src.type === "race" ? applyRace(this.actor, key) : applySubrace(this.actor, key);
+    }
     return super._onDropItem(event, data);
   }
 

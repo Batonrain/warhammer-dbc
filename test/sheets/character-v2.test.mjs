@@ -124,6 +124,49 @@ describe("слоты Расы и Субрасы", () => {
     expect(updates).toEqual([]);
     expect(captured.warnings.some(w => /Истиннорожд.+Друкхари.+Азуриане/.test(w))).toBe(true);
   });
+
+  // Находка C1 общего ревью (wdbc-n1k): дроп брал ключ отдельно от кэша
+  // (`system.key || ""`) и падал в пустую строку, если ГМ не заполнил поле —
+  // а пустой ключ на пути применения означает «снять расу»: дроп молча стирал
+  // носителя, все расовые Черты, субрасу и Прошлое. Через пикер та же запись
+  // работала: кэш индексирует её под id документа. Дроп обязан читать ключ
+  // тем же правилом (raceKeyOf), что и кэш.
+  it("раса без system.key на дропе берёт ключ по id документа, а не снимает расу", async () => {
+    resetCaptured();
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: { ws: { base: 30 } }, skills: {}, groupSkills: {}, race: "human"
+    });
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+    globalThis.Item.implementation = {
+      fromDropData: async () => ({ type: "race", id: "astartes", name: "Астартес", system: { key: "" } })
+    };
+
+    await WarhammerCharacterSheet.prototype._onDropItem.call(sheet, {}, {});
+
+    // clearRace внутри applyRace пишет транзитное "" первым шагом (снимает
+    // ПРЕЖНЮЮ расу) — финальное значение перезаписывается следом тем же
+    // update-вызовом, который несёт настоящий ключ.
+    const raceUpdates = updates.filter(u => "system.race" in u);
+    expect(raceUpdates.at(-1)["system.race"]).toBe("astartes");
+  });
+
+  it("раса без ключа и без id — явный отказ, лист не меняется", async () => {
+    resetCaptured();
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {}, race: "human"
+    });
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+    globalThis.Item.implementation = {
+      fromDropData: async () => ({ type: "race", id: "", name: "Повреждённый предмет", system: { key: "" } })
+    };
+
+    await WarhammerCharacterSheet.prototype._onDropItem.call(sheet, {}, {});
+
+    expect(updates).toEqual([]);
+    expect(captured.errors.length).toBeGreaterThan(0);
+  });
 });
 
 describe("производные листы не наследуют чужой шаблон", () => {
