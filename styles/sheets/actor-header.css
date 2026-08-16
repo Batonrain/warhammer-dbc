@@ -94,6 +94,11 @@
 }
 .warhammer-dbc .char-wizard-btn:hover { background: #5a2a0e; }
 
+/* «В Орду» — рядом с Мастером, но своим цветом: она создаёт нового актора,
+   а не правит текущего, и путать их не стоит. */
+.warhammer-dbc .horde-convert-btn { margin-left: 6px; background: #123a26; border-color: #2f9e6a; }
+.warhammer-dbc .horde-convert-btn:hover { background: #1b5c3b; }
+
 /* Мировоззрение в шапке — компактнее */
 .warhammer-dbc .align-label { font-size: 0.82em; gap: 3px; }
 .warhammer-dbc .alignment-select { font-size: 0.95em; padding: 1px 3px; }

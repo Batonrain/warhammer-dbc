@@ -9,6 +9,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES } from "../constants/items.mjs";
 import { _degWord, splitTopLevel, esc } from "../helpers/utils.mjs";
 import { showCreationWizard, ruSpec } from "../apps/creation.mjs";
+import { onConvertToHorde } from "../apps/horde-convert.mjs";
 import { buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog, showAttackDialogNoWeapon } from "./attack-dialog.mjs";
@@ -251,7 +252,7 @@ export class WarhammerCharacterSheet
       infamyPlus: whenEditable(onInfamyPlus),
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
-      charWizard: whenEditable(onCharWizard),
+      convertToHorde: whenEditable(onConvertToHorde),
       abilityDetail: whenEditable(onAbilityDetail),
       pathsToggle: whenEditable(onPathsToggle),
       statAdd: whenEditable(onStatAdd),

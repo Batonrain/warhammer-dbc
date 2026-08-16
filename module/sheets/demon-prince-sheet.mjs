@@ -8,6 +8,7 @@ import { homeworldSheetContext } from "../apps/homeworlds.mjs";
 import { divinationSheetContext } from "../apps/divinations.mjs";
 import { WarhammerCharacterSheet } from "./actor-sheet.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
+import { onConvertToHorde } from "../apps/horde-convert.mjs";
 import { DP_GODS, dpGodMeta, DP_ASCENSION, DP_IMMORTALITY, DP_RETINUE,
          DP_FAVOR_RULES, dpGiftsFor, dpGiftCost, DP_GIFT_NOTE,
          dpDivineTrait, DEMON_FORMS, DEMON_KEY_TRAITS, DEMON_WEAPON_PROPS,
@@ -72,6 +73,8 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       dpGiftBuy:       whenEditable(onGiftBuy),
       dpGiftSacrifice: whenEditable(onGiftSacrifice),
       dpManifest:      whenEditable(onManifest),
+      // Кнопка «В Орду» в своей шапке — действие объявляем здесь же.
+      convertToHorde:  whenEditable(onConvertToHorde),
       dpAscend:        whenEditable(onAscend),
       dpUnascend:      whenEditable(onUnascend)
     }
