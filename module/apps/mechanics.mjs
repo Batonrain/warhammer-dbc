@@ -1285,8 +1285,8 @@ function optHtml(value, label, selected) {
   return `<option value="${esc(value)}" ${selected ? "selected" : ""}>${esc(label)}</option>`;
 }
 
-function buildEntryFieldsHtml(groupId, ent, isGM) {
-  const dis = isGM ? "" : "disabled";
+function buildEntryFieldsHtml(groupId, ent, canEdit) {
+  const dis = canEdit ? "" : "disabled";
   if (ent.kind === "corruption") {
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-corruption-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
@@ -1322,8 +1322,8 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     const dropInner = ent.sourceUuid
       ? `<img src="${esc(ent.sourceImg || "icons/svg/item-bag.svg")}" class="grant-drop-img"/>
          <span class="grant-drop-name">${esc(ent.sourceName || "?")}</span>
-         ${isGM ? `<button type="button" class="grant-drop-clear" data-action="grantDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
-      : `<span class="grant-drop-placeholder">${isGM ? `Перетащите ${ent.kind === "trait" ? "Черту" : "Талант"} сюда` : "—"}</span>`;
+         ${canEdit ? `<button type="button" class="grant-drop-clear" data-action="grantDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
+      : `<span class="grant-drop-placeholder">${canEdit ? `Перетащите ${ent.kind === "trait" ? "Черту" : "Талант"} сюда` : "—"}</span>`;
     let out = `<div class="grant-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}">${dropInner}</div>`;
     if (ent.kind === "trait" && ent.sourceHasRating) {
       out += `<input type="number" class="grant-entry-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.rating ?? "")}" placeholder="Рейтинг" ${dis}/>`;
@@ -1451,8 +1451,8 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     const dropZone = (slot, key, label) => {
       const inner = key
         ? `<span class="grant-drop-name">${esc(label || key)}</span>
-           ${isGM ? `<button type="button" class="wprop-drop-clear" data-action="wpropDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}" title="Убрать">✕</button>` : ""}`
-        : `<span class="grant-drop-placeholder">${isGM ? "Перетащите Свойство оружия сюда" : "—"}</span>`;
+           ${canEdit ? `<button type="button" class="wprop-drop-clear" data-action="wpropDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}" title="Убрать">✕</button>` : ""}`
+        : `<span class="grant-drop-placeholder">${canEdit ? "Перетащите Свойство оружия сюда" : "—"}</span>`;
       return `<div class="grant-drop-zone wprop-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}">${inner}</div>`;
     };
     const action = ent.weaponPropAction || "add";
@@ -1541,7 +1541,7 @@ function buildSkillSelectorHtml(groupId, ent, dis) {
  * после ручной правки JSON) — иначе выбор в <select> не совпал бы ни с
  * одним <option> и вид записи visually «съехал» бы на другой.
  */
-function buildEntryHtml(groupId, ent, isGM, depth = 1) {
+function buildEntryHtml(groupId, ent, canEdit, depth = 1) {
   const kindEntries = Object.entries(KIND_LABELS)
     .filter(([k]) => k !== "group" || ent.kind === "group" || depth < MAX_GROUP_DEPTH);
   const kindOpts = kindEntries.map(([k, l]) => optHtml(k, l, ent.kind === k)).join("");
@@ -1549,12 +1549,12 @@ function buildEntryHtml(groupId, ent, isGM, depth = 1) {
   const isGroup  = ent.kind === "group";
   return `<div class="grant-entry ${isScript ? "grant-entry-script" : ""} ${isGroup ? "grant-entry-group" : ""}" data-group-id="${groupId}" data-entry-id="${ent.id}">
     <div class="grant-entry-row">
-      <select class="grant-entry-kind" data-group-id="${groupId}" data-entry-id="${ent.id}" ${isGM ? "" : "disabled"}>${kindOpts}</select>
-      ${buildEntryFieldsHtml(groupId, ent, isGM)}
-      ${isGM ? `<button type="button" class="grant-entry-remove" data-action="grantEntryRemove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
+      <select class="grant-entry-kind" data-group-id="${groupId}" data-entry-id="${ent.id}" ${canEdit ? "" : "disabled"}>${kindOpts}</select>
+      ${buildEntryFieldsHtml(groupId, ent, canEdit)}
+      ${canEdit ? `<button type="button" class="grant-entry-remove" data-action="grantEntryRemove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
     </div>
     <div class="grant-entry-preview">${esc(describeMechEntry(ent))}</div>
-    ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), isGM, depth + 1, true) : ""}
+    ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), canEdit, depth + 1, true) : ""}
   </div>`;
 }
 
@@ -1563,25 +1563,58 @@ function buildEntryHtml(groupId, ent, isGM, depth = 1) {
  * «✕ Удалить группу» (удаление — через «✕» самой записи-контейнера у
  * родителя, отдельной кнопки не нужно), но оставляет переключатель И/ИЛИ.
  */
-function buildGroupHtml(grp, isGM, depth = 1, nested = false) {
-  const entriesHtml = (grp.entries || []).map(e => buildEntryHtml(grp.id, e, isGM, depth)).join("")
+function buildGroupHtml(grp, canEdit, depth = 1, nested = false) {
+  const entriesHtml = (grp.entries || []).map(e => buildEntryHtml(grp.id, e, canEdit, depth)).join("")
     || `<div class="grant-empty-hint"><em>Записей нет</em></div>`;
   const opHint = grp.operator === "OR" ? "актор выбирает одну запись" : "применяются все записи";
   return `<div class="grant-group ${nested ? "grant-group-nested" : ""}" data-group-id="${grp.id}">
     <div class="grant-group-head">
       <span class="grant-op-badge grant-op-${grp.operator}">${grp.operator === "OR" ? "ИЛИ" : "И"}</span>
       <span class="grant-op-hint">${opHint}</span>
-      ${isGM ? `<button type="button" class="grant-op-toggle" data-action="grantOpToggle" data-group-id="${grp.id}" title="Переключить И/ИЛИ">⇄</button>` : ""}
-      ${isGM && !nested ? `<button type="button" class="grant-group-remove" data-action="grantGroupRemove" data-group-id="${grp.id}" title="Удалить группу">✕</button>` : ""}
+      ${canEdit ? `<button type="button" class="grant-op-toggle" data-action="grantOpToggle" data-group-id="${grp.id}" title="Переключить И/ИЛИ">⇄</button>` : ""}
+      ${canEdit && !nested ? `<button type="button" class="grant-group-remove" data-action="grantGroupRemove" data-group-id="${grp.id}" title="Удалить группу">✕</button>` : ""}
     </div>
     <div class="grant-entries">${entriesHtml}</div>
-    ${isGM ? `<button type="button" class="grant-entry-add" data-action="grantEntryAdd" data-group-id="${grp.id}">➕ Запись</button>` : ""}
+    ${canEdit ? `<button type="button" class="grant-entry-add" data-action="grantEntryAdd" data-group-id="${grp.id}">➕ Запись</button>` : ""}
   </div>`;
 }
 
-/** Собирает HTML всех групп механики предмета — идёт в контекст листа предмета. */
-export function buildMechanicsTabHtml(item, isGM) {
-  return getItemMechanics(item).map(g => buildGroupHtml(g, isGM)).join("");
+/**
+ * Записать механику предмета. Настраивают её все за столом, а не один Мастер:
+ * Черты, Таланты и снаряжение лежат в компендиумах и в мире, и своими для
+ * игрока не бывают. Клиенту чужой предмет писать не дают, поэтому без прав на
+ * документ правка уходит Мастеру по системному сокету (обработчик —
+ * warhammer-dbc.mjs), а он пишет её у себя.
+ *
+ * Досчёт system.effects.mechAddProps/mechRemoveProps идёт при КАЖДОМ
+ * сохранении, а не только из полей weaponProp: иначе смена kind или удаление
+ * записи не подчистили бы то, что раньше построил kind:"weaponProp".
+ *
+ * Пересборку эффектов отсюда НЕ зовём: на неё подписан хук updateItem — он
+ * ловит любую правку Механики, не только с листа предмета.
+ */
+export async function saveItemMechanics(item, groups) {
+  if (!item) return;
+  if (item.isOwner) {
+    await item.setFlag("warhammer-dbc", "mechanics", groups);
+    await syncWeaponPropItemEffects(item);
+    return;
+  }
+  if (!game.users?.activeGM) {
+    return ui.notifications?.warn(
+      "Правка не сохранена: предмет не ваш, а Мастера нет в игре — записать её некому.");
+  }
+  game.socket?.emit("system.warhammer-dbc",
+    { action: "itemMechanics", uuid: item.uuid, groups, userId: game.user.id });
+}
+
+/**
+ * Собирает HTML всех групп механики предмета — идёт в контекст листа предмета.
+ * `canEdit` — можно ли вообще править этот предмет: запертый компендиум не
+ * перепишет и Мастер. Роль здесь ни при чём — механику настраивают все.
+ */
+export function buildMechanicsTabHtml(item, canEdit) {
+  return getItemMechanics(item).map(g => buildGroupHtml(g, canEdit)).join("");
 }
 
 // ══════════════════ ТРЕБОВАНИЯ (условия-предпосылки) ══════════════════

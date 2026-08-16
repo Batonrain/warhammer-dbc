@@ -35,7 +35,8 @@ import { WarhammerActiveEffectConfig } from "./module/sheets/active-effect-confi
 import { refreshCalendarWidget, initTimeFlow } from "./module/apps/imperial-calendar.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
-import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
+import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
+         saveItemMechanics } from "./module/apps/mechanics.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
@@ -560,6 +561,13 @@ Hooks.once("ready", () => {
         if (!_validSquadChange(before, next, requester))
           return console.warn("Warhammer DBC | Изменение состава формирования отклонено.");
         await fm.update({ "system.posts": data.posts, "system.attached": next.members });
+      }
+      else if (data.action === "itemMechanics") {
+        // Механику предмета настраивают все за столом, но писать чужой предмет
+        // клиенту не дают — правка приходит сюда и ложится нашей рукой.
+        const item = await fromUuid(data.uuid).catch(() => null);
+        if (!(item instanceof Item) || !Array.isArray(data.groups)) return;
+        await saveItemMechanics(item, data.groups);
       }
       else if (data.action === "cogitatorDiary") {
         // Игрок ведёт запись на странице-дневнике когитатора — пишет ГМ.

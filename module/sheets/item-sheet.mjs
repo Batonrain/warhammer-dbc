@@ -35,7 +35,7 @@ import { DW_GODS_MAP }                               from "../constants/demon-we
 import { summarizeEffectChanges, expectedPhase }     from "../constants/effect-keys.mjs";
 import { createBlankEffect } from "../apps/effects.mjs";
 import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml,
-         syncWeaponPropItemEffects, findMechGroup, findMechEntry,
+         saveItemMechanics, findMechGroup, findMechEntry,
          getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
@@ -68,21 +68,11 @@ function _typeLabel(map, key) {
 // стоят однострочные переходники, подставляющие this.item.
 
 /**
- * Досчитываем system.effects.mechAddProps/mechRemoveProps при КАЖДОМ
- * сохранении, не только из полей weaponProp — иначе смена kind/удаление группы
- * или записи не подчистили бы то, что раньше построил kind:"weaponProp"
- * (см. mechanics.mjs).
- *
- * Пересборку эффектов отсюда НЕ зовём: на неё уже подписан хук updateItem
- * (warhammer-dbc.mjs) — он ловит любую правку Механики, не только с этого
- * листа. Два вызова разом гонялись бы: хук ядро зовёт синхронно, ещё до того
- * как setFlag вернёт управление, и оба прогона успели бы увидеть «эффекта
- * нет» и завести по своему.
+ * Сохранение Механики живёт в mechanics.mjs: писать её умеет не только лист
+ * (без прав на предмет правка уходит Мастеру по сокету), поэтому путь один на
+ * всех, а здесь — только короткое имя.
  */
-async function saveMechanics(item, arr) {
-  await item.setFlag("warhammer-dbc", "mechanics", arr);
-  await syncWeaponPropItemEffects(item);
-}
+const saveMechanics = (item, arr) => saveItemMechanics(item, arr);
 
 // Какой набор групп требований правим («req» ритуалиста или «assistReq»
 // ассистентов) — в data-req, поэтому один комплект обработчиков обслуживает
@@ -737,7 +727,6 @@ export class WarhammerItemSheet
    * ссылку (UUID), имя, картинку, признак «есть рейтинг» у Черт.
    */
   async _onDropGrantItem(event, data, dropZone) {
-    if (!this.item.isOwner) return;
     const groupId = dropZone.dataset.groupId, entryId = dropZone.dataset.entryId;
     const src = await Item.implementation.fromDropData(data);
     if (!src) return;
@@ -754,7 +743,7 @@ export class WarhammerItemSheet
     ent.sourceHasRating  = src.type === "trait" ? !!src.system.hasRating : false;
     ent.rating           = (src.type === "trait" && src.system.hasRating) ? (src.system.rating ?? 0) : "";
     ent.specialization   = src.type === "talent" ? (src.system.specialization || "") : "";
-    await this.item.setFlag("warhammer-dbc", "mechanics", groups);
+    await saveMechanics(this.item, groups);
   }
 
   /**
@@ -764,7 +753,6 @@ export class WarhammerItemSheet
    * при действии «заменить свойство») — пишет в соответствующую пару полей.
    */
   async _onDropWeaponPropItem(event, data, dropZone) {
-    if (!this.item.isOwner) return;
     const groupId = dropZone.dataset.groupId, entryId = dropZone.dataset.entryId;
     const slot = dropZone.dataset.slot === "newProp" ? "newProp" : "prop";
     const src = await Item.implementation.fromDropData(data);
@@ -787,8 +775,7 @@ export class WarhammerItemSheet
         && (ent.weaponPropAction === "increase" || ent.weaponPropAction === "decrease")) {
       ent.weaponPropAction = "add";
     }
-    await this.item.setFlag("warhammer-dbc", "mechanics", groups);
-    await syncWeaponPropItemEffects(this.item);
+    await saveMechanics(this.item, groups);
   }
 
   /** @override */
@@ -1280,7 +1267,13 @@ export class WarhammerItemSheet
     // предмета) — единый Конструктор, общая вкладка для всех типов. Заменил
     // собой прежние раздельные Скрипты/Выдачи/кнопку «Конструктор» в Эффектах.
     context.itemMechGroups   = getItemMechanics(this.item);
-    context.itemMechanicsHtml = buildMechanicsTabHtml(this.item, context.isGM);
+    // Механику настраивают все за столом, а не один Мастер: Черты, Таланты и
+    // снаряжение лежат в компендиумах и в мире, и «своими» для игрока не
+    // бывают — по владению доступ давать нечему. Закрыт только запертый
+    // компендиум: там правку не примут ни у кого. Чужой предмет клиент писать
+    // не вправе, поэтому такая правка уходит Мастеру (saveItemMechanics).
+    context.canEditMech       = !this.item.compendium?.locked;
+    context.itemMechanicsHtml = buildMechanicsTabHtml(this.item, context.canEditMech);
 
     // Ритуал — контентные разделы книги (стр. 393-425) и два набора
     // механических требований: к ритуалисту и к ассистентам.
@@ -1328,6 +1321,22 @@ export class WarhammerItemSheet
     }
     await this.item.update({ "system.quantity": (Number(sysT.quantity) || 0) + n });
     ui.notifications.info(`Собрано торпед: ${n}. Списано из грузов: ${whLabel} ×${n}${navNeeded ? `, ${navLabel} ×${n}` : ""}.`);
+  }
+
+  /**
+   * ApplicationV2 гасит всю форму, если предмет не наш. Вкладку «Механика» это
+   * гасить не должно: её настраивают все за столом, а правка чужого предмета
+   * уходит Мастеру (saveItemMechanics). Полей формы там нет — у элементов
+   * Механики нет name, в сабмит они не попадают и правятся своими
+   * обработчиками, — поэтому вернуть их в строй безопасно.
+   * @override
+   */
+  _toggleDisabled(disabled) {
+    super._toggleDisabled?.(disabled);
+    if (!disabled || this.item.compendium?.locked) return;
+    this.element?.querySelectorAll('[data-tab="mechanics"] input, [data-tab="mechanics"] select,'
+      + ' [data-tab="mechanics"] textarea, [data-tab="mechanics"] button')
+      .forEach(node => { node.disabled = false; });
   }
 
   _onRender(context, options) {
