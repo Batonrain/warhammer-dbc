@@ -14,8 +14,8 @@ import { CHARACTERISTICS }                       from "../constants/characterist
 import { aptitudeCat, charAptitudeSet,
          CHAR_APTITUDES }                        from "../constants/advancement.mjs";
 import { fateTerm }                              from "../helpers/utils.mjs";
-import { RACES, SUBRACES, RACE_GROUPS,
-         AELDARI_RACES }                         from "../constants/races.mjs";
+import { raceEntries, raceDef, subracesOf,
+         isAeldariRace, raceGroupList }          from "../apps/race-library.mjs";
 import { AZURIANE_PATHS, PATH_GRADES, PATH_GRADE_ORDER,
          buildPathSelectOptions, buildGradeSelectOptions } from "../constants/aeldari-paths.mjs";
 import { buildWorldSelectOptions, buildBandSelectOptions,
@@ -101,36 +101,33 @@ export function characterContext(actor) {
     };
   } else context.helmetless = null;
 
-  context.races = RACES;
+  context.races = raceEntries();
   // Сгруппированный список рас для optgroup — расы выключенных подсистем
   // (напр. «Книга Эльдар») из списка убираем, кроме уже стоящей у этого
   // актора: так подсистему можно выключить, не сломав существующих
   // персонажей (та же логика, что и у disabledActorTypes()).
   const offRaces = disabledRaceKeys();
-  context.raceGroups = RACE_GROUPS.map(g => ({
+  context.raceGroups = raceGroupList().map(g => ({
     label: g.label,
-    races: g.races.filter(k => RACES[k] && (k === system.race || !offRaces.includes(k)))
-      .map(k => ({ key: k, label: RACES[k].label }))
+    races: g.races.filter(r => r.key === system.race || !offRaces.includes(r.key))
   })).filter(g => g.races.length);
-  const currentRace = RACES[system.race];
-  context.availableSubraces = currentRace?.subraces?.length
-    ? currentRace.subraces.map(key => ({ key, label: SUBRACES[key] })) : [];
+  context.availableSubraces = subracesOf(system.race);
   context.hasSubraces = context.availableSubraces.length > 0;
-  context.isAeldari = AELDARI_RACES.includes(system.race);
+  context.isAeldari = isAeldariRace(system.race);
   context.isYnnari  = system.race === "ynnari";
   // Фактор Прибыли (Вольный Торговец): бонус = ФП ÷ 10 (как у характеристик)
   context.profitFactorBonus = Math.floor((Number(system.aspirations?.profitFactor) || 0) / 10);
   // Иннари: выбор «Прошлого» (бывшей расы) и её бонусы + Черты Иннари.
   context.ynnariPast      = system.ynnariPast || "";
-  context.ynnariPastLabel = RACES[system.ynnariPast]?.label || "";
-  context.ynnariPastOptions = (RACES.ynnari.pastRaces || [])
-    .map(k => ({ key: k, label: RACES[k]?.label || k }));
+  context.ynnariPastLabel = raceDef(system.ynnariPast)?.label || "";
+  context.ynnariPastOptions = (raceDef("ynnari")?.pastRaces || [])
+    .map(k => ({ key: k, label: raceDef(k)?.label || k }));
   // Арлекин: выбор «Прошлого» (изначальной расы) и её бонусы + Черты Арлекина.
   context.isHarlequin        = system.race === "harlequin";
   context.harlequinPast      = system.harlequinPast || "";
-  context.harlequinPastLabel = RACES[system.harlequinPast]?.label || "";
-  context.harlequinPastOptions = (RACES.harlequin.pastRaces || [])
-    .map(k => ({ key: k, label: RACES[k]?.label || k }));
+  context.harlequinPastLabel = raceDef(system.harlequinPast)?.label || "";
+  context.harlequinPastOptions = (raceDef("harlequin")?.pastRaces || [])
+    .map(k => ({ key: k, label: raceDef(k)?.label || k }));
   context.masqueOptions  = buildMasqueOptions(system.harlequinMasque || "");
   context.selectedMasque = getMasque(system.harlequinMasque || "");
 

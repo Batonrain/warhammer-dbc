@@ -13,7 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { ARCHETYPES } from "../constants/archetypes.mjs";
-import { AELDARI_RACES } from "../constants/races.mjs";
+import { isAeldariRace } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
 
 const PACK = "warhammer-dbc.archetypes";
@@ -64,7 +64,7 @@ export function archetypesForRace(raceKey) {
   if (raceKey === "harlequin") return all.filter(([, a]) => a.race === "harlequin");
   if (raceKey === "human")     return human();
   // Аэльдари используют Пути, Сслиты — без архетипа; всё прочее — человеческие архетипы.
-  if (!AELDARI_RACES.includes(raceKey) && raceKey !== "sslyth") return human();
+  if (!isAeldariRace(raceKey) && raceKey !== "sslyth") return human();
   return [];
 }
 

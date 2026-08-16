@@ -36,6 +36,7 @@ import { refreshCalendarWidget, initTimeFlow } from "./module/apps/imperial-cale
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
+import "./module/apps/race-library.mjs"; // хуки кэша рас (пак читается по готовности мира)
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
 import { openSystemsOverview, refreshSystemsOverview } from "./module/apps/systems-overview.mjs";

@@ -4,7 +4,7 @@
 // Добавить книгу означает зарегистрировать источник и положить данные; ядро при
 // этом не меняется.
 
-import { RACES } from "../constants/races.mjs";
+import { ASTARTES_RULES } from "./library/astartes.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
@@ -37,9 +37,11 @@ const hwKey = actor =>
 // Черта нескольких рас, штраф от которой достаётся не носителю, а атакующему.
 registerRuleSource("core", () => CORE_RULES);
 
-// Поле `rules` у данных расы и Происхождения пока не заполнено — источники
-// вернут пустой массив. Заполнение идёт на этапе 3 плана.
-registerRuleSource("race", a => RACES[a?.system?.race]?.rules ?? []);
+// Машинная часть расовых Черт остаётся кодом (этап 3 плана): в данные уехало
+// описание расы, а не её правила.
+const RACE_RULES = { astartes: ASTARTES_RULES };
+
+registerRuleSource("race", a => RACE_RULES[a?.system?.race] ?? []);
 
 // Выключенная подсистема убирает свои правила из сборки: иначе выключатель
 // «Происхождения» гасил бы галочки в диалоге броска, а правила Происхождения

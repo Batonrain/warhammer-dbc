@@ -142,7 +142,7 @@ import { AVAILABILITY }                       from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive }                       from "./effects.mjs";
 import { expectedPhase }                      from "../constants/effect-keys.mjs";
-import { RACES }                              from "../constants/races.mjs";
+import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -1567,7 +1567,7 @@ export function describeReqEntry(e) {
       return `${what}: ${e.sourceName || "?"}${r}`;
     }
     case "reqRace":
-      return e.raceKey ? `Раса: ${RACES[e.raceKey]?.label || e.raceKey}` : "Раса: (не выбрана)";
+      return e.raceKey ? `Раса: ${raceDef(e.raceKey)?.label || e.raceKey}` : "Раса: (не выбрана)";
     case "reqArchetype":
       return e.archetypeName ? `Элитный архетип: ${e.archetypeName}` : "Элитный архетип: (не выбран)";
     case "reqPatron":
@@ -1711,7 +1711,7 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
       return out;
     }
     case "reqRace": {
-      const opts = Object.entries(RACES).map(([k, r]) => optHtml(k, r.label || k, e.raceKey === k)).join("");
+      const opts = Object.values(raceEntries()).map(r => optHtml(r.key, r.label, e.raceKey === r.key)).join("");
       return `<select class="req-race" ${d} ${dis}><option value="">— выберите расу —</option>${opts}</select>`;
     }
     case "reqArchetype": {
