@@ -164,6 +164,22 @@ const TYPES = {
       trait: { name: "", benefit: "" }, bookSource: ""
     }
   },
+  race: {
+    pack: null,
+    defaults: {
+      key: "", group: "", chars: {}, bonusRolls: 0, skills: "", gear: "", talents: "",
+      description: "", notes: "", hasGeneSeed: false, pastRaces: [],
+      size: 0, bonusPoints: 0, charShift: 0, fateRoll: "", skillsNote: "", adaptations: "",
+      bookSource: ""
+    }
+  },
+  subrace: {
+    pack: null,
+    defaults: {
+      key: "", parent: "", cost: 0, effect: "", god: "", charMods: {}, talents: "",
+      removesTraits: [], description: "", notes: "", bookSource: ""
+    }
+  },
   armourHistoryEntry: {
     pack: "armour-histories",
     defaults: {

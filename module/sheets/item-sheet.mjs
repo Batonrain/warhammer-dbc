@@ -1024,6 +1024,12 @@ export class WarhammerItemSheet
       context.ritualAssistReqHtml = buildRequirementsHtml(this.item, "assistReq", context.isGM);
     }
 
+    // Раса/Субраса — десять полей характеристик листаются циклом в шаблоне,
+    // а не выписываются по одной, как в архетипе: там их пять, здесь десять.
+    if (this.item.type === "race" || this.item.type === "subrace") {
+      context.charKeys = Object.entries(CHARACTERISTICS).map(([key, c]) => ({ key, label: c.abbr }));
+    }
+
     return context;
   }
 

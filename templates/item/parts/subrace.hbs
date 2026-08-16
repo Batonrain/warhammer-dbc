@@ -1,0 +1,45 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  СУБРАСА (ветвь расы: библиотека происхождений) --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "subrace")}}
+
+<div class="item-section">
+  <div class="item-section-title">СУБРАСА</div>
+  <div class="trait-fx-hint">Запись библиотеки «Расы»: ветвь расы-родителя, стоит опыта. Субрасовые Черты добавляются на вкладке МЕХАНИКА ссылками на библиотеку Черт — здесь их нет намеренно, чтобы одно и то же не описывалось дважды.</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Ключ</label>
+    <input type="text" name="system.key" value="{{system.key}}" class="wr-input-md" placeholder="alaitoc"/>
+    <label class="wr-label">Раса-родитель</label>
+    <input type="text" name="system.parent" value="{{system.parent}}" class="wr-input-md" placeholder="ключ расы"/>
+    <label class="wr-label">Стоимость</label>
+    <input type="number" name="system.cost" value="{{system.cost}}" class="wr-input-sm"/>
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Бог</label>
+    <input type="text" name="system.god" value="{{system.god}}" class="wr-input-md"/>
+  </div>
+
+  <div class="item-section-title">ИЗМЕНЕНИЯ ХАРАКТЕРИСТИК</div>
+  <div class="weapon-row">
+    {{#each charKeys as |c|}}
+      <label class="wr-label">{{c.label}}</label>
+      <input type="number" name="system.charMods.{{c.key}}" value="{{lookup @root.system.charMods c.key}}" class="wr-input-sm"/>
+    {{/each}}
+  </div>
+
+  <div class="weapon-row"><label class="wr-label">Действие</label>
+    <textarea name="system.effect" rows="2" class="wr-input-lg">{{system.effect}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Таланты</label>
+    <textarea name="system.talents" rows="2" class="wr-input-lg">{{system.talents}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Снимает Черты</label>
+    <textarea name="system.removesTraits" rows="2" class="wr-input-lg">{{#each system.removesTraits}}{{this}}
+{{/each}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Описание</label>
+    <textarea name="system.description" rows="3" class="wr-input-lg">{{system.description}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Книга</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}" class="wr-input-lg"/></div>
+</div>
+
+{{/if}}
