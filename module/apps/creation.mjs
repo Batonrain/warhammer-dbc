@@ -20,6 +20,7 @@ import { disabledRaceKeys }             from "../constants/features.mjs";
 import { archetypeEntries, archetypesForRace } from "./archetypes.mjs";
 import { splitTopLevel, esc }           from "../helpers/utils.mjs";
 import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-levels.mjs";
+import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
 // Влияние (inf) сюда не входит — оно от arch.infRoll.
@@ -492,11 +493,28 @@ export function rollCharSet(bonusRolls = 0) {
   return { vals, sum: vals.reduce((s, v) => s + v, 0) };
 }
 
-/** Бросает формулу стартовых Ран вида "15+1d5". */
-async function rollWoundsFormula(formula) {
-  if (!formula) return 0;
-  try { return (await new Roll(String(formula)).evaluate()).total; }
-  catch(e) { console.warn("wounds formula:", formula, e); return 0; }
+/**
+ * Бросает формулу вида «15+1d5» и кладёт бросок в чат. Стартовые Раны и
+ * Бесчестие выпадают один раз на всю жизнь персонажа, и переспросить потом,
+ * что там было, негде — карточка в чате показывает бросок и игроку, и столу.
+ *
+ * Готовое число (например, +2 при распределении Характеристик) в чат не идёт:
+ * бросать нечего, а карточка «выпало 21» из ниоткуда только путала бы.
+ */
+async function rollFormula(actor, formula, flavor) {
+  if (formula === null || formula === undefined || formula === "") return 0;
+  if (typeof formula === "number") return formula;
+
+  try {
+    const roll = await new Roll(String(formula)).evaluate();
+    await roll.toMessage(
+      { speaker: ChatMessage.getSpeaker({ actor }), flavor },
+      { rollMode: game.settings.get("core", "rollMode") });
+    return roll.total;
+  } catch (e) {
+    console.warn("Warhammer DBC | формула создания:", formula, e);
+    return 0;
+  }
 }
 
 /** Выдаёт базовые импланты Механикум (пропуская уже имеющиеся). */
@@ -585,16 +603,22 @@ export async function applyCreation(actor,
     }
   }
 
-  // Раны (только если ещё не заданы)
-  const w = await rollWoundsFormula(arch?.wounds);
-  if (w && (actor.system.wounds?.max || 0) === 0) {
+  // Раны (только если ещё не заданы). Бросок уходит в чат: он одноразовый.
+  const woundsEmpty = (actor.system.wounds?.max || 0) === 0;
+  const w = woundsEmpty ? await rollFormula(actor, arch?.wounds, "Стартовые Раны") : 0;
+  if (w) {
     updates["system.wounds.max"]   = w;
     updates["system.wounds.value"] = w;
   }
 
-  // Влияние (Inf) по броску архетипа — только в пустое (до выдачи расы) поле
-  if (arch?.infRoll && wasEmpty.inf) {
-    const infv = await rollWoundsFormula(arch.infRoll);
+  // Стартовое Бесчестие (стр. 4): базовое расы плюс 1d5 при Генерации или +2
+  // при распределении. Архетипы Изгоев и Мореплавателей несут свой бросок
+  // Влияния — он старше общего правила и заменяет его целиком.
+  if (wasEmpty.inf) {
+    const infv = arch?.infRoll
+      ? await rollFormula(actor, arch.infRoll, `Влияние: ${arch.name}`)
+      : await rollFormula(actor,
+          startingInfamyFormula(sum.inf, !!charRolls), "Стартовое Бесчестие");
     if (infv) updates["system.characteristics.inf.base"] = infv;
   }
 
