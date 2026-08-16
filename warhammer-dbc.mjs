@@ -70,7 +70,7 @@ import { setSystemPackLocks }         from "./module/apps/pack-locks.mjs";
 import { importBooks }                from "./module/apps/books.mjs";
 import { registerHandlebarsHelpers }  from "./module/helpers/handlebars.mjs";
 import { registerHooks }              from "./module/hooks.mjs";
-import { registerCharacterStartButton } from "./module/apps/character-start.mjs";
+import { registerCharacterStartButton, openStartedCharacter, NEW_CHARACTER_NAME } from "./module/apps/character-start.mjs";
 import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
@@ -513,6 +513,14 @@ Hooks.once("ready", () => {
     try {
       // Баннер Сессии/Сцены — у ВСЕХ клиентов (не только у активного ГМа).
       if (data.action === "sessionSceneBanner") { showFateTurnBanner(data.text); return; }
+      // Ответ Мастера на просьбу завести персонажа: лист и Мастер создания
+      // открываются у того, кто просил, — остальные это сообщение пропускают.
+      if (data.action === "characterStarted") {
+        if (data.userId !== game.user.id) return;
+        const actor = await fromUuid(data.uuid).catch(() => null);
+        if (actor) await openStartedCharacter(actor);
+        return;
+      }
       if (game.user !== game.users.activeGM) return;      // применяет ровно один ГМ
       const requester = game.users.get(data?.userId);
       if (!requester) return;
@@ -568,6 +576,19 @@ Hooks.once("ready", () => {
         const item = await fromUuid(data.uuid).catch(() => null);
         if (!(item instanceof Item) || !Array.isArray(data.groups)) return;
         await saveItemMechanics(item, data.groups);
+      }
+      else if (data.action === "startCharacter") {
+        // Игрок нажал «Начать создание персонажа», а права заводить Актёров у
+        // его роли нет. Лист создаём мы и сразу отдаём его во владение
+        // просителю — дальше он сам работает Мастером создания.
+        const actor = await Actor.create({
+          name: NEW_CHARACTER_NAME,
+          type: "character",
+          ownership: { [requester.id]: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER }
+        });
+        if (!actor) return;
+        game.socket.emit("system.warhammer-dbc",
+          { action: "characterStarted", userId: requester.id, uuid: actor.uuid });
       }
       else if (data.action === "cogitatorDiary") {
         // Игрок ведёт запись на странице-дневнике когитатора — пишет ГМ.
