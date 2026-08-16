@@ -156,11 +156,9 @@
   align-items: flex-start;
 }
 
+/* Левая колонка шапки. Раскладка рядов внутри — сеткой, ниже. */
 .warhammer-dbc .header-rows {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
   min-width: 0;
 }
 
@@ -173,19 +171,21 @@
 }
 
 /* Фиксированные строки шапки (Раса/Субраса/Геносемя/Культура, Архетипы,
-   Происхождение/Предсказание, Стремления) — каждая на всю ширину колонки
-   .header-rows. */
-.warhammer-dbc .header-row-fixed {
-  display: flex;
-  flex-wrap: wrap;
+   Происхождение/Предсказание, Стремления) — ОДНА общая сетка на все ряды.
+   Раньше каждый ряд был самостоятельным flex-контейнером и ширину подписи
+   выбирал себе сам: «Раса», «Архетип» и «Происхождение» разной длины, поэтому
+   поля начинались в каждом ряду со своего места, а ряд Расы из четырёх ячеек
+   не совпадал по колонкам с рядами из двух. display:contents поднимает подписи
+   и поля прямо в эту сетку — колонки становятся общими для всех рядов, и пара,
+   которой не хватило места, переносится целиком на следующую строку. */
+.warhammer-dbc .header-rows {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr);
+  gap: 4px 10px;
   align-items: center;
-  gap: 4px 12px;
 }
-/* min-width:0 разрешал ячейке сжаться уже своего содержимого, и содержимое
-   вылезало на соседнюю — «Субраса» наезжала на слот Расы. С min-content ячейка
-   не уже своего минимума, а лишняя переносится на следующую строку (у ряда
-   стоит flex-wrap) — перенос вместо наложения. */
-.warhammer-dbc .header-row-fixed .header-cell { flex: 1 1 140px; min-width: min-content; }
+.warhammer-dbc .header-rows > .header-row-fixed,
+.warhammer-dbc .header-row-fixed > .header-cell { display: contents; }
 
 /* Компактное read-only поле (Геносемя/Культура/Стремления) — то же место, что
    и у select/input, но просто текст: сами дроплисты живут на «Заметках». */
@@ -218,9 +218,11 @@
 
 /* Субраса: контролы (слот + Дом/Происхождение) стопкой под лейблом */
 .warhammer-dbc .header-cell-subrace { align-items: flex-start; }
-/* Стопка тянется вниз, поэтому ярлык равняется по ПЕРВОМУ контролу (высота
-   слота), а не по середине всей стопки — иначе «Субраса» висит выше слота. */
-.warhammer-dbc .header-cell-subrace > label { line-height: 26px; }
+/* Субраса и Элитный архетип — стопки: под слотом появляются Дом Навигатора,
+   Прошлое, второй элитный архетип. Сетка центрировала бы подпись по середине
+   всей стопки; она равняется по ПЕРВОЙ строке, как в остальных рядах. */
+.warhammer-dbc .header-cell-subrace > label,
+.warhammer-dbc .header-cell-elite > label { align-self: start; line-height: 26px; }
 .warhammer-dbc .subrace-controls {
   flex: 1;
   display: flex;

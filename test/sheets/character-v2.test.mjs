@@ -44,6 +44,22 @@ describeV2Sheet(WarhammerDemonPrinceSheet, {
   template: "templates/actor/demon-prince-sheet.hbs"
 });
 
+describe("окно листа", () => {
+  // Foundry по умолчанию титулует окно как «<тип документа>: <имя>», а тип
+  // берёт из ключа TYPES.Actor.character. В мире на английском ключ не
+  // переводится и в заголовке стоит сам ключ. Имени персонажа достаточно.
+  it("в заголовке только имя персонажа", () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, { characteristics: {}, skills: {}, groupSkills: {} });
+    sheet.actor.name = "Астартес";
+
+    expect(sheet.title).toBe("Астартес");
+  });
+
+  it("стартовое окно не уже 960 точек", () => {
+    expect(WarhammerCharacterSheet.DEFAULT_OPTIONS.position.width).toBeGreaterThanOrEqual(960);
+  });
+});
+
 describe("слоты Расы и Субрасы", () => {
   it("слоты расы объявлены действиями листа", () => {
     const actions = Object.keys(WarhammerCharacterSheet.DEFAULT_OPTIONS.actions);

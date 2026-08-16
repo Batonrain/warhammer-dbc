@@ -279,7 +279,7 @@ export class WarhammerCharacterSheet
 
   static DEFAULT_OPTIONS = {
     classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
-    position: { width: 840, height: 920 },
+    position: { width: 1000, height: 940 },
     window: { resizable: true },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
@@ -377,6 +377,12 @@ export class WarhammerCharacterSheet
     el.querySelectorAll(`.gear-mods-toggle[data-host-id="${hid}"]`)
       .forEach(n => n.classList.toggle("collapsed", collapsed));
   }
+
+  // Foundry титулует окно как «<тип документа>: <имя>», где тип берётся из
+  // ключа перевода TYPES.Actor.<type>. В мире на английском ключ остаётся
+  // непереведённым и стоит в заголовке как есть. Тип и так виден по самому
+  // листу — в заголовке нужно имя.
+  get title() { return this.actor.name; }
 
   // ── Контекст шаблона ──────────────────────────────────────────────────────
 
