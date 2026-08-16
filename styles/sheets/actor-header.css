@@ -422,3 +422,34 @@
   color: #1b5e20;
   border-color: #2e7d32;
 }
+
+/* ══════════════════════════════════════════════════════
+   Слоты Расы и Субрасы — приём драг-н-дропа предмета-носителя
+══════════════════════════════════════════════════════ */
+
+/* Слот происхождения: иконка, имя, кнопки. Пустой слот — цель для перетаскивания. */
+.warhammer-dbc .wh-slot {
+  display: flex; align-items: center; gap: 4px;
+  padding: 2px 4px; min-height: 26px;
+  border: 1px solid var(--wh-border, #3a4a55); border-radius: 3px;
+}
+.warhammer-dbc .wh-slot.empty { border-style: dashed; opacity: 0.7; }
+.warhammer-dbc .wh-slot.drop-hint { border-color: var(--wh-accent, #7fd8ff); box-shadow: 0 0 4px var(--wh-accent, #7fd8ff); }
+.warhammer-dbc .wh-slot-img { width: 20px; height: 20px; border: none; flex: 0 0 auto; }
+.warhammer-dbc .wh-slot-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Ключ есть, носителя нет: персонаж из мира до переезда рас в библиотеку. */
+.warhammer-dbc .wh-slot-name.pending { opacity: 0.6; font-style: italic; }
+.warhammer-dbc .wh-slot-btn, .warhammer-dbc .wh-slot-add {
+  flex: 0 0 auto; background: none; border: none; cursor: pointer;
+  color: var(--wh-text, #cfe3ee); padding: 0 4px;
+}
+.warhammer-dbc .wh-slot-add { width: 100%; text-align: left; opacity: 0.7; }
+
+.warhammer-dbc .wh-race-picker .rp-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.warhammer-dbc .wh-race-picker .rp-sec { margin: 8px 0 4px; opacity: 0.8; }
+.warhammer-dbc .wh-race-picker .rp-item {
+  display: flex; flex-direction: column; align-items: flex-start;
+  min-width: 150px; padding: 4px 6px; cursor: pointer;
+}
+.warhammer-dbc .wh-race-picker .rp-meta { font-size: 0.8em; opacity: 0.6; }
+.warhammer-dbc .wh-race-picker .rp-hidden { display: none; }

@@ -1,14 +1,17 @@
 <header class="sheet-header{{#if (eq system.alignment "heretic")}} chaos-aligned{{/if}}{{#if (eq system.alignment "loyalist")}} loyalist-aligned{{/if}}{{#if (eq system.alignment "renegade")}} renegade-aligned{{/if}}"> <div class="portrait-block"> <img class="profile-img" data-action="portrait" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/> </div> <div class="header-main"> <div class="header-name-row"> <label class="header-label">Имя</label> <input class="actor-name" name="name" type="text" value="{{actor.name}}" placeholder="Имя персонажа"/> </div> <div class="header-grid"> <div class="header-rows">
-    <div class="header-row-fixed header-row-race"> <div class="header-cell"> <label>Раса</label> <select name="system.race" class="race-select"> <option value="">— выберите —</option> {{#each raceGroups as |g|}}
-          <optgroup label="{{g.label}}"> {{#each g.races as |r|}}
-            <option value="{{r.key}}" {{#if (eq @root.system.race r.key)}}selected{{/if}}>{{r.label}}</option> {{/each}}
-          </optgroup> {{/each}}
-        </select> </div> <div class="header-cell header-cell-subrace"> <label>Субраса</label> <div class="subrace-controls"> {{#if hasSubraces}}
-            <select name="system.subrace"> <option value="">— выберите —</option> {{#each availableSubraces as |sub|}}
-                <option value="{{sub.key}}" {{#if (eq @root.system.subrace sub.key)}}selected{{/if}}> {{sub.label}}
-                </option> {{/each}}
-            </select> {{else}}
-            <input type="text" name="system.subrace" value="{{system.subrace}}" placeholder="—"/> {{/if}}
+    <div class="header-row-fixed header-row-race"> <div class="header-cell header-cell-slot"> <label>Раса</label> <div class="wh-slot{{#unless raceSlot}} empty{{/unless}}" data-slot="race"> {{#if raceSlot}}
+            <img class="wh-slot-img" src="{{raceSlot.img}}" alt=""/> <span class="wh-slot-name{{#unless raceSlot.applied}} pending{{/unless}}">{{raceSlot.name}}</span> {{#if raceSlot.applied}}
+              <button type="button" class="wh-slot-btn" data-action="raceOpen" title="Открыть лист расы">⤢</button> {{else}}
+              <button type="button" class="wh-slot-btn" data-action="raceApply" title="Применить расу">Применить</button> {{/if}}
+            <button type="button" class="wh-slot-btn" data-action="raceClear" title="Снять расу">✕</button> {{else}}
+            <button type="button" class="wh-slot-add" data-action="racePick">+ перетащите или нажмите</button> {{/if}}
+          </div> </div> <div class="header-cell header-cell-subrace"> <label>Субраса</label> <div class="subrace-controls"> <div class="wh-slot{{#unless subraceSlot}} empty{{/unless}}" data-slot="subrace"> {{#if subraceSlot}}
+              <img class="wh-slot-img" src="{{subraceSlot.img}}" alt=""/> <span class="wh-slot-name{{#unless subraceSlot.applied}} pending{{/unless}}">{{subraceSlot.name}}</span> {{#if subraceSlot.applied}}
+                <button type="button" class="wh-slot-btn" data-action="subraceOpen" title="Открыть лист субрасы">⤢</button> {{/if}}
+              <button type="button" class="wh-slot-btn" data-action="subraceClear" title="Снять субрасу">✕</button> {{else}}
+              <button type="button" class="wh-slot-add" data-action="subracePick">+ перетащите или нажмите</button> {{/if}}
+            </div> {{#unless hasSubraces}}
+            <input type="text" name="system.subrace" value="{{system.subrace}}" placeholder="—"/> {{/unless}}
           {{#if (eq system.subrace "navigator")}}
           <input type="text" name="system.navigatorHouse" value="{{system.navigatorHouse}}" placeholder="Дом Навигатора" title="Название дома Навис Нобилитэ"/> {{/if}}
           {{#if isYnnari}}

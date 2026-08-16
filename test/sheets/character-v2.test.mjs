@@ -13,7 +13,7 @@
 
 import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
-import { sheetOf } from "../support/foundry-stub.mjs";
+import { sheetOf, captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
 
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
@@ -38,6 +38,37 @@ describeV2Sheet(WarhammerDaemonSheet, {
 describeV2Sheet(WarhammerDemonPrinceSheet, {
   sheet: "module/sheets/demon-prince-sheet.mjs",
   template: "templates/actor/demon-prince-sheet.hbs"
+});
+
+describe("слоты Расы и Субрасы", () => {
+  it("слоты расы объявлены действиями листа", () => {
+    const actions = Object.keys(WarhammerCharacterSheet.DEFAULT_OPTIONS.actions);
+
+    expect(actions).toEqual(expect.arrayContaining([
+      "racePick", "raceOpen", "raceClear", "raceApply",
+      "subracePick", "subraceOpen", "subraceClear"
+    ]));
+  });
+
+  // Ревью предыдущей задачи (wdbc-n1k): applySubrace отклоняет субрасу с чужим
+  // родителем, но эта ветка не была проверена ни одним тестом. Дроп субрасы на
+  // лист — новый путь в неё, поэтому проверка ставится рядом с приёмом дропа.
+  it("субраса друкхари, роняемая на азурианина, отклоняется без изменений листа", async () => {
+    resetCaptured();
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {}, race: "azuriane"
+    });
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+    globalThis.Item.implementation = {
+      fromDropData: async () => ({ type: "subrace", system: { key: "truebornDrukhari" } })
+    };
+
+    await WarhammerCharacterSheet.prototype._onDropItem.call(sheet, {}, {});
+
+    expect(updates).toEqual([]);
+    expect(captured.warnings.some(w => /Истиннорожд.+Друкхари.+Азуриане/.test(w))).toBe(true);
+  });
 });
 
 describe("производные листы не наследуют чужой шаблон", () => {

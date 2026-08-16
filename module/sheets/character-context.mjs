@@ -15,7 +15,9 @@ import { aptitudeCat, charAptitudeSet,
          CHAR_APTITUDES }                        from "../constants/advancement.mjs";
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { raceEntries, raceDef, subracesOf,
-         isAeldariRace, raceGroupList }          from "../apps/race-library.mjs";
+         isAeldariRace, raceGroupList,
+         subraceEntries }                        from "../apps/race-library.mjs";
+import { actorRaceItem, actorSubraceItem }       from "../apps/races.mjs";
 import { AZURIANE_PATHS, PATH_GRADES, PATH_GRADE_ORDER,
          buildPathSelectOptions, buildGradeSelectOptions } from "../constants/aeldari-paths.mjs";
 import { buildWorldSelectOptions, buildBandSelectOptions,
@@ -105,7 +107,9 @@ export function characterContext(actor) {
   // Сгруппированный список рас для optgroup — расы выключенных подсистем
   // (напр. «Книга Эльдар») из списка убираем, кроме уже стоящей у этого
   // актора: так подсистему можно выключить, не сломав существующих
-  // персонажей (та же логика, что и у disabledActorTypes()).
+  // персонажей (та же логика, что и у disabledActorTypes()). Список в шапке
+  // теперь не используется (слот открывает пикер), но остаётся частью
+  // контракта get-data — им может пользоваться другой потребитель.
   const offRaces = disabledRaceKeys();
   context.raceGroups = raceGroupList().map(g => ({
     label: g.label,
@@ -113,6 +117,22 @@ export function characterContext(actor) {
   })).filter(g => g.races.length);
   context.availableSubraces = subracesOf(system.race);
   context.hasSubraces = context.availableSubraces.length > 0;
+
+  // Слот показывает предмет-носитель, а если его нет — расу по ключу-зеркалу
+  // с пометкой «не применена»: так выглядят персонажи, созданные до переезда.
+  const raceItem = actorRaceItem(actor);
+  const raceKey  = system.race || "";
+  context.raceSlot = raceItem
+    ? { id: raceItem.id, key: raceKey, name: raceItem.name, img: raceItem.img, applied: true }
+    : (raceKey ? { id: "", key: raceKey, name: raceDef(raceKey)?.label || raceKey,
+                   img: "icons/svg/oak.svg", applied: false } : null);
+
+  const subItem = actorSubraceItem(actor);
+  const subKey  = system.subrace || "";
+  context.subraceSlot = subItem
+    ? { id: subItem.id, key: subKey, name: subItem.name, img: subItem.img, applied: true }
+    : (subKey ? { id: "", key: subKey, name: subraceEntries()[subKey]?.label || subKey,
+                  img: "icons/svg/oak.svg", applied: false } : null);
   context.isAeldari = isAeldariRace(system.race);
   context.isYnnari  = system.race === "ynnari";
   // Фактор Прибыли (Вольный Торговец): бонус = ФП ÷ 10 (как у характеристик)

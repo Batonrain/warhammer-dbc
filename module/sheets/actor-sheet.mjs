@@ -43,7 +43,10 @@ import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
 import { specOptions, specDef } from "../constants/skill-specializations.mjs";
 import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
-import { applyRace, applyLegion, applyYnnari, applyHarlequin } from "../apps/races.mjs";
+import { applyRace, applySubrace, clearRace, clearSubrace,
+         actorRaceItem, actorSubraceItem,
+         applyLegion, applyYnnari, applyHarlequin } from "../apps/races.mjs";
+import { openRacePicker } from "./race-picker.mjs";
 import { grantAstartesImplants } from "../apps/astartes-implants.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
@@ -245,6 +248,18 @@ function onLegionApply()    { return applyLegion(this.actor, { createTraits: (l,
 function onYnnariApply()    { return applyYnnari(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onHarlequinApply() { return applyHarlequin(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 
+// ── Слоты Расы и Субрасы в шапке: пикер из библиотеки, открытие носителя,
+//    снятие. onRaceApply — единственный путь ручного переезда персонажей,
+//    созданных до этой работы: у них system.race заполнен, а предмета-
+//    носителя ещё нет (см. брифа задачи 7, уточнение 1).
+function onRacePick()    { return openRacePicker(this.actor, { subrace: false }); }
+function onSubracePick() { return openRacePicker(this.actor, { subrace: true }); }
+function onRaceOpen()    { return actorRaceItem(this.actor)?.sheet?.render(true); }
+function onSubraceOpen() { return actorSubraceItem(this.actor)?.sheet?.render(true); }
+function onRaceClear()   { return clearRace(this.actor); }
+function onSubraceClear(){ return clearSubrace(this.actor); }
+function onRaceApply()   { return applyRace(this.actor, this.actor.system.race || ""); }
+
 export class WarhammerCharacterSheet
   extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
 
@@ -283,7 +298,14 @@ export class WarhammerCharacterSheet
       geneApply:      whenEditable(onGeneApply),
       legionApply:    whenEditable(onLegionApply),
       ynnariApply:    whenEditable(onYnnariApply),
-      harlequinApply: whenEditable(onHarlequinApply)
+      harlequinApply: whenEditable(onHarlequinApply),
+      racePick:     whenEditable(onRacePick),
+      raceOpen:     onRaceOpen,
+      raceClear:    whenEditable(onRaceClear),
+      raceApply:    whenEditable(onRaceApply),
+      subracePick:  whenEditable(onSubracePick),
+      subraceOpen:  onSubraceOpen,
+      subraceClear: whenEditable(onSubraceClear)
     }
   };
 
@@ -662,6 +684,18 @@ export class WarhammerCharacterSheet
   // 3. Состояние ОКНА, а не актора: тема листа, восстановление свёрток,
   //    зрачок Третьего Глаза, драг предметов с листа.
 
+  /**
+   * Раса и субраса на листе — не предмет в списке, а происхождение персонажа:
+   * дроп уходит в применение, а обычное создание предмета не выполняется.
+   * Бросить можно в любое место листа, слот лишь подсказывает куда целиться.
+   */
+  async _onDropItem(event, data) {
+    const src = await Item.implementation.fromDropData(data);
+    if (src?.type === "race")    return applyRace(this.actor, src.system?.key || "");
+    if (src?.type === "subrace") return applySubrace(this.actor, src.system?.key || "");
+    return super._onDropItem(event, data);
+  }
+
   _onRender(context, options) {
     super._onRender?.(context, options);
     const el = this.element;
@@ -729,6 +763,13 @@ export class WarhammerCharacterSheet
         ev.dataTransfer.effectAllowed = "copy";
       });
     });
+
+    // ── Подсветка слотов Расы/Субрасы при перетаскивании ────────────────────
+    for (const slot of el.querySelectorAll(".wh-slot")) {
+      slot.addEventListener("dragenter", () => slot.classList.add("drop-hint"));
+      slot.addEventListener("dragleave", () => slot.classList.remove("drop-hint"));
+      slot.addEventListener("drop",      () => slot.classList.remove("drop-hint"));
+    }
 
     if (!this.isEditable) return;
 
