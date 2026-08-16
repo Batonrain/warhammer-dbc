@@ -17,6 +17,7 @@ import { MINION_GROUPS, MINION_TIERS, GROUP_CHAR_LIMITS, MINION_INFAMY_CAP,
          MINION_WOUNDS, FRAGILE_TRAITS, DAEMON_CORRUPTION, MINION_TALENT_FLAG,
          MINION_TALENT_NAMES, tierBudget } from "../constants/minions.mjs";
 import { MINION_TRAITS, MANDATORY_BY_GROUP } from "../constants/minion-traits.mjs";
+import { SKILL_RANKS } from "../constants/characteristics.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -195,6 +196,19 @@ export function skillPointsLeft(entries = [], tier, converted = 0) {
   const ups = entries.filter(e => e?.upgraded).length;
   const spent = entries.length + ups * spec.upCost;
   return { left: spec.points + num(converted) - spent, ups, upLimit: spec.upLimit };
+}
+
+/**
+ * Ранг взятого Навыка: Низший берёт на +0, Обычный сразу на +10, Высший на
+ * +20, а подъём даёт следующую ступень (стр. 111). Ключ ищется по самой
+ * таблице рангов — второго списка её ступеней система не держит.
+ */
+export function skillRankFor(tier, upgraded = false) {
+  const spec = tierBudget(tier)?.skills;
+  if (!spec) return "untrained";
+  const bonus = upgraded ? spec.upTo : spec.at;
+  const hit = Object.entries(SKILL_RANKS).find(([, def]) => def.bonus === bonus);
+  return hit ? hit[0] : "untrained";
 }
 
 /** Остаток Очков Талантов с учётом того, что часть могли обменять на Навыки. */

@@ -17,12 +17,13 @@
 import { MINION_GROUPS, MINION_TIERS, MINION_TIER_ORDER, MINION_SWAP,
          tierBudget } from "../constants/minions.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
-import { SKILLS_DEF } from "../constants/skills.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
+import { specOptions } from "../constants/skill-specializations.mjs";
 import {
   minionSlots, slotUsage, charLimits, charIssues, charPointsLeft, rollHumanChars,
   skillPointsLeft, talentPointsLeft, traitPointsLeft,
   minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty,
-  availableTraits, traitAvailability, mandatoryTraits, traitEntry
+  availableTraits, traitAvailability, mandatoryTraits, traitEntry, skillRankFor
 } from "../rules/minion-build.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import { minionsOfActor } from "../sheets/tabs/minions-panel.mjs";
@@ -151,15 +152,47 @@ function charsStepHtml(state) {
     </section>`;
 }
 
+/** Подпись Навыка в списке слуги: групповой — вместе со специализацией. */
+function skillLabel(entry) {
+  if (entry.scope === "group") {
+    const group = GROUP_SKILLS_DEF[entry.key]?.label || entry.key;
+    return entry.spec ? `${group} (${entry.spec})` : group;
+  }
+  return SKILLS_DEF[entry.key]?.label || entry.key;
+}
+
 function skillsStepHtml(state) {
   const spec = tierBudget(state.tier).skills;
   const res = skillPointsLeft(state.skills, state.tier, state.convert.talentsToSkills);
-  const options = Object.entries(SKILLS_DEF)
-    .map(([key, def]) => `<option value="${key}">${esc(def.label)}</option>`).join("");
+
+  // Навыки двух родов, как везде в системе: обычные и групповые. Групповой без
+  // специализации не берётся — «Запретные знания» вообще не Навык, Навык это
+  // «Запретные знания (Демоны)», — поэтому рядом с ним стоит своё поле.
+  // Выбранное отмечаем в самой разметке: шаг перерисовывается целиком, и без
+  // `selected` селект возвращался к первому Навыку — «Добавить» клало не то,
+  // что выбрали.
+  const picked = String(state.skillPick || `plain:${Object.keys(SKILLS_DEF)[0]}`);
+  const opt = (value, label) =>
+    `<option value="${value}"${value === picked ? " selected" : ""}>${esc(label)}</option>`;
+
+  const plain = Object.entries(SKILLS_DEF)
+    .map(([key, def]) => opt(`plain:${key}`, def.label)).join("");
+  const groups = Object.entries(GROUP_SKILLS_DEF)
+    .map(([key, def]) => opt(`group:${key}`, def.label)).join("");
+
+  const [pickedScope, pickedKey] = picked.split(":");
+  const specs = pickedScope === "group" ? specOptions(pickedKey) : [];
+  const specHtml = pickedScope === "group"
+    ? `<select id="mc-skill-spec" class="pm-input">
+         ${specs.map(s => `<option value="${esc(s.ru || s.label)}">${esc(s.display)}</option>`).join("")}
+         <option value="">— своя —</option>
+       </select>
+       <input type="text" id="mc-skill-spec-custom" class="pm-input" placeholder="Своя специализация"/>`
+    : "";
 
   const rows = state.skills.map((s, i) => `
     <div class="mc-row">
-      <span class="mc-row-name">${esc(SKILLS_DEF[s.key]?.label || s.key)} +${s.upgraded ? spec.upTo : spec.at}</span>
+      <span class="mc-row-name">${esc(skillLabel(s))} +${s.upgraded ? spec.upTo : spec.at}</span>
       <label class="mc-up"><input type="checkbox" class="mc-skill-up" data-index="${i}" ${s.upgraded ? "checked" : ""}/>
         до +${spec.upTo} (${spec.upCost})</label>
       <button type="button" class="mc-del" data-kind="skills" data-index="${i}" title="Убрать">✕</button>
@@ -171,8 +204,14 @@ function skillsStepHtml(state) {
       <div class="mc-line">Очков: <b>${spec.points}</b>${state.convert.talentsToSkills ? ` + ${state.convert.talentsToSkills} с Талантов` : ""},
         осталось ${badge(res.left)} · берётся сразу на +${spec.at}, подъём до +${spec.upTo} стоит ${spec.upCost}
         (подъёмов ${res.ups} из ${res.upLimit})</div>
-      <div class="mc-add"><select id="mc-skill-sel" class="pm-input">${options}</select>
-        <button type="button" class="mc-btn" id="mc-skill-add">Добавить</button></div>
+      <div class="mc-add">
+        <select id="mc-skill-sel" class="pm-input">
+          <optgroup label="Навыки">${plain}</optgroup>
+          <optgroup label="Групповые навыки">${groups}</optgroup>
+        </select>
+        ${specHtml}
+        <button type="button" class="mc-btn" id="mc-skill-add">Добавить</button>
+      </div>
       <div class="mc-rows">${rows}</div>
       ${res.ups > res.upLimit ? `<div class="mc-issues">Подъёмов больше, чем даёт уровень: ${res.ups} из ${res.upLimit}.</div>` : ""}
     </section>`;
@@ -305,6 +344,30 @@ const DROP_TYPES = {
   gear:    ["weapon", "armor", "gear", "tool", "drug", "ammo", "cybernetic", "implant", "forcefield", "shield"]
 };
 
+/**
+ * Навыки слуги в поля листа. Обычные — записью на ключ, групповые — списком
+ * записей со специализацией: «Запретные знания» сами по себе не Навык, Навык —
+ * «Запретные знания (Демоны)».
+ */
+function minionSkillFields(state) {
+  const skills = {};
+  const groupSkills = {};
+
+  for (const entry of state.skills) {
+    const rank = skillRankFor(state.tier, entry.upgraded);
+    if (entry.scope === "group") {
+      (groupSkills[entry.key] ||= []).push({ rank, specialty: entry.spec || "", cost: 0, total: 0 });
+    } else {
+      skills[entry.key] = { rank, total: 0 };
+    }
+  }
+
+  const out = {};
+  if (Object.keys(skills).length)      out.skills = skills;
+  if (Object.keys(groupSkills).length) out.groupSkills = groupSkills;
+  return out;
+}
+
 /** Собрать актора-Миньона по состоянию окна. */
 async function createMinionActor(master, state) {
   const tierDef = MINION_TIERS[state.tier];
@@ -324,9 +387,7 @@ async function createMinionActor(master, state) {
     characteristics: chars,
     loyalty: { value: loyalty, max: loyalty },
     corruption: { value: minionCorruption(state.group) },
-    skills: Object.fromEntries(state.skills.map(s => [s.key, {
-      rank: s.upgraded ? "trained10" : "known", total: 0
-    }]))
+    ...minionSkillFields(state)
   };
 
   if (tierDef?.isHorde) {
@@ -393,9 +454,18 @@ function openCreator(master, state) {
       openCompendiumBrowser(false);
     });
 
-    box.querySelector("#mc-roll")?.addEventListener("click", ev => {
+    box.querySelector("#mc-roll")?.addEventListener("click", async ev => {
       ev.preventDefault();
-      state.rolls = rollHumanChars(state.tier, () => new Roll("2d10").evaluateSync().total);
+      // Кубы бросаются асинхронно: синхронный evaluateSync на «2d10» в Foundry
+      // не работает («terms that cannot be synchronously evaluated»), и
+      // обработчик молча падал. Бросаем нужное число заранее, а расчёт (какие
+      // результаты отбросить) остаётся синхронным и проверяемым.
+      const spec = tierBudget(state.tier)?.chars?.roll;
+      if (!spec) return;
+      const values = [];
+      for (let i = 0; i < spec.count; i++) values.push((await new Roll("2d10").evaluate()).total);
+      let n = 0;
+      state.rolls = rollHumanChars(state.tier, () => values[n++]);
       rebuild();
     });
 
@@ -404,10 +474,32 @@ function openCreator(master, state) {
       rebuild();
     }));
 
+    // Смена Навыка перерисовывает шаг: у группового рядом появляется поле
+    // специализации, у обычного его быть не должно.
+    box.querySelector("#mc-skill-sel")?.addEventListener("change", ev => {
+      state.skillPick = String(ev.currentTarget.value || "");
+      rebuild();
+    });
+
     box.querySelector("#mc-skill-add")?.addEventListener("click", ev => {
       ev.preventDefault();
-      const key = String(box.querySelector("#mc-skill-sel")?.value || "");
-      if (key && !state.skills.some(s => s.key === key)) state.skills.push({ key, upgraded: false });
+      const picked = String(box.querySelector("#mc-skill-sel")?.value || "");
+      const [scope, key] = picked.split(":");
+      if (!key) return;
+
+      if (scope === "group") {
+        const chosen = String(box.querySelector("#mc-skill-spec")?.value || "");
+        const custom = String(box.querySelector("#mc-skill-spec-custom")?.value || "").trim();
+        const spec = custom || chosen;
+        if (!spec) {
+          return ui.notifications?.warn("Групповой Навык берётся со специализацией — выберите её или впишите свою.");
+        }
+        if (state.skills.some(s => s.scope === "group" && s.key === key && s.spec === spec)) return;
+        state.skills.push({ scope: "group", key, spec, upgraded: false });
+      } else {
+        if (state.skills.some(s => s.scope !== "group" && s.key === key)) return;
+        state.skills.push({ scope: "plain", key, upgraded: false });
+      }
       rebuild();
     });
 

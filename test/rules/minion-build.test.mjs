@@ -13,7 +13,7 @@ import {
   isMinionTalent, minionSlotOf, minionSlots, slotUsage,
   minionCapacity, groupTally, talentRequirements,
   charLimits, charIssues, charPointsLeft, rollHumanChars,
-  skillPointsLeft, talentPointsLeft, traitPointsLeft,
+  skillPointsLeft, talentPointsLeft, traitPointsLeft, skillRankFor,
   minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty, speechNote
 } from "../../module/rules/minion-build.mjs";
 
@@ -182,6 +182,18 @@ describe("бюджеты создания", () => {
     expect(res.left).toBe(0);          // 4 − (2 навыка + 1 подъём × 2)
     expect(res.ups).toBe(1);
     expect(res.upLimit).toBe(1);
+  });
+
+  // Низший берёт Навык на +0, Обычный сразу на +10, Высший на +20, а подъём
+  // даёт следующую ступень таблицы рангов.
+  it("ранг взятого Навыка растёт вместе с силой", () => {
+    expect([skillRankFor("lesser"), skillRankFor("standard"), skillRankFor("greater")])
+      .toEqual(["knows", "trained", "veteran"]);
+    expect([skillRankFor("lesser", true), skillRankFor("standard", true), skillRankFor("greater", true)])
+      .toEqual(["trained", "veteran", "expert"]);
+    // Орда строится как Низший, Превосходящий — как Высший.
+    expect(skillRankFor("horde")).toBe("knows");
+    expect(skillRankFor("superior")).toBe("veteran");
   });
 
   it("Таланты: свой потолок уровня, перебор виден по именам", () => {
