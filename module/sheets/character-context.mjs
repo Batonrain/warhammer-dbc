@@ -117,6 +117,14 @@ export function characterContext(actor) {
   })).filter(g => g.races.length);
   context.availableSubraces = subracesOf(system.race);
   context.hasSubraces = context.availableSubraces.length > 0;
+  // Слот субрасы стоит всегда, как у расы, но выбирать есть что не всегда.
+  // Подсказка — причина отказа, показанная заранее: пустой слот, открывающий
+  // пикер ради предупреждения «сначала выберите расу», врал бы игроку.
+  context.subraceHint = context.hasSubraces
+    ? ""
+    : (system.race
+      ? `У расы «${raceDef(system.race)?.label || system.race}» субрас нет`
+      : "Сначала выберите расу");
 
   // Слот показывает предмет-носитель, а если его нет — расу по ключу-зеркалу
   // с пометкой «не применена»: так выглядят персонажи, созданные до переезда.

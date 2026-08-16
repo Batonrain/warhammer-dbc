@@ -180,3 +180,40 @@ describe("применение расы без прочитанной библи
     expect(captured.warnings.some(w => /библиотека рас/i.test(w) && /не выдан/i.test(w))).toBe(true);
   });
 });
+
+// Запрет чужой субрасы держался на сверке def.parent с расой актора, но у
+// субрасы, которой нет в библиотеке, def === undefined — сверять было не с чем,
+// и такой ключ проходил насквозь: старая субраса снималась, новая не выдавалась,
+// а system.subrace получал значение, которого система не знает. На листе это
+// путь «перетащить субрасу из чужого мира», ради него запрет и заводился.
+describe("applySubrace отвергает субрасу, которой нет в библиотеке", () => {
+  function actorStub() {
+    const list = [];
+    list.get = id => list.find(i => i.id === id) ?? null;
+    const actor = {
+      system: { race: "human", subrace: "", characteristics: chars(), skills: {}, groupSkills: {}, wounds: {} },
+      items: list, updates: [], deleted: [],
+      update: async data => { actor.updates.push(data); return data; },
+      createEmbeddedDocuments: async () => [],
+      deleteEmbeddedDocuments: async (_t, ids) => { actor.deleted.push(...ids); return ids; }
+    };
+    return actor;
+  }
+
+  it("не записывает неизвестный ключ в system.subrace", async () => {
+    resetCaptured();
+    const actor = actorStub();
+
+    await applySubrace(actor, "нет-такой-субрасы");
+
+    expect(actor.updates).toEqual([]);
+  });
+
+  it("предупреждает игрока вместо тихого отказа", async () => {
+    resetCaptured();
+
+    await applySubrace(actorStub(), "нет-такой-субрасы");
+
+    expect(captured.warnings.some(w => /не найдена|неизвестн/i.test(w))).toBe(true);
+  });
+});

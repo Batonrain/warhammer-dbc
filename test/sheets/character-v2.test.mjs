@@ -70,39 +70,25 @@ describe("слоты Расы и Субрасы", () => {
     expect(updates.some(u => u["system.subrace"] === "eldanar")).toBe(true);
   });
 
-  // Раунд правок 1, находка 3: для расы без субрас слот и свободный ввод
-  // сосуществовали и дублировали друг друга. Слот субрасы теперь рисуется
-  // только внутри {{#if hasSubraces}}, свободный ввод — только в {{else}}.
-  it("для расы без субрас слот субрасы не отрисовывается — только свободный ввод", () => {
+  // Свободный ввод субрасы убран (wdbc-4w4): слот стоит всегда, как у расы, а
+  // выбор идёт только через пикер и дроп — оба сверяют родительскую расу. Пока
+  // ввод существовал, вписать в него можно было что угодно, минуя сверку.
+  it("слот субрасы рисуется всегда, свободного ввода больше нет", () => {
     const header = readTemplate("templates/actor/parts/header.hbs");
-    const start = header.indexOf("{{#if hasSubraces}}");
-    expect(start).toBeGreaterThan(-1);
 
-    // Внутри hasSubraces-блока есть свои вложенные {{#if}}/{{else}}/{{/if}}
-    // (applied/не applied у самого слота) — наивный «нежадный» regex цепляет
-    // ПЕРВЫЙ попавшийся else/endif, то есть вложенный, а не внешний. Ищем
-    // границы внешнего блока по глубине вложенности.
-    const tokenRe = /{{#if [^}]*}}|{{else}}|{{\/if}}/g;
-    tokenRe.lastIndex = start + "{{#if hasSubraces}}".length;
-    let depth = 0, elseIdx = -1, endIdx = -1, m;
-    while ((m = tokenRe.exec(header))) {
-      if (m[0].startsWith("{{#if")) depth++;
-      else if (m[0] === "{{else}}") { if (depth === 0 && elseIdx === -1) elseIdx = m.index; }
-      else if (m[0] === "{{/if}}") {
-        if (depth === 0) { endIdx = m.index; break; }
-        depth--;
-      }
-    }
-    expect(elseIdx).toBeGreaterThan(-1);
-    expect(endIdx).toBeGreaterThan(elseIdx);
+    expect(header).toContain('data-slot="subrace"');
+    expect(header).not.toContain('name="system.subrace"');
+    expect(header.indexOf("{{#if hasSubraces}}")).toBe(-1);
+  });
 
-    const thenPart = header.slice(start, elseIdx);
-    const elsePart = header.slice(elseIdx, endIdx);
+  // Раса без субрас (Астартес) и раса, ещё не выбранная, — состояния, в которых
+  // пикер откажет. Слот показывает причину заранее вместо кнопки-приглашения.
+  it("пустой слот показывает причину, когда выбирать нечего", () => {
+    const header = readTemplate("templates/actor/parts/header.hbs");
+    const slot = header.slice(header.indexOf('data-slot="subrace"'));
 
-    expect(thenPart).toContain('data-slot="subrace"');
-    expect(thenPart).not.toContain('name="system.subrace"');
-    expect(elsePart).toContain('name="system.subrace"');
-    expect(elsePart).not.toContain('data-slot="subrace"');
+    expect(slot).toContain("{{#if subraceHint}}");
+    expect(slot.slice(0, slot.indexOf('data-action="subracePick"'))).toContain("wh-slot-none");
   });
 
   // Ревью предыдущей задачи (wdbc-n1k): applySubrace отклоняет субрасу с чужим

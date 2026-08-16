@@ -212,8 +212,11 @@
   gap: 5px;
 }
 
-/* Субраса: контролы (select + Дом/Происхождение) стопкой под лейблом */
+/* Субраса: контролы (слот + Дом/Происхождение) стопкой под лейблом */
 .warhammer-dbc .header-cell-subrace { align-items: flex-start; }
+/* Стопка тянется вниз, поэтому ярлык равняется по ПЕРВОМУ контролу (высота
+   слота), а не по середине всей стопки — иначе «Субраса» висит выше слота. */
+.warhammer-dbc .header-cell-subrace > label { line-height: 26px; }
 .warhammer-dbc .subrace-controls {
   flex: 1;
   display: flex;
@@ -238,6 +241,10 @@
   color: var(--wh-text-mid);
   white-space: nowrap;
   min-width: 58px;
+  /* Ярлык не сжимается: с nowrap сжатие не переносит текст, а пускает его на
+     соседнюю ячейку — длинные («Элитный архетип», «Предсказание») наезжали на
+     свой же контрол. Ужимается пусть поле ввода, оно к этому готово. */
+  flex: 0 0 auto;
 }
 
 .warhammer-dbc .header-cell input[type="text"],
@@ -444,6 +451,13 @@
   color: var(--wh-text, #cfe3ee); padding: 0 4px;
 }
 .warhammer-dbc .wh-slot-add { width: 100%; text-align: left; opacity: 0.7; }
+/* Слот стоит, но выбирать нечего (раса без субрас либо раса ещё не выбрана):
+   рамка сплошная и приглушённая — не приглашение к перетаскиванию. */
+.warhammer-dbc .wh-slot.locked { border-style: solid; opacity: 0.45; }
+.warhammer-dbc .wh-slot-none {
+  flex: 1 1 auto; font-size: 0.8em; font-style: italic;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 .warhammer-dbc .wh-race-picker .rp-list { display: flex; flex-wrap: wrap; gap: 4px; }
 .warhammer-dbc .wh-race-picker .rp-sec { margin: 8px 0 4px; opacity: 0.8; }

@@ -174,7 +174,12 @@ export async function applySubrace(actor, key) {
   const def  = subraceEntries()[key];
   const race = actor.system.race || "";
   if (!race) return ui.notifications?.warn("Сначала выберите расу.");
-  if (def && def.parent && def.parent !== race) {
+  // Субрасу без записи в библиотеке сверять не с чем: у неё нет parent, и
+  // проверка ниже её пропускала — ключ уезжал в system.subrace, а Черты не
+  // выдавались. Отказ громкий: это путь «перетащили субрасу из чужого мира».
+  if (!def) return ui.notifications?.warn(
+    `Субраса «${key}» не найдена в библиотеке — применение отменено.`);
+  if (def.parent && def.parent !== race) {
     const raceLabel = raceDef(race)?.label || race;
     const parentLabel = raceDef(def.parent)?.label || def.parent;
     return ui.notifications?.warn(
