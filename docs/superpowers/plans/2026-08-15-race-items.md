@@ -755,7 +755,8 @@ git commit -m "Библиотека Черт: 35 недостающих расо
 import { describe, it, expect } from "vitest";
 import { RACES, SUBRACES, SUBRACE_DATA, RACE_GROUPS } from "../../module/constants/races.mjs";
 import { raceDocs, traitEntries } from "../../tools/races-to-pack.mjs";
-import { normTraitName, missingRaceTraits } from "../../tools/race-traits.mjs";
+import { missingRaceTraits } from "../../tools/race-traits.mjs";
+import { packDocuments } from "../support/pack-docs.mjs";
 
 const docs = () => raceDocs().map(d => d.doc);
 const byKey = type => new Map(docs().filter(d => d.type === type).map(d => [d.system.key, d]));
@@ -804,12 +805,35 @@ describe("расы в пак", () => {
     expect(strength.sourceHasRating).toBe(true);
   });
 
-  it("ни одна запись не ссылается на Черту, которой нет в библиотеке", () => {
-    expect(missingRaceTraits()).toEqual([]);
+  // Это главная проверка связи с библиотекой. Рантайм ищет источник в
+  // resolveMechSource: сперва по sourceUuid, и только потом по имени — а имена
+  // он сравнивает БЕЗ отбрасывания скобок, поэтому «(4)» против шаблона «(X)»
+  // не совпало бы никогда. Без uuid Черта пришла бы пустой, и Астартес получил
+  // бы +0 вместо +4, ничего не сообщив.
+  it("каждая запись ссылается по UUID на существующий документ библиотеки", () => {
+    const ids = new Set(packDocuments("traits", "trait").map(({ doc }) => doc._id));
+
     for (const doc of docs()) {
-      for (const g of doc.flags["warhammer-dbc"].mechanics)
-        for (const e of g.entries) expect(normTraitName(e.sourceName)).not.toBe("");
+      for (const g of doc.flags["warhammer-dbc"].mechanics) {
+        for (const e of g.entries) {
+          expect(e.sourceUuid).toMatch(/^Compendium\.warhammer-dbc\.traits\.Item\./);
+          expect(ids.has(e.sourceUuid.split(".").pop())).toBe(true);
+        }
+      }
     }
+  });
+
+  it("имя в записи — точное имя документа библиотеки, а не название из констант", () => {
+    const byId = new Map(packDocuments("traits", "trait").map(({ doc }) => [doc._id, doc.name]));
+
+    for (const doc of docs())
+      for (const g of doc.flags["warhammer-dbc"].mechanics)
+        for (const e of g.entries)
+          expect(e.sourceName).toBe(byId.get(e.sourceUuid.split(".").pop()));
+  });
+
+  it("ни одна расовая Черта не осталась без пары в библиотеке", () => {
+    expect(missingRaceTraits()).toEqual([]);
   });
 
   it("идентификаторы устойчивы: два прогона дают те же _id", () => {
@@ -854,6 +878,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { RACES, SUBRACES, SUBRACE_DATA, RACE_GROUPS } from "../module/constants/races.mjs";
+import { libraryTrait } from "./race-traits.mjs";
 
 const ROOT = "packs-src/races";
 const NS   = "warhammer-dbc";
@@ -887,14 +912,36 @@ const blankEntry = id => ({
   equipMode: "direct", equipQty: 1
 });
 
-/** Черты расы или субрасы → записи Конструктора со ссылкой по имени. */
+/**
+ * Черты расы или субрасы → записи Конструктора.
+ *
+ * Ссылка идёт по UUID документа библиотеки, а НЕ по имени. Рантайм ищет
+ * источник в `resolveMechSource` (module/apps/mechanics.mjs), и там имена
+ * сравниваются без отбрасывания скобок: «Unnatural Strength (4) / Сверхъест.
+ * Сила (4)» никогда не совпало бы с шаблоном «Unnatural Strength /
+ * Сверхъестественная Сила (X)» — ни целиком, ни по английской части. Поиск
+ * вернул бы null, Черта пришла бы пустышкой без эффектов, и Астартес получил
+ * бы +0 вместо +4. Молча.
+ *
+ * UUID снимает вопрос нормализации вовсе — `resolveMechSource` пробует его
+ * первым. Тем же приёмом уже связаны Предсказания (см. `sourceUuid` в
+ * packs-src/divinations). Точное имя документа пишется рядом как запасной
+ * путь, если пак когда-нибудь пересоберут с другими идентификаторами.
+ */
 export function traitEntries(def) {
-  return (def?.traits || []).map((t, i) => ({
-    ...blankEntry(stableId(`${def.label}:trait:${i}:${t.name}`)),
-    sourceName: t.name,
-    sourceHasRating: !!t.hasRating,
-    rating: t.hasRating ? (t.rating ?? 0) : ""
-  }));
+  return (def?.traits || []).flatMap((t, i) => {
+    const doc = libraryTrait(t.name);
+    // Задача 3 гарантирует, что пара найдётся; пустой возврат — страховка.
+    if (!doc) return [];
+    return [{
+      ...blankEntry(stableId(`${def.label}:trait:${i}:${t.name}`)),
+      sourceUuid: `Compendium.warhammer-dbc.traits.Item.${doc._id}`,
+      sourceName: doc.name,
+      sourceImg: doc.img || "",
+      sourceHasRating: !!(doc.system?.hasRating || t.hasRating),
+      rating: t.hasRating ? (t.rating ?? 0) : ""
+    }];
+  });
 }
 
 /** Одна И-группа со всеми Чертами; пусто — пустой массив, а не группа без записей. */
@@ -1023,11 +1070,12 @@ import { describe, it, expect } from "vitest";
 import { RACES } from "../../module/constants/races.mjs";
 import { rescaleTraitByRating } from "../../module/apps/mechanics.mjs";
 import { traitEntries } from "../../tools/races-to-pack.mjs";
-import { normTraitName } from "../../tools/race-traits.mjs";
 import { packDocuments } from "../support/pack-docs.mjs";
 
-const LIB = new Map(packDocuments("traits", "trait")
-  .map(({ doc }) => [normTraitName(doc.name), doc]));
+// Ключ — идентификатор документа, ровно как его достаёт рантайм: сперва
+// fromUuid(entry.sourceUuid). Сверять здесь по имени значило бы проверять
+// не ту дорогу, по которой Черта поедет на самом деле.
+const LIB = new Map(packDocuments("traits", "trait").map(({ doc }) => [doc._id, doc]));
 
 /** Как считалось РАНЬШЕ: Черта создавалась из констант со своими effects. */
 function bonusesFromConstants(race) {
@@ -1044,7 +1092,7 @@ function bonusesFromConstants(race) {
 function bonusesFromLibrary(race) {
   const sum = {};
   for (const entry of traitEntries(race)) {
-    const src = LIB.get(normTraitName(entry.sourceName));
+    const src = LIB.get(String(entry.sourceUuid).split(".").pop());
     if (!src) continue;
     const doc = rescaleTraitByRating(structuredClone(src), entry.rating);
     const e = doc.system.effects || {};
