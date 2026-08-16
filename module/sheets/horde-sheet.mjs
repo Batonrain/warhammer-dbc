@@ -2,7 +2,8 @@
 // Лист Орды — множество слабых врагов, действующих как один персонаж.
 // Магнитуда вместо Ран, Размер по Магнитуде, психологический урон, состояние.
 
-import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
+import { SKILLS_DEF } from "../constants/skills.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES } from "../constants/items.mjs";
 import { HIT_LOCATIONS } from "../constants/combat.mjs";
 import { resolveCharFormula, _degWord, esc } from "../helpers/utils.mjs";
@@ -74,10 +75,16 @@ function hordeThreshold(form) {
 }
 
 function onRollChar(event, target)  { return this._rollChar(target.dataset.char); }
+function onRollSkill(event, target) { return this._rollSkill(target.dataset.skill); }
 function onItemCreate(event, target){ return this._createItem(target.dataset.type); }
 function onItemEdit(event, target)  { this.actor.items.get(target.dataset.itemId)?.sheet.render(true); }
 function onItemDelete(event, target){ return this._deleteItem(target.dataset.itemId); }
 function onWeaponRoll(event, target){ return this._hordeAttackDialog(target.dataset.itemId); }
+/** Надеть/снять броню: у Орды это простой переключатель на предмете. */
+function onItemEquip(event, target) {
+  const it = this.actor.items.get(target.dataset.itemId);
+  return it?.update({ "system.equipped": !it.system?.equipped });
+}
 function onPick(event, target)      { return this._openItemPicker(target.dataset.kind); }
 
 export class WarhammerHordeSheet
@@ -97,9 +104,11 @@ export class WarhammerHordeSheet
       editImage:  whenEditable(onEditImage),
       mag:        whenEditable(onMag),
       rollChar:   whenEditable(onRollChar),
+      rollSkill:  whenEditable(onRollSkill),
       itemCreate: whenEditable(onItemCreate),
       itemEdit:   whenEditable(onItemEdit),
       itemDelete: whenEditable(onItemDelete),
+      itemEquip:  whenEditable(onItemEquip),
       weaponRoll: whenEditable(onWeaponRoll),
       pick:       whenEditable(onPick)
     }
@@ -117,7 +126,9 @@ export class WarhammerHordeSheet
       initial: "battle",
       tabs: [
         { id: "battle", label: "БОЙ" },
-        { id: "traits", label: "ЧЕРТЫ" },
+        // id вкладки прежний: он лежит в сохранённом состоянии окон у мастера,
+        // а по содержимому это теперь Навыки + Черты и Таланты.
+        { id: "traits", label: "ПОКАЗАТЕЛИ" },
         { id: "notes",  label: "ЗАМЕТКИ" },
         { id: "rules",  label: "ПРАВИЛА" }
       ]
@@ -144,9 +155,27 @@ export class WarhammerHordeSheet
       advance: system.characteristics?.[k]?.advance ?? 0
     }));
 
+    // Навыки — тем же блоком, что у персонажа, но ранг ставится прямо здесь:
+    // покупки за опыт у орды нет, поэтому вместо ранга-цены — выпадающий список.
+    // Одним списком: на две колонки его раскладывает вёрстка (column-count),
+    // делить в коде незачем.
+    context.skills = Object.keys(SKILLS_DEF).map(k => ({
+      key:   k,
+      label: SKILLS_DEF[k].label,
+      rank:  system.skills?.[k]?.rank ?? "untrained",
+      total: system.skills?.[k]?.total ?? -20
+    }));
+    context.skillRanks = Object.entries(SKILL_RANKS)
+      .map(([key, def]) => ({ key, label: def.label, bonus: def.bonus }));
+
     context.d = system.derived || {};
     context.weapons = this.actor.items.filter(i => i.type === "weapon")
       .map(i => ({ id: i.id, name: i.name, img: i.img, sys: i.system }));
+    // Броня Орды: все попадания идут в торс, поэтому в списке показывается AP
+    // тела — остальные зоны у Орды ни на что не влияют.
+    context.armors = this.actor.items.filter(i => i.type === "armor")
+      .map(i => ({ id: i.id, name: i.name, img: i.img,
+        ap: i.system?.body ?? 0, equipped: !!i.system?.equipped }));
     context.talents = this.actor.items.filter(i => i.type === "talent" || i.type === "trait")
       .map(i => ({ id: i.id, name: i.name, img: i.img, type: i.type,
         summary: i.system?.summary || i.system?.description || "" }));
@@ -162,8 +191,21 @@ export class WarhammerHordeSheet
    */
   _onRender(context, options) {
     super._onRender?.(context, options);
-    if (this.element) activateFactionFieldListeners(this.element, this.actor);
+    const el = this.element;
+    if (!el) return;
+    activateFactionFieldListeners(el, this.actor);
+
+    // Перетаскивание предметов на лист: у ApplicationV2 своей привязки нет, а
+    // без неё на Орду нельзя было положить ни броню, ни оружие из компендиума —
+    // предметы заводились только кнопками самого листа.
+    try {
+      const DDC = foundry.applications?.ux?.DragDrop?.implementation
+               ?? foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
+      if (DDC) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
+    } catch (e) { console.warn("Warhammer DBC | horde DnD bind:", e); }
   }
+
+  _canDragDrop(_selector) { return this.isEditable; }
 
   async _magChange(dMag, dPsych) {
     const s = this.actor.system;
@@ -183,7 +225,7 @@ export class WarhammerHordeSheet
   }
 
   async _createItem(type) {
-    const label = type === "weapon" ? "Оружие" : "Черта";
+    const label = { weapon: "Оружие", armor: "Броня" }[type] || "Черта";
     const [it] = await this.actor.createEmbeddedDocuments("Item", [{ name: `Новое: ${label}`, type }]);
     it?.sheet.render(true);
   }
@@ -196,15 +238,33 @@ export class WarhammerHordeSheet
 
   async _rollChar(key) {
     const meta = CHARACTERISTICS[key];
-    const val  = this.actor.system.characteristics?.[key]?.total ?? 0;
+    return this._rollTest({
+      label:     meta?.label || key,
+      threshold: this.actor.system.characteristics?.[key]?.total ?? 0,
+      prefix:    meta?.abbr || key
+    });
+  }
+
+  /** Тест Навыка Орды — тот же d100 против значения навыка. */
+  async _rollSkill(key) {
+    const def = SKILLS_DEF[key];
+    return this._rollTest({
+      label:     def?.label || key,
+      threshold: this.actor.system.skills?.[key]?.total ?? -20,
+      prefix:    "Навык"
+    });
+  }
+
+  /** Общая карточка теста d100 против порога. */
+  async _rollTest({ label, threshold, prefix }) {
     const roll = await new Roll("1d100").evaluate();
-    const rv = roll.total, success = rv <= val;
-    const deg = Math.floor(Math.abs(rv - val) / 10) + 1;
+    const rv = roll.total, success = rv <= threshold;
+    const deg = Math.floor(Math.abs(rv - threshold) / 10) + 1;
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result">
-        <div class="roll-header">${esc(this.actor.name)} — ${meta?.label || key}</div>
-        <div class="roll-threshold">${meta?.abbr || key}: Порог <b>${val}</b></div>
+        <div class="roll-header">${esc(this.actor.name)} — ${esc(label)}</div>
+        <div class="roll-threshold">${esc(prefix)}: Порог <b>${threshold}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${success
           ? `<span class="roll-success">Успех (${deg} ст.)</span>`

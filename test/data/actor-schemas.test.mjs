@@ -18,6 +18,7 @@ import path from "node:path";
 
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 import { CHARACTERISTICS }   from "../../module/constants/characteristics.mjs";
+import { SKILLS_DEF }        from "../../module/constants/skills.mjs";
 import { packDocuments, leaves, isEmpty } from "../support/pack-docs.mjs";
 
 const LEGACY = JSON.parse(fs.readFileSync(
@@ -56,6 +57,12 @@ const DEVIATIONS = {
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
     "availability": 0
+  },
+  horde: {
+    // Навыки Орды заведены позже template.json (вкладка «ПОКАЗАТЕЛИ»): у Орды
+    // нет покупок за опыт, поэтому в записи только ранг и выведенное значение.
+    skills: Object.fromEntries(Object.keys(SKILLS_DEF)
+      .map(k => [k, { rank: "untrained", total: -20 }]))
   },
   // У трёх существ три набора расхождений сразу, и записаны они по-разному:
   // поля Миньонов и свои поля типа — обычными именами, надбавки характеристик —

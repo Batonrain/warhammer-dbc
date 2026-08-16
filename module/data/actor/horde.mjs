@@ -6,6 +6,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
+import { SKILLS_DEF } from "../../constants/skills.mjs";
 
 export class HordeData extends foundry.abstract.TypeDataModel {
 
@@ -27,11 +28,24 @@ export class HordeData extends foundry.abstract.TypeDataModel {
       }, { label: def.label });
     }
 
+    // Навыки орды — как у существ, но без покупки за опыт: у орды есть только
+    // ранг (его ставит ГМ прямо на листе) и выведенное из него значение.
+    const skillFields = {};
+    for (const [key, def] of Object.entries(SKILLS_DEF)) {
+      skillFields[key] = new SchemaField({
+        rank:  new StringField({ initial: "untrained", label: "Ранг" }),
+        // −20 — бросок нетренированного навыка; значение считается заново
+        // в prepareDerivedData, здесь только умолчание пустого листа.
+        total: num(-20, "Значение")
+      }, { label: def.label });
+    }
+
     return {
       speciesName: str("Вид"),
       faction:     str("Фракция"),
       descriptor:  str("Описание"),
       characteristics: new SchemaField(charFields, { label: "Характеристики" }),
+      skills:          new SchemaField(skillFields, { label: "Навыки" }),
       magnitude: new SchemaField({
         value: num(0, "Текущая"), start: num(0, "Начальная")
       }, { label: "Численность" }),

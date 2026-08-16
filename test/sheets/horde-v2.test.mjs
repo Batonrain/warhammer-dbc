@@ -57,6 +57,19 @@ describe("_prepareContext", () => {
     expect(ctx.chars.find(c => c.key === "ws")).toMatchObject({ total: 35, bonus: 3, base: 30, advance: 5 });
   });
 
+  it("отдаёт Навыки со значением и список рангов для выпадающего списка", async () => {
+    const actor = hordeActor();
+    actor.system.skills = { dodge: { rank: "trained", total: 45 } };
+    const ctx = await WarhammerHordeSheet.prototype._prepareContext.call(sheetLike(actor), {});
+
+    // Все навыки, а не только заполненные: пустой берётся из умолчаний.
+    expect(ctx.skills.find(s => s.key === "dodge"))
+      .toEqual({ key: "dodge", label: "Уклонение", rank: "trained", total: 45 });
+    expect(ctx.skills.find(s => s.key === "awareness"))
+      .toEqual({ key: "awareness", label: "Бдительность", rank: "untrained", total: -20 });
+    expect(ctx.skillRanks.map(r => r.key)).toContain("veteran");
+  });
+
   it("вкладка берётся из умолчания, пока её не переключали", async () => {
     const ctx = await WarhammerHordeSheet.prototype._prepareContext
       .call(sheetLike(hordeActor(), { tabGroups: {} }), {});

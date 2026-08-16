@@ -473,6 +473,14 @@ export class WarhammerActor extends Actor {
       char.total = (Number(char.base) || 0) + (Number(char.advance) || 0);
       char.bonus = Math.floor(char.total / 10);
     }
+    // Навыки: значение = характеристика навыка + надбавка ранга. Считается так
+    // же, как у существ, но без продвижений за опыт — у орды их нет.
+    for (const [key, sk] of Object.entries(system.skills || {})) {
+      const def     = SKILLS_DEF[key];
+      const charVal = def ? (system.characteristics?.[def.char]?.total ?? 0) : 0;
+      sk.total = charVal + (SKILL_RANKS[sk.rank]?.bonus ?? -20);
+    }
+
     const mag   = system.magnitude || (system.magnitude = { value: 0, start: 0 });
     const value = Math.max(0, Number(mag.value) || 0);
     const start = Math.max(0, Number(mag.start) || 0);
@@ -499,9 +507,22 @@ export class WarhammerActor extends Actor {
     if (!immune && pct <= 0.25) state = "broken";        // Сломлена (рассыпается)
     else if (pct <= 0.50) state = "weakened";            // Ослаблена (−10 W)
 
+    // Броня Орды: все попадания идут в торс, поэтому считается AP тела, и не
+    // суммой, а по лучшему предмету — как у существ (несколько слоёв брони не
+    // складываются). Поле system.absorption мастер по-прежнему ставит руками:
+    // там сумма «броня + бонус Стойкости», как было до появления предметов.
+    let armourAP = 0;
+    for (const item of this.items ?? []) {
+      if (item.type !== "armor" || !item.system?.equipped) continue;
+      armourAP = Math.max(armourAP, Number(item.system.body) || 0);
+    }
+    const manualAbsorption = Math.max(0, Number(system.absorption) || 0);
+
     system.derived = {
       magSize,
       magSizeLabel: HORDE_SIZE_LABELS[magSize] || "",
+      armourAP,
+      absorptionTotal: manualAbsorption + armourAP,
       magDamageDice,
       magDamageStr: magDamageDice ? `+${magDamageDice}d10` : "—",
       meleeTargets,
