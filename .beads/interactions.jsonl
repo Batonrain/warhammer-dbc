@@ -1,0 +1,2 @@
+{"id":"int-72b8f4f6f47dfc355386c9a55bf0e4d8","kind":"field_change","created_at":"2026-08-16T16:59:07.068136038Z","actor":"Batonrain","issue_id":"wdbc-4w4","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Слот субрасы всегда, свободный ввод убран, applySubrace отвергает неизвестную субрасу; 378881d"}}
+{"id":"int-52cead6d5bde72d04aaeed4b69f483d8","kind":"field_change","created_at":"2026-08-16T16:59:07.576682835Z","actor":"Batonrain","issue_id":"wdbc-94z","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}

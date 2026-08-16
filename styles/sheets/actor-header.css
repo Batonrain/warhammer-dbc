@@ -181,7 +181,11 @@
   align-items: center;
   gap: 4px 12px;
 }
-.warhammer-dbc .header-row-fixed .header-cell { flex: 1 1 140px; min-width: 0; }
+/* min-width:0 разрешал ячейке сжаться уже своего содержимого, и содержимое
+   вылезало на соседнюю — «Субраса» наезжала на слот Расы. С min-content ячейка
+   не уже своего минимума, а лишняя переносится на следующую строку (у ряда
+   стоит flex-wrap) — перенос вместо наложения. */
+.warhammer-dbc .header-row-fixed .header-cell { flex: 1 1 140px; min-width: min-content; }
 
 /* Компактное read-only поле (Геносемя/Культура/Стремления) — то же место, что
    и у select/input, но просто текст: сами дроплисты живут на «Заметках». */
