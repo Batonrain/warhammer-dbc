@@ -101,15 +101,24 @@ export function libraryTrait(name) {
 }
 
 /** Все документы Черт пака: [{ path, doc }]. */
-function packTraits(dir = DIR) {
+function scanTraits(dir) {
   const out = [];
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry);
-    if (statSync(path).isDirectory()) out.push(...packTraits(path));
+    if (statSync(path).isDirectory()) out.push(...scanTraits(path));
     else if (entry.endsWith(".json") && entry !== "_Folder.json")
       out.push({ path, doc: JSON.parse(readFileSync(path, "utf8")) });
   }
   return out;
+}
+
+// Разбор всего каталога Черт кэшируется на процесс: libraryTrait() зовётся по
+// разу на каждую расовую Черту, и без кэша каждый вызов заново читал и парсил
+// весь пак — сотни файлов. На выросшем паке это перевалило за таймаут теста.
+// Файлы в одном прогоне не меняются: генератор пишет их после всех чтений.
+let traitsCache = null;
+function packTraits(dir) {
+  return dir === undefined ? (traitsCache ??= scanTraits(DIR)) : scanTraits(dir);
 }
 
 /**
