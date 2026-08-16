@@ -138,4 +138,11 @@
     </div>
     {{#if isHeretic}}<div class="gene-seed-hint">«Одержимый» — архетип Двойного Духа (Cor→демоническая сила): открывает вкладку ОДЕРЖИМОСТЬ рядом с ТЕЛО.</div>{{/if}}
     {{#unless isAeldari}}<div class="gene-seed-hint">«Вольный торговец» добавляет характеристику «Фактор Прибыли» (под Влиянием на вкладке ПОКАЗАТЕЛИ).</div>{{/unless}}
-  </div> </div>{{!-- /tab notes --}}
+  </div> 
+  {{!-- «В Орду» живёт здесь, а не в шапке: действие редкое и необратимое —
+        оно создаёт ОТДЕЛЬНОГО актора, а не правит текущего. --}}
+  <div class="notes-section">
+    <div class="panel-title">ПРЕОБРАЗОВАНИЕ</div>
+    <button type="button" class="char-wizard-btn horde-convert-btn" data-action="convertToHorde" title="Создать копию этого персонажа как Орду: Раны станут Магнитудой, Характеристики, Навыки, Таланты, Черты и снаряжение переедут">В Орду</button>
+  </div>
+</div>{{!-- /tab notes --}}
