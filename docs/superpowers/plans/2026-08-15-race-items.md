@@ -447,18 +447,9 @@ import { SubraceData }        from "./item/subrace.mjs";
     "systems/warhammer-dbc/templates/item/parts/subrace.hbs",
 ```
 
-В `system.json`, в массив `packs` рядом с `archetypes`:
-
-```json
-    {
-      "name": "races",
-      "label": "Расы — Библиотека (DBC)",
-      "path": "packs/races",
-      "type": "Item",
-      "system": "warhammer-dbc",
-      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER", "GAMEMASTER": "OWNER" }
-    },
-```
+Пак `races` в `system.json` здесь **не объявляется**: гейт `test/tools/packs.test.mjs` требует, чтобы
+у объявленного не-книжного пака была непустая папка `packs-src/<имя>`, а контента ещё нет.
+Объявление уедет в задачу 4 — вместе с записями, которые оно описывает.
 
 - [ ] **Шаг 7: Проверка и коммит**
 
@@ -1090,6 +1081,23 @@ describe("числа рас после переезда", () => {
 ```bash
 node tools/races-to-pack.mjs --write
 ```
+
+Теперь, когда контент есть, объявить пак в `system.json` — в массив `packs` рядом с `archetypes`:
+
+```json
+    {
+      "name": "races",
+      "label": "Расы — Библиотека (DBC)",
+      "path": "packs/races",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER", "GAMEMASTER": "OWNER" }
+    },
+```
+
+Порядок именно такой: гейт `test/tools/packs.test.mjs` требует у объявленного пака непустую папку
+`packs-src/<имя>`, поэтому объявление без содержимого его роняет. Задача 2 по этой причине
+регистрацию не делала.
 
 В `test/data/item-schemas.test.mjs` заменить у обоих типов `pack: null` на `pack: "races"`.
 
