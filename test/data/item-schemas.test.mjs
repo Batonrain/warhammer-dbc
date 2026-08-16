@@ -165,7 +165,7 @@ const TYPES = {
     }
   },
   race: {
-    pack: null,
+    pack: "races",
     defaults: {
       key: "", group: "", chars: {}, bonusRolls: 0, skills: "", gear: "", talents: "",
       description: "", notes: "", hasGeneSeed: false, pastRaces: [],
@@ -174,7 +174,7 @@ const TYPES = {
     }
   },
   subrace: {
-    pack: null,
+    pack: "races",
     defaults: {
       key: "", parent: "", cost: 0, effect: "", god: "", charMods: {}, talents: "",
       removesTraits: [], description: "", notes: "", bookSource: ""

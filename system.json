@@ -381,6 +381,14 @@
       }
     },
     {
+      "name": "races",
+      "label": "Расы — Библиотека (DBC)",
+      "path": "packs/races",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER", "GAMEMASTER": "OWNER" }
+    },
+    {
       "name": "archetypes",
       "label": "Архетипы — Библиотека (DBC)",
       "path": "packs/archetypes",
