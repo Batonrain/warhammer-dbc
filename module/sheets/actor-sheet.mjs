@@ -134,17 +134,7 @@ function onAbilityDetail(event, target) {
   tr.classList.toggle("ability-row-open", shown);
 }
 
-// ── Мастер создания персонажа (только по кнопке) ──
-// Черты, стартовые таланты и тема листа остаются на листе: их зовут и кнопки
-// «Применить расу»/«Применить легион».
-function onCharWizard(event) {
-  event.preventDefault();
-  showCreationWizard(this.actor, {
-    createTraits:         (list, source) => this._createTraitsFromList(list, source),
-    applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source),
-    applyTheme:           ()             => this._applyThemeClasses()
-  });
-}
+
 
 // ── Кнопки «+» показателей: Безумие/Порча (число или XdY+Z), Опыт,
 //    Благосклонность Бога-покровителя (ЗАПИСИ) — общий диалог+лог в чат ──
@@ -451,6 +441,20 @@ export class WarhammerCharacterSheet
     root.classList.remove(...[...root.classList].filter(c => /^wh-(align|race|class)-/.test(c)));
     root.classList.add(`wh-align-${sys.alignment || "loyalist"}`,
       `wh-race-${sys.race || "none"}`, `wh-class-${cls}`);
+  }
+
+  /**
+   * Мастер создания персонажа. Раньше его звала кнопка в шапке листа; теперь
+   * создание начинается кнопкой в панели «Актёры» (apps/character-start.mjs),
+   * а лист остаётся местом, где живут коллбеки: Черты, стартовые Таланты и
+   * тема листа — его же работа, их зовут и кнопки «Применить расу»/«…легион».
+   */
+  openCreationWizard() {
+    return showCreationWizard(this.actor, {
+      createTraits:         (list, source) => this._createTraitsFromList(list, source),
+      applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source),
+      applyTheme:           ()             => this._applyThemeClasses()
+    });
   }
 
   /** Создаёт Черты из списка {name,benefit,rating,hasRating,effects}, пропуская существующие по имени. */

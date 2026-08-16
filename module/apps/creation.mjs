@@ -18,6 +18,7 @@ import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.m
 import { disabledRaceKeys }             from "../constants/features.mjs";
 import { archetypeEntries, archetypesForRace } from "./archetypes.mjs";
 import { splitTopLevel, esc }           from "../helpers/utils.mjs";
+import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-levels.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
 // Влияние (inf) сюда не входит — оно от arch.infRoll.
@@ -521,7 +522,8 @@ async function grantSkitariiWarPlate(actor) {
  * applyTheme.
  */
 export async function applyCreation(actor,
-  { raceKey, subraceKey, alignment, archKey, ynnariPast, harlequinPast, charRolls = null, geneSeed = null },
+  { raceKey, subraceKey, alignment, archKey, ynnariPast, harlequinPast, charRolls = null,
+    geneSeed = null, startLevel = null },
   { createTraits, applyStartingTalents, applyTheme }) {
   const { race, arch, sub, past, pastKey } =
     resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harlequinPast });
@@ -570,6 +572,20 @@ export async function applyCreation(actor,
   if (arch?.infRoll && (chars.inf?.base || 0) === 0) {
     const infv = await rollWoundsFormula(arch.infRoll);
     if (infv) updates["system.characteristics.inf.base"] = infv;
+  }
+
+  // Уровень стартовой игры (стр. 23): опыт по колонке своей расы, а бонусы к
+  // Влиянию и Порче — ПОВЕРХ броска архетипа, не вместо него. Считается здесь,
+  // потому что только тут известны и раса, и выпавшее Влияние.
+  const start = startLevel && startLevelValues({ ...startLevel, astartes: raceKey === "astartes" });
+  if (start) {
+    const infBase = Number(updates["system.characteristics.inf.base"] ?? chars.inf?.base) || 0;
+    const cap = v => Math.max(0, Math.min(START_CAP, Math.round(v)));
+    updates["system.experience.total"]          = start.xp;
+    updates["system.experience.current"]        = start.xp;
+    updates["system.characteristics.inf.base"]  = cap(infBase + start.infamy);
+    updates["system.corruption.value"]          =
+      cap((Number(actor.system.corruption?.value) || 0) + start.corruption);
   }
 
   await actor.update(updates);
@@ -641,7 +657,22 @@ function updateWizardNote(html) {
  * Применяет всё разом (характеристики только в пустые поля, Черты/импланты —
  * недостающие). Безопасно при повторном запуске.
  */
+/**
+ * Мастер создания персонажа.
+ *
+ * Возвращает промис: он резолвится ПОСЛЕ применения выбора (true) или при
+ * отмене (false). Ждать окончания нужно тем, кто дописывает что-то поверх —
+ * например, стартовому Уровню игры (apps/character-start.mjs): его бонусы к
+ * Влиянию идут ДОПОЛНИТЕЛЬНО к броску архетипа, а тот ставится здесь и только
+ * в пустое поле.
+ */
 export function showCreationWizard(actor, deps) {
+  let settle = () => {};
+  const done = new Promise(resolve => { settle = resolve; });
+  // Диалог закрывается СРАЗУ после вызова callback, не дожидаясь его async-
+  // работы, поэтому `close` резолвил бы промис раньше, чем применён выбор, и
+  // ждущая сторона дописывала бы своё поверх пустого листа.
+  let applying = false;
   const curRace = actor.system.race || "human";
   // Метод «Генерация»: два независимых набора (каждый можно перебросить). Игрок
   // выбирает набор, затем раскидывает его значения по х-кам (drag&drop / клики).
@@ -715,6 +746,36 @@ export function showCreationWizard(actor, deps) {
       <div class="roll-threshold" style="font-size:0.8em;color:#5a4a30;">
         Итог = база расы/архетипа + раскиданное значение. Заполняются только пустые поля; повторный запуск безопасен.
       </div>
+
+      <!-- Уровень стартовой игры (стр. 23) — последним блоком: колонка опыта
+           зависит от расы, а её выбирают выше. -->
+      <div class="wiz-gen wh-cstart">
+        <div class="wiz-gen-lbl">3. Уровень стартовой игры (стр. 23):</div>
+        <div class="cstart-hint">Опыт зависит от того, Десантник персонаж или нет — колонка подсвечивается по
+          выбранной расе. Бесчестие и Порча стартового персонажа не превышают ${START_CAP}.</div>
+        <table class="items-table cstart-table">
+          <thead><tr>
+            <th></th><th class="cstart-col-astartes">XP Десантника</th>
+            <th class="cstart-col-mortal">XP прочих</th><th>Влияние</th><th>Порча</th>
+          </tr></thead>
+          <tbody>
+            ${START_LEVELS.map((l, i) => `
+              <tr>
+                <td class="cstart-pick"><input type="radio" name="cstart-level" value="${l.key}" ${i === 0 ? "checked" : ""}/></td>
+                <td class="cstart-xp cstart-col-astartes">${l.astartes.toLocaleString("ru")}</td>
+                <td class="cstart-xp cstart-col-mortal">${l.mortal.toLocaleString("ru")}</td>
+                <td class="cstart-bonus">+${l.infamy}</td>
+                <td class="cstart-bonus">+${l.corruption}</td>
+              </tr>`).join("")}
+          </tbody>
+          <tfoot><tr class="cstart-extra">
+            <td>сверх того</td>
+            <td colspan="2"><input type="number" id="cstart-xp" value="0" step="50" title="Дополнительный опыт"/></td>
+            <td><input type="number" id="cstart-inf" value="0" title="Дополнительное Влияние"/></td>
+            <td><input type="number" id="cstart-cor" value="0" title="Дополнительная Порча"/></td>
+          </tr></tfoot>
+        </table>
+      </div>
     </form>`;
 
   const dlg = new Dialog({
@@ -724,6 +785,7 @@ export function showCreationWizard(actor, deps) {
       apply: {
         icon: '<i class="fas fa-user-plus"></i>', label: "Создать",
         callback: async html => {
+          applying = true;
           const isAstartes = html.find("#wiz-race").val() === "astartes";
           await applyCreation(actor, {
             raceKey:    html.find("#wiz-race").val(),
@@ -738,13 +800,23 @@ export function showCreationWizard(actor, deps) {
               chapter:        html.find("#wiz-chapter-sel").val() || "",
               cultureLegion:  html.find("#wiz-cult-sel").val() || "",
               cultureChapter: html.find("#wiz-cult-chapter-sel").val() || ""
-            } : null
+            } : null,
+            startLevel: {
+              level:    html.find('input[name="cstart-level"]:checked').val(),
+              extraXp:  parseInt(html.find("#cstart-xp").val())  || 0,
+              extraInf: parseInt(html.find("#cstart-inf").val()) || 0,
+              extraCor: parseInt(html.find("#cstart-cor").val()) || 0
+            }
           }, deps);
+          settle(true);
         }
       },
-      cancel: { label: "Отмена" }
+      cancel: { label: "Отмена", callback: () => settle(false) }
     },
     default: "apply",
+    // Закрыли крестиком — тоже ответ: ждущая сторона не должна зависнуть. Но
+    // если выбор уже применяется, ответ даст сам callback, когда закончит.
+    close: () => { if (!applying) settle(false); },
     render: html => {
       const rebuild = () => {
         const rk    = html.find("#wiz-race").val();
@@ -774,6 +846,9 @@ export function showCreationWizard(actor, deps) {
         // Легион+культура — только для Астартес.
         html.find("#wiz-legion").toggle(rk === "astartes");
         if (rk === "astartes") refreshLegion();
+        // Уровень старта: подсвечиваем ту колонку опыта, что достанется этой
+        // расе, — выбирать её отдельно не нужно.
+        html.find(".wh-cstart").toggleClass("cstart-astartes", rk === "astartes");
         // Число бонусных бросков зависит от расы — перекатываем оба набора и
         // сбрасываем раскладку.
         const bonus = creationBonusRolls(rk);
@@ -932,4 +1007,5 @@ export function showCreationWizard(actor, deps) {
     }
   }, { classes: ["dialog", "wh-attack-dialog", "warhammer-dbc", "wh-holo"], width: 460 });
   dlg.render(true);
+  return done;
 }

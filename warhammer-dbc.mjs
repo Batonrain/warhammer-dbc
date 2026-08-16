@@ -67,6 +67,7 @@ import { setSystemPackLocks }         from "./module/apps/pack-locks.mjs";
 import { importBooks }                from "./module/apps/books.mjs";
 import { registerHandlebarsHelpers }  from "./module/helpers/handlebars.mjs";
 import { registerHooks }              from "./module/hooks.mjs";
+import { registerCharacterStartButton } from "./module/apps/character-start.mjs";
 import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
@@ -439,6 +440,10 @@ Hooks.on("renderNoteConfig", (app, html) => {
 
 // Регистрируем hooks
 registerHooks();
+
+// Кнопка «Начать создание персонажа» в панели «Актёры» (apps/character-start.mjs):
+// с неё начинается новый персонаж — с выбора Уровня стартовой игры.
+registerCharacterStartButton();
 
 // ── Сокет: посадка игрока в чужую технику через активного ГМа ─────────────────
 // Игрок не может обновлять актора-технику, которым не владеет. Клиент игрока
