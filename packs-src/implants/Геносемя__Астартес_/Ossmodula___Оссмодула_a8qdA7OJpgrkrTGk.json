@@ -15,12 +15,7 @@
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,
-      "charBonuses": [
-        {
-          "stat": "t",
-          "value": 2
-        }
-      ],
+      "charBonuses": [],
       "charValueBonuses": [],
       "armourAll": 0,
       "apHead": 0,
@@ -28,7 +23,7 @@
       "apArms": 0,
       "apLegs": 0,
       "fearRating": 0,
-      "sizeMod": 1,
+      "sizeMod": 0,
       "initMod": 0,
       "speedMod": 0
     },
