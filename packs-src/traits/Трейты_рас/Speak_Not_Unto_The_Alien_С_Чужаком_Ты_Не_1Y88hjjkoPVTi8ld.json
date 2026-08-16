@@ -1,12 +1,12 @@
 {
-  "name": "The Price of Immortality / Цена Бессмертия",
+  "name": "Speak Not Unto The Alien / С Чужаком Ты Не Заговори",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
     "notes": "",
-    "benefit": "При гибели Гемункулы Кабала/Ковена/Культа возвращают друкхари из мёртвых: каждую главу −2d5 Inf за услуги. Невозможно при Выжигании Души, варп-оружии или поглощении души. Стартовый персонаж без субрасы может отказаться от Трейта ради +3d5 стартового Inf.",
+    "benefit": "При общении с людьми считается мутантом: −20 на общение (взаимно). Другие мутанты относятся дружелюбнее.",
     "source": "раса",
     "hasRating": false,
     "rating": 0,
@@ -25,9 +25,9 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "sVgBuwJHiF1wZe7t",
+  "_id": "1Y88hjjkoPVTi8ld",
   "effects": [],
   "sort": 0,
   "flags": {},
-  "_key": "!items!sVgBuwJHiF1wZe7t"
+  "_key": "!items!1Y88hjjkoPVTi8ld"
 }

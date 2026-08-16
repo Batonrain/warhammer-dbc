@@ -31,12 +31,14 @@ const FOLDER_ID = "NQHsbl75bk7fCc77";          // _Folder.json папки «Тр
  * (module/apps/origin-shared.mjs).
  */
 export function normTraitName(name) {
-  return String(name)
-    .split("/")[0]
-    .toLowerCase()
-    .replace(/\([^)]*\)/g, " ")
-    .replace(/[^a-z]+/g, " ")
-    .trim();
+  const full = String(name).toLowerCase().replace(/\([^)]*\)/g, " ");
+  const english = full.split("/")[0].replace(/[^a-z]+/g, " ").trim();
+  if (english) return english;
+  // Английской части нет («Дары Цегораха / Базовые Черты Арлекина» — оба
+  // куска кириллические): без запасного пути ключ ушёл бы в пустую строку, и
+  // любая вторая такая Черта молча склеилась бы с этой. Сверяем полное имя,
+  // латиницу и кириллицу — как в первой версии правила, до английского ключа.
+  return full.replace(/[^a-zа-яё]+/g, " ").trim();
 }
 
 /** Есть ли у документа чем считать: рейтинг и хоть один эффект. */
@@ -102,11 +104,26 @@ const fileName = (name, id) =>
 export function run({ write = false } = {}) {
   const missing = missingRaceTraits();
   const traits  = raceTraits();
-  const files   = [];
 
+  // Несколько сырых имён константы сходятся к одному ключу сверки — «Unnatural
+  // Agility» назван тремя разными рейтингами/русскими сокращениями у разных
+  // рас. Библиотеке нужен один документ на ключ: рейтинг роли не играет,
+  // выдача подвинет эффект под нужный сама (rescaleTraitByRating, задача 1).
+  // Выбор внутри группы — первое имя по алфавиту: детерминированно, значит
+  // при пересборке даёт тот же _id.
+  const groups = new Map();
   for (const name of missing) {
+    const key = normTraitName(name);
+    const group = groups.get(key) || [];
+    group.push(name);
+    groups.set(key, group);
+  }
+
+  const files = [];
+  for (const [key, names] of groups) {
+    const name = [...names].sort()[0];
     const t  = traits.get(name);
-    const id = stableId(`race-trait:${name}`);
+    const id = stableId(`race-trait:${key}`);
     // Черта с рейтингом заводится ШАБЛОНОМ «(X)», как уже сделаны Сила и
     // Стойкость: число из констант остаётся в rating и в эффекте, а выдача с
     // другим рейтингом подвинет его сама (rescaleTraitByRating, задача 1).
@@ -133,11 +150,11 @@ export function run({ write = false } = {}) {
     files.push(path);
   }
 
-  return { existing: traits.size - missing.length, created: missing.length, files };
+  return { existing: traits.size - missing.length, created: groups.size, files };
 }
 
 if (process.argv[1]?.endsWith("race-traits.mjs")) {
   const res = run({ write: process.argv.includes("--write") });
-  console.log(`Расовых Черт в константах: ${res.existing + res.created}`);
-  console.log(`Уже в библиотеке: ${res.existing}; заведено: ${res.created}`);
+  console.log(`Расовых Черт в константах: ${raceTraits().size}`);
+  console.log(`Уже в библиотеке: ${res.existing}; заведено документов: ${res.created}`);
 }

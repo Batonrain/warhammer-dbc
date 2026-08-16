@@ -7,6 +7,8 @@
 // Сверка по нормализованному имени: в паке шаблоны названы «(X)», а раса
 // называет конкретный рейтинг — «Unnatural Strength (4)».
 
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { normTraitName, libraryTrait, missingRaceTraits } from "../../tools/race-traits.mjs";
 
@@ -38,5 +40,28 @@ describe("сверка расовых Черт с библиотекой", () =>
 
   it("после прогона генератора ни одна расовая Черта не осталась без пары", () => {
     expect(missingRaceTraits()).toEqual([]);
+  });
+
+  // Черта без английской части («Дары Цегораха / Базовые Черты Арлекина») не
+  // должна схлопывать ключ сверки в пустую строку — иначе любая вторая такая
+  // Черта молча склеится с ней.
+  it("Черта без английской части не схлопывается с другой такой же Чертой", () => {
+    const a = normTraitName("Дары Цегораха / Базовые Черты Арлекина");
+    const b = normTraitName("Иные Дары / Другая Черта");
+
+    expect(a).not.toBe("");
+    expect(b).not.toBe("");
+    expect(a).not.toBe(b);
+  });
+
+  // «Unnatural Agility» встречается в константах с тремя разными рейтингами и
+  // разным русским сокращением — три сырых имени, один ключ сверки. run()
+  // обязан завести под этот ключ ОДИН документ, а не по документу на имя.
+  it("созданные документы не повторяют друг друга по ключу сверки", () => {
+    const dir   = "packs-src/traits/Трейты_рас";
+    const files = readdirSync(dir).filter(f => f.endsWith(".json") && f !== "_Folder.json");
+    const keys  = files.map(f => normTraitName(JSON.parse(readFileSync(join(dir, f), "utf8")).name));
+
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });

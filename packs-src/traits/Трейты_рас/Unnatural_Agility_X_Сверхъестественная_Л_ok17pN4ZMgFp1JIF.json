@@ -1,19 +1,19 @@
 {
-  "name": "Unnatural Intelligence (X) / Сверхъестественный Интеллект (X)",
+  "name": "Unnatural Agility (X) / Сверхъестественная Ловкость (X)",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
     "notes": "",
-    "benefit": "+2 к Бонусу Интеллекта.",
+    "benefit": "+2 к Бонусу Ловкости.",
     "source": "раса",
     "hasRating": true,
     "rating": 2,
     "hasRating2": false,
     "rating2": 0,
     "effects": {
-      "charBonusStat": "int",
+      "charBonusStat": "ag",
       "charBonusValue": 2,
       "charBonuses": [],
       "charValueBonuses": [],
@@ -25,9 +25,9 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "yTkQXDekjnpJdIP5",
+  "_id": "ok17pN4ZMgFp1JIF",
   "effects": [],
   "sort": 0,
   "flags": {},
-  "_key": "!items!yTkQXDekjnpJdIP5"
+  "_key": "!items!ok17pN4ZMgFp1JIF"
 }

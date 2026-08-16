@@ -1,20 +1,20 @@
 {
-  "name": "Unnatural Agility (X) / Сверхъестественная Ловкость (X)",
+  "name": "Godless / Безбожник",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
     "notes": "",
-    "benefit": "+2 к Бонусу Ловкости.",
+    "benefit": "Нет Очков Судьбы и Очков Бесчестья (нет Покровительства). Для талантов, требующих ОБ, тратит Очки Боли по уровню таланта. Смерть окончательна (см. «Цена Бессмертия»).",
     "source": "раса",
-    "hasRating": true,
-    "rating": 2,
+    "hasRating": false,
+    "rating": 0,
     "hasRating2": false,
     "rating2": 0,
     "effects": {
-      "charBonusStat": "ag",
-      "charBonusValue": 2,
+      "charBonusStat": "",
+      "charBonusValue": 0,
       "charBonuses": [],
       "charValueBonuses": [],
       "armourAll": 0,
@@ -25,9 +25,9 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "rDtLGyP6YEUYZrND",
+  "_id": "cnRQ8xzLr6qeW7b4",
   "effects": [],
   "sort": 0,
   "flags": {},
-  "_key": "!items!rDtLGyP6YEUYZrND"
+  "_key": "!items!cnRQ8xzLr6qeW7b4"
 }

@@ -1,12 +1,12 @@
 {
-  "name": "Mercenary Loyalty / Наёмничья Верность",
+  "name": "Clear Mind / Чистый Разум",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
     "notes": "",
-    "benefit": "Не предаёт нанимателя. Наниматель или уважаемый персонаж получает +30 на Командование Сслитом; сам Сслит — −30 на сопротивление их приказам и −10 на командование не-Сслитами.",
+    "benefit": "При обучении Пути от более опытного: +30 к тесту I/Logic в конце и ×2 успехи. При обучении других: +60 к Trade(Instructor)(I) (÷2, если ученик не на том же Пути).",
     "source": "раса",
     "hasRating": false,
     "rating": 0,
@@ -25,9 +25,9 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "mvdZUf7uJh3NpjUG",
+  "_id": "9uO44ctVkrzrMXLg",
   "effects": [],
   "sort": 0,
   "flags": {},
-  "_key": "!items!mvdZUf7uJh3NpjUG"
+  "_key": "!items!9uO44ctVkrzrMXLg"
 }

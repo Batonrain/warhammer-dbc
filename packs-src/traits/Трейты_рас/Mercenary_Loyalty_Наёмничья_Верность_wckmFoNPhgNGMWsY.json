@@ -1,12 +1,12 @@
 {
-  "name": "Non Imperial / Не Имперец",
+  "name": "Mercenary Loyalty / Наёмничья Верность",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
     "notes": "",
-    "benefit": "Навыки Знаний об Империуме враждебны при покупке; до Forbidden Lore (Mon-Keigh)+0 все имперские знания стоят вдвое.",
+    "benefit": "Не предаёт нанимателя. Наниматель или уважаемый персонаж получает +30 на Командование Сслитом; сам Сслит — −30 на сопротивление их приказам и −10 на командование не-Сслитами.",
     "source": "раса",
     "hasRating": false,
     "rating": 0,
@@ -25,9 +25,9 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "hmO39NmglqtRqxzP",
+  "_id": "wckmFoNPhgNGMWsY",
   "effects": [],
   "sort": 0,
   "flags": {},
-  "_key": "!items!hmO39NmglqtRqxzP"
+  "_key": "!items!wckmFoNPhgNGMWsY"
 }

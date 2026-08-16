@@ -1,12 +1,12 @@
 {
-  "name": "Untouchable / Неприкосновенные",
+  "name": "Non Imperial / Не Имперец",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
     "notes": "",
-    "benefit": "Иммунитет к ритуалам, феноменам и прорывам. Душу нельзя схватить, удержать или выжечь — её спасает Цегорах. Игнорирует Fear демонов/демонических сущностей, силовые щиты демонов и их трейты/свойства (Dreaming, Bane, Challenge и т.п.). Не может быть одержим.",
+    "benefit": "Навыки Знаний об Империуме враждебны при покупке; до Forbidden Lore (Mon-Keigh)+0 все имперские знания стоят вдвое.",
     "source": "раса",
     "hasRating": false,
     "rating": 0,
@@ -25,9 +25,9 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "wyefOdTpXpM6quHM",
+  "_id": "I6DHkP5pF4kb0v2P",
   "effects": [],
   "sort": 0,
   "flags": {},
-  "_key": "!items!wyefOdTpXpM6quHM"
+  "_key": "!items!I6DHkP5pF4kb0v2P"
 }

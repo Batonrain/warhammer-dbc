@@ -1,12 +1,12 @@
 {
-  "name": "Clear Mind / Чистый Разум",
+  "name": "Illiengau / Древний Рок",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
     "notes": "",
-    "benefit": "При обучении Пути от более опытного: +30 к тесту I/Logic в конце и ×2 успехи. При обучении других: +60 к Trade(Instructor)(I) (÷2, если ученик не на том же Пути).",
+    "benefit": "−15 на Мораль/Шок/Командование против последователей Слаанеш; −15 на сопротивление одержимости и больше Порчи; демоны Слаанеш +30 пси-чутья против него; за 100 опыта и время вне игры — снять 1 Порчу; ветка «Смелость» всегда дружественна.",
     "source": "раса",
     "hasRating": false,
     "rating": 0,
@@ -25,9 +25,9 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "24h8Np0gkd6nfsEA",
+  "_id": "KiwEaPhWPM2KGBfs",
   "effects": [],
   "sort": 0,
   "flags": {},
-  "_key": "!items!24h8Np0gkd6nfsEA"
+  "_key": "!items!KiwEaPhWPM2KGBfs"
 }

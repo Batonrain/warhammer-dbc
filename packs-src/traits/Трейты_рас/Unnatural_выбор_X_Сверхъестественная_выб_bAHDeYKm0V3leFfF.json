@@ -1,20 +1,20 @@
 {
-  "name": "Unnatural Perception (X) / Сверхъестественное Восприятие (X)",
+  "name": "Unnatural (выбор) (X) / Сверхъестественная (выбор) (X)",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
     "notes": "",
-    "benefit": "+2 к Бонусу Per.",
+    "benefit": "+2 к Бонусу выбранной из S/T/A/P. Укажите в авто-эффектах.",
     "source": "раса",
     "hasRating": true,
     "rating": 2,
     "hasRating2": false,
     "rating2": 0,
     "effects": {
-      "charBonusStat": "per",
-      "charBonusValue": 2,
+      "charBonusStat": "",
+      "charBonusValue": 0,
       "charBonuses": [],
       "charValueBonuses": [],
       "armourAll": 0,
@@ -25,9 +25,9 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "gTskxK5A2j7iR7Km",
+  "_id": "bAHDeYKm0V3leFfF",
   "effects": [],
   "sort": 0,
   "flags": {},
-  "_key": "!items!gTskxK5A2j7iR7Km"
+  "_key": "!items!bAHDeYKm0V3leFfF"
 }

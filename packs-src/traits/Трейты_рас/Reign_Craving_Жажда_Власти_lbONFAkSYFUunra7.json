@@ -1,15 +1,15 @@
 {
-  "name": "Unnatural (выбор) (X) / Сверхъестественная (выбор) (X)",
+  "name": "Reign Craving / Жажда Власти",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
     "description": "",
     "notes": "",
-    "benefit": "+2 к Бонусу выбранной из S/T/A/P. Укажите в авто-эффектах.",
+    "benefit": "+10 на социальные тесты ради власти, свержения или предательства. Вдвое снижает штрафы соц. тестов, пока участвует в заговоре. За идеальную интригу/предательство в нужный момент — до +1d5 Inf.",
     "source": "раса",
-    "hasRating": true,
-    "rating": 2,
+    "hasRating": false,
+    "rating": 0,
     "hasRating2": false,
     "rating2": 0,
     "effects": {
@@ -25,9 +25,9 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "LCfaNjN7PFq6NEjI",
+  "_id": "lbONFAkSYFUunra7",
   "effects": [],
   "sort": 0,
   "flags": {},
-  "_key": "!items!LCfaNjN7PFq6NEjI"
+  "_key": "!items!lbONFAkSYFUunra7"
 }
