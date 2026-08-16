@@ -20,13 +20,22 @@ import { clearGrantedBy } from "./origin-shared.mjs";
 const FLAG  = "warhammer-dbc";
 const GRANT = "originGrant";
 
+/**
+ * Предмет-носитель по флагу originGrant, а не по типу: Прошлое Иннари и
+ * Арлекина кладёт документ той же расы (тип "race"), что и сама раса, —
+ * различить их можно только по тегу. Поиск первого предмета типа "race" без
+ * тега путал носитель расы с носителем Прошлого (см. Находку 1, wdbc-n1k,
+ * раунд правок 1): смена расы могла снести не тот предмет.
+ */
+function grantedItem(actor, type, tag) {
+  return actor?.items?.find(i => i.type === type && i.getFlag(FLAG, GRANT) === tag) || null;
+}
+
 /** Предмет-носитель расы на акторе (или null). */
-export function actorRaceItem(actor) {
-  return actor?.items?.find(i => i.type === "race") || null;
-}
-export function actorSubraceItem(actor) {
-  return actor?.items?.find(i => i.type === "subrace") || null;
-}
+export function actorRaceItem(actor) { return grantedItem(actor, "race", "race"); }
+/** Предмет-носитель Прошлого (Иннари/Арлекин) — тот же тип "race", тег racePast. */
+export function actorRacePastItem(actor) { return grantedItem(actor, "race", "racePast"); }
+export function actorSubraceItem(actor) { return grantedItem(actor, "subrace", "subrace"); }
 
 /**
  * Стартовые характеристики расы — ТОЛЬКО в пустые поля. Заполненное значение
@@ -40,13 +49,21 @@ export function raceCharsUpdate(actor, chars) {
   return upd;
 }
 
-/** Снимает расу, всё ею выданное и субрасу: субраса относилась к прежней расе. */
+/**
+ * Снимает расу, всё ею выданное, субрасу и Прошлое: оба относились к прежней
+ * расе и без неё теряют смысл (Прошлое существует только у Иннари/Арлекина,
+ * которые сами и есть раса — см. Находку 2, wdbc-n1k, раунд правок 1).
+ */
 export async function clearRace(actor) {
   await clearSubrace(actor);
+  await clearRacePast(actor);
   await clearGrantedBy(actor, "race", actorRaceItem(actor));
 }
 export async function clearSubrace(actor) {
   await clearGrantedBy(actor, "subrace", actorSubraceItem(actor));
+}
+export async function clearRacePast(actor) {
+  await clearGrantedBy(actor, "racePast", actorRacePastItem(actor));
 }
 
 /**
@@ -67,8 +84,9 @@ export async function clearSubrace(actor) {
  */
 export async function applyRace(actor, key, { tag = "race", mirror = true } = {}) {
   if (!actor) return;
-  await clearGrantedBy(actor, tag, tag === "race" ? actorRaceItem(actor) : null);
-  if (tag === "race") await clearSubrace(actor);
+  // Своя раса тянет за собой субрасу и Прошлое; Прошлое снимает только себя.
+  if (tag === "race") await clearRace(actor);
+  else await clearRacePast(actor);
   if (!key) {
     if (mirror) await actor.update({ "system.race": "", "system.subrace": "" });
     return;
