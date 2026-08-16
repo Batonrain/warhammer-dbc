@@ -18,11 +18,17 @@ import { join } from "node:path";
 import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs } from "./packs.mjs";
 import { bookDocuments, linkIndexFrom } from "./book-docs.mjs";
 
-/** Собирает пак заново, снося прежнюю базу. */
+/**
+ * Собирает пак заново, снося прежнюю базу. Возвращает число документов, которые
+ * реально легли в базу: `transformEntry` зовётся на каждый документ, и это
+ * единственный честный счётчик — сам `compilePack` ничего не возвращает.
+ */
 async function build(src, dir) {
   rmSync(abs(dir), { recursive: true, force: true });
   mkdirSync(abs(dir), { recursive: true });
-  await compilePack(src, abs(dir), { recursive: true });
+  let docs = 0;
+  await compilePack(src, abs(dir), { recursive: true, transformEntry: () => { docs++; } });
+  return docs;
 }
 
 for (const p of LIBRARY_PACKS) {
@@ -30,8 +36,16 @@ for (const p of LIBRARY_PACKS) {
     console.error(`нет исходника ${p.src} — пак ${p.name} остался бы пустым`);
     process.exit(1);
   }
-  await build(abs(p.src), p.dir);
-  console.log(`собран ${p.name}`);
+  const docs = await build(abs(p.src), p.dir);
+  // Пустой пак — всегда ошибка сборки, а не «так вышло»: объявленный в
+  // system.json пак Foundry заводит сама, и пустая база выглядит в игре как
+  // пустой компендиум, ничем не отличимый от забытого контента. Так пропали
+  // «Расы»: сборка отчиталась «собран races» и промолчала про ноль документов.
+  if (!docs) {
+    console.error(`пак ${p.name} собрался пустым: в ${p.src} нет документов`);
+    process.exit(1);
+  }
+  console.log(`собран ${p.name}: документов — ${docs}`);
 }
 
 const index = linkIndexFrom(LIBRARY_PACKS.map(p => ({ ...p, dir: abs(p.src) })));

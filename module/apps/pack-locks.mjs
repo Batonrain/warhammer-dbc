@@ -35,3 +35,33 @@ export async function setSystemPackLocks(locked) {
   }
   return n;
 }
+
+/**
+ * Названия паков системы с пустым индексом. Пак объявлен в system.json, но
+ * база под него не собрана — Foundry заводит пустую сама, и в игре это
+ * выглядит как компендиум без содержимого, неотличимый от забытого контента.
+ * Так пропали «Расы»: заметили случайно и не сразу.
+ *
+ * Принимает список паков, а не читает game.packs, — чтобы считалось без
+ * запуска Foundry и проверялось тестом.
+ */
+export function emptySystemPacks(packs = []) {
+  return [...packs]
+    .filter(p => p?.metadata?.packageName === SYSTEM && (p.index?.size ?? 0) === 0)
+    .map(p => p.metadata.label || p.collection);
+}
+
+/**
+ * Говорит ГМу о пустых паках системы. Молчит, когда всё на месте. Чинится это
+ * не в игре, а пересборкой компендиумов, поэтому в тексте сразу команда.
+ */
+export function warnEmptySystemPacks(packs = []) {
+  const empty = emptySystemPacks(packs);
+  if (!empty.length) return empty;
+  const list = empty.join(", ");
+  console.error(`Warhammer DBC | Пустые компендиумы системы: ${list}. Соберите паки: npm run packs:build`);
+  ui.notifications?.error(
+    `Warhammer DBC: пустые компендиумы — ${list}. База под них не собрана (npm run packs:build).`,
+    { permanent: true });
+  return empty;
+}
