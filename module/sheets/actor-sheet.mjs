@@ -30,6 +30,8 @@ import { minionsContext, activateMinionListeners } from "../apps/minions.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
 import { minionsPanelContext } from "./tabs/minions-panel.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
+import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
+import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
@@ -748,6 +750,17 @@ export class WarhammerCharacterSheet
       }
       return src.type === "race" ? applyRace(this.actor, key) : applySubrace(this.actor, key);
     }
+
+    // «Миньон Хаоса» — Талант на двадцать разных слуг (стр. 111). Перетащенный
+    // без пары «группа + сила» он оставался бы слотом «непонятно чей», поэтому
+    // спрашиваем то же самое, что спрашивает покупка на вкладке «Развитие».
+    if (isMinionTalent(src) && !minionSlotOf(src).group) {
+      const pick = await promptMinionSlot(this.actor, src);
+      if (!pick) return;                        // отменили — предмет не создаём
+      const obj = applyMinionSlot(src.toObject(), pick);
+      return this.actor.createEmbeddedDocuments("Item", [obj]);
+    }
+
     return super._onDropItem(event, data);
   }
 
