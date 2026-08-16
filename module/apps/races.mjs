@@ -23,6 +23,23 @@ const FLAG  = "warhammer-dbc";
 const GRANT = "originGrant";
 
 /**
+ * Опция create-контекста (третий аргумент createEmbeddedDocuments), а НЕ
+ * флаг документа: Foundry прокидывает такие опции в третий параметр хука
+ * createItem как есть. Носитель расы/субрасы несёт `originGrant`, поэтому
+ * страховочная ветка хука (warhammer-dbc.mjs, находка C1/handleStrayRaceItem)
+ * его не трогает — предмет доходит до общей ветки `applyItemMechanics(item)`.
+ * Без этой опции хук применил бы Механику ВТОРОЙ раз поверх нашего прямого
+ * вызова ниже (см. applyItemMechanics в applyRace/applySubrace) — и это НЕ
+ * лечится идемпотентностью applyItemMechanics: appliedEntryIds читает флаг
+ * mechanicsApplied в начале функции, а пишет его только в конце. Прямой
+ * вызов здесь и вызов из хука независимы и оба успевают стартовать с пустым
+ * флагом, если наш вызов уходит в реальные createEmbeddedDocuments (по Черте)
+ * дольше, чем хук доходит до своего applyItemMechanics — в сетевом Foundry
+ * так и есть. Экспортируется, чтобы warhammer-dbc.mjs проверял тот же ключ.
+ */
+export const SKIP_MECHANICS_HOOK = "raceMechanicsInline";
+
+/**
  * Предмет-носитель по флагу originGrant, а не по типу: Прошлое Иннари и
  * Арлекина кладёт документ той же расы (тип "race"), что и сама раса, —
  * различить их можно только по тегу. Поиск первого предмета типа "race" без
@@ -120,9 +137,12 @@ export async function applyRace(actor, key, { tag = "race", mirror = true } = {}
     // промис не ждёт — код, идущий следом (в Мастере создания это applySubrace
     // с фильтром removesTraits), может пробежать по актору раньше, чем хук
     // успел выдать расовые Черты (Находка I3, wdbc-n1k). Применяем Механику
-    // сами и синхронно ждём; хук всё равно сработает следом, но
-    // applyItemMechanics идемпотентна (mechanicsApplied) и повторно не сыграет.
-    const [created] = await actor.createEmbeddedDocuments("Item", [data]);
+    // сами и синхронно ждём — а SKIP_MECHANICS_HOOK в опциях создания
+    // говорит хуку не применять её ещё раз следом (см. константу выше: одной
+    // идемпотентности applyItemMechanics тут НЕ хватает — оба вызова успевают
+    // стартовать с одинаковым пустым флагом mechanicsApplied, и Черты
+    // выдались бы дважды).
+    const [created] = await actor.createEmbeddedDocuments("Item", [data], { [SKIP_MECHANICS_HOOK]: true });
     if (created) await applyItemMechanics(created);
   } else {
     ui.notifications?.warn(
@@ -172,9 +192,11 @@ export async function applySubrace(actor, key) {
     // промис не ждёт (Hooks.callAll не await'ит колбэки) — фильтр removesTraits
     // ниже читает actor.items СРАЗУ и может пробежать раньше хука, не увидев
     // ещё не выданные субрасовые Черты (Находка I3, wdbc-n1k). Применяем
-    // Механику сами и синхронно ждём; хук всё равно сработает следом, но
-    // applyItemMechanics идемпотентна (mechanicsApplied) и повторно не сыграет.
-    const [created] = await actor.createEmbeddedDocuments("Item", [data]);
+    // Механику сами и синхронно ждём — а SKIP_MECHANICS_HOOK в опциях
+    // создания говорит хуку не применять её ещё раз следом (см. константу
+    // выше: идемпотентности applyItemMechanics тут НЕ хватает — оба вызова
+    // успевают стартовать с одинаковым пустым флагом mechanicsApplied).
+    const [created] = await actor.createEmbeddedDocuments("Item", [data], { [SKIP_MECHANICS_HOOK]: true });
     if (created) await applyItemMechanics(created);
   }
 

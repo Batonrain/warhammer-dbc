@@ -37,7 +37,7 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
-import { applyRace, applySubrace } from "./module/apps/races.mjs";
+import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
 import { openSystemsOverview, refreshSystemsOverview } from "./module/apps/systems-overview.mjs";
@@ -1183,7 +1183,13 @@ export async function handleStrayRaceItem(item, actor) {
   else await applySubrace(actor, key);
 }
 
-Hooks.on("createItem", async (item, options, userId) => {
+/**
+ * Основной обработчик создания предмета — вынесен в именованную функцию,
+ * чтобы ветку SKIP_MECHANICS_HOOK можно было проверить тестом напрямую:
+ * Hooks.on в тестовом стенде — пустышка (foundry-stub.mjs), сама подписка
+ * не срабатывает никогда.
+ */
+export async function handleItemCreated(item, options, userId) {
   if (game.user.id !== userId) return;
   const actor = item.parent;
   if (!(actor instanceof Actor)) return;
@@ -1195,8 +1201,28 @@ Hooks.on("createItem", async (item, options, userId) => {
   }
 
   await runAutoScripts(item);
+  // Носитель расы/субрасы (originGrant стоит — страховка выше его не трогает)
+  // уже получил свою Механику СИНХРОННО внутри applyRace/applySubrace
+  // (module/apps/races.mjs) — опция SKIP_MECHANICS_HOOK в контексте создания
+  // говорит этому хуку не применять её ещё раз.
+  //
+  // Идемпотентность applyItemMechanics (флаг mechanicsApplied) здесь НЕ
+  // спасает, хотя раньше в комментарии на этом месте было обратное
+  // утверждение — оно было ошибкой, которую поймало ревью. appliedEntryIds
+  // читает флаг в САМОМ НАЧАЛЕ applyItemMechanics, а пишется он в конце.
+  // Прямой вызов из applyRace и этот вызов из хука — два НЕЗАВИСИМЫХ старта:
+  // если прямой вызов успевает уйти в реальные createEmbeddedDocuments по
+  // каждой выдаваемой Черте (сетевые round-trip'ы в живом Foundry) дольше,
+  // чем этот хук доходит до своего applyItemMechanics, оба читают один и тот
+  // же ПУСТОЙ флаг и оба выдают Черты целиком — Астартес получил бы их
+  // дважды. Раньше это не ловилось тестами: Hooks.on в стенде — пустышка,
+  // поэтому в тестах отрабатывал только прямой вызов, и «зелёный» прогон
+  // ничего про эту гонку не доказывал.
+  if (options?.[SKIP_MECHANICS_HOOK]) return;
   await applyItemMechanics(item);
-});
+}
+
+Hooks.on("createItem", handleItemCreated);
 
 // Механику правят и на предмете, который УЖЕ лежит у актора: Черта из
 // библиотеки приезжает пикером пустой, и настраивают её прямо на листе. Это

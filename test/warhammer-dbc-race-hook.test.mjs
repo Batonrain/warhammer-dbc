@@ -10,10 +10,26 @@
 
 import "./support/foundry-stub.mjs";
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { captured, resetCaptured } from "./support/foundry-stub.mjs";
 
-const { handleStrayRaceItem } = await import("../warhammer-dbc.mjs");
+// Наблюдаем applyItemMechanics/runAutoScripts, не полагаясь на реальные
+// эффекты (Конструктор требует полноценного предмета с механикой) — контракт
+// проверяется в том, ЗВАЛИ ли их, а не что именно они сделали.
+const mechanicsCalls = [];
+vi.mock("../module/apps/mechanics.mjs", async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, applyItemMechanics: vi.fn(async item => { mechanicsCalls.push(item.id); }) };
+});
+
+const scriptCalls = [];
+vi.mock("../module/apps/item-script.mjs", async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, runAutoScripts: vi.fn(async item => { scriptCalls.push(item.id); }) };
+});
+
+const { handleStrayRaceItem, handleItemCreated } = await import("../warhammer-dbc.mjs");
+const { SKIP_MECHANICS_HOOK } = await import("../module/apps/races.mjs");
 
 function itemStub({ type, key, id = "doc-1", name = "Раса" }) {
   const deleted = { called: false };
@@ -79,5 +95,49 @@ describe("handleStrayRaceItem — страховка createItem race/subrace", (
     expect(deleted.called).toBe(true);
     expect(actor.updates).toEqual([]);
     expect(captured.errors.length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Предмет-носитель расы: originGrant СТОИТ (его кладут applyRace/applySubrace
+ * сами), значит страховочная ветка (handleStrayRaceItem) его не касается —
+ * он доходит до общей ветки createItem-хука (runAutoScripts + applyItemMechanics).
+ */
+function carrierItem(actor, id) {
+  return {
+    id, type: "trait", name: "Носитель", parent: actor,
+    getFlag: (_scope, key) => (key === "originGrant" ? "race" : undefined)
+  };
+}
+
+describe("handleItemCreated — общая ветка createItem, SKIP_MECHANICS_HOOK", () => {
+  it("без опции применяет и runAutoScripts, и applyItemMechanics — как раньше", async () => {
+    mechanicsCalls.length = 0; scriptCalls.length = 0;
+    globalThis.game.user = { id: "user-1" };
+    const actor = new Actor();
+    const item = carrierItem(actor, "carrier-1");
+
+    await handleItemCreated(item, {}, "user-1");
+
+    expect(scriptCalls).toContain("carrier-1");
+    expect(mechanicsCalls).toContain("carrier-1");
+  });
+
+  // Находка второго раунда ревью (wdbc-n1k): applyRace/applySubrace уже
+  // применили Механику носителя СИНХРОННО и напрямую — если этот хук
+  // применит её ЕЩЁ раз, Астартес получит Черты дважды. Идемпотентность
+  // applyItemMechanics тут не спасает (гонка по флагу mechanicsApplied),
+  // поэтому единственный надёжный контракт — явная опция в контексте
+  // создания, которую этот хук обязан уважать.
+  it("с опцией SKIP_MECHANICS_HOOK применяет runAutoScripts, но НЕ applyItemMechanics", async () => {
+    mechanicsCalls.length = 0; scriptCalls.length = 0;
+    globalThis.game.user = { id: "user-1" };
+    const actor = new Actor();
+    const item = carrierItem(actor, "carrier-2");
+
+    await handleItemCreated(item, { [SKIP_MECHANICS_HOOK]: true }, "user-1");
+
+    expect(scriptCalls).toContain("carrier-2");
+    expect(mechanicsCalls).not.toContain("carrier-2");
   });
 });

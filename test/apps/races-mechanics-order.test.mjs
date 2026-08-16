@@ -36,24 +36,33 @@ vi.mock("../../module/apps/race-library.mjs", async (importOriginal) => {
     ...actual,
     raceDef: key => key === "raceWithCarrier"
       ? { key, label: "Тестовая раса", chars: {}, uuid: "Compendium.test.races.race1" }
-      : actual.raceDef(key)
+      : actual.raceDef(key),
+    subraceEntries: () => ({
+      subWithCarrier: { key: "subWithCarrier", label: "Тестовая субраса",
+        parent: "raceWithCarrier", uuid: "Compendium.test.races.sub1" }
+    })
   };
 });
 
-globalThis.fromUuid = async uuid => uuid === "Compendium.test.races.race1"
-  ? { toObject: () => ({ _id: "race1", type: "race", name: "Тестовая раса", system: { key: "raceWithCarrier" } }) }
-  : null;
+globalThis.fromUuid = async uuid => {
+  if (uuid === "Compendium.test.races.race1")
+    return { toObject: () => ({ _id: "race1", type: "race", name: "Тестовая раса", system: { key: "raceWithCarrier" } }) };
+  if (uuid === "Compendium.test.races.sub1")
+    return { toObject: () => ({ _id: "sub1", type: "subrace", name: "Тестовая субраса", system: { key: "subWithCarrier" } }) };
+  return null;
+};
 
-const { applyRace } = await import("../../module/apps/races.mjs");
+const { applyRace, applySubrace, SKIP_MECHANICS_HOOK } = await import("../../module/apps/races.mjs");
 
-function actorStub() {
+function actorStub(over = {}) {
   const list = [];
   list.get = id => list.find(i => i.id === id) ?? null;
   const actor = {
-    system: { characteristics: {}, skills: {}, groupSkills: {}, wounds: {} },
-    items: list, updates: [],
+    system: { characteristics: {}, skills: {}, groupSkills: {}, wounds: {}, ...over },
+    items: list, updates: [], createOptions: [],
     update: async data => { actor.updates.push(data); return data; },
-    createEmbeddedDocuments: async (_t, docs) => {
+    createEmbeddedDocuments: async (_t, docs, options) => {
+      actor.createOptions.push(options);
       const made = docs.map((d, i) => ({ id: `carrier-${i}`, ...d, parent: actor, getFlag: () => undefined }));
       list.push(...made);
       return made;
@@ -71,5 +80,29 @@ describe("applyRace ждёт применение Механики носите�
 
     expect(mechanicsCalls.length).toBe(1);
     expect(actor.items.some(i => i.type === "trait")).toBe(true);
+  });
+});
+
+// Находка ревью (второй раунд, wdbc-n1k): applyItemMechanics вызывается и
+// напрямую здесь, и из хука createItem (тот же предмет несёт originGrant и
+// проходит мимо страховочной ветки на общее применение) — идемпотентность
+// applyItemMechanics эту гонку не лечит (appliedEntryIds читает флаг ДО, а
+// не после применения). Правильный контракт: создание носителя передаёт
+// опцию, которая говорит хуку не применять Механику ещё раз.
+describe("создание носителя передаёт SKIP_MECHANICS_HOOK — хук не должен применить Механику второй раз", () => {
+  it("applyRace: опция стоит в контексте createEmbeddedDocuments носителя расы", async () => {
+    const actor = actorStub();
+
+    await applyRace(actor, "raceWithCarrier");
+
+    expect(actor.createOptions[0]?.[SKIP_MECHANICS_HOOK]).toBe(true);
+  });
+
+  it("applySubrace: опция стоит в контексте createEmbeddedDocuments носителя субрасы", async () => {
+    const actor = actorStub({ race: "raceWithCarrier" });
+
+    await applySubrace(actor, "subWithCarrier");
+
+    expect(actor.createOptions[0]?.[SKIP_MECHANICS_HOOK]).toBe(true);
   });
 });
