@@ -270,7 +270,7 @@ export const WEAPON_PROPERTIES = {
   imprecise: {
     key: "imprecise", label: "Неточное", en: "Imprecise", rating: false, cat: "ranged",
     desc: "Не способно попадать по мелким целям. Нельзя совершать Избирательные атаки по сочленениям и глазам.",
-    reminder: "🎯 Неточное: нельзя делать Избирательные попадания",
+    reminder: "🎯 Неточное: нет Избирательных по сочленениям и глазам",
     auto: { noCalledShot: true }
   },
 

@@ -215,8 +215,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { value: "joint",  label: "Сочленение/Шея",         penalty: -40, precise: true },
     { value: "eye",    label: "Глаз",                   penalty: -50, precise: true }
   ];
-  // Неточное / Взрывное (Imprecise): нельзя делать Избирательные попадания
-  if (wp.noCalledShot) aimTargets = [aimTargets[0]];
+  // Неточное / Взрывное (Imprecise): «не для прицельных атак в сочленения и
+  // глаза» — то есть закрыты ровно эти две цели, а по конечностям, торсу и
+  // голове бить прицельно можно.
+  if (wp.noCalledShot) aimTargets = aimTargets.filter(t => !t.precise);
   const aimHtml = aimTargets.map(t => {
     const pen = (t.precise && csMod) ? Math.min(0, t.penalty + csMod) : t.penalty;
     const lbl = t.value && !t.label.includes("(")
