@@ -156,6 +156,14 @@ describe("раса и подраса", () => {
     expect(ctxOf({ race: "astartes" }).subraceHint).toMatch(/субрас нет/i);
   });
 
+  // У Астартес субрас не бывает вовсе — их место занимают Легион и Орден,
+  // поэтому слот не показывается совсем, а не стоит с вечным «Субрас нет».
+  it("у Астартес слота субрасы нет, у прочих он остаётся", () => {
+    expect(ctxOf({ race: "astartes" }).showSubrace).toBe(false);
+    expect(ctxOf({ race: "ynnari" }).showSubrace).toBe(true);
+    expect(ctxOf({ race: "" }).showSubrace).toBe(true);
+  });
+
   it("выключенная «Книга Эльдар» убирает свои расы из списка", () => {
     const aeldari = ctx => ctx.raceGroups.find(g => g.label === "Аэльдари");
     expect(aeldari(ctxOf({ race: "human" })).races.length).toBeGreaterThan(1);
