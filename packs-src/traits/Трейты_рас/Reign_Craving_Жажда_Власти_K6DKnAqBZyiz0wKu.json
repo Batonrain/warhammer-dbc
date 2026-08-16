@@ -1,0 +1,33 @@
+{
+  "name": "Reign Craving / Жажда Власти",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "+10 на социальные тесты ради власти, свержения или предательства. Вдвое снижает штрафы соц. тестов, пока участвует в заговоре. За идеальную интригу/предательство в нужный момент — до +1d5 Inf.",
+    "source": "раса",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "K6DKnAqBZyiz0wKu",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!K6DKnAqBZyiz0wKu"
+}

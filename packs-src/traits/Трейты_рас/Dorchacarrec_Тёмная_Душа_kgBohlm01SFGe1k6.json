@@ -1,0 +1,33 @@
+{
+  "name": "Dorchacarrec / Тёмная Душа",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Взаимный +10 на Атаку и W с демонами Слаанеш. −20 на сопротивление одержимости и больше Cor. При Истончении Завесы −5×Уровень к ментальным тестам. Может питаться эмоциями (психическая «пища»; смерть жертвы от пыток = полноценный сон). Рейтинг Страха всех существ (кроме демонов) против него −1; сородичей-друкхари +1. При 20-кратной Порче — тест по 2 хар-кам, иначе Ментальное Расстройство. Ветка «Смелость» дружественна. Психодар пробуждается только обучением у варлока/провидца.",
+    "source": "раса",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "kgBohlm01SFGe1k6",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!kgBohlm01SFGe1k6"
+}

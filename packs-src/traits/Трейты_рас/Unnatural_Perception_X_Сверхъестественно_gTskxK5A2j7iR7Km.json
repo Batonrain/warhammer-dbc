@@ -1,0 +1,33 @@
+{
+  "name": "Unnatural Perception (X) / Сверхъестественное Восприятие (X)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "+2 к Бонусу Per.",
+    "source": "раса",
+    "hasRating": true,
+    "rating": 2,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "per",
+      "charBonusValue": 2,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "gTskxK5A2j7iR7Km",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!gTskxK5A2j7iR7Km"
+}

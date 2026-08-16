@@ -1,0 +1,33 @@
+{
+  "name": "Godless / Безбожник",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Нет Очков Судьбы и Очков Бесчестья (нет Покровительства). Для талантов, требующих ОБ, тратит Очки Боли по уровню таланта. Смерть окончательна (см. «Цена Бессмертия»).",
+    "source": "раса",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "4SDcIhaCLdj8FGIq",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!4SDcIhaCLdj8FGIq"
+}

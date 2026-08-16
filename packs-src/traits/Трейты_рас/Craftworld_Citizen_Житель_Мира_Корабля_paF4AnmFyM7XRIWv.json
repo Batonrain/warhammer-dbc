@@ -1,0 +1,33 @@
+{
+  "name": "Craftworld Citizen / Житель Мира-Корабля",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Trade на 1 ступень дружественнее. Персонаж начинает с 2 Путями на уровне «Следующий».",
+    "source": "раса",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "paF4AnmFyM7XRIWv",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!paF4AnmFyM7XRIWv"
+}
