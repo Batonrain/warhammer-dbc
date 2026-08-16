@@ -12,6 +12,8 @@ import { talentCostXP, aptitudeCat, charAptitudeSet, ALIGN_LABEL,
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { isMinionTalent } from "../rules/minion-build.mjs";
+import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
 import { esc } from "../helpers/utils.mjs";
 
@@ -314,7 +316,17 @@ export async function openItemPicker(actor, kind) {
           // Авто-цена по склонностям; помечаем как купленный (учитывается в Опыте).
           obj.system = obj.system || {};
           const dyn = dynamicAptKind(d.name);
-          if (dyn) {
+          if (isMinionTalent(d)) {
+            // «Миньон Хаоса» — один Талант на двадцать разных слуг (стр. 111):
+            // группа и сила спрашиваются до оплаты, потому что от них зависит
+            // уровень Таланта, а значит и цена.
+            const pick = await promptMinionSlot(actor, d);
+            if (!pick) return;                       // отмена — ничего не покупаем
+            applyMinionSlot(obj, pick);
+            obj.system.cost = talentCostXP(pick.talentTier, d.system.aptitudes || [], charApts,
+              talentCategory(actor, d.name, d.folder),
+              { name: d.name, patron: actor.system.patronGod });
+          } else if (dyn) {
             // Mastery / Beyond Human: сначала выбор привязки (стр. 62), затем
             // цена по склонностям выбранной Характеристики/Навыка (стр. 23-24).
             const pick = await promptDynamicAptTalent(actor, d, dyn, charApts);
