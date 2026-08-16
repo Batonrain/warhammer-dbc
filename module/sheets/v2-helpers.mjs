@@ -24,3 +24,13 @@ export function onTab(event, target) {
 /** В v13 FilePicker переехал в namespace, глобальный помечен устаревшим. */
 export const filePicker = () =>
   foundry.applications?.apps?.FilePicker?.implementation || globalThis.FilePicker;
+
+/**
+ * Textarea (одно имя через строку) → массив строк для `ArrayField(StringField)`.
+ * Foundry сам собирает массив примитивов из формы только когда одно имя поля
+ * дают НЕСКОЛЬКО input'ов (чекбоксы и т.п.) — одиночная textarea шлёт одну
+ * строку, и без разбора она уйдёт в поле как есть. Пустые и пробельные строки
+ * отбрасываются, чтобы не плодить в массиве бессмысленные "" элементы.
+ */
+export const linesToArray = text =>
+  String(text ?? "").split("\n").map(s => s.trim()).filter(Boolean);
