@@ -177,6 +177,29 @@ describe("раса и подраса", () => {
     expect(ctx.masqueOptions).toContain("endlessSong");
   });
 
+  // Происхождение выбирается по тому, кем персонаж БЫЛ: у Иннари и Арлекина с
+  // прошлым Друкхари это Кабал/Культ/Ковен, а не Мир-Корабль.
+  it("прошлое Друкхари убирает Мир-Корабль у Иннари и Арлекина", () => {
+    for (const system of [{ race: "ynnari", ynnariPast: "drukhari" },
+                          { race: "harlequin", harlequinPast: "drukhari" }]) {
+      const ctx = ctxOf(system);
+      expect(ctx.isDrukhari).toBe(true);
+      expect(ctx.showWorldOrigin).toBe(false);
+    }
+  });
+
+  it("прошлое Азуриан оставляет Мир-Корабль на месте", () => {
+    const ctx = ctxOf({ race: "harlequin", harlequinPast: "azuriane" });
+    expect(ctx.isDrukhari).toBe(false);
+    expect(ctx.showWorldOrigin).toBe(true);
+  });
+
+  it("Корсарская Банда доступна и Друкхари — список банд общий", () => {
+    const ctx = ctxOf({ race: "drukhari", band: "novaBlades" });
+    expect(ctx.isDrukhari).toBe(true);
+    expect(ctx.selectedBand?.label).toBe("Нова-Клинки");
+  });
+
   it("фигура на вкладке ТЕЛО: по умолчанию мужская", () => {
     expect(ctxOf({}).bodyTypes.find(b => b.selected).key).toBe("male");
     expect(ctxOf({ bodyType: "female" }).bodyTypes.find(b => b.selected).key).toBe("female");

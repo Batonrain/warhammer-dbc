@@ -77,6 +77,9 @@
       {{#if selectedDrukhariFaction}}<div class="origin-info"> <div class="origin-chars">{{selectedDrukhariFaction.chars}}</div> <div class="origin-special">{{selectedDrukhariFaction.special}}</div> </div>{{/if}}
       <div class="origin-row"> <label class="origin-label">Район Комморага</label> <select name="system.drukhariDistrict" class="origin-select">{{{drukhariDistrictOptions}}}</select> </div>
       {{#if selectedDrukhariDistrict}}<div class="origin-info"> <div class="origin-chars">{{selectedDrukhariDistrict.chars}}</div> <div class="origin-special">{{selectedDrukhariDistrict.special}}</div> </div>{{/if}}
+      {{!-- Корсарские банды — общие для Аэльдари и Друкхари: в банде ходят и те, и другие. --}}
+      <div class="origin-row"> <label class="origin-label">Корсарская Банда</label> <select name="system.band" class="origin-select">{{{bandOptions}}}</select> </div>
+      {{#if selectedBand}}<div class="origin-info"> <div class="origin-chars">{{selectedBand.chars}}</div> <div class="origin-special">{{selectedBand.special}}</div> </div>{{/if}}
     </div>
     <div class="gene-seed-hint">Выберите ОДНО из: Кабал, Культ Ведьм или Ковен Гемункулов — и отдельно Район Комморага (берётся вместе с фракцией). Модификаторы характеристик применяются в Базу при создании (вручную); особенность — справка.</div>
   </div> {{/if}}
