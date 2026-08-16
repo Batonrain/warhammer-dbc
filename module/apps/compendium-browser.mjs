@@ -114,6 +114,10 @@ async function buildPackTree(pack) {
         // type приходит в индексе компендиума сам, просить его полем не нужно;
         // по нему работает фильтр «тип предмета» режима выбора.
         type: it.type,
+        // Род документа пака: «Item» или «Actor». Перетаскивание наружу шлёт
+        // его в payload — Foundry по нему решает, что класть на сцену и в
+        // боковую панель, и с чужим родом дроп молча ничего не делает.
+        doc: pack.metadata?.type || "Item",
         folderId, armorType: it.system?.armorType,
         availability: it.system?.availability, properties: it.system?.properties || []
       }))
@@ -244,7 +248,7 @@ function pruneTree(node, pred) {
 
 function renderItemsHtml(items) {
   return items.map(it => `
-    <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-name="${esc(it.name.toLowerCase())}">
+    <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}">
       <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
       <span class="cbrowse-item-name">${esc(it.name)}</span>
     </div>`).join("");
@@ -391,7 +395,11 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
         html.find(".cbrowse-item").each((_, el) => {
           el.addEventListener("dragstart", ev => {
             ev.stopPropagation();
-            ev.dataTransfer.setData("text/plain", JSON.stringify({ type: "Item", uuid: el.dataset.uuid }));
+            // Род документа берём из самой записи: пак бывает и с акторами, а
+            // с жёстким «Item» дроп актора на сцену и в боковую панель молча
+            // ничего не делал.
+            ev.dataTransfer.setData("text/plain",
+              JSON.stringify({ type: el.dataset.doc || "Item", uuid: el.dataset.uuid }));
             ev.dataTransfer.effectAllowed = "copy";
           });
         });
