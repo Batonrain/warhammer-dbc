@@ -762,10 +762,13 @@ export function buildGetData(actor) {
 
   // Стремления (стр. 22): ЖЁСТКО фиксированные 3 слота, по одному на таблицу
   // (Гордыня/Позор/Мотивация) — раньше был свободный список до 3 из любой
-  // таблицы, но по месту решили закрепить по смыслу. system.aspirations
-  // остаётся МАССИВОМ (как и был), просто позиция теперь = категория:
+  // таблицы, но по месту решили закрепить по смыслу. Позиция = категория:
   // [0]=pride, [1]=disgrace, [2]=motivation.
-  const aspirRaw = Array.isArray(system.aspirations) ? system.aspirations : [];
+  //
+  // Лежат в system.aspirations.slots, а не в самом `aspirations`: то поле —
+  // объект (там же Фактор Прибыли), и записанный в него массив схема молча
+  // отбрасывала, то есть выбор не доживал до перерисовки листа.
+  const aspirRaw = Array.isArray(system.aspirations?.slots) ? system.aspirations.slots : [];
   context.aspirationSlots = ASPIRATION_TABLES.map((t, idx) => {
     const a = aspirRaw[idx];
     const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));

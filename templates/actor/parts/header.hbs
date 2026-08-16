@@ -42,8 +42,24 @@
           <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option> {{/each}}
         </select> </div> </div> {{/if}}
       {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}} </div>
+    {{!-- Стремления выбираются здесь же: раньше выбор жил на вкладке «Записи»,
+          а шапка повторяла его как текст — две поверхности на одно поле. --}}
     <div class="header-row-fixed header-row-aspir"> {{#each aspirationSlots as |a|}}
-      <div class="header-cell header-cell-readonly" title="{{#if a.mods}}{{a.mods}}{{else}}Редактируется на вкладке «Заметки»{{/if}}"> <label>{{a.label}}</label> <div class="header-readonly-val">{{#if a.name}}{{a.name}}{{else}}—{{/if}}</div> </div>
+      <div class="header-cell header-cell-aspir"> <label>{{a.label}}</label>
+        <div class="aspir-controls">
+          {{#if a.custom}}
+          <input type="text" class="aspir-custom-name" data-index="{{a.idx}}" value="{{a.name}}" placeholder="Своё стремление"/>
+          <input type="text" class="aspir-custom-mods" data-index="{{a.idx}}" value="{{a.mods}}" placeholder="Модификаторы"/>
+          {{else}}
+          <select class="aspir-select" data-index="{{a.idx}}" title="{{#if a.mods}}{{a.mods}}{{else}}Выберите Стремление{{/if}}"> <option value="">— выбрать —</option>
+            {{#each a.options as |e|}}<option value="{{e.id}}" {{#if (eq e.id a.id)}}selected{{/if}} title="{{e.mods}}">{{e.name}}</option>{{/each}}
+            <option value="__custom__">Своё…</option>
+          </select>
+          {{/if}}
+          <button type="button" class="aspir-remove" data-index="{{a.idx}}" title="Очистить">✕</button>
+        </div>
+        <div class="aspir-mods-line" title="Модификаторы — справка: применяются к Базе вручную">{{#if a.mods}}{{a.mods}}{{else}}&nbsp;{{/if}}</div>
+      </div>
       {{/each}} </div>
     </div>
     <div class="header-resources">

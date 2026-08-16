@@ -91,28 +91,7 @@
     <div class="gene-seed-hint">Маска (труппа) определяет бонусы характеристик и особый эффект. Бонусы характеристик применяются в Базу вручную при создании; особенность — справка. Это не то же, что Мириада Масок (Света/Сумерек/Ночи) из Черты «Myriad Masks».</div>
   </div> {{/if}}
 
-  <div class="notes-section-panel"> <div class="panel-title">БИОГРАФИЯ</div> <div class="bio-grid"> <label>Пол<input type="text" name="system.bio.gender" value="{{system.bio.gender}}"/></label> <label>Возраст<input type="number" name="system.bio.age" value="{{system.bio.age}}"/></label> <label>Рост<input type="text" name="system.bio.height" value="{{system.bio.height}}"/></label> <label>Сложение<input type="text" name="system.bio.build" value="{{system.bio.build}}"/></label> <label>Волосы<input type="text" name="system.bio.hair" value="{{system.bio.hair}}"/></label> </div> </div> <div class="notes-section-panel"> <div class="panel-title">СТРЕМЛЕНИЯ <span class="aspir-hint">// по одному из Гордости, Позора и Мотивации — видны также в шапке листа</span> </div>
-    <table class="items-table aspir-table"> <tbody>
-      {{#each aspirationSlots as |a|}}
-      <tr class="aspir-row" data-index="{{a.idx}}">
-        <td class="aspir-label-cell">{{a.label}}</td>
-        <td class="aspir-sel-cell">
-          {{#if a.custom}}
-          <div class="aspir-custom"><input type="text" class="aspir-custom-name" data-index="{{a.idx}}" value="{{a.name}}" placeholder="Своё стремление"/><input type="text" class="aspir-custom-mods" data-index="{{a.idx}}" value="{{a.mods}}" placeholder="Модификаторы (+5 F, −5 W…)"/></div>
-          {{else}}
-          <select class="aspir-select" data-index="{{a.idx}}"> <option value="">— выбрать —</option>
-            {{#each a.options as |e|}}<option value="{{e.id}}" {{#if (eq e.id a.id)}}selected{{/if}}>{{e.name}} ({{e.mods}})</option>{{/each}}
-            <option value="__custom__" {{#if a.custom}}selected{{/if}}>Своё…</option>
-          </select>
-          {{/if}}
-        </td>
-        <td class="aspir-mods-cell">{{a.mods}}</td>
-        <td class="aspir-del-cell"><button type="button" class="aspir-remove" data-index="{{a.idx}}" title="Очистить">✕</button></td>
-      </tr>
-      {{/each}}
-    </tbody> </table>
-    <div class="gene-seed-hint" style="padding:3px 4px 0;">Модификаторы — справка (к Базе вручную; часто «или»/«по выбору»). «Своё…» — свой вариант.</div>
-  </div>
+  <div class="notes-section-panel"> <div class="panel-title">БИОГРАФИЯ</div> <div class="bio-grid"> <label>Пол<input type="text" name="system.bio.gender" value="{{system.bio.gender}}"/></label> <label>Возраст<input type="number" name="system.bio.age" value="{{system.bio.age}}"/></label> <label>Рост<input type="text" name="system.bio.height" value="{{system.bio.height}}"/></label> <label>Сложение<input type="text" name="system.bio.build" value="{{system.bio.build}}"/></label> <label>Волосы<input type="text" name="system.bio.hair" value="{{system.bio.hair}}"/></label> </div> </div>
 
   {{#if isMinionCapable}}
   <div class="notes-section-panel minion-panel">

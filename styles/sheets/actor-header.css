@@ -183,8 +183,35 @@
 }
 .warhammer-dbc .header-row-fixed .header-cell { flex: 1 1 140px; min-width: 0; }
 
-/* Компактное read-only поле (Геносемя/Культура/Стремления) — то же место, что
-   и у select/input, но просто текст: сами дроплисты живут на «Заметках». */
+/* Стремления: выбор прямо в шапке (Гордыня / Позор / Мотивация), под ним —
+   строка модификаторов справкой. Раньше здесь стоял текст, а дроплисты жили на
+   «Записях»; одно поле на две поверхности только путало. */
+.warhammer-dbc .header-cell-aspir {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+.warhammer-dbc .header-cell-aspir > label { flex: 0 0 auto; }
+.warhammer-dbc .header-cell-aspir .aspir-controls {
+  display: flex; align-items: center; gap: 3px; min-width: 0;
+}
+.warhammer-dbc .header-cell-aspir .aspir-controls select { flex: 1 1 auto; min-width: 0; }
+/* «Своё»: название длиннее модификаторов, поэтому делит строку 2 к 1. */
+.warhammer-dbc .header-cell-aspir .aspir-custom-name { flex: 2 1 0; min-width: 0; }
+.warhammer-dbc .header-cell-aspir .aspir-custom-mods { flex: 1 1 0; min-width: 0; }
+.warhammer-dbc .header-cell-aspir .aspir-remove {
+  flex: 0 0 auto; width: 20px; height: 20px; padding: 0; line-height: 1; cursor: pointer;
+  background: var(--wh-input-dark); color: var(--wh-text-mid);
+  border: 1px solid var(--wh-border); border-radius: 3px; font-size: 0.72em;
+}
+.warhammer-dbc .header-cell-aspir .aspir-remove:hover { background: #7a2e2e; color: #ffb0b0; border-color: #7a2e2e; }
+.warhammer-dbc .header-cell-aspir .aspir-mods-line {
+  font-size: 0.72em; color: var(--wh-text-mid); min-height: 1em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Компактное read-only поле (Геносемя/Культура) — то же место, что и у
+   select/input, но просто текст: сами дроплисты живут на «Записях». */
 .warhammer-dbc .header-cell-readonly .header-readonly-val {
   flex: 1;
   font-size: 0.85em;

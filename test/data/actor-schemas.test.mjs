@@ -65,7 +65,9 @@ const DEVIATIONS = {
     // Навыки Орды заведены позже template.json (вкладка «ПОКАЗАТЕЛИ»): у Орды
     // нет покупок за опыт, поэтому в записи только ранг и выведенное значение.
     skills: Object.fromEntries(Object.keys(SKILLS_DEF)
-      .map(k => [k, { rank: "untrained", total: -20 }]))
+      .map(k => [k, { rank: "untrained", total: -20 }])),
+    // Групповые — записями со специализацией, как у существ.
+    groupSkills: Object.fromEntries(Object.keys(GROUP_SKILLS_DEF).map(k => [k, []]))
   },
   // У трёх существ три набора расхождений сразу, и записаны они по-разному:
   // поля Миньонов и свои поля типа — обычными именами, надбавки характеристик —
