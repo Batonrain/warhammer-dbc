@@ -16,6 +16,7 @@
 import { MINION_GROUPS, MINION_TIERS, GROUP_CHAR_LIMITS, MINION_INFAMY_CAP,
          MINION_WOUNDS, FRAGILE_TRAITS, DAEMON_CORRUPTION, MINION_TALENT_FLAG,
          MINION_TALENT_NAMES, tierBudget } from "../constants/minions.mjs";
+import { MINION_TRAITS, MANDATORY_BY_GROUP } from "../constants/minion-traits.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -213,6 +214,67 @@ export function traitPointsLeft(entries = [], tier, { toTalents = 0, fromGear = 
   if (!spec) return 0;
   const spent = entries.reduce((sum, e) => sum + (num(e?.cost) || 1), 0);
   return spec.points + num(fromGear) - num(toTalents) - spent;
+}
+
+// ── Трейты: доступность по таблице книги (стр. 112) ────────────────────────
+
+/**
+ * Запись таблицы по имени предмета. Имена в компендиуме двуязычные («Bite /
+ * Укус (X)»), поэтому ищем вхождение английской части — она и есть ключ
+ * таблицы. Сначала точное совпадение, потом самое длинное вхождение: иначе
+ * «Daemonic» перехватывал бы «Daemonic Presence».
+ */
+export function traitEntry(name) {
+  const text = String(name || "");
+  if (MINION_TRAITS[text]) return { key: text, ...MINION_TRAITS[text] };
+  const hit = Object.keys(MINION_TRAITS)
+    .filter(key => text.includes(key))
+    .sort((a, b) => b.length - a.length)[0];
+  return hit ? { key: hit, ...MINION_TRAITS[hit] } : null;
+}
+
+/**
+ * Что говорит таблица о Трейте для этой пары «группа + сила»: можно ли его
+ * взять, сколько стоит, каков базовый Рейтинг и на сколько его поднимает
+ * лишнее очко. `reason` — почему нельзя, если нельзя.
+ */
+export function traitAvailability(name, group, tier) {
+  const entry = traitEntry(name);
+  if (!entry) return { known: false, allowed: true, cost: 1 };
+
+  const buildsAs = MINION_TIERS[tier]?.buildsAs || tier;
+  const rating = entry.tiers?.[buildsAs] ?? null;
+  const access = entry.groups?.[group];
+
+  if (!access) {
+    return { known: true, allowed: false, cost: entry.cost, key: entry.key,
+             reason: `${entry.key} этой группе недоступен` };
+  }
+  if (rating === null || rating === undefined) {
+    return { known: true, allowed: false, cost: entry.cost, key: entry.key,
+             reason: `${entry.key} доступен только с более высокой силы` };
+  }
+  return {
+    known: true, allowed: true, key: entry.key,
+    cost: entry.cost,
+    rating: rating === true ? null : rating,
+    perPoint: entry.perPoint ?? null,
+    mandatory: access === "required",
+    complex: !!entry.complex,
+    note: entry.note || ""
+  };
+}
+
+/** Всё, что этой паре доступно, — список для шага Трейтов в генераторе. */
+export function availableTraits(group, tier) {
+  return Object.keys(MINION_TRAITS)
+    .map(name => ({ name, ...traitAvailability(name, group, tier) }))
+    .filter(t => t.allowed);
+}
+
+/** Трейты, обязательные для группы: Daemonic у демона, Machine у машины. */
+export function mandatoryTraits(group) {
+  return MANDATORY_BY_GROUP.filter(m => m.group === group).map(m => m.name);
 }
 
 // ── Производные величины готового Миньона ─────────────────────────────────

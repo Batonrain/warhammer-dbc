@@ -1,0 +1,51 @@
+{
+  "name": "Dedication / Посвящение",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Даёт Покровительство одного из Богов и божественный Трейт демонов этого Бога (Книга Хаоса, стр. 5). Комплексный Трейт Миньона: Очков Трейтов стоит 1, доступен только Миньону-Демону силы Обычный и выше (корбук стр. 112).",
+    "notes": "",
+    "benefit": "Покровительство Бога и его божественный Трейт демонов.",
+    "source": "миньоны",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "wHYJ5x0sxmjLrC7Y",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786913698330,
+    "modifiedTime": 1786913698330,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!wHYJ5x0sxmjLrC7Y"
+}

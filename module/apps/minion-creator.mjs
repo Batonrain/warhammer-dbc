@@ -21,7 +21,8 @@ import { SKILLS_DEF } from "../constants/skills.mjs";
 import {
   minionSlots, slotUsage, charLimits, charIssues, charPointsLeft, rollHumanChars,
   skillPointsLeft, talentPointsLeft, traitPointsLeft,
-  minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty
+  minionWounds, hordeMagnitude, minionInfamy, minionCorruption, minionLoyalty,
+  availableTraits, traitAvailability, mandatoryTraits, traitEntry
 } from "../rules/minion-build.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import { minionsOfActor } from "../sheets/tabs/minions-panel.mjs";
@@ -181,14 +182,14 @@ function dropStepHtml(state, kind, title, num) {
   const spec = tierBudget(state.tier);
   const list = state[kind];
   const rows = list.map((it, i) => `
-    <div class="mc-row">
+    <div class="mc-row${it.warn ? " mc-row-warn" : ""}"${it.warn ? ` title="${esc(it.warn)}"` : ""}>
       <img class="mc-row-img" src="${esc(it.img || "icons/svg/item-bag.svg")}" alt=""/>
-      <span class="mc-row-name">${esc(it.name)}</span>
+      <span class="mc-row-name">${esc(it.name)}${it.rating ? ` <span class="mc-row-meta">Рейтинг ${esc(String(it.rating))}</span>` : ""}</span>
       ${kind === "gear"
         ? `<span class="mc-row-meta">R${it.rarity ?? "?"}</span>`
         : `<label class="mc-cost">цена <input type="number" class="mc-cost-input" data-kind="${kind}" data-index="${i}" value="${it.cost ?? 1}"/></label>`}
       <button type="button" class="mc-del" data-kind="${kind}" data-index="${i}" title="Убрать">✕</button>
-    </div>`).join("") || `<div class="mc-hint">Пусто — перетащите сюда из Обозреватели компендиумов.</div>`;
+    </div>`).join("") || `<div class="mc-hint">Пусто — перетащите сюда из Обозревателя компендиумов.</div>`;
 
   let head = "";
   if (kind === "talents") {
@@ -204,8 +205,20 @@ function dropStepHtml(state, kind, title, num) {
   } else if (kind === "traits") {
     const left = traitPointsLeft(list, state.tier,
       { toTalents: state.convert.traitsToTalents, fromGear: state.convert.gearToTraits });
+    // Таблица книги (стр. 112) сама говорит, что этой паре доступно и почём —
+    // список выбирается отсюда, а не набирается перетаскиванием вслепую.
+    const options = availableTraits(state.group, state.tier).map(t => `
+      <option value="${esc(t.name)}">${esc(t.name)} — ${t.cost} оч.${t.rating ? `, Рейтинг ${esc(String(t.rating))}` : ""}${t.complex ? " (комплексный)" : ""}${t.mandatory ? " (обязателен)" : ""}</option>`).join("");
+    const missing = mandatoryTraits(state.group)
+      .filter(name => !list.some(it => String(it.name).includes(name)));
+
     head = `<div class="mc-line">Очков: <b>${spec.traits.points}</b>, осталось ${badge(left)}
-        · рейтинг выше базового — по «+1» за очко</div>
+        · рейтинг выше базового — за очко</div>
+      <div class="mc-add">
+        <select id="mc-trait-sel" class="pm-input">${options}</select>
+        <button type="button" class="mc-btn" id="mc-trait-add">Добавить</button>
+      </div>
+      ${missing.length ? `<div class="mc-issues">Обязателен для этой группы: ${esc(missing.join(", "))}.</div>` : ""}
       <div class="mc-line mc-convert">
         <label>Трейтов → Таланты: <input type="number" class="mc-conv" data-key="traitsToTalents" value="${state.convert.traitsToTalents}" min="0"/></label>
         ${["beast", "daemon"].includes(state.group)
@@ -256,6 +269,21 @@ function creatorHtml(state, master) {
 }
 
 // ── Окно ────────────────────────────────────────────────────────────────────
+
+/**
+ * Трейт компендиума по имени из таблицы книги. Имена там двуязычные («Bite /
+ * Укус (X)»), а ключ таблицы — английская часть, поэтому ищем вхождение.
+ */
+async function findTraitInPack(name) {
+  const pack = game.packs?.get("warhammer-dbc.traits");
+  if (!pack) return null;
+  // Совпадения по вхождению мало: «Daemonic» находит «Daemonic Armament»
+  // первым. Поэтому имя документа разбираем той же таблицей и сверяем ключи —
+  // у «Daemonic Armament» ключ свой, и коротким именем он больше не ловится.
+  const entry = [...pack.index].find(i => traitEntry(i.name)?.key === name)
+             ?? [...pack.index].find(i => String(i.name).startsWith(`${name} /`));
+  return entry ? pack.getDocument(entry._id).catch(() => null) : null;
+}
 
 /** Что за предмет уронили в шаг: имя, картинка, цена/Редкость и уровень. */
 async function resolveDrop(uuid) {
@@ -383,6 +411,22 @@ function openCreator(master, state) {
       rebuild();
     });
 
+    // Трейт из таблицы книги: предмет ищем в компендиуме по имени, чтобы у
+    // слуги оказался настоящий Трейт с описанием и эффектами, а не строка.
+    box.querySelector("#mc-trait-add")?.addEventListener("click", async ev => {
+      ev.preventDefault();
+      const name = String(box.querySelector("#mc-trait-sel")?.value || "");
+      if (!name) return;
+      const spec = traitAvailability(name, state.group, state.tier);
+      const doc = await findTraitInPack(name);
+      state.traits.push({
+        uuid: doc?.uuid || "", name: doc?.name || name, img: doc?.img,
+        cost: spec.cost ?? 1, rating: spec.rating ?? null,
+        warn: doc ? "" : "Трейта нет в компендиуме — запишется только в список"
+      });
+      rebuild();
+    });
+
     box.querySelectorAll(".mc-skill-up").forEach(input => input.addEventListener("change", ev => {
       const i = Number(ev.currentTarget.dataset.index);
       if (state.skills[i]) state.skills[i].upgraded = ev.currentTarget.checked;
@@ -425,6 +469,16 @@ function openCreator(master, state) {
           return ui.notifications?.warn(
             `Сюда идут ${kind === "talents" ? "Таланты, психосилы и Техночудеса"
               : kind === "traits" ? "Трейты и мутации" : "снаряжение"}, а перетащено: ${entry.docType}.`);
+        }
+        // Трейт сверяем с таблицей книги: цена и базовый Рейтинг подставляются
+        // сами, а недоступный этой паре не отвергается, но помечается — решает
+        // ГМ, а не окно.
+        if (kind === "traits") {
+          const spec = traitAvailability(entry.name, state.group, state.tier);
+          entry.cost = spec.cost ?? 1;
+          entry.rating = spec.rating ?? null;
+          entry.warn = spec.allowed ? "" : (spec.reason || "");
+          if (!spec.allowed) ui.notifications?.warn(`${entry.name}: ${spec.reason}.`);
         }
         state[kind].push(entry);
         rebuild();
