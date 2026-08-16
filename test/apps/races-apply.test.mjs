@@ -7,7 +7,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { raceCharsUpdate, actorRaceItem, actorRacePastItem, clearRace } from "../../module/apps/races.mjs";
+import { raceCharsUpdate, actorRaceItem, actorRacePastItem, clearRace, applySubrace } from "../../module/apps/races.mjs";
 
 const chars = over => ({
   ws: { base: 0 }, bs: { base: 0 }, s: { base: 0 }, t: { base: 0 }, ag: { base: 0 },
@@ -83,5 +83,47 @@ describe("предметы-носители расы и Прошлого не п
     await clearRace(actor);
 
     expect(actor.deleted.sort()).toEqual(["past-1", "race-1"]);
+  });
+});
+
+// Находка (раунд правок 1, ревью документации): removesTraits субрасы
+// сравнивался с именем Черты посимвольно, точным равенством. Данные книги
+// называют Черту одной половиной («Natural Weapons»), а предмет в паке —
+// двуязычно («Natural Weapons / Естественное Оружие») — совпадений не было
+// никогда. Тзаангор — единственная субраса с непустым removesTraits, и её
+// снятие Черт было мёртвым кодом с момента появления первого потребителя.
+describe("applySubrace снимает Черты по removesTraits", () => {
+
+  const traitItem = (id, name) => ({
+    id, type: "trait", name,
+    getFlag() { return undefined; }
+  });
+
+  function actorStub(items) {
+    const actor = {
+      system: { race: "beastman", subrace: "", characteristics: chars(), skills: {}, groupSkills: {}, wounds: {} },
+      items: [...items], updates: [], deleted: [],
+      update: async data => { actor.updates.push(data); return data; },
+      deleteEmbeddedDocuments: async (_type, ids) => { actor.deleted.push(...ids); return ids; }
+    };
+    return actor;
+  }
+
+  it("снимает Черту, записанную в removesTraits только английской половиной имени", async () => {
+    const natural = traitItem("nat-1", "Natural Weapons / Естественное Оружие");
+    const actor = actorStub([natural]);
+
+    await applySubrace(actor, "tzaangor");
+
+    expect(actor.deleted).toContain("nat-1");
+  });
+
+  it("не трогает похожую по названию, но другую Черту", async () => {
+    const deadly = traitItem("deadly-1", "Deadly Natural Weapons / Смертельное Естественное Оружие");
+    const actor = actorStub([deadly]);
+
+    await applySubrace(actor, "tzaangor");
+
+    expect(actor.deleted).not.toContain("deadly-1");
   });
 });

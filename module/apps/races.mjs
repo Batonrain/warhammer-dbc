@@ -16,6 +16,7 @@ import { grantAstartesImplants } from "./astartes-implants.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { raceDef, subraceEntries } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
+import { itemHasName } from "../rules/predicates.mjs";
 
 const FLAG  = "warhammer-dbc";
 const GRANT = "originGrant";
@@ -140,11 +141,17 @@ export async function applySubrace(actor, key) {
     await actor.createEmbeddedDocuments("Item", [data]);
   }
 
-  // Субрасы друкхари отменяют часть расовых Черт.
-  const drop = (def?.removesTraits || []).map(n => String(n).toLowerCase().trim());
+  // Субрасы друкхари отменяют часть расовых Черт. Имена в `removesTraits` и на
+  // Черте почти никогда не совпадают посимвольно: данные книги называют Черту
+  // одной половиной («Natural Weapons»), а предмет в паке — двуязычно
+  // («Natural Weapons / Естественное Оружие»). Сверка идёт через itemHasName
+  // (rules/predicates.mjs) — тем же способом, что и предикат `hasTrait`: по
+  // РАВЕНСТВУ половины двуязычного имени, а не по вхождению подстроки, иначе
+  // «Natural Weapons» снёс бы заодно другую Черту — «Deadly Natural Weapons».
+  const drop = def?.removesTraits || [];
   if (drop.length) {
     const ids = actor.items
-      .filter(i => i.type === "trait" && drop.includes(i.name.toLowerCase().trim()))
+      .filter(i => i.type === "trait" && drop.some(name => itemHasName(i, name)))
       .map(i => i.id);
     if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
   }
