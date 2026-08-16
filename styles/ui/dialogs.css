@@ -1291,3 +1291,54 @@ body.wh-aiming #board, body.wh-aiming canvas {
   color: var(--wh-text, #b8ffd8); border-radius: 3px;
 }
 .wh-actor-setup .was-source { font-size: .78em; opacity: .6; text-align: right; }
+
+/* ══ Выбор расы и субрасы ════════════════════════════════════════════════
+   Окно живёт на общей обвязке .wh-item-picker: липкий поиск, группы со
+   счётчиком, строка с раскрытием. Здесь — только то, чего у соседей нет:
+   Характеристики расы и пометка уже выбранного. */
+
+/* Строка целиком — цель выбора, поэтому курсор ведёт себя как на кнопке. */
+.wh-race-picker .pick-name,
+.wh-race-picker .pick-add { cursor: pointer; }
+.wh-race-picker .pick-row { transition: background .12s ease-out; }
+
+/* Уже выбранная раса не предлагает выбрать себя ещё раз: вместо «＋» — галочка,
+   и подсветка строки. Полосы-акцента слева нет намеренно: она была бы третьим
+   способом сказать одно и то же. */
+.wh-race-picker .pick-row.rp-current { background: rgba(77,255,166,.10); }
+.wh-race-picker .rp-current-mark { flex: 0 0 auto; width: 22px; text-align: center; color: #4dffa6; }
+
+/* Характеристики — табличные цифры: колонки не пляшут от строки к строке. */
+.wh-race-picker .rp-chars {
+  display: flex; flex-wrap: wrap; gap: 3px 4px; margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.wh-race-picker .rp-char {
+  padding: 1px 6px; border-radius: 3px; font-size: .95em;
+  background: rgba(77,255,166,.10); border: 1px solid rgba(77,255,166,.22); color: #b8ffd8;
+}
+.wh-race-picker .rp-char b { margin-right: 4px; font-weight: 700; color: #6fe6ff; }
+
+.wh-race-picker .rp-desc-text { margin: 0; }
+.wh-race-picker .rp-drops { margin: 5px 0 0; color: #ff9a9a; }
+
+/* Пусто — это состояние, а не отсутствие разметки: без него окно выглядит
+   сломанным, когда поиск не нашёл ничего. */
+.wh-race-picker .rp-empty,
+.wh-race-picker .rp-none {
+  padding: 18px 14px; text-align: center; font-size: .88em; color: #8fb8a2;
+}
+
+/* Полоса прокрутки — часть окна, а не подарок браузера. */
+.wh-race-picker .window-content { scrollbar-width: thin; scrollbar-color: #2f9e6a #06120c; }
+.wh-race-picker .window-content::-webkit-scrollbar { width: 10px; }
+.wh-race-picker .window-content::-webkit-scrollbar-track { background: #06120c; }
+.wh-race-picker .window-content::-webkit-scrollbar-thumb {
+  background: #2f9e6a; border-radius: 5px; border: 2px solid #06120c;
+}
+.wh-race-picker .window-content::-webkit-scrollbar-thumb:hover { background: #4dffa6; }
+
+/* Клавиатура: поиск и строки должны быть видимы при обходе табом. */
+.wh-race-picker .pick-search:focus-visible,
+.wh-race-picker .pick-add:focus-visible,
+.wh-race-picker .pick-exp:focus-visible { outline: 2px solid #4dffa6; outline-offset: 1px; }
