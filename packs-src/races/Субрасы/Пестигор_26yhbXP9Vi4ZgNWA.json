@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "pestigor",
-    "parent": "beastman",
+    "parentKey": "beastman",
     "cost": 750,
     "effect": "+5 T, +5 I; не может потерять покровительство Нургла. Trait Toxic (1); Sturdy и Stuff of Nightmares. Талант Pestigor Mourner.",
     "god": "Нургл",

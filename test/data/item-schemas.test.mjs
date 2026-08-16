@@ -176,7 +176,7 @@ const TYPES = {
   subrace: {
     pack: "races",
     defaults: {
-      key: "", parent: "", cost: 0, effect: "", god: "", charMods: {}, talents: "",
+      key: "", parentKey: "", cost: 0, effect: "", god: "", charMods: {}, talents: "",
       removesTraits: [], description: "", notes: "", bookSource: ""
     }
   },

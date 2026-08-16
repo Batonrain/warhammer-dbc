@@ -27,7 +27,7 @@ describe("расы в пак", () => {
     const eldanar = byKey("subrace").get("eldanar");
 
     expect(eldanar.name).toBe("Эльданар");
-    expect(eldanar.system.parent).toBe("azuriane");
+    expect(eldanar.system.parentKey).toBe("azuriane");
     expect(eldanar.flags["warhammer-dbc"].mechanics).toEqual([]);
   });
 

@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "mutant",
-    "parent": "human",
+    "parentKey": "human",
     "cost": 500,
     "effect": "+5 Cor и 1 дополнительная мутация (выбор из списка). Навыки Deceive или For.Lore (Mutants) становятся дружественными.",
     "god": "",

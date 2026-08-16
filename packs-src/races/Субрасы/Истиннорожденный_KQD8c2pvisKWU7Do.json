@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "truebornDrukhari",
-    "parent": "drukhari",
+    "parentKey": "drukhari",
     "cost": 1500,
     "effect": "Рождён естественным путём. Таланты «Пилот/Смелость/Всадник» +1 враждебнее; «Социальное» +1 дружественнее; Charm/Deceive/Scrutiny +1 дружественнее; Stealth/Survival +1 враждебнее. Талант Paranoia или Lightning Reflexes; Kabalite Weapon Training; +3 Очка Снаряжения; +6 улучшений стартового снаряжения (до R2); дважды бросок на Влияние (выбор большего); +2 броска характеристик или 11 Бонусных Очков. Доступ к архетипу Придворный.",
     "god": "",

@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "khorngor",
-    "parent": "beastman",
+    "parentKey": "beastman",
     "cost": 750,
     "effect": "+5 WS, +5 S; не может потерять покровительство Кхорна. Trait Brutal Charge (2); Natural Weapons → Deadly Natural Weapons; Талант Frenzy. Талант Khorngor Butcher.",
     "god": "Кхорн",

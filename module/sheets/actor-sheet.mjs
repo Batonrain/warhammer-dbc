@@ -280,6 +280,9 @@ export class WarhammerCharacterSheet
       infamyPlus: whenEditable(onInfamyPlus),
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
+      // Мастера зовут из двух мест: панель «Актёры» — для нового персонажа,
+      // эта кнопка — чтобы пройти его заново на уже созданном.
+      charWizard: whenEditable(function () { this.openCreationWizard(); }),
       convertToHorde: whenEditable(onConvertToHorde),
       abilityDetail: whenEditable(onAbilityDetail),
       pathsToggle: whenEditable(onPathsToggle),

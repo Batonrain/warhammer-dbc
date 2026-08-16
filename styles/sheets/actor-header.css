@@ -191,6 +191,10 @@
 }
 .warhammer-dbc .header-rows > .header-row-fixed,
 .warhammer-dbc .header-row-fixed > .header-cell { display: contents; }
+/* Фракция — не пара «подпись + поле», а самостоятельный блок внутри ряда.
+   Через display:contents она попадала в сетку одним элементом и занимала место
+   ОДНОЙ колонки, сдвигая всё за собой. Своя строка целиком. */
+.warhammer-dbc .header-row-fixed > .wh-faction-field { grid-column: 1 / -1; }
 /* Стремления — исключение: их трое (Гордость, Мотивация, Позор), и в сетке из
    двух пар третья уезжала на свою строку. Ряд занимает всю ширину и делит её
    на три сам. */
@@ -568,11 +572,18 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-.warhammer-dbc .wh-race-picker .rp-list { display: flex; flex-wrap: wrap; gap: 4px; }
-.warhammer-dbc .wh-race-picker .rp-sec { margin: 8px 0 4px; opacity: 0.8; }
-.warhammer-dbc .wh-race-picker .rp-item {
-  display: flex; flex-direction: column; align-items: flex-start;
-  min-width: 150px; padding: 4px 6px; cursor: pointer;
+/* Окно выбора расы и субрасы говорит языком остальных пикеров — styles/ui/dialogs.css. */
+
+/* Состояния слота: пустой слот — цель перетаскивания, поэтому он отвечает на
+   наведение; кнопки слота отвечают тоже. Без этого слот выглядел как надпись,
+   а не как то, с чем можно что-то сделать. */
+.warhammer-dbc .wh-slot { transition: border-color .12s ease-out, background .12s ease-out; }
+.warhammer-dbc .wh-slot.empty:hover {
+  border-color: #4dffa6; background: rgba(77,255,166,.06); opacity: 1;
 }
-.warhammer-dbc .wh-race-picker .rp-meta { font-size: 0.8em; opacity: 0.6; }
-.warhammer-dbc .wh-race-picker .rp-hidden { display: none; }
+.warhammer-dbc .wh-slot-btn:hover { color: #4dffa6; }
+.warhammer-dbc .wh-slot-add:hover { opacity: 1; color: #4dffa6; }
+.warhammer-dbc .wh-slot-btn:focus-visible,
+.warhammer-dbc .wh-slot-add:focus-visible { outline: 2px solid #4dffa6; outline-offset: 1px; }
+/* Заполненный слот: имя — главное в строке, кнопки при нём. */
+.warhammer-dbc .wh-slot .wh-slot-name { font-weight: 600; }

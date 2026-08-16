@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "slaangor",
-    "parent": "beastman",
+    "parentKey": "beastman",
     "cost": 750,
     "effect": "+5 A, +5 P; не может потерять покровительство Слаанеш. Trait Digitigrade (3); Deadly Natural Weapons (Клешня: 1d10+2 R, Pen 3, Razor Sharp/Reinforced/Tearing). Талант Slaangor Fiendblood.",
     "god": "Слаанеш",

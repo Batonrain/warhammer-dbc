@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "discordant",
-    "parent": "human",
+    "parentKey": "human",
     "cost": 1500,
     "effect": "Аура Haywire (2 м, интенсивность 7): глушит технику; +T0 vs болезни; биотех изнашивается. Талант Enemy (Adeptus Mechanicus, Dark Mechanicus). Не получает Архетипы Техножрец и Скитарий.",
     "god": "",

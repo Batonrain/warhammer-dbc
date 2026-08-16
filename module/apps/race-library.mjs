@@ -58,7 +58,7 @@ const raceFromConst = (key, r) => ({
 
 const subFromDoc = doc => ({
   key: raceKeyOf(doc), label: doc.name,
-  parent: doc.system?.parent || "", cost: doc.system?.cost || 0,
+  parent: doc.system?.parentKey || "", cost: doc.system?.cost || 0,
   effect: doc.system?.effect || "", god: doc.system?.god || "",
   charMods: { ...(doc.system?.charMods || {}) },
   talents: doc.system?.talents || "",
@@ -90,8 +90,14 @@ export async function refreshRaceCache() {
       if (d.type === "race")    races[d.system?.key || d.id] = raceFromDoc(d);
       if (d.type === "subrace") subs[d.system?.key || d.id]  = subFromDoc(d);
     }
-    RACE_CACHE = races;
-    SUB_CACHE  = subs;
+    // Половины ставятся порознь и только непустые. Пустая половина — это не
+    // «в книге столько и есть», а «прочитать не удалось»: пак прочитан
+    // частично, пересобран под живым сервером, миграция сменила тип документа.
+    // Раньше такая половина молча вставала на место рабочего отката, и субрасы
+    // пропадали разом у ВСЕХ рас (пак с расами, но без субрас — ровно этот
+    // случай). Откат на константы хуже свежих данных, но лучше пустоты.
+    if (Object.keys(races).length) RACE_CACHE = races;
+    if (Object.keys(subs).length)  SUB_CACHE  = subs;
   } catch (e) { console.warn("Warhammer DBC | Кэш рас:", e); }
 }
 

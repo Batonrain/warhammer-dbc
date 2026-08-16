@@ -64,3 +64,31 @@ describe("raceKeyOf — единое правило ключа для кэша �
     expect(raceKeyOf(undefined)).toBe("");
   });
 });
+
+// Пак читается один раз на «ready» и заменяет собой откат на константы. Если
+// чтение вернуло расы, но НИ ОДНОЙ субрасы (частично прочитанный пак, пак,
+// пересобранный под живым сервером, миграция, сменившая тип документа), пустая
+// половина кэша всё равно вставала на место рабочего отката — и субрасы
+// пропадали разом у ВСЕХ рас. Половина кэша, в которой ничего не нашлось, — это
+// не «субрас нет», а «прочитать не удалось»: откат должен уцелеть.
+describe("неполный пак не затирает откат на константы", () => {
+  const raceDoc = (key, label) => ({
+    type: "race", name: label, id: key, uuid: `Compendium.warhammer-dbc.races.Item.${key}`,
+    system: { key, group: "Люди", chars: {}, pastRaces: [] }
+  });
+
+  function withPack(docs, fn) {
+    const prev = globalThis.game;
+    globalThis.game = { ...(prev || {}), packs: { get: () => ({ getDocuments: async () => docs }) } };
+    return Promise.resolve(fn()).finally(() => { globalThis.game = prev; });
+  }
+
+  it("пак без субрас оставляет субрасы констант", async () => {
+    await withPack([raceDoc("drukhari", "Друкхари")], async () => {
+      const { refreshRaceCache, subracesOf: sub } = await import("../../module/apps/race-library.mjs");
+      await refreshRaceCache();
+
+      expect(sub("drukhari").map(s => s.key).sort()).toEqual([...RACES.drukhari.subraces].sort());
+    });
+  });
+});

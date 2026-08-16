@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "wrack",
-    "parent": "drukhari",
+    "parentKey": "drukhari",
     "cost": 2000,
     "effect": "Гемаколит, хирургически перестроенный Гемункулами. +5 S/T. Таланты Ambidextrous, Bulging Biceps, Resistance (Cold, Heat, Poisons), Unarmed Warrior. Архетипы: Убийца, Алхимик, Неприкаянный, Боец Ямы. Элитный архетип Гемункул вдвое дешевле.",
     "god": "",

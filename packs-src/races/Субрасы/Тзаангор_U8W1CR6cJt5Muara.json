@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "tzaangor",
-    "parent": "beastman",
+    "parentKey": "beastman",
     "cost": 750,
     "effect": "+5 I, +5 F; не может потерять покровительство Тзинча. Теряет Natural Weapons (Рога/Когти), Aversion to Order и Stepchildren of the Gods. Талант Tzaangor Enlightened.",
     "god": "Тзинч",
