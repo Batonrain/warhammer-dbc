@@ -543,6 +543,11 @@ export async function applyCreation(actor,
   // ПОСЛЕ этой выдачи (см. ниже): его сумма учитывает архетип, броски и
   // распределение очков, а расовые chars в ней лишь слагаемое.
   await applyRace(actor, raceKey);
+  // Прошлое Иннари/Арлекина — та же выдача под своим тегом racePast: mirror:false,
+  // потому что раса персонажа остаётся Иннари/Арлекином, а не переписывается на
+  // бывшую расу; свой тег — чтобы Прошлое снималось отдельно от расы и повторный
+  // прогон Мастера его не задваивал (тот же приём, что у applyYnnari/applyHarlequin).
+  if (pastKey) await applyRace(actor, pastKey, { tag: "racePast", mirror: false });
   if (subraceKey) await applySubrace(actor, subraceKey);
 
   const updates = {
@@ -594,8 +599,9 @@ export async function applyCreation(actor,
 
   await actor.update(updates);
 
-  // Черты: расовые и субрасовые уже выданы applyRace/applySubrace выше (через
-  // предмет-носитель и Конструктор Механики) — здесь остался только архетипный.
+  // Черты: расовые, Прошлого и субрасовые уже выданы applyRace/applySubrace
+  // выше (через предмет-носитель и Конструктор Механики) — здесь остался
+  // только архетипный.
   let traits = 0;
   if (arch?.trait) traits += await createTraits([arch.trait], `Архетип: ${arch.name}`);
 
