@@ -284,6 +284,20 @@ describe("применение создания", () => {
     expect(d.calls.talents.at(-1).raw).toContain("Hatred (Fallen)");   // культура ордена
   });
 
+  // Раунд правок 2: race.talents из библиотеки — строка, а не массив. Без
+  // splitTopLevel девять талантов Астартес склеятся в один несуществующий
+  // элемент (длина станет не 9); а если splitTopLevel заменить на наивный
+  // split(","), скобочный талант «Resistance (Cold, Heat, Poisons)» развалится
+  // на куски. Без архетипа/культуры/субрасы в списке — только таланты расы.
+  it("таланты расы приходят раздельными элементами, скобочный не рвётся по запятым внутри", async () => {
+    const a = actor();
+    const d = sheetDeps();
+    await settle(applyCreation(a, { raceKey: "astartes" }, d));
+    const raw = d.calls.talents.at(-1).raw;
+    expect(raw).toHaveLength(9);
+    expect(raw).toContain("Resistance (Cold, Heat, Poisons)");
+  });
+
   it("Азуриан — псайкер и без архетипа", async () => {
     const a = actor();
     await settle(applyCreation(a, { raceKey: "azuriane" }, sheetDeps()));
