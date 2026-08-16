@@ -78,9 +78,13 @@ const EXPECTED_DIFFS = [
   { key: "subrace:wrack", path: "armourAll", from: 0, to: 2,
     why: "Machine (2) в константах wrack шёл с effects:{}; библиотечный шаблон «Machine / Машина (X)» несёт +X AP (armourAll)." },
   { key: "race:sslyth", path: "armourAll", from: 0, to: 3,
-    why: "Natural Armour (3) в константах sslyth указывал ключ effects.naturalArmour — его нет в схеме Черты (module/data/item/trait.mjs), никто и никогда его не читал; библиотечный шаблон «Natural Armour / Естественная Броня (X)» несёт настоящий effects.armourAll." },
-  { key: "race:replicant", path: "sizeMod", from: 1, to: 2,
-    why: "Trait «Hulking / Громила (Легион)» в константах replicant шёл с effects:{} (только текст «может использовать снаряжение Легиона»); библиотечный документ «Hulking / Громила (Размер)» несёт тот же физический смысл (тело крупнее — Размер +1 к SPD) уже числом. Найдено при сверке этим тестом, отдельно от трёх случаев, названных в ревью — тот же класс: константа описывала последствие словами, не числом." }
+    why: "Natural Armour (3) в константах sslyth указывал ключ effects.naturalArmour — его нет в схеме Черты (module/data/item/trait.mjs), никто и никогда его не читал; библиотечный шаблон «Natural Armour / Естественная Броня (X)» несёт настоящий effects.armourAll." }
+  // «Hulking / Громила (Легион)» у replicant НЕ здесь: это был омоним, а не
+  // недописанная константа — «Легион» (доступ к снаряжению) и «Размер»
+  // (sizeMod:1) внутри библиотеки совпадали только словом. Разведены
+  // HOMONYM_EXCLUSIONS в tools/race-traits.mjs; у Легиона теперь свой
+  // документ без чисел, и sizeMod репликанта остался таким, как в константах
+  // (см. проверку ниже).
 ];
 
 /** Старый счёт с подставленными осознанными расхождениями для конкретного def. */
@@ -121,6 +125,18 @@ describe("числа рас после переезда", () => {
   it.each(Object.keys(SUBRACE_DATA))("субраса %s: бонусы из библиотеки совпали с прежними (с поправкой на осознанные починки)", key => {
     const expected = patchExpected(`subrace:${key}`, bonusesFromConstants(SUBRACE_DATA[key]));
     expect(bonusesFromLibrary(SUBRACE_DATA[key])).toEqual(expected);
+  });
+
+  // Раунд правок 2: «Hulking / Громила (Легион)» у Репликанта — омоним
+  // библиотечной «Hulking / Громила (Размер)», не та же Черта (см.
+  // HOMONYM_EXCLUSIONS в tools/race-traits.mjs). После починки у Репликанта
+  // свой документ без чисел: sizeMod не должен приобрести чужой +1, а сама
+  // запись про снаряжение Легиона обязана остаться среди Черт.
+  it("Репликант: Hulking(Легион) не приносит чужой Размер, но остаётся записью", () => {
+    expect(bonusesFromLibrary(RACES.replicant).sizeMod).toBe(bonusesFromConstants(RACES.replicant).sizeMod);
+
+    const hulking = traitEntries(RACES.replicant).find(e => e.sourceName.startsWith("Hulking"));
+    expect(hulking?.sourceName).toBe("Hulking / Громила (Легион)");
   });
 
   // Список осознанных расхождений не должен молча разрастись «на всякий

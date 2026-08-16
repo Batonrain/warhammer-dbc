@@ -46,14 +46,37 @@ const usable = doc => !!doc?.system?.hasRating && (Number(doc.system.rating) || 
   && ((doc.effects || []).length > 0 || !!doc.system.effects?.charBonusStat);
 
 /**
+ * Омонимы: имя из констант и документ библиотеки совпадают по ключу сверки
+ * (normTraitName — английская часть имени без скобок), но это РАЗНЫЕ Черты —
+ * общее только слово, не смысл. Автоматического правила, отличающего такой
+ * омоним от честного синонима («Природная Броня» / «Естественная Броня» —
+ * одна Черта под двумя названиями), не существует, поэтому список — ручной,
+ * с пояснением на каждую запись. libraryTrait() эту пару НЕ считает парой,
+ * из-за чего missingRaceTraits() признаёт Черту отсутствующей, и run() ниже
+ * заводит для нею собственный документ — как для остальных недостающих.
+ */
+const HOMONYM_EXCLUSIONS = [
+  {
+    name: "Hulking / Громила (Легион)",
+    excludeDoc: "Hulking / Громила (Размер)",
+    why: "«Легион» у Репликанта — доступ к снаряжению Легиона Астартес, без " +
+      "чисел; библиотечная «Размер» — Размер +1 (sizeMod). Общее только " +
+      "английское слово «Hulking»."
+  }
+];
+
+/**
  * Документ Черты по имени. Кандидатов может быть несколько: рядом с рабочей
  * записью в паке лежат пустые заглушки вроде «Unnatural Agility (+2)» без
  * рейтинга и эффектов. Ссылка на заглушку выдала бы +0, поэтому рабочая
- * запись предпочитается всегда.
+ * запись предпочитается всегда. Документ из HOMONYM_EXCLUSIONS в кандидаты не
+ * попадает вовсе — это не заглушка, а Черта с другим смыслом.
  */
 export function libraryTrait(name) {
   const key = normTraitName(name);
-  const hits = packTraits().map(t => t.doc).filter(d => normTraitName(d.name) === key);
+  const excludeDoc = HOMONYM_EXCLUSIONS.find(h => h.name === name)?.excludeDoc;
+  const hits = packTraits().map(t => t.doc)
+    .filter(d => normTraitName(d.name) === key && d.name !== excludeDoc);
   return hits.find(usable) || hits[0] || null;
 }
 

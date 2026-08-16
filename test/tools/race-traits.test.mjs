@@ -10,7 +10,15 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
-import { normTraitName, libraryTrait, missingRaceTraits } from "../../tools/race-traits.mjs";
+import { normTraitName, libraryTrait, missingRaceTraits, raceTraits } from "../../tools/race-traits.mjs";
+
+/** Нечисловые уточнения в скобках: «(4)», «(X)», «(+2)» из сравнения выбрасываются. */
+function bracketQualifiers(name) {
+  const brackets = [...String(name).matchAll(/\(([^)]*)\)/g)].map(m => m[1].trim());
+  return new Set(brackets.filter(b => !/^[+-]?(\d+|x)$/i.test(b)));
+}
+
+const setsEqual = (a, b) => a.size === b.size && [...a].every(v => b.has(v));
 
 describe("сверка расовых Черт с библиотекой", () => {
 
@@ -40,6 +48,27 @@ describe("сверка расовых Черт с библиотекой", () =>
 
   it("после прогона генератора ни одна расовая Черта не осталась без пары", () => {
     expect(missingRaceTraits()).toEqual([]);
+  });
+
+  // Сторож омонимов (раунд правок 2): «Hulking / Громила (Легион)» когда-то
+  // молча привязался к «Hulking / Громила (Размер)» — разные Черты, общее
+  // только английское слово. Автоматического правила, отличающего такой
+  // омоним от честного синонима («Природная Броня» / «Естественная Броня» —
+  // одна Черта под двумя названиями), нет, поэтому проверка грубая: нечисловое
+  // уточнение в скобках («Легион» против «Размер») у имени из констант и у
+  // имени привязанного документа обязано совпасть, если оно вообще есть у
+  // обоих. Числовые уточнения — «(4)», «(X)», «(+2)» — не считаются: иначе
+  // сторож заругался бы на каждый параметрический шаблон.
+  it("нечисловое уточнение в скобках не расходится с привязанным документом (сторож омонимов)", () => {
+    const suspects = [];
+    for (const [name] of raceTraits()) {
+      const doc = libraryTrait(name);
+      if (!doc) continue;
+      const a = bracketQualifiers(name);
+      const b = bracketQualifiers(doc.name);
+      if (a.size && b.size && !setsEqual(a, b)) suspects.push(`«${name}» → «${doc.name}»`);
+    }
+    expect(suspects).toEqual([]);
   });
 
   // Черта без английской части («Дары Цегораха / Базовые Черты Арлекина») не
