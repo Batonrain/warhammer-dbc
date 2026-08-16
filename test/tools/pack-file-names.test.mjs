@@ -8,11 +8,16 @@
 // «сборка компендиумов теряет документ».
 
 import { describe, it, expect } from "vitest";
+import path from "node:path";
 import { packFileName } from "../../tools/pack-file-name.mjs";
 import { raceDocs } from "../../tools/races-to-pack.mjs";
 import { libraryDocs } from "../../tools/race-traits.mjs";
 
-const stem = p => p.slice(p.lastIndexOf("/") + 1);
+// Имя файла берём platform-независимо: генераторы строят путь через path.join,
+// и на Windows разделитель обратный. Резать строку по «/» значило проверять на
+// Windows целый путь вместо имени — тест краснел там, где всё верно, и зеленел
+// на CI.
+const stem = p => path.basename(p);
 
 describe("генераторы именуют файлы правилом распаковщика", () => {
   it.each([
