@@ -13,21 +13,11 @@ import { extractPack } from "@foundryvtt/foundryvtt-cli";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { NAME_LIMIT, safe } from "./pack-file-name.mjs";
 import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs } from "./packs.mjs";
 import { bookSource } from "./book-source.mjs";
 
 // ── Имена файлов исходника ────────────────────────────────────────────────
-// Сам по себе CLI кладёт документ в «<Папка>_<id16>/<Название>_<id16>.json».
-// На кириллице такой путь перестаёт влезать в лимит Windows: буква весит два
-// байта, и самый длинный путь тянул на 300 байт при потолке в 260 — checkout
-// падал с «Filename too long». Поэтому у каталогов снимается суффикс id
-// (одноимённых соседей в паках нет), а название документа режется. Полное имя
-// лежит внутри JSON, id в имени файла остаётся, максимум пути — 240 байт.
-const NAME_LIMIT = 40;
-
-/** Как в CLI: в имени файла остаются только буквы и цифры. */
-const safe = (name) => String(name).replace(/[^a-zA-Z0-9А-я]/g, "_");
-
 const transformFolderName = (doc) => (doc.name ? safe(doc.name) : doc._id);
 
 const transformName = (doc, { documentType, folder }) => {

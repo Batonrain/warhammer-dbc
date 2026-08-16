@@ -10,8 +10,9 @@
 
 import { CHARACTERISTICS }              from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
-import { RACES, SUBRACES, SUBRACE_DATA,
-         RACE_GROUPS, AELDARI_RACES }   from "../constants/races.mjs";
+import { raceDef, subraceEntries, subracesOf, isAeldariRace, raceGroupList }
+  from "./race-library.mjs";
+import { applyRace, applySubrace }      from "./races.mjs";
 import { buildLegionOptions, buildChapterOptions,
          buildCultureLegionOptions, resolveCultureFx } from "../constants/legions.mjs";
 import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
@@ -459,12 +460,12 @@ function ruSkillString(str) {
 
 /** Резолвит объекты расы/архетипа/субрасы/«Прошлого» по выбранным ключам мастера. */
 export function resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harlequinPast }) {
-  const race = RACES[raceKey];
+  const race = raceDef(raceKey);
   const arch = archetypeEntries()[archKey];
-  const sub  = SUBRACE_DATA[subraceKey];
+  const sub  = subraceEntries()[subraceKey] || null;
   const pastKey = raceKey === "ynnari" ? ynnariPast
                 : raceKey === "harlequin" ? harlequinPast : "";
-  const past = (pastKey && RACES[pastKey]) ? RACES[pastKey] : null;
+  const past = pastKey ? raceDef(pastKey) : null;
   return { race, arch, sub, past, pastKey };
 }
 
@@ -480,7 +481,7 @@ export function creationCharSum({ race, past, arch, sub }) {
 
 /** Число бонусных бросков расы (по выбранным ключам мастера). */
 function creationBonusRolls(raceKey) {
-  return Number(RACES[raceKey]?.bonusRolls) || 0;
+  return Number(raceDef(raceKey)?.bonusRolls) || 0;
 }
 
 /** Один комплект метода «Генерация»: 9 (+бонус) бросков 2d10, берём 9 старших. */
@@ -527,6 +528,27 @@ export async function applyCreation(actor,
   const { race, arch, sub, past, pastKey } =
     resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harlequinPast });
   const chars = actor.system.characteristics;
+  // Пустые ли поля ДО выдачи расы/субрасы — снимок нужен именно тут: applyRace
+  // ниже пишет расовые chars в тот же объект (общая ссылка на
+  // actor.system.characteristics), и без снимка проверка «поле ещё не
+  // заполнено» перестанет отличать «было пусто» от «уже заполнено расой» —
+  // итог потеряет бонус архетипа и бросок (см. тест «характеристики пишутся
+  // только в пустые поля»).
+  const wasEmpty = {};
+  for (const k of [...CREATION_ROLL_CHARS, "inf"]) wasEmpty[k] = (chars[k]?.base || 0) === 0;
+
+  // Раса и субраса выдаются тем же путём, что из слота листа и из дропа
+  // предмета: иначе два пути выдачи разойдутся при первой же правке
+  // библиотеки. Порядок строгий — характеристики Мастер перезапишет итогом
+  // ПОСЛЕ этой выдачи (см. ниже): его сумма учитывает архетип, броски и
+  // распределение очков, а расовые chars в ней лишь слагаемое.
+  await applyRace(actor, raceKey);
+  // Прошлое Иннари/Арлекина — та же выдача под своим тегом racePast: mirror:false,
+  // потому что раса персонажа остаётся Иннари/Арлекином, а не переписывается на
+  // бывшую расу; свой тег — чтобы Прошлое снималось отдельно от расы и повторный
+  // прогон Мастера его не задваивал (тот же приём, что у applyYnnari/applyHarlequin).
+  if (pastKey) await applyRace(actor, pastKey, { tag: "racePast", mirror: false });
+  if (subraceKey) await applySubrace(actor, subraceKey);
 
   const updates = {
     "system.race":      raceKey,
@@ -549,12 +571,14 @@ export async function applyCreation(actor,
   // Азуриане — псайкеры (трейт Psyker, «Древнее Мастерство»); то же для Иннари/Арлекина с Прошлым Азуриан
   if (raceKey === "azuriane" || pastKey === "azuriane") updates["system.isPsyker"] = true;
 
-  // Характеристики (только в пустые поля): база = раса (+ Прошлое) + бонус
-  // архетипа + бонус субрасы, ПЛЮС бросок 2d10 в каждую из 9 основных х-к
-  // (корник вахи). Влияние (inf) 2d10 не кидается — оно от arch.infRoll ниже.
+  // Характеристики: база = раса (+ Прошлое) + бонус архетипа + бонус субрасы,
+  // ПЛЮС бросок 2d10 в каждую из 9 основных х-к (корник вахи). Пишем только в
+  // поля, пустые ДО выдачи расы: applyRace уже заполнил их своей частью суммы —
+  // здесь она перекрывается итогом. Влияние (inf) 2d10 не кидается — оно от
+  // arch.infRoll ниже.
   const sum = creationCharSum({ race, past, arch, sub });
   for (const [k, v] of Object.entries(sum)) {
-    if ((chars[k]?.base || 0) === 0) {
+    if (wasEmpty[k]) {
       const roll = (charRolls && CREATION_ROLL_CHARS.includes(k)) ? (charRolls[k] || 0) : 0;
       updates[`system.characteristics.${k}.base`] = v + roll;
     }
@@ -567,19 +591,18 @@ export async function applyCreation(actor,
     updates["system.wounds.value"] = w;
   }
 
-  // Влияние (Inf) по броску архетипа — только в пустое поле
-  if (arch?.infRoll && (chars.inf?.base || 0) === 0) {
+  // Влияние (Inf) по броску архетипа — только в пустое (до выдачи расы) поле
+  if (arch?.infRoll && wasEmpty.inf) {
     const infv = await rollWoundsFormula(arch.infRoll);
     if (infv) updates["system.characteristics.inf.base"] = infv;
   }
 
   await actor.update(updates);
 
-  // Черты: расовые (+ Прошлого для Иннари) + субрасовые + архетипный
+  // Черты: расовые, Прошлого и субрасовые уже выданы applyRace/applySubrace
+  // выше (через предмет-носитель и Конструктор Механики) — здесь остался
+  // только архетипный.
   let traits = 0;
-  traits += await createTraits(race?.traits, race?.label || raceKey);
-  if (past?.traits) traits += await createTraits(past.traits, past.label || pastKey);
-  if (sub?.traits) traits += await createTraits(sub.traits, sub.label || subraceKey);
   if (arch?.trait) traits += await createTraits([arch.trait], `Архетип: ${arch.name}`);
 
   // Импланты Механикум / Боевые Латы Скитарии
@@ -596,10 +619,15 @@ export async function applyCreation(actor,
     ? resolveCultureFx(geneSeed.cultureLegion || geneSeed.legion,
                        geneSeed.cultureChapter || geneSeed.chapter)
     : null;
+  // race/past/sub.talents из библиотеки — строка («Ambidextrous, Bulging
+  // Biceps, ...»), а не массив имён, как раньше в константах: splitTopLevel
+  // режет её по запятым верхнего уровня (скобки специализаций не трогает).
+  // Иначе строка ляжет в concat одним элементом, и 9 талантов Астартес
+  // превратятся в один несуществующий.
   const talRaw = [].concat(
-    race?.talents || [],
-    past?.talents || [],
-    sub?.talents  || [],
+    race?.talents ? splitTopLevel(race.talents) : [],
+    past?.talents ? splitTopLevel(past.talents) : [],
+    sub?.talents  ? splitTopLevel(sub.talents)  : [],
     arch?.talents ? [arch.talents] : [],
     cultFx?.grantTalents || []
   );
@@ -623,7 +651,7 @@ export async function applyCreation(actor,
 
 /** Подсказка под селектами: что даёт выбранная раса/архетип. */
 function updateWizardNote(html) {
-  const race = RACES[html.find("#wiz-race").val()];
+  const race = raceDef(html.find("#wiz-race").val());
   const arch = archetypeEntries()[html.find("#wiz-arch").val()];
   const parts = [];
   if (race?.skills) parts.push(`<b>Навыки расы:</b> ${ruSkillString(race.skills)}`);
@@ -672,15 +700,15 @@ export function showCreationWizard(actor, deps) {
   // Расы выключенных подсистем («Книга Эльдар» и т.п.) прячем из Мастера —
   // та же логика, что и у шапки листа (context.raceGroups).
   const offRacesWiz = disabledRaceKeys();
-  const raceOpts = RACE_GROUPS.map(g => {
-    const opts = g.races.filter(k => RACES[k] && (k === curRace || !offRacesWiz.includes(k)))
-      .map(k => `<option value="${k}" ${k === curRace ? "selected" : ""}>${RACES[k].label}</option>`).join("");
+  const raceOpts = raceGroupList().map(g => {
+    const opts = g.races.filter(r => r.key === curRace || !offRacesWiz.includes(r.key))
+      .map(r => `<option value="${r.key}" ${r.key === curRace ? "selected" : ""}>${r.label}</option>`).join("");
     return opts ? `<optgroup label="${g.label}">${opts}</optgroup>` : "";
   }).join("");
-  const ynnariPastOpts = `<option value="">— не выбрано —</option>` + (RACES.ynnari.pastRaces || [])
-    .map(k => `<option value="${k}" ${k === actor.system.ynnariPast ? "selected" : ""}>${RACES[k]?.label || k}</option>`).join("");
-  const harlequinPastOpts = `<option value="">— не выбрано —</option>` + (RACES.harlequin.pastRaces || [])
-    .map(k => `<option value="${k}" ${k === actor.system.harlequinPast ? "selected" : ""}>${RACES[k]?.label || k}</option>`).join("");
+  const ynnariPastOpts = `<option value="">— не выбрано —</option>` + (raceDef("ynnari")?.pastRaces || [])
+    .map(k => `<option value="${k}" ${k === actor.system.ynnariPast ? "selected" : ""}>${raceDef(k)?.label || k}</option>`).join("");
+  const harlequinPastOpts = `<option value="">— не выбрано —</option>` + (raceDef("harlequin")?.pastRaces || [])
+    .map(k => `<option value="${k}" ${k === actor.system.harlequinPast ? "selected" : ""}>${raceDef(k)?.label || k}</option>`).join("");
 
   const content = `
     <form class="wh-wizard-form" style="padding:6px;">
@@ -751,9 +779,10 @@ export function showCreationWizard(actor, deps) {
     render: html => {
       const rebuild = () => {
         const rk    = html.find("#wiz-race").val();
-        const race  = RACES[rk];
+        // Субрасы — отбором по родителю (subracesOf), а не по списку внутри расы:
+        // тот же приём, что читает и шапка листа.
         const subOpts = ['<option value="">— нет —</option>']
-          .concat((race?.subraces || []).map(sk => `<option value="${sk}">${SUBRACES[sk] || sk}</option>`));
+          .concat(subracesOf(rk).map(s => `<option value="${s.key}">${s.label}</option>`));
         html.find("#wiz-subrace").html(subOpts.join(""));
         // Архетипы: Астартес/Азуриане/Друкхари/Арлекины — свои; Человек — обычные.
         // Прочие (сплайсы, гарпии, наги, скваты и т.п.) — человеческие архетипы.
@@ -773,7 +802,7 @@ export function showCreationWizard(actor, deps) {
         html.find(".wiz-ynnari-row").toggle(rk === "ynnari");
         html.find(".wiz-harlequin-row").toggle(rk === "harlequin");
         // Аэльдари используют Пути, а не Мировоззрение — скрываем выбор.
-        html.find(".wiz-align-row").toggle(!AELDARI_RACES.includes(rk));
+        html.find(".wiz-align-row").toggle(!isAeldariRace(rk));
         // Легион+культура — только для Астартес.
         html.find("#wiz-legion").toggle(rk === "astartes");
         if (rk === "astartes") refreshLegion();

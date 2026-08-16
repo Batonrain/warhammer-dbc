@@ -1,6 +1,6 @@
 <div class="tab abil-cog {{#if (eq tab "abilities")}}active{{/if}}" data-tab="abilities" data-group="primary"> {{#if isAstartes}}
   <div class="ability-section-panel gene-seed-panel"> <div class="panel-title"> ГЕНОСЕМЯ
-      <button type="button" class="gene-toggle-btn" data-action="geneToggle" title="Свернуть/развернуть импланты">▸ Импланты</button> </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> <button type="button" class="gene-apply-btn" title="Создать расовые Черты Астартес (Unnatural S/T, Size, Nimble, Amphibious, Gene-Seed) и базовые характеристики"> {{#if hasGeneSeedTrait}}↻ Обновить расовые бонусы{{else}}Применить расовые бонусы{{/if}}
+      <button type="button" class="gene-toggle-btn" data-action="geneToggle" title="Свернуть/развернуть импланты">▸ Импланты</button> </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> <button type="button" class="gene-apply-btn" data-action="geneApply" title="Создать расовые Черты Астартес (Unnatural S/T, Size, Nimble, Amphibious, Gene-Seed) и базовые характеристики"> {{#if hasGeneSeedTrait}}↻ Обновить расовые бонусы{{else}}Применить расовые бонусы{{/if}}
       </button> </div> <div class="gene-seed-hint">Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты — памятка (сворачивается).</div> <div class="gene-organs collapsed"> {{#each geneSeedOrgans as |o|}}
       <div class="gene-organ"> <span class="gene-organ-name">{{o.name}}</span> <span class="gene-organ-effect">{{o.effect}}</span> </div> {{/each}}
     </div> </div> {{/if}}
@@ -8,14 +8,14 @@
   {{#if isYnnari}}
   <div class="ability-section-panel ynnari-panel"> <div class="panel-title"> ИННАРИ — ПЕРЕРОЖДЁННЫЕ </div>
     <div class="gene-seed-head"> <span class="gene-origin-label">Прошлое: <b>{{#if ynnariPastLabel}}{{ynnariPastLabel}}{{else}}— не выбрано (в шапке листа) —{{/if}}</b></span>
-      <button type="button" class="ynnari-apply-btn" title="Применить бонусы Прошлого (характеристики в пустые поля + расовые Черты) и Черты Иннари">{{#if ynnariPastLabel}}Применить бонусы ({{ynnariPastLabel}}) + Иннари{{else}}Применить Черты Иннари{{/if}}</button> </div>
+      <button type="button" class="ynnari-apply-btn" data-action="ynnariApply" title="Применить бонусы Прошлого (характеристики в пустые поля + расовые Черты) и Черты Иннари">{{#if ynnariPastLabel}}Применить бонусы ({{ynnariPastLabel}}) + Иннари{{else}}Применить Черты Иннари{{/if}}</button> </div>
     <div class="gene-seed-hint">Прошлое (бывшая раса) выбирается в шапке листа или в Мастере создания. Иннари получает все бонусы изначальной расы + Черты «Перерождённые» и «Сила Душ». Мёртвое Могущество — на вкладке Показатели. Бонусы применяются в пустые поля характеристик и как Черты — повторное нажатие безопасно.</div>
   </div> {{/if}}
 
   {{#if isHarlequin}}
   <div class="ability-section-panel ynnari-panel"> <div class="panel-title"> АРЛЕКИН — СЛУГИ ЦЕГОРАХА </div>
     <div class="gene-seed-head"> <span class="gene-origin-label">Прошлое: <b>{{#if harlequinPastLabel}}{{harlequinPastLabel}}{{else}}— не выбрано (в шапке листа) —{{/if}}</b></span>
-      <button type="button" class="harlequin-apply-btn" title="Применить бонусы Прошлого (характеристики в пустые поля + расовые Черты) и Черты Арлекина">{{#if harlequinPastLabel}}Применить бонусы ({{harlequinPastLabel}}) + Арлекин{{else}}Применить Черты Арлекина{{/if}}</button> </div>
+      <button type="button" class="harlequin-apply-btn" data-action="harlequinApply" title="Применить бонусы Прошлого (характеристики в пустые поля + расовые Черты) и Черты Арлекина">{{#if harlequinPastLabel}}Применить бонусы ({{harlequinPastLabel}}) + Арлекин{{else}}Применить Черты Арлекина{{/if}}</button> </div>
     <div class="gene-seed-hint">Прошлое (изначальная раса: Азуриане/Друкхари/Экзодит) выбирается в шапке листа или в Мастере создания. Арлекин получает все бонусы изначальной расы + Черты Арлекина (Дары Цегораха, Акробатическое Мастерство, Искажённое Тело, Неприкосновенные, Воля Цегораха) и выбор Маски (Мириада Масок). Бонусы применяются в пустые поля характеристик и как Черты — повторное нажатие безопасно.</div>
   </div> {{/if}}
 

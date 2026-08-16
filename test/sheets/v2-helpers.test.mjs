@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
-import { whenEditable, onTab, filePicker } from "../../module/sheets/v2-helpers.mjs";
+import { whenEditable, onTab, filePicker, linesToArray } from "../../module/sheets/v2-helpers.mjs";
 
 describe("whenEditable", () => {
   it("пропускает вызов на редактируемом листе, отдавая event и target", () => {
@@ -63,5 +63,31 @@ describe("filePicker", () => {
     expect(filePicker()).toBe(globalThis.FilePicker);
 
     foundry.applications.apps = apps;
+  });
+});
+
+// Субраса: «Снимает Черты» — ArrayField(StringField), а на листе одна textarea
+// (имя на строку). Foundry сама собирает массив из формы, только когда одно
+// имя поля дают несколько input'ов — одиночная textarea шлёт строку целиком,
+// item-sheet.mjs зовёт linesToArray перед тем, как отдать значение схеме.
+describe("linesToArray", () => {
+  it("строки textarea становятся массивом имён", () => {
+    expect(linesToArray("Nimble\nPsyker")).toEqual(["Nimble", "Psyker"]);
+  });
+
+  it("пустые и пробельные строки не превращаются в пустые элементы", () => {
+    expect(linesToArray("Nimble\n\n   \nPsyker\n")).toEqual(["Nimble", "Psyker"]);
+  });
+
+  it("уже сохранённый массив переживает повторное сохранение без изменений", () => {
+    // Так лист отрисовывает массив обратно в textarea (join) и получает его
+    // назад при следующей отправке формы (split) — цикл не должен искажать данные.
+    const saved = ["Nimble", "Psyker", "Fleshbane"];
+    expect(linesToArray(saved.join("\n"))).toEqual(saved);
+  });
+
+  it("без значения отдаёт пустой массив", () => {
+    expect(linesToArray("")).toEqual([]);
+    expect(linesToArray(undefined)).toEqual([]);
   });
 });

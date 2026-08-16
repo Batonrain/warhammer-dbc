@@ -1,0 +1,28 @@
+{
+  "name": "Серый Человек",
+  "type": "subrace",
+  "img": "icons/svg/oak.svg",
+  "folder": "jT8qmJ96CX5W9mG5",
+  "system": {
+    "key": "grayman",
+    "parent": "halfEldar",
+    "cost": 0,
+    "effect": "",
+    "god": "",
+    "charMods": {},
+    "talents": "",
+    "removesTraits": [],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "nMKfyeoo5SiSSdTQ",
+  "effects": [],
+  "sort": 0,
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": []
+    }
+  },
+  "_key": "!items!nMKfyeoo5SiSSdTQ"
+}

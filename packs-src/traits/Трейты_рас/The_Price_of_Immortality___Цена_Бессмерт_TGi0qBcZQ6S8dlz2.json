@@ -1,0 +1,33 @@
+{
+  "name": "The Price of Immortality / Цена Бессмертия",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При гибели Гемункулы Кабала/Ковена/Культа возвращают друкхари из мёртвых: каждую главу −2d5 Inf за услуги. Невозможно при Выжигании Души, варп-оружии или поглощении души. Стартовый персонаж без субрасы может отказаться от Трейта ради +3d5 стартового Inf.",
+    "source": "раса",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "TGi0qBcZQ6S8dlz2",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!TGi0qBcZQ6S8dlz2"
+}

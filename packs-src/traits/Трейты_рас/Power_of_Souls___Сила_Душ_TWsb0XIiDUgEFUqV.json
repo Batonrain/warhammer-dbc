@@ -1,0 +1,33 @@
+{
+  "name": "Power of Souls / Сила Душ",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда Иннари кого-либо убивает или кто-то умирает в радиусе 10 м — тест W+20, при успехе +1 Мёртвое Могущество (макс. W.b×3). Мёртвое Могущество тратится как Очки Бесчестья в расчёте «Х×строку таблицы» (эффект Cor=0 — 1 ММ, Cor=20 — 2 ММ и т.д.). Мистическая природа — давится нуль-полями; позволяет любому эльдар пользоваться механикой Очков Бесчестья.",
+    "source": "раса",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "TWsb0XIiDUgEFUqV",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!TWsb0XIiDUgEFUqV"
+}

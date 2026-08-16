@@ -447,18 +447,9 @@ import { SubraceData }        from "./item/subrace.mjs";
     "systems/warhammer-dbc/templates/item/parts/subrace.hbs",
 ```
 
-В `system.json`, в массив `packs` рядом с `archetypes`:
-
-```json
-    {
-      "name": "races",
-      "label": "Расы — Библиотека (DBC)",
-      "path": "packs/races",
-      "type": "Item",
-      "system": "warhammer-dbc",
-      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER", "GAMEMASTER": "OWNER" }
-    },
-```
+Пак `races` в `system.json` здесь **не объявляется**: гейт `test/tools/packs.test.mjs` требует, чтобы
+у объявленного не-книжного пака была непустая папка `packs-src/<имя>`, а контента ещё нет.
+Объявление уедет в задачу 4 — вместе с записями, которые оно описывает.
 
 - [ ] **Шаг 7: Проверка и коммит**
 
@@ -476,10 +467,24 @@ git commit -m "Типы предметов «Раса» и «Субраса»: �
 
 ### Задача 3: Недостающие расовые Черты в библиотеке
 
-67 из 102 уникальных расовых Черт уже лежат в паке `traits`. Остальные 35 — в основном большие
+78 из 102 уникальных расовых Черт уже лежат в паке `traits`. Остальные 24 — в основном большие
 повествовательные («Эльдарское Тело», «Тёмная Душа», «Через Боль») — надо завести, иначе ссылаться
 будет не на что. Делается генератором, а не руками: константы уже содержат имя, текст, рейтинг и
 числовые эффекты.
+
+**Сверка идёт по английской части имени, а не по всему имени.** Русские названия одной и той же
+Черты в константах и в паке расходятся: «Природная Броня» против «Естественная Броня», «Тёмное
+Зрение» против «Ночное Зрение», «Кряжистый» против «Надёжный». Сверка по полному имени сочла бы их
+разными и завела 11 дублей — включая второй «Unnatural Strength» рядом с шаблоном «(X)», чем убила
+бы и правку рейтинга из задачи 1, и весь смысл ссылок. Английская часть — устойчивый ключ; тем же
+приёмом уже пользуется `buildTalents` в `module/apps/origin-shared.mjs`.
+
+**Три имени требуют не создания, а замены заглушки.** В паке лежат «Unnatural Agility (+2)»,
+«Unnatural Intelligence (+2)» (дважды) и «Unnatural Perception (+2)» — пустые: `hasRating: false`,
+`rating: 0`, эффектов нет вовсе. Ссылка на такую заглушку дала бы Азурианам +0 вместо +4. Для этих
+трёх имён генератор заводит нормальные параметрические записи «(X)» по образцу уже правильных
+«Unnatural Strength / Сверхъестественная Сила (X)» и «Unnatural Toughness». Сами заглушки **не
+удаляются**: чужой контент не наша забота, а выбор между кандидатами решается предпочтением.
 
 **Файлы:**
 - Создать: `tools/race-traits.mjs`
@@ -487,7 +492,11 @@ git commit -m "Типы предметов «Раса» и «Субраса»: �
 - Создать (генератором): `packs-src/traits/Трейты_рас/*.json`
 
 **Интерфейсы:**
-- Отдаёт: `normTraitName(name)` — нормализация имени для сверки (регистр, скобки, знаки); `missingRaceTraits()` — список Черт из констант, которых нет в паке; `run({ write })` — отчёт `{ existing, created, files }`.
+- Отдаёт:
+  - `normTraitName(name)` — ключ сверки: английская часть имени (до `/`), без скобок, регистра и знаков
+  - `libraryTrait(name)` — документ Черты из пака по имени или `null`; из нескольких кандидатов выбирает пригодный (с рейтингом и эффектом) вместо пустой заглушки
+  - `missingRaceTraits()` — расовые Черты, для которых `libraryTrait` ничего не вернул
+  - `run({ write })` — отчёт `{ existing, created, files }`
 - Потребляет: ничего. Идёт параллельно задаче 2.
 
 - [ ] **Шаг 1: Написать падающий тест**
@@ -503,13 +512,32 @@ git commit -m "Типы предметов «Раса» и «Субраса»: �
 // называет конкретный рейтинг — «Unnatural Strength (4)».
 
 import { describe, it, expect } from "vitest";
-import { normTraitName, missingRaceTraits } from "../../tools/race-traits.mjs";
+import { normTraitName, libraryTrait, missingRaceTraits } from "../../tools/race-traits.mjs";
 
 describe("сверка расовых Черт с библиотекой", () => {
 
   it("рейтинг в скобках не мешает узнать Черту", () => {
     expect(normTraitName("Unnatural Strength (4) / Сверхъест. Сила (4)"))
       .toBe(normTraitName("Unnatural Strength / Сверхъестественная Сила (X)"));
+  });
+
+  // Русские названия одной Черты в константах и в паке расходятся, английские —
+  // нет. Сверка по полному имени завела бы 11 дублей.
+  it("расхождение русских названий не делает Черту новой", () => {
+    expect(normTraitName("Natural Armour (3) / Природная Броня (3)"))
+      .toBe(normTraitName("Natural Armour / Естественная Броня (X)"));
+    expect(normTraitName("Dark Sight / Тёмное Зрение"))
+      .toBe(normTraitName("Dark Sight / Ночное Зрение"));
+  });
+
+  // «Unnatural Agility (+2)» в паке — пустышка без рейтинга и эффектов. Выбрать
+  // её значит выдать Азурианам +0 вместо +4.
+  it("из кандидатов выбирается рабочая запись, а не пустая заглушка", () => {
+    const doc = libraryTrait("Unnatural Agility (4) / Сверхъестественная Ловкость (4)");
+
+    expect(doc).toBeTruthy();
+    expect(doc.system.hasRating).toBe(true);
+    expect(doc.system.rating).toBeGreaterThan(0);
   });
 
   it("после прогона генератора ни одна расовая Черта не осталась без пары", () => {
@@ -550,13 +578,37 @@ const DIR    = "packs-src/traits";
 const FOLDER = "packs-src/traits/Трейты_рас";
 const FOLDER_ID = "NQHsbl75bk7fCc77";          // _Folder.json папки «Трейты рас»
 
-/** Имя без скобок, регистра и знаков — общий вид для шаблона и конкретного рейтинга. */
+/**
+ * Ключ сверки — АНГЛИЙСКАЯ часть имени (до «/»), без скобок и знаков.
+ *
+ * Русские названия одной Черты расходятся между константами и паком
+ * («Природная Броня» против «Естественной»), английские — нет. Сверка по
+ * полному имени завела бы 11 дублей. Тот же приём — в buildTalents
+ * (module/apps/origin-shared.mjs).
+ */
 export function normTraitName(name) {
   return String(name)
+    .split("/")[0]
     .toLowerCase()
     .replace(/\([^)]*\)/g, " ")
-    .replace(/[^a-zа-яё]+/gi, " ")
+    .replace(/[^a-z]+/g, " ")
     .trim();
+}
+
+/** Есть ли у документа чем считать: рейтинг и хоть один эффект. */
+const usable = doc => !!doc?.system?.hasRating && (Number(doc.system.rating) || 0) > 0
+  && ((doc.effects || []).length > 0 || !!doc.system.effects?.charBonusStat);
+
+/**
+ * Документ Черты по имени. Кандидатов может быть несколько: рядом с рабочей
+ * записью в паке лежат пустые заглушки вроде «Unnatural Agility (+2)» без
+ * рейтинга и эффектов. Ссылка на заглушку выдала бы +0, поэтому рабочая
+ * запись предпочитается всегда.
+ */
+export function libraryTrait(name) {
+  const key = normTraitName(name);
+  const hits = packTraits().map(t => t.doc).filter(d => normTraitName(d.name) === key);
+  return hits.find(usable) || hits[0] || null;
 }
 
 /** Все документы Черт пака: [{ path, doc }]. */
@@ -579,10 +631,20 @@ export function raceTraits() {
   return out;
 }
 
-/** Расовые Черты, у которых нет пары в библиотеке. */
+/**
+ * Расовые Черты без пригодной пары в библиотеке. Черта с числовым эффектом в
+ * константах, которой в паке отвечает пустая заглушка, считается отсутствующей:
+ * ссылка на заглушку молча обнулила бы бонус.
+ */
 export function missingRaceTraits() {
-  const have = new Set(packTraits().map(({ doc }) => normTraitName(doc.name)));
-  return [...raceTraits().keys()].filter(n => !have.has(normTraitName(n)));
+  return [...raceTraits().entries()]
+    .filter(([name, t]) => {
+      const doc = libraryTrait(name);
+      if (!doc) return true;
+      const needsNumbers = !!(t.effects?.charBonusStat || (t.effects?.charBonuses || []).length);
+      return needsNumbers && !usable(doc);
+    })
+    .map(([name]) => name);
 }
 
 /** Устойчивый идентификатор: пересборка не должна менять _id. */
@@ -601,8 +663,13 @@ export function run({ write = false } = {}) {
   for (const name of missing) {
     const t  = traits.get(name);
     const id = stableId(`race-trait:${name}`);
+    // Черта с рейтингом заводится ШАБЛОНОМ «(X)», как уже сделаны Сила и
+    // Стойкость: число из констант остаётся в rating и в эффекте, а выдача с
+    // другим рейтингом подвинет его сама (rescaleTraitByRating, задача 1).
+    // Поэтому одной записи хватает всем расам, какой бы рейтинг им ни был нужен.
+    const libName = t.hasRating ? name.replace(/\((\d+)\)/g, "(X)") : name;
     const doc = {
-      name, type: "trait", img: "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      name: libName, type: "trait", img: "systems/warhammer-dbc/assets/item-icons/trait.svg",
       folder: FOLDER_ID,
       system: {
         description: "", notes: "", benefit: t.benefit || "", source: "раса",
@@ -617,7 +684,7 @@ export function run({ write = false } = {}) {
       },
       _id: id, effects: [], sort: 0, flags: {}, _key: `!items!${id}`
     };
-    const path = join(FOLDER, fileName(name, id));
+    const path = join(FOLDER, fileName(libName, id));
     if (write) writeFileSync(path, JSON.stringify(doc, null, 2) + "\n");
     files.push(path);
   }
@@ -638,7 +705,12 @@ if (process.argv[1]?.endsWith("race-traits.mjs")) {
 node tools/race-traits.mjs --write
 npx vitest run test/tools/race-traits.test.mjs
 ```
-Ожидание: генератор сообщает «заведено: 35», тест PASS — `missingRaceTraits()` пуст.
+Ожидание: генератор сообщает «заведено: 27» (24 отсутствующих плюс три замены пустым заглушкам
+Ловкости, Интеллекта и Восприятия), тест PASS — `missingRaceTraits()` пуст.
+
+Точное число может отличаться на единицы, если английские названия где-то расходятся сильнее
+ожидаемого. Важно другое: `missingRaceTraits()` обязан стать пустым, а созданных документов быть
+меньше 35 — если их ровно 35, значит сверка идёт по полному имени и дубли всё-таки заводятся.
 
 - [ ] **Шаг 5: Проверить, что новые Черты проходят схему**
 
@@ -683,7 +755,8 @@ git commit -m "Библиотека Черт: 35 недостающих расо
 import { describe, it, expect } from "vitest";
 import { RACES, SUBRACES, SUBRACE_DATA, RACE_GROUPS } from "../../module/constants/races.mjs";
 import { raceDocs, traitEntries } from "../../tools/races-to-pack.mjs";
-import { normTraitName, missingRaceTraits } from "../../tools/race-traits.mjs";
+import { missingRaceTraits } from "../../tools/race-traits.mjs";
+import { packDocuments } from "../support/pack-docs.mjs";
 
 const docs = () => raceDocs().map(d => d.doc);
 const byKey = type => new Map(docs().filter(d => d.type === type).map(d => [d.system.key, d]));
@@ -732,12 +805,35 @@ describe("расы в пак", () => {
     expect(strength.sourceHasRating).toBe(true);
   });
 
-  it("ни одна запись не ссылается на Черту, которой нет в библиотеке", () => {
-    expect(missingRaceTraits()).toEqual([]);
+  // Это главная проверка связи с библиотекой. Рантайм ищет источник в
+  // resolveMechSource: сперва по sourceUuid, и только потом по имени — а имена
+  // он сравнивает БЕЗ отбрасывания скобок, поэтому «(4)» против шаблона «(X)»
+  // не совпало бы никогда. Без uuid Черта пришла бы пустой, и Астартес получил
+  // бы +0 вместо +4, ничего не сообщив.
+  it("каждая запись ссылается по UUID на существующий документ библиотеки", () => {
+    const ids = new Set(packDocuments("traits", "trait").map(({ doc }) => doc._id));
+
     for (const doc of docs()) {
-      for (const g of doc.flags["warhammer-dbc"].mechanics)
-        for (const e of g.entries) expect(normTraitName(e.sourceName)).not.toBe("");
+      for (const g of doc.flags["warhammer-dbc"].mechanics) {
+        for (const e of g.entries) {
+          expect(e.sourceUuid).toMatch(/^Compendium\.warhammer-dbc\.traits\.Item\./);
+          expect(ids.has(e.sourceUuid.split(".").pop())).toBe(true);
+        }
+      }
     }
+  });
+
+  it("имя в записи — точное имя документа библиотеки, а не название из констант", () => {
+    const byId = new Map(packDocuments("traits", "trait").map(({ doc }) => [doc._id, doc.name]));
+
+    for (const doc of docs())
+      for (const g of doc.flags["warhammer-dbc"].mechanics)
+        for (const e of g.entries)
+          expect(e.sourceName).toBe(byId.get(e.sourceUuid.split(".").pop()));
+  });
+
+  it("ни одна расовая Черта не осталась без пары в библиотеке", () => {
+    expect(missingRaceTraits()).toEqual([]);
   });
 
   it("идентификаторы устойчивы: два прогона дают те же _id", () => {
@@ -782,6 +878,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { RACES, SUBRACES, SUBRACE_DATA, RACE_GROUPS } from "../module/constants/races.mjs";
+import { libraryTrait } from "./race-traits.mjs";
 
 const ROOT = "packs-src/races";
 const NS   = "warhammer-dbc";
@@ -815,14 +912,36 @@ const blankEntry = id => ({
   equipMode: "direct", equipQty: 1
 });
 
-/** Черты расы или субрасы → записи Конструктора со ссылкой по имени. */
+/**
+ * Черты расы или субрасы → записи Конструктора.
+ *
+ * Ссылка идёт по UUID документа библиотеки, а НЕ по имени. Рантайм ищет
+ * источник в `resolveMechSource` (module/apps/mechanics.mjs), и там имена
+ * сравниваются без отбрасывания скобок: «Unnatural Strength (4) / Сверхъест.
+ * Сила (4)» никогда не совпало бы с шаблоном «Unnatural Strength /
+ * Сверхъестественная Сила (X)» — ни целиком, ни по английской части. Поиск
+ * вернул бы null, Черта пришла бы пустышкой без эффектов, и Астартес получил
+ * бы +0 вместо +4. Молча.
+ *
+ * UUID снимает вопрос нормализации вовсе — `resolveMechSource` пробует его
+ * первым. Тем же приёмом уже связаны Предсказания (см. `sourceUuid` в
+ * packs-src/divinations). Точное имя документа пишется рядом как запасной
+ * путь, если пак когда-нибудь пересоберут с другими идентификаторами.
+ */
 export function traitEntries(def) {
-  return (def?.traits || []).map((t, i) => ({
-    ...blankEntry(stableId(`${def.label}:trait:${i}:${t.name}`)),
-    sourceName: t.name,
-    sourceHasRating: !!t.hasRating,
-    rating: t.hasRating ? (t.rating ?? 0) : ""
-  }));
+  return (def?.traits || []).flatMap((t, i) => {
+    const doc = libraryTrait(t.name);
+    // Задача 3 гарантирует, что пара найдётся; пустой возврат — страховка.
+    if (!doc) return [];
+    return [{
+      ...blankEntry(stableId(`${def.label}:trait:${i}:${t.name}`)),
+      sourceUuid: `Compendium.warhammer-dbc.traits.Item.${doc._id}`,
+      sourceName: doc.name,
+      sourceImg: doc.img || "",
+      sourceHasRating: !!(doc.system?.hasRating || t.hasRating),
+      rating: t.hasRating ? (t.rating ?? 0) : ""
+    }];
+  });
 }
 
 /** Одна И-группа со всеми Чертами; пусто — пустой массив, а не группа без записей. */
@@ -951,11 +1070,12 @@ import { describe, it, expect } from "vitest";
 import { RACES } from "../../module/constants/races.mjs";
 import { rescaleTraitByRating } from "../../module/apps/mechanics.mjs";
 import { traitEntries } from "../../tools/races-to-pack.mjs";
-import { normTraitName } from "../../tools/race-traits.mjs";
 import { packDocuments } from "../support/pack-docs.mjs";
 
-const LIB = new Map(packDocuments("traits", "trait")
-  .map(({ doc }) => [normTraitName(doc.name), doc]));
+// Ключ — идентификатор документа, ровно как его достаёт рантайм: сперва
+// fromUuid(entry.sourceUuid). Сверять здесь по имени значило бы проверять
+// не ту дорогу, по которой Черта поедет на самом деле.
+const LIB = new Map(packDocuments("traits", "trait").map(({ doc }) => [doc._id, doc]));
 
 /** Как считалось РАНЬШЕ: Черта создавалась из констант со своими effects. */
 function bonusesFromConstants(race) {
@@ -972,7 +1092,7 @@ function bonusesFromConstants(race) {
 function bonusesFromLibrary(race) {
   const sum = {};
   for (const entry of traitEntries(race)) {
-    const src = LIB.get(normTraitName(entry.sourceName));
+    const src = LIB.get(String(entry.sourceUuid).split(".").pop());
     if (!src) continue;
     const doc = rescaleTraitByRating(structuredClone(src), entry.rating);
     const e = doc.system.effects || {};
@@ -1009,6 +1129,25 @@ describe("числа рас после переезда", () => {
 ```bash
 node tools/races-to-pack.mjs --write
 ```
+
+Теперь, когда контент есть, объявить пак в `system.json` — в массив `packs` рядом с `archetypes`:
+
+```json
+    {
+      "name": "races",
+      "label": "Расы — Библиотека (DBC)",
+      "path": "packs/races",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER", "GAMEMASTER": "OWNER" }
+    },
+```
+
+Гейт `test/tools/packs.test.mjs` держит соответствие в обе стороны: объявленный пак обязан иметь
+непустую папку `packs-src/<имя>` («JSON на месте и не пуст»), а папка в `packs-src` — объявленный
+пак («лишних папок в packs-src нет»). Поэтому запись генератора и правка `system.json` — один шаг:
+между ними тесты прогонять бессмысленно, любая половина роняет гейт. Задача 2 по этой же причине
+регистрацию не делала.
 
 В `test/data/item-schemas.test.mjs` заменить у обоих типов `pack: null` на `pack: "races"`.
 
@@ -1310,6 +1449,8 @@ git commit -m "Библиотека рас: чтение пака вместо �
 
 **Файлы:**
 - Изменить: `module/apps/races.mjs` (добавить применение, снять jQuery-слушатели)
+- Изменить: `module/sheets/actor-sheet.mjs` (убрать импорт и вызов `activateRaceListeners`, завести четыре действия применения)
+- Изменить: `templates/actor/parts/tab-abilities.hbs`, `templates/actor/parts/tab-notes.hbs` (`data-action` на четырёх кнопках)
 - Изменить: `warhammer-dbc.mjs` (хук `createItem` для расы, брошенной мимо листа)
 - Создать: `test/apps/races-apply.test.mjs`
 
@@ -1520,6 +1661,45 @@ export async function applySubrace(actor, key) {
 
 Запуск: `npx vitest run test/apps/races-apply.test.mjs`
 Ожидание: PASS (3 теста).
+
+- [ ] **Шаг 4б: Спасти четыре кнопки применения**
+
+`activateRaceListeners` держит не только селект расы. На ней висят четыре кнопки, и удалить функцию,
+не перевесив их, значит сломать рабочие места на двух вкладках:
+
+| Кнопка | Где | Что делает |
+| --- | --- | --- |
+| `.gene-apply-btn` | `tab-abilities.hbs:3` | расовые бонусы Астартес |
+| `.ynnari-apply-btn` | `tab-abilities.hbs:11` | Прошлое + Черты Иннари |
+| `.harlequin-apply-btn` | `tab-abilities.hbs:18` | Прошлое + Черты Арлекина |
+| `.legion-apply-btn` | `tab-notes.hbs:43` | Черты легиона и ордена |
+
+В `module/sheets/actor-sheet.mjs` убрать импорт `activateRaceListeners` (строка 46) и его вызов
+(строка 726), а вместо них завести действия:
+
+```js
+function onGeneApply()      { return applyRace(this.actor, "astartes"); }
+function onLegionApply()    { return applyLegion(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
+function onYnnariApply()    { return applyYnnari(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
+function onHarlequinApply() { return applyHarlequin(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
+```
+```js
+      geneApply:      whenEditable(onGeneApply),
+      legionApply:    whenEditable(onLegionApply),
+      ynnariApply:    whenEditable(onYnnariApply),
+      harlequinApply: whenEditable(onHarlequinApply),
+```
+
+и проставить в шаблонах `data-action="geneApply"`, `data-action="ynnariApply"`,
+`data-action="harlequinApply"`, `data-action="legionApply"` на соответствующих кнопках.
+
+Пятый обработчик из той же функции, `.gene-origin-input`, не восстанавливать: разметки под него в
+шаблонах нет — поле убрали раньше, слушатель остался сиротой. Это находка, а не задача: удалять
+чужой мёртвый код здесь не нужно, достаточно не тащить его дальше.
+
+Проверка: `npx vitest run test/sheets/character-v2.test.mjs` — двусторонняя сверка
+`describeV2Sheet` требует, чтобы у каждого объявленного действия была разметка и наоборот, так что
+забытая кнопка покраснеет здесь же.
 
 - [ ] **Шаг 5: Хук на расу, брошенную мимо листа**
 
@@ -1867,8 +2047,8 @@ export function resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harl
 
 - [ ] **Шаг 3: Перевести выдачу на общий путь**
 
-В главной функции создания (строки 525-621) убрать `createTraits(race?.traits)`,
-`createTraits(sub.traits)` и `applyStartingTalents(race?.talents)`, поставив на их место:
+В главной функции создания (строки 525-621) убрать **только два** вызова — `createTraits(race?.traits)`
+и `createTraits(sub.traits)`, — поставив на их место:
 
 ```js
   // Раса и субраса выдаются тем же путём, что из слота и из дропа: иначе два
@@ -1881,6 +2061,18 @@ export function resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harl
   // applyRace до этого заполнил пустые поля — здесь они перекрываются итогом.
   await actor.update(charUpdate);
 ```
+
+**Стартовые таланты остаются работой Мастера — вызов `applyStartingTalents(talRaw, srcLabel)` НЕ
+удалять.** `applyRace` их не выдаёт: в механике предмета-расы лежат только Черты, талантов там нет.
+А сборка `talRaw` собирает таланты не только расы, но и Прошлого, субрасы, архетипа и культуры
+легиона — убрав её, останутся без талантов все пятеро.
+
+Но одна правка здесь необходима. В константах `talents` у расы — массив имён, а библиотека отдаёт
+строку («Ambidextrous, Bulging Biceps, Jaded»). Сборка идёт через `[].concat(...)`, и строка станет
+ОДНИМ элементом со всеми именами внутри: девять талантов Астартес превратятся в один
+несуществующий. Разбей строку по запятым верхнего уровня перед сборкой — готовый разборщик
+`splitTopLevel` из `module/helpers/utils.mjs` уже применяется в этом файле и не режет по запятым
+внутри скобок. То же касается `past.talents` и `sub.talents`.
 
 - [ ] **Шаг 4: Прогнать тесты Мастера**
 

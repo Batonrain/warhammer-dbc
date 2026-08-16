@@ -1,0 +1,33 @@
+{
+  "name": "Sslyth Physiology / Физиология Сслита",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Иммунитет к ядам, пост-эффектам и зависимости от наркотиков. +15 к максимуму Ран; лечится как Космодесантник и дополнительно +1 Рана в сутки; кровотечение затягивает тестом T+0 в начале Хода. +4 к Инициативе; избегает атак Орды и «Троек» как одиночные (теряется при Размере 2+). Хвост считается парой рук с Unnatural S (6) и +30 к Athletics для Захвата и Борьбы, освобождая руки. Unnatural Senses (60) на кровь: авто-поиск раненых, различает запахи. Может отключать боль — физические пытки бесполезны. +20 против психосил на разум, +40 против иных воздействий (гипно-индоктринация); W.b перебросов в день против тестов на сознание; иммунен к подавителям воли. Холод: тест T+0 каждый час или 1 усталость; на 4-й — анабиоз (Medicae(I)−40, чтобы отличить от смерти).",
+    "source": "раса",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "OZN2S1JapucmgHVb",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!OZN2S1JapucmgHVb"
+}

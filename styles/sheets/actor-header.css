@@ -156,11 +156,9 @@
   align-items: flex-start;
 }
 
+/* Левая колонка шапки. Раскладка рядов внутри — сеткой, ниже. */
 .warhammer-dbc .header-rows {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
   min-width: 0;
 }
 
@@ -173,15 +171,35 @@
 }
 
 /* Фиксированные строки шапки (Раса/Субраса/Геносемя/Культура, Архетипы,
-   Происхождение/Предсказание, Стремления) — каждая на всю ширину колонки
-   .header-rows. */
-.warhammer-dbc .header-row-fixed {
+   Происхождение/Предсказание, Стремления) — ОДНА общая сетка на все ряды.
+   Раньше каждый ряд был самостоятельным flex-контейнером и ширину подписи
+   выбирал себе сам: «Раса», «Архетип» и «Происхождение» разной длины, поэтому
+   поля начинались в каждом ряду со своего места, а ряд Расы из четырёх ячеек
+   не совпадал по колонкам с рядами из двух. display:contents поднимает подписи
+   и поля прямо в эту сетку — колонки становятся общими для всех рядов, и пара,
+   которой не хватило места, переносится целиком на следующую строку. */
+.warhammer-dbc .header-rows {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+}
+.warhammer-dbc .header-rows > .header-row-fixed,
+.warhammer-dbc .header-row-fixed > .header-cell { display: contents; }
+/* Стремления — исключение: их трое (Гордость, Мотивация, Позор), и в сетке из
+   двух пар третья уезжала на свою строку. Ряд занимает всю ширину и делит её
+   на три сам. */
+.warhammer-dbc .header-rows > .header-row-aspir {
   display: flex;
-  flex-wrap: wrap;
+  grid-column: 1 / -1;
   align-items: center;
   gap: 4px 12px;
 }
-.warhammer-dbc .header-row-fixed .header-cell { flex: 1 1 140px; min-width: 0; }
+.warhammer-dbc .header-row-aspir > .header-cell {
+  display: flex;
+  flex: 1 1 0;
+  min-width: min-content;
+}
 
 /* Компактное read-only поле (Геносемя/Культура/Стремления) — то же место, что
    и у select/input, но просто текст: сами дроплисты живут на «Заметках». */
@@ -212,8 +230,13 @@
   gap: 5px;
 }
 
-/* Субраса: контролы (select + Дом/Происхождение) стопкой под лейблом */
+/* Субраса: контролы (слот + Дом/Происхождение) стопкой под лейблом */
 .warhammer-dbc .header-cell-subrace { align-items: flex-start; }
+/* Субраса и Элитный архетип — стопки: под слотом появляются Дом Навигатора,
+   Прошлое, второй элитный архетип. Сетка центрировала бы подпись по середине
+   всей стопки; она равняется по ПЕРВОЙ строке, как в остальных рядах. */
+.warhammer-dbc .header-cell-subrace > label,
+.warhammer-dbc .header-cell-elite > label { align-self: start; line-height: 26px; }
 .warhammer-dbc .subrace-controls {
   flex: 1;
   display: flex;
@@ -238,6 +261,10 @@
   color: var(--wh-text-mid);
   white-space: nowrap;
   min-width: 58px;
+  /* Ярлык не сжимается: с nowrap сжатие не переносит текст, а пускает его на
+     соседнюю ячейку — длинные («Элитный архетип», «Предсказание») наезжали на
+     свой же контрол. Ужимается пусть поле ввода, оно к этому готово. */
+  flex: 0 0 auto;
 }
 
 .warhammer-dbc .header-cell input[type="text"],
@@ -374,6 +401,8 @@
 /* Ряд кнопок: компактные квадратики */
 .warhammer-dbc .fatigue-btns {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 2px;
   margin-top: 2px;
   justify-content: flex-end;
@@ -404,12 +433,19 @@
   border-color: var(--wh-red);
 }
 
-/* +1 / −1 — ещё компактнее, чисто квадрат */
+/* +1 / −1 стоят своей строкой сразу под значениями: вчетвером с «Отдыхом» и
+   «Сном» они не помещались в колонку ресурсов и вылезали за неё влево. */
+.warhammer-dbc .fatigue-step-btns {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
 .warhammer-dbc .fatigue-add-btn,
 .warhammer-dbc .fatigue-remove-btn {
-  width: 18px;
+  width: 30px;
   padding: 0;
-  font-size: 0.9em;
+  font-size: 1em;
 }
 
 /* Кнопка «Сон» — зелёный акцент */
@@ -422,3 +458,41 @@
   color: #1b5e20;
   border-color: #2e7d32;
 }
+
+/* ══════════════════════════════════════════════════════
+   Слоты Расы и Субрасы — приём драг-н-дропа предмета-носителя
+══════════════════════════════════════════════════════ */
+
+/* Слот происхождения: иконка, имя, кнопки. Пустой слот — цель для перетаскивания. */
+.warhammer-dbc .wh-slot {
+  display: flex; align-items: center; gap: 4px;
+  padding: 2px 4px; min-height: 26px;
+  border: 1px solid var(--wh-border, #3a4a55); border-radius: 3px;
+}
+.warhammer-dbc .wh-slot.empty { border-style: dashed; opacity: 0.7; }
+.warhammer-dbc .wh-slot.drop-hint { border-color: var(--wh-accent, #7fd8ff); box-shadow: 0 0 4px var(--wh-accent, #7fd8ff); }
+.warhammer-dbc .wh-slot-img { width: 20px; height: 20px; border: none; flex: 0 0 auto; }
+.warhammer-dbc .wh-slot-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Ключ есть, носителя нет: персонаж из мира до переезда рас в библиотеку. */
+.warhammer-dbc .wh-slot-name.pending { opacity: 0.6; font-style: italic; }
+.warhammer-dbc .wh-slot-btn, .warhammer-dbc .wh-slot-add {
+  flex: 0 0 auto; background: none; border: none; cursor: pointer;
+  color: var(--wh-text, #cfe3ee); padding: 0 4px;
+}
+.warhammer-dbc .wh-slot-add { width: 100%; text-align: left; opacity: 0.7; }
+/* Слот стоит, но выбирать нечего (раса без субрас либо раса ещё не выбрана):
+   рамка сплошная и приглушённая — не приглашение к перетаскиванию. */
+.warhammer-dbc .wh-slot.locked { border-style: solid; opacity: 0.45; }
+.warhammer-dbc .wh-slot-none {
+  flex: 1 1 auto; font-size: 0.8em; font-style: italic;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.warhammer-dbc .wh-race-picker .rp-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.warhammer-dbc .wh-race-picker .rp-sec { margin: 8px 0 4px; opacity: 0.8; }
+.warhammer-dbc .wh-race-picker .rp-item {
+  display: flex; flex-direction: column; align-items: flex-start;
+  min-width: 150px; padding: 4px 6px; cursor: pointer;
+}
+.warhammer-dbc .wh-race-picker .rp-meta { font-size: 0.8em; opacity: 0.6; }
+.warhammer-dbc .wh-race-picker .rp-hidden { display: none; }

@@ -1,0 +1,33 @@
+{
+  "name": "Distorted Body / Искажённое Тело",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Не нуждается в еде, воде, сне; иммунитет к обычным и сверхъестественным болезням; не страдает от погодного жара/холода (но не от огнемёта/крио-оружия). Автоуспех против наркотиков; +5×W.b и переброс против ядов и химикатов. Иммунитет к укачиванию/дезориентации от скорости и падения; +30 и переброс против Concussive. Лечится как космодесантник; бросает d20 на тестах Кровотечения. +1d3 к максимуму Очков Судьбы.",
+    "source": "раса",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "lFt37axBXPcpfFMO",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!lFt37axBXPcpfFMO"
+}

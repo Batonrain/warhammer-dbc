@@ -19,7 +19,7 @@
  * Пока она null, бросок ведёт себя по-старому: любая формула даёт `nextRoll`.
  */
 export const captured = { dialog: null, rolls: [], chat: [], created: [], nextRoll: 50, dice: null,
-  confirmAnswer: true, warnings: [],
+  confirmAnswer: true, warnings: [], errors: [],
   // Ручки открытого DialogV2 — их ставит заглушка wait (см. ниже).
   press: null, dismiss: null, rerender: null };
 
@@ -32,6 +32,7 @@ export function resetCaptured() {
   captured.dice = null;
   captured.confirmAnswer = true;
   captured.warnings = [];
+  captured.errors = [];
   captured.press = null;
   captured.dismiss = null;
   captured.rerender = null;
@@ -261,7 +262,8 @@ globalThis.game   = {
   i18n: { localize: s => s }, user: {}, users: []
 };
 // warn копится: выдача стартовых навыков сообщает им о нераспознанных записях.
-globalThis.ui     = { notifications: { warn: m => captured.warnings.push(String(m)), info: () => {}, error: () => {} } };
+globalThis.ui     = { notifications: { warn: m => captured.warnings.push(String(m)), info: () => {},
+  error: m => captured.errors.push(String(m)) } };
 
 /** Диалог не рендерится, а запоминается: тест сам нажимает его кнопки. */
 globalThis.Dialog = class {

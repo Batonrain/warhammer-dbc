@@ -1,0 +1,33 @@
+{
+  "name": "Speak Not Unto The Alien / С Чужаком Ты Не Заговори",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При общении с людьми считается мутантом: −20 на общение (взаимно). Другие мутанты относятся дружелюбнее.",
+    "source": "раса",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "1Y88hjjkoPVTi8ld",
+  "effects": [],
+  "sort": 0,
+  "flags": {},
+  "_key": "!items!1Y88hjjkoPVTi8ld"
+}

@@ -15,12 +15,7 @@
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,
-      "charBonuses": [
-        {
-          "stat": "s",
-          "value": 2
-        }
-      ],
+      "charBonuses": [],
       "charValueBonuses": [],
       "armourAll": 0,
       "apHead": 0,

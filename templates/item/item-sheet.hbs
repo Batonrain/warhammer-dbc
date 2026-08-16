@@ -117,6 +117,12 @@
 {{#if (eq item.type "archetype")}}
 {{> "systems/warhammer-dbc/templates/item/parts/archetype.hbs"}}
 {{/if}}
+{{#if (eq item.type "race")}}
+{{> "systems/warhammer-dbc/templates/item/parts/race.hbs"}}
+{{/if}}
+{{#if (eq item.type "subrace")}}
+{{> "systems/warhammer-dbc/templates/item/parts/subrace.hbs"}}
+{{/if}}
 
     <div class="item-section">
       <div class="item-section-title">ОПИСАНИЕ</div>

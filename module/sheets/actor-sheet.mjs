@@ -43,7 +43,11 @@ import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
 import { specOptions, specDef } from "../constants/skill-specializations.mjs";
 import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
-import { activateRaceListeners } from "../apps/races.mjs";
+import { applyRace, applySubrace, clearRace, clearSubrace,
+         actorRaceItem, actorSubraceItem,
+         applyLegion, applyYnnari, applyHarlequin } from "../apps/races.mjs";
+import { raceDef, raceKeyOf } from "../apps/race-library.mjs";
+import { openRacePicker } from "./race-picker.mjs";
 import { grantAstartesImplants } from "../apps/astartes-implants.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
@@ -237,12 +241,45 @@ function onMutgiftRoll(event) {
   return rollMutationOrGift(this.actor);
 }
 
+// ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
+// только разбор текстовых списков колбэком createTraits — его зовёт и Мастер
+// создания персонажа)
+//
+// Находка I1 общего ревью (wdbc-n1k): applyRace выдаёт только Черты
+// (Конструктором, с предмета-носителя) — поле talents в схеме расы читает
+// один потребитель, Мастер создания (apps/creation.mjs). Кнопка «Применить
+// расовые бонусы» раньше (applyRaceData) выдавала и таланты — без этого шага
+// она перестала бы выдавать 9 стартовых талантов Астартес. _applyStartingTalents
+// сама зовёт splitTopLevel — строку из библиотеки резать самим не нужно.
+async function onGeneApply() {
+  await applyRace(this.actor, "astartes");
+  const def = raceDef("astartes");
+  return this._applyStartingTalents(def?.talents ? [def.talents] : [], def?.label || "Астартес");
+}
+function onLegionApply()    { return applyLegion(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
+function onYnnariApply()    { return applyYnnari(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
+function onHarlequinApply() { return applyHarlequin(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
+
+// ── Слоты Расы и Субрасы в шапке: пикер из библиотеки, открытие носителя,
+//    снятие. onRaceApply/onSubraceApply — единственный путь ручного переезда
+//    персонажей, созданных до этой работы: у них system.race/system.subrace
+//    заполнены, а предмета-носителя ещё нет (см. брифа задачи 7, уточнение 1;
+//    раунд правок 1, находка 2 — та же дыра была и у субрасы).
+function onRacePick()    { return openRacePicker(this.actor, { subrace: false }); }
+function onSubracePick() { return openRacePicker(this.actor, { subrace: true }); }
+function onRaceOpen()    { return actorRaceItem(this.actor)?.sheet?.render(true); }
+function onSubraceOpen() { return actorSubraceItem(this.actor)?.sheet?.render(true); }
+function onRaceClear()   { return clearRace(this.actor); }
+function onSubraceClear(){ return clearSubrace(this.actor); }
+function onRaceApply()   { return applyRace(this.actor, this.actor.system.race || ""); }
+function onSubraceApply(){ return applySubrace(this.actor, this.actor.system.subrace || ""); }
+
 export class WarhammerCharacterSheet
   extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
 
   static DEFAULT_OPTIONS = {
     classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
-    position: { width: 840, height: 920 },
+    position: { width: 1000, height: 940 },
     window: { resizable: true },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
@@ -271,7 +308,19 @@ export class WarhammerCharacterSheet
       traitAdd: whenEditable(onTraitAdd),
       talentAdd: whenEditable(onTalentAdd),
       mutgiftAdd: whenEditable(onMutgiftAdd),
-      mutgiftRoll: whenEditable(onMutgiftRoll)
+      mutgiftRoll: whenEditable(onMutgiftRoll),
+      geneApply:      whenEditable(onGeneApply),
+      legionApply:    whenEditable(onLegionApply),
+      ynnariApply:    whenEditable(onYnnariApply),
+      harlequinApply: whenEditable(onHarlequinApply),
+      racePick:     whenEditable(onRacePick),
+      raceOpen:     onRaceOpen,
+      raceClear:    whenEditable(onRaceClear),
+      raceApply:    whenEditable(onRaceApply),
+      subracePick:  whenEditable(onSubracePick),
+      subraceOpen:  onSubraceOpen,
+      subraceClear: whenEditable(onSubraceClear),
+      subraceApply: whenEditable(onSubraceApply)
     }
   };
 
@@ -328,6 +377,12 @@ export class WarhammerCharacterSheet
     el.querySelectorAll(`.gear-mods-toggle[data-host-id="${hid}"]`)
       .forEach(n => n.classList.toggle("collapsed", collapsed));
   }
+
+  // Foundry титулует окно как «<тип документа>: <имя>», где тип берётся из
+  // ключа перевода TYPES.Actor.<type>. В мире на английском ключ остаётся
+  // непереведённым и стоит в заголовке как есть. Тип и так виден по самому
+  // листу — в заголовке нужно имя.
+  get title() { return this.actor.name; }
 
   // ── Контекст шаблона ──────────────────────────────────────────────────────
 
@@ -650,6 +705,29 @@ export class WarhammerCharacterSheet
   // 3. Состояние ОКНА, а не актора: тема листа, восстановление свёрток,
   //    зрачок Третьего Глаза, драг предметов с листа.
 
+  /**
+   * Раса и субраса на листе — не предмет в списке, а происхождение персонажа:
+   * дроп уходит в применение, а обычное создание предмета не выполняется.
+   * Бросить можно в любое место листа, слот лишь подсказывает куда целиться.
+   */
+  async _onDropItem(event, data) {
+    const src = await Item.implementation.fromDropData(data);
+    if (src?.type === "race" || src?.type === "subrace") {
+      // Ключ — тем же правилом, что и кэш библиотеки (raceKeyOf): пустой
+      // system.key нельзя молча читать как «снять расу» (Находка C1, wdbc-n1k) —
+      // на этом пути пустой ключ означает ошибку данных, а не команду игрока.
+      // «Снять» остаётся доступным только крестиком слота (raceClear/subraceClear).
+      const key = raceKeyOf(src);
+      if (!key) {
+        ui.notifications?.error(
+          `Не удалось определить ключ ${src.type === "race" ? "расы" : "субрасы"} у «${src.name}» — перетаскивание отменено.`);
+        return;
+      }
+      return src.type === "race" ? applyRace(this.actor, key) : applySubrace(this.actor, key);
+    }
+    return super._onDropItem(event, data);
+  }
+
   _onRender(context, options) {
     super._onRender?.(context, options);
     const el = this.element;
@@ -718,15 +796,14 @@ export class WarhammerCharacterSheet
       });
     });
 
-    if (!this.isEditable) return;
+    // ── Подсветка слотов Расы/Субрасы при перетаскивании ────────────────────
+    for (const slot of el.querySelectorAll(".wh-slot")) {
+      slot.addEventListener("dragenter", () => slot.classList.add("drop-hint"));
+      slot.addEventListener("dragleave", () => slot.classList.remove("drop-hint"));
+      slot.addEventListener("drop",      () => slot.classList.remove("drop-hint"));
+    }
 
-    // ── Раса, Прошлое и легион ──────────────────────────────────────────────
-    // Разбор строк книг остаётся на листе и уходит в модуль колбэками: те же
-    // две функции зовёт Мастер создания персонажа.
-    activateRaceListeners(html, this.actor, {
-      createTraits:         (list, source) => this._createTraitsFromList(list, source),
-      applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source)
-    });
+    if (!this.isEditable) return;
 
     // Длительность теперь бросается автоматически при применении препарата.
 
