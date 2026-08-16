@@ -28,6 +28,8 @@ import { activateGearListeners } from "./tabs/gear.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { minionsContext, activateMinionListeners } from "../apps/minions.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
+import { minionsPanelContext } from "./tabs/minions-panel.mjs";
+import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
@@ -284,6 +286,8 @@ export class WarhammerCharacterSheet
       // эта кнопка — чтобы пройти его заново на уже созданном.
       charWizard: whenEditable(function () { this.openCreationWizard(); }),
       convertToHorde: whenEditable(onConvertToHorde),
+      // «+» в блоке МИНЬОНЫ на вкладке СОЦИУМ — генератор слуги (стр. 111-113).
+      minionCreate:   whenEditable(onMinionCreate),
       abilityDetail: whenEditable(onAbilityDetail),
       pathsToggle: whenEditable(onPathsToggle),
       statAdd: whenEditable(onStatAdd),
@@ -397,6 +401,10 @@ export class WarhammerCharacterSheet
     // Фракции, Миньоны и Отношения. Назначения ищутся по миру — привязка живёт
     // у той стороны, к которой персонажа прицепили, а не у него самого.
     Object.assign(context, socialContext(this.actor, [...(game.actors ?? [])]));
+
+    // Блок «МИНЬОНЫ» там же: слоты купленных Талантов, счётчик по группам и
+    // максимум, а при свободном Таланте — кнопка «+» в генератор.
+    Object.assign(context, minionsPanelContext(this.actor, [...(game.actors ?? [])]));
 
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
     context.combatStanceCollapsed = !!this._combatCollapse?.stance;

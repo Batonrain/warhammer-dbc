@@ -31,17 +31,18 @@ describeV2Sheet(WarhammerCharacterSheet, {
   template: ["templates/actor/character-sheet.hbs",
     ...["header", "infamy-strip", "tab-stats", "tab-combat", "tab-abilities", "tab-psy",
         "tab-tech", "tab-nav", "tab-gear", "tab-advance", "tab-notes", "tab-effects",
-        "tab-possession", "tab-haemonculus"].map(PART)]
+        "tab-possession", "tab-haemonculus", "tab-social"].map(PART)]
 });
 
 describeV2Sheet(WarhammerDaemonSheet, {
   sheet: "module/sheets/daemon-sheet.mjs",
-  template: "templates/actor/daemon-sheet.hbs"
+  // Вкладку СОЦИУМ демон подключает частью — «+» Миньонов живёт там.
+  template: ["templates/actor/daemon-sheet.hbs", PART("tab-social")]
 });
 
 describeV2Sheet(WarhammerDemonPrinceSheet, {
   sheet: "module/sheets/demon-prince-sheet.mjs",
-  template: "templates/actor/demon-prince-sheet.hbs"
+  template: ["templates/actor/demon-prince-sheet.hbs", PART("tab-social")]
 });
 
 describe("окно листа", () => {

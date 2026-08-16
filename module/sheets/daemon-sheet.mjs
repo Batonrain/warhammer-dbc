@@ -9,6 +9,7 @@ import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_
 import { esc } from "../helpers/utils.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { onConvertToHorde } from "../apps/horde-convert.mjs";
+import { onMinionCreate } from "../apps/minion-creator.mjs";
 
 // Действия листа демона; всё общее — от листа персонажа: ApplicationV2 склеивает
 // DEFAULT_OPTIONS по цепочке классов, поэтому его карта действий здесь в силе.
@@ -28,7 +29,9 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
       daemonAvatar:      whenEditable(onAvatar),
       // Кнопка «В Орду» стоит в своей шапке, поэтому и действие объявлено
       // здесь: карта действий проверяется у каждого класса своя.
-      convertToHorde:    whenEditable(onConvertToHorde)
+      convertToHorde:    whenEditable(onConvertToHorde),
+      // Карта действий у каждого класса своя — «+» Миньонов объявляем и здесь.
+      minionCreate:      whenEditable(onMinionCreate)
     }
   };
 

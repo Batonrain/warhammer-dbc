@@ -9,6 +9,7 @@ import { divinationSheetContext } from "../apps/divinations.mjs";
 import { WarhammerCharacterSheet } from "./actor-sheet.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { onConvertToHorde } from "../apps/horde-convert.mjs";
+import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { DP_GODS, dpGodMeta, DP_ASCENSION, DP_IMMORTALITY, DP_RETINUE,
          DP_FAVOR_RULES, dpGiftsFor, dpGiftCost, DP_GIFT_NOTE,
          dpDivineTrait, DEMON_FORMS, DEMON_KEY_TRAITS, DEMON_WEAPON_PROPS,
@@ -75,6 +76,8 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       dpManifest:      whenEditable(onManifest),
       // Кнопка «В Орду» в своей шапке — действие объявляем здесь же.
       convertToHorde:  whenEditable(onConvertToHorde),
+      // Карта действий у каждого класса своя — «+» Миньонов объявляем и здесь.
+      minionCreate:    whenEditable(onMinionCreate),
       dpAscend:        whenEditable(onAscend),
       dpUnascend:      whenEditable(onUnascend)
     }

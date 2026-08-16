@@ -104,26 +104,46 @@
     {{else}}<div class="gene-seed-hint">Ни в одном Отряде, Формировании, экипаже или расчёте не числится.</div>{{/if}}
   </div>
 
-  {{!-- ── Миньоны ── --}}
-  {{#if canHaveMinions}}
-  <div class="notes-section-panel">
-    <div class="panel-title">МИНЬОНЫ</div>
-    {{#if myMinions.length}}
-    <table class="items-table">
-      <thead><tr><th>Имя</th><th class="col-narrow">Тип</th><th class="col-narrow">Уровень</th><th class="col-narrow">Лояльность</th></tr></thead>
-      <tbody>
-        {{#each myMinions as |m|}}
-        <tr class="item-row">
-          <td class="item-name-cell minion-open-link" data-uuid="{{m.uuid}}" title="Открыть лист">{{m.name}}</td>
-          <td class="godgift-god">{{m.typeLabel}}</td>
-          <td class="godgift-god">{{m.tierLabel}}</td>
-          <td class="godgift-god">{{m.loyaltyValue}}/{{m.loyaltyMax}}</td>
-        </tr>
-        {{/each}}
-      </tbody>
-    </table>
+  {{!-- ── Миньоны (стр. 111-113) ──
+        Блока нет, пока не куплен Талант «Миньон Хаоса»: слуг даёт Талант.
+        В шапке — сколько их какой группы и каков максимум (наименьший бонус
+        Характеристики по имеющимся группам). «+» появляется, когда Талантов
+        куплено больше, чем заведено слуг. --}}
+  {{#if hasMinionTalent}}
+  <div class="notes-section-panel social-minions">
+    <div class="panel-title">
+      МИНЬОНЫ
+      <span class="minion-count" title="Занято слуг из максимума: максимум — наименьший бонус Характеристики по имеющимся группам (стр. 111)">
+        {{minionCount}} / {{minionCapacity}}
+      </span>
+      {{#each minionTally as |t|}}<span class="minion-tally">{{t.label}}: {{t.count}}</span>{{/each}}
+      {{#if freeSlots.length}}
+      <button type="button" class="minion-add-btn" data-action="minionCreate"
+              title="Создать Миньона по купленному Таланту: свободных Талантов — {{freeSlots.length}}">+</button>
+      {{/if}}
+    </div>
+
+    {{#if minionRows.length}}
+    <div class="minion-cards">
+      {{#each minionRows as |m|}}
+      <div class="minion-card minion-open-link" data-uuid="{{m.uuid}}" title="Открыть лист: {{m.name}}">
+        <img class="minion-card-img" src="{{m.img}}" alt=""/>
+        <div class="minion-card-name">{{m.name}}</div>
+        <div class="minion-card-meta">{{m.groupLabel}} · {{m.tierLabel}}</div>
+        <div class="minion-card-loyalty">
+          {{#if m.magnitude}}Магнитуда {{m.magnitude}}{{else}}Лояльность {{m.loyaltyValue}}/{{m.loyaltyMax}}{{/if}}
+        </div>
+      </div>
+      {{/each}}
+    </div>
     {{else}}
-    <div class="gene-seed-hint">Миньонов нет. Привязка заводится на листе самого миньона — там выбирается Хозяин.</div>
+    <div class="gene-seed-hint">Талант куплен, а слуги ещё нет — нажмите «+», чтобы собрать его по правилам книги.</div>
+    {{/if}}
+
+    {{#if freeSlots.length}}
+    <div class="gene-seed-hint">Свободных Талантов: {{freeSlots.length}} —
+      {{#each freeSlots as |s|}}<span class="minion-slot-chip">{{s.label}}</span>{{/each}}
+    </div>
     {{/if}}
   </div>
   {{/if}}
