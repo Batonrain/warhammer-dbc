@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "mandrake",
-    "parent": "drukhari",
+    "parentKey": "drukhari",
     "cost": 2000,
     "effect": "Дитя теневого царства Элиндрах. +5 S/T, −10 I/F. Stealth → +10. Теряет талант Jaded. Таланты Disturbing Voice, Fearless, Unarmed Warrior. Стартовое снаряжение (кроме снаряжения/инструментов) → Glimmersteel Blade (Good.Q) и Xenohide Tunic. Архетипы: Убийца, Неприкаянный, Боец Ямы.",
     "god": "",

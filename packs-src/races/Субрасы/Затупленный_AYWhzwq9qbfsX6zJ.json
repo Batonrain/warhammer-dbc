@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "stunted",
-    "parent": "human",
+    "parentKey": "human",
     "cost": 500,
     "effect": "Трейт Blunted (1); не уменьшает максимум Очков Бесчестья на 1. Можно повышать рейтинг Blunted (дороже).",
     "god": "",

@@ -58,7 +58,7 @@ const raceFromConst = (key, r) => ({
 
 const subFromDoc = doc => ({
   key: raceKeyOf(doc), label: doc.name,
-  parent: doc.system?.parent || "", cost: doc.system?.cost || 0,
+  parent: doc.system?.parentKey || "", cost: doc.system?.cost || 0,
   effect: doc.system?.effect || "", god: doc.system?.god || "",
   charMods: { ...(doc.system?.charMods || {}) },
   talents: doc.system?.talents || "",

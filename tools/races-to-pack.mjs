@@ -159,7 +159,7 @@ export function raceDocs() {
   for (const [key, label] of Object.entries(SUBRACES)) {
     const s = SUBRACE_DATA[key] || {};
     const doc = wrap(label, "subrace", key, {
-      parent: parentOf(key),
+      parentKey: parentOf(key),
       cost: s.cost || 0, effect: s.effect || "", god: s.god || "",
       charMods: { ...(s.charMods || {}) },
       talents: Array.isArray(s.talents) ? s.talents.join(", ") : (s.talents || ""),

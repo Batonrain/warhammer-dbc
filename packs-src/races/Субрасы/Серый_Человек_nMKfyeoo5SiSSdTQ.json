@@ -5,7 +5,7 @@
   "folder": "jT8qmJ96CX5W9mG5",
   "system": {
     "key": "grayman",
-    "parent": "halfEldar",
+    "parentKey": "halfEldar",
     "cost": 0,
     "effect": "",
     "god": "",
