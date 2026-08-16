@@ -40,7 +40,7 @@
       <div class="origin-row"> <label class="origin-label">Орден / Банда</label> <select name="system.geneSeed.chapter" class="origin-select">{{{chapterOptions}}}</select> </div>
       <div class="origin-row"> <label class="origin-label" title="Геносемя ты сохраняешь, а культуру можно перенять у другого легиона (напр. Повелитель Ночи в Чёрном Легионе). �.">Культура (легион)</label> <select name="system.geneSeed.cultureLegion" class="origin-select">{{{cultureLegionOptions}}}</select> </div>
       {{#if hasCultureOverride}}<div class="origin-row"> <label class="origin-label">Культура (орден)</label> <select name="system.geneSeed.cultureChapter" class="origin-select">{{{cultureChapterOptions}}}</select> </div>{{/if}}
-      {{#if selectedLegion}}<div class="origin-row"> <button type="button" class="legion-apply-btn" title="Создать Черты «Геносемя/Культура/Проклятье» легиона (с авто-эффектами, где есть числовые бонусы)">Применить легион/орден</button> </div>{{/if}}
+      {{#if selectedLegion}}<div class="origin-row"> <button type="button" class="legion-apply-btn" data-action="legionApply" title="Создать Черты «Геносемя/Культура/Проклятье» легиона (с авто-эффектами, где есть числовые бонусы)">Применить легион/орден</button> </div>{{/if}}
       {{#if selectedLegion}}
       <div class="origin-info legion-info">
         <div class="legion-info-title">{{selectedLegion.num}} — {{selectedLegion.name}}{{#if selectedChapter}} · {{selectedChapter.name}}{{/if}}</div>

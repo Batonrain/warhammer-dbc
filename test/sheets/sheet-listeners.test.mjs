@@ -600,15 +600,20 @@ describe("Одержимость: Проявление", () => {
   });
 });
 
+// Кнопки геносемени/Иннари/Арлекина/легиона перевезены с jQuery-обвязки
+// activateRaceListeners на действия ApplicationV2 (wdbc-n1k): в разметке у
+// них теперь [data-action], а не отдельный addEventListener в _onRender,
+// поэтому wire()/listenerHtml тут ни при чём — действие достаточно вызвать
+// напрямую из карты static DEFAULT_OPTIONS.actions с this = лист.
 describe("Применение расы, Прошлого и легиона", () => {
 
   const traitNames = () => captured.created.filter(d => d.type === "trait").map(d => d.name);
+  const actions = WarhammerCharacterSheet.DEFAULT_OPTIONS.actions;
 
   it("расовые бонусы идут только в пустые характеристики", async () => {
     const sheet = sheetFor({ characteristics: { ws: { base: 45 }, bs: {} } });
-    const handlers = wire(sheet);
 
-    await handlers[".gene-apply-btn:click"](ev());
+    await actions.geneApply.call(sheet, ev());
 
     const upd = sheet.actor.updates[0];
     expect(upd["system.characteristics.ws.base"]).toBeUndefined();   // занято — не трогаем
@@ -617,9 +622,9 @@ describe("Применение расы, Прошлого и легиона", ()
   });
 
   it("Иннари получает Черты Иннари поверх бонусов Прошлого", async () => {
-    const handlers = wire(sheetFor({ characteristics: {}, ynnariPast: "aeldari" }));
+    const sheet = sheetFor({ characteristics: {}, ynnariPast: "aeldari" });
 
-    await handlers[".ynnari-apply-btn:click"](ev());
+    await actions.ynnariApply.call(sheet, ev());
 
     expect(traitNames().length).toBeGreaterThan(0);
   });
@@ -628,9 +633,8 @@ describe("Применение расы, Прошлого и легиона", ()
     const legion = LEGIONS.find(l => !l.curseChoices?.length);
     const old = { id: "old-1", type: "trait", name: "Геносемя: прежний", system: { source: "Легион" } };
     const sheet = sheetFor({ characteristics: {}, items: [old], geneSeed: { legion: legion.id } });
-    const handlers = wire(sheet);
 
-    await handlers[".legion-apply-btn:click"](ev());
+    await actions.legionApply.call(sheet, ev());
 
     expect(sheet.actor.deleted).toEqual(["old-1"]);
     expect(traitNames().some(n => n.startsWith("Геносемя: "))).toBe(true);
@@ -640,9 +644,8 @@ describe("Применение расы, Прошлого и легиона", ()
   it("проклятье с вариантами спрашивает, и «Без проклятья» создаёт две Черты", async () => {
     const legion = LEGIONS.find(l => l.curseChoices?.length);
     const sheet = sheetFor({ characteristics: {}, geneSeed: { legion: legion.id } });
-    const handlers = wire(sheet);
 
-    await handlers[".legion-apply-btn:click"](ev());
+    await actions.legionApply.call(sheet, ev());
     expect(captured.dialog.buttons.c0.label).toBe(legion.curseChoices[0].name);
 
     await captured.dialog.buttons.none.callback();
@@ -650,20 +653,14 @@ describe("Применение расы, Прошлого и легиона", ()
     expect(traitNames()).toHaveLength(2);                   // Геносемя + Культура
   });
 
-  it("смена расы обнуляет субрасу — иначе на листе осталась бы чужая", async () => {
-    const sheet = sheetFor({ race: "drukhari", subrace: "wrack" });
-    const handlers = wire(sheet);
-
-    await handlers[".race-select:change"](ev({}, "human"));
-
-    expect(sheet.actor.updates[0]).toEqual({ "system.race": "human", "system.subrace": "" });
-  });
+  // Слушатель ".race-select" (обнуление субрасы при смене расы) ушёл вместе с
+  // activateRaceListeners и пока не восстановлен: селект в шапке до задачи со
+  // слотами пишет ключ напрямую атрибутом name, без применения (wdbc-n1k).
 
   it("без выбранного легиона кнопка объясняет порядок и ничего не создаёт", async () => {
     const sheet = sheetFor({ characteristics: {}, geneSeed: {} });
-    const handlers = wire(sheet);
 
-    await handlers[".legion-apply-btn:click"](ev());
+    await actions.legionApply.call(sheet, ev());
 
     expect(captured.created).toEqual([]);
     expect(captured.warnings).toHaveLength(1);

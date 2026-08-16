@@ -37,6 +37,7 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
 import "./module/apps/race-library.mjs"; // хуки кэша рас (пак читается по готовности мира)
+import { applyRace, applySubrace } from "./module/apps/races.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
 import { openSystemsOverview, refreshSystemsOverview } from "./module/apps/systems-overview.mjs";
@@ -1161,6 +1162,19 @@ Hooks.on("createItem", async (item, options, userId) => {
   if (game.user.id !== userId) return;
   const actor = item.parent;
   if (!(actor instanceof Actor)) return;
+
+  // Раса, попавшая на актора мимо листа — макросом, скриптом, копированием.
+  // Флаг originGrant ставит сам applyRace, поэтому его собственная выдача сюда
+  // не возвращается и цикла не образует. Свой clientId-фильтр выше уже не даёт
+  // каждому подключённому клиенту повторить удаление и применение самому.
+  if (["race", "subrace"].includes(item.type) && !item.getFlag("warhammer-dbc", "originGrant")) {
+    const key = item.system?.key || "";
+    await item.delete();
+    if (item.type === "race") await applyRace(actor, key);
+    else await applySubrace(actor, key);
+    return;
+  }
+
   await runAutoScripts(item);
   await applyItemMechanics(item);
 });

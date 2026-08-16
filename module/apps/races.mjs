@@ -12,32 +12,134 @@
 
 import { RACES } from "../constants/races.mjs";
 import { getLegion, getChapter, resolveCulture } from "../constants/legions.mjs";
-import { ASTARTES_RACE } from "../constants/astartes-implants.mjs";
 import { grantAstartesImplants } from "./astartes-implants.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { raceDef, subraceEntries } from "./race-library.mjs";
+import { clearGrantedBy } from "./origin-shared.mjs";
 
-/** Применяет расовые бонусы: характеристики только в пустые поля + расовые Черты. */
-export async function applyRaceData(actor, raceKey, { createTraits, applyStartingTalents }) {
-  const race = RACES[raceKey];
-  if (!race) return;
-  const chars = actor.system.characteristics;
+const FLAG  = "warhammer-dbc";
+const GRANT = "originGrant";
+
+/** Предмет-носитель расы на акторе (или null). */
+export function actorRaceItem(actor) {
+  return actor?.items?.find(i => i.type === "race") || null;
+}
+export function actorSubraceItem(actor) {
+  return actor?.items?.find(i => i.type === "subrace") || null;
+}
+
+/**
+ * Стартовые характеристики расы — ТОЛЬКО в пустые поля. Заполненное значение
+ * это уже выбор игрока или бросок Мастера, и раса его не переписывает.
+ */
+export function raceCharsUpdate(actor, chars) {
+  const cur = actor?.system?.characteristics || {};
   const upd = {};
-  for (const [k, v] of Object.entries(race.chars || {})) {
-    if ((chars[k]?.base || 0) === 0) upd[`system.characteristics.${k}.base`] = v;
+  for (const [k, v] of Object.entries(chars || {}))
+    if ((cur[k]?.base || 0) === 0) upd[`system.characteristics.${k}.base`] = v;
+  return upd;
+}
+
+/** Снимает расу, всё ею выданное и субрасу: субраса относилась к прежней расе. */
+export async function clearRace(actor) {
+  await clearSubrace(actor);
+  await clearGrantedBy(actor, "race", actorRaceItem(actor));
+}
+export async function clearSubrace(actor) {
+  await clearGrantedBy(actor, "subrace", actorSubraceItem(actor));
+}
+
+/**
+ * Раса персонажа: снимает прежнюю, кладёт носитель (штатный createItem →
+ * applyItemMechanics выдаёт Черты, таланты и навыки), пишет ключ-зеркало и
+ * стартовые характеристики.
+ *
+ * Пустой ключ означает «снять расу», а не «ошибка».
+ *
+ * Прошлое Иннари и Арлекина — та же выдача под своим тегом `racePast`: оно
+ * снимается отдельно от самой расы, иначе смена Прошлого уносила бы расу.
+ *
+ * @param {Actor} actor
+ * @param {string} key
+ * @param {{tag?: string, mirror?: boolean}} [opts]  tag — под каким тегом
+ *   помечать выданное; mirror:false — не трогать system.race (так кладётся
+ *   Прошлое: ключ расы остаётся «ynnari»)
+ */
+export async function applyRace(actor, key, { tag = "race", mirror = true } = {}) {
+  if (!actor) return;
+  await clearGrantedBy(actor, tag, tag === "race" ? actorRaceItem(actor) : null);
+  if (tag === "race") await clearSubrace(actor);
+  if (!key) {
+    if (mirror) await actor.update({ "system.race": "", "system.subrace": "" });
+    return;
   }
-  if (Object.keys(upd).length) await actor.update(upd);
-  const n  = await createTraits(race.traits || [], race.label || raceKey);
-  const nt = await applyStartingTalents(race.talents || [], race.label || raceKey);
-  // Космодесантнику органы Геносемени положены по умолчанию.
-  const ng = raceKey === ASTARTES_RACE ? await grantAstartesImplants(actor) : 0;
-  ui.notifications.info(`🧬 ${race.label}: характеристик ${Object.keys(upd).length}, `
-    + `Черт ${n}, Талантов ${nt}${ng ? `, органов Геносемени ${ng}` : ""}.`);
+
+  const def = raceDef(key);
+  // Пака в мире может не быть (свежий мир, отключённая библиотека): тогда
+  // носителя не будет, но ключ и стартовые характеристики персонаж получит —
+  // лист продолжит работать по ключу, как до переезда.
+  const src = def?.uuid ? await fromUuid(def.uuid).catch(() => null) : null;
+  if (src) {
+    const data = src.toObject();
+    delete data._id;
+    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: tag } };
+    await actor.createEmbeddedDocuments("Item", [data]);
+  }
+
+  await actor.update({
+    ...(mirror ? { "system.race": key, "system.subrace": "" } : {}),
+    ...raceCharsUpdate(actor, def?.chars || {})
+  });
+
+  if (def?.hasGeneSeed) await grantAstartesImplants(actor);
+  ui.notifications?.info(`🧬 ${mirror ? "Раса" : "Прошлое"}: ${def?.label || key}.`);
+}
+
+/**
+ * Субраса: только своей расе. Чужая — отказ с пояснением, лист не меняется:
+ * молчаливое применение чужой субрасы испортило бы персонажа незаметно.
+ */
+export async function applySubrace(actor, key) {
+  if (!actor) return;
+  await clearSubrace(actor);
+  if (!key) { await actor.update({ "system.subrace": "" }); return; }
+
+  const def  = subraceEntries()[key];
+  const race = actor.system.race || "";
+  if (!race) return ui.notifications?.warn("Сначала выберите расу.");
+  if (def && def.parent && def.parent !== race) {
+    const raceLabel = raceDef(race)?.label || race;
+    const parentLabel = raceDef(def.parent)?.label || def.parent;
+    return ui.notifications?.warn(
+      `${def.label} — субраса расы «${parentLabel}», а у персонажа «${raceLabel}».`);
+  }
+
+  const src = def?.uuid ? await fromUuid(def.uuid).catch(() => null) : null;
+  if (src) {
+    const data = src.toObject();
+    delete data._id;
+    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: "subrace" } };
+    await actor.createEmbeddedDocuments("Item", [data]);
+  }
+
+  // Субрасы друкхари отменяют часть расовых Черт.
+  const drop = (def?.removesTraits || []).map(n => String(n).toLowerCase().trim());
+  if (drop.length) {
+    const ids = actor.items
+      .filter(i => i.type === "trait" && drop.includes(i.name.toLowerCase().trim()))
+      .map(i => i.id);
+    if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
+  }
+
+  await actor.update({ "system.subrace": key });
 }
 
 /** Иннари: бонусы Прошлого (бывшей расы) + Черты Иннари. */
 export async function applyYnnari(actor, callbacks) {
   const past = actor.system.ynnariPast;
-  if (past && RACES[past]) await applyRaceData(actor, past, callbacks);  // бонусы изначальной расы
+  // Прошлое — бонусы бывшей расы, но раса персонажа остаётся своей, поэтому
+  // mirror:false, а свой тег даёт снять Прошлое, не трогая саму расу.
+  if (past) await applyRace(actor, past, { tag: "racePast", mirror: false });
   const n = await callbacks.createTraits(RACES.ynnari.traits || [], "Иннари");
   ui.notifications.info(`Иннари: применены Черты Иннари (${n})${past ? ` и бонусы Прошлого (${RACES[past]?.label})` : ""}.`);
 }
@@ -45,7 +147,7 @@ export async function applyYnnari(actor, callbacks) {
 /** Арлекин: бонусы Прошлого (изначальной расы) + Черты Арлекина. */
 export async function applyHarlequin(actor, callbacks) {
   const past = actor.system.harlequinPast;
-  if (past && RACES[past]) await applyRaceData(actor, past, callbacks);  // бонусы изначальной расы
+  if (past) await applyRace(actor, past, { tag: "racePast", mirror: false });
   const n = await callbacks.createTraits(RACES.harlequin.traits || [], "Арлекин");
   ui.notifications.info(`Арлекин: применены Черты Арлекина (${n})${past ? ` и бонусы Прошлого (${RACES[past]?.label})` : ""}.`);
 }
@@ -102,39 +204,4 @@ export async function applyLegion(actor, { createTraits }) {
   }
 
   await apply(noCurse ? null : { name: effName, text: curse });
-}
-
-/**
- * Кнопки применения на листе. `callbacks` — `createTraits` и
- * `applyStartingTalents` листа (см. заголовок файла).
- */
-export function activateRaceListeners(html, actor, callbacks) {
-  html.find(".race-select").change(ev => {
-    actor.update({ "system.race": ev.currentTarget.value, "system.subrace": "" });
-  });
-
-  html.find(".gene-origin-input").change(ev => {
-    actor.update({ "system.geneSeed.origin": ev.currentTarget.value });
-  });
-
-  // Кнопка геносемени применяет расу Астартес.
-  html.find(".gene-apply-btn").click(async ev => {
-    ev.preventDefault();
-    await applyRaceData(actor, ASTARTES_RACE, callbacks);
-  });
-
-  html.find(".legion-apply-btn").click(async ev => {
-    ev.preventDefault();
-    await applyLegion(actor, callbacks);
-  });
-
-  html.find(".ynnari-apply-btn").click(async ev => {
-    ev.preventDefault();
-    await applyYnnari(actor, callbacks);
-  });
-
-  html.find(".harlequin-apply-btn").click(async ev => {
-    ev.preventDefault();
-    await applyHarlequin(actor, callbacks);
-  });
 }
