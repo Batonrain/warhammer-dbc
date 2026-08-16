@@ -186,6 +186,20 @@
 }
 .warhammer-dbc .header-rows > .header-row-fixed,
 .warhammer-dbc .header-row-fixed > .header-cell { display: contents; }
+/* Стремления — исключение: их трое (Гордость, Мотивация, Позор), и в сетке из
+   двух пар третья уезжала на свою строку. Ряд занимает всю ширину и делит её
+   на три сам. */
+.warhammer-dbc .header-rows > .header-row-aspir {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 4px 12px;
+}
+.warhammer-dbc .header-row-aspir > .header-cell {
+  display: flex;
+  flex: 1 1 0;
+  min-width: min-content;
+}
 
 /* Компактное read-only поле (Геносемя/Культура/Стремления) — то же место, что
    и у select/input, но просто текст: сами дроплисты живут на «Заметках». */
@@ -387,6 +401,8 @@
 /* Ряд кнопок: компактные квадратики */
 .warhammer-dbc .fatigue-btns {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 2px;
   margin-top: 2px;
   justify-content: flex-end;
@@ -417,12 +433,19 @@
   border-color: var(--wh-red);
 }
 
-/* +1 / −1 — ещё компактнее, чисто квадрат */
+/* +1 / −1 стоят своей строкой сразу под значениями: вчетвером с «Отдыхом» и
+   «Сном» они не помещались в колонку ресурсов и вылезали за неё влево. */
+.warhammer-dbc .fatigue-step-btns {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
 .warhammer-dbc .fatigue-add-btn,
 .warhammer-dbc .fatigue-remove-btn {
-  width: 18px;
+  width: 30px;
   padding: 0;
-  font-size: 0.9em;
+  font-size: 1em;
 }
 
 /* Кнопка «Сон» — зелёный акцент */
