@@ -29,7 +29,7 @@ describe("флаги-возможности", () => {
 
   it("ruleFlags отдаёт все возможности актора", () => {
     expect([...ruleFlags(actor())].sort()).toEqual(
-      ["healing.astartes", "talents.geneSeed", "unarmed.astartesProfile"]);
+      ["healing.astartes", "talents.geneSeed", "unarmed.astartesProfile", "weapons.legion"]);
   });
 
   describe("правило под условием", () => {

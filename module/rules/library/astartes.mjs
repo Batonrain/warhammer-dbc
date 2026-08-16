@@ -51,7 +51,10 @@ export const ASTARTES_RULES = [
     label: "Физиология Астартес",
     effects: [
       { kind: "grantFlag", target: "healing.astartes" },
-      { kind: "grantFlag", target: "unarmed.astartesProfile" }
+      { kind: "grantFlag", target: "unarmed.astartesProfile" },
+      // Сложение под легионное оружие: своё берёт без штрафа, чужое — со
+      // штрафом за тесную спусковую скобу (rules/legion-fit.mjs).
+      { kind: "grantFlag", target: "weapons.legion" }
     ]
   }
 ];

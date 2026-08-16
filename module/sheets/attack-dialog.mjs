@@ -23,6 +23,7 @@ import { attackThreshold }                    from "../combat/attack-threshold.m
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
+import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { ruleRollModsHtml }                   from "../rules/roll-mods.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 
@@ -133,7 +134,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const wp           = aggregateAuto(wProps);
   // Качество: рукопашное даёт мод на тесты с оружием (Poor −10 / Good +5 / Best +10)
   const qTestMod     = isMelee ? (qualityEffects(item).auto.testMod || 0) : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod;
+  // Легион (стр. 179): своё оружие Астартес берут без штрафа, чужое — со
+  // штрафом, и наоборот — не-Астартес не сладит с легионным хватом.
+  const legionFit = legionAttackPenalty({
+    hasLegion:  _entries.some(e => e.key === "legion"),
+    fitsLegion: hasRuleFlag(actor, LEGION_FIT_FLAG),
+    size:       actor.system.size ?? 0,
+    sBonus:     actor.system.characteristics?.s?.bonus ?? 0,
+    isGrenade:  sys.weaponType === "grenade"
+  });
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total;
   const wantShortBox = !isMelee && (wp.meltaShort || wp.scatter);
   const wantMaximal  = !isMelee && wp.maximal;
 
@@ -401,11 +411,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const tip = esc(p.def.desc);
     return `<span class="atk-wprop-badge" title="${tip}">${p.def.label}${r}</span>`;
   }).join("");
-  const wpDialogHtml = wProps.length ? `
+  // Штраф Легиона уже сидит в пороге — здесь показываем, из чего он сложился.
+  const legionHtml = legionFit.parts.length ? `
+    <div class="atk-dlg-modifiers atk-legion-note">
+      <div class="atk-mods-title">${rollIcon("gear","#ffb84d")}Легион: ${legionFit.total} к тесту</div>
+      <div class="atk-wprops-list">${legionFit.parts
+        .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
+    </div>` : "";
+  const wpDialogHtml = (wProps.length ? `
     <div class="atk-dlg-modifiers">
       <div class="atk-mods-title">${rollIcon("gear","#8fd0ff")}Свойства оружия</div>
       <div class="atk-wprops-list">${wpDialogList}</div>
-    </div>` : "";
+    </div>` : "") + legionHtml;
   const shortRangeHtml = wantShortBox ? `
     <label class="attack-mod-check">
       <input type="checkbox" id="atk-shortrange" class="atk-mod-cb" data-value="${wp.scatter ? 10 : 0}"/>
