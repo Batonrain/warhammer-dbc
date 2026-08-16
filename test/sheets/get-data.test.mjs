@@ -147,6 +147,15 @@ describe("раса и подраса", () => {
     expect(ctxOf({ race: "ynnari" }).hasSubraces).toBe(false);
   });
 
+  // Слот субрасы теперь стоит всегда — как у расы, — поэтому шаблону нужна
+  // причина, по которой выбирать нечего: без неё пустой слот звал бы открыть
+  // пикер, который тут же ответил бы отказом.
+  it("подсказка объясняет, почему субрасу выбрать нельзя", () => {
+    expect(ctxOf({ race: "azuriane" }).subraceHint).toBe("");
+    expect(ctxOf({ race: "" }).subraceHint).toMatch(/сначала выберите расу/i);
+    expect(ctxOf({ race: "astartes" }).subraceHint).toMatch(/субрас нет/i);
+  });
+
   it("выключенная «Книга Эльдар» убирает свои расы из списка", () => {
     const aeldari = ctx => ctx.raceGroups.find(g => g.label === "Аэльдари");
     expect(aeldari(ctxOf({ race: "human" })).races.length).toBeGreaterThan(1);

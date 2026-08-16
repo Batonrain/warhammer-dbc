@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
 import { splitTopLevel } from "../../module/helpers/utils.mjs";
 import { grantCreationSkills, grantCultureSkills, grantCreationGear,
          resolveCreation, creationCharSum, rollCharSet, applyCreation,
          showCreationWizard } from "../../module/apps/creation.mjs";
+import * as racesModule from "../../module/apps/races.mjs";
 
 /** Обновление по плоскому пути: Foundry меняет документ на месте, тесты — тоже. */
 function applyPath(target, path, value) {
@@ -281,6 +282,20 @@ describe("применение создания", () => {
     expect(d.calls.talents.at(-1).raw).toContain("Hatred (Fallen)");   // культура ордена
   });
 
+  // Раунд правок 2: race.talents из библиотеки — строка, а не массив. Без
+  // splitTopLevel девять талантов Астартес склеятся в один несуществующий
+  // элемент (длина станет не 9); а если splitTopLevel заменить на наивный
+  // split(","), скобочный талант «Resistance (Cold, Heat, Poisons)» развалится
+  // на куски. Без архетипа/культуры/субрасы в списке — только таланты расы.
+  it("таланты расы приходят раздельными элементами, скобочный не рвётся по запятым внутри", async () => {
+    const a = actor();
+    const d = sheetDeps();
+    await settle(applyCreation(a, { raceKey: "astartes" }, d));
+    const raw = d.calls.talents.at(-1).raw;
+    expect(raw).toHaveLength(9);
+    expect(raw).toContain("Resistance (Cold, Heat, Poisons)");
+  });
+
   it("Азуриан — псайкер и без архетипа", async () => {
     const a = actor();
     await settle(applyCreation(a, { raceKey: "azuriane" }, sheetDeps()));
@@ -294,6 +309,28 @@ describe("применение создания", () => {
     expect(a.flags["warhammer-dbc"].setupDone).toBe(true);
     expect(a.system.alignment).toBe("heretic");
     expect(d.calls.theme).toBe(1);
+  });
+});
+
+// Прошлое Иннари/Арлекина — та же выдача, что раса и субраса (applyRace под
+// своим тегом), а не отдельная ветка: раунд правок 1 нашёл, что переход
+// resolveCreation на библиотеку молча обнулил Черты Прошлого (past.traits
+// у библиотеки просто нет поля) — здесь фиксируется правильный вызов.
+describe("Прошлое Иннари/Арлекина выдаётся тем же путём, что раса", () => {
+  let applyRaceSpy;
+  beforeEach(() => { applyRaceSpy = vi.spyOn(racesModule, "applyRace"); });
+  afterEach(() => { applyRaceSpy.mockRestore(); });
+
+  it("с выбранным Прошлым зовёт applyRace с тегом racePast и mirror:false", async () => {
+    const a = actor();
+    await settle(applyCreation(a, { raceKey: "ynnari", ynnariPast: "azuriane" }, sheetDeps()));
+    expect(applyRaceSpy).toHaveBeenCalledWith(a, "azuriane", { tag: "racePast", mirror: false });
+  });
+
+  it("без выбранного Прошлого выдачу для него не зовёт", async () => {
+    const a = actor();
+    await settle(applyCreation(a, { raceKey: "ynnari" }, sheetDeps()));
+    expect(applyRaceSpy.mock.calls.some(call => call[2]?.tag === "racePast")).toBe(false);
   });
 });
 

@@ -8,7 +8,7 @@ import { WEAPON_CLASSES, DAMAGE_TYPES,
          ARMOR_MOD_GROUPS }                          from "../constants/items.mjs";
 import { MELEE_STANCES }                             from "../constants/combat.mjs";
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
-import { AELDARI_RACES }                             from "../constants/races.mjs";
+import { isAeldariRace }                             from "../apps/race-library.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
 import { buildLegionOptions, getLegion,
          buildChapterOptions, getChapter,
@@ -914,7 +914,7 @@ export function buildGetData(actor) {
   }
 
   // ── Псайкер (сводка для вкладки) ────────────────────────────────────────────
-  const isEldarPsyker = AELDARI_RACES.includes(system.race);
+  const isEldarPsyker = isAeldariRace(system.race);
   const psyBPR = system.psyker?.rating ?? 0;
   const psyTPR = system.psyker?.currentRating ?? 0;
   context.psyker = {

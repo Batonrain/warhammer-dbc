@@ -50,7 +50,9 @@
       "smallCraft": "Малое судно (МЛА)",
       "vehicleGear": "Оснащение техники",
       "vehicleTrait": "Черта техники",
-      "celestialBody": "Небесное тело"
+      "celestialBody": "Небесное тело",
+      "race": "Раса",
+      "subrace": "Субраса"
     }
   }
 }

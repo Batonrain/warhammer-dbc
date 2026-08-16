@@ -30,6 +30,8 @@ import { MentalTraumaData }   from "./item/mental-trauma.mjs";
 import { HomeworldData }      from "./item/homeworld.mjs";
 import { DivinationData }     from "./item/divination.mjs";
 import { ArchetypeData }      from "./item/archetype.mjs";
+import { RaceData }           from "./item/race.mjs";
+import { SubraceData }        from "./item/subrace.mjs";
 import { ArmourHistoryEntryData } from "./item/armour-history-entry.mjs";
 import { DrugData }           from "./item/drug.mjs";
 import { PsychicPowerData }   from "./item/psychic-power.mjs";
@@ -83,6 +85,8 @@ export const ITEM_DATA_MODELS = {
   homeworld:          HomeworldData,
   divination:         DivinationData,
   archetype:          ArchetypeData,
+  race:               RaceData,
+  subrace:            SubraceData,
   armourHistoryEntry: ArmourHistoryEntryData,
   drug:               DrugData,
   // Силы (wdbc-ff4.1.4)

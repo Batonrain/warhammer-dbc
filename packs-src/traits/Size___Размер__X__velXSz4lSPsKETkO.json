@@ -7,8 +7,8 @@
     "notes": "",
     "benefit": "Категория Размера.",
     "source": "раса/размер",
-    "hasRating": false,
-    "rating": 0,
+    "hasRating": true,
+    "rating": 1,
     "hasRating2": false,
     "rating2": 0,
     "effects": {
@@ -18,7 +18,7 @@
       "charValueBonuses": [],
       "armourAll": 0,
       "fearRating": 0,
-      "sizeMod": 0,
+      "sizeMod": 1,
       "initMod": 0,
       "speedMod": 0
     },

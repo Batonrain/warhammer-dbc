@@ -40,7 +40,8 @@ const TAB_DEFS = [
 // весь пак. tabs — на каких вкладках (кроме «Все») показывается категория;
 // allTab:false — скрыть с «Все» (вырезка, дублирующая то, что и так видно
 // внутри своей полной категории).
-const CATEGORIES = [
+export const CATEGORIES = [
+  { label: "Расы",                    sources: [{ pack: "races" }] },
   { label: "Черты",                   sources: [{ pack: "traits" }], tabs: ["abilities"] },
   { label: "Таланты",                 sources: [{ pack: "talents" }], tabs: ["abilities"] },
   { label: "Ритуалы",                 sources: [{ pack: "rituals" }], tabs: ["abilities"] },

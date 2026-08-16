@@ -36,6 +36,8 @@ import { refreshCalendarWidget, initTimeFlow } from "./module/apps/imperial-cale
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
+import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
+import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
@@ -135,6 +137,8 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/archetype.hbs",            // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/faction.hbs",
     "systems/warhammer-dbc/templates/item/parts/faction-roster.hbs",
+    "systems/warhammer-dbc/templates/item/parts/race.hbs",
+    "systems/warhammer-dbc/templates/item/parts/subrace.hbs",
     // Звёздная система
     "systems/warhammer-dbc/templates/item/parts/celestial-body.hbs",
     "systems/warhammer-dbc/templates/actor/star-system-sheet.hbs",
@@ -1172,13 +1176,71 @@ async function _twinLookup(name) {
 // что и у пары боевых профилей ниже: createItem рассылается всем клиентам,
 // а выполнить/применить должен только клиент того, кто реально создал
 // документ (иначе выполнится у каждого).
-Hooks.on("createItem", async (item, options, userId) => {
+/**
+ * Раса/субраса, попавшая на актора мимо листа — макросом, скриптом,
+ * копированием. Флаг originGrant ставит сам applyRace, поэтому его
+ * собственная выдача сюда не возвращается и цикла не образует.
+ *
+ * Ключ — тем же правилом, что и кэш библиотеки (raceKeyOf: system.key или id
+ * документа), а не «system.key || ''»: пустая строка на пути применения
+ * означает «снять расу», и раса без заполненного ключа стирала бы персонажа
+ * тем же способом, что чинит Находка C1 у дропа на лист (wdbc-n1k). Если
+ * ключ не определился вовсе (документ без id — на практике не бывает, но
+ * отказ явный, а не тихое снятие) — предмет всё равно убираем с актора, но
+ * применение не зовём.
+ */
+export async function handleStrayRaceItem(item, actor) {
+  const key = raceKeyOf(item);
+  await item.delete();
+  if (!key) {
+    ui.notifications?.error(
+      `Не удалось определить ключ ${item.type === "race" ? "расы" : "субрасы"} у «${item.name}» — предмет снят с актора без применения.`);
+    return;
+  }
+  if (item.type === "race") await applyRace(actor, key);
+  else await applySubrace(actor, key);
+}
+
+/**
+ * Основной обработчик создания предмета — вынесен в именованную функцию,
+ * чтобы ветку SKIP_MECHANICS_HOOK можно было проверить тестом напрямую:
+ * Hooks.on в тестовом стенде — пустышка (foundry-stub.mjs), сама подписка
+ * не срабатывает никогда.
+ */
+export async function handleItemCreated(item, options, userId) {
   if (game.user.id !== userId) return;
   const actor = item.parent;
   if (!(actor instanceof Actor)) return;
+
+  // Свой clientId-фильтр выше уже не даёт каждому подключённому клиенту
+  // повторить удаление и применение самому.
+  if (["race", "subrace"].includes(item.type) && !item.getFlag("warhammer-dbc", "originGrant")) {
+    return handleStrayRaceItem(item, actor);
+  }
+
   await runAutoScripts(item);
+  // Носитель расы/субрасы (originGrant стоит — страховка выше его не трогает)
+  // уже получил свою Механику СИНХРОННО внутри applyRace/applySubrace
+  // (module/apps/races.mjs) — опция SKIP_MECHANICS_HOOK в контексте создания
+  // говорит этому хуку не применять её ещё раз.
+  //
+  // Идемпотентность applyItemMechanics (флаг mechanicsApplied) здесь НЕ
+  // спасает, хотя раньше в комментарии на этом месте было обратное
+  // утверждение — оно было ошибкой, которую поймало ревью. appliedEntryIds
+  // читает флаг в САМОМ НАЧАЛЕ applyItemMechanics, а пишется он в конце.
+  // Прямой вызов из applyRace и этот вызов из хука — два НЕЗАВИСИМЫХ старта:
+  // если прямой вызов успевает уйти в реальные createEmbeddedDocuments по
+  // каждой выдаваемой Черте (сетевые round-trip'ы в живом Foundry) дольше,
+  // чем этот хук доходит до своего applyItemMechanics, оба читают один и тот
+  // же ПУСТОЙ флаг и оба выдают Черты целиком — Астартес получил бы их
+  // дважды. Раньше это не ловилось тестами: Hooks.on в стенде — пустышка,
+  // поэтому в тестах отрабатывал только прямой вызов, и «зелёный» прогон
+  // ничего про эту гонку не доказывал.
+  if (options?.[SKIP_MECHANICS_HOOK]) return;
   await applyItemMechanics(item);
-});
+}
+
+Hooks.on("createItem", handleItemCreated);
 
 // Механику правят и на предмете, который УЖЕ лежит у актора: Черта из
 // библиотеки приезжает пикером пустой, и настраивают её прямо на листе. Это

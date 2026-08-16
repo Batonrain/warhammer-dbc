@@ -12,9 +12,13 @@
 // а ApplicationV2 склеивает DEFAULT_OPTIONS по цепочке наследования сам.
 
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import "../support/foundry-stub.mjs";
-import { sheetOf } from "../support/foundry-stub.mjs";
+import { sheetOf, captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
+
+const readTemplate = p => fs.readFileSync(path.resolve(import.meta.dirname, "../..", p), "utf8");
 
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
 const { WarhammerDaemonSheet }    = await import("../../module/sheets/daemon-sheet.mjs");
@@ -38,6 +42,133 @@ describeV2Sheet(WarhammerDaemonSheet, {
 describeV2Sheet(WarhammerDemonPrinceSheet, {
   sheet: "module/sheets/demon-prince-sheet.mjs",
   template: "templates/actor/demon-prince-sheet.hbs"
+});
+
+describe("окно листа", () => {
+  // Foundry по умолчанию титулует окно как «<тип документа>: <имя>», а тип
+  // берёт из ключа TYPES.Actor.character. В мире на английском ключ не
+  // переводится и в заголовке стоит сам ключ. Имени персонажа достаточно.
+  it("в заголовке только имя персонажа", () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, { characteristics: {}, skills: {}, groupSkills: {} });
+    sheet.actor.name = "Астартес";
+
+    expect(sheet.title).toBe("Астартес");
+  });
+
+  it("стартовое окно не уже 960 точек", () => {
+    expect(WarhammerCharacterSheet.DEFAULT_OPTIONS.position.width).toBeGreaterThanOrEqual(960);
+  });
+});
+
+describe("слоты Расы и Субрасы", () => {
+  it("слоты расы объявлены действиями листа", () => {
+    const actions = Object.keys(WarhammerCharacterSheet.DEFAULT_OPTIONS.actions);
+
+    expect(actions).toEqual(expect.arrayContaining([
+      "racePick", "raceOpen", "raceClear", "raceApply",
+      "subracePick", "subraceOpen", "subraceClear", "subraceApply"
+    ]));
+  });
+
+  // Раунд правок 1 (wdbc-n1k), находка 2: состояние «ключ есть, носителя
+  // нет» было тупиком для субрасы — у расы такое же состояние чинится
+  // кнопкой «Применить» (raceApply), а у субрасы её не было вовсе.
+  it("subraceApply зовёт applySubrace ключом текущей субрасы", async () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {}, race: "azuriane", subrace: "eldanar"
+    });
+    sheet.isEditable = true;
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+
+    await WarhammerCharacterSheet.DEFAULT_OPTIONS.actions.subraceApply.call(sheet);
+
+    expect(updates.some(u => u["system.subrace"] === "eldanar")).toBe(true);
+  });
+
+  // Свободный ввод субрасы убран (wdbc-4w4): слот стоит всегда, как у расы, а
+  // выбор идёт только через пикер и дроп — оба сверяют родительскую расу. Пока
+  // ввод существовал, вписать в него можно было что угодно, минуя сверку.
+  it("слот субрасы рисуется всегда, свободного ввода больше нет", () => {
+    const header = readTemplate("templates/actor/parts/header.hbs");
+
+    expect(header).toContain('data-slot="subrace"');
+    expect(header).not.toContain('name="system.subrace"');
+    expect(header.indexOf("{{#if hasSubraces}}")).toBe(-1);
+  });
+
+  // Раса без субрас (Астартес) и раса, ещё не выбранная, — состояния, в которых
+  // пикер откажет. Слот показывает причину заранее вместо кнопки-приглашения.
+  it("пустой слот показывает причину, когда выбирать нечего", () => {
+    const header = readTemplate("templates/actor/parts/header.hbs");
+    const slot = header.slice(header.indexOf('data-slot="subrace"'));
+
+    expect(slot).toContain("{{#if subraceHint}}");
+    expect(slot.slice(0, slot.indexOf('data-action="subracePick"'))).toContain("wh-slot-none");
+  });
+
+  // Ревью предыдущей задачи (wdbc-n1k): applySubrace отклоняет субрасу с чужим
+  // родителем, но эта ветка не была проверена ни одним тестом. Дроп субрасы на
+  // лист — новый путь в неё, поэтому проверка ставится рядом с приёмом дропа.
+  it("субраса друкхари, роняемая на азурианина, отклоняется без изменений листа", async () => {
+    resetCaptured();
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {}, race: "azuriane"
+    });
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+    globalThis.Item.implementation = {
+      fromDropData: async () => ({ type: "subrace", system: { key: "truebornDrukhari" } })
+    };
+
+    await WarhammerCharacterSheet.prototype._onDropItem.call(sheet, {}, {});
+
+    expect(updates).toEqual([]);
+    expect(captured.warnings.some(w => /Истиннорожд.+Друкхари.+Азуриане/.test(w))).toBe(true);
+  });
+
+  // Находка C1 общего ревью (wdbc-n1k): дроп брал ключ отдельно от кэша
+  // (`system.key || ""`) и падал в пустую строку, если ГМ не заполнил поле —
+  // а пустой ключ на пути применения означает «снять расу»: дроп молча стирал
+  // носителя, все расовые Черты, субрасу и Прошлое. Через пикер та же запись
+  // работала: кэш индексирует её под id документа. Дроп обязан читать ключ
+  // тем же правилом (raceKeyOf), что и кэш.
+  it("раса без system.key на дропе берёт ключ по id документа, а не снимает расу", async () => {
+    resetCaptured();
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: { ws: { base: 30 } }, skills: {}, groupSkills: {}, race: "human"
+    });
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+    globalThis.Item.implementation = {
+      fromDropData: async () => ({ type: "race", id: "astartes", name: "Астартес", system: { key: "" } })
+    };
+
+    await WarhammerCharacterSheet.prototype._onDropItem.call(sheet, {}, {});
+
+    // clearRace внутри applyRace пишет транзитное "" первым шагом (снимает
+    // ПРЕЖНЮЮ расу) — финальное значение перезаписывается следом тем же
+    // update-вызовом, который несёт настоящий ключ.
+    const raceUpdates = updates.filter(u => "system.race" in u);
+    expect(raceUpdates.at(-1)["system.race"]).toBe("astartes");
+  });
+
+  it("раса без ключа и без id — явный отказ, лист не меняется", async () => {
+    resetCaptured();
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {}, race: "human"
+    });
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+    globalThis.Item.implementation = {
+      fromDropData: async () => ({ type: "race", id: "", name: "Повреждённый предмет", system: { key: "" } })
+    };
+
+    await WarhammerCharacterSheet.prototype._onDropItem.call(sheet, {}, {});
+
+    expect(updates).toEqual([]);
+    expect(captured.errors.length).toBeGreaterThan(0);
+  });
 });
 
 describe("производные листы не наследуют чужой шаблон", () => {

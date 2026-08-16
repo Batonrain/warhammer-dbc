@@ -1,0 +1,64 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  РАСА (библиотека происхождений) --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "race")}}
+
+<div class="item-section">
+  <div class="item-section-title">РАСА</div>
+  <div class="trait-fx-hint">Запись библиотеки «Расы»: источник списков в шапке листа и в Мастере создания. Расовые Черты добавляются на вкладке МЕХАНИКА ссылками на библиотеку Черт — здесь их нет намеренно, чтобы одно и то же не описывалось дважды.</div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Ключ</label>
+    <input type="text" name="system.key" value="{{system.key}}" class="wr-input-md" placeholder="astartes"/>
+    <label class="wr-label">Группа</label>
+    <input type="text" name="system.group" value="{{system.group}}" class="wr-input-md" placeholder="Люди / Отродия / Аэльдари / Другие Ксеносы"/>
+  </div>
+
+  <div class="item-section-title">СТАРТОВЫЕ ХАРАКТЕРИСТИКИ</div>
+  <div class="trait-fx-hint">Значения, а не прибавки: применение расы кладёт их в пустые поля и не трогает заполненные.</div>
+  <div class="weapon-row">
+    {{#each charKeys as |c|}}
+      <label class="wr-label">{{c.label}}</label>
+      <input type="number" name="system.chars.{{c.key}}" value="{{lookup @root.system.chars c.key}}" class="wr-input-sm"/>
+    {{/each}}
+  </div>
+
+  <div class="weapon-row">
+    <label class="wr-label">Бонусные броски</label>
+    <input type="number" name="system.bonusRolls" value="{{system.bonusRolls}}" class="wr-input-sm"/>
+    <label class="wr-label">Геносемя</label>
+    <input type="checkbox" name="system.hasGeneSeed" {{#if system.hasGeneSeed}}checked{{/if}}/>
+  </div>
+
+  <div class="weapon-row"><label class="wr-label">Навыки</label>
+    <textarea name="system.skills" rows="2" class="wr-input-lg">{{system.skills}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Снаряжение</label>
+    <textarea name="system.gear" rows="2" class="wr-input-lg">{{system.gear}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Таланты</label>
+    <textarea name="system.talents" rows="2" class="wr-input-lg">{{system.talents}}</textarea></div>
+
+  <div class="item-section-title">ИЗ КНИГИ</div>
+  <div class="trait-fx-hint">Справка для игрока: система по этим полям ничего не считает.</div>
+  <div class="weapon-row">
+    <label class="wr-label">Размер</label>
+    <input type="number" name="system.size" value="{{system.size}}" class="wr-input-sm"/>
+    <label class="wr-label">Очки распределения</label>
+    <input type="number" name="system.bonusPoints" value="{{system.bonusPoints}}" class="wr-input-sm"/>
+    <label class="wr-label">Сдвиг</label>
+    <input type="number" name="system.charShift" value="{{system.charShift}}" class="wr-input-sm"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Бросок Судьбы</label>
+    <input type="text" name="system.fateRoll" value="{{system.fateRoll}}" class="wr-input-md"/>
+    <label class="wr-label">Адаптации</label>
+    <input type="text" name="system.adaptations" value="{{system.adaptations}}" class="wr-input-md"/>
+  </div>
+  <div class="weapon-row"><label class="wr-label">Примечание к навыкам</label>
+    <textarea name="system.skillsNote" rows="2" class="wr-input-lg">{{system.skillsNote}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Описание</label>
+    <textarea name="system.description" rows="3" class="wr-input-lg">{{system.description}}</textarea></div>
+  <div class="weapon-row"><label class="wr-label">Книга</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}" class="wr-input-lg"/></div>
+</div>
+
+{{/if}}

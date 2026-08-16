@@ -1,14 +1,18 @@
 <header class="sheet-header{{#if (eq system.alignment "heretic")}} chaos-aligned{{/if}}{{#if (eq system.alignment "loyalist")}} loyalist-aligned{{/if}}{{#if (eq system.alignment "renegade")}} renegade-aligned{{/if}}"> <div class="portrait-block"> <img class="profile-img" data-action="portrait" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/> </div> <div class="header-main"> <div class="header-name-row"> <label class="header-label">Имя</label> <input class="actor-name" name="name" type="text" value="{{actor.name}}" placeholder="Имя персонажа"/> </div> <div class="header-grid"> <div class="header-rows">
-    <div class="header-row-fixed header-row-race"> <div class="header-cell"> <label>Раса</label> <select name="system.race" class="race-select"> <option value="">— выберите —</option> {{#each raceGroups as |g|}}
-          <optgroup label="{{g.label}}"> {{#each g.races as |r|}}
-            <option value="{{r.key}}" {{#if (eq @root.system.race r.key)}}selected{{/if}}>{{r.label}}</option> {{/each}}
-          </optgroup> {{/each}}
-        </select> </div> <div class="header-cell header-cell-subrace"> <label>Субраса</label> <div class="subrace-controls"> {{#if hasSubraces}}
-            <select name="system.subrace"> <option value="">— выберите —</option> {{#each availableSubraces as |sub|}}
-                <option value="{{sub.key}}" {{#if (eq @root.system.subrace sub.key)}}selected{{/if}}> {{sub.label}}
-                </option> {{/each}}
-            </select> {{else}}
-            <input type="text" name="system.subrace" value="{{system.subrace}}" placeholder="—"/> {{/if}}
+    <div class="header-row-fixed header-row-race"> <div class="header-cell header-cell-slot"> <label>Раса</label> <div class="wh-slot{{#unless raceSlot}} empty{{/unless}}" data-slot="race"> {{#if raceSlot}}
+            <img class="wh-slot-img" src="{{raceSlot.img}}" alt=""/> <span class="wh-slot-name{{#unless raceSlot.applied}} pending{{/unless}}">{{raceSlot.name}}</span> {{#if raceSlot.applied}}
+              <button type="button" class="wh-slot-btn" data-action="raceOpen" title="Открыть лист расы">⤢</button> {{else}}
+              <button type="button" class="wh-slot-btn" data-action="raceApply" title="Применить расу">Применить</button> {{/if}}
+            <button type="button" class="wh-slot-btn" data-action="raceClear" title="Снять расу">✕</button> {{else}}
+            <button type="button" class="wh-slot-add" data-action="racePick">+ перетащите или нажмите</button> {{/if}}
+          </div> </div> <div class="header-cell header-cell-subrace"> <label>Субраса</label> <div class="subrace-controls"> <div class="wh-slot{{#unless subraceSlot}} empty{{/unless}}{{#if subraceHint}} locked{{/if}}" data-slot="subrace"> {{#if subraceSlot}}
+              <img class="wh-slot-img" src="{{subraceSlot.img}}" alt=""/> <span class="wh-slot-name{{#unless subraceSlot.applied}} pending{{/unless}}">{{subraceSlot.name}}</span> {{#if subraceSlot.applied}}
+                <button type="button" class="wh-slot-btn" data-action="subraceOpen" title="Открыть лист субрасы">⤢</button> {{else}}
+                <button type="button" class="wh-slot-btn" data-action="subraceApply" title="Применить субрасу">Применить</button> {{/if}}
+              <button type="button" class="wh-slot-btn" data-action="subraceClear" title="Снять субрасу">✕</button> {{else}}{{#if subraceHint}}
+              <span class="wh-slot-none" title="{{subraceHint}}">{{subraceHint}}</span> {{else}}
+              <button type="button" class="wh-slot-add" data-action="subracePick">+ перетащите или нажмите</button> {{/if}}{{/if}}
+            </div>
           {{#if (eq system.subrace "navigator")}}
           <input type="text" name="system.navigatorHouse" value="{{system.navigatorHouse}}" placeholder="Дом Навигатора" title="Название дома Навис Нобилитэ"/> {{/if}}
           {{#if isYnnari}}
@@ -70,7 +74,7 @@
           {{#if system.fatigue.value}}
           <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cog)">−10</span> {{/if}}
         </label> <div class="fate-values fatigue-values"> <input type="number" name="system.fatigue.value" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input
-                   {{#if system.fatigue.value}}fatigue-nonzero{{/if}}"/> <span>/</span> <input type="number" name="system.fatigue.max" value="{{system.fatigue.max}}" min="0" title="Порог (= T.b + W.b)"/> </div> <div class="fatigue-bar" title="Усталость {{fatiguePct}}%"><div class="fatigue-fill load-{{fatigueLevel}}" style="width:{{fatiguePct}}%;"></div></div> <div class="fatigue-btns"> <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button> <button type="button" class="fatigue-btn fatigue-remove-btn" title="Снять 1 Усталость">−1</button> <button type="button" class="fatigue-btn fatigue-rest-btn" title="Час отдыха (−1 Усталость)">Отдых</button> <button type="button" class="fatigue-btn fatigue-btn-sleep fatigue-sleep-btn" title="Полноценный сон (снять всю Усталость)">Сон</button> </div> </div>
+                   {{#if system.fatigue.value}}fatigue-nonzero{{/if}}"/> <span>/</span> <input type="number" name="system.fatigue.max" value="{{system.fatigue.max}}" min="0" title="Порог (= T.b + W.b)"/> </div> <div class="fatigue-step-btns"> <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button> <button type="button" class="fatigue-btn fatigue-remove-btn" title="Снять 1 Усталость">−1</button> </div> <div class="fatigue-bar" title="Усталость {{fatiguePct}}%"><div class="fatigue-fill load-{{fatigueLevel}}" style="width:{{fatiguePct}}%;"></div></div> <div class="fatigue-btns"> <button type="button" class="fatigue-btn fatigue-rest-btn" title="Час отдыха (−1 Усталость)">Отдых</button> <button type="button" class="fatigue-btn fatigue-btn-sleep fatigue-sleep-btn" title="Полноценный сон (снять всю Усталость)">Сон</button> </div> </div>
     </div>
   </div> <div class="header-checks"> {{#unless isAeldari}}
       <label class="checkbox-label align-label"> <span>Мировоззрение</span> <select name="system.alignment" class="alignment-select"> <option value="loyalist" {{#if (eq system.alignment "loyalist")}}selected{{/if}}>Лоялист</option> <option value="renegade" {{#if (eq system.alignment "renegade")}}selected{{/if}}>Ренегат</option> <option value="heretic" {{#if (eq system.alignment "heretic")}}selected{{/if}}>Хаосит</option> </select> </label> {{/unless}}

@@ -4,8 +4,8 @@
   "description": "Система для Warhammer 40k — DBC (Doom BC). Объединяет Rogue Trader, Dark Heresy и другие линейки.",
   "version": "0.1.0",
   "compatibility": {
-    "minimum": "13",
-    "verified": "13"
+    "minimum": "14",
+    "verified": "14"
   },
   "authors": [
     {
@@ -384,6 +384,14 @@
         "ASSISTANT": "OWNER",
         "GAMEMASTER": "OWNER"
       }
+    },
+    {
+      "name": "races",
+      "label": "Расы — Библиотека (DBC)",
+      "path": "packs/races",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER", "GAMEMASTER": "OWNER" }
     },
     {
       "name": "archetypes",

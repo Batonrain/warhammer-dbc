@@ -26,7 +26,7 @@ export const filePicker = () =>
   foundry.applications?.apps?.FilePicker?.implementation || globalThis.FilePicker;
 
 /**
- * Корневой DOM-узел из того, что пришло в обработчики: у листов, снятых с
+* Корневой DOM-узел из того, что пришло в обработчики: у листов, снятых с
  * jQuery, это сам элемент, у остальных — обёртка.
  *
  * Разворачивать обёртку привычным `root?.[0] ?? root` НЕЛЬЗЯ: у листов на
@@ -40,3 +40,13 @@ export function rootEl(root) {
   // есть и у формы, только там это её контрол.
   return root.jquery ? root[0] : root;
 }
+
+/**
+ * Textarea (одно имя через строку) → массив строк для `ArrayField(StringField)`.
+ * Foundry сам собирает массив примитивов из формы только когда одно имя поля
+ * дают НЕСКОЛЬКО input'ов (чекбоксы и т.п.) — одиночная textarea шлёт одну
+ * строку, и без разбора она уйдёт в поле как есть. Пустые и пробельные строки
+ * отбрасываются, чтобы не плодить в массиве бессмысленные "" элементы.
+ */
+export const linesToArray = text =>
+  String(text ?? "").split("\n").map(s => s.trim()).filter(Boolean);

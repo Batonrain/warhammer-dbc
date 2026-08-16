@@ -51,7 +51,7 @@ import { factionRosterContext, originTreeContext,
          activateFactionRosterListeners, activateOriginTreeListeners }
                                                      from "../apps/faction-roster.mjs";
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
-import { onTab, whenEditable }                       from "./v2-helpers.mjs";
+import { onTab, whenEditable, linesToArray }         from "./v2-helpers.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -791,6 +791,20 @@ export class WarhammerItemSheet
     await syncWeaponPropItemEffects(this.item);
   }
 
+  /** @override */
+  _processFormData(event, form, formData) {
+    // Субраса: «Снимает Черты» — ArrayField(StringField), а на листе это одна
+    // textarea (по имени на строку). Foundry сама собирает массив примитивов
+    // из формы, только когда одному имени поля отвечают НЕСКОЛЬКО input'ов —
+    // одиночная textarea шлёт строку целиком, и без разбора она уйдёт в схему
+    // как есть (ArrayField() у настоящего Foundry раскладывает строку по
+    // символам — это годами будет незаметно ломать любое сохранение субрасы).
+    if (this.item.type === "subrace" && typeof formData.object["system.removesTraits"] === "string") {
+      formData.object["system.removesTraits"] = linesToArray(formData.object["system.removesTraits"]);
+    }
+    return super._processFormData(event, form, formData);
+  }
+
   // Асинхронный не только по требованию V2: вкладке «Состав» Фракции нужны
   // акторы компендиумов, а они приходят загрузкой документов.
   async _prepareContext(options) {
@@ -1275,6 +1289,12 @@ export class WarhammerItemSheet
       context.ritualTest          = ritualTestContext(this.item);
       context.ritualReqHtml       = buildRequirementsHtml(this.item, "req", context.isGM);
       context.ritualAssistReqHtml = buildRequirementsHtml(this.item, "assistReq", context.isGM);
+    }
+
+    // Раса/Субраса — десять полей характеристик листаются циклом в шаблоне,
+    // а не выписываются по одной, как в архетипе: там их пять, здесь десять.
+    if (this.item.type === "race" || this.item.type === "subrace") {
+      context.charKeys = Object.entries(CHARACTERISTICS).map(([key, c]) => ({ key, label: c.abbr }));
     }
 
     return context;

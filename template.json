@@ -58,7 +58,9 @@
       "armourHistoryEntry",
       "aspiration",
       "archetype",
-      "faction"
+      "faction",
+      "race",
+      "subrace"
     ],
     "smallCraft": {},
     "vehicleGear": {},
@@ -95,6 +97,8 @@
     "weaponProperty": {},
     "armourHistoryEntry": {},
     "aspiration": {},
-    "archetype": {}
+    "archetype": {},
+    "race": {},
+    "subrace": {}
   }
 }

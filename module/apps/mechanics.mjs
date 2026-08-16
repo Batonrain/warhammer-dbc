@@ -154,7 +154,7 @@ import { AVAILABILITY }                       from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive }                       from "./effects.mjs";
 import { expectedPhase }                      from "../constants/effect-keys.mjs";
-import { RACES }                              from "../constants/races.mjs";
+import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -618,6 +618,38 @@ async function resolveMechSource(entry) {
   return hit ? pack.getDocument(hit._id) : null;
 }
 
+/**
+ * Черта-шаблон «(X)» несёт эффект, равный своему рейтингу — так заведён пак
+ * (проверено на всех шести параметрических Чертах с эффектами). Выдача с другим
+ * рейтингом обязана двигать и эффект: иначе рейтинг остаётся только в тексте, а
+ * «Сверхъест. Сила (4)» даёт +1, как шаблонная единица.
+ *
+ * Меняются ТОЛЬКО числа, равные рейтингу шаблона. Всё прочее к рейтингу
+ * отношения не имеет: у «Машины (3)» броня равна рейтингу, а порог теста — нет.
+ *
+ * @param {object} data   копия документа Черты (src.toObject()), правится на месте
+ * @param {number|string} rating  рейтинг выдачи
+ * @returns {object} тот же data — для сцепления с вызовом
+ */
+export function rescaleTraitByRating(data, rating) {
+  const base = Number(data?.system?.rating) || 0;
+  const next = Number(rating) || 0;
+  if (!base || !next || base === next) return data;
+  const swap = v => (Number(v) === base ? next : v);
+
+  for (const eff of data.effects || [])
+    for (const ch of (eff.system?.changes || eff.changes || [])) ch.value = swap(ch.value);
+
+  const e = data.system.effects;
+  if (e) {
+    for (const k of ["charBonusValue", "armourAll", "fearRating", "sizeMod", "initMod", "speedMod"])
+      if (Number(e[k])) e[k] = swap(e[k]);
+    for (const cb of [...(e.charBonuses || []), ...(e.charValueBonuses || [])])
+      if (cb) cb.value = swap(cb.value);
+  }
+  return data;
+}
+
 // ── Слаженность отряда (kind:"cohesion") ─────────────────────────────────
 
 /** Роль актора в КОНКРЕТНОМ отряде: пост важнее простого членства. null — не состоит вовсе. */
@@ -893,6 +925,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     delete data._id;
     if (entry.kind === "trait") {
       if (entry.rating !== "" && entry.rating != null && data.system) {
+        rescaleTraitByRating(data, entry.rating);   // пока system.rating — рейтинг шаблона
         data.system.hasRating = true;
         data.system.rating = Number(entry.rating) || 0;
       }
@@ -1617,7 +1650,7 @@ export function describeReqEntry(e) {
       return `${what}: ${e.sourceName || "?"}${r}`;
     }
     case "reqRace":
-      return e.raceKey ? `Раса: ${RACES[e.raceKey]?.label || e.raceKey}` : "Раса: (не выбрана)";
+      return e.raceKey ? `Раса: ${raceDef(e.raceKey)?.label || e.raceKey}` : "Раса: (не выбрана)";
     case "reqArchetype":
       return e.archetypeName ? `Элитный архетип: ${e.archetypeName}` : "Элитный архетип: (не выбран)";
     case "reqPatron":
@@ -1761,7 +1794,7 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
       return out;
     }
     case "reqRace": {
-      const opts = Object.entries(RACES).map(([k, r]) => optHtml(k, r.label || k, e.raceKey === k)).join("");
+      const opts = Object.values(raceEntries()).map(r => optHtml(r.key, r.label, e.raceKey === r.key)).join("");
       return `<select class="req-race" ${d} ${dis}><option value="">— выберите расу —</option>${opts}</select>`;
     }
     case "reqArchetype": {
