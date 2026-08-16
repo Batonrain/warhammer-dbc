@@ -18,6 +18,7 @@ import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { RACES, SUBRACES, SUBRACE_DATA, RACE_GROUPS } from "../module/constants/races.mjs";
 import { libraryTrait } from "./race-traits.mjs";
+import { packFileName } from "./pack-file-name.mjs";
 
 const ROOT = "packs-src/races";
 const NS   = "warhammer-dbc";
@@ -25,8 +26,7 @@ const NS   = "warhammer-dbc";
 const stableId = seed => createHash("sha1").update(seed).digest("base64")
   .replace(/[^A-Za-z0-9]/g, "").slice(0, 16);
 
-const fileName = (name, id) =>
-  `${name.replace(/[^A-Za-zА-Яа-яЁё0-9]+/g, "_").slice(0, 40)}_${id}.json`;
+
 
 /** Группа расы по RACE_GROUPS; она же отвечает на вопрос «аэльдари ли это». */
 const groupOf = key => RACE_GROUPS.find(g => g.races.includes(key))?.label || "";
@@ -149,7 +149,7 @@ export function raceDocs() {
       adaptations: r.adaptations || "",
       bookSource: "DoomBC — Основная книга"
     }, mechanics(r, `race:${key}`), folderId(group));
-    out.push({ path: join(ROOT, group.replace(/\s+/g, "_"), fileName(r.label, doc._id)), doc });
+    out.push({ path: join(ROOT, group.replace(/\s+/g, "_"), packFileName(r.label, doc._id)), doc });
   }
 
   // Родитель субрасы — раса, в списке subraces которой она названа.
@@ -167,7 +167,7 @@ export function raceDocs() {
       description: s.effect || "", notes: "",
       bookSource: "DoomBC — Основная книга"
     }, mechanics(s, `subrace:${key}`), folderId("Субрасы"));
-    out.push({ path: join(ROOT, "Субрасы", fileName(label, doc._id)), doc });
+    out.push({ path: join(ROOT, "Субрасы", packFileName(label, doc._id)), doc });
   }
 
   return out;

@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { RACES, SUBRACE_DATA } from "../module/constants/races.mjs";
+import { packFileName } from "./pack-file-name.mjs";
 
 const DIR    = "packs-src/traits";
 const FOLDER = "packs-src/traits/Трейты_рас";
@@ -145,11 +146,10 @@ export function missingRaceTraits() {
 const stableId = seed => createHash("sha1").update(seed).digest("base64")
   .replace(/[^A-Za-z0-9]/g, "").slice(0, 16);
 
-/** Имя файла в стиле выгрузки: пробелы и знаки — подчёркиванием. */
-const fileName = (name, id) =>
-  `${name.replace(/[^A-Za-zА-Яа-яЁё0-9]+/g, "_").slice(0, 40)}_${id}.json`;
 
-export function run({ write = false } = {}) {
+
+/** Документы библиотеки со своими путями — без записи на диск. */
+export function libraryDocs() {
   const missing = missingRaceTraits();
   const traits  = raceTraits();
 
@@ -193,12 +193,18 @@ export function run({ write = false } = {}) {
       },
       _id: id, effects: [], sort: 0, flags: {}, _key: `!items!${id}`
     };
-    const path = join(FOLDER, fileName(libName, id));
-    if (write) writeFileSync(path, JSON.stringify(doc, null, 2) + "\n");
-    files.push(path);
+    files.push({ path: join(FOLDER, packFileName(libName, id)), doc });
   }
 
-  return { existing: traits.size - missing.length, created: groups.size, files };
+  return files;
+}
+
+export function run({ write = false } = {}) {
+  const docs = libraryDocs();
+  if (write) for (const { path, doc } of docs)
+    writeFileSync(path, JSON.stringify(doc, null, 2) + "\n");
+  const existing = raceTraits().size - missingRaceTraits().length;
+  return { existing, created: docs.length, files: docs.map(d => d.path) };
 }
 
 if (process.argv[1]?.endsWith("race-traits.mjs")) {
