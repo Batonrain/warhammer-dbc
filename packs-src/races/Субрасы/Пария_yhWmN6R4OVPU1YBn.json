@@ -21,7 +21,70 @@
   "sort": 0,
   "flags": {
     "warhammer-dbc": {
-      "mechanics": []
+      "mechanics": [
+        {
+          "id": "tadE2Vz0s1V078AL",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "Ars2ReYgMtdmZY7j",
+              "kind": "trait",
+              "group": null,
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.x8rVwVWA6EabOqsv",
+              "sourceName": "Pariah / Пария",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
+              "equipCategoryPack": "weapons",
+              "equipWeaponType": "",
+              "equipWeaponProp": "",
+              "equipArmorType": "",
+              "equipMaxAvailability": 5,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
     }
   },
   "_key": "!items!yhWmN6R4OVPU1YBn"

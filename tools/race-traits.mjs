@@ -16,7 +16,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
-import { RACES } from "../module/constants/races.mjs";
+import { RACES, SUBRACE_DATA } from "../module/constants/races.mjs";
 
 const DIR    = "packs-src/traits";
 const FOLDER = "packs-src/traits/Трейты_рас";
@@ -69,11 +69,17 @@ function packTraits(dir = DIR) {
   return out;
 }
 
-/** Уникальные расовые Черты констант: имя → запись расы. */
+/**
+ * Уникальные расовые Черты констант: имя → запись расы/субрасы.
+ *
+ * Субрасы обязаны участвовать наравне с расами: у них свои Черты
+ * (Pariah/Дискордант — целиком, Daemonic/Machine у друкхарийских — как
+ * добавка), и без них missingRaceTraits() не увидел бы дыру в паке.
+ */
 export function raceTraits() {
   const out = new Map();
-  for (const race of Object.values(RACES))
-    for (const t of race.traits || []) if (t?.name && !out.has(t.name)) out.set(t.name, t);
+  for (const def of [...Object.values(RACES), ...Object.values(SUBRACE_DATA)])
+    for (const t of def.traits || []) if (t?.name && !out.has(t.name)) out.set(t.name, t);
   return out;
 }
 

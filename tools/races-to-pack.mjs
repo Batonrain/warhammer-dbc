@@ -80,8 +80,9 @@ const blankEntry = id => ({
 export function traitEntries(def) {
   return (def?.traits || []).flatMap((t, i) => {
     const doc = libraryTrait(t.name);
-    // Задача 3 гарантирует, что пара найдётся; пустой возврат — страховка.
-    if (!doc) return [];
+    // Пары нет — сборка обязана упасть, а не тихо выдать расу без этой Черты:
+    // молча пустая ссылка означала бы обнулённый бонус, замеченный только в игре.
+    if (!doc) throw new Error(`Расовая Черта без пары в библиотеке Черт: «${t.name}» (${def.label})`);
     return [{
       ...blankEntry(stableId(`${def.label}:trait:${i}:${t.name}`)),
       sourceUuid: `Compendium.warhammer-dbc.traits.Item.${doc._id}`,
