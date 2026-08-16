@@ -68,3 +68,55 @@ describe("исходники книг", () => {
     expect(existsSync(abs(`${SRC_ROOT}/books/${book.slug}.json`))).toBe(true);
   });
 });
+
+// CI гоняет круговорот сборка → извлечение и падает при расхождении, поэтому
+// исходники обязаны быть байт-в-байт тем, что пишут инструменты. Дважды
+// расходились молча: файл, положенный руками или скриптом, оставался без
+// концевого перевода строки (`extractPack` в CLI пишет `JSON.stringify(...) + "\n"`,
+// его же теперь пишут книги в tools/unpack.mjs), а имя файла не совпадало с тем,
+// как его назвал бы `transformName` — тогда извлечение удаляло старый файл и
+// заводило рядом такой же под своим именем.
+describe("формат исходников паков", () => {
+  /** Все JSON паков-библиотек: путь + содержимое. */
+  function sourceFiles() {
+    const out = [];
+    for (const pack of LIBRARY_PACKS) {
+      const dir = abs(pack.src);
+      if (!existsSync(dir)) continue;
+      for (const e of readdirSync(dir, { withFileTypes: true, recursive: true })) {
+        if (e.isDirectory() || !e.name.endsWith(".json")) continue;
+        const file = join(e.parentPath ?? e.path, e.name);
+        out.push({ pack: pack.name, file, name: e.name, text: readFileSync(file, "utf8") });
+      }
+    }
+    return out;
+  }
+
+  const FILES = sourceFiles();
+  // Правила имени — те же, что у tools/unpack.mjs: CLI оставляет в имени только
+  // буквы и цифры, а длину режет ради лимита пути Windows.
+  const safe = (name) => String(name).replace(/[^a-zA-Z0-9А-я]/g, "_");
+  const NAME_LIMIT = 40;
+
+  it("исходники вообще найдены", () => {
+    expect(FILES.length).toBeGreaterThan(1000);
+  });
+
+  it("каждый файл заканчивается ровно одним переводом строки", () => {
+    const broken = FILES
+      .filter(f => !f.text.endsWith("\n") || f.text.endsWith("\n\n"))
+      .map(f => f.file);
+    expect(broken).toEqual([]);
+  });
+
+  it("имя файла — то, которым его назовёт извлечение", () => {
+    const wrong = [];
+    for (const f of FILES) {
+      if (f.name === "_Folder.json") continue;
+      const doc = JSON.parse(f.text);
+      const expected = doc.name ? `${safe(doc.name).slice(0, NAME_LIMIT)}_${doc._id}.json` : `${doc._id}.json`;
+      if (f.name !== expected) wrong.push(`${f.name} → ожидалось ${expected}`);
+    }
+    expect(wrong).toEqual([]);
+  });
+});
