@@ -1,0 +1,32 @@
+{{!-- Лист Миньона: шапка своя (стр. 111-113), вкладки от персонажа.
+      Вкладок «СОЦИУМ» здесь нет: Миньоны не могут брать своих Миньонов, а
+      Фракции и Отношения слуге ведёт Хозяин. --}}
+<div class="warhammer-dbc character-sheet minion-sheet">
+  {{> "systems/warhammer-dbc/templates/actor/parts/minion-header.hbs"}}
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item {{#if (eq tab "stats")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="stats">ПОКАЗАТЕЛИ</a>
+    <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a>
+    <a class="item {{#if (eq tab "effects")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="effects">ТЕЛО</a>
+    <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a>
+    {{#if system.isPsyker}}
+    <a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">ПСИ</a>
+    {{/if}}
+    <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a>
+    <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a>
+    <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="notes">ЗАПИСИ</a>
+  </nav>
+
+  <div class="sheet-body">
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs"}}
+    {{#if system.isPsyker}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs"}}
+    {{/if}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs"}}
+  </div>
+</div>

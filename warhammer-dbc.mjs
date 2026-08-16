@@ -27,6 +27,7 @@ import { WarhammerStarSystemSheet }   from "./module/sheets/star-system-sheet.mj
 import { WarhammerHordeSheet }        from "./module/sheets/horde-sheet.mjs";
 import { WarhammerVehicleSheet }      from "./module/sheets/vehicle-sheet.mjs";
 import { WarhammerDaemonSheet }       from "./module/sheets/daemon-sheet.mjs";
+import { WarhammerMinionSheet }       from "./module/sheets/minion-sheet.mjs";
 import { WarhammerDemonPrinceSheet }  from "./module/sheets/demon-prince-sheet.mjs";
 import { WarhammerSquadSheet }        from "./module/sheets/squad-sheet.mjs";
 import { WarhammerFormationSheet }    from "./module/sheets/formation-sheet.mjs";
@@ -66,7 +67,8 @@ import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
 import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
-import { setSystemPackLocks }         from "./module/apps/pack-locks.mjs";
+import { setSystemPackLocks,
+         warnEmptySystemPacks }      from "./module/apps/pack-locks.mjs";
 import { importBooks }                from "./module/apps/books.mjs";
 import { registerHandlebarsHelpers }  from "./module/helpers/handlebars.mjs";
 import { registerHooks }              from "./module/hooks.mjs";
@@ -90,6 +92,7 @@ Hooks.once("init", () => {
   foundry.applications.handlebars.loadTemplates([
     // Актор
     "systems/warhammer-dbc/templates/actor/parts/header.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/minion-header.hbs",
     "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs",
     "systems/warhammer-dbc/templates/apps/nexus-card.hbs",
     "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs",
@@ -212,6 +215,11 @@ Hooks.once("init", () => {
   foundry.documents.collections.Actors.registerSheet("warhammer-dbc",
     WarhammerDaemonSheet, {
       types: ["daemon"], makeDefault: true, label: "Лист демона WH"
+    }
+  );
+  foundry.documents.collections.Actors.registerSheet("warhammer-dbc",
+    WarhammerMinionSheet, {
+      types: ["minion"], makeDefault: true, label: "Лист миньона WH"
     }
   );
   foundry.documents.collections.Actors.registerSheet("warhammer-dbc",
@@ -1167,6 +1175,9 @@ Hooks.on("applyActiveEffect", (targetDoc, change) => {
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
   await setSystemPackLocks(!_libsUnlocked());
+  // Пустой компендиум системы = база под него не собрана. Молча это выглядит
+  // как «контент забыли», поэтому ГМу говорится сразу и с командой починки.
+  warnEmptySystemPacks(game.packs);
   await migrateAllItemEffects();
 });
 

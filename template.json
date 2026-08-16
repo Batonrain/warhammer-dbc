@@ -9,7 +9,8 @@
       "daemon",
       "demonPrince",
       "squad",
-      "formation"
+      "formation",
+      "minion"
     ],
     "formation": {},
     "squad": {},
@@ -19,7 +20,8 @@
     "ship": {},
     "character": {},
     "daemon": {},
-    "demonPrince": {}
+    "demonPrince": {},
+    "minion": {}
   },
   "Item": {
     "types": [

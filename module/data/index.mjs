@@ -47,6 +47,7 @@ import { SmallCraftData }     from "./item/small-craft.mjs";
 import { RitualData }         from "./item/ritual.mjs";
 import { FactionData }        from "./item/faction.mjs";
 
+import { MinionData }        from "./actor/minion.mjs";
 import { DaemonData }      from "./actor/daemon.mjs";
 import { DemonPrinceData } from "./actor/demon-prince.mjs";
 import { HordeData }       from "./actor/horde.mjs";
@@ -111,6 +112,8 @@ export const ITEM_DATA_MODELS = {
 export const ACTOR_DATA_MODELS = {
   // Простые акторы (wdbc-ff4.1.7)
   daemon:      DaemonData,
+  // Миньон — слуга по Таланту (корбук стр. 111-113)
+  minion:      MinionData,
   demonPrince: DemonPrinceData,
   horde:       HordeData,
   vehicle:     VehicleData,

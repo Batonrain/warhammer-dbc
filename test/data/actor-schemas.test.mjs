@@ -34,7 +34,11 @@ const PACKS = {
   formation:   null,
   ship:        null,
   starSystem:  null,
-  character:   "bestiary"
+  character:   "bestiary",
+  // Миньон (стр. 111-113) заведён уже после отказа от template.json: снимка
+  // прежних умолчаний у него нет и быть не может. Вместо сверки со снимком у
+  // него своя проверка ниже — состав полей относительно общей схемы существа.
+  minion:      null
 };
 
 // Миньоны (стр. 111-113) — поля заведены уже после того, как template.json
@@ -126,7 +130,7 @@ describe("типы данных акторов", () => {
     describe(type, () => {
       const Model = ACTOR_DATA_MODELS[type];
 
-      it("пустой актор получает умолчания прежнего template.json", () => {
+      it.skipIf(!LEGACY[type])("пустой актор получает умолчания прежнего template.json", () => {
         expect(new Model({}).toObject()).toEqual(withDeviations(LEGACY[type], DEVIATIONS[type]));
       });
 
@@ -147,6 +151,38 @@ describe("типы данных акторов", () => {
       });
     });
   }
+
+  // Миньон — существо с общей механикой плюс три своих поля. Проверяем не
+  // снимок (его нет), а что схема не разошлась с общей: слуга кидает те же
+  // Характеристики и Навыки, носит то же снаряжение, и лист персонажа
+  // показывает его вкладками персонажа.
+  describe("minion", () => {
+    const minion = new ACTOR_DATA_MODELS.minion({}).toObject();
+    const daemon = new ACTOR_DATA_MODELS.daemon({}).toObject();
+
+    it("берёт всю общую схему существа", () => {
+      // У Демона свои поля сверх общих — сравниваем в одну сторону: всё, что
+      // есть у существа, должно быть и у Миньона.
+      const daemonOwn = ["allegiance", "rank", "form", "instabilityRating",
+                         "trueName", "trueNameKnown", "portfolio", "isDaemon"];
+      const missing = Object.keys(daemon)
+        .filter(key => !daemonOwn.includes(key) && !(key in minion));
+      expect(missing).toEqual([]);
+    });
+
+    it("добавляет своё: признак, Талант-слот и Магнитуду Орды", () => {
+      expect(minion.isMinion).toBe(true);
+      expect(minion.slotTalentId).toBe("");
+      expect(minion.magnitude).toEqual({ value: 0, max: 0 });
+    });
+
+    it("привязка к Хозяину и Лояльность — те же поля, что у существа", () => {
+      expect(minion.masterUuid).toBe("");
+      expect(minion.minionType).toBe("");
+      expect(minion.minionTier).toBe("");
+      expect(minion.loyalty).toEqual({ value: 0, max: 0 });
+    });
+  });
 
   describe("разовые переезды", () => {
     it("ростер экипажа техники переезжает из crew в stations", () => {
