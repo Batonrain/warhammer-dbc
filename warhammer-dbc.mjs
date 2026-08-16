@@ -92,6 +92,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs",

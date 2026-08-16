@@ -29,7 +29,7 @@
           <input type="number" name="system.instabilityRating" value="{{daemon.instability}}" min="0"/>
         </label>
       </div>
-      {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
+      {{!-- Фракции переехали на вкладку СОЦИУМ: там карточка с аватаром, описанием и переходом на предмет. --}}
     </div>
     <div class="daemon-vitals">
       <div class="daemon-vrow"><span>Раны</span><b>{{system.wounds.value}}/{{system.wounds.max}}</b></div>
@@ -65,7 +65,7 @@
   <nav class="sheet-tabs tabs" data-group="primary">
     <a class="item {{#if (eq tab "stats")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="stats">ПОКАЗАТЕЛИ</a>
     <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a>
-    <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a>
+    <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a> <a class="item {{#if (eq tab "social")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="social">СОЦИУМ</a>
     {{#if daemon.showPsy}}<a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">ПСИ</a>{{/if}}
     <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a>
     <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a>
@@ -76,6 +76,7 @@
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs"}}
     {{#if daemon.showPsy}}{{> "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs"}}{{/if}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}

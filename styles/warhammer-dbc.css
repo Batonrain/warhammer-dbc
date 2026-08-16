@@ -7,6 +7,7 @@
 @import url("base/common.css");
 
 @import url("sheets/actor-header.css");
+@import url("sheets/actor-social.css");
 @import url("sheets/actor-stats.css");
 @import url("sheets/actor-combat.css");
 @import url("sheets/actor-combat-cog.css");

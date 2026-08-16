@@ -99,6 +99,7 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
         { id: "combat",     label: "БОЙ" },
         { id: "effects",    label: "ТЕЛО" },
         { id: "abilities",  label: "СПОСОБНОСТИ" },
+        { id: "social",     label: "СОЦИУМ" },
         { id: "psy",        label: "ПСИ" },
         { id: "gear",       label: "СНАРЯЖЕНИЕ" },
         { id: "advance",    label: "РАЗВИТИЕ" },

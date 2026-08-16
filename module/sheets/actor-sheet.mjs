@@ -27,6 +27,7 @@ import { activateTechListeners, activateTechMiracle, techGenResource } from "./t
 import { activateGearListeners } from "./tabs/gear.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { minionsContext, activateMinionListeners } from "../apps/minions.mjs";
+import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
@@ -290,6 +291,7 @@ export class WarhammerCharacterSheet
         { id: "possession",  label: "ОДЕРЖИМОСТЬ" },
         { id: "haemonculus", label: "ГЕМУНКУЛ" },
         { id: "abilities",   label: "СПОСОБНОСТИ" },
+        { id: "social",      label: "СОЦИУМ" },
         { id: "psy",         label: "ПСИ" },
         { id: "tech",        label: "ТЕХ" },
         { id: "nav",         label: "НАВ" },
@@ -342,6 +344,11 @@ export class WarhammerCharacterSheet
     // и Принца Демонов. Список акторов мира передаём сюда — сам расчёт про
     // game ничего не знает и проверяется без Foundry.
     Object.assign(context, minionsContext(this.actor, [...(game.actors ?? [])]));
+
+    // Вкладка СОЦИУМ: Навыки, Таланты, Особенности, Модификаторы, Назначения,
+    // Фракции, Миньоны и Отношения. Назначения ищутся по миру — привязка живёт
+    // у той стороны, к которой персонажа прицепили, а не у него самого.
+    Object.assign(context, socialContext(this.actor, [...(game.actors ?? [])]));
 
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
     context.combatStanceCollapsed = !!this._combatCollapse?.stance;
@@ -762,6 +769,9 @@ export class WarhammerCharacterSheet
     // Панель на вкладке ЗАПИСИ; листы Демона и Принца Демонов получают её
     // вместе с этой отрисовкой — они наследуют лист персонажа.
     activateMinionListeners(html, this.actor);
+
+    // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
+    activateSocialListeners(html, this.actor, { editable: this.isEditable });
 
     // ── Ритуалы (стр. 393-425) ─────────────────────────────────────────────
     activateRitualListeners(html, this.actor);

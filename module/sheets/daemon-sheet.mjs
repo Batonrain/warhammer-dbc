@@ -49,6 +49,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
         { id: "stats",      label: "ПОКАЗАТЕЛИ" },
         { id: "combat",     label: "БОЙ" },
         { id: "abilities",  label: "СПОСОБНОСТИ" },
+        { id: "social",     label: "СОЦИУМ" },
         { id: "psy",        label: "ПСИ" },
         { id: "gear",       label: "СНАРЯЖЕНИЕ" },
         { id: "advance",    label: "РАЗВИТИЕ" },

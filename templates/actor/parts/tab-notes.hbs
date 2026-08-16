@@ -119,28 +119,9 @@
   </div>
   {{/if}}
 
-  {{#if canHaveMinions}}
-  <div class="notes-section-panel">
-    <div class="panel-title">МОИ МИНЬОНЫ</div>
-    {{#if myMinions.length}}
-    <table class="items-table">
-      <thead><tr><th>Имя</th><th class="col-narrow">Тип</th><th class="col-narrow">Уровень</th><th class="col-narrow">Лояльность</th></tr></thead>
-      <tbody>
-        {{#each myMinions as |m|}}
-        <tr class="item-row">
-          <td class="item-name-cell minion-open-link" data-uuid="{{m.uuid}}" title="Открыть лист">{{m.name}}</td>
-          <td class="godgift-god">{{m.typeLabel}}</td>
-          <td class="godgift-god">{{m.tierLabel}}</td>
-          <td class="godgift-god">{{m.loyaltyValue}}/{{m.loyaltyMax}}</td>
-        </tr>
-        {{/each}}
-      </tbody>
-    </table>
-    {{else}}
-    <div class="gene-seed-hint">Миньонов нет. Привязка заводится на листе самого миньона — там выбирается Хозяин.</div>
-    {{/if}}
-  </div>
-  {{/if}}
+  {{!-- Перечень миньонов переехал на вкладку СОЦИУМ: он там рядом с
+        Назначениями и Отношениями, а здесь дублировал бы их. Панель «МИНЬОН»
+        выше осталась — она о том, что этот актор сам чей-то миньон. --}}
 
   <div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <textarea name="system.notes" class="notes-textarea" placeholder="Записи...">{{system.notes}}</textarea> </div>
   <div class="notes-section-panel"> <div class="panel-title">СТАТУС</div>
