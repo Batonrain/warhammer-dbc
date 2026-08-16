@@ -1,7 +1,7 @@
 import { IMPROVEMENT_BONUS, SKILL_RANKS } from "../constants/characteristics.mjs";
 import { HAEM_STAGES, isHaemonculus } from "../constants/haemonculus.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }   from "../constants/skills.mjs";
-import { _calcMaxCarry }                   from "../helpers/utils.mjs";
+import { carryRow }                        from "../helpers/utils.mjs";
 import { getArmorModEffects, armorModApForLocation, armorAgilityCap } from "../combat/armor-mods.mjs";
 import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
@@ -1139,23 +1139,22 @@ export class WarhammerActor extends Actor {
     // Феодальный мир, «Житие тяжкое»: +1 к S.b именно для грузоподъёмности.
     const hwCarry = HOMEWORLD_BY_KEY[this.items.find(i => i.type === "homeworld")?.system?.key]?.carryBonus || 0;
     // ── Ношение/Подъём/Толкание (стр. 27) ───────────────────────────────────
-    // Таблица _calcMaxCarry(idx) даёт Ношение; Подъём и Толкание — та же
-    // таблица со сдвигом индекса на +1/+2 строки (подтверждено построчным
-    // сравнением с таблицей книги: Ношение(idx+1) === Подъём(idx), и т.д.).
-    // indexBonus.all сдвигает БАЗОВЫЙ индекс — значит одинаково влияет на все
-    // три (за счёт того, что Подъём/Толкание уже определены через тот же
-    // базовый индекс), тогда как indexBonus.carry/.lift/.push бьёт только по
-    // своей категории поверх базы — так Конструктор («Механика», запись
-    // kind:"weight") реализует и «Общее», и точечные категории одним
-    // механизмом. indexBonus.* — обычные ХРАНИМЫЕ поля (см. template.json),
-    // безопасные целью для ActiveEffect в фазе "initial" (СТАВИТСЯ ДО этого
-    // расчёта, не после — в отличие от .carry/.lift/.push/.max, которые сами
-    // производные и берут "final").
+    // Все три числа берутся из ОДНОЙ строки таблицы Максимального Веса
+    // (helpers/utils.mjs, carryRow): у книги это три отдельных столбца, и
+    // прежний вывод Подъёма/Толкания сдвигом строки на +1/+2 совпадал с ней
+    // только у слабых персонажей.
+    // indexBonus.all сдвигает БАЗОВЫЙ индекс — значит влияет на все три сразу,
+    // тогда как indexBonus.carry/.lift/.push бьёт только по своей категории
+    // поверх базы: так Конструктор («Механика», запись kind:"weight")
+    // реализует и «Общее», и точечные категории одним механизмом.
+    // indexBonus.* — обычные ХРАНИМЫЕ поля, безопасные целью для ActiveEffect
+    // в фазе "initial" (СТАВИТСЯ ДО этого расчёта, не после — в отличие от
+    // .carry/.lift/.push/.max, которые сами производные и берут "final").
     const ib = system.encumbrance.indexBonus || {};
     const baseIdx = sb + tb + hwCarry + (ib.all || 0);
-    system.encumbrance.carry = _calcMaxCarry(baseIdx + (ib.carry || 0));
-    system.encumbrance.lift  = _calcMaxCarry(baseIdx + 1 + (ib.lift || 0));
-    system.encumbrance.push  = _calcMaxCarry(baseIdx + 2 + (ib.push || 0));
+    system.encumbrance.carry = carryRow(baseIdx + (ib.carry || 0)).carry;
+    system.encumbrance.lift  = carryRow(baseIdx + (ib.lift  || 0)).lift;
+    system.encumbrance.push  = carryRow(baseIdx + (ib.push  || 0)).push;
     system.encumbrance.max = system.encumbrance.carry;
     system.homeworldCarryBonus = hwCarry;
 
