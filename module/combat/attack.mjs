@@ -40,7 +40,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     gripKey:     opts.gripKey,
     gripProps2h: sys.gripProps2h || [],
     ammoProps:   loadedAmmo?.system?.properties || [],
-    condProps:   opts.ammoCondProps || []
+    condProps:   opts.ammoCondProps || [],
+    removeProps: loadedAmmo?.system?.removeProps || []
   });
 
   // ── Выключенное оружие (стр. 209-211) ────────────────────────────────────

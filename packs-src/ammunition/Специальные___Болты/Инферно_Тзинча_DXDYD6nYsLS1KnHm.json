@@ -21,7 +21,14 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Warp Weapon; убирает Tearing",
-    "properties": []
+    "properties": [
+      {
+        "key": "warpWeapon"
+      }
+    ],
+    "removeProps": [
+      "tearing"
+    ]
   },
   "_id": "DXDYD6nYsLS1KnHm",
   "effects": [],

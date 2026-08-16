@@ -295,6 +295,9 @@ const TYPES = {
       rarity: 0, quantity: 0, weight: 0, availability: 0, attackMod: 0,
       damageMod: 0, damageDiceMod: 0, damageTypeOverride: "", penetrationMod: 0,
       rangeMod: 0, rangeMultiplier: 1, special: "", properties: [], condMods: [],
+      // Свойства, которые боеприпас у оружия отнимает (Инферно Тзинча — Tearing):
+      // поля не было, и замена держалась на одном тексте «Особенностей».
+      removeProps: [],
       drukhari: false
     }
   },

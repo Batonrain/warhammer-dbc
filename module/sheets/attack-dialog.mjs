@@ -113,11 +113,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // ── Особые свойства оружия (+ модификации + боеприпас) ───────────────────
   const modFx       = getModEffects(actor, item);
-  const _entries    = mergeWeaponPropEntries(item, modFx);
+  let _entries      = mergeWeaponPropEntries(item, modFx);
   // Свойства заряженного боеприпаса (стр. 203) — чтобы порог и памятки в
   // диалоге совпадали с тем, что реально применит бросок.
   {
     const _ammo = sys.loadedAmmoId ? actor.items.get(sys.loadedAmmoId) : null;
+    // Боеприпас бывает и отнимает свойство (Инферно Тзинча гасит Tearing).
+    const _drop = new Set((_ammo?.system?.removeProps || []).map(k => String(k)));
+    if (_drop.size) _entries = _entries.filter(e => !_drop.has(e.key));
     for (const p of (_ammo?.system?.properties || [])) {
       const key = typeof p === "string" ? p : p.key;
       if (!key || _entries.some(x => x.key === key)) continue;

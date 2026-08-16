@@ -44,9 +44,13 @@ function propEntry(p) {
  *
  * Исходный список не изменяется.
  */
-export function mergeExtraProps(entries, { gripProps = [], gripKey = "", gripProps2h = [], ammoProps = [], condProps = [] } = {}) {
-  const result = entries.map(e => ({ ...e }));
-  const has    = key => result.some(x => x.key === key);
+export function mergeExtraProps(entries, { gripProps = [], gripKey = "", gripProps2h = [],
+                                           ammoProps = [], condProps = [], removeProps = [] } = {}) {
+  // Боеприпас может и отнимать свойство (Инферно Тзинча гасит Tearing).
+  // Снимаем до долива: своё свойство боеприпаса важнее того, что он погасил.
+  const dropped = new Set(removeProps.map(k => String(k)));
+  const result  = entries.filter(e => !dropped.has(e.key)).map(e => ({ ...e }));
+  const has     = key => result.some(x => x.key === key);
 
   // Хват может добавлять свойства (Бл → Precise, Хв → Cheap Shot; стр. 39).
   for (const key of gripProps) if (!has(key)) result.push({ key, rating: 0, rating2: 0 });

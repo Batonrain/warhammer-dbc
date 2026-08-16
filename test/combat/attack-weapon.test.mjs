@@ -68,6 +68,29 @@ describe("mergeExtraProps", () => {
     expect(entries.find(e => e.key === "blast").rating).toBe("1d5");
   });
 
+  // Боеприпас бывает и отнимает свойство: Инферно Тзинча гасит Tearing,
+  // дробовичная Пуля — Scatter, Пена — Flame (стр. 203).
+  it("боеприпас снимает у оружия названные свойства", () => {
+    const entries = mergeExtraProps(
+      [{ key: "tearing", rating: 0, rating2: 0 }, { key: "reliable", rating: 0, rating2: 0 }],
+      { removeProps: ["tearing"] }
+    );
+    expect(entries.map(e => e.key)).toEqual(["reliable"]);
+  });
+
+  it("снятое свойство возвращается, если сам боеприпас его даёт", () => {
+    const entries = mergeExtraProps(
+      [{ key: "tearing", rating: 0, rating2: 0 }],
+      { removeProps: ["tearing"], ammoProps: [{ key: "tearing", rating: 2 }] }
+    );
+    expect(entries.find(e => e.key === "tearing").rating).toBe(2);
+  });
+
+  it("чего у оружия нет, того снятие не трогает", () => {
+    const entries = mergeExtraProps([{ key: "balanced", rating: 0, rating2: 0 }], { removeProps: ["tearing"] });
+    expect(entries.map(e => e.key)).toEqual(["balanced"]);
+  });
+
   it("условные свойства боеприпаса, отмеченные игроком, доливаются как обычные", () => {
     const entries = mergeExtraProps([], { condProps: ["razorSharp"] });
     expect(entries).toEqual([{ key: "razorSharp", rating: 0, rating2: 0 }]);
