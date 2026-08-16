@@ -577,6 +577,38 @@ async function resolveMechSource(entry) {
   return hit ? pack.getDocument(hit._id) : null;
 }
 
+/**
+ * Черта-шаблон «(X)» несёт эффект, равный своему рейтингу — так заведён пак
+ * (проверено на всех шести параметрических Чертах с эффектами). Выдача с другим
+ * рейтингом обязана двигать и эффект: иначе рейтинг остаётся только в тексте, а
+ * «Сверхъест. Сила (4)» даёт +1, как шаблонная единица.
+ *
+ * Меняются ТОЛЬКО числа, равные рейтингу шаблона. Всё прочее к рейтингу
+ * отношения не имеет: у «Машины (3)» броня равна рейтингу, а порог теста — нет.
+ *
+ * @param {object} data   копия документа Черты (src.toObject()), правится на месте
+ * @param {number|string} rating  рейтинг выдачи
+ * @returns {object} тот же data — для сцепления с вызовом
+ */
+export function rescaleTraitByRating(data, rating) {
+  const base = Number(data?.system?.rating) || 0;
+  const next = Number(rating) || 0;
+  if (!base || !next || base === next) return data;
+  const swap = v => (Number(v) === base ? next : v);
+
+  for (const eff of data.effects || [])
+    for (const ch of (eff.system?.changes || eff.changes || [])) ch.value = swap(ch.value);
+
+  const e = data.system.effects;
+  if (e) {
+    for (const k of ["charBonusValue", "armourAll", "fearRating", "sizeMod", "initMod", "speedMod"])
+      if (Number(e[k])) e[k] = swap(e[k]);
+    for (const cb of [...(e.charBonuses || []), ...(e.charValueBonuses || [])])
+      if (cb) cb.value = swap(cb.value);
+  }
+  return data;
+}
+
 // ── Слаженность отряда (kind:"cohesion") ─────────────────────────────────
 
 /** Роль актора в КОНКРЕТНОМ отряде: пост важнее простого членства. null — не состоит вовсе. */
@@ -834,6 +866,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     delete data._id;
     if (entry.kind === "trait") {
       if (entry.rating !== "" && entry.rating != null && data.system) {
+        rescaleTraitByRating(data, entry.rating);   // пока system.rating — рейтинг шаблона
         data.system.hasRating = true;
         data.system.rating = Number(entry.rating) || 0;
       }
