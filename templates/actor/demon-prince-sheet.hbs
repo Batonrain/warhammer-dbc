@@ -83,6 +83,7 @@
   <nav class="sheet-tabs tabs" data-group="primary">
     <a class="item {{#if (eq tab "stats")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="stats">ПОКАЗАТЕЛИ</a>
     <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a>
+    <a class="item {{#if (eq tab "effects")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="effects">ТЕЛО</a>
     <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a>
     {{#if dp.showPsy}}<a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">ПСИ</a>{{/if}}
     <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a>
@@ -94,6 +95,7 @@
   <div class="sheet-body">
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs"}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs"}}
     {{#if dp.showPsy}}{{> "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs"}}{{/if}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs"}}

@@ -85,13 +85,16 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
     }
   };
 
-  // Вместо Тела/Одержимости/Гемункула — своя вкладка АПОФЕОЗ с реестром Даров.
+  // Вместо Одержимости/Гемункула — своя вкладка АПОФЕОЗ с реестром Даров.
+  // «ТЕЛО» у Принца общее с Персонажем: голо-скан фигуры, Хирургикон, дары и
+  // мутации — всё это у него есть, и своей вкладки для них не заводилось.
   static TABS = {
     primary: {
       initial: "stats",
       tabs: [
         { id: "stats",      label: "ПОКАЗАТЕЛИ" },
         { id: "combat",     label: "БОЙ" },
+        { id: "effects",    label: "ТЕЛО" },
         { id: "abilities",  label: "СПОСОБНОСТИ" },
         { id: "psy",        label: "ПСИ" },
         { id: "gear",       label: "СНАРЯЖЕНИЕ" },
