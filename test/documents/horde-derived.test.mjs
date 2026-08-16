@@ -12,7 +12,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import { WarhammerActor } from "../../module/documents/actor.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
-import { SKILLS_DEF } from "../../module/constants/skills.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../module/constants/skills.mjs";
 
 /** Орда со схемой по умолчанию: расчёт листа без живого документа Foundry. */
 function hordeWith(patch = {}, itemList = []) {
@@ -52,6 +52,34 @@ describe("Навыки Орды", () => {
   it("в схеме есть все навыки, а не выборочные", () => {
     const system = hordeWith();
     expect(Object.keys(system.skills).sort()).toEqual(Object.keys(SKILLS_DEF).sort());
+  });
+});
+
+// ── Групповые навыки ─────────────────────────────────────────────────────────
+// Управление, Навигация, Знания, Лингвистика, Ремесло: у толпы они такие же,
+// как у одиночки, — записями со специализацией.
+describe("Групповые навыки Орды", () => {
+  it("значение записи = характеристика группы + надбавка ранга", () => {
+    const system = hordeWith({
+      characteristics: { int: { base: 30, advance: 0 } },
+      groupSkills: { commonLore: [{ specialty: "Империум", rank: "trained" }] }
+    });
+    expect(system.groupSkills.commonLore[0].total).toBe(30 + 10);
+  });
+
+  it("своя характеристика записи важнее характеристики группы", () => {
+    const system = hordeWith({
+      characteristics: { int: { base: 30 }, s: { base: 50 } },
+      // Ремесло разрешает выбрать характеристику каждой специализации.
+      groupSkills: { trade: [{ specialty: "Кузнец", rank: "knows", char: "s" }] }
+    });
+    expect(system.groupSkills.trade[0].total).toBe(50 + 0);
+  });
+
+  it("в схеме заведены все группы, пустыми списками", () => {
+    const system = hordeWith();
+    expect(Object.keys(system.groupSkills).sort()).toEqual(Object.keys(GROUP_SKILLS_DEF).sort());
+    expect(Object.values(system.groupSkills).every(v => Array.isArray(v) && !v.length)).toBe(true);
   });
 });
 

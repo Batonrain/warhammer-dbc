@@ -6,13 +6,14 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
-import { SKILLS_DEF } from "../../constants/skills.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 
 export class HordeData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, SchemaField } = foundry.data.fields;
+    const { StringField, BooleanField, NumberField, SchemaField,
+            ArrayField, ObjectField } = foundry.data.fields;
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str = label => new StringField({ initial: "", label });
 
@@ -40,12 +41,21 @@ export class HordeData extends foundry.abstract.TypeDataModel {
       }, { label: def.label });
     }
 
+    // Групповые навыки (Управление, Навигация, Знания, Лингвистика, Ремесло) —
+    // список записей со специализацией: «Управление (Наземный транспорт)».
+    // Толпе они нужны так же, как одиночке: орда рабов знает своё ремесло, а
+    // орда culтистов — свои запретные знания.
+    const groupSkillFields = {};
+    for (const [key, def] of Object.entries(GROUP_SKILLS_DEF))
+      groupSkillFields[key] = new ArrayField(new ObjectField(), { label: def.label });
+
     return {
       speciesName: str("Вид"),
       faction:     str("Фракция"),
       descriptor:  str("Описание"),
       characteristics: new SchemaField(charFields, { label: "Характеристики" }),
       skills:          new SchemaField(skillFields, { label: "Навыки" }),
+      groupSkills:     new SchemaField(groupSkillFields, { label: "Групповые навыки" }),
       magnitude: new SchemaField({
         value: num(0, "Текущая"), start: num(0, "Начальная")
       }, { label: "Численность" }),

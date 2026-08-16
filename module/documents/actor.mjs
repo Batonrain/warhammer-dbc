@@ -481,6 +481,18 @@ export class WarhammerActor extends Actor {
       sk.total = charVal + (SKILL_RANKS[sk.rank]?.bonus ?? -20);
     }
 
+    // Групповые навыки — те же правила, но характеристику может задавать сама
+    // запись (у Ремесла она своя у каждой специализации).
+    for (const [groupKey, entries] of Object.entries(system.groupSkills || {})) {
+      if (!Array.isArray(entries)) continue;
+      const def = GROUP_SKILLS_DEF[groupKey];
+      for (const entry of entries) {
+        const charKey = entry.char || def?.char;
+        const charVal = charKey ? (system.characteristics?.[charKey]?.total ?? 0) : 0;
+        entry.total = charVal + (SKILL_RANKS[entry.rank]?.bonus ?? -20);
+      }
+    }
+
     const mag   = system.magnitude || (system.magnitude = { value: 0, start: 0 });
     const value = Math.max(0, Number(mag.value) || 0);
     const start = Math.max(0, Number(mag.start) || 0);

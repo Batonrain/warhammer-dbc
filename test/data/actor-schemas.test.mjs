@@ -18,7 +18,7 @@ import path from "node:path";
 
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 import { CHARACTERISTICS }   from "../../module/constants/characteristics.mjs";
-import { SKILLS_DEF }        from "../../module/constants/skills.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../module/constants/skills.mjs";
 import { packDocuments, leaves, isEmpty } from "../support/pack-docs.mjs";
 
 const LEGACY = JSON.parse(fs.readFileSync(
@@ -80,6 +80,12 @@ const DEVIATIONS = {
   // заново, и эффект поверх него не поднимал ни Бонус, ни навыки (wdbc-5wm).
   ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type, {
     ...MINION_FIELDS,
+    // Три слота Стремлений. Раньше писались прямо в `aspirations`, но то поле
+    // объявлено объектом (там Фактор Прибыли), и массив схема отбрасывала —
+    // выбор не сохранялся вовсе. Теперь у слотов своё поле.
+    "aspirations.slots": [],
+    // Отношения (вкладка СОЦИУМ): к кому этот актор как относится.
+    relations: [],
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

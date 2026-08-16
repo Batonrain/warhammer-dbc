@@ -6,6 +6,8 @@
 // контекст. Само окно смотрится руками в Foundry, тест этого не заменяет.
 
 import { describe, it, expect, beforeEach } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
 import { WarhammerHordeSheet } from "../../module/sheets/horde-sheet.mjs";
@@ -38,6 +40,19 @@ beforeEach(() => { globalThis.game.user.isGM = true; });
 describeV2Sheet(WarhammerHordeSheet, {
   sheet: "module/sheets/horde-sheet.mjs",
   template: "templates/actor/horde-sheet.hbs"
+});
+
+// Блочный параметр цикла (`as |sk|`) лексический, и `../` к нему не применяется:
+// с `../sk.rank` выбранный ранг терялся и КАЖДЫЙ навык показывался
+// Нетренированным, хотя значение рядом стояло верное.
+describe("селект ранга навыка", () => {
+  const template = fs.readFileSync(
+    path.resolve(import.meta.dirname, "../../templates/actor/horde-sheet.hbs"), "utf8");
+
+  it("сравнивает вариант с рангом самого навыка", () => {
+    expect(template).toContain("(eq r.key sk.rank)");
+    expect(template).not.toContain("../sk.rank");
+  });
 });
 
 // ── Контекст ─────────────────────────────────────────────────────────────────

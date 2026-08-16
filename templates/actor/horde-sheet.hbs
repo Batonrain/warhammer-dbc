@@ -158,13 +158,50 @@
           <button type="button" class="horde-skill-name" data-action="rollSkill" data-skill="{{sk.key}}"
                   data-tooltip="Бросок: {{sk.label}}">{{sk.label}}</button>
           <select name="system.skills.{{sk.key}}.rank" class="horde-skill-rank" data-tooltip="Ранг навыка">
+            {{!-- sk — блочный параметр внешнего цикла: он лексический, и путь
+                  «на уровень выше» к нему не применяется. С таким путём ранг
+                  терялся, и любой навык показывался Нетренированным. --}}
             {{#each ../skillRanks as |r|}}
-            <option value="{{r.key}}" {{#if (eq r.key ../sk.rank)}}selected{{/if}}>{{r.label}}</option>
+            <option value="{{r.key}}" {{#if (eq r.key sk.rank)}}selected{{/if}}>{{r.label}}</option>
             {{/each}}
           </select>
           <span class="horde-skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span>
         </div>
         {{/each}}
+      </div>
+    </section>
+
+    {{!-- Групповые навыки: Управление, Навигация, Знания, Лингвистика, Ремесло --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">ГРУППОВЫЕ НАВЫКИ <span class="dim">— со специализацией</span></div>
+      {{#if groupSkills.length}}
+      <div class="horde-skills">
+        {{#each groupSkills as |g|}}
+        <div class="horde-skill horde-gskill">
+          <button type="button" class="horde-skill-name" data-action="rollGroupSkill"
+                  data-group="{{g.groupKey}}" data-index="{{g.idx}}"
+                  data-tooltip="Бросок: {{g.groupLabel}}{{#if g.specialty}} ({{g.specialty}}){{/if}}">{{g.groupLabel}}</button>
+          <input type="text" class="horde-gskill-spec" data-gskill-field="specialty"
+                 data-group="{{g.groupKey}}" data-index="{{g.idx}}" value="{{g.specialty}}"
+                 placeholder="Специализация"/>
+          <select class="horde-skill-rank" data-gskill-field="rank"
+                  data-group="{{g.groupKey}}" data-index="{{g.idx}}" data-tooltip="Ранг навыка">
+            {{#each ../skillRanks as |r|}}
+            <option value="{{r.key}}" {{#if (eq r.key g.rank)}}selected{{/if}}>{{r.label}}</option>
+            {{/each}}
+          </select>
+          <span class="horde-skill-total {{#if (lt g.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{g.total}}</span>
+          <button type="button" class="hbtn hbtn-del" data-action="groupRemove"
+                  data-group="{{g.groupKey}}" data-index="{{g.idx}}" data-tooltip="Убрать"><span class="hi hi-x"></span></button>
+        </div>
+        {{/each}}
+      </div>
+      {{else}}<div class="horde-empty">Групповых навыков нет.</div>{{/if}}
+      <div class="horde-gskill-add">
+        <select class="horde-gskill-group" data-tooltip="Какую группу добавить">
+          {{#each groupSkillDefs as |d|}}<option value="{{d.key}}">{{d.label}}</option>{{/each}}
+        </select>
+        <button type="button" class="horde-add" data-action="groupAdd" title="Добавить специализацию">＋</button>
       </div>
     </section>
 

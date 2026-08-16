@@ -3,7 +3,7 @@
 // Магнитуда вместо Ран, Размер по Магнитуде, психологический урон, состояние.
 
 import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
-import { SKILLS_DEF } from "../constants/skills.mjs";
+import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES } from "../constants/items.mjs";
 import { HIT_LOCATIONS } from "../constants/combat.mjs";
 import { resolveCharFormula, _degWord, esc } from "../helpers/utils.mjs";
@@ -76,6 +76,17 @@ function hordeThreshold(form) {
 
 function onRollChar(event, target)  { return this._rollChar(target.dataset.char); }
 function onRollSkill(event, target) { return this._rollSkill(target.dataset.skill); }
+function onRollGroupSkill(event, target) {
+  return this._rollGroupSkill(target.dataset.group, Number(target.dataset.index));
+}
+function onGroupAdd(event, target) {
+  const group = target.closest(".horde-gskill-add")?.querySelector("select")?.value
+             || target.dataset.group;
+  return this._groupSkillAdd(group);
+}
+function onGroupRemove(event, target) {
+  return this._groupSkillRemove(target.dataset.group, Number(target.dataset.index));
+}
 function onItemCreate(event, target){ return this._createItem(target.dataset.type); }
 function onItemEdit(event, target)  { this.actor.items.get(target.dataset.itemId)?.sheet.render(true); }
 function onItemDelete(event, target){ return this._deleteItem(target.dataset.itemId); }
@@ -105,6 +116,9 @@ export class WarhammerHordeSheet
       mag:        whenEditable(onMag),
       rollChar:   whenEditable(onRollChar),
       rollSkill:  whenEditable(onRollSkill),
+      rollGroupSkill: whenEditable(onRollGroupSkill),
+      groupAdd:       whenEditable(onGroupAdd),
+      groupRemove:    whenEditable(onGroupRemove),
       itemCreate: whenEditable(onItemCreate),
       itemEdit:   whenEditable(onItemEdit),
       itemDelete: whenEditable(onItemDelete),
@@ -168,6 +182,19 @@ export class WarhammerHordeSheet
     context.skillRanks = Object.entries(SKILL_RANKS)
       .map(([key, def]) => ({ key, label: def.label, bonus: def.bonus }));
 
+    // Групповые навыки: записи со специализацией. Строкой идут все заведённые,
+    // а список групп нужен кнопке «добавить».
+    context.groupSkills = Object.entries(GROUP_SKILLS_DEF).flatMap(([groupKey, def]) =>
+      (system.groupSkills?.[groupKey] ?? []).map((entry, idx) => ({
+        groupKey, idx,
+        groupLabel: def.label,
+        specialty:  entry.specialty || "",
+        rank:       entry.rank || "untrained",
+        total:      entry.total ?? -20
+      })));
+    context.groupSkillDefs = Object.entries(GROUP_SKILLS_DEF)
+      .map(([key, def]) => ({ key, label: def.label }));
+
     context.d = system.derived || {};
     context.weapons = this.actor.items.filter(i => i.type === "weapon")
       .map(i => ({ id: i.id, name: i.name, img: i.img, sys: i.system }));
@@ -194,6 +221,14 @@ export class WarhammerHordeSheet
     const el = this.element;
     if (!el) return;
     activateFactionFieldListeners(el, this.actor);
+
+    // Поля записей групповых навыков: у них нет `name`, потому что запись
+    // лежит в массиве — форма сложила бы её в объект с числовыми ключами, и
+    // схема такой массив не приняла бы. Пишем сами.
+    if (this.isEditable) el.querySelectorAll("[data-gskill-field]").forEach(node =>
+      node.addEventListener("change", ev => this._groupSkillSet(
+        node.dataset.group, Number(node.dataset.index),
+        node.dataset.gskillField, ev.currentTarget.value)));
 
     // Перетаскивание предметов на лист: у ApplicationV2 своей привязки нет, а
     // без неё на Орду нельзя было положить ни броню, ни оружие из компендиума —
@@ -253,6 +288,45 @@ export class WarhammerHordeSheet
       threshold: this.actor.system.skills?.[key]?.total ?? -20,
       prefix:    "Навык"
     });
+  }
+
+  /** Тест группового Навыка: «Управление (Наземный транспорт)». */
+  async _rollGroupSkill(group, idx) {
+    const entry = this.actor.system.groupSkills?.[group]?.[idx];
+    if (!entry) return;
+    const def = GROUP_SKILLS_DEF[group];
+    return this._rollTest({
+      label:     `${def?.label || group}${entry.specialty ? ` (${entry.specialty})` : ""}`,
+      threshold: entry.total ?? -20,
+      prefix:    "Навык"
+    });
+  }
+
+  /** Записи группы правятся целиком: массив в схеме — один объект. */
+  async _writeGroup(group, entries) {
+    return this.actor.update({ [`system.groupSkills.${group}`]: entries });
+  }
+
+  async _groupSkillAdd(group) {
+    if (!GROUP_SKILLS_DEF[group]) return;
+    const entries = foundry.utils.deepClone(this.actor.system.groupSkills?.[group] ?? []);
+    entries.push({ specialty: "", rank: "untrained", total: -20 });
+    return this._writeGroup(group, entries);
+  }
+
+  async _groupSkillRemove(group, idx) {
+    const entries = foundry.utils.deepClone(this.actor.system.groupSkills?.[group] ?? []);
+    if (!entries[idx]) return;
+    entries.splice(idx, 1);
+    return this._writeGroup(group, entries);
+  }
+
+  /** Правка поля записи: специализация — текстом, ранг — списком. */
+  async _groupSkillSet(group, idx, field, value) {
+    const entries = foundry.utils.deepClone(this.actor.system.groupSkills?.[group] ?? []);
+    if (!entries[idx]) return;
+    entries[idx] = { ...entries[idx], [field]: value };
+    return this._writeGroup(group, entries);
   }
 
   /** Общая карточка теста d100 против порога. */
