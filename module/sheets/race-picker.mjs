@@ -11,6 +11,7 @@
 import { raceGroupList, subracesOf, raceDef } from "../apps/race-library.mjs";
 import { applyRace, applySubrace } from "../apps/races.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { disabledRaceKeys } from "../constants/features.mjs";
 
 const card = (key, name, meta) => `
   <button type="button" class="rp-item" data-key="${esc(key)}">
@@ -27,13 +28,23 @@ export async function openRacePicker(actor, { subrace = false } = {}) {
 
   let body;
   if (subrace) {
+    // Субрасы своей расы фильтровать по подсистеме отдельно не нужно: раса
+    // здесь всегда actor.system.race — она уже исключена из фильтра ниже как
+    // «уже стоящая у актора», а субрасы выключенной расы к ней и не привяжешь.
     const list = subracesOf(raceKey);
     if (!raceKey) return ui.notifications?.warn("Сначала выберите расу.");
     body = list.length
       ? `<div class="rp-list">${list.map(s => card(s.key, s.label, raceDef(raceKey)?.label)).join("")}</div>`
       : `<div class="rp-none">У расы «${esc(raceDef(raceKey)?.label || raceKey)}» субрас нет — впишите свою в поле под слотом.</div>`;
   } else {
-    body = raceGroupList().map(g => `
+    // Раса выключенной подсистемы (напр. «Книга Эльдар») из выбора убирается —
+    // кроме той, что уже стоит у актора: иначе выключатель ломал бы готового
+    // персонажа. То же правило, что у context.raceGroups (character-context.mjs).
+    const offRaces = disabledRaceKeys();
+    body = raceGroupList().map(g => ({
+      label: g.label,
+      races: g.races.filter(r => r.key === raceKey || !offRaces.includes(r.key))
+    })).filter(g => g.races.length).map(g => `
       <div class="rp-sec">${esc(g.label)}</div>
       <div class="rp-list">${g.races.map(r => card(r.key, r.label, g.label)).join("")}</div>`).join("");
   }

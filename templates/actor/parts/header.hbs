@@ -5,13 +5,15 @@
               <button type="button" class="wh-slot-btn" data-action="raceApply" title="Применить расу">Применить</button> {{/if}}
             <button type="button" class="wh-slot-btn" data-action="raceClear" title="Снять расу">✕</button> {{else}}
             <button type="button" class="wh-slot-add" data-action="racePick">+ перетащите или нажмите</button> {{/if}}
-          </div> </div> <div class="header-cell header-cell-subrace"> <label>Субраса</label> <div class="subrace-controls"> <div class="wh-slot{{#unless subraceSlot}} empty{{/unless}}" data-slot="subrace"> {{#if subraceSlot}}
+          </div> </div> <div class="header-cell header-cell-subrace"> <label>Субраса</label> <div class="subrace-controls"> {{#if hasSubraces}}
+            <div class="wh-slot{{#unless subraceSlot}} empty{{/unless}}" data-slot="subrace"> {{#if subraceSlot}}
               <img class="wh-slot-img" src="{{subraceSlot.img}}" alt=""/> <span class="wh-slot-name{{#unless subraceSlot.applied}} pending{{/unless}}">{{subraceSlot.name}}</span> {{#if subraceSlot.applied}}
-                <button type="button" class="wh-slot-btn" data-action="subraceOpen" title="Открыть лист субрасы">⤢</button> {{/if}}
+                <button type="button" class="wh-slot-btn" data-action="subraceOpen" title="Открыть лист субрасы">⤢</button> {{else}}
+                <button type="button" class="wh-slot-btn" data-action="subraceApply" title="Применить субрасу">Применить</button> {{/if}}
               <button type="button" class="wh-slot-btn" data-action="subraceClear" title="Снять субрасу">✕</button> {{else}}
               <button type="button" class="wh-slot-add" data-action="subracePick">+ перетащите или нажмите</button> {{/if}}
-            </div> {{#unless hasSubraces}}
-            <input type="text" name="system.subrace" value="{{system.subrace}}" placeholder="—"/> {{/unless}}
+            </div> {{else}}
+            <input type="text" name="system.subrace" value="{{system.subrace}}" placeholder="—"/> {{/if}}
           {{#if (eq system.subrace "navigator")}}
           <input type="text" name="system.navigatorHouse" value="{{system.navigatorHouse}}" placeholder="Дом Навигатора" title="Название дома Навис Нобилитэ"/> {{/if}}
           {{#if isYnnari}}

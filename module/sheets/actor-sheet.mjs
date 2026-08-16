@@ -249,9 +249,10 @@ function onYnnariApply()    { return applyYnnari(this.actor, { createTraits: (l,
 function onHarlequinApply() { return applyHarlequin(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 
 // ── Слоты Расы и Субрасы в шапке: пикер из библиотеки, открытие носителя,
-//    снятие. onRaceApply — единственный путь ручного переезда персонажей,
-//    созданных до этой работы: у них system.race заполнен, а предмета-
-//    носителя ещё нет (см. брифа задачи 7, уточнение 1).
+//    снятие. onRaceApply/onSubraceApply — единственный путь ручного переезда
+//    персонажей, созданных до этой работы: у них system.race/system.subrace
+//    заполнены, а предмета-носителя ещё нет (см. брифа задачи 7, уточнение 1;
+//    раунд правок 1, находка 2 — та же дыра была и у субрасы).
 function onRacePick()    { return openRacePicker(this.actor, { subrace: false }); }
 function onSubracePick() { return openRacePicker(this.actor, { subrace: true }); }
 function onRaceOpen()    { return actorRaceItem(this.actor)?.sheet?.render(true); }
@@ -259,6 +260,7 @@ function onSubraceOpen() { return actorSubraceItem(this.actor)?.sheet?.render(tr
 function onRaceClear()   { return clearRace(this.actor); }
 function onSubraceClear(){ return clearSubrace(this.actor); }
 function onRaceApply()   { return applyRace(this.actor, this.actor.system.race || ""); }
+function onSubraceApply(){ return applySubrace(this.actor, this.actor.system.subrace || ""); }
 
 export class WarhammerCharacterSheet
   extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
@@ -305,7 +307,8 @@ export class WarhammerCharacterSheet
       raceApply:    whenEditable(onRaceApply),
       subracePick:  whenEditable(onSubracePick),
       subraceOpen:  onSubraceOpen,
-      subraceClear: whenEditable(onSubraceClear)
+      subraceClear: whenEditable(onSubraceClear),
+      subraceApply: whenEditable(onSubraceApply)
     }
   };
 

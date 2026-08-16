@@ -12,9 +12,13 @@
 // а ApplicationV2 склеивает DEFAULT_OPTIONS по цепочке наследования сам.
 
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import "../support/foundry-stub.mjs";
 import { sheetOf, captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
+
+const readTemplate = p => fs.readFileSync(path.resolve(import.meta.dirname, "../..", p), "utf8");
 
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
 const { WarhammerDaemonSheet }    = await import("../../module/sheets/daemon-sheet.mjs");
@@ -46,8 +50,59 @@ describe("слоты Расы и Субрасы", () => {
 
     expect(actions).toEqual(expect.arrayContaining([
       "racePick", "raceOpen", "raceClear", "raceApply",
-      "subracePick", "subraceOpen", "subraceClear"
+      "subracePick", "subraceOpen", "subraceClear", "subraceApply"
     ]));
+  });
+
+  // Раунд правок 1 (wdbc-n1k), находка 2: состояние «ключ есть, носителя
+  // нет» было тупиком для субрасы — у расы такое же состояние чинится
+  // кнопкой «Применить» (raceApply), а у субрасы её не было вовсе.
+  it("subraceApply зовёт applySubrace ключом текущей субрасы", async () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {}, race: "azuriane", subrace: "eldanar"
+    });
+    sheet.isEditable = true;
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+
+    await WarhammerCharacterSheet.DEFAULT_OPTIONS.actions.subraceApply.call(sheet);
+
+    expect(updates.some(u => u["system.subrace"] === "eldanar")).toBe(true);
+  });
+
+  // Раунд правок 1, находка 3: для расы без субрас слот и свободный ввод
+  // сосуществовали и дублировали друг друга. Слот субрасы теперь рисуется
+  // только внутри {{#if hasSubraces}}, свободный ввод — только в {{else}}.
+  it("для расы без субрас слот субрасы не отрисовывается — только свободный ввод", () => {
+    const header = readTemplate("templates/actor/parts/header.hbs");
+    const start = header.indexOf("{{#if hasSubraces}}");
+    expect(start).toBeGreaterThan(-1);
+
+    // Внутри hasSubraces-блока есть свои вложенные {{#if}}/{{else}}/{{/if}}
+    // (applied/не applied у самого слота) — наивный «нежадный» regex цепляет
+    // ПЕРВЫЙ попавшийся else/endif, то есть вложенный, а не внешний. Ищем
+    // границы внешнего блока по глубине вложенности.
+    const tokenRe = /{{#if [^}]*}}|{{else}}|{{\/if}}/g;
+    tokenRe.lastIndex = start + "{{#if hasSubraces}}".length;
+    let depth = 0, elseIdx = -1, endIdx = -1, m;
+    while ((m = tokenRe.exec(header))) {
+      if (m[0].startsWith("{{#if")) depth++;
+      else if (m[0] === "{{else}}") { if (depth === 0 && elseIdx === -1) elseIdx = m.index; }
+      else if (m[0] === "{{/if}}") {
+        if (depth === 0) { endIdx = m.index; break; }
+        depth--;
+      }
+    }
+    expect(elseIdx).toBeGreaterThan(-1);
+    expect(endIdx).toBeGreaterThan(elseIdx);
+
+    const thenPart = header.slice(start, elseIdx);
+    const elsePart = header.slice(elseIdx, endIdx);
+
+    expect(thenPart).toContain('data-slot="subrace"');
+    expect(thenPart).not.toContain('name="system.subrace"');
+    expect(elsePart).toContain('name="system.subrace"');
+    expect(elsePart).not.toContain('data-slot="subrace"');
   });
 
   // Ревью предыдущей задачи (wdbc-n1k): applySubrace отклоняет субрасу с чужим
