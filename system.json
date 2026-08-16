@@ -4,8 +4,8 @@
   "description": "Система для Warhammer 40k — DBC (Doom BC). Объединяет Rogue Trader, Dark Heresy и другие линейки.",
   "version": "0.1.0",
   "compatibility": {
-    "minimum": "13",
-    "verified": "13"
+    "minimum": "14",
+    "verified": "14"
   },
   "authors": [
     {
