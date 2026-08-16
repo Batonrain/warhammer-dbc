@@ -6,7 +6,8 @@
 //  хранится на акторе во флаге warhammer-dbc.stowage = { itemId: location }.
 // ════════════════════════════════════════════════════════════════════════
 
-import { STOWABLE_TYPES, itemSizeStr, fits, expandSlots, isContainerRig, RIG_COMFORT_HINT } from "../constants/rig.mjs";
+import { STOWABLE_TYPES, itemSizeStr, fits, expandSlots, isContainerRig, RIG_COMFORT_HINT,
+         RIG_VARIANT_FLAG } from "../constants/rig.mjs";
 import { ITEM_TYPES } from "../constants/items.mjs";
 
 const { Application } = foundry.appv1.api;
@@ -33,13 +34,33 @@ export class RigManager extends Application {
   // ВАЖНО: update() рекурсивно МЕРЖИТ объекты флага, поэтому удаление ключа —
   // только через синтаксис `-=`, иначе «убрать из слота» не работает.
   async _assign(itemId, location) {
-    await this.actor.update({ [`flags.${NS}.${FLAG}.${itemId}`]: location });
+    const upd = { [`flags.${NS}.${FLAG}.${itemId}`]: location };
+    // Слот вмещает один предмет: кладя новый, прежнего выкладываем. Рюкзак
+    // (bp:) — контейнер, там соседи законны.
+    if (!location.startsWith("bp:")) {
+      const stow = this.actor.getFlag(NS, FLAG) || {};
+      for (const [iid, loc] of Object.entries(stow))
+        if (loc === location && iid !== itemId) upd[`flags.${NS}.${FLAG}.-=${iid}`] = null;
+    }
+    await this.actor.update(upd);
     this.render(false);
   }
   async _unassign(itemId) {
     await this.actor.update({ [`flags.${NS}.${FLAG}.-=${itemId}`]: null });
     this.render(false);
   }
+  /**
+   * Сменить вариант слота (кобура → ножны → петля). Лежащее в слоте выкладываем:
+   * новый вариант может быть другого размера, и предмет в него уже не влезет.
+   */
+  async _setVariant(slotId, variantKey) {
+    const rig = this.actor?.items?.get(String(slotId).split(":")[0]);
+    if (!rig) return;
+    await this._clearSlot(slotId);
+    await rig.update({ [`flags.${NS}.${RIG_VARIANT_FLAG}.${slotId}`]: variantKey });
+    this.render(false);
+  }
+
   async _clearSlot(slotId) {
     const stow = this.actor.getFlag(NS, FLAG) || {};
     const upd = {};
@@ -85,10 +106,15 @@ export class RigManager extends Application {
         const occId = Object.keys(stow).find(iid => stow[iid] === sl.id);
         const occ = occId ? items.get(occId) : null;
         if (occ) inRig.push(occ);
-        const opts = occ ? [] : stowable
-          .filter(i => i.id !== rig.id && !_isValidLoc(locOf(i.id), rigs) && fits(itemSizeStr(i), sl.size))
+        // Свободные предметы, что влезают в слот. Считаются и для занятого
+        // слота: заменить лежащее должно быть можно одним выбором, не убирая
+        // предмет заранее.
+        const opts = stowable
+          .filter(i => i.id !== rig.id && i.id !== occ?.id
+                    && !_isValidLoc(locOf(i.id), rigs) && fits(itemSizeStr(i), sl.size))
           .map(i => ({ id: i.id, name: i.name, size: itemSizeStr(i) }));
         return { id: sl.id, size: sl.size, note: sl.note, isMag: sl.isMag,
+          awkward: sl.awkward, variants: sl.variants,
           item: occ ? { id: occ.id, name: occ.name, weight: wt(occ) } : null, opts };
       });
       return { id: rig.id, name: rig.name, container: false, comfortHint, canQuickDraw, backSlot,
@@ -122,6 +148,9 @@ export class RigManager extends Application {
     }));
     // Убрать из слота
     el.querySelectorAll("[data-slot-clear]").forEach(b => b.addEventListener("click", () => this._clearSlot(b.dataset.slotClear)));
+    // Сменить вариант слота (кобура → ножны → петля)
+    el.querySelectorAll("[data-slot-variant]").forEach(sel => sel.addEventListener("change", e =>
+      this._setVariant(sel.dataset.slotVariant, e.target.value)));
     // Добавить в рюкзак
     el.querySelectorAll("[data-bp-add]").forEach(sel => sel.addEventListener("change", e => {
       const itemId = e.target.value; if (!itemId) return;
