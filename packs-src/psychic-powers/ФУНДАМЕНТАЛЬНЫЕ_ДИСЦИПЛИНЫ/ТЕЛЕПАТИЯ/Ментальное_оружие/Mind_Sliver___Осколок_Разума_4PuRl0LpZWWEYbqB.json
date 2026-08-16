@@ -11,7 +11,7 @@
     "subtype": "Ментальное оружие",
     "powerType": "attack",
     "extraTypes": [],
-    "shootSubtype": "",
+    "shootSubtype": "projectile",
     "prRequired": 3,
     "testChar": "wp",
     "testMod": -10,

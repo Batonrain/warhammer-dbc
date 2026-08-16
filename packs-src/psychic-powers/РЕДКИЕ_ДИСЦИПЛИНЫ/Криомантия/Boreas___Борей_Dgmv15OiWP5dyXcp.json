@@ -11,7 +11,7 @@
     "subtype": "",
     "powerType": "attack",
     "extraTypes": [],
-    "shootSubtype": "",
+    "shootSubtype": "breath",
     "prRequired": 4,
     "testChar": "wp",
     "testMod": 0,

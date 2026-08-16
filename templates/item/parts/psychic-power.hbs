@@ -24,7 +24,11 @@
       <option value="other"        {{#if (eq system.powerType "other")}}selected{{/if}}>Прочее</option>
     </select>
 
-    {{#if (eq system.powerType "psychicShoot")}}
+    {{!-- Подтип Психострельбы нужен и «Атаке»: в книге такие силы помечены
+          «Атака · Психический Шторм · Стрельба», и от подтипа зависит число
+          попаданий. Прятать выбор за типом «Психострельба» значило оставлять
+          Обстрел и Шторм одним попаданием. --}}
+    {{#if (or (eq system.powerType "psychicShoot") (eq system.powerType "attack"))}}
     <label class="wr-label">Подтип</label>
     <select name="system.shootSubtype" class="wr-select-sm">
       <option value=""           {{#if (eq system.shootSubtype "")}}selected{{/if}}>—</option>

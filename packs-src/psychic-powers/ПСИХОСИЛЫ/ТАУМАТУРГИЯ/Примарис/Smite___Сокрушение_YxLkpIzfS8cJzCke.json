@@ -11,7 +11,7 @@
     "subtype": "Примарис",
     "powerType": "psychicShoot",
     "extraTypes": [],
-    "shootSubtype": "",
+    "shootSubtype": "projectile",
     "prRequired": 1,
     "testChar": "wp",
     "testMod": 20,

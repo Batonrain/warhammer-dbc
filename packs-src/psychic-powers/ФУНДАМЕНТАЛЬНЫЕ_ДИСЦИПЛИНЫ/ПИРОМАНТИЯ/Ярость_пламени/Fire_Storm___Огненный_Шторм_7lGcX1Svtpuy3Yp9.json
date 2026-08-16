@@ -11,7 +11,7 @@
     "subtype": "Ярость пламени",
     "powerType": "attack",
     "extraTypes": [],
-    "shootSubtype": "",
+    "shootSubtype": "storm",
     "prRequired": 3,
     "testChar": "wp",
     "testMod": -10,

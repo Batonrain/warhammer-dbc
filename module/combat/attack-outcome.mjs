@@ -61,6 +61,26 @@ export function hitCount({ hit, isMelee, rofMode, deg, wp, sys = {}, isSwift = f
 }
 
 /**
+ * Число попаданий Психострельбы по её подтипу (стр. 290).
+ *
+ * Снаряд, Взрыв и Дыхание бьют один раз; Обстрел — как короткая очередь, по
+ * одному попаданию за нечётный Успех; Шторм — как длинная, по одному за каждый.
+ * Подтип живёт в system.shootSubtype, а тип силы при этом обычно «Атака»:
+ * «Атака · Психический Шторм · Стрельба» — это её теги из книги, и привязывать
+ * счёт к powerType нельзя, иначе Шторм считался бы одним попаданием.
+ *
+ * @returns {{count: number, label: string}} label пуст, если подтип не бьёт очередью
+ */
+export function psychicHitCount(shootSubtype, deg) {
+  const d = Math.max(1, Number(deg) || 1);
+  switch (shootSubtype) {
+    case "barrage": return { count: Math.max(1, Math.ceil(d / 2)), label: "Психический Обстрел" };
+    case "storm":   return { count: Math.max(1, d),                label: "Психический Шторм" };
+    default:        return { count: 1, label: "" };
+  }
+}
+
+/**
  * Место попадания: бросок читается задом наперёд (23 → 32). `shift` — сдвиг от
  * Таланта или Черты «сдвинуть место попадания» (±A.b).
  *
