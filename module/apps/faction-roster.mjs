@@ -19,6 +19,7 @@
 import { factionKey, factionChildren, factionServants, factionChain,
          factionAncestors, getFactionIndex } from "../rules/factions.mjs";
 import { packActors } from "./faction-cache.mjs";
+import { rootEl } from "../sheets/v2-helpers.mjs";
 
 /**
  * Блоки состава. Порядок — от людей к владениям, как в книге читается сверху
@@ -206,7 +207,7 @@ export function originTreeContext(item) {
 
 /** Обработчики схемы происхождения. */
 export function activateOriginTreeListeners(root, item) {
-  const el = root?.[0] ?? root;
+  const el = rootEl(root);
   if (!el?.querySelectorAll) return;
   // Свёрнутость — состояние окна, а не предмета: у каждого мастера своё.
   el.querySelectorAll(".faction-origin-tree").forEach(n => n.addEventListener("toggle", ev => {
@@ -233,7 +234,7 @@ export function activateOriginTreeListeners(root, item) {
 
 /** Обработчики вкладки. Item здесь — сама Фракция, чей лист открыт. */
 export function activateFactionRosterListeners(root, item) {
-  const el = root?.[0] ?? root;
+  const el = rootEl(root);
   if (!el?.querySelectorAll) return;
   el.querySelectorAll(".faction-roster-zone").forEach(zone => {
     zone.addEventListener("dragover", ev => {

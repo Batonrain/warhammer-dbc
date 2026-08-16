@@ -16,6 +16,7 @@
 
 import { factionKey, factionChain, getFactionIndex } from "../rules/factions.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
+import { rootEl } from "../sheets/v2-helpers.mjs";
 import { ITEM_TYPES } from "../constants/items.mjs";
 
 /** Подпись фракции по ключу: из каталога, а без него — сам ключ. */
@@ -85,10 +86,12 @@ async function addFaction(actor, src) {
  * заводить ради этого две функции незачем.
  */
 export function activateFactionFieldListeners(root, actor) {
-  const el = root?.[0] ?? root;
+  const el = rootEl(root);
   if (!el?.querySelector) return;
-  const zone = el.querySelector(".faction-drop-zone");
-  if (zone) {
+  // Зон бывает несколько: у листов, где поле осталось в шапке, — одна, у
+  // Персонажа с вкладкой СОЦИУМ — своя. Первую попавшуюся брать нельзя, иначе
+  // вторая молча остаётся мёртвой.
+  for (const zone of el.querySelectorAll(".faction-drop-zone")) {
     zone.addEventListener("dragover", ev => {
       ev.preventDefault();
       zone.classList.add("faction-drop-over");
@@ -107,7 +110,7 @@ export function activateFactionFieldListeners(root, actor) {
     });
   }
 
-  el.querySelector(".wh-faction-add")?.addEventListener("click", async ev => {
+  el.querySelectorAll(".wh-faction-add").forEach(btn => btn.addEventListener("click", async ev => {
     ev.preventDefault();
     if (!actor.isOwner) return;
     const uuid = await openCompendiumBrowser(false, {
@@ -118,7 +121,7 @@ export function activateFactionFieldListeners(root, actor) {
     const doc = await fromUuid(uuid).catch(() => null);
     if (!doc) return ui.notifications.warn("Фракция не найдена — возможно, компендиум изменился.");
     await addFaction(actor, doc);
-  });
+  }));
 
   el.querySelectorAll(".wh-faction-remove").forEach(btn => {
     btn.addEventListener("click", async ev => {
