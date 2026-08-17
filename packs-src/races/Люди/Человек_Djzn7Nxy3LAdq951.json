@@ -20,7 +20,7 @@
     },
     "bonusRolls": 2,
     "skills": "",
-    "gear": "5 элементов Снаряжения/Инструментов до R1 (2 Good.Q, 1 Best.Q), Vox-Bead",
+    "gear": "5 элементов Снаряжения/Инструментов до R1 (2 Good.Q, 1 Best.Q)",
     "talents": "",
     "description": "Один из несчётных квадриллионов Человечества, способный сражаться наравне с чемпионами Губительных Сил.",
     "notes": "",
@@ -313,6 +313,52 @@
               "id": "Djzn7Nxysae",
               "kind": "skill",
               "specChoiceAny": true
+            }
+          ]
+        },
+        {
+          "id": "Djzn7Nxygen",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "direct",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "Djzn7Nxyeav",
+              "kind": "equipment",
+              "equipSourceUuid": "Compendium.warhammer-dbc.gear.Item.ywCPMt5FrmM6nLUX",
+              "equipSourceName": "Vox-Bead / Вокс Бусина",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/gear.svg",
+              "equipQuality": "common",
+              "equipMaxAvailability": 5
             }
           ]
         }

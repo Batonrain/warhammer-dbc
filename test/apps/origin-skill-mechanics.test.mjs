@@ -109,3 +109,46 @@ describe("выбор целой записи", () => {
     for (const g of orGroups) expect(g.entries.length).toBeGreaterThan(1);
   });
 });
+
+// Таланты Происхождений переехали тем же перегоном, что и Навыки.
+describe("таланты Происхождений в Конструкторе", () => {
+  const talents = origins.flatMap(d => allEntries(d).filter(e => e?.kind === "talent")
+    .map(e => ({ doc: d.name, e })));
+
+  it("записи талантов появились", () => {
+    expect(talents.length).toBeGreaterThan(200);
+  });
+
+  it("каждая ссылается на запись пака Талантов", () => {
+    const bad = talents.filter(({ e }) =>
+      !/^Compendium\.warhammer-dbc\.talents\.Item\.\w+$/.test(e.sourceUuid || ""));
+    expect(bad.map(x => `${x.doc}: ${x.e.sourceName || "?"}`)).toEqual([]);
+  });
+});
+
+// «12 Талантов 1 уровня» и «500хр на Психосилы» — тот же выбор из компендиума с
+// фильтром, только бюджет считается штуками и опытом.
+describe("выбор с бюджетом", () => {
+  const picks = origins.flatMap(d => allEntries(d)
+    .filter(e => e?.kind === "equipment" && e.equipMode === "choice")
+    .map(e => ({ doc: d.name, e })));
+
+  it("записи с бюджетом появились", () => {
+    expect(picks.length).toBeGreaterThan(0);
+  });
+
+  it("бюджет штуками ставит фильтр по ступени Таланта", () => {
+    const byCount = picks.filter(x => x.e.equipBudgetMode === "count" && x.e.equipCategoryPack === "talents");
+    expect(byCount.length).toBeGreaterThan(0);
+    for (const { e } of byCount) expect([1, 2, 3]).toContain(Number(e.equipTalentTier));
+  });
+
+  it("бюджет опытом смотрит в Психосилы или Техночудеса", () => {
+    const byXP = picks.filter(x => x.e.equipBudgetMode === "xp");
+    expect(byXP.length).toBeGreaterThan(0);
+    for (const { e } of byXP) {
+      expect(["psychic-powers", "tech-powers"]).toContain(e.equipCategoryPack);
+      expect(Number(e.equipBudgetValue)).toBeGreaterThan(0);
+    }
+  });
+});

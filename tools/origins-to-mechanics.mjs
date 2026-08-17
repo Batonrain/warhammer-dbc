@@ -218,7 +218,61 @@ function walk(dir, fn) {
   }
 }
 
-const report = { docs: 0, skillEntries: 0, unknown: [], touched: [] };
+const TALENT_IDX = packIndex("talents");
+const GEAR_IDX = new Map();
+for (const pack of ["weapons", "armor", "gear", "ammunition", "tools", "shields", "implants"]) {
+  for (const [k, v] of packIndex(pack)) if (!GEAR_IDX.has(k)) GEAR_IDX.set(k, { ...v, pack });
+}
+
+/** Одна альтернатива Таланта → запись, либо null. */
+function talentEntry(str, docId) {
+  const budget = budgetEntry(str, docId);
+  if (budget) return budget;
+  const bare = str.replace(/\s*\([^)]*\)\s*$/, "").trim().toLowerCase();
+  const spec = str.match(/\(([^)]*)\)\s*$/);
+  const hit = TALENT_IDX.get(str.toLowerCase()) || TALENT_IDX.get(bare);
+  if (!hit) return null;
+  return {
+    id: mkId(docId, "t"), kind: "talent", sourceUuid: hit.uuid, sourceName: hit.name,
+    sourceImg: hit.img || "", specialization: spec ? spec[1].trim() : ""
+  };
+}
+
+/** Одна альтернатива снаряжения → запись, либо null. */
+function gearEntry(str, docId) {
+  const m = gearMods(str);
+  const hit = GEAR_IDX.get(m.name.toLowerCase());
+  if (!hit) return null;
+  return {
+    id: mkId(docId, "e"), kind: "equipment", equipMode: "direct",
+    equipSourceUuid: hit.uuid, equipSourceName: hit.name, equipSourceImg: hit.img || "",
+    equipQty: m.qty, equipQuality: m.quality, equipMaxAvailability: m.avail
+  };
+}
+
+/**
+ * Разбор списка «имя, имя или имя» одного поля. Прямые записи и ИЛИ-группы
+ * складываются отдельно, неопознанное возвращается строкой — чтобы поле не
+ * опустело там, где книга сказала то, чего Конструктор не умеет.
+ */
+function parseList(raw, docId, make) {
+  const entries = [], leftover = [];
+  for (const part of splitTopLevel(raw)) {
+    const alts = splitChoice(part);
+    if (alts.length > 1) {
+      const sub = alts.map(a => make(a, docId));
+      if (sub.every(Boolean)) { entries.push({ kind: "__or__", items: sub.map(fill) }); continue; }
+      leftover.push(part);
+      continue;
+    }
+    const one = make(part, docId);
+    if (one) entries.push(one); else leftover.push(part);
+  }
+  return { entries, leftover };
+}
+
+const report = { docs: 0, skillEntries: 0, talentEntries: 0, gearEntries: 0,
+                 unknown: [], leftTalents: [], leftGear: [], touched: [] };
 
 walk(abs(SRC_ROOT), (file) => {
   let doc;
@@ -226,7 +280,9 @@ walk(abs(SRC_ROOT), (file) => {
   if (!TYPES.includes(doc.type)) return;
 
   const raw = String(doc.system?.skills || "").trim();
-  if (!raw) return;
+  const rawTal  = String(doc.system?.talents || "").trim();
+  const rawGear = String(doc.system?.gear || "").trim();
+  if (!raw && !rawTal && !rawGear) return;
 
   const entries = [], unknown = [];
   for (const part of splitTopLevel(raw)) {
@@ -243,17 +299,34 @@ walk(abs(SRC_ROOT), (file) => {
     skillEntries(part, doc._id, entries, unknown);
   }
 
-  if (!entries.length && !unknown.length) return;
+  const tal  = parseList(rawTal,  doc._id, talentEntry);
+  const gear = parseList(rawGear, doc._id, gearEntry);
+
+  const all = [...entries, ...tal.entries, ...gear.entries];
+  if (!all.length && !unknown.length) return;
   report.docs++;
-  report.skillEntries += entries.length;
+  report.skillEntries  += entries.length;
+  report.talentEntries += tal.entries.length;
+  report.gearEntries   += gear.entries.length;
   if (unknown.length) report.unknown.push(`${doc.name}: ${unknown.join("; ")}`);
-  report.touched.push({ file, doc, entries });
+  if (tal.leftover.length)  report.leftTalents.push(`${doc.name}: ${tal.leftover.join("; ")}`);
+  if (gear.leftover.length) report.leftGear.push(`${doc.name}: ${gear.leftover.join("; ")}`);
+  report.touched.push({ file, doc, entries: all, leftTal: tal.leftover, leftGear: gear.leftover });
 });
 
 // ── Печать отчёта / запись ──────────────────────────────────────────────────
 
-console.log(`Записей с Навыками строкой: ${report.docs}`);
-console.log(`Получилось записей Конструктора: ${report.skillEntries}`);
+console.log(`Затронуто записей: ${report.docs}`);
+console.log(`Навыков: ${report.skillEntries}, Талантов: ${report.talentEntries}, Снаряжения: ${report.gearEntries}`);
+const show = (title, list) => {
+  if (!list.length) { console.log(`
+${title}: всё разобрано.`); return; }
+  console.log(`
+${title} (${list.length}) — остаётся строкой:`);
+  for (const u of list) console.log("  " + u);
+};
+show("ТАЛАНТЫ", report.leftTalents);
+show("СНАРЯЖЕНИЕ", report.leftGear);
 if (report.unknown.length) {
   console.log(`\nНЕ РАЗОБРАНО (${report.unknown.length}) — остаётся строкой, выдаётся вручную:`);
   for (const u of report.unknown) console.log("  " + u);
@@ -266,7 +339,8 @@ if (!APPLY) {
   process.exit(0);
 }
 
-for (const { file, doc, entries } of report.touched) {
+for (const rest of report.touched) {
+  const { file, doc, entries } = rest;
   const flags = doc.flags?.[FLAG] ?? {};
   const groups = Array.isArray(flags.mechanics) ? [...flags.mechanics] : [];
 
@@ -281,7 +355,74 @@ for (const { file, doc, entries } of report.touched) {
   }
 
   doc.flags = { ...(doc.flags || {}), [FLAG]: { ...flags, mechanics: groups } };
-  doc.system.skills = "";                       // строку убираем: выдаёт Конструктор
+  // Разобранное убираем, неразобранное оставляем строкой: молча выбросить
+  // требование книги хуже, чем оставить его ГМу на глаза.
+  doc.system.skills  = "";
+  doc.system.talents = (rest.leftTal  || []).join(", ");
+  doc.system.gear    = (rest.leftGear || []).join(", ");
   fs.writeFileSync(file, JSON.stringify(doc, null, 2) + "\n");
 }
 console.log(`\nЗаписано файлов: ${report.touched.length}`);
+
+// ── Таланты и снаряжение → записи Конструктора ───────────────────────────────
+//
+//  Имя из книги ищется в паке по английской части («Frenzy» в «Frenzy /
+//  Бешенство»). Что не нашлось — остаётся строкой: молча выбросить требование
+//  книги хуже, чем оставить его ГМу на глаза.
+//
+//  Отдельно разбираются записи, у которых имени нет вовсе, а есть счётчик:
+//  «7 талантов 1 уровня» и «500хр на Психосилы». Это тот же выбор из
+//  компендиума с фильтром, только бюджет считается ступенью и опытом.
+
+/** Индекс пака: английская часть имени → { uuid, name }. */
+function packIndex(pack) {
+  const idx = new Map();
+  walk(abs(SRC_ROOT, "/" + pack), (file) => {
+    let j; try { j = JSON.parse(fs.readFileSync(file, "utf8")); } catch { return; }
+    if (!j?.name || !j?._id) return;
+    const uuid = `Compendium.warhammer-dbc.${pack}.Item.${j._id}`;
+    const en = String(j.name).split("/")[0].trim().toLowerCase();
+    if (!idx.has(en)) idx.set(en, { uuid, name: j.name, img: j.img });
+    const full = String(j.name).toLowerCase();
+    if (!idx.has(full)) idx.set(full, { uuid, name: j.name, img: j.img });
+  });
+  return idx;
+}
+
+/** «7 талантов 1 уровня», «500хр на Психосилы» — выбор с бюджетом. */
+function budgetEntry(str, docId) {
+  // \w без флага u кириллицу не ловит — хвост слова берём как «не пробел».
+  const tier = str.match(/^(\d+)\s+талант\S*\s+(\d+)\s+уровня/i);
+  if (tier) {
+    return {
+      id: mkId(docId, "b"), kind: "equipment", equipMode: "choice",
+      equipCategoryPack: "talents", equipTalentTier: Number(tier[2]),
+      equipMaxAvailability: 5,
+      equipBudgetMode: "count", equipBudgetValue: Number(tier[1])
+    };
+  }
+  const xp = str.match(/^(\d+)\s*хр\s+на\s+(психосил\S*|техночудес\S*)/i);
+  if (xp) {
+    return {
+      id: mkId(docId, "b"), kind: "equipment", equipMode: "choice",
+      equipCategoryPack: /психосил/i.test(xp[2]) ? "psychic-powers" : "tech-powers",
+      equipMaxAvailability: 5,
+      equipBudgetMode: "xp", equipBudgetValue: Number(xp[1])
+    };
+  }
+  return null;
+}
+
+/** «20 доз Химии до R1» / «Narthecium (Good.Q)» → количество, Редкость, качество. */
+function gearMods(str) {
+  const qty = str.match(/^(\d+)\s*(?:×|x|шт\.?)?\s+/i);
+  const avail = str.match(/до\s*R\s*(\d)/i);
+  const quality = /best\.?\s*q/i.test(str) ? "best" : /good\.?\s*q/i.test(str) ? "good" : "common";
+  const name = str
+    .replace(/^\d+\s*(?:×|x|шт\.?)?\s+/i, "")
+    .replace(/\((?:[^()]*)\)\s*$/, "")
+    .replace(/\bдо\s*R\s*\d\b/ig, "")
+    .replace(/[;,]\s*$/, "")
+    .trim();
+  return { qty: qty ? Number(qty[1]) : 1, avail: avail ? Number(avail[1]) : 5, quality, name };
+}
