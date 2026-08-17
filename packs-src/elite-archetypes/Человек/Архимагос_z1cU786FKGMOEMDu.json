@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "b3fbcfb9",
+    "cost": 4000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Неделимый",
     "req": "Не Тех-Ассасин, Секутор или Малагра, I 55, Inf 55, Трейт Mechanicum Implants, Forbidden Lore (Mechanicum, Archeotech), Cybernetic Rebirth, Binary Dominion, 4000 xp",

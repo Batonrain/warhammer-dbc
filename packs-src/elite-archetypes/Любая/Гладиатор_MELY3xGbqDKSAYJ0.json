@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "d4bcfc3b",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Неделимый",
     "req": "WS 50, S 40, T 40, A 40, F 35, Athletics+10, Acrobatics+10, Dodge+10, Parry+10, Die Hard, Everything a Weapon, Iron Jaw, Sure Strike, Precise Blow, 2500 xp",

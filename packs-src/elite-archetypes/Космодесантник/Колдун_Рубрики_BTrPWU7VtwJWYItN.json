@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "bec64d3d",
+    "cost": 3000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Космодесантник",
     "god": "Тзинч",
     "req": "Покровительство Тзинча, W 50, I 45, Psyker, PR 5, Command +0, 3000 xp",

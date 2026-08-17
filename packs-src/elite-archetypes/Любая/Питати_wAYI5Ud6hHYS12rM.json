@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "e2199950",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Неделимый",
     "req": "BS 45, W 45, Psyker, PR 4, Schol.Lore (Occult)+10, Trade (Scrimshawer), 2500 xp",

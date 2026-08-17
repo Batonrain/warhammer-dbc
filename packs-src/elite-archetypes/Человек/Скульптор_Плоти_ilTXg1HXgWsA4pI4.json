@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "eb2cdc9b",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Слаанеш",
     "req": "Покровительство Слаанеш, I 50, P 45, Medicae+10, Schol.Lore (Occult)+10, 2500 xp",

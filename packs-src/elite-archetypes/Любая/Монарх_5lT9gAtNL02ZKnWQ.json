@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "9f39d18e",
+    "cost": 3000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Неделимый",
     "req": "I 50, W 50, Tech-Use+20, For.Lore (Psykers)+20, Medicae+20, 3000 xp",

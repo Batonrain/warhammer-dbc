@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "22e7bd66",
+    "cost": 20000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Космодесантник",
     "god": "Неделимый",
     "req": "Hatred (любые 3 Имперские фракции), 20 000 xp потрачено, 2000 xp",

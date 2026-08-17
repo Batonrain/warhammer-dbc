@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "2511f8e2",
+    "cost": 2000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Неделимый",
     "req": "I 45, P 40, Трейт Mechanicum Implants, Medicae, Tech-Use+10, 2000 xp",

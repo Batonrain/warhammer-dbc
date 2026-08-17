@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "023f689e",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Мандрагора",
     "god": "",
     "req": "BS 40, T 40; 2500 xp",

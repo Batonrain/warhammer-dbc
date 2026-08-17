@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "08eff414",
+    "cost": 3000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Космодесантник",
     "god": "Неделимый",
     "req": "WS 50, P 50, Awareness+20, For.Lore(Warp)+10, 3000 xp",

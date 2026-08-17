@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "ed0a95b1",
+    "cost": 3000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Друкхари",
     "god": "",
     "req": "WS 55, A 50, Disarm, Steady Footwork, Sure Strike, Cleave, Precise Blow, Tenacity, Blademaster; 3000 xp",

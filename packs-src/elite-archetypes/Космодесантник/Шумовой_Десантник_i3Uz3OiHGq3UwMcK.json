@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "75800eb9",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Космодесантник",
     "god": "Слаанеш",
     "req": "Покровительство Слаанеш, BS 45, P 50, 2500 xp",

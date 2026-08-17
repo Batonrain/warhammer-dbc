@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "fa1deb1b",
+    "cost": 4000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Неделимый",
     "req": "Не Секутор, Архимагос или Малагра, WS 45, A 45, Трейт Mechanicum Implants, 4000 xp",

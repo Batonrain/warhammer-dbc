@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "3b45f828",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Неделимый",
     "req": "I 65, W 55, F 55, Charm+10, Deceive+10, Inquiry+10, Interrogate+10, Scrutiny+10, Security, Stealth, Tech-Use, Schol.Lore (Bureaucracy, Cryptology, Occult), For.Lore (Heresy, Inquisition, Warp), Trade (Chymist, Instructor), Linguistics (High Gothic, Chaos Glyphs, True Tongue), 2500 xp",

@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "7c8f0a65",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Кхорн",
     "req": "Покровительство Кхорна, WS 50, W 45, For.Lore (Daemons)+10, Trade (Weaponsmith)+10, 2500 xp",

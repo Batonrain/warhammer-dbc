@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "d9eaa705",
+    "cost": 1750,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Друкхари, Развалина",
     "god": "",
     "req": "A 50, Operate (Aeronautica)+10, Inf 35; 1750 xp",

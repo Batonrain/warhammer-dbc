@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "769f1af3",
+    "cost": 2000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Слаанеш",
     "req": "Покровительство Слаанеш, 2000 xp",

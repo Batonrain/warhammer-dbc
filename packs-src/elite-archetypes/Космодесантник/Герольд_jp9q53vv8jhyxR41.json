@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "5d29b927",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Космодесантник",
     "god": "Неделимый",
     "req": "WS 40, F 40, Charm+10, Command+10, Logic+10, Schol.Lore (Heraldry), Air of Authority, Iron Discipline, 2500 xp",

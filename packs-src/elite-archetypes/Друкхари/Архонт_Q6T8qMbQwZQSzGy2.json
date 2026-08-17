@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "84fa56ed",
+    "cost": 3000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Друкхари",
     "god": "",
     "req": "WS 40, BS 40, I 40, W 40, F 50, Charm+20, Command+30, Deceive+20, Logic+20, Scholastic Lore (Heraldry)+20, Air of Authority, Iron Discipline, Mastery Common Lore (Intrigue), 60 Inf; 3000 xp",

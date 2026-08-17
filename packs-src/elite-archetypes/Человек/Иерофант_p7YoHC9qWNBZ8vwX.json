@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "31ddcebb",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Неделимый",
     "req": "W 50, F 60, Charm+20, Deceive+20, Scrutiny+20, Schol.Lore (Imperial Creed)+20, For.Lore (Heresy)+20, Air of Authority, Inspire Wrath, 2500 xp",

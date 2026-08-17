@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "0fea726e",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Друкхари Истиннорожденный",
     "god": "",
     "req": "F 45, I 45, Peer (3 комморитские фракции), Good Reputation (1 комморитская фракция), быть в подчинении у Архонта, Intimidate+10, Inquiry+10, Charm+20, Commerce+20, Common Lore (Druchii)+30, Common Lore (Intrigue)+30; 2500 xp",

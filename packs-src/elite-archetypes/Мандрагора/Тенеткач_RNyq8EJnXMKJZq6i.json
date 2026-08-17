@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "c74afcc8",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Мандрагора",
     "god": "",
     "req": "Deceive+10, Scholastic Lore (Occult)+10; 2500 xp",

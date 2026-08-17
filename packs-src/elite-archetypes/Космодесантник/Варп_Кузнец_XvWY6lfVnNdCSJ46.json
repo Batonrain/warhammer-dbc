@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "30cdeb8a",
+    "cost": 2000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Космодесантник",
     "god": "Неделимый",
     "req": "I 45, Tech-Use+10, For.Lore (Daemons), Trade (Armourer, Weaponsmith), 2000 xp",

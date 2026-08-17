@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "185a3385",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Неделимый",
     "req": "W 40, A 40, For.Lore (Mechanicum)+10, Трейт Mechanicum Implants, Техночудеса: Voltagheist Shield, Luminen Shock, Electroepithany, 2500 xp",

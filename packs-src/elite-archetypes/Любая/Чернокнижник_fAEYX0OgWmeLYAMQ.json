@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "7bed5931",
+    "cost": 1500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Неделимый",
     "req": "Cor 20, For.Lore (Psykers)+20, Schol.Lore (Occult)+20, 1500 xp",

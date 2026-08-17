@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "76dcb1f5",
+    "cost": 4500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Неделимый",
     "req": "I 50, Tech-Use+10, 4500 xp для Космодесантника, 5500 xp для Человека",

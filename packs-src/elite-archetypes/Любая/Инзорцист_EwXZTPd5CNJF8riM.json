@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "c5f2bf91",
+    "cost": 3500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Неделимый",
     "req": "I 50, W 50, Psyker, PR 6, Total Recall, Schol.Lore (Occult)+10, For.Lore (Daemons)+30, Linguistics (True Tongue), 3500 xp",

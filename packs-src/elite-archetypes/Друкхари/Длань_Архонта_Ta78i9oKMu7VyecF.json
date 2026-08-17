@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "3ddbbb0f",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Друкхари, Сслит",
     "god": "",
     "req": "Все характеристики (кроме Cor и Inf) от 30, 29 Inf, Peer с Архонтом, Гемункулом, Суккубом или Клэйвексом; 2500 xp",

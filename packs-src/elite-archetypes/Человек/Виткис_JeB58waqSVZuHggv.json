@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "ba91f4a2",
+    "cost": 3500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Кхорн",
     "req": "Покровительство Кхорна, WS 50, I 35, Athletics+10, Command+0, Com.Lore (War)+10, Resistance (Fear), Frenzy, Unshakeable Will, 3500 xp",

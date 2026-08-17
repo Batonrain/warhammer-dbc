@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "ba9e8e39",
+    "cost": 2000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Друкхари, Развалина",
     "god": "",
     "req": "I 40, 2000 xp потрачено, 30 Inf; 3000 xp",

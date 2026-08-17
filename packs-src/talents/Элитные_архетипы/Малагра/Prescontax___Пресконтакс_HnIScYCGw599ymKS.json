@@ -8,7 +8,7 @@
     "notes": "",
     "benefit": "Мысли и тайны Механикум открыты перед Малагрой. Используя Numerica Delving, чтобы прочесть память жертвы, засёкшей активацию этого Техночуда, жертва автоматически проваливает встречный тест с 1 Провалом, а Малагра может считать на 1d5 воспоминаний больше обычного.",
     "tier": 1,
-    "requirement": "Неделимый, Numerica Delving, Scrutiny+0",
+    "requirement": "Numerica Delving, Scrutiny+0",
     "aptitudes": [],
     "aptSource": "",
     "aspirations": [],

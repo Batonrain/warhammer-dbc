@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "8b597be6",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Нургл",
     "req": "Покровительство Нургла, I 50, P 45, Psyker, PR 4, Survival+10, 2500 xp",

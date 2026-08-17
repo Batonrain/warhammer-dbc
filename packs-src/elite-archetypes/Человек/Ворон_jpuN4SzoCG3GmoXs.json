@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "efb6485b",
+    "cost": 3500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Тзинч",
     "req": "Покровительство Тзинча, WS 40, I 40, Deceive+10, Medicae+0, For.Lore (Warp)+10, Blind Fighting, Disarm, Double Team, 3500 xp",

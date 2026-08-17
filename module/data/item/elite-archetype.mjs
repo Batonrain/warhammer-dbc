@@ -18,12 +18,25 @@ export class EliteArchetypeData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, ArrayField } = foundry.data.fields;
+    const { StringField, ArrayField, NumberField, SchemaField, ObjectField } = foundry.data.fields;
     const str = (initial, label) => new StringField({ initial, label });
     const list = label => new ArrayField(new StringField(), { label });
+    const reqList = label => new ArrayField(new ObjectField(), { label });
 
     return {
       key:         str("", "Ключ"),
+      // Цена в опыте. Каждый следующий Элитный архетип персонажа вдвое дороже
+      // предыдущего — множитель считает rules/elite-requirements.mjs, здесь
+      // лежит базовая цена самого архетипа.
+      cost:        new NumberField({ initial: 0, nullable: false, label: "Цена (опыт)" }),
+      // Требования Конструктором. Основные («кто ты есть») решают, показывать
+      // ли архетип в выборе вовсе; прочие («чего ты добился») и требуемые
+      // Таланты только помечаются красным — разрешить исключение вправе ГМ.
+      requirements: new SchemaField({
+        primary:   reqList("Основные требования"),
+        secondary: reqList("Прочие требования"),
+        talents:   reqList("Требуемые Таланты")
+      }, { label: "Требования" }),
       race:        str("", "Раса"),
       // Покровительство: у друкхари его нет вовсе, поэтому пусто — обычное дело.
       god:         str("", "Покровительство"),

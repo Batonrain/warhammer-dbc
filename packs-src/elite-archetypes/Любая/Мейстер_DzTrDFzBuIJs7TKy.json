@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "45be494d",
+    "cost": 2000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Нургл",
     "req": "Покровительство Нургла, Medicae+10, Schol.Lore (Chymistry)+10, 2000 xp",

@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "b7c15a61",
+    "cost": 3500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Неделимый",
     "req": "Без Лат Скитарии или Имплантов Механикум, Inf 30, Cor 30, 3500 xp",

@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "10deba39",
+    "cost": 3000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Друкхари, Развалина, Сслит",
     "god": "",
     "req": "Женщина; I 40, F 40, Charm+20, Trade (Chymist)+20; 3000 xp (2500 для Истиннорождённого)",

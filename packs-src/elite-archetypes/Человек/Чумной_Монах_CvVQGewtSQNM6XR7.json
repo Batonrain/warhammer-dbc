@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "d06bde02",
+    "cost": 3500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Нургл",
     "req": "Покровительство Нургла, T 50, W 35, Survival+10, For.Lore (Heresy)+10, Trade (Chymist), Resistance (Disease, Poison), Tireless, True Grit, Unarmed Master, Meditation, 3500 xp",

@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "e1241c8c",
+    "cost": 3500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Слаанеш",
     "req": "Покровительство Слаанеш, WS 40, A 50, Acrobatics+10, Awareness+10, Dodge+10, Trade (Musician), Trade (Dancer), Flip, Hard Target, Step Aside, Sure Strike, Precise Blow, 3500 xp",

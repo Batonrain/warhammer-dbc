@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "80c02691",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Любая",
     "god": "Неделимый",
     "req": "WS 50, W 50, Psyker, PR 4, Schol.Lore (Occult)+10, Психосилы: Mind Link, Precognitive Strike, 2500 xp",

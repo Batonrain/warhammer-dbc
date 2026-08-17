@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "6901dabe",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Космодесантник",
     "god": "Неделимый",
     "req": "BS 50, A 50, Operate (Aeronautica)+10, Stealth+10, Tech-Use+10, Trade (Weaponsmith)+10, Two Weapon Wielder (Ranged), Gunslinger, 2500 xp",

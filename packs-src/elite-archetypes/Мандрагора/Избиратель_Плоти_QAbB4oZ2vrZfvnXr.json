@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "9db2cf88",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Мандрагора",
     "god": "",
     "req": "WS 40, I 40, Forbidden Lore (Xenobiology)+0, Medicae+10, Scholastic Lore (Occult)+10; 2500 xp",

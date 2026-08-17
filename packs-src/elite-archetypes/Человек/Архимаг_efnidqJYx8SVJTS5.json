@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "44f9b6ea",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Тзинч",
     "req": "Покровительство Тзинча, W 50, I 45, Psyker, PR 6, Meditation, For.Lore (Warp, Daemons, Psykers)+10, Schol.Lore (Occult)+10, Deceive+10, Scrutiny+10, 2500 xp",

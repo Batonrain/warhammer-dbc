@@ -170,7 +170,9 @@ const TYPES = {
   eliteArchetype: {
     pack: "elite-archetypes",
     defaults: {
-      key: "", race: "", god: "", req: "", charBonus: "", freeTalents: "",
+      key: "", cost: 0,
+      requirements: { primary: [], secondary: [], talents: [] },
+      race: "", god: "", req: "", charBonus: "", freeTalents: "",
       gear: "", traits: [], talents: [], description: "", notes: "", bookSource: ""
     }
   },

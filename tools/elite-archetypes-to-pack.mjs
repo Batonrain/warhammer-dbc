@@ -59,10 +59,18 @@ export function eliteDocs() {
     const folder = folders.get(folderLabel);
     const id = idOf(arch.name);
 
+    // Цена стоит в самом требовании книги хвостом «2000 xp» — вынимаем её в
+    // своё поле: по нему считается покупка и удвоение за каждый следующий
+    // Элитный архетип. В тексте требований она остаётся как есть.
+    const costMatch = String(arch.req || "").match(/(\d[\d\s]*)\s*xp/i);
+    const cost = costMatch ? parseInt(costMatch[1].replace(/\s+/g, ""), 10) || 0 : 0;
+
     const doc = {
       name: arch.name, type: "eliteArchetype", img: IMG,
       system: {
         key: keyOf(arch.name),
+        cost,
+        requirements: { primary: [], secondary: [], talents: [] },
         race: arch.race || "", god: arch.god || "",
         req: arch.req || "", charBonus: arch.charBonus || "",
         freeTalents: arch.freeTalents || "", gear: arch.gear || "",

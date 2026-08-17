@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "9e9870ec",
+    "cost": 2000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Друкхари",
     "god": "",
     "req": "A 60, WS 50, Acrobatics+20, Dodge+20; Cleave, Dexterity Technique, Eldanesh Technique, Hekatrii Technique, Whirlwind of Death, Ultanesh Technique; 2000 xp",

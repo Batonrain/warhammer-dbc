@@ -4,6 +4,12 @@
   "img": "icons/svg/upgrade.svg",
   "system": {
     "key": "185d3f94",
+    "cost": 4000,
+    "requirements": {
+      "primary": [],
+      "secondary": [],
+      "talents": []
+    },
     "race": "Человек",
     "god": "Неделимый",
     "req": "Не Тех-Ассасин, Секутор или Архимагос, I 55, P 55, Трейт Mechanicum Implants, Stealth+10, Total Recall, 4000 xp",
