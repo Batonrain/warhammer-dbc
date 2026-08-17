@@ -164,6 +164,16 @@ const TYPES = {
       trait: { name: "", benefit: "" }, bookSource: ""
     }
   },
+  // Элитные архетипы (корбук стр. 114-164): ступень поверх Архетипа. Трейты и
+  // Дополнительные Таланты — списками имён: сами записи лежат в библиотеках
+  // Черт и Талантов, и копировать их сюда значило бы править одно в двух местах.
+  eliteArchetype: {
+    pack: "elite-archetypes",
+    defaults: {
+      key: "", race: "", god: "", req: "", charBonus: "", freeTalents: "",
+      gear: "", traits: [], talents: [], description: "", notes: "", bookSource: ""
+    }
+  },
   race: {
     pack: "races",
     defaults: {

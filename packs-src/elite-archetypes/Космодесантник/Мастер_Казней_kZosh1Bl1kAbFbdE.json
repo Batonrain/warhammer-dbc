@@ -1,0 +1,52 @@
+{
+  "name": "Мастер Казней",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "08eff414",
+    "race": "Космодесантник",
+    "god": "Неделимый",
+    "req": "WS 50, P 50, Awareness+20, For.Lore(Warp)+10, 3000 xp",
+    "charBonus": "+5 WS, +5 P, −5 F, +1d5 Cor",
+    "freeTalents": "Fanatic, Unnatural Senses (P), Warp Sight",
+    "gear": "",
+    "traits": [
+      "Single-Minded Hunter / Целеустремлённый Охотник",
+      "Trophy Taker / Собиратель Трофеев",
+      "Hunter Sight / Взор Охотника",
+      "Mistwalker / Туманоходец",
+      "Execution / Казнь"
+    ],
+    "talents": [
+      "Trophies of Judgement / Трофеи Приговора",
+      "Trophies of Triumph / Трофеи Триумфа",
+      "Marked Prey / Отмеченная Добыча",
+      "Mist Leap / Туманный Прыжок",
+      "Mist Savior / Спаситель Туманов",
+      "Final Execution / Окончательная Казнь"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "kZosh1Bl1kAbFbdE",
+  "effects": [],
+  "folder": "EhPnOPbmMLPmxVvL",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!kZosh1Bl1kAbFbdE"
+}

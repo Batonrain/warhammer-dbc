@@ -1,0 +1,50 @@
+{
+  "name": "Берсерк Кхорна",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "f85d1173",
+    "race": "Космодесантник",
+    "god": "Кхорн",
+    "req": "Покровительство Кхорна, WS 50, S 45, Frenzy, Fire in Blood, Hatred (любые 3), 2000 xp",
+    "charBonus": "+5 WS, +5 S, −8 I",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Avatar of Slaughter / Аватар Резни",
+      "Butcher's Nails / Гвозди Мясника",
+      "Unstoppable Wrath / Неостановимый Гнев"
+    ],
+    "talents": [
+      "For He Cares Not / Ему Не Важно",
+      "Red Streak / Красная Полоса",
+      "Paint It Red / Окрась Всё в Красный",
+      "Tempered in Blood / Закалённое в Крови",
+      "Blood Offering / Кровавое Подношение",
+      "Skull Offering / Подношение Черепов"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "cCac0hizt00GA6uN",
+  "effects": [],
+  "folder": "EhPnOPbmMLPmxVvL",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!cCac0hizt00GA6uN"
+}

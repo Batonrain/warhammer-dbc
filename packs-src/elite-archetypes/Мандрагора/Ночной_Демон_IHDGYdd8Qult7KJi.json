@@ -1,0 +1,51 @@
+{
+  "name": "Ночной Демон",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "3447f15d",
+    "race": "Мандрагора",
+    "god": "",
+    "req": "F 35, Command+20; 2500 xp",
+    "charBonus": "+5 WS, +5 F",
+    "freeTalents": "Peer (Мандрагоры), Good Reputation (своя община Мандрагор)",
+    "gear": "",
+    "traits": [
+      "Daemonic (+3) / Демонический",
+      "Unnatural WS (+4) / Сверхъест. Оружейное Мастерство",
+      "Chosen One of Darkness / Избранник Тьмы",
+      "The Exalted Mandrake / Возвышенный Мандрагор"
+    ],
+    "talents": [
+      "The Cold of Darkness / Холод Тьмы",
+      "Shimmering Bodies / Мерцающие Тела",
+      "The Glimmer of Blades / Мерцание Клинков",
+      "Darkness is Our Home / Тьма Дом Родной",
+      "Freeze the Blood / Заморозить Кровь",
+      "Skulls to the Throne of Mandrakes / Черепа Трону Мандрагор"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "IHDGYdd8Qult7KJi",
+  "effects": [],
+  "folder": "BSny4tDCVx9m6PGl",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!IHDGYdd8Qult7KJi"
+}

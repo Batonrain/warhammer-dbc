@@ -391,12 +391,28 @@
       "path": "packs/races",
       "type": "Item",
       "system": "warhammer-dbc",
-      "ownership": { "PLAYER": "OBSERVER", "ASSISTANT": "OWNER", "GAMEMASTER": "OWNER" }
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
     },
     {
       "name": "archetypes",
       "label": "Архетипы — Библиотека (DBC)",
       "path": "packs/archetypes",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "elite-archetypes",
+      "label": "Элитные архетипы — Библиотека (DBC)",
+      "path": "packs/elite-archetypes",
       "type": "Item",
       "system": "warhammer-dbc",
       "ownership": {
@@ -623,7 +639,8 @@
               "name": "Архетипы",
               "sorting": "m",
               "packs": [
-                "archetypes"
+                "archetypes",
+                "elite-archetypes"
               ]
             }
           ]

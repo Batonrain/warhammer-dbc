@@ -1,0 +1,49 @@
+{
+  "name": "Король Червей",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "8b597be6",
+    "race": "Человек",
+    "god": "Нургл",
+    "req": "Покровительство Нургла, I 50, P 45, Psyker, PR 4, Survival+10, 2500 xp",
+    "charBonus": "+5 T, +5 I, +5 W, −5 F, +7 Cor",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Verminous Conduit / Паразитический Проводник",
+      "Hand of Plenty / Рука Изобилия",
+      "Worm Master / Повелитель Червей"
+    ],
+    "talents": [
+      "Maggot Mark / Метка Опарыша",
+      "Free Roamer / Свободный Скиталец",
+      "King's Plate / Латы Короля",
+      "Wormwalker / Червеход",
+      "Shell Guard / Стражи Панциря"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "pXoZn6DDY1v2uPls",
+  "effects": [],
+  "folder": "sq3IdHf4cO8fQP2j",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!pXoZn6DDY1v2uPls"
+}

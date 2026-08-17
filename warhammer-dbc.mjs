@@ -140,6 +140,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/aspiration.hbs",           // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/archetype.hbs",            // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/faction.hbs",
+    "systems/warhammer-dbc/templates/item/parts/elite-archetype.hbs",
     "systems/warhammer-dbc/templates/item/parts/faction-roster.hbs",
     "systems/warhammer-dbc/templates/item/parts/race.hbs",
     "systems/warhammer-dbc/templates/item/parts/subrace.hbs",

@@ -53,7 +53,8 @@
       "vehicleTrait": "Черта техники",
       "celestialBody": "Небесное тело",
       "race": "Раса",
-      "subrace": "Субраса"
+      "subrace": "Субраса",
+      "eliteArchetype": "Элитный архетип"
     }
   }
 }

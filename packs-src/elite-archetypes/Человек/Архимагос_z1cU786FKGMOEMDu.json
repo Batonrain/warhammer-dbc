@@ -1,0 +1,50 @@
+{
+  "name": "Архимагос",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "b3fbcfb9",
+    "race": "Человек",
+    "god": "Неделимый",
+    "req": "Не Тех-Ассасин, Секутор или Малагра, I 55, Inf 55, Трейт Mechanicum Implants, Forbidden Lore (Mechanicum, Archeotech), Cybernetic Rebirth, Binary Dominion, 4000 xp",
+    "charBonus": "+10 I, +2 Cor",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Masterpiece Frame / Фрейм Шедевра",
+      "Voice of Omnissiah / Глас Омниссии",
+      "Doctrina Imperative / Доктрина Императив"
+    ],
+    "talents": [
+      "Dogmatix / Догматикс",
+      "Infernax / Инфернакс",
+      "Avatar of Metal / Аватар Металла",
+      "Visio Irae / Лик Гнева",
+      "Concordax / Конкордакс",
+      "Arch-Dominus / Архи-Доминус"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "z1cU786FKGMOEMDu",
+  "effects": [],
+  "folder": "sq3IdHf4cO8fQP2j",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!z1cU786FKGMOEMDu"
+}

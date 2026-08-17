@@ -62,7 +62,8 @@
       "archetype",
       "faction",
       "race",
-      "subrace"
+      "subrace",
+      "eliteArchetype"
     ],
     "smallCraft": {},
     "vehicleGear": {},
@@ -101,6 +102,7 @@
     "aspiration": {},
     "archetype": {},
     "race": {},
-    "subrace": {}
+    "subrace": {},
+    "eliteArchetype": {}
   }
 }

@@ -30,6 +30,7 @@ import { MentalTraumaData }   from "./item/mental-trauma.mjs";
 import { HomeworldData }      from "./item/homeworld.mjs";
 import { DivinationData }     from "./item/divination.mjs";
 import { ArchetypeData }      from "./item/archetype.mjs";
+import { EliteArchetypeData } from "./item/elite-archetype.mjs";
 import { RaceData }           from "./item/race.mjs";
 import { SubraceData }        from "./item/subrace.mjs";
 import { ArmourHistoryEntryData } from "./item/armour-history-entry.mjs";
@@ -86,6 +87,8 @@ export const ITEM_DATA_MODELS = {
   homeworld:          HomeworldData,
   divination:         DivinationData,
   archetype:          ArchetypeData,
+  // Элитные архетипы (корбук стр. 114-164) — своя библиотека.
+  eliteArchetype:     EliteArchetypeData,
   race:               RaceData,
   subrace:            SubraceData,
   armourHistoryEntry: ArmourHistoryEntryData,

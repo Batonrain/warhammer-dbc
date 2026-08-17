@@ -1,0 +1,49 @@
+{
+  "name": "Кенетаи",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "80c02691",
+    "race": "Любая",
+    "god": "Неделимый",
+    "req": "WS 50, W 50, Psyker, PR 4, Schol.Lore (Occult)+10, Психосилы: Mind Link, Precognitive Strike, 2500 xp",
+    "charBonus": "+5 WS, +5 W",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Occult Blade / Оккультный Клинок",
+      "Shared Consciousness / Общее Сознание"
+    ],
+    "talents": [
+      "Wide Berth / Пространство для Маневра",
+      "Focused Storm / Фокусированный Шторм",
+      "Soul Thrust / Выпад Души",
+      "Way of Two Blades / Путь Двух Клинков",
+      "Blades of Brotherhood / Клинки Братства",
+      "Spell Breaker / Разрушитель Чар"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "Ycf6VjEYBV2lgFOo",
+  "effects": [],
+  "folder": "YekrvgAYNWWLLaG5",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!Ycf6VjEYBV2lgFOo"
+}

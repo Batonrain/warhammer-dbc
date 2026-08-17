@@ -1,0 +1,51 @@
+{
+  "name": "Чемпион-Терминатор",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "43e4b463",
+    "race": "Космодесантник",
+    "god": "Неделимый",
+    "req": "WS 50, BS 50, Inf 40, 2500 xp",
+    "charBonus": "+5 WS или +5 BS, +5 W или +5 F",
+    "freeTalents": "",
+    "gear": "Terminator Armour (только при старте с Архетипом)",
+    "traits": [
+      "Graceful Giant / Изящный Гигант",
+      "Legendary Plate / Легендарные Латы"
+    ],
+    "talents": [
+      "Anointed / Помазанник",
+      "Atramentar / Атрамэнтар",
+      "Death Shroud / Саван Смерти",
+      "Devourer / Поглотитель",
+      "Justaerin / Юстаэринец",
+      "Lernean / Лернеец",
+      "Phoenician / Фениксиец",
+      "Tyranthikos / Тирантикос"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "tVTuyAs6qcSvAYJ3",
+  "effects": [],
+  "folder": "EhPnOPbmMLPmxVvL",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!tVTuyAs6qcSvAYJ3"
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Малагра",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "185d3f94",
+    "race": "Человек",
+    "god": "Неделимый",
+    "req": "Не Тех-Ассасин, Секутор или Архимагос, I 55, P 55, Трейт Mechanicum Implants, Stealth+10, Total Recall, 4000 xp",
+    "charBonus": "+5 I, +5 P, +2 Cor",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Astral Converter / Астральный Конвертер",
+      "Digital Ghost / Цифровой Призрак",
+      "Paragon Coil / Совершенная Катушка",
+      "Malagra Cortex / Кортекс Малагра"
+    ],
+    "talents": [
+      "Fell Discharge / Жестокая Разрядка",
+      "Prescontax / Пресконтакс",
+      "Iovex / Йовекс",
+      "Rogoex / Рогоекс",
+      "Magnetomorphosis / Магнитоморфоз",
+      "Venefactor / Вэнефактор"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "WEfb7ZMTFKN4oijn",
+  "effects": [],
+  "folder": "sq3IdHf4cO8fQP2j",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!WEfb7ZMTFKN4oijn"
+}

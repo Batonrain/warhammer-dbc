@@ -1,0 +1,50 @@
+{
+  "name": "Иерарх",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "0fea726e",
+    "race": "Друкхари Истиннорожденный",
+    "god": "",
+    "req": "F 45, I 45, Peer (3 комморитские фракции), Good Reputation (1 комморитская фракция), быть в подчинении у Архонта, Intimidate+10, Inquiry+10, Charm+20, Commerce+20, Common Lore (Druchii)+30, Common Lore (Intrigue)+30; 2500 xp",
+    "charBonus": "+3 F, +3 I",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Unnatural Fellowship (+2) / Сверхъест. Общительность",
+      "His Will / Его Воля",
+      "Invisible Threads / Невидимые Нити"
+    ],
+    "talents": [
+      "Sophisticated Speech / Утончённая Речь",
+      "Convincing Argument / Убедительный Аргумент",
+      "A Trained Eye / Наметанный Глаз",
+      "Whatever You Want / Что Захотите",
+      "The Contract Network / Сеть Контрактов",
+      "Please At Any Cost! / Угодить Любой Ценой!"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "GoREi8rLezGXE8m4",
+  "effects": [],
+  "folder": "Y3xmrmSf8LnVnZMP",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!GoREi8rLezGXE8m4"
+}

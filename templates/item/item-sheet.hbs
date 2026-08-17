@@ -102,6 +102,9 @@
 {{#if (eq item.type "faction")}}
 {{> "systems/warhammer-dbc/templates/item/parts/faction.hbs"}}
 {{/if}}
+{{#if (eq item.type "eliteArchetype")}}
+{{> "systems/warhammer-dbc/templates/item/parts/elite-archetype.hbs"}}
+{{/if}}
 {{#if (eq item.type "vehicleGear")}}
 {{> "systems/warhammer-dbc/templates/item/parts/vehicle-gear.hbs"}}
 {{/if}}

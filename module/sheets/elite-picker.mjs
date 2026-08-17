@@ -10,6 +10,30 @@
 import { ELITE_ARCHETYPES } from "../constants/elite-archetypes.mjs";
 import { esc } from "../helpers/utils.mjs";
 
+/** Пак элитных архетипов: библиотека, которую ГМ правит прямо в игре. */
+const ELITE_PACK = "warhammer-dbc.elite-archetypes";
+
+/**
+ * Список для пикера. Источник истины — компендиум: архетип, заведённый или
+ * поправленный ГМом, должен попадать в выбор наравне с книжным. Константы
+ * остаются запасным путём — пак может быть ещё не собран.
+ */
+export function eliteEntries() {
+  try {
+    const rows = [...(game.packs?.get(ELITE_PACK)?.index ?? [])]
+      .map(e => ({
+        name: e.name,
+        race: e.system?.race || "Любая",
+        god:  e.system?.god  || "",
+        req:  e.system?.req  || "",
+        uuid: e.uuid
+      }))
+      .filter(e => e.name);
+    if (rows.length) return rows.sort((a, b) => String(a.name).localeCompare(String(b.name), "ru"));
+  } catch { /* вне игры или пак не собран — идём в константы */ }
+  return ELITE_ARCHETYPES;
+}
+
 // Метки рас из книги → ключи рас и субрас листа.
 const RACE_LABELS = {
   "Космодесантник": ["astartes"],
@@ -46,7 +70,7 @@ export function openElitePicker(actor, extraIndex = null) {
     ? (actor.system.eliteArchetype || "")
     : (actor.system.eliteArchetypesExtra?.[extraIndex] || "");
   const fit = [], rest = [];
-  for (const e of ELITE_ARCHETYPES) (eliteRaceMatch(actor, e) ? fit : rest).push(e);
+  for (const e of eliteEntries()) (eliteRaceMatch(actor, e) ? fit : rest).push(e);
 
   const card = (e, dim) => `
     <button type="button" class="ep-item ${dim ? "dim" : ""} ${e.name === cur ? "on" : ""}"

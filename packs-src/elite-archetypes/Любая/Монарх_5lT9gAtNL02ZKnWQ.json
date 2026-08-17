@@ -1,0 +1,47 @@
+{
+  "name": "Монарх",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "9f39d18e",
+    "race": "Любая",
+    "god": "Неделимый",
+    "req": "I 50, W 50, Tech-Use+20, For.Lore (Psykers)+20, Medicae+20, 3000 xp",
+    "charBonus": "",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Corona Polentia / Корона Полентия",
+      "Brain Harvesting / Извлечение Мозга"
+    ],
+    "talents": [
+      "Cerebral Channeling / Церебральный Поток",
+      "Dragon Monarch / Монарх Дракон",
+      "Awakening / Пробуждение",
+      "Neuronist / Нейронист"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "5lT9gAtNL02ZKnWQ",
+  "effects": [],
+  "folder": "YekrvgAYNWWLLaG5",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!5lT9gAtNL02ZKnWQ"
+}

@@ -1,0 +1,50 @@
+{
+  "name": "Архимаг",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "44f9b6ea",
+    "race": "Человек",
+    "god": "Тзинч",
+    "req": "Покровительство Тзинча, W 50, I 45, Psyker, PR 6, Meditation, For.Lore (Warp, Daemons, Psykers)+10, Schol.Lore (Occult)+10, Deceive+10, Scrutiny+10, 2500 xp",
+    "charBonus": "+5 I, +5 W, +5 F, −5 S, +9 Cor",
+    "freeTalents": "",
+    "gear": "Force Staff",
+    "traits": [
+      "Mastery of Form / Мастерство Формы",
+      "Magus Supreme / Высший Магус",
+      "Wizard Staff / Чародейский Посох"
+    ],
+    "talents": [
+      "Inner Eye / Внутренний Глаз",
+      "Exemptus / Экземптус",
+      "Mystic Feint / Мистический Финт",
+      "Mirror Soul / Зеркальная Душа",
+      "Savant Immaterial / Савант Иммматериал",
+      "Unlimited Power / Безграничная Сила"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "efnidqJYx8SVJTS5",
+  "effects": [],
+  "folder": "sq3IdHf4cO8fQP2j",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!efnidqJYx8SVJTS5"
+}

@@ -1,0 +1,50 @@
+{
+  "name": "Инкуб",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "ed0a95b1",
+    "race": "Друкхари",
+    "god": "",
+    "req": "WS 55, A 50, Disarm, Steady Footwork, Sure Strike, Cleave, Precise Blow, Tenacity, Blademaster; 3000 xp",
+    "charBonus": "+5 S, +5 T",
+    "freeTalents": "Frenzy, Fire in Blood, Cold Fury, Battle Rage",
+    "gear": "Klaive, Incubus Warsuit",
+    "traits": [
+      "Unnatural WS (+4) / Сверхъест. Оружейное Мастерство",
+      "Mercenary of the Word / Наёмник Слова",
+      "Mercenary of the Matter / Наёмник Дела"
+    ],
+    "talents": [
+      "Cold Face / Холодное Лицо",
+      "Let's Finish It Faster / Закончим Быстрее",
+      "Sword Duel / Дуэль Мечей",
+      "Disciple Tormentor / Ученик Мучителя",
+      "The Teachings of Arhra / Учения Архры",
+      "Klaivex / Клэйвекс"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "ManXi5ZzE0ZTjo5O",
+  "effects": [],
+  "folder": "cyxnHXXm4TknH7Qx",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!ManXi5ZzE0ZTjo5O"
+}

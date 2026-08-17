@@ -1,0 +1,51 @@
+{
+  "name": "Гладиатор",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "d4bcfc3b",
+    "race": "Любая",
+    "god": "Неделимый",
+    "req": "WS 50, S 40, T 40, A 40, F 35, Athletics+10, Acrobatics+10, Dodge+10, Parry+10, Die Hard, Everything a Weapon, Iron Jaw, Sure Strike, Precise Blow, 2500 xp",
+    "charBonus": "+3 WS, +3 S, +3 A, +3 F",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Momentum / Момент",
+      "Red Sands / Красные Пески",
+      "Bloody Performance / Кровавое Представление",
+      "Morituri / Идущие на Смерть"
+    ],
+    "talents": [
+      "Bestiarius / Бестиарий",
+      "Militarius / Милитарий",
+      "Dimacherus / Димахер",
+      "Secutorius / Секуторий",
+      "Retiarius / Ретиарий",
+      "Malearius / Малеарий"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "MELY3xGbqDKSAYJ0",
+  "effects": [],
+  "folder": "YekrvgAYNWWLLaG5",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!MELY3xGbqDKSAYJ0"
+}

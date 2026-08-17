@@ -1,0 +1,54 @@
+{
+  "name": "Медуза",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "99750bc6",
+    "race": "Любая",
+    "god": "",
+    "req": "Отсутствие Blunted; 3000 xp (2500 для Друкхари)",
+    "charBonus": "+15 W, −5 S, −5 T, −5 F",
+    "freeTalents": "",
+    "gear": "Живая медуза (зверь R4; R3 при связях с Гемункулами, Архонтами, Суккубами или Клэйвексами)",
+    "traits": [
+      "Deadly Natural Weapon (2, Щупальца; 7, Укус)",
+      "From Beyond / Извне",
+      "Hoverer (W.b) / Парящий",
+      "Parasite / Паразит",
+      "Unnatural Willpower (+4) / Сверхъест. Воля",
+      "Warp Sight / Варп-Зрение",
+      "Medusae / Медуза",
+      "Empath / Эмпат"
+    ],
+    "talents": [
+      "Extreme Sensations / Экстремальные Ощущения",
+      "Emotional Vision / Эмоциональное Зрение",
+      "Emotional Explosion / Эмоциональный Взрыв",
+      "Material Wreck / Материальное Крушение",
+      "Alien Consciousness, Alien Powers / Чуждое Сознание, Чуждые Силы"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "1FIaSimTlpQxBMgg",
+  "effects": [],
+  "folder": "YekrvgAYNWWLLaG5",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!1FIaSimTlpQxBMgg"
+}

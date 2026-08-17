@@ -1,0 +1,50 @@
+{
+  "name": "Чернокнижник",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "7bed5931",
+    "race": "Любая",
+    "god": "Неделимый",
+    "req": "Cor 20, For.Lore (Psykers)+20, Schol.Lore (Occult)+20, 1500 xp",
+    "charBonus": "+1d5 Cor",
+    "freeTalents": "Blasphemous Incantation",
+    "gear": "",
+    "traits": [
+      "Dark Arts / Тёмные Искусства",
+      "Transcription / Транскрипция"
+    ],
+    "talents": [
+      "Cannibal Mage / Маг-Каннибал",
+      "Final Echo / Последнее Эхо",
+      "Warp Dancer / Варп-Танцор",
+      "High Ritualist / Высший Ритуалист",
+      "Listener / Слушающий",
+      "Silent Student / Тихий Ученик",
+      "Interpreter / Интерпретатор"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "fAEYX0OgWmeLYAMQ",
+  "effects": [],
+  "folder": "YekrvgAYNWWLLaG5",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!fAEYX0OgWmeLYAMQ"
+}

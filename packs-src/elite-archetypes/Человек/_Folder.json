@@ -1,0 +1,15 @@
+{
+  "name": "Человек",
+  "type": "Item",
+  "_id": "sq3IdHf4cO8fQP2j",
+  "sorting": "a",
+  "color": null,
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0"
+  },
+  "_key": "!folders!sq3IdHf4cO8fQP2j"
+}

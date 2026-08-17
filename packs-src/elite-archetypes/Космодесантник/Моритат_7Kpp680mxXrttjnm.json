@@ -1,0 +1,49 @@
+{
+  "name": "Моритат",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "6901dabe",
+    "race": "Космодесантник",
+    "god": "Неделимый",
+    "req": "BS 50, A 50, Operate (Aeronautica)+10, Stealth+10, Tech-Use+10, Trade (Weaponsmith)+10, Two Weapon Wielder (Ranged), Gunslinger, 2500 xp",
+    "charBonus": "+5 BS, +5 A, −5 F",
+    "freeTalents": "",
+    "gear": "Moritat Power Pack (только при старте с Архетипом)",
+    "traits": [
+      "No Lord, Nor Servant / Ни Владыка, Ни Слуга",
+      "Chain Shot / Цепной Выстрел"
+    ],
+    "talents": [
+      "Lone Warrior / Одинокий Воин",
+      "Mortido / Мортидо",
+      "Belt Feed / Ленточное Питание",
+      "Lightning Fingers / Молниеносные Пальцы",
+      "Fly-By / Пролётом",
+      "Outgun / Огневая Мощь"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "7Kpp680mxXrttjnm",
+  "effects": [],
+  "folder": "EhPnOPbmMLPmxVvL",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!7Kpp680mxXrttjnm"
+}

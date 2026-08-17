@@ -1,0 +1,50 @@
+{
+  "name": "Ламия",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "10deba39",
+    "race": "Друкхари, Развалина, Сслит",
+    "god": "",
+    "req": "Женщина; I 40, F 40, Charm+20, Trade (Chymist)+20; 3000 xp (2500 для Истиннорождённого)",
+    "charBonus": "+5 I, +5 F",
+    "freeTalents": "Disciple Of Shaimesh",
+    "gear": "Blade of the Sisterhood",
+    "traits": [
+      "Unnatural Intelligence (+2) / Сверхъест. Интеллект",
+      "Shaimesh Disciple / Ученица Шаимеш",
+      "Blessing of Shaimesh / Благословение Шаимеша"
+    ],
+    "talents": [
+      "Lhamaean Kiss / Ламеянский Поцелуй",
+      "Shard of Poison / Осколок Яда",
+      "Salt On The Wound / Соль На Рану",
+      "Hands In A Poison / Руки В Яде",
+      "Cruelty of the Poison / Жестокость Яда",
+      "Daughter of Shiamesh / Дочь Шаимеш"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "fd2NxMohMQ0CSj94",
+  "effects": [],
+  "folder": "cyxnHXXm4TknH7Qx",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!fd2NxMohMQ0CSj94"
+}
