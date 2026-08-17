@@ -79,7 +79,7 @@ describe("раздел Ритуалов", () => {
 
   it("механические Требования разбираются в строки текста", () => {
     const ctx = ritualsContext(actorWith(
-      ritual("r1", "С требованиями", {}, {
+      ritual("r1", "С требованиями", { assistMax: 4 }, {
         req:       [raceGroup("AND", "drukhari")],
         assistReq: [raceGroup("AND", "human")]
       })
@@ -87,6 +87,19 @@ describe("раздел Ритуалов", () => {
 
     expect(ctx[0].reqLines).toEqual(["Раса: Друкхари"]);
     expect(ctx[0].assistReqLines).toEqual(["Раса: Человек"]);
+  });
+
+  it("вилка «0—0» — требования к ассистентам не показываются", () => {
+    // Ритуал в одиночку: помощников не бывает, и условия, набранные до того,
+    // как вилку свели к нулям, всплывать в строке не должны — лист предмета
+    // этот блок тоже выключает.
+    const ctx = ritualsContext(actorWith(
+      ritual("r1", "В одиночку", { assistMin: 0, assistMax: 0 },
+        { assistReq: [raceGroup("AND", "human")] })
+    ));
+
+    expect(ctx[0].assistReqLines).toEqual([]);
+    expect(ctx[0].hasAnyText).toBe(false);
   });
 
   it("ИЛИ-группа показывается как выбор, а не как список обязательных", () => {
@@ -173,7 +186,7 @@ describe("раздел Ритуалов", () => {
     // помощников на листе ритуалиста нет. Отметка строки — только про него.
     it("требования к ассистентам на отметку не влияют", () => {
       const ctx = ritualsContext(actorWith(
-        ritual("r1", "С помощниками", {}, { assistReq: [raceGroup("AND", "drukhari")] })));
+        ritual("r1", "С помощниками", { assistMax: 4 }, { assistReq: [raceGroup("AND", "drukhari")] })));
 
       expect(ctx[0].meetsReq).toBe(true);
     });

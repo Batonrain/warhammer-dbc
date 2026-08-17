@@ -1313,7 +1313,15 @@ export class WarhammerItemSheet
       context.ritualItemTypes     = RITUAL_ITEM_TYPES;
       context.ritualTest          = ritualTestContext(this.item);
       context.ritualReqHtml       = buildRequirementsHtml(this.item, "req", context.isGM);
-      context.ritualAssistReqHtml = buildRequirementsHtml(this.item, "assistReq", context.isGM);
+      // Вилка «0—0» — ритуал проводится в одиночку: ассистентов у него не
+      // бывает, и требовать с них нечего. Блок требований к ассистентам в этом
+      // случае выключаем целиком (вместе с кнопками групп), чтобы не набирать
+      // условия для тех, кого не позовут.
+      const s = this.item.system || {};
+      context.ritualHasAssists    = !!((Number(s.assistMin) || 0) || (Number(s.assistMax) || 0));
+      context.ritualAssistReqHtml = context.ritualHasAssists
+        ? buildRequirementsHtml(this.item, "assistReq", context.isGM)
+        : "";
     }
 
     // Раса/Субраса — десять полей характеристик листаются циклом в шаблоне,
