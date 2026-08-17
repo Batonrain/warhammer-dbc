@@ -89,7 +89,7 @@
 <div class="sheet-body">
 
   {{!-- ───────────────── ОТРЯД ───────────────── --}}
-  <div class="tab sq-tab" data-tab="roster" data-group="primary">
+  <div class="tab sq-tab {{#if (eq tab "roster")}}active{{/if}}" data-tab="roster" data-group="primary">
 
     <div class="stat-panel sq-panel">
       <div class="panel-title">КОМАНДНАЯ ВЕРТИКАЛЬ</div>
@@ -216,7 +216,7 @@
   </div>
 
   {{!-- ───────────────── КОМАНДЫ ───────────────── --}}
-  <div class="tab sq-tab" data-tab="commands" data-group="primary">
+  <div class="tab sq-tab {{#if (eq tab "commands")}}active{{/if}}" data-tab="commands" data-group="primary">
 
     {{#unless activeCommander}}
     <div class="sq-warn">Ни Командир, ни Лидер не назначены — Команды отдавать некому. Перетащите актора на пост во вкладке «Отряд».</div>
@@ -326,7 +326,7 @@
   </div>
 
   {{!-- ───────────────── МОРАЛЬ ───────────────── --}}
-  <div class="tab sq-tab" data-tab="morale" data-group="primary">
+  <div class="tab sq-tab {{#if (eq tab "morale")}}active{{/if}}" data-tab="morale" data-group="primary">
 
     <div class="stat-panel sq-panel">
       <div class="panel-title">МОРАЛЬ И ПОТЕРЯ КОМАНДОВАНИЯ</div>
@@ -373,7 +373,7 @@
   </div>
 
   {{!-- ───────────────── СПРАВОЧНИК ───────────────── --}}
-  <div class="tab sq-tab" data-tab="reference" data-group="primary">
+  <div class="tab sq-tab {{#if (eq tab "reference")}}active{{/if}}" data-tab="reference" data-group="primary">
 
     <div class="stat-panel sq-panel">
       <div class="panel-title">РИСК КОМАНДИРА</div>
@@ -411,7 +411,7 @@
   </div>
 
   {{!-- ───────────────── ЗАПИСИ ───────────────── --}}
-  <div class="tab sq-tab" data-tab="notes" data-group="primary">
+  <div class="tab sq-tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
     <div class="stat-panel sq-panel">
       <div class="panel-title">ЗАПИСИ ОБ ОТРЯДЕ</div>
       <div class="panel-body">

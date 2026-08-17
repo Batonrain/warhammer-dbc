@@ -61,5 +61,22 @@ export function describeV2Sheet(SheetClass, files) {
       expect(inMarkup.sort()).toEqual(group.tabs.map(t => t.id).sort());
       expect(group.tabs.map(t => t.id)).toContain(group.initial);
     });
+
+    // Foundry расставляет .active только в changeTab, то есть по клику. При
+    // любой другой перерисовке — а submitOnChange перерисовывает лист на каждое
+    // изменение поля — класс не возвращается, и раздел, у которого active нет в
+    // самой разметке, пропадает с экрана до следующего клика по вкладке. Именно
+    // так «ломались» листы Отряда, Формирования и Звёздной системы.
+    it("каждый раздел помечает себя active из контекста", () => {
+      const group = SheetClass.TABS?.primary;
+      if (!group) return;
+
+      const sections = [...TEMPLATE.matchAll(/<div class="tab[^"]*"[^>]*data-tab="(\w+)"[^>]*data-group="primary"/g)];
+      const withoutActive = sections
+        .filter(m => !/\{\{#if \(eq (\.\.\/)?tab "\w+"\)\}\}active/.test(m[0]))
+        .map(m => m[1]);
+
+      expect(withoutActive).toEqual([]);
+    });
   });
 }

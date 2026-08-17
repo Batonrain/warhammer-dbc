@@ -116,7 +116,7 @@
 <div class="sheet-body">
 
   {{!-- ───────────────── ЧАСТЬ ───────────────── --}}
-  <div class="tab fm-tab" data-tab="unit" data-group="primary">
+  <div class="tab fm-tab {{#if (eq tab "unit")}}active{{/if}}" data-tab="unit" data-group="primary">
 
     {{#if featureOff}}
     <div class="fm-feature-off">
@@ -249,7 +249,7 @@
   </div>
 
   {{!-- ───────────────── ПРИКАЗЫ ───────────────── --}}
-  <div class="tab fm-tab" data-tab="orders" data-group="primary">
+  <div class="tab fm-tab {{#if (eq tab "orders")}}active{{/if}}" data-tab="orders" data-group="primary">
 
     <div class="stat-panel fm-panel{{#if currentOrder}} fm-panel-on{{/if}}">
       <div class="panel-title">ПРИКАЗ НА СТРАТЕГИЧЕСКИЙ ХОД{{#if currentOrder}} — {{currentOrder.label}}{{/if}}</div>
@@ -290,7 +290,7 @@
   </div>
 
   {{!-- ───────────────── БОЙ ───────────────── --}}
-  <div class="tab fm-tab" data-tab="battle" data-group="primary">
+  <div class="tab fm-tab {{#if (eq tab "battle")}}active{{/if}}" data-tab="battle" data-group="primary">
 
     <div class="stat-panel fm-panel">
       <div class="panel-title">БОЕВЫЕ ДЕЙСТВИЯ</div>
@@ -379,7 +379,7 @@
   </div>
 
   {{!-- ───────────────── СОБЫТИЯ ───────────────── --}}
-  <div class="tab fm-tab" data-tab="events" data-group="primary">
+  <div class="tab fm-tab {{#if (eq tab "events")}}active{{/if}}" data-tab="events" data-group="primary">
 
     <div class="stat-panel fm-panel{{#if status.keyEventBonus}} fm-panel-on{{/if}}">
       <div class="panel-title">КЛЮЧЕВЫЕ СОБЫТИЯ{{#if status.keyEventBonus}} — БОНУС АКТИВЕН{{/if}}</div>
@@ -417,7 +417,7 @@
   </div>
 
   {{!-- ───────────────── СПРАВОЧНИК ───────────────── --}}
-  <div class="tab fm-tab" data-tab="reference" data-group="primary">
+  <div class="tab fm-tab {{#if (eq tab "reference")}}active{{/if}}" data-tab="reference" data-group="primary">
 
     <div class="stat-panel fm-panel">
       <div class="panel-title">ТИПЫ ПОДРАЗДЕЛЕНИЙ</div>
@@ -535,7 +535,7 @@
   </div>
 
   {{!-- ───────────────── ЗАПИСИ ───────────────── --}}
-  <div class="tab fm-tab" data-tab="notes" data-group="primary">
+  <div class="tab fm-tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
     <div class="stat-panel fm-panel">
       <div class="panel-title">ЗАПИСИ О ЧАСТИ</div>
       <div class="panel-body">
