@@ -1,15 +1,15 @@
 {
-  "name": "17. Железа Бетчера / Betcher's Gland",
+  "name": "14. Оолитическая Почка / Oolitic Kidney",
   "type": "implant",
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "folder": "UjIC7NnQmIxPWhgg",
   "system": {
-    "description": "Известная также как Ядовитый Укус — на самом деле две маленькие луковицевидные железы, одна из которых имплантируется в слюнные железы под языком, а другая — в основание верхней губы. Первая железа выделяет соединения, что укрепляют ротовую полость, горло и пищевод от кислоты, а вторая вырабатывает и накапливает в мешочке мощную кислоту.\n\nВозраст имплантации: 16–17 лет.",
-    "notes": "Имплантация. Операция занимает 1 час работы и требует комбинированного теста Medicae(I)–10 и For.Lore (Astartes Implants)(I)+20. Провал ничем не угрожает аспиранту, кроме обычного времени на восстановление.",
+    "description": "Известная также как Очиститель — мясистый овальный орган размером с кулак, имплантируемый в брюшную полость рядом с печенью, где он фильтрует кровь и изменяет иммунную систему десантника, а также стабилизирует работу всех его органов — как искусственных, так и родных — в условиях экстремальных нагрузок на них.\n\nВозраст имплантации: 15–17 лет.",
+    "notes": "Имплантация. Эти два органа имплантируются одновременно; операция занимает смену работы и требует комбинированного теста Medicae(А)–30 и For.Lore (Astartes Implants)(I)+10. При Провале аспирант получает Провалы d5 урона в Т.",
     "category": "astartes",
     "quality": "common",
-    "effect": "Позволяет плеваться кислотой со следующим профилем: Rng 3 м; Dmg 1d5 C; Pen 4; Corrosive (3), Independent, Precise — если рот десантника не закрыт шлемом или чем-то ещё (респиратором, ребризером и т.п.). При попадании в глаза также получает свойство Blinding (3). Также позволяет медленно (от 10 минут до часа) перегрызать стальные решётки или кандалы, если они не сделаны из пластека, адамантия или прочих стойких к кислоте материалов.",
-    "installed": "слюнные железы под языком и основание верхней губы",
+    "effect": "Даёт Талант Resistance (Poison), перебросы тестов Т на сопротивление ядам и полный иммунитет к эффектам обычных болезней и слабых наркотиков вроде Алкоголя или Лхо. Если урон от яда убивает десантника, он вместо этого теряет сознание на 1 час, в течение которого Оолитическая Почка усиленно очищает его организм.",
+    "installed": "брюшная полость, рядом с печенью",
     "linkedWeapon": "",
     "bookSource": "DoomBC — Основная книга, ГЕНОСЕМЯ (стр. 485-487)",
     "effects": {
@@ -39,9 +39,9 @@
     },
     "weaponProps": []
   },
-  "_id": "cbHckvBObryw75ma",
+  "_id": "TYGdZEj6aSxCupXd",
   "effects": [],
-  "sort": 1700000,
+  "sort": 1400000,
   "ownership": {
     "default": 0
   },
@@ -49,12 +49,12 @@
     "warhammer-dbc": {
       "mechanics": [
         {
-          "id": "3K8c0boGWZ4S31Hd",
+          "id": "EPD9XE6ZWBYPmnJH",
           "operator": "AND",
           "entries": [
             {
-              "id": "IQvNjjPNFMb3YyaX",
-              "kind": "integralAttack",
+              "id": "IvclziuXrGTzUKWJ",
+              "kind": "talent",
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",
@@ -64,12 +64,12 @@
               "field": "total",
               "op": "add",
               "value": 1,
-              "sourceUuid": "",
-              "sourceName": "",
-              "sourceImg": "",
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.KUrEsT190BtUwtW8",
+              "sourceName": "Resistance / Сопротивление",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
               "sourceHasRating": false,
               "rating": "",
-              "specialization": "",
+              "specialization": "Poison",
               "minionGroup": "",
               "minionTier": "",
               "skillScope": "plain",
@@ -91,9 +91,9 @@
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
               "equipQty": 1,
-              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.6WcaNaveRx2HrNjU",
-              "equipSourceName": "Кислотный Плевок (Железа Бетчера)",
-              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-ranged.svg",
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
               "equipCategoryPack": "weapons",
               "equipWeaponType": "",
               "equipWeaponProp": "",
@@ -127,17 +127,20 @@
           ]
         }
       ],
-      "installed": true
+      "installed": true,
+      "migratedEffect": true
     }
   },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,
     "exportSource": null,
-    "coreVersion": "13.346",
+    "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "lastModifiedBy": null
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1786993505320,
+    "modifiedTime": 1786993505320
   },
-  "_key": "!items!cbHckvBObryw75ma"
+  "_key": "!items!TYGdZEj6aSxCupXd"
 }

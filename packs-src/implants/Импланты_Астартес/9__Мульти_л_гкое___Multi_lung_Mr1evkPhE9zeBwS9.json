@@ -127,17 +127,20 @@
           ]
         }
       ],
-      "installed": true
+      "installed": true,
+      "migratedEffect": true
     }
   },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,
     "exportSource": null,
-    "coreVersion": "13.346",
+    "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "lastModifiedBy": null
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1786993505192,
+    "modifiedTime": 1786993505192
   },
   "_key": "!items!Mr1evkPhE9zeBwS9"
 }

@@ -28,6 +28,24 @@
   "_id": "6F9wh4WERx9C7Y7n",
   "effects": [],
   "sort": 0,
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786993502973,
+    "modifiedTime": 1786993502973,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
   "_key": "!items!6F9wh4WERx9C7Y7n"
 }
