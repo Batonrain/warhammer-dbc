@@ -1,7 +1,9 @@
 
 <header class="item-sheet-header">
+  {{!-- Картинку меняет штатное действие ApplicationV2: одного data-edit мало,
+        у V2 клик разбирается по data-action, и без него аватар не открывался. --}}
   <img class="profile-img item-img" src="{{item.img}}"
-       data-edit="img" title="{{item.name}}"/>
+       data-action="editImage" data-edit="img" title="Сменить картинку: {{item.name}}"/>
   <div class="item-header-info">
     <label class="item-name-label">Название</label>
     <input name="name" type="text" value="{{item.name}}"
@@ -96,6 +98,9 @@
 {{/if}}
 {{#if (eq item.type "celestialBody")}}
 {{> "systems/warhammer-dbc/templates/item/parts/celestial-body.hbs"}}
+{{/if}}
+{{#if (eq item.type "faction")}}
+{{> "systems/warhammer-dbc/templates/item/parts/faction.hbs"}}
 {{/if}}
 {{#if (eq item.type "vehicleGear")}}
 {{> "systems/warhammer-dbc/templates/item/parts/vehicle-gear.hbs"}}

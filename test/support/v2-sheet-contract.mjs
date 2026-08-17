@@ -44,8 +44,13 @@ export function describeV2Sheet(SheetClass, files) {
     const inTemplate = [...new Set([...TEMPLATE.matchAll(/data-action="(\w+)"/g)].map(m => m[1]))];
     const declared = Object.keys(SheetClass.DEFAULT_OPTIONS.actions ?? {});
 
+    // Действия самого Foundry: объявлять их у себя незачем — ядро уже умеет, а
+    // дубль означал бы второй обработчик той же кнопки. `editImage` открывает
+    // выбор картинки документа (DocumentSheetV2).
+    const CORE_ACTIONS = ["editImage"];
+
     it("у каждого data-action есть обработчик", () => {
-      expect(inTemplate.filter(a => !declared.includes(a))).toEqual([]);
+      expect(inTemplate.filter(a => !declared.includes(a) && !CORE_ACTIONS.includes(a))).toEqual([]);
     });
 
     it("каждый обработчик кем-то вызывается", () => {
