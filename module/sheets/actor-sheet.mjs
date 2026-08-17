@@ -31,6 +31,7 @@ import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minion
 import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
+import { refundXP, talentCost, talentReason } from "../apps/duplicate-refund.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
@@ -558,6 +559,8 @@ export class WarhammerCharacterSheet
     for (const d of lib) byEng.set(norm(d.name.split("/")[0]), d);
     const toCreate = [];
     const seen = new Set();
+    // Таланты, которые у персонажа уже есть: за каждый вернётся его цена.
+    const refunds = [];
     for (const raw of list) {
       if (!raw) continue;
       const m        = String(raw).match(/^([^(]+?)\s*(?:\(([^)]*)\))?\s*$/);
@@ -566,7 +569,17 @@ export class WarhammerCharacterSheet
       const hit      = byEng.get(norm(baseName)) || byEng.get(TALENT_ALIAS[norm(baseName)] || "\0");
       const fullName = hit ? hit.name : String(raw);
       const key      = keyOf(fullName, spec);
-      if (existing.has(key) || seen.has(key)) continue;
+      // Повтор внутри одного списка — просто описка источника, за него ничего
+      // не полагается. А вот Талант, который у персонажа уже есть от другого
+      // источника, повторить нечем: вместо копии возвращается его цена
+      // (rules/duplicate-grants.mjs).
+      if (seen.has(key)) continue;
+      if (existing.has(key)) {
+        const same = this.actor.items.find(i => i.type === "talent" && keyOf(i.name, i.system?.specialization) === key);
+        if (same) refunds.push(same);
+        seen.add(key);
+        continue;
+      }
       seen.add(key);
       if (hit) {
         const sys = foundry.utils.deepClone(hit.system);
@@ -581,6 +594,14 @@ export class WarhammerCharacterSheet
       }
     }
     if (toCreate.length) await this.actor.createEmbeddedDocuments("Item", toCreate);
+
+    // Возврат — после создания: цена Таланта считается по Склонностям
+    // персонажа, а их мог поднять Талант, выданный этим же списком.
+    for (const same of refunds) {
+      await refundXP(this.actor, talentCost(this.actor, same),
+        talentReason(same.name, same.system?.specialization));
+    }
+
     return toCreate.length;
   }
 

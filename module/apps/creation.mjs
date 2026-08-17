@@ -21,6 +21,8 @@ import { archetypeEntries, archetypesForRace } from "./archetypes.mjs";
 import { splitTopLevel, esc }           from "../helpers/utils.mjs";
 import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-levels.mjs";
 import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
+import { skillGrantOutcome } from "../rules/duplicate-grants.mjs";
+import { refundXP, skillStepCost, skillCapReason } from "./duplicate-refund.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
 // Влияние (inf) сюда не входит — оно от arch.infRoll.
@@ -270,6 +272,9 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
   const wildWant = {};   // gkey → сколько слотов даёт генерация
   const wildRank = {};   // gkey → лучший ранг среди источников
   const unknown  = [];   // нераспознанные записи (диагностика для ГМа)
+  // Навыки, доросшие до потолка на повторной выдаче: за них возвращается опыт,
+  // но не раньше, чем упадёт общий actor.update — иначе правки перебьют друг друга.
+  const refunds  = [];
 
   for (let str of all) {
     str = String(str).trim(); if (!str) continue;
@@ -322,12 +327,19 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
     }
     const skey = SK[norm(str)];
     if (skey) {
+      // Тот же Навык из второго источника поднимает ступень, а на потолке
+      // возвращает опыт (rules/duplicate-grants.mjs). Источников при создании
+      // несколько — раса, Прошлое, субраса, Родной мир, Архетип, — и совпадения
+      // среди них обычное дело.
       const cur = upd[`system.skills.${skey}.grantedRank`] || actor.system.skills?.[skey]?.grantedRank || "untrained";
-      const better = (STEP[rank] >= (STEP[cur]||0)) ? rank : cur;
-      upd[`system.skills.${skey}.grantedRank`] = better;
+      const out = skillGrantOutcome(cur, rank);
+      upd[`system.skills.${skey}.grantedRank`] = out.rank;
       const curRank = actor.system.skills?.[skey]?.rank || "untrained";
-      if ((STEP[curRank]||0) < STEP[better]) upd[`system.skills.${skey}.rank`] = better;
+      if ((STEP[curRank]||0) < STEP[out.rank]) upd[`system.skills.${skey}.rank`] = out.rank;
       upd[`system.skills.${skey}.cost`] = 0;
+      if (out.refundStep !== null) {
+        refunds.push({ skey, step: out.refundStep, rank: out.rank });
+      }
     } else {
       // Не распознали — раньше запись просто исчезала. Теперь копим и сообщаем
       // ГМу, чтобы опечатка в данных архетипа была видна сразу.
@@ -356,6 +368,12 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
   }
   for (const [gk, arr] of Object.entries(groupCache)) upd[`system.groupSkills.${gk}`] = arr;
   if (Object.keys(upd).length) await actor.update(upd);
+
+  // Совпавшие Навыки на потолке: опыт за третью покупку — по одной строке в чат.
+  for (const r of refunds) {
+    await refundXP(actor, skillStepCost(actor, r.skey, r.step),
+      skillCapReason(SKILLS_DEF[r.skey]?.label || r.skey, r.rank));
+  }
 
   // Нераспознанное больше не теряется молча — говорим ГМу, что выдать руками.
   if (unknown.length) {

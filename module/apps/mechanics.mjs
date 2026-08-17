@@ -144,6 +144,9 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF }      from "../constants/skills.mjs";
+import { skillGrantOutcome, findSameTalent } from "../rules/duplicate-grants.mjs";
+import { refundXP, skillStepCost, talentCost, skillCapReason, talentReason }
+  from "./duplicate-refund.mjs";
 import { MINION_TYPES, minionsOf, loyaltyAfterChange } from "./minions.mjs";
 import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics.mjs";
 import { specOptions, findGroupEntry }        from "../constants/skill-specializations.mjs";
@@ -923,6 +926,20 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       img: entry.sourceImg || "icons/svg/aura.svg", system: {}
     };
     delete data._id;
+
+    // Тот же Талант из второго источника повторить нечем — вместо копии
+    // возвращается его цена: столько он стоил бы самому персонажу.
+    if (entry.kind === "talent") {
+      const same = findSameTalent(actor.items, {
+        name: data.name,
+        system: { specialization: entry.specialization || data.system?.specialization || "" }
+      });
+      if (same) {
+        await refundXP(actor, talentCost(actor, same),
+          talentReason(same.name, same.system?.specialization));
+        return;
+      }
+    }
     if (entry.kind === "trait") {
       if (entry.rating !== "" && entry.rating != null && data.system) {
         rescaleTraitByRating(data, entry.rating);   // пока system.rating — рейтинг шаблона
@@ -949,8 +966,17 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     const idx = found ? arr.findIndex(e =>
       (found.specKey && e.specKey === found.specKey) || (!found.specKey && e.specialty === found.specialty)) : -1;
     if (idx >= 0) {
-      arr[idx].rank        = higherRank(arr[idx].rank || "untrained", entry.rank);
-      arr[idx].grantedRank = higherRank(arr[idx].grantedRank || "untrained", entry.rank);
+      // Тот же групповой Навык из второго источника: ступень выше, а на
+      // потолке — возврат опыта (rules/duplicate-grants.mjs).
+      const out = skillGrantOutcome(arr[idx].grantedRank || "untrained", entry.rank);
+      arr[idx].rank        = higherRank(arr[idx].rank || "untrained", out.rank);
+      arr[idx].grantedRank = out.rank;
+      if (out.refundStep !== null) {
+        await refundXP(actor,
+          skillStepCost(actor, entry.skillKey, out.refundStep, { group: true }),
+          skillCapReason(`${GROUP_SKILLS_DEF[entry.skillKey]?.label || entry.skillKey}`
+            + ` (${arr[idx].specialty || arr[idx].specKey || "?"})`, out.rank));
+      }
     } else {
       arr.push({
         specialty: entry.specialty || entry.specKey || "?",
@@ -961,8 +987,16 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     await actor.update({ [`system.groupSkills.${entry.skillKey}`]: arr });
   } else {
     const cur = actor.system.skills?.[entry.skillKey] || {};
-    const newRank    = higherRank(cur.rank || "untrained", entry.rank);
-    const newGranted = higherRank(cur.grantedRank || "untrained", entry.rank);
+    // Тот же Навык из второго источника поднимает ступень, а на потолке
+    // возвращает цену третьей покупки (rules/duplicate-grants.mjs).
+    const out = skillGrantOutcome(cur.grantedRank || "untrained", entry.rank);
+    const newRank    = higherRank(cur.rank || "untrained", out.rank);
+    const newGranted = out.rank;
+    if (out.refundStep !== null) {
+      await refundXP(actor,
+        skillStepCost(actor, entry.skillKey, out.refundStep, { entryChar: entry.char }),
+        skillCapReason(SKILLS_DEF[entry.skillKey]?.label || entry.skillKey, out.rank));
+    }
     const upd = {
       [`system.skills.${entry.skillKey}.rank`]: newRank,
       [`system.skills.${entry.skillKey}.grantedRank`]: newGranted
