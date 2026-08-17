@@ -1426,3 +1426,43 @@
   border: 1px solid #2f9e6a; background: rgba(77,255,166,.1); color: #d6ffe9;
 }
 .warhammer-dbc .faction-also-add:hover { background: #4dffa6; color: #05291a; }
+
+/* ── Конструктор требований Элитного архетипа ─────────────────────────────────
+   Строка на требование: вид записи слева, поля по виду, крестик справа. Ширины
+   не фиксируем — у Умения три поля, у Порчи одно, и колонки разъехались бы. */
+.warhammer-dbc .elite-req-rows { display: flex; flex-direction: column; gap: 4px; }
+.warhammer-dbc .elite-req-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  padding: 4px 6px; border: 1px solid var(--wh-border, #1f6f4a); border-radius: 4px;
+  background: rgba(10, 32, 22, .35);
+}
+.warhammer-dbc .elite-req-row.elite-req-over {
+  border-color: #4dffa6; background: rgba(77, 255, 166, .1);
+}
+.warhammer-dbc .elite-req-kind { flex: 0 0 auto; min-width: 128px; }
+.warhammer-dbc .elite-req-field { height: 24px; font-size: .86em; }
+.warhammer-dbc .elite-req-num  { flex: 0 0 70px; text-align: center; }
+.warhammer-dbc .elite-req-text { flex: 1 1 180px; }
+.warhammer-dbc .elite-req-skill { flex: 1 1 150px; }
+
+/* Зона перетаскивания: пустая — пунктиром и приглушена, занятая — как ярлык. */
+.warhammer-dbc .elite-req-drop {
+  flex: 1 1 auto; min-height: 24px; display: flex; align-items: center;
+  padding: 2px 8px; border-radius: 4px; font-size: .86em;
+}
+.warhammer-dbc .elite-req-drop.empty {
+  border: 1px dashed var(--wh-border, #1f6f4a);
+  color: var(--wh-panel-mid, #7fae97); font-style: italic;
+}
+.warhammer-dbc .elite-req-drop.filled {
+  border: 1px solid #2f9e6a; background: rgba(77, 255, 166, .1); color: #d6ffe9;
+}
+.warhammer-dbc .elite-req-clear,
+.warhammer-dbc .elite-req-remove {
+  flex: 0 0 auto; width: 22px; height: 22px; padding: 0; line-height: 1;
+  border: 1px solid rgba(255, 107, 107, .4); background: rgba(255, 107, 107, .08);
+  color: #ff9a9a; border-radius: 4px;
+}
+.warhammer-dbc .elite-req-clear:hover,
+.warhammer-dbc .elite-req-remove:hover { background: rgba(255, 107, 107, .2); }
+.warhammer-dbc .elite-req-add { margin-top: 5px; }

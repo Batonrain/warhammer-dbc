@@ -38,6 +38,7 @@ import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml
          saveItemMechanics, findMechGroup, findMechEntry,
          getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
+import { buildEliteReqHtml, activateEliteReqListeners } from "../apps/elite-req-builder.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
 import { openCompendiumBrowser }                     from "../apps/compendium-browser.mjs";
 import { factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, patronTarget,
@@ -1007,6 +1008,11 @@ export class WarhammerItemSheet
       Object.assign(context, await factionRosterContext(this.item), originTreeContext(this.item));
     }
 
+    // Элитный архетип: Конструктор требований (три блока разной силы).
+    if (this.item.type === "eliteArchetype") {
+      context.eliteReqHtml = buildEliteReqHtml(this.item, context.canEditMech);
+    }
+
     // ── Талант: склонности ───────────────────────────────────────────────────────
     if (this.item.type === "talent") {
       const active = context.system.aptitudes || [];
@@ -1349,6 +1355,9 @@ export class WarhammerItemSheet
 
     /** Слушатель на все узлы по селектору — замена jQuery-обхода из V1. */
     const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
+
+    // Конструктор требований Элитного архетипа.
+    if (this.item.type === "eliteArchetype") activateEliteReqListeners(el, this.item);
 
     // ── Цели Таланта (Hatred, Peer, Enemy, Good Reputation) ─────────────────
     // Цель добавляется тремя путями, потому что и природа у целей разная:

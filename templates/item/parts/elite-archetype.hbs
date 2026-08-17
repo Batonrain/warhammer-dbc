@@ -21,10 +21,15 @@
       <span class="wr-label" title="Бонусы Характеристик при взятии архетипа">Бонусы Характеристик</span>
       <input type="text" name="system.charBonus" value="{{system.charBonus}}" placeholder="+5 WS, +5 A"/>
     </label>
+
+    <label class="wr-row">
+      <span class="wr-label" title="Базовая цена в опыте. Каждый следующий Элитный архетип персонажа вдвое дороже предыдущего">Цена (опыт)</span>
+      <input type="number" name="system.cost" value="{{system.cost}}" min="0"/>
+    </label>
   </div>
 
   <label class="wr-row wr-row-wide">
-    <span class="wr-label" title="Что нужно, чтобы взять архетип: Характеристики, Навыки, Таланты и опыт">Требования</span>
+    <span class="wr-label" title="Текст требований из книги — для чтения. Машинная проверка живёт в Конструкторе ниже">Требования (текст книги)</span>
     <textarea name="system.req" class="item-textarea" placeholder="A 60, WS 50, Acrobatics+20…">{{system.req}}</textarea>
   </label>
 
@@ -68,3 +73,6 @@
   </ul>
 </div>
 {{/if}}
+
+{{!-- Конструктор требований: три блока разной силы, см. apps/elite-req-builder.mjs --}}
+{{{eliteReqHtml}}}
