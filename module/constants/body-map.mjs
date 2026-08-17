@@ -14,11 +14,13 @@ const IMPLANT_KINDS = [
   { kind: "mechadendrite",
     re: /servo-manip|манипул|mechadendr|механодендр|servo-arm|dataspike|даташип|даташп|scribe-tine|писар|prehensile|цепк|gordii|гордий/i },
   { kind: "eye",
-    re: /\beye\b|глаз|ocular|окуляр|visor|визор|ranger visor|auspex|ауспекс|target focus|прицельн/i },
+    re: /\beye\b|глаз|ocular|окуляр|visor|визор|ranger visor|auspex|ауспекс|target focus|прицельн|оккулоб|occulobe/i },
+  // «Сус-ан» и «Железа Бетчера» стоят ИМЕННО здесь, выше кожи: мембрана Сус-ан
+  // иначе попала бы в кожу по слову «мембрана», а железы Бетчера — в торс.
   { kind: "cranial",
-    re: /cranial|черепн|cortical|кортикал|cerebr|мозж|mind|мысл|разум|memoranc|меморанс|\bmiu\b|миу|neuro|нейро|crown|корон|skull|череп|infoslave|инфораб|marshal|маршал|volitor|волитор|circuitry|цепи|catechism|катехиз|noospher|ноосфер|logic|логик/i },
+    re: /cranial|черепн|cortical|кортикал|cerebr|мозж|mind|мысл|разум|memoranc|меморанс|\bmiu\b|миу|neuro|нейро|crown|корон|skull|череп|infoslave|инфораб|marshal|маршал|volitor|волитор|circuitry|цепи|catechism|катехиз|noospher|ноосфер|logic|логик|каталепт|catalepsean|сус-ан|sus-an|бетчер|betcher/i },
   { kind: "heart",
-    re: /heart|сердц|autosangu|автосангв|potentia|потенциа/i },
+    re: /heart|сердц|autosangu|автосангв|potentia|потенциа|гемастамен|haemastamen|ларраман|larraman/i },
   { kind: "respirator",
     re: /respirator|респират|breath|дыхан|воздух|противогаз|маск|rebreath/i },
   { kind: "lung",
@@ -28,11 +30,11 @@ const IMPLANT_KINDS = [
   { kind: "leg",
     re: /\bleg\b|нога|ноги|ногу|ноге|tracked|гусениц|digitigrad|дигитигр|all-?terrain|вездеход|talon|коготь птер|птераксии|arachnid|арахнид|serpentine|серпентин|repulsor|репульсор/i },
   { kind: "skeleton",
-    re: /skeletal|скелет|petrifaction|petrif|укреплен|spined|шипаст|reinforced skel|усиленн\w* скелет|flexible skel|гибк\w* скелет|joint reconfig|реконфиг сустав|\bbone\b|кост(ь|и|ей|ный)|adamant|адамант|sicarian efm|сикарианск/i },
+    re: /skeletal|скелет|petrifaction|petrif|укреплен|spined|шипаст|reinforced skel|усиленн\w* скелет|flexible skel|гибк\w* скелет|joint reconfig|реконфиг сустав|\bbone\b|кост(ь|и|ей|ный)|adamant|адамант|sicarian efm|сикарианск|оссмодул|ossmodul/i },
   { kind: "skin",
-    re: /subdermal|подкожн|voidskin|пустотн\w* кож|synthmusc|синтемускул|\bdermal\b|slime skin|слизист\w* кож|scale skin|чешу|skin mite|кожн\w* параз|membrane|мембран|reconstructor|реконструктор/i },
+    re: /subdermal|подкожн|voidskin|пустотн\w* кож|synthmusc|синтемускул|\bdermal\b|slime skin|слизист\w* кож|scale skin|чешу|skin mite|кожн\w* параз|membrane|мембран|reconstructor|реконструктор|меланохром|melanochrom|мукраноид|mucranoid/i },
   { kind: "torso",
-    re: /carapace|панцирь|war plate|латы|mantle|мантия|rib|рёбр|ребр|torso|тулов|\bbody\b|тело|internal|внутрен|bio-monitor|биомонитор|gastral|гастрал|sucroregul|сахарорег|waste proc|обработк\w* отход/i },
+    re: /carapace|панцирь|war plate|латы|mantle|мантия|rib|рёбр|ребр|torso|тулов|\bbody\b|тело|internal|внутрен|bio-monitor|биомонитор|gastral|гастрал|sucroregul|сахарорег|waste proc|обработк\w* отход|бископе|biscopea|преомнор|preomnor|омофаге|omophage|оолитическ|oolitic|прогеноид|progenoid/i },
 ];
 
 /** Возвращает {kind} для импланта или null, если не удалось локализовать. */
@@ -57,6 +59,7 @@ const CAT_COLORS = {
   archeotech:   "#ffd24d",
   skitarii:     "#ff6b3c",
   bioimplant:   "#ff5a8a",   // биоимпланты Друкхари
+  astartes:     "#c0392b",   // органы Геносемени — бордовый, «мясо», а не металл
 };
 export function implantCatColor(cat) { return CAT_COLORS[cat] || "#7fe0a8"; }
 

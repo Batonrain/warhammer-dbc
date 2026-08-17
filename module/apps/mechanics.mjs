@@ -94,6 +94,33 @@
 //      flags.warhammer-dbc.grantedByItem — общий deleteItem-откат подхватывает
 //      его так же, как Черты/Таланты. Отмена диалога выбора (choice) — просто
 //      ничего не выдаётся, без ошибки.
+//    armour: { armourLocation:"all"|"head"|"body"|"leftArm"|"rightArm"|
+//               "leftLeg"|"rightLeg", op:"add"|"subtract", armourValue }
+//      → ActiveEffect НА ПРЕДМЕТЕ на system.armorBonus.<локация> — ту самую
+//      СКЛАДЫВАЕМУЮ надбавку AP, которой пользуются Естественная Броня и
+//      подкожные импланты (см. AP_LOCATIONS в constants/effect-keys.mjs). Фаза
+//      "initial": поле хранимое, расчёт листа читает его в середине
+//      prepareDerivedData, рядом с бронёй от Черт, а не после. "all" — шесть
+//      изменений разом, по одному на локацию.
+//      Заведено потому, что Черта «Natural Armour (X)» раздаёт AP только СРАЗУ
+//      НА ВСЕ шесть локаций, и выдать «+4 только в торс» (Чёрный Панцирь) ею
+//      было нечем: rescaleTraitByRating масштабирует значение, но не сужает
+//      набор локаций.
+//    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg }
+//      → ВСТРОЕННАЯ АТАКА: то же создание предмета-оружия на акторе, что и у
+//      equipment режима "direct", но с двумя отличиями, ради которых она и
+//      заведена отдельным видом. Первое: выданное оружие сразу
+//      system.equipped = true — и боевой HUD (equippedWeapons() в apps/hud.mjs),
+//      и вкладка БОЙ (combatMeleeWeapons/combatRangedWeapons в sheets/
+//      sheet-helpers.mjs) отбирают оружие ровно по этому полю, так что надетому
+//      предмету не нужно ни строчки нового кода, чтобы там появиться. Второе:
+//      на предмете ставится flags.warhammer-dbc.integralAttack, по которому
+//      хуки preUpdateItem/preDeleteItem (warhammer-dbc.mjs) не дают его ни снять,
+//      ни удалить, пока источник на акторе и активен — это часть тела (Кислотный
+//      Плевок Железы Бетчера) или машины (Пинок Дредноута), а не снаряжение,
+//      которое игрок волен отложить.
+//      Живёт и снимается тем же syncGrantedEquipment, что и equipment "direct":
+//      сняли имплант в Хирургиконе — атака ушла вместе с ним.
 //    loyalty: { loyaltyMinionType:""|"human"|"beast"|"machine"|"daemon",
 //               loyaltyOp:"add"|"subtract", loyaltyValue }
 //      → ОДНОРАЗОВАЯ ПЕРМАНЕНТНАЯ правка system.loyalty.value у ВСЕХ Миньонов
@@ -164,7 +191,7 @@ import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } fr
 import { AVAILABILITY }                       from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive }                       from "./effects.mjs";
-import { expectedPhase }                      from "../constants/effect-keys.mjs";
+import { expectedPhase, AP_LOCATIONS }        from "../constants/effect-keys.mjs";
 import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
@@ -229,7 +256,9 @@ const KIND_LABELS = {
   weaponProp: "Оружие: Свойство",
   movement: "Движение: Скорость", terrainIgnore: "Движение: Ландшафт (игнор)",
   fatigue: "Усталость",
+  armour: "Очки Брони (локация)",
   equipment: "Снаряжение",
+  integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
   group: "Вложенная группа",
   script: "Код"
@@ -355,10 +384,15 @@ export function initEquipmentIndex() {
     Hooks.on(h, doc => { if (doc?.pack && packIds.has(doc.pack)) _refreshEquipmentIndex(); });
 }
 
-/** <optgroup> по категориям для дропдауна режима «Непосредственно предмет». */
-function equipmentOptionsHtml(selectedUuid) {
+/**
+ * <optgroup> по категориям для дропдауна режима «Непосредственно предмет».
+ * onlyPacks — сузить список паков (интегральной атакой может быть только
+ * оружие: её кладут в руки боевому HUD, а он умеет бросать лишь weapon).
+ */
+function equipmentOptionsHtml(selectedUuid, onlyPacks = null) {
   if (!_equipIndex) return `<option value="">— компендиумы ещё загружаются, переоткройте лист —</option>`;
-  return GRANTABLE_CATEGORIES.map(({ pack, label }) => {
+  const cats = onlyPacks ? GRANTABLE_CATEGORIES.filter(c => onlyPacks.includes(c.pack)) : GRANTABLE_CATEGORIES;
+  return cats.map(({ pack, label }) => {
     const items = _equipIndex[pack] || [];
     if (!items.length) return "";
     const opts = items.map(it => optHtml(it.uuid, it.name, it.uuid === selectedUuid)).join("");
@@ -393,6 +427,8 @@ export function blankMechEntry(kind = "characteristic") {
     weightScope: "all", weightMode: "kg", weightValue: 1,
     // movement (op — общее поле)
     movementTarget: "spd", movementValue: 1,
+    // armour (op — общее поле): "all" = все шесть локаций разом
+    armourLocation: "body", armourValue: 1,
     // terrainIgnore
     ignoreTerrainProps: [],
     // fatigue — каскад: действие → характеристика (см. шапку файла)
@@ -482,6 +518,13 @@ export function describeMechEntry(entry) {
       const sign = entry.op === "subtract" ? "−" : "+";
       return `Движение: ${label} ${sign}${entry.movementValue}`;
     }
+    case "armour": {
+      const loc = entry.armourLocation === "all"
+        ? "все локации" : (AP_LOCATIONS[entry.armourLocation] ?? entry.armourLocation);
+      if (entry.armourValue === "" || entry.armourValue == null) return `Очки Брони: ${loc} (не задано)`;
+      const sign = entry.op === "subtract" ? "−" : "+";
+      return `Очки Брони: ${loc} ${sign}${entry.armourValue}`;
+    }
     case "terrainIgnore": {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
@@ -508,6 +551,10 @@ export function describeMechEntry(entry) {
       }
       if (!entry.equipSourceUuid) return "Снаряжение: (выберите предмет)";
       return `Снаряжение: ${entry.equipSourceName || "?"} ×${qty}`;
+    }
+    case "integralAttack": {
+      if (!entry.equipSourceUuid) return "Интегральная атака: (выберите оружие)";
+      return `Интегральная атака: ${entry.equipSourceName || "?"} — надета всегда, снять и удалить нельзя`;
     }
     case "loyalty": {
       const typeLabel = entry.loyaltyMinionType
@@ -590,6 +637,8 @@ function isEntryComplete(e) {
       return !!e.weightScope && numOk(e.weightValue);
     case "movement":
       return !!e.movementTarget && numOk(e.movementValue);
+    case "armour":
+      return !!e.armourLocation && numOk(e.armourValue);
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "fatigue":
@@ -597,6 +646,8 @@ function isEntryComplete(e) {
     case "equipment":
       if (!numOk(e.equipQty) || Number(e.equipQty) <= 0) return false;
       return e.equipMode === "choice" ? !!e.equipCategoryPack : !!e.equipSourceUuid;
+    case "integralAttack":
+      return !!e.equipSourceUuid;
     case "loyalty":
       return numOk(e.loyaltyValue);
     case "rollmod":
@@ -968,6 +1019,12 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     return;
   }
 
+  if (entry.kind === "integralAttack") {
+    const data = await buildIntegralAttackData(entry, sourceItem);
+    if (data) await actor.createEmbeddedDocuments("Item", [data]);
+    return;
+  }
+
   if (entry.kind === "loyalty") {
     // Правим ЧУЖИХ акторов — миньонов владельца предмета. Ограничение по типу
     // необязательно: пустое значение означает «любой тип».
@@ -1195,8 +1252,35 @@ export async function syncWeaponPropItemEffects(item) {
   await item.update({ "system.effects.mechAddProps": addProps, "system.effects.mechRemoveProps": removeProps });
 }
 
-// Записи kind:"equipment" (equipMode:"direct" — фиксированный предмет, не
-// «выбор») из АНД-цепочек: верхнеуровневая группа + вложенные АНД-подгруппы.
+/**
+ * Данные предмета для записи kind:"integralAttack" — общий сборщик для первой
+ * выдачи (applyMechEntry) и для пересинхронизации (syncGrantedEquipment):
+ * оба пути обязаны класть на актора ОДИН И ТОТ ЖЕ предмет, иначе снятая и
+ * заново выданная интегральная атака отличалась бы от первоначальной.
+ *
+ * Источник не нашёлся (запись ссылается на удалённый предмет пака) — вернём
+ * null и ничего не выдадим: подделывать боевой профиль заглушкой нельзя, в
+ * отличие от kind:"equipment", где заглушкой становится безобидный gear.
+ */
+async function buildIntegralAttackData(entry, sourceItem) {
+  const src = entry.equipSourceUuid ? await fromUuid(entry.equipSourceUuid).catch(() => null) : null;
+  if (!src) {
+    ui.notifications?.warn(`${sourceItem.name}: интегральная атака «${entry.equipSourceName || "?"}» не найдена в компендиуме.`);
+    return null;
+  }
+  const data = src.toObject();
+  delete data._id;
+  // Надета всегда: и HUD, и вкладка БОЙ отбирают оружие по system.equipped,
+  // а снять её игрок не сможет — см. preUpdateItem в warhammer-dbc.mjs.
+  data.system = { ...(data.system || {}), equipped: true };
+  data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
+    grantedByItem: sourceItem.id, equipEntryId: entry.id, integralAttack: true } };
+  return data;
+}
+
+// Записи, выдающие предмет на актора «намертво»: kind:"equipment" в режиме
+// "direct" (фиксированный предмет, не «выбор») и kind:"integralAttack" — из
+// АНД-цепочек: верхнеуровневая группа + вложенные АНД-подгруппы.
 // ИЛИ-ветки сознательно пропускаются — там выбор делается ОДИН РАЗ диалогом
 // в момент выдачи (showMechChoiceDialog/applyMechEntry), переигрывать его
 // при каждой пересинхронизации активности источника не нужно и не должно.
@@ -1205,7 +1289,8 @@ function collectDirectEquipmentEntries(groups) {
   const walk = (entries, operator) => {
     if (operator === "OR") return;
     for (const e of entries) {
-      if (e.kind === "equipment" && e.equipMode !== "choice" && isEntryComplete(e)) out.push(e);
+      if (e.kind === "integralAttack" && isEntryComplete(e)) out.push(e);
+      else if (e.kind === "equipment" && e.equipMode !== "choice" && isEntryComplete(e)) out.push(e);
       else if (e.kind === "group" && e.group) walk(e.group.entries || [], e.group.operator);
     }
   };
@@ -1246,6 +1331,11 @@ export async function syncGrantedEquipment(sourceItem) {
   const toCreate = [];
   for (const e of entries) {
     if (haveIds.has(e.id)) continue;
+    if (e.kind === "integralAttack") {
+      const data = await buildIntegralAttackData(e, sourceItem);
+      if (data) toCreate.push(data);
+      continue;
+    }
     const src = e.equipSourceUuid ? await fromUuid(e.equipSourceUuid).catch(() => null) : null;
     const data = src ? src.toObject() : {
       name: e.equipSourceName || "?", type: "gear",
@@ -1269,7 +1359,7 @@ export async function syncGrantedEquipment(sourceItem) {
 //
 // Разовых записей (Порча, Раны, Слаженность, выдача предмета/Черты/Таланта,
 // Код) это не касается: повтор бросил бы кубик заново и выдал второй предмет.
-export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax"]);
+export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax", "armour"]);
 
 /** Эффект, отыгрывающий одну долговечную запись. Метка — id самой записи. */
 function mechEffectData(entry, sourceItem) {
@@ -1299,6 +1389,15 @@ function mechEffectData(entry, sourceItem) {
     const key = "system.fate.max";
     changes.push({ key, type: "add", value: Number(entry.value) || 0,
                    phase: expectedPhase(key), priority: 0 });
+  } else if (entry.kind === "armour") {
+    const locs = entry.armourLocation === "all"
+      ? Object.keys(AP_LOCATIONS) : [entry.armourLocation];
+    for (const loc of locs) {
+      const key = `system.armorBonus.${loc}`;
+      changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
+                     value: Number(entry.armourValue) || 0,
+                     phase: expectedPhase(key), priority: 0 });
+    }
   }
   return {
     name: describeMechEntry(entry), img: sourceItem.img,
@@ -1528,6 +1627,16 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <input type="number" class="mech-move-value" step="1" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.movementValue ?? "")}" ${dis}/>`;
   }
 
+  if (ent.kind === "armour") {
+    const locOpts = [optHtml("all", "Все локации", (ent.armourLocation || "body") === "all")]
+      .concat(Object.entries(AP_LOCATIONS)
+        .map(([k, l]) => optHtml(k, l, (ent.armourLocation || "body") === k))).join("");
+    const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
+    return `<select class="mech-armour-loc" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${locOpts}</select>
+      <select class="mech-armour-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
+      <input type="number" class="mech-armour-value" step="1" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.armourValue ?? "")}" ${dis}/>`;
+  }
+
   if (ent.kind === "terrainIgnore") {
     const chosen = new Set(ent.ignoreTerrainProps || []);
     const opts = TERRAIN_PROPS.map(p =>
@@ -1548,6 +1657,16 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       ? `<select class="mech-fatigue-char" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${charOpts}</select>`
       : "";
     return `<select class="mech-fatigue-action" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${actionOpts}</select>${charSelect}`;
+  }
+
+  if (ent.kind === "integralAttack") {
+    // Тот же класс, что у «Снаряжения»: обработчик .mech-equip-source в
+    // item-sheet.mjs пишет equipSourceUuid/Name по id группы и записи, вида
+    // записи не касаясь, — своего слушателя тут заводить незачем.
+    return `<select class="mech-equip-source" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+      <option value="">— выберите оружие —</option>
+      ${equipmentOptionsHtml(ent.equipSourceUuid, ["weapons"])}
+    </select>`;
   }
 
   if (ent.kind === "equipment") {

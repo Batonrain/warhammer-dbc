@@ -385,7 +385,7 @@
         "weight": 0,
         "attackBonus": 0,
         "special": "Ноги, досягаемость 0–2. Только когда не используется др. рукопашное оружие.",
-        "equipped": false,
+        "equipped": true,
         "loadedAmmoId": "",
         "weaponProps": [
           {
@@ -432,7 +432,11 @@
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "integralAttack": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,

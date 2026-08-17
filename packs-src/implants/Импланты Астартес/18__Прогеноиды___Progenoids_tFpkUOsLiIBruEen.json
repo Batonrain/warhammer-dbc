@@ -1,0 +1,63 @@
+{
+  "name": "18. Прогеноиды / Progenoids",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "folder": "UjIC7NnQmIxPWhgg",
+  "system": {
+    "description": "Также известные как Геносемя. У космодесантника два прогеноида: первый в основании шеи, второй в груди возле сердца. Оба подключены к его эндокринной системе и через неё собирают генетические образцы других органов Геносемени, постепенно выращивая их зиготы внутри. Подробно расписаны в начале раздела ГЕНОСЕМЯ.\n\nВозраст имплантации: 16–18 лет.",
+    "notes": "Имплантация. Операция занимает 1 час работы и требует комбинированного теста Medicae(I)–10 и For.Lore (Astartes Implants)(I)+20. Провал ничем не угрожает аспиранту, кроме обычного времени на восстановление.",
+    "category": "astartes",
+    "quality": "common",
+    "effect": "Если не имплантировать Прогеноиды перед Чёрным Панцирем, начинается процесс отторжения органов — как если бы из живого десантника удалили грудной Прогеноид.",
+    "installed": "основание шеи и грудь возле сердца",
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, ГЕНОСЕМЯ (стр. 485-487)",
+    "effects": {
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    },
+    "weaponProps": []
+  },
+  "_id": "tFpkUOsLiIBruEen",
+  "effects": [],
+  "sort": 1800000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "installed": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!items!tFpkUOsLiIBruEen"
+}

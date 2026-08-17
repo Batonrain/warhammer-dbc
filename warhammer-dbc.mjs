@@ -38,6 +38,7 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics } from "./module/apps/mechanics.mjs";
+import { isItemActive }              from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
@@ -1497,4 +1498,57 @@ Hooks.on("deleteItem", async (item, options, userId) => {
     _twinDeleting.delete(partnerId);
     console.error("Warhammer DBC | не удалось удалить парный предмет", err);
   }
+});
+
+/* ═══════════════════════ ИНТЕГРАЛЬНЫЕ АТАКИ ═══════════════════════════════
+ * Оружие с флагом warhammer-dbc.integralAttack — это не снаряжение, а часть
+ * тела или машины: Кислотный Плевок Железы Бетчера, Пинок Дредноута. Его
+ * нельзя ни снять, ни выбросить, пока источник на месте и работает.
+ *
+ * Два происхождения, и правило для них одно:
+ *   • выдано записью kind:"integralAttack" Конструктора — на оружии стоит
+ *     grantedByItem, и оно живёт ровно пока источник активен (isItemActive:
+ *     имплант — installed и не disabled). Снятие источника убирает атаку само
+ *     — через syncGrantedEquipment и общий откат deleteItem выше;
+ *   • вложено в актора инлайн, источника-предмета нет вовсе (Пинок в шасси
+ *     Дредноута). Такую атаку убирает только ГМ — правкой самого шасси.
+ *
+ * Почему хуки, а не блокировка кнопок на листе: удаление идёт через
+ * item.delete() из контекстного меню (sheets/context-menu.mjs), снятие — через
+ * equipItem() (sheets/tabs/gear.mjs), и есть ещё макросы и перетаскивание.
+ * Хук закрывает все пути разом, как и у пары боевых профилей выше.
+ */
+const INTEGRAL_FLAG = "integralAttack";
+
+/**
+ * Защищена ли эта интегральная атака прямо сейчас.
+ * Источник уже удалён или выключен — не защищена: именно так её и убирают
+ * штатные откаты, и мешать им нельзя, иначе снятый имплант оставит за собой
+ * неудаляемое оружие.
+ */
+function _integralProtected(item) {
+  if (!item.getFlag("warhammer-dbc", INTEGRAL_FLAG)) return false;
+  const actor = item.parent;
+  if (!(actor instanceof Actor)) return false;
+  const sourceId = item.getFlag("warhammer-dbc", "grantedByItem");
+  if (!sourceId) return !game.user.isGM;   // инлайн в шасси — только ГМ вправе
+  const source = actor.items.get(sourceId);
+  if (!source) return false;               // источник ушёл — идёт штатный откат
+  return isItemActive(source);
+}
+
+Hooks.on("preDeleteItem", (item) => {
+  if (!_integralProtected(item)) return true;
+  ui.notifications?.warn(
+    `«${item.name}» — интегральная атака: она есть, пока работает то, что её даёт. Убрать можно только источник.`);
+  return false;
+});
+
+Hooks.on("preUpdateItem", (item, changed) => {
+  // Ловим только попытку СНЯТЬ: надеть её обратно никто не мешает, а прочие
+  // правки оружия (боезапас, модификации, переименование) не запрещены вовсе.
+  if (changed?.system?.equipped !== false) return true;
+  if (!_integralProtected(item)) return true;
+  ui.notifications?.warn(`«${item.name}» — интегральная атака: снять её нельзя.`);
+  return false;
 });

@@ -1,0 +1,63 @@
+{
+  "name": "5. Орган Ларрамана / Larraman's Organ",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "folder": "UjIC7NnQmIxPWhgg",
+  "system": {
+    "description": "Известный также как Целитель — напоминает формой печень, но размером всего 8 см. Имплантируется на аорту рядом с Гемастаменом и насыщает кровь Клетками Ларрамана, что замещают естественные тромбоциты.\n\nВозраст имплантации: 12–14 лет.",
+    "notes": "Имплантация. Эти два органа имплантируются одновременно; операция занимает 2 часа работы и требует комбинированного теста Medicae(А)–20 и For.Lore (Astartes Implants)(I)+0. При Провале аспирант получает Провалы d5 урона в Т.",
+    "category": "astartes",
+    "quality": "common",
+    "effect": "Кровь десантника невероятно быстро сворачивается на воздухе, закупоривая даже прорывы крупных артерий и вен. Он бросает на Кровотечение d20 вместо d10 у людей. Позволяет затянуть Кровотечение тестом T+0 в начале Хода.",
+    "installed": "аорта, рядом с Гемастаменом",
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, ГЕНОСЕМЯ (стр. 485-487)",
+    "effects": {
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    },
+    "weaponProps": []
+  },
+  "_id": "gPn4XR5m7wt890QA",
+  "effects": [],
+  "sort": 500000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "installed": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!items!gPn4XR5m7wt890QA"
+}

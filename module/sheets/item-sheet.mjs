@@ -1663,6 +1663,22 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.movementValue = ev.currentTarget.value === "" ? "" : (parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
     });
+    // Очки Брони по локации (kind:"armour")
+    on(".mech-armour-loc", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.armourLocation = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-armour-op", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-armour-value", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.armourValue = ev.currentTarget.value === "" ? "" : (parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
+    });
     // Ландшафт — игнорирование свойств (kind:"terrainIgnore")
     on(".mech-terrain-ignore", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));

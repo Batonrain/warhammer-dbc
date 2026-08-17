@@ -1,0 +1,63 @@
+{
+  "name": "6. Каталептический Узел / Catalepsean Node",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "folder": "UjIC7NnQmIxPWhgg",
+  "system": {
+    "description": "Известный также как Бессонник — плоский круглый имплант из серого вещества радиусом всего 2 см. Имплантируется в затылочную долю мозга рядом со стволом мозга и пускает корни в мозговую ткань, изменяя циклы сна и отдыха мозга.\n\nВозраст имплантации: 14–17 лет.",
+    "notes": "Имплантация. Операция занимает смену работы и требует комбинированного теста Medicae(А)–30 и For.Lore (Astartes Implants)(I)+10. При Провале аспирант получает Провалы d5 урона в I, P и W — бросок отдельно для каждой. За каждые полные 10 урона в любую Характеристику она перманентно уменьшается на 1.",
+    "category": "astartes",
+    "quality": "common",
+    "effect": "Десантник может обходиться без сна до 3 месяцев и нуждается только в 3 часах здорового сна в сутки. Также делает мозг восприимчивым к гипно-индоктринации, которая необходима для обучения использованию некоторых других органов и ускорения обучения.",
+    "installed": "затылочная доля мозга, рядом со стволом",
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, ГЕНОСЕМЯ (стр. 485-487)",
+    "effects": {
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    },
+    "weaponProps": []
+  },
+  "_id": "50VXhHI6ybIZ7UAP",
+  "effects": [],
+  "sort": 600000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "installed": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!items!50VXhHI6ybIZ7UAP"
+}

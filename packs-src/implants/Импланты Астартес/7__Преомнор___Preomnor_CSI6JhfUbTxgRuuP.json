@@ -1,0 +1,63 @@
+{
+  "name": "7. Преомнор / Preomnor",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "folder": "UjIC7NnQmIxPWhgg",
+  "system": {
+    "description": "Известный также как Нейтрализатор — вторичный желудок, имплантируемый над настоящим желудком; действует во многом как птичий зоб.\n\nВозраст имплантации: 14–17 лет.",
+    "notes": "Имплантация. Эти три органа имплантируются одновременно; операция занимает 4 часа работы и требует комбинированного теста Medicae(I)–10 и For.Lore (Astartes Implants)(I)+10. При Провале аспирант получает R Критический Эффект <Провалы> в торс.",
+    "category": "astartes",
+    "quality": "common",
+    "effect": "Преомнор анализирует еду и питьё, прежде чем пустить их дальше, и нейтрализует или изолирует яды в них: даёт бонус +20 к тестам Т против съеденных и выпитых ядов. При Успехе яд задерживается в органе, не доходя до желудка, и десантник может выплюнуть его в любой момент. Преомнор также размягчает и ферментирует обычно несъедобные или вредные для человека органические вещества, прежде чем пустить их дальше в желудок, и выплёвывает не поддающиеся перевариванию: десантник переваривает траву, древесину, кости и даже пластек и прометий, а также может питаться откровенно гнилой и испорченной едой без всякого вреда для себя.",
+    "installed": "над желудком",
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, ГЕНОСЕМЯ (стр. 485-487)",
+    "effects": {
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    },
+    "weaponProps": []
+  },
+  "_id": "CSI6JhfUbTxgRuuP",
+  "effects": [],
+  "sort": 700000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "installed": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!items!CSI6JhfUbTxgRuuP"
+}

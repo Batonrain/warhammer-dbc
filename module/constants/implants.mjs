@@ -4,6 +4,8 @@
 // "implants" (раскладываются по папкам категорий).
 //
 // system.category: "mechanicus" | "bionic" | "cybernetic" | "archeotech" | "bioimplant"
+//                | "skitarii" | "astartes" (органы Геносемени — они живут только
+//                  в packs-src/implants/Импланты Астартес, библиотеки здесь нет)
 // Эффекты по Качеству (Poor.Q/Good.Q/Best.Q) указаны в тексте effect.
 
 import { DRUKHARI_BIOIMPLANTS } from "./drukhari-bio.mjs";

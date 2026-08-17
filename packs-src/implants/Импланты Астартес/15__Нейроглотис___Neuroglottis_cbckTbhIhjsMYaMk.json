@@ -1,0 +1,63 @@
+{
+  "name": "15. Нейроглотис / Neuroglottis",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "folder": "UjIC7NnQmIxPWhgg",
+  "system": {
+    "description": "Известный также как Пожиратель — серия нервных узлов, что имплантируются в верхние носовые проходы и основание языка, расширяя чувства нюха и вкуса и позволяя анализировать химикаты, что десантник берёт в рот, за счёт их запаха и вкуса.\n\nВозраст имплантации: 15–17 лет.",
+    "notes": "Имплантация. Эти два органа имплантируются одновременно; операция занимает смену работы и требует комбинированного теста Medicae(А)–30 и For.Lore (Astartes Implants)(I)+10. При Провале аспирант получает Провалы d5 урона в Т.",
+    "category": "astartes",
+    "quality": "common",
+    "effect": "Позволяет определять яды и химикаты на вкус тестом Awareness+0, при Успехе определяя их эффект на организм, а также отслеживать цели по вкусу и запаху, как ищейка.",
+    "installed": "верхние носовые проходы и основание языка",
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, ГЕНОСЕМЯ (стр. 485-487)",
+    "effects": {
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    },
+    "weaponProps": []
+  },
+  "_id": "cbckTbhIhjsMYaMk",
+  "effects": [],
+  "sort": 1500000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "installed": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!items!cbckTbhIhjsMYaMk"
+}

@@ -508,6 +508,11 @@ export function buildGetData(actor) {
 
   context.gearWeapons = weaponItems.map(i => ({
     id: i.id, name: i.name, equipped: i.system.equipped ?? false,
+    // Интегральная атака (Кислотный Плевок, Пинок Дредноута) — часть тела или
+    // машины: галочку «надето» шаблон делает недоступной, потому что снять её
+    // всё равно не дадут хуки (warhammer-dbc.mjs), а мёртвый на вид переключатель
+    // выглядел бы поломкой листа.
+    integralAttack: !!i.getFlag?.("warhammer-dbc", "integralAttack"),
     weaponClass: WEAPON_CLASSES[i.system.weaponClass] ?? i.system.weaponClass,
     weaponType:  i.system.weaponType,
     damage:      i.system.damage,
@@ -646,7 +651,7 @@ export function buildGetData(actor) {
   }));
 
   // ── Импланты (Механикус/Бионика/Кибернетика) ────────────────────────────────
-  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант" };
+  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", astartes: "Импланты Астартес" };
   const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
   context.gearImplants = allItems.filter(i => i.type === "implant").map(i => ({
     id: i.id, name: i.name,

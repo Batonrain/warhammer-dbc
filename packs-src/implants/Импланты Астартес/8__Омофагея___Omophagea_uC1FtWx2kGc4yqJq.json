@@ -1,0 +1,63 @@
+{
+  "name": "8. Омофагея / Omophagea",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "folder": "UjIC7NnQmIxPWhgg",
+  "system": {
+    "description": "Известная также как Летописец — большой нервный узел и серия рецепторов, связанные нервными путями. Узел имплантируется в спинной мозг возле желудка, а рецепторы — в стенки желудка и Преомнора. Узел пускает нервы, прорастающие через спинной мозг до центров памяти головного мозга, а рецепторы способны поглощать и анализировать РНК памяти из мозгового вещества.\n\nВозраст имплантации: 14–17 лет.",
+    "notes": "Имплантация. Эти три органа имплантируются одновременно; операция занимает 4 часа работы и требует комбинированного теста Medicae(I)–10 и For.Lore (Astartes Implants)(I)+10. При Провале аспирант получает R Критический Эффект <Провалы> в торс.",
+    "category": "astartes",
+    "quality": "common",
+    "effect": "Съев мозг разумного существа, космодесантник может получить часть его воспоминаний, пройдя тест I+0. Полученные воспоминания случайны и определяются ГМом в зависимости от количества Успехов. Неудача в этом тесте значит, что персонаж не смог выудить ничего полезного из туманных видений.",
+    "installed": "спинной мозг у желудка; рецепторы в стенках желудка и Преомнора",
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, ГЕНОСЕМЯ (стр. 485-487)",
+    "effects": {
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    },
+    "weaponProps": []
+  },
+  "_id": "uC1FtWx2kGc4yqJq",
+  "effects": [],
+  "sort": 800000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "installed": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!items!uC1FtWx2kGc4yqJq"
+}
