@@ -57,10 +57,23 @@ function hitLines(hits) {
   }).join("");
 }
 
-/** Кнопки «Применить урон»: всё, что нужно расчёту поглощения на цели. */
-function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, vehicleSide }) {
+/**
+ * Кнопки «Применить урон»: всё, что нужно расчёту поглощения на цели.
+ *
+ * Данные про Орду (свойства, дающие ей лишние попадания, дальность для
+ * Распыления, рукопашность и uuid стрелка для его Талантов) едут теми же
+ * кнопками: цель выбирается уже после броска, и на момент сборки карточки
+ * неизвестно, попадут ли в толпу.
+ */
+function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, vehicleSide,
+                                    isMelee = false, burst = false, weaponRange = 0,
+                                    attackerUuid = "", hordeHits = null }) {
   if (!hits.length) return "";
-  const buttons = hits.map((d, i) => `<button class="wh-apply-dmg-btn" type="button"
+  const buttons = hits.map((d, i) => {
+    // «Прячась в Орде»: попадание, уведённое в союзную Орду, применяется к ней,
+    // а не к тому, в кого целились.
+    const toHorde = Array.isArray(hordeHits) && hordeHits[i];
+    return `<button class="wh-apply-dmg-btn${toHorde ? " wh-apply-dmg-horde" : ""}" type="button"
     data-damage="${d.total}"
     data-penetration="${pen}"
     data-damage-type="${damageType}"
@@ -68,14 +81,25 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     data-vehicle-side="${vehicleSide}"
     data-weapon-name="${weaponName}"
     data-attacker="${actorName}"
+    data-attacker-uuid="${attackerUuid}"
     data-felling="${wp.fellingRating ?? 0}"
     data-primitive="${wp.primitive ? 1 : 0}"
     data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
     data-warp-soak="${wp.warpSoak ? 1 : 0}"
     data-lance="${wp.lance ? 1 : 0}"
-    data-sanctified="${wp.sanctified ? 1 : 0}">
-    Применить урон ${i + 1}: <b>${d.total}</b> → ${d.loc}
-  </button>`).join("");
+    data-sanctified="${wp.sanctified ? 1 : 0}"
+    data-blast="${wp.blastRating ?? 0}"
+    data-flame="${wp.flame ? 1 : 0}"
+    data-power-field="${wp.powerField ? 1 : 0}"
+    data-spray="${wp.spray ? 1 : 0}"
+    data-devastating="${wp.devastatingRating ?? 0}"
+    data-weapon-range="${weaponRange}"
+    data-melee="${isMelee ? 1 : 0}"
+    data-burst="${burst ? 1 : 0}"
+    ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
+    Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}
+  </button>`;
+  }).join("");
   return `
   <div class="roll-apply-dmg-section">
     <div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>
@@ -174,6 +198,10 @@ export function attackCard({
   ammo = null, band = null, suppression = null,
   corVal = 0, corEffects = [],
   soulBurnActorId = null,
+  // Данные для урона по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый
+  // Дождь», uuid — чтобы найти Таланты и Размер стрелка, hordeHits — раскладка
+  // попаданий правилом «Прячась в Орде» (combat/horde-tokens.mjs).
+  weaponRange = 0, burst = false, attackerUuid = "", hordeHits = null,
   defense = {}, notes = {}, blocks = {}
 } = {}) {
   const hitCountNote = hitsCount > 1 ? ` (${hitsCount} попадани${hitsCount < 5 ? "я" : "й"})` : "";
@@ -240,6 +268,7 @@ export function attackCard({
         ${hit && hitsCount > 0
           ? `<div class="roll-location">Место попадания: <b>${hitLocLabel}</b> (${locRoll})</div>`
           : ""}
+        ${notes.shelter ? `<div class="roll-wprop-note horde-shelter-note">🛡️ ${notes.shelter}</div>` : ""}
         ${locShift ? locShiftSection(locShift, actorName) : ""}
         ${notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : ""}
         ${damageSection}
@@ -262,7 +291,9 @@ export function attackCard({
       ${blocks.dice}
     </details>` : ""}
         ${hit ? defenseSection(defense, { wp, deg }) : ""}
-        ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName, vehicleSide })}
+        ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
+                                                vehicleSide, isMelee, burst, weaponRange,
+                                                attackerUuid, hordeHits })}
         ${soulBurnActorId ? `
     <div class="roll-wprop-effects">
       <button class="wh-soulburn-btn" type="button" data-attacker-id="${soulBurnActorId}">

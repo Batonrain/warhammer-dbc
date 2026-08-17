@@ -26,6 +26,9 @@ import { disabledActorTypes, featureForActorType, isFeatureEnabled,
          featureForRace, isRaceDisabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
+import { HORDE_SIZE_LABELS, hordeSizeFor, hordeMagDamageDice, hordeState,
+         massDamageThreshold, WEAKENED_WP_PENALTY, noRecoveryHours }
+  from "../rules/horde-damage.mjs";
 
 /**
  * Расчёт движения по таблице Warhammer FFG.
@@ -57,14 +60,6 @@ function calcMovement(agBonus, size) {
   };
 }
 
-// Метки боевого Размера Орды по Магнитуде (Размер в расчётах атак/Stealth).
-const HORDE_SIZE_LABELS = {
-  2: "небольшая толпа / стая",
-  3: "толпа / отряд / выводок",
-  4: "фаланга / орда",
-  5: "массированное наступление",
-  6: "огромная волна"
-};
 
 export class WarhammerActor extends Actor {
   prepareData() { super.prepareData(); }
@@ -515,11 +510,10 @@ export class WarhammerActor extends Actor {
     const value = Math.max(0, Number(mag.value) || 0);
     const start = Math.max(0, Number(mag.start) || 0);
 
-    // Боевой Размер по Магнитуде (не влияет на SPD).
-    const magSize = value >= 120 ? 6 : value >= 90 ? 5 : value >= 60 ? 4
-                  : value >= 30 ? 3 : value >= 10 ? 2 : 1;
-    // Бонус к урону от Магнитуды.
-    const magDamageDice = value >= 20 ? 2 : value >= 10 ? 1 : 0;
+    // Боевой Размер по Магнитуде (не влияет на SPD) и бонусные кубы урона —
+    // счёт общий с конвейером урона, rules/horde-damage.mjs.
+    const magSize       = hordeSizeFor(value);
+    const magDamageDice = hordeMagDamageDice(value);
 
     // Движение: SPD = Ag.bonus + собственный размер существа (не Размер Орды).
     const agB = system.characteristics?.ag?.bonus ?? 0;
@@ -528,14 +522,16 @@ export class WarhammerActor extends Actor {
     // Боевые показатели Орды.
     const meleeTargets = Math.max(1, Math.floor(value / 5));
     const enemiesMelee = Math.max(0, Number(system.enemiesInMelee) || 0);
-    const rangedShots  = Math.max(0, Math.floor(value / 10) - Math.floor(enemiesMelee / 2));
+    // Отдельные стрелки (расчёты тяжёлого оружия) бьют своими атаками и в
+    // стрельбе Орды не участвуют — их Магнитуда из расчёта вычитается.
+    const detached     = Math.min(value, Math.max(0, Number(system.detachedMagnitude) || 0));
+    const shootingMag  = Math.max(0, value - detached);
+    const rangedShots  = Math.max(0, Math.floor(shootingMag / 10) - Math.floor(enemiesMelee / 2));
 
     // Состояние по доле от стартовой Магнитуды.
     const pct = start > 0 ? value / start : 1;
     const immune = !!system.immuneFear;
-    let state = "steady";                       // боеспособна
-    if (!immune && pct <= 0.25) state = "broken";        // Сломлена (рассыпается)
-    else if (pct <= 0.50) state = "weakened";            // Ослаблена (−10 W)
+    const state = hordeState({ value, start, immune });
 
     // Броня Орды: все попадания идут в торс, поэтому считается AP тела, и не
     // суммой, а по лучшему предмету — как у существ (несколько слоёв брони не
@@ -557,6 +553,7 @@ export class WarhammerActor extends Actor {
       magDamageStr: magDamageDice ? `+${magDamageDice}d10` : "—",
       meleeTargets,
       rangedShots,
+      detached,
       psychTestBonus: value,                    // бонус к тестам Страха/Запугивания/Подавления = Магнитуда
       pct: Math.round(pct * 100),
       state,
@@ -565,7 +562,17 @@ export class WarhammerActor extends Actor {
       psychDamage: Math.max(0, Number(system.psychDamage) || 0),
       halfThreshold: Math.floor(start * 0.5),
       quarterThreshold: Math.floor(start * 0.25),
-      massDamageThreshold: Math.ceil(start * 0.25)   // 25%+ за раунд → тест W+Магнитуда
+      massDamageThreshold: massDamageThreshold(start),  // 25%+ за раунд → тест W+Магнитуда
+      // Ослабленная Орда катит Волю с −10 и не лечит психологический урон
+      // 10−W.b часов. Штраф уже сложен в порог теста Воли ниже.
+      wpPenalty: state === "weakened" ? WEAKENED_WP_PENALTY : 0,
+      wpTestThreshold: (system.characteristics?.wp?.total ?? 0)
+                     + (state === "weakened" ? WEAKENED_WP_PENALTY : 0),
+      // Порог психологического теста: Воля плюс Магнитуда (толпа держится числом).
+      psychTestThreshold: (system.characteristics?.wp?.total ?? 0) + value
+                        + (state === "weakened" ? WEAKENED_WP_PENALTY : 0),
+      noRecoveryHours: noRecoveryHours(system.characteristics?.wp?.bonus ?? 0),
+      roundDamage: Number(this.getFlag?.("warhammer-dbc", "hordeRoundDamage")) || 0
     };
   }
 

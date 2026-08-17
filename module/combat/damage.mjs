@@ -6,6 +6,7 @@ import { _degWord, esc }       from "../helpers/utils.mjs";
 import { getCriticalEffect } from "../../critical-tables.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
+import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
@@ -139,6 +140,10 @@ export async function applyDamageToActor(actor, damageData) {
       vehicleLocation: VEH_PARTS.includes(damageData.hitLocation) ? damageData.hitLocation : "Корпус"
     });
   }
+  // Орда: Ран у неё нет, Поглощение лежит одним числом, а попадания всегда идут
+  // в торс — общий расчёт зон брони и Критических Ран ей не подходит.
+  if (actor.type === "horde") return applyDamageToHorde(actor, damageData);
+
   const {
     rawDamage,       // число — урон до поглощения
     penetration,     // число — бронепробитие

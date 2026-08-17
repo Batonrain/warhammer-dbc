@@ -71,7 +71,11 @@ const DEVIATIONS = {
     skills: Object.fromEntries(Object.keys(SKILLS_DEF)
       .map(k => [k, { rank: "untrained", total: -20 }])),
     // Групповые — записями со специализацией, как у существ.
-    groupSkills: Object.fromEntries(Object.keys(GROUP_SKILLS_DEF).map(k => [k, []]))
+    groupSkills: Object.fromEntries(Object.keys(GROUP_SKILLS_DEF).map(k => [k, []])),
+    // Расчёты тяжёлого оружия: стреляют отдельно, своими атаками без бонусов
+    // Орды, и вычитаются из Магнитуды в расчёте её стрельбы. В template.json
+    // поля не было — правило считали на бумаге.
+    detachedMagnitude: 0
   },
   // У трёх существ три набора расхождений сразу, и записаны они по-разному:
   // поля Миньонов и свои поля типа — обычными именами, надбавки характеристик —

@@ -14,6 +14,7 @@ import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
 import { qualityEffects, buildQualityChatBlock }    from "../constants/quality.mjs";
 import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../constants/drukhari-splinter.mjs";
 import { vehicleHitLocation }                        from "../constants/vehicle.mjs";
+import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 
 export async function _executeAttackRoll(actor, item, charKey, threshold, rofMode, aimTarget, opts = {}) {
   const sys     = item.system;
@@ -298,6 +299,22 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         hits: Math.min(Math.ceil(deg / 2), supCap), cap: supCap }
     : null;
 
+  // ── «Прячась в Орде» ─────────────────────────────────────────────────────
+  // Цель стоит внутри союзной Орды (токены наложены), и не-Избирательный
+  // выстрел половиной попаданий уходит в толпу: одиночный — по чётности броска,
+  // очередь — каждым нечётным попаданием.
+  const targetToken = [...(game.user?.targets ?? [])][0] ?? null;
+  const shelter = hit && targetToken
+    ? hidingInHordeSplit(targetToken, {
+        hitsCount, rv, isMelee,
+        burst: rofMode === "semi" || rofMode === "full",
+        selective: !!aimTarget?.value
+      })
+    : null;
+  const hordeHits = shelter
+    ? shelter.mask.map(inHorde => inHorde ? (shelter.horde?.uuid || "") : "")
+    : null;
+
   const techOpts = opts.techniqueOpts || {};
 
   // Перезарядка: оружие с Recharge и Максимальный режим стреляют раз в 2 хода.
@@ -325,6 +342,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         condLabels: opts.ammoCondLabels || [], warning: ammoWarning
       },
       band, suppression, corVal, corEffects: sys.corEffects || [],
+      // Урон по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый Дождь»,
+      // uuid — чтобы найти Таланты и Размер стрелка.
+      weaponRange: Number(sys.range) || 0,
+      burst: rofMode === "semi" || rofMode === "full",
+      attackerUuid: actor.uuid || "",
+      hordeHits,
       // Выжигание Души: Психосиловое оружие в руках псайкера при попадании.
       soulBurnActorId: (hit && wp.forcePR && isPsyker) ? actor.id : null,
       defense: {
@@ -333,6 +356,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         targetIsVehicle, note: techOpts.chatNote
       },
       notes: {
+        shelter: shelter
+          ? `Цель прикрыта Ордой «${shelter.hordeToken.name ?? shelter.horde?.name}»: `
+            + `${shelter.count} из ${hitsCount} попадан${shelter.count === 1 ? "ия уходит" : "ий уходят"} в толпу.`
+          : "",
         attack:    opts.attackNote,
         technique: { label: techOpts.techniqueLabel, stance: techOpts.stanceLabel, note: techOpts.chatNote },
         aiming:    opts.aimingLabel,
