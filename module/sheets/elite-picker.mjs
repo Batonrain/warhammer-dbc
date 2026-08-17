@@ -13,8 +13,8 @@
 // Поле в шапке остаётся текстовым — свой архетип всегда можно вписать руками.
 
 import { ELITE_ARCHETYPES } from "../constants/elite-archetypes.mjs";
-import { checkEliteRequirements, eliteWho, eliteTakenCount, eliteCost, eliteCostNote }
-  from "../rules/elite-requirements.mjs";
+import { checkEliteRequirements, describeEliteReq, eliteWho, eliteTakenCount,
+         eliteCost, eliteCostNote } from "../rules/elite-requirements.mjs";
 import { buyEliteArchetype } from "../apps/elite-buy.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -77,38 +77,67 @@ export function eliteRaceMatch(actor, entry) {
 }
 
 /**
- * Годен ли архетип персонажу: сперва требования Конструктора, а если их нет —
- * метка расы из книги.
+ * Годен ли архетип персонажу.
+ *
+ * Метка расы проверяется всегда, а требования Конструктора — сверх неё. Иначе
+ * вышла бы ловушка: заведи Лорд-Дисcкорданту одну лишь требуемую Черту — и он
+ * тут же открылся бы всем расам, потому что метка «Космодесантник» перестала бы
+ * учитываться. Нужно расширить круг — метка расы правится там же, на вкладке
+ * ИНФО архетипа.
+ *
  * @returns {{check: object, available: boolean}}
  */
 export function eliteAvailability(actor, doc) {
-  const req = doc?.system?.requirements;
-  const hasReq = (req?.primary?.length || 0) > 0;
-  const check = checkEliteRequirements(req, eliteWho(actor));
-  return { check, available: hasReq ? check.available : eliteRaceMatch(actor, { race: doc?.system?.race }) };
+  const check = checkEliteRequirements(doc?.system?.requirements, eliteWho(actor));
+  const raceOk = eliteRaceMatch(actor, { race: doc?.system?.race });
+  return { check, available: raceOk && check.available };
 }
 
-/** Строка архетипа в пикере — устройство то же, что у строки Таланта. */
+/**
+ * Строка архетипа в пикере — устройство то же, что у строки Таланта.
+ *
+ * Основные требования в строке не показываются вовсе: раса, субраса, Черта и
+ * Покровительство решают, попадёт ли архетип в список, и у всех, кто до списка
+ * дошёл, они выполнены — писать их значило бы забивать строку тем, что и так
+ * верно. Остаются прочие требования и Таланты: они и есть то, чего может не
+ * хватать, поэтому их видно, а невыполненные — красным.
+ *
+ * Пока требования Конструктором не заведены, под именем идёт строка требований
+ * из книги — как есть, без разбора и без цвета. Сверить её с листом нечем, но
+ * читать её надо: без неё у такого архетипа под именем пусто.
+ *
+ * Шапка строки в две линии: имя с ценой сверху, требования под именем. В одну
+ * они не влезают — у иного архетипа их с десяток, и имя ужималось до «Берсерк
+ * К…», а сами требования обрывались многоточием на середине.
+ */
 function eliteRow(doc, check, cost, note, taken) {
   const unmet = [...check.secondaryUnmet, ...check.talentsUnmet];
-  const meta  = [doc.system?.race, doc.system?.god].filter(Boolean).join(" · ");
-  const reqTxt = unmet.length
-    ? `<span class="pick-req pick-req-fail" title="Не выполнено: ${esc(unmet.join(", "))}">${esc(unmet.join(", "))}</span>`
+  const bad   = new Set(unmet);
+  const man   = new Set(check.manual);
+  const r = doc.system?.requirements ?? {};
+  const entries = [...(r.secondary || []), ...(r.talents || [])];
+  const reqTxt = entries.length
+    ? entries.map(e => describeEliteReq(e)).filter(Boolean).map(t => {
+        const state = bad.has(t) ? "fail" : (man.has(t) ? "unknown" : "ok");
+        const title = state === "fail" ? "Не выполнено"
+          : (state === "unknown" ? "Проверяет ГМ" : "Выполнено");
+        return `<span class="pick-req pick-req-${state}" title="${title}">${esc(t)}</span>`;
+      }).join("")
     : (doc.system?.req
-      ? `<span class="pick-req pick-req-ok" title="Требования выполнены">${esc(doc.system.req)}</span>` : "");
-  const manual = check.manual.length
-    ? `<span class="pick-req pick-req-unknown" title="Проверяет ГМ">${esc(check.manual.join(", "))}</span>` : "";
+      ? `<span class="pick-req pick-req-book" title="Требования из книги. Сверить их с листом нельзя, пока они не заведены Конструктором на вкладке ИНФО архетипа">${esc(doc.system.req)}</span>`
+      : "");
   const costTxt = cost
     ? `<span class="pick-cost cost-${unmet.length ? "enemy" : "neutral"}" title="Базовая цена ${doc.system?.cost || 0}${note ? `, ${note}` : ""}">${cost} XP</span>`
     : "";
   const desc = esc(doc.system?.description || doc.system?.charBonus || "—");
   return `<div class="pick-row${unmet.length ? " pick-unmet" : ""}" data-name="${esc(String(doc.name).toLowerCase())}" data-id="${doc.id}">
-    <div class="pick-head">
+    <div class="pick-head elite-head">
       <button type="button" class="pick-exp" title="Показать описание">▸</button>
       <span class="pick-name" title="Раскрыть">${esc(doc.name)}</span>
-      <span class="pick-tier">${esc(meta)}</span>${reqTxt}${manual}${costTxt}
+      ${costTxt}
       <button type="button" class="pick-add" data-id="${doc.id}" title="Купить и добавить на лист">＋</button>
     </div>
+    ${reqTxt ? `<div class="elite-req-line">${reqTxt}</div>` : ""}
     <div class="pick-desc" style="display:none;">
       ${desc}
       ${doc.system?.charBonus ? `<p><b>Бонусы:</b> ${esc(doc.system.charBonus)}</p>` : ""}
@@ -119,8 +148,9 @@ function eliteRow(doc, check, cost, note, taken) {
 }
 
 /**
- * Пикер элитных архетипов: доступные списком, недоступные по основным
- * требованиям — под спойлером (видеть, чего лишён, полезно, брать нельзя).
+ * Пикер элитных архетипов: только те, кем этот персонаж может стать. Не
+ * прошедших по основным требованиям в окне нет вовсе — ни строкой, ни
+ * спойлером: это и значит «не показывается в списке доступных».
  * extraIndex оставлен для кнопки «+» в шапке: там архетип вписывается строкой.
  */
 export async function openElitePicker(actor, extraIndex = null) {
@@ -135,23 +165,14 @@ export async function openElitePicker(actor, extraIndex = null) {
   const taken = eliteTakenCount(actor);
   const note  = eliteCostNote(taken);
 
-  const fit = [], rest = [];
+  const fit = [];
   for (const d of docs) {
     const { check, available } = eliteAvailability(actor, d);
-    (available ? fit : rest).push({ doc: d, check });
+    if (available) fit.push({ doc: d, check });
   }
 
   const rows = fit.map(({ doc, check }) =>
     eliteRow(doc, check, eliteCost(doc.system?.cost, taken), note, taken)).join("");
-
-  const restRows = rest.map(({ doc, check }) => `
-    <div class="pick-row pick-row-locked" data-name="${esc(String(doc.name).toLowerCase())}">
-      <div class="pick-head">
-        <span class="pick-name">${esc(doc.name)}</span>
-        <span class="pick-req pick-req-fail" title="${esc(check.primaryUnmet.join(", ") || doc.system?.race || "")}">${esc(check.primaryUnmet.join(", ") || doc.system?.race || "не для этой расы")}</span>
-        <button type="button" class="pick-add" disabled title="Персонаж не может стать этим — дело не в опыте">🔒</button>
-      </div>
-    </div>`).join("");
 
   const content = `<div class="wh-item-picker wh-elite-picker">
     <div class="pick-top">
@@ -159,11 +180,7 @@ export async function openElitePicker(actor, extraIndex = null) {
       <span class="elite-taken" title="Каждый следующий Элитный архетип вдвое дороже предыдущего">Уже взято: ${taken}${note ? ` · ${esc(note)}` : ""}</span>
     </div>
     <div class="pick-list">
-      <div class="pick-group"><div class="pick-group-head"><span class="pick-caret">▾</span>Доступные<span class="pick-count">${fit.length}</span></div>
-        <div class="pick-group-body">${rows || '<div class="ep-none">Подходящих записей нет — впишите свой архетип в поле шапки.</div>'}</div></div>
-      ${rest.length ? `<div class="pick-group pick-collapsed pick-group-locked">
-        <div class="pick-group-head" title="Свернуть / развернуть"><span class="pick-caret">▸</span>Недоступные<span class="pick-count">${rest.length}</span></div>
-        <div class="pick-group-body">${restRows}</div></div>` : ""}
+      ${rows || '<div class="ep-none">Подходящих записей нет — впишите свой архетип в поле шапки.</div>'}
     </div>
   </div>`;
 

@@ -46,17 +46,36 @@ describe("цена Элитного архетипа при покупке", () 
 describe("отбор архетипов для списка", () => {
   it("заведённые основные требования решают, показывать ли архетип", () => {
     const doc = elite("Ведьма Культа", {
-      race: "Человек",
-      requirements: { primary: [{ kind: "race", key: "drukhari" }], secondary: [], talents: [] }
+      race: "Друкхари",
+      requirements: {
+        primary: [{ kind: "trait", name: "Mechanicum Implants" }], secondary: [], talents: []
+      }
     });
-    expect(eliteAvailability(actor({ system: { race: "drukhari" } }), doc).available).toBe(true);
-    expect(eliteAvailability(actor({ system: { race: "human" } }), doc).available).toBe(false);
+    const withTrait = { items: [{ type: "trait", name: "Mechanicum Implants / Импланты Механикум" }],
+                        system: { race: "drukhari" } };
+    expect(eliteAvailability(actor(withTrait), doc).available).toBe(true);
+    expect(eliteAvailability(actor({ system: { race: "drukhari" } }), doc).available).toBe(false);
   });
 
   it("без заведённых основных требований отбор идёт по метке расы из книги", () => {
     const doc = elite("Апотекарий", { race: "Космодесантник" });
     expect(eliteAvailability(actor({ system: { race: "astartes" } }), doc).available).toBe(true);
     expect(eliteAvailability(actor({ system: { race: "human" } }), doc).available).toBe(false);
+  });
+
+  // Иначе вышла бы ловушка: заведи Лорд-Дисcкорданту одну требуемую Черту — и
+  // он открылся бы всем расам, потому что метка «Космодесантник» перестала бы
+  // учитываться.
+  it("метка расы проверяется и после того, как требования заведены", () => {
+    const doc = elite("Лорд-Дискордант", {
+      race: "Космодесантник",
+      requirements: {
+        primary: [{ kind: "trait", name: "Mechanicum Implants" }], secondary: [], talents: []
+      }
+    });
+    const items = [{ type: "trait", name: "Mechanicum Implants / Импланты Механикум" }];
+    expect(eliteAvailability(actor({ items, system: { race: "astartes" } }), doc).available).toBe(true);
+    expect(eliteAvailability(actor({ items, system: { race: "human" } }), doc).available).toBe(false);
   });
 
   it("прочие требования не запирают выбор, а только помечают", () => {
