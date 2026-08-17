@@ -14,7 +14,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "3 стандартных Примитивных рукопашных или стрелковых оружия (Best.Q), 6 Throwing Knife (+Mono)/6 Throwing Axe (+Mono), 9 модификаций для оружия (до R2), Xeno Hides (+Jack Chains, Best.Q) + Carapace Helm, Скакун до R1 и набор брони до R1 (базово)",
+    "gear": "3 стандартных Примитивных рукопашных или стрелковых оружия (Best.Q), 6 Throwing Knife (+Mono)/6 Throwing Axe (+Mono), Xeno Hides (+Jack Chains, Best.Q) + Carapace Helm, Скакун до R1 и набор брони до R1 (базово)",
     "wounds": "11+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -1632,6 +1632,52 @@
               "equipQuality": "common",
               "equipBudgetMode": "count",
               "equipBudgetValue": 1
+            }
+          ]
+        },
+        {
+          "id": "rZjq8ZEDg14",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "rZjq8ZEDri",
+              "kind": "equipment",
+              "equipCategoryPack": "weapon-mods",
+              "equipMaxAvailability": 2,
+              "equipQuality": "common",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 9
             }
           ]
         }

@@ -11,7 +11,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "3 модификации для оружия (до R3)",
+    "gear": "",
     "wounds": "17+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -578,6 +578,52 @@
               "equipQuality": "common",
               "equipBudgetMode": "count",
               "equipBudgetValue": 1
+            }
+          ]
+        },
+        {
+          "id": "xEoPz6o7g11",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "xEoPz6o7r7",
+              "kind": "equipment",
+              "equipCategoryPack": "weapon-mods",
+              "equipMaxAvailability": 3,
+              "equipQuality": "common",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 3
             }
           ]
         }

@@ -14,7 +14,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "Radium Carbine (Best.Q)/Galvanic Rifle (Best.Q)/Arc Rifle, Radium Pistol (Best.Q)/Flechette Blaster (Good.Q)/Phosphor Pistol, Taser (Good.Q)/Transonic Blade (Good.Q)/Power Weapon (до R2), 2 модификации для оружия (до R2), 2 Модуля Кибернетики Скитария (R1 Good.Q или R2), +1 к Качеству 3 предметов",
+    "gear": "Radium Carbine (Best.Q)/Galvanic Rifle (Best.Q)/Arc Rifle, Radium Pistol (Best.Q)/Flechette Blaster (Good.Q)/Phosphor Pistol, Taser (Good.Q)/Transonic Blade (Good.Q)/Power Weapon (до R2), 2 Модуля Кибернетики Скитария (R1 Good.Q или R2), +1 к Качеству 3 предметов",
     "wounds": "11+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -1508,6 +1508,52 @@
               "code": "",
               "id": "T2X1Qm3Pt8q",
               "kind": "talent"
+            }
+          ]
+        },
+        {
+          "id": "T2X1Qm3Pg19",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "T2X1Qm3Prx",
+              "kind": "equipment",
+              "equipCategoryPack": "weapon-mods",
+              "equipMaxAvailability": 2,
+              "equipQuality": "common",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 2
             }
           ]
         }

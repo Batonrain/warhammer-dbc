@@ -14,7 +14,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "2 любых рукопашных оружия R1 (Best.Q)/R2 (Good.Q)/R3, Hotshot Pistol (Best.Q)/Orthlak Duel Revolver (Good.Q)/Needler Pistol, Digital Laser (Good.Q)/Digital Plasma (до R3), 9 модификаций для оружия (до R3), Tempestus Carapace (Best.Q)/Light Power Armour (Good.Q), 5 модификаций и Систем для брони (до R3)",
+    "gear": "2 любых рукопашных оружия R1 (Best.Q)/R2 (Good.Q)/R3, Hotshot Pistol (Best.Q)/Orthlak Duel Revolver (Good.Q)/Needler Pistol, Digital Laser (Good.Q)/Digital Plasma (до R3), Tempestus Carapace (Best.Q)/Light Power Armour (Good.Q), 5 модификаций и Систем для брони (до R3)",
     "wounds": "11+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -1476,6 +1476,52 @@
               "code": "",
               "id": "O3qKF9xHt11",
               "kind": "talent"
+            }
+          ]
+        },
+        {
+          "id": "O3qKF9xHg13",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "O3qKF9xHrg",
+              "kind": "equipment",
+              "equipCategoryPack": "weapon-mods",
+              "equipMaxAvailability": 3,
+              "equipQuality": "common",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 9
             }
           ]
         }

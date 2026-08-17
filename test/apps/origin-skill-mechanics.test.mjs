@@ -161,7 +161,9 @@ describe("слоты Миньонов и классы оружия", () => {
       .filter(e => e?.kind === "talent" && /Minion of Chaos/i.test(e.sourceName || "")));
     expect(minions.length).toBeGreaterThan(0);
     for (const e of minions) {
-      expect(["human", "beast", "machine", "daemon"]).toContain(e.minionGroup);
+      // Пустая группа законна: «Minion (Средний)» книга оставляет на выбор, и
+      // недостающее спрашивается при выдаче. Сила названа всегда.
+      expect(["", "human", "beast", "machine", "daemon"]).toContain(e.minionGroup || "");
       expect(["lesser", "standard", "greater", "horde", "superior"]).toContain(e.minionTier);
     }
   });

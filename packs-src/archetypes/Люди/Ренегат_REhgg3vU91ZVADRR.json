@@ -14,7 +14,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "Lasgun (Best.Q)/Bolter (Good.Q)/Plasma Gun/Heavy Flamer, Combi-Flamer/Auxiliary Grenade Launcher/Long-Las, 6 модификаций для оружия (до R2), Tempestus Carapace (Good.Q)/Xeno Mesh + Cameleoline Cloak, 4 модификации для брони (до R2)",
+    "gear": "Lasgun (Best.Q)/Bolter (Good.Q)/Plasma Gun/Heavy Flamer, Combi-Flamer/Auxiliary Grenade Launcher/Long-Las, Tempestus Carapace (Good.Q)/Xeno Mesh + Cameleoline Cloak, 4 модификации для брони (до R2)",
     "wounds": "10+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -1652,6 +1652,52 @@
               "equipQuality": "common",
               "equipBudgetMode": "count",
               "equipBudgetValue": 1
+            }
+          ]
+        },
+        {
+          "id": "REhgg3vUg18",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "REhgg3vUrv",
+              "kind": "equipment",
+              "equipCategoryPack": "weapon-mods",
+              "equipMaxAvailability": 2,
+              "equipQuality": "common",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 6
             }
           ]
         }

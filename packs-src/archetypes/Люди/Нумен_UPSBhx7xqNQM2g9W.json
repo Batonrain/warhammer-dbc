@@ -11,7 +11,7 @@
     "charChoice": "+5 к одной Характеристике и +2 к другой (по выбору)",
     "skills": "",
     "talents": "",
-    "gear": "2 любых рукопашных оружия R0(Best.Q)/R1(Good.Q)/R2, 1 любое стрелковое R0(Best.Q)/R1(Good.Q)/R2, Полный комплект брони R0(Best.Q)/R1(Good.Q)/R2, 6 модификаций для оружия (до R2), 3 модификации для брони (до R2)",
+    "gear": "2 любых рукопашных оружия R0(Best.Q)/R1(Good.Q)/R2, 1 любое стрелковое R0(Best.Q)/R1(Good.Q)/R2, Полный комплект брони R0(Best.Q)/R1(Good.Q)/R2, 3 модификации для брони (до R2)",
     "wounds": "10+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -728,6 +728,52 @@
               "equipMaxAvailability": 5,
               "equipBudgetMode": "count",
               "equipBudgetValue": 2
+            }
+          ]
+        },
+        {
+          "id": "UPSBhx7xg15",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "UPSBhx7xrk",
+              "kind": "equipment",
+              "equipCategoryPack": "weapon-mods",
+              "equipMaxAvailability": 2,
+              "equipQuality": "common",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 6
             }
           ]
         }

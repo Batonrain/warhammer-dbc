@@ -157,7 +157,7 @@ import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
 import { MINION_GROUPS, MINION_TIERS }         from "../constants/minions.mjs";
 import { isMinionTalent }                      from "../rules/minion-build.mjs";
-import { applyMinionSlot }                     from "./minion-talent.mjs";
+import { applyMinionSlot, promptMinionSlot }   from "./minion-talent.mjs";
 import { executeItemCode }                    from "./item-script.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } from "./compendium-browser.mjs";
@@ -404,7 +404,7 @@ export function blankMechEntry(kind = "characteristic") {
     equipArmorType: "", equipMaxAvailability: 5,
     // Качество выданного («Narthecium (Good.Q)») и фильтры небоевых паков:
     // ступень Таланта, потолок Пси-Рейтинга.
-    equipQuality: "common", equipTalentTier: "", equipMaxPsyRating: "",
+    equipQuality: "common", equipTalentTier: "", equipMaxPsyRating: "", equipImplantCategory: "",
     // Бюджет выбора (rules/pick-budget.mjs): штуками или опытом.
     equipBudgetMode: "count", equipBudgetValue: 1,
     // loyalty — тип миньона ("" = любой), знак и величина (см. шапку файла)
@@ -924,6 +924,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       if (entry.equipCategoryPack === "armor"   && entry.equipArmorType)  filters.armorType = entry.equipArmorType;
       if (entry.equipTalentTier !== "" && entry.equipTalentTier != null)   filters.talentTier = Number(entry.equipTalentTier);
       if (entry.equipMaxPsyRating !== "" && entry.equipMaxPsyRating != null) filters.maxPsyRating = Number(entry.equipMaxPsyRating);
+      if (entry.equipCategoryPack === "implants" && entry.equipImplantCategory) filters.implantCategory = entry.equipImplantCategory;
       if (Number.isFinite(Number(entry.equipMaxAvailability))) filters.maxAvailability = Number(entry.equipMaxAvailability);
 
       const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue });
@@ -1041,14 +1042,29 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       }
       // Талант Миньона без пары «группа + сила» — Миньон ниоткуда: блок в
       // СОЦИУМе не поймёт, какой это слот, а счётчик занятых поедет.
-      if (entry.kind === "talent" && entry.minionGroup && entry.minionTier
-          && isMinionTalent({ type: "talent", name: data.name })) {
-        const def = MINION_TIERS[entry.minionTier];
-        applyMinionSlot(data, {
-          group: entry.minionGroup, tier: entry.minionTier,
-          talentTier: def?.talentTier ?? 1,
-          label: `${MINION_GROUPS[entry.minionGroup]?.label || entry.minionGroup}, ${def?.label || entry.minionTier}`
-        });
+      if (entry.kind === "talent" && isMinionTalent({ type: "talent", name: data.name })) {
+        if (entry.minionGroup && entry.minionTier) {
+          const def = MINION_TIERS[entry.minionTier];
+          applyMinionSlot(data, {
+            group: entry.minionGroup, tier: entry.minionTier,
+            talentTier: def?.talentTier ?? 1,
+            label: `${MINION_GROUPS[entry.minionGroup]?.label || entry.minionGroup}, ${def?.label || entry.minionTier}`
+          });
+        } else {
+          // Книга называет не всё: «Minion (Средний)» задаёт силу, а группу
+          // оставляет на выбор. Недостающее спрашиваем тем же окном, что и при
+          // покупке с листа, — выдумывать за книгу нельзя.
+          const pick = await promptMinionSlot(actor, src || { name: data.name, system: data.system });
+          if (!pick) return;
+          // То, что книга назвала, за ней и остаётся: спрашивали недостающее.
+          const tier = entry.minionTier || pick.tier;
+          const group = entry.minionGroup || pick.group;
+          const def = MINION_TIERS[tier];
+          applyMinionSlot(data, {
+            group, tier, talentTier: def?.talentTier ?? pick.talentTier,
+            label: `${MINION_GROUPS[group]?.label || group}, ${def?.label || tier}`
+          });
+        }
       }
     }
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id } };

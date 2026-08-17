@@ -31,6 +31,8 @@ export const ITEM_FILTERS = {
   maxAvailability: (it, want) => (Number(it?.availability) || 0) <= Number(want),
   /** Ступень Таланта: «7 талантов 1 уровня» — это ступень, а не цена. */
   talentTier: (it, want) => Number(it?.tier) === Number(want),
+  /** Категория импланта: «Мехадендрит» — это system.category, а не папка. */
+  implantCategory: (it, want) => it?.category === want,
   /** Пси-Рейтинг силы не выше указанного: у психосилы system.cost — цена в ПР. */
   maxPsyRating: (it, want) => (Number(it?.cost) || 0) <= Number(want)
 };

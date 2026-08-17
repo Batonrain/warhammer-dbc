@@ -14,7 +14,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "",
-    "gear": "Hotshot Pistol (Good.Q)/Bolt Pistol/Phosphor Blast Pistol, Poleaxe (Best.Q +Mono)/Power Axe/Arc Maul, Enforcer Carapace + Vulcanized Cloak, 6 Бионики/Кибернетики (до R2 Good.Q или R1 Best.Q), 3 Кибернетики Механикум (до R2), 2 Мехадендрита (R3/R2 Good.Q/R1 Best.Q), Cogitator (Best.Q) + Retinal Display",
+    "gear": "Hotshot Pistol (Good.Q)/Bolt Pistol/Phosphor Blast Pistol, Poleaxe (Best.Q +Mono)/Power Axe/Arc Maul, Enforcer Carapace + Vulcanized Cloak, 6 Бионики/Кибернетики (до R2 Good.Q или R1 Best.Q), 3 Кибернетики Механикум (до R2), Cogitator (Best.Q) + Retinal Display",
     "wounds": "12+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -1197,6 +1197,53 @@
               "code": "",
               "id": "w27A7ks4t1p",
               "kind": "talent"
+            }
+          ]
+        },
+        {
+          "id": "w27A7ks4g1a",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "w27A7ks4rz",
+              "kind": "equipment",
+              "equipCategoryPack": "implants",
+              "equipImplantCategory": "mechadendrite",
+              "equipMaxAvailability": 5,
+              "equipQuality": "best",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 2
             }
           ]
         }

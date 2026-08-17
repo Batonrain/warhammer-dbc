@@ -239,7 +239,7 @@ function minionEntries(str, docId) {
     if (MINION_GROUP_RU[low]) group = MINION_GROUP_RU[low];
     else if (MINION_TIER_RU[low]) tier = MINION_TIER_RU[low];
   }
-  if (!group || !tier) return null;
+  if (!tier) return null;
   const hit = TALENT_IDX.get("minion of chaos");
   if (!hit) return null;
   return Array.from({ length: times }, () => ({
@@ -273,7 +273,7 @@ function talentEntry(str, docId) {
 function gearEntry(str, docId) {
   const m = gearMods(str);
   const hit = GEAR_IDX.get(m.name.toLowerCase());
-  if (!hit) return weaponClassEntry(str, docId, WEAPON_FOLDERS);
+  if (!hit) return weaponClassEntry(str, docId, WEAPON_FOLDERS) || ruClassEntry(str, docId);
   return {
     id: mkId(docId, "e"), kind: "equipment", equipMode: "direct",
     equipSourceUuid: hit.uuid, equipSourceName: hit.name, equipSourceImg: hit.img || "",
@@ -495,6 +495,33 @@ function weaponClassFolders() { return {
   "grenades": "Гранаты", "frag grenades": "Гранаты", "grenade launcher": "Гранатомёты",
   "bombs": "Бомбы", "missiles": "Ракеты", "lascannon": "Лазерное", "laspistol": "Лазерное"
 }; }
+
+// Классы, которые книга называет по-русски: свой пак, иногда со своим фильтром.
+function ruClassPicks() {
+  return {
+    "доз химии": { pack: "chemistry" },
+    "химии":     { pack: "chemistry" },
+    "доз друкхарийской химии": { pack: "chemistry" },
+    "модификации для оружия":  { pack: "weapon-mods" },
+    "модификаций для оружия":  { pack: "weapon-mods" },
+    "мехадендрит":  { pack: "implants", implantCategory: "mechadendrite" },
+    "мехадендрита": { pack: "implants", implantCategory: "mechadendrite" }
+  };
+}
+
+/** «20 доз Химии до R1», «3 модификации для оружия (до R3)» → выбор с фильтром. */
+function ruClassEntry(str, docId) {
+  const m = gearMods(str);
+  const def = ruClassPicks()[m.name.toLowerCase()];
+  if (!def) return null;
+  return {
+    id: mkId(docId, "r"), kind: "equipment", equipMode: "choice",
+    equipCategoryPack: def.pack,
+    ...(def.implantCategory ? { equipImplantCategory: def.implantCategory } : {}),
+    equipMaxAvailability: m.avail, equipQuality: m.quality,
+    equipBudgetMode: "count", equipBudgetValue: m.qty
+  };
+}
 
 /** «L. Chain Weapon (до R1)» → запись выбора с фильтром по папке. */
 function weaponClassEntry(str, docId, folders) {

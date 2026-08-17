@@ -92,7 +92,7 @@ async function buildPackTree(pack) {
     // tier и cost нужны фильтрам «Талант такой-то ступени» и «Психосила до
     // такого-то ПР», а cost — ещё и бюджету в опыте (rules/pick-budget.mjs).
     fields: ["system.armorType", "system.availability", "system.properties",
-             "system.tier", "system.cost", "system.aptitudes"]
+             "system.tier", "system.cost", "system.aptitudes", "system.category"]
   });
   const folders = pack.folders?.contents ?? [];
   const byParent = new Map();
@@ -125,7 +125,8 @@ async function buildPackTree(pack) {
         doc: pack.metadata?.type || "Item",
         folderId, armorType: it.system?.armorType,
         availability: it.system?.availability, properties: it.system?.properties || [],
-        tier: it.system?.tier, cost: it.system?.cost, aptitudes: it.system?.aptitudes || []
+        tier: it.system?.tier, cost: it.system?.cost, aptitudes: it.system?.aptitudes || [],
+        category: it.system?.category
       }))
     };
   };
@@ -241,7 +242,7 @@ async function buildAllTrees(force = false) {
 // приём «компендиум с фильтрами плюс счётчик», просто пак другой.
 const GRANTABLE_PACKS = ["weapons", "armor", "gear", "ammunition", "implants",
   "weapon-mods", "armor-mods", "tools", "shields",
-  "talents", "traits", "psychic-powers", "tech-powers"];
+  "talents", "traits", "psychic-powers", "tech-powers", "chemistry"];
 export const GRANTABLE_CATEGORIES = GRANTABLE_PACKS.map(pack => ({
   pack, label: CATEGORIES.find(c => c.sources.length === 1 && c.sources[0].pack === pack)?.label || pack
 }));
