@@ -219,6 +219,34 @@ function walk(dir, fn) {
 }
 
 const TALENT_IDX = packIndex("talents");
+const WEAPON_FOLDERS = folderIndex("weapons");
+
+// Подписи книги для пары «группа + сила» Миньона. «Средний» в книге — это
+// «Обычный» в константах, поэтому обе формы.
+const MINION_GROUP_RU = { "человек": "human", "зверь": "beast", "машина": "machine", "демон": "daemon" };
+const MINION_TIER_RU  = { "низший": "lesser", "обычный": "standard", "средний": "standard",
+                          "высший": "greater", "орда": "horde", "превосходящий": "superior" };
+
+/** «Minion (Высший, Человек, ×2)» → записи со слотом, по одной на копию. */
+function minionEntries(str, docId) {
+  const m = str.match(/^minion\s*\(([^)]*)\)/i);
+  if (!m) return null;
+  let group = "", tier = "", times = 1;
+  for (const raw of m[1].split(",").map(x => x.trim())) {
+    const low = raw.toLowerCase();
+    const mult = low.match(/^[x×]\s*(\d+)$/);
+    if (mult) { times = Number(mult[1]); continue; }
+    if (MINION_GROUP_RU[low]) group = MINION_GROUP_RU[low];
+    else if (MINION_TIER_RU[low]) tier = MINION_TIER_RU[low];
+  }
+  if (!group || !tier) return null;
+  const hit = TALENT_IDX.get("minion of chaos");
+  if (!hit) return null;
+  return Array.from({ length: times }, () => ({
+    id: mkId(docId, "m"), kind: "talent", sourceUuid: hit.uuid, sourceName: hit.name,
+    sourceImg: hit.img || "", minionGroup: group, minionTier: tier
+  }));
+}
 const GEAR_IDX = new Map();
 for (const pack of ["weapons", "armor", "gear", "ammunition", "tools", "shields", "implants"]) {
   for (const [k, v] of packIndex(pack)) if (!GEAR_IDX.has(k)) GEAR_IDX.set(k, { ...v, pack });
@@ -228,6 +256,9 @@ for (const pack of ["weapons", "armor", "gear", "ammunition", "tools", "shields"
 function talentEntry(str, docId) {
   const budget = budgetEntry(str, docId);
   if (budget) return budget;
+  // Миньон даёт СПИСОК записей («×2» — два слуги), а не одну.
+  const minions = minionEntries(str, docId);
+  if (minions) return minions.length === 1 ? minions[0] : { kind: "__many__", items: minions.map(fill) };
   const bare = str.replace(/\s*\([^)]*\)\s*$/, "").trim().toLowerCase();
   const spec = str.match(/\(([^)]*)\)\s*$/);
   const hit = TALENT_IDX.get(str.toLowerCase()) || TALENT_IDX.get(bare);
@@ -242,7 +273,7 @@ function talentEntry(str, docId) {
 function gearEntry(str, docId) {
   const m = gearMods(str);
   const hit = GEAR_IDX.get(m.name.toLowerCase());
-  if (!hit) return null;
+  if (!hit) return weaponClassEntry(str, docId, WEAPON_FOLDERS);
   return {
     id: mkId(docId, "e"), kind: "equipment", equipMode: "direct",
     equipSourceUuid: hit.uuid, equipSourceName: hit.name, equipSourceImg: hit.img || "",
@@ -266,7 +297,9 @@ function parseList(raw, docId, make) {
       continue;
     }
     const one = make(part, docId);
-    if (one) entries.push(one); else leftover.push(part);
+    if (one?.kind === "__many__") entries.push(...one.items);
+    else if (one) entries.push(one);
+    else leftover.push(part);
   }
   return { entries, leftover };
 }
@@ -425,4 +458,56 @@ function gearMods(str) {
     .replace(/[;,]\s*$/, "")
     .trim();
   return { qty: qty ? Number(qty[1]) : 1, avail: avail ? Number(avail[1]) : 5, quality, name };
+}
+
+// ── Класс оружия из книги → папка компендиума ────────────────────────────────
+//
+//  «L. Chain Weapon (до R1)» называет не предмет, а КЛАСС: цепное оружие
+//  Редкости не выше первой, а какое именно — выбирает игрок. В этом проекте
+//  класс оружия задан папкой компендиума, поэтому запись пишется выбором с
+//  фильтром по папке. Идентификаторы папок лежат в _Folder.json исходников —
+//  запущенная игра для этого не нужна.
+
+/** Имя папки → её идентификатор (первое совпадение сверху вниз). */
+function folderIndex(pack) {
+  const idx = new Map();
+  walk(abs(SRC_ROOT, "/" + pack), (file) => {
+    if (!file.endsWith("_Folder.json")) return;
+    let j; try { j = JSON.parse(fs.readFileSync(file, "utf8")); } catch { return; }
+    if (j?.name && j?._id && !idx.has(j.name)) idx.set(j.name, j._id);
+  });
+  return idx;
+}
+
+// Английские названия классов из книги → папка компендиума. Список ручной и
+// таким останется: книга пишет «Combi-Bolter», а папка называется «Болтерное»,
+// и вывести одно из другого нельзя.
+function weaponClassFolders() { return {
+  "chain weapon": "Цепное", "power weapon": "Силовое", "shock weapon": "Шоковое",
+  "force weapon": "Психосиловое", "primitive weapon": "Примитивное",
+  "bolter": "Болтерное", "bolt pistol": "Болтерное", "combi-bolter": "Болтерное",
+  "storm bolter": "Болтерное", "stalker bolter": "Болтерное", "bolt rifle": "Болтерное",
+  "heavy bolter": "Болтерное",
+  "flamer": "Огнемёты", "combi-flamer": "Огнемёты",
+  "meltagun": "Мельта", "combi-melta": "Мельта", "multimelta": "Мельта",
+  "plasmagun": "Плазменное", "combi-plasma": "Плазменное", "plasma cannon": "Плазменное",
+  "autocannon": "Автопушки", "shotgun": "Дробовики",
+  "grenades": "Гранаты", "frag grenades": "Гранаты", "grenade launcher": "Гранатомёты",
+  "bombs": "Бомбы", "missiles": "Ракеты", "lascannon": "Лазерное", "laspistol": "Лазерное"
+}; }
+
+/** «L. Chain Weapon (до R1)» → запись выбора с фильтром по папке. */
+function weaponClassEntry(str, docId, folders) {
+  const m = gearMods(str);
+  // Приставка «L.» — легионное исполнение; на класс она не влияет.
+  const bare = m.name.replace(/^L\.\s*/i, "").trim().toLowerCase();
+  const folderName = weaponClassFolders()[bare];
+  const folderId = folderName ? folders.get(folderName) : null;
+  if (!folderId) return null;
+  return {
+    id: mkId(docId, "w"), kind: "equipment", equipMode: "choice",
+    equipCategoryPack: "weapons", equipWeaponType: folderId,
+    equipMaxAvailability: m.avail, equipQuality: m.quality,
+    equipBudgetMode: "count", equipBudgetValue: m.qty
+  };
 }

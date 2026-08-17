@@ -21,7 +21,7 @@
     "charChoice": "",
     "skills": "",
     "talents": "Sure Stitch",
-    "gear": "L. Chain Weapon (до R1), 20 доз Химии до R1",
+    "gear": "20 доз Химии до R1",
     "wounds": "15+1d5",
     "infRoll": "",
     "requiredPath": "",
@@ -383,6 +383,53 @@
               "code": "",
               "id": "9xoU0AONt3",
               "kind": "talent"
+            }
+          ]
+        },
+        {
+          "id": "9xoU0AONg1s",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "9xoU0AONw0",
+              "kind": "equipment",
+              "equipCategoryPack": "weapons",
+              "equipWeaponType": "16Gyzmczaej5IVxr",
+              "equipMaxAvailability": 1,
+              "equipQuality": "common",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 1
             }
           ]
         }

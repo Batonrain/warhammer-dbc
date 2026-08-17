@@ -152,3 +152,25 @@ describe("выбор с бюджетом", () => {
     }
   });
 });
+
+// «Minion (Высший, Человек)» и «L. Chain Weapon (до R1)» — тот же выбор с
+// фильтром: слот слуги и класс оружия папкой компендиума.
+describe("слоты Миньонов и классы оружия", () => {
+  it("Талант Миньона несёт пару «группа + сила»", () => {
+    const minions = origins.flatMap(d => allEntries(d)
+      .filter(e => e?.kind === "talent" && /Minion of Chaos/i.test(e.sourceName || "")));
+    expect(minions.length).toBeGreaterThan(0);
+    for (const e of minions) {
+      expect(["human", "beast", "machine", "daemon"]).toContain(e.minionGroup);
+      expect(["lesser", "standard", "greater", "horde", "superior"]).toContain(e.minionTier);
+    }
+  });
+
+  it("класс оружия задан папкой компендиума, а не именем предмета", () => {
+    const byFolder = origins.flatMap(d => allEntries(d)
+      .filter(e => e?.kind === "equipment" && e.equipMode === "choice"
+                && e.equipCategoryPack === "weapons"));
+    expect(byFolder.length).toBeGreaterThan(0);
+    for (const e of byFolder) expect(e.equipWeaponType).toMatch(/^\w{16}$/);
+  });
+});

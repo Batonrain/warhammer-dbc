@@ -1728,6 +1728,13 @@ export class WarhammerItemSheet
     });
     setEquipFilter(".mech-equip-tier", "equipTalentTier");
     setEquipFilter(".mech-equip-pr",   "equipMaxPsyRating");
+    const setMinionSlot = (sel, field) => on(sel, "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e[field] = ev.currentTarget.value; saveMech(arr); }
+    });
+    setMinionSlot(".mech-minion-group", "minionGroup");
+    setMinionSlot(".mech-minion-tier",  "minionTier");
     on(".mech-equip-quality", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);

@@ -155,6 +155,9 @@ import { masteryTargets, masteryAptitudes, masteryLabel } from "../rules/mastery
 import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.mjs";
 import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
+import { MINION_GROUPS, MINION_TIERS }         from "../constants/minions.mjs";
+import { isMinionTalent }                      from "../rules/minion-build.mjs";
+import { applyMinionSlot }                     from "./minion-talent.mjs";
 import { executeItemCode }                    from "./item-script.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } from "./compendium-browser.mjs";
@@ -378,6 +381,9 @@ export function blankMechEntry(kind = "characteristic") {
     charKey: "s", field: "total", op: "add", value: 1,
     // trait/talent
     sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "", specialization: "",
+    // «Миньон Хаоса» — один Талант на двадцать разных слуг (стр. 111): пара
+    // «группа + сила» решает и уровень Таланта, и что покажет блок в СОЦИУМе.
+    minionGroup: "", minionTier: "",
     // skill / rollmod — specKey:"__choice__" => specChoiceKeys (кандидаты) и
     // specChoiceCount (сколько РАЗНЫХ из них берёт актор при получении,
     // см. resolveEntrySpecChoice): «Общие знания (любые 4)».
@@ -1033,6 +1039,17 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
         const apts = masteryAptitudes(specKey);
         if (apts.length) { data.system.aptitudes = apts; data.system.aptSource = specKey; }
       }
+      // Талант Миньона без пары «группа + сила» — Миньон ниоткуда: блок в
+      // СОЦИУМе не поймёт, какой это слот, а счётчик занятых поедет.
+      if (entry.kind === "talent" && entry.minionGroup && entry.minionTier
+          && isMinionTalent({ type: "talent", name: data.name })) {
+        const def = MINION_TIERS[entry.minionTier];
+        applyMinionSlot(data, {
+          group: entry.minionGroup, tier: entry.minionTier,
+          talentTier: def?.talentTier ?? 1,
+          label: `${MINION_GROUPS[entry.minionGroup]?.label || entry.minionGroup}, ${def?.label || entry.minionTier}`
+        });
+      }
     }
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id } };
     await actor.createEmbeddedDocuments("Item", [data]);
@@ -1448,7 +1465,18 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       // «Мастерство» владеет конкретным Навыком (стр. 62), и от того, каким,
       // зависят его склонности и цена. Поэтому у него не строка, а список: с
       // произвольной подписью привязку было бы не с чем сверить.
-      if (dynamicAptKind(ent.sourceName) === "skill") {
+      // «Миньон Хаоса» — один Талант на двадцать слуг: пара «группа + сила»
+      // решает и уровень Таланта, и что покажет блок в СОЦИУМе.
+      if (isMinionTalent({ type: "talent", name: ent.sourceName })) {
+        const gOpts = Object.entries(MINION_GROUPS)
+          .map(([k, d]) => optHtml(k, d.label, (ent.minionGroup || "") === k)).join("");
+        const tOpts = Object.entries(MINION_TIERS)
+          .map(([k, d]) => optHtml(k, d.label, (ent.minionTier || "") === k)).join("");
+        out += `<select class="mech-minion-group" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+            ${optHtml("", "— группа —", !ent.minionGroup)}${gOpts}</select>
+          <select class="mech-minion-tier" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+            ${optHtml("", "— сила —", !ent.minionTier)}${tOpts}</select>`;
+      } else if (dynamicAptKind(ent.sourceName) === "skill") {
         const opts = masteryTargets()
           .map(t => optHtml(t.key, t.label, ent.specialization === t.key)).join("");
         out += `<select class="grant-entry-spec" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
