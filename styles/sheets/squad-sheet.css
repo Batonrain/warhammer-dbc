@@ -423,3 +423,14 @@
   min-width: 0;
 }
 .warhammer-dbc .sq-head-col .wh-faction-field { margin-top: 0; }
+
+/* ── Командование вне Отряда: карточка в чате ──
+      Классы .sq-chat переиспользуются целиком — карточка та же, — добавляются
+      только пометка про отсутствие Слаженности и список тех, до кого команда
+      не дошла. */
+.wh-roll-result.sq-chat .cmd-chat-hint { font-size: 0.82em; opacity: 0.75; }
+.wh-roll-result.sq-chat .cmd-chat-num {
+  font-size: 0.78em; color: #ffd98a; border: 1px solid #6a5a2a;
+  background: rgba(120, 95, 40, 0.2); border-radius: 8px; padding: 0 6px; margin-left: 5px;
+}
+.wh-roll-result.sq-chat .sq-chat-missed { color: #ffd98a; border-left: 3px solid #6a5a2a; padding-left: 7px; }
