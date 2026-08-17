@@ -26,9 +26,8 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners } from "./tabs/gear.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
-import { minionsContext, activateMinionListeners } from "../apps/minions.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
-import { minionsPanelContext } from "./tabs/minions-panel.mjs";
+import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minions-panel.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
@@ -393,11 +392,6 @@ export class WarhammerCharacterSheet
     // character-context.mjs — самого персонажа. Здесь остаётся только то, что
     // знает окно, а не актор.
     Object.assign(context, buildGetData(this.actor), characterContext(this.actor));
-
-    // Миньоны (стр. 111-113): панель на вкладке ЗАПИСИ, общая с листами Демона
-    // и Принца Демонов. Список акторов мира передаём сюда — сам расчёт про
-    // game ничего не знает и проверяется без Foundry.
-    Object.assign(context, minionsContext(this.actor, [...(game.actors ?? [])]));
 
     // Вкладка СОЦИУМ: Навыки, Таланты, Особенности, Модификаторы, Назначения,
     // Фракции, Миньоны и Отношения. Назначения ищутся по миру — привязка живёт
@@ -871,9 +865,8 @@ export class WarhammerCharacterSheet
     activatePathListeners(html, this.actor);
 
     // ── Миньоны (стр. 111-113) ─────────────────────────────────────────────
-    // Панель на вкладке ЗАПИСИ; листы Демона и Принца Демонов получают её
-    // вместе с этой отрисовкой — они наследуют лист персонажа.
-    activateMinionListeners(html, this.actor);
+    // Карточки слуг в блоке «МИНЬОНЫ» на вкладке СОЦИУМ: клик открывает лист.
+    activateMinionPanelListeners(html);
 
     // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
     activateSocialListeners(html, this.actor, { editable: this.isEditable });

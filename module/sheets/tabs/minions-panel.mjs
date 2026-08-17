@@ -18,6 +18,19 @@
 import { MINION_GROUPS, MINION_TIERS } from "../../constants/minions.mjs";
 import { minionSlots, slotUsage, minionCapacity, groupTally } from "../../rules/minion-build.mjs";
 
+/**
+ * Клик по карточке слуги открывает его лист. Обработчик живёт здесь, рядом с
+ * панелью: прежде он был общим с панелями «Записей», а тех больше нет.
+ */
+export function activateMinionPanelListeners(html, root = null) {
+  const el = root ?? (html?.jquery ? html[0] : html);
+  el?.querySelectorAll?.(".minion-open-link").forEach(node => node.addEventListener("click", async ev => {
+    ev.preventDefault();
+    const doc = await fromUuid(ev.currentTarget.dataset.uuid).catch(() => null);
+    doc?.sheet?.render(true);
+  }));
+}
+
 /** Акторы, чей Хозяин — этот актор. Ссылку хранит слуга, а не Хозяин. */
 export function minionsOfActor(actor, actors = []) {
   if (!actor?.uuid) return [];
