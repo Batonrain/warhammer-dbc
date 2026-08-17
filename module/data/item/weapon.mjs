@@ -54,6 +54,28 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       needsRecharge: new BooleanField({ initial: false, label: "Требует перезарядки" }),
       legacyWeapon: new BooleanField({ initial: false, label: "Реликвия" }),
       sacred:       new BooleanField({ initial: false, label: "Освящённое" }),
+      // Оружие Наследия (стр. 426-428). Признак «реликвия» выше существовал и
+      // раньше — он остаётся отметкой на листе, а здесь лежит сама механика:
+      // История (одна, при Возвышении), Характер (выбирается при первой
+      // Мутации и больше не меняется) и сами Мутации по порогам Порчи.
+      //
+      // preProps/preDamage/prePen — снимок профиля ДО Возвышения, как у
+      // демонического оружия рядом: связь может порваться Ревностью, и
+      // возвращать оружию обычный вид надо по снимку, а не вычитанием.
+      legacy: new SchemaField({
+        active:      new BooleanField({ initial: false, label: "Оружие Наследия" }),
+        legendary:   new BooleanField({ initial: false, label: "Легендарное" }),
+        historyKey:  num(0, "История (бросок)"),
+        historyName: new StringField({ initial: "", label: "Название Истории" }),
+        historyText: new StringField({ initial: "", label: "Правило Истории" }),
+        character:   new StringField({ initial: "", label: "Характер" }),
+        mutations:   list("Мутации"),
+        bonus:       num(0, "Бонус Наследия к Dmg/Pen"),
+        preProps:    list("Свойства до Возвышения"),
+        preDamage:   new StringField({ initial: "", label: "Урон до Возвышения" }),
+        prePen:      num(0, "Пробитие до Возвышения"),
+        preQuality:  new StringField({ initial: "", label: "Качество до Возвышения" })
+      }, { label: "Наследие" }),
       daemonWeapon: new SchemaField({
         bound:      new BooleanField({ initial: false, label: "Демон связан" }),
         god:        new StringField({ initial: "", label: "Бог" }),

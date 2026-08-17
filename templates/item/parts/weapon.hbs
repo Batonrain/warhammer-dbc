@@ -85,7 +85,7 @@
   </div>
 
   <div class="weapon-row">
-    <label class="wr-label" title="Доступные хваты через запятую/скобки, как в таблицах: напр. 2р (1р), Об, Бл. �">Хваты (Grip)</label>
+    <label class="wr-label" title="Доступные хваты через запятую/скобки, как в таблицах: напр. 2р (1р), Об, Бл. �">Хваты (Grip)</label>
     <input type="text" name="system.grips" value="{{system.grips}}" class="wr-input" placeholder="напр. 2р (1р), Об"/>
   </div>
 
@@ -240,6 +240,93 @@
         <input type="checkbox" name="system.sacred" {{#if system.sacred}}checked{{/if}}/> ✚ Священное Оружие
       </label>
     </div>
+
+    {{!-- ── Наследие (стр. 426-428) ──
+          Возвышение правит сам профиль оружия, поэтому блок показывает и порог
+          теста, и что именно оружие получит. Мутации открываются по порогам
+          Порчи владельца — без актора считать их не от чего. --}}
+    {{#if legacy}}
+    <div class="wms-legacy{{#if legacy.active}} is-legacy{{/if}}">
+      <div class="wms-legacy-head">
+        <span class="wms-legacy-title">⚜ НАСЛЕДИЕ</span>
+        {{#if legacy.active}}
+        <span class="wms-legacy-meta">Бонус +{{legacy.bonus}} к Dmg/Pen{{#if legacy.legendary}} · Легендарное{{/if}}</span>
+        <button type="button" class="wms-btn legacy-break" title="Провал теста Ревности: связь рвётся, профиль возвращается к прежнему. История и Мутации сохраняются.">Разорвать связь</button>
+        {{else}}
+        <span class="wms-legacy-meta">{{#if legacy.blockReason}}{{legacy.blockReason}}{{else}}Ещё не возвышено{{/if}}</span>
+        {{/if}}
+      </div>
+
+      {{#unless legacy.active}}
+      {{#if legacy.canAscend}}
+      <div class="wms-legacy-rows">
+        {{#each legacy.ascension.rows as |r|}}<div class="wms-legacy-row"><span>{{r.label}}</span><span>{{r.signed}}</span></div>{{/each}}
+        <div class="wms-legacy-row total"><span>Порог Возвышения</span><span>{{legacy.ascension.thresholdSigned}}</span></div>
+      </div>
+      <div class="wms-legacy-actions">
+        <label class="wms-legacy-deed">Подвиги (0–30)
+          <input type="number" class="legacy-deed" value="0" min="0" max="30"/>
+        </label>
+        <label class="wms-check" title="Легендарное оружие: всегда максимальный бонус +30 на тесты Возвышения и Ревности.">
+          <input type="checkbox" class="legacy-legendary"/> Легендарное
+        </label>
+        <button type="button" class="wms-btn legacy-ascend">⚜ Возвысить (тест Inf)</button>
+      </div>
+      {{/if}}
+      {{/unless}}
+
+      {{#if legacy.active}}
+      <div class="wms-legacy-block">
+        <div class="wms-legacy-sub">История</div>
+        {{#if legacy.history}}
+        <div class="wms-legacy-entry"><b>{{legacy.history.name}}</b> <span class="wms-legacy-roll">({{legacy.history.roll}})</span>
+          <div class="wms-legacy-text">{{legacy.history.text}}</div></div>
+        {{else}}
+        <div class="wms-legacy-pick">
+          <select class="legacy-history-select">
+            <option value="">— выберите Историю —</option>
+            {{#each legacy.histories as |h|}}<option value="{{h.roll}}" {{#if h.selected}}selected{{/if}}>{{h.roll}} — {{h.name}}</option>{{/each}}
+          </select>
+          <button type="button" class="wms-btn legacy-roll-history">🎲 1d10</button>
+        </div>
+        {{/if}}
+      </div>
+
+      <div class="wms-legacy-block">
+        <div class="wms-legacy-sub">Мутации
+          <span class="wms-legacy-meta">Порча {{legacy.corruption}} · получено {{legacy.mutations.length}} из {{legacy.mutationSlots}}{{#if legacy.nextAt}} · следующая при Порче {{legacy.nextAt}}{{/if}}</span>
+        </div>
+        {{#each legacy.mutations as |m idx|}}
+        <div class="wms-legacy-entry">
+          <b>{{m.name}}</b>{{#if m.roll}} <span class="wms-legacy-roll">({{m.roll}})</span>{{/if}}
+          <button type="button" class="wms-legacy-del legacy-mutation-del" data-index="{{idx}}" title="Убрать Мутацию">✕</button>
+          <div class="wms-legacy-text">{{m.text}}</div>
+        </div>
+        {{/each}}
+        <div class="wms-legacy-pick">
+          <select class="legacy-character-select" {{#if legacy.character}}disabled{{/if}}
+                  title="Характер выбирается один раз: все дальнейшие Мутации бросаются по той же таблице.">
+            <option value="">— таблица Характера —</option>
+            {{#each legacy.characters as |c|}}<option value="{{c.key}}" {{#if c.selected}}selected{{/if}}>{{c.label}}</option>{{/each}}
+          </select>
+          <button type="button" class="wms-btn legacy-roll-mutation" {{#unless legacy.mutationsAvailable}}disabled{{/unless}}
+                  title="{{#if legacy.mutationsAvailable}}Доступно Мутаций: {{legacy.mutationsAvailable}}{{else}}Новая Мутация — при следующем пороге Порчи{{/if}}">🎲 Мутация</button>
+          <button type="button" class="wms-btn legacy-custom-mutation" title="Для 3-й и 4-й Мутации книга разрешает придумать свою (стр. 428).">+ Своя</button>
+        </div>
+      </div>
+      {{/if}}
+
+      <details class="wms-legacy-rules">
+        <summary>Правила Наследия</summary>
+        <div class="wms-legacy-text"><b>Общие свойства.</b> {{#each legacy.common as |c|}}{{c}} {{/each}}</div>
+        <div class="wms-legacy-text">{{legacy.rules.jealousy}}</div>
+        <div class="wms-legacy-text">{{legacy.rules.inheritance}}</div>
+        <div class="wms-legacy-text">{{legacy.rules.custom}}</div>
+        <div class="wms-legacy-text">{{legacy.rules.combined}}</div>
+        <div class="wms-legacy-text">{{legacy.rules.legendary}}</div>
+      </details>
+    </div>
+    {{/if}}
     {{#if system.daemonWeapon.bound}}
     <div class="wms-daemon" style="--gc:{{daemonWeaponColor}};">
       <div class="wms-daemon-head">

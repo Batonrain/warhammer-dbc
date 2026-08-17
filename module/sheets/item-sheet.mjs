@@ -2,6 +2,9 @@ import { armourHistoryContext, rollArmourTable, rollArmourEntry,
          rollArmourZones, setArmourEntry, clearArmourHistory } from "../apps/armour-history.mjs";
 import { submutationContext, rollSubmutation,
          pickSubmutation, clearSubmutation }                   from "../apps/submutations.mjs";
+import { legacyContext, rollAscension, breakLegacy, setHistory, rollHistory,
+         rollMutation, addCustomMutation, removeMutation,
+         legacyPrompt }                                        from "../apps/legacy-weapon.mjs";
 import { shipQualityMods, qualityOptionsFor, effectiveWeapon, clampQuality, QUALITY_LABELS }
   from "../constants/ship-quality.mjs";
 import { availableFieldModes, fieldSuitFor } from "../constants/drukhari-armor-fields.mjs";
@@ -825,6 +828,8 @@ export class WarhammerItemSheet
     context.armourHistory = armourHistoryContext(this.item);
     // Субмутации — только у мутаций, у которых таблица есть в тексте (стр. 440).
     context.submutation   = submutationContext(this.item);
+    // Оружие Наследия — только у оружия (стр. 426-428).
+    context.legacy        = legacyContext(this.item);
     context.system = this.item.system;
 
     context.system.balanceStr      = String(context.system.balance      ?? "0");
@@ -1956,6 +1961,32 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.weaponPropNewValue2 = ev.currentTarget.value; saveMech(arr); }
+    });
+
+    // ── Оружие Наследия (стр. 426-428) ──
+    //   Возвышение — тест Inf, он же правит профиль оружия; История и Мутации
+    //   выбираются или бросаются, Мутация требует выбранного Характера.
+    on(".legacy-ascend", "click", () => rollAscension(this.item, {
+      deedBonus: parseInt(el.querySelector(".legacy-deed")?.value) || 0,
+      legendary: !!el.querySelector(".legacy-legendary")?.checked
+    }));
+    on(".legacy-break", "click", () => breakLegacy(this.item));
+    on(".legacy-history-select", "change", ev => {
+      if (ev.currentTarget.value) setHistory(this.item, ev.currentTarget.value);
+    });
+    on(".legacy-roll-history", "click", () => rollHistory(this.item));
+    on(".legacy-character-select", "change", ev =>
+      this.item.update({ "system.legacy.character": ev.currentTarget.value }));
+    on(".legacy-roll-mutation", "click", () => rollMutation(
+      this.item, el.querySelector(".legacy-character-select")?.value));
+    on(".legacy-mutation-del", "click", ev =>
+      removeMutation(this.item, Number(ev.currentTarget.dataset.index)));
+    on(".legacy-custom-mutation", "click", async () => {
+      const name = await legacyPrompt("Название Мутации", "Нестандартная Мутация");
+      if (name === null) return;
+      const text = await legacyPrompt("Правило Мутации", "");
+      if (text === null) return;
+      await addCustomMutation(this.item, name, text);
     });
 
     // ── Особенность комплекта силовой брони ──
