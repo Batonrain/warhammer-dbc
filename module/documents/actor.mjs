@@ -1224,11 +1224,21 @@ export class WarhammerActor extends Actor {
     }
     system.experience.spentPsy = autoPsyCost;
 
+    // Элитные архетипы (стр. 114): цена лежит на самом предмете и уже посчитана
+    // с множителем за предыдущие. Сумма по предметам, а не отдельный счётчик:
+    // снятый с листа архетип обязан вернуть опыт сам, без ручной правки.
+    let autoEliteCost = 0;
+    for (const it of this.items) {
+      if (it.type === "eliteArchetype") autoEliteCost += (parseInt(it.system?.paidCost) || 0);
+    }
+    system.experience.spentElite = autoEliteCost;
+
     const spentTotal =
       (system.experience.spentChar    || 0) +
       (system.experience.spentSkills  || 0) +
       (system.experience.spentTalents || 0) +
       (system.experience.spentPsy     || 0) +
+      (system.experience.spentElite   || 0) +
       (system.experience.spentOther   || 0);
 
     system.experience.spent   = spentTotal;

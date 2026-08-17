@@ -147,6 +147,7 @@ export function creatureSchema({ granted = false } = {}) {
       spentSkills:  num(0, "На навыки"),
       spentTalents: num(0, "На таланты"),
       spentPsy:     num(0, "На психосилы"),
+      spentElite:   num(0, "На элитные архетипы"),
       spentOther:   num(0, "На прочее"),
       current:      num(0, "Свободно")
     }, { label: "Опыт" }),

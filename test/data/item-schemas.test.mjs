@@ -170,7 +170,9 @@ const TYPES = {
   eliteArchetype: {
     pack: "elite-archetypes",
     defaults: {
-      key: "", cost: 0,
+      // cost — цена по книге, paidCost — сколько заплатил этот персонаж
+      // (с удвоением за каждый предыдущий Элитный архетип).
+      key: "", cost: 0, paidCost: 0,
       requirements: { primary: [], secondary: [], talents: [] },
       race: "", god: "", req: "", charBonus: "", freeTalents: "",
       gear: "", traits: [], talents: [], description: "", notes: "", bookSource: ""

@@ -48,7 +48,11 @@ export function talentGroupLock(actor, kind, parent, folderName) {
     return has ? null : "Нужна Черта Navigator's Gen / Ген Навигатора";
   }
   if (parent === "Элитные архетипы") {
-    const has = sys.eliteArchetype === folderName || (sys.eliteArchetypesExtra || []).includes(folderName);
+    // Архетип бывает и предметом на листе, и строкой в шапке: предметом — когда
+    // куплен пикером, строкой — когда вписан руками или пришёл со старого листа.
+    const has = sys.eliteArchetype === folderName
+      || (sys.eliteArchetypesExtra || []).includes(folderName)
+      || items.some(i => i.type === "eliteArchetype" && i.name === folderName);
     return has ? null : `Нужен Элитный архетип «${folderName}»`;
   }
   if (parent === "Таланты одержимых") {

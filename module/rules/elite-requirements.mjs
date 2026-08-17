@@ -177,3 +177,45 @@ export function checkEliteRequirements(req, who = {}) {
     unmet: [...primaryUnmet, ...secondaryUnmet, ...talentsUnmet]
   };
 }
+
+/**
+ * Снимок персонажа для проверки требований. Отдельной функцией и здесь же,
+ * рядом с правилом: так видно, какие поля листа правило вообще читает, и
+ * проверка не разъедется с тем, что ей скармливают в игре.
+ *
+ * Принимает актора, но обходится его данными — ни компендиумов, ни game.
+ */
+export function eliteWho(actor) {
+  const s = actor?.system ?? {};
+  const items = [...(actor?.items ?? [])];
+
+  const skills = {};
+  for (const [key, val] of Object.entries(s.skills ?? {})) skills[key] = val?.rank || "untrained";
+
+  const groupSkills = {};
+  for (const [key, list] of Object.entries(s.groupSkills ?? {})) {
+    groupSkills[key] = (Array.isArray(list) ? list : []).map(e => ({
+      specKey: e?.specKey, specialty: e?.specialty, rank: e?.rank || "untrained"
+    }));
+  }
+
+  const chars = {};
+  for (const [key, val] of Object.entries(s.characteristics ?? {})) chars[key] = num(val?.total);
+
+  return {
+    race: s.race || "", subrace: s.subrace || "", patron: s.patronGod || "",
+    traits:  items.filter(i => i.type === "trait").map(i => i.name),
+    talents: items.filter(i => i.type === "talent")
+      .map(i => ({ name: i.name, specialization: i.system?.specialization || "" })),
+    skills, groupSkills, chars,
+    corruption: num(s.corruption?.value),
+    // Бесчестие — Характеристика inf, отдельного поля у него нет.
+    infamy: num(s.characteristics?.inf?.total),
+    spentXP: num(s.experience?.spent)
+  };
+}
+
+/** Сколько Элитных архетипов уже взято — от этого удваивается цена. */
+export function eliteTakenCount(actor) {
+  return [...(actor?.items ?? [])].filter(i => i.type === "eliteArchetype").length;
+}

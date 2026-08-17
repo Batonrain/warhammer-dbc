@@ -93,6 +93,9 @@ const DEVIATIONS = {
     // Журнал опыта: откуда взялся опыт помимо ручной правки «Всего». Первым
     // его наполняет возврат за совпавшую выдачу Навыка или Таланта.
     "experience.log": [],
+    // Опыт на Элитные архетипы: своя статья, а не «прочее», потому что сумма
+    // считается по предметам на листе — у каждого лежит уплаченная цена.
+    "experience.spentElite": 0,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]
