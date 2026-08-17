@@ -208,6 +208,11 @@
       <div class="trait-fx-hint"><em>Записей нет{{#if canEditMech}} — добавьте группу кнопкой выше{{/if}}.</em></div>
       {{/unless}}
     </div>
+
+    {{!-- Требования Элитного архетипа: два блока, см. apps/elite-req-builder.mjs.
+          Стоят под Конструктором выдачи — тот отвечает, что архетип ДАЁТ, а эти
+          два, что он СПРАШИВАЕТ. --}}
+    {{{eliteReqHtml}}}
   </div>
 
   {{#if (eq item.type "faction")}}

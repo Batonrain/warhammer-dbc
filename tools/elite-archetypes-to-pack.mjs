@@ -70,7 +70,7 @@ export function eliteDocs() {
       system: {
         key: keyOf(arch.name),
         cost,
-        requirements: { primary: [], secondary: [], talents: [] },
+        requirements: { primary: [], secondary: [] },
         race: arch.race || "", god: arch.god || "",
         req: arch.req || "", charBonus: arch.charBonus || "",
         freeTalents: arch.freeTalents || "", gear: arch.gear || "",

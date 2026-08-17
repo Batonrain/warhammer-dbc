@@ -29,7 +29,7 @@ export function eliteCostFor(actor, doc) {
  * если решили брать.
  */
 function confirmUnmet(doc, check) {
-  const list = [...check.secondaryUnmet, ...check.talentsUnmet];
+  const list = check.secondaryUnmet;
   return new Promise(resolve => {
     new Dialog({
       title: `${doc.name}: требования не выполнены`,

@@ -469,8 +469,15 @@ export class WarhammerItemSheet
     }
   };
 
+  // scrollable — прокрутка тела листа переживает перерисовку. Без него любая
+  // правка (а лист перерисовывается на каждое изменение) швыряла к самому
+  // верху, и до Конструктора внизу вкладки приходилось мотать заново.
   static PARTS = {
-    body: { template: "systems/warhammer-dbc/templates/item/item-sheet.hbs", root: true }
+    body: {
+      template: "systems/warhammer-dbc/templates/item/item-sheet.hbs",
+      root: true,
+      scrollable: [".sheet-body"]
+    }
   };
 
   // «СОСТАВ» объявлен для всех типов, а показывается только у Фракции (разметка

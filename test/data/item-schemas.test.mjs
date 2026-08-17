@@ -173,7 +173,7 @@ const TYPES = {
       // cost — цена по книге, paidCost — сколько заплатил этот персонаж
       // (с удвоением за каждый предыдущий Элитный архетип).
       key: "", cost: 0, paidCost: 0,
-      requirements: { primary: [], secondary: [], talents: [] },
+      requirements: { primary: [], secondary: [] },
       race: "", god: "", req: "", charBonus: "", freeTalents: "",
       gear: "", traits: [], talents: [], description: "", notes: "", bookSource: ""
     }

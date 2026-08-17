@@ -96,11 +96,10 @@ export function eliteAvailability(actor, doc) {
 /**
  * Строка архетипа в пикере — устройство то же, что у строки Таланта.
  *
- * Основные требования в строке не показываются вовсе: раса, субраса, Черта и
- * Покровительство решают, попадёт ли архетип в список, и у всех, кто до списка
- * дошёл, они выполнены — писать их значило бы забивать строку тем, что и так
- * верно. Остаются прочие требования и Таланты: они и есть то, чего может не
- * хватать, поэтому их видно, а невыполненные — красным.
+ * Обязательные требования в строке не показываются вовсе: они решают, попадёт
+ * ли архетип в список, и у всех, кто до списка дошёл, выполнены — писать их
+ * значило бы забивать строку тем, что и так верно. Остаются вторичные: они и
+ * есть то, чего может не хватать, поэтому их видно, а невыполненные — красным.
  *
  * Пока требования Конструктором не заведены, под именем идёт строка требований
  * из книги — как есть, без разбора и без цвета. Сверить её с листом нечем, но
@@ -111,11 +110,10 @@ export function eliteAvailability(actor, doc) {
  * К…», а сами требования обрывались многоточием на середине.
  */
 function eliteRow(doc, check, cost, note, taken) {
-  const unmet = [...check.secondaryUnmet, ...check.talentsUnmet];
+  const unmet = check.secondaryUnmet;
   const bad   = new Set(unmet);
   const man   = new Set(check.manual);
-  const r = doc.system?.requirements ?? {};
-  const entries = [...(r.secondary || []), ...(r.talents || [])];
+  const entries = doc.system?.requirements?.secondary || [];
   const reqTxt = entries.length
     ? entries.map(e => describeEliteReq(e)).filter(Boolean).map(t => {
         const state = bad.has(t) ? "fail" : (man.has(t) ? "unknown" : "ok");
@@ -124,7 +122,7 @@ function eliteRow(doc, check, cost, note, taken) {
         return `<span class="pick-req pick-req-${state}" title="${title}">${esc(t)}</span>`;
       }).join("")
     : (doc.system?.req
-      ? `<span class="pick-req pick-req-book" title="Требования из книги. Сверить их с листом нельзя, пока они не заведены Конструктором на вкладке ИНФО архетипа">${esc(doc.system.req)}</span>`
+      ? `<span class="pick-req pick-req-book" title="Требования из книги. Сверить их с листом нельзя, пока они не заведены Конструктором на вкладке МЕХАНИКА архетипа">${esc(doc.system.req)}</span>`
       : "");
   const costTxt = cost
     ? `<span class="pick-cost cost-${unmet.length ? "enemy" : "neutral"}" title="Базовая цена ${doc.system?.cost || 0}${note ? `, ${note}` : ""}">${cost} XP</span>`

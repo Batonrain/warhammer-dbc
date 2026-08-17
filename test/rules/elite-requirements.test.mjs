@@ -125,19 +125,93 @@ describe("прочие требования — «чего ты добился»
   });
 });
 
+// Талант — такой же вид записи, как прочие: блоки различаются строгостью, а не
+// тем, что в них можно потребовать. Обычно он во вторичном, но «без этого
+// Таланта ты не он» тоже бывает — тогда в обязательном.
 describe("требуемые Таланты", () => {
   it("нет нужного — красным, но архетип доступен", () => {
-    const req = { ...blankEliteReq(), talents: [{ name: "Whirlwind of Death" }] };
+    const req = { ...blankEliteReq(), secondary: [{ kind: "talent", name: "Whirlwind of Death" }] };
     const res = checkEliteRequirements(req, who());
 
     expect(res.available).toBe(true);
-    expect(res.talentsUnmet).toHaveLength(1);
+    expect(res.secondaryUnmet).toHaveLength(1);
+  });
+
+  it("в обязательном блоке недостающий Талант убирает архетип из списка", () => {
+    const req = { ...blankEliteReq(), primary: [{ kind: "talent", name: "Whirlwind of Death" }] };
+    expect(checkEliteRequirements(req, who()).available).toBe(false);
   });
 
   it("специализация учитывается", () => {
-    const req = { ...blankEliteReq(), talents: [{ name: "Weapon Training", specialization: "Bolt" }] };
+    const req = { ...blankEliteReq(), secondary: [{ kind: "talent", name: "Weapon Training", specialization: "Bolt" }] };
     expect(checkEliteRequirements(req, who({ talents: [{ name: "Weapon Training", specialization: "Las" }] })).warn).toBe(true);
     expect(checkEliteRequirements(req, who({ talents: [{ name: "Weapon Training", specialization: "Bolt" }] })).warn).toBe(false);
+  });
+
+  // «Hatred (любые 3)» — три ненависти к РАЗНЫМ целям. Один и тот же Талант,
+  // записанный трижды с одной специализацией, требования не закрывает.
+  it("счётчик считает разные специализации, а не повторы одной", () => {
+    const req = { ...blankEliteReq(), secondary: [{ kind: "talent", name: "Hatred", count: 3 }] };
+    const three = ["Имперская Гвардия", "Астартес", "Механикум"]
+      .map(specialization => ({ name: "Hatred", specialization }));
+
+    expect(checkEliteRequirements(req, who({ talents: three })).warn).toBe(false);
+    expect(checkEliteRequirements(req, who({ talents: three.slice(0, 2) })).warn).toBe(true);
+    expect(checkEliteRequirements(req, who({
+      talents: [0, 1, 2].map(() => ({ name: "Hatred", specialization: "Астартес" }))
+    })).warn).toBe(true);
+  });
+
+  it("подпись счётчика читается человеком", () => {
+    expect(describeEliteReq({ kind: "talent", name: "Hatred", count: 3 })).toBe("Hatred — любые 3");
+  });
+});
+
+describe("группа «одно из» (ИЛИ)", () => {
+  const or = (...items) => ({ kind: "or", items });
+
+  it("выполнена, если выполнена хоть одна вложенная", () => {
+    const req = { ...blankEliteReq(), primary: [
+      or({ kind: "race", key: "astartes" }, { kind: "race", key: "drukhari" })
+    ] };
+    expect(checkEliteRequirements(req, who({ race: "drukhari" })).available).toBe(true);
+    expect(checkEliteRequirements(req, who({ race: "human" })).available).toBe(false);
+  });
+
+  it("пустая группа никого не запирает", () => {
+    const req = { ...blankEliteReq(), primary: [or()] };
+    expect(checkEliteRequirements(req, who()).available).toBe(true);
+  });
+
+  // Иначе ручное требование внутри группы молча превращалось бы в провал.
+  it("ни одна не выполнена, но есть ручная — решает ГМ", () => {
+    const req = { ...blankEliteReq(), secondary: [
+      or({ kind: "corruption", value: 90 }, { kind: "other", text: "Слово Архонта" })
+    ] };
+    const res = checkEliteRequirements(req, who());
+
+    expect(res.warn).toBe(false);
+    expect(res.manual).toHaveLength(1);
+  });
+
+  it("подпись перечисляет варианты", () => {
+    expect(describeEliteReq(or({ kind: "corruption", value: 30 }, { kind: "infamy", value: 40 })))
+      .toBe("Одно из: Порча 30 / Бесчестие 40");
+  });
+});
+
+// «Любые 3 Запретных знания» — три разные специализации группы, а не одна,
+// прокачанная трижды.
+describe("счётчик у групповых Навыков", () => {
+  it("считает разные специализации группы", () => {
+    const req = { ...blankEliteReq(), secondary: [
+      { kind: "skill", scope: "group", skillKey: "forbiddenLore", rank: "knows", count: 3,
+        label: "Запретные знания" }
+    ] };
+    const spec = list => ({ groupSkills: { forbiddenLore: list.map(s => ({ specKey: s, rank: "trained" })) } });
+
+    expect(checkEliteRequirements(req, who(spec(["Демоны", "Ересь", "Варп"]))).warn).toBe(false);
+    expect(checkEliteRequirements(req, who(spec(["Демоны", "Ересь"]))).warn).toBe(true);
   });
 });
 

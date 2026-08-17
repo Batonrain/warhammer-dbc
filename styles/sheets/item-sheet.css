@@ -1466,3 +1466,25 @@
 .warhammer-dbc .elite-req-clear:hover,
 .warhammer-dbc .elite-req-remove:hover { background: rgba(255, 107, 107, .2); }
 .warhammer-dbc .elite-req-add { margin-top: 5px; }
+
+/* ИЛИ-группа: своя рамка и отступ у вложенных, иначе не видно, где кончается
+   выбор «одно из» и начинаются обычные требования. */
+.warhammer-dbc .elite-req-group {
+  border: 1px solid rgba(120, 200, 160, .35); border-radius: 5px;
+  background: rgba(10, 32, 22, .25); padding: 4px;
+}
+.warhammer-dbc .elite-req-group > .elite-req-row.elite-req-or { border-style: dashed; }
+.warhammer-dbc .elite-req-sub {
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 4px 0 0 18px; padding-left: 8px;
+  border-left: 2px solid rgba(120, 200, 160, .3);
+}
+.warhammer-dbc .elite-req-sub .mc-hint { margin: 0; }
+.warhammer-dbc .elite-req-add-sub { align-self: flex-start; font-size: .82em; }
+
+/* Счётчик «любые N» — для Талантов и групповых Навыков без специализации. */
+.warhammer-dbc .elite-req-count {
+  display: flex; align-items: center; gap: 4px; flex: 0 0 auto;
+  font-size: .82em; color: var(--wh-panel-mid, #7fae97); cursor: help;
+}
+.warhammer-dbc .elite-req-count .elite-req-num { flex: 0 0 52px; }

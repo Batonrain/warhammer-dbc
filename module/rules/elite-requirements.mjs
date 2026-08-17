@@ -2,18 +2,25 @@
 // ════════════════════════════════════════════════════════════════════════════
 //  Требования и цена Элитного архетипа (корбук стр. 114-164).
 //
-//  Требования делятся на два рода, и разница не косметическая:
+//  Требований два блока, и разница не косметическая:
 //
-//    основные — раса, субраса, Черта, Покровительство. Это «кто ты есть»:
-//        не выполнено — архетипа нет в списке доступных вовсе, потому что
+//    ОБЯЗАТЕЛЬНЫЙ — не выполнено, и архетипа нет в списке доступных вовсе:
 //        человеку не стать Ведьмой Культа, сколько опыта ни трать;
-//    прочие  — Навыки, Порча, Бесчестие, Характеристика, потраченный опыт и
-//        свободная строка. Это «чего ты добился»: не выполнено — красным, но
-//        взять можно, потому что ГМ вправе разрешить исключение.
+//    ВТОРИЧНЫЙ    — не выполнено, и требование красится красным, но взять
+//        архетип можно: разрешить исключение вправе ГМ.
 //
-//  Требуемые Таланты идут третьим списком и считаются как прочие: провалить
-//  выбор из-за одного недостающего Таланта — слишком строго, а видеть, чего не
-//  хватает, нужно.
+//  Виды записей у блоков одни и те же — блоки различаются строгостью, а не
+//  тем, что в них можно потребовать. Требуемый Талант поэтому кладётся в любой
+//  из двух: обычно во вторичный, но «без этого Таланта ты не он» тоже бывает.
+//
+//  Особые виды:
+//    «Одно из» — ИЛИ-группа: выполнено, если выполнена хоть одна вложенная
+//        запись. Так пишется «Ведьма ИЛИ Укротитель»;
+//    счётчик у Таланта и у групповых Навыков — «Hatred, любые 3»: считаются
+//        разные специализации, а не повторы одной.
+//
+//  Свободная строка машиной не проверяется вовсе: она не «провалена», а помечена
+//  как ручная — читает её ГМ.
 //
 //  Цена: каждый следующий Элитный архетип удваивается — ×2 за второй, ×4 за
 //  третий, ×8 за четвёртый. Считается от базовой цены самого архетипа.
@@ -33,29 +40,36 @@ export const PATRON_OPTIONS = [
   ...WARP_GODS.map(g => ({ key: g.key, label: g.label }))
 ];
 
-/** Виды записей основного блока — «кто ты есть». */
-export const PRIMARY_KINDS = [
-  { key: "race",    label: "Раса",            drop: "race" },
-  { key: "subrace", label: "Субраса",         drop: "subrace" },
-  { key: "trait",   label: "Черта",           drop: "trait" },
-  { key: "patron",  label: "Покровительство", drop: null }
+/**
+ * Виды записей — общие для обоих блоков. `drop` — тип документа, который
+ * кладётся в запись перетаскиванием.
+ */
+export const REQ_KINDS = [
+  { key: "race",           label: "Раса",            drop: "race"    },
+  { key: "subrace",        label: "Субраса",         drop: "subrace" },
+  { key: "trait",          label: "Черта",           drop: "trait"   },
+  { key: "talent",         label: "Талант",          drop: "talent"  },
+  { key: "patron",         label: "Покровительство"  },
+  { key: "skill",          label: "Умение"           },
+  { key: "corruption",     label: "Порча"            },
+  { key: "infamy",         label: "Бесчестие"        },
+  { key: "characteristic", label: "Характеристика"   },
+  { key: "xp",             label: "Опыт"             },
+  { key: "other",          label: "Другое"           },
+  { key: "or",             label: "Одно из (ИЛИ)"    }
 ];
 
-/** Виды записей прочего блока — «чего ты добился». */
-export const SECONDARY_KINDS = [
-  { key: "skill",          label: "Умение" },
-  { key: "corruption",     label: "Порча" },
-  { key: "infamy",         label: "Бесчестие" },
-  { key: "characteristic", label: "Характеристика" },
-  { key: "xp",             label: "Опыт" },
-  { key: "other",          label: "Другое" }
-];
+/** Тип документа, который принимает запись этого вида; null — дропа нет. */
+export const reqDropType = kind => REQ_KINDS.find(k => k.key === kind)?.drop || null;
 
 /** Пустая заготовка требований — её же кладёт схема предмета. */
-export const blankEliteReq = () => ({ primary: [], secondary: [], talents: [] });
+export const blankEliteReq = () => ({ primary: [], secondary: [] });
 
 const num = v => Number(v) || 0;
-const rankIdx = rank => Math.max(0, ["untrained", "knows", "trained", "veteran", "expert"].indexOf(rank || "untrained"));
+const RANKS = ["untrained", "knows", "trained", "veteran", "expert"];
+const rankIdx = rank => Math.max(0, RANKS.indexOf(rank || "untrained"));
+/** Сколько предметов требуется: пусто и 0 значат «один». */
+const wantCount = e => Math.max(1, num(e?.count) || 1);
 
 /**
  * Цена архетипа для персонажа: каждый следующий вдвое дороже предыдущего.
@@ -85,96 +99,134 @@ export function eliteCostNote(taken = 0) {
  *   skills: { ключ: ранг }, groupSkills: { ключ: [{specKey|specialty, rank}] },
  *   corruption, infamy, chars: { ключ: значение }, spentXP }
  */
-function primaryOk(entry, who) {
+
+/** Совпадают ли имена: требование пишется частью имени («Mechanicum Implants»). */
+const nameHit = (have, want) => String(have || "").toLowerCase().includes(String(want).toLowerCase());
+
+/**
+ * Требуемые Таланты. Счётчик считает РАЗНЫЕ специализации: «Hatred, любые 3» —
+ * это три ненависти к разным целям, а не один Талант, записанный трижды.
+ */
+function talentOk(entry, who) {
+  const want = String(entry?.name || "").trim();
+  if (!want) return true;
+  const spec = String(entry?.specialization || "").toLowerCase();
+  const hits = (who.talents || []).filter(t => nameHit(t?.name, want)
+    && (!spec || String(t?.specialization || "").toLowerCase() === spec));
+  const need = wantCount(entry);
+  if (need <= 1) return hits.length > 0;
+  // Без специализации в требовании считаем разные специализации найденного.
+  return new Set(hits.map(t => String(t?.specialization || "").toLowerCase())).size >= need;
+}
+
+function skillOk(entry, who) {
+  const want = rankIdx(entry.rank);
+  if (entry.scope !== "group") return rankIdx(who.skills?.[entry.skillKey]) >= want;
+
+  const list = (who.groupSkills?.[entry.skillKey] || []).filter(e => rankIdx(e.rank) >= want);
+  if (entry.specKey) {
+    return list.some(e => e.specKey === entry.specKey || e.specialty === entry.specKey);
+  }
+  // «Любые N специализаций этой группы» — считаем разные, а не повторы одной.
+  return new Set(list.map(e => e.specKey || e.specialty)).size >= wantCount(entry);
+}
+
+/**
+ * Одна запись: true — выполнено, false — нет, null — проверяет ГМ.
+ * Вынесена отдельно, потому что ИЛИ-группа зовёт её на своих вложенных.
+ */
+function entryOk(entry, who) {
   switch (entry?.kind) {
     case "race":    return !entry.key || who.race === entry.key;
     case "subrace": return !entry.key || who.subrace === entry.key;
     case "trait": {
-      const want = String(entry.name || "").toLowerCase();
-      return !want || (who.traits || []).some(t => String(t).toLowerCase().includes(want));
+      const want = String(entry.name || "").trim();
+      return !want || (who.traits || []).some(t => nameHit(t, want));
     }
     case "patron":
       // «Любое» значит «хоть какое-то»: у безбожника Покровительства нет вовсе.
       if (!entry.key) return true;
       return entry.key === PATRON_ANY ? !!who.patron : who.patron === entry.key;
-    default: return true;
-  }
-}
-
-function secondaryOk(entry, who) {
-  switch (entry?.kind) {
-    case "skill": {
-      const want = rankIdx(entry.rank);
-      if (entry.scope === "group") {
-        const list = who.groupSkills?.[entry.skillKey] || [];
-        return list.some(e =>
-          (!entry.specKey || e.specKey === entry.specKey || e.specialty === entry.specKey)
-          && rankIdx(e.rank) >= want);
-      }
-      return rankIdx(who.skills?.[entry.skillKey]) >= want;
-    }
+    case "talent":         return talentOk(entry, who);
+    case "skill":          return skillOk(entry, who);
     case "corruption":     return num(who.corruption) >= num(entry.value);
     case "infamy":         return num(who.infamy) >= num(entry.value);
     case "characteristic": return num(who.chars?.[entry.charKey]) >= num(entry.value);
     case "xp":             return num(who.spentXP) >= num(entry.value);
-    // Свободную строку машина не проверяет — её читает ГМ. Не «провалено», но
-    // и не «выполнено»: такое требование помечается отдельно.
+    case "or": {
+      const items = Array.isArray(entry.items) ? entry.items : [];
+      if (!items.length) return true;
+      const res = items.map(e => entryOk(e, who));
+      if (res.some(r => r === true)) return true;
+      // Ни одна не выполнена, но среди них есть ручная — решает ГМ, а не мы.
+      return res.some(r => r === null) ? null : false;
+    }
+    // Свободную строку машина не проверяет — её читает ГМ.
     case "other":          return null;
     default: return true;
   }
 }
 
-function talentOk(entry, who) {
-  const name = String(entry?.name || "").toLowerCase();
-  const spec = String(entry?.specialization || "").toLowerCase();
-  if (!name) return true;
-  return (who.talents || []).some(t =>
-    String(t?.name || "").toLowerCase().includes(name)
-    && (!spec || String(t?.specialization || "").toLowerCase() === spec));
-}
-
-/** Человеческая подпись записи — для подсказки «чего не хватает». */
+/** Человеческая подпись записи — для строки в пикере и подсказки «чего не хватает». */
 export function describeEliteReq(entry) {
+  const n = wantCount(entry);
   switch (entry?.kind) {
     case "race":    return `Раса: ${entry.name || entry.key || "?"}`;
     case "subrace": return `Субраса: ${entry.name || entry.key || "?"}`;
     case "trait":   return `Черта: ${entry.name || "?"}`;
     case "patron":  return `Покровительство: ${PATRON_OPTIONS.find(p => p.key === entry.key)?.label || "?"}`;
-    case "skill":   return `${entry.label || entry.skillKey}${entry.specKey ? ` (${entry.specKey})` : ""} ${SKILL_RANKS[entry.rank]?.label || ""}`.trim();
+    case "talent": {
+      const name = entry.name || "?";
+      if (entry.specialization) return `${name} (${entry.specialization})`;
+      return n > 1 ? `${name} — любые ${n}` : name;
+    }
+    case "skill": {
+      const rank = SKILL_RANKS[entry.rank]?.label || "";
+      const base = entry.label || entry.skillKey;
+      if (entry.specKey) return `${base} (${entry.specKey}) ${rank}`.trim();
+      return n > 1 ? `${base} — любые ${n}, ${rank}`.trim() : `${base} ${rank}`.trim();
+    }
     case "corruption":     return `Порча ${entry.value}`;
     case "infamy":         return `Бесчестие ${entry.value}`;
     case "characteristic": return `${CHARACTERISTICS[entry.charKey]?.abbr || entry.charKey} ${entry.value}`;
     case "xp":             return `Потрачено опыта: ${entry.value}`;
     case "other":          return entry.text || "—";
+    case "or": {
+      const parts = (entry.items || []).map(describeEliteReq).filter(Boolean);
+      return parts.length ? `Одно из: ${parts.join(" / ")}` : "Одно из: —";
+    }
     default: return entry?.name || "—";
   }
 }
 
 /**
  * Полная проверка. Возвращает состояние по каждому блоку и общий вывод:
- *   available — показывать ли архетип в списке (основной блок выполнен);
- *   warn      — есть ли невыполненное среди прочих требований и Талантов.
+ *   available — показывать ли архетип в списке (обязательный блок выполнен);
+ *   warn      — есть ли невыполненное среди вторичных требований.
  */
 export function checkEliteRequirements(req, who = {}) {
   const r = req || blankEliteReq();
 
-  const primaryUnmet = (r.primary || []).filter(e => !primaryOk(e, who)).map(describeEliteReq);
+  const sort = (list) => {
+    const unmet = [], manual = [];
+    for (const e of list || []) {
+      const res = entryOk(e, who);
+      if (res === null) manual.push(describeEliteReq(e));
+      else if (!res) unmet.push(describeEliteReq(e));
+    }
+    return { unmet, manual };
+  };
 
-  const secondaryUnmet = [];
-  const manual = [];
-  for (const e of r.secondary || []) {
-    const res = secondaryOk(e, who);
-    if (res === null) manual.push(describeEliteReq(e));
-    else if (!res) secondaryUnmet.push(describeEliteReq(e));
-  }
-
-  const talentsUnmet = (r.talents || []).filter(e => !talentOk(e, who)).map(describeEliteReq);
+  const p = sort(r.primary);
+  const s = sort(r.secondary);
 
   return {
-    available: primaryUnmet.length === 0,
-    warn: secondaryUnmet.length > 0 || talentsUnmet.length > 0,
-    primaryUnmet, secondaryUnmet, talentsUnmet, manual,
-    unmet: [...primaryUnmet, ...secondaryUnmet, ...talentsUnmet]
+    available: p.unmet.length === 0,
+    warn: s.unmet.length > 0,
+    primaryUnmet: p.unmet,
+    secondaryUnmet: s.unmet,
+    manual: [...p.manual, ...s.manual],
+    unmet: [...p.unmet, ...s.unmet]
   };
 }
 
