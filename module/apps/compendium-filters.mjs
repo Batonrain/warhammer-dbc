@@ -16,6 +16,8 @@
 // «Предмет» здесь — узел дерева из buildPackTree, а не документ Foundry: в нём
 // лежит то, что даёт индекс компендиума, без загрузки самих предметов.
 
+import { normalizeBudget, BUDGET_COUNT } from "../rules/pick-budget.mjs";
+
 export const ITEM_FILTERS = {
   /** Тип предмета: "faction" либо список ["weapon","ammo"]. */
   type: (it, want) => (Array.isArray(want) ? want : [want]).includes(it?.type),
@@ -26,7 +28,11 @@ export const ITEM_FILTERS = {
   /** Тип брони (system.armorType). */
   armorType: (it, want) => it?.armorType === want,
   /** Доступность не выше указанной. */
-  maxAvailability: (it, want) => (Number(it?.availability) || 0) <= Number(want)
+  maxAvailability: (it, want) => (Number(it?.availability) || 0) <= Number(want),
+  /** Ступень Таланта: «7 талантов 1 уровня» — это ступень, а не цена. */
+  talentTier: (it, want) => Number(it?.tier) === Number(want),
+  /** Пси-Рейтинг силы не выше указанного: у психосилы system.cost — цена в ПР. */
+  maxPsyRating: (it, want) => (Number(it?.cost) || 0) <= Number(want)
 };
 
 /**
@@ -56,7 +62,11 @@ export function matchesFilters(item, filters = {}) {
  * maxAvailability) — её шлёт kind:"equipment" Конструктора, и переписывать
  * рабочий вызов ради формы записи не стоит.
  *
- * @returns {{pack:?string, filters:object, count:number, prompt:string}|null}
+ * Бюджет («сколько можно взять») приводится к общему виду тем же проходом:
+ * штуками или опытом, см. rules/pick-budget.mjs. Прежняя форма `count: N`
+ * остаётся и означает бюджет в штуках — переписывать рабочие вызовы незачем.
+ *
+ * @returns {{pack:?string, filters:object, count:number, budget:object, prompt:string}|null}
  */
 export function normalizePick(pick) {
   if (!pick) return null;
@@ -65,10 +75,13 @@ export function normalizePick(pick) {
   if (pick.weaponProp      != null) filters.weaponProp      = pick.weaponProp;
   if (pick.armorType       != null) filters.armorType       = pick.armorType;
   if (pick.maxAvailability != null) filters.maxAvailability = pick.maxAvailability;
+  const count  = Math.max(1, Number(pick.count) || 1);
+  const budget = normalizeBudget(pick.budget ?? { mode: BUDGET_COUNT, value: count });
   return {
     pack:   pick.pack ?? null,
     filters,
-    count:  Math.max(1, Number(pick.count) || 1),
+    count,
+    budget,
     prompt: String(pick.prompt || "")
   };
 }

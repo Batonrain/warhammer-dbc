@@ -22,6 +22,7 @@
 //  кнопка «↻ Обновить» в шапке диалога форсирует пересборку.
 // ════════════════════════════════════════════════════════════════════════
 import { matchesFilters, normalizePick } from "./compendium-filters.mjs";
+import { budgetLabel, budgetReady, budgetFits, budgetState, BUDGET_XP } from "../rules/pick-budget.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const TAB_DEFS = [
@@ -88,7 +89,10 @@ export const CATEGORIES = [
  *  обычному просмотру не мешают, просто едут с остальными данными узла. */
 async function buildPackTree(pack) {
   const index = await pack.getIndex({
-    fields: ["system.armorType", "system.availability", "system.properties"]
+    // tier и cost нужны фильтрам «Талант такой-то ступени» и «Психосила до
+    // такого-то ПР», а cost — ещё и бюджету в опыте (rules/pick-budget.mjs).
+    fields: ["system.armorType", "system.availability", "system.properties",
+             "system.tier", "system.cost", "system.aptitudes"]
   });
   const folders = pack.folders?.contents ?? [];
   const byParent = new Map();
@@ -120,7 +124,8 @@ async function buildPackTree(pack) {
         // боковую панель, и с чужим родом дроп молча ничего не делает.
         doc: pack.metadata?.type || "Item",
         folderId, armorType: it.system?.armorType,
-        availability: it.system?.availability, properties: it.system?.properties || []
+        availability: it.system?.availability, properties: it.system?.properties || [],
+        tier: it.system?.tier, cost: it.system?.cost, aptitudes: it.system?.aptitudes || []
       }))
     };
   };
@@ -232,8 +237,11 @@ async function buildAllTrees(force = false) {
 // Категории, которые можно «выдать» предметом (kind:"equipment" в Конструкторе,
 // module/apps/mechanics.mjs) — подмножество CATEGORIES с одним источником-паком.
 // Метки берутся из CATEGORIES, чтобы не разъезжались с обычным браузером.
+// Не только снаряжение: «7 талантов 1 уровня» и «500хр на Психосилы» — тот же
+// приём «компендиум с фильтрами плюс счётчик», просто пак другой.
 const GRANTABLE_PACKS = ["weapons", "armor", "gear", "ammunition", "implants",
-  "weapon-mods", "armor-mods", "tools", "shields"];
+  "weapon-mods", "armor-mods", "tools", "shields",
+  "talents", "traits", "psychic-powers", "tech-powers"];
 export const GRANTABLE_CATEGORIES = GRANTABLE_PACKS.map(pack => ({
   pack, label: CATEGORIES.find(c => c.sources.length === 1 && c.sources[0].pack === pack)?.label || pack
 }));
@@ -332,12 +340,26 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
     // Шапка требования: что нужно выбрать и сколько уже выбрано. Показывается
     // только когда есть что сказать — при обычном выборе одного предмета без
     // пояснения она лишняя.
-    const multi = !!pick && pick.count > 1;
+    // Бюджет: штуками («7 талантов 1 уровня») или опытом («500хр на Психосилы»).
+    // Одна штука без пояснения — прежний одиночный выбор, шапка ему не нужна.
+    const budget = pick?.budget ?? null;
+    const multi = !!pick && (budget?.mode === BUDGET_XP || budget?.value > 1);
+    // Цена одной записи в опыте зависит от того, кому выдают, поэтому приходит
+    // снаружи; без неё берётся собственная цена записи компендиума.
+    const xpCost = pickMode?.xpCost || null;
+    const byUuid = new Map();
+    for (const c of cats) {
+      const collect = node => {
+        for (const it of node.items || []) byUuid.set(it.uuid, it);
+        for (const f of node.folders || []) collect(f);
+      };
+      collect(c.tree);
+    }
     const headHtml = (pick && (pick.prompt || multi)) ? `
       <div class="cbrowse-pick-head">
         ${pick.prompt ? `<div class="cbrowse-pick-prompt">${esc(pick.prompt)}</div>` : ""}
         ${multi ? `<div class="cbrowse-pick-state">
-          <span>Выбрано <span class="cbrowse-pick-n">0</span> из ${pick.count}</span>
+          <span class="cbrowse-pick-n">${esc(budgetLabel([], budget, xpCost))}</span>
           <button type="button" class="cbrowse-pick-confirm" disabled>Готово</button>
         </div>` : ""}
       </div>` : "";
@@ -360,11 +382,12 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
         let activeTab = "all";
         // Выбранное при count > 1. Порядок сохраняется: он же порядок выдачи.
         const chosen = [];
+        const picked = () => chosen.map(u => byUuid.get(u)).filter(Boolean);
         const syncPickState = () => {
           html.find(".cbrowse-item").each((_, el) =>
             el.classList.toggle("cbrowse-picked", chosen.includes(el.dataset.uuid)));
-          html.find(".cbrowse-pick-n").text(chosen.length);
-          html.find(".cbrowse-pick-confirm").prop("disabled", chosen.length !== pick.count);
+          html.find(".cbrowse-pick-n").text(budgetLabel(picked(), budget, xpCost));
+          html.find(".cbrowse-pick-confirm").prop("disabled", !budgetReady(picked(), budget, xpCost));
         };
 
         html.find(".cbrowse-item").on("click", async ev => {
@@ -373,8 +396,12 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
           if (multi) {
             const at = chosen.indexOf(uuid);
             if (at >= 0) chosen.splice(at, 1);
-            else if (chosen.length >= pick.count)
-              return ui.notifications.warn(`Уже выбрано ${pick.count} — снимите лишнее, чтобы выбрать другое.`);
+            else if (!budgetFits(picked(), byUuid.get(uuid), budget, xpCost)) {
+              const st = budgetState(picked(), budget, xpCost);
+              return ui.notifications.warn(st.mode === BUDGET_XP
+                ? `Не хватает опыта: осталось ${st.left} из ${st.value}.`
+                : `Уже выбрано ${st.value} — снимите лишнее, чтобы выбрать другое.`);
+            }
             else chosen.push(uuid);
             return syncPickState();
           }
@@ -385,7 +412,7 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
 
         html.find(".cbrowse-pick-confirm").on("click", ev => {
           ev.preventDefault();
-          if (chosen.length !== pick.count) return;
+          if (!budgetReady(picked(), budget, xpCost)) return;
           finish(chosen.slice());
           dlg.close();
         });
