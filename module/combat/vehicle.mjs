@@ -9,6 +9,7 @@ import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
          REPAIR_CONDITIONS, REPAIR_PACE } from "../constants/vehicle.mjs";
 import { DAMAGE_TYPES }    from "../constants/items.mjs";
+import { ablativeDamage }  from "../rules/mount.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -279,7 +280,12 @@ export async function applyDamageToVehicle(actor, damageData) {
   const armour  = actor.system.armour || {};
   const ap      = Number(armour[side]) || 0;
   const effAP   = Math.max(0, ap - (Number(penetration) || 0));
-  const net     = deflected ? 0 : Math.max(0, (Number(rawDamage) || 0) - effAP);
+  const rawNet  = deflected ? 0 : Math.max(0, (Number(rawDamage) || 0) - effAP);
+  // Аблативное Бронирование байка (стр. 478): пока Структура полна, любой
+  // непоглощённый урон срезается до 1. У большой техники этой Черты нет, и
+  // расчёт для неё не меняется.
+  const net     = ablativeDamage(rawNet, actor);
+  const ablated = net !== rawNet;
 
   const curVal  = Number(actor.system.structure?.value) || 0;
   const curCrit = Number(actor.system.structure?.critical) || 0;
@@ -333,7 +339,8 @@ export async function applyDamageToVehicle(actor, damageData) {
           <div class="roll-section-head">Итог</div>
           ${net > 0
             ? `<div class="roll-hit-line"><span class="roll-hit-idx">В Структуру</span><span class="roll-hit-dmg roll-hit-dmg-bad">${net}</span></div>
-               <div class="roll-damage-meta">Структура: <b>${curVal}</b> → <b>${newVal}</b>${gotCrit ? ` (крит. ${newCrit})` : ""}</div>`
+               <div class="roll-damage-meta">Структура: <b>${curVal}</b> → <b>${newVal}</b>${gotCrit ? ` (крит. ${newCrit})` : ""}${
+                 ablated ? ` · <span class="dmg-tb-note">Аблативное Бронирование: ${rawNet} → 1</span>` : ""}</div>`
             : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${effAP})</span></div>`
           }
         </div>

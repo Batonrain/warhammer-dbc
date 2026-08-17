@@ -364,6 +364,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         technique: { label: techOpts.techniqueLabel, stance: techOpts.stanceLabel, note: techOpts.chatNote },
         aiming:    opts.aimingLabel,
         aim:       aimTarget?.value ? aimTarget.label.replace(/\s*\(.*\)/, "") : "",
+        mount:     opts.mountNote || "",
         allOut:    !!opts.isAllOut,
         off:       offNote,
         maximal:   maximalOn,

@@ -1532,3 +1532,57 @@
   color: #0b1a12; background: var(--wh-accent, #4dffa6);
   border-color: var(--wh-accent, #4dffa6); font-weight: 700;
 }
+
+/* ═══ Блок «ВЕРХОМ» (стр. 477-478) ═══
+   Панель живёт на вкладке БОЙ рядом со Стойками: верховые тесты — часть боя,
+   а не отдельная вкладка. Разметка — templates/actor/parts/tab-combat.hbs. */
+.warhammer-dbc .mount-panel .mount-title-meta {
+  margin-left: 8px; font-size: 11px; font-weight: 400; opacity: .8;
+}
+.warhammer-dbc .mount-panel .mount-dismount-btn {
+  float: right; width: auto; padding: 1px 8px;
+  font-size: 11px; line-height: 1.5; color: #9fd8bb; background: transparent;
+  border: 1px solid var(--wh-border-light, #23483a); border-radius: 3px; cursor: pointer;
+}
+.warhammer-dbc .mount-panel .mount-dismount-btn:hover {
+  border-color: var(--wh-accent, #4dffa6); color: #d8ffe9;
+}
+.warhammer-dbc .mount-body { padding: 5px 8px; }
+.warhammer-dbc .mount-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.warhammer-dbc .mount-img {
+  flex: 0 0 auto; width: 40px; height: 40px; object-fit: cover;
+  border: 1px solid var(--wh-border, #1d3a2e); border-radius: 3px; cursor: pointer;
+}
+.warhammer-dbc .mount-head-main { flex: 1 1 auto; min-width: 0; }
+.warhammer-dbc .mount-name { font-weight: 700; cursor: pointer; }
+.warhammer-dbc .mount-name:hover { color: var(--wh-accent, #4dffa6); }
+.warhammer-dbc .mount-chips { margin-top: 2px; }
+
+.warhammer-dbc .mount-controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 5px;
+}
+.warhammer-dbc .mount-field { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.warhammer-dbc .mount-field select { width: auto; min-width: 120px; }
+.warhammer-dbc .mount-toggle { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+
+.warhammer-dbc .mount-summary {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 3px 10px;
+  padding: 4px 0; border-top: 1px solid var(--wh-border, #1d3a2e);
+  border-bottom: 1px solid var(--wh-border, #1d3a2e);
+}
+.warhammer-dbc .mount-stat { display: flex; justify-content: space-between; font-size: 11px; }
+.warhammer-dbc .mount-stat label { opacity: .75; }
+.warhammer-dbc .mount-stat span { font-weight: 700; }
+.warhammer-dbc .mount-warn { color: #e2a04a; }
+
+.warhammer-dbc .mount-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.warhammer-dbc .mount-action-btn {
+  width: auto; padding: 2px 9px; font-size: 11px; line-height: 1.6;
+  color: #9fd8bb; background: transparent;
+  border: 1px solid var(--wh-border-light, #23483a); border-radius: 3px; cursor: pointer;
+}
+.warhammer-dbc .mount-action-btn:hover:not(:disabled) {
+  border-color: var(--wh-accent, #4dffa6); color: #d8ffe9;
+}
+.warhammer-dbc .mount-action-btn:disabled { opacity: .4; cursor: default; }
+.warhammer-dbc .mount-drop-zone { min-height: 44px; padding: 6px; }

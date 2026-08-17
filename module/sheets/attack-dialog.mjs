@@ -23,6 +23,7 @@ import { attackThreshold }                    from "../combat/attack-threshold.m
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
+import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS } from "../rules/mount.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { ruleRollModsHtml }                   from "../rules/roll-mods.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
@@ -67,6 +68,12 @@ function readAttackForm(form, ammoConds) {
     rofBonus:   attr(ROF, "bonus"),
     aimVal:     el("#atk-aim")?.value,
     aimPenalty: attr("#atk-aim option:checked", "penalty"),
+    // Кого выцеливают в паре «всадник + скакун» и во что это обходится. Штраф
+    // берётся только вместе с зоной прицела: не-Избирательная атака никого не
+    // выцеливает вовсе — там попадание делится по дублю (стр. 478).
+    mountPick:    el("#atk-mount")?.value || "",
+    mountPenalty: el("#atk-aim")?.value
+      ? (parseInt(el("#atk-mount option:checked")?.dataset?.penalty) || 0) : 0,
     aiming:     el(AIM)?.value || "none",
     aimBonus:   attr(AIM, "bonus"),
     // Отмеченные ситуативные: сумма — в порог, список — в сводку заголовка.
@@ -226,6 +233,29 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       : t.label;
     return `<option value="${t.value}" data-penalty="${pen}">${lbl}</option>`;
   }).join("");
+
+  // ── Цель верхом (стр. 478) ──────────────────────────────────────────────
+  //  Книга делит попадания между двумя телами: не-Избирательная атака бьёт
+  //  скакуна, и лишь дубль достаётся всаднику, а выцелить всадника можно
+  //  Избирательной атакой с дополнительным штрафом (−10, а под «Укрытием»
+  //  демона −30). Стрелок целится в один токен, поэтому пара ищется по нему —
+  //  всё равно, кого он выбрал, всадника или скакуна.
+  const mountPair = mountPairFor(attackCtx.targetActor, [...(game.actors ?? [])]);
+  const mountRiderPen = mountPair ? mountSelectiveMod("rider", mountPair.mount) : 0;
+  const mountHtml = mountPair ? `
+      <div class="av-row">
+        <label>Цель верхом</label>
+        <select id="atk-mount" class="av-input av-wide">
+          <option value="" data-penalty="0">— не выцеливать: попадание делится —</option>
+          <option value="mount" data-penalty="0">В скакуна: ${esc(mountPair.mount.name)} (±0)</option>
+          <option value="rider" data-penalty="${mountRiderPen}">Во всадника: ${esc(mountPair.rider.name)} (${mountRiderPen})</option>
+        </select>
+      </div>
+      <div class="atk-range-info av-mount-note" style="font-size:0.82em;">
+        Не-Избирательная атака бьёт скакуна; попаданием по всаднику считается дубль на броске.
+        Выцеливание всадника — только Избирательной атакой («Прицельно в…»), штраф
+        <b>${mountRiderPen}</b>${mountRiderPen === SELECTIVE_MODS.riderCovered ? " (Укрытие)" : ""} сверх штрафа зоны.
+      </div>` : "";
 
   let rangeInfoHtml = "";
   if (!isMelee && sys.range > 0) {
@@ -531,6 +561,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <label>Прицельно в…</label>
         <select id="atk-aim" class="av-input av-wide">${aimHtml}</select>
       </div>
+      ${mountHtml}
 
       ${rangeInfoHtml}
       ${shortRangeHtml}${bandHtml}${offHtml}${maximalHtml}
@@ -567,7 +598,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     base: (actor.system.characteristics[f.char]?.total ?? 0)
           + (sys.attackBonus || 0) + wpAttackMod + techBonus + stanceBonus + ammoAtkMod + gripWs
           + (wp.noAim ? 0 : f.aimBonus),
-    mods: [f.modifier, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty, f.extraBonus],
+    mods: [f.modifier, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty,
+           f.mountPenalty, f.extraBonus],
     halvePenalty: f.halvePenalty
   });
 
@@ -618,7 +650,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               ammoCondLabels: f.ammoSel.map(c => c.label),
               aimingLabel: (f.aiming !== "none" && !wp.noAim)
                 ? (f.aiming === "half" ? "Полу-прицеливание (+10)" : "Полное прицеливание (+20)")
-                : ""
+                : "",
+              // Кого выцелили в паре: урон применяют к листу, а на сцене у пары
+              // обычно один токен — без этой строки попадание во всадника ушло
+              // бы скакуну просто потому, что кликнули по видимому токену.
+              mountNote: mountPair && f.mountPick && f.aimVal
+                ? (f.mountPick === "rider"
+                    ? `Верхом: попадание во ВСАДНИКА — ${mountPair.rider.name}`
+                    : `Верхом: попадание в скакуна — ${mountPair.mount.name}`)
+                : (mountPair
+                    ? `Верхом: не-Избирательная атака — попадание в скакуна (${mountPair.mount.name}), дубль на броске — во всадника (${mountPair.rider.name})`
+                    : "")
             }
           );
           return true;

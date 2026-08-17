@@ -49,6 +49,13 @@ const MINION_FIELDS = {
   masterUuid: "", minionType: "", minionTier: "", loyalty: { value: 0, max: 0 }
 };
 
+// Верховой бой (стр. 477-478) заведён так же поздно, и по той же причине его
+// полей нет в снимке. Ссылку на скакуна хранит ВСАДНИК — скакуном бывает и
+// техника, у которой общей схемы существа нет вовсе (rules/mount.mjs).
+const MOUNT_FIELDS = {
+  mount: { uuid: "", role: "rider", speed: "still", sync: false, linked: false, skidUsed: false }
+};
+
 /** Расхождения сверх общих для трёх типов с характеристиками. */
 const OWN_DEVIATIONS = {
   // Пусто = Бог не выбран. Умолчание "undivided" делало «Покровительство:
@@ -88,6 +95,7 @@ const DEVIATIONS = {
   // заново, и эффект поверх него не поднимал ни Бонус, ни навыки (wdbc-5wm).
   ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type, {
     ...MINION_FIELDS,
+    ...MOUNT_FIELDS,
     // Три слота Стремлений. Раньше писались прямо в `aspirations`, но то поле
     // объявлено объектом (там Фактор Прибыли), и массив схема отбрасывала —
     // выбор не сохранялся вовсе. Теперь у слотов своё поле.

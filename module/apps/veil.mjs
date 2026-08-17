@@ -20,6 +20,9 @@ import { TAROT_DECK, SUITS, SUIT_HINTS, TAROT_SPREADS, TAROT_GUIDE,
          cardByN, cardTitle, cardSuitLine, cardImgSrc } from "../constants/tarot.mjs";
 import { DW_GODS, DW_GODS_MAP, DEMON_INF_FORMULAS, VESSEL_RESONANCE, VESSEL_RESONANCE_GROUPS,
          DEMON_WEAPON_COMMON, rollDemonProperty, propsFromRow } from "../constants/demon-weapon.mjs";
+import { MOUNT_POSSESSION_COMMON, mountRitualMods, rollMountProperty, possessionFlags }
+  from "../constants/mount-possession.mjs";
+import { MOUNT_ACTOR_TYPES, isPossessed } from "../rules/mount.mjs";
 import { ROUTE_STABILITY, JOURNEY_DURATION, GUIDE_ESTIMATE, ENTRY_LOCATIONS, jumpDurationMult,
          WARP_ENCOUNTERS, WARP_INVASIONS, INACCURATE_EXIT, WARP_STORMS, lookupTable, degWord }
   from "../constants/warp-travel.mjs";
@@ -441,7 +444,11 @@ export class VeilMystic extends Application {
   _defileData() {
     const D = this.defile;
     const item = this._defileWeapon();
-    const wSys = item?.system || null;
+    // Сосудом бывает и скакун (стр. 478). Тогда резонанс оружия не собирается —
+    // определять «Оружие Наследия» и «Примитивное» на живом звере нечем, — а
+    // порог получает свои две поправки.
+    const isMount = item?.documentName === "Actor";
+    const wSys = isMount ? null : (item?.system || null);
     const godMeta = DW_GODS_MAP[D.god] || DW_GODS_MAP.undivided;
 
     // Резонанс сосуда: авто-детект из оружия + ручные чекбоксы.
@@ -496,6 +503,7 @@ export class VeilMystic extends Application {
       ...(D.demonWilling ? [{ label: "Демон желает заключения", val: 10 }] : []),
       { label: "½ Inf демона", val: infHalf },
       { label: "Резонанс сосуда", val: resonanceTotal },
+      ...(isMount ? mountRitualMods(D.demonFormula) : []),
       ...(D.sacrificedAssist ? [{ label: `Жертвы-ассистенты ×${D.sacrificedAssist}`, val: D.sacrificedAssist * 10 }] : []),
       ...(D.gmMod ? [{ label: "ГМ-модификатор", val: Number(D.gmMod) }] : [])
     ].map(r => ({ ...r, signed: sgn(r.val) }));
@@ -503,12 +511,22 @@ export class VeilMystic extends Application {
 
     const propCount = Math.max(1, (Number(D.demonWb) || 1) - (Number(D.binding) || 0));
 
+    // Строка под именем сосуда: у оружия это профиль, у скакуна — запас, по
+    // которому его и опознают за столом (Раны у живого, Структура у байка).
+    const mountLine = isMount
+      ? (item.type === "vehicle"
+          ? `Байк · AP ${item.system?.armour?.side ?? 0} · Структура ${item.system?.structure?.value ?? 0}/${item.system?.structure?.max ?? 0}`
+          : `Скакун · Раны ${item.system?.wounds?.value ?? 0}/${item.system?.wounds?.max ?? 0}`)
+      : "";
+
     return {
       hasWeapon: !!item,
+      isMountVessel: isMount,
       weaponName: item?.name || "",
       weaponImg: item?.img || "",
-      weaponLine: wSys ? `${wSys.damage || "—"} · Pen ${wSys.penetration || 0} · ${wSys.quality || "common"}` : "",
-      alreadyDaemon: !!wSys?.daemonWeapon?.bound,
+      weaponLine: isMount ? mountLine
+        : (wSys ? `${wSys.damage || "—"} · Pen ${wSys.penetration || 0} · ${wSys.quality || "common"}` : ""),
+      alreadyDaemon: isMount ? isPossessed(item) : !!wSys?.daemonWeapon?.bound,
       gods: DW_GODS.map(g => ({ key: g.key, label: g.label, color: g.color, selected: g.key === D.god })),
       godMeta,
       formulas: DEMON_INF_FORMULAS.map(f => ({ ...f, selected: f.key === D.demonFormula })),
@@ -521,7 +539,7 @@ export class VeilMystic extends Application {
       trueNameKnown: D.trueNameKnown, demonWilling: D.demonWilling, sacrificedAssist: D.sacrificedAssist,
       resGroups, resonanceTotal, resonanceSigned: sgn(resonanceTotal),
       rows, threshold, thresholdSigned: sgn(threshold),
-      propCount, common: DEMON_WEAPON_COMMON
+      propCount, common: isMount ? MOUNT_POSSESSION_COMMON : DEMON_WEAPON_COMMON
     };
   }
   async _defileRitual() {
@@ -536,13 +554,14 @@ export class VeilMystic extends Application {
     const dos = success ? (1 + Math.floor((data.threshold - rv) / 10)) : 0;
     const godMeta = data.godMeta;
 
+    const vessel = data.isMountVessel ? "скакуна" : "оружие";
     let body = `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
       <div class="roll-header">⚒ Ритуал Создания Демонического Оружия — ${esc(item.name)}</div>
       <div class="roll-outcome"><b>${rv}</b> vs Порог <b>${data.thresholdSigned}</b> → ${success
         ? `<span class="roll-success">Успех (${dos} ст.)</span>` : `<span class="roll-fail">Провал</span>`}</div>`;
     if (success) {
-      body += `<div class="dc-line">Демон вселён в оружие. Связывание установлено до <b>${Math.min(dos, Number(D.binding) || 0) || dos}</b> (≤ успехов).</div>
-        <div class="dc-line">Нажмите «Осквернить» на панели, чтобы применить свойства к оружию.</div>`;
+      body += `<div class="dc-line">Демон вселён в ${vessel}. Связывание установлено до <b>${Math.min(dos, Number(D.binding) || 0) || dos}</b> (≤ успехов).</div>
+        <div class="dc-line">Нажмите «Осквернить» на панели, чтобы применить свойства.</div>`;
     } else {
       body += `<div class="dc-line">Демон вырывается: Сосуд уничтожен, +5 ко всем Хар-кам демона и +2 Раны за каждый Провал Часов. Отвращение Варпа. Участники с Cor&lt;75 получают +1d5+1 Порчи.</div>`;
     }
@@ -555,6 +574,7 @@ export class VeilMystic extends Application {
     const D = this.defile;
     const item = this._defileWeapon();
     if (!item) { ui.notifications?.warn("Осквернение: перетащите оружие-сосуд."); return; }
+    if (item.documentName === "Actor") return this._defileApplyMount(item);
     if (item.system?.daemonWeapon?.bound) { ui.notifications?.warn("Это оружие уже демоническое."); return; }
     const wb = Math.max(1, Number(D.demonWb) || 1);
     const binding = Math.max(0, Number(D.binding) || 0);
@@ -617,6 +637,123 @@ export class VeilMystic extends Application {
     this.render(false);
   }
 
+  /**
+   * Осквернение СКАКУНА или байка (стр. 478). Отдельный путь, а не ветка в
+   * _defileApply: у скакуна своя таблица свойств (одна на всех богов), нет
+   * профиля оружия, который надо править и потом возвращать, а результат
+   * ложится флагом на актора — оттуда его читает верховой бой (rules/mount.mjs).
+   */
+  async _defileApplyMount(mount) {
+    const D = this.defile;
+    if (isPossessed(mount)) { ui.notifications?.warn("Этот скакун уже одержим."); return; }
+    const wb = Math.max(1, Number(D.demonWb) || 1);
+    const binding = Math.max(0, Number(D.binding) || 0);
+    const count = Math.max(1, wb - binding);
+    const godMeta = DW_GODS_MAP[D.god] || DW_GODS_MAP.undivided;
+
+    // Свойства не повторяются: список короткий, и дубль «Скорость ×2» книга не
+    // подразумевает. Ограничитель на случай, если свойств просят больше строк.
+    const generated = [];
+    const used = new Set();
+    for (let n = 0; n < count; n++) {
+      let r, guard = 0;
+      do { r = rollMountProperty(); guard++; } while (used.has(r.name) && guard < 20);
+      used.add(r.name);
+      generated.push(r);
+    }
+
+    const properties = generated.map(g => ({ name: g.name, text: g.text, flag: g.flag, roll: g.total }));
+    const update = {
+      "flags.warhammer-dbc.mountPossession": {
+        god: D.god, demonName: D.demonName || "",
+        binding, demonInf: Number(D.demonInf) || 0,
+        subdued: !!D.demonWilling, properties,
+        ...possessionFlags(properties, wb)
+      }
+    };
+
+    // Два свойства правят сам сосуд, а не расчёты вокруг него, и потому
+    // применяются здесь же, разово: «Укрепление» (+10 Ран или Структуры) и
+    // «Скорость» (+W.b к SPD). Всё остальное живёт флагом — его читает
+    // верховой бой при каждом тесте.
+    if (properties.some(p => p.flag === "reinforced")) {
+      if (mount.type === "vehicle") {
+        const s = mount.system.structure ?? {};
+        update["system.structure.max"]   = (Number(s.max) || 0) + 10;
+        update["system.structure.value"] = (Number(s.value) || 0) + 10;
+      } else {
+        const w = mount.system.wounds ?? {};
+        update["system.wounds.max"]   = (Number(w.max) || 0) + 10;
+        update["system.wounds.value"] = (Number(w.value) || 0) + 10;
+      }
+    }
+    if (properties.some(p => p.flag === "speed")) {
+      if (mount.type === "vehicle") {
+        update["system.chassis.spd"] = (Number(mount.system.chassis?.spd) || 0) + wb;
+      } else {
+        // У существа SPD выводится из Ag и Размера; прибавка идёт тем же
+        // входным полем, которым пользуются Черты и Конструктор.
+        update["system.movement.spdBonus"] = (Number(mount.system.movement?.spdBonus) || 0) + wb;
+      }
+    }
+    await mount.update(update);
+
+    // Общие свойства Одержимых: «Получает Трейты Daemonic (W.b демона) и Stuff
+    // of Nightmares» (стр. 478). Черты живут в двух паках — у существ свои, у
+    // техники свои, — поэтому берётся тот, что соответствует сосуду.
+    const granted = await this._grantPossessionTraits(mount, wb);
+
+    const propHtml = generated.map(g =>
+      `<div class="dc-prop"><b>${esc(g.name)}</b> — ${esc(g.text)}</div>`).join("");
+    ChatMessage.create({
+      speaker: { alias: "Кузница Душ" },
+      content: `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
+        <div class="roll-header">⛧ ${esc(mount.name)} осквернён — Одержимый ${mount.type === "vehicle" ? "байк" : "скакун"}</div>
+        <div class="dc-line">Связывание ${binding} · W.b демона ${wb} · Демонических свойств: ${count}.</div>
+        ${granted.length ? `<div class="dc-line">Выданы Трейты: ${granted.map(esc).join(", ")}.</div>` : ""}
+        <div class="dc-props">${propHtml}</div>
+        <div class="dc-foot">${MOUNT_POSSESSION_COMMON.map(esc).join(" ")}</div>
+      </div>`
+    });
+    this._defileLastSuccess = null;
+    this.render(false);
+  }
+
+  /**
+   * Выдаёт сосуду Daemonic (W.b) и Stuff of Nightmares. Черта берётся из пака
+   * по типу сосуда: у существ они лежат в `traits`, у техники — в
+   * `vehicle-traits` (заведены под Одержимость, стр. 478). Уже имеющиеся
+   * Черты не задваиваются, а Daemonic получает рейтинг демона.
+   * @returns {Promise<string[]>} имена выданных Черт
+   */
+  async _grantPossessionTraits(mount, wb) {
+    const isVehicle = mount.type === "vehicle";
+    const pack = game.packs.get(isVehicle ? "warhammer-dbc.vehicle-traits" : "warhammer-dbc.traits");
+    if (!pack) return [];
+    const wanted = isVehicle
+      ? [{ starts: "Демонический (", rating: wb }, { starts: "Существо из Кошмаров", rating: null }]
+      : [{ starts: "Daemonic /", rating: wb }, { starts: "Stuff of Nightmares", rating: null }];
+
+    const docs = await pack.getDocuments();
+    const created = [];
+    for (const w of wanted) {
+      const src = docs.find(d => d.name.startsWith(w.starts));
+      if (!src) continue;
+      const bare = src.name.replace(/\s*\([^)]*\)/g, "");
+      if (mount.items.some(i => i.name.replace(/\s*\([^)]*\)/g, "") === bare)) continue;
+      const data = src.toObject();
+      delete data._id;
+      if (w.rating != null) {
+        data.system.rating = w.rating;
+        data.name = src.name.replace(/\(X\)/g, `(${w.rating})`);
+      }
+      created.push(data);
+    }
+    if (!created.length) return [];
+    const made = await mount.createEmbeddedDocuments("Item", created);
+    return made.map(i => i.name);
+  }
+
   activateListeners(html) {
     super.activateListeners(html);
     const el = html[0] ?? html;
@@ -656,10 +793,15 @@ export class VeilMystic extends Application {
           ev.preventDefault(); dz.classList.remove("dragover");
           try {
             const data = JSON.parse(ev.dataTransfer.getData("text/plain"));
-            let item = null;
-            if (data?.uuid) item = await fromUuid(data.uuid);
-            if (item?.documentName === "Item" && item.type === "weapon") { D.weaponUuid = item.uuid; rr(); }
-            else ui.notifications?.warn("Перетащите предмет типа «оружие».");
+            let doc = null;
+            if (data?.uuid) doc = await fromUuid(data.uuid);
+            // Со сцены приходит Токен — сосудом становится его актор.
+            if (doc?.documentName === "Token") doc = doc.actor;
+            if (doc?.documentName === "Item" && doc.type === "weapon") { D.weaponUuid = doc.uuid; rr(); }
+            // Сосудом бывает и скакун: тот же ритуал, но своя таблица свойств и
+            // две поправки порога (стр. 478).
+            else if (doc?.documentName === "Actor" && MOUNT_ACTOR_TYPES.includes(doc.type)) { D.weaponUuid = doc.uuid; rr(); }
+            else ui.notifications?.warn("Перетащите оружие-сосуд или актора-скакуна (байк).");
           } catch (e) { ui.notifications?.warn("Не удалось прочитать перетащенный объект."); }
         });
       }

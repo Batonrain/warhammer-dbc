@@ -271,6 +271,7 @@ export function attackCard({
         ${notes.shelter ? `<div class="roll-wprop-note horde-shelter-note">🛡️ ${notes.shelter}</div>` : ""}
         ${locShift ? locShiftSection(locShift, actorName) : ""}
         ${notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : ""}
+        ${notes.mount ? `<div class="roll-aim-note">${notes.mount}</div>` : ""}
         ${damageSection}
         ${notes.maximal
           ? `<div class="roll-allout-note">Максимальный режим: +1d10 урона, +2 Проб., Взрыв(2), ×2 расход, Перезарядка.</div>` : ""}

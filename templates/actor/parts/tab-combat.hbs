@@ -74,6 +74,91 @@
   {{!-- СТОЙКИ И ПРИЁМЫ --}}
   <div class="combat-melee-layout"> <div class="combat-section-panel combat-collapsible {{#if combatStanceCollapsed}}collapsed{{/if}}"> <div class="panel-title combat-collapse-head" data-action="combatCollapse" data-collapse="stance"><span class="cc-caret">▾</span> СТОЙКА <span class="cc-badge">{{combatStanceLabel}}</span></div> <div class="combat-collapse-body"><div class="stance-grid"> <label class="stance-label {{#if (eq system.meleeStance 'standard')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="standard" class="stance-radio" {{#if (eq system.meleeStance 'standard')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Стандартная</div> <div class="stance-desc">По умолчанию. Нет эффектов.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'aggressive')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="aggressive" class="stance-radio" {{#if (eq system.meleeStance 'aggressive')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Агрессивная</div> <div class="stance-desc">WS +10, Избегания −10, нет Реакции в конце хода.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'defensive')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="defensive" class="stance-radio" {{#if (eq system.meleeStance 'defensive')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Защитная</div> <div class="stance-desc">Нет атак. WS −20. +1 Реакция. Избегания +10 если оружие в руке.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'covering')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="covering" class="stance-radio" {{#if (eq system.meleeStance 'covering')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Прикрывающая</div> <div class="stance-desc">Все атаки по персонажу +20. Атаки по союзникам рядом −20.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'springing')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="springing" class="stance-radio" {{#if (eq system.meleeStance 'springing')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Пружинящая</div> <div class="stance-desc">SPD −2 для движения, +2 для отскока. Уклонение +10, S −10.</div> </div> </label> <label class="stance-label {{#if (eq system.meleeStance 'rapidstrike')}}stance-active{{/if}}"> <input type="radio" name="system.meleeStance" value="rapidstrike" class="stance-radio" {{#if (eq system.meleeStance 'rapidstrike')}}checked{{/if}}/> <div class="stance-info"> <div class="stance-name">Частокол</div> <div class="stance-desc">Свободная атака на атакующего с меньшим Rng оружием до его удара.</div> </div> </label> </div></div> </div> <div class="combat-section-panel combat-collapsible {{#if combatTechCollapsed}}collapsed{{/if}}"> <div class="panel-title combat-collapse-head" data-action="combatCollapse" data-collapse="tech"><span class="cc-caret">▾</span> ПРИЁМЫ</div> <div class="combat-collapse-body"><div class="technique-grid"> <button type="button" class="technique-btn" data-technique="standard"> <span class="tech-name">Обычная Атака</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +0</span> </button> <button type="button" class="technique-btn" data-technique="sweep"> <span class="tech-name">Широкий Взмах</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +0</span> </button> <button type="button" class="technique-btn" data-technique="thrust"> <span class="tech-name">Выпад</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +0</span> </button> <button type="button" class="technique-btn" data-technique="saw"> <span class="tech-name">Пила</span> <span class="tech-action">Стандартная</span> <span class="tech-mod">WS −10</span> </button> <button type="button" class="technique-btn" data-technique="stun"> <span class="tech-name">Оглушить</span> <span class="tech-action">Стандартная</span> <span class="tech-mod">WS −20</span> </button> <button type="button" class="technique-btn" data-technique="knockdown"> <span class="tech-name">Повалить</span> <span class="tech-action">Натиск/Полная</span> <span class="tech-mod">Ath vs Ath</span> </button> <button type="button" class="technique-btn" data-technique="grapple"> <span class="tech-name">Захват</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +0</span> </button> <button type="button" class="technique-btn" data-technique="charge"> <span class="tech-name">Натиск</span> <span class="tech-action">Полное действие</span> <span class="tech-mod">WS +20</span> </button> <button type="button" class="technique-btn" data-technique="fullatk"> <span class="tech-name">Полная Атака</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS +30</span> </button> <button type="button" class="technique-btn" data-technique="careful"> <span class="tech-name">Осторожная Атака</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS −10</span> </button> <button type="button" class="technique-btn" data-technique="feint"> <span class="tech-name">Финт</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS vs WS</span> </button> <button type="button" class="technique-btn" data-technique="press"> <span class="tech-name">Давление</span> <span class="tech-action">Полудействие</span> <span class="tech-mod">WS vs WS</span> </button> </div></div> </div> </div>{{!-- /combat-melee-layout --}}
 
+  {{!-- ═══ ВЕРХОМ (стр. 477-478) ═══
+        Пока скакун не выбран — только полоса-приглашение с зоной переноса.
+        Скорость в текущем Ходу переключается руками: от неё зависят штраф
+        стрельбы, доступные углы поворота и высота падения из седла. --}}
+  {{#if mountAvailable}}
+  <div class="combat-section-panel mount-panel">
+    <div class="panel-title">
+      ВЕРХОМ
+      {{#if mountActor}}
+      <span class="mount-title-meta">{{mountActor.kind}} · {{mountActor.poolLabel}} {{mountActor.poolValue}}/{{mountActor.poolMax}}{{#if mountActor.broken}} — сломан{{/if}}</span>
+      <button type="button" class="mount-dismount-btn" title="Спешиться — связь снимается">Спешиться</button>
+      {{/if}}
+    </div>
+
+    {{#if mountActor}}
+    <div class="panel-body mount-body">
+      <div class="mount-head">
+        <img class="mount-img mount-open-link" src="{{mountActor.img}}" data-uuid="{{mountActor.uuid}}" alt="" title="Открыть лист: {{mountActor.name}}"/>
+        <div class="mount-head-main">
+          <a class="mount-name mount-open-link" data-uuid="{{mountActor.uuid}}">{{mountActor.name}}</a>
+          <div class="mount-chips">
+            {{#each mountTraitChips as |t|}}<span class="minion-slot-chip">{{t.label}}{{#if t.rating}} ({{t.rating}}){{/if}}</span>{{/each}}
+          </div>
+        </div>
+      </div>
+
+      <div class="mount-controls">
+        <label class="mount-field">Место
+          <select class="mount-role-select">
+            {{#each mountRoles as |r|}}<option value="{{r.key}}" {{#if r.selected}}selected{{/if}}>{{r.label}}</option>{{/each}}
+          </select>
+        </label>
+        <label class="mount-field" title="Скорость скакуна в текущем Ходу — от неё идут штраф стрельбы и углы поворота">Скорость в Ходу
+          <select class="mount-speed-select">
+            {{#each mountSpeeds as |s|}}<option value="{{s.key}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}
+          </select>
+        </label>
+        <label class="mount-toggle" title="Пара действует в наименьшую инициативу обоих, зато скакун тратит свои действия, бьёт и реагирует сам">
+          <input type="checkbox" class="mount-flag-toggle" data-flag="sync" {{checked mountSync}}/> В ритм скакуна
+        </label>
+        <label class="mount-toggle" title="MIU, телепатия или подчинённый демонический скакун — управление не занимает руку">
+          <input type="checkbox" class="mount-flag-toggle" data-flag="linked" {{checked mountLinked}}/> Связь без рук
+        </label>
+      </div>
+
+      <div class="mount-summary">
+        <div class="mount-stat"><label>Управление</label>
+          <span class="{{#unless mountControl.trained}}mount-warn{{/unless}}">{{mountControl.label}} {{mountControl.value}}</span>
+        </div>
+        <div class="mount-stat"><label>Стрельба с седла</label><span>{{mountRanged}}</span></div>
+        <div class="mount-stat"><label>Маневрирование</label><span>{{mountManoeuvre}}</span></div>
+        <div class="mount-stat"><label>Руки заняты</label><span title="{{mountHands.reason}}">{{mountHands.hands}}</span></div>
+        <div class="mount-stat"><label>Инициатива пары</label><span title="{{mountInitiative.label}}">{{mountInitiative.value}}</span></div>
+        <div class="mount-stat"><label>Пассажиров</label><span>{{mountPassengers}}</span></div>
+      </div>
+
+      {{#unless mountControl.trained}}
+      <div class="gene-seed-hint mount-warn">Навыком управления персонаж не владеет: каждое движение и атака верхом — комбинированный тест, и бонусного верхового полудействия нет.</div>
+      {{/unless}}
+      {{#unless mountSizeFits}}
+      <div class="gene-seed-hint mount-warn">Скакун не крупнее седока на Размер — по книге он такого не понесёт (стр. 477).</div>
+      {{/unless}}
+
+      <div class="mount-actions">
+        <button type="button" class="mount-action-btn" data-mount-action="turn">Поворот</button>
+        <button type="button" class="mount-action-btn" data-mount-action="skid" {{#unless mountSkidAllowed}}disabled{{/unless}}
+          title="{{#if mountSkidBlocked}}Байк с Коляской Занос не совершает{{else}}Только после Натиска или Бега{{/if}}">Занос</button>
+        <button type="button" class="mount-action-btn" data-mount-action="terrain">Трудный ландшафт</button>
+        <button type="button" class="mount-action-btn" data-mount-action="hit" title="Куда пришлось не-Избирательное попадание: дубль — по всаднику">Попадание</button>
+        <button type="button" class="mount-action-btn" data-mount-action="damage" title="Скакун получил Крит. Эффект, сбит с ног или погиб — тест Акробатики">Скакуна тряхнуло</button>
+        {{#if mountIsBike}}
+        <button type="button" class="mount-action-btn" data-mount-action="repair" title="Смена работы и тест Tech-Use −20 (сломанному −40)">Ремонт байка</button>
+        {{/if}}
+      </div>
+    </div>
+    {{else}}
+    <div class="panel-body mount-body">
+      <div class="mount-drop-zone social-relations-zone" data-tooltip="Перетащите сюда скакуна или байк">
+        <div class="gene-seed-hint">Не верхом. Перетащите сюда актора-скакуна или байк — из боковой панели или со сцены.</div>
+      </div>
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+
   {{!-- БЛИЖНИЙ БОЙ --}}
   <div class="combat-section-panel"> <div class="panel-title">БЛИЖНИЙ БОЙ</div> <table class="items-table combat-weapons-table"> <thead> <tr> <th>Название</th><th>Класс</th><th>Урон</th><th>Тип</th> <th>Проб.</th><th>Особое</th><th>Порог</th><th></th> </tr> </thead> <tbody> {{#if combatMeleeWeapons.length}}
           {{#each combatMeleeWeapons as |w|}}

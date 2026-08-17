@@ -35,6 +35,7 @@ import { refundXP, talentCost, talentReason } from "../apps/duplicate-refund.mjs
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
+import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-panel.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
 import { activatePossessionListeners } from "./tabs/possession.mjs";
 import { activateAdvanceListeners } from "./tabs/advance.mjs";
@@ -402,6 +403,10 @@ export class WarhammerCharacterSheet
     // Блок «МИНЬОНЫ» там же: слоты купленных Талантов, счётчик по группам и
     // максимум, а при свободном Таланте — кнопка «+» в генератор.
     Object.assign(context, minionsPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // Блок «ВЕРХОМ» на вкладке БОЙ: скакун ищется по списку акторов мира —
+    // ссылку на него хранит сам всадник (rules/mount.mjs).
+    Object.assign(context, mountPanelContext(this.actor, [...(game.actors ?? [])]));
 
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
     context.combatStanceCollapsed = !!this._combatCollapse?.stance;
@@ -908,6 +913,9 @@ export class WarhammerCharacterSheet
 
     // ── Вкладка БОЙ ───────────────────────────────────────────────────────
     activateCombatListeners(root, this.actor);
+
+    // ── Блок «ВЕРХОМ» там же (стр. 477-478) ───────────────────────────────
+    activateMountPanelListeners(root, this.actor, { editable: this.isEditable });
 
     // ── Контекстное меню предметов ────────────────────────────────────────
     activateItemContextMenu(html, this.actor);

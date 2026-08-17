@@ -8,6 +8,7 @@ import { showApplyDamageDialog, applyDamageToActor } from "./combat/damage.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
+import { saddleTest, applyFall, showMountedDodgeDialog } from "./combat/mount.mjs";
 import { CONDITION_LEVEL_FIELD }         from "./combat/weapon-properties.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
@@ -34,6 +35,14 @@ export function registerHooks() {
         const attackDeg = ev.currentTarget.dataset.attackDeg != null
           ? parseInt(ev.currentTarget.dataset.attackDeg) : null;
         if (!await confirmHordeDefense(selectedToken.actor, "Уклонение")) return;
+        // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
+        // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
+        // карточке одна, а знает о седле только сама цель, поэтому развилка
+        // здесь: карточка на момент броска ещё не знает, в кого попадут.
+        if (selectedToken.actor.system?.mount?.uuid) {
+          const handled = await showMountedDodgeDialog(selectedToken.actor, extraMod, attackDeg);
+          if (handled !== null) return;
+        }
         await _performDodge(selectedToken.actor, extraMod, attackDeg);
       });
     });
@@ -66,6 +75,46 @@ export function registerHooks() {
         const attackDeg = ev.currentTarget.dataset.attackDeg != null
           ? parseInt(ev.currentTarget.dataset.attackDeg) : null;
         await _performSwerve(selectedToken.actor, extraMod, attackDeg);
+      });
+    });
+
+    // Верховые тесты: удержаться в седле, переброс «Опытного Всадника» и урон
+    // падения. Актор берётся не по выбранному токену, а по uuid из карточки:
+    // тест удержания всегда проходит тот же всадник, чей поворот или ландшафт
+    // его вызвал, и промах мышью по чужому токену тут ничего не должен решать.
+    html.querySelectorAll(".wh-saddle-btn, .wh-saddle-reroll-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        // Кнопка запоминается ДО первого await: currentTarget живёт только пока
+        // событие обрабатывается синхронно, а дальше он уже null.
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const actor = await fromUuid(ds.actorUuid).catch(() => null);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Тест проходит владелец всадника (или ГМ).");
+        }
+        const reroll = el.classList.contains("wh-saddle-reroll-btn");
+        if (reroll) el.disabled = true;
+        await saddleTest(actor, {
+          kind: ds.kind || "agility",
+          mod: parseInt(ds.mod || "0"),
+          reason: ds.reason || "",
+          reroll
+        });
+      });
+    });
+
+    html.querySelectorAll(".wh-saddle-fall-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const actor = await fromUuid(ds.actorUuid).catch(() => null);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Бросить урон падения может владелец всадника (или ГМ).");
+        }
+        el.disabled = true;
+        await applyFall(actor, ds.formula || "1d10");
       });
     });
 
