@@ -41,6 +41,8 @@ import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE }                   from "../constants/vitals.mjs";
 import { ritualsContext }                            from "./tabs/rituals.mjs";
+import { mergeAbilityItems, mergeAbilityEffects,
+         abilityLabel }                              from "../rules/merge-abilities.mjs";
 
 // ── Определение всех состояний ────────────────────────────────────────────────
 export const CONDITIONS_DEF = {
@@ -708,23 +710,32 @@ export function buildGetData(actor) {
   }
 
   // ── Способности / Таланты ─────────────────────────────────────────────────
-  context.abilityTalents = allItems.filter(i => i.type === "talent").map(i => {
-    const e  = i.system.effects || {};
+  // Одинаковые Таланты из разных источников идут ОДНОЙ строкой: с общим
+  // рейтингом и со списком специализаций (rules/merge-abilities.mjs). Предметы
+  // при этом остаются раздельными — строка ведёт к первому из них, и удаление
+  // снимает источники по одному.
+  context.abilityTalents = mergeAbilityItems(allItems.filter(i => i.type === "talent")).map(g => {
+    const i  = g.first;
+    const e  = mergeAbilityEffects(g.items);
     const fx = [];
-    if (e.charBonusStat && (e.charBonusValue || 0) !== 0)
-      fx.push(`💪 ${e.charBonusValue > 0 ? "+" : ""}${e.charBonusValue} к ${(CHARACTERISTICS[e.charBonusStat]?.abbr ?? e.charBonusStat)}`);
+    for (const [stat, value] of Object.entries(e.charBonus))
+      fx.push(`💪 ${value > 0 ? "+" : ""}${value} к ${(CHARACTERISTICS[stat]?.abbr ?? stat)}`);
     if (e.initMod)    fx.push(`⚡ ${e.initMod > 0 ? "+" : ""}${e.initMod} Иниц.`);
     if (e.fearRating) fx.push(`😱 Страх ${e.fearRating}`);
     return {
-      id:             i.id,
-      name:           i.name,
+      id:             g.id,
+      // Рейтинг у Талантов своей колонки не имеет (в отличие от Черт), поэтому
+      // и он, и специализации живут в подписи.
+      name:           abilityLabel(g),
       tier:           i.system.tier || 1,
       god:            i.system.god || "",
-      specialization: i.system.specialization || "",
+      specialization: g.specs.join(", "),
       requirement:    i.system.requirement || "",
       aptitudes:      (i.system.aptitudes || []).map(k => APTITUDES[k] ?? k).join(", "),
       effectSummary:  fx.join(" · "),
       benefit:        i.system.benefit || i.system.description || "",
+      // Тип (папка корбука) ищется по имени как его записал источник: в
+      // библиотеке имя лежит целиком, вместе с «(X)».
       typeGroup:      TALENT_TYPE.byName.get(i.name) || "Прочие"
     };
   });
@@ -745,13 +756,16 @@ export function buildGetData(actor) {
   // видна там же, где она считается (спис. цены суммирует actor.mjs).
   // Показываем ВСЕ таланты-предметы, а не только купленные: выданные при
   // генерации тоже должны быть видны, чтобы их можно было пометить/снять ★.
+  // Здесь склейки НЕТ и быть не должно: считается опыт, а каждая
+  // специализация — своя покупка со своей ценой. Чтобы строки не выглядели
+  // тремя одинаковыми «Сопротивлениями», специализация видна в подписи.
   context.purchasedTalents = actor.items
     .filter(i => i.type === "talent")
     .map(i => {
       const cost = parseInt(i.system?.cost) || 0;
       return {
         id:   i.id,
-        name: i.name,
+        name: abilityLabel(mergeAbilityItems([i])[0]),
         cost,
         tier: i.system?.tier || 1,
         // ★ — «выдан архетипом/расой, опыт не тратится»
@@ -806,27 +820,25 @@ export function buildGetData(actor) {
   context.rituals = ritualsContext(actor);
 
   // ── Черты (трейты) ──────────────────────────────────────────────────────
-  context.traits = allItems.filter(i => i.type === "trait").map(i => {
-    const s  = i.system;
-    const e  = s.effects || {};
+  // Как и Таланты, одинаковые Черты из разных источников склеиваются в одну
+  // строку с общим рейтингом: «Nimble (5)» дважды — это Nimble (10).
+  context.traits = mergeAbilityItems(allItems.filter(i => i.type === "trait")).map(g => {
+    const e  = mergeAbilityEffects(g.items);
     const fx = [];
-    if (e.charBonusStat && (e.charBonusValue || 0) !== 0)
-      fx.push(`💪 ${e.charBonusValue > 0 ? "+" : ""}${e.charBonusValue} к ${(CHARACTERISTICS[e.charBonusStat]?.abbr ?? e.charBonusStat)}`);
+    for (const [stat, value] of Object.entries(e.charBonus))
+      fx.push(`💪 ${value > 0 ? "+" : ""}${value} к ${(CHARACTERISTICS[stat]?.abbr ?? stat)}`);
     if (e.armourAll)  fx.push(`🛡️ +${e.armourAll} AP`);
     if (e.fearRating) fx.push(`😱 Страх ${e.fearRating}`);
     if (e.sizeMod)    fx.push(`📏 Размер ${e.sizeMod > 0 ? "+" : ""}${e.sizeMod}`);
 
-    let ratingStr = "";
-    if (s.hasRating)  ratingStr += `(${s.rating}`;
-    if (s.hasRating2) ratingStr += `${s.hasRating ? "/" : "("}${s.rating2}`;
-    if (ratingStr)    ratingStr += ")";
-
     return {
-      id:            i.id,
-      name:          i.name,
-      ratingDisplay: ratingStr,
+      id:            g.id,
+      // У Черты рейтинг показывает своя колонка, поэтому в подписи остаются
+      // только имя и специализации (у Черт схемы их нет, но имя бывает общим).
+      name:          g.specs.length ? `${g.baseName} (${g.specs.join(", ")})` : g.baseName,
+      ratingDisplay: g.ratingText,
       effectSummary: fx.join(" · "),
-      benefit:       s.benefit || ""
+      benefit:       g.first.system.benefit || ""
     };
   });
 

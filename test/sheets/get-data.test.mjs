@@ -354,6 +354,65 @@ describe("Одержимый", () => {
   });
 });
 
+describe("одинаковые Таланты и Черты на листе", () => {
+  let n = 0;
+  const talent = (name, system = {}) =>
+    ({ id: `tal${++n}`, type: "talent", name, system: { tier: 1, aptitudes: [], ...system } });
+  const trait = (name, system = {}) => ({ id: `tr${++n}`, type: "trait", name, system });
+
+  // Списки способностей собирает buildGetData, а не characterContext, поэтому
+  // берём весь контекст листа целиком.
+  async function abilitiesCtx(items) {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      items, characteristics: {}, skills: {}, groupSkills: {}
+    });
+    sheet.actor.items.contents = sheet.actor.items;
+    return sheet._prepareContext({});
+  }
+
+  it("две Черты Nimble (5) — одна строка с рейтингом (10)", async () => {
+    const ctx = await abilitiesCtx([
+      trait("Nimble / Проворный", { hasRating: true, rating: 5 }),
+      trait("Nimble / Проворный", { hasRating: true, rating: 5 })
+    ]);
+    expect(ctx.traits).toHaveLength(1);
+    expect(ctx.traits[0].name).toBe("Nimble / Проворный");
+    expect(ctx.traits[0].ratingDisplay).toBe("(10)");
+  });
+
+  it("три Сопротивления — один Талант со списком специализаций", async () => {
+    const ctx = await abilitiesCtx([
+      talent("Resistance / Сопротивление", { specialization: "Poison" }),
+      talent("Resistance / Сопротивление", { specialization: "Cold" }),
+      talent("Resistance / Сопротивление", { specialization: "Heat" })
+    ]);
+    expect(ctx.abilityTalents).toHaveLength(1);
+    expect(ctx.abilityTalents[0].name).toBe("Resistance / Сопротивление (Poison, Cold, Heat)");
+    expect(ctx.abilityTalents[0].specialization).toBe("Poison, Cold, Heat");
+  });
+
+  it("во вкладке «Развитие» каждая специализация — своя строка со своей ценой", async () => {
+    const ctx = await abilitiesCtx([
+      talent("Resistance / Сопротивление", { specialization: "Cold", cost: 200, purchased: true }),
+      talent("Resistance / Сопротивление", { specialization: "Heat", cost: 300, purchased: true })
+    ]);
+    expect(ctx.purchasedTalents.map(p => [p.name, p.cost])).toEqual([
+      ["Resistance / Сопротивление (Cold)", 200],
+      ["Resistance / Сопротивление (Heat)", 300]
+    ]);
+  });
+
+  it("склейка не роняет Талант из его группы по типам", async () => {
+    const ctx = await abilitiesCtx([
+      talent("Nerves of Steel / Стальные Нервы"),
+      talent("Nerves of Steel / Стальные Нервы")
+    ]);
+    const shown = ctx.abilityTalentGroups.flatMap(g => g.items);
+    expect(shown).toHaveLength(1);
+    expect(shown[0].name).toBe("Nerves of Steel / Стальные Нервы");
+  });
+});
+
 describe("лист собирает контекст целиком", () => {
   it("вкладки, характеристики и состояние окна попадают в один контекст", async () => {
     const sheet = sheetOf(WarhammerCharacterSheet, { characteristics: {}, skills: {}, groupSkills: {} });
