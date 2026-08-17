@@ -18,7 +18,7 @@ import { buildLegionOptions, buildChapterOptions,
          buildCultureLegionOptions, resolveCultureFx } from "../constants/legions.mjs";
 import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
 import { disabledRaceKeys }             from "../constants/features.mjs";
-import { archetypeEntries, archetypesForRace } from "./archetypes.mjs";
+import { archetypeEntries, archetypesForRace, applyArchetype } from "./archetypes.mjs";
 import { splitTopLevel, esc }           from "../helpers/utils.mjs";
 import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-levels.mjs";
 import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
@@ -479,19 +479,6 @@ function ruSkillEntry(str) {
   return (sk ? SKILLS_DEF[sk]?.label : s) + suf;
 }
 
-// Полная строка навыков (через запятую, с учётом «или»/скобок) → русский.
-function ruSkillString(str) {
-  if (!str) return "";
-  // Разбиваем по запятым верхнего уровня (скобки не трогаем).
-  const out = []; let d = 0, cur = "";
-  for (const ch of String(str)) { if (ch === "(") d++; else if (ch === ")") d--; if (ch === "," && d === 0) { out.push(cur); cur = ""; } else cur += ch; }
-  if (cur.trim()) out.push(cur);
-  return out.map(e => {
-    const parts = e.split(/\s+или\s+/);
-    return parts.map(p => ruSkillEntry(p)).join(" или ");
-  }).join(", ");
-}
-
 /** Резолвит объекты расы/архетипа/субрасы/«Прошлого» по выбранным ключам мастера. */
 export function resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harlequinPast }) {
   const race = raceDef(raceKey);
@@ -608,12 +595,16 @@ export async function applyCreation(actor,
   // прогон Мастера его не задваивал (тот же приём, что у applyYnnari/applyHarlequin).
   if (pastKey) await applyRace(actor, pastKey, { tag: "racePast", mirror: false });
   if (subraceKey) await applySubrace(actor, subraceKey);
+  // Архетип кладётся предметом, а не строкой: его выдача живёт в Конструкторе
+  // Механики, а тот отыгрывается только при получении предмета. Раньше Мастер
+  // писал сюда один ключ, и всё, что Архетип даёт, разбиралось здесь же из его
+  // текстовых полей — то есть ровно один раз, при создании.
+  if (archKey) await applyArchetype(actor, archKey);
 
   const updates = {
     "system.race":      raceKey,
     "system.subrace":   subraceKey || "",
     "system.alignment": alignment || "loyalist",
-    "system.archetype": archKey || "",
     "system.ynnariPast":    raceKey === "ynnari"    ? (ynnariPast || "")    : "",
     "system.harlequinPast": raceKey === "harlequin" ? (harlequinPast || "") : ""
   };
@@ -711,9 +702,10 @@ export async function applyCreation(actor,
   const srcLabel = `${race?.label || raceKey}${arch ? ` / ${arch.name}` : ""}`;
   const talents = await applyStartingTalents(talRaw, srcLabel);
 
-  // Навыки архетипа/расы — выдаём БЕСПЛАТНО (grantedRank), опыт не тратится (стр. 5-21).
-  const grantedSkills = await grantCreationSkills(actor, { race, past, sub, arch });
-  // Навыки от культуры легиона — тоже бесплатным рангом.
+  // Навыки расы, Прошлого, субрасы и Архетипа выдаёт Конструктор Механики их
+  // собственных записей — при получении предмета, выше по этой же функции.
+  // Здесь остались только навыки культуры легиона: они приходят из констант
+  // (legions.mjs), своего предмета у культуры нет.
   const cultSkills = await grantCultureSkills(actor, cultFx);
 
   // Снаряжение архетипа/расы — ВРЕМЕННО ОТКЛЮЧЕНО (grantCreationGear оставлена
@@ -723,7 +715,7 @@ export async function applyCreation(actor,
   await actor.setFlag("warhammer-dbc", "setupDone", true);
   applyTheme();
 
-  ui.notifications.info(`🧙 Создание: ${race?.label}${arch ? ` / ${arch.name}` : ""} — Черт ${traits}, Талантов ${talents}, Навыков ${grantedSkills + cultSkills} (бесплатно)${implants ? `, имплантов ${implants}` : ""}. Снаряжение — вручную.`);
+  ui.notifications.info(`🧙 Создание: ${race?.label}${arch ? ` / ${arch.name}` : ""} — Черт ${traits}, Талантов ${talents}, Навыков ${cultSkills} от культуры (остальные выдал Конструктор)${implants ? `, имплантов ${implants}` : ""}. Снаряжение — вручную.`);
 }
 
 /** Подсказка под селектами: что даёт выбранная раса/архетип. */
@@ -731,7 +723,6 @@ function updateWizardNote(html) {
   const race = raceDef(html.find("#wiz-race").val());
   const arch = archetypeEntries()[html.find("#wiz-arch").val()];
   const parts = [];
-  if (race?.skills) parts.push(`<b>Навыки расы:</b> ${ruSkillString(race.skills)}`);
   if (arch) {
     if (Object.keys(arch.charBonus || {}).length)
       parts.push(`<b>Бонус архетипа:</b> ${Object.entries(arch.charBonus).map(([k, v]) => `${k.toUpperCase()} ${v >= 0 ? "+" : ""}${v}`).join(", ")}`);

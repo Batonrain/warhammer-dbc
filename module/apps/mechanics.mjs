@@ -249,7 +249,9 @@ const WEAPON_PROP_ACTIONS_RATED = [["increase", "Увеличить рейтин
 function specChoiceLabel(entry) {
   if (entry.specKey === "__choice__") {
     const n = (entry.specChoiceKeys || []).length;
-    return n ? `по выбору из ${n}` : "по выбору (не выбрано ни одной)";
+    if (!n) return "по выбору (не выбрано ни одной)";
+    const need = Math.max(1, Number(entry.specChoiceCount) || 1);
+    return need > 1 ? `любые ${need} из ${n}` : `по выбору из ${n}`;
   }
   return entry.specialty || "?";
 }
@@ -373,9 +375,11 @@ export function blankMechEntry(kind = "characteristic") {
     charKey: "s", field: "total", op: "add", value: 1,
     // trait/talent
     sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "", specialization: "",
-    // skill / rollmod — specKey:"__choice__" => specChoiceKeys (несколько
-    // кандидатов, актор выбирает один при получении, см. resolveEntrySpecChoice).
-    skillScope: "plain", skillKey: "", specKey: "", specialty: "", specChoiceKeys: [], rank: "untrained",
+    // skill / rollmod — specKey:"__choice__" => specChoiceKeys (кандидаты) и
+    // specChoiceCount (сколько РАЗНЫХ из них берёт актор при получении,
+    // см. resolveEntrySpecChoice): «Общие знания (любые 4)».
+    skillScope: "plain", skillKey: "", specKey: "", specialty: "",
+    specChoiceKeys: [], specChoiceCount: 1, rank: "untrained",
     // weight
     weightScope: "all", weightMode: "kg", weightValue: 1,
     // movement (op — общее поле)
@@ -723,29 +727,49 @@ export async function reconcileCohesionForActor(actor) {
 }
 
 /** Диалог выбора ОДНОЙ специализации из нескольких кандидатов («по выбору»). */
-function showSpecChoiceDialog(skillLabel, choices) {
+function showSpecChoiceDialog(skillLabel, choices, need = 1) {
   return new Promise(resolve => {
     let resolved = false;
+    // Одну выбирают радиокнопками, несколько — галочками: у рас сплошь
+    // «Общие знания (любые 4)», и там нужны РАЗНЫЕ четыре, а не одна четырежды.
+    const many = need > 1;
     const rows = choices.map((c, i) => `<label class="grant-choice-row">
-      <input type="radio" name="spec-choice" value="${i}" ${i === 0 ? "checked" : ""}/>
+      <input type="${many ? "checkbox" : "radio"}" name="spec-choice" value="${i}" ${!many && i === 0 ? "checked" : ""}/>
       <span>${esc(c.display)}</span></label>`).join("");
     new Dialog({
       title: `Выбор специализации — ${skillLabel}`,
-      content: `<div class="wh-grant-choice"><p>Выберите специализацию:</p>${rows}</div>`,
+      content: `<div class="wh-grant-choice">
+        <p>${many ? `Выберите ${need} разных специализации:` : "Выберите специализацию:"}</p>
+        ${rows}
+        ${many ? `<p class="grant-choice-count" data-need="${need}"></p>` : ""}</div>`,
       buttons: {
         pick: {
           icon: '<i class="fas fa-check"></i>', label: "Применить",
           callback: html => {
             if (resolved) return;
+            const picked = [...html.find('input[name="spec-choice"]:checked')]
+              .map(el => choices[parseInt(el.value)]).filter(Boolean);
             resolved = true;
-            const idx = parseInt(html.find('input[name="spec-choice"]:checked').val());
-            resolve(choices[idx] ?? null);
+            resolve(many ? picked : (picked[0] ?? null));
           }
         },
-        skip: { label: "Пропустить", callback: () => { if (!resolved) { resolved = true; resolve(null); } } }
+        skip: { label: "Пропустить", callback: () => { if (!resolved) { resolved = true; resolve(many ? [] : null); } } }
       },
       default: "pick",
-      close: () => { if (!resolved) { resolved = true; resolve(null); } }
+      close: () => { if (!resolved) { resolved = true; resolve(many ? [] : null); } },
+      render: html => {
+        if (!many) return;
+        // Кнопка «Применить» ждёт ровно нужное число: недобор молча съел бы
+        // слоты, перебор выдал бы лишнее.
+        const btn = html.closest(".app").find('button[data-button="pick"]');
+        const upd = () => {
+          const n = html.find('input[name="spec-choice"]:checked').length;
+          html.find(".grant-choice-count").text(`Выбрано ${n} из ${need}`);
+          btn.prop("disabled", n !== need);
+        };
+        html.find('input[name="spec-choice"]').on("change", upd);
+        upd();
+      }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 380 }).render(true);
   });
 }
@@ -757,14 +781,15 @@ function showSpecChoiceDialog(skillLabel, choices) {
  * Пропуск диалога (Пропустить/закрыть) → null, вызывающий код не применяет запись.
  */
 async function resolveEntrySpecChoice(entry) {
-  if (entry.specKey !== "__choice__") return entry;
+  if (entry.specKey !== "__choice__") return [entry];
   const def = GROUP_SKILLS_DEF[entry.skillKey];
   const keys = new Set(entry.specChoiceKeys || []);
   const choices = specOptions(entry.skillKey).filter(c => keys.has(c.key));
-  if (!choices.length) return null;
-  const chosen = await showSpecChoiceDialog(def?.label || entry.skillKey, choices);
-  if (!chosen) return null;
-  return { ...entry, specKey: chosen.key, specialty: chosen.display };
+  if (!choices.length) return [];
+  const need = Math.min(Math.max(1, Number(entry.specChoiceCount) || 1), choices.length);
+  const chosen = await showSpecChoiceDialog(def?.label || entry.skillKey, choices, need);
+  const list = Array.isArray(chosen) ? chosen : (chosen ? [chosen] : []);
+  return list.map(c => ({ ...entry, specKey: c.key, specialty: c.display }));
 }
 
 /** Применяет одну запись механики: создаёт ActiveEffect/предмет, правит навык, либо исполняет код. */
@@ -785,8 +810,17 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
 
   if (entry.kind === "skill" || entry.kind === "rollmod") {
     const resolved = await resolveEntrySpecChoice(entry);
-    if (!resolved) return;
-    entry = resolved;
+    if (!resolved.length) return;
+    // «Любые N» разворачиваются в N записей с уже выбранными специализациями.
+    // Отметку о применении несёт каждая своя — иначе вторая и третья сочлись бы
+    // за уже применённые и молча пропали.
+    if (resolved.length > 1) {
+      for (const e of resolved) {
+        await applyMechEntry(actor, { ...e, id: `${entry.id}:${e.specKey}` }, sourceItem, fromChoice, applied);
+      }
+      return;
+    }
+    entry = resolved[0];
   }
 
   if (entry.kind === "corruption") {
@@ -1581,9 +1615,16 @@ function buildSkillSelectorHtml(groupId, ent, dis) {
       out += `<input type="text" class="grant-entry-spec-custom" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.specialty)}" placeholder="Название специализации" ${dis}/>`;
     }
     // «По выбору» — отметьте checkbox'ами НЕСКОЛЬКО кандидатов; актор выбирает
-    // ОДИН из них диалогом в момент получения предмета (resolveEntrySpecChoice).
+    // из них диалогом в момент получения предмета (resolveEntrySpecChoice).
+    // Сколько именно — задаёт счётчик: у рас сплошь «Общие знания (любые 4)»,
+    // и четырьмя отдельными записями это не написать — диалог четырежды
+    // предложил бы тот же список, а повторный выбор занял бы один слот.
     if (isChoice) {
       const chosen = new Set(ent.specChoiceKeys || []);
+      out += `<label class="grant-spec-choice-count" title="Сколько РАЗНЫХ специализаций выбирает актор при получении">
+        любые <input type="number" class="grant-entry-spec-count" data-group-id="${groupId}" data-entry-id="${ent.id}"
+                     min="1" value="${Math.max(1, Number(ent.specChoiceCount) || 1)}" ${dis}/>
+      </label>`;
       const rows = specs.map(s => `<label class="grant-spec-choice-row">
         <input type="checkbox" class="grant-entry-spec-choice" data-group-id="${groupId}" data-entry-id="${ent.id}" data-key="${esc(s.key)}" ${chosen.has(s.key) ? "checked" : ""} ${dis}/>
         <span>${esc(s.display)}</span></label>`).join("");

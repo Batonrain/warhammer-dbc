@@ -1843,6 +1843,14 @@ export class WarhammerItemSheet
       e.specChoiceKeys = [...set];
       saveMech(arr);
     });
+    // Сколько РАЗНЫХ специализаций выбирает актор: «Общие знания (любые 4)».
+    on(".grant-entry-spec-count", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.specChoiceCount = Math.max(1, parseInt(ev.currentTarget.value) || 1);
+      saveMech(arr);
+    });
     on(".grant-entry-rank", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
