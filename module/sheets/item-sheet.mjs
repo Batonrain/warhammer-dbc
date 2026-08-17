@@ -1716,6 +1716,33 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipQty = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
     });
+    // Ступень Таланта и потолок Пси-Рейтинга — фильтры небоевых паков.
+    // Пустая строка значит «любая», поэтому пустое НЕ приводится к нулю.
+    const setEquipFilter = (sel, field) => on(sel, "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      const raw = String(ev.currentTarget.value).trim();
+      e[field] = raw === "" ? "" : (parseInt(raw) || 0);
+      saveMech(arr);
+    });
+    setEquipFilter(".mech-equip-tier", "equipTalentTier");
+    setEquipFilter(".mech-equip-pr",   "equipMaxPsyRating");
+    on(".mech-equip-quality", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.equipQuality = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-equip-budget-mode", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.equipBudgetMode = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-equip-budget-value", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.equipBudgetValue = Math.max(0, parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
+    });
     // Лояльность миньонов (kind:"loyalty")
     on(".mech-loyalty-type", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));

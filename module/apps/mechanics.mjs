@@ -152,6 +152,9 @@ import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics
 import { specOptions, findGroupEntry }        from "../constants/skill-specializations.mjs";
 import { dynamicAptKind }                     from "../constants/advancement.mjs";
 import { masteryTargets, masteryAptitudes, masteryLabel } from "../rules/mastery-targets.mjs";
+import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.mjs";
+import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
+import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
 import { executeItemCode }                    from "./item-script.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } from "./compendium-browser.mjs";
@@ -393,6 +396,11 @@ export function blankMechEntry(kind = "characteristic") {
     equipSourceUuid: "", equipSourceName: "", equipSourceImg: "",
     equipCategoryPack: "weapons", equipWeaponType: "", equipWeaponProp: "",
     equipArmorType: "", equipMaxAvailability: 5,
+    // Качество выданного («Narthecium (Good.Q)») и фильтры небоевых паков:
+    // ступень Таланта, потолок Пси-Рейтинга.
+    equipQuality: "common", equipTalentTier: "", equipMaxPsyRating: "",
+    // Бюджет выбора (rules/pick-budget.mjs): штуками или опытом.
+    equipBudgetMode: "count", equipBudgetValue: 1,
     // loyalty — тип миньона ("" = любой), знак и величина (см. шапку файла)
     loyaltyMinionType: "", loyaltyOp: "add", loyaltyValue: 1,
     // weaponProp — «Свойство» перетаскивается (weaponPropKey/Label/HasRating[2]),
@@ -904,13 +912,33 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       // Живой выбор в момент выдачи — Обозреватель компендиумов, сужен фильтрами
       // категории/типа/свойства/типа брони/макс. Редкости (см. compendium-browser.mjs
       // pickMode). Отмена (null) — просто ничего не выдаём, без ошибки.
-      uuid = await openCompendiumBrowser(false, {
-        pack: entry.equipCategoryPack,
-        weaponFolderId: entry.equipCategoryPack === "weapons" ? (entry.equipWeaponType || null) : null,
-        weaponProp:  entry.equipCategoryPack === "weapons" ? (entry.equipWeaponProp  || null) : null,
-        armorType:   entry.equipCategoryPack === "armor"   ? (entry.equipArmorType   || null) : null,
-        maxAvailability: Number.isFinite(Number(entry.equipMaxAvailability)) ? Number(entry.equipMaxAvailability) : null
+      const filters = {};
+      if (entry.equipCategoryPack === "weapons" && entry.equipWeaponType) filters.folderId = entry.equipWeaponType;
+      if (entry.equipCategoryPack === "weapons" && entry.equipWeaponProp) filters.weaponProp = entry.equipWeaponProp;
+      if (entry.equipCategoryPack === "armor"   && entry.equipArmorType)  filters.armorType = entry.equipArmorType;
+      if (entry.equipTalentTier !== "" && entry.equipTalentTier != null)   filters.talentTier = Number(entry.equipTalentTier);
+      if (entry.equipMaxPsyRating !== "" && entry.equipMaxPsyRating != null) filters.maxPsyRating = Number(entry.equipMaxPsyRating);
+      if (Number.isFinite(Number(entry.equipMaxAvailability))) filters.maxAvailability = Number(entry.equipMaxAvailability);
+
+      const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue });
+      const picked = await openCompendiumBrowser(false, {
+        pack: entry.equipCategoryPack, filters, budget,
+        prompt: describeMechEntry(entry),
+        // Цена в опыте считается для ЭТОГО актора: у Талантов она зависит от
+        // Склонностей и культуры, а не лежит в записи компендиума.
+        xpCost: budget.mode === BUDGET_XP ? (it => pickXPCost(actor, it)) : null
       });
+      if (!picked) return;
+      // Бюджет больше одной штуки — Обозреватель отдаёт список.
+      const list = Array.isArray(picked) ? picked : [picked];
+      if (list.length > 1) {
+        for (const u of list) {
+          await applyMechEntry(actor, { ...entry, equipMode: "direct", equipSourceUuid: u, equipQty: 1,
+                                        id: `${entry.id}:${u}` }, sourceItem, fromChoice, applied);
+        }
+        return;
+      }
+      uuid = list[0];
       if (!uuid) return;
     }
     const src = uuid ? await fromUuid(uuid).catch(() => null) : null;
@@ -921,6 +949,10 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     delete data._id;
     const qty = Math.max(1, parseInt(entry.equipQty) || 1);
     if ("quantity" in (data.system || {})) data.system.quantity = qty;
+    // «Narthecium (Good.Q)» — качество часть выдачи, а не украшение: от него
+    // зависят и Надёжность, и модификаторы. Ставим только там, где поле есть.
+    if (entry.equipQuality && entry.equipQuality !== "common"
+        && "quality" in (data.system || {})) data.system.quality = entry.equipQuality;
     // equipEntryId — какая именно запись Механики это выдала; читает
     // syncGrantedEquipment ниже, чтобы не плодить дубли и опознавать «своё»
     // при пересинхронизации по активности источника (импланты — installed/disabled).
@@ -1504,11 +1536,34 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
           .concat(Object.entries(ARMOR_TYPES).map(([v, l]) => optHtml(v, l, (ent.equipArmorType || "") === v))).join("");
         out += `<select class="mech-equip-atype" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${atOpts}</select>`;
       }
+      if (cat === "talents") {
+        // «7 талантов 1 уровня» — это ступень Таланта, а не его цена.
+        const tierOpts = [`<option value="">— любая ступень —</option>`]
+          .concat([1, 2, 3].map(t => optHtml(String(t), `Ступень ${t}`, String(ent.equipTalentTier ?? "") === String(t)))).join("");
+        out += `<select class="mech-equip-tier" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${tierOpts}</select>`;
+      }
+      if (cat === "psychic-powers") {
+        out += `<input type="number" class="mech-equip-pr" min="0" step="1" placeholder="до ПР"
+          data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipMaxPsyRating ?? "")}" ${dis}/>`;
+      }
       const availOpts = Object.entries(AVAILABILITY)
         .map(([v, l]) => optHtml(v, l, String(ent.equipMaxAvailability ?? 5) === v)).join("");
       out += `<select class="mech-equip-avail" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${availOpts}</select>`;
+
+      // Бюджет: штуками («7 талантов») или опытом («500хр на Психосилы»).
+      const bmOpts = BUDGET_MODES.map(m => optHtml(m.key, m.label, (ent.equipBudgetMode || "count") === m.key)).join("");
+      out += `<select class="mech-equip-budget-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${bmOpts}</select>
+        <input type="number" class="mech-equip-budget-value" min="0" step="1" placeholder="Бюджет"
+          data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipBudgetValue ?? 1)}" ${dis}/>`;
     }
-    out += `<input type="number" class="mech-equip-qty" min="1" step="1" placeholder="Кол-во" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipQty ?? 1)}" ${dis}/>`;
+    // Качество — часть выдачи: «Narthecium (Good.Q)» отличается от обычного и
+    // Надёжностью, и модификаторами.
+    const qOpts = ITEM_QUALITY_LIST
+      .map(k => optHtml(k, ITEM_QUALITY[k].label, (ent.equipQuality || "common") === k)).join("");
+    out += `<select class="mech-equip-quality" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${qOpts}</select>`;
+    if (mode === "direct") {
+      out += `<input type="number" class="mech-equip-qty" min="1" step="1" placeholder="Кол-во" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipQty ?? 1)}" ${dis}/>`;
+    }
     return out;
   }
 
