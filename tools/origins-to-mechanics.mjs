@@ -454,7 +454,8 @@ function gearMods(str) {
   const name = str
     .replace(/^\d+\s*(?:×|x|шт\.?)?\s+/i, "")
     .replace(/\((?:[^()]*)\)\s*$/, "")
-    .replace(/\bдо\s*R\s*\d\b/ig, "")
+    // \b строится на \w и кириллицу не видит, поэтому границы слова здесь нет
+    .replace(/\s*до\s*R\s*\d\s*/ig, " ")
     .replace(/[;,]\s*$/, "")
     .trim();
   return { qty: qty ? Number(qty[1]) : 1, avail: avail ? Number(avail[1]) : 5, quality, name };
