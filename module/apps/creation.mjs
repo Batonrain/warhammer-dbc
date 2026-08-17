@@ -10,6 +10,7 @@
 
 import { CHARACTERISTICS }              from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
+import { APTITUDES } from "../constants/characteristics.mjs";
 import { raceDef, subraceEntries, subracesOf, isAeldariRace, raceGroupList }
   from "./race-library.mjs";
 import { applyRace, applySubrace }      from "./races.mjs";
@@ -22,11 +23,24 @@ import { splitTopLevel, esc }           from "../helpers/utils.mjs";
 import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-levels.mjs";
 import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
 import { skillGrantOutcome } from "../rules/duplicate-grants.mjs";
-import { refundXP, skillStepCost, skillCapReason } from "./duplicate-refund.mjs";
+import { refundXP, skillStepsCost, skillReason } from "./duplicate-refund.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
 // Влияние (inf) сюда не входит — оно от arch.infRoll.
 const CREATION_ROLL_CHARS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
+
+// ── Склонности (стр. 23-24) ─────────────────────────────────────────────────
+// Персонаж выбирает четыре Характеристики и четыре прочих. «Общее» есть у всех
+// и в выбор не входит — charAptitudeSet добавляет его сам.
+export const APT_CHAR_KEYS  = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf"];
+export const APT_OTHER_KEYS = ["offence", "defence", "finesse", "fieldcraft",
+                               "knowledge", "leadership", "social", "tech", "psyker"];
+export const APT_PICK = { char: 4, other: 4 };
+
+/** Фишки выбора для одной группы Склонностей. */
+const aptChips = (group) => (group === "char" ? APT_CHAR_KEYS : APT_OTHER_KEYS)
+  .map(k => `<label class="apt-chip"><input type="checkbox" class="wiz-apt" data-group="${group}" value="${k}"/> ${esc(APTITUDES[k])}</label>`)
+  .join("");
 
 // Плейсхолдер невыбранной специализации группового навыка («любые N», стр. 5-21).
 const WILD_SPEC = "— выбери —";
@@ -332,14 +346,15 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
       // несколько — раса, Прошлое, субраса, Родной мир, Архетип, — и совпадения
       // среди них обычное дело.
       const cur = upd[`system.skills.${skey}.grantedRank`] || actor.system.skills?.[skey]?.grantedRank || "untrained";
-      const out = skillGrantOutcome(cur, rank);
-      upd[`system.skills.${skey}.grantedRank`] = out.rank;
-      const curRank = actor.system.skills?.[skey]?.rank || "untrained";
+      const curRank = upd[`system.skills.${skey}.rank`] || actor.system.skills?.[skey]?.rank || "untrained";
+      const curGrant = upd[`system.skills.${skey}.grantedRank`] || actor.system.skills?.[skey]?.grantedRank || "untrained";
+      const out = skillGrantOutcome(curRank, rank);
+      // grantedRank — сколько дали источники, а не сколько куплено за опыт:
+      // купленный «+30» иначе стал бы бесплатным.
+      upd[`system.skills.${skey}.grantedRank`] = (STEP[rank] >= (STEP[curGrant]||0)) ? rank : curGrant;
       if ((STEP[curRank]||0) < STEP[out.rank]) upd[`system.skills.${skey}.rank`] = out.rank;
       upd[`system.skills.${skey}.cost`] = 0;
-      if (out.refundStep !== null) {
-        refunds.push({ skey, step: out.refundStep, rank: out.rank });
-      }
+      if (out.refundSteps.length) refunds.push({ skey, steps: out.refundSteps, granted: rank, had: curRank });
     } else {
       // Не распознали — раньше запись просто исчезала. Теперь копим и сообщаем
       // ГМу, чтобы опечатка в данных архетипа была видна сразу.
@@ -371,8 +386,8 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
 
   // Совпавшие Навыки на потолке: опыт за третью покупку — по одной строке в чат.
   for (const r of refunds) {
-    await refundXP(actor, skillStepCost(actor, r.skey, r.step),
-      skillCapReason(SKILLS_DEF[r.skey]?.label || r.skey, r.rank));
+    await refundXP(actor, skillStepsCost(actor, r.skey, r.steps),
+      skillReason(SKILLS_DEF[r.skey]?.label || r.skey, r.granted, r.had));
   }
 
   // Нераспознанное больше не теряется молча — говорим ГМу, что выдать руками.
@@ -560,7 +575,7 @@ async function grantSkitariiWarPlate(actor) {
  */
 export async function applyCreation(actor,
   { raceKey, subraceKey, alignment, archKey, ynnariPast, harlequinPast, charRolls = null,
-    geneSeed = null, startLevel = null },
+    geneSeed = null, startLevel = null, aptitudes = null },
   { createTraits, applyStartingTalents, applyTheme }) {
   const { race, arch, sub, past, pastKey } =
     resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harlequinPast });
@@ -573,6 +588,13 @@ export async function applyCreation(actor,
   // только в пустые поля»).
   const wasEmpty = {};
   for (const k of [...CREATION_ROLL_CHARS, "inf"]) wasEmpty[k] = (chars[k]?.base || 0) === 0;
+
+  // Склонности пишем ПЕРВЫМ делом, до всякой выдачи: по ним считается возврат
+  // опыта за Навык или Талант, пришедший из второго источника, и посчитанный
+  // без них он оказался бы не тем.
+  if (Array.isArray(aptitudes) && aptitudes.length) {
+    await actor.update({ "system.aptitudes": [...new Set(aptitudes)] });
+  }
 
   // Раса и субраса выдаются тем же путём, что из слота листа и из дропа
   // предмета: иначе два пути выдачи разойдутся при первой же правке
@@ -817,10 +839,29 @@ export function showCreationWizard(actor, deps) {
         Итог = база расы/архетипа + раскиданное значение. Заполняются только пустые поля; повторный запуск безопасен.
       </div>
 
+      <!-- Склонности (стр. 23-24) — до Уровня старта: от них зависит цена
+           всего, что персонаж купит, и возврат за совпавшую выдачу Навыка или
+           Таланта. Выбор обязателен: ровно четыре Характеристики и ровно
+           четыре прочих; «Общее» есть у всех и в выбор не входит. -->
+      <div class="wiz-gen wh-apts">
+        <div class="wiz-gen-lbl">3. Склонности — ровно <b>4</b> Характеристики и <b>4</b> прочих:</div>
+        <div class="cstart-hint">По ним считается цена Характеристик, Навыков и Талантов, а значит и возврат
+          опыта, когда один и тот же Навык или Талант приходит из двух источников.</div>
+        <div class="apt-group">
+          <div class="apt-group-lbl">Характеристики <span class="apt-count" data-for="char">0 / 4</span></div>
+          <div class="apt-list">${aptChips("char")}</div>
+        </div>
+        <div class="apt-group">
+          <div class="apt-group-lbl">Прочие <span class="apt-count" data-for="other">0 / 4</span></div>
+          <div class="apt-list">${aptChips("other")}</div>
+        </div>
+        <div class="apt-warn" id="wiz-apt-warn"></div>
+      </div>
+
       <!-- Уровень стартовой игры (стр. 23) — последним блоком: колонка опыта
            зависит от расы, а её выбирают выше. -->
       <div class="wiz-gen wh-cstart">
-        <div class="wiz-gen-lbl">3. Уровень стартовой игры (стр. 23):</div>
+        <div class="wiz-gen-lbl">4. Уровень стартовой игры (стр. 23):</div>
         <div class="cstart-hint">Опыт зависит от того, Десантник персонаж или нет — колонка подсвечивается по
           выбранной расе. Бесчестие и Порча стартового персонажа не превышают ${START_CAP}.</div>
         <table class="items-table cstart-table">
@@ -871,6 +912,13 @@ export function showCreationWizard(actor, deps) {
               cultureLegion:  html.find("#wiz-cult-sel").val() || "",
               cultureChapter: html.find("#wiz-cult-chapter-sel").val() || ""
             } : null,
+            // Склонности: их выбирают в этом же окне, и без них цена всего
+            // купленного (и возврат за совпавшую выдачу) считался бы не тем.
+            aptitudes: (() => {
+              const picked = [];
+              html.find(".wiz-apt:checked").each((_, el) => picked.push(el.value ?? el.getAttribute?.("value")));
+              return picked.filter(Boolean);
+            })(),
             startLevel: {
               level:    html.find('input[name="cstart-level"]:checked').val(),
               extraXp:  parseInt(html.find("#cstart-xp").val())  || 0,
@@ -1055,6 +1103,29 @@ export function showCreationWizard(actor, deps) {
           if (k) { delete assign[k]; renderGen(); }
         });
       };
+
+      // ── Склонности: ровно 4 и 4 ──
+      // Лишнюю галочку не даём поставить вовсе, вместо того чтобы ругаться
+      // после: выбор из десятка фишек и так требует внимания.
+      const aptState = () => {
+        const picked = {};
+        for (const [group, want] of Object.entries(APT_PICK)) {
+          const boxes = html.find(`.wiz-apt[data-group="${group}"]`).toArray();
+          const on = boxes.filter(b => b.checked).length;
+          html.find(`.apt-count[data-for="${group}"]`).text(`${on} / ${want}`)
+            .toggleClass("apt-count-full", on === want);
+          for (const b of boxes) b.disabled = !b.checked && on >= want;
+          picked[group] = on;
+        }
+        const ready = Object.entries(APT_PICK).every(([g, n]) => picked[g] === n);
+        html.find("#wiz-apt-warn").text(ready ? "" : "Выберите Склонности — без них не посчитать ни цены, ни возвраты.");
+        // «Создать» ждёт полного выбора: возврат за совпавшую выдачу считается
+        // по Склонностям, и посчитанный до их выбора оказался бы не тем.
+        html.closest(".app").find("button.dialog-button.apply").prop("disabled", !ready);
+        return ready;
+      };
+      html.find(".wiz-apt").on("change", aptState);
+      aptState();
 
       html.find("#wiz-race").on("change", rebuild);
       html.find("#wiz-subrace, #wiz-arch, #wiz-ynnari-past, #wiz-harlequin-past").on("change", () => {

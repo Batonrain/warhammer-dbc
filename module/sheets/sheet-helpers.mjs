@@ -769,6 +769,16 @@ export function buildGetData(actor) {
   // объект (там же Фактор Прибыли), и записанный в него массив схема молча
   // отбрасывала, то есть выбор не доживал до перерисовки листа.
   const aspirRaw = Array.isArray(system.aspirations?.slots) ? system.aspirations.slots : [];
+  // Журнал опыта: свежие записи сверху — интересна последняя выдача, а не
+  // первая. Дата короткая: год у одного персонажа всё равно один.
+  context.xpLog = [...(Array.isArray(system.experience?.log) ? system.experience.log : [])]
+    .sort((a, b) => (b?.at || 0) - (a?.at || 0))
+    .map(e => ({
+      amount: Number(e?.amount) || 0,
+      reason: e?.kind === "refund" ? `Возврат за ${e?.reason || "—"}` : (e?.reason || "—"),
+      when: e?.at ? new Date(e.at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""
+    }));
+
   context.aspirationSlots = ASPIRATION_TABLES.map((t, idx) => {
     const a = aspirRaw[idx];
     const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));

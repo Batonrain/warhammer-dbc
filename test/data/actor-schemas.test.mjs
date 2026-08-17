@@ -90,6 +90,9 @@ const DEVIATIONS = {
     "aspirations.slots": [],
     // Отношения (вкладка СОЦИУМ): к кому этот актор как относится.
     relations: [],
+    // Журнал опыта: откуда взялся опыт помимо ручной правки «Всего». Первым
+    // его наполняет возврат за совпавшую выдачу Навыка или Таланта.
+    "experience.log": [],
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

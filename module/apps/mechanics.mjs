@@ -145,7 +145,7 @@
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF }      from "../constants/skills.mjs";
 import { skillGrantOutcome, findSameTalent } from "../rules/duplicate-grants.mjs";
-import { refundXP, skillStepCost, talentCost, skillCapReason, talentReason }
+import { refundXP, skillStepsCost, talentCost, skillReason, talentReason }
   from "./duplicate-refund.mjs";
 import { MINION_TYPES, minionsOf, loyaltyAfterChange } from "./minions.mjs";
 import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics.mjs";
@@ -968,14 +968,15 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     if (idx >= 0) {
       // Тот же групповой Навык из второго источника: ступень выше, а на
       // потолке — возврат опыта (rules/duplicate-grants.mjs).
-      const out = skillGrantOutcome(arr[idx].grantedRank || "untrained", entry.rank);
-      arr[idx].rank        = higherRank(arr[idx].rank || "untrained", out.rank);
-      arr[idx].grantedRank = out.rank;
-      if (out.refundStep !== null) {
+      const prev = arr[idx].rank || "untrained";
+      const out  = skillGrantOutcome(prev, entry.rank);
+      arr[idx].rank        = out.rank;
+      arr[idx].grantedRank = higherRank(arr[idx].grantedRank || "untrained", out.rank);
+      if (out.refundSteps.length) {
         await refundXP(actor,
-          skillStepCost(actor, entry.skillKey, out.refundStep, { group: true }),
-          skillCapReason(`${GROUP_SKILLS_DEF[entry.skillKey]?.label || entry.skillKey}`
-            + ` (${arr[idx].specialty || arr[idx].specKey || "?"})`, out.rank));
+          skillStepsCost(actor, entry.skillKey, out.refundSteps, { group: true }),
+          skillReason(`${GROUP_SKILLS_DEF[entry.skillKey]?.label || entry.skillKey}`
+            + ` (${arr[idx].specialty || arr[idx].specKey || "?"})`, entry.rank, prev));
       }
     } else {
       arr.push({
@@ -989,13 +990,13 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     const cur = actor.system.skills?.[entry.skillKey] || {};
     // Тот же Навык из второго источника поднимает ступень, а на потолке
     // возвращает цену третьей покупки (rules/duplicate-grants.mjs).
-    const out = skillGrantOutcome(cur.grantedRank || "untrained", entry.rank);
-    const newRank    = higherRank(cur.rank || "untrained", out.rank);
-    const newGranted = out.rank;
-    if (out.refundStep !== null) {
+    const out = skillGrantOutcome(cur.rank || "untrained", entry.rank);
+    const newRank    = out.rank;
+    const newGranted = higherRank(cur.grantedRank || "untrained", out.rank);
+    if (out.refundSteps.length) {
       await refundXP(actor,
-        skillStepCost(actor, entry.skillKey, out.refundStep, { entryChar: entry.char }),
-        skillCapReason(SKILLS_DEF[entry.skillKey]?.label || entry.skillKey, out.rank));
+        skillStepsCost(actor, entry.skillKey, out.refundSteps, { entryChar: entry.char }),
+        skillReason(SKILLS_DEF[entry.skillKey]?.label || entry.skillKey, entry.rank, cur.rank));
     }
     const upd = {
       [`system.skills.${entry.skillKey}.rank`]: newRank,

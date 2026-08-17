@@ -1,15 +1,16 @@
 // test/rules/duplicate-grants.test.mjs
 //
-// Один и тот же Навык или Талант из разных источников при создании персонажа.
+// Один и тот же Навык или Талант из разных источников (Архетип, Раса, Элитный
+// архетип, Субраса, Происхождение, Предсказание, Стремления, Черты, Культура
+// Астартес). Совпадения там обычны, и второй источник пропадал впустую.
 //
-// Раньше второй источник пропадал впустую: Навык брал лучший из двух рангов, а
-// Талант просто не задваивался. По правилу стола совпадение должно что-то
-// давать: Навыку — ступень выше, а на потолке возврат опыта; Таланту — возврат
-// его цены.
+// Правило стола: Навык выше — заменяет; такой же или ниже — не даёт ничего, но
+// возвращает опыт, как если бы игрок качал ЭТОТ уровень с нуля; Талант, который
+// уже есть, возвращает свою цену.
 
 import { describe, it, expect } from "vitest";
 import {
-  RANK_ORDER, SKILL_REFUND_STEP, nextRank, higherOf, rankIndex,
+  RANK_ORDER, rankIndex, nextRank, higherOf, stepsUpTo,
   skillGrantOutcome, isSameTalent, findSameTalent
 } from "../../module/rules/duplicate-grants.mjs";
 
@@ -22,7 +23,6 @@ describe("ступени Навыка", () => {
 
   it("следующая ступень, а на потолке её нет", () => {
     expect(nextRank("knows")).toBe("trained");
-    expect(nextRank("veteran")).toBe("expert");
     expect(nextRank("expert")).toBeNull();
   });
 
@@ -31,39 +31,46 @@ describe("ступени Навыка", () => {
     expect(higherOf("veteran", "knows")).toBe("veteran");
     expect(rankIndex("нет-такого")).toBe(0);
   });
+
+  // Цена считается «с нуля»: за +10 платятся обе ступени — «+0» и «+10».
+  it("ступени до ранга — те, что пришлось бы оплатить с нуля", () => {
+    expect(stepsUpTo("untrained")).toEqual([]);
+    expect(stepsUpTo("knows")).toEqual([0]);
+    expect(stepsUpTo("trained")).toEqual([0, 1]);
+    expect(stepsUpTo("veteran")).toEqual([0, 1, 2]);
+    expect(stepsUpTo("expert")).toEqual([0, 1, 2, 3]);
+  });
 });
 
 describe("Навык из второго источника", () => {
-  it("первая выдача ничего не поднимает — подниматься не с чего", () => {
-    const res = skillGrantOutcome("untrained", "knows");
-    expect(res).toEqual({ rank: "knows", refundStep: null, duplicate: false });
+  it("первая выдача — просто выдача, без возврата", () => {
+    expect(skillGrantOutcome("untrained", "knows"))
+      .toEqual({ rank: "knows", refundSteps: [], duplicate: false });
   });
 
-  it("источник даёт больше — просто берётся больший ранг", () => {
-    const res = skillGrantOutcome("knows", "veteran");
-    expect(res).toEqual({ rank: "veteran", refundStep: null, duplicate: false });
+  it("выше имеющегося — заменяет, персонаж стал лучше", () => {
+    expect(skillGrantOutcome("knows", "veteran"))
+      .toEqual({ rank: "veteran", refundSteps: [], duplicate: false });
   });
 
-  // Главное правило: два источника с одним и тем же Навыком дают ступень.
-  it("совпадение поднимает на ступень", () => {
-    expect(skillGrantOutcome("knows", "knows").rank).toBe("trained");
-    expect(skillGrantOutcome("trained", "knows").rank).toBe("veteran");
-    expect(skillGrantOutcome("veteran", "trained").rank).toBe("expert");
-    expect(skillGrantOutcome("knows", "knows").duplicate).toBe(true);
-  });
-
-  it("на потолке ступени нет — возвращается цена третьей покупки", () => {
-    const res = skillGrantOutcome("expert", "trained");
-    expect(res.rank).toBe("expert");
-    expect(res.refundStep).toBe(SKILL_REFUND_STEP);
+  // Главное правило: совпадение или уровень ниже ранг не трогают, но
+  // возвращают цену выдаваемого уровня, посчитанную с нуля.
+  it("такой же — ранг на месте, возврат за этот уровень", () => {
+    const res = skillGrantOutcome("trained", "trained");
+    expect(res.rank).toBe("trained");
+    expect(res.refundSteps).toEqual([0, 1]);
     expect(res.duplicate).toBe(true);
-    // Третья покупка — ступень +30, индекс 3 в таблице цен Навыков.
-    expect(SKILL_REFUND_STEP).toBe(3);
   });
 
-  it("возврата нет, пока Навык растёт", () => {
-    expect(skillGrantOutcome("knows", "knows").refundStep).toBeNull();
-    expect(skillGrantOutcome("veteran", "veteran").refundStep).toBeNull();
+  it("ниже имеющегося — тоже возврат, и ровно за выдаваемый уровень", () => {
+    const res = skillGrantOutcome("expert", "knows");
+    expect(res.rank).toBe("expert");
+    // Дают «+0» — возвращается цена одной ступени, а не всей прокачки до +30.
+    expect(res.refundSteps).toEqual([0]);
+  });
+
+  it("выдача +20 поверх +30 возвращает три ступени", () => {
+    expect(skillGrantOutcome("expert", "veteran").refundSteps).toEqual([0, 1, 2]);
   });
 });
 
@@ -73,18 +80,13 @@ describe("Талант из второго источника", () => {
     expect(isSameTalent(talent("Дуэлист"), talent("Меткий выстрел"))).toBe(false);
   });
 
-  // Специализация делает Талант другим: обучение болтерам и лазганам — разные
-  // покупки, и совпадением они не считаются.
   it("специализация различает Таланты", () => {
     expect(isSameTalent(talent("Weapon Training", "Bolt"), talent("Weapon Training", "Las"))).toBe(false);
     expect(isSameTalent(talent("Weapon Training", "Bolt"), talent("Weapon Training", "bolt"))).toBe(true);
   });
 
   it("совпадение ищется только среди Талантов", () => {
-    const items = [
-      { type: "trait", name: "Дуэлист", system: {} },
-      talent("Дуэлист")
-    ];
+    const items = [{ type: "trait", name: "Дуэлист", system: {} }, talent("Дуэлист")];
     expect(findSameTalent(items, talent("Дуэлист"))?.type).toBe("talent");
     expect(findSameTalent([], talent("Дуэлист"))).toBeNull();
     expect(findSameTalent(items, talent("Меткий выстрел"))).toBeNull();

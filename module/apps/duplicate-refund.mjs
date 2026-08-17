@@ -2,41 +2,58 @@
 // ════════════════════════════════════════════════════════════════════════════
 //  Возврат опыта за совпавшую выдачу (rules/duplicate-grants.mjs).
 //
-//  Навык, доросший до потолка, и Талант, который уже есть, повторить нечем —
-//  вместо этого источник возвращает опыт: столько, сколько эта покупка стоила
-//  бы самому персонажу. Цена зависит от его Склонностей и культуры легиона,
-//  поэтому считается теми же функциями, что и вкладка «Развитие», — иначе
-//  возврат разошёлся бы с ценой покупки.
+//  Навык, который персонажу уже не поднять, и Талант, который у него уже есть,
+//  повторить нечем — вместо этого источник возвращает опыт: столько, сколько
+//  эта покупка стоила бы ему самому. Цена зависит от Склонностей и культуры
+//  легиона, поэтому считается теми же функциями, что и вкладка «Развитие», —
+//  иначе возврат разошёлся бы с ценой покупки.
 //
-//  Опыт идёт и в полученный, и в свободный: это не возврат потраченного, а
+//  Каждое начисление пишется в журнал опыта (system.experience.log) с пометкой
+//  «Возврат за …»: оно случается само собой, посреди применения расы или
+//  Архетипа, и разобраться потом, откуда взялись лишние 300, было бы негде.
+//  Опыт идёт и в полученный, и в свободный — это не возврат потраченного, а
 //  новый опыт за то, чего персонаж не смог взять.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { charAptitudeSet, skillCostXP, talentCostXP } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
-import { rankLabel } from "../rules/duplicate-grants.mjs";
+import { rankLabel, stepsUpTo } from "../rules/duplicate-grants.mjs";
 
 /** Культура легиона персонажа — она двигает категорию цены (стр. 58, 61). */
 function cultFxOf(actor) {
-  try { return resolveCultureFx(actor.system?.geneSeed?.cultureLegion || "", actor.system?.geneSeed?.cultureChapter || ""); }
-  catch { return null; }
+  try {
+    return resolveCultureFx(actor.system?.geneSeed?.cultureLegion || "",
+                            actor.system?.geneSeed?.cultureChapter || "");
+  } catch { return null; }
 }
 
-/**
- * Цена ступени Навыка для этого персонажа. `step` — индекс покупки (0 = +0,
- * 3 = +30): по нему и считается возврат на потолке.
- */
-export function skillStepCost(actor, skillKey, step, { group = false, entryChar = "" } = {}) {
-  const def = group ? GROUP_SKILLS_DEF[skillKey] : SKILLS_DEF[skillKey];
-  if (!def) return 0;
+/** Категория цены Навыка для этого персонажа: Склонности плюс культура. */
+function skillCat(actor, def, entryChar = "") {
   const apts = charAptitudeSet(actor.system?.aptitudes);
   const itemApts = [entryChar || def.char, def.apt2].filter(Boolean);
   // Общие знания и Ремесло всегда Дружественные — это перебивает и Склонности,
   // и культуру легиона, ровно как на «Развитии».
   const cat = def.alwaysAlly ? "ally"
-    : cultureCat("skill", def.label || skillKey, "", cultFxOf(actor));
-  return skillCostXP(step, itemApts, apts, cat);
+    : cultureCat("skill", def.label || "", "", cultFxOf(actor));
+  return { apts, itemApts, cat };
+}
+
+/**
+ * Цена перечисленных ступеней Навыка для этого персонажа. Ступени приходят
+ * готовыми (rules/duplicate-grants.mjs): за выдаваемый уровень платится так,
+ * будто персонаж качал его с нуля.
+ */
+export function skillStepsCost(actor, skillKey, steps = [], { group = false, entryChar = "" } = {}) {
+  const def = group ? GROUP_SKILLS_DEF[skillKey] : SKILLS_DEF[skillKey];
+  if (!def || !steps.length) return 0;
+  const { apts, itemApts, cat } = skillCat(actor, def, entryChar);
+  return steps.reduce((sum, step) => sum + skillCostXP(step, itemApts, apts, cat), 0);
+}
+
+/** Цена прокачки Навыка с нуля до ранга — для подписи и для прямых вызовов. */
+export function skillRankCost(actor, skillKey, rank, opts = {}) {
+  return skillStepsCost(actor, skillKey, stepsUpTo(rank), opts);
 }
 
 /** Цена Таланта для этого персонажа — столько и возвращается за повтор. */
@@ -49,29 +66,37 @@ export function talentCost(actor, talent) {
 }
 
 /**
- * Зачислить опыт и сказать об этом в чат: возврат случается сам собой, посреди
- * выдачи расы или Архетипа, и без строки в чате игрок его попросту не заметит.
+ * Зачислить опыт, записать в журнал и сказать в чат.
+ *
+ * @param {Actor}  actor
+ * @param {number} amount  сколько начислить
+ * @param {string} reason  за что — идёт в журнал после слов «Возврат за»
  */
 export async function refundXP(actor, amount, reason) {
   const xp = Math.max(0, Math.round(Number(amount) || 0));
   if (!xp) return 0;
 
   const exp = actor.system?.experience ?? {};
+  const log = Array.isArray(exp.log) ? foundry.utils.deepClone(exp.log) : [];
+  log.push({ at: Date.now(), amount: xp, kind: "refund", reason: String(reason || "") });
+
   await actor.update({
     "system.experience.total":   (Number(exp.total) || 0) + xp,
-    "system.experience.current": (Number(exp.current) || 0) + xp
+    "system.experience.current": (Number(exp.current) || 0) + xp,
+    "system.experience.log":     log
   });
 
   await ChatMessage.create({
     speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<p><b>Совпавшая выдача:</b> ${reason} — возвращено <b>${xp}</b> опыта.</p>`
+    content: `<p><b>Возврат за</b> ${reason}: <b>${xp}</b> опыта.</p>`
   });
   return xp;
 }
 
-/** Подпись для чата: «Навык Скрытность уже на +30». */
-export const skillCapReason = (label, rank) => `Навык «${label}» уже ${rankLabel(rank)}`;
+/** Подпись для журнала: «Навык Скрытность (+10) — уже есть +20». */
+export const skillReason = (label, grantedRank, currentRank) =>
+  `Навык «${label}» ${rankLabel(grantedRank)}${currentRank ? ` — уже ${rankLabel(currentRank)}` : ""}`;
 
-/** Подпись для чата: «Талант Дуэлист уже есть». */
+/** Подпись для журнала: «Талант Дуэлист — уже есть». */
 export const talentReason = (name, specialization) =>
-  `Талант «${name}${specialization ? ` (${specialization})` : ""}» уже есть`;
+  `Талант «${name}${specialization ? ` (${specialization})` : ""}» — уже есть`;
