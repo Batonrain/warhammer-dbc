@@ -29,6 +29,8 @@ import { PSY_POWER_TYPES }                           from "../constants/psyker.m
 import { TECH_MIRACLE_TYPES }                        from "../constants/tech.mjs";
 import { SKILLS_DEF }                                from "../constants/skills.mjs";
 import { CHARACTERISTICS, APTITUDES }                from "../constants/characteristics.mjs";
+import { dynamicAptKind }                            from "../constants/advancement.mjs";
+import { masteryTargets }                            from "../rules/mastery-targets.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES,
          buildDisciplineContext }                    from "../constants/disciplines.mjs";
 import { DW_GODS_MAP }                               from "../constants/demon-weapon.mjs";
@@ -1030,6 +1032,9 @@ export class WarhammerItemSheet
       context.aptitudesAvailable = Object.entries(APTITUDES)
         .filter(([k]) => !used.has(k))
         .map(([k, label]) => ({ key: k, label }));
+      // «Мастерство» привязывается к конкретному Навыку (стр. 62) — подсказываем
+      // весь список, включая специализации групп.
+      if (dynamicAptKind(this.item.name) === "skill") context.masteryList = masteryTargets();
     }
 
     // ── Модификация брони ───────────────────────────────────────────────────────

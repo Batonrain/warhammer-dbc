@@ -11,6 +11,7 @@ import { talentCostXP, aptitudeCat, charAptitudeSet, ALIGN_LABEL,
          resolveTalentAptitudes } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
+import { masteryTargets, masteryAptitudes } from "../rules/mastery-targets.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isMinionTalent } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
@@ -110,12 +111,16 @@ export function talentGroupLock(actor, kind, parent, folderName) {
 export function dynamicTalentOptions(actor, doc, kind, charApts) {
   const defs = { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF };
   const tier = doc.system?.tier || 3;
+  // «Мастерство» владеет не абстрактным Навыком, а конкретным: у групп это
+  // специализация («Запретные знания (Демоны)»), и склонности берутся у неё —
+  // у Навигации (Варп) первая склонность Воля, а не Интеллект группы.
   const src  = kind === "char"
     ? Object.entries(CHAR_APTITUDES).map(([k]) => [k, CHARACTERISTICS[k]?.label || k.toUpperCase()])
-    : [...Object.entries(SKILLS_DEF).map(([k, v]) => [k, v.label]),
-       ...Object.entries(GROUP_SKILLS_DEF).map(([k, v]) => [k, `${v.label} (группа)`])];
+    : masteryTargets().map(t => [t.key, t.label]);
   return src.map(([key, label]) => {
-    const apts = resolveTalentAptitudes(doc.name, doc.system?.aptitudes || [], key, defs);
+    const apts = kind === "char"
+      ? resolveTalentAptitudes(doc.name, doc.system?.aptitudes || [], key, defs)
+      : masteryAptitudes(key);
     const cat  = aptitudeCat(charApts, apts);
     return { key, label, apts, cat, cost: talentCostXP(tier, apts, charApts,
       talentCategory(actor, label)) };

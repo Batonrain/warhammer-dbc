@@ -23,6 +23,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { REQ_KINDS, reqDropType, PATRON_OPTIONS } from "../rules/elite-requirements.mjs";
+import { masteryTargets } from "../rules/mastery-targets.mjs";
+import { dynamicAptKind } from "../constants/advancement.mjs";
 import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { specOptions } from "../constants/skill-specializations.mjs";
@@ -84,11 +86,22 @@ function fieldsHtml(e, dis) {
     case "race":    return dropField(e, dis, "Расу");
     case "subrace": return dropField(e, dis, "Субрасу");
     case "trait":   return dropField(e, dis, "Черту");
-    case "talent":
+    case "talent": {
+      // «Мастерство» без привязки — это не Талант, а пустое место: он владеет
+      // конкретным Навыком, и требовать его вообще бессмысленно. Поэтому у него
+      // не счётчик, а обязательный выбор Навыка, тот же список, что при покупке.
+      if (dynamicAptKind(e.name) === "skill") {
+        const opts = masteryTargets()
+          .map(t => opt(t.label, t.label, e.specialization === t.label)).join("");
+        return dropField(e, dis, "Талант")
+          + `<select class="elite-req-field" data-field="specialization" ${dis}>
+               ${opt("", "— выберите Навык —", !e.specialization)}${opts}</select>`;
+      }
       // Счётчик нужен только Таланту без указанной специализации: «Hatred,
       // любые 3» — это три ненависти к разным целям, а не один Талант трижды.
       return dropField(e, dis, "Талант")
         + (e.specialization ? "" : countField(e, dis, "Сколько разных специализаций этого Таланта нужно"));
+    }
 
     case "patron":
       return `<select class="elite-req-field" data-field="key" ${dis}>

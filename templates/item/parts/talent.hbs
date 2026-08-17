@@ -31,8 +31,18 @@
   </div>
   <div class="weapon-row">
     <label class="wr-label">Специализации</label>
+    {{!-- «Мастерство» владеет конкретным Навыком (стр. 62), и от того, каким,
+          зависят его склонности и цена. Поэтому у него подсказка списком — все
+          Навыки и специализации групп; поле осталось текстовым, чтобы своё
+          вписывалось по-прежнему. --}}
     <input type="text" name="system.specialization" value="{{system.specialization}}" class="wr-input-special"
+           {{#if masteryList}}list="mastery-targets"{{/if}}
            placeholder="напр. WS, BS, S… (для специализированных Талантов)"/>
+    {{#if masteryList}}
+    <datalist id="mastery-targets">
+      {{#each masteryList as |t|}}<option value="{{t.label}}"></option>{{/each}}
+    </datalist>
+    {{/if}}
   </div>
 
   <div class="weapon-row">

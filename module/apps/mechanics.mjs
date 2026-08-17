@@ -150,6 +150,8 @@ import { refundXP, skillStepsCost, talentCost, skillReason, talentReason }
 import { MINION_TYPES, minionsOf, loyaltyAfterChange } from "./minions.mjs";
 import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics.mjs";
 import { specOptions, findGroupEntry }        from "../constants/skill-specializations.mjs";
+import { dynamicAptKind }                     from "../constants/advancement.mjs";
+import { masteryTargets, masteryAptitudes, masteryLabel } from "../rules/mastery-targets.mjs";
 import { executeItemCode }                    from "./item-script.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } from "./compendium-browser.mjs";
@@ -927,13 +929,19 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     };
     delete data._id;
 
+    // Привязка «Мастерства» хранится в записи ключом Навыка, а на самом Таланте
+    // живёт подписью («Запретные знания (Демоны)»): по ней его читают на листе и
+    // с ней же сравнивают повторную выдачу. Разводим одно и другое здесь, до
+    // проверки на повтор, — иначе ключ никогда не совпал бы с подписью и второе
+    // «Мастерство» тем же Навыком легло бы вторым предметом.
+    const isMastery = entry.kind === "talent" && dynamicAptKind(data.name) === "skill";
+    const specKey   = entry.specialization || data.system?.specialization || "";
+    const spec      = isMastery && specKey ? (masteryLabel(specKey) || specKey) : specKey;
+
     // Тот же Талант из второго источника повторить нечем — вместо копии
     // возвращается его цена: столько он стоил бы самому персонажу.
     if (entry.kind === "talent") {
-      const same = findSameTalent(actor.items, {
-        name: data.name,
-        system: { specialization: entry.specialization || data.system?.specialization || "" }
-      });
+      const same = findSameTalent(actor.items, { name: data.name, system: { specialization: spec } });
       if (same) {
         await refundXP(actor, talentCost(actor, same),
           talentReason(same.name, same.system?.specialization));
@@ -949,9 +957,16 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     } else {
       data.system = {
         ...(data.system || {}),
-        specialization: entry.specialization || data.system?.specialization || "",
+        specialization: spec,
         granted: true, purchased: false, cost: 0
       };
+      // «Мастерство» наследует склонности того Навыка, которым овладело
+      // (стр. 62). Выдано оно даром, но склонности всё равно нужны: по ним
+      // считается цена следующих покупок, а не его собственная.
+      if (isMastery && specKey) {
+        const apts = masteryAptitudes(specKey);
+        if (apts.length) { data.system.aptitudes = apts; data.system.aptSource = specKey; }
+      }
     }
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id } };
     await actor.createEmbeddedDocuments("Item", [data]);
@@ -1364,7 +1379,17 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       out += `<input type="number" class="grant-entry-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.rating ?? "")}" placeholder="Рейтинг" ${dis}/>`;
     }
     if (ent.kind === "talent" && ent.sourceUuid) {
-      out += `<input type="text" class="grant-entry-spec" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.specialization || "")}" placeholder="Специализация" ${dis}/>`;
+      // «Мастерство» владеет конкретным Навыком (стр. 62), и от того, каким,
+      // зависят его склонности и цена. Поэтому у него не строка, а список: с
+      // произвольной подписью привязку было бы не с чем сверить.
+      if (dynamicAptKind(ent.sourceName) === "skill") {
+        const opts = masteryTargets()
+          .map(t => optHtml(t.key, t.label, ent.specialization === t.key)).join("");
+        out += `<select class="grant-entry-spec" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+          ${optHtml("", "— выберите Навык —", !ent.specialization)}${opts}</select>`;
+      } else {
+        out += `<input type="text" class="grant-entry-spec" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.specialization || "")}" placeholder="Специализация" ${dis}/>`;
+      }
     }
     return out;
   }

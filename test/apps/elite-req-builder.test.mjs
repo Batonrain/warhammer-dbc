@@ -81,6 +81,20 @@ describe("Конструктор требований Элитного архе�
     expect(fixed).not.toContain('data-field="count"');
   });
 
+  // «Мастерство» без привязки — не Талант, а пустое место: он владеет
+  // конкретным Навыком. Требовать его «вообще» бессмысленно, поэтому у него
+  // вместо счётчика обязательный выбор Навыка.
+  it("у Мастерства вместо счётчика выбор Навыка со специализациями", () => {
+    const html = buildEliteReqHtml(item({
+      primary: [], secondary: [{ id: "a", kind: "talent", name: "Mastery / Мастерство" }]
+    }), true);
+
+    expect(html).toContain('data-field="specialization"');
+    expect(html).toContain("Запретные знания (Демоны)");
+    expect(html).toContain("— выберите Навык —");
+    expect(html).not.toContain('data-field="count"');
+  });
+
   it("групповой Навык без специализации тоже получает счётчик", () => {
     const html = buildEliteReqHtml(item({
       primary: [], secondary: [
