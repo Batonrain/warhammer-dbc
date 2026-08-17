@@ -18,7 +18,8 @@
  * `dice` — очередь значений кубов для честного разбора формул (см. Roll ниже).
  * Пока она null, бросок ведёт себя по-старому: любая формула даёт `nextRoll`.
  */
-export const captured = { dialog: null, rolls: [], chat: [], created: [], nextRoll: 50, dice: null,
+export const captured = { dialog: null, rolls: [], chat: [], created: [], updates: [],
+  nextRoll: 50, dice: null,
   confirmAnswer: true, warnings: [], errors: [],
   // Ручки открытого DialogV2 — их ставит заглушка wait (см. ниже).
   press: null, dismiss: null, rerender: null };
@@ -28,6 +29,7 @@ export function resetCaptured() {
   captured.rolls = [];
   captured.chat = [];
   captured.created = [];
+  captured.updates = [];
   captured.nextRoll = 50;
   captured.dice = null;
   captured.confirmAnswer = true;
@@ -387,6 +389,27 @@ const elementJq = el => ({
 globalThis.$ = elementJq;
 
 /**
+ * Подставной документ: данные предмета плюс `update` с путями через точку —
+ * ровно тем видом, каким система пишет в предметы. Правки копятся в
+ * captured.updates и применяются к самому документу, чтобы тест мог прочитать
+ * результат прямо из него.
+ */
+export function stubDocument(data = {}) {
+  const doc = { sheet: { render: () => {} }, ...structuredClone(data) };
+  doc.update = async (changes = {}) => {
+    captured.updates.push(changes);
+    for (const [path, value] of Object.entries(changes)) {
+      const keys = path.split(".");
+      let node = doc;
+      for (const key of keys.slice(0, -1)) node = (node[key] ??= {});
+      node[keys[keys.length - 1]] = value;
+    }
+    return doc;
+  };
+  return doc;
+}
+
+/**
  * Лист без Foundry: объект с прототипом класса и подставным актором. Конструктор
  * ApplicationV1 не вызывается — методам расчёта нужен только this.actor.
  */
@@ -403,7 +426,10 @@ export function sheetOf(cls, { items = [], ...system } = {}) {
       update: async () => {},
       createEmbeddedDocuments: async (type, docs) => {
         captured.created.push(...docs);
-        return docs.map(d => ({ ...d, sheet: { render: () => {} } }));
+        // Выданный предмет умеет и обновляться: бросок субмутации пишет
+        // результат прямо в него сразу после выдачи. Правки ложатся в
+        // captured.updates и в сам документ, чтобы дальше его можно было читать.
+        return docs.map(d => stubDocument(d));
       }
     },
     configurable: true

@@ -1,5 +1,7 @@
 import { armourHistoryContext, rollArmourTable, rollArmourEntry,
          rollArmourZones, setArmourEntry, clearArmourHistory } from "../apps/armour-history.mjs";
+import { submutationContext, rollSubmutation,
+         pickSubmutation, clearSubmutation }                   from "../apps/submutations.mjs";
 import { shipQualityMods, qualityOptionsFor, effectiveWeapon, clampQuality, QUALITY_LABELS }
   from "../constants/ship-quality.mjs";
 import { availableFieldModes, fieldSuitFor } from "../constants/drukhari-armor-fields.mjs";
@@ -234,6 +236,13 @@ function onPaRollEntry() {
     this.element.querySelector(".pa-table-select")?.value || this.item.system.history?.table);
 }
 
+// ── Субмутация (корбук, стр. 440) ──
+function onSubRoll()  { return rollSubmutation(this.item); }
+function onSubClear() { return clearSubmutation(this.item); }
+function onSubPick()  {
+  return pickSubmutation(this.item, this.element.querySelector(".sub-entry-select")?.value);
+}
+
 // ── Правящие действия ──
 
 /** Сборка торпеды из грузов корабля: сколько собрать — в поле рядом с кнопкой. */
@@ -449,6 +458,9 @@ export class WarhammerItemSheet
       paRollEntry: onPaRollEntry,
       paRollZones: onPaRollZones,
       paClear: onPaClear,
+      subRoll: onSubRoll,
+      subPick: onSubPick,
+      subClear: onSubClear,
       // Ниже — то, что в V1 висело после общей проверки isEditable.
       torpedoAssemble: whenEditable(onTorpedoAssemble),
       wpropRemove: whenEditable(onWpropRemove),
@@ -811,6 +823,8 @@ export class WarhammerItemSheet
     context.tab = this.tabGroups?.["item-primary"] ?? WarhammerItemSheet.TABS["item-primary"].initial;
     // Истории силовой брони — только для брони Астартес и при включённом расширении.
     context.armourHistory = armourHistoryContext(this.item);
+    // Субмутации — только у мутаций, у которых таблица есть в тексте (стр. 440).
+    context.submutation   = submutationContext(this.item);
     context.system = this.item.system;
 
     context.system.balanceStr      = String(context.system.balance      ?? "0");

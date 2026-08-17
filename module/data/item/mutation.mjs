@@ -19,7 +19,7 @@ export class MutationData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, ObjectField } = foundry.data.fields;
+    const { StringField, NumberField, ObjectField, SchemaField } = foundry.data.fields;
     return {
       description: new StringField({ initial: "", label: "Описание" }),
       notes:       new StringField({ initial: "", label: "Заметки" }),
@@ -31,7 +31,20 @@ export class MutationData extends foundry.abstract.TypeDataModel {
       // В template.json объявлено не было, но лежит у трёх мутаций пака и
       // читается общим пикером Талантов, Черт и Мутаций — как у Черты.
       requirement: new StringField({ initial: "", label: "Требование" }),
-      effects:     new ObjectField({ initial: emptyEffects, label: "Механика" })
+      effects:     new ObjectField({ initial: emptyEffects, label: "Механика" }),
+      // Выпавшая субмутация (стр. 440). Сама таблица субмутаций лежит в тексте
+      // `benefit` и разбирается rules/submutations.mjs — здесь только результат
+      // броска, чтобы у мутации на листе была ОДНА определённая строка.
+      // Пустое `name` — «не определена».
+      submutation: new SchemaField({
+        name:  new StringField({ initial: "", label: "Субмутация" }),
+        label: new StringField({ initial: "", label: "Строка таблицы" }),
+        text:  new StringField({ initial: "", label: "Описание субмутации" }),
+        god:   new StringField({ initial: "", label: "Цвет Бога" }),
+        roll:  new NumberField({ initial: 0, integer: true, label: "Бросок d10" }),
+        shift: new NumberField({ initial: 0, integer: true, label: "Сдвиг (⅓Inf.b)" }),
+        total: new NumberField({ initial: 0, integer: true, label: "Итог броска" })
+      }, { label: "Субмутация" })
     };
   }
 

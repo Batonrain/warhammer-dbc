@@ -12,6 +12,8 @@
 import { mutationByRoll, giftByRoll, mutationCatalog,
          mutationItemData, GOD_GIFTS } from "../../constants/mutations.mjs";
 import { centerPicker, pickerPos }     from "../picker-ui.mjs";
+import { hasSubmutations }             from "../../rules/submutations.mjs";
+import { rollSubmutation }             from "../../apps/submutations.mjs";
 import { esc } from "../../helpers/utils.mjs";
 
 /**
@@ -48,6 +50,10 @@ export async function rollMutationOrGift(actor) {
       <div class="atk-dlg-row" id="mg-which-row"><label>Использовать:</label>
         <select id="mg-which"><option value="1">Первый (${roll1.total})</option><option value="2">Второй (${roll2.total})</option></select></div>` : ""}
       <div class="atk-dlg-row">
+        <label title="Мутация от Порчи за Провал не даёт ни сдвига, ни второго броска Неделимым">От Порчи за Провал:</label>
+        <input type="checkbox" id="mg-fail"/>
+      </div>
+      <div class="atk-dlg-row">
         <label>Сдвиг (±Inf.b ${infB}):</label>
         <input type="number" id="mg-shift" value="0" min="-${infB}" max="${infB}"
                title="Только если результат НЕ от Порчи за Провал"/>
@@ -62,8 +68,11 @@ export async function rollMutationOrGift(actor) {
       ok: { label: "Получить", callback: async (html) => {
         const type  = String(html.find("#mg-type").val() || "mutation");
         const god   = String(html.find("#mg-god").val() || defaultGod);
-        const base  = (roll2 && type === "mutation" && html.find("#mg-which").val() === "2") ? roll2.total : roll1.total;
-        const shift = Math.max(-infB, Math.min(infB, parseInt(html.find("#mg-shift").val()) || 0));
+        // Порча за Провал закрывает и сдвиг, и выбор из двух бросков (стр. 440).
+        const failed = html.find("#mg-fail").is(":checked");
+        const base  = (roll2 && !failed && type === "mutation" && html.find("#mg-which").val() === "2") ? roll2.total : roll1.total;
+        const shift = failed ? 0
+          : Math.max(-infB, Math.min(infB, parseInt(html.find("#mg-shift").val()) || 0));
         const val   = base + shift;
         const name  = resultName(type, god, val);
         const data  = foundry.utils.deepClone(mutationItemData(name, type === "gift" ? god : ""));
@@ -76,8 +85,12 @@ export async function rollMutationOrGift(actor) {
             ${shift ? `<span class="roll-stat"><label>Сдвиг</label><b>${shift > 0 ? "+" : ""}${shift}</b></span>` : ""}
             <span class="roll-stat"><label>Итог</label><b>${val}</b></span></div>
             <div class="roll-outcome"><b>${name}</b></div></div>`,
-          rolls: [roll1, ...(roll2 ? [roll2] : [])]
+          rolls: [roll1, ...(roll2 && !failed ? [roll2] : [])]
         });
+        // Субмутация бросается сразу за мутацией — она часть той же выдачи
+        // (стр. 440), и её сдвиг тоже закрыт Порчей за Провал.
+        if (item && hasSubmutations(item.system?.benefit || ""))
+          await rollSubmutation(item, { actor, fromFailure: failed });
         item?.sheet?.render(true);
       }},
       cancel: { label: "Отмена" }
@@ -86,18 +99,21 @@ export async function rollMutationOrGift(actor) {
     render: html => {
       const syncVisibility = () => {
         const type = html.find("#mg-type").val();
+        const failed = html.find("#mg-fail").is(":checked");
         html.find("#mg-god-row").toggle(type === "gift");
-        html.find("#mg-which-row").toggle(!!roll2 && type === "mutation");
+        html.find("#mg-which-row").toggle(!!roll2 && type === "mutation" && !failed);
       };
       const upd = () => {
         const type  = html.find("#mg-type").val();
         const god   = html.find("#mg-god").val();
-        const base  = (roll2 && type === "mutation" && html.find("#mg-which").val() === "2") ? roll2.total : roll1.total;
-        const shift = Math.max(-infB, Math.min(infB, parseInt(html.find("#mg-shift").val()) || 0));
+        const failed = html.find("#mg-fail").is(":checked");
+        const base  = (roll2 && !failed && type === "mutation" && html.find("#mg-which").val() === "2") ? roll2.total : roll1.total;
+        const shift = failed ? 0
+          : Math.max(-infB, Math.min(infB, parseInt(html.find("#mg-shift").val()) || 0));
         html.find("#mg-result").text(resultName(type, god, base + shift));
       };
       syncVisibility();
-      html.find("#mg-type").on("change", () => { syncVisibility(); upd(); });
+      html.find("#mg-type, #mg-fail").on("change", () => { syncVisibility(); upd(); });
       html.find("#mg-god, #mg-shift, #mg-which").on("input change", upd);
     }
   }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 420 }).render(true);
@@ -148,8 +164,11 @@ export async function openMutationPicker(actor) {
         const { name, god } = ev.currentTarget.dataset;
         const data = foundry.utils.deepClone(mutationItemData(name, god));
         delete data.folder; delete data.folderParent;
-        await actor.createEmbeddedDocuments("Item", [data]);
+        const [item] = await actor.createEmbeddedDocuments("Item", [data]);
         ui.notifications.info(`Добавлено: ${name}`);
+        // Мутация с субмутациями сразу спрашивает свою строку — как и при броске.
+        if (item && hasSubmutations(item.system?.benefit || ""))
+          await rollSubmutation(item, { actor });
         $(ev.currentTarget).closest(".pick-row").addClass("just-added");
       });
       const toggle = (r) => {

@@ -37,3 +37,22 @@ export const CHAOS_PATRONS = [
 export const CHAOS_PATRONS_MAP = Object.fromEntries(CHAOS_PATRONS.map(p => [p.key, p]));
 
 export function chaosPatronMeta(key) { return CHAOS_PATRONS_MAP[key] || CHAOS_PATRONS_MAP.undivided; }
+
+/**
+ * Извечные соперники: Боги враждебны ПАРАМИ и взаимно — Кхорн ↔ Слаанеш,
+ * Тзинч ↔ Нургл. Остальные сочетания враждебными не считаются (Кхорн и Нургл —
+ * не пара), Неделимый не враждебен никому.
+ *
+ * Отношение спрашивают правила, где книга говорит «враждебный Бог»: цвет чужой
+ * субмутации (стр. 440), резонанс Демонического Оружия (стр. 431).
+ */
+export const OPPOSED_GODS = {
+  khorne: "slaanesh", slaanesh: "khorne",
+  tzeentch: "nurgle", nurgle: "tzeentch"
+};
+
+/** Извечный соперник Бога (или "" — у Неделимого и незнакомых ключей). */
+export function opposedGod(key) { return OPPOSED_GODS[key] || ""; }
+
+/** Враждебны ли два Бога друг другу. */
+export function areGodsHostile(a, b) { return !!a && !!b && OPPOSED_GODS[a] === b; }

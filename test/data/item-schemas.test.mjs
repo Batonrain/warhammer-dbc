@@ -271,7 +271,10 @@ const TYPES = {
       effects: {
         charBonuses: [], charValueBonuses: [], armourAll: 0,
         fearRating: 0, sizeMod: 0, initMod: 0, speedMod: 0
-      }
+      },
+      // Выпавшая субмутация (стр. 440): в template.json поля не было, в паке
+      // его тоже нет — оно заполняется броском уже на листе персонажа.
+      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0 }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },

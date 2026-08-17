@@ -830,12 +830,19 @@ export function buildGetData(actor) {
   // Один общий пул на листе (не два раздельных подраздела) — см. mutgift-*.
   const GOD_LABEL = { khorne: "Кхорн", slaanesh: "Слаанеш", nurgle: "Нургл", tzeentch: "Тзинч" };
   const allMut = allItems.filter(i => i.type === "mutation");
-  context.mutationsAndGifts = allMut.map(i => ({
-    id:       i.id,
-    name:     i.name,
-    godLabel: i.system.god ? (GOD_LABEL[i.system.god] || i.system.god) : "",
-    benefit:  i.system.benefit || i.system.description || ""
-  }));
+  context.mutationsAndGifts = allMut.map(i => {
+    // Выпавшая субмутация (стр. 440) показывается прямо в строке: у мутации с
+    // таблицей значение имеет именно она, а не общее описание.
+    const sub = i.system.submutation || {};
+    return {
+      id:       i.id,
+      name:     i.name,
+      subName:  sub.name || "",
+      godLabel: i.system.god ? (GOD_LABEL[i.system.god] || i.system.god) : "",
+      benefit:  i.system.benefit || i.system.description || "",
+      subText:  sub.name ? `${sub.label} — ${sub.name}: ${sub.text}` : ""
+    };
+  });
 
   context.abilityPsychicPowers = allItems.filter(i => i.type === "psychicPower").map(i => ({
     id:   i.id,
