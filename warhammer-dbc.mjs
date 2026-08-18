@@ -587,6 +587,24 @@ Hooks.once("ready", () => {
         if (!(item instanceof Item) || !Array.isArray(data.groups)) return;
         await saveItemMechanics(item, data.groups);
       }
+      else if (data.action === "itemUpdate") {
+        // Общий релей (relayItemUpdate, module/helpers/utils.mjs) для блоков листа
+        // предмета, которые обязаны работать не только у владельца — напр.
+        // «Особенность комплекта» силовой брони (module/apps/armour-history.mjs).
+        // В отличие от itemMechanics (пишет только через доверенный
+        // saveItemMechanics), здесь клиент присылает произвольный object для
+        // item.update() — без сужения путей любой подключённый клиент мог бы
+        // socket-сообщением переписать ЛЮБОЕ поле ЛЮБОГО предмета в игре, а не
+        // только «Особенность брони». Сейчас все настоящие вызыватели пишут
+        // только под system.history.* (см. armour-history.mjs, item-sheet.mjs) —
+        // разрешаем ровно это дерево, остальное отклоняем.
+        const item = await fromUuid(data.uuid).catch(() => null);
+        if (!(item instanceof Item) || !data.data || typeof data.data !== "object") return;
+        const allowed = Object.keys(data.data).every(k => k === "system.history"
+          || k.startsWith("system.history."));
+        if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*", data.data);
+        await item.update(data.data);
+      }
       else if (data.action === "startCharacter") {
         // Игрок нажал «Начать создание персонажа», а права заводить Актёров у
         // его роли нет. Лист создаём мы и сразу отдаём его во владение

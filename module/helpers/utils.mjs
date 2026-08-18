@@ -21,6 +21,27 @@ export const esc = v => foundry.utils.escapeHTML(v ?? "");
 export const on = (root, selector, event, handler) =>
   root.querySelectorAll(selector).forEach(el => el.addEventListener(event, handler));
 
+/**
+ * Обновить документ предмета, даже если он не наш. Тот же приём, что у
+ * Конструктора Механики (saveItemMechanics в apps/mechanics.mjs): предмет,
+ * которым сейчас пользуются за столом (снаряжение из мира/компендиума,
+ * особенности комплекта силовой брони), «своим» для игрока не бывает — по
+ * владению доступ давать нечему. Владелец пишет сам; иначе правка уходит
+ * активному Мастеру системным сокетом (module/warhammer-dbc.mjs ловит
+ * action:"itemUpdate") — без этого запись молча падала бы на проверке прав
+ * Foundry, а не превращалась в понятную ошибку.
+ */
+export async function relayItemUpdate(item, data) {
+  if (!item) return;
+  if (item.isOwner) return item.update(data);
+  if (!game.users?.activeGM) {
+    return ui.notifications?.warn(
+      "Правка не сохранена: предмет не ваш, а Мастера нет в игре — записать её некому.");
+  }
+  game.socket?.emit("system.warhammer-dbc",
+    { action: "itemUpdate", uuid: item.uuid, data, userId: game.user.id });
+}
+
 export function _getAmmoSpent(weapon, rofMode) {
   const sys = weapon.system;
   switch (rofMode) {

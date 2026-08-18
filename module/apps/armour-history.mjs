@@ -8,7 +8,7 @@
 import { PA_TABLES, PA_TABLE_ORDER, PA_TABLE_PICK, PA_SHIFT_RULE, PA_ZONES,
          entryByRoll, rangeLabel, shiftOptions } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
-import { esc } from "../helpers/utils.mjs";
+import { esc, relayItemUpdate } from "../helpers/utils.mjs";
 
 /** Истории есть только у силовой брони Астартес. */
 export function supportsHistory(item) {
@@ -57,12 +57,12 @@ export async function setArmourEntry(item, table, name, { second = false, roll =
     [`${path}.name`]: def.name, [`${path}.desc`]: def.desc, [`${path}.effect`]: def.effect
   };
   if (!second) data["system.history.choice"] = "";
-  await item.update(data);
+  await relayItemUpdate(item, data);
 }
 
 /** Снять особенность (и вторую, если была). */
 export async function clearArmourHistory(item) {
-  await item.update({
+  await relayItemUpdate(item, {
     "system.history.table": "", "system.history.key": "", "system.history.roll": 0,
     "system.history.name": "", "system.history.desc": "", "system.history.effect": "",
     "system.history.choice": "", "system.history.zones": {},
@@ -104,7 +104,7 @@ export async function rollArmourTable(item) {
     msg += `<div class="pa-chat-note">Выберите любую таблицу вручную на листе брони.</div>`;
   }
   else if (pick) {
-    await item.update({ "system.history.table": pick.table });
+    await relayItemUpdate(item, { "system.history.table": pick.table });
     msg += `<div class="pa-chat-note">Теперь бросьте к10 по этой таблице.</div>`;
   }
 
@@ -183,7 +183,7 @@ export async function rollArmourZones(item) {
     zones[z.key] = v;
     lines.push(`${z.label}: к10 = ${r.total} → ${v > 0 ? "+1" : (v < 0 ? "−1" : "без изменений")}`);
   }
-  await item.update({ "system.history.zones": zones });
+  await relayItemUpdate(item, { "system.history.zones": zones });
   await ChatMessage.create(ChatMessage.applyRollMode({
     content: `<div class="wh-roll-result pa-chat">
       <div class="roll-header">Уничтоженный и восстановленный — ${esc(item.name)}</div>

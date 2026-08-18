@@ -60,6 +60,7 @@ import { factionRosterContext, originTreeContext,
                                                      from "../apps/faction-roster.mjs";
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
 import { onTab, whenEditable, linesToArray }         from "./v2-helpers.mjs";
+import { relayItemUpdate }                           from "../helpers/utils.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -1374,15 +1375,41 @@ export class WarhammerItemSheet
    * уходит Мастеру (saveItemMechanics). Полей формы там нет — у элементов
    * Механики нет name, в сабмит они не попадают и правятся своими
    * обработчиками, — поэтому вернуть их в строй безопасно.
+   *
+   * «Особенность комплекта» силовой брони (.pa-history, вкладка «ИНФО») живёт
+   * по тому же правилу «не своим для игрока не бывает» (module/apps/
+   * armour-history.mjs, relayItemUpdate) — без этой строчки её кнопки
+   * оставались бы серыми у любого, кто не владелец предмета, хотя запись и
+   * так уходит через Мастера. У её input'а тоже нет name (armor.hbs) — по
+   * той же причине, что у Механики.
    * @override
    */
   _toggleDisabled(disabled) {
     super._toggleDisabled?.(disabled);
     if (!disabled || this.item.compendium?.locked) return;
-    this.element?.querySelectorAll('[data-tab="mechanics"] input, [data-tab="mechanics"] select,'
-      + ' [data-tab="mechanics"] textarea, [data-tab="mechanics"] button')
+    this.element?.querySelectorAll(
+      '[data-tab="mechanics"] input, [data-tab="mechanics"] select,'
+      + ' [data-tab="mechanics"] textarea, [data-tab="mechanics"] button,'
+      + ' .pa-history input, .pa-history select, .pa-history button')
       .forEach(node => { node.disabled = false; });
   }
+
+  /**
+   * Перетаскивание Черты/Таланта/Свойства оружия на запись «Механики»
+   * (.grant-drop-zone/.wprop-drop-zone) должно работать даже у того, кто
+   * предметом не владеет — тот же принцип, что и у _toggleDisabled выше, и
+   * тот же приём, что в ship-sheet.mjs/squad-sheet.mjs/vehicle-sheet.mjs/
+   * formation-sheet.mjs: штатный DragDrop Foundry сам вешает обработчик
+   * 'drop' по _canDragDrop(), а не по отдельным зонам, и без переопределения
+   * гасится вместе со всей формой (this.isEditable=false) — драг-н-дроп молча
+   * переставал работать, оставляя ТОЛЬКО свободный код («Код») как способ
+   * задать что-либо предмету. Разрешение по-прежнему проверяет каждый
+   * обработчик отдельно: _onDropReqItem/_onDropTalentTarget — только ГМ,
+   * _onDropActiveEffect — только owner, _onDropGrantItem/_onDropWeaponPropItem
+   * — через relay (saveItemMechanics), поэтому здесь достаточно всегда true.
+   * @override
+   */
+  _canDragDrop(_selector) { return true; }
 
   _onRender(context, options) {
     super._onRender?.(context, options);
@@ -2012,12 +2039,21 @@ export class WarhammerItemSheet
     });
 
     // ── Особенность комплекта силовой брони ──
+    // relayItemUpdate, а не this.item.update напрямую: комплект силовой брони
+    // так же часто «не свой» для игрока, как и запись Механики (лежит в мире/
+    // компендиуме, пока его не выдали) — без релея правка тихо отклонялась бы
+    // проверкой прав Foundry. Тот же приём — у input'а .pa-hist-choice ниже.
     on(".pa-table-select", "change", ev =>
-      this.item.update({ "system.history.table": ev.currentTarget.value }));
+      relayItemUpdate(this.item, { "system.history.table": ev.currentTarget.value }));
     on(".pa-entry-select", "change", ev => {
       const table = el.querySelector(".pa-table-select")?.value || this.item.system.history?.table;
       if (ev.currentTarget.value) setArmourEntry(this.item, table, ev.currentTarget.value);
     });
+    // Поле «уточнение» у особенностей с hasChoice — то же самое, почему без
+    // name (см. .pa-hist-choice в armor.hbs): нативный сабмит формы пишет
+    // документ владельца напрямую, мимо relayItemUpdate.
+    on(".pa-hist-choice-input", "change", ev =>
+      relayItemUpdate(this.item, { "system.history.choice": ev.currentTarget.value }));
 
     // Качество узла: галочки модификаторов. Лишние сверх лимита сбрасываем —
     // иначе тихо применились бы только первые, а вид говорил бы обратное.
