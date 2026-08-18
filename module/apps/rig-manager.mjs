@@ -6,9 +6,7 @@
 //  хранится на акторе во флаге warhammer-dbc.stowage = { itemId: location }.
 // ════════════════════════════════════════════════════════════════════════
 
-import { STOWABLE_TYPES, itemSizeStr, fits, expandSlots, isContainerRig, RIG_COMFORT_HINT,
-         RIG_VARIANT_FLAG } from "../constants/rig.mjs";
-import { ITEM_TYPES } from "../constants/items.mjs";
+import { RIG_VARIANT_FLAG, rigManagerData } from "../constants/rig.mjs";
 
 const { Application } = foundry.appv1.api;
 const NS = "warhammer-dbc";
@@ -69,73 +67,8 @@ export class RigManager extends Application {
   }
 
   getData() {
-    const actor = this.actor;
-    if (!actor) return { missing: true };
-    const stow = this.actor.getFlag(NS, FLAG) || {};
-    const items = actor.items;
-
-    const stowable = items.filter(i => STOWABLE_TYPES.includes(i.type));
-    const rigs = items.filter(i => i.type === "gear" && i.system?.isRig);
-
-    // Занятые локации (для списка «не размещено»).
-    const locOf = (id) => stow[id];
-    const validLocs = new Set();
-
-    const wt = (i) => Number(i.system?.weight) || 0;
-    const wsum = (arr) => Math.round(arr.reduce((a, i) => a + wt(i), 0) * 100) / 100;
-
-    const rigViews = rigs.map(rig => {
-      const comfort = rig.system?.rig?.comfort || "normal";
-      const comfortHint = RIG_COMFORT_HINT[comfort] || "";
-      const canQuickDraw = comfort === "normal";        // неудобные не дают Quick Draw
-      const backSlot = !!rig.system?.rig?.backSlot;
-      if (isContainerRig(rig)) {
-        const loc = `bp:${rig.id}`;
-        const inBp = stowable.filter(i => locOf(i.id) === loc);
-        validLocs.add(loc);
-        const contents = inBp.map(i => ({ id: i.id, name: i.name, size: itemSizeStr(i), weight: wt(i) }));
-        const addable = stowable
-          .filter(i => i.id !== rig.id && !_isValidLoc(locOf(i.id), rigs))
-          .map(i => ({ id: i.id, name: i.name, size: itemSizeStr(i) }));
-        return { id: rig.id, name: rig.name, container: true, comfortHint, canQuickDraw, backSlot,
-          contents, addable, count: contents.length, weight: wsum(inBp) };
-      }
-      const inRig = [];
-      const slots = expandSlots(rig).map(sl => {
-        validLocs.add(sl.id);
-        const occId = Object.keys(stow).find(iid => stow[iid] === sl.id);
-        const occ = occId ? items.get(occId) : null;
-        if (occ) inRig.push(occ);
-        // Свободные предметы, что влезают в слот. Считаются и для занятого
-        // слота: заменить лежащее должно быть можно одним выбором, не убирая
-        // предмет заранее.
-        const opts = stowable
-          .filter(i => i.id !== rig.id && i.id !== occ?.id
-                    && !_isValidLoc(locOf(i.id), rigs) && fits(itemSizeStr(i), sl.size))
-          .map(i => ({ id: i.id, name: i.name, size: itemSizeStr(i) }));
-        return { id: sl.id, size: sl.size, note: sl.note, isMag: sl.isMag,
-          awkward: sl.awkward, variants: sl.variants,
-          item: occ ? { id: occ.id, name: occ.name, weight: wt(occ) } : null, opts };
-      });
-      return { id: rig.id, name: rig.name, container: false, comfortHint, canQuickDraw, backSlot,
-        slots, count: inRig.length, total: slots.length, weight: wsum(inRig),
-        isMagAny: slots.some(s => s.isMag) };
-    });
-
-    // Не размещено: стоуимые предметы без валидной локации.
-    const unassigned = stowable
-      .filter(i => !_isValidLoc(locOf(i.id), rigs))
-      .map(i => ({ id: i.id, name: i.name, type: ITEM_TYPES[i.type] || i.type, size: itemSizeStr(i), weight: wt(i) }))
-      .sort((a, b) => a.name.localeCompare(b.name, "ru"));
-
-    // Спину можно занять только одной разгрузкой — предупреждаем при конфликте.
-    const backCount = rigs.filter(r => r.system?.rig?.backSlot).length;
-
-    return {
-      actorName: actor.name, hasRigs: rigViews.length > 0, rigs: rigViews, unassigned,
-      backConflict: backCount > 1,
-      unassignedWeight: wsum(stowable.filter(i => !_isValidLoc(locOf(i.id), rigs)))
-    };
+    if (!this.actor) return { missing: true };
+    return rigManagerData(this.actor);
   }
 
   activateListeners(html) {
@@ -159,14 +92,6 @@ export class RigManager extends Application {
     // Достать (сделать не размещённым)
     el.querySelectorAll("[data-item-clear]").forEach(b => b.addEventListener("click", () => this._unassign(b.dataset.itemClear)));
   }
-}
-
-// Валидна ли локация (слот существующей разгрузки или её рюкзак).
-function _isValidLoc(loc, rigs) {
-  if (!loc) return false;
-  if (loc.startsWith("bp:")) return rigs.some(r => r.id === loc.slice(3));
-  const rigId = loc.split(":")[0];
-  return rigs.some(r => r.id === rigId);
 }
 
 export function openRigManager(actor) {
