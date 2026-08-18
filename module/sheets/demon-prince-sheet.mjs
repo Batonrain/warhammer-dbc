@@ -6,7 +6,7 @@
 
 import { homeworldSheetContext } from "../apps/homeworlds.mjs";
 import { divinationSheetContext } from "../apps/divinations.mjs";
-import { WarhammerCharacterSheet } from "./actor-sheet.mjs";
+import { WarhammerCharacterSheet, onSkillRoll } from "./actor-sheet.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { onConvertToHorde } from "../apps/horde-convert.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
@@ -79,7 +79,10 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       // Карта действий у каждого класса своя — «+» Миньонов объявляем и здесь.
       minionCreate:    whenEditable(onMinionCreate),
       dpAscend:        whenEditable(onAscend),
-      dpUnascend:      whenEditable(onUnascend)
+      dpUnascend:      whenEditable(onUnascend),
+      // Вкладка СОЦИУМ — общая часть (tab-social.hbs), клик по названию Навыка
+      // требует того же обработчика, что и на вкладке ПОКАЗАТЕЛИ.
+      skillRoll:       whenEditable(onSkillRoll)
     }
   };
 

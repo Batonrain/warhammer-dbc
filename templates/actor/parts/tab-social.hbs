@@ -33,7 +33,7 @@
     <div class="social-skills">
       {{#each socialSkills as |sk|}}
       <div class="social-skill">
-        <a class="social-skill-name skill-roll" data-skill="{{sk.key}}" title="Бросок: {{sk.label}}">{{sk.label}}</a>
+        <a class="social-skill-name skill-roll" data-action="skillRoll" data-skill="{{sk.key}}" title="Бросок: {{sk.label}}">{{sk.label}}</a>
         <span class="social-skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span>
       </div>
       {{/each}}

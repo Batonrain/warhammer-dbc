@@ -436,7 +436,10 @@ function onCharRoll(event, target) {
   return this._rollCharacteristic(charLabel(key, this.actor.system.alignment), meta.abbr, total, key);
 }
 
-function onSkillRoll(event, target) {
+// Экспортирован: вкладка СОЦИУМ подключается частью и к Демону, и к
+// Демону-Принцу (tab-social.hbs), а карта действий ApplicationV2 у каждого
+// класса своя — обработчику нужно быть доступным для их собственных actions.
+export function onSkillRoll(event, target) {
   if (target.dataset.group === "true") {
     const groupKey = target.dataset.groupkey;
     const idx      = parseInt(target.dataset.index);
