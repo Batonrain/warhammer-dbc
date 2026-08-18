@@ -1,7 +1,7 @@
 {
   "name": "Кастраферум",
   "type": "vehicle",
-  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-machines/kastraferum.webp",
   "folder": "Gu8qxZ5ZQE1L2VKE",
   "system": {
     "vehicleClass": "Дредноут",

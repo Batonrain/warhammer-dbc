@@ -1,7 +1,7 @@
 {
   "name": "Адский Змий",
   "type": "vehicle",
-  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-machines/adskiy-zmiy.webp",
   "folder": "aoMAoicVfGoTjds8",
   "system": {
     "vehicleClass": "Адский Змий",
