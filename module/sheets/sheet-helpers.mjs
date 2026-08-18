@@ -965,6 +965,22 @@ export function buildGetData(actor) {
   // Применены ли уже расовые Черты (для подсказки кнопки)
   context.hasGeneSeedTrait = allItems.some(i => i.type === "trait" && /Gene-Seed|Геносемя/i.test(i.name));
 
+  // Гайд по имплантам Геносемени на вкладке СПОСОБНОСТИ — на него ссылается
+  // описание Черты «Геносемя» ("см. гайд на вкладке СПОСОБНОСТИ"). Органы
+  // выдаёт Конструктор той Черты обычными предметами-имплантами категории
+  // "astartes" (module/apps/mechanics.mjs, kind:"equipment"), поэтому гайд не
+  // хранит свою копию текста, а читает то же поле system.effect, что и карточка
+  // импланта на вкладке СНАРЯЖЕНИЕ — расхождения быть не может по построению.
+  context.geneSeedOrgans = allItems
+    .filter(i => i.type === "implant" && i.system.category === "astartes")
+    .map(i => ({
+      id: i.id, name: i.name,
+      effect:      i.system.effect || "",
+      description: i.system.description || "",
+      installed:   i.system.installed || ""
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
   // Имя источника Геносемя/Культуры для шапки — ЧИСТОЕ имя легиона/варбанды
   // (без номера легиона, который несёт resolvedCulture.name/legion-info-title
   // на «Заметках» — там уместен, в компактной шапке нет).
