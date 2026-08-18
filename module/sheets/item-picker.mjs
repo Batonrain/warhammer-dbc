@@ -11,6 +11,7 @@ import { talentCostXP, aptitudeCat, charAptitudeSet, ALIGN_LABEL,
          resolveTalentAptitudes } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
+import { createOrRankTalent } from "../rules/duplicate-grants.mjs";
 import { DREADNOUGHT_PILOT_FLAG } from "../rules/dreadnought.mjs";
 import { masteryTargets, masteryAptitudes } from "../rules/mastery-targets.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
@@ -360,9 +361,13 @@ export async function openItemPicker(actor, kind) {
           }
           obj.system.purchased = true;
         }
-        await actor.createEmbeddedDocuments("Item", [obj]);
+        // Многократный Талант (system.hasRating — Enemy, стр. 62, и подобные),
+        // уже лежащий на листе, не задваивается второй копией: ранг существующего
+        // предмета поднимается на 1. Остальные Таланты, Черты и Мутации — как раньше.
+        const { ranked, rating } = await createOrRankTalent(actor, obj);
+        const verb = ranked ? `Ранг поднят до ${rating}` : "Куплено";
         ui.notifications.info(kind === "talent" && obj.system?.cost
-          ? `Куплено: ${d.name} (−${obj.system.cost} XP)` : `Добавлено: ${d.name}`);
+          ? `${verb}: ${d.name} (−${obj.system.cost} XP)` : `${ranked ? `Ранг поднят до ${rating}` : "Добавлено"}: ${d.name}`);
         $(ev.currentTarget).closest(".pick-row").addClass("just-added");
       });
       const toggle = row => {

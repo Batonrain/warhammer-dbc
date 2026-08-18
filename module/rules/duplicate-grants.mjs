@@ -100,3 +100,35 @@ export function isSameTalent(a, b) {
 export function findSameTalent(items = [], talent) {
   return [...items].find(i => i?.type === "talent" && isSameTalent(i, talent)) || null;
 }
+
+/**
+ * Существующий на акторе Талант, который повторная покупка должна поднять на
+ * ранг, а не задвоить предметом. Срабатывает ТОЛЬКО когда сама запись
+ * компендиума отмечена многократной (system.hasRating — та же пара полей,
+ * что у Черты, см. data/item/trait.mjs; например Enemy/Враг, стр. 62) —
+ * признак стоит не у всех «можно брать снова» Талантов книги, это решение
+ * автора конкретной записи пака, а не всеобщее правило имени.
+ */
+export function repeatableTalentTarget(items = [], data) {
+  if (!data || data.type !== "talent" || !data.system?.hasRating) return null;
+  return findSameTalent(items, data);
+}
+
+/**
+ * Покупка Таланта в пикере (module/sheets/item-picker.mjs, kind:"equipment"
+ * Конструктора): если это повторная покупка уже взятого многократного
+ * Таланта, поднимает system.rating существующему предмету вместо второй
+ * копии — раньше Enemy/Sound Constitution задваивались строкой на каждой
+ * покупке. Прочие Таланты и любые не-Таланты создаются как обычно.
+ * @returns {Promise<{item: Item, ranked: boolean, rating: number}>}
+ */
+export async function createOrRankTalent(actor, data) {
+  const existing = repeatableTalentTarget(actor.items, data);
+  if (existing) {
+    const rating = (Number(existing.system?.rating) || 0) + 1;
+    await existing.update({ "system.rating": rating });
+    return { item: existing, ranked: true, rating };
+  }
+  const [item] = await actor.createEmbeddedDocuments("Item", [data]);
+  return { item, ranked: false, rating: item?.system?.rating ?? 0 };
+}
