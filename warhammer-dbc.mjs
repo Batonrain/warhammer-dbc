@@ -587,6 +587,16 @@ Hooks.once("ready", () => {
         if (!(item instanceof Item) || !Array.isArray(data.groups)) return;
         await saveItemMechanics(item, data.groups);
       }
+      else if (data.action === "itemUpdate") {
+        // Общий релей (relayItemUpdate, module/helpers/utils.mjs) для блоков листа
+        // предмета, которые обязаны работать не только у владельца — напр.
+        // «Особенность комплекта» силовой брони (module/apps/armour-history.mjs).
+        // То же разрешение, что у itemMechanics выше, но без привязки к
+        // конкретному флагу — data.data уходит в item.update() как есть.
+        const item = await fromUuid(data.uuid).catch(() => null);
+        if (!(item instanceof Item) || !data.data || typeof data.data !== "object") return;
+        await item.update(data.data);
+      }
       else if (data.action === "startCharacter") {
         // Игрок нажал «Начать создание персонажа», а права заводить Актёров у
         // его роли нет. Лист создаём мы и сразу отдаём его во владение
