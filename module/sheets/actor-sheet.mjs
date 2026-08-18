@@ -1,4 +1,5 @@
 import { activateEliteListeners } from "./elite-picker.mjs";
+import { buyEliteArchetype } from "../apps/elite-buy.mjs";
 import { activateHaemonculusListeners } from "./tabs/haemonculus.mjs";
 import { openItemPicker, talentCategory } from "./item-picker.mjs";
 import { openGearPicker } from "./gear-picker.mjs";
@@ -1038,6 +1039,16 @@ export class WarhammerCharacterSheet
         return;
       }
       return src.type === "race" ? applyRace(this.actor, key) : applySubrace(this.actor, key);
+    }
+
+    // Элитный архетип брошенный прямо на лист (в обход своего пикера, elite-
+    // picker.mjs) обязан пройти ту же покупку, что и кнопка: иначе предмет
+    // создаётся обычным дропом с paidCost по умолчанию 0 — множитель за уже
+    // взятые архетипы не считается, требования не проверяются, опыт не
+    // списывается и не попадает в блок «Опыт» (system.experience.spentElite
+    // складывает paidCost по предметам, а у голого дропа он пуст).
+    if (src?.type === "eliteArchetype") {
+      return buyEliteArchetype(this.actor, src);
     }
 
     // «Миньон Хаоса» — Талант на двадцать разных слуг (стр. 111). Перетащенный

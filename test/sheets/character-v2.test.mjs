@@ -174,6 +174,38 @@ describe("слоты Расы и Субрасы", () => {
     expect(updates).toEqual([]);
     expect(captured.errors.length).toBeGreaterThan(0);
   });
+
+  // Жалоба игрока: покупка Элитного архетипа не попадала в блок «Опыт».
+  // Причина — дроп предмета прямо на лист (в обход elite-picker.mjs) шёл
+  // обычным созданием предмета: paidCost оставался умолчанием 0, множитель за
+  // уже взятые архетипы не считался, опыт не списывался. Дроп обязан идти
+  // через buyEliteArchetype — тем же путём, что кнопка пикера.
+  it("Элитный архетип, брошенный на лист напрямую, покупается через buyEliteArchetype", async () => {
+    resetCaptured();
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {},
+      experience: { total: 500, current: 500 }
+    });
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+    globalThis.Item.implementation = {
+      fromDropData: async () => ({
+        type: "eliteArchetype", name: "Испытанный Инквизитор",
+        system: { cost: 300, requirements: { primary: [], secondary: [] } },
+        toObject() { return foundry.utils.deepClone({ ...this, toObject: undefined }); }
+      })
+    };
+
+    await WarhammerCharacterSheet.prototype._onDropItem.call(sheet, {}, {});
+
+    // paidCost посчитан (множитель ×1 — первый архетип) и лёг на созданный
+    // предмет: голый дроп оставил бы его умолчанием 0.
+    expect(captured.created.length).toBe(1);
+    expect(captured.created[0].system.paidCost).toBe(300);
+    // Списание ушло в журнал опыта актора, а не потерялось.
+    const logUpdate = updates.find(u => "system.experience.log" in u);
+    expect(logUpdate?.["system.experience.log"]?.at(-1)?.amount).toBe(-300);
+  });
 });
 
 describe("производные листы не наследуют чужой шаблон", () => {
