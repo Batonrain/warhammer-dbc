@@ -72,6 +72,65 @@
 }
 .warhammer-dbc .pain-actions button:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
 
+/* ── Здравомыслие пилота Дредноута ── */
+.warhammer-dbc .sanity-panel {
+  margin: 6px 0;
+  padding: 6px 8px;
+  border: 1px solid var(--wh-border);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(40,60,90,0.10), rgba(40,60,90,0.04));
+}
+.warhammer-dbc .sanity-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.warhammer-dbc .sanity-title { font-weight: bold; letter-spacing: 0.04em; }
+.warhammer-dbc .sanity-dread-name { font-weight: normal; opacity: 0.75; }
+.warhammer-dbc .sanity-info { cursor: help; opacity: 0.7; }
+.warhammer-dbc .sanity-daily-test-btn {
+  margin-left: auto; padding: 2px 8px; font-size: 0.8em; cursor: pointer;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border); border-radius: 3px;
+  color: var(--wh-text, inherit);
+}
+.warhammer-dbc .sanity-daily-test-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
+.warhammer-dbc .sanity-current { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.warhammer-dbc .sanity-current input {
+  width: 4em; text-align: right; background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border); color: var(--wh-text, inherit); border-radius: 3px;
+}
+.warhammer-dbc .sanity-max { opacity: 0.75; }
+.warhammer-dbc .sanity-add-btn {
+  margin-left: auto; padding: 2px 8px; font-weight: bold; cursor: pointer;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border); border-radius: 3px;
+  color: var(--wh-text, inherit);
+}
+.warhammer-dbc .sanity-add-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
+.warhammer-dbc .sanity-bar {
+  position: relative; height: 8px; border: 1px solid var(--wh-border); border-radius: 3px;
+  background: rgba(0,0,0,0.45); overflow: hidden;
+}
+.warhammer-dbc .sanity-fill { height: 100%; transition: width 0.35s ease; }
+.warhammer-dbc .sanity-fill.load-ok    { background: linear-gradient(90deg, #2a6f8c, #4fa3c9); }
+.warhammer-dbc .sanity-fill.load-heavy { background: linear-gradient(90deg, #c8892a, #e0a83f); }
+.warhammer-dbc .sanity-fill.load-over  { background: linear-gradient(90deg, #a01810, #d13b2d); }
+.warhammer-dbc .sanity-pct {
+  position: absolute; right: 5px; top: -1px; line-height: 8px; font-size: 0.62em;
+  color: #eafff4; text-shadow: 0 0 3px #000;
+}
+.warhammer-dbc .sanity-thresholds { display: flex; align-items: center; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+.warhammer-dbc .sanity-thresholds-label { opacity: 0.7; font-size: 0.85em; }
+.warhammer-dbc .sanity-threshold-chip {
+  padding: 1px 6px; font-size: 0.8em; font-weight: bold; border-radius: 8px;
+  background: var(--wh-accent, #7a1f1f); color: #fff; cursor: help;
+}
+.warhammer-dbc .sanity-recoveries { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.warhammer-dbc .sanity-recover-btn {
+  padding: 2px 8px; font-size: 0.8em; cursor: pointer;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border); border-radius: 3px;
+  color: var(--wh-text, inherit);
+}
+.warhammer-dbc .sanity-recover-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
+.warhammer-dbc .sanity-electrostim-rollback { border-color: #a01810; color: #d13b2d; }
+.warhammer-dbc .sanity-electrostim-rollback:hover { background: #a01810; color: #fff; }
+.warhammer-dbc .sanity-recover-btn-inert { opacity: 0.55; }
+
 /* ── Броня ── */
 .warhammer-dbc .armor-body { padding: 4px !important; }
 

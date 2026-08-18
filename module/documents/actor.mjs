@@ -29,6 +29,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { HORDE_SIZE_LABELS, hordeSizeFor, hordeMagDamageDice, hordeState,
          massDamageThreshold, WEAKENED_WP_PENALTY, noRecoveryHours }
   from "../rules/horde-damage.mjs";
+import { sanityMax, madnessLevels } from "../rules/dreadnought.mjs";
 
 /**
  * Расчёт движения по таблице Warhammer FFG.
@@ -1015,6 +1016,23 @@ export class WarhammerActor extends Actor {
       if ((system.fate.value ?? 0) > system.fate.max) system.fate.value = system.fate.max;
       system.painActive  = true;
       system.fateMaxAuto = true;
+    }
+
+    // ── Здравомыслие пилота Дредноута (Книга Машин, стр. 57) ────────────────
+    // Максимум зависит только от локальных данных (W.b и число взятых «Ядро
+    // Воспоминаний» — тот же приём подсчёта повторяемого Таланта, что и у
+    // «Бездонной Души» выше), поэтому считается для КАЖДОГО персонажа, не
+    // только пилотов: дёшево, и не требует обращения к миру. Кто именно сейчас
+    // пилот — знает только сам Дредноут (место экипажа с ролью pilot хранит его
+    // uuid), и это спрашивается на уровне листа (sheets/tabs/dreadnought-panel.mjs),
+    // а не здесь: prepareDerivedData обязан работать и без game.actors (см.
+    // module/rules/dreadnought.mjs).
+    if (system.sanity) {
+      const coreMemories = this.items.filter(i =>
+        i.type === "talent" && /Core Memories|Ядро Воспоминаний/i.test(i.name)).length;
+      system.sanity.max = sanityMax(chars.wp?.bonus ?? 0, coreMemories);
+      system.sanity.value = Math.max(0, Math.min(system.sanity.max, Number(system.sanity.value) || 0));
+      system.sanity.thresholds = madnessLevels(system.sanity.value);
     }
 
     const tb = chars.t?.bonus ?? 0;

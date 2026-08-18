@@ -151,3 +151,110 @@ export function madnessLevels(sanity) {
   const value = Number.isFinite(s) ? s : 0;
   return MADNESS_THRESHOLDS.filter(t => value <= t);
 }
+
+/**
+ * Порог урона по Дредноуту, при котором ранит и пилота: ½W.b пилота, окр.▲
+ * (стр. 57). Считается от пилота, а не от машины — резонанс саркофага зависит
+ * от того, кто внутри, а не от корпуса.
+ */
+export function pilotDamageThreshold(pilotWpBonus) {
+  return Math.ceil(Math.max(0, Number(pilotWpBonus) || 0) / 2);
+}
+
+/**
+ * Раны пилота ПОСЛЕ удара по Дредноуту: тот же непоглощённый урон машины идёт
+ * пилоту напрямую — саркофаг передаёт толчок, а не наносит отдельное попадание
+ * со своей броней. Подсчёт переполнения в Критические Раны — тот же приём, что
+ * в combat/damage.mjs (applyDamageToActor), но здесь без брони/T.b и без
+ * отдельного Критического Эффекта: это резонанс удара, а не прямое попадание.
+ *
+ * @param {{wounds?:{value?:number,critical?:number}}} pilotSystem  actor.system пилота
+ * @param {number} netDamage  непоглощённый урон, что получила машина
+ */
+export function pilotWoundsAfter(pilotSystem, netDamage) {
+  const current  = Number(pilotSystem?.wounds?.value) || 0;
+  const critical = Number(pilotSystem?.wounds?.critical) || 0;
+  const net = Math.max(0, Number(netDamage) || 0);
+  if (current >= net) return { value: current - net, critical, overflow: false };
+  return { value: 0, critical: critical + (net - current), overflow: true };
+}
+
+/**
+ * Четыре Таланта Дредноутов (стр. 58), чьё выполненное условие даёт разовое
+ * восстановление 2d10 Здравомыслия за 1 Очко Бесчестия. `match` узнаёт Талант
+ * на листе тем же приёмом, что и «Ядро Воспоминаний» выше; `hint` — короткая
+ * памятка об условии, само условие книга не проверяет автоматически (решает
+ * стол), код лишь считает трату и бросок.
+ */
+export const SANITY_RECOVERY_TALENTS = [
+  { key: "cruelty",     label: "Жестокость",    match: /Cruelty|Жестокость \(Дредноут\)/i,
+    hint: "добита конечность атакой" },
+  { key: "endurance",   label: "Превозмогание", match: /Endurance|Превозмогание/i,
+    hint: "3-й непоглощённый урон с прошлого Хода" },
+  { key: "superiority", label: "Превосходство", match: /Superiority|Превосходство/i,
+    hint: "победа нечестным приёмом" },
+  { key: "triumph",     label: "Триумф",        match: /Triumph|Триумф/i,
+    hint: "добит сильный противник" }
+];
+
+/** Какие из четырёх Талантов восстановления есть у актора (по предметам на листе). */
+export function sanityRecoveryTalentsOf(items) {
+  return SANITY_RECOVERY_TALENTS.filter(t =>
+    (items || []).some(i => i?.type === "talent" && t.match.test(i.name)));
+}
+
+/**
+ * Суточный тест бодрствования (стр. 57): W+0, без модификаторов — саркофаг
+ * снимает обычные основания для их учёта (усталость/шлем и т.п. пилоту, по
+ * сути, больше не аргумент). При Провале число его Провалов книга ПРЯМО
+ * называет потерей Здравомыслия — выбора тут нет, поэтому кнопка листа может
+ * применить результат сама, без диалога с причиной (в отличие от «±»).
+ *
+ * @param {number} roll     результат 1d100
+ * @param {number} wpTotal  W пилота (не W.b) — порог теста
+ */
+export function dailyWillTestOutcome(roll, wpTotal) {
+  const eff = Math.max(0, Number(wpTotal) || 0);
+  const rv = Number(roll) || 0;
+  const success = rv <= eff;
+  const degrees = Math.floor(Math.abs(success ? eff - rv : rv - eff) / 10) + 1;
+  return { success, degrees, sanityLoss: success ? 0 : degrees };
+}
+
+/** Узнаём снаряжение «Электростимуляторы» (стр. 58) среди предметов Дредноута. */
+const ELECTROSTIM_MATCH = /Electrostimulator|Электростимулятор/i;
+export function hasElectrostimulators(vehicleItems) {
+  return (vehicleItems || []).some(i => i?.type === "vehicleGear" && ELECTROSTIM_MATCH.test(i.name));
+}
+
+/**
+ * Электростимуляторы (стр. 58): разовое +10+2×W.b Здравомыслия за свободное
+ * действие. Отката по таймеру в системе нет (тикающего хука нет нигде в
+ * кодовой базе — тот же случай, что и Пост-эффект Препаратов в drugs.mjs):
+ * кнопка листа лишь считает числа, откат жмут вручную, когда сочтут, что
+ * 2×W.b минут истекли.
+ */
+export function electrostimulatorBoost(pilotWpBonus) {
+  const wp = Math.max(0, Number(pilotWpBonus) || 0);
+  return { amount: 10 + 2 * wp, delayMinutes: 2 * wp };
+}
+
+/** Узнаём Талант «Ферум Инфернус» (стр. 58) среди предметов пилота. */
+const FERUM_INFERNUS_MATCH = /Ferum Infernus|Ферум Инфернус/i;
+export function hasFerumInfernus(items) {
+  return (items || []).some(i => i?.type === "talent" && FERUM_INFERNUS_MATCH.test(i.name));
+}
+
+/**
+ * Порог «Ферум Инфернус»: ½Inf+5 (стр. 58). Книга не оговаривает округление
+ * половины отдельно для этой формулы, но округляет вверх для всех соседних
+ * «½X» этой же главы — та же конвенция принята и здесь.
+ */
+export function ferumInfernusThreshold(infTotal) {
+  return Math.ceil(Math.max(0, Number(infTotal) || 0) / 2) + 5;
+}
+
+/** Активна ли пассивка сейчас: Здравомыслие СТРОГО ниже порога. */
+export function ferumInfernusActive(sanityValue, infTotal) {
+  return (Number(sanityValue) || 0) < ferumInfernusThreshold(infTotal);
+}

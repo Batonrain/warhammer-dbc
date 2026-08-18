@@ -60,7 +60,14 @@ const MOUNT_FIELDS = {
 const OWN_DEVIATIONS = {
   // Пусто = Бог не выбран. Умолчание "undivided" делало «Покровительство:
   // Неделимый» выполненным у любого, кто не трогал выбор (wdbc-osz).
-  character: { patronGod: "" },
+  // Здравомыслие пилота Дредноута (wdbc-a7s) — в template.json поля не было
+  // вовсе, механика Книги Машин появилась позже. electrostim/hibernation —
+  // туда же: буст Электростимуляторов и флаг Гибернации (стр. 57-58).
+  character: {
+    patronGod: "", sanity: { value: 0, max: 0 },
+    electrostim: { active: false, amount: 0 },
+    hibernation: { active: false }
+  },
   // Вкладку «ТЕЛО» Принцу открыли позже: она общая с Персонажем, и её хранимые
   // поля (фигура голо-скана и жизнеобеспечение) пришлось завести и здесь.
   demonPrince: { bodyType: "male", vitals: { hunger: 0, thirst: 0, sleep: 0 } }

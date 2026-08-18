@@ -46,6 +46,76 @@
   </div>
   {{/if}}
 
+  {{!-- ═══ ЗДРАВОМЫСЛИЕ ПИЛОТА ДРЕДНОУТА (Книга Машин, стр. 57) ═══
+        Видна только персонажу, которого какой-то Дредноут в мире держит
+        своим пилотом (dreadnought-panel.mjs) — иначе пустая полоса ни за чем. --}}
+  {{#if sanityAvailable}}
+  <div class="sanity-panel">
+    <div class="sanity-head">
+      <span class="sanity-title">ЗДРАВОМЫСЛИЕ{{#if sanity.dreadnoughtName}} <span class="sanity-dread-name">— {{sanity.dreadnoughtName}}</span>{{/if}}</span>
+      <span class="sanity-info" title="Максимум = 50 + 2×W.b, плюс 5 за каждое взятое «Ядро Воспоминаний». Кнопка ниже — единая для потери (урон Дредноуту, провал теста Воли) и восстановления (Гибернация, Электростимуляторы, Таланты) — число и причина, книга стр. 57-58.">ⓘ</span>
+      <button type="button" class="sanity-daily-test-btn" data-action="dreadnoughtDailyTest"
+              title="Суточный тест бодрствования: W+0 без модификаторов. При Провале Здравомыслие теряется автоматически, на число Провалов.">Тест бодрствования</button>
+    </div>
+    <div class="sanity-current">
+      <input type="number" name="system.sanity.value" value="{{sanity.value}}" min="0" max="{{sanity.max}}"/>
+      <span class="sanity-max">/ {{sanity.max}}</span>
+      <button type="button" class="stat-add-btn sanity-add-btn" data-action="statAdd" data-stat="sanity"
+              title="Изменить Здравомыслие (число, можно отрицательное, или XdY+Z) с причиной в лог">±</button>
+    </div>
+    <div class="sanity-bar">
+      <div class="sanity-fill load-{{sanity.level}}" style="width:{{sanity.pct}}%;"></div>
+      <span class="sanity-pct">{{sanity.pct}}%</span>
+    </div>
+    {{#if sanity.thresholds.length}}
+    <div class="sanity-thresholds">
+      <span class="sanity-thresholds-label">Пороги:</span>
+      {{#each sanity.thresholds as |t|}}<span class="sanity-threshold-chip" title="{{t.label}}">{{t.value}}</span>{{/each}}
+    </div>
+    {{/if}}
+    {{#if sanity.recoveries.length}}
+    <div class="sanity-recoveries">
+      {{#each sanity.recoveries as |r|}}
+      <button type="button" class="sanity-recover-btn" data-action="sanityTalentRecover" data-talent="{{r.key}}"
+              title="{{r.label}}: {{r.hint}}. Трата 1 Очка Бесчестия, бросок 2d10 в Здравомыслие.">{{r.label}} 2d10</button>
+      {{/each}}
+    </div>
+    {{/if}}
+    {{#if sanity.electrostim}}
+    <div class="sanity-recoveries">
+      {{#if sanity.electrostim.active}}
+      <button type="button" class="sanity-recover-btn sanity-electrostim-rollback" data-action="electrostimRollback"
+              title="Снять буст Электростимуляторов: −{{sanity.electrostim.amount}} Здравомыслия, 1d5 непоглощаемого урона.">
+        Откат Электростимуляторов (−{{sanity.electrostim.amount}})</button>
+      {{else}}
+      <button type="button" class="sanity-recover-btn" data-action="electrostimActivate"
+              title="Свободное действие: +{{sanity.electrostim.boostAmount}} Здравомыслия. Через ~{{sanity.electrostim.delayMinutes}} мин. нужно нажать «Откат».">
+        Электростимуляторы (+{{sanity.electrostim.boostAmount}})</button>
+      {{/if}}
+    </div>
+    {{/if}}
+    {{#if sanity.ferumInfernus}}
+    <div class="sanity-recoveries">
+      <button type="button" class="sanity-recover-btn{{#unless sanity.ferumInfernus.active}} sanity-recover-btn-inert{{/unless}}"
+              data-action="ferumInfernusTick"
+              title="Порог: Здравомыслие < {{sanity.ferumInfernus.threshold}} (½Inf+5). Пока ниже — раз в игровой час +1 Здравомыслия; тикать нужно вручную.">
+        Ферум Инфернус: тик часа{{#if sanity.ferumInfernus.active}} (порог {{sanity.ferumInfernus.threshold}}){{else}} — неактивно{{/if}}</button>
+    </div>
+    {{/if}}
+    <div class="sanity-recoveries">
+      {{#if sanity.hibernation.active}}
+      <button type="button" class="sanity-recover-btn" data-action="hibernationWeekTick"
+              title="Раз в полную неделю Гибернации: 1d10 Здравомыслия.">Гибернация: тик недели (1d10)</button>
+      <button type="button" class="sanity-recover-btn sanity-electrostim-rollback" data-action="hibernationExit"
+              title="Выход из Гибернации: часовой техноритуал, Tech-Use−40 + Medicae−40.">Выход из Гибернации</button>
+      {{else}}
+      <button type="button" class="sanity-recover-btn" data-action="hibernationEnter"
+              title="Вход в Гибернацию: часовой техноритуал, комбинированный тест Tech-Use−40 + Medicae−40 (2-8 ассистентов). Основной способ восстановить Здравомыслие.">Войти в Гибернацию</button>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+
   {{!-- ═══ СИЛОВОЕ ПОЛЕ — отдельная строка под основной сеткой ═══ --}}
   {{#if activeShield}}
   <div class="shield-combat-bar shield-bar-active"> <div class="shield-bar-left"> <span class="shield-bar-icon"> {{#if (eq activeShield.shieldNature "technological")}}{{else}}{{/if}}

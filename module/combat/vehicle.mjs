@@ -10,6 +10,8 @@ import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          REPAIR_CONDITIONS, REPAIR_PACE } from "../constants/vehicle.mjs";
 import { DAMAGE_TYPES }    from "../constants/items.mjs";
 import { ablativeDamage }  from "../rules/mount.mjs";
+import { isDreadnought, pilotUuidOf, pilotDamageThreshold, pilotWoundsAfter }
+  from "../rules/dreadnought.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -302,6 +304,32 @@ export async function applyDamageToVehicle(actor, damageData) {
     await actor.update({ "system.structure.value": newVal, "system.structure.critical": newCrit });
   }
 
+  // ── Пилот Дредноута (Книга Машин, стр. 57) ───────────────────────────────
+  // Толчок от удара по машине достаёт и того, кто в саркофаге: при ≥½W.b
+  // пилота (окр.▲) непоглощённого урона по машине пилот получает ровно тот
+  // же урон в свои Раны — без брони и T.b, саркофаг лишь передаёт удар, а не
+  // принимает отдельное попадание (rules/dreadnought.mjs).
+  let pilotLine = "";
+  if (net > 0 && isDreadnought(actor)) {
+    const pilotUuid = pilotUuidOf(actor);
+    const pilot = pilotUuid ? await fromUuid(pilotUuid).catch(() => null) : null;
+    if (pilot) {
+      const wb = pilot.system?.characteristics?.wp?.bonus ?? 0;
+      const threshold = pilotDamageThreshold(wb);
+      if (net >= threshold) {
+        const before = Number(pilot.system?.wounds?.value) || 0;
+        const after  = pilotWoundsAfter(pilot.system, net);
+        await pilot.update({ "system.wounds.value": after.value, "system.wounds.critical": after.critical });
+        pilotLine = `
+    <div class="dmg-critical-block">
+      <b>Резонанс саркофага — ${esc(pilot.name)}</b>
+      <div class="dmg-tb-note">Урон по машине ≥ ½W.b пилота (${threshold}) — пилот тоже ранен.</div>
+      <div class="roll-damage-meta">Раны пилота: <b>${before}</b> → <b>${after.value}</b>${after.overflow ? ` (крит. ${after.critical})` : ""}</div>
+    </div>`;
+      }
+    }
+  }
+
   const dtLabel = DAMAGE_TYPES[damageType] || damageType;
   // Крит-эффект по глубине отрицательной Структуры и выбранной части машины.
   const critLine = gotCrit ? (() => {
@@ -345,6 +373,7 @@ export async function applyDamageToVehicle(actor, damageData) {
           }
         </div>
         ${critLine}
+        ${pilotLine}
       </div>`
   }, game.settings.get("core", "rollMode")));
 }

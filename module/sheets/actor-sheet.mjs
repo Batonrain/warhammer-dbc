@@ -36,6 +36,10 @@ import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
 import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-panel.mjs";
+import { dreadnoughtPanelContext } from "./tabs/dreadnought-panel.mjs";
+import { SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf, dailyWillTestOutcome,
+         electrostimulatorBoost, ferumInfernusActive } from "../rules/dreadnought.mjs";
+import { computeWoundDamage } from "./tabs/wounds.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
 import { activatePossessionListeners } from "./tabs/possession.mjs";
 import { activateAdvanceListeners } from "./tabs/advance.mjs";
@@ -172,7 +176,240 @@ async function onStatAdd(event, target) {
     const god = target.dataset.god;
     const meta = chaosPatronMeta(god);
     await promptStatAdd(this.actor, { label: `Благосклонность — ${meta.label}`, path: `system.patronFavor.${god}` });
+  } else if (stat === "sanity") {
+    // Единственная кнопка покрывает и потерю (урон Дредноуту, провал теста
+    // Воли — отрицательное число), и все способы восстановления книги
+    // (Гибернация — 1dX за неделю, Электростимуляторы, Таланты на кубах):
+    // они разные по РИТУАЛУ, но одинаковы по РЕЗУЛЬТАТУ — число с причиной.
+    // Максимум читается заново при каждом клике: он производный и меняется
+    // вместе с W.b и количеством «Ядро Воспоминаний».
+    const max = this.actor.system.sanity?.max ?? null;
+    await promptStatAdd(this.actor, {
+      label: "Здравомыслие", path: "system.sanity.value", allowDice: true, clampMax: max
+    });
   }
+}
+
+// Четыре Таланта пилота Дредноута (стр. 58): исполненное условие — на
+// усмотрение стола, кнопка лишь считает результат — трату 1 Очка Бесчестия
+// и бросок 2d10 в Здравомыслие. Путь/максимум ОБ — те же геттеры, что и у
+// общей траты Хаосита (_infamyPath/_infamyMax/_ipChange), Талант просто
+// открывает доступ к ним ещё с одной стороны.
+async function onSanityTalentRecover(event, target) {
+  event.preventDefault();
+  const talent = SANITY_RECOVERY_TALENTS.find(t => t.key === target.dataset.talent);
+  if (!talent) return;
+  if (!sanityRecoveryTalentsOf(this.actor.items).some(t => t.key === talent.key)) return;
+
+  const ip = Math.max(0, Number(foundry.utils.getProperty(this.actor, this._infamyPath)) || 0);
+  if (!this._infamyEnabled || ip < 1)
+    return ui.notifications.warn("Нет Очков Бесчестия для восстановления Здравомыслия.");
+
+  await this._ipChange(-1);
+  const roll = await new Roll("2d10").evaluate();
+  const max = this.actor.system.sanity?.max ?? null;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  const next = max != null ? Math.min(max, cur + roll.total) : cur + roll.total;
+  await this.actor.update({ "system.sanity.value": next });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `<b>${esc(talent.label)}</b>: −1 Очко Бесчестия, +<b>${roll.total}</b> Здравомыслия `
+      + `(${cur} → ${next}).`,
+    rolls: [roll], sound: CONFIG.sounds.dice
+  }, rollMode));
+}
+
+// Суточный тест бодрствования пилота Дредноута (стр. 57): фиксированный
+// W+0 без модификаторов (саркофаг), Провал сразу списывает Здравомыслие на
+// число Провалов — книга не оставляет тут выбора, поэтому в отличие от
+// общей кнопки «±» причина не спрашивается.
+async function onDreadnoughtDailyTest(event) {
+  event.preventDefault();
+  const wp = Number(this.actor.system.characteristics?.wp?.total) || 0;
+  const roll = await new Roll("1d100").evaluate();
+  const { success, degrees, sanityLoss } = dailyWillTestOutcome(roll.total, wp);
+
+  let next = null;
+  if (sanityLoss > 0) {
+    const cur = Number(this.actor.system.sanity?.value) || 0;
+    next = Math.max(0, cur - sanityLoss);
+    await this.actor.update({ "system.sanity.value": next });
+  }
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Тест бодрствования — W+0</div>
+        <div class="roll-threshold">Порог: <b>${wp}</b></div>
+        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
+        <div class="roll-outcome">
+          ${success
+            ? `<span class="roll-success">Успех — ${degrees} ${_degWord(degrees)}</span>`
+            : `<span class="roll-failure">Провал — ${degrees} ${_degWord(degrees)}, `
+              + `−${sanityLoss} Здравомыслия (${next})</span>`}
+        </div>
+      </div>`,
+    rolls: [roll], sound: CONFIG.sounds.dice
+  }, rollMode));
+}
+
+// Электростимуляторы Дредноута (стр. 58): разовый буст Здравомыслия, откат —
+// вручную (тикающего таймера в системе нет, тот же случай, что и Пост-эффект
+// Препаратов в drugs.mjs). Сумму буста храним на пилоте (system.electrostim),
+// чтобы «Откат» знал, сколько снимать, даже после перерисовки листа.
+async function onElectrostimActivate(event) {
+  event.preventDefault();
+  if (this.actor.system.electrostim?.active) return;
+  const wpBonus = Number(this.actor.system.characteristics?.wp?.bonus) || 0;
+  const { amount, delayMinutes } = electrostimulatorBoost(wpBonus);
+  const max = this.actor.system.sanity?.max ?? null;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  const next = max != null ? Math.min(max, cur + amount) : cur + amount;
+
+  await this.actor.update({
+    "system.sanity.value": next,
+    "system.electrostim.active": true,
+    "system.electrostim.amount": amount
+  });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Электростимуляторы</div>
+        <div class="roll-outcome"><span class="roll-success">+${amount} Здравомыслия (${cur} → ${next})</span></div>
+        <div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">
+          Через ~${delayMinutes} мин. нажмите «Откат»: буст снимется, придёт 1d5 непоглощаемого урона.
+        </div>
+      </div>`
+  }, rollMode));
+}
+
+async function onElectrostimRollback(event) {
+  event.preventDefault();
+  const es = this.actor.system.electrostim;
+  if (!es?.active) return;
+  const amount = Number(es.amount) || 0;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  const next = Math.max(0, cur - amount);
+
+  const roll = await new Roll("1d5").evaluate();
+  const woundUpdates = computeWoundDamage(this.actor.system, roll.total);
+
+  await this.actor.update({
+    "system.sanity.value": next,
+    "system.electrostim.active": false,
+    "system.electrostim.amount": 0,
+    ...woundUpdates
+  });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Электростимуляторы — откат</div>
+        <div class="roll-outcome"><span class="roll-failure">−${amount} Здравомыслия (${cur} → ${next})</span></div>
+        <div class="roll-dice">Непоглощаемый урон: <b>${roll.total}</b></div>
+      </div>`,
+    rolls: [roll], sound: CONFIG.sounds.dice
+  }, rollMode));
+}
+
+// «Ферум Инфернус» (стр. 58): пока Здравомыслие ниже ½Inf+5, раз в игровой
+// час +1. В системе нет тикающего хука по игровому времени (нашёлся только
+// updateWorldTime, который лишь перерисовывает виджет календаря), поэтому
+// кнопка — ручной «тик», который игрок жмёт сам по прошествии часа.
+async function onFerumInfernusTick(event) {
+  event.preventDefault();
+  const infTotal = Number(this.actor.system.characteristics?.inf?.total) || 0;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  if (!ferumInfernusActive(cur, infTotal)) {
+    return ui.notifications.info("Ферум Инфернус: Здравомыслие уже не ниже порога — восстановления нет.");
+  }
+  const max = this.actor.system.sanity?.max ?? null;
+  const next = max != null ? Math.min(max, cur + 1) : cur + 1;
+  await this.actor.update({ "system.sanity.value": next });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Ферум Инфернус</div>
+        <div class="roll-outcome"><span class="roll-success">+1 Здравомыслия (${cur} → ${next})</span></div>
+      </div>`
+  }, rollMode));
+}
+
+// Гибернация (стр. 57) — основной способ восстановить Здравомыслие: часовой
+// техноритуал (комбинированный тест Tech-Use-40 + Medicae-40, 2-8
+// ассистентов — тесты кидают обычными кнопками Навыков, отдельного диалога
+// для комбинированного теста в системе нет) переводит пилота в кому, и раз в
+// полную неделю в ней восстанавливается 1d10. Выход — тот же ритуал. Кнопки
+// листа только держат флаг и напоминают условие входа/выхода в чате.
+async function onHibernationEnter(event) {
+  event.preventDefault();
+  if (this.actor.system.hibernation?.active) return;
+  await this.actor.update({ "system.hibernation.active": true });
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Гибернация — вход</div>
+        <div class="roll-outcome"><span class="roll-success">Пилот погружён в Гибернацию.</span></div>
+        <div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">
+          Ритуал: часовой техноритуал, комбинированный тест Tech-Use−40 + Medicae−40 (2-8 ассистентов).
+          Раз в полную неделю — «Тик недели» на панели.
+        </div>
+      </div>`
+  }, rollMode));
+}
+
+async function onHibernationExit(event) {
+  event.preventDefault();
+  if (!this.actor.system.hibernation?.active) return;
+  await this.actor.update({ "system.hibernation.active": false });
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Гибернация — выход</div>
+        <div class="roll-outcome"><span class="roll-success">Пилот выведен из Гибернации.</span></div>
+        <div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">
+          Ритуал: тот же порядок, что и вход (часовой техноритуал, Tech-Use−40 + Medicae−40).
+        </div>
+      </div>`
+  }, rollMode));
+}
+
+async function onHibernationWeekTick(event) {
+  event.preventDefault();
+  if (!this.actor.system.hibernation?.active) return;
+  const roll = await new Roll("1d10").evaluate();
+  const max = this.actor.system.sanity?.max ?? null;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  const next = max != null ? Math.min(max, cur + roll.total) : cur + roll.total;
+  await this.actor.update({ "system.sanity.value": next });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Гибернация — полная неделя</div>
+        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
+        <div class="roll-outcome"><span class="roll-success">+${roll.total} Здравомыслия (${cur} → ${next})</span></div>
+      </div>`,
+    rolls: [roll], sound: CONFIG.sounds.dice
+  }, rollMode));
 }
 
 // ── Инициатива ──
@@ -306,6 +543,14 @@ export class WarhammerCharacterSheet
       toggleAbility: whenEditable(onToggleAbility),
       pathsToggle: whenEditable(onPathsToggle),
       statAdd: whenEditable(onStatAdd),
+      sanityTalentRecover: whenEditable(onSanityTalentRecover),
+      dreadnoughtDailyTest: whenEditable(onDreadnoughtDailyTest),
+      electrostimActivate: whenEditable(onElectrostimActivate),
+      electrostimRollback: whenEditable(onElectrostimRollback),
+      ferumInfernusTick: whenEditable(onFerumInfernusTick),
+      hibernationEnter: whenEditable(onHibernationEnter),
+      hibernationExit: whenEditable(onHibernationExit),
+      hibernationWeekTick: whenEditable(onHibernationWeekTick),
       initiativeRoll: whenEditable(onInitiativeRoll),
       charRoll: whenEditable(onCharRoll),
       skillRoll: whenEditable(onSkillRoll),
@@ -419,6 +664,10 @@ export class WarhammerCharacterSheet
     // Блок «ВЕРХОМ» на вкладке БОЙ: скакун ищется по списку акторов мира —
     // ссылку на него хранит сам всадник (rules/mount.mjs).
     Object.assign(context, mountPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // Блок «ЗДРАВОМЫСЛИЕ» там же: видим, только если какой-то Дредноут в мире
+    // держит этого персонажа своим пилотом (rules/dreadnought.mjs, стр. 57-58).
+    Object.assign(context, dreadnoughtPanelContext(this.actor, [...(game.actors ?? [])]));
 
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
     context.combatStanceCollapsed = !!this._combatCollapse?.stance;
