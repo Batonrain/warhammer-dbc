@@ -1,3 +1,17 @@
 {
-  "hooks": {}
+  "hooks": {},
+  "permissions": {
+    "allow": [
+      "Bash(git pull*)",
+      "Bash(git fetch*)",
+      "Bash(git commit*)",
+      "Bash(git merge*)"
+    ],
+    "deny": [
+      "Bash(git push*)",
+      "Bash(git rebase*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -f*)"
+    ]
+  }
 }
