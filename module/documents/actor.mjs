@@ -1161,15 +1161,17 @@ export class WarhammerActor extends Actor {
     }
 
     // ── Вес ───────────────────────────────────────────────────────────────
-    // Надетая силовая броня (armorType power/aspect) несёт свой вес сама —
-    // сервоприводы разгружают носителя, поэтому её вес не учитывается в нагрузке.
-    const POWER_ARMOR_TYPES = new Set(["power", "aspect"]);
+    // «Нейтрализует собственный вес в расчёте переносимого веса» (стр. 233) —
+    // свойство конкретной модели (Лёгкая Силовая Броня, system.weightless),
+    // а не всей силовой/аспектной брони: раньше отсюда выпадал ЛЮБОЙ надетый
+    // armorType power/aspect, и Астартес в Мк II (280 кг) не платил за неё
+    // ничего в Ношении, хотя книга освобождает от веса только эту модель.
     let totalWeight = 0;
     for (const item of this.items) {
       const s = item.system;
       const w = parseFloat(s.weight) || 0;
-      if (item.type === "armor" && s.equipped && POWER_ARMOR_TYPES.has(s.armorType)) {
-        continue; // силовая броня носит себя сама
+      if (item.type === "armor" && s.equipped && s.weightless) {
+        continue; // несёт свой вес сама
       }
       if (["gear","drug","tool","ammo"].includes(item.type)) {
         totalWeight += w * (parseInt(s.quantity) || 1);
