@@ -91,8 +91,14 @@ async function buildPackTree(pack) {
   const index = await pack.getIndex({
     // tier и cost нужны фильтрам «Талант такой-то ступени» и «Психосила до
     // такого-то ПР», а cost — ещё и бюджету в опыте (rules/pick-budget.mjs).
+    // benefit/description — то же, что показывает лист по стрелочке у уже
+    // взятых Талантов/Черт (см. templates/actor/parts/tab-abilities.hbs);
+    // здесь тот же текст нужен ДО покупки — стрелочка есть только в pickMode
+    // (renderItemsHtml), но поле читаем для всех категорий разом, второй
+    // проход по компендиуму дороже лишних двух строк в индексе.
     fields: ["system.armorType", "system.availability", "system.properties",
-             "system.tier", "system.cost", "system.aptitudes", "system.category"]
+             "system.tier", "system.cost", "system.aptitudes", "system.category",
+             "system.benefit", "system.description"]
   });
   const folders = pack.folders?.contents ?? [];
   const byParent = new Map();
@@ -126,7 +132,11 @@ async function buildPackTree(pack) {
         folderId, armorType: it.system?.armorType,
         availability: it.system?.availability, properties: it.system?.properties || [],
         tier: it.system?.tier, cost: it.system?.cost, aptitudes: it.system?.aptitudes || [],
-        category: it.system?.category
+        category: it.system?.category,
+        // Действие/эффект приоритетнее общего описания — у Талантов и Черт
+        // именно в benefit лежит механический текст (см. item-picker.mjs),
+        // у остальных типов benefit нет, и в ход идёт description.
+        desc: it.system?.benefit || it.system?.description || ""
       }))
     };
   };
@@ -256,11 +266,21 @@ function pruneTree(node, pred) {
   return { folders, items };
 }
 
+// Строка предмета + стрелочка раскрытия описания — тот же приём, что у уже
+// взятых Талантов/Черт на листе (▸ у tab-abilities.hbs) и у пикера
+// module/sheets/item-picker.mjs (.pick-exp/.pick-desc): раньше почитать, что
+// даёт запись, ДО покупки можно было только открыв её отдельный лист.
 function renderItemsHtml(items) {
   return items.map(it => `
-    <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}">
-      <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
-      <span class="cbrowse-item-name">${esc(it.name)}</span>
+    <div class="cbrowse-row">
+      <div class="cbrowse-row-head">
+        <button type="button" class="cbrowse-exp pick-exp" title="Показать описание">▸</button>
+        <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}">
+          <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
+          <span class="cbrowse-item-name">${esc(it.name)}</span>
+        </div>
+      </div>
+      <div class="cbrowse-desc pick-desc" style="display:none;">${esc(it.desc || "—")}</div>
     </div>`).join("");
 }
 
@@ -409,6 +429,20 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
           const doc = await fromUuid(uuid).catch(() => null);
           if (!doc) return ui.notifications.warn("Предмет не найден (возможно, компендиум изменился — нажмите ↻).");
           doc.sheet?.render(true);
+        });
+
+        // Стрелочка раскрытия описания — прочитать, что даёт запись, ДО
+        // выбора/покупки (тот же приём, что у Талантов/Черт на листе и в
+        // module/sheets/item-picker.mjs). Отдельная кнопка вне .cbrowse-item,
+        // поэтому клик по ней не запускает ни выбор, ни драг.
+        html.find(".cbrowse-exp").on("click", ev => {
+          ev.preventDefault();
+          const row = ev.currentTarget.closest(".cbrowse-row");
+          const desc = row?.querySelector(".cbrowse-desc");
+          if (!desc) return;
+          const open = desc.style.display !== "none";
+          desc.style.display = open ? "none" : "block";
+          ev.currentTarget.textContent = open ? "▸" : "▾";
         });
 
         html.find(".cbrowse-pick-confirm").on("click", ev => {

@@ -1156,7 +1156,7 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-item-picker .cbrowse-folder.pick-collapsed .cbrowse-folder-body { display: none; }
 .wh-item-picker .cbrowse-folder-body { padding: 0 0 0 4px; }
 .wh-item-picker .cbrowse-item {
-  display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 20px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 2px; cursor: pointer;
   border-bottom: 1px solid rgba(77,255,166,.08); font-size: .88em; color: #d8ffe8;
 }
 .wh-item-picker .cbrowse-item:hover { background: rgba(77,255,166,.08); color: #4dffa6; }
@@ -1165,6 +1165,20 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-item-picker .cbrowse-item.pick-hidden { display: none; }
 .wh-item-picker .cbrowse-item-img { flex: 0 0 auto; width: 18px; height: 18px; border: none; border-radius: 2px; }
 .wh-item-picker .cbrowse-item-name { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Строка предмета + стрелочка описания (см. renderItemsHtml в
+   compendium-browser.mjs) — обёртка нужна, чтобы стрелочка и раскрытая
+   панель не были частью самого .cbrowse-item: он draggable и кликабелен
+   целиком (выбор/открытие листа), а стрелочка — отдельный элемент рядом,
+   без конфликта с драгом. Скрытие поиском по-прежнему решает .cbrowse-item
+   (JS не тронут) — :has() гасит всю строку целиком, когда предмет внутри неё
+   спрятан. */
+.wh-item-picker .cbrowse-row { padding-left: 18px; }
+.wh-item-picker .cbrowse-row:has(.cbrowse-item.pick-hidden) { display: none; }
+.wh-item-picker .cbrowse-row-head { display: flex; align-items: center; gap: 2px; }
+.wh-item-picker .cbrowse-row-head .cbrowse-item { flex: 1 1 auto; min-width: 0; }
+/* Внешний вид самой кнопки и панели описания — от .pick-exp/.pick-desc (см.
+   выше); .cbrowse-exp/.cbrowse-desc только отдают JS свой селектор, отдельный
+   от одноимённого пикера Талантов/Черт (module/sheets/item-picker.mjs). */
 
 /* Панель вкладок (Все/Способности/Мистика/Арсенал/Машины/Пустолёты) — вторая
    липкая строка под поиском, как у .pick-top-gate; сдвигает липкие заголовки

@@ -8,10 +8,11 @@
 // возвращает опыт, как если бы игрок качал ЭТОТ уровень с нуля; Талант, который
 // уже есть, возвращает свою цену.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   RANK_ORDER, rankIndex, nextRank, higherOf, stepsUpTo,
-  skillGrantOutcome, isSameTalent, findSameTalent
+  skillGrantOutcome, isSameTalent, findSameTalent,
+  repeatableTalentTarget, createOrRankTalent
 } from "../../module/rules/duplicate-grants.mjs";
 
 const talent = (name, specialization = "") => ({ type: "talent", name, system: { specialization } });
@@ -94,5 +95,52 @@ describe("Талант из второго источника", () => {
 
   it("безымянный Талант ни с чем не совпадает", () => {
     expect(isSameTalent(talent(""), talent(""))).toBe(false);
+  });
+});
+
+// Пикер (module/sheets/item-picker.mjs, kind:"equipment" Конструктора) не
+// должен плодить второй предмет при повторной покупке многократного Таланта
+// (system.hasRating — Enemy, стр. 62, и т.п.): вместо копии поднимается
+// system.rating уже лежащего. Признак стоит на КОНКРЕТНОЙ записи пака, не на
+// имени вообще — это отдельная функция от findSameTalent/skillGrantOutcome,
+// которые решают судьбу СЛУЧАЙНОГО совпадения из разных источников.
+describe("Талант с накоплением ранга (system.hasRating)", () => {
+  const rateable = (name, rating = 1) =>
+    ({ type: "talent", name, system: { hasRating: true, rating } });
+
+  it("цель для повышения ранга находится только у отмеченных hasRating", () => {
+    const items = [talent("Sound Constitution"), rateable("Enemy")];
+    expect(repeatableTalentTarget(items, rateable("Enemy"))?.name).toBe("Enemy");
+    // Обычный Талант (без hasRating в НОВОЙ покупке) — не цель, даже если на
+    // листе уже есть одноимённый: это не тот случай, который чинили.
+    expect(repeatableTalentTarget(items, talent("Sound Constitution"))).toBeNull();
+  });
+
+  it("не-Талант или ещё не купленный многократный Талант — не цель", () => {
+    expect(repeatableTalentTarget([], rateable("Enemy"))).toBeNull();
+    expect(repeatableTalentTarget([{ type: "trait", name: "Enemy", system: { hasRating: true, rating: 1 } }],
+      rateable("Enemy"))).toBeNull();
+  });
+
+  it("повторная покупка поднимает ранг существующему предмету, не создаёт второй", async () => {
+    const existing = rateable("Enemy", 1);
+    existing.update = vi.fn(async upd => { existing.system.rating = upd["system.rating"]; });
+    const actor = { items: [existing], createEmbeddedDocuments: vi.fn() };
+
+    const res = await createOrRankTalent(actor, rateable("Enemy"));
+
+    expect(res).toEqual({ item: existing, ranked: true, rating: 2 });
+    expect(existing.update).toHaveBeenCalledWith({ "system.rating": 2 });
+    expect(actor.createEmbeddedDocuments).not.toHaveBeenCalled();
+  });
+
+  it("первая покупка (или обычный Талант) создаёт предмет как раньше", async () => {
+    const created = rateable("Enemy", 1);
+    const actor = { items: [], createEmbeddedDocuments: vi.fn(async () => [created]) };
+
+    const res = await createOrRankTalent(actor, rateable("Enemy"));
+
+    expect(res).toEqual({ item: created, ranked: false, rating: 1 });
+    expect(actor.createEmbeddedDocuments).toHaveBeenCalledWith("Item", [rateable("Enemy")]);
   });
 });

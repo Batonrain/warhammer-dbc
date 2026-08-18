@@ -184,7 +184,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF }      from "../constants/skills.mjs";
-import { skillGrantOutcome, findSameTalent } from "../rules/duplicate-grants.mjs";
+import { skillGrantOutcome, findSameTalent, createOrRankTalent } from "../rules/duplicate-grants.mjs";
 import { refundXP, skillStepsCost, talentCost, skillReason, talentReason }
   from "./duplicate-refund.mjs";
 import { MINION_TYPES, minionsOf, loyaltyAfterChange } from "./minions.mjs";
@@ -1100,7 +1100,10 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     // syncGrantedEquipment ниже, чтобы не плодить дубли и опознавать «своё»
     // при пересинхронизации по активности источника (импланты — installed/disabled).
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id, equipEntryId: entry.id } };
-    await actor.createEmbeddedDocuments("Item", [data]);
+    // Многократный Талант (system.hasRating — Enemy и т.п.), уже взятый
+    // раньше, не задваивается: createOrRankTalent поднимает ему ранг вместо
+    // создания второго предмета. Для любых других выдач — обычное создание.
+    await createOrRankTalent(actor, data);
     return;
   }
 
