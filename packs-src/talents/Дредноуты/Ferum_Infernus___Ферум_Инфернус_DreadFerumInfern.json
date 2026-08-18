@@ -29,9 +29,9 @@
     },
     "bookSource": "DoomBC — Машины, «Таланты Дредноутов» (стр. 58)"
   },
-  "_id": "DreadFerumInfer",
+  "_id": "DreadFerumInfern",
   "effects": [],
-  "folder": "DreadTalentsFld",
+  "folder": "DreadTalentsFld1",
   "sort": 0,
   "ownership": {
     "default": 0
@@ -52,5 +52,5 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!DreadFerumInfer"
+  "_key": "!items!DreadFerumInfern"
 }

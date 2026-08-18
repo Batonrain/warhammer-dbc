@@ -2,7 +2,7 @@
   "name": "Локусы Герольдов",
   "type": "Item",
   "sorting": "m",
-  "_id": "LocusHeraldFld1",
+  "_id": "LocusHeraldFld01",
   "description": "",
   "folder": null,
   "sort": 0,
@@ -19,5 +19,5 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!folders!LocusHeraldFld1"
+  "_key": "!folders!LocusHeraldFld01"
 }
