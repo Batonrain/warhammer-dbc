@@ -848,8 +848,8 @@ export class WarhammerItemSheet
       }
     }
 
-    // ── Оружие и психосилы: особые свойства атаки (общий список) ────────────────
-    if (this.item.type === "weapon" || this.item.type === "psychicPower") {
+    // ── Оружие, психосилы и техночудеса: особые свойства атаки (общий список) ──
+    if (["weapon", "psychicPower", "techPower"].includes(this.item.type)) {
       const active     = context.system.weaponProps || [];
       const activeKeys = new Set(active.map(p => p.key));
       context.weaponPropsActive = active

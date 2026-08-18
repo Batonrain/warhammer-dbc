@@ -17,6 +17,42 @@ import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../const
 import { vehicleHitLocation }                        from "../constants/vehicle.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 
+/**
+ * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
+ * свойства Extreme (wp.extremeThreshold), а без него — собственный максимум
+ * кубика. Сработавшее даёт отдельный бросок 1d5 на Критический Результат и
+ * переводит его в Критический Эффект (кроме техники — там Экстремальный уходит
+ * в отрицательную Структуру при применении урона, а не по этой таблице).
+ *
+ * Общий код для оружия, психосил и техночудес (module/sheets/tabs/psychic.mjs,
+ * tech.mjs): раньше те считали урон в обход этой проверки и не подхватывали ни
+ * Экстремальный урон, ни другие дайс-моды свойств атаки (см. applyDamageDiceMods,
+ * который вызывающая сторона обязана применить к формуле ДО броска).
+ *
+ * @param {Roll}    dmgRoll  уже брошенный урон — проверяются его кубы
+ * @param {object}  wp       агрегат aggregateAuto(...) для этой атаки
+ */
+export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation = "Торс", targetIsVehicle = false }) {
+  let hasExtreme = false;
+  if (dmgRoll.terms) {
+    for (const term of dmgRoll.terms) {
+      if (term.faces && term.results) {
+        const thr = wp.extremeThreshold < 10 ? wp.extremeThreshold : term.faces;
+        for (const r of term.results) {
+          if (r.active && r.result >= thr) hasExtreme = true;
+        }
+      }
+    }
+  }
+  let extremeLevel = 0, critEffect = null, exRoll = null;
+  if (hasExtreme) {
+    exRoll = await new Roll("1d5").evaluate();
+    extremeLevel = exRoll.total;
+    if (!targetIsVehicle) critEffect = getCriticalEffect(damageType, hitLocation, extremeLevel);
+  }
+  return { hasExtreme, extremeLevel, critEffect, exRoll };
+}
+
 export async function _executeAttackRoll(actor, item, charKey, threshold, rofMode, aimTarget, opts = {}) {
   const sys     = item.system;
   const isMelee = sys.weaponClass === "melee" || sys.weaponClass === "thrown";
@@ -249,16 +285,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         allRolls.push(second);
         if (second.total > dmgRoll.total) dmgRoll = second;
       }
-      let hasExtreme = false;
       let deflagrateHit = false;
       if (dmgRoll.terms) {
         for (const term of dmgRoll.terms) {
           if (term.faces && term.results) {
-            // Экстремальное (X): порог = рейтинг; иначе максимум кубика
-            const thr = wp.extremeThreshold < 10 ? wp.extremeThreshold : term.faces;
             for (const r of term.results) {
-              if (r.active && r.result >= thr) hasExtreme = true;
-              if (r.active && r.result >= 7)   deflagrateHit = true;
+              if (r.active && r.result >= 7) deflagrateHit = true;
             }
           }
         }
@@ -287,18 +319,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         msPenalty = 3 * i;
         total = Math.max(0, total - msPenalty);
       }
-      let extremeLevel = 0, critEffect = null;
-      if (hasExtreme) {
-        const exRoll = await new Roll("1d5").evaluate();
-        allRolls.push(exRoll);
-        extremeLevel = exRoll.total;
-        // У техники Экстремальный урон переводится в её Критический Эффект через
-        // отрицательную Структуру (при применении урона), а не по таблице существ.
-        if (!targetIsVehicle) {
-          const thisLoc = locForHit(i);
-          critEffect = getCriticalEffect(effDmgType, thisLoc, extremeLevel);
-        }
-      }
+      // У техники Экстремальный урон переводится в её Критический Эффект через
+      // отрицательную Структуру (при применении урона), а не по таблице существ.
+      const { hasExtreme, extremeLevel, critEffect, exRoll } = await rollExtremeDamage(dmgRoll, {
+        wp, damageType: effDmgType, hitLocation: locForHit(i), targetIsVehicle
+      });
+      if (exRoll) allRolls.push(exRoll);
       damageRolls.push({ total, extremeLevel, hasExtreme, critEffect, bonusNote, deflagrateNote, msPenalty });
     }
   }

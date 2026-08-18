@@ -33,6 +33,17 @@ export function activateCombatListeners(root, actor) {
     }
   });
 
+  // Бросок дальнобойного оружия БЕЗ цели (тестовый или «на глазок»): открывает
+  // тот же диалог атаки напрямую, минуя перекрестие прицеливания — авто-расчёт
+  // по защите цели (Уклонение/Парирование) просто не заполняется, порог и урон
+  // считаются как обычно. Раньше единственный путь к «без цели» был спрятан
+  // за скрытой горячей клавишей Пробел внутри прицеливания (module/combat/aim.mjs).
+  on(root, ".weapon-attack-notarget", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    showAttackDialog(actor, item);
+  });
+
   // ── Лечение и Очки Боли ──────────────────────────────────────────────────
   on(root, ".wounds-heal-btn", "click", () => showHealingDialog(actor));
 
