@@ -13,18 +13,18 @@
   {{!-- Навыки --}}
   <div class="skills-panel"> <div class="panel-title">НАВЫКИ</div> <div class="skills-grid"> {{!-- Колонка 1 --}}
       <div class="skills-column"> {{#each skillsCol1 as |sk|}}
-        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" title="Бросок: {{sk.label}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{sk.total}}
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{sk.total}}
           </span> </div> {{/each}}
       </div> {{!-- Колонка 2 --}}
       <div class="skills-column"> {{#each skillsCol2 as |sk|}}
-        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" title="Бросок: {{sk.label}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{sk.total}}
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{sk.total}}
           </span> </div> {{/each}}
       </div> {{!-- Колонка 3 — групповые навыки --}}
       <div class="skills-column skills-column-groups"> {{#if groupSkillsDisplay}}
           {{#each groupSkillsDisplay as |gsk|}}
             {{#if gsk.isFirstInGroup}}
             <div class="skill-group-header">{{gsk.groupLabel}}</div> {{/if}}
-            <div class="skill-row skill-row-grouped"> <a class="skill-roll skill-name skill-name-specialty" data-action="skillRoll" data-skill="group" data-group="true" data-groupkey="{{gsk.groupKey}}" data-index="{{gsk.entryIndex}}" title="Бросок: {{gsk.label}}">{{gsk.specialty}}</a> <span class="skill-total {{#if (lt gsk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{gsk.total}}
+            <div class="skill-row skill-row-grouped"> <a class="skill-roll skill-name skill-name-specialty" data-action="skillRoll" data-skill="group" data-group="true" data-groupkey="{{gsk.groupKey}}" data-index="{{gsk.entryIndex}}" data-tooltip="{{gsk.tip}}">{{gsk.specialty}}</a> <span class="skill-total {{#if (lt gsk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{gsk.total}}
               </span> </div> {{/each}}
         {{else}}
           <div class="skill-row"> <span class="skill-name" style="color:var(--wh-text-mid);font-style:italic;"> Нет групповых навыков

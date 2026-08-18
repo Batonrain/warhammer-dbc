@@ -234,6 +234,18 @@ export class WarhammerSquadSheet
   }
 
   async _prepareContext(options) {
+    // submitOnChange перерисовывает весь лист на КАЖДОЕ изменение поля (Риск,
+    // Слаженность, отметки Детальной Команды и т.п.). Активная вкладка обязана
+    // пережить этот цикл: единственный надёжный момент её прочитать — здесь,
+    // до того как _prepareContext построит новый context.tab, а this.element
+    // ещё хранит СТАРЫЙ DOM с верной .active-меткой (changeTab выставляет её
+    // по клику и нигде больше не трогает). Если это разошлось с this.tabGroups
+    // (нашли живьём: лист откатывался на «ОТРЯД» вместо вкладки игрока), берём
+    // за истину то, что фактически было на экране, а не внутреннее состояние.
+    const liveTab = this.element
+      ?.querySelector('.sheet-tabs[data-group="primary"] .item.active')?.dataset.tab;
+    if (liveTab && this.tabGroups) this.tabGroups.primary = liveTab;
+
     const context = await super._prepareContext(options);
     context.actor = this.actor;
     context.tab = this.tabGroups?.primary ?? WarhammerSquadSheet.TABS.primary.initial;

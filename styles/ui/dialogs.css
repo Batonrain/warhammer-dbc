@@ -1343,8 +1343,15 @@ body.wh-aiming #board, body.wh-aiming canvas {
   padding: 18px 14px; text-align: center; font-size: .88em; color: #8fb8a2;
 }
 
-/* Полоса прокрутки — часть окна, а не подарок браузера. */
-.wh-race-picker .window-content { scrollbar-width: thin; scrollbar-color: #2f9e6a #06120c; }
+/* Полоса прокрутки — часть окна, а не подарок браузера.
+   DialogV2 (в отличие от старого AppV1 Dialog, на котором стоят соседние
+   пикеры — Таланты, Черты, Снаряжение) не включает прокрутку .window-content
+   сам: без явного overflow-y список рас длиннее окна просто обрезался по
+   рамке, и до нижних рас было не долистать никаким колесом мыши. */
+.wh-race-picker .window-content {
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: #2f9e6a #06120c;
+}
 .wh-race-picker .window-content::-webkit-scrollbar { width: 10px; }
 .wh-race-picker .window-content::-webkit-scrollbar-track { background: #06120c; }
 .wh-race-picker .window-content::-webkit-scrollbar-thumb {

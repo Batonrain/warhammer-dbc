@@ -73,10 +73,37 @@ for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
 
 // ── Навык ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Краткая подсказка к Навыку для тултипа наведения на вкладке ПОКАЗАТЕЛИ.
+ *
+ * Прозы «что за Навык и когда его применяют» по каждому Навыку в системе
+ * нет: в packs-src/books/core.json описания идут одним HTML-блоком на всю
+ * страницу книги, и абзацы описания перемешаны со строками сводной таблицы
+ * (см. doombc-book-text-extraction) — программно растащить их по Навыкам
+ * значило бы рисковать приписать чужое описание не тому Навыку. Пока такой
+ * чистый источник не заведён отдельной работой, подсказка собирается из
+ * того, что система УЖЕ проверенно знает про Навык: его базовая
+ * Характеристика и Склонность — та же пара, что решает цену покупки на
+ * вкладке РАЗВИТИЕ (aptitudeCat ниже).
+ *
+ * `rollLabel` — то, что раньше несло атрибут `title` («Бросок: …»): оба текста
+ * сведены в один data-tooltip, чтобы не показывать на одном элементе сразу
+ * два всплывающих окна — нативное по title и своё, Foundry-шное (см. вывод
+ * ниже, откуда взят сам паттерн data-tooltip: horde-sheet.hbs, tab-social.hbs).
+ */
+function skillTip(def, rollLabel) {
+  if (!def) return "";
+  const ch   = CHARACTERISTICS[def.char];
+  const base = ch ? `${ch.label} (${ch.abbr})` : def.char;
+  const apt2 = APTITUDES[def.apt2] || def.apt2;
+  return `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}`;
+}
+
 export function buildSkillDisplay(key, system) {
   const def = SKILLS_DEF[key];
   const sk  = system.skills?.[key] || {};
-  return { key, label: def.label, total: sk.total ?? -20, rank: sk.rank ?? "untrained" };
+  return { key, label: def.label, total: sk.total ?? -20, rank: sk.rank ?? "untrained",
+    tip: skillTip(def, def.label) };
 }
 
 // ── Данные щитов ──────────────────────────────────────────────────────────────
@@ -343,7 +370,8 @@ export function buildGetData(actor) {
         groupLabel:     def.label,
         isFirstInGroup: idx === 0,
         rank:           entry.rank,
-        total:          entry.total ?? -20
+        total:          entry.total ?? -20,
+        tip:            skillTip(def, `${def.label}: ${entry.specialty}`)
       });
     });
   }

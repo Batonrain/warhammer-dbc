@@ -3,7 +3,7 @@
 // боя/способностей), но с демонической шапкой (сигил бога, ранг, форма,
 // Нестабильность, Истинное Имя) и урезанным набором вкладок.
 
-import { WarhammerCharacterSheet } from "./actor-sheet.mjs";
+import { WarhammerCharacterSheet, onSkillRoll } from "./actor-sheet.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_KEY_TRAITS,
@@ -33,7 +33,10 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
       // здесь: карта действий проверяется у каждого класса своя.
       convertToHorde:    whenEditable(onConvertToHorde),
       // Карта действий у каждого класса своя — «+» Миньонов объявляем и здесь.
-      minionCreate:      whenEditable(onMinionCreate)
+      minionCreate:      whenEditable(onMinionCreate),
+      // Вкладка СОЦИУМ — общая часть (tab-social.hbs), клик по названию Навыка
+      // требует того же обработчика, что и на вкладке ПОКАЗАТЕЛИ.
+      skillRoll:         whenEditable(onSkillRoll)
     }
   };
 
