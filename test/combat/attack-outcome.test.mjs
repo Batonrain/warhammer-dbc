@@ -73,8 +73,14 @@ describe("hitCount", () => {
     expect(base.label).toBe("Рукопашная");
   });
 
-  it("Мульти-удар добавляет попадания сверх обычного", () => {
-    expect(hitCount({ hit: true, isMelee: true, rofMode: "melee", deg: 2, wp: withProps({ multiStrikeRating: 2 }), sys: {} }).count).toBe(3);
+  it("Мульти-удар считает как Стремительная (1 доп. попадание за 2 Успеха сверх первого), с потолком в X", () => {
+    const ms = r => hitCount({ hit: true, isMelee: true, rofMode: "melee", deg: r, wp: withProps({ multiStrikeRating: 2 }), sys: {} }).count;
+    expect(ms(1)).toBe(1);   // голый Успех — доп. попаданий ещё нет
+    expect(ms(2)).toBe(1);   // второй Успех не нечётный — по-прежнему одно
+    expect(ms(3)).toBe(2);   // третий (нечётный) Успех открывает второе попадание
+    expect(ms(4)).toBe(2);
+    // deg=9 дал бы ceil(9/2)=5 попаданий, но рейтинг X=2 — потолок.
+    expect(ms(9)).toBe(2);
   });
 
   it("промах не даёт попаданий, но подпись режима сохраняет", () => {
