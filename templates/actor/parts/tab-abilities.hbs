@@ -1,6 +1,15 @@
 <div class="tab abil-cog {{#if (eq tab "abilities")}}active{{/if}}" data-tab="abilities" data-group="primary"> {{#if isAstartes}}
   <div class="ability-section-panel gene-seed-panel"> <div class="panel-title"> ГЕНОСЕМЯ </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> <button type="button" class="gene-apply-btn" data-action="geneApply" title="Создать расовые Черты Астартес (Unnatural S/T, Size, Nimble, Amphibious, Gene-Seed) и базовые характеристики"> {{#if hasGeneSeedTrait}}↻ Обновить расовые бонусы{{else}}Применить расовые бонусы{{/if}}
-      </button> </div> <div class="gene-seed-hint">Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты.</div> </div> {{/if}}
+      </button> </div> <div class="gene-seed-hint">Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты Геносемени — гайд ниже.</div>
+    {{#if geneSeedOrgans.length}}
+    <table class="items-table gene-seed-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th class="col-wide">Орган</th> <th>Эффект</th> </tr> </thead> <tbody> {{#each geneSeedOrgans as |o|}}
+      <tr class="item-row" data-item-id="{{o.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{o.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{o.name}}</td> <td class="trait-fx-cell">{{o.effect}}</td> </tr>
+      <tr class="ability-detail-row" data-item-id="{{o.id}}" style="display:none;"> <td colspan="3"><div class="ability-detail-text">{{#if o.installed}}<b>Расположение:</b> {{o.installed}}<br/>{{/if}}{{#if o.description}}{{o.description}}{{else}}—{{/if}}</div></td> </tr>
+      {{/each}} </tbody> </table>
+    {{else}}
+    <div class="gene-seed-hint">Импланты Геносемени ещё не выданы — их даёт Конструктор Черты «Геносемя» (см. вкладку МЕХАНИКА этой Черты).</div>
+    {{/if}}
+  </div> {{/if}}
 
   {{#if isYnnari}}
   <div class="ability-section-panel ynnari-panel"> <div class="panel-title"> ИННАРИ — ПЕРЕРОЖДЁННЫЕ </div>
