@@ -171,7 +171,12 @@ async function onStatAdd(event, target) {
   } else if (stat === "corruption") {
     await promptStatAdd(this.actor, { label: "Порча", path: "system.corruption.value", allowDice: true });
   } else if (stat === "xpTotal") {
-    await promptStatAdd(this.actor, { label: "Опыт (Всего)", path: "system.experience.total" });
+    // Ловит на Лету (X) / Fast Learner: +X% к прибавляемому опыту, читаем
+    // живой процент с актора (module/documents/actor.mjs, system.fastLearnerBonus).
+    await promptStatAdd(this.actor, {
+      label: "Опыт (Всего)", path: "system.experience.total",
+      bonusPercent: this.actor.system?.fastLearnerBonus || 0
+    });
   } else if (stat === "patronFavor") {
     const god = target.dataset.god;
     const meta = chaosPatronMeta(god);

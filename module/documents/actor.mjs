@@ -1214,6 +1214,17 @@ export class WarhammerActor extends Actor {
     system.homeworldCarryBonus = hwCarry;
 
         // ── Опыт ──────────────────────────────────────────────────────────────
+    // Ловит на Лету / Fast Learner (X): +X% к стартовому опыту и опыту за
+    // сессию (ГМ округляет вверх), X = рейтинг Черты, разный у рас (10/15/20/25).
+    // Готового derived-поля под «+X% к прибавляемому опыту» нет — начисление
+    // разовое (диалог module/apps/stat-log.mjs), а не пересчитываемое каждый
+    // prepareData(), поэтому ActiveEffect тут не работает (некуда бить: сумма
+    // не хранится, а вводится). Здесь только живой процент с Черты — читает его
+    // тот же диалог в момент прибавления опыта.
+    const fastLearner = this.items.find(i => i.type === "trait"
+                                           && /Fast Learner|Ловит на Лету/i.test(i.name));
+    system.fastLearnerBonus = fastLearner ? (Number(fastLearner.system?.rating) || 0) : 0;
+
     // Автосумма цен характеристик
     let autoCharCost = 0;
     for (const char of Object.values(chars)) {
