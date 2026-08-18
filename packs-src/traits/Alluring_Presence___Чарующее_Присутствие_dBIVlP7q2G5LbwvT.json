@@ -1,0 +1,51 @@
+{
+  "name": "Alluring Presence / Чарующее Присутствие",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Чарующая аура витает вокруг демонов Слаанеш, привлекая внимание наблюдателя к их неземной грации и отвлекая его от атак демона.",
+    "notes": "",
+    "benefit": "Все враги получают штраф −10 на Избегания против атак демона.",
+    "source": "Демон Слаанеш",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Хаос, I. ДЕМОНЫ («Особенности Демонов», стр. 5)"
+  },
+  "_id": "dBIVlP7q2G5LbwvT",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!dBIVlP7q2G5LbwvT"
+}

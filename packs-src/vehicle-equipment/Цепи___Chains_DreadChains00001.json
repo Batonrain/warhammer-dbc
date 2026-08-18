@@ -1,0 +1,37 @@
+{
+  "name": "Цепи / Chains",
+  "type": "vehicleGear",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "К спине Дредноута прикреплена серия укреплённых цепей. До 5 союзных персонажей могут за полудействие коснуться кормы Дредноута и взять одну из цепей. Если их суммарный S.b выше, чем у Дредноута, взявшиеся за цепи могут контролировать его движение, тратя каждый по полудействию в свой Ход. Обычно Цепи используются, чтобы удерживать обезумевших Дредноутов на месте или оттаскивать их из битвы при отступлении.",
+    "notes": "",
+    "availability": 0,
+    "quality": "common",
+    "active": false,
+    "bookSource": "DoomBC — Машины, «Снаряжение Дредноутов» (стр. 58)"
+  },
+  "_id": "DreadChains00001",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!DreadChains00001"
+}

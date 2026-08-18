@@ -4,6 +4,8 @@
 // Нестабильность, Истинное Имя) и урезанным набором вкладок.
 
 import { WarhammerCharacterSheet } from "./actor-sheet.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
 import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_KEY_TRAITS,
          allegianceMeta, formDuration } from "../constants/demon-mechanics.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -126,21 +128,41 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
   }
 
   // Тест Варп-Нестабильности (W+0). Провал → урон/изгнание в Варп (по решению ГМа).
+  //
+  // Идёт через общий конвейер правил (kind:"instability"), а не мимо него: иначе
+  // Локус Цепей («+Inf герольда на все тесты Нестабильности») и всё, что книга
+  // даст к этому тесту позже, до броска бы не доехало. Модификаторы и перебросы
+  // предлагаются игроку так же, как в прочих тестах, — молча система их не
+  // применяет.
   async _rollInstability() {
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
     const rating = this.actor.system.instabilityRating ?? 1;
-    const roll = await new Roll("1d100").evaluate();
-    const rv = roll.total;
-    const success = rv <= wp;
-    const deg = Math.floor(Math.abs(rv - wp) / 10) + 1;
+    const ctx = { kind: "instability" };
+    const { mods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
+    const bonus = mods.reduce((n, m) => n + (Number(m.value) || 0), 0);
+    const threshold = wp + bonus;
+
+    // Переброс берём первый доступный: выбирать не из чего — на тест
+    // Нестабильности книга даёт максимум один (Локус Цепей его не даёт вовсе).
+    const rr = rerolls[0] || null;
+    const rolled = [];
+    for (let i = 0; i < (rr ? Math.max(2, rr.rolls) : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+    const picked = pickReroll(rolled.map(r => r.total), rr?.mode);
+    const roll = rolled[picked.index];
+    const rv = picked.value;
+    const success = rv <= threshold;
+    const deg = Math.floor(Math.abs(rv - threshold) / 10) + 1;
     const rollMode = game.settings.get("core", "rollMode");
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result wh-daemon-card">
           <div class="roll-header">🌀 Тест Нестабильности — ${esc(this.actor.name)}</div>
-          <div class="roll-threshold">Сила Воли: <b>${wp}</b> · Warp Instability (${rating})</div>
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
+          <div class="roll-threshold">Сила Воли: <b>${wp}</b>${
+            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${mods.map(m => m.label).join(", ")}) → Порог: <b>${threshold}</b>` : ""
+          } · Warp Instability (${rating})</div>
+          <div class="roll-dice">Бросок: <b>${rv}</b>${
+            picked.dropped.length ? ` <em class="roll-reroll-note">(переброс, отброшено ${picked.dropped.join(", ")})</em>` : ""}</div>
           <div class="roll-outcome">${success
             ? `<span class="roll-success">Удержался — ${deg} ст.</span>`
             : `<span class="roll-failure">Дестабилизация — ${deg} ст.: варп-урон / изгнание в Варп (по решению ГМа).</span>`}</div>

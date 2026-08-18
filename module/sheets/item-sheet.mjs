@@ -1700,6 +1700,27 @@ export class WarhammerItemSheet
       e.ignoreTerrainProps = Array.from(ev.currentTarget.selectedOptions).map(o => o.value);
       saveMech(arr);
     });
+    // Переброс (kind:"reroll"). Смена области меняет набор полей (у «теста
+    // характеристики» появляется её выбор, у «теста навыка» — навык), поэтому
+    // сохраняем и даём листу перерисоваться, как у Усталости ниже.
+    const mechField = (sel, apply) => on(sel, "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      apply(e, ev.currentTarget.value);
+      saveMech(arr);
+    });
+    mechField(".mech-reroll-scope", (e, v) => { e.rerollScope = v; });
+    mechField(".mech-reroll-char",  (e, v) => { e.rerollChar = v; });
+    mechField(".mech-reroll-skill", (e, v) => { e.skillKey = v; });
+    mechField(".mech-reroll-mode",  (e, v) => { e.rerollMode = v; });
+    mechField(".mech-reroll-label", (e, v) => { e.label = v; });
+    mechField(".mech-mod-scope",     (e, v) => { e.modScope = v; });
+    mechField(".mech-mod-valuemode", (e, v) => { e.modValueMode = v; });
+    mechField(".mech-mod-char",      (e, v) => { e.modCharBonus = v; });
+    mechField(".mech-reroll-who",    (e, v) => { e.rerollWho = v; });
+    mechField(".mech-capability-key", (e, v) => { e.capabilityKey = v; });
+
     // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
     // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.
     on(".mech-fatigue-action", "change", ev => {
@@ -1867,6 +1888,7 @@ export class WarhammerItemSheet
     on(".req-race", "change",      ev => patchReq(ev, (e, el) => { e.raceKey = el.value; }));
     on(".req-archetype", "change", ev => patchReq(ev, (e, el) => { e.archetypeName = el.value; }));
     on(".req-patron", "change",    ev => patchReq(ev, (e, el) => { e.patronKey = el.value; }));
+    on(".req-capability-key", "change", ev => patchReq(ev, (e, el) => { e.capabilityKey = el.value; }));
 
     // Черта / Талант (драг-н-дроп резолвится в _onDropGrantItem)
     on(".grant-entry-rating", "change", ev => {

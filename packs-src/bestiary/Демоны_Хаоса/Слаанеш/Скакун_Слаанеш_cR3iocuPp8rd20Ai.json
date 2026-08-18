@@ -1956,7 +1956,55 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Скакун Слаанеш (стр. 15)",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Обычный Скакун из статблока."
+              },
+              {
+                "key": "elevated",
+                "label": "Возвышенный Скакун",
+                "hint": "I до 12, W до 45, F до 14, Раны до 21, Acrobatics+30, Dodge+20, Linguistics (True Tongue); Таланты Catfall, Sentry, Sprint; Трейт Natural Armour (2) — рейтинг проставьте вручную.",
+                "system": {
+                  "characteristics.int.base": 12,
+                  "characteristics.wp.base": 45,
+                  "characteristics.fel.base": 14,
+                  "wounds.max": 21,
+                  "wounds.value": 21,
+                  "skills.acrobatics.rank": "expert",
+                  "skills.dodge.rank": "veteran"
+                },
+                "groupSkills": [
+                  {
+                    "group": "linguistics",
+                    "specialty": "True Tongue",
+                    "rank": "knows"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.wpXWVsFxaMd35EKJ",
+                  "Compendium.warhammer-dbc.talents.lT9AL69ChvRqqKFS",
+                  "Compendium.warhammer-dbc.talents.hJFYGzxmhxwJ1Kx9",
+                  "Compendium.warhammer-dbc.traits.bvO8S59a6fOSBXcK"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

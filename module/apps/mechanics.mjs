@@ -80,6 +80,19 @@
 //      это ЖИВОЙ запрос: пока предмет на акторе, ignoredTerrainKeysForActor()
 //      (module/combat/movement-terrain.mjs) читает его Механику напрямую;
 //      уйдёт предмет — сам перестанет учитываться, без отдельного отката.
+//    reroll: { rerollScope:"all"|"char"|"skill"|"attack"|"initiative"|"social",
+//              rerollChar / skillKey (уточнение области), rerollMode:"keepBest"|
+//              "keepWorst", label }
+//      → ЖИВОЙ ЗАПРОС, как terrainIgnore: при получении предмета не пишет
+//      ничего. В момент броска rulesFromItemMechanics (module/rules/
+//      item-rules.mjs) превращает запись в правило формата docs/rules-format.md
+//      с эффектом `rollMode`, и диалог броска показывает переброс отдельной
+//      строкой. Область (`target`) — та же, что у модификаторов: «+10 к тестам
+//      Ловкости» и «переброс теста Ловкости» обязаны срабатывать на одних
+//      бросках. Активность источника решает общий isItemActive: выключенный
+//      Локус Герольда перебросов не даёт.
+//      Заведено под Локусы Герольдов (DoomBC — Хаос, стр. 27-32), где книга
+//      раздаёт перебросы россыпью: «раз в Раунд перебросить любой тест A».
 //    equipment: { equipMode:"direct"|"choice", equipQty,
 //                 // direct — конкретный предмет из дропдауна (кэш компендиумов
 //                 // GRANTABLE_CATEGORIES, см. equipmentOptionsHtml/_equipIndex):
@@ -195,6 +208,8 @@ import { expectedPhase, AP_LOCATIONS }        from "../constants/effect-keys.mjs
 import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
+import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
+import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -256,6 +271,9 @@ const KIND_LABELS = {
   weaponProp: "Оружие: Свойство",
   movement: "Движение: Скорость", terrainIgnore: "Движение: Ландшафт (игнор)",
   fatigue: "Усталость",
+  reroll: "Переброс",
+  testMod: "Модификатор теста",
+  capability: "Возможность",
   armour: "Очки Брони (локация)",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
@@ -267,6 +285,27 @@ const KIND_LABELS = {
 // вкладки МЕХАНИКА уже уровень 1, поэтому подгрупп-в-подгруппах допускается 4.
 const MAX_GROUP_DEPTH = 5;
 const WEIGHT_SCOPE_LABELS = { all: "Общее", carry: "Ношение", lift: "Подъём", push: "Толкание" };
+// Области «Переброса» (kind:"reroll"). Совпадают с областями `target` в
+// docs/rules-format.md: одна и та же область обязана значить одно и то же и в
+// «+10 к тестам Ловкости», и в «перебросить тест Ловкости».
+const REROLL_SCOPES = [
+  ["all",        "любой тест"],
+  ["char",       "тест характеристики"],
+  ["skill",      "тест навыка"],
+  ["attack",     "тест атаки"],
+  ["initiative", "Инициатива"],
+  ["social",     "социальные навыки"],
+  ["shield",     "тесты на щиты"],
+  ["opposed",    "встречные тесты"]
+];
+const REROLL_SCOPE_LABEL = (e) => {
+  switch (e.rerollScope) {
+    case "char":  return e.rerollChar ? `тест ${CHARACTERISTICS[e.rerollChar]?.label || e.rerollChar}` : "";
+    case "skill": return e.skillKey ? `тест «${SKILLS_DEF[e.skillKey]?.label || e.skillKey}»` : "";
+    default: return REROLL_SCOPES.find(([v]) => v === e.rerollScope)?.[1] || "";
+  }
+};
+
 // «Усталость» (kind:"fatigue") — каскад «действие → уточнение». Действие пока
 // одно; список оставлен на вырост, чтобы будущее («Снять уровень», «Порог
 // потери сознания») не ломало уже сохранённые записи.
@@ -431,6 +470,16 @@ export function blankMechEntry(kind = "characteristic") {
     armourLocation: "body", armourValue: 1,
     // terrainIgnore
     ignoreTerrainProps: [],
+    // reroll — «Переброс»: живой запрос, читается в момент броска
+    // (module/rules/item-rules.mjs), при получении предмета ничего не делает.
+    rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
+    // testMod — «Модификатор теста»: тот же живой запрос, области общие
+    // с «Перебросом» (rerollChar/skillKey переиспользуются как уточнение).
+    modScope: "all", modValueMode: "flat", modCharBonus: "inf",
+    // reroll: чей бросок перебрасывается — свой или навязанный цели.
+    rerollWho: "self",
+    // capability — имя возможности из constants/capabilities.mjs
+    capabilityKey: "",
     // fatigue — каскад: действие → характеристика (см. шапку файла)
     fatigueAction: "threshold", fatigueThresholdChar: "t",
     // equipment
@@ -529,6 +578,23 @@ export function describeMechEntry(entry) {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
       return `Ландшафт: игнорирует — ${labels.join(", ")}`;
+    }
+    case "capability": {
+      if (!entry.capabilityKey) return "Возможность: (не выбрана)";
+      return `Возможность: ${CAPABILITIES[entry.capabilityKey]?.label || entry.capabilityKey}`;
+    }
+    case "testMod": {
+      const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
+      if (!scope) return "Модификатор теста: (область не выбрана)";
+      const val = entry.modValueMode === "charBonus"
+        ? `+Бонус ${CHARACTERISTICS[entry.modCharBonus]?.label || entry.modCharBonus}`
+        : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
+      return `Модификатор теста: ${scope} — ${val}`;
+    }
+    case "reroll": {
+      const modeLabel = entry.rerollMode === "keepWorst" ? "худший из двух" : "лучший из двух";
+      const scope = REROLL_SCOPE_LABEL(entry);
+      return scope ? `Переброс: ${scope} — ${modeLabel}` : "Переброс: (область не выбрана)";
     }
     case "fatigue": {
       if (entry.fatigueAction !== "threshold") return "Усталость: (действие не выбрано)";
@@ -643,6 +709,17 @@ function isEntryComplete(e) {
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "fatigue":
       return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
+    case "reroll":
+      if (e.rerollScope === "char")  return !!e.rerollChar;
+      if (e.rerollScope === "skill") return !!e.skillKey;
+      return !!e.rerollScope;
+    case "testMod":
+      if (e.modScope === "char")  return !!e.rerollChar;
+      if (e.modScope === "skill") return !!e.skillKey;
+      if (e.modValueMode === "charBonus") return !!e.modCharBonus;
+      return !!e.modScope && numOk(e.value);
+    case "capability":
+      return !!e.capabilityKey;
     case "equipment":
       if (!numOk(e.equipQty) || Number(e.equipQty) <= 0) return false;
       return e.equipMode === "choice" ? !!e.equipCategoryPack : !!e.equipSourceUuid;
@@ -957,6 +1034,14 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     return;
   }
 
+  if (entry.kind === "reroll" || entry.kind === "testMod" || entry.kind === "capability") {
+    // Живой запрос, как terrainIgnore выше: правило собирается в момент броска
+    // (rulesFromItemMechanics в module/rules/item-rules.mjs). Писать и
+    // откатывать нечего — уйдёт предмет или выключат Локус, и переброс сам
+    // перестанет предлагаться.
+    return;
+  }
+
   if (entry.kind === "fatigue") {
     // Тоже живой запрос: fatigueGraceForActor() (rules/fatigue-grace.mjs)
     // читает Механику в момент теста, писать и откатывать нечего.
@@ -1124,7 +1209,12 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
         }
       }
     }
-    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id } };
+    // abilityEntryId — не для отката при удалении предмета-источника (тот
+    // работает по одному grantedByItem), а для ЖИВОЙ пересинхронизации:
+    // syncGrantedAbilities ниже по нему отличает свою выдачу от чужой и от
+    // копии, которую ГМ положил руками.
+    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
+      grantedByItem: sourceItem.id, abilityEntryId: entry.id } };
     await actor.createEmbeddedDocuments("Item", [data]);
     return;
   }
@@ -1345,6 +1435,72 @@ export async function syncGrantedEquipment(sourceItem) {
     const qty = Math.max(1, parseInt(e.equipQty) || 1);
     if ("quantity" in (data.system || {})) data.system.quantity = qty;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id, equipEntryId: e.id } };
+    toCreate.push(data);
+  }
+  if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
+}
+
+// Записи, выдающие Черту или Талант, из тех же АНД-цепочек. ИЛИ-ветки
+// пропускаются по той же причине, что и у снаряжения: выбор там сделан один
+// раз диалогом, переигрывать его на каждом включении нельзя.
+function collectDirectAbilityEntries(groups) {
+  const out = [];
+  const walk = (entries, operator) => {
+    if (operator === "OR") return;
+    for (const e of entries) {
+      if ((e.kind === "trait" || e.kind === "talent") && isEntryComplete(e)) out.push(e);
+      else if (e.kind === "group" && e.group) walk(e.group.entries || [], e.group.operator);
+    }
+  };
+  for (const g of groups) walk(g.entries || [], g.operator);
+  return out;
+}
+
+/**
+ * Живая пересинхронизация выдачи Черт и Талантов с активностью источника —
+ * сестра syncGrantedEquipment выше, и заведена ровно тогда, когда у источника
+ * появилось выключаемое состояние: подспособность переключаемой способности
+ * (Локус Герольда, module/rules/toggle-abilities.mjs). Пока источниками были
+ * только Черты, Таланты и Расы, «активен всегда» держалось само собой, и
+ * разовой выдачи при createItem хватало.
+ *
+ * Отличие от первой выдачи (applyMechEntry) сознательное: там Талант умеет
+ * не задвоиться и вернуть опыт за совпадение (findSameTalent/refundXP), здесь
+ * — нет. Локус даёт Hatred на бой, а не покупает его персонажу: возвращать за
+ * него опыт при каждом переключении значило бы печатать опыт кнопкой.
+ * Поэтому включение кладёт СВОЮ копию с меткой abilityEntryId, а выключение
+ * снимает ровно её, не трогая одноимённый Талант, купленный персонажем.
+ */
+export async function syncGrantedAbilities(sourceItem) {
+  const actor = sourceItem.parent;
+  if (!(actor instanceof Actor)) return;
+  const entries = collectDirectAbilityEntries(getItemMechanics(sourceItem));
+  if (!entries.length) return;
+
+  const grantedNow = actor.items.filter(i =>
+    i.getFlag(FLAG, "grantedByItem") === sourceItem.id && i.getFlag(FLAG, "abilityEntryId"));
+
+  if (!isItemActive(sourceItem)) {
+    if (grantedNow.length) await actor.deleteEmbeddedDocuments("Item", grantedNow.map(i => i.id));
+    return;
+  }
+
+  const haveIds = new Set(grantedNow.map(i => i.getFlag(FLAG, "abilityEntryId")));
+  const toCreate = [];
+  for (const e of entries) {
+    if (haveIds.has(e.id)) continue;
+    const src = await resolveMechSource(e);
+    const data = src ? src.toObject() : {
+      name: e.sourceName || "?", type: e.kind,
+      img: e.sourceImg || "icons/svg/aura.svg", system: {}
+    };
+    delete data._id;
+    if (e.kind === "trait" && e.rating !== "" && e.rating != null && "rating" in (data.system || {})) {
+      data.system.rating = Number(e.rating) || 0;
+    }
+    if (e.kind === "talent" && e.specialization) data.system.specialization = e.specialization;
+    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
+      grantedByItem: sourceItem.id, abilityEntryId: e.id } };
     toCreate.push(data);
   }
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
@@ -1678,6 +1834,70 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     return `<select class="mech-terrain-ignore" multiple size="6" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>`;
   }
 
+  if (ent.kind === "capability") {
+    const opts = CAPABILITY_OPTIONS
+      .map(([k, l]) => `<option value="${esc(k)}" ${ent.capabilityKey === k ? "selected" : ""}>${esc(l)}</option>`).join("");
+    return `<select class="mech-capability-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="">— возможность —</option>${opts}</select>
+      <input type="text" class="mech-reroll-label" placeholder="подпись" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
+  if (ent.kind === "testMod") {
+    const scopeOpts = REROLL_SCOPES
+      .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const modeOpts = [["flat", "число"], ["charBonus", "бонус характеристики"]]
+      .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const charSel = (cls, val) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
+      Object.entries(CHARACTERISTICS).map(([k, c]) =>
+        `<option value="${k}" ${val === k ? "selected" : ""}>${esc(c.label || k)}</option>`).join("")}</select>`;
+    let detail = "";
+    if (ent.modScope === "char") detail = charSel("mech-reroll-char", ent.rerollChar);
+    else if (ent.modScope === "skill") {
+      detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
+          `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
+    }
+    const valueField = ent.modValueMode === "charBonus"
+      ? charSel("mech-mod-char", ent.modCharBonus)
+      : `<input type="number" class="mech-entry-value" value="${esc(ent.value)}"
+                data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+    return `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
+      ${detail}
+      <select class="mech-mod-valuemode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      ${valueField}
+      <input type="text" class="mech-reroll-label" placeholder="подпись в диалоге" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
+  if (ent.kind === "reroll") {
+    const scopeOpts = REROLL_SCOPES
+      .map(([v, l]) => `<option value="${v}" ${ent.rerollScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const modeOpts = [["keepBest", "лучший из двух"], ["keepWorst", "худший из двух"]]
+      .map(([v, l]) => `<option value="${v}" ${ent.rerollMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    // Уточнение показывается только там, где оно есть: у «любого теста»,
+    // атаки, Инициативы и социальных навыков области хватает самой по себе.
+    let detail = "";
+    if (ent.rerollScope === "char") {
+      const opts = Object.entries(CHARACTERISTICS)
+        .map(([k, c]) => `<option value="${k}" ${ent.rerollChar === k ? "selected" : ""}>${esc(c.label || k)}</option>`).join("");
+      detail = `<select class="mech-reroll-char" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>`;
+    } else if (ent.rerollScope === "skill") {
+      const opts = Object.entries(SKILLS_DEF)
+        .map(([k, d]) => `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("");
+      detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="">— навык —</option>${opts}</select>`;
+    }
+    const whoOpts = [["self", "свой бросок"], ["target", "навязать цели"]]
+      .map(([v, l]) => `<option value="${v}" ${ent.rerollWho === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    return `<select class="mech-reroll-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
+      ${detail}
+      <select class="mech-reroll-who" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${whoOpts}</select>
+      <select class="mech-reroll-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      <input type="text" class="mech-reroll-label" placeholder="подпись в диалоге" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
   if (ent.kind === "fatigue") {
     // Каскад: сначала ЧТО делать с Усталостью, потом уточнение. Действие пока
     // одно, но выбор оставлен списком — чтобы будущие действия («Снять
@@ -1987,7 +2207,8 @@ export const REQ_KIND_LABELS = {
   reqTrait:      "Черта",
   reqRace:       "Раса",
   reqArchetype:  "Элитный архетип",
-  reqPatron:     "Покровительство Бога"
+  reqPatron:     "Покровительство Бога",
+  reqCapability: "Возможность"
 };
 
 /** Сравнение имён: регистр и лишние пробелы значения не имеют. */
@@ -2002,7 +2223,10 @@ export function blankReqEntry(kind = "reqSkill") {
     // reqTalent / reqTrait — источник перетаскивается, рейтинг необязателен
     sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "",
     // reqRace / reqArchetype / reqPatron
-    raceKey: "", archetypeName: "", patronKey: ""
+    raceKey: "", archetypeName: "", patronKey: "",
+    // reqCapability — имя из constants/capabilities.mjs. Так книжное «доступно
+    // только пилоту Дредноута» становится проверяемым условием, а не примечанием.
+    capabilityKey: ""
   };
 }
 
@@ -2042,6 +2266,10 @@ export function describeReqEntry(e) {
       return e.patronKey
         ? `Покровительство: ${WARP_GODS_MAP[e.patronKey]?.label || e.patronKey}`
         : "Покровительство: (не выбрано)";
+    case "reqCapability":
+      return e.capabilityKey
+        ? (CAPABILITIES[e.capabilityKey]?.label || e.capabilityKey)
+        : "Возможность: (не выбрана)";
     default:
       return "(неизвестное требование)";
   }
@@ -2057,6 +2285,7 @@ export function isReqComplete(e) {
     case "reqRace":      return !!e.raceKey;
     case "reqArchetype": return !!e.archetypeName;
     case "reqPatron":    return !!e.patronKey;
+    case "reqCapability": return !!e.capabilityKey;
     default:             return false;
   }
 }
@@ -2114,6 +2343,11 @@ export function actorMeetsReq(actor, e) {
     }
     case "reqPatron":
       return actor.system.patronGod === e.patronKey;
+    // Возможность спрашивается у общего реестра правил (module/rules/flags.mjs),
+    // а не у полей актора: «пилот Дредноута» — это ссылка с ЧУЖОГО актора
+    // (место экипажа саркофага), и в system персонажа её нет вовсе.
+    case "reqCapability":
+      return hasRuleFlag(actor, e.capabilityKey);
     default:
       return false;
   }
@@ -2186,6 +2420,12 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
       const names = [...new Set(ELITE_ARCHETYPES.map(a => a.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ru"));
       const opts = names.map(n => optHtml(n, n, e.archetypeName === n)).join("");
       return `<select class="req-archetype" ${d} ${dis}><option value="">— выберите архетип —</option>${opts}</select>`;
+    }
+        case "reqCapability": {
+      const opts = CAPABILITY_OPTIONS
+        .map(([k, l]) => `<option value="${esc(k)}" ${e.capabilityKey === k ? "selected" : ""}>${esc(l)}</option>`).join("");
+      return `<select class="req-capability-key" ${d} ${dis}>
+        <option value="">— возможность —</option>${opts}</select>`;
     }
     case "reqPatron": {
       const opts = WARP_GODS.map(g => optHtml(g.key, g.label, e.patronKey === g.key)).join("");

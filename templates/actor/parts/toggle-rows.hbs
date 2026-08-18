@@ -1,0 +1,27 @@
+{{!-- Подспособности переключаемой способности: Локус Герольда и подобные
+      «раз в Ход выбери один из N». Рисуются вложенными под своей способностью
+      в тех же таблицах ТАЛАНТОВ и ЧЕРТ — см. module/rules/toggle-abilities.mjs.
+      Параметры: toggles (из toggleRows), cols — ширина таблицы-хозяйки,
+      namecols — сколько колонок занимает подпись (cols минус колонка кнопки).
+      Второе число передаётся, а не считается: helper вычитания в проекте не
+      заведён, а заводить его ради одной вёрстки — лишняя общая сущность. --}}
+<tr class="toggle-head-row" data-parent-id="{{toggles.parentId}}">
+  <td colspan="{{cols}}" class="toggle-head-cell">
+    {{toggles.label}}
+    <span class="toggle-mode-hint">{{#if (eq toggles.mode "many")}}можно несколько{{else}}одна из{{/if}}</span>
+  </td>
+</tr>
+{{#each toggles.rows as |sub|}}
+<tr class="toggle-row {{#if sub.on}}is-on{{/if}}" data-item-id="{{sub.id}}">
+  <td class="toggle-btn-cell">
+    <button type="button" class="toggle-ability-btn {{#if sub.on}}is-on{{/if}}"
+            data-action="toggleAbility"
+            data-parent-id="{{../toggles.parentId}}" data-item-id="{{sub.id}}"
+            title="{{#if sub.on}}Выключить{{else}}Включить{{/if}}">{{#if sub.on}}●{{else}}○{{/if}}</button>
+  </td>
+  <td colspan="{{../namecols}}" class="toggle-name-cell">
+    <span class="toggle-name">{{sub.name}}</span>
+    {{#if sub.hint}}<span class="toggle-hint">{{sub.hint}}</span>{{/if}}
+  </td>
+</tr>
+{{/each}}

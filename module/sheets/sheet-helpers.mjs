@@ -43,6 +43,9 @@ import { VITALS, VITAL_MAX_STAGE }                   from "../constants/vitals.m
 import { ritualsContext }                            from "./tabs/rituals.mjs";
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
+import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
+import { ruleFlags, ruleFlagLabels }                 from "../rules/flags.mjs";
+import { CAPABILITIES }                              from "../constants/capabilities.mjs";
 
 // ── Определение всех состояний ────────────────────────────────────────────────
 export const CONDITIONS_DEF = {
@@ -714,7 +717,12 @@ export function buildGetData(actor) {
   // рейтингом и со списком специализаций (rules/merge-abilities.mjs). Предметы
   // при этом остаются раздельными — строка ведёт к первому из них, и удаление
   // снимает источники по одному.
-  context.abilityTalents = mergeAbilityItems(allItems.filter(i => i.type === "talent")).map(g => {
+  // Подспособности переключаемой способности (Локус Герольда и подобные) в
+  // общий список не идут: они рисуются вложенными под своим родителем, со
+  // своей кнопкой вкл./выкл. Иначе шесть эффектов Локуса засорили бы таблицу
+  // Талантов шестью самостоятельными строками, а склейка одноимённых
+  // (mergeAbilityItems) ещё и слепила бы одинаковые Локусы разных Герольдов.
+  context.abilityTalents = mergeAbilityItems(allItems.filter(i => i.type === "talent" && !toggleParentId(i))).map(g => {
     const i  = g.first;
     const e  = mergeAbilityEffects(g.items);
     const fx = [];
@@ -736,7 +744,8 @@ export function buildGetData(actor) {
       benefit:        i.system.benefit || i.system.description || "",
       // Тип (папка корбука) ищется по имени как его записал источник: в
       // библиотеке имя лежит целиком, вместе с «(X)».
-      typeGroup:      TALENT_TYPE.byName.get(i.name) || "Прочие"
+      typeGroup:      TALENT_TYPE.byName.get(i.name) || "Прочие",
+      toggles:        toggleRows(allItems, i)
     };
   });
   // Группировка талантов по типам корбука (стр. 62-105) для читаемого списка.
@@ -822,7 +831,27 @@ export function buildGetData(actor) {
   // ── Черты (трейты) ──────────────────────────────────────────────────────
   // Как и Таланты, одинаковые Черты из разных источников склеиваются в одну
   // строку с общим рейтингом: «Nimble (5)» дважды — это Nimble (10).
-  context.traits = mergeAbilityItems(allItems.filter(i => i.type === "trait")).map(g => {
+  // Возможности, которые актор имеет прямо сейчас (записи Конструктора вида
+  // «Возможность» с активных предметов — включённые Локусы и всё прочее).
+  // Панель нужна затем, что часть возможностей пока не имеет читателя в
+  // расчёте: за столом их применяет ГМ, и он должен видеть список, а не
+  // вспоминать, какой Локус включён.
+  {
+    const flags = ruleFlags(actor, { kind: "skill" });
+    context.activeCapabilities = [...flags]
+      .map(key => ({
+        key,
+        label: CAPABILITIES[key]?.label || key,
+        sources: ruleFlagLabels(actor, key, { kind: "skill" }).join(", "),
+        // Есть ли код, который эту возможность читает. Ложь честнее молчания:
+        // ГМ должен знать, что вот это система сама не посчитает.
+        auto: !!CAPABILITIES[key]?.reader
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, "ru"));
+  }
+
+  // Подспособности сюда тоже не идут — см. комментарий у Талантов выше.
+  context.traits = mergeAbilityItems(allItems.filter(i => i.type === "trait" && !toggleParentId(i))).map(g => {
     const e  = mergeAbilityEffects(g.items);
     const fx = [];
     for (const [stat, value] of Object.entries(e.charBonus))
@@ -838,7 +867,8 @@ export function buildGetData(actor) {
       name:          g.specs.length ? `${g.baseName} (${g.specs.join(", ")})` : g.baseName,
       ratingDisplay: g.ratingText,
       effectSummary: fx.join(" · "),
-      benefit:       g.first.system.benefit || ""
+      benefit:       g.first.system.benefit || "",
+      toggles:       toggleRows(allItems, g.first)
     };
   });
 

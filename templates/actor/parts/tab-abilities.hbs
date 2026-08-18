@@ -42,7 +42,8 @@
           <tr class="talent-group-row"><td colspan="5" class="talent-group-cell">{{g.label}} <span class="talent-group-count">{{g.items.length}}</span></td></tr>
           {{#each g.items as |t|}}
           <tr class="item-row" data-item-id="{{t.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{t.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{t.name}}</td> <td class="talent-tier-cell">{{t.tier}}</td> <td class="talent-apt-cell">{{t.aptitudes}}</td> <td class="talent-req-cell">{{t.requirement}}</td> </tr>
-          <tr class="ability-detail-row" data-item-id="{{t.id}}" style="display:none;"> <td colspan="5"><div class="ability-detail-text">{{#if t.god}}<b>Бог:</b> {{t.god}}{{/if}}{{#if t.specialization}} · <b>Специализации:</b> {{t.specialization}}{{/if}}{{#if t.effectSummary}} · {{t.effectSummary}}{{/if}}{{#if (or t.god t.specialization t.effectSummary)}}<br/>{{/if}}{{#if t.benefit}}{{t.benefit}}{{else}}—{{/if}}</div></td> </tr> {{/each}}
+          <tr class="ability-detail-row" data-item-id="{{t.id}}" style="display:none;"> <td colspan="5"><div class="ability-detail-text">{{#if t.god}}<b>Бог:</b> {{t.god}}{{/if}}{{#if t.specialization}} · <b>Специализации:</b> {{t.specialization}}{{/if}}{{#if t.effectSummary}} · {{t.effectSummary}}{{/if}}{{#if (or t.god t.specialization t.effectSummary)}}<br/>{{/if}}{{#if t.benefit}}{{t.benefit}}{{else}}—{{/if}}</div></td> </tr>
+          {{#if t.toggles}}{{> "systems/warhammer-dbc/templates/actor/parts/toggle-rows.hbs" toggles=t.toggles cols=5 namecols=4}}{{/if}} {{/each}}
           {{/each}}
         {{else}}
           <tr class="items-empty"> <td colspan="5"><em>Нет талантов</em></td> </tr> {{/if}}
@@ -50,10 +51,28 @@
       <button type="button" class="trait-add-btn" data-action="traitAdd" title="Добавить черту из списка (по типам). ПКМ — создать пустую">＋</button> </div> <table class="items-table traits-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th class="col-wide">Название</th> <th class="col-narrow">Рейтинг</th> <th>Авто-эффекты</th> </tr> </thead> <tbody> {{#if traits.length}}
           {{#each traits as |tr|}}
           <tr class="item-row" data-item-id="{{tr.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{tr.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{tr.name}}</td> <td class="trait-rating-cell">{{tr.ratingDisplay}}</td> <td class="trait-fx-cell">{{tr.effectSummary}}</td> </tr>
-          <tr class="ability-detail-row" data-item-id="{{tr.id}}" style="display:none;"> <td colspan="4"><div class="ability-detail-text">{{#if tr.benefit}}{{tr.benefit}}{{else}}—{{/if}}</div></td> </tr> {{/each}}
+          <tr class="ability-detail-row" data-item-id="{{tr.id}}" style="display:none;"> <td colspan="4"><div class="ability-detail-text">{{#if tr.benefit}}{{tr.benefit}}{{else}}—{{/if}}</div></td> </tr>
+          {{#if tr.toggles}}{{> "systems/warhammer-dbc/templates/actor/parts/toggle-rows.hbs" toggles=tr.toggles cols=4 namecols=3}}{{/if}} {{/each}}
         {{else}}
           <tr class="items-empty"> <td colspan="4"><em>Нет черт</em></td> </tr> {{/if}}
       </tbody> </table> </div>
+
+  {{#if activeCapabilities.length}}
+  <div class="ability-section-panel"> <div class="panel-title"> ВОЗМОЖНОСТИ СЕЙЧАС </div>
+    <table class="items-table"> <thead> <tr>
+      <th class="col-wide">Что даёт</th><th class="col-narrow">Считает</th><th>Источник</th>
+    </tr> </thead> <tbody>
+      {{#each activeCapabilities as |c|}}
+      <tr class="item-row">
+        <td class="item-name-cell">{{c.label}}</td>
+        <td class="cap-auto-cell">{{#if c.auto}}<span title="Система учитывает сама">авто</span>{{else}}<span class="cap-manual" title="Читателя в расчёте нет — применяет ГМ">вручную</span>{{/if}}</td>
+        <td>{{c.sources}}</td>
+      </tr>
+      {{/each}}
+    </tbody> </table>
+    <div class="gene-seed-hint">Список собирается из записей Конструктора вида «Возможность» на активных предметах: включённые Локусы Герольда и всё прочее того же рода. «Вручную» значит, что расчёт эту возможность пока не читает.</div>
+  </div>
+  {{/if}}
 
   {{!-- Ритуалы (стр. 393-425). Пополняются драг-н-дропом предмета-ритуала на
         лист (штатный _onDropItem Foundry, свой обработчик не нужен) либо

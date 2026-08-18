@@ -1,0 +1,56 @@
+{
+  "name": "Iron Wrath / Железный Гнев",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "system": {
+    "description": "Настраиваясь на изменения своего сознания, пилот усмиряет и направляет бушующий в нём гнев.",
+    "notes": "",
+    "benefit": "Сохраняет способность стрелять как обычно и игнорирует штраф к BS от Ярости. В Ярости не обязан двигаться к ближайшей цели быстрее Шага, если понимает, что не доберётся до неё Натиском в этот Ход.",
+    "tier": 1,
+    "requirement": "Frenzy",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "khorne",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Машины, «Таланты Дредноутов» (стр. 58)"
+  },
+  "_id": "DreadIronWrath01",
+  "effects": [],
+  "folder": "DreadTalentsFld",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!DreadIronWrath01"
+}

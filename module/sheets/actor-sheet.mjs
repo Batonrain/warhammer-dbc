@@ -47,7 +47,8 @@ import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
-import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
          assistsBeyondCap, countedAssists }
   from "../rules/assists.mjs";
@@ -63,6 +64,7 @@ import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { toggleAbility } from "../apps/toggle-abilities.mjs";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
@@ -141,6 +143,15 @@ function onAbilityDetail(event, target) {
   row.style.display = shown ? "" : "none";
   target.textContent = shown ? "▾" : "▸";
   tr.classList.toggle("ability-row-open", shown);
+}
+
+// Кнопка «вкл./выкл.» у подспособности переключаемой способности (Локус
+// Герольда и подобные «раз в Ход выбери один из N»). Что именно станет
+// включённым — считает module/rules/toggle-abilities.mjs, применяет
+// module/apps/toggle-abilities.mjs; лист перерисуется сам по updateItem.
+async function onToggleAbility(event, target) {
+  event.preventDefault(); event.stopPropagation();
+  await toggleAbility(this.actor, target.dataset.parentId, target.dataset.itemId);
 }
 
 
@@ -292,6 +303,7 @@ export class WarhammerCharacterSheet
       // «+» в блоке МИНЬОНЫ на вкладке СОЦИУМ — генератор слуги (стр. 111-113).
       minionCreate:   whenEditable(onMinionCreate),
       abilityDetail: whenEditable(onAbilityDetail),
+      toggleAbility: whenEditable(onToggleAbility),
       pathsToggle: whenEditable(onPathsToggle),
       statAdd: whenEditable(onStatAdd),
       initiativeRoll: whenEditable(onInitiativeRoll),
@@ -1131,6 +1143,9 @@ export class WarhammerCharacterSheet
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
     const rl = this._ruleRollModsHtml(rollCtx);
+    // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
+    // блоком, а не галочкой среди модификаторов: их не с чем складывать.
+    const rr = ruleRerollsHtml(this.actor, rollCtx);
     const defaultCharTotal = this.actor.system.characteristics[defaultChar]?.total ?? 0;
     const rankBonus        = baseTotal - defaultCharTotal;
 
@@ -1174,6 +1189,7 @@ export class WarhammerCharacterSheet
             ${hw.html}
             ${im.html}
             ${rl.html}
+            ${rr.html}
           </div>`,
       buttons: [
         {
@@ -1197,11 +1213,18 @@ export class WarhammerCharacterSheet
             // прибавка к степени — отдельным полем: она применяется только при
             // успехе, и решать это должен вызывающий код.
             modifier += assistThresholdBonus(assistants.length);
+            // Выбранный переброс: −1 значит «без переброса».
+            const rerollEl = form.querySelector(".rule-reroll-opt:checked");
+            const rerollIdx = parseInt(rerollEl?.dataset.idx ?? "-1");
             return {
               charKey:  form.querySelector("#skill-char-select")?.value,
               target:   parseInt(form.querySelector("#skill-target").value) || 0,
               modifier,
-              assistCount: assistants.length
+              assistCount: assistants.length,
+              reroll: rerollIdx >= 0
+                ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2,
+                    label: rerollEl.parentElement?.textContent?.trim() || "Переброс" }
+                : null
             };
           }
         },
@@ -1277,7 +1300,7 @@ export class WarhammerCharacterSheet
   async _rollSkill(label, baseTotal, defaultChar, rollContext = null) {
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext);
     if (!result) return;
-    const { charKey, target, modifier, assistCount = 0 } = result;
+    const { charKey, target, modifier, assistCount = 0, reroll = null } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(defaultChar);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
@@ -1285,8 +1308,20 @@ export class WarhammerCharacterSheet
 
     // Мод препаратов уже входит в target (через char.total → итог навыка)
     const eff      = target + modifier + fatiguePenalty + helmetBonus;
-    const roll     = await new Roll("1d100").evaluate();
-    const rv       = roll.total;
+    // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
+    // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
+    // держится в одном месте, а не переписывается на каждом месте броска.
+    const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+    const rolls = [];
+    for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+    const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
+    const roll   = rolls[picked.index];
+    const rv     = picked.value;
+    // Отброшенные броски показываем в карточке: иначе переброс выглядит как
+    // «мастер что-то посчитал», а не как потраченная возможность.
+    const rerollNote = reroll
+      ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+      : "";
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
     const rollMode = game.settings.get("core", "rollMode");
     const success  = rv <= eff;
@@ -1311,6 +1346,7 @@ export class WarhammerCharacterSheet
           </div>
           ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${success ? `, +${assistCount} к степени` : ""})</div>` : ""}
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
+          ${rerollNote}
           <div class="roll-outcome">${outcome}</div>
         </div>`,
       rolls: [roll],

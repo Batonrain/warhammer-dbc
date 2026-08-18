@@ -8,6 +8,10 @@ import { ASTARTES_RULES } from "./library/astartes.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
+import { rulesFromItemMechanics } from "./item-rules.mjs";
+import { isItemActive } from "../apps/effects.mjs";
+import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
+         SARCOPHAGUS, sarcophagusFlags } from "./dreadnought.mjs";
 
 const SOURCES = new Map();
 
@@ -49,3 +53,49 @@ registerRuleSource("race", a => RACE_RULES[a?.system?.race] ?? []);
 // умолчанию, поэтому реестр по-прежнему запускается в тестах.
 registerRuleSource("homeworld", a =>
   isFeatureEnabled("homeworlds") ? (HOMEWORLD_BY_KEY[hwKey(a)]?.rules ?? []) : []);
+
+// Предметы актора: записи Конструктора, которые живут В МОМЕНТ БРОСКА, а не при
+// получении предмета (первая такая — «Переброс» Локусов Герольдов). Активность
+// источника спрашивается у общего рубильника isItemActive: выключенный Локус,
+// снятое оружие и вынутый имплант правил не дают — ровно так же, как не дают
+// эффектов. См. module/rules/item-rules.mjs.
+registerRuleSource("items", a => rulesFromItemMechanics(a?.items ?? [], isItemActive));
+
+// Пилот Дредноута (Книга Машин, стр. 57-58). Связь хранит сам Дредноут — место
+// экипажа с ролью `pilot` и uuid актора, — поэтому спрашивать приходится не
+// персонажа, а мир: не назначен ли он куда-то пилотом. Из этой возможности
+// растут Требования двенадцати Талантов Дредноутов: книга даёт их только
+// заключённому в саркофаг, и проверять это должны данные, а не память ГМа.
+//
+// Вне Foundry игры нет, и источник молчит — на тестах ядра это не сказывается:
+// сама связь считается в module/rules/dreadnought.mjs без всякой игры.
+registerRuleSource("dreadnought", (a) => {
+  if (typeof game === "undefined" || !a?.uuid) return [];
+  if (!isDreadnoughtPilot(a.uuid, game.actors ?? [])) return [];
+
+  // Один пункт книги — одно правило, а не свалка в одном: в диалоге броска и в
+  // панели возможностей игрок видит, ЧТО именно сработало, а не «Дредноут».
+  const rules = [{
+    id: "dreadnought.pilot", label: "Пилот Дредноута", when: {},
+    effects: [{ kind: "grantFlag", target: DREADNOUGHT_PILOT_FLAG }]
+  }];
+
+  // Числовые пункты стр. 57. Рейтинги Сверхъестественного здесь не трогаем:
+  // «уменьшить рейтинг на 4» зависит от того, сколько его есть, и считается
+  // расчётом листа через sarcophagusCharDelta, а не плоским модификатором.
+  rules.push({
+    id: "dreadnought.sarcophagus.mind", label: "Саркофаг: защита сознания", when: {},
+    effects: [{ kind: "rollBonus", target: "all", value: SARCOPHAGUS.mindControlBonus,
+                label: "Саркофаг: против контроля сознания" }]
+  });
+
+  // Возможности книги: иммунитеты, автоуспехи и запреты. Читателей у части из
+  // них пока нет — они помечены «вручную» в панели на листе.
+  for (const flag of sarcophagusFlags()) {
+    rules.push({
+      id: `dreadnought.sarcophagus.${flag}`, label: "Саркофаг Дредноута", when: {},
+      effects: [{ kind: "grantFlag", target: flag }]
+    });
+  }
+  return rules;
+});

@@ -1,4 +1,5 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
 import { MELEE_STANCES }                           from "../constants/combat.mjs";
 import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
@@ -86,9 +87,25 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // forcedRoll задаётся при перебросе/+10 за Очко Судьбы — повторяем ту же
   // атаку с заданным значением d100 (а не бросаем заново).
-  const roll     = (opts.forcedRoll != null)
-    ? await new Roll(String(Math.max(1, Math.min(100, opts.forcedRoll)))).evaluate()
-    : await new Roll("1d100").evaluate();
+  //
+  // opts.reroll — другое: переброс от правила (Локус Буйства и подобные,
+  // module/rules/item-rules.mjs). Он не повторяет прошлую атаку, а катает
+  // несколько кубов сразу и оставляет один. Какой — решает pickReroll: на d100
+  // «лучший» это МЕНЬШИЙ, и это знание живёт в одном месте на всю систему.
+  // forcedRoll старше: если атаку переигрывают, перебрасывать уже нечего.
+  let rerollDropped = [];
+  let roll;
+  if (opts.forcedRoll != null) {
+    roll = await new Roll(String(Math.max(1, Math.min(100, opts.forcedRoll)))).evaluate();
+  } else if (opts.reroll) {
+    const rolls = [];
+    for (let i = 0; i < Math.max(2, opts.reroll.rolls || 2); i++) rolls.push(await new Roll("1d100").evaluate());
+    const picked = pickReroll(rolls.map(r => r.total), opts.reroll.mode);
+    roll = rolls[picked.index];
+    rerollDropped = picked.dropped;
+  } else {
+    roll = await new Roll("1d100").evaluate();
+  }
   const rv       = roll.total;
   const rollMode = game.settings.get("core", "rollMode");
   const hit      = rv <= threshold;
@@ -328,7 +345,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     speaker: ChatMessage.getSpeaker({ actor }),
     content: attackCard({
       actorName: actor.name, weaponName: item.name, wp,
-      threshold, rv, hit, deg, hitsCount, hits,
+      threshold, rv, hit, deg, hitsCount, hits, rerollDropped,
       modeLine: (isMelee && rofMode === "melee") ? "Рукопашная" : rofLabel,
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
@@ -353,6 +370,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       defense: {
         dodgeMod: techOpts.targetDodgeMod ?? 0,
         parryMod: techOpts.targetParryMod ?? 0,
+        // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
+        // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
+        // кнопках защиты в карточке.
+        forcedDefenceReroll: opts.forcedDefenceReroll || "",
         targetIsVehicle, note: techOpts.chatNote
       },
       notes: {

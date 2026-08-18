@@ -458,7 +458,8 @@ const TYPES = {
   },
   vehicleGear: {
     pack: "vehicle-equipment",
-    defaults: { description: "", notes: "", availability: 0, quality: "common", active: true }
+    defaults: { description: "", notes: "", availability: 0, quality: "common", active: true,
+                bookSource: "" }
   },
   vehicleTrait: {
     pack: "vehicle-traits",

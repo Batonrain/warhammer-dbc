@@ -108,7 +108,8 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
 }
 
 /** Кнопки защиты цели. Уклонение и Парирование гасятся приёмом или Гибким. */
-function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "" }, { wp, deg }) {
+function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
+                          forcedDefenceReroll = "" }, { wp, deg }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
   return `
@@ -119,7 +120,7 @@ function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, n
           ? `<button class="wh-dodge-btn wh-dodge-disabled" disabled>
                Уклонение (невозможно)
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-attack-deg="${deg}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-attack-deg="${deg}" data-force-reroll="${forcedDefenceReroll}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -127,7 +128,7 @@ function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, n
           ? `<button class="wh-parry-btn wh-dodge-disabled" disabled>
                Парирование (невозможно${wp.flexible ? " — Гибкое" : ""})
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-attack-deg="${deg}">
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-attack-deg="${deg}" data-force-reroll="${forcedDefenceReroll}">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
@@ -191,6 +192,9 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0
 export function attackCard({
   actorName = "", weaponName = "", wp = {},
   threshold = 0, rv = 0, modeLine = "", hit = false, deg = 0,
+  // Отброшенные перебросом кубы: без них потраченный Локус выглядит как
+  // «мастер что-то посчитал», а не как использованная возможность.
+  rerollDropped = [],
   hitsCount = 0, hits = [],
   hitLocLabel = "", locRoll = 0, locShift = null,
   isMelee = false, dtLabel = "", damageType = "", pen = 0,
@@ -262,7 +266,8 @@ export function attackCard({
         <div class="roll-statline">
           <span class="roll-stat"><label>Порог</label><b>${threshold}</b></span>
           <span class="roll-stat"><label>Режим</label><b>${modeLine}</b></span>
-          <span class="roll-stat"><label>Бросок</label><b>${rv}</b></span>
+          <span class="roll-stat"><label>Бросок</label><b>${rv}</b>${
+            rerollDropped.length ? `<em class="roll-reroll-note"> (переброс, отброшено ${rerollDropped.join(", ")})</em>` : ""}</span>
         </div>
         <div class="roll-outcome">${outcomeHtml}</div>
         ${hit && hitsCount > 0

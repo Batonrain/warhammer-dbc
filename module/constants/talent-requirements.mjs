@@ -30,6 +30,15 @@ const CHAR_ALIASES = {
   F: "fel", FEL: "fel", INF: "inf"
 };
 
+// Боги в том падеже, в каком их пишет книга: «Покровительство Кхорна».
+// Таблица здесь, а не в constants/veil.mjs, потому что там лежат имена
+// именительного падежа для интерфейса, и склонять их кодом — заведомо хуже,
+// чем перечислить пять форм.
+const PATRON_ALIASES = {
+  "кхорна": "khorne", "нургла": "nurgle", "слаанеш": "slaanesh",
+  "тзинча": "tzeentch", "неделимого": "undivided"
+};
+
 /** Пишутся как характеристики, но живут в других полях листа. */
 const SPECIAL_ALIASES = { COR: "corruption", PR: "psyRating" };
 
@@ -154,6 +163,16 @@ function parseAtom(raw) {
     return { kind: "unknown", raw };
   }
 
+  // «Покровительство Кхорна» (Таланты Дредноутов, Книга Машин стр. 58).
+  m = /^покровительство\s+(\S+)$/i.exec(text);
+  if (m) {
+    const key = PATRON_ALIASES[norm(m[1])];
+    // Незнакомого бога не превращаем в «не выполнено»: вернём прозу, и
+    // требование останется unknown — ложное предупреждение хуже молчания.
+    if (key) return { kind: "patron", key, raw };
+    return { kind: "unknown", raw };
+  }
+
   // Просто имя: навык без продвижения или талант
   const skill = SKILL_ALIASES[norm(text)];
   if (skill) return { kind: "skill", key: skill, bonus: 0, raw };
@@ -196,9 +215,15 @@ export function parseRequirement(str) {
 const rankBonus = (rank) => SKILL_RANKS[rank]?.bonus ?? -20;
 
 /** Есть ли у актора талант/черта с таким именем (сравнение по англ. части). */
+// «Hatred (любой)» — годится ЛЮБАЯ специализация. Скобку разборщик читает как
+// конкретную специализацию, поэтому такие слова снимаются здесь: иначе
+// требование искало бы талант со специализацией по имени «любой».
+const ANY_SPEC = new Set(["любой", "любая", "любое", "любых", "any"]);
+
 function hasTalent(actor, atom) {
   const wanted = norm((atom.base || atom.name || "").split("/")[0]);
-  const spec   = norm(atom.spec || "");
+  const rawSpec = norm(atom.spec || "");
+  const spec   = ANY_SPEC.has(rawSpec) ? "" : rawSpec;
   for (const i of actor.items) {
     if (i.type !== "talent" && i.type !== "trait") continue;
     const nm = norm(String(i.name).split("/")[0]);
@@ -241,6 +266,7 @@ function checkAtom(actor, atom) {
       if (!fit.length) return false;
       return fit.some(e => rankBonus(e.rank) >= atom.bonus);
     }
+    case "patron": return norm(sys.patronGod) === atom.key;
     case "talent": return hasTalent(actor, atom);
     default: return null;                      // проза — не проверяем
   }

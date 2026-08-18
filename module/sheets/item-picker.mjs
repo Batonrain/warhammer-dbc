@@ -11,6 +11,7 @@ import { talentCostXP, aptitudeCat, charAptitudeSet, ALIGN_LABEL,
          resolveTalentAptitudes } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
+import { DREADNOUGHT_PILOT_FLAG } from "../rules/dreadnought.mjs";
 import { masteryTargets, masteryAptitudes } from "../rules/mastery-targets.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isMinionTalent } from "../rules/minion-build.mjs";
@@ -99,6 +100,14 @@ export function talentGroupLock(actor, kind, parent, folderName) {
   // получит ту же папку из своих данных, без правки этой строки.
   if (!parent && folderName === "Геносемя") {
     return hasRuleFlag(actor, "talents.geneSeed") ? null : "Нужно Геносемя (раса Астартес)";
+  }
+  // Таланты Дредноутов (Книга Машин, стр. 58) книга даёт только заключённому в
+  // саркофаг. Возможность раздаёт источник «dreadnought» (module/rules/
+  // sources.mjs) по месту экипажа с ролью «пилот» — то есть по связи, которая
+  // живёт на ЧУЖОМ акторе, и в полях самого персонажа её не найти.
+  if (!parent && folderName === "Дредноуты") {
+    return hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
+      ? null : "Нужно быть назначенным пилотом Дредноута";
   }
   return null;
 }

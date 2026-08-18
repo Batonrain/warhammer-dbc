@@ -1,0 +1,51 @@
+{
+  "name": "Mockery of Life / Насмешка Над Жизнью",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Демоны Нургла цепляются за существование гораздо сильнее других, даже когда их эфирные тела разваливаются на части.",
+    "notes": "",
+    "benefit": "Раз в Раунд, когда Раны опускаются ниже 0, демон может пройти тест Т+10 и при Успехе остаться с 0 Ран. Не действует против урона от священного оружия и Варп-Нестабильности. Иммунитет ко всем ядам, даже демоническим.",
+    "source": "Демон Нургла",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Хаос, I. ДЕМОНЫ («Особенности Демонов», стр. 5)"
+  },
+  "_id": "yr53iZEVtEjVRSA7",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!yr53iZEVtEjVRSA7"
+}

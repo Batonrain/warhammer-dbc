@@ -1,0 +1,56 @@
+{
+  "name": "Bastion / Бастион",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "system": {
+    "description": "Танки, решившие протаранить Дредноута, быстро узнают, что тот более чем способен остановить их.",
+    "notes": "",
+    "benefit": "Подвергшись Тарану, может пройти тест Parry+0 со штрафом −10 за каждый Размер таранящей машины выше своего: при Успехе не получает урона и не отбрасывается, на 3+ Успеха немедленно проводит по таранящей машине рукопашную атаку одним орудием.",
+    "tier": 3,
+    "requirement": "Parry +20",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "undivided",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Машины, «Таланты Дредноутов» (стр. 58)"
+  },
+  "_id": "DreadBastion0001",
+  "effects": [],
+  "folder": "DreadTalentsFld",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!DreadBastion0001"
+}

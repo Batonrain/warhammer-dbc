@@ -43,7 +43,8 @@ export function registerHooks() {
           const handled = await showMountedDodgeDialog(selectedToken.actor, extraMod, attackDeg);
           if (handled !== null) return;
         }
-        await _performDodge(selectedToken.actor, extraMod, attackDeg);
+        await _performDodge(selectedToken.actor, extraMod, attackDeg,
+          ev.currentTarget.dataset.forceReroll || "");
       });
     });
 

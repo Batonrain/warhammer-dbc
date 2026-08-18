@@ -2157,7 +2157,175 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Чумонос (стр. 12)",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Рядовой Чумонос из статблока."
+              },
+              {
+                "key": "tormentedParry",
+                "label": "Измученный: парирование",
+                "hint": "+10 WS, +5 T, Parry+10; Blade Binding, Disarm, High Guard.",
+                "system": {
+                  "characteristics.int.base": 44,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 34,
+                  "wounds.max": 26,
+                  "wounds.value": 26,
+                  "characteristics.ws.base": "+10",
+                  "characteristics.t.base": "+5",
+                  "skills.parry.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.LYLxB7IZwpBnwsjm",
+                  "Compendium.warhammer-dbc.talents.1WYssoM7RId2SxUJ",
+                  "Compendium.warhammer-dbc.talents.9UA0mDpGKwUpyZvU"
+                ]
+              },
+              {
+                "key": "tormentedStrength",
+                "label": "Измученный: сила",
+                "hint": "+5 WS, +10 S, Athletics+10; Crushing Blow, Gatekeeper, Takedown.",
+                "system": {
+                  "characteristics.int.base": 44,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 34,
+                  "wounds.max": 26,
+                  "wounds.value": 26,
+                  "characteristics.ws.base": "+5",
+                  "characteristics.s.base": "+10",
+                  "skills.athletics.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.oizk4tHEmPOWRN0C",
+                  "Compendium.warhammer-dbc.talents.6yFKpCQXZWpxbo6d",
+                  "Compendium.warhammer-dbc.talents.wAnnAflzT7pZaafB"
+                ]
+              },
+              {
+                "key": "tormentedTough",
+                "label": "Измученный: стойкость",
+                "hint": "+10 T, +5 A, Dodge+0, Parry+10; Blade Reader, Step Aside.",
+                "system": {
+                  "characteristics.int.base": 44,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 34,
+                  "wounds.max": 26,
+                  "wounds.value": 26,
+                  "characteristics.t.base": "+10",
+                  "characteristics.ag.base": "+5",
+                  "skills.dodge.rank": "knows",
+                  "skills.parry.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.F4EAXuY8Tl3QriuY",
+                  "Compendium.warhammer-dbc.talents.qbE7QyGmIN3a2IGH"
+                ]
+              },
+              {
+                "key": "tormentedWatch",
+                "label": "Измученный: внимательность",
+                "hint": "+5 I, +10 P, Awareness+10; Cold Hearted, Combat Formation, Blind Fighting.",
+                "system": {
+                  "characteristics.int.base": "+5",
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 34,
+                  "wounds.max": 26,
+                  "wounds.value": 26,
+                  "characteristics.per.base": "+10",
+                  "skills.awareness.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.pqcSlQfEKC0yBJ5x",
+                  "Compendium.warhammer-dbc.talents.ISxUYkVfUQPpRDRh",
+                  "Compendium.warhammer-dbc.talents.pnCwlXjvGlZjoNDs"
+                ]
+              },
+              {
+                "key": "tormentedVoice",
+                "label": "Измученный: голос",
+                "hint": "+5 W, +10 F, Command+0, Intimidate+0; Baleful Dirge, Disturbing Voice.",
+                "system": {
+                  "characteristics.int.base": 44,
+                  "characteristics.wp.base": "+5",
+                  "characteristics.fel.base": "+10",
+                  "wounds.max": 26,
+                  "wounds.value": 26,
+                  "skills.command.rank": "knows",
+                  "skills.intimidate.rank": "knows"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.um0HwrYFIbniqB6G",
+                  "Compendium.warhammer-dbc.talents.JdRGAAT7mCyKD8Zq"
+                ]
+              },
+              {
+                "key": "tormentedChymist",
+                "label": "Измученный: химия",
+                "hint": "+10 I, +5 W, S.Lore (Chymistry)+20; But a Scratch, Fast Stitches, Restitching.",
+                "system": {
+                  "characteristics.int.base": "+10",
+                  "characteristics.wp.base": "+5",
+                  "characteristics.fel.base": 34,
+                  "wounds.max": 26,
+                  "wounds.value": 26
+                },
+                "groupSkills": [
+                  {
+                    "group": "scholasticLore",
+                    "specialty": "Chymistry",
+                    "rank": "veteran"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.L4tGf1gFGAv9Zlcf",
+                  "Compendium.warhammer-dbc.talents.w0iyRXpGHlGEXVja",
+                  "Compendium.warhammer-dbc.talents.gw8agdN6KPVY7StB"
+                ]
+              },
+              {
+                "key": "plagueDrone",
+                "label": "Чумной Трутень (верхом на Гнильной Мухе)",
+                "hint": "BS до 42, W до 41, Operate (Aeronautica)+10, Survival+10; Таланты Mount Sense и Grenadier.",
+                "system": {
+                  "characteristics.bs.base": 42,
+                  "characteristics.wp.base": 41,
+                  "skills.survival.rank": "trained"
+                },
+                "groupSkills": [
+                  {
+                    "group": "operate",
+                    "specialty": "Aeronautica",
+                    "rank": "trained"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.rB4GcZ6DvXJBSrMi",
+                  "Compendium.warhammer-dbc.talents.BfHakkx2QyNDmQLJ"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

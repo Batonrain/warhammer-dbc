@@ -29,8 +29,12 @@ const PART = n => `templates/actor/parts/${n}.hbs`;
 describeV2Sheet(WarhammerCharacterSheet, {
   sheet: "module/sheets/actor-sheet.mjs",
   template: ["templates/actor/character-sheet.hbs",
-    ...["header", "infamy-strip", "tab-stats", "tab-combat", "tab-abilities", "tab-psy",
-        "tab-tech", "tab-nav", "tab-gear", "tab-advance", "tab-notes", "tab-effects",
+    // toggle-rows — часть внутри части: вкладка Способностей подключает её под
+    // каждой способностью с подспособностями (Локус Герольда). Кнопка вкл./выкл.
+    // живёт только там, и без этой строки договор «каждый обработчик кем-то
+    // вызывается» считал бы её мёртвой.
+    ...["header", "infamy-strip", "tab-stats", "tab-combat", "tab-abilities", "toggle-rows",
+        "tab-psy", "tab-tech", "tab-nav", "tab-gear", "tab-advance", "tab-notes", "tab-effects",
         "tab-possession", "tab-haemonculus", "tab-social"].map(PART)]
 });
 

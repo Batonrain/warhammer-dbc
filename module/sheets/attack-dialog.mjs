@@ -25,7 +25,8 @@ import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS } from "../rules/mount.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
-import { ruleRollModsHtml }                   from "../rules/roll-mods.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 
 /**
@@ -60,7 +61,14 @@ function readAttackForm(form, ammoConds) {
 
   const swift = on("#atk-swift"), lightning = on("#atk-lightning"), allOut = on("#atk-allout");
 
+  // Выбранный переброс: −1 значит «без переброса».
+  const rerollEl = el(".rule-reroll-opt:checked");
+  const rerollIdx = parseInt(rerollEl?.dataset?.idx ?? "-1");
+
   return {
+    reroll: rerollIdx >= 0
+      ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2 }
+      : null,
     autoFail:   all(".atk-mod-cb[data-autofail]:checked").length > 0,
     char:       el("#atk-char")?.value,
     modifier:   parseInt(el("#atk-modifier")?.value) || 0,
@@ -166,6 +174,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
   };
   const ruleMods = ruleRollModsHtml(actor, attackCtx);
+  // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
+  // Отдельным блоком: складывать их не с чем, выбирается один.
+  const ruleRerolls = ruleRerollsHtml(actor, attackCtx);
+  // Перебросы, навязанные ЦЕЛИ (Локус Кровопролития), в свой блок не идут:
+  // бросает их защищающийся у себя. Они уезжают атрибутом на кнопки защиты в
+  // карточке атаки — см. combat/attack-card.mjs.
+  const forcedDefenceReroll = (resolveTest({ actor, ...attackCtx }).rerolls || [])
+    .find(r => r.who === "target")?.mode || "";
 
   const stance      = actor.system.meleeStance || "standard";
   const stanceDef   = MELEE_STANCES[stance];
@@ -342,6 +358,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     m.immune = true;
     m.note   = `${attackCtx.targetActor.name}: ${why[0]}`;
   }
+  const charSwapWhy  = ruleFlagLabels(actor, "charSwap.wp.forWsS", attackCtx);
+  const twoWeaponWhy = ruleFlagLabels(actor, "penalty.twoWeapon.off", attackCtx);
+  const twoWeaponOff  = twoWeaponWhy.length > 0;
   const specificMods = isMelee ? [
     { label: "Трудный ландшафт",       value: -10 },
     { label: "Очень трудный ландшафт", value: -20 },
@@ -349,7 +368,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { label: "Числ. перевес 3к1",      value:  20 },
     { label: "Положение выше",         value:  10 },
     { label: "Более длинное оружие",   value:   5 },
-    { label: "Бой несколькими руками", value: -20, note: "осн./неосн. рука" }
+    // Локус Быстроты (стр. 29) снимает этот штраф. Строку не прячем, а обнуляем
+    // с подписью: игрок должен видеть, ЧТО его сняло, иначе исчезнувшая галочка
+    // выглядит как баг диалога.
+    twoWeaponOff
+      ? { label: "Бой несколькими руками", value: 0,
+          note: `штраф снят: ${twoWeaponWhy.join(", ")}` }
+      : { label: "Бой несколькими руками", value: -20, note: "осн./неосн. рука" }
   ] : [
     { label: "Подавлен огнём",          value: -20 },
     { label: "Стрельба в рукопашную",   value: -20 },
@@ -540,7 +565,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <select id="atk-char" class="av-input">
           ${Object.entries(CHARACTERISTICS).map(([k, m]) => {
             const v = actor.system.characteristics[k]?.total ?? 0;
-            return `<option value="${k}" ${k === charKey ? "selected" : ""}>${m.abbr} (${v})</option>`;
+            // Список характеристик и так полный — ГМ волен бросить чем угодно.
+            // Локус Мутации (стр. 28, 32) делает бросок по Воле вместо WS/S
+            // законным, и это подписывается прямо в пункте: иначе игрок не
+            // отличит разрешённую книгой подмену от самоуправства.
+            const swap = (k === "wp" && charSwapWhy.length)
+              ? ` — вместо ${isMelee ? "WS" : "BS"}: ${charSwapWhy.join(", ")}` : "";
+            return `<option value="${k}" ${k === charKey ? "selected" : ""}>${m.abbr} (${v})${swap}</option>`;
           }).join("")}
         </select>
         <label>Доп. мод</label>
@@ -567,6 +598,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ${shortRangeHtml}${bandHtml}${offHtml}${maximalHtml}
       ${ammoCondHtml}
       ${ruleMods.html}
+      ${ruleRerolls.html}
 
       <details class="av-adv">
         <summary>Ситуативные модификаторы<span class="av-adv-hint">— разверни, если нужны</span></summary>
@@ -637,6 +669,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
             aimTargets.find(t => t.value === f.aimVal),
             {
               isSwift: f.swift, isLightning: f.lightning, isAllOut: f.allOut,
+              // Переброс от правила (Локус Буйства): бросок катает несколько
+              // кубов и оставляет один — см. combat/attack.mjs.
+              reroll: f.reroll,
+              forcedDefenceReroll,
               techniqueOpts,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
               profile: atkProfile, attackNote,
