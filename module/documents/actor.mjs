@@ -806,7 +806,13 @@ export class WarhammerActor extends Actor {
         const mech = implantMech(item.name);
         if (mech) {
           const q = item.system.quality || "common";
-          if (mech.energyMax) implantEnergyMax += mech.energyMax;
+          // energyMax — число (флат) либо {poor,common,good,best}, когда сама
+          // надбавка зависит от Качества импланта (базовая Катушка Потенции).
+          if (mech.energyMax) {
+            implantEnergyMax += typeof mech.energyMax === "object"
+              ? (mech.energyMax[q] ?? 0)
+              : mech.energyMax;
+          }
           if (mech.compensator && (mech.compensator[q] ?? 0) > implantCompBonus)
             implantCompBonus = mech.compensator[q] ?? 0;
           if (mech.ironFocus)
