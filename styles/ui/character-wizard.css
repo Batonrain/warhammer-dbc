@@ -58,3 +58,15 @@
   border-top: 1px solid var(--wh-border, #7a5c2e);
   margin-top: 8px;
 }
+
+/* Foundry-ядро стилит любую <button> внутри .app как width:100% (body.game
+   .app button) — .wh-slot-btn выставляет flex:0 0 auto, но flex-basis:auto
+   всё равно берёт этот унаследованный width:100%, а не размер по контенту.
+   Без явного width сама «Далее →» растягивалась на всю ширину футера и
+   выталкивала «Готово»/вторую кнопку за правый край окна — кнопка физически
+   пропадала с экрана, хотя в DOM была на месте. !important обязателен: ядро
+   и система лежат в разных @layer, и слой системы проигрывает слою ядра для
+   обычных объявлений. */
+.wh-char-wizard .wiz-footer button {
+  width: auto !important;
+}
