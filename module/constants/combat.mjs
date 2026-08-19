@@ -63,9 +63,9 @@ export const MELEE_TECHNIQUES = {
   },
   grapple: {
     label: "Захват", wsBonus: 0,
-    note: "Парируется со штрафом −30. Нельзя Уклониться.",
-    targetDodgeMod: -999, targetParryMod: -30,
-    chatNote: "🤼 Уклонение невозможно | Парирование −30"
+    note: "Парируется со штрафом −30.",
+    targetDodgeMod: 0, targetParryMod: -30,
+    chatNote: "🤼 Парирование −30"
   },
   charge: {
     label: "Натиск", wsBonus: 20,
