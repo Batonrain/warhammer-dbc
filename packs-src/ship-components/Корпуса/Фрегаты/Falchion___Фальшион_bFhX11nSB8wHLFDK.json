@@ -1,0 +1,73 @@
+{
+  "name": "Falchion / Фальшион",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "VOyInFpl9FIDrRXg",
+  "system": {
+    "kind": "hull",
+    "power": 0,
+    "space": 0,
+    "sp": 42,
+    "rarity": 0,
+    "quality": "common",
+    "hulls": "",
+    "aspects": "In-build: Торпедный аппарат Восс (Н), 1/1",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [
+      {
+        "key": "inbuild"
+      }
+    ],
+    "hull": {
+      "spaceMax": 34,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "Н1, НП2",
+      "hullIntegrity": 36
+    },
+    "chars": {
+      "speed": 8,
+      "manoeuvrability": 17,
+      "detection": 14,
+      "voidShields": 0,
+      "armour": 17,
+      "turretRating": 1
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 0,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "bFhX11nSB8wHLFDK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!bFhX11nSB8wHLFDK"
+}
