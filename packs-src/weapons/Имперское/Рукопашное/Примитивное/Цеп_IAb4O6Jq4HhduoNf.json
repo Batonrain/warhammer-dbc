@@ -80,7 +80,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Кистень"
   },
   "_id": "IAb4O6Jq4HhduoNf",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

@@ -240,6 +240,8 @@
 
 .atk-stance-badge { font-size: 0.82em; color: var(--wh-red); font-weight: bold; }
 .atk-ammo-badge   { font-size: 0.82em; color: #3a6a3a; font-weight: bold; }
+.atk-base-badge   { font-size: 0.82em; color: var(--wh-red); font-weight: bold; }
+.atk-training-warn { font-size: 0.82em; color: #b8860b; font-weight: bold; }
 
 /* ── Прицельная атака ── */
 #atk-aim {
@@ -611,15 +613,16 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-atk-v2 .av-section { display: flex; flex-direction: column; gap: 3px; }
 .wh-atk-v2 .av-sec-lbl { font-size: .72em; letter-spacing: .04em; color: #5aa37e; text-transform: uppercase; }
 
-/* Сводка выбранного хвата/профиля (read-only; выбор — в HUD) */
+/* Сводка эффектов выбранного хвата/профиля — обновляется вместе с выбором ниже */
 .wh-atk-v2 .av-gripnote {
   font-size: .82em; line-height: 1.4; color: #b8ffd8;
   padding: 5px 8px; border-radius: 4px;
   border: 1px solid rgba(111,230,255,.25); background: rgba(111,230,255,.06);
 }
+.wh-atk-v2 .av-gripnote:empty { display: none; }
 .wh-atk-v2 .av-gripnote .wh-ri { margin-right: 5px; vertical-align: -1px; }
 
-/* Пилюли режима/прицеливания (радио спрятан, подсветка активного) */
+/* Пилюли режима/прицеливания/Стойки-Базы-Приёма-Хвата-Профиля (радио спрятан) */
 .wh-atk-v2 .av-pills { display: flex; flex-wrap: wrap; gap: 4px; }
 .wh-atk-v2 .av-pill { cursor: pointer; }
 .wh-atk-v2 .av-pill input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -633,6 +636,12 @@ body.wh-aiming #board, body.wh-aiming canvas {
   background: linear-gradient(180deg, #4dffa6, #2f9e6a); color: #04100a;
   border-color: #4dffa6; box-shadow: 0 0 8px rgba(77,255,166,.4);
 }
+/* Недоступно без Рукопашной Тренировки/не подходит категории оружия (стр. 62) */
+.wh-atk-v2 .av-pill.av-pill-disabled { cursor: not-allowed; }
+.wh-atk-v2 .av-pill.av-pill-disabled span {
+  border-color: #3a3a3a; color: #7a7a7a; background: rgba(60,60,60,.15);
+}
+.wh-atk-v2 .av-pill.av-pill-disabled:hover span { border-color: #3a3a3a; color: #7a7a7a; }
 
 /* Ситуативные модификаторы — сворачиваемо */
 .wh-atk-v2 .av-adv { border-top: 1px dashed #1f6f4a; padding-top: 4px; }

@@ -79,7 +79,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Штык"
   },
   "_id": "xTZOrCcqNtUUjyve",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

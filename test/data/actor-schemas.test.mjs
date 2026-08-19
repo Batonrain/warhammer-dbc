@@ -125,6 +125,9 @@ const DEVIATIONS = {
     // Опыт на Элитные архетипы: своя статья, а не «прочее», потому что сумма
     // считается по предметам на листе — у каждого лежит уплаченная цена.
     "experience.spentElite": 0,
+    // База рукопашной атаки (стр. 13) — заведена отдельно от Приёма гораздо
+    // позже template.json, тем же приёмом, что и meleeStance когда-то.
+    meleeBase: "standard",
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

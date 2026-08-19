@@ -9,7 +9,7 @@ import { SKILLS_DEF,
          GROUP_SKILLS_DEF }           from "./module/constants/skills.mjs";
 import { HIT_LOCATIONS, MELEE_STANCES,
          BALANCE_PARRY_MOD,
-         MELEE_TECHNIQUES }           from "./module/constants/combat.mjs";
+         MELEE_BASES, MELEE_MANEUVERS, MELEE_CONTESTS } from "./module/constants/combat.mjs";
 import { ITEM_TYPES, WEAPON_CLASSES,
          DAMAGE_TYPES,
          AVAILABILITY }               from "./module/constants/items.mjs";
@@ -176,7 +176,7 @@ Hooks.once("init", () => {
     RACES, SUBRACES, CHARACTERISTICS, IMPROVEMENTS,
     IMPROVEMENT_BONUS, SKILL_RANKS, SKILLS_DEF, GROUP_SKILLS_DEF,
     ITEM_TYPES, WEAPON_CLASSES, DAMAGE_TYPES, AVAILABILITY,
-    HIT_LOCATIONS, MELEE_TECHNIQUES, MELEE_STANCES,
+    HIT_LOCATIONS, MELEE_BASES, MELEE_MANEUVERS, MELEE_CONTESTS, MELEE_STANCES,
     BALANCE_PARRY_MOD, AMMO_CATEGORIES, WEAPON_PROPERTIES
   };
 

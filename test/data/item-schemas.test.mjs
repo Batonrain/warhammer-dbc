@@ -299,8 +299,8 @@ const TYPES = {
     pack: ["weapons", "vehicle-weapons"],
     defaults: {
       description: "", notes: "", infoguard: 0, rangeBands: [], offProfile: {}, gripProps2h: [],
-      corEffects: [], weaponClass: "melee", weaponType: "laser", range: 0,
-      balance: 0, grips: "", profileLabel: "", profiles: [], reload: "1",
+      corEffects: [], weaponClass: "melee", weaponType: "laser", itemSize: "", range: 0,
+      balance: 0, grips: "", profileLabel: "", meleeCategory: "", profiles: [], reload: "1",
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
       damage: "", damageType: "impact", penetration: 0, quality: "common",
       availability: 0, weight: 0, attackBonus: 0, special: "", equipped: false,
@@ -352,6 +352,7 @@ const TYPES = {
       head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
       quality: "common", availability: 0, weight: 0, properties: [],
       strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
+      isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
       history: {
         table: "", key: "", roll: 0, name: "", desc: "", effect: "", choice: "",
         zones: {},

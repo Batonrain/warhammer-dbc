@@ -6,7 +6,7 @@ import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
          ARMOR_MOD_GROUPS }                          from "../constants/items.mjs";
-import { MELEE_STANCES }                             from "../constants/combat.mjs";
+import { MELEE_STANCES, MELEE_BASES }                from "../constants/combat.mjs";
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { isAeldariRace }                             from "../apps/race-library.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
@@ -433,6 +433,11 @@ export function buildGetData(actor) {
     const ck    = melee ? "ws" : "bs";
     const stance = system.meleeStance || "standard";
     const stBon  = melee ? (MELEE_STANCES[stance]?.wsBonus ?? 0) : 0;
+    // База (стр. 13) — так же, как Стойка, читается напрямую с актора и
+    // складывается в общий порог: без неё колонка «Порог» врала бы на −10
+    // против того, что реально покажет диалог атаки (Стандартная Атака +10).
+    const meleeBaseKey = system.meleeBase || "standard";
+    const baseBon = melee ? (MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0) : 0;
 
     const compatAmmo = melee ? [] : allItems
       .filter(item =>
@@ -487,7 +492,7 @@ export function buildGetData(actor) {
       shieldCoverage:  s.shieldAP != null ? shieldCoverageLabel(i) : "",
       hasMods,
       modNames:        modFx.names.join(", "),
-      attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + stBon + (modFx.attackMod || 0) + qTestMod,
+      attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + baseBon + stBon + (modFx.attackMod || 0) + qTestMod,
       compatAmmo, magLow, magEmpty
     };
   };

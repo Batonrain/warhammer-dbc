@@ -7,7 +7,7 @@
 // Функции принимают актора, а не лист. Свёртка «Стойки» и «Приёмов» осталась на
 // листе: это состояние окна, а не актора.
 
-import { MELEE_STANCES, MELEE_TECHNIQUES } from "../../constants/combat.mjs";
+import { MELEE_STANCES, MELEE_MANEUVERS, MELEE_CONTESTS } from "../../constants/combat.mjs";
 import { showAttackDialog, showAttackDialogWithTechnique,
          showAttackDialogNoWeapon } from "../attack-dialog.mjs";
 import { _showContestDialog } from "../../combat/techniques.mjs";
@@ -56,10 +56,16 @@ export function activateCombatListeners(root, actor) {
     actor.update({ "system.meleeStance": ev.currentTarget.value });
   });
 
-  // ── Приёмы ───────────────────────────────────────────────────────────────
+  // ── База ─────────────────────────────────────────────────────────────────
+  on(root, ".base-radio", "change", ev => {
+    actor.update({ "system.meleeBase": ev.currentTarget.value });
+  });
+
+  // ── Приёмы (маневры + состязания) ───────────────────────────────────────
   on(root, ".technique-btn", "click", ev => {
-    const tech    = ev.currentTarget.dataset.technique;
-    const techDef = MELEE_TECHNIQUES[tech];
+    const tech      = ev.currentTarget.dataset.technique;
+    const contestDef = MELEE_CONTESTS[tech];
+    const techDef   = MELEE_MANEUVERS[tech] || contestDef;
     if (!techDef) return;
 
     const meleeItem = actor.items.find(i =>
@@ -69,7 +75,7 @@ export function activateCombatListeners(root, actor) {
     const stance    = actor.system.meleeStance || "standard";
     const stanceDef = MELEE_STANCES[stance];
 
-    if (tech === "knockdown" || tech === "feint" || tech === "press") {
+    if (contestDef) {
       _showContestDialog(actor, techDef);
     } else if (meleeItem) {
       showAttackDialogWithTechnique(actor, meleeItem, techDef, stanceDef, tech);

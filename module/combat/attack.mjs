@@ -201,7 +201,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // на предмете — ставится kind:"script" Конструктора при получении). «Одиночная
   // атака» — по формулировке пользователя это НЕ конкретно RoF-режим "single":
   // для стрелкового — да, "single" (Одиночный выстрел); для рукопашного — приём
-  // "Обычная Атака" (module/constants/combat.mjs, MELEE_TECHNIQUES.standard) или
+  // "Обычная Атака" (module/constants/combat.mjs, MELEE_MANEUVERS.standard) или
   // вовсе без выбранного приёма (обычный клик по оружию, минуя вкладку «Приёмы»),
   // при режиме "melee"/"charge" (Натиск — тоже обычная атака, просто со штрафом/
   // бонусом на попадание, не меняет число ударов). Everywhere — ровно 1 попадание

@@ -18,6 +18,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { isMinionTalent } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
+import { arsenalSpecKind, arsenalSpecOptions } from "../constants/weapon-categories.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 function cultFxOf(actor) {
@@ -198,6 +199,35 @@ export function promptDynamicAptTalent(actor, doc, kind, charApts) {
 }
 
 /**
+ * Диалог выбора специализации Weapon Training / Melee Training (стр. 62):
+ * одна категория из фиксированного списка (module/constants/weapon-categories.mjs),
+ * а не вся строка шаблона разом — иначе module/rules/weapon-training.mjs не
+ * смог бы сравнить владение с категорией конкретного оружия.
+ */
+export function promptArsenalSpec(doc, kind) {
+  const opts = arsenalSpecOptions(kind);
+  const rows = opts.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  return new Promise(resolve => {
+    new Dialog({
+      title: `${doc.name}: выбор специализации`,
+      content: `
+        <form class="wh-dyn-apt">
+          <div class="atk-dlg-row">
+            <label>Специализация:</label>
+            <select id="arsenal-spec-sel" class="pm-input pm-wide">${rows}</select>
+          </div>
+        </form>`,
+      buttons: {
+        ok: { label: "Купить", callback: html => resolve(String(html.find("#arsenal-spec-sel").val() || "")) },
+        cancel: { label: "Отмена", callback: () => resolve(null) }
+      },
+      default: "ok",
+      close: () => resolve(null)
+    }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-dyn-apt-dialog"], width: 380 }).render(true);
+  });
+}
+
+/**
  * Пикер добавления Талантов/Черт прямо с листа (без лазания в компендиум).
  * Группировка по типам корбука (папки компендиума, стр. 62-105) + Аэльдари.
  * Поиск, раскрытие описания стрелкой, добавление по «＋». kind: "talent"|"trait".
@@ -354,6 +384,17 @@ export async function openItemPicker(actor, kind) {
             obj.system.aptitudes      = pick.apts;   // фиксируем на предмете
             obj.system.aptSource      = pick.key;    // ключ Х-ки/навыка для пересчёта
             obj.system.cost           = pick.cost;
+          } else if (arsenalSpecKind(d.name)) {
+            // Weapon Training / Melee Training (стр. 62): у шаблона в
+            // specialization лежат ВСЕ варианты через запятую — без выбора
+            // это скопировалось бы как есть, и module/rules/weapon-training.mjs
+            // не смог бы сравнить его с категорией конкретного оружия.
+            const category = await promptArsenalSpec(d, arsenalSpecKind(d.name));
+            if (!category) return;                   // отмена — ничего не покупаем
+            obj.system.specialization = category;
+            obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
+              talentCategory(actor, d.name, d.folder),
+              { name: d.name, patron: actor.system.patronGod });
           } else {
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),

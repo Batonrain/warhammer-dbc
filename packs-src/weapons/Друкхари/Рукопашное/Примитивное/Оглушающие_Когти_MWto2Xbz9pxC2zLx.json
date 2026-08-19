@@ -62,7 +62,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Кнут"
   },
   "_id": "MWto2Xbz9pxC2zLx",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-mace.svg",

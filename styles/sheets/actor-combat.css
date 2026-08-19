@@ -222,10 +222,11 @@
 
 .warhammer-dbc .psy-combat-header input { width: 48px; text-align: center; }
 
-/* ── Стойки и приёмы ── */
+/* ── Стойки, База и Приёмы (стр. 12-14: 4 независимых компонента атаки —
+   Стойка/База/Приём/Хват, Хват выбирается в HUD оружия) ── */
 .combat-melee-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
   margin-bottom: 8px;
 }
@@ -328,6 +329,17 @@
   font-weight: bold;
   color: var(--wh-red);
   line-height: 1.2;
+}
+
+/* Приёмы vs Состязания (Повалить/Финт/Давление — WS/Athletics vs цель, не
+   обычный бросок атаки) — тонкий визуальный разделитель внутри той же панели. */
+.tech-subhead {
+  font-size: 0.72em;
+  font-weight: bold;
+  color: var(--wh-text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 4px 6px 2px;
 }
 
 /* ── Таблица боевого оружия ── */
@@ -795,9 +807,15 @@
   padding: 1px 4px;
 }
 
-/* ── Инициатива — строка с контролами ── */
+/* ── Инициатива — строка с контролами ──
+   .initiative-controls (база + модификатор + кнопка броска) шире, чем
+   помещается в узкую колонку «ПРОЧЕЕ» рядом с меткой «Инициатива» —
+   кнопка 🎲 вылезала за правую границу панели. flex-wrap переносит
+   контролы на вторую строку внутри той же ячейки вместо выхода за рамки. */
 .warhammer-dbc .initiative-row {
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 2px;
 }
 
 .warhammer-dbc .initiative-controls {

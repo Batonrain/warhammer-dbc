@@ -137,6 +137,11 @@ describe("показатели листа", () => {
     expect(ctxOf({ meleeStance: "aggressive" }).combatStanceLabel).toBe("Агрессивная");
     expect(ctxOf({}).combatStanceLabel).toBe("Стандартная");
   });
+
+  it("база рукопашной подписана для свёрнутого заголовка", () => {
+    expect(ctxOf({ meleeBase: "charge" }).combatBaseLabel).toBe("Натиск");
+    expect(ctxOf({}).combatBaseLabel).toBe("Стандартная Атака");
+  });
 });
 
 describe("раса и подраса", () => {

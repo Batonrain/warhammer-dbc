@@ -122,6 +122,7 @@ export function creatureSchema({ granted = false } = {}) {
     isTechpriest:  bool(false, "Техножрец"),
     isRogueTrader: bool(false, "Вольный торговец"),
     meleeStance:   str("standard", "Стойка"),
+    meleeBase:     str("standard", "База"),
     aiming:        str("none", "Прицеливание"),
     initiativeMod: num(0, "Модификатор Инициативы"),
     aspirations: new SchemaField({

@@ -6,7 +6,7 @@
     "description": "",
     "notes": "",
     "weaponClass": "melee",
-    "weaponType": "exotic",
+    "weaponType": "grav",
     "range": 0,
     "balance": -2,
     "grips": "П+Л",
@@ -77,7 +77,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Кулаки"
   },
   "_id": "vT3hJOS81KgVZvSx",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

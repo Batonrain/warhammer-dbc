@@ -94,7 +94,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Булава"
   },
   "_id": "XNpvjGNrfH6ogvTM",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-mace.svg",

@@ -62,7 +62,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Нож"
   },
   "_id": "H5UK4EzQ2SkAnQCH",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",

@@ -49,10 +49,13 @@ export function characterContext(actor) {
   // ── Архетип (шапка): селектор из компендиума, только доступные текущей расе ──
   context.archetype = archetypeSheetContext(actor);
 
-  // ── Бой: метка стойки для свёрнутого заголовка ──────────────────────────
+  // ── Бой: метка стойки/базы для свёрнутого заголовка ─────────────────────
   const _STANCE_NAMES = { standard: "Стандартная", aggressive: "Агрессивная",
     defensive: "Защитная", covering: "Прикрывающая", springing: "Пружинящая", rapidstrike: "Частокол" };
   context.combatStanceLabel = _STANCE_NAMES[system.meleeStance] || "Стандартная";
+  const _BASE_NAMES = { standard: "Стандартная Атака", charge: "Натиск",
+    fullatk: "Полная Атака", careful: "Осторожная Атака" };
+  context.combatBaseLabel = _BASE_NAMES[system.meleeBase] || "Стандартная Атака";
 
   // ── Снаряжение: сенсор нагрузки (когитатор) ─────────────────────────────
   const _enc = system.encumbrance || {};
