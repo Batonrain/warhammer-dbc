@@ -1542,3 +1542,9 @@
 .warhammer-dbc .wms-legacy-pick select { flex: 1 1 160px; min-width: 140px; }
 .warhammer-dbc .wms-legacy-rules { margin-top: 6px; font-size: 11px; }
 .warhammer-dbc .wms-legacy-rules summary { cursor: pointer; opacity: .8; }
+
+/* ── Инфограждение (module/apps/infoguard.mjs) ── */
+.warhammer-dbc .infoguard-row { justify-content: space-between; }
+.warhammer-dbc .infoguard-value {
+  font-size: 0.85em; color: var(--wh-text-light, var(--wh-text));
+}

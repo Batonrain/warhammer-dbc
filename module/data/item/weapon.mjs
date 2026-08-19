@@ -11,6 +11,8 @@
 //  разбираются отдельно (wdbc-ff4.8).
 // ════════════════════════════════════════════════════════════════════════════
 
+import { infoguardField } from "./infoguard.mjs";
+
 export class WeaponData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -21,6 +23,7 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
     return {
       description:  new StringField({ initial: "", label: "Описание" }),
       notes:        new StringField({ initial: "", label: "Заметки" }),
+      infoguard:    infoguardField(),
       rangeBands:   list("Полосы дальности"),
       // Второй профиль: ключи те же, что у основного, но набор задаёт предмет.
       offProfile:   new ObjectField({ label: "Второй профиль" }),

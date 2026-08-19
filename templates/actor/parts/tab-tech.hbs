@@ -128,6 +128,19 @@
         {{/each}}
         <button type="button" class="tech-scan-btn" title="Ноосферное Сканирование (Tech-Use+0)"><span class="tech-ab-ico">⊹</span>Сканирование (Tech-Use)</button>
       </div>
+      {{#if infoguardItems.length}}
+      <div class="infoguard-list">
+        <div class="infoguard-list-title">Инфограждение снаряжения</div>
+        {{#each infoguardItems as |ig|}}
+        <div class="infoguard-list-row">
+          <span class="infoguard-list-name">{{ig.name}}</span>
+          <span class="infoguard-list-val">🛡 {{ig.successes}}</span>
+          <button type="button" class="tech-infoguard-roll-btn" data-item-id="{{ig.id}}"
+                  title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">Наложить</button>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
     </div>
   </div>
 </div>{{!-- /tab tech --}}

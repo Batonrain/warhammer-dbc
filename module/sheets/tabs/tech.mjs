@@ -14,6 +14,7 @@ import { fatiguePenalty } from "./conditions.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock,
          aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
+import { rollInfoguard, infoguardInteractionSection } from "../../apps/infoguard.mjs";
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
 export async function activateTechMiracle(actor, item) {
@@ -186,6 +187,11 @@ export async function activateTechMiracle(actor, item) {
     (sys.sustained && sys.sustainCost) ? `Поддержание ${sys.sustainCost} ${cogIco}/Ход` : ""
   ].filter(Boolean).join(" | ");
 
+  // Автоматизация «vs Инфограждение» (Numerica Curse/Delving, Scrapcode
+  // Injection, Techsorcism Purge) и усиливающих чудес (Techsorcism Ward,
+  // Vox Warding) — module/apps/infoguard.mjs.
+  const infoguardSection = await infoguardInteractionSection(actor, item, { success });
+
   const rollMode = game.settings.get("core", "rollMode");
   const techDice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   await ChatMessage.create(ChatMessage.applyRollMode({
@@ -208,6 +214,7 @@ export async function activateTechMiracle(actor, item) {
           </div>
           ${dmgSection}
           ${attackPropsSection}
+          ${infoguardSection}
           ${sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : ""}
           <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${techDice}</details>
         </div>`,
@@ -300,6 +307,10 @@ export function activateTechListeners(html, actor, { rollSkill } = {}) {
   });
   html.find(".tech-scan-btn").click(() => {
     if (rollSkill) rollTechScan(actor, rollSkill);
+  });
+  html.find(".tech-infoguard-roll-btn").click(ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) rollInfoguard(item);
   });
   // Кнопки генерации ⚙/⚡ от имплантов Кибернетики Механикум
   html.find(".tech-gen-btn").click(ev => {

@@ -136,6 +136,14 @@
   color: var(--wh-text-mid);
 }
 
+/* Инфограждение — узкая колонка со значением (module/apps/infoguard.mjs) */
+.gear-infoguard-cell {
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+}
+
 /* Подсветка экипированной строки */
 .item-row-equipped {
   background: rgba(100, 60, 20, 0.08);

@@ -64,7 +64,9 @@ const TYPES = {
       // В template.json объявлено не было, но лежит у 20 предметов пака —
       // след раскладки по папкам компендиума при импорте. Кодом не читается;
       // объявлено, чтобы правка предмета в игре его не стирала.
-      folderPath: []
+      folderPath: [],
+      // Инфограждение (module/apps/infoguard.mjs) — Успехи встречного теста.
+      infoguard: 0
     }
   },
   tool: {
@@ -73,7 +75,7 @@ const TYPES = {
       description: "", notes: "", quantity: 1, weight: 0, availability: 0,
       quality: "common", toolCategory: "general", linkedWeapon: "", effect: "",
       reminder: "", qualityEffects: { poor: "", good: "", best: "" },
-      bonuses: [], drukhari: false, bookSource: ""
+      bonuses: [], drukhari: false, bookSource: "", infoguard: 0
     }
   },
   cybernetic: {
@@ -296,7 +298,7 @@ const TYPES = {
   weapon: {
     pack: ["weapons", "vehicle-weapons"],
     defaults: {
-      description: "", notes: "", rangeBands: [], offProfile: {}, gripProps2h: [],
+      description: "", notes: "", infoguard: 0, rangeBands: [], offProfile: {}, gripProps2h: [],
       corEffects: [], weaponClass: "melee", weaponType: "laser", range: 0,
       balance: 0, grips: "", profileLabel: "", profiles: [], reload: "1",
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
@@ -345,7 +347,7 @@ const TYPES = {
   armor: {
     pack: "armor",
     defaults: {
-      description: "", notes: "", armorType: "simple", stacks: false,
+      description: "", notes: "", infoguard: 0, armorType: "simple", stacks: false,
       maxAgility: 100, propRatings: {}, apSecond: {}, equipped: false,
       head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
       quality: "common", availability: 0, weight: 0, properties: [],

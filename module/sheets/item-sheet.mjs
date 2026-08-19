@@ -1,5 +1,6 @@
 import { armourHistoryContext, rollArmourTable, rollArmourEntry,
          rollArmourZones, setArmourEntry, clearArmourHistory } from "../apps/armour-history.mjs";
+import { infoguardContext, rollInfoguard }                    from "../apps/infoguard.mjs";
 import { submutationContext, rollSubmutation,
          pickSubmutation, clearSubmutation }                   from "../apps/submutations.mjs";
 import { legacyContext, rollAscension, breakLegacy, setHistory, rollHistory,
@@ -232,6 +233,8 @@ function onReqDropClear(event, target) {
 }
 
 // ── Особенность комплекта силовой брони ──
+function onInfoguardRoll() { return rollInfoguard(this.item); }
+
 function onPaRollTable() { return rollArmourTable(this.item); }
 function onPaRollZones() { return rollArmourZones(this.item); }
 function onPaClear()     { return clearArmourHistory(this.item); }
@@ -458,6 +461,7 @@ export class WarhammerItemSheet
       reqEntryAdd: onReqEntryAdd,
       reqEntryRemove: onReqEntryRemove,
       reqDropClear: onReqDropClear,
+      infoguardRoll: whenEditable(onInfoguardRoll),
       paRollTable: onPaRollTable,
       paRollEntry: onPaRollEntry,
       paRollZones: onPaRollZones,
@@ -827,6 +831,8 @@ export class WarhammerItemSheet
     context.tab = this.tabGroups?.["item-primary"] ?? WarhammerItemSheet.TABS["item-primary"].initial;
     // Истории силовой брони — только для брони Астартес и при включённом расширении.
     context.armourHistory = armourHistoryContext(this.item);
+    // Инфограждение — только у не-примитивных/не-мистических weapon/armor/gear/tool.
+    context.infoguard     = infoguardContext(this.item);
     // Субмутации — только у мутаций, у которых таблица есть в тексте (стр. 440).
     context.submutation   = submutationContext(this.item);
     // Оружие Наследия — только у оружия (стр. 426-428).

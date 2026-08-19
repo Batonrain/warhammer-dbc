@@ -20,6 +20,7 @@ import { TALENT_LIBRARY }                            from "../constants/talents-
 import { aptitudeCat, charAptitudeSet }             from "../constants/advancement.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
+import { supportsInfoguard } from "../apps/infoguard.mjs";
 
 // Карта «полное имя таланта → тип (папка корбука)» + порядок типов — строится один
 // раз. Используется для группировки талантов на листе по типам (стр. 62-105).
@@ -553,6 +554,7 @@ export function buildGetData(actor) {
     magazineCur: i.system.magazineCur,
     magazineMax: i.system.magazineMax,
     weight:      i.system.weight,
+    infoguard:   supportsInfoguard(i) ? (i.system.infoguard || 0) : null,
     mods:        allWeaponMods.filter(m => m.system.installedOn === i.id).map(weaponModView)
   }));
 
@@ -583,6 +585,7 @@ export function buildGetData(actor) {
     rightLeg:  i.system.rightLeg   ?? 0,
     weight:    i.system.weight     ?? 0,
     stacks:    i.system.stacks     ?? false,
+    infoguard: supportsInfoguard(i) ? (i.system.infoguard || 0) : null,
     mods:      allArmorMods.filter(m => m.system.installedOn === i.id).map(armorModView)
   }));
 
@@ -667,13 +670,15 @@ export function buildGetData(actor) {
     id: i.id, name: i.name,
     quantity:    i.system.quantity,
     weight:      i.system.weight,
-    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100
+    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100,
+    infoguard:   supportsInfoguard(i) ? (i.system.infoguard || 0) : null
   }));
 
   context.gearTools = allItems.filter(i => i.type === "tool").map(i => ({
     id: i.id, name: i.name,
     quantity: i.system.quantity,
-    weight:   i.system.weight
+    weight:   i.system.weight,
+    infoguard: supportsInfoguard(i) ? (i.system.infoguard || 0) : null
   }));
 
   context.gearCybernetics = allItems.filter(i => i.type === "cybernetic").map(i => ({
@@ -1084,6 +1089,14 @@ export function buildGetData(actor) {
     pips: Array.from({ length: Math.min(16, Math.max(0, enMaxTotal)) }, (_, i) => ({ on: (i + 1) <= enVal }))
   };
   context.noosphereActions = NOOSPHERE_ACTIONS;
+
+  // ── Инфограждение: сводка по высокотехнологичному снаряжению персонажа ────
+  // (module/apps/infoguard.mjs) — та же кнопка «Наложить», что и на листе
+  // предмета, но списком на вкладке Тех, где игрок и так работает с Tech-Use.
+  context.infoguardItems = allItems
+    .filter(i => supportsInfoguard(i))
+    .map(i => ({ id: i.id, name: i.name, successes: i.system.infoguard || 0 }))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 
   // ── Кибернетика Механикум: кнопки генерации ⚙/⚡ и тумблеры от имплантов ──────
   // Только установленные (флаг) импланты с директивами gen/toggle в IMPLANT_MECH.

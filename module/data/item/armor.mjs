@@ -7,6 +7,8 @@
 //  конкретного предмета, схемой их не перечислить.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { infoguardField } from "./infoguard.mjs";
+
 export class ArmorData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -26,6 +28,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
     return {
       description:  new StringField({ initial: "", label: "Описание" }),
       notes:        new StringField({ initial: "", label: "Заметки" }),
+      infoguard:    infoguardField(),
       armorType:    new StringField({ initial: "simple", label: "Тип брони" }),
       stacks:       new BooleanField({ initial: false, label: "Складывается" }),
       maxAgility:   num(100, "Потолок Ловкости"),

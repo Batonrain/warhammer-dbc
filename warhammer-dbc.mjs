@@ -124,6 +124,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/psychic-power.hbs", // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/implant.hbs",       // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/tech-power.hbs",    // ← НОВОЕ
+    "systems/warhammer-dbc/templates/item/parts/infoguard.hbs",     // ← НОВОЕ
     "systems/warhammer-dbc/templates/actor/parts/tab-tech.hbs",     // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/navigator-power.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-nav.hbs",
@@ -595,14 +596,15 @@ Hooks.once("ready", () => {
         // saveItemMechanics), здесь клиент присылает произвольный object для
         // item.update() — без сужения путей любой подключённый клиент мог бы
         // socket-сообщением переписать ЛЮБОЕ поле ЛЮБОГО предмета в игре, а не
-        // только «Особенность брони». Сейчас все настоящие вызыватели пишут
-        // только под system.history.* (см. armour-history.mjs, item-sheet.mjs) —
-        // разрешаем ровно это дерево, остальное отклоняем.
+        // только «Особенность брони» и «Инфограждение». Сейчас все настоящие
+        // вызыватели пишут только под system.history.* (armour-history.mjs,
+        // item-sheet.mjs) или system.infoguard (module/apps/infoguard.mjs) —
+        // разрешаем ровно эти два пути, остальное отклоняем.
         const item = await fromUuid(data.uuid).catch(() => null);
         if (!(item instanceof Item) || !data.data || typeof data.data !== "object") return;
         const allowed = Object.keys(data.data).every(k => k === "system.history"
-          || k.startsWith("system.history."));
-        if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*", data.data);
+          || k.startsWith("system.history.") || k === "system.infoguard");
+        if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*/system.infoguard", data.data);
         await item.update(data.data);
       }
       else if (data.action === "startCharacter") {

@@ -41,7 +41,7 @@
       <table class="items-table gear-table">
         <thead><tr>
           <th class="gear-equip-th">Экип.</th><th>Оружие</th><th>Класс</th><th>Тип</th>
-          <th>Урон</th><th>Тип урона</th><th>Маг.</th><th>Вес</th>
+          <th>Урон</th><th>Тип урона</th><th>Маг.</th><th>Вес</th><th title="Успехи Инфограждения">Инфогр.</th>
         </tr></thead>
         <tbody>
           {{#if gearWeapons.length}}
@@ -52,6 +52,7 @@
               <td>{{w.weaponClass}}</td><td>{{w.weaponType}}</td>
               <td>{{w.damage}}</td><td>{{w.damageType}}</td>
               <td>{{w.magazineCur}}/{{w.magazineMax}}</td><td>{{w.weight}}</td>
+              <td class="gear-infoguard-cell" title="Успехи Инфограждения">{{#if w.infoguard}}🛡 {{w.infoguard}}{{else if (eq w.infoguard 0)}}0{{else}}—{{/if}}</td>
             </tr>
             {{#each w.mods as |m|}}
             <tr class="item-row gear-modsub-row" data-item-id="{{m.id}}" data-host-id="{{w.id}}">
@@ -62,13 +63,13 @@
                 {{#if m.groupLabel}}<span class="gear-modsub-group">{{m.groupLabel}}</span>{{/if}}
                 <button type="button" class="gear-mod-uninstall" data-item-id="{{m.id}}" title="Снять модификацию">✕ снять</button>
               </td>
-              <td>{{m.weight}}</td>
+              <td colspan="2">{{m.weight}}</td>
             </tr>
-            <tr class="ability-detail-row" data-item-id="{{m.id}}" data-host-id="{{w.id}}" style="display:none;"><td colspan="8"><div class="ability-detail-text">{{#if m.benefit}}{{m.benefit}}{{else}}—{{/if}}</div></td></tr>
+            <tr class="ability-detail-row" data-item-id="{{m.id}}" data-host-id="{{w.id}}" style="display:none;"><td colspan="9"><div class="ability-detail-text">{{#if m.benefit}}{{m.benefit}}{{else}}—{{/if}}</div></td></tr>
             {{/each}}
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="8"><em>Нет оружия</em></td></tr>
+            <tr class="items-empty"><td colspan="9"><em>Нет оружия</em></td></tr>
           {{/if}}
         </tbody>
       </table>
@@ -115,6 +116,7 @@
           <th title="Голова">Гол.</th><th title="Корпус">Корп.</th>
           <th title="Левая рука">Л.Р.</th><th title="Правая рука">П.Р.</th>
           <th title="Левая нога">Л.Н.</th><th title="Правая нога">П.Н.</th><th>Вес</th>
+          <th title="Успехи Инфограждения">Инфогр.</th>
         </tr></thead>
         <tbody>
           {{#if gearArmor.length}}
@@ -137,6 +139,7 @@
               <td class="gear-ap-cell {{#if a.equipped}}gear-ap-active{{/if}}">{{a.leftLeg}}</td>
               <td class="gear-ap-cell {{#if a.equipped}}gear-ap-active{{/if}}">{{a.rightLeg}}</td>
               <td>{{a.weight}}</td>
+              <td class="gear-infoguard-cell" title="Успехи Инфограждения">{{#if a.infoguard}}🛡 {{a.infoguard}}{{else if (eq a.infoguard 0)}}0{{else}}—{{/if}}</td>
             </tr>
             {{#each a.mods as |m|}}
             <tr class="item-row gear-modsub-row {{#if m.activatable}}{{#unless m.active}}gear-modsub-off{{/unless}}{{/if}}" data-item-id="{{m.id}}" data-host-id="{{a.id}}">
@@ -151,13 +154,13 @@
                 {{/if}}
                 <button type="button" class="gear-mod-uninstall" data-item-id="{{m.id}}" title="Снять">✕ снять</button>
               </td>
-              <td>{{m.weight}}</td>
+              <td colspan="2">{{m.weight}}</td>
             </tr>
-            <tr class="ability-detail-row" data-item-id="{{m.id}}" data-host-id="{{a.id}}" style="display:none;"><td colspan="10"><div class="ability-detail-text">{{#if m.benefit}}{{m.benefit}}{{else}}—{{/if}}</div></td></tr>
+            <tr class="ability-detail-row" data-item-id="{{m.id}}" data-host-id="{{a.id}}" style="display:none;"><td colspan="11"><div class="ability-detail-text">{{#if m.benefit}}{{m.benefit}}{{else}}—{{/if}}</div></td></tr>
             {{/each}}
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="10"><em>Нет брони</em></td></tr>
+            <tr class="items-empty"><td colspan="11"><em>Нет брони</em></td></tr>
           {{/if}}
         </tbody>
       </table>
@@ -277,14 +280,14 @@
     </div>
     <div class="gear-cat-body">
       <table class="items-table gear-table">
-        <thead><tr><th>Снаряжение</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th>Всего</th></tr></thead>
+        <thead><tr><th>Снаряжение</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th>Всего</th><th title="Успехи Инфограждения">Инфогр.</th></tr></thead>
         <tbody>
           {{#if gearGear.length}}
             {{#each gearGear as |g|}}
-            <tr class="item-row" data-item-id="{{g.id}}"><td class="item-name-cell">{{g.name}}</td><td></td><td>{{g.quantity}}</td><td>{{g.weight}}</td><td>{{g.totalWeight}}</td></tr>
+            <tr class="item-row" data-item-id="{{g.id}}"><td class="item-name-cell">{{g.name}}</td><td></td><td>{{g.quantity}}</td><td>{{g.weight}}</td><td>{{g.totalWeight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">{{#if g.infoguard}}🛡 {{g.infoguard}}{{else if (eq g.infoguard 0)}}0{{else}}—{{/if}}</td></tr>
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="5"><em>Нет снаряжения</em></td></tr>
+            <tr class="items-empty"><td colspan="6"><em>Нет снаряжения</em></td></tr>
           {{/if}}
         </tbody>
       </table>
@@ -323,14 +326,14 @@
     </div>
     <div class="gear-cat-body">
       <table class="items-table gear-table">
-        <thead><tr><th>Инструменты</th><th>Описание</th><th>Кол-во</th><th>Вес</th></tr></thead>
+        <thead><tr><th>Инструменты</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th title="Успехи Инфограждения">Инфогр.</th></tr></thead>
         <tbody>
           {{#if gearTools.length}}
             {{#each gearTools as |t|}}
-            <tr class="item-row" data-item-id="{{t.id}}"><td class="item-name-cell">{{t.name}}</td><td></td><td>{{t.quantity}}</td><td>{{t.weight}}</td></tr>
+            <tr class="item-row" data-item-id="{{t.id}}"><td class="item-name-cell">{{t.name}}</td><td></td><td>{{t.quantity}}</td><td>{{t.weight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">{{#if t.infoguard}}🛡 {{t.infoguard}}{{else if (eq t.infoguard 0)}}0{{else}}—{{/if}}</td></tr>
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="4"><em>Нет инструментов</em></td></tr>
+            <tr class="items-empty"><td colspan="5"><em>Нет инструментов</em></td></tr>
           {{/if}}
         </tbody>
       </table>

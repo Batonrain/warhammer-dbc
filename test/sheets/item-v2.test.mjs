@@ -21,6 +21,8 @@ describeV2Sheet(WarhammerItemSheet, {
     "templates/item/item-sheet.hbs",
     "templates/item/parts/armor.hbs",
     "templates/item/parts/component.hbs",
+    "templates/item/parts/gear.hbs",
+    "templates/item/parts/infoguard.hbs",
     "templates/item/parts/psychic-power.hbs",
     "templates/item/parts/ritual.hbs",
     "templates/item/parts/talent.hbs",
