@@ -1224,6 +1224,14 @@ export class WarhammerItemSheet
       context.armorPropsAvailable = Object.entries(ARMOR_PROPERTIES)
         .filter(([key]) => !activeProps.includes(key))
         .map(([key, def]) => ({ key, label: def.label }));
+
+      // Разгрузка силовой брони (стр. 27) — те же константы, что у снаряжения.
+      const sys = context.system;
+      if (!sys.rig) sys.rig = { comfort: "normal", backSlot: false, slots: [], magLocks: [] };
+      if (!Array.isArray(sys.rig.slots))    sys.rig.slots = [];
+      if (!Array.isArray(sys.rig.magLocks)) sys.rig.magLocks = [];
+      context.rigComfort   = RIG_COMFORT;
+      context.rigSlotSizes = RIG_SLOT_SIZES;
     }
 
     // ── Силовой щит ───────────────────────────────────────────────────────────

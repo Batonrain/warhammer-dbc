@@ -6,6 +6,9 @@
 //  во флаге warhammer-dbc.stowage = { <itemId>: <location> }, где location:
 //    "<slotId>"        — конкретный слот разгрузки,
 //    "bp:<rigItemId>"  — в контейнере-рюкзаке.
+//  Разгрузкой (isRig/rig) может быть gear (Ремень, Рюкзак) ИЛИ armor —
+//  у силовой брони (стр. 27) 12 магнитных замков и пояс лежат на самом
+//  предмете брони, а не на отдельном снаряжении.
 // ════════════════════════════════════════════════════════════════════════
 
 import { ITEM_TYPES } from "./items.mjs";
@@ -25,7 +28,10 @@ export function itemSizeStr(item) {
   const s = item?.system || {};
   if (s.itemSize) return String(s.itemSize).toLowerCase().replace(/\s/g, "");
   switch (item?.type) {
-    case "weapon":     return WEAPON_SIZE[s.weaponClass] || "4x1";
+    // Граната — отдельный случай класса "thrown": книга (стр. 243, таблица
+    // «Размеры предметов») даёт ей 1×1, тогда как остальной «thrown»
+    // (бомбы, метательные ножи/топоры и т.п.) остаётся на общих 2×1.
+    case "weapon":     return s.weaponType === "grenade" ? "1x1" : (WEAPON_SIZE[s.weaponClass] || "4x1");
     case "ammo":       return "1x1";
     case "forcefield": return "3x3";
     default:           return "1x1"; // gear/tool/drug без явного размера
@@ -55,7 +61,10 @@ export const RIG_VARIANT_FLAG = "rigVariants";
  * и удобство, поэтому вариант выбирается, а не описывается словами в тексте.
  */
 export function slotVariants(entry) {
-  const base = { key: "", label: entry.note || entry.size, size: entry.size, awkward: false };
+  // Слот без замен наследует своё собственное неудобство (голени/пояс сзади/
+  // ранец силовой брони — стр. 27): entry.awkward может быть true
+  // ("неудобный") или "veryAwkward" ("очень неудобный"), не только false.
+  const base = { key: "", label: entry.note || entry.size, size: entry.size, awkward: entry.awkward || false };
   const rest = (entry.variants || []).map((v, i) => ({
     key:     v.key || `v${i}`,
     label:   v.label || v.size,
@@ -136,7 +145,9 @@ export function rigManagerData(actor) {
   const items = actor.items;
 
   const stowable = items.filter(i => STOWABLE_TYPES.includes(i.type));
-  const rigs = items.filter(i => i.type === "gear" && i.system?.isRig);
+  // Разгрузка бывает не только снаряжением (Ремень) — у силовой брони (стр. 27)
+  // свои 12 магнитных замков на самом предмете брони.
+  const rigs = items.filter(i => (i.type === "gear" || i.type === "armor") && i.system?.isRig);
 
   const locOf = (id) => stow[id];
 
@@ -155,7 +166,7 @@ export function rigManagerData(actor) {
       const addable = stowable
         .filter(i => i.id !== rig.id && locOf(i.id) !== loc)
         .map(i => ({ id: i.id, name: i.name, size: itemSizeStr(i) }));
-      return { id: rig.id, name: rig.name, container: true, comfortHint, canQuickDraw, backSlot,
+      return { id: rig.id, name: rig.name, type: rig.type, container: true, comfortHint, canQuickDraw, backSlot,
         contents, addable, count: contents.length, weight: wsum(inBp) };
     }
     const inRig = [];
@@ -174,7 +185,7 @@ export function rigManagerData(actor) {
         awkward: sl.awkward, variants: sl.variants,
         item: occ ? { id: occ.id, name: occ.name, weight: wt(occ) } : null, opts };
     });
-    return { id: rig.id, name: rig.name, container: false, comfortHint, canQuickDraw, backSlot,
+    return { id: rig.id, name: rig.name, type: rig.type, container: false, comfortHint, canQuickDraw, backSlot,
       slots, count: inRig.length, total: slots.length, weight: wsum(inRig),
       isMagAny: slots.some(s => s.isMag) };
   });

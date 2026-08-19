@@ -91,6 +91,16 @@ export class RigManager extends Application {
     }));
     // Достать (сделать не размещённым)
     el.querySelectorAll("[data-item-clear]").forEach(b => b.addEventListener("click", () => this._unassign(b.dataset.itemClear)));
+    // Клик по зоне схемы силовой брони — подсветить и проскроллить к слотам той же зоны.
+    el.querySelectorAll("[data-slot-region]").forEach(r => r.addEventListener("click", () => {
+      const region = r.dataset.slotRegion;
+      const rigEl = r.closest(".wr-rig");
+      if (!rigEl) return;
+      rigEl.querySelectorAll(".wr-slot.hl").forEach(s => s.classList.remove("hl"));
+      const matches = [...rigEl.querySelectorAll(".wr-slot-note")].filter(n => n.textContent.trim() === region);
+      matches.forEach(n => n.closest(".wr-slot")?.classList.add("hl"));
+      matches[0]?.closest(".wr-slot")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }));
   }
 }
 

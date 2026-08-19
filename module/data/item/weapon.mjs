@@ -31,10 +31,19 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       corEffects:   list("Эффекты порчи"),
       weaponClass:  new StringField({ initial: "melee", label: "Класс" }),
       weaponType:   new StringField({ initial: "laser", label: "Тип" }),
+      // Свой размер на разгрузке (стр. 27) — переопределяет вывод по
+      // weaponClass в itemSizeStr(), когда конкретный предмет не совпадает
+      // с общим правилом (напр. карабин 3×1 против винтовки 4×1).
+      itemSize:     new StringField({ initial: "", label: "Размер (разгрузка)" }),
       range:        num(0, "Дальность"),
       balance:      num(0, "Баланс"),
       grips:        new StringField({ initial: "", label: "Хват" }),
       profileLabel: new StringField({ initial: "", label: "Название профиля" }),
+      // Категория для Талантов «Арсенал» (Melee Training/Приёмы, стр. 14, 62):
+      // меч/топор/булава и т.п. НЕ то же самое, что profileLabel (у него своя
+      // роль — ярлык профиля хвата для HUD) — заполняется отдельно, из
+      // profileLabel как источника, но своим полем, чтобы не путать смыслы.
+      meleeCategory: new StringField({ initial: "", label: "Категория (Арсенал)" }),
       profiles:     list("Профили"),
       // Перезарядка — строка: в книге это и «1», и «полн.», и «2 полн.».
       reload:       new StringField({ initial: "1", label: "Перезарядка" }),

@@ -50,6 +50,16 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       wpBonus:      num(0, "Бонус Силы Воли"),
       drukhari:     new BooleanField({ initial: false, label: "Друкхари" }),
       fieldMode:    new StringField({ initial: "", label: "Режим поля" }),
+      // Разгрузка (стр. 27): у силовой брони — 12 магнитных замков и пояс.
+      // Те же поля, что у GearData.rig, чтобы module/constants/rig.mjs
+      // работал без ветвления по типу предмета.
+      isRig:        new BooleanField({ initial: false, label: "Разгрузка" }),
+      rig: new SchemaField({
+        comfort:  new StringField({ initial: "normal", label: "Удобство" }),
+        backSlot: new BooleanField({ initial: false, label: "Заспинная ячейка" }),
+        slots:    new ArrayField(new ObjectField(), { label: "Слоты" }),
+        magLocks: new ArrayField(new ObjectField(), { label: "Магнитные замки" })
+      }, { label: "Разгрузка" }),
       history: new SchemaField({
         ...historyEntry(),
         // Зоны правит бросок «Уничтоженный и восстановленный»: ключ — локация.
