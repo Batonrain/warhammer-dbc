@@ -18,6 +18,7 @@
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { charAptitudeSet, skillCostXP, talentCostXP } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
+import { isFriendlySpecialty } from "../rules/friendly-specialties.mjs";
 import { rankLabel, stepsUpTo } from "../rules/duplicate-grants.mjs";
 
 /** Культура легиона персонажа — она двигает категорию цены (стр. 58, 61). */
@@ -29,12 +30,14 @@ function cultFxOf(actor) {
 }
 
 /** Категория цены Навыка для этого персонажа: Склонности плюс культура. */
-function skillCat(actor, def, entryChar = "") {
+function skillCat(actor, def, entryChar = "", group = "", specialty = "") {
   const apts = charAptitudeSet(actor.system?.aptitudes);
   const itemApts = [entryChar || def.char, def.apt2].filter(Boolean);
   // Общие знания и Ремесло всегда Дружественные — это перебивает и Склонности,
-  // и культуру легиона, ровно как на «Развитии».
+  // и культуру легиона, ровно как на «Развитии». То же самое — специализация,
+  // отмеченная как Дружественная на Родном мире (Исследовательская станция).
   const cat = def.alwaysAlly ? "ally"
+    : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
     : cultureCat("skill", def.label || "", "", cultFxOf(actor));
   return { apts, itemApts, cat };
 }
@@ -44,10 +47,10 @@ function skillCat(actor, def, entryChar = "") {
  * готовыми (rules/duplicate-grants.mjs): за выдаваемый уровень платится так,
  * будто персонаж качал его с нуля.
  */
-export function skillStepsCost(actor, skillKey, steps = [], { group = false, entryChar = "" } = {}) {
+export function skillStepsCost(actor, skillKey, steps = [], { group = false, entryChar = "", specialty = "" } = {}) {
   const def = group ? GROUP_SKILLS_DEF[skillKey] : SKILLS_DEF[skillKey];
   if (!def || !steps.length) return 0;
-  const { apts, itemApts, cat } = skillCat(actor, def, entryChar);
+  const { apts, itemApts, cat } = skillCat(actor, def, entryChar, group ? skillKey : "", specialty);
   return steps.reduce((sum, step) => sum + skillCostXP(step, itemApts, apts, cat), 0);
 }
 

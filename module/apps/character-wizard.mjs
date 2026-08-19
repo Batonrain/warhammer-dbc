@@ -24,7 +24,7 @@ import { applyRace, applySubrace, applyLegion, applyYnnari, applyHarlequin,
          actorRaceItem, actorSubraceItem }    from "./races.mjs";
 import { buildLegionOptions, buildChapterOptions,
          buildCultureLegionOptions }          from "../constants/legions.mjs";
-import { applyHomeworld, homeworldSheetContext } from "./homeworlds.mjs";
+import { applyHomeworld, homeworldSheetContext, needsIntBonusChoice } from "./homeworlds.mjs";
 import { applyDivination, divinationSheetContext } from "./divinations.mjs";
 import { characterContext }      from "../sheets/character-context.mjs";
 import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
@@ -115,6 +115,12 @@ export class CharacterWizard extends Application {
     this.gearPicks = {};
     this._confirmingGear = false;
     this._gearDone = false;
+    // Родной мир с выбором «N специализаций = Int.b×2» (Исследовательская
+    // станция) нельзя применить прямо на Этапе 1 — Интеллект появляется
+    // только на Этапе 2, диалог показал бы «доступно 0». Ключ мира копится
+    // здесь и по-настоящему применяется по подтверждению Этапа 2 (см.
+    // _onNext), когда Int.b уже посчитан.
+    this._pendingHomeworldKey = null;
   }
 
   get actor() { return game.actors.get(this.actorId); }
@@ -162,7 +168,7 @@ export class CharacterWizard extends Application {
       ynnariPastOptions: cc.ynnariPastOptions, harlequinPastOptions: cc.harlequinPastOptions,
       ynnariPast: sys.ynnariPast || "", harlequinPast: sys.harlequinPast || "",
 
-      homeworld:  homeworldSheetContext(actor),
+      homeworld:  this._homeworldStepContext(),
       divination: divinationSheetContext(actor),
       ...actorFactionsContext(actor),
 
@@ -189,6 +195,28 @@ export class CharacterWizard extends Application {
             choices: r.choices.map((c, idx) => ({ idx, label: c.display, picked: r.picked.includes(idx) })),
             pickedCount: r.picked.length })
     };
+  }
+
+  /**
+   * Контекст дропдауна Родного мира для Этапа 1. Обычный
+   * `homeworldSheetContext` метит «выбрано» по реально гранту (embedded-
+   * предмету) — а мир с Int-зависимым выбором намеренно повисает
+   * неприменённым до Этапа 2 (см. _pendingHomeworldKey), поэтому здесь
+   * подменяем «выбрано» на отложенный ключ, чтобы селект не откатывался
+   * обратно на «— не выбрано —» после выбора игрока.
+   */
+  _homeworldStepContext() {
+    const ctx = homeworldSheetContext(this.actor);
+    if (!ctx) return ctx;
+    if (this._pendingHomeworldKey) {
+      const key = this._pendingHomeworldKey;
+      return {
+        ...ctx, current: key,
+        options: ctx.options.map(o => ({ ...o, selected: o.key === key })),
+        deferredNote: "Этот мир даёт выбор специализаций по Интеллекту — уточнится сразу после Этапа 2 («Характеристики»), когда станет известен бонус Интеллекта."
+      };
+    }
+    return ctx;
   }
 
   // ── Этап 3: Архетип, Умения/Таланты, Раны ────────────────────────────────
@@ -643,15 +671,31 @@ export class CharacterWizard extends Application {
       cur += ch; i++;
     }
     if (cur.trim()) out.push(cur);
-    return out.map(s => s.trim()).filter(Boolean);
+    // Хвостовая «,» перед следующим «или» — часть той же цепочки выбора
+    // («A или B, или C»), не разделитель вариантов; чистим её здесь, а не
+    // на входе, чтобы не путать с «,» из _splitGearTopLevel.
+    return out.map(s => s.trim().replace(/,+$/, "").trim()).filter(Boolean);
   }
 
-  /** Разбивка верхнего уровня на отдельные предметы: «,» и «;» — оба уровня «И», с учётом скобок. */
+  /**
+   * Разбивка верхнего уровня на отдельные предметы: «,» и «;» — оба уровня
+   * «И», с учётом скобок. Исключение: «,» ПЕРЕД «или» — это не новый предмет,
+   * а хвост той же цепочки выбора (естественный русский список «A или B, или
+   * C» = «A или B или C») — реальный текст расы Друкхари содержит именно
+   * такую запись («Xenomesh Armour (Good.Q) или Kabalite Armour, или
+   * Wychsuit»); без этого исключения «или Wychsuit» отрывался бы отдельным
+   * лже-предметом верхнего уровня, а Wychsuit пропадал бы из выбора брони.
+   */
   _splitGearTopLevel(str) {
     const out = []; let d = 0, cur = "";
-    for (const ch of String(str)) {
+    const s = String(str);
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
       if (ch === "(") d++; else if (ch === ")") d = Math.max(0, d - 1);
-      if ((ch === "," || ch === ";") && d === 0) { out.push(cur); cur = ""; }
+      if ((ch === "," || ch === ";") && d === 0) {
+        if (ch === "," && /^\s*или\s+/.test(s.slice(i + 1))) { cur += ch; continue; }
+        out.push(cur); cur = "";
+      }
       else cur += ch;
     }
     if (cur.trim()) out.push(cur);
@@ -772,6 +816,11 @@ export class CharacterWizard extends Application {
     on("[data-action='wizFinish']", "click", async () => {
       if (this._confirmingGear) return;
       if (this.step.id === "gear" && !this._gearDone) await this._confirmGear();
+      // _confirmGear() кончает своим render(false) (снять «Применяется…»),
+      // который сам не awaited — вызванный сразу вслед close() иногда
+      // проигрывал этой гонке: рендер из finally долетал ПОСЛЕ close() и
+      // окно фактически оставалось открытым. Даём кадру осесть перед close().
+      await new Promise(r => setTimeout(r, 0));
       this.close();
     });
     on(".wiz-gear-sel", "change", ev => {
@@ -787,7 +836,18 @@ export class CharacterWizard extends Application {
     on(".wiz-chapter-sel", "change", ev => this.actor.update({ "system.geneSeed.chapter": ev.currentTarget.value }));
     on(".wiz-cult-sel",    "change", ev => this.actor.update({ "system.geneSeed.cultureLegion": ev.currentTarget.value }));
 
-    on(".wiz-hw-sel", "change", ev => applyHomeworld(this.actor, ev.currentTarget.value).then(() => this.render(false)));
+    on(".wiz-hw-sel", "change", ev => {
+      const key = ev.currentTarget.value;
+      if (key && needsIntBonusChoice(key)) {
+        // Диалог выбора специализаций отложен до Этапа 2 (см. _onNext) —
+        // на Этапе 1 Интеллект ещё не посчитан, «доступно» показало бы 0.
+        this._pendingHomeworldKey = key;
+        this.render(false);
+        return;
+      }
+      this._pendingHomeworldKey = null;
+      applyHomeworld(this.actor, key).then(() => this.render(false));
+    });
     on(".wiz-dv-sel", "change", ev => applyDivination(this.actor, ev.currentTarget.value).then(() => this.render(false)));
     // Фракция — переиспользуем как есть (дроп + кнопка «＋», Обозреватель компендиумов).
     activateFactionFieldListeners(html, this.actor);
@@ -932,6 +992,13 @@ export class CharacterWizard extends Application {
     if (this.step.id === "characteristics") {
       const ok = await this._confirmCharacteristics();
       if (!ok) { ui.notifications?.warn("Выберите Склонности — ровно 4 Характеристики и 4 прочих."); return; }
+      // Родной мир с Int-зависимым выбором специализаций (см. Этап 1) —
+      // применяем именно сейчас, Интеллект уже посчитан.
+      if (this._pendingHomeworldKey) {
+        const key = this._pendingHomeworldKey;
+        this._pendingHomeworldKey = null;
+        await applyHomeworld(this.actor, key);
+      }
     }
     if (this.step.id === "archetype") await this._confirmArchetype();
     if (this.step.id === "aspirations") await this._confirmAspirations();

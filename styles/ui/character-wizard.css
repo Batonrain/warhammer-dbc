@@ -1,9 +1,23 @@
 /* Единый Мастер создания персонажа (module/apps/character-wizard.mjs).
    Формы полей переиспользуют .wh-wizard-form/.atk-dlg-row/.wiz-* из
-   ui/dialogs.css — здесь только шаги-чипсы и футер с навигацией. */
+   ui/dialogs.css — здесь только шаги-чипсы и футер с навигацией.
+
+   Каркас — та же схема, что у Разгрузки (ui/rig-manager.css): окно
+   V1-приложения само не скроллит контент, а .wiz-step-body раньше рос
+   без ограничения высоты и выталкивал футер («Далее»/«Готово») за
+   пределы окна — кнопка физически не помещалась на экран. Форма
+   становится колонкой на всю высоту .window-content, тело — единственный
+   растущий/скроллящийся элемент, шаги-чипсы и футер остаются на месте. */
+.wh-char-wizard .window-content { padding: 8px; overflow: hidden; }
+.wh-wizard-form.wh-char-wizard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
 .wh-char-wizard .wiz-steps {
   display: flex;
+  flex: 0 0 auto;
   flex-wrap: wrap;
   gap: 4px;
   padding: 4px 0 8px;
@@ -28,10 +42,16 @@
 
 .wh-char-wizard .wiz-step-chip.done { color: #7fbf7f; }
 
-.wh-char-wizard .wiz-step-body { min-height: 320px; }
+.wh-char-wizard .wiz-step-body {
+  flex: 1 1 auto;
+  min-height: 0; /* классическая ловушка flexbox: без этого ребёнок не сжимается и не скроллит, а раздувает родителя */
+  overflow-y: auto;
+  padding-right: 4px;
+}
 
 .wh-char-wizard .wiz-footer {
   display: flex;
+  flex: 0 0 auto;
   justify-content: space-between;
   gap: 8px;
   padding-top: 8px;

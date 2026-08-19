@@ -11,6 +11,7 @@ import { charAptitudeSet, charCostXP, skillCostXP, talentCostXP,
          resolveTalentAptitudes } from "../../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 import { cultureCat, resolveCultureFx } from "../../constants/legions.mjs";
+import { isFriendlySpecialty } from "../../rules/friendly-specialties.mjs";
 import { talentCategory } from "../item-picker.mjs";
 import { openContextMenu, closeContextMenus } from "../context-menu.mjs";
 import { esc } from "../../helpers/utils.mjs";
@@ -49,15 +50,17 @@ export function charImpCost(actor, charKey, improvement, grantedImp) {
  * entryChar — своя Характеристика записи Группы Навыков (Operate (Voidship) —
  * Интеллект), она же меняет склонности, а значит и категорию цены.
  */
-export function skillCumCost(actor, def, rank, entryChar, grantedRank) {
+export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, specialty) {
   const apts     = charAptitudeSet(actor.system.aptitudes);
   const itemApts = [entryChar || def?.char, def?.apt2].filter(Boolean);
   const steps    = SKILL_RANK_STEPS[rank] ?? 0;
   const floor    = SKILL_RANK_STEPS[grantedRank] ?? 0;
   let sum = 0;
   // Общие знания и Ремесло всегда Дружественные — это перебивает и Склонности,
-  // и культуру легиона (стр. 58, 61).
+  // и культуру легиона (стр. 58, 61). То же самое — специализация, отмеченная
+  // как Дружественная на Родном мире (Исследовательская станция).
   const cat = def?.alwaysAlly ? "ally"
+    : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
     : cultureCat("skill", def?.label || def?.name || "", "", cultFxOf(actor));
   for (let i = Math.max(floor, 0); i < steps; i++) sum += skillCostXP(i, itemApts, apts, cat);
   return sum;
@@ -109,7 +112,7 @@ export async function setAptitudes(actor, list) {
     upd[`system.groupSkills.${gk}`] = entries.map(e => ({
       ...e,
       cost: (e?.rank && e.rank !== "untrained")
-        ? skillCumCost(actor, def, e.rank, e.char, e.grantedRank || "untrained")
+        ? skillCumCost(actor, def, e.rank, e.char, e.grantedRank || "untrained", gk, e.specialty)
         : (e.cost || 0)
     }));
   }
@@ -144,7 +147,7 @@ export async function setGroupEntryField(actor, group, index, field, value) {
   if (entry) {
     if (field === "rank") {
       entry.rank = value;
-      entry.cost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained");
+      entry.cost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained", group, entry.specialty);
     } else if (field === "cost") {
       entry.cost = parseInt(value) || 0;
     } else {
@@ -364,7 +367,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     if (!on && rank === "untrained")
       return ui.notifications.warn("Сначала выберите ранг навыка, потом помечайте его как выданный.");
     e.grantedRank = on ? "untrained" : rank;
-    e.cost = skillCumCost(actor, GROUP_SKILLS_DEF[gk], rank, e.char, e.grantedRank);
+    e.cost = skillCumCost(actor, GROUP_SKILLS_DEF[gk], rank, e.char, e.grantedRank, gk, e.specialty);
     actor.update({ [`system.groupSkills.${gk}`]: entries });
   });
 

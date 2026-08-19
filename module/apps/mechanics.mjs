@@ -1262,7 +1262,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       arr[idx].grantedRank = higherRank(arr[idx].grantedRank || "untrained", out.rank);
       if (out.refundSteps.length) {
         await refundXP(actor,
-          skillStepsCost(actor, entry.skillKey, out.refundSteps, { group: true }),
+          skillStepsCost(actor, entry.skillKey, out.refundSteps, { group: true, specialty: arr[idx].specialty }),
           skillReason(`${GROUP_SKILLS_DEF[entry.skillKey]?.label || entry.skillKey}`
             + ` (${arr[idx].specialty || arr[idx].specKey || "?"})`, entry.rank, prev));
       }

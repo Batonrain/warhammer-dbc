@@ -18,6 +18,7 @@ import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/discipli
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { aptitudeCat, charAptitudeSet }             from "../constants/advancement.mjs";
+import { isFriendlySpecialty }                       from "../rules/friendly-specialties.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
@@ -412,7 +413,9 @@ export function buildGetData(actor) {
           charAbbr: CHARACTERISTICS[charKey]?.abbr ?? charKey,
           grantedRank: e.grantedRank ?? "untrained",
           isGranted: (e.grantedRank ?? "untrained") !== "untrained",
-          aptCat: def.alwaysAlly ? "ally" : aptitudeCat(_skApts, [charKey, def.apt2]),
+          aptCat: def.alwaysAlly ? "ally"
+            : isFriendlySpecialty(actor, groupKey, e.specialty) ? "ally"
+            : aptitudeCat(_skApts, [charKey, def.apt2]),
           charOptions: GS_CHAR_KEYS.map(k => ({
             key: k, abbr: CHARACTERISTICS[k]?.abbr ?? k.toUpperCase(), selected: k === charKey
           }))
