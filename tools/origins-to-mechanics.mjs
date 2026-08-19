@@ -66,13 +66,18 @@ let idSeq = 0;
 /** Устойчивый id записи: перегон дважды не должен менять файл. */
 const mkId = (docId, tag) => `${String(docId).slice(0, 8)}${tag}${(idSeq++).toString(36)}`.slice(0, 16);
 
-/** Разбивка по запятым верхнего уровня — запятая внутри скобок это «и обе». */
+/**
+ * Разбивка по запятым верхнего уровня — запятая внутри скобок это «и обе».
+ * «;» в реальных данных (напр. «Огрин», «Неприкаянный») стоит на том же
+ * месте, что и запятая — отдельный пункт «И», а не выбор — поэтому делит
+ * строку наравне с ней, а не в splitChoice.
+ */
 function splitTopLevel(s) {
   const out = []; let cur = "", depth = 0;
   for (const ch of String(s)) {
     if (ch === "(") depth++;
     if (ch === ")") depth--;
-    if (ch === "," && depth === 0) { out.push(cur); cur = ""; continue; }
+    if ((ch === "," || ch === ";") && depth === 0) { out.push(cur); cur = ""; continue; }
     cur += ch;
   }
   if (cur.trim()) out.push(cur);
@@ -86,7 +91,7 @@ function splitChoice(s) {
   while (i < str.length) {
     const ch = str[i];
     if (ch === "(") depth++; else if (ch === ")") depth--;
-    if (depth === 0 && (ch === "/" || ch === ";")) { out.push(cur); cur = ""; i++; continue; }
+    if (depth === 0 && ch === "/") { out.push(cur); cur = ""; i++; continue; }
     // «или» ищем регуляркой, а не срезом фиксированной длины: пробелов вокруг
     // него в книге бывает и два, и перенос строки.
     const m = depth === 0 ? str.slice(i).match(/^\s+или\s+/) : null;
@@ -219,7 +224,6 @@ function walk(dir, fn) {
 }
 
 const TALENT_IDX = packIndex("talents");
-const WEAPON_FOLDERS = folderIndex("weapons");
 
 // Подписи книги для пары «группа + сила» Миньона. «Средний» в книге — это
 // «Обычный» в константах, поэтому обе формы.
@@ -247,11 +251,6 @@ function minionEntries(str, docId) {
     sourceImg: hit.img || "", minionGroup: group, minionTier: tier
   }));
 }
-const GEAR_IDX = new Map();
-for (const pack of ["weapons", "armor", "gear", "ammunition", "tools", "shields", "implants"]) {
-  for (const [k, v] of packIndex(pack)) if (!GEAR_IDX.has(k)) GEAR_IDX.set(k, { ...v, pack });
-}
-
 /** Одна альтернатива Таланта → запись, либо null. */
 function talentEntry(str, docId) {
   const budget = budgetEntry(str, docId);
@@ -266,18 +265,6 @@ function talentEntry(str, docId) {
   return {
     id: mkId(docId, "t"), kind: "talent", sourceUuid: hit.uuid, sourceName: hit.name,
     sourceImg: hit.img || "", specialization: spec ? spec[1].trim() : ""
-  };
-}
-
-/** Одна альтернатива снаряжения → запись, либо null. */
-function gearEntry(str, docId) {
-  const m = gearMods(str);
-  const hit = GEAR_IDX.get(m.name.toLowerCase());
-  if (!hit) return weaponClassEntry(str, docId, WEAPON_FOLDERS) || ruClassEntry(str, docId);
-  return {
-    id: mkId(docId, "e"), kind: "equipment", equipMode: "direct",
-    equipSourceUuid: hit.uuid, equipSourceName: hit.name, equipSourceImg: hit.img || "",
-    equipQty: m.qty, equipQuality: m.quality, equipMaxAvailability: m.avail
   };
 }
 
@@ -304,8 +291,8 @@ function parseList(raw, docId, make) {
   return { entries, leftover };
 }
 
-const report = { docs: 0, skillEntries: 0, talentEntries: 0, gearEntries: 0,
-                 unknown: [], leftTalents: [], leftGear: [], touched: [] };
+const report = { docs: 0, skillEntries: 0, talentEntries: 0,
+                 unknown: [], leftTalents: [], gearText: [], toWrite: [] };
 
 walk(abs(SRC_ROOT), (file) => {
   let doc;
@@ -332,39 +319,47 @@ walk(abs(SRC_ROOT), (file) => {
     skillEntries(part, doc._id, entries, unknown);
   }
 
-  const tal  = parseList(rawTal,  doc._id, talentEntry);
-  const gear = parseList(rawGear, doc._id, gearEntry);
+  const tal = parseList(rawTal, doc._id, talentEntry);
+  const all = [...entries, ...tal.entries];
 
-  const all = [...entries, ...tal.entries, ...gear.entries];
-  if (!all.length && !unknown.length) return;
+  // Ничего интересного — ни разобрано, ни осталось на глаза ГМу. Пропускаем
+  // молча по-настоящему, а не прячем то, что стоило бы показать (был баг:
+  // условие проверяло только «all» и «unknown», из-за чего документы с
+  // одним лишь остатком в Талантах или текстом Снаряжения выпадали из
+  // отчёта целиком).
+  if (!all.length && !unknown.length && !tal.leftover.length && !rawGear) return;
+
   report.docs++;
   report.skillEntries  += entries.length;
   report.talentEntries += tal.entries.length;
-  report.gearEntries   += gear.entries.length;
   if (unknown.length) report.unknown.push(`${doc.name}: ${unknown.join("; ")}`);
-  if (tal.leftover.length)  report.leftTalents.push(`${doc.name}: ${tal.leftover.join("; ")}`);
-  if (gear.leftover.length) report.leftGear.push(`${doc.name}: ${gear.leftover.join("; ")}`);
-  report.touched.push({ file, doc, entries: all, leftTal: tal.leftover, leftGear: gear.leftover });
+  if (tal.leftover.length) report.leftTalents.push(`${doc.name}: ${tal.leftover.join("; ")}`);
+  // Снаряжение целиком остаётся текстом (см. шапку файла) — не «не разобрано»,
+  // а по замыслу не переводится, поэтому выводится отдельно и без пометки «баг».
+  if (rawGear) report.gearText.push(`${doc.name}: ${rawGear}`);
+
+  // Файл переписываем только если реально что-то извлекли — иначе документ,
+  // где нашёлся только текст Снаряжения или неопознанные Таланты, попадёт
+  // в JSON-переформатирование без единого смыслового изменения.
+  if (all.length) report.toWrite.push({ file, doc, entries: all, leftTal: tal.leftover });
 });
 
 // ── Печать отчёта / запись ──────────────────────────────────────────────────
 
 console.log(`Затронуто записей: ${report.docs}`);
-console.log(`Навыков: ${report.skillEntries}, Талантов: ${report.talentEntries}, Снаряжения: ${report.gearEntries}`);
-const show = (title, list) => {
-  if (!list.length) { console.log(`
-${title}: всё разобрано.`); return; }
-  console.log(`
-${title} (${list.length}) — остаётся строкой:`);
+console.log(`Навыков: ${report.skillEntries}, Талантов: ${report.talentEntries}`);
+const show = (title, list, note) => {
+  if (!list.length) { console.log(`\n${title}: пусто.`); return; }
+  console.log(`\n${title} (${list.length})${note ? " — " + note : ""}:`);
   for (const u of list) console.log("  " + u);
 };
-show("ТАЛАНТЫ", report.leftTalents);
-show("СНАРЯЖЕНИЕ", report.leftGear);
+show("ТАЛАНТЫ", report.leftTalents, "остаются строкой, не разобрано");
+show("СНАРЯЖЕНИЕ", report.gearText, "не переводится по замыслу, см. шапку файла");
 if (report.unknown.length) {
   console.log(`\nНЕ РАЗОБРАНО (${report.unknown.length}) — остаётся строкой, выдаётся вручную:`);
   for (const u of report.unknown) console.log("  " + u);
 } else {
-  console.log("\nНеразобранных записей нет.");
+  console.log("\nНеразобранных Навыков нет.");
 }
 
 if (!APPLY) {
@@ -372,7 +367,7 @@ if (!APPLY) {
   process.exit(0);
 }
 
-for (const rest of report.touched) {
+for (const rest of report.toWrite) {
   const { file, doc, entries } = rest;
   const flags = doc.flags?.[FLAG] ?? {};
   const groups = Array.isArray(flags.mechanics) ? [...flags.mechanics] : [];
@@ -389,15 +384,15 @@ for (const rest of report.touched) {
 
   doc.flags = { ...(doc.flags || {}), [FLAG]: { ...flags, mechanics: groups } };
   // Разобранное убираем, неразобранное оставляем строкой: молча выбросить
-  // требование книги хуже, чем оставить его ГМу на глаза.
+  // требование книги хуже, чем оставить его ГМу на глаза. Снаряжение не
+  // трогаем вообще — оно не разбиралось.
   doc.system.skills  = "";
-  doc.system.talents = (rest.leftTal  || []).join(", ");
-  doc.system.gear    = (rest.leftGear || []).join(", ");
+  doc.system.talents = (rest.leftTal || []).join(", ");
   fs.writeFileSync(file, JSON.stringify(doc, null, 2) + "\n");
 }
-console.log(`\nЗаписано файлов: ${report.touched.length}`);
+console.log(`\nЗаписано файлов: ${report.toWrite.length}`);
 
-// ── Таланты и снаряжение → записи Конструктора ───────────────────────────────
+// ── Таланты → записи Конструктора ───────────────────────────────────────────
 //
 //  Имя из книги ищется в паке по английской части («Frenzy» в «Frenzy /
 //  Бешенство»). Что не нашлось — остаётся строкой: молча выбросить требование
@@ -446,96 +441,3 @@ function budgetEntry(str, docId) {
   return null;
 }
 
-/** «20 доз Химии до R1» / «Narthecium (Good.Q)» → количество, Редкость, качество. */
-function gearMods(str) {
-  const qty = str.match(/^(\d+)\s*(?:×|x|шт\.?)?\s+/i);
-  const avail = str.match(/до\s*R\s*(\d)/i);
-  const quality = /best\.?\s*q/i.test(str) ? "best" : /good\.?\s*q/i.test(str) ? "good" : "common";
-  const name = str
-    .replace(/^\d+\s*(?:×|x|шт\.?)?\s+/i, "")
-    .replace(/\((?:[^()]*)\)\s*$/, "")
-    // \b строится на \w и кириллицу не видит, поэтому границы слова здесь нет
-    .replace(/\s*до\s*R\s*\d\s*/ig, " ")
-    .replace(/[;,]\s*$/, "")
-    .trim();
-  return { qty: qty ? Number(qty[1]) : 1, avail: avail ? Number(avail[1]) : 5, quality, name };
-}
-
-// ── Класс оружия из книги → папка компендиума ────────────────────────────────
-//
-//  «L. Chain Weapon (до R1)» называет не предмет, а КЛАСС: цепное оружие
-//  Редкости не выше первой, а какое именно — выбирает игрок. В этом проекте
-//  класс оружия задан папкой компендиума, поэтому запись пишется выбором с
-//  фильтром по папке. Идентификаторы папок лежат в _Folder.json исходников —
-//  запущенная игра для этого не нужна.
-
-/** Имя папки → её идентификатор (первое совпадение сверху вниз). */
-function folderIndex(pack) {
-  const idx = new Map();
-  walk(abs(SRC_ROOT, "/" + pack), (file) => {
-    if (!file.endsWith("_Folder.json")) return;
-    let j; try { j = JSON.parse(fs.readFileSync(file, "utf8")); } catch { return; }
-    if (j?.name && j?._id && !idx.has(j.name)) idx.set(j.name, j._id);
-  });
-  return idx;
-}
-
-// Английские названия классов из книги → папка компендиума. Список ручной и
-// таким останется: книга пишет «Combi-Bolter», а папка называется «Болтерное»,
-// и вывести одно из другого нельзя.
-function weaponClassFolders() { return {
-  "chain weapon": "Цепное", "power weapon": "Силовое", "shock weapon": "Шоковое",
-  "force weapon": "Психосиловое", "primitive weapon": "Примитивное",
-  "bolter": "Болтерное", "bolt pistol": "Болтерное", "combi-bolter": "Болтерное",
-  "storm bolter": "Болтерное", "stalker bolter": "Болтерное", "bolt rifle": "Болтерное",
-  "heavy bolter": "Болтерное",
-  "flamer": "Огнемёты", "combi-flamer": "Огнемёты",
-  "meltagun": "Мельта", "combi-melta": "Мельта", "multimelta": "Мельта",
-  "plasmagun": "Плазменное", "combi-plasma": "Плазменное", "plasma cannon": "Плазменное",
-  "autocannon": "Автопушки", "shotgun": "Дробовики",
-  "grenades": "Гранаты", "frag grenades": "Гранаты", "grenade launcher": "Гранатомёты",
-  "bombs": "Бомбы", "missiles": "Ракеты", "lascannon": "Лазерное", "laspistol": "Лазерное"
-}; }
-
-// Классы, которые книга называет по-русски: свой пак, иногда со своим фильтром.
-function ruClassPicks() {
-  return {
-    "доз химии": { pack: "chemistry" },
-    "химии":     { pack: "chemistry" },
-    "доз друкхарийской химии": { pack: "chemistry" },
-    "модификации для оружия":  { pack: "weapon-mods" },
-    "модификаций для оружия":  { pack: "weapon-mods" },
-    "мехадендрит":  { pack: "implants", implantCategory: "mechadendrite" },
-    "мехадендрита": { pack: "implants", implantCategory: "mechadendrite" }
-  };
-}
-
-/** «20 доз Химии до R1», «3 модификации для оружия (до R3)» → выбор с фильтром. */
-function ruClassEntry(str, docId) {
-  const m = gearMods(str);
-  const def = ruClassPicks()[m.name.toLowerCase()];
-  if (!def) return null;
-  return {
-    id: mkId(docId, "r"), kind: "equipment", equipMode: "choice",
-    equipCategoryPack: def.pack,
-    ...(def.implantCategory ? { equipImplantCategory: def.implantCategory } : {}),
-    equipMaxAvailability: m.avail, equipQuality: m.quality,
-    equipBudgetMode: "count", equipBudgetValue: m.qty
-  };
-}
-
-/** «L. Chain Weapon (до R1)» → запись выбора с фильтром по папке. */
-function weaponClassEntry(str, docId, folders) {
-  const m = gearMods(str);
-  // Приставка «L.» — легионное исполнение; на класс она не влияет.
-  const bare = m.name.replace(/^L\.\s*/i, "").trim().toLowerCase();
-  const folderName = weaponClassFolders()[bare];
-  const folderId = folderName ? folders.get(folderName) : null;
-  if (!folderId) return null;
-  return {
-    id: mkId(docId, "w"), kind: "equipment", equipMode: "choice",
-    equipCategoryPack: "weapons", equipWeaponType: folderId,
-    equipMaxAvailability: m.avail, equipQuality: m.quality,
-    equipBudgetMode: "count", equipBudgetValue: m.qty
-  };
-}
