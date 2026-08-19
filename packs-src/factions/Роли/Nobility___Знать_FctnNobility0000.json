@@ -1,0 +1,37 @@
+{
+  "name": "Nobility / Знать",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "btwkmmd9c9k6MWt3",
+  "system": {
+    "key": "nobility",
+    "parentKey": "",
+    "alsoIn": [],
+    "aliases": [
+      "Nobility"
+    ],
+    "isLore": true,
+    "description": "Высокородные: те, чьё положение дано рождением, а не должностью. Книга нацеливает на них Связи у Благородного и Дикаря.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnNobility0000",
+  "effects": [],
+  "sort": 3700000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnNobility0000"
+}

@@ -1,0 +1,37 @@
+{
+  "name": "Chaos / Хаос",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "ZW3y0AfCVRJL3r5P",
+  "system": {
+    "key": "chaos",
+    "aliases": [
+      "Chaos"
+    ],
+    "isLore": true,
+    "description": "Силы Изменения, Разложения, Крови и Излишеств и всё, что им служит.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга",
+    "parentKey": "",
+    "alsoIn": []
+  },
+  "_id": "FctnChaosRoot001",
+  "effects": [],
+  "sort": 2300000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnChaosRoot001"
+}
