@@ -18,6 +18,7 @@ import { ARMOR_PROPERTIES,
          TOOL_CATEGORIES, RIG_COMFORT, RIG_SLOT_SIZES, ITEM_TYPES } from "../constants/items.mjs";
 import { qualityEffects, itemSpecificQuality }       from "../constants/quality.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
+import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { WEAPON_PROPERTIES,
@@ -160,6 +161,26 @@ function onGrantEntryRemove(event, target) {
   const g = findMechGroup(arr, target.dataset.groupId);
   if (!g) return;
   g.entries = g.entries.filter(e => e.id !== target.dataset.entryId);
+  return saveMechanics(this.item, arr);
+}
+
+// «Когда» (entry.when.conditions) — варианты одного условия, ИЛИ между ними
+// (см. buildEntryWhenHtml/entryWhenOk в mechanics.mjs).
+function onGrantWhenAdd(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  const e = findMechEntry(arr, target.dataset.groupId, target.dataset.entryId);
+  if (!e) return;
+  e.when = e.when || { negate: false, conditions: [] };
+  e.when.conditions.push({ legion: "", chapter: "" });
+  return saveMechanics(this.item, arr);
+}
+
+function onGrantWhenRemove(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  const e = findMechEntry(arr, target.dataset.groupId, target.dataset.entryId);
+  if (!e || !e.when) return;
+  const idx = parseInt(target.dataset.whenIdx);
+  e.when.conditions = (e.when.conditions || []).filter((_, i) => i !== idx);
   return saveMechanics(this.item, arr);
 }
 
@@ -453,6 +474,8 @@ export class WarhammerItemSheet
       grantOpToggle: onGrantOpToggle,
       grantEntryAdd: onGrantEntryAdd,
       grantEntryRemove: onGrantEntryRemove,
+      grantWhenAdd: onGrantWhenAdd,
+      grantWhenRemove: onGrantWhenRemove,
       grantDropClear: onGrantDropClear,
       wpropDropClear: onWpropDropClear,
       reqGroupAdd: onReqGroupAdd,
@@ -957,6 +980,9 @@ export class WarhammerItemSheet
           any: (mech.traits || []).length || (mech.skills || []).length || mech.note || (mech.q && Object.keys(mech.q).length),
         };
       }
+      // Активное исцеление Сус-ан Мембраны у Призраков Смерти — пусто у всех
+      // остальных владельцев того же органа (module/apps/sus-an-heal.mjs).
+      context.susAnHealHtml = susAnHealButtonHtml(this.item, this.item.parent);
     }
 
     // ── Торпеда (боеголовка + система наведения) ────────────────────────────────
@@ -1609,6 +1635,13 @@ export class WarhammerItemSheet
       if (fx) await fx.update({ disabled: !ev.currentTarget.checked });
     });
 
+    // ── Сус-ан Мембрана: активное исцеление Призраков Смерти раз в сутки ────────
+    on(".sus-an-heal-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useSusAnHeal(actor, this.item);
+    });
+
     // ── МЕХАНИКА (единый Конструктор: Характеристика/Черта/Талант/Навык/Код,
     // группы И/ИЛИ) — общая вкладка для всех типов. Кнопки групп и записей —
     // действия [data-action] выше; здесь остались поля записи.
@@ -1622,8 +1655,10 @@ export class WarhammerItemSheet
       // blankMechEntry(kind) — а не blankMechEntry() — иначе смена вида на
       // "group" оставила бы entry.group=null (kind сам по себе выставился бы
       // верно 3-м аргументом Object.assign, но вложенная подгруппа — нет).
+      // when сохраняется явно: условие «Когда» — про то, КОМУ достаётся
+      // запись, а не про то, ЧТО она даёт, смена вида его не касается.
       const kind = ev.currentTarget.value;
-      Object.assign(e, blankMechEntry(kind), { id: e.id, kind });
+      Object.assign(e, blankMechEntry(kind), { id: e.id, kind, when: e.when });
       saveMech(arr);
     });
     // Порча (kind:"corruption")
@@ -1899,6 +1934,50 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.code = ev.currentTarget.value; saveMech(arr); }
+    });
+    // ── «Когда» (entry.when) — гейт по Геносемени, общий для ЛЮБОГО kind ────
+    // (см. entryWhenOk в mechanics.mjs). conditions — список вариантов (ИЛИ),
+    // data-when-idx метит, какой именно правим. Смена легиона в варианте
+    // сбрасывает его орден: набор орденов зависит от легиона, старый выбор из
+    // другого дерева не годится.
+    const whenCondition = (e, idx) => {
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.conditions[idx] = e.when.conditions[idx] || { legion: "", chapter: "" };
+      return e.when.conditions[idx];
+    };
+    on(".grant-when-legion", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      const c = whenCondition(e, parseInt(ev.currentTarget.dataset.whenIdx) || 0);
+      c.legion = ev.currentTarget.value;
+      c.chapter = "";
+      saveMech(arr);
+    });
+    on(".grant-when-chapter", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      const c = whenCondition(e, parseInt(ev.currentTarget.dataset.whenIdx) || 0);
+      c.chapter = ev.currentTarget.value;
+      saveMech(arr);
+    });
+    on(".grant-when-age", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      const c = whenCondition(e, parseInt(ev.currentTarget.dataset.whenIdx) || 0);
+      const v = ev.currentTarget.value;
+      c.ageAtLeast = v === "" ? "" : Math.max(0, parseInt(v) || 0);
+      saveMech(arr);
+    });
+    on(".grant-when-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negate = !!ev.currentTarget.checked;
+      saveMech(arr);
     });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
     // Кнопки групп и условий — действия [data-action] выше; здесь поля записи.

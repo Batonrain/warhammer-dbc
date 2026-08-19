@@ -210,6 +210,8 @@ import { ELITE_ARCHETYPES }                   from "../constants/elite-archetype
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
+import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
+import { entryWhenOk, whenConditions } from "../rules/mech-when.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -502,7 +504,14 @@ export function blankMechEntry(kind = "characteristic") {
     weaponPropNewKey: "", weaponPropNewLabel: "", weaponPropNewHasRating: false, weaponPropNewHasRating2: false,
     weaponPropNewValue: "1", weaponPropNewValue2: "0",
     // script / rollmod (label) / poolMax (value, shared with characteristic)
-    label: "", code: ""
+    label: "", code: "",
+    // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
+    // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
+    // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
+    // stardragons, ИЛИ legion XIX» — так у Железы Бетчера сразу три линии, где
+    // она не работает, одной записью, а не тремя её копиями). negate
+    // переворачивает смысл целиком: «выдать этим» ⇄ «выдать всем, КРОМЕ этих».
+    when: { negate: false, conditions: [] }
   };
 }
 
@@ -746,6 +755,19 @@ function isEntryComplete(e) {
   }
 }
 
+/** Человекочитаемое описание entry.when — суффикс к превью записи (пусто, если условий нет). */
+function describeMechWhen(when) {
+  const conditions = whenConditions(when);
+  if (!conditions.length) return "";
+  const names = conditions.map(c => {
+    const lg = getLegion(c.legion);
+    const ch = c.chapter ? getChapter(c.legion, c.chapter) : null;
+    const base = ch ? `${lg?.num ?? c.legion} ${ch.name}` : `${lg?.num ?? c.legion} ${lg?.name ?? c.legion}`;
+    return c.ageAtLeast ? `${base}, Возраст ≥ ${c.ageAtLeast}` : base;
+  });
+  return ` · Когда: Геносемя ${when.negate ? "≠" : "="} ${names.join(" или ")}`;
+}
+
 /**
  * Находит исходный документ Черты/Таланта по сохранённому UUID; если он
  * недоступен (напр. UUID указывал на embedded-предмет конкретного актора,
@@ -966,6 +988,12 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     await applyGroupEntries(actor, entry.group, sourceItem, applied);
     return;
   }
+
+  // Условие «Когда» не пройдено — запись пропускается БЕЗ отметки applied,
+  // чтобы она осталась кандидатом на будущее: сменит актор Геносемя позже
+  // (Мастер поправит легион/орден на листе) — следующий прогон Механики её
+  // подхватит, а не будет молча считать «уже разобрана и мимо».
+  if (!entryWhenOk(actor, entry)) return;
 
   // Каждая запись отыгрывается по одному разу — Порча не бросается дважды,
   // выданная Черта не приезжает второй копией. Долговечные записи при этом
@@ -1402,7 +1430,7 @@ async function buildIntegralAttackData(entry, sourceItem) {
 // ИЛИ-ветки сознательно пропускаются — там выбор делается ОДИН РАЗ диалогом
 // в момент выдачи (showMechChoiceDialog/applyMechEntry), переигрывать его
 // при каждой пересинхронизации активности источника не нужно и не должно.
-function collectDirectEquipmentEntries(groups) {
+function collectDirectEquipmentEntries(groups, actor = null) {
   const out = [];
   const walk = (entries, operator) => {
     if (operator === "OR") return;
@@ -1413,7 +1441,7 @@ function collectDirectEquipmentEntries(groups) {
     }
   };
   for (const g of groups) walk(g.entries || [], g.operator);
-  return out;
+  return out.filter(e => entryWhenOk(actor, e));
 }
 
 /**
@@ -1434,7 +1462,7 @@ function collectDirectEquipmentEntries(groups) {
 export async function syncGrantedEquipment(sourceItem) {
   const actor = sourceItem.parent;
   if (!(actor instanceof Actor)) return;
-  const entries = collectDirectEquipmentEntries(getItemMechanics(sourceItem));
+  const entries = collectDirectEquipmentEntries(getItemMechanics(sourceItem), actor);
   if (!entries.length) return;
 
   const grantedNow = actor.items.filter(i =>
@@ -1471,7 +1499,7 @@ export async function syncGrantedEquipment(sourceItem) {
 // Записи, выдающие Черту или Талант, из тех же АНД-цепочек. ИЛИ-ветки
 // пропускаются по той же причине, что и у снаряжения: выбор там сделан один
 // раз диалогом, переигрывать его на каждом включении нельзя.
-function collectDirectAbilityEntries(groups) {
+function collectDirectAbilityEntries(groups, actor = null) {
   const out = [];
   const walk = (entries, operator) => {
     if (operator === "OR") return;
@@ -1481,7 +1509,7 @@ function collectDirectAbilityEntries(groups) {
     }
   };
   for (const g of groups) walk(g.entries || [], g.operator);
-  return out;
+  return out.filter(e => entryWhenOk(actor, e));
 }
 
 /**
@@ -1502,7 +1530,7 @@ function collectDirectAbilityEntries(groups) {
 export async function syncGrantedAbilities(sourceItem) {
   const actor = sourceItem.parent;
   if (!(actor instanceof Actor)) return;
-  const entries = collectDirectAbilityEntries(getItemMechanics(sourceItem));
+  const entries = collectDirectAbilityEntries(getItemMechanics(sourceItem), actor);
   if (!entries.length) return;
 
   const grantedNow = actor.items.filter(i =>
@@ -1616,8 +1644,13 @@ function collectMechEntries(groups) {
  * эффект ГМа и след миграции остаются на месте.
  */
 export async function syncMechanicsEffects(item) {
+  const actor = item.parent instanceof Actor ? item.parent : null;
   const { durable, allIds } = collectMechEntries(getItemMechanics(item));
-  const wanted = new Map(durable.map(e => [e.id, mechEffectData(e, item)]));
+  // durableIds — ВСЕ И-ветвенные долговечные записи, даже те, чьё «Когда»
+  // сейчас не выполнено: их эффект должен ИСЧЕЗНУТЬ (не просто не появиться),
+  // а не остаться от прошлого раза, когда условие ещё выполнялось.
+  const durableIds = new Set(durable.map(e => e.id));
+  const wanted = new Map(durable.filter(e => entryWhenOk(actor, e)).map(e => [e.id, mechEffectData(e, item)]));
 
   const toDelete = [], toCreate = [];
   const seen = new Set();
@@ -1627,7 +1660,12 @@ export async function syncMechanicsEffects(item) {
     // Запись убрали с листа — уносим и её эффект.
     if (!allIds.has(entryId)) { toDelete.push(fx.id); continue; }
     const want = wanted.get(entryId);
-    if (!want) continue;                       // ИЛИ-ветка либо разовая запись
+    if (!want) {
+      // И-ветвенная запись, чьё «Когда» сейчас не выполнено, — эффект следом
+      // за ней. ИЛИ-ветку/разовую запись (durableIds её не содержит) не трогаем.
+      if (durableIds.has(entryId)) toDelete.push(fx.id);
+      continue;
+    }
     seen.add(entryId);
     const same = fx.name === want.name
       && JSON.stringify(fx.system?.changes ?? []) === JSON.stringify(want.system.changes);
@@ -1654,8 +1692,39 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
     const chosen = await showMechChoiceDialog(sourceItem, entries);
     if (chosen) await applyMechEntry(actor, chosen, sourceItem, true, applied);
   } else {
-    for (const e of entries) await applyMechEntry(actor, e, sourceItem, false, applied);
+    // Опрос вложенных ИЛИ-подгрупп (showMechChoiceDialog) сам по себе ничего
+    // не пишет в актора — запись происходит только внутри applyMechEntry,
+    // ПОСЛЕ ответа. Поэтому вопросы для соседних вложенных ИЛИ-подгрупп этой
+    // И-группы можно задать ОДНОВРЕМЕННО (в Мастере создания коллектор
+    // получает все строки выбора сразу, а не одну за другой) — а сама
+    // ЗАПИСЬ в актора всё равно идёт строго по одной, в неизменном исходном
+    // порядке ниже. Порядок применения (и то, от чего зависят «Когда» и
+    // общие поля вроде Порчи/Ран) не меняется — меняется только момент, в
+    // который задаётся вопрос, а не момент записи.
+    const picks = await Promise.all(entries.map(e => resolveDirectOrGroup(e, applied, sourceItem)));
+    for (let i = 0; i < entries.length; i++) {
+      const pick = picks[i];
+      if (pick) { if (pick.chosen) await applyMechEntry(actor, pick.chosen, sourceItem, true, applied); }
+      else await applyMechEntry(actor, entries[i], sourceItem, false, applied);
+    }
   }
+}
+
+/**
+ * Если запись — прямая вложенная ИЛИ-подгруппа (>1 незавершённой альтернативы,
+ * ещё не отвеченная), заранее спрашивает выбор БЕЗ применения — вызывается
+ * для всех соседей одной И-группы одновременно (Promise.all в
+ * applyGroupEntries), чтобы все их вопросы дошли до коллектора Мастера
+ * разом, а не по очереди. Для любой другой записи (включая уже отвеченную
+ * ИЛИ-подгруппу или не-ИЛИ-подгруппу) возвращает undefined — применяющий
+ * цикл в applyGroupEntries обрабатывает её как раньше, через applyMechEntry.
+ */
+async function resolveDirectOrGroup(entry, applied, sourceItem) {
+  if (entry.kind !== "group") return undefined;
+  const subEntries = (entry.group?.entries || []).filter(isEntryComplete);
+  if (entry.group?.operator !== "OR" || subEntries.length <= 1) return undefined;
+  if (subEntries.some(e => applied.has(e.id))) return undefined;
+  return { chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };
 }
 
 /**
@@ -1729,7 +1798,16 @@ async function _applyItemMechanics(item) {
 
   const applied = appliedEntryIds(item);
   const before  = applied.size;
-  for (const group of getItemMechanics(item)) await applyGroupEntries(actor, group, item, applied);
+  // Верхнеуровневые группы Механики предмета независимы друг от друга — то
+  // же самое «И» между соседями, что и entries ВНУТРИ одной группы. Заворачиваем
+  // их в синтетическую И-группу kind:"group", чтобы пройти через ОБЩИЙ путь
+  // applyGroupEntries — тогда их прямые ИЛИ-подгруппы (напр. независимые
+  // ИЛИ-выборы Навыка у одного архетипа) опрашиваются одновременно, а не по
+  // очереди, той же гарантированно безопасной веткой (см. комментарий там).
+  await applyGroupEntries(actor, {
+    operator: "AND",
+    entries: getItemMechanics(item).map(g => ({ kind: "group", group: g, id: g.id }))
+  }, item, applied);
   await syncMechanicsEffects(item);
   await syncWeaponPropItemEffects(item);
   // Источник мог родиться неактивным (напр. Имплант создан ещё не
@@ -2141,6 +2219,40 @@ function buildSkillSelectorHtml(groupId, ent, dis) {
  * после ручной правки JSON) — иначе выбор в <select> не совпал бы ни с
  * одним <option> и вид записи visually «съехал» бы на другой.
  */
+/**
+ * Условие «Когда» — общая строка под записью, для ЛЮБОГО вида (kind), не
+ * только Импланта: гейт по Геносемени актора (см. entryWhenOk). Ни одного
+ * варианта не заполнено — условия нет, запись работает как раньше, всем.
+ * Орден не выбран в варианте (значение «весь легион / своя банда») — этот
+ * вариант держит только легион, подходит и наследникам без своей более узкой
+ * записи. Несколько вариантов — ИЛИ, с общим переключателем «не» на всех разом
+ * (Железа Бетчера не работает СРАЗУ у трёх линий — три варианта одной записи).
+ */
+function buildEntryWhenHtml(groupId, ent, canEdit) {
+  const dis = canEdit ? "" : "disabled";
+  const w = ent.when || {};
+  const conditions = (w.conditions || []).length ? w.conditions : [{ legion: "", chapter: "" }];
+  const d = `data-group-id="${groupId}" data-entry-id="${ent.id}"`;
+  const rows = conditions.map((c, i) => `<div class="grant-when-row">
+    <select class="grant-when-legion" ${d} data-when-idx="${i}" ${dis}>${buildLegionOptions(c.legion || "")}</select>
+    <select class="grant-when-chapter" ${d} data-when-idx="${i}" ${dis}>${buildChapterOptions(c.legion || "", c.chapter || "")}</select>
+    <label class="grant-when-age-label" title="Дополнительно — не меньше этого Возраста (вкладка Записи)">
+      Возраст ≥ <input type="number" class="grant-when-age" ${d} data-when-idx="${i}" min="0"
+                        value="${c.ageAtLeast ?? ""}" placeholder="—" ${dis}/>
+    </label>
+    ${canEdit && conditions.length > 1 ? `<button type="button" class="grant-when-row-remove" data-action="grantWhenRemove" ${d} data-when-idx="${i}" title="Убрать вариант">✕</button>` : ""}
+  </div>`).join("");
+  return `<div class="grant-entry-when">
+    <span class="grant-when-label">Когда Геносемя</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-negate" ${d} ${w.negate ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <div class="grant-when-rows">${rows}</div>
+    ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
+  </div>`;
+}
+
 function buildEntryHtml(groupId, ent, canEdit, depth = 1) {
   const kindEntries = Object.entries(KIND_LABELS)
     .filter(([k]) => k !== "group" || ent.kind === "group" || depth < MAX_GROUP_DEPTH);
@@ -2153,7 +2265,8 @@ function buildEntryHtml(groupId, ent, canEdit, depth = 1) {
       ${buildEntryFieldsHtml(groupId, ent, canEdit)}
       ${canEdit ? `<button type="button" class="grant-entry-remove" data-action="grantEntryRemove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
     </div>
-    <div class="grant-entry-preview">${esc(describeMechEntry(ent))}</div>
+    ${buildEntryWhenHtml(groupId, ent, canEdit)}
+    <div class="grant-entry-preview">${esc(describeMechEntry(ent) + describeMechWhen(ent.when))}</div>
     ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), canEdit, depth + 1, true) : ""}
   </div>`;
 }

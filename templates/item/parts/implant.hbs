@@ -39,6 +39,12 @@
   <textarea name="system.effect" class="item-textarea" placeholder="Что даёт имплант...">{{system.effect}}</textarea>
 </div>
 
+{{#if susAnHealHtml}}
+<div class="item-section">
+  {{{susAnHealHtml}}}
+</div>
+{{/if}}
+
 {{#if implantMech.any}}
 <div class="item-section implant-mech">
   <div class="item-section-title">МЕХАНИКА <span class="implant-mech-tag">роспись</span></div>

@@ -1314,6 +1314,44 @@
 .warhammer-dbc .grant-drop-clear, .warhammer-dbc .wprop-drop-clear, .warhammer-dbc .req-drop-clear {
   width: auto; flex: 0 0 auto; padding: 0 5px; font-size: .8em; background: none; border: none; color: #ffb0b0;
 }
+/* Условие «Когда» (гейт по Геносемени, entry.when) — под основной строкой
+   записи, тем же приглушённым видом, что у превью, но со своими полями. */
+.warhammer-dbc .grant-entry-when {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(77,255,166,.15);
+}
+.warhammer-dbc .grant-when-label { font-size: .78em; opacity: .75; }
+.warhammer-dbc .grant-when-negate-label { display: flex; align-items: center; gap: 3px; font-size: .78em; opacity: .85; }
+.warhammer-dbc .grant-when-rows { display: flex; flex-direction: column; gap: 3px; flex: 1 1 260px; }
+.warhammer-dbc .grant-when-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.warhammer-dbc .grant-when-legion, .warhammer-dbc .grant-when-chapter {
+  width: auto; flex: 1 1 130px; font-size: .8em;
+}
+.warhammer-dbc .grant-when-age-label { display: flex; align-items: center; gap: 3px; font-size: .78em; opacity: .85; white-space: nowrap; }
+.warhammer-dbc .grant-when-age { width: 52px; flex: 0 0 auto; font-size: .8em; }
+.warhammer-dbc .grant-when-row-remove {
+  width: auto; flex: 0 0 auto; padding: 0 5px; font-size: .8em; background: none; border: none; color: #ffb0b0;
+}
+.warhammer-dbc .grant-when-row-add {
+  width: auto; flex: 0 0 auto; padding: 0 6px; font-size: .8em;
+  border: 1px solid #2f9e6a; background: rgba(77,255,166,.1); color: #d6ffe9;
+}
+.warhammer-dbc .grant-when-row-add:hover { background: #4dffa6; color: #04120b; }
+
+/* Сус-ан Мембрана: активное исцеление Призраков Смерти раз в сутки (module/apps/sus-an-heal.mjs) */
+.warhammer-dbc .sus-an-heal {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 6px 8px; border: 1px solid rgba(77,255,166,.25); border-radius: 4px; background: rgba(77,255,166,.05);
+}
+.warhammer-dbc .sus-an-heal-title { flex: 1 1 100%; font-size: .85em; font-weight: 700; opacity: .85; }
+.warhammer-dbc .sus-an-heal-btn {
+  width: auto; padding: 3px 10px; font-size: .85em;
+  border: 1px solid #2f9e6a; background: rgba(77,255,166,.12); color: #d6ffe9;
+}
+.warhammer-dbc .sus-an-heal-btn:hover:not(:disabled) { background: #4dffa6; color: #04120b; }
+.warhammer-dbc .sus-an-heal-btn:disabled { opacity: .5; cursor: not-allowed; }
+.warhammer-dbc .sus-an-heal-status { font-size: .8em; opacity: .8; }
+.warhammer-dbc .sus-an-heal-status.sus-an-heal-ready { color: #4dffa6; opacity: 1; }
 .warhammer-dbc .grant-entry-preview { margin-top: 3px; font-size: .78em; color: #7fffba; opacity: .85; }
 .warhammer-dbc .grant-empty-hint { font-size: .82em; opacity: .7; padding: 2px 0; }
 .warhammer-dbc .grant-entry-add, .warhammer-dbc .req-entry-add {

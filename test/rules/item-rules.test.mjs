@@ -93,3 +93,38 @@ describe("rulesFromItemMechanics: вложенные подгруппы", () => 
     expect(rulesFromItemMechanics([nested])).toHaveLength(1);
   });
 });
+
+// entry.when — тот же гейт по Геносемени, что у разовой выдачи/долговечных
+// записей (module/apps/mechanics.mjs), но здесь он должен закрывать и «живой
+// запрос» — Оолитическая Почка на XIV легион даёт testMod «против болезней»,
+// и без этой проверки его получил бы любой Астартес, не только Гвардия Смерти.
+describe("rulesFromItemMechanics: гейт по Геносемени (entry.when)", () => {
+  const gated = (w) => reroll({ when: w });
+
+  it("без актора — правило как раньше, всем", () => {
+    const rules = rulesFromItemMechanics([item("И", [gated({ negate: false, conditions: [{ legion: "XIV" }] })])]);
+    expect(rules).toHaveLength(1);
+  });
+
+  it("легион совпал — правило есть", () => {
+    const actor = { system: { geneSeed: { legion: "XIV", chapter: "" } } };
+    const rules = rulesFromItemMechanics(
+      [item("И", [gated({ negate: false, conditions: [{ legion: "XIV" }] })])], () => true, actor);
+    expect(rules).toHaveLength(1);
+  });
+
+  it("легион не совпал — правила нет", () => {
+    const actor = { system: { geneSeed: { legion: "VI", chapter: "" } } };
+    const rules = rulesFromItemMechanics(
+      [item("И", [gated({ negate: false, conditions: [{ legion: "XIV" }] })])], () => true, actor);
+    expect(rules).toEqual([]);
+  });
+
+  it("negate — правило у всех, кроме перечисленных", () => {
+    const stardragon = { system: { geneSeed: { legion: "X", chapter: "stardragons" } } };
+    const ironlord   = { system: { geneSeed: { legion: "X", chapter: "ironlords" } } };
+    const w = { negate: true, conditions: [{ legion: "VII" }, { legion: "X", chapter: "stardragons" }, { legion: "XIX" }] };
+    expect(rulesFromItemMechanics([item("И", [gated(w)])], () => true, stardragon)).toEqual([]);
+    expect(rulesFromItemMechanics([item("И", [gated(w)])], () => true, ironlord)).toHaveLength(1);
+  });
+});

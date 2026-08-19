@@ -37,6 +37,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { isKnownCapability } from "../constants/capabilities.mjs";
+import { entryWhenOk } from "./mech-when.mjs";
 
 const SYSTEM = "warhammer-dbc";
 
@@ -131,8 +132,13 @@ function ruleFromEntry(item, entry) {
  *
  * @param {Iterable} items    предметы актора
  * @param {Function} isActive (item) => boolean, по умолчанию «все активны»
+ * @param {object}   [actor]  владелец items — для гейта по Геносемени
+ *   (entry.when, mech-when.mjs). Без него гейт считается пройденным (см.
+ *   entryWhenOk): здесь это не должно случаться при обычном вызове из
+ *   sources.mjs, где актор всегда есть, но функция вызывается и с сырыми
+ *   данными теста без владельца — тогда веди себя как раньше, без фильтра.
  */
-export function rulesFromItemMechanics(items, isActive = () => true) {
+export function rulesFromItemMechanics(items, isActive = () => true, actor = null) {
   const out = [];
   const walk = (item, entries, operator) => {
     if (operator === "OR") return;
@@ -141,6 +147,7 @@ export function rulesFromItemMechanics(items, isActive = () => true) {
         walk(item, entry.group.entries, entry.group.operator);
         continue;
       }
+      if (!entryWhenOk(actor, entry)) continue;
       const rule = ruleFromEntry(item, entry);
       if (rule) out.push(rule);
     }

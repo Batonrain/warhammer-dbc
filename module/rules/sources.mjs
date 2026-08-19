@@ -59,7 +59,7 @@ registerRuleSource("homeworld", a =>
 // источника спрашивается у общего рубильника isItemActive: выключенный Локус,
 // снятое оружие и вынутый имплант правил не дают — ровно так же, как не дают
 // эффектов. См. module/rules/item-rules.mjs.
-registerRuleSource("items", a => rulesFromItemMechanics(a?.items ?? [], isItemActive));
+registerRuleSource("items", a => rulesFromItemMechanics(a?.items ?? [], isItemActive, a));
 
 // Пилот Дредноута (Книга Машин, стр. 57-58). Связь хранит сам Дредноут — место
 // экипажа с ролью `pilot` и uuid актора, — поэтому спрашивать приходится не

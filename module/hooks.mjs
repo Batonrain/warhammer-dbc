@@ -13,6 +13,7 @@ import { CONDITION_LEVEL_FIELD }         from "./combat/weapon-properties.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
+import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 
 export function registerHooks() {
 
@@ -811,6 +812,14 @@ function _attachFateContextMenu(message, html) {
       if (actor.getFlag("warhammer-dbc", ROUND_DAMAGE_FLAG))
         await actor.unsetFlag("warhammer-dbc", ROUND_DAMAGE_FLAG);
     }
+    await resolvePendingSusAnHeals(combat);
+  });
+
+  // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
+  // доносим исцеление немедленно, а не теряем его молча (module/apps/sus-an-heal.mjs).
+  Hooks.on("deleteCombat", async combat => {
+    if (!game.user.isGM) return;
+    await resolvePendingSusAnHeals(combat, { force: true });
   });
 }
 

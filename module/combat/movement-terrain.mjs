@@ -12,6 +12,7 @@ import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { getTerrainInfoForToken } from "../regions/difficult-terrain.mjs";
 import { getItemMechanics } from "../apps/mechanics.mjs";
+import { entryWhenOk } from "../rules/mech-when.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -25,6 +26,7 @@ function ignoredTerrainKeysForActor(actor) {
     for (const group of getItemMechanics(item)) {
       for (const entry of group.entries || []) {
         if (entry.kind !== "terrainIgnore") continue;
+        if (!entryWhenOk(actor, entry)) continue;
         for (const k of entry.ignoreTerrainProps || []) keys.add(k);
       }
     }
