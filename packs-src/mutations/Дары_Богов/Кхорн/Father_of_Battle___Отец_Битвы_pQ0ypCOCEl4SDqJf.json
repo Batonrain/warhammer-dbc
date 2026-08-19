@@ -1,0 +1,50 @@
+{
+  "name": "Father of Battle / Отец Битвы",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Бог Крови дарует своему чемпиону видения, ведущие его к славным битвам. За полудействие персонаж может закрыть глаза и произнести молитву своему Богу, запросив наставления в достижении своей цели. Взамен он получает видение, указывающее ему следующее действие, которое он должен провести, чтобы исполнить задуманное. Путь, начертанный божественными видениями, не самый короткий или лёгкий и зачастую втягивает персонажа в дополнительные битвы, но никогда не в битвы, которые он не мог бы выиграть, выложившись на полную. Если персонаж выполняет миссию, полностью следуя пути видений, он получает дополнительно 1 Бесчестия, если эта миссия давала ему Бесчестие.",
+    "source": "Дары Кхорн, d100 6…8",
+    "roll": "6…8",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "pQ0ypCOCEl4SDqJf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021720,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pQ0ypCOCEl4SDqJf"
+}

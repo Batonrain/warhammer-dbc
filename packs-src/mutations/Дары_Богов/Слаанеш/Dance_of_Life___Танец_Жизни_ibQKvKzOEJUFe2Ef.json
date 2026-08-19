@@ -1,0 +1,50 @@
+{
+  "name": "Dance of Life / Танец Жизни",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Слаанеш одаривает своего чемпиона грацией одной из своих танцовщиц, позволяя ему уклоняться от множественных атак нечеловечески плавными и изящными движениями. Персонаж тратит только 1 Успех вместо 2 на Уклонение от последующих атак. Он сохраняет не растраченные Успехи на Уклонение до начала своего следующего Хода и может тратить их на Уклонение от попаданий других персонажей, тратя по 2 Успеха от каждого.",
+    "source": "Дары Слаанеш, d100 9…12",
+    "roll": "9…12",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "ibQKvKzOEJUFe2Ef",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021310,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ibQKvKzOEJUFe2Ef"
+}

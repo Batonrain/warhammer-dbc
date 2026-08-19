@@ -1,0 +1,50 @@
+{
+  "name": "Flame of Souls / Пламя Душ",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Архитектор Судеб позволяет своему чемпиону поглощать частицы душ своих жертв, используя их как источник силы. Раз в Раунд, когда чемпион или его Миньон или подчинённый убивают другого персонажа, чемпион получает одно Очко Бесчестия, которое пропадёт в конце его следующего Хода, если он его не потратит. Цель, убитая атакой персонажа, которого она не видела, даёт 3 Очка Бесчестия вместо 1. Чемпион может тратить эти дополнительные Очки Бесчестия, чтобы увеличить урон одного своего попадания (после Избегания, но до Щитов) на 1d10.",
+    "source": "Дары Тзинч, d100 30…33",
+    "roll": "30…33",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "7zXiJnjBINAGFHxb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122018789,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7zXiJnjBINAGFHxb"
+}

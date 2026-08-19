@@ -1,0 +1,50 @@
+{
+  "name": "Narcissus / Нарцисс",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Слаанеш одаривает своего чемпиона безмерной гордостью своей внешностью, не важно, заслуженной или нет. В первый раз за Ход, когда он видит своё отражение в любой зеркальной поверхности, он должен пройти тест на W+30. В случае Успеха он получает одно Очко Бесчестия, которое пропадает в начале его следующего Хода, если он его не потратит. В случае Провала он входит в Ступор на 1 Раунд, поражённый собственной красотой или грацией, поглощённый наблюдением за собой. Персонаж может за полудействие пытаться рассмотреть себя в бликах на блестящих поверхностях, вроде прицелов или линз шлемов, пройдя тест на Awareness+10 (зрение).",
+    "source": "Дары Слаанеш, d100 41…43",
+    "roll": "41…43",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "8qxZRIA1IT3N7h2k",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122018831,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!8qxZRIA1IT3N7h2k"
+}

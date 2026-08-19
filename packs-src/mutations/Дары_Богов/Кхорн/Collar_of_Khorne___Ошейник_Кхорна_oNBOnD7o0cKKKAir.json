@@ -1,0 +1,50 @@
+{
+  "name": "Collar of Khorne / Ошейник Кхорна",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Кхорн награждает своего верного чемпиона бронзовым ошейником, ограждающим его от колдовства. Персонаж получает Ошейник Кхорна и Талант Shield of Contempt. Если он являлся псайкером, ошейник лишает его Трейта Psyker и особого эффекта на псайкеров. Использование Щита Презрения не тратит Очков Бесчестия и персонаж автоматически проходит тесты W для этого Таланта, пока он носит ошейник.",
+    "source": "Дары Кхорн, d100 22…25",
+    "roll": "22…25",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "oNBOnD7o0cKKKAir",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021656,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!oNBOnD7o0cKKKAir"
+}

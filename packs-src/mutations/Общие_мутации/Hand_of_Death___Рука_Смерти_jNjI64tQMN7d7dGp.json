@@ -1,0 +1,50 @@
+{
+  "name": "Hand of Death / Рука Смерти",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Одна из рук персонажа сливается с оружием, создавая причудливую комбинацию плоти и технологии. Он выбирает одно из оружий, что он носит, и руку, что поглощает его, после чего оружие замещает предплечье и кисть руки, или только кисть, если это нож или пистолет. Это оружие может использоваться одной рукой, даже если оно ранее требовало две, и всегда считается Закреплённым. Будучи частью тела персонажа, оружие получает +10 на тесты WS и BS и увеличивает свой Баланс до 0, если он был ниже. Оружие генерирует стандартные боеприпасы из метаболизма персонажа, но может быть заряжено нестандартными, хотя его Rld удваивается. В рукопашной оно может использовать только Стандартный Хват. Укреплённое струящейся сквозь него Порчей, оружие получает свойство Reinforced, а мутировавшая рука с ним — +10 AP.",
+    "source": "Общие мутации, d100 77…78",
+    "roll": "77…78",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "jNjI64tQMN7d7dGp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122021328,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!jNjI64tQMN7d7dGp"
+}

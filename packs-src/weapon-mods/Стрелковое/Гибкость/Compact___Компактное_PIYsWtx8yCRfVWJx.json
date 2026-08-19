@@ -1,0 +1,58 @@
+{
+  "name": "Compact / Компактное",
+  "type": "weaponMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/weaponmod.svg",
+  "folder": "Z1EphNue3m2ra8os",
+  "system": {
+    "description": "Rng и Clip −50%, Dmg −1, меньше на 1 клетку разгрузки, легче спрятать.",
+    "notes": "",
+    "category": "ranged",
+    "modGroup": "flexibility",
+    "requirement": "Пистолет/винтовка, не экзотическое, без Ammo Selector/Combi. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": -1,
+    "quality": "common",
+    "effects": {
+      "attackMod": 0,
+      "damageMod": -1,
+      "penMod": 0,
+      "rangeMod": 0,
+      "rangeMult": 0.5,
+      "clipMod": 0,
+      "clipMult": 0.5,
+      "rofSemiMod": 0,
+      "rofFullMod": 0,
+      "reliabilityMod": 0,
+      "balanceMod": 0,
+      "weightPct": -50,
+      "addProps": [],
+      "removeProps": []
+    },
+    "drukhari": false
+  },
+  "_id": "PIYsWtx8yCRfVWJx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157452555,
+    "modifiedTime": 1786122046795,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!PIYsWtx8yCRfVWJx"
+}

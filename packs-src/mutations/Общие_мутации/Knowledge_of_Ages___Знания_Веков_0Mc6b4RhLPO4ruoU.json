@@ -1,0 +1,51 @@
+{
+  "name": "Knowledge of Ages / Знания Веков",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "На долю мгновения безграничный кладезь знаний и навыков, накопленных другими чемпионами Хаоса, павшими по пути к величию, открывается разуму еретика; но видение исчезает столь же быстро, как появляется, позволяя зачерпнуть лишь крупицу жизненного опыта, поглощённого Варпом. Персонаж без траты опыта изучает любой Навык по своему выбору до +10 и получает Талант Mastery для этого Навыка.\n\nКогда персонаж использует способности Бесчестия «Усиление», «Успех» или «Переброс» для этого Навыка, он может перебросить 1d10 — на 9-10 он не тратит Очко Бесчестия, но на 1 он входит в Ступор на 1 Раунд, поглощённый видениями из жизней других чемпионов.",
+    "source": "Общие мутации, d100 −3…0",
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)",
+    "roll": "−3…0",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "0Mc6b4RhLPO4ruoU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": []
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786281817555,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0Mc6b4RhLPO4ruoU"
+}
