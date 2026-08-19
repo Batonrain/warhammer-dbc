@@ -868,8 +868,32 @@ export async function reconcileCohesionForActor(actor) {
   }
 }
 
+// ── Коллектор простых ИЛИ/спец-выборов ───────────────────────────────────
+// По умолчанию showMechChoiceDialog/showSpecChoiceDialog сами открывают
+// Dialog. Вызывающий, который хочет собрать эти выборы в СВОЙ UI (Мастер
+// создания персонажа — Этап 3), оборачивает свой вызов в withMechCollector:
+// пока коллектор активен, оба диалога отдают выбор ЕМУ вместо Dialog, а он
+// сам решает, как и когда его получить (напр. отрисовать строку в форме
+// шага и ждать клика). Бюджетные покупки (kind:"equipment" →
+// openCompendiumBrowser) коллектор НЕ перехватывает — им нужен полноценный
+// экран (дерево компендиума, поиск), в маленькую форму шага не влезают,
+// остаются отдельным окном независимо от коллектора.
+let _activeMechCollector = null;
+
+/**
+ * @param {{choose:(item,entries)=>Promise, chooseSpec:(label,choices,need)=>Promise}} collector
+ * @param {() => Promise<any>} fn
+ */
+export function withMechCollector(collector, fn) {
+  const prev = _activeMechCollector;
+  _activeMechCollector = collector;
+  const restore = () => { _activeMechCollector = prev; };
+  return Promise.resolve().then(fn).then(r => { restore(); return r; }, e => { restore(); throw e; });
+}
+
 /** Диалог выбора ОДНОЙ специализации из нескольких кандидатов («по выбору»). */
 function showSpecChoiceDialog(skillLabel, choices, need = 1) {
+  if (_activeMechCollector) return _activeMechCollector.chooseSpec(skillLabel, choices, need);
   return new Promise(resolve => {
     let resolved = false;
     // Одну выбирают радиокнопками, несколько — галочками: у рас сплошь
@@ -1282,6 +1306,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
 
 /** Диалог выбора одной записи из ИЛИ-группы при получении предмета. */
 function showMechChoiceDialog(item, entries) {
+  if (_activeMechCollector) return _activeMechCollector.choose(item, entries);
   return new Promise(resolve => {
     let resolved = false;
     const rows = entries.map((e, i) => `<label class="grant-choice-row">

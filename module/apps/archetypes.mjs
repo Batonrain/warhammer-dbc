@@ -15,6 +15,8 @@
 import { ARCHETYPES } from "../constants/archetypes.mjs";
 import { isAeldariRace } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
+import { SKIP_MECHANICS_HOOK } from "./races.mjs";
+import { applyItemMechanics } from "./mechanics.mjs";
 
 const PACK = "warhammer-dbc.archetypes";
 const FLAG = "warhammer-dbc";
@@ -109,9 +111,16 @@ export async function clearArchetype(actor) {
 }
 
 /**
- * Выбор архетипа: снимает прежний, кладёт embedded-копию выбранного (запускает
- * штатный createItem → applyItemMechanics), обновляет system.archetype (селектор
- * в шапке читает именно его, см. archetypeSheetContext).
+ * Выбор архетипа: снимает прежний, кладёт embedded-копию выбранного,
+ * обновляет system.archetype (селектор в шапке читает именно его, см.
+ * archetypeSheetContext).
+ *
+ * Механику носителя применяем СИНХРОННО (SKIP_MECHANICS_HOOK + прямой вызов
+ * applyItemMechanics), а не ждём асинхронный хук createItem — тот же приём,
+ * что у applyRace (module/apps/races.mjs). Без этого вызывающий код (в т.ч.
+ * Мастер создания) не может дождаться результата: диалоги ИЛИ-выбора и
+ * бюджетный Обозреватель компендиумов (kind:"equipment") всплывали бы уже
+ * ПОСЛЕ того, как applyArchetype «завершился».
  * @param {Actor} actor
  * @param {string} key   ключ/uuid-хвост записи компендиума (см. docToDef) или ""
  */
@@ -128,6 +137,7 @@ export async function applyArchetype(actor, key) {
   const data = src.toObject();
   delete data._id;
   data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: TAG } };
-  await actor.createEmbeddedDocuments("Item", [data]);
+  const [created] = await actor.createEmbeddedDocuments("Item", [data], { [SKIP_MECHANICS_HOOK]: true });
+  if (created) await applyItemMechanics(created);
   await actor.update({ "system.archetype": key });
 }

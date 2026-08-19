@@ -1,0 +1,40 @@
+/* Единый Мастер создания персонажа (module/apps/character-wizard.mjs).
+   Формы полей переиспользуют .wh-wizard-form/.atk-dlg-row/.wiz-* из
+   ui/dialogs.css — здесь только шаги-чипсы и футер с навигацией. */
+
+.wh-char-wizard .wiz-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--wh-border, #7a5c2e);
+  margin-bottom: 8px;
+}
+
+.wh-char-wizard .wiz-step-chip {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--wh-text-dim, #a8926a);
+  border: 1px solid transparent;
+}
+
+.wh-char-wizard .wiz-step-chip.active {
+  color: var(--wh-text-light, #e8d5a3);
+  border-color: var(--wh-border, #7a5c2e);
+  background: var(--wh-panel-dark, #2a1c10);
+}
+
+.wh-char-wizard .wiz-step-chip.done { color: #7fbf7f; }
+
+.wh-char-wizard .wiz-step-body { min-height: 320px; }
+
+.wh-char-wizard .wiz-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--wh-border, #7a5c2e);
+  margin-top: 8px;
+}

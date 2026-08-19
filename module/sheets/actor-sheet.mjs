@@ -9,7 +9,8 @@ import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES } from "../constants/items.mjs";
 import { _degWord, splitTopLevel, esc } from "../helpers/utils.mjs";
-import { showCreationWizard, ruSpec } from "../apps/creation.mjs";
+import { ruSpec } from "../apps/creation.mjs";
+import { openCharacterWizard } from "../apps/character-wizard.mjs";
 import { onConvertToHorde } from "../apps/horde-convert.mjs";
 import { buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
@@ -74,14 +75,17 @@ import { toggleAbility } from "../apps/toggle-abilities.mjs";
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
 // «Minion of Chaos», дефисы, мн.ч. и опечатки.
-const TALENT_ALIAS = {
+// Экспортируются: та же таблица и регулярка нужны Этапу 3 нового мастера
+// (character-wizard.mjs) — там разбор списка талантов на «выбор» продублирован
+// без диалога, но по тем же правилам.
+export const TALENT_ALIAS = {
   "minion":               "minion of chaos",
   "erudite infernal":     "erudite-infernal",
   "clues from the crowd": "clues from the crowds",
   "sure stitch":          "sure strike"
 };
 // Разделители вариантов выбора в данных: « или » и «/».
-const TALENT_CHOICE_SEP = /\s+или\s+|\s*\/\s*/i;
+export const TALENT_CHOICE_SEP = /\s+или\s+|\s*\/\s*/i;
 
 // ── Действия листа ───────────────────────────────────────────────────────────
 // ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
@@ -528,7 +532,19 @@ export class WarhammerCharacterSheet
   static DEFAULT_OPTIONS = {
     classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
     position: { width: 1000, height: 940 },
-    window: { resizable: true },
+    window: {
+      resizable: true,
+      // Кнопка «Мастер» раньше стояла в шапке листа (header.hbs) рядом с
+      // Мировоззрением; перенесена сюда, чтобы не путать с кнопкой «Начать
+      // создание персонажа» на панели Актёры (apps/character-start.mjs) —
+      // та заводит НОВОГО актора, а этот пункт лишь перезапускает Мастера
+      // на уже существующем.
+      controls: [{
+        icon: "fa-solid fa-hat-wizard",
+        label: "Перезапустить мастера создания",
+        action: "charWizard"
+      }]
+    },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       // Вкладки и свёртки доступны и тому, кто лист только смотрит.
@@ -543,7 +559,8 @@ export class WarhammerCharacterSheet
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
       // Мастера зовут из двух мест: панель «Актёры» — для нового персонажа,
-      // эта кнопка — чтобы пройти его заново на уже созданном.
+      // пункт «Перезапустить мастера создания» в window.controls (выше) —
+      // чтобы пройти его заново на уже созданном.
       charWizard: whenEditable(function () { this.openCreationWizard(); }),
       convertToHorde: whenEditable(onConvertToHorde),
       // «+» в блоке МИНЬОНЫ на вкладке СОЦИУМ — генератор слуги (стр. 111-113).
@@ -782,17 +799,18 @@ export class WarhammerCharacterSheet
   }
 
   /**
-   * Мастер создания персонажа. Раньше его звала кнопка в шапке листа; теперь
-   * создание начинается кнопкой в панели «Актёры» (apps/character-start.mjs),
-   * а лист остаётся местом, где живут коллбеки: Черты, стартовые Таланты и
-   * тема листа — его же работа, их зовут и кнопки «Применить расу»/«…легион».
+   * Мастер создания персонажа (module/apps/character-wizard.mjs) — пять
+   * этапов в одном окне. Зовётся из панели «Актёры» (apps/character-start.mjs
+   * — для нового персонажа) и из пункта «Перезапустить мастера создания» в
+   * window.controls этого листа (для уже существующего). Коллбеки Черт/
+   * стартовых Талантов новому мастеру не нужны — он читает их с
+   * `actor.sheet` сам (`_createTraitsFromList`/`_applyStartingTalents`,
+   * методы ниже); тема листа обновляется сама через обычный ре-рендер
+   * (`_applyThemeClasses()` в `activateListeners`, вызывается на каждом
+   * рендере), явный вызов не нужен.
    */
   openCreationWizard() {
-    return showCreationWizard(this.actor, {
-      createTraits:         (list, source) => this._createTraitsFromList(list, source),
-      applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source),
-      applyTheme:           ()             => this._applyThemeClasses()
-    });
+    return openCharacterWizard(this.actor);
   }
 
   /** Создаёт Черты из списка {name,benefit,rating,hasRating,effects}, пропуская существующие по имени. */

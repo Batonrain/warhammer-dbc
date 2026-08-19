@@ -27,7 +27,8 @@ import { refundXP, skillStepsCost, skillReason } from "./duplicate-refund.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
 // Влияние (inf) сюда не входит — оно от arch.infRoll.
-const CREATION_ROLL_CHARS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
+// Экспортируется: тот же список нужен Этапу 2 нового мастера (character-wizard.mjs).
+export const CREATION_ROLL_CHARS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 
 // ── Склонности (стр. 23-24) ─────────────────────────────────────────────────
 // Персонаж выбирает четыре Характеристики и четыре прочих. «Общее» есть у всех
@@ -501,7 +502,7 @@ export function creationCharSum({ race, past, arch, sub }) {
 }
 
 /** Число бонусных бросков расы (по выбранным ключам мастера). */
-function creationBonusRolls(raceKey) {
+export function creationBonusRolls(raceKey) {
   return Number(raceDef(raceKey)?.bonusRolls) || 0;
 }
 
@@ -521,7 +522,7 @@ export function rollCharSet(bonusRolls = 0) {
  * Готовое число (например, +2 при распределении Характеристик) в чат не идёт:
  * бросать нечего, а карточка «выпало 21» из ниоткуда только путала бы.
  */
-async function rollFormula(actor, formula, flavor) {
+export async function rollFormula(actor, formula, flavor) {
   if (formula === null || formula === undefined || formula === "") return 0;
   if (typeof formula === "number") return formula;
 
@@ -538,7 +539,7 @@ async function rollFormula(actor, formula, flavor) {
 }
 
 /** Выдаёт базовые импланты Механикум (пропуская уже имеющиеся). */
-async function grantMechanicusImplants(actor) {
+export async function grantMechanicusImplants(actor) {
   const existing = new Set(actor.items.filter(i => i.type === "implant").map(i => i.name));
   const toAdd = MECHANICUS_IMPLANTS.filter(d => !existing.has(d.name)).map(d => foundry.utils.deepClone(d));
   if (toAdd.length) await actor.createEmbeddedDocuments("Item", toAdd);
@@ -546,7 +547,7 @@ async function grantMechanicusImplants(actor) {
 }
 
 /** Выдаёт Скитарию Боевые Латы Скитарии (броня + дефлектор) вместо имплантов Механикум. */
-async function grantSkitariiWarPlate(actor) {
+export async function grantSkitariiWarPlate(actor) {
   const existing = new Set(actor.items.filter(i => i.type === "implant").map(i => i.name));
   if (existing.has(SKITARII_WAR_PLATE.name)) return 0;
   await actor.createEmbeddedDocuments("Item", [foundry.utils.deepClone(SKITARII_WAR_PLATE)]);

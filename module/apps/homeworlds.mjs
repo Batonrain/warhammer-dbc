@@ -15,6 +15,8 @@ import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { registerPackCache, packEntries, clearGrantedBy, charBonusesToMechanics } from "./origin-shared.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { SKIP_MECHANICS_HOOK } from "./races.mjs";
+import { applyItemMechanics } from "./mechanics.mjs";
 
 const PACK = "warhammer-dbc.homeworlds";
 const FLAG = "warhammer-dbc";
@@ -227,6 +229,12 @@ async function grantHomeworld(actor, hw, picks) {
 
   // ── Предмет-мир: несёт модификаторы Характеристик ──
   const friendly = (picks.many?.["research-lore"] || []);
+  // Механику носителя ждём синхронно (SKIP_MECHANICS_HOOK, как у applyRace/
+  // applyArchetype) — сама выдача мира интерактивных выборов не просит (те
+  // уже отвечены выше, в promptChoices), но ГМ мог дописать в Механику
+  // записи компендиума что угодно вручную, и без этого асинхронный хук
+  // createItem мог бы отработать уже ПОСЛЕ того, как applyHomeworld вернул
+  // управление вызывающему коду.
   const [worldItem] = await actor.createEmbeddedDocuments("Item", [{
     name: hw.label, type: "homeworld", img: "icons/svg/city.svg",
     system: {
@@ -236,7 +244,8 @@ async function grantHomeworld(actor, hw, picks) {
       choices: chosenLabels, friendlySpecs: friendly
     },
     flags: { [FLAG]: { mechanics: charBonusesToMechanics(charBonuses) } }
-  }]);
+  }], { [SKIP_MECHANICS_HOOK]: true });
+  if (worldItem) await applyItemMechanics(worldItem);
 
   // ── Черта-Особенность ──
   const created = [{

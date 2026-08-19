@@ -41,7 +41,11 @@ export function describeV2Sheet(SheetClass, files) {
   });
 
   describe(`${SheetClass.name}: шаблон и класс сходятся`, () => {
-    const inTemplate = [...new Set([...TEMPLATE.matchAll(/data-action="(\w+)"/g)].map(m => m[1]))];
+    // Пункты window.controls (меню окна ApplicationV2, «шапка» с иконкой) Foundry
+    // рендерит сам — в собственном hbs листа у них нет data-action, поэтому их
+    // тоже считаем «вызванными», иначе такой обработчик ложно выглядит мёртвым.
+    const inControls = (SheetClass.DEFAULT_OPTIONS.window?.controls ?? []).map(c => c.action).filter(Boolean);
+    const inTemplate = [...new Set([...TEMPLATE.matchAll(/data-action="(\w+)"/g)].map(m => m[1]).concat(inControls))];
     const declared = Object.keys(SheetClass.DEFAULT_OPTIONS.actions ?? {});
 
     // Действия самого Foundry: объявлять их у себя незачем — ядро уже умеет, а

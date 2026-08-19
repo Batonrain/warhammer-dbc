@@ -12,6 +12,8 @@ import { isFeatureEnabled } from "../constants/features.mjs";
 import { promptGrantChoices, applyGrants, clearGrantedBy,
          registerPackCache, packEntries, charBonusesToMechanics } from "./origin-shared.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { SKIP_MECHANICS_HOOK } from "./races.mjs";
+import { applyItemMechanics } from "./mechanics.mjs";
 
 const PACK = "warhammer-dbc.divinations";
 const FLAG = "warhammer-dbc";
@@ -93,11 +95,14 @@ export async function applyDivination(actor, key) {
 
 async function grantDivination(actor, key, def, entry, picks, rolled) {
   // Своё предсказание из компендиума без описания в коде — кладём как есть.
+  // Механику ждём синхронно (SKIP_MECHANICS_HOOK) — это ГМ-запись целиком,
+  // её Механика может быть любой, не только пассивными бонусами.
   if (!def) {
     const doc = entry?.uuid ? await fromUuid(entry.uuid) : null;
     if (!doc) return;
     const data = doc.toObject(); delete data._id;
-    await actor.createEmbeddedDocuments("Item", [data]);
+    const [created] = await actor.createEmbeddedDocuments("Item", [data], { [SKIP_MECHANICS_HOOK]: true });
+    if (created) await applyItemMechanics(created);
     if (isFeatureEnabled("divinations")) await actor.update({ "system.bio.divination": "" });
     return;
   }
@@ -122,7 +127,8 @@ async function grantDivination(actor, key, def, entry, picks, rolled) {
       choices: chosen
     },
     flags: { [FLAG]: { mechanics: charBonusesToMechanics(charBonuses) } }
-  }]);
+  }], { [SKIP_MECHANICS_HOOK]: true });
+  if (item) await applyItemMechanics(item);
 
   const summary = await applyGrants(actor, {
     def, picks, chosen, tag: DIVINATION_TAG, owner: item,
