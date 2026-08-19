@@ -244,6 +244,7 @@
       {{#if (eq r.type "or")}}
       <div class="atk-dlg-row wtc-row"><label class="wtc-lbl">{{r.itemName}}:</label>
         <select class="wtc-sel wiz-mech-or-sel" data-key="{{r.key}}">
+          <option value="" disabled selected>— выбрать —</option>
           {{#each r.options as |o|}}<option value="{{o.idx}}">{{o.label}}</option>{{/each}}
         </select>
         <button type="button" class="wiz-mini-btn wiz-mech-skip" data-key="{{r.key}}" data-many="0" title="Пропустить">✕</button>

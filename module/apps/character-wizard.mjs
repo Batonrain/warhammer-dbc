@@ -702,6 +702,27 @@ export class CharacterWizard extends Application {
     return out.map(s => s.trim()).filter(Boolean);
   }
 
+  /**
+   * По ключевым словам в строке текста снаряжения (английская военная
+   * номенклатура архетипов/рас, изредка русский) угадывает ОДИН пак
+   * Обозревателя, до которого стоит сузить окно ручного выбора — вместо
+   * того чтобы игрок листал вообще все категории ради «Light Bolter».
+   * Намеренно НЕ угадывает `type`/`folderId` (более узкие фильтры внутри
+   * пака) — при ошибке угадывания там реален жёсткий дедэнд («под условия
+   * не подошёл ни один предмет», Обозреватель сам закрывается), а у пака
+   * целиком предметов десятки, риск пустой категории на практике нулевой.
+   * Не угадал — вернёт null, Обозреватель откроется как раньше, без сужения.
+   */
+  _guessGearPack(text) {
+    const t = String(text).toLowerCase();
+    if (/\b(bolter|pistol|rifle|shotgun|sword|axe|blade|knife|mace|spear|chain\w*|flamer|cannon|gun|launcher|carbine|autogun|lasgun|las\s*pistol|whip|club|hammer|dagger|talon)\b|оруж|пистолет|винтовк|дробовик|\bмеч\b|\bнож\b|топор|клинок|булав/.test(t)) return "weapons";
+    if (/\b(armour|armor|carapace|flak|xenomesh|wychsuit)\b|брон|доспех|\bлаты\b|панцир/.test(t)) return "armor";
+    if (/\b(ammo|rounds?|clip|magazine)\b|патрон|обойм|магазин|боеприпас/.test(t)) return "ammunition";
+    if (/\bshield\b|щит\b/.test(t)) return "shields";
+    if (/\b(toolkit|tool\s*kit)\b|инструмент|набор\s+инструментов/.test(t)) return "tools";
+    return null;
+  }
+
   /** Раскладка текста снаряжения на layout (фикс/выбор) + сами группы выбора. Без резолва в предметы. */
   _gearLayout() {
     const sys = this.actor.system;
@@ -780,9 +801,18 @@ export class CharacterWizard extends Application {
       }
 
       // Точных совпадений не нашлось — спрашиваем игрока по очереди, а не
-      // угадываем: тот же Обозреватель, что и для бюджетных покупок.
+      // угадываем САМ ПРЕДМЕТ: тот же Обозреватель, что и для бюджетных
+      // покупок. Категорию (пак) при этом угадать МОЖНО — сужаем окно до
+      // одной вкладки по ключевым словам строки (see _guessGearPack), чтобы
+      // не листать вообще все компендиумы ради одной винтовки. Угадываем
+      // только ПАК целиком (не type/folderId) — у пака десятки предметов,
+      // риск «под фильтр не подошло ничего» и жёсткого дедэнда практически
+      // нулевой; при неуверенном угадывании просто не сужаем (как раньше).
       for (const i of manualIdx) {
-        const uuid = await openCompendiumBrowser(false, { count: 1, prompt: `Стартовое снаряжение: ${resolved[i]}` });
+        const uuid = await openCompendiumBrowser(false, {
+          count: 1, pack: this._guessGearPack(resolved[i]),
+          prompt: `Стартовое снаряжение: ${resolved[i]}`
+        });
         if (!uuid) continue;
         const doc = await fromUuid(uuid).catch(() => null);
         if (doc) { await actor.createEmbeddedDocuments("Item", [doc.toObject()]); done[i] = true; }
@@ -920,9 +950,11 @@ export class CharacterWizard extends Application {
 
     // ── Этап 3: ИЛИ/спец-выборы Конструктора, собранные в форму шага ──
     on(".wiz-mech-or-sel", "change", ev => {
+      const val = ev.currentTarget.value;
+      if (val === "") return; // плейсхолдер «— выбрать —», не настоящий вариант
       const key = ev.currentTarget.dataset.key;
       const row = this.pendingMechChoices.find(r => r.key === key);
-      if (row) this._resolveMechChoice(key, row.options[Number(ev.currentTarget.value)]?.entry ?? null);
+      if (row) this._resolveMechChoice(key, row.options[Number(val)]?.entry ?? null);
     });
     on(".wiz-mech-spec-radio", "change", ev => {
       const key = ev.currentTarget.dataset.key;
