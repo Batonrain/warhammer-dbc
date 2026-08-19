@@ -46,6 +46,29 @@ import { esc } from "../helpers/utils.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "./actor-factions.mjs";
 
+// Текст расы Астартес («Power Armour Mk III-VII» в race.gear) называет
+// ДИАПАЗОН марок, а не одну фиксированную вещь — игрок выбирает одну марку
+// внутри диапазона. Имена — ТОЧНЫЕ имена предметов компендиума
+// warhammer-dbc.armor (Астартес/Броня/Силовая), сверено с пользователем по
+// реальным uuid; порядок — хронологический (по номеру марки), нужен для
+// вырезания диапазона «от…до». Держим здесь, а не в constants/, — нужен
+// только этому разбору текста снаряжения.
+const POWER_ARMOUR_MARKS = [
+  { n: "II",   name: "Мк II Крестовый Поход" },
+  { n: "III",  name: "Мк III Железный" },
+  { n: "IV",   name: "Мк IV Максимус" },
+  { n: "V",    name: "Мк V Ереси" },
+  { n: "VI",   name: "Мк VI Корвус" },
+  { n: "VII",  name: "Мк VII Аквила" },
+  { n: "VIII", name: "Мк VIII Странник" },
+  { n: "X",    name: "Мк X Примарис" }
+];
+
+// «N Стандартные системы» в race.gear Астартес — выбор N штук ИЗ КОНКРЕТНОЙ
+// папки компендиума warhammer-dbc.armour-systems (id папки постоянен, как и
+// любой id Foundry, сверен с пользователем), а не один произвольный предмет.
+const STANDARD_SYSTEMS_FOLDER = "PJGdkJLkUXdx2JTp";
+
 export const WIZARD_STEPS = [
   { id: "origin",          label: "Происхождение" },
   { id: "characteristics", label: "Характеристики" },
@@ -723,6 +746,28 @@ export class CharacterWizard extends Application {
     return null;
   }
 
+  /**
+   * «Power Armour Mk X-Y» → список ИМЁН предметов компендиума (не выдуманных,
+   * см. POWER_ARMOUR_MARKS) для марок от X до Y включительно — как обычная
+   * группа выбора («A или B»), только развёрнутая из диапазона, а не из
+   * текста с «или». Не диапазон/непонятная марка — null, строка идёт по
+   * обычному пути (см. вызов в _gearLayout).
+   */
+  _expandPowerArmourMkRange(text) {
+    const m = /\bMk\s+([IVXLCDM]+)\s*[-–—]\s*([IVXLCDM]+)\b/i.exec(String(text));
+    if (!m) return null;
+    const i0 = POWER_ARMOUR_MARKS.findIndex(x => x.n === m[1].toUpperCase());
+    const i1 = POWER_ARMOUR_MARKS.findIndex(x => x.n === m[2].toUpperCase());
+    if (i0 < 0 || i1 < 0 || i1 < i0) return null;
+    return POWER_ARMOUR_MARKS.slice(i0, i1 + 1).map(x => x.name);
+  }
+
+  /** «N Стандартные системы» → сколько штук выбрать из папки STANDARD_SYSTEMS_FOLDER; иначе null. */
+  _matchStandardSystemsCount(text) {
+    const m = /^\s*(\d+)\s+Стандартны[ех]\s+систем/i.exec(String(text));
+    return m ? Number(m[1]) : null;
+  }
+
   /** Раскладка текста снаряжения на layout (фикс/выбор) + сами группы выбора. Без резолва в предметы. */
   _gearLayout() {
     const sys = this.actor.system;
@@ -734,6 +779,9 @@ export class CharacterWizard extends Application {
     const entries = raw.trim() ? this._splitGearTopLevel(raw) : [];
     const layout = [], choiceDefs = [];
     for (const e of entries) {
+      const mkRange = this._expandPowerArmourMkRange(e);
+      if (mkRange) { layout.push({ ci: choiceDefs.length }); choiceDefs.push(mkRange); continue; }
+      if (this._matchStandardSystemsCount(e) != null) { layout.push({ fixed: e }); continue; }
       const parts = this._splitGearChoice(e);
       if (parts.length > 1) { layout.push({ ci: choiceDefs.length }); choiceDefs.push(parts); }
       else layout.push({ fixed: e });
@@ -777,7 +825,9 @@ export class CharacterWizard extends Application {
       for (const pk of packs) for (const e of await pk.getIndex()) {
         for (const part of String(e.name).split("/")) { const k = norm(part); if (k && !index.has(k)) index.set(k, { pack: pk, id: e._id }); }
       }
-      const clean = txt => String(txt).replace(/^\s*\d+×?\s*/, "").replace(/^l\.\s*/i, "").replace(/\([^)]*\)/g, "")
+      // «(Астартес)» — часть настоящего имени предмета (отличает Легион-версию
+      // от обычной), а не квалификатор вроде «(Good.Q)» — не срезаем именно её.
+      const clean = txt => String(txt).replace(/^\s*\d+×?\s*/, "").replace(/^l\.\s*/i, "").replace(/\((?!Астартес\))[^)]*\)/g, "")
         .replace(/\bдо\s*R\s*\d+\b/gi, "").replace(/\b(Best|Good|Common|Poor)\.?Q\b/gi, "").trim();
 
       // done[r] — по КОНКРЕТНОЙ строке (индексу resolved), не общим флагом:
@@ -786,7 +836,9 @@ export class CharacterWizard extends Application {
       const toCreate = [];
       const done = resolved.map(() => false);
       const manualIdx = [];
+      const stdSysIdx = []; // «N Стандартные системы» — свой бюджетный поток, не по одной
       resolved.forEach((r, i) => {
+        if (this._matchStandardSystemsCount(r) != null) { stdSysIdx.push(i); return; }
         if (/\bлюб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
         const k = norm(clean(r));
         const ref = k ? index.get(k) : null;
@@ -798,6 +850,23 @@ export class CharacterWizard extends Application {
         const objs = [];
         toCreate.forEach(({ i }, idx) => { if (docs[idx]) { objs.push(docs[idx].toObject()); done[i] = true; } });
         if (objs.length) await actor.createEmbeddedDocuments("Item", objs);
+      }
+
+      // «N Стандартные системы» — не «предмет за предметом», а один бюджетный
+      // выбор N штук из конкретной папки (STANDARD_SYSTEMS_FOLDER), тем же
+      // Обозревателем, что и у бюджетных покупок Механики (count>1 → живой
+      // счётчик «выбрано X из N» вместо диалога на каждую позицию).
+      for (const i of stdSysIdx) {
+        const need = this._matchStandardSystemsCount(resolved[i]);
+        const picked = await openCompendiumBrowser(false, {
+          count: need, pack: "armour-systems", filters: { folderId: STANDARD_SYSTEMS_FOLDER },
+          prompt: `Стартовое снаряжение: ${resolved[i]}`
+        });
+        const uuids = Array.isArray(picked) ? picked : (picked ? [picked] : []);
+        if (!uuids.length) continue;
+        const docs = await Promise.all(uuids.map(u => fromUuid(u).catch(() => null)));
+        const objs = docs.filter(Boolean).map(d => d.toObject());
+        if (objs.length) { await actor.createEmbeddedDocuments("Item", objs); done[i] = objs.length === need; }
       }
 
       // Точных совпадений не нашлось — спрашиваем игрока по очереди, а не
