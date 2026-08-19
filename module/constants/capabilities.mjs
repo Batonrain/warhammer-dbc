@@ -91,7 +91,7 @@ export const CAPABILITIES = {
   "technique.baseFullAttack": {
     label: "Раз в Раунд любая рукопашная атака считается имеющей базу Полная Атака",
     source: "Локус Сокрушения (стр. 31)",
-    reader: ""
+    reader: "module/sheets/attack-dialog.mjs — meleeBaseKey в showAttackDialog/showAttackDialogNoWeapon; module/apps/game-session.mjs — isRoundCapabilityAvailable/markRoundCapabilityUsed"
   },
 
   // ── Ауры и особые правила ─────────────────────────────────────────────────
@@ -109,6 +109,30 @@ export const CAPABILITIES = {
     label: "Игнорирует шаблоны со свойством Linger",
     source: "Локус Упорства (стр. 30)",
     reader: ""   // Трудный Ландшафт закрыт записью terrainIgnore; шаблоны Linger — нет
+  },
+
+  // ── Арсенал: блочные обходы Melee/Weapon Training ───────────────────────
+  // «Персонаж считается имеющим все специализации Талантов Melee Training и
+  // Weapon Training» — вместо покупки специализации на каждую категорию.
+  "weapon.trained.legion": {
+    label: "Владеет всем легионным вооружением без штрафов (Melee+Weapon Training)",
+    source: "Legion Weapon Training / Тренировка Легиона (стр. 62)",
+    reader: "module/rules/weapon-training.mjs — meleeTrainingStatus/weaponTrainingPenalty"
+  },
+  "weapon.trained.eldar": {
+    label: "Владеет всем эльдарским вооружением без штрафов (Melee+Weapon Training)",
+    source: "Eldar Weapon Training / Эльдарская Тренировка",
+    reader: "module/rules/weapon-training.mjs — meleeTrainingStatus/weaponTrainingPenalty"
+  },
+  "weapon.trained.drukhari": {
+    label: "Владеет всем друкхарийским вооружением без штрафов (Melee+Weapon Training)",
+    source: "Kabalite Weapon Training / Тренировка Кабалита",
+    reader: "module/rules/weapon-training.mjs — meleeTrainingStatus/weaponTrainingPenalty"
+  },
+  "weapon.trained.allMelee": {
+    label: "Считается имеющим все специализации Melee Training",
+    source: "Arms Master / Оружейный Мастер (стр. 62)",
+    reader: "module/rules/weapon-training.mjs — meleeTrainingStatus"
   }
 };
 

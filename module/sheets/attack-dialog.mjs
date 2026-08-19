@@ -13,7 +13,7 @@
 
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }       from "../constants/items.mjs";
-import { MELEE_STANCES, GRIPS, parseGrips, gripEffects } from "../constants/combat.mjs";
+import { MELEE_STANCES, MELEE_BASES, GRIPS, parseGrips, gripEffects } from "../constants/combat.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { rollIcon }                           from "../constants/roll-icons.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
@@ -23,11 +23,18 @@ import { attackThreshold }                    from "../combat/attack-threshold.m
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
+import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS } from "../rules/mount.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
+import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
+
+// Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
+// и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
+// в showAttackDialog/showAttackDialogNoWeapon ниже.
+const FULL_ATTACK_CAPABILITY = "technique.baseFullAttack";
 
 /**
  * Всё, что игрок отметил в окне, — одним чтением формы.
@@ -158,7 +165,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     sBonus:     actor.system.characteristics?.s?.bonus ?? 0,
     isGrenade:  sys.weaponType === "grenade"
   });
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total;
+  // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.
+  const weaponTraining = weaponTrainingPenalty({
+    actor, weaponType: sys.weaponType, weaponClass: sys.weaponClass,
+    isGrenade: sys.weaponType === "grenade"
+  });
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total;
   const wantShortBox = !isMelee && (wp.meltaShort || wp.scatter);
   const wantMaximal  = !isMelee && wp.maximal;
 
@@ -187,6 +199,21 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const stanceDef   = MELEE_STANCES[stance];
   const stanceBonus = isMelee ? (stanceDef?.wsBonus ?? 0) : 0;
 
+  // База (стр. 13) — тип действия атаки, персистентна на акторе как Стойка.
+  // Складывается с бонусом Приёма (techniqueOpts.extraBonus), не заменяет
+  // его: обычный клик по оружию без выбранного Приёма — это уже "Стандартная
+  // Атака (+10) + Обычная Атака (+0)", а не голый +0.
+  //
+  // Локус Сокрушения подменяет её на «Полная Атака», пока способность не
+  // потрачена в текущем Раунде (см. FULL_ATTACK_CAPABILITY выше) — расходуется
+  // самим броском, а не открытием окна (см. кнопку «Бросок!» ниже).
+  const fullAttackForced = isMelee
+    && hasRuleFlag(actor, FULL_ATTACK_CAPABILITY)
+    && isRoundCapabilityAvailable(actor, FULL_ATTACK_CAPABILITY);
+  const meleeBaseKey = fullAttackForced ? "fullatk" : (actor.system.meleeBase || "standard");
+  const baseDef      = MELEE_BASES[meleeBaseKey];
+  const baseBonus    = isMelee ? (baseDef?.wsBonus ?? 0) : 0;
+
   const currentAiming = actor.system.aiming || "none";
   const aimingBonus   = currentAiming === "half" ? 10 : currentAiming === "full" ? 20 : 0;
   const aimingLabel   = currentAiming === "half"
@@ -197,7 +224,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const ammoSys    = loadedAmmo?.system;
   const ammoAtkMod = ammoSys?.attackMod ?? 0;
 
-  const techBonus = techniqueOpts.extraBonus ?? 0;
+  const techBonus = baseBonus + (techniqueOpts.extraBonus ?? 0);
   const charBase  = (actor.system.characteristics[charKey]?.total ?? 0) + (sys.attackBonus || 0) + wpAttackMod + gripWs;
   const charVal   = charBase + techBonus + stanceBonus + (wp.noAim ? 0 : aimingBonus) + ammoAtkMod;
 
@@ -206,8 +233,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   const rofModes = [];
   if (isMelee) {
-    rofModes.push({ value: "melee",  label: "Рукопашная атака (±0)",      bonus: 0  });
-    rofModes.push({ value: "charge", label: "Натиск (+20, движение ≥4м)", bonus: 20 });
+    // Бонус Базы (Стандартная/Натиск/Полная/Осторожная) теперь персистентен
+    // на акторе (system.meleeBase, панель «БАЗА») и уже вошёл в techBonus —
+    // здесь только один вариант без своего бонуса, чтобы не задваивать.
+    rofModes.push({ value: "melee",  label: "Рукопашная атака",      bonus: 0  });
   } else {
     if (sys.rof_single > 0)
       rofModes.push({ value: "single", label: "Одиночный выстрел (+10)", bonus: 10 });
@@ -425,6 +454,23 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const stanceBonusNote = (isMelee && stanceBonus !== 0)
     ? `<span class="atk-stance-badge">${rollIcon("sword")}Стойка: ${stanceBonus >= 0 ? "+" : ""}${stanceBonus}</span>`
     : "";
+  // База (стр. 13) видна всегда для рукопашной, а не только вместе с Приёмом —
+  // иначе обычный клик по оружию скрывал бы, откуда взялся +10.
+  const baseBonusNote = isMelee
+    ? `<span class="atk-base-badge">${rollIcon("sword")}База: ${baseDef?.label ?? "Стандартная Атака"} (${baseBonus >= 0 ? "+" : ""}${baseBonus})${fullAttackForced ? " — Локус Сокрушения" : ""}</span>`
+    : "";
+  // Арсенал (стр. 62): без Melee Training книга ограничивает выбор Обычной
+  // Атакой/Стандартной Стойкой/Базовым Хватом — но это ПРЕДУПРЕЖДЕНИЕ, не
+  // запрет (решение за ГМ, тот же принцип, что уже у bases[]/categories[]
+  // на записях Приёма — см. план «Таланты Арсенал»). Показываем только если
+  // персонаж реально выбрал что-то сверх дефолта.
+  const meleeCategory  = sys.meleeCategory || "";
+  const meleeTraining  = (isMelee && meleeCategory) ? meleeTrainingStatus(actor, meleeCategory) : { trained: true };
+  const usesNonDefault = (techniqueOpts.technique && techniqueOpts.technique !== "standard")
+    || meleeBaseKey !== "standard" || (gripKey && gripKey !== primGrip);
+  const meleeTrainingNote = (isMelee && meleeCategory && !meleeTraining.trained && usesNonDefault)
+    ? `<span class="atk-training-warn" title="Без Рукопашной Тренировки (${esc(meleeCategory)}) книга разрешает только Обычную Атаку, Стандартную Стойку и Базовый Хват — исключение на усмотрение ГМ">⚠ Без Тренировки (${esc(meleeCategory)})</span>`
+    : "";
   const ammoBadge = (!isMelee && ammoAtkMod !== 0)
     ? `<span class="atk-ammo-badge">${rollIcon("spark","#8fd0ff")}Боеприпасы: ${ammoAtkMod >= 0 ? "+" : ""}${ammoAtkMod}</span>`
     : "";
@@ -475,11 +521,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="atk-wprops-list">${legionFit.parts
         .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
     </div>` : "";
+  // Штраф Арсенала (Weapon Training) — тот же приём, что у Легиона выше.
+  const weaponTrainingHtml = weaponTraining.parts.length ? `
+    <div class="atk-dlg-modifiers atk-legion-note">
+      <div class="atk-mods-title">${rollIcon("gear","#ffb84d")}Арсенал: ${weaponTraining.total} к тесту</div>
+      <div class="atk-wprops-list">${weaponTraining.parts
+        .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
+    </div>` : "";
   const wpDialogHtml = (wProps.length ? `
     <div class="atk-dlg-modifiers">
       <div class="atk-mods-title">${rollIcon("gear","#8fd0ff")}Свойства оружия</div>
       <div class="atk-wprops-list">${wpDialogList}</div>
-    </div>` : "") + legionHtml;
+    </div>` : "") + legionHtml + weaponTrainingHtml;
   const shortRangeHtml = wantShortBox ? `
     <label class="attack-mod-check">
       <input type="checkbox" id="atk-shortrange" class="atk-mod-cb" data-value="${wp.scatter ? 10 : 0}"/>
@@ -550,7 +603,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="av-header">
         <span class="av-name">${esc(item.name)}</span>
         <span class="av-class">${forceMelee ? "в упор / приклад" : (WEAPON_CLASSES[sys.weaponClass] || "")}</span>
-        <span class="av-badges">${stanceBonusNote}${ammoBadge}${fatigueBadge}${drugAtkBadge}</span>
+        <span class="av-badges">${baseBonusNote}${stanceBonusNote}${meleeTrainingNote}${ammoBadge}${fatigueBadge}${drugAtkBadge}</span>
       </div>
 
       <div class="av-preview">
@@ -661,6 +714,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           }
 
           await actor.update({ "system.aiming": "none" });
+          // Локус Сокрушения тратится реальным броском — отменённая или
+          // закрытая атака способность не расходует (см. meleeBaseKey выше).
+          if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
 
           // Профиль атаки + хват выбраны в HUD (см. начало метода): применяем молча.
           await _executeAttackRoll(
@@ -760,12 +816,22 @@ export async function showAttackDialogWithTechnique(actor, item, techDef, stance
 }
 
 export async function showAttackDialogNoWeapon(actor, techDef) {
-  const ws      = actor.system.characteristics.ws?.total ?? 0;
-  const stance  = actor.system.meleeStance || "standard";
-  const stBon   = MELEE_STANCES[stance]?.wsBonus ?? 0;
-  const fatigue = fatiguePenalty(actor, "ws");
+  const ws       = actor.system.characteristics.ws?.total ?? 0;
+  const stance   = actor.system.meleeStance || "standard";
+  const stBon    = MELEE_STANCES[stance]?.wsBonus ?? 0;
+  // База (стр. 13) — та же логика, что в showAttackDialog: складывается с
+  // бонусом Приёма, а не заменяет его. Локус Сокрушения подменяет её на
+  // «Полная Атака», пока не потрачена в текущем Раунде (см. FULL_ATTACK_CAPABILITY
+  // выше) — здесь бросок безусловный (нет кнопки/отмены), поэтому расходуется
+  // сразу, вместе с чтением.
+  const fullAttackForced = hasRuleFlag(actor, FULL_ATTACK_CAPABILITY)
+    && isRoundCapabilityAvailable(actor, FULL_ATTACK_CAPABILITY);
+  if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
+  const meleeBaseKey = fullAttackForced ? "fullatk" : (actor.system.meleeBase || "standard");
+  const baseBon  = MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0;
+  const fatigue  = fatiguePenalty(actor, "ws");
   // WS уже включает мод препаратов (см. prepareDerivedData)
-  const final   = ws + techDef.wsBonus + stBon + fatigue;
+  const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue;
 
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
@@ -823,6 +889,7 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
         <div class="roll-header">${rollIcon("sword")}${techDef.label} ${techDef.headerSuffix ? `— ${techDef.headerSuffix}` : "(без оружия)"}</div>
         <div class="roll-threshold">
           WS: <b>${ws}</b>
+          база ${baseBon >= 0 ? "+" : ""}${baseBon}${fullAttackForced ? " (Локус Сокрушения)" : ""}
           ${stBon !== 0 ? ` стойка ${stBon >= 0 ? "+" : ""}${stBon}` : ""}
           ${techDef.wsBonus !== 0 ? ` ${techDef.wsBonus >= 0 ? "+" : ""}${techDef.wsBonus}` : ""}
           ${fatigue !== 0 ? ` усталость ${fatigue}` : ""}

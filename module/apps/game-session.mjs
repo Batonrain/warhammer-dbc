@@ -72,6 +72,28 @@ export async function markRuleUsageUsed(actor, flag, scope = "scene") {
   await actor.setFlag("warhammer-dbc", `usageLimits.${usageKey(flag)}`, { scope, used: true });
 }
 
+// ── Разовые-за-РАУНД возможности актора ─────────────────────────────────────
+// Тот же примитив, что isRuleUsageUsed/markRuleUsageUsed выше, но раунд не
+// нужно откатывать кнопкой: он и так меняется сам, поэтому вместо булева
+// used запоминается НОМЕР раунда последнего использования и сравнивается с
+// текущим (game.combat.round) — совпал номер, значит уже потрачено в этом
+// раунде. Без активного Combat раунд отследить нечем: возможность считается
+// доступной, чтобы отсутствие боевого трекера не отнимало её у игрока.
+
+/** Доступна ли Раз-в-Раунд возможность актора в текущем Раунде боя. */
+export function isRoundCapabilityAvailable(actor, flag) {
+  if (!game.combat) return true;
+  const usedRound = actor?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`)?.round;
+  return usedRound !== game.combat.round;
+}
+
+/** Отметить Раз-в-Раунд возможность актора потраченной в текущем Раунде. */
+export async function markRoundCapabilityUsed(actor, flag) {
+  if (!actor || !game.combat) return;
+  await actor.setFlag("warhammer-dbc", `usageLimits.${usageKey(flag)}`,
+    { scope: "round", used: true, round: game.combat.round });
+}
+
 /**
  * Сбросить разовые-за-scope эффекты: метки usageLimit у предметов и метки
  * usageLimits возможностей у самих акторов.

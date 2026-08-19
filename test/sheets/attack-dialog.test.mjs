@@ -66,7 +66,7 @@ beforeEach(() => {
 
 afterEach(() => {
   clearRuleSources();
-  for (const [key, fn] of Object.entries(DEFAULT_SOURCES)) registerRuleSource(key, fn);
+  for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
 });
 
 describe("разметка диалога: стрелковое оружие", () => {
@@ -127,8 +127,8 @@ describe("разметка диалога: рукопашное оружие", (
     showAttackDialog(attacker({ items: [weapon] }), weapon);
     const html = captured.dialog.content;
 
-    expect(html).toContain("Рукопашная атака (±0)");
-    expect(html).toContain("Натиск (+20, движение ≥4м)");
+    expect(html).toContain("Рукопашная атака");
+    expect(html).not.toContain("Натиск (+20, движение ≥4м)");   // переехал в персистентную Базу
     expect(html).not.toContain("Дистанции (Rng");
     expect(html).not.toContain("Магазин:");
   });
@@ -137,7 +137,7 @@ describe("разметка диалога: рукопашное оружие", (
     const weapon = sword();
     showAttackDialog(attacker({ items: [weapon], meleeStance: "aggressive" }), weapon);
 
-    expect(dialogThreshold()).toBe(55);        // WS 45 + Агрессивная 10
+    expect(dialogThreshold()).toBe(65);        // WS 45 + База «Стандартная» 10 + Агрессивная 10
     expect(captured.dialog.content).toContain("Стойка: +10");
   });
 
@@ -145,7 +145,7 @@ describe("разметка диалога: рукопашное оружие", (
     const weapon = sword({ quality: "best" });
     showAttackDialog(attacker({ items: [weapon] }), weapon);
 
-    expect(dialogThreshold()).toBe(55);        // WS 45 + Лучшее +10
+    expect(dialogThreshold()).toBe(65);        // WS 45 + База «Стандартная» 10 + Лучшее +10
   });
 
   it("вторичный хват из HUD применяется молча и попадает в сводку", () => {
@@ -153,7 +153,7 @@ describe("разметка диалога: рукопашное оружие", (
                          { flags: { "warhammer-dbc.hudGrip": "Об" } });
     showAttackDialog(attacker({ items: [weapon] }), weapon);
 
-    expect(dialogThreshold()).toBe(35);        // WS 45 − 10 за Обратный хват
+    expect(dialogThreshold()).toBe(45);        // WS 45 + База «Стандартная» 10 − 10 за Обратный хват
     expect(captured.dialog.content).toContain("Хват: Обратный (Об) · WS -10");
   });
 
@@ -396,7 +396,7 @@ describe("приём с оружием", () => {
     showAttackDialogWithTechnique(attacker({ items: [sword] }), sword,
       techDef, { label: "Агрессивная" }, "saw");
 
-    expect(dialogThreshold()).toBe(35);        // WS 45 − 10
+    expect(dialogThreshold()).toBe(45);        // WS 45 + База «Стандартная» 10 − 10 Пила
     expect(captured.dialog.content).toContain("Приём: <b>Пила</b>");
     expect(captured.dialog.content).toContain("Стойка: <b>Агрессивная</b>");
   });
@@ -411,9 +411,9 @@ describe("приём без оружия", () => {
     const actor = attacker({ meleeStance: "aggressive", fatigue: { value: 1 } });
     await showAttackDialogNoWeapon(actor, kick);
 
-    // WS 45 − 10 приём + 10 стойка − 10 усталость = 35; бросок 30 → попадание.
+    // WS 45 + 10 база − 10 приём + 10 стойка − 10 усталость = 45; бросок 30 → попадание.
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("Порог: <b>35</b>");
+    expect(card).toContain("Порог: <b>45</b>");
     expect(card).toContain("Попадание");
     expect(card).toContain("wh-dodge-btn");
   });
@@ -450,5 +450,159 @@ describe("приём без оружия", () => {
     const card = captured.chat.at(-1).content;
     expect(card).toContain('data-damage="14"');
     expect(card).toContain("профиль Астартес");
+  });
+});
+
+// Локус Сокрушения (стр. 31, module/constants/capabilities.mjs —
+// "technique.baseFullAttack"): раз в Раунд любая рукопашная атака считается
+// имеющей Базу «Полная Атака» (+30 вместо персистентного system.meleeBase).
+describe("Локус Сокрушения: раз в Раунд База «Полная Атака»", () => {
+  /** Актор с getFlag/setFlag — «раз-в-Раунд» метка хранится флагом на акторе. */
+  function actorWithFlags(overrides = {}) {
+    const a = attacker(overrides);
+    const store = {};
+    a.getFlag = (scope, key) => store[`${scope}.${key}`];
+    a.setFlag = async (scope, key, value) => { store[`${scope}.${key}`] = value; };
+    return a;
+  }
+
+  function grantCapability() {
+    registerRuleSource("test", () => [{ id: "loc-sokrusheniya", label: "Локус Сокрушения",
+      effects: [{ kind: "grantFlag", target: "technique.baseFullAttack" }] }]);
+  }
+
+  afterEach(() => { globalThis.game.combat = undefined; });
+
+  describe("оружие (showAttackDialog)", () => {
+    it("порог и бейдж отражают Базу «Полная Атака», пока способность не потрачена", () => {
+      globalThis.game.combat = { round: 1 };
+      grantCapability();
+      const sword = weaponFor({ weaponClass: "melee" });
+      showAttackDialog(actorWithFlags({ items: [sword] }), sword);
+
+      expect(dialogThreshold()).toBe(75);        // WS 45 + База «Полная Атака» +30
+      expect(captured.dialog.content).toContain("Локус Сокрушения");
+    });
+
+    it("уже потраченная в этом Раунде — обычная персистентная База", async () => {
+      globalThis.game.combat = { round: 1 };
+      grantCapability();
+      const sword = weaponFor({ weaponClass: "melee" });
+      const actor = actorWithFlags({ items: [sword] });
+      await actor.setFlag("warhammer-dbc", "usageLimits.technique-baseFullAttack",
+        { scope: "round", used: true, round: 1 });
+
+      showAttackDialog(actor, sword);
+      expect(dialogThreshold()).toBe(55);        // WS 45 + База «Стандартная» +10
+      expect(captured.dialog.content).not.toContain("Локус Сокрушения");
+    });
+
+    it("бросок расходует способность до конца текущего Раунда", async () => {
+      globalThis.game.combat = { round: 1 };
+      grantCapability();
+      const sword = weaponFor({ weaponClass: "melee" });
+      const actor = actorWithFlags({ items: [sword] });
+
+      const p1 = showAttackDialog(actor, sword);
+      await pressRoll(p1);
+      expect(actor.getFlag("warhammer-dbc", "usageLimits.technique-baseFullAttack"))
+        .toMatchObject({ round: 1 });
+
+      const p2 = showAttackDialog(actor, sword);
+      expect(dialogThreshold()).toBe(55);        // способность уже потрачена
+      await captured.press("cancel", attackForm());
+      await p2;
+    });
+
+    it("отменённое окно не тратит способность", async () => {
+      globalThis.game.combat = { round: 1 };
+      grantCapability();
+      const sword = weaponFor({ weaponClass: "melee" });
+      const actor = actorWithFlags({ items: [sword] });
+
+      const p = showAttackDialog(actor, sword);
+      await captured.press("cancel", attackForm());
+      await p;
+
+      expect(actor.getFlag("warhammer-dbc", "usageLimits.technique-baseFullAttack")).toBeUndefined();
+    });
+
+    it("новый Раунд возвращает способность", async () => {
+      globalThis.game.combat = { round: 1 };
+      grantCapability();
+      const sword = weaponFor({ weaponClass: "melee" });
+      const actor = actorWithFlags({ items: [sword] });
+      const p1 = showAttackDialog(actor, sword);
+      await pressRoll(p1);
+
+      globalThis.game.combat = { round: 2 };
+      showAttackDialog(actor, sword);
+      expect(dialogThreshold()).toBe(75);
+    });
+
+    it("без активного Combat способность доступна всегда — раунд отследить нечем", () => {
+      grantCapability();
+      const sword = weaponFor({ weaponClass: "melee" });
+      showAttackDialog(actorWithFlags({ items: [sword] }), sword);
+
+      expect(dialogThreshold()).toBe(75);
+    });
+
+    it("на стрелковое оружие не действует", () => {
+      globalThis.game.combat = { round: 1 };
+      grantCapability();
+      const weapon = weaponFor();
+      showAttackDialog(actorWithFlags({ items: [weapon] }), weapon);
+
+      expect(captured.dialog.content).not.toContain("Локус Сокрушения");
+    });
+  });
+
+  describe("голыми руками (showAttackDialogNoWeapon)", () => {
+    const kick = { label: "Пинок", wsBonus: -10, damage: "1d5-1+S.b",
+                   damageAstartes: "1d10+2+S.b", damageType: "impact", pen: 0 };
+
+    it("подменяет Базу на «Полная Атака» (+30 вместо +10)", async () => {
+      globalThis.game.combat = { round: 1 };
+      grantCapability();
+      captured.dice = [30, 4];
+      await showAttackDialogNoWeapon(actorWithFlags(), kick);
+
+      // WS 45 + 30 (Полная Атака) − 10 (Пинок) = 65.
+      const card = captured.chat.at(-1).content;
+      expect(card).toContain("Порог: <b>65</b>");
+      expect(card).toContain("Локус Сокрушения");
+    });
+
+    it("расходуется за Раунд: вторая безоружная атака — обычная База", async () => {
+      globalThis.game.combat = { round: 1 };
+      grantCapability();
+      const actor = actorWithFlags();
+      captured.dice = [30, 4];
+      await showAttackDialogNoWeapon(actor, kick);
+
+      captured.dice = [30, 4];
+      await showAttackDialogNoWeapon(actor, kick);
+
+      // WS 45 + 10 (обычная База) − 10 (Пинок) = 45 — способность уже потрачена.
+      const card = captured.chat.at(-1).content;
+      expect(card).toContain("Порог: <b>45</b>");
+      expect(card).not.toContain("Локус Сокрушения");
+    });
+
+    it("новый Раунд возвращает способность", async () => {
+      globalThis.game.combat = { round: 1 };
+      grantCapability();
+      const actor = actorWithFlags();
+      captured.dice = [30, 4];
+      await showAttackDialogNoWeapon(actor, kick);
+
+      globalThis.game.combat = { round: 2 };
+      captured.dice = [30, 4];
+      await showAttackDialogNoWeapon(actor, kick);
+
+      const card = captured.chat.at(-1).content;
+      expect(card).toContain("Порог: <b>65</b>");
+    });
   });
 });
