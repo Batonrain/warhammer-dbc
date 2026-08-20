@@ -75,7 +75,8 @@ export const WEAPON_PROPERTIES = {
     key: "blast", label: "Взрывное", en: "Blast", rating: true, cat: "ranged",
     desc: "Урон по площади радиусом X метров. Получает свойство Неточное (Imprecise). Все в радиусе получают попадание.",
     reminder: "💥 Взрывное (X): урон по площади радиусом X м",
-    auto: { noCalledShot: true, targetEffect: { kind: "blast" } }
+    // blast — рейтинг нужен счёту урона по Орде: Взрывное даёт ей +X попаданий.
+    auto: { noCalledShot: true, blast: true, targetEffect: { kind: "blast" } }
   },
 
   blinding: {
@@ -187,7 +188,8 @@ export const WEAPON_PROPERTIES = {
     key: "flame", label: "Огонь", en: "Flame", rating: true, ratingDice: true, cat: "ranged",
     desc: "Облепляет цель пылающим прометием. При попадании цель проходит тест Ag+0, иначе Загорается. Рейтинг — урон Горения за раунд (формула, напр. 1d10).",
     reminder: "🔥 Огонь: цель — тест Ag+0 или Загорается",
-    auto: { targetEffect: { condition: "burning", testChar: "ag", testMod: 0, damageFromRating: true } }
+    // flame — флаг нужен счёту урона по Орде: Огонь даёт ей +1 попадание.
+    auto: { flame: true, targetEffect: { condition: "burning", testChar: "ag", testMod: 0, damageFromRating: true } }
   },
 
   flexible: {
