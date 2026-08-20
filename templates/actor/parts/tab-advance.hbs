@@ -27,7 +27,28 @@
         <div class="xp-bar"><div class="xp-fill" style="width:{{xpPct}}%;"></div><span class="xp-bar-pct">{{xpPct}}%</span></div>
         <div class="xp-sensor-legend"><span>Потрачено <b>{{system.experience.spent}}</b> / {{system.experience.total}}</span><span class="xp-cur">Свободно <b>{{system.experience.current}}</b></span></div>
       </div>
-      <div class="xp-table"> <div class="xp-row"> <label>Всего</label> <input type="number" name="system.experience.total" value="{{system.experience.total}}" min="0"/> <button type="button" class="stat-add-btn" data-action="statAdd" data-stat="xpTotal" title="Добавить Опыт">＋</button> </div> <div class="xp-row"> <label>Потрачено на Характеристики</label> <span class="xp-auto">{{system.experience.spentChar}}</span> </div> <div class="xp-row"> <label>Потрачено на Навыки</label> <span class="xp-auto">{{system.experience.spentSkills}}</span> </div> <div class="xp-row"> <label>Потрачено на Таланты</label> <span class="xp-auto">{{system.experience.spentTalents}}</span> </div> <div class="xp-row"> <label>Потрачено на Психосилы</label> <span class="xp-auto">{{system.experience.spentPsy}}</span> </div> <div class="xp-row"> <label>Потрачено на другое</label> <input type="number" name="system.experience.spentOther" value="{{system.experience.spentOther}}" min="0"/> </div> <div class="xp-row xp-row-result"> <label>Всего потрачено</label> <span>{{system.experience.spent}}</span> </div> <div class="xp-row xp-row-current"> <label>Текущий</label> <span>{{system.experience.current}}</span> </div> </div> </div> </div>{{!-- /advance-top --}}
+      <div class="xp-table"> <div class="xp-row"> <label>Всего</label> <input type="number" name="system.experience.total" value="{{system.experience.total}}" min="0"/> <button type="button" class="stat-add-btn" data-action="statAdd" data-stat="xpTotal" title="Добавить Опыт">＋</button> </div> <div class="xp-row"> <label>Потрачено на Характеристики</label> <span class="xp-auto">{{system.experience.spentChar}}</span> </div> <div class="xp-row"> <label>Потрачено на Навыки</label> <span class="xp-auto">{{system.experience.spentSkills}}</span> </div> <div class="xp-row"> <label>Потрачено на Таланты</label> <span class="xp-auto">{{system.experience.spentTalents}}</span> </div> <div class="xp-row"> <label>Потрачено на Психосилы</label> <span class="xp-auto">{{system.experience.spentPsy}}</span> </div> <div class="xp-row"> <label>Потрачено на Элитные архетипы</label> <span class="xp-auto">{{system.experience.spentElite}}</span> </div> <div class="xp-row"> <label>Потрачено на другое</label> <input type="number" name="system.experience.spentOther" value="{{system.experience.spentOther}}" min="0"/> </div> <div class="xp-row xp-row-result"> <label>Всего потрачено</label> <span>{{system.experience.spent}}</span> </div> <div class="xp-row xp-row-current"> <label>Текущий</label> <span>{{system.experience.current}}</span> </div> </div> </div> </div>{{!-- /advance-top --}}
+
+  {{!-- Журнал опыта: откуда взялся опыт помимо ручной правки «Всего». Возврат
+        за совпавшую выдачу приходит сам собой, посреди применения расы или
+        Архетипа, и без этой ленты разобраться потом было бы негде. --}}
+  {{#if xpLog.length}}
+  <div class="stat-panel xp-log-panel">
+    <div class="panel-title">ЖУРНАЛ ОПЫТА</div>
+    <table class="items-table xp-log-table">
+      <thead><tr><th class="col-narrow">Когда</th><th>За что</th><th class="col-narrow">Опыт</th></tr></thead>
+      <tbody>
+        {{#each xpLog as |e|}}
+        <tr class="item-row">
+          <td class="xp-log-when">{{e.when}}</td>
+          <td class="xp-log-reason">{{e.reason}}</td>
+          <td class="xp-log-amount">+{{e.amount}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{/if}}
 
   <div class="advance-bottom">{{!-- Характеристики --}}
         <div class="stat-panel advance-chars-edit"> <div class="panel-title">ХАРАКТЕРИСТИКИ</div> <table class="char-table-edit"> <thead> <tr> <th class="cte-name">Х-ка</th> <th class="cte-imp">Улучшение</th> <th class="cte-num">Сверх.</th> <th class="cte-num">База</th> <th class="cte-num">Итого</th> <th class="cte-num">Бонус</th> <th class="cte-cost">Цена</th> </tr> </thead> <tbody> {{#each chars as |char|}}

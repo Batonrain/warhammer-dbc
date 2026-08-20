@@ -5,7 +5,7 @@
               <button type="button" class="wh-slot-btn" data-action="raceApply" title="Применить расу">Применить</button> {{/if}}
             <button type="button" class="wh-slot-btn" data-action="raceClear" title="Снять расу">✕</button> {{else}}
             <button type="button" class="wh-slot-add" data-action="racePick">+ перетащите или нажмите</button> {{/if}}
-          </div> </div> <div class="header-cell header-cell-subrace"> <label>Субраса</label> <div class="subrace-controls"> <div class="wh-slot{{#unless subraceSlot}} empty{{/unless}}{{#if subraceHint}} locked{{/if}}" data-slot="subrace"> {{#if subraceSlot}}
+          </div> </div> {{#if showSubrace}}<div class="header-cell header-cell-subrace"> <label>Субраса</label> <div class="subrace-controls"> <div class="wh-slot{{#unless subraceSlot}} empty{{/unless}}{{#if subraceHint}} locked{{/if}}" data-slot="subrace"> {{#if subraceSlot}}
               <img class="wh-slot-img" src="{{subraceSlot.img}}" alt=""/> <span class="wh-slot-name{{#unless subraceSlot.applied}} pending{{/unless}}">{{subraceSlot.name}}</span> {{#if subraceSlot.applied}}
                 <button type="button" class="wh-slot-btn" data-action="subraceOpen" title="Открыть лист субрасы">⤢</button> {{else}}
                 <button type="button" class="wh-slot-btn" data-action="subraceApply" title="Применить субрасу">Применить</button> {{/if}}
@@ -25,7 +25,7 @@
           </select> {{/if}}
           {{#if isAeldari}}
           <input type="text" name="system.lineageOrigin" value="{{system.lineageOrigin}}" placeholder="Происхождение" title="Мир-корабль / Кабал / линия происхождения"/> {{/if}}
-        </div> </div> {{#if isAstartes}}
+        </div> </div>{{/if}} {{#if isAstartes}}
       <div class="header-cell header-cell-readonly" title="Геносемя — редактируется на вкладке «Заметки» (Происхождение и легион)"> <label>Геносемя</label> <div class="header-readonly-val">{{#if headerGeneSeedName}}{{headerGeneSeedName}}{{else}}—{{/if}}</div> </div>
       <div class="header-cell header-cell-readonly" title="Культура — редактируется на вкладке «Заметки» (Происхождение и легион)"> <label>Культура</label> <div class="header-readonly-val">{{#if headerCultureName}}{{headerCultureName}}{{else}}—{{/if}}</div> </div>
       {{/if}}</div>

@@ -37,3 +37,25 @@
 .wh-cstart .cstart-extra td { border-top: 1px solid var(--wh-border); padding-top: 5px; }
 .wh-cstart .cstart-extra td:first-child { font-size: 0.76em; color: var(--wh-text-mid); text-align: right; }
 .wh-cstart .cstart-extra input { width: 100%; text-align: center; }
+
+/* ── Блок «Склонности» в Мастере (стр. 23-24) ──
+   Ровно четыре Характеристики и четыре прочих: счётчик рядом с заголовком, а
+   лишние фишки гасятся, когда набор закрыт. */
+.wh-apts .apt-group { margin-top: 6px; }
+.wh-apts .apt-group-lbl {
+  font-size: 0.82em; letter-spacing: 0.04em; text-transform: uppercase; color: var(--wh-text-mid);
+}
+.wh-apts .apt-count { margin-left: 6px; font-variant-numeric: tabular-nums; }
+.wh-apts .apt-count-full { color: #7fd6a2; }
+
+.wh-apts .apt-list { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 3px; }
+.wh-apts .apt-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 7px 1px 5px; font-size: 0.84em;
+  border: 1px solid var(--wh-border); border-radius: 11px; cursor: pointer;
+}
+.wh-apts .apt-chip:has(input:checked) { border-color: var(--wh-accent); background: rgba(255,255,255,0.06); }
+/* Гашение — признак «набор закрыт», а не поломки: чип тускнеет целиком. */
+.wh-apts .apt-chip:has(input:disabled) { opacity: 0.4; cursor: default; }
+
+.wh-apts .apt-warn { margin-top: 5px; font-size: 0.78em; color: #e2a04a; min-height: 1em; }

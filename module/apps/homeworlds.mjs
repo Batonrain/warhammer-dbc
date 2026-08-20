@@ -11,10 +11,14 @@
 import { HOMEWORLDS, HOMEWORLD_BY_KEY, HOMEWORLD_SOURCE,
          charModLabel, hasChoices } from "../constants/homeworlds.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
+import { SKILL_SPECIALIZATIONS } from "../constants/skill-specializations.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { registerPackCache, packEntries, clearGrantedBy, charBonusesToMechanics } from "./origin-shared.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { SKIP_MECHANICS_HOOK } from "./races.mjs";
+import { applyItemMechanics } from "./mechanics.mjs";
+import { friendlySpecKey } from "../rules/friendly-specialties.mjs";
 
 const PACK = "warhammer-dbc.homeworlds";
 const FLAG = "warhammer-dbc";
@@ -67,6 +71,20 @@ export function homeworldSheetContext(actor) {
 /** Всё, что было выдано родным миром, помечено флагом — снимаем разом. */
 export async function clearHomeworld(actor) {
   await clearGrantedBy(actor, TAG, actorHomeworldItem(actor));
+}
+
+/**
+ * Есть ли у мира выбор специализаций, число которых зависит от Бонуса
+ * Интеллекта (сейчас единственный такой — Исследовательская станция).
+ * Нужен вызывающим, которые могут применять Родной мир ДО того, как у
+ * персонажа вообще есть Интеллект (напр. Мастер создания — Родной мир
+ * выбирается на Этапе 1, Характеристики только на Этапе 2): без Int.b
+ * диалог показал бы «доступно 0» вместо настоящего числа.
+ * @param {string} key ключ мира
+ */
+export function needsIntBonusChoice(key) {
+  const hw = HOMEWORLD_BY_KEY[key];
+  return !!(hw?.choices || []).some(c => c.countFormula === "intBonus2");
 }
 
 /**
@@ -129,16 +147,30 @@ function promptChoices(hw, actor) {
     else if (ch.type === "many") {
       // Число специализаций считается от Бонуса Интеллекта на момент выбора.
       const count = ch.countFormula === "intBonus2" ? intBonus * 2 : (ch.count || 0);
-      const rows = (ch.groups || []).map(g => {
+      // Общий пул канонических специализаций из всех перечисленных групп —
+      // выпадающий список вместо слепого «впиши через запятую» (был источником
+      // опечаток, которые matchSpec потом не мог сопоставить с каталогом).
+      // Записи с free:true (вида «<Регион>») в пул не идут — под них нет
+      // короткого выпадающего варианта, их по-прежнему вписывают вручную
+      // на самом Навыке после создания.
+      const pool = [];
+      for (const g of (ch.groups || [])) {
         const def = GROUP_SKILLS_DEF[g];
-        return `<div class="hw-many-group"><b>${esc(def?.label || g)}</b>
-          <input type="text" data-many="${ch.key}" data-group="${g}"
-                 placeholder="Специализации через запятую"/></div>`;
-      }).join("");
+        for (const s of (SKILL_SPECIALIZATIONS[g] || [])) {
+          if (s.free) continue;
+          pool.push({ value: `${g}:${s.key}`, label: `${def?.label || g} — ${s.ru || s.label}` });
+        }
+      }
+      const optsHtml = pool.map(o => `<option value="${o.value}">${esc(o.label)}</option>`).join("");
+      const rows = Array.from({ length: Math.max(count, 0) }, (_, i) => `
+        <select class="hw-many-sel" data-many="${ch.key}">
+          <option value="">— выбрать —</option>
+          ${optsHtml}
+        </select>`).join("");
       blocks.push(`<div class="hw-choice">
         <div class="hw-choice-label">${esc(ch.label)} — доступно ${count}</div>
         <div class="hw-choice-hint">${esc(ch.hint || "")}</div>
-        ${rows}
+        <div class="hw-many-grid">${rows}</div>
         <div class="hw-choice-count" data-count-for="${ch.key}">Выбрано: 0 / ${count}</div></div>`);
     }
   }
@@ -159,10 +191,14 @@ function promptChoices(hw, actor) {
           if (hw.charChoice) out.charChoice = parseInt(h.find("#hw-charchoice").val()) || 0;
           h.find("select[data-choice]").each((_, el) => { out.one[el.dataset.choice] = parseInt(el.value) || 0; });
           h.find("input[data-choice]").each((_, el) => { out.text[el.dataset.choice] = String(el.value || "").trim(); });
-          h.find("input[data-many]").each((_, el) => {
+          h.find("select.hw-many-sel").each((_, el) => {
+            const val = String(el.value || "");
+            if (!val) return;
             const k = el.dataset.many;
-            (out.many[k] ||= []).push(...String(el.value || "").split(",")
-              .map(s => s.trim()).filter(Boolean).map(s => ({ group: el.dataset.group, specialty: s })));
+            const sep = val.indexOf(":");
+            const group = val.slice(0, sep), specKey = val.slice(sep + 1);
+            const specDef = (SKILL_SPECIALIZATIONS[group] || []).find(s => s.key === specKey);
+            (out.many[k] ||= []).push({ group, specialty: specDef?.ru || specDef?.label || specKey });
           });
           resolve(out);
         }},
@@ -171,11 +207,10 @@ function promptChoices(hw, actor) {
       default: "ok",
       render: h => {
         // Живой счётчик для «выберите N специализаций».
-        h.find("input[data-many]").on("input", ev => {
+        h.find("select.hw-many-sel").on("change", ev => {
           const k = ev.currentTarget.dataset.many;
           let n = 0;
-          h.find(`input[data-many="${k}"]`).each((_, el) =>
-            { n += String(el.value || "").split(",").map(s => s.trim()).filter(Boolean).length; });
+          h.find(`select.hw-many-sel[data-many="${k}"]`).each((_, el) => { if (el.value) n++; });
           const box = h.find(`[data-count-for="${k}"]`);
           const max = parseInt(box.text().split("/")[1]) || 0;
           box.text(`Выбрано: ${n} / ${max}`);
@@ -227,16 +262,23 @@ async function grantHomeworld(actor, hw, picks) {
 
   // ── Предмет-мир: несёт модификаторы Характеристик ──
   const friendly = (picks.many?.["research-lore"] || []);
+  // Механику носителя ждём синхронно (SKIP_MECHANICS_HOOK, как у applyRace/
+  // applyArchetype) — сама выдача мира интерактивных выборов не просит (те
+  // уже отвечены выше, в promptChoices), но ГМ мог дописать в Механику
+  // записи компендиума что угодно вручную, и без этого асинхронный хук
+  // createItem мог бы отработать уже ПОСЛЕ того, как applyHomeworld вернул
+  // управление вызывающему коду.
   const [worldItem] = await actor.createEmbeddedDocuments("Item", [{
     name: hw.label, type: "homeworld", img: "icons/svg/city.svg",
     system: {
       key: hw.key, description: hw.feature.desc, source: HOMEWORLD_SOURCE,
       featureName: hw.feature.name, featureDesc: hw.feature.desc,
       charModLabel: charBonuses.map(c => `${c.value >= 0 ? "+" : "−"}${Math.abs(c.value)} ${c.stat.toUpperCase()}`).join(", "),
-      choices: chosenLabels, friendlySpecs: friendly
+      choices: chosenLabels, friendlySpecs: friendly.map(f => friendlySpecKey(f.group, f.specialty))
     },
     flags: { [FLAG]: { mechanics: charBonusesToMechanics(charBonuses) } }
-  }]);
+  }], { [SKIP_MECHANICS_HOOK]: true });
+  if (worldItem) await applyItemMechanics(worldItem);
 
   // ── Черта-Особенность ──
   const created = [{
