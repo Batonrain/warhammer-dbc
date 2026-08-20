@@ -196,3 +196,16 @@
 }
 .warhammer-dbc .tech-tab .tech-scan-btn:hover { border-color: var(--mc-data); box-shadow: 0 0 14px -4px var(--mc-data); }
 .warhammer-dbc .tech-tab .tech-ab-ico { color: var(--mc-data); font-size: 1.05em; text-shadow: 0 0 8px color-mix(in srgb, var(--mc-data) 55%, transparent); }
+
+/* ── Инфограждение снаряжения (module/apps/infoguard.mjs) ── */
+.warhammer-dbc .tech-tab .infoguard-list { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--mc-data) 25%, transparent); }
+.warhammer-dbc .tech-tab .infoguard-list-title { font-weight: 700; font-size: 0.8em; color: var(--mc-data); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+.warhammer-dbc .tech-tab .infoguard-list-row { display: flex; align-items: center; gap: 8px; font-size: 0.82em; }
+.warhammer-dbc .tech-tab .infoguard-list-name { flex: 1 1 auto; color: #dfe6ee; }
+.warhammer-dbc .tech-tab .infoguard-list-val { color: #a4b0c0; white-space: nowrap; }
+.warhammer-dbc .tech-tab .tech-infoguard-roll-btn {
+  flex: 0 0 auto; padding: 3px 9px; border-radius: 5px; cursor: pointer; font-family: inherit;
+  font-size: 0.82em; color: #dff7e8; background: linear-gradient(180deg, rgba(20,26,32,0.9), rgba(10,13,18,0.95));
+  border: 1px solid color-mix(in srgb, var(--mc-data) 45%, #2a3038);
+}
+.warhammer-dbc .tech-tab .tech-infoguard-roll-btn:hover { border-color: var(--mc-data); box-shadow: 0 0 12px -4px var(--mc-data); }

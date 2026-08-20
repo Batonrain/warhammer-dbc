@@ -13,9 +13,11 @@ import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
 import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
-import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock } from "../../combat/weapon-properties.mjs";
+import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock,
+         aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
 import { attackThreshold } from "../../combat/attack-threshold.mjs";
 import { psychicHitCount } from "../../combat/attack-outcome.mjs";
+import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { computeWoundDamage } from "./wounds.mjs";
@@ -430,10 +432,18 @@ export async function executePsychotest(actor, item, opts) {
   // ── Авто-урон (для атакующих сил при успехе) ──────────────────────────────
   const isDamaging = ["attack", "psychicShoot", "psychicBlade"].includes(sys.powerType);
   const atkProps   = resolveWeaponPropsList(atk.props);   // свойства атаки (профиля)
+  // Тот же движок, что читает system.weaponProps у обычного оружия
+  // (module/combat/attack.mjs): без него Рвущее/Проверенное/Экстремальный урон
+  // и подобные свойства атаки психосилы были только текстовой памяткой ниже,
+  // а числа в бросок не попадали.
+  const wp         = aggregateAuto(atkProps);
   let damageSection = "";
   if (success && isDamaging && atk.damage) {
     const chars = actor.system.characteristics;
-    const dmgFormula = resolveCharFormula(String(atk.damage).replace(/\bPR\b/gi, damagePR), chars, actor.system.corruptionBonus ?? 0);
+    const dmgFormula = applyDamageDiceMods(
+      resolveCharFormula(String(atk.damage).replace(/\bPR\b/gi, damagePR), chars, actor.system.corruptionBonus ?? 0),
+      wp
+    );
     // Число попаданий по подтипу Психострельбы (стр. 290). Считается по самому
     // подтипу, а не по типу силы: в книге такие силы помечены «Атака ·
     // Психический Шторм · Стрельба», то есть powerType у них «Атака».
@@ -452,6 +462,14 @@ export async function executePsychotest(actor, item, opts) {
       for (let h = 0; h < hits; h++) {
         const dmgRoll = await new Roll(dmgFormula).evaluate();
         allRolls.push(dmgRoll);
+        // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия.
+        const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: atk.damageType, hitLocation: "Торс" });
+        if (ext.exRoll) allRolls.push(ext.exRoll);
+        const extStr = ext.hasExtreme ? `
+              <div class="roll-extreme-block">
+                <b>Экстремальный урон</b> · d5: ${ext.extremeLevel}
+                ${ext.critEffect ? `<div class="roll-crit-effect">${ext.critEffect}</div>` : ""}
+              </div>` : "";
         hitLines.push(`
             <div class="roll-damage-hit">
               <span>${hits > 1 ? `Попадание #${h + 1}` : "Урон"} (${dtLabel}, Проб. ${pen}): <b>${dmgRoll.total}</b></span>
@@ -461,7 +479,7 @@ export async function executePsychotest(actor, item, opts) {
                 data-weapon-name="${item.name}" data-attacker="${actor.name}">
                 ${dmgRoll.total} → Торс
               </button>
-            </div>`);
+            </div>${extStr}`);
       }
       damageSection = `
           <div class="roll-damage-section">

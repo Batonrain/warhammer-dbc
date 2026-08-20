@@ -16,7 +16,8 @@ export class TechPowerData extends foundry.abstract.TypeDataModel {
   /** @override */
   static defineSchema() {
     const { StringField, BooleanField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
-    const num = (initial, label) => new NumberField({ initial, nullable: false, label });
+    const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
+    const list = label => new ArrayField(new ObjectField(), { label });
     return {
       description:   new StringField({ initial: "", label: "Описание" }),
       notes:         new StringField({ initial: "", label: "Заметки" }),
@@ -40,6 +41,10 @@ export class TechPowerData extends foundry.abstract.TypeDataModel {
       damage:        new StringField({ initial: "", label: "Урон" }),
       damageType:    new StringField({ initial: "energy", label: "Тип урона" }),
       penetration:   num(0, "Пробитие"),
+      // Свойства атаки Техночуда (тот же реестр, что у оружия и психосил, стр.
+      // 166-170): раньше их негде было завести, и Экстремальный урон, Рвущее
+      // и подобное для техночудес не считались вовсе — только текстом в «Эффекте».
+      weaponProps:   list("Свойства атаки"),
       effect:        new StringField({ initial: "", label: "Эффект" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" })
     };

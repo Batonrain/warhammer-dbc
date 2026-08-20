@@ -82,6 +82,54 @@ describe("числовая роспись IMPLANT_MECH больше не при�
 // ключи должны быть настоящими. Кортикальный Имплант писал в `i` — такой
 // характеристики нет вовсе (она `int`), и Unnatural I (+2) не работал никогда:
 // надбавка ложилась в несуществующее поле и молча пропадала.
+// Жалоба игрока (bugfix-tech-wonders): «катушка потентия в Техночудесах
+// заполняется от руки, сам не ставится» — базовый имплант Potentia Coil не
+// нёс energyMax вовсе, и максимум Энергии приходилось вбивать вручную на
+// вкладке ТЕХ, хотя книга задаёт его Качеством импланта (Poor 1/Common 3/
+// Good 5/Best 7).
+describe("Катушка Потенции: базовый максимум Энергии по Качеству", () => {
+  function coil(quality) {
+    return { id: `coil-${quality}`, name: "Potentia Coil / Потенциа Коил", type: "implant",
+             system: { effects: {}, category: "cybernetic", quality },
+             getFlag: (_s, k) => (k === "installed" ? true : undefined) };
+  }
+
+  it.each([
+    ["poor", 1], ["common", 3], ["good", 5], ["best", 7]
+  ])("Качество %s даёт maxTotal %i без ручного ввода", (quality, expected) => {
+    const system = characterWith([coil(quality)]);
+
+    expect(system.energy.maxTotal).toBe(expected);
+  });
+
+  it("Мотивные Банки складываются с базой Катушки Потенции", () => {
+    const system = characterWith([
+      coil("common"),
+      { id: "banks", name: "Manipulus Motive Banks / Мотивные Банки Манипулюс", type: "implant",
+        system: { effects: {}, category: "cybernetic", quality: "common" },
+        getFlag: (_s, k) => (k === "installed" ? true : undefined) }
+    ]);
+
+    expect(system.energy.maxTotal).toBe(8); // 3 (Катушка, Common) + 5 (Банки)
+  });
+});
+
+// Жалоба игрока: «абейянт заполняет 3 потенции в ход, вместо 2 когниции,
+// 1 потенции» — обе строки generate шли в energy (⚡), хотя по книге (стр.
+// 276) при подключении техножрец восстанавливает Когницию разово и Энергию
+// по Ходу отдельно.
+describe("Абейянт: генерация ресурсов по подключению", () => {
+  it("разово даёт Когницию, а не Энергию", () => {
+    const mech = IMPLANT_MECH.find(m => m.re.test("Abeyant / Абейянт"));
+
+    const onConnect = mech.gen.find(g => g.action === "free");
+    const perTurn   = mech.gen.find(g => g.action === "turn");
+
+    expect(onConnect).toMatchObject({ res: "cognition", amount: 2 });
+    expect(perTurn).toMatchObject({ res: "energy", amount: 1 });
+  });
+});
+
 describe("ключи числовой росписи", () => {
   it("каждая характеристика в un/val существует", () => {
     const bad = [];

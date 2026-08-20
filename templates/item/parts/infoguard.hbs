@@ -1,0 +1,16 @@
+{{!-- templates/item/parts/infoguard.hbs
+     Инфограждение (гл. IV «Арсенал») — Успехи встречного теста против
+     Техночудес Ноотеургии/Аниматеургии. Показывается только если контекст
+     infoguard собран (module/apps/infoguard.mjs, supportsInfoguard). --}}
+{{#if infoguard}}
+<div class="item-section infoguard-section">
+  <div class="item-section-title">ИНФОГРАЖДЕНИЕ</div>
+  <div class="pa-hist-bar infoguard-row">
+    <span class="infoguard-value" title="Встречный порог против Техночудес Ноотеургии/Аниматеургии («vs Инфограждение»)">🛡 Успехи: <b>{{infoguard.successes}}</b></span>
+    <button type="button" data-action="infoguardRoll" class="pa-btn infoguard-roll-btn"
+            title="½ смены, тест Tech-Use+0 (без бонуса инструментов, кроме Комби-Инструмента в Топоре Омниссии; Unnatural I не учитывается). Успехи делятся пополам (окр.▲).">
+      Наложить Инфограждение
+    </button>
+  </div>
+</div>
+{{/if}}
