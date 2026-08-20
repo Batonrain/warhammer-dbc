@@ -14,7 +14,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { createHash } from "node:crypto";
 import { RACES, SUBRACES, SUBRACE_DATA, RACE_GROUPS } from "../module/constants/races.mjs";
 import { libraryTrait } from "./race-traits.mjs";
@@ -177,7 +177,10 @@ export function run({ write = false } = {}) {
   const all = [...folderDocs(), ...raceDocs()];
   if (write) {
     for (const { path, doc } of all) {
-      mkdirSync(path.slice(0, path.lastIndexOf("/")), { recursive: true });
+      // dirname, а не обрезка по «/»: путь построен через join, и на Windows
+      // разделитель обратный — lastIndexOf вернул бы −1, а slice(0, −1) отрезал
+      // бы последнюю букву имени файла и завёл каталог-призрак.
+      mkdirSync(dirname(path), { recursive: true });
       writeFileSync(path, JSON.stringify(doc, null, 2) + "\n");
     }
   }

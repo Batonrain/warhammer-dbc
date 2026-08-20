@@ -19,6 +19,16 @@ export const unlink = (html) => String(html ?? "").replace(/@UUID\[[^\]]+\]\{([^
 
 const bySort = (a, b) => (a.sort ?? 0) - (b.sort ?? 0);
 
+/** Разметка разбора закладок PDF, если она у раздела была. Порядок — как в исходнике. */
+function outline(page) {
+  const flags = page.flags?.[NS] ?? {};
+  const out = {};
+  for (const key of ["pdfEnd", "level", "checked"]) {
+    if (flags[key] !== undefined) out[key] = flags[key];
+  }
+  return out;
+}
+
 /**
  * Исходник книги по документам её компендиума.
  * @param {object} existing  прежний исходник — из него берётся описание книги
@@ -36,6 +46,12 @@ export function bookSource(existing, docs) {
       pages: [...(doc.pages ?? [])].sort(bySort).map(page => ({
         name: page.name,
         pdfPage: page.flags?.[NS]?.pdfPage,
+        // Разметка разбора закладок (см. outlineFlags в tools/book-docs.mjs).
+        // Ключи ставятся по одному и только если они пришли из пака: порядок
+        // здесь тот же, что в исходнике, а лишний ключ со значением undefined
+        // JSON.stringify выбросит — но у книг без разметки не должно появиться
+        // и его, иначе круговорот покажет правку на ровном месте.
+        ...outline(page),
         html: unlink(page.text?.content)
       }))
     }))
