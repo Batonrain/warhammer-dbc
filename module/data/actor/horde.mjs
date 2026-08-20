@@ -67,6 +67,10 @@ export class HordeData extends foundry.abstract.TypeDataModel {
         charge:   num(0, "Натиск"),  run:  num(0, "Бег")
       }, { label: "Перемещение" }),
       enemiesInMelee: num(0, "Врагов в ближнем бою"),
+      // Расчёты тяжёлого оружия и прочие бойцы с особо мощным оружием: они
+      // стреляют отдельно, своими атаками без бонусов Орды, и вычитаются из
+      // Магнитуды при расчёте её собственной стрельбы.
+      detachedMagnitude: num(0, "Отдельные стрелки"),
       immuneFear:     new BooleanField({ initial: false, label: "Иммунитет к Страху" }),
       traits:  str("Черты"),
       notes:   str("Заметки"),
