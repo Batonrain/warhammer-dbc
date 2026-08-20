@@ -26,6 +26,10 @@ import { disabledActorTypes, featureForActorType, isFeatureEnabled,
          featureForRace, isRaceDisabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
+import { HORDE_SIZE_LABELS, hordeSizeFor, hordeMagDamageDice, hordeState,
+         massDamageThreshold, WEAKENED_WP_PENALTY, noRecoveryHours }
+  from "../rules/horde-damage.mjs";
+import { sanityMax, madnessLevels } from "../rules/dreadnought.mjs";
 
 /**
  * Расчёт движения по таблице Warhammer FFG.
@@ -57,14 +61,6 @@ function calcMovement(agBonus, size) {
   };
 }
 
-// Метки боевого Размера Орды по Магнитуде (Размер в расчётах атак/Stealth).
-const HORDE_SIZE_LABELS = {
-  2: "небольшая толпа / стая",
-  3: "толпа / отряд / выводок",
-  4: "фаланга / орда",
-  5: "массированное наступление",
-  6: "огромная волна"
-};
 
 export class WarhammerActor extends Actor {
   prepareData() { super.prepareData(); }
@@ -515,11 +511,10 @@ export class WarhammerActor extends Actor {
     const value = Math.max(0, Number(mag.value) || 0);
     const start = Math.max(0, Number(mag.start) || 0);
 
-    // Боевой Размер по Магнитуде (не влияет на SPD).
-    const magSize = value >= 120 ? 6 : value >= 90 ? 5 : value >= 60 ? 4
-                  : value >= 30 ? 3 : value >= 10 ? 2 : 1;
-    // Бонус к урону от Магнитуды.
-    const magDamageDice = value >= 20 ? 2 : value >= 10 ? 1 : 0;
+    // Боевой Размер по Магнитуде (не влияет на SPD) и бонусные кубы урона —
+    // счёт общий с конвейером урона, rules/horde-damage.mjs.
+    const magSize       = hordeSizeFor(value);
+    const magDamageDice = hordeMagDamageDice(value);
 
     // Движение: SPD = Ag.bonus + собственный размер существа (не Размер Орды).
     const agB = system.characteristics?.ag?.bonus ?? 0;
@@ -528,14 +523,16 @@ export class WarhammerActor extends Actor {
     // Боевые показатели Орды.
     const meleeTargets = Math.max(1, Math.floor(value / 5));
     const enemiesMelee = Math.max(0, Number(system.enemiesInMelee) || 0);
-    const rangedShots  = Math.max(0, Math.floor(value / 10) - Math.floor(enemiesMelee / 2));
+    // Отдельные стрелки (расчёты тяжёлого оружия) бьют своими атаками и в
+    // стрельбе Орды не участвуют — их Магнитуда из расчёта вычитается.
+    const detached     = Math.min(value, Math.max(0, Number(system.detachedMagnitude) || 0));
+    const shootingMag  = Math.max(0, value - detached);
+    const rangedShots  = Math.max(0, Math.floor(shootingMag / 10) - Math.floor(enemiesMelee / 2));
 
     // Состояние по доле от стартовой Магнитуды.
     const pct = start > 0 ? value / start : 1;
     const immune = !!system.immuneFear;
-    let state = "steady";                       // боеспособна
-    if (!immune && pct <= 0.25) state = "broken";        // Сломлена (рассыпается)
-    else if (pct <= 0.50) state = "weakened";            // Ослаблена (−10 W)
+    const state = hordeState({ value, start, immune });
 
     // Броня Орды: все попадания идут в торс, поэтому считается AP тела, и не
     // суммой, а по лучшему предмету — как у существ (несколько слоёв брони не
@@ -557,6 +554,7 @@ export class WarhammerActor extends Actor {
       magDamageStr: magDamageDice ? `+${magDamageDice}d10` : "—",
       meleeTargets,
       rangedShots,
+      detached,
       psychTestBonus: value,                    // бонус к тестам Страха/Запугивания/Подавления = Магнитуда
       pct: Math.round(pct * 100),
       state,
@@ -565,7 +563,17 @@ export class WarhammerActor extends Actor {
       psychDamage: Math.max(0, Number(system.psychDamage) || 0),
       halfThreshold: Math.floor(start * 0.5),
       quarterThreshold: Math.floor(start * 0.25),
-      massDamageThreshold: Math.ceil(start * 0.25)   // 25%+ за раунд → тест W+Магнитуда
+      massDamageThreshold: massDamageThreshold(start),  // 25%+ за раунд → тест W+Магнитуда
+      // Ослабленная Орда катит Волю с −10 и не лечит психологический урон
+      // 10−W.b часов. Штраф уже сложен в порог теста Воли ниже.
+      wpPenalty: state === "weakened" ? WEAKENED_WP_PENALTY : 0,
+      wpTestThreshold: (system.characteristics?.wp?.total ?? 0)
+                     + (state === "weakened" ? WEAKENED_WP_PENALTY : 0),
+      // Порог психологического теста: Воля плюс Магнитуда (толпа держится числом).
+      psychTestThreshold: (system.characteristics?.wp?.total ?? 0) + value
+                        + (state === "weakened" ? WEAKENED_WP_PENALTY : 0),
+      noRecoveryHours: noRecoveryHours(system.characteristics?.wp?.bonus ?? 0),
+      roundDamage: Number(this.getFlag?.("warhammer-dbc", "hordeRoundDamage")) || 0
     };
   }
 
@@ -798,7 +806,13 @@ export class WarhammerActor extends Actor {
         const mech = implantMech(item.name);
         if (mech) {
           const q = item.system.quality || "common";
-          if (mech.energyMax) implantEnergyMax += mech.energyMax;
+          // energyMax — число (флат) либо {poor,common,good,best}, когда сама
+          // надбавка зависит от Качества импланта (базовая Катушка Потенции).
+          if (mech.energyMax) {
+            implantEnergyMax += typeof mech.energyMax === "object"
+              ? (mech.energyMax[q] ?? 0)
+              : mech.energyMax;
+          }
           if (mech.compensator && (mech.compensator[q] ?? 0) > implantCompBonus)
             implantCompBonus = mech.compensator[q] ?? 0;
           if (mech.ironFocus)
@@ -1010,6 +1024,23 @@ export class WarhammerActor extends Actor {
       system.fateMaxAuto = true;
     }
 
+    // ── Здравомыслие пилота Дредноута (Книга Машин, стр. 57) ────────────────
+    // Максимум зависит только от локальных данных (W.b и число взятых «Ядро
+    // Воспоминаний» — тот же приём подсчёта повторяемого Таланта, что и у
+    // «Бездонной Души» выше), поэтому считается для КАЖДОГО персонажа, не
+    // только пилотов: дёшево, и не требует обращения к миру. Кто именно сейчас
+    // пилот — знает только сам Дредноут (место экипажа с ролью pilot хранит его
+    // uuid), и это спрашивается на уровне листа (sheets/tabs/dreadnought-panel.mjs),
+    // а не здесь: prepareDerivedData обязан работать и без game.actors (см.
+    // module/rules/dreadnought.mjs).
+    if (system.sanity) {
+      const coreMemories = this.items.filter(i =>
+        i.type === "talent" && /Core Memories|Ядро Воспоминаний/i.test(i.name)).length;
+      system.sanity.max = sanityMax(chars.wp?.bonus ?? 0, coreMemories);
+      system.sanity.value = Math.max(0, Math.min(system.sanity.max, Number(system.sanity.value) || 0));
+      system.sanity.thresholds = madnessLevels(system.sanity.value);
+    }
+
     const tb = chars.t?.bonus ?? 0;
 
     // ── Броня ─────────────────────────────────────────────────────────────
@@ -1136,15 +1167,32 @@ export class WarhammerActor extends Actor {
     }
 
     // ── Вес ───────────────────────────────────────────────────────────────
-    // Надетая силовая броня (armorType power/aspect) несёт свой вес сама —
-    // сервоприводы разгружают носителя, поэтому её вес не учитывается в нагрузке.
-    const POWER_ARMOR_TYPES = new Set(["power", "aspect"]);
+    // «Нейтрализует собственный вес в расчёте переносимого веса» (стр. 233,
+    // «СИЛОВАЯ БРОНЯ») — прочитано ещё раз по картинке страницы (текстовый
+    // слой PDF был обманчив: двухколоночная вёрстка визуально ставит общий
+    // список свойств рядом с ПЕРВОЙ таблицей модели — Лёгкой Силовой — из-за
+    // чего предыдущее чтение приняло общее правило за особенность только этой
+    // модели). На самом деле абзац «Вся силовая броня, имеет свойства Hard,
+    // Heavy и Sealed…» и список ниже — общее описание ВСЕЙ силовой брони,
+    // ДО таблиц конкретных моделей; ни в одном из блоков самих моделей (Light/
+    // Sabbat/Power Armour/Dragon Scale/Vrantine) вес отдельно не оговаривается
+    // — только отличия от этого общего правила. Аспектная броня Аэльдари
+    // (armorType "aspect") к этой главе не относится, её не трогаем.
+    // Книга также разделяет ВКЛЮЧЕННУЮ и ВЫКЛЮЧЕННУЮ силовую броню — «Она
+    // более не подавляет свой вес» в выключенном состоянии. Учитываем через
+    // system.active (те же имя/семантика, что у armorMod.activatable/active,
+    // см. комментарий у поля в data/item/armor.mjs) — по умолчанию true, так
+    // что существующие предметы паков ведут себя как раньше, пока игрок сам
+    // не выключит броню тумблером на листе предмета. Другие последствия
+    // выключенной брони (Max.A 35, штрафы −10/−40 на действия) книга
+    // описывает тоже, но здесь не реализованы — отдельная, более крупная
+    // задача, не часть этой правки.
     let totalWeight = 0;
     for (const item of this.items) {
       const s = item.system;
       const w = parseFloat(s.weight) || 0;
-      if (item.type === "armor" && s.equipped && POWER_ARMOR_TYPES.has(s.armorType)) {
-        continue; // силовая броня носит себя сама
+      if (item.type === "armor" && s.equipped && ((s.armorType === "power" && s.active) || s.weightless)) {
+        continue; // несёт свой вес сама
       }
       if (["gear","drug","tool","ammo"].includes(item.type)) {
         totalWeight += w * (parseInt(s.quantity) || 1);
@@ -1189,6 +1237,17 @@ export class WarhammerActor extends Actor {
     system.homeworldCarryBonus = hwCarry;
 
         // ── Опыт ──────────────────────────────────────────────────────────────
+    // Ловит на Лету / Fast Learner (X): +X% к стартовому опыту и опыту за
+    // сессию (ГМ округляет вверх), X = рейтинг Черты, разный у рас (10/15/20/25).
+    // Готового derived-поля под «+X% к прибавляемому опыту» нет — начисление
+    // разовое (диалог module/apps/stat-log.mjs), а не пересчитываемое каждый
+    // prepareData(), поэтому ActiveEffect тут не работает (некуда бить: сумма
+    // не хранится, а вводится). Здесь только живой процент с Черты — читает его
+    // тот же диалог в момент прибавления опыта.
+    const fastLearner = this.items.find(i => i.type === "trait"
+                                           && /Fast Learner|Ловит на Лету/i.test(i.name));
+    system.fastLearnerBonus = fastLearner ? (Number(fastLearner.system?.rating) || 0) : 0;
+
     // Автосумма цен характеристик
     let autoCharCost = 0;
     for (const char of Object.values(chars)) {
@@ -1224,11 +1283,21 @@ export class WarhammerActor extends Actor {
     }
     system.experience.spentPsy = autoPsyCost;
 
+    // Элитные архетипы (стр. 114): цена лежит на самом предмете и уже посчитана
+    // с множителем за предыдущие. Сумма по предметам, а не отдельный счётчик:
+    // снятый с листа архетип обязан вернуть опыт сам, без ручной правки.
+    let autoEliteCost = 0;
+    for (const it of this.items) {
+      if (it.type === "eliteArchetype") autoEliteCost += (parseInt(it.system?.paidCost) || 0);
+    }
+    system.experience.spentElite = autoEliteCost;
+
     const spentTotal =
       (system.experience.spentChar    || 0) +
       (system.experience.spentSkills  || 0) +
       (system.experience.spentTalents || 0) +
       (system.experience.spentPsy     || 0) +
+      (system.experience.spentElite   || 0) +
       (system.experience.spentOther   || 0);
 
     system.experience.spent   = spentTotal;

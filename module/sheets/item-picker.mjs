@@ -11,8 +11,14 @@ import { talentCostXP, aptitudeCat, charAptitudeSet, ALIGN_LABEL,
          resolveTalentAptitudes } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
+import { createOrRankTalent } from "../rules/duplicate-grants.mjs";
+import { DREADNOUGHT_PILOT_FLAG } from "../rules/dreadnought.mjs";
+import { masteryTargets, masteryAptitudes } from "../rules/mastery-targets.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { isMinionTalent } from "../rules/minion-build.mjs";
+import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
+import { arsenalSpecKind, arsenalSpecOptions } from "../constants/weapon-categories.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 function cultFxOf(actor) {
@@ -46,7 +52,11 @@ export function talentGroupLock(actor, kind, parent, folderName) {
     return has ? null : "Нужна Черта Navigator's Gen / Ген Навигатора";
   }
   if (parent === "Элитные архетипы") {
-    const has = sys.eliteArchetype === folderName || (sys.eliteArchetypesExtra || []).includes(folderName);
+    // Архетип бывает и предметом на листе, и строкой в шапке: предметом — когда
+    // куплен пикером, строкой — когда вписан руками или пришёл со старого листа.
+    const has = sys.eliteArchetype === folderName
+      || (sys.eliteArchetypesExtra || []).includes(folderName)
+      || items.some(i => i.type === "eliteArchetype" && i.name === folderName);
     return has ? null : `Нужен Элитный архетип «${folderName}»`;
   }
   if (parent === "Таланты одержимых") {
@@ -93,6 +103,14 @@ export function talentGroupLock(actor, kind, parent, folderName) {
   if (!parent && folderName === "Геносемя") {
     return hasRuleFlag(actor, "talents.geneSeed") ? null : "Нужно Геносемя (раса Астартес)";
   }
+  // Таланты Дредноутов (Книга Машин, стр. 58) книга даёт только заключённому в
+  // саркофаг. Возможность раздаёт источник «dreadnought» (module/rules/
+  // sources.mjs) по месту экипажа с ролью «пилот» — то есть по связи, которая
+  // живёт на ЧУЖОМ акторе, и в полях самого персонажа её не найти.
+  if (!parent && folderName === "Дредноуты") {
+    return hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
+      ? null : "Нужно быть назначенным пилотом Дредноута";
+  }
   return null;
 }
 
@@ -104,12 +122,16 @@ export function talentGroupLock(actor, kind, parent, folderName) {
 export function dynamicTalentOptions(actor, doc, kind, charApts) {
   const defs = { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF };
   const tier = doc.system?.tier || 3;
+  // «Мастерство» владеет не абстрактным Навыком, а конкретным: у групп это
+  // специализация («Запретные знания (Демоны)»), и склонности берутся у неё —
+  // у Навигации (Варп) первая склонность Воля, а не Интеллект группы.
   const src  = kind === "char"
     ? Object.entries(CHAR_APTITUDES).map(([k]) => [k, CHARACTERISTICS[k]?.label || k.toUpperCase()])
-    : [...Object.entries(SKILLS_DEF).map(([k, v]) => [k, v.label]),
-       ...Object.entries(GROUP_SKILLS_DEF).map(([k, v]) => [k, `${v.label} (группа)`])];
+    : masteryTargets().map(t => [t.key, t.label]);
   return src.map(([key, label]) => {
-    const apts = resolveTalentAptitudes(doc.name, doc.system?.aptitudes || [], key, defs);
+    const apts = kind === "char"
+      ? resolveTalentAptitudes(doc.name, doc.system?.aptitudes || [], key, defs)
+      : masteryAptitudes(key);
     const cat  = aptitudeCat(charApts, apts);
     return { key, label, apts, cat, cost: talentCostXP(tier, apts, charApts,
       talentCategory(actor, label)) };
@@ -173,6 +195,35 @@ export function promptDynamicAptTalent(actor, doc, kind, charApts) {
         upd();
       }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-dyn-apt-dialog"], width: 460 }).render(true);
+  });
+}
+
+/**
+ * Диалог выбора специализации Weapon Training / Melee Training (стр. 62):
+ * одна категория из фиксированного списка (module/constants/weapon-categories.mjs),
+ * а не вся строка шаблона разом — иначе module/rules/weapon-training.mjs не
+ * смог бы сравнить владение с категорией конкретного оружия.
+ */
+export function promptArsenalSpec(doc, kind) {
+  const opts = arsenalSpecOptions(kind);
+  const rows = opts.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  return new Promise(resolve => {
+    new Dialog({
+      title: `${doc.name}: выбор специализации`,
+      content: `
+        <form class="wh-dyn-apt">
+          <div class="atk-dlg-row">
+            <label>Специализация:</label>
+            <select id="arsenal-spec-sel" class="pm-input pm-wide">${rows}</select>
+          </div>
+        </form>`,
+      buttons: {
+        ok: { label: "Купить", callback: html => resolve(String(html.find("#arsenal-spec-sel").val() || "")) },
+        cancel: { label: "Отмена", callback: () => resolve(null) }
+      },
+      default: "ok",
+      close: () => resolve(null)
+    }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-dyn-apt-dialog"], width: 380 }).render(true);
   });
 }
 
@@ -314,7 +365,17 @@ export async function openItemPicker(actor, kind) {
           // Авто-цена по склонностям; помечаем как купленный (учитывается в Опыте).
           obj.system = obj.system || {};
           const dyn = dynamicAptKind(d.name);
-          if (dyn) {
+          if (isMinionTalent(d)) {
+            // «Миньон Хаоса» — один Талант на двадцать разных слуг (стр. 111):
+            // группа и сила спрашиваются до оплаты, потому что от них зависит
+            // уровень Таланта, а значит и цена.
+            const pick = await promptMinionSlot(actor, d);
+            if (!pick) return;                       // отмена — ничего не покупаем
+            applyMinionSlot(obj, pick);
+            obj.system.cost = talentCostXP(pick.talentTier, d.system.aptitudes || [], charApts,
+              talentCategory(actor, d.name, d.folder),
+              { name: d.name, patron: actor.system.patronGod });
+          } else if (dyn) {
             // Mastery / Beyond Human: сначала выбор привязки (стр. 62), затем
             // цена по склонностям выбранной Характеристики/Навыка (стр. 23-24).
             const pick = await promptDynamicAptTalent(actor, d, dyn, charApts);
@@ -323,6 +384,17 @@ export async function openItemPicker(actor, kind) {
             obj.system.aptitudes      = pick.apts;   // фиксируем на предмете
             obj.system.aptSource      = pick.key;    // ключ Х-ки/навыка для пересчёта
             obj.system.cost           = pick.cost;
+          } else if (arsenalSpecKind(d.name)) {
+            // Weapon Training / Melee Training (стр. 62): у шаблона в
+            // specialization лежат ВСЕ варианты через запятую — без выбора
+            // это скопировалось бы как есть, и module/rules/weapon-training.mjs
+            // не смог бы сравнить его с категорией конкретного оружия.
+            const category = await promptArsenalSpec(d, arsenalSpecKind(d.name));
+            if (!category) return;                   // отмена — ничего не покупаем
+            obj.system.specialization = category;
+            obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
+              talentCategory(actor, d.name, d.folder),
+              { name: d.name, patron: actor.system.patronGod });
           } else {
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),
@@ -330,9 +402,13 @@ export async function openItemPicker(actor, kind) {
           }
           obj.system.purchased = true;
         }
-        await actor.createEmbeddedDocuments("Item", [obj]);
+        // Многократный Талант (system.hasRating — Enemy, стр. 62, и подобные),
+        // уже лежащий на листе, не задваивается второй копией: ранг существующего
+        // предмета поднимается на 1. Остальные Таланты, Черты и Мутации — как раньше.
+        const { ranked, rating } = await createOrRankTalent(actor, obj);
+        const verb = ranked ? `Ранг поднят до ${rating}` : "Куплено";
         ui.notifications.info(kind === "talent" && obj.system?.cost
-          ? `Куплено: ${d.name} (−${obj.system.cost} XP)` : `Добавлено: ${d.name}`);
+          ? `${verb}: ${d.name} (−${obj.system.cost} XP)` : `${ranked ? `Ранг поднят до ${rating}` : "Добавлено"}: ${d.name}`);
         $(ev.currentTarget).closest(".pick-row").addClass("just-added");
       });
       const toggle = row => {

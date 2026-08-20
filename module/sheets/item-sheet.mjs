@@ -1,5 +1,11 @@
 import { armourHistoryContext, rollArmourTable, rollArmourEntry,
          rollArmourZones, setArmourEntry, clearArmourHistory } from "../apps/armour-history.mjs";
+import { infoguardContext, rollInfoguard }                    from "../apps/infoguard.mjs";
+import { submutationContext, rollSubmutation,
+         pickSubmutation, clearSubmutation }                   from "../apps/submutations.mjs";
+import { legacyContext, rollAscension, breakLegacy, setHistory, rollHistory,
+         rollMutation, addCustomMutation, removeMutation,
+         legacyPrompt }                                        from "../apps/legacy-weapon.mjs";
 import { shipQualityMods, qualityOptionsFor, effectiveWeapon, clampQuality, QUALITY_LABELS }
   from "../constants/ship-quality.mjs";
 import { availableFieldModes, fieldSuitFor } from "../constants/drukhari-armor-fields.mjs";
@@ -12,6 +18,7 @@ import { ARMOR_PROPERTIES,
          TOOL_CATEGORIES, RIG_COMFORT, RIG_SLOT_SIZES, ITEM_TYPES } from "../constants/items.mjs";
 import { qualityEffects, itemSpecificQuality }       from "../constants/quality.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
+import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { WEAPON_PROPERTIES,
@@ -29,15 +36,18 @@ import { PSY_POWER_TYPES }                           from "../constants/psyker.m
 import { TECH_MIRACLE_TYPES }                        from "../constants/tech.mjs";
 import { SKILLS_DEF }                                from "../constants/skills.mjs";
 import { CHARACTERISTICS, APTITUDES }                from "../constants/characteristics.mjs";
+import { dynamicAptKind }                            from "../constants/advancement.mjs";
+import { masteryTargets }                            from "../rules/mastery-targets.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES,
          buildDisciplineContext }                    from "../constants/disciplines.mjs";
 import { DW_GODS_MAP }                               from "../constants/demon-weapon.mjs";
 import { summarizeEffectChanges, expectedPhase }     from "../constants/effect-keys.mjs";
 import { createBlankEffect } from "../apps/effects.mjs";
 import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml,
-         syncWeaponPropItemEffects, findMechGroup, findMechEntry,
+         saveItemMechanics, findMechGroup, findMechEntry,
          getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
+import { buildEliteReqHtml, activateEliteReqListeners } from "../apps/elite-req-builder.mjs";
 import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
 import { openCompendiumBrowser }                     from "../apps/compendium-browser.mjs";
 import { factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, patronTarget,
@@ -52,6 +62,7 @@ import { factionRosterContext, originTreeContext,
                                                      from "../apps/faction-roster.mjs";
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
 import { onTab, whenEditable, linesToArray }         from "./v2-helpers.mjs";
+import { relayItemUpdate }                           from "../helpers/utils.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -68,21 +79,11 @@ function _typeLabel(map, key) {
 // стоят однострочные переходники, подставляющие this.item.
 
 /**
- * Досчитываем system.effects.mechAddProps/mechRemoveProps при КАЖДОМ
- * сохранении, не только из полей weaponProp — иначе смена kind/удаление группы
- * или записи не подчистили бы то, что раньше построил kind:"weaponProp"
- * (см. mechanics.mjs).
- *
- * Пересборку эффектов отсюда НЕ зовём: на неё уже подписан хук updateItem
- * (warhammer-dbc.mjs) — он ловит любую правку Механики, не только с этого
- * листа. Два вызова разом гонялись бы: хук ядро зовёт синхронно, ещё до того
- * как setFlag вернёт управление, и оба прогона успели бы увидеть «эффекта
- * нет» и завести по своему.
+ * Сохранение Механики живёт в mechanics.mjs: писать её умеет не только лист
+ * (без прав на предмет правка уходит Мастеру по сокету), поэтому путь один на
+ * всех, а здесь — только короткое имя.
  */
-async function saveMechanics(item, arr) {
-  await item.setFlag("warhammer-dbc", "mechanics", arr);
-  await syncWeaponPropItemEffects(item);
-}
+const saveMechanics = (item, arr) => saveItemMechanics(item, arr);
 
 // Какой набор групп требований правим («req» ритуалиста или «assistReq»
 // ассистентов) — в data-req, поэтому один комплект обработчиков обслуживает
@@ -163,6 +164,26 @@ function onGrantEntryRemove(event, target) {
   return saveMechanics(this.item, arr);
 }
 
+// «Когда» (entry.when.conditions) — варианты одного условия, ИЛИ между ними
+// (см. buildEntryWhenHtml/entryWhenOk в mechanics.mjs).
+function onGrantWhenAdd(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  const e = findMechEntry(arr, target.dataset.groupId, target.dataset.entryId);
+  if (!e) return;
+  e.when = e.when || { negate: false, conditions: [] };
+  e.when.conditions.push({ legion: "", chapter: "" });
+  return saveMechanics(this.item, arr);
+}
+
+function onGrantWhenRemove(event, target) {
+  const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+  const e = findMechEntry(arr, target.dataset.groupId, target.dataset.entryId);
+  if (!e || !e.when) return;
+  const idx = parseInt(target.dataset.whenIdx);
+  e.when.conditions = (e.when.conditions || []).filter((_, i) => i !== idx);
+  return saveMechanics(this.item, arr);
+}
+
 /** Черта / Талант: сброс перетащенного (сам дроп резолвится в _onDropGrantItem). */
 function onGrantDropClear(event, target) {
   const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -233,12 +254,21 @@ function onReqDropClear(event, target) {
 }
 
 // ── Особенность комплекта силовой брони ──
+function onInfoguardRoll() { return rollInfoguard(this.item); }
+
 function onPaRollTable() { return rollArmourTable(this.item); }
 function onPaRollZones() { return rollArmourZones(this.item); }
 function onPaClear()     { return clearArmourHistory(this.item); }
 function onPaRollEntry() {
   return rollArmourEntry(this.item,
     this.element.querySelector(".pa-table-select")?.value || this.item.system.history?.table);
+}
+
+// ── Субмутация (корбук, стр. 440) ──
+function onSubRoll()  { return rollSubmutation(this.item); }
+function onSubClear() { return clearSubmutation(this.item); }
+function onSubPick()  {
+  return pickSubmutation(this.item, this.element.querySelector(".sub-entry-select")?.value);
 }
 
 // ── Правящие действия ──
@@ -444,6 +474,8 @@ export class WarhammerItemSheet
       grantOpToggle: onGrantOpToggle,
       grantEntryAdd: onGrantEntryAdd,
       grantEntryRemove: onGrantEntryRemove,
+      grantWhenAdd: onGrantWhenAdd,
+      grantWhenRemove: onGrantWhenRemove,
       grantDropClear: onGrantDropClear,
       wpropDropClear: onWpropDropClear,
       reqGroupAdd: onReqGroupAdd,
@@ -452,10 +484,14 @@ export class WarhammerItemSheet
       reqEntryAdd: onReqEntryAdd,
       reqEntryRemove: onReqEntryRemove,
       reqDropClear: onReqDropClear,
+      infoguardRoll: whenEditable(onInfoguardRoll),
       paRollTable: onPaRollTable,
       paRollEntry: onPaRollEntry,
       paRollZones: onPaRollZones,
       paClear: onPaClear,
+      subRoll: onSubRoll,
+      subPick: onSubPick,
+      subClear: onSubClear,
       // Ниже — то, что в V1 висело после общей проверки isEditable.
       torpedoAssemble: whenEditable(onTorpedoAssemble),
       wpropRemove: whenEditable(onWpropRemove),
@@ -478,8 +514,15 @@ export class WarhammerItemSheet
     }
   };
 
+  // scrollable — прокрутка тела листа переживает перерисовку. Без него любая
+  // правка (а лист перерисовывается на каждое изменение) швыряла к самому
+  // верху, и до Конструктора внизу вкладки приходилось мотать заново.
   static PARTS = {
-    body: { template: "systems/warhammer-dbc/templates/item/item-sheet.hbs", root: true }
+    body: {
+      template: "systems/warhammer-dbc/templates/item/item-sheet.hbs",
+      root: true,
+      scrollable: [".sheet-body"]
+    }
   };
 
   // «СОСТАВ» объявлен для всех типов, а показывается только у Фракции (разметка
@@ -737,7 +780,6 @@ export class WarhammerItemSheet
    * ссылку (UUID), имя, картинку, признак «есть рейтинг» у Черт.
    */
   async _onDropGrantItem(event, data, dropZone) {
-    if (!this.item.isOwner) return;
     const groupId = dropZone.dataset.groupId, entryId = dropZone.dataset.entryId;
     const src = await Item.implementation.fromDropData(data);
     if (!src) return;
@@ -754,7 +796,7 @@ export class WarhammerItemSheet
     ent.sourceHasRating  = src.type === "trait" ? !!src.system.hasRating : false;
     ent.rating           = (src.type === "trait" && src.system.hasRating) ? (src.system.rating ?? 0) : "";
     ent.specialization   = src.type === "talent" ? (src.system.specialization || "") : "";
-    await this.item.setFlag("warhammer-dbc", "mechanics", groups);
+    await saveMechanics(this.item, groups);
   }
 
   /**
@@ -764,7 +806,6 @@ export class WarhammerItemSheet
    * при действии «заменить свойство») — пишет в соответствующую пару полей.
    */
   async _onDropWeaponPropItem(event, data, dropZone) {
-    if (!this.item.isOwner) return;
     const groupId = dropZone.dataset.groupId, entryId = dropZone.dataset.entryId;
     const slot = dropZone.dataset.slot === "newProp" ? "newProp" : "prop";
     const src = await Item.implementation.fromDropData(data);
@@ -787,8 +828,7 @@ export class WarhammerItemSheet
         && (ent.weaponPropAction === "increase" || ent.weaponPropAction === "decrease")) {
       ent.weaponPropAction = "add";
     }
-    await this.item.setFlag("warhammer-dbc", "mechanics", groups);
-    await syncWeaponPropItemEffects(this.item);
+    await saveMechanics(this.item, groups);
   }
 
   /** @override */
@@ -814,6 +854,12 @@ export class WarhammerItemSheet
     context.tab = this.tabGroups?.["item-primary"] ?? WarhammerItemSheet.TABS["item-primary"].initial;
     // Истории силовой брони — только для брони Астартес и при включённом расширении.
     context.armourHistory = armourHistoryContext(this.item);
+    // Инфограждение — только у не-примитивных/не-мистических weapon/armor/gear/tool.
+    context.infoguard     = infoguardContext(this.item);
+    // Субмутации — только у мутаций, у которых таблица есть в тексте (стр. 440).
+    context.submutation   = submutationContext(this.item);
+    // Оружие Наследия — только у оружия (стр. 426-428).
+    context.legacy        = legacyContext(this.item);
     context.system = this.item.system;
 
     context.system.balanceStr      = String(context.system.balance      ?? "0");
@@ -832,8 +878,8 @@ export class WarhammerItemSheet
       }
     }
 
-    // ── Оружие и психосилы: особые свойства атаки (общий список) ────────────────
-    if (this.item.type === "weapon" || this.item.type === "psychicPower") {
+    // ── Оружие, психосилы и техночудеса: особые свойства атаки (общий список) ──
+    if (["weapon", "psychicPower", "techPower"].includes(this.item.type)) {
       const active     = context.system.weaponProps || [];
       const activeKeys = new Set(active.map(p => p.key));
       context.weaponPropsActive = active
@@ -934,6 +980,9 @@ export class WarhammerItemSheet
           any: (mech.traits || []).length || (mech.skills || []).length || mech.note || (mech.q && Object.keys(mech.q).length),
         };
       }
+      // Активное исцеление Сус-ан Мембраны у Призраков Смерти — пусто у всех
+      // остальных владельцев того же органа (module/apps/sus-an-heal.mjs).
+      context.susAnHealHtml = susAnHealButtonHtml(this.item, this.item.parent);
     }
 
     // ── Торпеда (боеголовка + система наведения) ────────────────────────────────
@@ -1020,6 +1069,11 @@ export class WarhammerItemSheet
       Object.assign(context, await factionRosterContext(this.item), originTreeContext(this.item));
     }
 
+    // Элитный архетип: Конструктор требований (три блока разной силы).
+    if (this.item.type === "eliteArchetype") {
+      context.eliteReqHtml = buildEliteReqHtml(this.item, context.canEditMech);
+    }
+
     // ── Талант: склонности ───────────────────────────────────────────────────────
     if (this.item.type === "talent") {
       const active = context.system.aptitudes || [];
@@ -1030,6 +1084,9 @@ export class WarhammerItemSheet
       context.aptitudesAvailable = Object.entries(APTITUDES)
         .filter(([k]) => !used.has(k))
         .map(([k, label]) => ({ key: k, label }));
+      // «Мастерство» привязывается к конкретному Навыку (стр. 62) — подсказываем
+      // весь список, включая специализации групп.
+      if (dynamicAptKind(this.item.name) === "skill") context.masteryList = masteryTargets();
     }
 
     // ── Модификация брони ───────────────────────────────────────────────────────
@@ -1193,6 +1250,14 @@ export class WarhammerItemSheet
       context.armorPropsAvailable = Object.entries(ARMOR_PROPERTIES)
         .filter(([key]) => !activeProps.includes(key))
         .map(([key, def]) => ({ key, label: def.label }));
+
+      // Разгрузка силовой брони (стр. 27) — те же константы, что у снаряжения.
+      const sys = context.system;
+      if (!sys.rig) sys.rig = { comfort: "normal", backSlot: false, slots: [], magLocks: [] };
+      if (!Array.isArray(sys.rig.slots))    sys.rig.slots = [];
+      if (!Array.isArray(sys.rig.magLocks)) sys.rig.magLocks = [];
+      context.rigComfort   = RIG_COMFORT;
+      context.rigSlotSizes = RIG_SLOT_SIZES;
     }
 
     // ── Силовой щит ───────────────────────────────────────────────────────────
@@ -1280,7 +1345,13 @@ export class WarhammerItemSheet
     // предмета) — единый Конструктор, общая вкладка для всех типов. Заменил
     // собой прежние раздельные Скрипты/Выдачи/кнопку «Конструктор» в Эффектах.
     context.itemMechGroups   = getItemMechanics(this.item);
-    context.itemMechanicsHtml = buildMechanicsTabHtml(this.item, context.isGM);
+    // Механику настраивают все за столом, а не один Мастер: Черты, Таланты и
+    // снаряжение лежат в компендиумах и в мире, и «своими» для игрока не
+    // бывают — по владению доступ давать нечему. Закрыт только запертый
+    // компендиум: там правку не примут ни у кого. Чужой предмет клиент писать
+    // не вправе, поэтому такая правка уходит Мастеру (saveItemMechanics).
+    context.canEditMech       = !this.item.compendium?.locked;
+    context.itemMechanicsHtml = buildMechanicsTabHtml(this.item, context.canEditMech);
 
     // Ритуал — контентные разделы книги (стр. 393-425) и два набора
     // механических требований: к ритуалисту и к ассистентам.
@@ -1288,7 +1359,15 @@ export class WarhammerItemSheet
       context.ritualItemTypes     = RITUAL_ITEM_TYPES;
       context.ritualTest          = ritualTestContext(this.item);
       context.ritualReqHtml       = buildRequirementsHtml(this.item, "req", context.isGM);
-      context.ritualAssistReqHtml = buildRequirementsHtml(this.item, "assistReq", context.isGM);
+      // Вилка «0—0» — ритуал проводится в одиночку: ассистентов у него не
+      // бывает, и требовать с них нечего. Блок требований к ассистентам в этом
+      // случае выключаем целиком (вместе с кнопками групп), чтобы не набирать
+      // условия для тех, кого не позовут.
+      const s = this.item.system || {};
+      context.ritualHasAssists    = !!((Number(s.assistMin) || 0) || (Number(s.assistMax) || 0));
+      context.ritualAssistReqHtml = context.ritualHasAssists
+        ? buildRequirementsHtml(this.item, "assistReq", context.isGM)
+        : "";
     }
 
     // Раса/Субраса — десять полей характеристик листаются циклом в шаблоне,
@@ -1330,6 +1409,48 @@ export class WarhammerItemSheet
     ui.notifications.info(`Собрано торпед: ${n}. Списано из грузов: ${whLabel} ×${n}${navNeeded ? `, ${navLabel} ×${n}` : ""}.`);
   }
 
+  /**
+   * ApplicationV2 гасит всю форму, если предмет не наш. Вкладку «Механика» это
+   * гасить не должно: её настраивают все за столом, а правка чужого предмета
+   * уходит Мастеру (saveItemMechanics). Полей формы там нет — у элементов
+   * Механики нет name, в сабмит они не попадают и правятся своими
+   * обработчиками, — поэтому вернуть их в строй безопасно.
+   *
+   * «Особенность комплекта» силовой брони (.pa-history, вкладка «ИНФО») живёт
+   * по тому же правилу «не своим для игрока не бывает» (module/apps/
+   * armour-history.mjs, relayItemUpdate) — без этой строчки её кнопки
+   * оставались бы серыми у любого, кто не владелец предмета, хотя запись и
+   * так уходит через Мастера. У её input'а тоже нет name (armor.hbs) — по
+   * той же причине, что у Механики.
+   * @override
+   */
+  _toggleDisabled(disabled) {
+    super._toggleDisabled?.(disabled);
+    if (!disabled || this.item.compendium?.locked) return;
+    this.element?.querySelectorAll(
+      '[data-tab="mechanics"] input, [data-tab="mechanics"] select,'
+      + ' [data-tab="mechanics"] textarea, [data-tab="mechanics"] button,'
+      + ' .pa-history input, .pa-history select, .pa-history button')
+      .forEach(node => { node.disabled = false; });
+  }
+
+  /**
+   * Перетаскивание Черты/Таланта/Свойства оружия на запись «Механики»
+   * (.grant-drop-zone/.wprop-drop-zone) должно работать даже у того, кто
+   * предметом не владеет — тот же принцип, что и у _toggleDisabled выше, и
+   * тот же приём, что в ship-sheet.mjs/squad-sheet.mjs/vehicle-sheet.mjs/
+   * formation-sheet.mjs: штатный DragDrop Foundry сам вешает обработчик
+   * 'drop' по _canDragDrop(), а не по отдельным зонам, и без переопределения
+   * гасится вместе со всей формой (this.isEditable=false) — драг-н-дроп молча
+   * переставал работать, оставляя ТОЛЬКО свободный код («Код») как способ
+   * задать что-либо предмету. Разрешение по-прежнему проверяет каждый
+   * обработчик отдельно: _onDropReqItem/_onDropTalentTarget — только ГМ,
+   * _onDropActiveEffect — только owner, _onDropGrantItem/_onDropWeaponPropItem
+   * — через relay (saveItemMechanics), поэтому здесь достаточно всегда true.
+   * @override
+   */
+  _canDragDrop(_selector) { return true; }
+
   _onRender(context, options) {
     super._onRender?.(context, options);
     const el = this.element;
@@ -1340,6 +1461,9 @@ export class WarhammerItemSheet
 
     /** Слушатель на все узлы по селектору — замена jQuery-обхода из V1. */
     const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
+
+    // Конструктор требований Элитного архетипа.
+    if (this.item.type === "eliteArchetype") activateEliteReqListeners(el, this.item);
 
     // ── Цели Таланта (Hatred, Peer, Enemy, Good Reputation) ─────────────────
     // Цель добавляется тремя путями, потому что и природа у целей разная:
@@ -1511,6 +1635,13 @@ export class WarhammerItemSheet
       if (fx) await fx.update({ disabled: !ev.currentTarget.checked });
     });
 
+    // ── Сус-ан Мембрана: активное исцеление Призраков Смерти раз в сутки ────────
+    on(".sus-an-heal-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useSusAnHeal(actor, this.item);
+    });
+
     // ── МЕХАНИКА (единый Конструктор: Характеристика/Черта/Талант/Навык/Код,
     // группы И/ИЛИ) — общая вкладка для всех типов. Кнопки групп и записей —
     // действия [data-action] выше; здесь остались поля записи.
@@ -1524,8 +1655,10 @@ export class WarhammerItemSheet
       // blankMechEntry(kind) — а не blankMechEntry() — иначе смена вида на
       // "group" оставила бы entry.group=null (kind сам по себе выставился бы
       // верно 3-м аргументом Object.assign, но вложенная подгруппа — нет).
+      // when сохраняется явно: условие «Когда» — про то, КОМУ достаётся
+      // запись, а не про то, ЧТО она даёт, смена вида его не касается.
       const kind = ev.currentTarget.value;
-      Object.assign(e, blankMechEntry(kind), { id: e.id, kind });
+      Object.assign(e, blankMechEntry(kind), { id: e.id, kind, when: e.when });
       saveMech(arr);
     });
     // Порча (kind:"corruption")
@@ -1619,6 +1752,22 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.movementValue = ev.currentTarget.value === "" ? "" : (parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
     });
+    // Очки Брони по локации (kind:"armour")
+    on(".mech-armour-loc", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.armourLocation = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-armour-op", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-armour-value", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.armourValue = ev.currentTarget.value === "" ? "" : (parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
+    });
     // Ландшафт — игнорирование свойств (kind:"terrainIgnore")
     on(".mech-terrain-ignore", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -1627,6 +1776,27 @@ export class WarhammerItemSheet
       e.ignoreTerrainProps = Array.from(ev.currentTarget.selectedOptions).map(o => o.value);
       saveMech(arr);
     });
+    // Переброс (kind:"reroll"). Смена области меняет набор полей (у «теста
+    // характеристики» появляется её выбор, у «теста навыка» — навык), поэтому
+    // сохраняем и даём листу перерисоваться, как у Усталости ниже.
+    const mechField = (sel, apply) => on(sel, "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      apply(e, ev.currentTarget.value);
+      saveMech(arr);
+    });
+    mechField(".mech-reroll-scope", (e, v) => { e.rerollScope = v; });
+    mechField(".mech-reroll-char",  (e, v) => { e.rerollChar = v; });
+    mechField(".mech-reroll-skill", (e, v) => { e.skillKey = v; });
+    mechField(".mech-reroll-mode",  (e, v) => { e.rerollMode = v; });
+    mechField(".mech-reroll-label", (e, v) => { e.label = v; });
+    mechField(".mech-mod-scope",     (e, v) => { e.modScope = v; });
+    mechField(".mech-mod-valuemode", (e, v) => { e.modValueMode = v; });
+    mechField(".mech-mod-char",      (e, v) => { e.modCharBonus = v; });
+    mechField(".mech-reroll-who",    (e, v) => { e.rerollWho = v; });
+    mechField(".mech-capability-key", (e, v) => { e.capabilityKey = v; });
+
     // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
     // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.
     on(".mech-fatigue-action", "change", ev => {
@@ -1686,6 +1856,40 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipQty = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
     });
+    // Ступень Таланта и потолок Пси-Рейтинга — фильтры небоевых паков.
+    // Пустая строка значит «любая», поэтому пустое НЕ приводится к нулю.
+    const setEquipFilter = (sel, field) => on(sel, "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      const raw = String(ev.currentTarget.value).trim();
+      e[field] = raw === "" ? "" : (parseInt(raw) || 0);
+      saveMech(arr);
+    });
+    setEquipFilter(".mech-equip-tier", "equipTalentTier");
+    setEquipFilter(".mech-equip-pr",   "equipMaxPsyRating");
+    const setMinionSlot = (sel, field) => on(sel, "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e[field] = ev.currentTarget.value; saveMech(arr); }
+    });
+    setMinionSlot(".mech-minion-group", "minionGroup");
+    setMinionSlot(".mech-minion-tier",  "minionTier");
+    on(".mech-equip-quality", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.equipQuality = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-equip-budget-mode", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.equipBudgetMode = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-equip-budget-value", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.equipBudgetValue = Math.max(0, parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
+    });
     // Лояльность миньонов (kind:"loyalty")
     on(".mech-loyalty-type", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -1731,6 +1935,50 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.code = ev.currentTarget.value; saveMech(arr); }
     });
+    // ── «Когда» (entry.when) — гейт по Геносемени, общий для ЛЮБОГО kind ────
+    // (см. entryWhenOk в mechanics.mjs). conditions — список вариантов (ИЛИ),
+    // data-when-idx метит, какой именно правим. Смена легиона в варианте
+    // сбрасывает его орден: набор орденов зависит от легиона, старый выбор из
+    // другого дерева не годится.
+    const whenCondition = (e, idx) => {
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.conditions[idx] = e.when.conditions[idx] || { legion: "", chapter: "" };
+      return e.when.conditions[idx];
+    };
+    on(".grant-when-legion", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      const c = whenCondition(e, parseInt(ev.currentTarget.dataset.whenIdx) || 0);
+      c.legion = ev.currentTarget.value;
+      c.chapter = "";
+      saveMech(arr);
+    });
+    on(".grant-when-chapter", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      const c = whenCondition(e, parseInt(ev.currentTarget.dataset.whenIdx) || 0);
+      c.chapter = ev.currentTarget.value;
+      saveMech(arr);
+    });
+    on(".grant-when-age", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      const c = whenCondition(e, parseInt(ev.currentTarget.dataset.whenIdx) || 0);
+      const v = ev.currentTarget.value;
+      c.ageAtLeast = v === "" ? "" : Math.max(0, parseInt(v) || 0);
+      saveMech(arr);
+    });
+    on(".grant-when-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negate = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
     // Кнопки групп и условий — действия [data-action] выше; здесь поля записи.
     const patchReq = (ev, fn) => patchReqEntry(this.item, ev.currentTarget, fn);
@@ -1760,6 +2008,7 @@ export class WarhammerItemSheet
     on(".req-race", "change",      ev => patchReq(ev, (e, el) => { e.raceKey = el.value; }));
     on(".req-archetype", "change", ev => patchReq(ev, (e, el) => { e.archetypeName = el.value; }));
     on(".req-patron", "change",    ev => patchReq(ev, (e, el) => { e.patronKey = el.value; }));
+    on(".req-capability-key", "change", ev => patchReq(ev, (e, el) => { e.capabilityKey = el.value; }));
 
     // Черта / Талант (драг-н-дроп резолвится в _onDropGrantItem)
     on(".grant-entry-rating", "change", ev => {
@@ -1813,6 +2062,14 @@ export class WarhammerItemSheet
       e.specChoiceKeys = [...set];
       saveMech(arr);
     });
+    // Сколько РАЗНЫХ специализаций выбирает актор: «Общие знания (любые 4)».
+    on(".grant-entry-spec-count", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.specChoiceCount = Math.max(1, parseInt(ev.currentTarget.value) || 1);
+      saveMech(arr);
+    });
     on(".grant-entry-rank", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
@@ -1848,13 +2105,48 @@ export class WarhammerItemSheet
       if (e) { e.weaponPropNewValue2 = ev.currentTarget.value; saveMech(arr); }
     });
 
+    // ── Оружие Наследия (стр. 426-428) ──
+    //   Возвышение — тест Inf, он же правит профиль оружия; История и Мутации
+    //   выбираются или бросаются, Мутация требует выбранного Характера.
+    on(".legacy-ascend", "click", () => rollAscension(this.item, {
+      deedBonus: parseInt(el.querySelector(".legacy-deed")?.value) || 0,
+      legendary: !!el.querySelector(".legacy-legendary")?.checked
+    }));
+    on(".legacy-break", "click", () => breakLegacy(this.item));
+    on(".legacy-history-select", "change", ev => {
+      if (ev.currentTarget.value) setHistory(this.item, ev.currentTarget.value);
+    });
+    on(".legacy-roll-history", "click", () => rollHistory(this.item));
+    on(".legacy-character-select", "change", ev =>
+      this.item.update({ "system.legacy.character": ev.currentTarget.value }));
+    on(".legacy-roll-mutation", "click", () => rollMutation(
+      this.item, el.querySelector(".legacy-character-select")?.value));
+    on(".legacy-mutation-del", "click", ev =>
+      removeMutation(this.item, Number(ev.currentTarget.dataset.index)));
+    on(".legacy-custom-mutation", "click", async () => {
+      const name = await legacyPrompt("Название Мутации", "Нестандартная Мутация");
+      if (name === null) return;
+      const text = await legacyPrompt("Правило Мутации", "");
+      if (text === null) return;
+      await addCustomMutation(this.item, name, text);
+    });
+
     // ── Особенность комплекта силовой брони ──
+    // relayItemUpdate, а не this.item.update напрямую: комплект силовой брони
+    // так же часто «не свой» для игрока, как и запись Механики (лежит в мире/
+    // компендиуме, пока его не выдали) — без релея правка тихо отклонялась бы
+    // проверкой прав Foundry. Тот же приём — у input'а .pa-hist-choice ниже.
     on(".pa-table-select", "change", ev =>
-      this.item.update({ "system.history.table": ev.currentTarget.value }));
+      relayItemUpdate(this.item, { "system.history.table": ev.currentTarget.value }));
     on(".pa-entry-select", "change", ev => {
       const table = el.querySelector(".pa-table-select")?.value || this.item.system.history?.table;
       if (ev.currentTarget.value) setArmourEntry(this.item, table, ev.currentTarget.value);
     });
+    // Поле «уточнение» у особенностей с hasChoice — то же самое, почему без
+    // name (см. .pa-hist-choice в armor.hbs): нативный сабмит формы пишет
+    // документ владельца напрямую, мимо relayItemUpdate.
+    on(".pa-hist-choice-input", "change", ev =>
+      relayItemUpdate(this.item, { "system.history.choice": ev.currentTarget.value }));
 
     // Качество узла: галочки модификаторов. Лишние сверх лимита сбрасываем —
     // иначе тихо применились бы только первые, а вид говорил бы обратное.

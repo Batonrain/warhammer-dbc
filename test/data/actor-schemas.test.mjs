@@ -34,7 +34,11 @@ const PACKS = {
   formation:   null,
   ship:        null,
   starSystem:  null,
-  character:   "bestiary"
+  character:   "bestiary",
+  // Миньон (стр. 111-113) заведён уже после отказа от template.json: снимка
+  // прежних умолчаний у него нет и быть не может. Вместо сверки со снимком у
+  // него своя проверка ниже — состав полей относительно общей схемы существа.
+  minion:      null
 };
 
 // Миньоны (стр. 111-113) — поля заведены уже после того, как template.json
@@ -45,11 +49,25 @@ const MINION_FIELDS = {
   masterUuid: "", minionType: "", minionTier: "", loyalty: { value: 0, max: 0 }
 };
 
+// Верховой бой (стр. 477-478) заведён так же поздно, и по той же причине его
+// полей нет в снимке. Ссылку на скакуна хранит ВСАДНИК — скакуном бывает и
+// техника, у которой общей схемы существа нет вовсе (rules/mount.mjs).
+const MOUNT_FIELDS = {
+  mount: { uuid: "", role: "rider", speed: "still", sync: false, linked: false, skidUsed: false }
+};
+
 /** Расхождения сверх общих для трёх типов с характеристиками. */
 const OWN_DEVIATIONS = {
   // Пусто = Бог не выбран. Умолчание "undivided" делало «Покровительство:
   // Неделимый» выполненным у любого, кто не трогал выбор (wdbc-osz).
-  character: { patronGod: "" },
+  // Здравомыслие пилота Дредноута (wdbc-a7s) — в template.json поля не было
+  // вовсе, механика Книги Машин появилась позже. electrostim/hibernation —
+  // туда же: буст Электростимуляторов и флаг Гибернации (стр. 57-58).
+  character: {
+    patronGod: "", sanity: { value: 0, max: 0 },
+    electrostim: { active: false, amount: 0 },
+    hibernation: { active: false }
+  },
   // Вкладку «ТЕЛО» Принцу открыли позже: она общая с Персонажем, и её хранимые
   // поля (фигура голо-скана и жизнеобеспечение) пришлось завести и здесь.
   demonPrince: { bodyType: "male", vitals: { hunger: 0, thirst: 0, sleep: 0 } }
@@ -67,7 +85,11 @@ const DEVIATIONS = {
     skills: Object.fromEntries(Object.keys(SKILLS_DEF)
       .map(k => [k, { rank: "untrained", total: -20 }])),
     // Групповые — записями со специализацией, как у существ.
-    groupSkills: Object.fromEntries(Object.keys(GROUP_SKILLS_DEF).map(k => [k, []]))
+    groupSkills: Object.fromEntries(Object.keys(GROUP_SKILLS_DEF).map(k => [k, []])),
+    // Расчёты тяжёлого оружия: стреляют отдельно, своими атаками без бонусов
+    // Орды, и вычитаются из Магнитуды в расчёте её стрельбы. В template.json
+    // поля не было — правило считали на бумаге.
+    detachedMagnitude: 0
   },
   // У трёх существ три набора расхождений сразу, и записаны они по-разному:
   // поля Миньонов и свои поля типа — обычными именами, надбавки характеристик —
@@ -80,12 +102,32 @@ const DEVIATIONS = {
   // заново, и эффект поверх него не поднимал ни Бонус, ни навыки (wdbc-5wm).
   ...Object.fromEntries(["character", "daemon", "demonPrince"].map(type => [type, {
     ...MINION_FIELDS,
+    ...MOUNT_FIELDS,
     // Три слота Стремлений. Раньше писались прямо в `aspirations`, но то поле
     // объявлено объектом (там Фактор Прибыли), и массив схема отбрасывала —
     // выбор не сохранялся вовсе. Теперь у слотов своё поле.
     "aspirations.slots": [],
     // Отношения (вкладка СОЦИУМ): к кому этот актор как относится.
     relations: [],
+    // Командование вне Отряда: командовать можно и теми, кто в Отряд не сведён.
+    // Поля повторяют лист Отряда, но без Слаженности и Риска — их у случайной
+    // группы взять неоткуда. В template.json блока не было вовсе: Команды
+    // отдавались только через Отряд.
+    followers: [],
+    command: {
+      presence:      { active: false, benefit: "extreme" },
+      shortCommand:  { active: false, key: "inspire", successes: 0, note: "" },
+      detailCommand: { active: false, successes: 0, picks: [] }
+    },
+    // Журнал опыта: откуда взялся опыт помимо ручной правки «Всего». Первым
+    // его наполняет возврат за совпавшую выдачу Навыка или Таланта.
+    "experience.log": [],
+    // Опыт на Элитные архетипы: своя статья, а не «прочее», потому что сумма
+    // считается по предметам на листе — у каждого лежит уплаченная цена.
+    "experience.spentElite": 0,
+    // База рукопашной атаки (стр. 13) — заведена отдельно от Приёма гораздо
+    // позже template.json, тем же приёмом, что и meleeStance когда-то.
+    meleeBase: "standard",
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]
@@ -126,7 +168,7 @@ describe("типы данных акторов", () => {
     describe(type, () => {
       const Model = ACTOR_DATA_MODELS[type];
 
-      it("пустой актор получает умолчания прежнего template.json", () => {
+      it.skipIf(!LEGACY[type])("пустой актор получает умолчания прежнего template.json", () => {
         expect(new Model({}).toObject()).toEqual(withDeviations(LEGACY[type], DEVIATIONS[type]));
       });
 
@@ -147,6 +189,38 @@ describe("типы данных акторов", () => {
       });
     });
   }
+
+  // Миньон — существо с общей механикой плюс три своих поля. Проверяем не
+  // снимок (его нет), а что схема не разошлась с общей: слуга кидает те же
+  // Характеристики и Навыки, носит то же снаряжение, и лист персонажа
+  // показывает его вкладками персонажа.
+  describe("minion", () => {
+    const minion = new ACTOR_DATA_MODELS.minion({}).toObject();
+    const daemon = new ACTOR_DATA_MODELS.daemon({}).toObject();
+
+    it("берёт всю общую схему существа", () => {
+      // У Демона свои поля сверх общих — сравниваем в одну сторону: всё, что
+      // есть у существа, должно быть и у Миньона.
+      const daemonOwn = ["allegiance", "rank", "form", "instabilityRating",
+                         "trueName", "trueNameKnown", "portfolio", "isDaemon"];
+      const missing = Object.keys(daemon)
+        .filter(key => !daemonOwn.includes(key) && !(key in minion));
+      expect(missing).toEqual([]);
+    });
+
+    it("добавляет своё: признак, Талант-слот и Магнитуду Орды", () => {
+      expect(minion.isMinion).toBe(true);
+      expect(minion.slotTalentId).toBe("");
+      expect(minion.magnitude).toEqual({ value: 0, max: 0 });
+    });
+
+    it("привязка к Хозяину и Лояльность — те же поля, что у существа", () => {
+      expect(minion.masterUuid).toBe("");
+      expect(minion.minionType).toBe("");
+      expect(minion.minionTier).toBe("");
+      expect(minion.loyalty).toEqual({ value: 0, max: 0 });
+    });
+  });
 
   describe("разовые переезды", () => {
     it("ростер экипажа техники переезжает из crew в stations", () => {

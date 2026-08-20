@@ -13,7 +13,7 @@
 
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }       from "../constants/items.mjs";
-import { MELEE_STANCES, GRIPS, parseGrips, gripEffects } from "../constants/combat.mjs";
+import { MELEE_STANCES, MELEE_BASES, MELEE_MANEUVERS, GRIPS, parseGrips, gripEffects } from "../constants/combat.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { rollIcon }                           from "../constants/roll-icons.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
@@ -23,9 +23,19 @@ import { attackThreshold }                    from "../combat/attack-threshold.m
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
+import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
+import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS } from "../rules/mount.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
-import { ruleRollModsHtml }                   from "../rules/roll-mods.mjs";
+import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
+import { isHandShield } from "../combat/hand-shield.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
+
+// Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
+// и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
+// в showAttackDialog/showAttackDialogNoWeapon ниже.
+const FULL_ATTACK_CAPABILITY = "technique.baseFullAttack";
 
 /**
  * Всё, что игрок отметил в окне, — одним чтением формы.
@@ -46,6 +56,17 @@ function readAttackForm(form, ammoConds) {
   const ROF = "input[name='atk-rof']:checked";
   const AIM = "input[name='atk-aiming']:checked";
 
+  // Стойка/База/Приём/Хват/Профиль — undefined, если в форме нет такой
+  // группы (стрелковое: только Профиль) или ничего не выбрано (не должно
+  // случиться — по одному option всегда checked), resolveSelection тогда
+  // берёт стартовое значение диалога.
+  const stanceKey    = el("input[name='atk-stance']:checked")?.value;
+  const baseKey      = el("input[name='atk-base']:checked")?.value;
+  const maneuverKey  = el("input[name='atk-maneuver']:checked")?.value;
+  const gripKeySel   = el("input[name='atk-grip']:checked")?.value;
+  const profIdxRaw   = el("input[name='atk-profile']:checked")?.value;
+  const profIdxSel   = profIdxRaw === undefined ? undefined : Number(profIdxRaw);
+
   const ammoSel = all(".atk-ammo-cond:checked")
     .map(cb => ammoConds[parseInt(cb.dataset.idx)]).filter(Boolean);
 
@@ -59,7 +80,14 @@ function readAttackForm(form, ammoConds) {
 
   const swift = on("#atk-swift"), lightning = on("#atk-lightning"), allOut = on("#atk-allout");
 
+  // Выбранный переброс: −1 значит «без переброса».
+  const rerollEl = el(".rule-reroll-opt:checked");
+  const rerollIdx = parseInt(rerollEl?.dataset?.idx ?? "-1");
+
   return {
+    reroll: rerollIdx >= 0
+      ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2 }
+      : null,
     autoFail:   all(".atk-mod-cb[data-autofail]:checked").length > 0,
     char:       el("#atk-char")?.value,
     modifier:   parseInt(el("#atk-modifier")?.value) || 0,
@@ -67,6 +95,12 @@ function readAttackForm(form, ammoConds) {
     rofBonus:   attr(ROF, "bonus"),
     aimVal:     el("#atk-aim")?.value,
     aimPenalty: attr("#atk-aim option:checked", "penalty"),
+    // Кого выцеливают в паре «всадник + скакун» и во что это обходится. Штраф
+    // берётся только вместе с зоной прицела: не-Избирательная атака никого не
+    // выцеливает вовсе — там попадание делится по дублю (стр. 478).
+    mountPick:    el("#atk-mount")?.value || "",
+    mountPenalty: el("#atk-aim")?.value
+      ? (parseInt(el("#atk-mount option:checked")?.dataset?.penalty) || 0) : 0,
     aiming:     el(AIM)?.value || "none",
     aimBonus:   attr(AIM, "bonus"),
     // Отмеченные ситуативные: сумма — в порог, список — в сводку заголовка.
@@ -81,7 +115,8 @@ function readAttackForm(form, ammoConds) {
     shortRange: on("#atk-shortrange"),
     weaponOff:  on("#atk-weaponoff"),
     maximal:    on("#atk-maximal"),
-    bandIdx:    Number(el("#atk-band")?.value ?? -1)
+    bandIdx:    Number(el("#atk-band")?.value ?? -1),
+    stanceKey, baseKey, maneuverKey, gripKey: gripKeySel, profIdx: profIdxSel
   };
 }
 
@@ -93,24 +128,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const isMelee = sys.weaponClass === "melee" || sys.weaponClass === "thrown" || forceMelee;
   const charKey = isMelee ? "ws" : "bs";
 
-  // ── Хват и профиль выбираются в HUD (флаги оружия) или передаются в opts ──
-  //   Здесь применяются молча: пилюль выбора в окне атаки больше нет (стр. 39, 207-221).
+  // ── Хват и профиль: значения по умолчанию (из HUD-флагов оружия или opts) ──
+  //   Теперь выбираются прямо в этом окне (см. resolveSelection ниже) — эти
+  //   переменные лишь стартовые значения, с которых открывается диалог.
   const gripList  = isMelee ? parseGrips(sys.grips) : [];
   const primGrip  = gripList[0] || "";
   const gripKey   = techniqueOpts.gripKey
                  ?? item.getFlag?.("warhammer-dbc", "hudGrip")
                  ?? primGrip;
-  const gripDef   = GRIPS[gripKey] ? gripEffects(gripKey, gripKey !== primGrip) : null;
   const atkProfiles = Array.isArray(sys.profiles) ? sys.profiles : [];
   let   profIdx   = techniqueOpts.profileIdx;
   if (profIdx === undefined || profIdx === null) profIdx = item.getFlag?.("warhammer-dbc", "hudProfile");
   profIdx = Number.isFinite(Number(profIdx)) ? Number(profIdx) : -1;
-  const atkProfile  = (profIdx >= 0) ? (atkProfiles[profIdx] || null) : null;
-  const gripWs      = gripDef ? gripDef.ws : 0;
-  const attackNote  = [
-    atkProfile ? `Профиль: ${atkProfile.label || "доп."}${atkProfile.damage ? ` (${atkProfile.damage})` : ""}` : "",
-    gripDef ? `Хват: ${gripDef.label}${gripDef.ws ? ` · WS ${gripDef.ws >= 0 ? "+" : ""}${gripDef.ws}` : ""}${gripDef.dmgFlat ? ` · урон ${gripDef.dmgFlat >= 0 ? "+" : ""}${gripDef.dmgFlat}` : ""}${gripDef.sbHalf ? " · ½S.b" : ""} — ${gripDef.note}` : ""
-  ].filter(Boolean).join("<br>");
 
   // ── Особые свойства оружия (+ модификации + боеприпас) ───────────────────
   const modFx       = getModEffects(actor, item);
@@ -143,9 +172,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     sBonus:     actor.system.characteristics?.s?.bonus ?? 0,
     isGrenade:  sys.weaponType === "grenade"
   });
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total;
-  const wantShortBox = !isMelee && (wp.meltaShort || wp.scatter);
-  const wantMaximal  = !isMelee && wp.maximal;
+  // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.
+  const weaponTraining = weaponTrainingPenalty({
+    actor, weaponType: sys.weaponType, weaponClass: sys.weaponClass,
+    isGrenade: sys.weaponType === "grenade"
+  });
 
   // ── Правила из реестра (module/rules/) ───────────────────────────────────
   //   Атака — такой же тест конвейера, как бросок навыка: вид теста «attack»,
@@ -159,10 +190,54 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
   };
   const ruleMods = ruleRollModsHtml(actor, attackCtx);
+  // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
+  // Отдельным блоком: складывать их не с чем, выбирается один.
+  const ruleRerolls = ruleRerollsHtml(actor, attackCtx);
+  // Перебросы, навязанные ЦЕЛИ (Локус Кровопролития), в свой блок не идут:
+  // бросает их защищающийся у себя. Они уезжают атрибутом на кнопки защиты в
+  // карточке атаки — см. combat/attack-card.mjs.
+  const forcedDefenceReroll = (resolveTest({ actor, ...attackCtx }).rerolls || [])
+    .find(r => r.who === "target")?.mode || "";
 
-  const stance      = actor.system.meleeStance || "standard";
-  const stanceDef   = MELEE_STANCES[stance];
-  const stanceBonus = isMelee ? (stanceDef?.wsBonus ?? 0) : 0;
+  // Стойка цели (стр. 15, Защитная/Прикрывающая) меняет ЧУЖИЕ атаки против
+  // неё — читается с targetActor, а не с атакующего, и складывается прямо в
+  // wpAttackMod (тот же слот, что Легион/Арсенал ниже).
+  const targetStance    = (isMelee && attackCtx.targetActor) ? (attackCtx.targetActor.system?.meleeStance || "standard") : "";
+  const targetStanceDef = targetStance ? MELEE_STANCES[targetStance] : null;
+  const targetStanceMod = targetStanceDef?.attackerMod ?? 0;
+  const targetStanceBadge = targetStanceMod
+    ? `<span class="atk-training-warn" title="Стойка цели меняет порог атаки по ней">🎯 Цель: ${esc(targetStanceDef.label)} (${targetStanceMod >= 0 ? "+" : ""}${targetStanceMod})</span>`
+    : "";
+
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod;
+  // Melee Training (стр. 62) — используется ниже resolveSelection, чтобы
+  // ограничить доступные Стойку/Хват/Приём. Категория неизвестна (данные
+  // ещё не дошли из packs-src, см. память doombc-arsenal-weapon-training) —
+  // meleeTrainingStatus сама трактует пустую категорию как «владеет».
+  const meleeCategory = sys.meleeCategory || "";
+  const meleeTraining = isMelee ? meleeTrainingStatus(actor, meleeCategory) : { trained: true, source: "" };
+  const wantShortBox = !isMelee && (wp.meltaShort || wp.scatter);
+  const wantMaximal  = !isMelee && wp.maximal;
+
+  // Стойка/База — персистентны на акторе, стартовые значения для resolveSelection
+  // ниже (выбор в этом диалоге может их поменять — см. кнопку «Бросок!»).
+  const stance = actor.system.meleeStance || "standard";
+
+  // Локус Сокрушения подменяет Базу на «Полная Атака», пока способность не
+  // потрачена в текущем Раунде (см. FULL_ATTACK_CAPABILITY выше) — расходуется
+  // самим броском, а не открытием окна (см. кнопку «Бросок!» ниже).
+  const fullAttackForced = isMelee
+    && hasRuleFlag(actor, FULL_ATTACK_CAPABILITY)
+    && isRoundCapabilityAvailable(actor, FULL_ATTACK_CAPABILITY);
+  const meleeBaseKey = fullAttackForced ? "fullatk" : (actor.system.meleeBase || "standard");
+
+  // Верховая Атака (стр. 12) — только персонажам верхом на байке/скакуне,
+  // ссылку на него держит сам всадник (module/rules/mount.mjs, тот же
+  // принцип, что у mountPairFor ниже). Защитная Стойка (стр. 15) без щита
+  // запрещает атаки вовсе — щит определяется тем же полем, что и в HUD/
+  // sheet-helpers (system.shieldAP != null, module/combat/hand-shield.mjs).
+  const isMounted        = isMelee && !!actor.system?.mount?.uuid;
+  const hasShieldEquipped = isMelee && actor.items.some(i => i.system?.equipped && isHandShield(i));
 
   const currentAiming = actor.system.aiming || "none";
   const aimingBonus   = currentAiming === "half" ? 10 : currentAiming === "full" ? 20 : 0;
@@ -174,17 +249,147 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const ammoSys    = loadedAmmo?.system;
   const ammoAtkMod = ammoSys?.attackMod ?? 0;
 
-  const techBonus = techniqueOpts.extraBonus ?? 0;
-  const charBase  = (actor.system.characteristics[charKey]?.total ?? 0) + (sys.attackBonus || 0) + wpAttackMod + gripWs;
-  const charVal   = charBase + techBonus + stanceBonus + (wp.noAim ? 0 : aimingBonus) + ammoAtkMod;
+  const maneuverKeyDefault = techniqueOpts.technique || "standard";
+
+  // ── Доступность Стойки/Хвата/Базы/Приёма (стр. 62, Melee Training) ───────
+  // Без Рукопашной Тренировки на категорию оружия книга разрешает только
+  // Обычную Атаку, Стандартную Стойку и Базовый (первый) Хват — База книгой
+  // не ограничена, остаётся полностью на выбор. Приём дополнительно всегда
+  // сверяется со списком совместимых категорий (MELEE_MANEUVERS[*].categories),
+  // независимо от тренировки — но только если категория оружия известна:
+  // много предметов пока без meleeCategory (пак не пересобран), и в этом
+  // случае фильтр не применяется — лучше показать лишнее, чем незаслуженно
+  // запереть Приёмы там, где данных попросту ещё нет.
+  // Стойка дополнительно сверяется со своим categories/minBalance (Частокол:
+  // Глефа/Копьё/Штык; Пружинящая: Баланс не ниже 0, стр. 15) — так же, как
+  // Приём сверяется со своим categories ниже.
+  const stanceOptions = Object.entries(MELEE_STANCES).map(([key, def]) => {
+    const trainingOk = meleeTraining.trained || key === "standard";
+    const fitOk = def.categories ? (!meleeCategory || def.categories.includes(meleeCategory))
+      : def.minBalance != null ? ((sys.balance ?? 0) >= def.minBalance)
+      : true;
+    const reason = !trainingOk
+      ? `Нужна Рукопашная Тренировка (${meleeCategory})`
+      : (!fitOk ? (def.categories ? `Не подходит категории «${meleeCategory}»` : `Нужен Баланс не ниже ${def.minBalance}`) : "");
+    return { key, label: def.label, allowed: trainingOk && fitOk, reason };
+  });
+  const gripOptions = gripList.map(key => ({
+    key, label: GRIPS[key]?.label || key,
+    allowed: meleeTraining.trained || key === primGrip
+  }));
+  // "freeattack" (Свободная Атака, стр. 12) — Реакция доступная всем, как и
+  // Обычная Атака: книга не требует Тренировки для неё отдельно.
+  const maneuverOptions = Object.entries(MELEE_MANEUVERS).map(([key, def]) => {
+    const categoryOk = key === "standard" || key === "freeattack" || !def.categories || !meleeCategory || def.categories.includes(meleeCategory);
+    const trainingOk = meleeTraining.trained || key === "standard" || key === "freeattack";
+    const reason = !trainingOk
+      ? `Нужна Рукопашная Тренировка (${meleeCategory})`
+      : (!categoryOk ? `Не подходит категории «${meleeCategory}»` : "");
+    return { key, label: def.label, allowed: trainingOk && categoryOk, reason };
+  });
+  /**
+   * Пилюли Базы зависят от ТЕКУЩЕЙ Стойки (Частокол запрещает Натиск, стр. 15)
+   * и от Верховой Атаки (только верхом) — пересчитываются заново на каждое
+   * изменение формы (см. #atk-base-pills в updateTotal), а не один раз.
+   */
+  function computeBaseOptions(stanceKeyNow) {
+    const noCharge = MELEE_STANCES[stanceKeyNow]?.noCharge === true;
+    return Object.entries(MELEE_BASES).map(([key, def]) => {
+      let allowed = !fullAttackForced || key === "fullatk";
+      let reason = "";
+      if (allowed && def.requiresMount && !isMounted) { allowed = false; reason = "Только верхом на байке/скакуне"; }
+      if (allowed && noCharge && key === "charge") { allowed = false; reason = "Недоступно в Стойке «Частокол»"; }
+      return { key, label: def.label, allowed, reason };
+    });
+  }
+  // Профиль (стр. 207-221) не завязан на Тренировку — доступен всегда.
+  const profileOptions = atkProfiles.length ? [
+    { idx: -1, label: sys.profileLabel || "Основной", dmg: sys.damage || "", allowed: true },
+    ...atkProfiles.map((p, i) => ({ idx: i, label: p.label || `Проф. ${i + 1}`, dmg: p.damage || "", allowed: true }))
+  ] : [];
+  const lockNoteHtml = (isMelee && meleeCategory && !meleeTraining.trained)
+    ? `<span class="atk-training-warn" title="Без Рукопашной Тренировки (${esc(meleeCategory)}) книга разрешает только Обычную Атаку, Стандартную Стойку и Базовый Хват">🔒 Без Тренировки (${esc(meleeCategory)})</span>`
+    : "";
+
+  /** Бонусы по текущему выбору (по умолчанию — стартовые значения диалога). */
+  function resolveSelection(sel = {}) {
+    const stanceKey = sel.stanceKey ?? stance;
+    const stDef     = MELEE_STANCES[stanceKey] || MELEE_STANCES.standard;
+    const stanceBon = isMelee ? (stDef.wsBonus ?? 0) : 0;
+
+    const baseKey = fullAttackForced ? "fullatk" : (sel.baseKey ?? meleeBaseKey);
+    const bDef    = MELEE_BASES[baseKey] || MELEE_BASES.standard;
+    const baseBon = isMelee ? (bDef.wsBonus ?? 0) : 0;
+
+    const maneuverKey = isMelee ? (sel.maneuverKey ?? maneuverKeyDefault) : "standard";
+    const mDef        = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
+    const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) : 0;
+
+    const gKey = sel.gripKey ?? gripKey;
+    const gDef = GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip) : null;
+    const gWs  = gDef ? gDef.ws : 0;
+
+    const pIdx = sel.profIdx ?? profIdx;
+    const prof = (pIdx >= 0) ? (atkProfiles[pIdx] || null) : null;
+
+    // Избегания ЦЕЛИ против ЭТОЙ атаки — Приём и Стойка складываются (стр.
+    // 14-15): например Взмах (−10 Уклонение) + Агрессивная (−10 Уклонение).
+    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0);
+    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0);
+
+    // Защитная Стойка без щита (стр. 15) — персонаж не может атаковать вовсе.
+    const blocked = isMelee && stanceKey === "defensive" && stDef.noAttackWithoutShield && !hasShieldEquipped;
+
+    const note = [
+      prof ? `Профиль: ${prof.label || "доп."}${prof.damage ? ` (${prof.damage})` : ""}` : "",
+      gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : ""
+    ].filter(Boolean).join("<br>");
+
+    return {
+      stanceKey, stDef, stanceBon, baseKey, bDef, baseBon,
+      maneuverKey, mDef, maneuverBon, gKey, gDef, gWs, pIdx, prof,
+      techBon: baseBon + maneuverBon, targetDodgeMod, targetParryMod, blocked, note
+    };
+  }
+
+  const dyn0 = resolveSelection();
+
+  function badgesHtml(sel) {
+    const stanceBadge = (isMelee && sel.stanceBon !== 0)
+      ? `<span class="atk-stance-badge">${rollIcon("sword")}Стойка: ${sel.stanceBon >= 0 ? "+" : ""}${sel.stanceBon}</span>`
+      : "";
+    const baseBadge = isMelee
+      ? `<span class="atk-base-badge">${rollIcon("sword")}База: ${sel.bDef?.label ?? "Стандартная Атака"} (${sel.baseBon >= 0 ? "+" : ""}${sel.baseBon})${fullAttackForced ? " — Локус Сокрушения" : ""}</span>`
+      : "";
+    const blockedBadge = sel.blocked
+      ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
+      : "";
+    return `${baseBadge}${stanceBadge}${blockedBadge}${lockNoteHtml}${targetStanceBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
+  }
+
+  function pillsHtml(name, options, currentKey, keyField = "key") {
+    return options.map(o => {
+      const key      = o[keyField];
+      const checked  = key === currentKey ? "checked" : "";
+      const disabled = o.allowed ? "" : "disabled";
+      const cls      = o.allowed ? "av-pill" : "av-pill av-pill-disabled";
+      const title    = o.reason ? ` title="${esc(o.reason)}"` : "";
+      return `<label class="${cls}"${title}><input type="radio" name="${name}" value="${key}" ${checked} ${disabled}/><span>${esc(o.label)}</span></label>`;
+    }).join("");
+  }
+
+  const charVal = (actor.system.characteristics[charKey]?.total ?? 0) + (sys.attackBonus || 0)
+    + wpAttackMod + dyn0.techBon + dyn0.stanceBon + dyn0.gWs + (wp.noAim ? 0 : aimingBonus) + ammoAtkMod;
 
   // Штраф усталости (мод препаратов уже учтён в char.total)
   const hasFatigue = (actor.system.fatigue?.value ?? 0) >= 1;
 
   const rofModes = [];
   if (isMelee) {
-    rofModes.push({ value: "melee",  label: "Рукопашная атака (±0)",      bonus: 0  });
-    rofModes.push({ value: "charge", label: "Натиск (+20, движение ≥4м)", bonus: 20 });
+    // Бонус Базы (Стандартная/Натиск/Полная/Осторожная) теперь персистентен
+    // на акторе (system.meleeBase, панель «БАЗА») и уже вошёл в techBonus —
+    // здесь только один вариант без своего бонуса, чтобы не задваивать.
+    rofModes.push({ value: "melee",  label: "Рукопашная атака",      bonus: 0  });
   } else {
     if (sys.rof_single > 0)
       rofModes.push({ value: "single", label: "Одиночный выстрел (+10)", bonus: 10 });
@@ -226,6 +431,29 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       : t.label;
     return `<option value="${t.value}" data-penalty="${pen}">${lbl}</option>`;
   }).join("");
+
+  // ── Цель верхом (стр. 478) ──────────────────────────────────────────────
+  //  Книга делит попадания между двумя телами: не-Избирательная атака бьёт
+  //  скакуна, и лишь дубль достаётся всаднику, а выцелить всадника можно
+  //  Избирательной атакой с дополнительным штрафом (−10, а под «Укрытием»
+  //  демона −30). Стрелок целится в один токен, поэтому пара ищется по нему —
+  //  всё равно, кого он выбрал, всадника или скакуна.
+  const mountPair = mountPairFor(attackCtx.targetActor, [...(game.actors ?? [])]);
+  const mountRiderPen = mountPair ? mountSelectiveMod("rider", mountPair.mount) : 0;
+  const mountHtml = mountPair ? `
+      <div class="av-row">
+        <label>Цель верхом</label>
+        <select id="atk-mount" class="av-input av-wide">
+          <option value="" data-penalty="0">— не выцеливать: попадание делится —</option>
+          <option value="mount" data-penalty="0">В скакуна: ${esc(mountPair.mount.name)} (±0)</option>
+          <option value="rider" data-penalty="${mountRiderPen}">Во всадника: ${esc(mountPair.rider.name)} (${mountRiderPen})</option>
+        </select>
+      </div>
+      <div class="atk-range-info av-mount-note" style="font-size:0.82em;">
+        Не-Избирательная атака бьёт скакуна; попаданием по всаднику считается дубль на броске.
+        Выцеливание всадника — только Избирательной атакой («Прицельно в…»), штраф
+        <b>${mountRiderPen}</b>${mountRiderPen === SELECTIVE_MODS.riderCovered ? " (Укрытие)" : ""} сверх штрафа зоны.
+      </div>` : "";
 
   let rangeInfoHtml = "";
   if (!isMelee && sys.range > 0) {
@@ -312,6 +540,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     m.immune = true;
     m.note   = `${attackCtx.targetActor.name}: ${why[0]}`;
   }
+  const charSwapWhy  = ruleFlagLabels(actor, "charSwap.wp.forWsS", attackCtx);
+  const twoWeaponWhy = ruleFlagLabels(actor, "penalty.twoWeapon.off", attackCtx);
+  const twoWeaponOff  = twoWeaponWhy.length > 0;
   const specificMods = isMelee ? [
     { label: "Трудный ландшафт",       value: -10 },
     { label: "Очень трудный ландшафт", value: -20 },
@@ -319,7 +550,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { label: "Числ. перевес 3к1",      value:  20 },
     { label: "Положение выше",         value:  10 },
     { label: "Более длинное оружие",   value:   5 },
-    { label: "Бой несколькими руками", value: -20, note: "осн./неосн. рука" }
+    // Локус Быстроты (стр. 29) снимает этот штраф. Строку не прячем, а обнуляем
+    // с подписью: игрок должен видеть, ЧТО его сняло, иначе исчезнувшая галочка
+    // выглядит как баг диалога.
+    twoWeaponOff
+      ? { label: "Бой несколькими руками", value: 0,
+          note: `штраф снят: ${twoWeaponWhy.join(", ")}` }
+      : { label: "Бой несколькими руками", value: -20, note: "осн./неосн. рука" }
   ] : [
     { label: "Подавлен огнём",          value: -20 },
     { label: "Стрельба в рукопашную",   value: -20 },
@@ -367,9 +604,6 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       </div>
     </div>`;
 
-  const stanceBonusNote = (isMelee && stanceBonus !== 0)
-    ? `<span class="atk-stance-badge">${rollIcon("sword")}Стойка: ${stanceBonus >= 0 ? "+" : ""}${stanceBonus}</span>`
-    : "";
   const ammoBadge = (!isMelee && ammoAtkMod !== 0)
     ? `<span class="atk-ammo-badge">${rollIcon("spark","#8fd0ff")}Боеприпасы: ${ammoAtkMod >= 0 ? "+" : ""}${ammoAtkMod}</span>`
     : "";
@@ -420,11 +654,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="atk-wprops-list">${legionFit.parts
         .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
     </div>` : "";
+  // Штраф Арсенала (Weapon Training) — тот же приём, что у Легиона выше.
+  const weaponTrainingHtml = weaponTraining.parts.length ? `
+    <div class="atk-dlg-modifiers atk-legion-note">
+      <div class="atk-mods-title">${rollIcon("gear","#ffb84d")}Арсенал: ${weaponTraining.total} к тесту</div>
+      <div class="atk-wprops-list">${weaponTraining.parts
+        .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
+    </div>` : "";
   const wpDialogHtml = (wProps.length ? `
     <div class="atk-dlg-modifiers">
       <div class="atk-mods-title">${rollIcon("gear","#8fd0ff")}Свойства оружия</div>
       <div class="atk-wprops-list">${wpDialogList}</div>
-    </div>` : "") + legionHtml;
+    </div>` : "") + legionHtml + weaponTrainingHtml;
   const shortRangeHtml = wantShortBox ? `
     <label class="attack-mod-check">
       <input type="checkbox" id="atk-shortrange" class="atk-mod-cb" data-value="${wp.scatter ? 10 : 0}"/>
@@ -474,28 +715,47 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     `<label class="av-pill"><input type="radio" name="atk-aiming" value="${v}" data-bonus="${bon}" ${currentAiming === v ? "checked" : ""}/><span>${lbl}</span></label>`
   ).join("");
 
-  // Хват и профиль выбираются в HUD; здесь — только компактная сводка (read-only).
-  // Показываем, если выбран доп. профиль, у хвата есть эффект, или хватов несколько.
-  const gripHasEffect = gripDef && (gripDef.ws || gripDef.dmgFlat || (gripDef.addProps?.length) || gripDef.sbHalf);
-  const gripProfileNote = (atkProfile || gripHasEffect || gripList.length > 1) ? `
-      <div class="av-gripnote">${rollIcon("sword","#6fe6ff")}${attackNote}</div>` : "";
+  // ── Стойка/База/Приём/Хват/Профиль — теперь выбираются прямо в диалоге ───
+  const maneuverBlockHtml = isMelee ? `
+    <div class="av-section">
+      <div class="av-sec-lbl">Приём</div>
+      <div class="av-pills">${pillsHtml("atk-maneuver", maneuverOptions, dyn0.maneuverKey)}</div>
+    </div>` : "";
+  const stanceBlockHtml = isMelee ? `
+    <div class="av-section">
+      <div class="av-sec-lbl">Стойка</div>
+      <div class="av-pills">${pillsHtml("atk-stance", stanceOptions, dyn0.stanceKey)}</div>
+    </div>` : "";
+  // Пилюли Базы зависят от Стойки (Частокол запрещает Натиск) — контейнер с
+  // id, чтобы updateTotal мог перерисовать их при смене Стойки, не открывая
+  // окно заново (см. render ниже).
+  const baseBlockHtml = isMelee ? `
+    <div class="av-section">
+      <div class="av-sec-lbl">База</div>
+      <div class="av-pills" id="atk-base-pills">${pillsHtml("atk-base", computeBaseOptions(dyn0.stanceKey), dyn0.baseKey)}</div>
+    </div>` : "";
+  const gripBlockHtml = (isMelee && gripOptions.length > 1) ? `
+    <div class="av-section">
+      <div class="av-sec-lbl">Хват</div>
+      <div class="av-pills">${pillsHtml("atk-grip", gripOptions, dyn0.gKey)}</div>
+    </div>` : "";
+  // "Основной" тоже вариант выбора — поэтому порог "больше одного" по общему
+  // числу опций (главный + доп. профили), а не только по числу доп. профилей.
+  const profileBlockHtml = profileOptions.length > 1 ? `
+    <div class="av-section">
+      <div class="av-sec-lbl">Профиль</div>
+      <div class="av-pills">${pillsHtml("atk-profile", profileOptions, dyn0.pIdx, "idx")}</div>
+    </div>` : "";
+  const techSectionsHtml = `${maneuverBlockHtml}${stanceBlockHtml}${baseBlockHtml}${gripBlockHtml}${profileBlockHtml}`;
 
   // Не <form>: содержимое DialogV2 уже лежит внутри его собственной формы, а
   // вложенная форма недопустима — браузер её выбросит вместе с оформлением.
   const content = `
     <div class="wh-attack-form wh-atk-v2">
-      ${techniqueOpts.techniqueLabel ? `
-      <div class="atk-technique-note">
-        ${rollIcon("sword")}Приём: <b>${techniqueOpts.techniqueLabel}</b>
-        ${techniqueOpts.stanceLabel ? ` | Стойка: <b>${techniqueOpts.stanceLabel}</b>` : ""}
-        ${techniqueOpts.techniqueNote ? `<div class="atk-technique-desc">${techniqueOpts.techniqueNote}</div>` : ""}
-        ${techniqueOpts.chatNote ? `<div class="atk-technique-chatnote">${techniqueOpts.chatNote}</div>` : ""}
-      </div>` : ""}
-
       <div class="av-header">
         <span class="av-name">${esc(item.name)}</span>
         <span class="av-class">${forceMelee ? "в упор / приклад" : (WEAPON_CLASSES[sys.weaponClass] || "")}</span>
-        <span class="av-badges">${stanceBonusNote}${ammoBadge}${fatigueBadge}${drugAtkBadge}</span>
+        <span class="av-badges" id="atk-badges">${badgesHtml(dyn0)}</span>
       </div>
 
       <div class="av-preview">
@@ -510,14 +770,22 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <select id="atk-char" class="av-input">
           ${Object.entries(CHARACTERISTICS).map(([k, m]) => {
             const v = actor.system.characteristics[k]?.total ?? 0;
-            return `<option value="${k}" ${k === charKey ? "selected" : ""}>${m.abbr} (${v})</option>`;
+            // Список характеристик и так полный — ГМ волен бросить чем угодно.
+            // Локус Мутации (стр. 28, 32) делает бросок по Воле вместо WS/S
+            // законным, и это подписывается прямо в пункте: иначе игрок не
+            // отличит разрешённую книгой подмену от самоуправства.
+            const swap = (k === "wp" && charSwapWhy.length)
+              ? ` — вместо ${isMelee ? "WS" : "BS"}: ${charSwapWhy.join(", ")}` : "";
+            return `<option value="${k}" ${k === charKey ? "selected" : ""}>${m.abbr} (${v})${swap}</option>`;
           }).join("")}
         </select>
         <label>Доп. мод</label>
         <input id="atk-modifier" class="av-input av-num" type="number" value="0"/>
       </div>
 
-      ${gripProfileNote}
+      ${techSectionsHtml}
+      <div class="av-gripnote" id="atk-gripnote">${dyn0.note}</div>
+
       <div class="av-section">
         <div class="av-sec-lbl">Режим атаки</div>
         <div class="av-pills">${rofPills}</div>
@@ -531,11 +799,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <label>Прицельно в…</label>
         <select id="atk-aim" class="av-input av-wide">${aimHtml}</select>
       </div>
+      ${mountHtml}
 
       ${rangeInfoHtml}
       ${shortRangeHtml}${bandHtml}${offHtml}${maximalHtml}
       ${ammoCondHtml}
       ${ruleMods.html}
+      ${ruleRerolls.html}
 
       <details class="av-adv">
         <summary>Ситуативные модификаторы<span class="av-adv-hint">— разверни, если нужны</span></summary>
@@ -559,17 +829,22 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     </div>`;
 
   /**
-   * Порог теста по прочитанной форме. Мод хвата (gripWs) и мод препаратов
-   * (в char.total) уже внутри базы; характеристику игрок может сменить в окне,
-   * поэтому база считается здесь, а не берётся из charVal.
+   * Порог теста по прочитанной форме. Мод хвата и мод препаратов (в char.total)
+   * уже внутри базы; характеристику игрок может сменить в окне, а Стойка/База/
+   * Приём/Хват — прямо в этом же диалоге, поэтому база считается здесь заново
+   * из текущего выбора (resolveSelection), а не берётся из charVal.
    */
-  const thresholdOf = f => attackThreshold({
-    base: (actor.system.characteristics[f.char]?.total ?? 0)
-          + (sys.attackBonus || 0) + wpAttackMod + techBonus + stanceBonus + ammoAtkMod + gripWs
-          + (wp.noAim ? 0 : f.aimBonus),
-    mods: [f.modifier, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty, f.extraBonus],
-    halvePenalty: f.halvePenalty
-  });
+  const thresholdOf = f => {
+    const sel = resolveSelection(f);
+    return attackThreshold({
+      base: (actor.system.characteristics[f.char]?.total ?? 0)
+            + (sys.attackBonus || 0) + wpAttackMod + sel.techBon + sel.stanceBon + ammoAtkMod + sel.gWs
+            + (wp.noAim ? 0 : f.aimBonus),
+      mods: [f.modifier, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty,
+             f.mountPenalty, f.extraBonus],
+      halvePenalty: f.halvePenalty
+    });
+  };
 
   return foundry.applications.api.DialogV2.wait({
     window: { title: `Атака: ${item.name}` },
@@ -596,29 +871,81 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
             return null;
           }
 
-          await actor.update({ "system.aiming": "none" });
+          const sel = resolveSelection(f);
 
-          // Профиль атаки + хват выбраны в HUD (см. начало метода): применяем молча.
+          if (sel.blocked) {
+            await ChatMessage.create({
+              speaker: ChatMessage.getSpeaker({ actor: actor }),
+              content: `<div class="wh-roll-result">
+                <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
+                <div class="roll-outcome">
+                  <span class="roll-failure">Защитная Стойка без щита — атака запрещена (стр. 15)</span>
+                </div></div>`
+            });
+            return null;
+          }
+
+          // Стойка/База — персистентны на акторе (как радио на вкладке БОЙ),
+          // Хват/Профиль — во флагах предмета (как раньше в HUD): выбор в этом
+          // диалоге должен остаться в силе и после закрытия окна, а не сбрасываться.
+          const actorUpdates = { "system.aiming": "none" };
+          if (isMelee && sel.stanceKey !== stance) actorUpdates["system.meleeStance"] = sel.stanceKey;
+          if (isMelee && !fullAttackForced && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
+          await actor.update(actorUpdates);
+          if (isMelee && sel.gKey !== gripKey) await item.setFlag?.("warhammer-dbc", "hudGrip", sel.gKey);
+          if (sel.pIdx !== profIdx) await item.setFlag?.("warhammer-dbc", "hudProfile", sel.pIdx);
+          // Локус Сокрушения тратится реальным броском — отменённая или
+          // закрытая атака способность не расходует (см. meleeBaseKey выше).
+          if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
+
+          // Приём выбран в этом же окне — свежий techniqueOpts под конкретный
+          // выбор (targetDodgeMod/targetParryMod/chatNote и т.п. зависят от него).
+          const finalTechniqueOpts = isMelee ? {
+            ...techniqueOpts,
+            technique:      sel.maneuverKey,
+            techniqueLabel: sel.mDef.label,
+            techniqueNote:  sel.mDef.note,
+            chatNote:       sel.mDef.chatNote,
+            targetDodgeMod: sel.targetDodgeMod,
+            targetParryMod: sel.targetParryMod,
+            extraBonus:     sel.mDef.wsBonus,
+            stanceLabel:    sel.stDef.label
+          } : techniqueOpts;
+
           await _executeAttackRoll(
             actor, item, f.char, thresholdOf(f),
             f.rofMode || rofModes[0]?.value,
             aimTargets.find(t => t.value === f.aimVal),
             {
               isSwift: f.swift, isLightning: f.lightning, isAllOut: f.allOut,
-              techniqueOpts,
+              // Переброс от правила (Локус Буйства): бросок катает несколько
+              // кубов и оставляет один — см. combat/attack.mjs.
+              reroll: f.reroll,
+              forcedDefenceReroll,
+              techniqueOpts: finalTechniqueOpts,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
-              profile: atkProfile, attackNote,
-              weaponOff: f.weaponOff, gripKey,
-              gripProps: gripDef ? gripDef.addProps : [],
-              gripDmgFlat: gripDef ? gripDef.dmgFlat : 0,
-              gripSbHalf: gripDef ? gripDef.sbHalf : false,
+              profile: sel.prof, attackNote: sel.note,
+              weaponOff: f.weaponOff, gripKey: sel.gKey,
+              gripProps: sel.gDef ? sel.gDef.addProps : [],
+              gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
+              gripSbHalf: sel.gDef ? sel.gDef.sbHalf : false,
               // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
               ammoCondDmg:    f.ammoSel.reduce((n, c) => n + (c.dmg || 0), 0),
               ammoCondLabels: f.ammoSel.map(c => c.label),
               aimingLabel: (f.aiming !== "none" && !wp.noAim)
                 ? (f.aiming === "half" ? "Полу-прицеливание (+10)" : "Полное прицеливание (+20)")
-                : ""
+                : "",
+              // Кого выцелили в паре: урон применяют к листу, а на сцене у пары
+              // обычно один токен — без этой строки попадание во всадника ушло
+              // бы скакуну просто потому, что кликнули по видимому токену.
+              mountNote: mountPair && f.mountPick && f.aimVal
+                ? (f.mountPick === "rider"
+                    ? `Верхом: попадание во ВСАДНИКА — ${mountPair.rider.name}`
+                    : `Верхом: попадание в скакуна — ${mountPair.mount.name}`)
+                : (mountPair
+                    ? `Верхом: не-Избирательная атака — попадание в скакуна (${mountPair.mount.name}), дубль на броске — во всадника (${mountPair.rider.name})`
+                    : "")
             }
           );
           return true;
@@ -631,8 +958,31 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       const display = form.querySelector("#atk-total-display");
       const hint    = form.querySelector(".av-adv-hint");
 
+      const badgesEl    = form.querySelector("#atk-badges");
+      const noteEl      = form.querySelector("#atk-gripnote");
+      const basePillsEl = form.querySelector("#atk-base-pills");
+      let lastStanceKey = dyn0.stanceKey;
+
       const updateTotal = () => {
         const f = readAttackForm(form, ammoConds);
+        // Стойка/База/Приём/Хват/Профиль меняются прямо в форме — заголовок и
+        // сводка эффектов хвата должны обновляться вместе с порогом, иначе
+        // бейджи показывают устаревший выбор до следующего открытия окна.
+        const sel = resolveSelection(f);
+        if (badgesEl) badgesEl.innerHTML = badgesHtml(sel);
+        if (noteEl)   noteEl.innerHTML   = sel.note;
+        // База зависит от выбранной Стойки (Частокол запрещает Натиск, стр. 15) —
+        // перерисовываем пилюли только когда Стойка реально поменялась, чтобы
+        // не сбрасывать фокус на каждый несвязанный ввод в форме.
+        if (basePillsEl && sel.stanceKey !== lastStanceKey) {
+          lastStanceKey = sel.stanceKey;
+          basePillsEl.innerHTML = pillsHtml("atk-base", computeBaseOptions(sel.stanceKey), sel.baseKey);
+        }
+        if (sel.blocked) {
+          display.textContent = "ЗАБЛОКИРОВАНО";
+          display.style.color = "#8b0000";
+          return;
+        }
         if (f.autoFail) {
           display.textContent = "ПРОВАЛ";
           display.style.color = "#8b0000";
@@ -682,12 +1032,22 @@ export async function showAttackDialogWithTechnique(actor, item, techDef, stance
 }
 
 export async function showAttackDialogNoWeapon(actor, techDef) {
-  const ws      = actor.system.characteristics.ws?.total ?? 0;
-  const stance  = actor.system.meleeStance || "standard";
-  const stBon   = MELEE_STANCES[stance]?.wsBonus ?? 0;
-  const fatigue = fatiguePenalty(actor, "ws");
+  const ws       = actor.system.characteristics.ws?.total ?? 0;
+  const stance   = actor.system.meleeStance || "standard";
+  const stBon    = MELEE_STANCES[stance]?.wsBonus ?? 0;
+  // База (стр. 13) — та же логика, что в showAttackDialog: складывается с
+  // бонусом Приёма, а не заменяет его. Локус Сокрушения подменяет её на
+  // «Полная Атака», пока не потрачена в текущем Раунде (см. FULL_ATTACK_CAPABILITY
+  // выше) — здесь бросок безусловный (нет кнопки/отмены), поэтому расходуется
+  // сразу, вместе с чтением.
+  const fullAttackForced = hasRuleFlag(actor, FULL_ATTACK_CAPABILITY)
+    && isRoundCapabilityAvailable(actor, FULL_ATTACK_CAPABILITY);
+  if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
+  const meleeBaseKey = fullAttackForced ? "fullatk" : (actor.system.meleeBase || "standard");
+  const baseBon  = MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0;
+  const fatigue  = fatiguePenalty(actor, "ws");
   // WS уже включает мод препаратов (см. prepareDerivedData)
-  const final   = ws + techDef.wsBonus + stBon + fatigue;
+  const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue;
 
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
@@ -745,6 +1105,7 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
         <div class="roll-header">${rollIcon("sword")}${techDef.label} ${techDef.headerSuffix ? `— ${techDef.headerSuffix}` : "(без оружия)"}</div>
         <div class="roll-threshold">
           WS: <b>${ws}</b>
+          база ${baseBon >= 0 ? "+" : ""}${baseBon}${fullAttackForced ? " (Локус Сокрушения)" : ""}
           ${stBon !== 0 ? ` стойка ${stBon >= 0 ? "+" : ""}${stBon}` : ""}
           ${techDef.wsBonus !== 0 ? ` ${techDef.wsBonus >= 0 ? "+" : ""}${techDef.wsBonus}` : ""}
           ${fatigue !== 0 ? ` усталость ${fatigue}` : ""}

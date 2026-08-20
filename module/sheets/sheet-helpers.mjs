@@ -6,7 +6,7 @@ import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
          ARMOR_MOD_GROUPS }                          from "../constants/items.mjs";
-import { MELEE_STANCES }                             from "../constants/combat.mjs";
+import { MELEE_STANCES, MELEE_BASES }                from "../constants/combat.mjs";
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { isAeldariRace }                             from "../apps/race-library.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
@@ -18,8 +18,10 @@ import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/discipli
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { aptitudeCat, charAptitudeSet }             from "../constants/advancement.mjs";
+import { isFriendlySpecialty }                       from "../rules/friendly-specialties.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
+import { supportsInfoguard } from "../apps/infoguard.mjs";
 
 // Карта «полное имя таланта → тип (папка корбука)» + порядок типов — строится один
 // раз. Используется для группировки талантов на листе по типам (стр. 62-105).
@@ -41,6 +43,11 @@ import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE }                   from "../constants/vitals.mjs";
 import { ritualsContext }                            from "./tabs/rituals.mjs";
+import { mergeAbilityItems, mergeAbilityEffects,
+         abilityLabel }                              from "../rules/merge-abilities.mjs";
+import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
+import { ruleFlags, ruleFlagLabels }                 from "../rules/flags.mjs";
+import { CAPABILITIES }                              from "../constants/capabilities.mjs";
 
 // ── Определение всех состояний ────────────────────────────────────────────────
 export const CONDITIONS_DEF = {
@@ -68,10 +75,37 @@ for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
 
 // ── Навык ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Краткая подсказка к Навыку для тултипа наведения на вкладке ПОКАЗАТЕЛИ.
+ *
+ * Прозы «что за Навык и когда его применяют» по каждому Навыку в системе
+ * нет: в packs-src/books/core.json описания идут одним HTML-блоком на всю
+ * страницу книги, и абзацы описания перемешаны со строками сводной таблицы
+ * (см. doombc-book-text-extraction) — программно растащить их по Навыкам
+ * значило бы рисковать приписать чужое описание не тому Навыку. Пока такой
+ * чистый источник не заведён отдельной работой, подсказка собирается из
+ * того, что система УЖЕ проверенно знает про Навык: его базовая
+ * Характеристика и Склонность — та же пара, что решает цену покупки на
+ * вкладке РАЗВИТИЕ (aptitudeCat ниже).
+ *
+ * `rollLabel` — то, что раньше несло атрибут `title` («Бросок: …»): оба текста
+ * сведены в один data-tooltip, чтобы не показывать на одном элементе сразу
+ * два всплывающих окна — нативное по title и своё, Foundry-шное (см. вывод
+ * ниже, откуда взят сам паттерн data-tooltip: horde-sheet.hbs, tab-social.hbs).
+ */
+function skillTip(def, rollLabel) {
+  if (!def) return "";
+  const ch   = CHARACTERISTICS[def.char];
+  const base = ch ? `${ch.label} (${ch.abbr})` : def.char;
+  const apt2 = APTITUDES[def.apt2] || def.apt2;
+  return `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}`;
+}
+
 export function buildSkillDisplay(key, system) {
   const def = SKILLS_DEF[key];
   const sk  = system.skills?.[key] || {};
-  return { key, label: def.label, total: sk.total ?? -20, rank: sk.rank ?? "untrained" };
+  return { key, label: def.label, total: sk.total ?? -20, rank: sk.rank ?? "untrained",
+    tip: skillTip(def, def.label) };
 }
 
 // ── Данные щитов ──────────────────────────────────────────────────────────────
@@ -338,7 +372,8 @@ export function buildGetData(actor) {
         groupLabel:     def.label,
         isFirstInGroup: idx === 0,
         rank:           entry.rank,
-        total:          entry.total ?? -20
+        total:          entry.total ?? -20,
+        tip:            skillTip(def, `${def.label}: ${entry.specialty}`)
       });
     });
   }
@@ -378,7 +413,9 @@ export function buildGetData(actor) {
           charAbbr: CHARACTERISTICS[charKey]?.abbr ?? charKey,
           grantedRank: e.grantedRank ?? "untrained",
           isGranted: (e.grantedRank ?? "untrained") !== "untrained",
-          aptCat: def.alwaysAlly ? "ally" : aptitudeCat(_skApts, [charKey, def.apt2]),
+          aptCat: def.alwaysAlly ? "ally"
+            : isFriendlySpecialty(actor, groupKey, e.specialty) ? "ally"
+            : aptitudeCat(_skApts, [charKey, def.apt2]),
           charOptions: GS_CHAR_KEYS.map(k => ({
             key: k, abbr: CHARACTERISTICS[k]?.abbr ?? k.toUpperCase(), selected: k === charKey
           }))
@@ -396,6 +433,11 @@ export function buildGetData(actor) {
     const ck    = melee ? "ws" : "bs";
     const stance = system.meleeStance || "standard";
     const stBon  = melee ? (MELEE_STANCES[stance]?.wsBonus ?? 0) : 0;
+    // База (стр. 13) — так же, как Стойка, читается напрямую с актора и
+    // складывается в общий порог: без неё колонка «Порог» врала бы на −10
+    // против того, что реально покажет диалог атаки (Стандартная Атака +10).
+    const meleeBaseKey = system.meleeBase || "standard";
+    const baseBon = melee ? (MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0) : 0;
 
     const compatAmmo = melee ? [] : allItems
       .filter(item =>
@@ -450,7 +492,7 @@ export function buildGetData(actor) {
       shieldCoverage:  s.shieldAP != null ? shieldCoverageLabel(i) : "",
       hasMods,
       modNames:        modFx.names.join(", "),
-      attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + stBon + (modFx.attackMod || 0) + qTestMod,
+      attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + baseBon + stBon + (modFx.attackMod || 0) + qTestMod,
       compatAmmo, magLow, magEmpty
     };
   };
@@ -508,6 +550,11 @@ export function buildGetData(actor) {
 
   context.gearWeapons = weaponItems.map(i => ({
     id: i.id, name: i.name, equipped: i.system.equipped ?? false,
+    // Интегральная атака (Кислотный Плевок, Пинок Дредноута) — часть тела или
+    // машины: галочку «надето» шаблон делает недоступной, потому что снять её
+    // всё равно не дадут хуки (warhammer-dbc.mjs), а мёртвый на вид переключатель
+    // выглядел бы поломкой листа.
+    integralAttack: !!i.getFlag?.("warhammer-dbc", "integralAttack"),
     weaponClass: WEAPON_CLASSES[i.system.weaponClass] ?? i.system.weaponClass,
     weaponType:  i.system.weaponType,
     damage:      i.system.damage,
@@ -515,6 +562,7 @@ export function buildGetData(actor) {
     magazineCur: i.system.magazineCur,
     magazineMax: i.system.magazineMax,
     weight:      i.system.weight,
+    infoguard:   supportsInfoguard(i) ? (i.system.infoguard || 0) : null,
     mods:        allWeaponMods.filter(m => m.system.installedOn === i.id).map(weaponModView)
   }));
 
@@ -545,6 +593,7 @@ export function buildGetData(actor) {
     rightLeg:  i.system.rightLeg   ?? 0,
     weight:    i.system.weight     ?? 0,
     stacks:    i.system.stacks     ?? false,
+    infoguard: supportsInfoguard(i) ? (i.system.infoguard || 0) : null,
     mods:      allArmorMods.filter(m => m.system.installedOn === i.id).map(armorModView)
   }));
 
@@ -629,13 +678,15 @@ export function buildGetData(actor) {
     id: i.id, name: i.name,
     quantity:    i.system.quantity,
     weight:      i.system.weight,
-    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100
+    totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100,
+    infoguard:   supportsInfoguard(i) ? (i.system.infoguard || 0) : null
   }));
 
   context.gearTools = allItems.filter(i => i.type === "tool").map(i => ({
     id: i.id, name: i.name,
     quantity: i.system.quantity,
-    weight:   i.system.weight
+    weight:   i.system.weight,
+    infoguard: supportsInfoguard(i) ? (i.system.infoguard || 0) : null
   }));
 
   context.gearCybernetics = allItems.filter(i => i.type === "cybernetic").map(i => ({
@@ -646,7 +697,7 @@ export function buildGetData(actor) {
   }));
 
   // ── Импланты (Механикус/Бионика/Кибернетика) ────────────────────────────────
-  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант" };
+  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", astartes: "Импланты Астартес" };
   const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
   context.gearImplants = allItems.filter(i => i.type === "implant").map(i => ({
     id: i.id, name: i.name,
@@ -703,24 +754,39 @@ export function buildGetData(actor) {
   }
 
   // ── Способности / Таланты ─────────────────────────────────────────────────
-  context.abilityTalents = allItems.filter(i => i.type === "talent").map(i => {
-    const e  = i.system.effects || {};
+  // Одинаковые Таланты из разных источников идут ОДНОЙ строкой: с общим
+  // рейтингом и со списком специализаций (rules/merge-abilities.mjs). Предметы
+  // при этом остаются раздельными — строка ведёт к первому из них, и удаление
+  // снимает источники по одному.
+  // Подспособности переключаемой способности (Локус Герольда и подобные) в
+  // общий список не идут: они рисуются вложенными под своим родителем, со
+  // своей кнопкой вкл./выкл. Иначе шесть эффектов Локуса засорили бы таблицу
+  // Талантов шестью самостоятельными строками, а склейка одноимённых
+  // (mergeAbilityItems) ещё и слепила бы одинаковые Локусы разных Герольдов.
+  context.abilityTalents = mergeAbilityItems(allItems.filter(i => i.type === "talent" && !toggleParentId(i))).map(g => {
+    const i  = g.first;
+    const e  = mergeAbilityEffects(g.items);
     const fx = [];
-    if (e.charBonusStat && (e.charBonusValue || 0) !== 0)
-      fx.push(`💪 ${e.charBonusValue > 0 ? "+" : ""}${e.charBonusValue} к ${(CHARACTERISTICS[e.charBonusStat]?.abbr ?? e.charBonusStat)}`);
+    for (const [stat, value] of Object.entries(e.charBonus))
+      fx.push(`💪 ${value > 0 ? "+" : ""}${value} к ${(CHARACTERISTICS[stat]?.abbr ?? stat)}`);
     if (e.initMod)    fx.push(`⚡ ${e.initMod > 0 ? "+" : ""}${e.initMod} Иниц.`);
     if (e.fearRating) fx.push(`😱 Страх ${e.fearRating}`);
     return {
-      id:             i.id,
-      name:           i.name,
+      id:             g.id,
+      // Рейтинг у Талантов своей колонки не имеет (в отличие от Черт), поэтому
+      // и он, и специализации живут в подписи.
+      name:           abilityLabel(g),
       tier:           i.system.tier || 1,
       god:            i.system.god || "",
-      specialization: i.system.specialization || "",
+      specialization: g.specs.join(", "),
       requirement:    i.system.requirement || "",
       aptitudes:      (i.system.aptitudes || []).map(k => APTITUDES[k] ?? k).join(", "),
       effectSummary:  fx.join(" · "),
       benefit:        i.system.benefit || i.system.description || "",
-      typeGroup:      TALENT_TYPE.byName.get(i.name) || "Прочие"
+      // Тип (папка корбука) ищется по имени как его записал источник: в
+      // библиотеке имя лежит целиком, вместе с «(X)».
+      typeGroup:      TALENT_TYPE.byName.get(i.name) || "Прочие",
+      toggles:        toggleRows(allItems, i)
     };
   });
   // Группировка талантов по типам корбука (стр. 62-105) для читаемого списка.
@@ -740,13 +806,16 @@ export function buildGetData(actor) {
   // видна там же, где она считается (спис. цены суммирует actor.mjs).
   // Показываем ВСЕ таланты-предметы, а не только купленные: выданные при
   // генерации тоже должны быть видны, чтобы их можно было пометить/снять ★.
+  // Здесь склейки НЕТ и быть не должно: считается опыт, а каждая
+  // специализация — своя покупка со своей ценой. Чтобы строки не выглядели
+  // тремя одинаковыми «Сопротивлениями», специализация видна в подписи.
   context.purchasedTalents = actor.items
     .filter(i => i.type === "talent")
     .map(i => {
       const cost = parseInt(i.system?.cost) || 0;
       return {
         id:   i.id,
-        name: i.name,
+        name: abilityLabel(mergeAbilityItems([i])[0]),
         cost,
         tier: i.system?.tier || 1,
         // ★ — «выдан архетипом/расой, опыт не тратится»
@@ -769,6 +838,16 @@ export function buildGetData(actor) {
   // объект (там же Фактор Прибыли), и записанный в него массив схема молча
   // отбрасывала, то есть выбор не доживал до перерисовки листа.
   const aspirRaw = Array.isArray(system.aspirations?.slots) ? system.aspirations.slots : [];
+  // Журнал опыта: свежие записи сверху — интересна последняя выдача, а не
+  // первая. Дата короткая: год у одного персонажа всё равно один.
+  context.xpLog = [...(Array.isArray(system.experience?.log) ? system.experience.log : [])]
+    .sort((a, b) => (b?.at || 0) - (a?.at || 0))
+    .map(e => ({
+      amount: Number(e?.amount) || 0,
+      reason: e?.kind === "refund" ? `Возврат за ${e?.reason || "—"}` : (e?.reason || "—"),
+      when: e?.at ? new Date(e.at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""
+    }));
+
   context.aspirationSlots = ASPIRATION_TABLES.map((t, idx) => {
     const a = aspirRaw[idx];
     const options = aspirationOptions(t.key).map(e => ({ id: e.key, name: e.name, mods: e.mods }));
@@ -791,27 +870,46 @@ export function buildGetData(actor) {
   context.rituals = ritualsContext(actor);
 
   // ── Черты (трейты) ──────────────────────────────────────────────────────
-  context.traits = allItems.filter(i => i.type === "trait").map(i => {
-    const s  = i.system;
-    const e  = s.effects || {};
+  // Как и Таланты, одинаковые Черты из разных источников склеиваются в одну
+  // строку с общим рейтингом: «Nimble (5)» дважды — это Nimble (10).
+  // Возможности, которые актор имеет прямо сейчас (записи Конструктора вида
+  // «Возможность» с активных предметов — включённые Локусы и всё прочее).
+  // Панель нужна затем, что часть возможностей пока не имеет читателя в
+  // расчёте: за столом их применяет ГМ, и он должен видеть список, а не
+  // вспоминать, какой Локус включён.
+  {
+    const flags = ruleFlags(actor, { kind: "skill" });
+    context.activeCapabilities = [...flags]
+      .map(key => ({
+        key,
+        label: CAPABILITIES[key]?.label || key,
+        sources: ruleFlagLabels(actor, key, { kind: "skill" }).join(", "),
+        // Есть ли код, который эту возможность читает. Ложь честнее молчания:
+        // ГМ должен знать, что вот это система сама не посчитает.
+        auto: !!CAPABILITIES[key]?.reader
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, "ru"));
+  }
+
+  // Подспособности сюда тоже не идут — см. комментарий у Талантов выше.
+  context.traits = mergeAbilityItems(allItems.filter(i => i.type === "trait" && !toggleParentId(i))).map(g => {
+    const e  = mergeAbilityEffects(g.items);
     const fx = [];
-    if (e.charBonusStat && (e.charBonusValue || 0) !== 0)
-      fx.push(`💪 ${e.charBonusValue > 0 ? "+" : ""}${e.charBonusValue} к ${(CHARACTERISTICS[e.charBonusStat]?.abbr ?? e.charBonusStat)}`);
+    for (const [stat, value] of Object.entries(e.charBonus))
+      fx.push(`💪 ${value > 0 ? "+" : ""}${value} к ${(CHARACTERISTICS[stat]?.abbr ?? stat)}`);
     if (e.armourAll)  fx.push(`🛡️ +${e.armourAll} AP`);
     if (e.fearRating) fx.push(`😱 Страх ${e.fearRating}`);
     if (e.sizeMod)    fx.push(`📏 Размер ${e.sizeMod > 0 ? "+" : ""}${e.sizeMod}`);
 
-    let ratingStr = "";
-    if (s.hasRating)  ratingStr += `(${s.rating}`;
-    if (s.hasRating2) ratingStr += `${s.hasRating ? "/" : "("}${s.rating2}`;
-    if (ratingStr)    ratingStr += ")";
-
     return {
-      id:            i.id,
-      name:          i.name,
-      ratingDisplay: ratingStr,
+      id:            g.id,
+      // У Черты рейтинг показывает своя колонка, поэтому в подписи остаются
+      // только имя и специализации (у Черт схемы их нет, но имя бывает общим).
+      name:          g.specs.length ? `${g.baseName} (${g.specs.join(", ")})` : g.baseName,
+      ratingDisplay: g.ratingText,
       effectSummary: fx.join(" · "),
-      benefit:       s.benefit || ""
+      benefit:       g.first.system.benefit || "",
+      toggles:       toggleRows(allItems, g.first)
     };
   });
 
@@ -820,12 +918,19 @@ export function buildGetData(actor) {
   // Один общий пул на листе (не два раздельных подраздела) — см. mutgift-*.
   const GOD_LABEL = { khorne: "Кхорн", slaanesh: "Слаанеш", nurgle: "Нургл", tzeentch: "Тзинч" };
   const allMut = allItems.filter(i => i.type === "mutation");
-  context.mutationsAndGifts = allMut.map(i => ({
-    id:       i.id,
-    name:     i.name,
-    godLabel: i.system.god ? (GOD_LABEL[i.system.god] || i.system.god) : "",
-    benefit:  i.system.benefit || i.system.description || ""
-  }));
+  context.mutationsAndGifts = allMut.map(i => {
+    // Выпавшая субмутация (стр. 440) показывается прямо в строке: у мутации с
+    // таблицей значение имеет именно она, а не общее описание.
+    const sub = i.system.submutation || {};
+    return {
+      id:       i.id,
+      name:     i.name,
+      subName:  sub.name || "",
+      godLabel: i.system.god ? (GOD_LABEL[i.system.god] || i.system.god) : "",
+      benefit:  i.system.benefit || i.system.description || "",
+      subText:  sub.name ? `${sub.label} — ${sub.name}: ${sub.text}` : ""
+    };
+  });
 
   context.abilityPsychicPowers = allItems.filter(i => i.type === "psychicPower").map(i => ({
     id:   i.id,
@@ -900,6 +1005,22 @@ export function buildGetData(actor) {
     ? resolveCulture(system.geneSeed.cultureLegion, system.geneSeed?.cultureChapter) : null;
   // Применены ли уже расовые Черты (для подсказки кнопки)
   context.hasGeneSeedTrait = allItems.some(i => i.type === "trait" && /Gene-Seed|Геносемя/i.test(i.name));
+
+  // Гайд по имплантам Геносемени на вкладке СПОСОБНОСТИ — на него ссылается
+  // описание Черты «Геносемя» ("см. гайд на вкладке СПОСОБНОСТИ"). Органы
+  // выдаёт Конструктор той Черты обычными предметами-имплантами категории
+  // "astartes" (module/apps/mechanics.mjs, kind:"equipment"), поэтому гайд не
+  // хранит свою копию текста, а читает то же поле system.effect, что и карточка
+  // импланта на вкладке СНАРЯЖЕНИЕ — расхождения быть не может по построению.
+  context.geneSeedOrgans = allItems
+    .filter(i => i.type === "implant" && i.system.category === "astartes")
+    .map(i => ({
+      id: i.id, name: i.name,
+      effect:      i.system.effect || "",
+      description: i.system.description || "",
+      installed:   i.system.installed || ""
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
   // Имя источника Геносемя/Культуры для шапки — ЧИСТОЕ имя легиона/варбанды
   // (без номера легиона, который несёт resolvedCulture.name/legion-info-title
@@ -976,6 +1097,14 @@ export function buildGetData(actor) {
     pips: Array.from({ length: Math.min(16, Math.max(0, enMaxTotal)) }, (_, i) => ({ on: (i + 1) <= enVal }))
   };
   context.noosphereActions = NOOSPHERE_ACTIONS;
+
+  // ── Инфограждение: сводка по высокотехнологичному снаряжению персонажа ────
+  // (module/apps/infoguard.mjs) — та же кнопка «Наложить», что и на листе
+  // предмета, но списком на вкладке Тех, где игрок и так работает с Tech-Use.
+  context.infoguardItems = allItems
+    .filter(i => supportsInfoguard(i))
+    .map(i => ({ id: i.id, name: i.name, successes: i.system.infoguard || 0 }))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 
   // ── Кибернетика Механикум: кнопки генерации ⚙/⚡ и тумблеры от имплантов ──────
   // Только установленные (флаг) импланты с директивами gen/toggle в IMPLANT_MECH.

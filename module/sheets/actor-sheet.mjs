@@ -1,4 +1,5 @@
 import { activateEliteListeners } from "./elite-picker.mjs";
+import { buyEliteArchetype } from "../apps/elite-buy.mjs";
 import { activateHaemonculusListeners } from "./tabs/haemonculus.mjs";
 import { openItemPicker, talentCategory } from "./item-picker.mjs";
 import { openGearPicker } from "./gear-picker.mjs";
@@ -8,7 +9,8 @@ import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES } from "../constants/items.mjs";
 import { _degWord, splitTopLevel, esc } from "../helpers/utils.mjs";
-import { showCreationWizard, ruSpec } from "../apps/creation.mjs";
+import { ruSpec } from "../apps/creation.mjs";
+import { openCharacterWizard } from "../apps/character-wizard.mjs";
 import { onConvertToHorde } from "../apps/horde-convert.mjs";
 import { buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
@@ -26,11 +28,20 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners } from "./tabs/gear.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
-import { minionsContext, activateMinionListeners } from "../apps/minions.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
+import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minions-panel.mjs";
+import { onMinionCreate } from "../apps/minion-creator.mjs";
+import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
+import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
+import { refundXP, talentCost, talentReason } from "../apps/duplicate-refund.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
+import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-panel.mjs";
+import { dreadnoughtPanelContext } from "./tabs/dreadnought-panel.mjs";
+import { SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf, dailyWillTestOutcome,
+         electrostimulatorBoost, ferumInfernusActive } from "../rules/dreadnought.mjs";
+import { computeWoundDamage } from "./tabs/wounds.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
 import { activatePossessionListeners } from "./tabs/possession.mjs";
 import { activateAdvanceListeners } from "./tabs/advance.mjs";
@@ -42,7 +53,8 @@ import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
-import { ruleRollModsHtml } from "../rules/roll-mods.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
          assistsBeyondCap, countedAssists }
   from "../rules/assists.mjs";
@@ -58,18 +70,22 @@ import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { toggleAbility } from "../apps/toggle-abilities.mjs";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
 // «Minion of Chaos», дефисы, мн.ч. и опечатки.
-const TALENT_ALIAS = {
+// Экспортируются: та же таблица и регулярка нужны Этапу 3 нового мастера
+// (character-wizard.mjs) — там разбор списка талантов на «выбор» продублирован
+// без диалога, но по тем же правилам.
+export const TALENT_ALIAS = {
   "minion":               "minion of chaos",
   "erudite infernal":     "erudite-infernal",
   "clues from the crowd": "clues from the crowds",
   "sure stitch":          "sure strike"
 };
 // Разделители вариантов выбора в данных: « или » и «/».
-const TALENT_CHOICE_SEP = /\s+или\s+|\s*\/\s*/i;
+export const TALENT_CHOICE_SEP = /\s+или\s+|\s*\/\s*/i;
 
 // ── Действия листа ───────────────────────────────────────────────────────────
 // ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
@@ -138,6 +154,15 @@ function onAbilityDetail(event, target) {
   tr.classList.toggle("ability-row-open", shown);
 }
 
+// Кнопка «вкл./выкл.» у подспособности переключаемой способности (Локус
+// Герольда и подобные «раз в Ход выбери один из N»). Что именно станет
+// включённым — считает module/rules/toggle-abilities.mjs, применяет
+// module/apps/toggle-abilities.mjs; лист перерисуется сам по updateItem.
+async function onToggleAbility(event, target) {
+  event.preventDefault(); event.stopPropagation();
+  await toggleAbility(this.actor, target.dataset.parentId, target.dataset.itemId);
+}
+
 
 
 // ── Кнопки «+» показателей: Безумие/Порча (число или XdY+Z), Опыт,
@@ -151,12 +176,250 @@ async function onStatAdd(event, target) {
   } else if (stat === "corruption") {
     await promptStatAdd(this.actor, { label: "Порча", path: "system.corruption.value", allowDice: true });
   } else if (stat === "xpTotal") {
-    await promptStatAdd(this.actor, { label: "Опыт (Всего)", path: "system.experience.total" });
+    // Ловит на Лету (X) / Fast Learner: +X% к прибавляемому опыту, читаем
+    // живой процент с актора (module/documents/actor.mjs, system.fastLearnerBonus).
+    await promptStatAdd(this.actor, {
+      label: "Опыт (Всего)", path: "system.experience.total",
+      bonusPercent: this.actor.system?.fastLearnerBonus || 0
+    });
   } else if (stat === "patronFavor") {
     const god = target.dataset.god;
     const meta = chaosPatronMeta(god);
     await promptStatAdd(this.actor, { label: `Благосклонность — ${meta.label}`, path: `system.patronFavor.${god}` });
+  } else if (stat === "sanity") {
+    // Единственная кнопка покрывает и потерю (урон Дредноуту, провал теста
+    // Воли — отрицательное число), и все способы восстановления книги
+    // (Гибернация — 1dX за неделю, Электростимуляторы, Таланты на кубах):
+    // они разные по РИТУАЛУ, но одинаковы по РЕЗУЛЬТАТУ — число с причиной.
+    // Максимум читается заново при каждом клике: он производный и меняется
+    // вместе с W.b и количеством «Ядро Воспоминаний».
+    const max = this.actor.system.sanity?.max ?? null;
+    await promptStatAdd(this.actor, {
+      label: "Здравомыслие", path: "system.sanity.value", allowDice: true, clampMax: max
+    });
   }
+}
+
+// Четыре Таланта пилота Дредноута (стр. 58): исполненное условие — на
+// усмотрение стола, кнопка лишь считает результат — трату 1 Очка Бесчестия
+// и бросок 2d10 в Здравомыслие. Путь/максимум ОБ — те же геттеры, что и у
+// общей траты Хаосита (_infamyPath/_infamyMax/_ipChange), Талант просто
+// открывает доступ к ним ещё с одной стороны.
+async function onSanityTalentRecover(event, target) {
+  event.preventDefault();
+  const talent = SANITY_RECOVERY_TALENTS.find(t => t.key === target.dataset.talent);
+  if (!talent) return;
+  if (!sanityRecoveryTalentsOf(this.actor.items).some(t => t.key === talent.key)) return;
+
+  const ip = Math.max(0, Number(foundry.utils.getProperty(this.actor, this._infamyPath)) || 0);
+  if (!this._infamyEnabled || ip < 1)
+    return ui.notifications.warn("Нет Очков Бесчестия для восстановления Здравомыслия.");
+
+  await this._ipChange(-1);
+  const roll = await new Roll("2d10").evaluate();
+  const max = this.actor.system.sanity?.max ?? null;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  const next = max != null ? Math.min(max, cur + roll.total) : cur + roll.total;
+  await this.actor.update({ "system.sanity.value": next });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `<b>${esc(talent.label)}</b>: −1 Очко Бесчестия, +<b>${roll.total}</b> Здравомыслия `
+      + `(${cur} → ${next}).`,
+    rolls: [roll], sound: CONFIG.sounds.dice
+  }, rollMode));
+}
+
+// Суточный тест бодрствования пилота Дредноута (стр. 57): фиксированный
+// W+0 без модификаторов (саркофаг), Провал сразу списывает Здравомыслие на
+// число Провалов — книга не оставляет тут выбора, поэтому в отличие от
+// общей кнопки «±» причина не спрашивается.
+async function onDreadnoughtDailyTest(event) {
+  event.preventDefault();
+  const wp = Number(this.actor.system.characteristics?.wp?.total) || 0;
+  const roll = await new Roll("1d100").evaluate();
+  const { success, degrees, sanityLoss } = dailyWillTestOutcome(roll.total, wp);
+
+  let next = null;
+  if (sanityLoss > 0) {
+    const cur = Number(this.actor.system.sanity?.value) || 0;
+    next = Math.max(0, cur - sanityLoss);
+    await this.actor.update({ "system.sanity.value": next });
+  }
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Тест бодрствования — W+0</div>
+        <div class="roll-threshold">Порог: <b>${wp}</b></div>
+        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
+        <div class="roll-outcome">
+          ${success
+            ? `<span class="roll-success">Успех — ${degrees} ${_degWord(degrees)}</span>`
+            : `<span class="roll-failure">Провал — ${degrees} ${_degWord(degrees)}, `
+              + `−${sanityLoss} Здравомыслия (${next})</span>`}
+        </div>
+      </div>`,
+    rolls: [roll], sound: CONFIG.sounds.dice
+  }, rollMode));
+}
+
+// Электростимуляторы Дредноута (стр. 58): разовый буст Здравомыслия, откат —
+// вручную (тикающего таймера в системе нет, тот же случай, что и Пост-эффект
+// Препаратов в drugs.mjs). Сумму буста храним на пилоте (system.electrostim),
+// чтобы «Откат» знал, сколько снимать, даже после перерисовки листа.
+async function onElectrostimActivate(event) {
+  event.preventDefault();
+  if (this.actor.system.electrostim?.active) return;
+  const wpBonus = Number(this.actor.system.characteristics?.wp?.bonus) || 0;
+  const { amount, delayMinutes } = electrostimulatorBoost(wpBonus);
+  const max = this.actor.system.sanity?.max ?? null;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  const next = max != null ? Math.min(max, cur + amount) : cur + amount;
+
+  await this.actor.update({
+    "system.sanity.value": next,
+    "system.electrostim.active": true,
+    "system.electrostim.amount": amount
+  });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Электростимуляторы</div>
+        <div class="roll-outcome"><span class="roll-success">+${amount} Здравомыслия (${cur} → ${next})</span></div>
+        <div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">
+          Через ~${delayMinutes} мин. нажмите «Откат»: буст снимется, придёт 1d5 непоглощаемого урона.
+        </div>
+      </div>`
+  }, rollMode));
+}
+
+async function onElectrostimRollback(event) {
+  event.preventDefault();
+  const es = this.actor.system.electrostim;
+  if (!es?.active) return;
+  const amount = Number(es.amount) || 0;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  const next = Math.max(0, cur - amount);
+
+  const roll = await new Roll("1d5").evaluate();
+  const woundUpdates = computeWoundDamage(this.actor.system, roll.total);
+
+  await this.actor.update({
+    "system.sanity.value": next,
+    "system.electrostim.active": false,
+    "system.electrostim.amount": 0,
+    ...woundUpdates
+  });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Электростимуляторы — откат</div>
+        <div class="roll-outcome"><span class="roll-failure">−${amount} Здравомыслия (${cur} → ${next})</span></div>
+        <div class="roll-dice">Непоглощаемый урон: <b>${roll.total}</b></div>
+      </div>`,
+    rolls: [roll], sound: CONFIG.sounds.dice
+  }, rollMode));
+}
+
+// «Ферум Инфернус» (стр. 58): пока Здравомыслие ниже ½Inf+5, раз в игровой
+// час +1. В системе нет тикающего хука по игровому времени (нашёлся только
+// updateWorldTime, который лишь перерисовывает виджет календаря), поэтому
+// кнопка — ручной «тик», который игрок жмёт сам по прошествии часа.
+async function onFerumInfernusTick(event) {
+  event.preventDefault();
+  const infTotal = Number(this.actor.system.characteristics?.inf?.total) || 0;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  if (!ferumInfernusActive(cur, infTotal)) {
+    return ui.notifications.info("Ферум Инфернус: Здравомыслие уже не ниже порога — восстановления нет.");
+  }
+  const max = this.actor.system.sanity?.max ?? null;
+  const next = max != null ? Math.min(max, cur + 1) : cur + 1;
+  await this.actor.update({ "system.sanity.value": next });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Ферум Инфернус</div>
+        <div class="roll-outcome"><span class="roll-success">+1 Здравомыслия (${cur} → ${next})</span></div>
+      </div>`
+  }, rollMode));
+}
+
+// Гибернация (стр. 57) — основной способ восстановить Здравомыслие: часовой
+// техноритуал (комбинированный тест Tech-Use-40 + Medicae-40, 2-8
+// ассистентов — тесты кидают обычными кнопками Навыков, отдельного диалога
+// для комбинированного теста в системе нет) переводит пилота в кому, и раз в
+// полную неделю в ней восстанавливается 1d10. Выход — тот же ритуал. Кнопки
+// листа только держат флаг и напоминают условие входа/выхода в чате.
+async function onHibernationEnter(event) {
+  event.preventDefault();
+  if (this.actor.system.hibernation?.active) return;
+  await this.actor.update({ "system.hibernation.active": true });
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Гибернация — вход</div>
+        <div class="roll-outcome"><span class="roll-success">Пилот погружён в Гибернацию.</span></div>
+        <div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">
+          Ритуал: часовой техноритуал, комбинированный тест Tech-Use−40 + Medicae−40 (2-8 ассистентов).
+          Раз в полную неделю — «Тик недели» на панели.
+        </div>
+      </div>`
+  }, rollMode));
+}
+
+async function onHibernationExit(event) {
+  event.preventDefault();
+  if (!this.actor.system.hibernation?.active) return;
+  await this.actor.update({ "system.hibernation.active": false });
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Гибернация — выход</div>
+        <div class="roll-outcome"><span class="roll-success">Пилот выведен из Гибернации.</span></div>
+        <div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">
+          Ритуал: тот же порядок, что и вход (часовой техноритуал, Tech-Use−40 + Medicae−40).
+        </div>
+      </div>`
+  }, rollMode));
+}
+
+async function onHibernationWeekTick(event) {
+  event.preventDefault();
+  if (!this.actor.system.hibernation?.active) return;
+  const roll = await new Roll("1d10").evaluate();
+  const max = this.actor.system.sanity?.max ?? null;
+  const cur = Number(this.actor.system.sanity?.value) || 0;
+  const next = max != null ? Math.min(max, cur + roll.total) : cur + roll.total;
+  await this.actor.update({ "system.sanity.value": next });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Гибернация — полная неделя</div>
+        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
+        <div class="roll-outcome"><span class="roll-success">+${roll.total} Здравомыслия (${cur} → ${next})</span></div>
+      </div>`,
+    rolls: [roll], sound: CONFIG.sounds.dice
+  }, rollMode));
 }
 
 // ── Инициатива ──
@@ -183,7 +446,10 @@ function onCharRoll(event, target) {
   return this._rollCharacteristic(charLabel(key, this.actor.system.alignment), meta.abbr, total, key);
 }
 
-function onSkillRoll(event, target) {
+// Экспортирован: вкладка СОЦИУМ подключается частью и к Демону, и к
+// Демону-Принцу (tab-social.hbs), а карта действий ApplicationV2 у каждого
+// класса своя — обработчику нужно быть доступным для их собственных actions.
+export function onSkillRoll(event, target) {
   if (target.dataset.group === "true") {
     const groupKey = target.dataset.groupkey;
     const idx      = parseInt(target.dataset.index);
@@ -266,7 +532,19 @@ export class WarhammerCharacterSheet
   static DEFAULT_OPTIONS = {
     classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
     position: { width: 1000, height: 940 },
-    window: { resizable: true },
+    window: {
+      resizable: true,
+      // Кнопка «Мастер» раньше стояла в шапке листа (header.hbs) рядом с
+      // Мировоззрением; перенесена сюда, чтобы не путать с кнопкой «Начать
+      // создание персонажа» на панели Актёры (apps/character-start.mjs) —
+      // та заводит НОВОГО актора, а этот пункт лишь перезапускает Мастера
+      // на уже существующем.
+      controls: [{
+        icon: "fa-solid fa-hat-wizard",
+        label: "Перезапустить мастера создания",
+        action: "charWizard"
+      }]
+    },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       // Вкладки и свёртки доступны и тому, кто лист только смотрит.
@@ -281,12 +559,24 @@ export class WarhammerCharacterSheet
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
       // Мастера зовут из двух мест: панель «Актёры» — для нового персонажа,
-      // эта кнопка — чтобы пройти его заново на уже созданном.
+      // пункт «Перезапустить мастера создания» в window.controls (выше) —
+      // чтобы пройти его заново на уже созданном.
       charWizard: whenEditable(function () { this.openCreationWizard(); }),
       convertToHorde: whenEditable(onConvertToHorde),
+      // «+» в блоке МИНЬОНЫ на вкладке СОЦИУМ — генератор слуги (стр. 111-113).
+      minionCreate:   whenEditable(onMinionCreate),
       abilityDetail: whenEditable(onAbilityDetail),
+      toggleAbility: whenEditable(onToggleAbility),
       pathsToggle: whenEditable(onPathsToggle),
       statAdd: whenEditable(onStatAdd),
+      sanityTalentRecover: whenEditable(onSanityTalentRecover),
+      dreadnoughtDailyTest: whenEditable(onDreadnoughtDailyTest),
+      electrostimActivate: whenEditable(onElectrostimActivate),
+      electrostimRollback: whenEditable(onElectrostimRollback),
+      ferumInfernusTick: whenEditable(onFerumInfernusTick),
+      hibernationEnter: whenEditable(onHibernationEnter),
+      hibernationExit: whenEditable(onHibernationExit),
+      hibernationWeekTick: whenEditable(onHibernationWeekTick),
       initiativeRoll: whenEditable(onInitiativeRoll),
       charRoll: whenEditable(onCharRoll),
       skillRoll: whenEditable(onSkillRoll),
@@ -345,7 +635,7 @@ export class WarhammerCharacterSheet
   };
 
   _savedScrollTops = {};
-  _combatCollapse = { stance: false, tech: false };
+  _combatCollapse = { stance: false, base: false, tech: false };
   // Свёрнутые категории вкладки снаряжения (ключ категории → свёрнута?).
   _gearCollapse = {};
   // Носители (оружие/броня), у которых свёрнут список установленных улучшений.
@@ -388,18 +678,26 @@ export class WarhammerCharacterSheet
     // знает окно, а не актор.
     Object.assign(context, buildGetData(this.actor), characterContext(this.actor));
 
-    // Миньоны (стр. 111-113): панель на вкладке ЗАПИСИ, общая с листами Демона
-    // и Принца Демонов. Список акторов мира передаём сюда — сам расчёт про
-    // game ничего не знает и проверяется без Foundry.
-    Object.assign(context, minionsContext(this.actor, [...(game.actors ?? [])]));
-
     // Вкладка СОЦИУМ: Навыки, Таланты, Особенности, Модификаторы, Назначения,
     // Фракции, Миньоны и Отношения. Назначения ищутся по миру — привязка живёт
     // у той стороны, к которой персонажа прицепили, а не у него самого.
     Object.assign(context, socialContext(this.actor, [...(game.actors ?? [])]));
 
+    // Блок «МИНЬОНЫ» там же: слоты купленных Талантов, счётчик по группам и
+    // максимум, а при свободном Таланте — кнопка «+» в генератор.
+    Object.assign(context, minionsPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // Блок «ВЕРХОМ» на вкладке БОЙ: скакун ищется по списку акторов мира —
+    // ссылку на него хранит сам всадник (rules/mount.mjs).
+    Object.assign(context, mountPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // Блок «ЗДРАВОМЫСЛИЕ» там же: видим, только если какой-то Дредноут в мире
+    // держит этого персонажа своим пилотом (rules/dreadnought.mjs, стр. 57-58).
+    Object.assign(context, dreadnoughtPanelContext(this.actor, [...(game.actors ?? [])]));
+
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
     context.combatStanceCollapsed = !!this._combatCollapse?.stance;
+    context.combatBaseCollapsed   = !!this._combatCollapse?.base;
     context.combatTechCollapsed   = !!this._combatCollapse?.tech;
     context.gearCollapse = this._gearCollapse || {};
 
@@ -502,17 +800,18 @@ export class WarhammerCharacterSheet
   }
 
   /**
-   * Мастер создания персонажа. Раньше его звала кнопка в шапке листа; теперь
-   * создание начинается кнопкой в панели «Актёры» (apps/character-start.mjs),
-   * а лист остаётся местом, где живут коллбеки: Черты, стартовые Таланты и
-   * тема листа — его же работа, их зовут и кнопки «Применить расу»/«…легион».
+   * Мастер создания персонажа (module/apps/character-wizard.mjs) — пять
+   * этапов в одном окне. Зовётся из панели «Актёры» (apps/character-start.mjs
+   * — для нового персонажа) и из пункта «Перезапустить мастера создания» в
+   * window.controls этого листа (для уже существующего). Коллбеки Черт/
+   * стартовых Талантов новому мастеру не нужны — он читает их с
+   * `actor.sheet` сам (`_createTraitsFromList`/`_applyStartingTalents`,
+   * методы ниже); тема листа обновляется сама через обычный ре-рендер
+   * (`_applyThemeClasses()` в `activateListeners`, вызывается на каждом
+   * рендере), явный вызов не нужен.
    */
   openCreationWizard() {
-    return showCreationWizard(this.actor, {
-      createTraits:         (list, source) => this._createTraitsFromList(list, source),
-      applyStartingTalents: (raw, source)  => this._applyStartingTalents(raw, source),
-      applyTheme:           ()             => this._applyThemeClasses()
-    });
+    return openCharacterWizard(this.actor);
   }
 
   /** Создаёт Черты из списка {name,benefit,rating,hasRating,effects}, пропуская существующие по имени. */
@@ -554,6 +853,8 @@ export class WarhammerCharacterSheet
     for (const d of lib) byEng.set(norm(d.name.split("/")[0]), d);
     const toCreate = [];
     const seen = new Set();
+    // Таланты, которые у персонажа уже есть: за каждый вернётся его цена.
+    const refunds = [];
     for (const raw of list) {
       if (!raw) continue;
       const m        = String(raw).match(/^([^(]+?)\s*(?:\(([^)]*)\))?\s*$/);
@@ -562,7 +863,17 @@ export class WarhammerCharacterSheet
       const hit      = byEng.get(norm(baseName)) || byEng.get(TALENT_ALIAS[norm(baseName)] || "\0");
       const fullName = hit ? hit.name : String(raw);
       const key      = keyOf(fullName, spec);
-      if (existing.has(key) || seen.has(key)) continue;
+      // Повтор внутри одного списка — просто описка источника, за него ничего
+      // не полагается. А вот Талант, который у персонажа уже есть от другого
+      // источника, повторить нечем: вместо копии возвращается его цена
+      // (rules/duplicate-grants.mjs).
+      if (seen.has(key)) continue;
+      if (existing.has(key)) {
+        const same = this.actor.items.find(i => i.type === "talent" && keyOf(i.name, i.system?.specialization) === key);
+        if (same) refunds.push(same);
+        seen.add(key);
+        continue;
+      }
       seen.add(key);
       if (hit) {
         const sys = foundry.utils.deepClone(hit.system);
@@ -577,6 +888,14 @@ export class WarhammerCharacterSheet
       }
     }
     if (toCreate.length) await this.actor.createEmbeddedDocuments("Item", toCreate);
+
+    // Возврат — после создания: цена Таланта считается по Склонностям
+    // персонажа, а их мог поднять Талант, выданный этим же списком.
+    for (const same of refunds) {
+      await refundXP(this.actor, talentCost(this.actor, same),
+        talentReason(same.name, same.system?.specialization));
+    }
+
     return toCreate.length;
   }
 
@@ -740,6 +1059,27 @@ export class WarhammerCharacterSheet
       }
       return src.type === "race" ? applyRace(this.actor, key) : applySubrace(this.actor, key);
     }
+
+    // Элитный архетип брошенный прямо на лист (в обход своего пикера, elite-
+    // picker.mjs) обязан пройти ту же покупку, что и кнопка: иначе предмет
+    // создаётся обычным дропом с paidCost по умолчанию 0 — множитель за уже
+    // взятые архетипы не считается, требования не проверяются, опыт не
+    // списывается и не попадает в блок «Опыт» (system.experience.spentElite
+    // складывает paidCost по предметам, а у голого дропа он пуст).
+    if (src?.type === "eliteArchetype") {
+      return buyEliteArchetype(this.actor, src);
+    }
+
+    // «Миньон Хаоса» — Талант на двадцать разных слуг (стр. 111). Перетащенный
+    // без пары «группа + сила» он оставался бы слотом «непонятно чей», поэтому
+    // спрашиваем то же самое, что спрашивает покупка на вкладке «Развитие».
+    if (isMinionTalent(src) && !minionSlotOf(src).group) {
+      const pick = await promptMinionSlot(this.actor, src);
+      if (!pick) return;                        // отменили — предмет не создаём
+      const obj = applyMinionSlot(src.toObject(), pick);
+      return this.actor.createEmbeddedDocuments("Item", [obj]);
+    }
+
     return super._onDropItem(event, data);
   }
 
@@ -850,9 +1190,8 @@ export class WarhammerCharacterSheet
     activatePathListeners(html, this.actor);
 
     // ── Миньоны (стр. 111-113) ─────────────────────────────────────────────
-    // Панель на вкладке ЗАПИСИ; листы Демона и Принца Демонов получают её
-    // вместе с этой отрисовкой — они наследуют лист персонажа.
-    activateMinionListeners(html, this.actor);
+    // Карточки слуг в блоке «МИНЬОНЫ» на вкладке СОЦИУМ: клик открывает лист.
+    activateMinionPanelListeners(html);
 
     // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
     activateSocialListeners(html, this.actor, { editable: this.isEditable });
@@ -873,6 +1212,9 @@ export class WarhammerCharacterSheet
 
     // ── Вкладка БОЙ ───────────────────────────────────────────────────────
     activateCombatListeners(root, this.actor);
+
+    // ── Блок «ВЕРХОМ» там же (стр. 477-478) ───────────────────────────────
+    activateMountPanelListeners(root, this.actor, { editable: this.isEditable });
 
     // ── Контекстное меню предметов ────────────────────────────────────────
     activateItemContextMenu(html, this.actor);
@@ -1088,6 +1430,9 @@ export class WarhammerCharacterSheet
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
     const rl = this._ruleRollModsHtml(rollCtx);
+    // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
+    // блоком, а не галочкой среди модификаторов: их не с чем складывать.
+    const rr = ruleRerollsHtml(this.actor, rollCtx);
     const defaultCharTotal = this.actor.system.characteristics[defaultChar]?.total ?? 0;
     const rankBonus        = baseTotal - defaultCharTotal;
 
@@ -1131,6 +1476,7 @@ export class WarhammerCharacterSheet
             ${hw.html}
             ${im.html}
             ${rl.html}
+            ${rr.html}
           </div>`,
       buttons: [
         {
@@ -1154,11 +1500,18 @@ export class WarhammerCharacterSheet
             // прибавка к степени — отдельным полем: она применяется только при
             // успехе, и решать это должен вызывающий код.
             modifier += assistThresholdBonus(assistants.length);
+            // Выбранный переброс: −1 значит «без переброса».
+            const rerollEl = form.querySelector(".rule-reroll-opt:checked");
+            const rerollIdx = parseInt(rerollEl?.dataset.idx ?? "-1");
             return {
               charKey:  form.querySelector("#skill-char-select")?.value,
               target:   parseInt(form.querySelector("#skill-target").value) || 0,
               modifier,
-              assistCount: assistants.length
+              assistCount: assistants.length,
+              reroll: rerollIdx >= 0
+                ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2,
+                    label: rerollEl.parentElement?.textContent?.trim() || "Переброс" }
+                : null
             };
           }
         },
@@ -1234,7 +1587,7 @@ export class WarhammerCharacterSheet
   async _rollSkill(label, baseTotal, defaultChar, rollContext = null) {
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext);
     if (!result) return;
-    const { charKey, target, modifier, assistCount = 0 } = result;
+    const { charKey, target, modifier, assistCount = 0, reroll = null } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(defaultChar);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
@@ -1242,8 +1595,20 @@ export class WarhammerCharacterSheet
 
     // Мод препаратов уже входит в target (через char.total → итог навыка)
     const eff      = target + modifier + fatiguePenalty + helmetBonus;
-    const roll     = await new Roll("1d100").evaluate();
-    const rv       = roll.total;
+    // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
+    // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
+    // держится в одном месте, а не переписывается на каждом месте броска.
+    const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+    const rolls = [];
+    for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+    const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
+    const roll   = rolls[picked.index];
+    const rv     = picked.value;
+    // Отброшенные броски показываем в карточке: иначе переброс выглядит как
+    // «мастер что-то посчитал», а не как потраченная возможность.
+    const rerollNote = reroll
+      ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+      : "";
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
     const rollMode = game.settings.get("core", "rollMode");
     const success  = rv <= eff;
@@ -1268,6 +1633,7 @@ export class WarhammerCharacterSheet
           </div>
           ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${success ? `, +${assistCount} к степени` : ""})</div>` : ""}
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
+          ${rerollNote}
           <div class="roll-outcome">${outcome}</div>
         </div>`,
       rolls: [roll],

@@ -85,12 +85,13 @@ export async function createTraumaItem(actor, row) {
 }
 
 /** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без Демона/переброса. */
-export async function _executeTraumaRoll(actor) {
+export async function _executeTraumaRoll(actor, mod = 0) {
   const wp   = actor.system.characteristics.wp?.total ?? 0;
+  const eff  = wp + mod;
   const roll = await new Roll("1d100").evaluate();
   const rv   = roll.total;
-  const success = rv <= wp;
-  const dof  = success ? 0 : Math.floor((rv - wp) / 10) + 1;
+  const success = rv <= eff;
+  const dof  = success ? 0 : Math.floor((rv - eff) / 10) + 1;
   const allRolls = [roll];
   let traumaHtml = "";
   if (!success) {
@@ -105,7 +106,8 @@ export async function _executeTraumaRoll(actor) {
     // просто падал в чат и исчезал.
     await createTraumaItem(actor, row);
   }
-  await _postFearMsg(actor, "🧠 Ментальная Травма", "тест W+0", wp, 0, rv, wp, success, dof, traumaHtml, allRolls);
+  const sub = mod ? `тест W${mod >= 0 ? "+" : ""}${mod}` : "тест W+0";
+  await _postFearMsg(actor, "🧠 Ментальная Травма", sub, wp, mod, rv, eff, success, dof, traumaHtml, allRolls);
 }
 
 /**
