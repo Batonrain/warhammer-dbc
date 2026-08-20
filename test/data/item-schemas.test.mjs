@@ -64,7 +64,9 @@ const TYPES = {
       // В template.json объявлено не было, но лежит у 20 предметов пака —
       // след раскладки по папкам компендиума при импорте. Кодом не читается;
       // объявлено, чтобы правка предмета в игре его не стирала.
-      folderPath: []
+      folderPath: [],
+      // Инфограждение (module/apps/infoguard.mjs) — Успехи встречного теста.
+      infoguard: 0
     }
   },
   tool: {
@@ -73,7 +75,7 @@ const TYPES = {
       description: "", notes: "", quantity: 1, weight: 0, availability: 0,
       quality: "common", toolCategory: "general", linkedWeapon: "", effect: "",
       reminder: "", qualityEffects: { poor: "", good: "", best: "" },
-      bonuses: [], drukhari: false, bookSource: ""
+      bonuses: [], drukhari: false, bookSource: "", infoguard: 0
     }
   },
   cybernetic: {
@@ -162,6 +164,20 @@ const TYPES = {
       isPsyker: false, isTechpriest: false, psykerClass: "",
       grantsWarPlate: false, grantsImplants: false, description: "", notes: "",
       trait: { name: "", benefit: "" }, bookSource: ""
+    }
+  },
+  // Элитные архетипы (корбук стр. 114-164): ступень поверх Архетипа. Трейты и
+  // Дополнительные Таланты — списками имён: сами записи лежат в библиотеках
+  // Черт и Талантов, и копировать их сюда значило бы править одно в двух местах.
+  eliteArchetype: {
+    pack: "elite-archetypes",
+    defaults: {
+      // cost — цена по книге, paidCost — сколько заплатил этот персонаж
+      // (с удвоением за каждый предыдущий Элитный архетип).
+      key: "", cost: 0, paidCost: 0,
+      requirements: { primary: [], secondary: [] },
+      race: "", god: "", req: "", charBonus: "", freeTalents: "",
+      gear: "", traits: [], talents: [], description: "", notes: "", bookSource: ""
     }
   },
   race: {
@@ -257,7 +273,10 @@ const TYPES = {
       effects: {
         charBonuses: [], charValueBonuses: [], armourAll: 0,
         fearRating: 0, sizeMod: 0, initMod: 0, speedMod: 0
-      }
+      },
+      // Выпавшая субмутация (стр. 440): в template.json поля не было, в паке
+      // его тоже нет — оно заполняется броском уже на листе персонажа.
+      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0 }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },
@@ -279,9 +298,9 @@ const TYPES = {
   weapon: {
     pack: ["weapons", "vehicle-weapons"],
     defaults: {
-      description: "", notes: "", rangeBands: [], offProfile: {}, gripProps2h: [],
-      corEffects: [], weaponClass: "melee", weaponType: "laser", range: 0,
-      balance: 0, grips: "", profileLabel: "", profiles: [], reload: "1",
+      description: "", notes: "", infoguard: 0, rangeBands: [], offProfile: {}, gripProps2h: [],
+      corEffects: [], weaponClass: "melee", weaponType: "laser", itemSize: "", range: 0,
+      balance: 0, grips: "", profileLabel: "", meleeCategory: "", profiles: [], reload: "1",
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
       damage: "", damageType: "impact", penetration: 0, quality: "common",
       availability: 0, weight: 0, attackBonus: 0, special: "", equipped: false,
@@ -290,6 +309,14 @@ const TYPES = {
       daemonWeapon: {
         bound: false, god: "", demonName: "", binding: 0, demonWb: 0, demonInf: 0,
         subdued: false, runic: false, properties: [], preProps: [], preDamage: "", prePen: 0
+      },
+      // Оружие Наследия (стр. 426-428) заведено позже template.json: признак
+      // «реликвия» (legacyWeapon) был и раньше, а механика — История, Характер,
+      // Мутации и снимок профиля до Возвышения — появилась вместе с правилами.
+      legacy: {
+        active: false, legendary: false, historyKey: 0, historyName: "", historyText: "",
+        character: "", mutations: [], bonus: 0,
+        preProps: [], preDamage: "", prePen: 0, preQuality: ""
       },
       vehicleMount: {
         isMounted: false, operator: "gunner", stationId: "", mount: "turret",
@@ -320,11 +347,12 @@ const TYPES = {
   armor: {
     pack: "armor",
     defaults: {
-      description: "", notes: "", armorType: "simple", stacks: false,
+      description: "", notes: "", infoguard: 0, armorType: "simple", stacks: false,
       maxAgility: 100, propRatings: {}, apSecond: {}, equipped: false,
       head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
       quality: "common", availability: 0, weight: 0, properties: [],
       strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
+      isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
       history: {
         table: "", key: "", roll: 0, name: "", desc: "", effect: "", choice: "",
         zones: {},
@@ -332,7 +360,8 @@ const TYPES = {
       },
       // Текст особенностей комплекта — заполнен у 65 предметов пака, а в
       // template.json объявлен не был.
-      special: ""
+      special: "",
+      weightless: false
     }
   },
   // ── Силы (wdbc-ff4.1.4) ────────────────────────────────────────────────────
@@ -364,7 +393,7 @@ const TYPES = {
       cognitionCost: 1, energyCost: 0, sustainCost: 0, sustainAction: "free",
       testSkill: "techUse", testMod: 0, action: "full", sustained: false,
       compiled: false, range: "", damage: "", damageType: "energy",
-      penetration: 0, effect: "",
+      penetration: 0, weaponProps: [], effect: "",
       effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] }
     }
   },
@@ -433,7 +462,8 @@ const TYPES = {
   },
   vehicleGear: {
     pack: "vehicle-equipment",
-    defaults: { description: "", notes: "", availability: 0, quality: "common", active: true }
+    defaults: { description: "", notes: "", availability: 0, quality: "common", active: true,
+                bookSource: "" }
   },
   vehicleTrait: {
     pack: "vehicle-traits",

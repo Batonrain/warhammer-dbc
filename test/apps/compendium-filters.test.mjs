@@ -80,8 +80,22 @@ describe("normalizePick", () => {
   });
 
   it("умолчания: один предмет, без пояснения", () => {
-    expect(normalizePick({ pack: "weapons" }))
-      .toEqual({ pack: "weapons", filters: {}, count: 1, prompt: "" });
+    expect(normalizePick({ pack: "weapons" })).toEqual({
+      pack: "weapons", filters: {}, count: 1, prompt: "",
+      budget: { mode: "count", value: 1 }
+    });
+  });
+
+  // Прежняя форма `count: N` — это бюджет в штуках; переписывать рабочие
+  // вызовы Конструктора ради новой записи незачем.
+  it("count переезжает в бюджет штуками", () => {
+    expect(normalizePick({ pack: "talents", count: 7 }).budget)
+      .toEqual({ mode: "count", value: 7 });
+  });
+
+  it("бюджет опытом задаётся явно и count не перебивает его", () => {
+    expect(normalizePick({ pack: "psychic-powers", budget: { mode: "xp", value: 500 } }).budget)
+      .toEqual({ mode: "xp", value: 500 });
   });
 
   it("прежняя плоская форма переезжает в filters — вызовы Конструктора не правились", () => {

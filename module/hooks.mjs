@@ -4,12 +4,16 @@ import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
-import { showApplyDamageDialog }         from "./combat/damage.mjs";
+import { showApplyDamageDialog, applyDamageToActor } from "./combat/damage.mjs";
+import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
+import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
+import { saddleTest, applyFall, showMountedDodgeDialog } from "./combat/mount.mjs";
 import { CONDITION_LEVEL_FIELD }         from "./combat/weapon-properties.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
+import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 
 export function registerHooks() {
 
@@ -31,7 +35,17 @@ export function registerHooks() {
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const attackDeg = ev.currentTarget.dataset.attackDeg != null
           ? parseInt(ev.currentTarget.dataset.attackDeg) : null;
-        await _performDodge(selectedToken.actor, extraMod, attackDeg);
+        if (!await confirmHordeDefense(selectedToken.actor, "Уклонение")) return;
+        // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
+        // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
+        // карточке одна, а знает о седле только сама цель, поэтому развилка
+        // здесь: карточка на момент броска ещё не знает, в кого попадут.
+        if (selectedToken.actor.system?.mount?.uuid) {
+          const handled = await showMountedDodgeDialog(selectedToken.actor, extraMod, attackDeg);
+          if (handled !== null) return;
+        }
+        await _performDodge(selectedToken.actor, extraMod, attackDeg,
+          ev.currentTarget.dataset.forceReroll || "");
       });
     });
 
@@ -46,6 +60,7 @@ export function registerHooks() {
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const attackDeg = ev.currentTarget.dataset.attackDeg != null
           ? parseInt(ev.currentTarget.dataset.attackDeg) : null;
+        if (!await confirmHordeDefense(selectedToken.actor, "Парирование")) return;
         await _performParry(selectedToken.actor, extraMod, attackDeg);
       });
     });
@@ -62,6 +77,46 @@ export function registerHooks() {
         const attackDeg = ev.currentTarget.dataset.attackDeg != null
           ? parseInt(ev.currentTarget.dataset.attackDeg) : null;
         await _performSwerve(selectedToken.actor, extraMod, attackDeg);
+      });
+    });
+
+    // Верховые тесты: удержаться в седле, переброс «Опытного Всадника» и урон
+    // падения. Актор берётся не по выбранному токену, а по uuid из карточки:
+    // тест удержания всегда проходит тот же всадник, чей поворот или ландшафт
+    // его вызвал, и промах мышью по чужому токену тут ничего не должен решать.
+    html.querySelectorAll(".wh-saddle-btn, .wh-saddle-reroll-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        // Кнопка запоминается ДО первого await: currentTarget живёт только пока
+        // событие обрабатывается синхронно, а дальше он уже null.
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const actor = await fromUuid(ds.actorUuid).catch(() => null);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Тест проходит владелец всадника (или ГМ).");
+        }
+        const reroll = el.classList.contains("wh-saddle-reroll-btn");
+        if (reroll) el.disabled = true;
+        await saddleTest(actor, {
+          kind: ds.kind || "agility",
+          mod: parseInt(ds.mod || "0"),
+          reason: ds.reason || "",
+          reroll
+        });
+      });
+    });
+
+    html.querySelectorAll(".wh-saddle-fall-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const actor = await fromUuid(ds.actorUuid).catch(() => null);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Бросить урон падения может владелец всадника (или ГМ).");
+        }
+        el.disabled = true;
+        await applyFall(actor, ds.formula || "1d10");
       });
     });
 
@@ -163,7 +218,7 @@ export function registerHooks() {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const ds = ev.currentTarget.dataset;
-        await showApplyDamageDialog({
+        const damageData = {
           rawDamage:    parseInt(ds.damage      || "0"),
           penetration:  parseInt(ds.penetration || "0"),
           damageType:   ds.damageType  || "impact",
@@ -171,13 +226,44 @@ export function registerHooks() {
           side:         ds.vehicleSide || "",   // сторона брони техники (из окна атаки)
           weaponName:   ds.weaponName  || "",
           attackerName: ds.attacker    || "",
+          attackerUuid: ds.attackerUuid || "",
           felling:      parseInt(ds.felling || "0"),
           primitive:    ds.primitive    === "1",
           ignoreShield: ds.ignoreShield === "1",
           warpSoak:     ds.warpSoak     === "1",
           lance:        ds.lance        === "1",
-          sanctified:   ds.sanctified   === "1"
-        });
+          sanctified:   ds.sanctified   === "1",
+          // Свойства, дающие Орде дополнительные попадания; на прочих целях
+          // они не читаются и ни на что не влияют.
+          blast:        parseInt(ds.blast || "0"),
+          flame:        ds.flame      === "1",
+          powerField:   ds.powerField === "1",
+          spray:        ds.spray      === "1",
+          devastating:  parseInt(ds.devastating || "0"),
+          weaponRange:  parseInt(ds.weaponRange || "0"),
+          melee:        ds.melee === "1",
+          burst:        ds.burst === "1"
+        };
+        // «Прячась в Орде»: попадание уже расписано в Орду — цель не выбирается.
+        if (ds.forceHorde) {
+          const horde = await fromUuid(ds.forceHorde);
+          const actor = horde?.actor ?? horde ?? null;
+          if (!actor) return ui.notifications.warn("⚠️ Орда, прикрывшая цель, не найдена.");
+          return applyDamageToActor(actor, damageData);
+        }
+        await showApplyDamageDialog(damageData);
+      });
+    });
+
+    // Психологический тест Орды: массивные потери, Страх, Запугивание.
+    html.querySelectorAll(".wh-horde-psych-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const horde = game.actors.get(ds.hordeId);
+        if (!horde) return ui.notifications.warn("⚠️ Орда не найдена.");
+        await rollHordePsychTest(horde, ds.kind || "massDamage",
+          { mod: parseInt(ds.mod || "0") });
       });
     });
 
@@ -713,9 +799,53 @@ function _attachFateContextMenu(message, html) {
       );
     });
   });
+
+  // ── Новый Раунд обнуляет счётчики потерь Орд ─────────────────────────────
+  // Тест W+Магнитуда требуется за массивный урон «в один Раунд», поэтому
+  // накопитель живёт ровно один Раунд боя. Чистит только ГМ: флаги пишет
+  // владелец документа, и дублировать запись с каждого клиента незачем.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.user.isGM || changed?.round === undefined) return;
+    for (const combatant of combat.combatants ?? []) {
+      const actor = combatant.actor;
+      if (actor?.type !== "horde") continue;
+      if (actor.getFlag("warhammer-dbc", ROUND_DAMAGE_FLAG))
+        await actor.unsetFlag("warhammer-dbc", ROUND_DAMAGE_FLAG);
+    }
+    await resolvePendingSusAnHeals(combat);
+  });
+
+  // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
+  // доносим исцеление немедленно, а не теряем его молча (module/apps/sus-an-heal.mjs).
+  Hooks.on("deleteCombat", async combat => {
+    if (!game.user.isGM) return;
+    await resolvePendingSusAnHeals(combat, { force: true });
+  });
 }
 
 // ── Вспомогательные функции ───────────────────────────────────────────────────
+
+/**
+ * Орда не может совершать Избегания — но кнопки защиты в чате не знают, чей
+ * токен выделен. Предупреждаем и спрашиваем подтверждение: домашние Черты и
+ * особые случаи ГМа бывают, а молча катить бросок против правила нельзя.
+ *
+ * @returns {Promise<boolean>} продолжать ли бросок
+ */
+async function confirmHordeDefense(actor, label) {
+  if (actor?.type !== "horde") return true;
+  ui.notifications.warn("⚠️ Орда не может совершать Избегания (правила Орд).");
+  return foundry.applications.api.DialogV2.confirm({
+    window: { title: `${label} за Орду` },
+    classes: ["warhammer-dbc", "wh-holo"],
+    content: `<p><b>${esc(actor.name)}</b> — Орда, а Орды Избеганий не совершают:
+      их площадь слишком велика, чтобы уклоняться.</p>
+      <p>Бросить ${esc(label.toLowerCase())} всё равно?</p>`,
+    yes: { label: "Бросить" },
+    no:  { label: "Отмена", default: true }
+  }).catch(() => false);
+}
+
 function _makeFateMenuItem(label, enabled, tooltip = "") {
   const item = document.createElement("div");
   item.style.cssText = `

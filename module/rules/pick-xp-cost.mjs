@@ -1,0 +1,47 @@
+// module/rules/pick-xp-cost.mjs
+// ════════════════════════════════════════════════════════════════════════════
+//  Цена записи компендиума в опыте — для бюджета выбора («500хр на Психосилы»).
+//
+//  Бюджет считает опыт, а опыт у каждого свой: Талант за 200 одному персонажу
+//  обойдётся в 600 другому, потому что цена зависит от Склонностей и культуры
+//  легиона (стр. 23-24). Поэтому цена берётся не из записи компендиума, а
+//  считается для того актора, кому выдают.
+//
+//  Психосилы и Техночудеса считаются иначе: у них в компендиуме лежит цена в
+//  Пси-Рейтинге, а не в опыте, и книжной формулы «ПР → опыт» нет. Пока её нет,
+//  честнее взять то, что записано, чем выдумать множитель: ГМ видит счётчик и
+//  правит бюджет, если цифры разойдутся с его столом.
+//
+//  Модуль знает про актора, но не про Foundry: на вход идут его system и items.
+// ════════════════════════════════════════════════════════════════════════════
+
+import { talentCostXP, aptitudeCat, charAptitudeSet } from "../constants/advancement.mjs";
+
+const num = v => Number(v) || 0;
+
+/**
+ * Цена одной записи Обозревателя в опыте для этого актора.
+ *
+ * @param {Actor}  actor  кому выдают (нужны Склонности)
+ * @param {object} item   узел дерева Обозревателя: { type, tier, cost, aptitudes }
+ * @returns {number}
+ */
+export function pickXPCost(actor, item) {
+  if (!item) return 0;
+  if (item.type === "talent") {
+    const charApts = charAptitudeSet(actor?.system?.aptitudes || []);
+    return talentCostXP(item.tier || 1, item.aptitudes || [], charApts, "neutral",
+      { name: item.name, patron: actor?.system?.patronGod });
+  }
+  // Психосила/техночудо и всё прочее — своя записанная цена.
+  return num(item.cost);
+}
+
+/**
+ * Категория цены записи — для подписи в списке («Дружественная»/«Враждебная»).
+ * Отдельно от цены: подпись нужна не всегда, а считать её дешевле, чем цену.
+ */
+export function pickCostCategory(actor, item) {
+  if (item?.type !== "talent") return null;
+  return aptitudeCat(charAptitudeSet(actor?.system?.aptitudes || []), item.aptitudes || []);
+}

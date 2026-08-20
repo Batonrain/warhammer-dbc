@@ -23,7 +23,7 @@ import { CHARACTERISTICS } from "./characteristics.mjs";
 // До wdbc-b3m ключ звался system.armour.<зона> — такого поля у актора нет
 // вовсе: в схеме system.armor, и это ручной блок, который берётся через
 // Math.max, а не складывается. Эффекты писали в никуда.
-const AP_LOCATIONS = {
+export const AP_LOCATIONS = {
   head: "Голова", body: "Тело", leftArm: "Левая рука", rightArm: "Правая рука",
   leftLeg: "Левая нога", rightLeg: "Правая нога"
 };

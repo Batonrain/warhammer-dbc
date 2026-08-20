@@ -10,12 +10,23 @@ import { _executeFearRoll, _executeTraumaRoll } from "../../combat/fear.mjs";
 import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
+import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
+
+/** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
+function checkedRuleMods(form) {
+  let sum = 0;
+  for (const cb of form?.querySelectorAll?.(".rule-mod:checked") ?? []) sum += parseInt(cb.dataset.value) || 0;
+  return sum;
+}
 
 /** Диалог теста Страха: форма живёт рядом с остальными кнопками безумия. */
 export function openFearDialog(actor) {
   const ratingOpts = Object.entries(FEAR_RATINGS).map(([key, rating]) =>
     `<option value="${key}">${rating.label} — важный W${rating.important >= 0 ? "+" : ""}${rating.important}, Infamy ${rating.infamy}+</option>`
   ).join("");
+  // Галочки правил (Конструктор, kind:"testMod", область char:wp) — та же
+  // область, что у Травмы ниже: Каталептический Узел и подобное сюда же.
+  const rm = ruleRollModsHtml(actor, { kind: "skill", char: "wp" });
 
   new Dialog({
     title: "😱 Тест Страха",
@@ -28,6 +39,7 @@ export function openFearDialog(actor) {
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="fear-mod" type="number" value="0"/></div>
         <div class="atk-dlg-section">Свойства</div>
         <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"/> Демон</label></div>
+        ${rm.html}
       </form>`,
     buttons: {
       roll: {
@@ -37,7 +49,7 @@ export function openFearDialog(actor) {
           const ratingKey = html.find("#fear-rating").val();
           const type = html.find("#fear-type").val();
           const infamy = parseInt(html.find("#fear-infamy").val()) || 0;
-          const mod = parseInt(html.find("#fear-mod").val()) || 0;
+          const mod = (parseInt(html.find("#fear-mod").val()) || 0) + checkedRuleMods(html[0]);
           // Свойства источника Страха — читаются в карточку/флаги сообщения;
           // Демон уже даёт бесплатный переброс при провале (см. fear.mjs).
           const properties = { demon: html.find("#fear-prop-demon").is(":checked") };
@@ -50,9 +62,41 @@ export function openFearDialog(actor) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 380 }).render(true);
 }
 
-/** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. */
+/** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без диалога — прежнее поведение для программных вызовов. */
 export async function rollTrauma(actor) {
   return _executeTraumaRoll(actor);
+}
+
+/**
+ * Диалог перед тестом Ментальной Травмы — раньше кнопка катала сразу, без
+ * шага выбора: у теста не было ни одного модификатора, спрашивать было не о
+ * чем. Появились галочки правил (Каталептический Узел и подобное, область
+ * char:wp) — тем же диалоговым приёмом, что и у Страха выше.
+ */
+export function openTraumaDialog(actor) {
+  const rm = ruleRollModsHtml(actor, { kind: "skill", char: "wp" });
+  if (!rm.mods.length) return rollTrauma(actor);   // нечего выбирать — как раньше, сразу бросок
+
+  new Dialog({
+    title: "🧠 Тест Ментальной Травмы",
+    content: `
+      <form class="wh-attack-form" style="padding:6px;">
+        <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="trauma-mod" type="number" value="0"/></div>
+        ${rm.html}
+      </form>`,
+    buttons: {
+      roll: {
+        icon: '<i class="fas fa-dice-d10"></i>',
+        label: "Бросок!",
+        callback: async html => {
+          const mod = (parseInt(html.find("#trauma-mod").val()) || 0) + checkedRuleMods(html[0]);
+          await _executeTraumaRoll(actor, mod);
+        }
+      },
+      cancel: { label: "Отмена" }
+    },
+    default: "roll"
+  }, { classes: ["dialog", "wh-attack-dialog"], width: 340 }).render(true);
 }
 
 /** Создаёт предмет-расстройство на акторе из записи библиотеки (без дублей по имени). */
@@ -248,7 +292,7 @@ export async function suppressMental(actor, type) {
  */
 export function activateDisorderListeners(html, actor, { rollCharacteristic } = {}) {
   html.find(".fear-roll").click(() => openFearDialog(actor));
-  html.find(".trauma-roll").click(() => rollTrauma(actor));
+  html.find(".trauma-roll").click(() => openTraumaDialog(actor));
   html.find(".trauma-suppress").click(() => suppressMental(actor, "mentalTrauma"));
   html.find(".disorder-suppress").click(() => suppressMental(actor, "mentalDisorder"));
   html.find(".disorder-roll, .disorder-roll-btn").click(() => rollDisorder(actor));

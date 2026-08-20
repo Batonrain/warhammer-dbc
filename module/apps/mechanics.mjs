@@ -80,6 +80,19 @@
 //      это ЖИВОЙ запрос: пока предмет на акторе, ignoredTerrainKeysForActor()
 //      (module/combat/movement-terrain.mjs) читает его Механику напрямую;
 //      уйдёт предмет — сам перестанет учитываться, без отдельного отката.
+//    reroll: { rerollScope:"all"|"char"|"skill"|"attack"|"initiative"|"social",
+//              rerollChar / skillKey (уточнение области), rerollMode:"keepBest"|
+//              "keepWorst", label }
+//      → ЖИВОЙ ЗАПРОС, как terrainIgnore: при получении предмета не пишет
+//      ничего. В момент броска rulesFromItemMechanics (module/rules/
+//      item-rules.mjs) превращает запись в правило формата docs/rules-format.md
+//      с эффектом `rollMode`, и диалог броска показывает переброс отдельной
+//      строкой. Область (`target`) — та же, что у модификаторов: «+10 к тестам
+//      Ловкости» и «переброс теста Ловкости» обязаны срабатывать на одних
+//      бросках. Активность источника решает общий isItemActive: выключенный
+//      Локус Герольда перебросов не даёт.
+//      Заведено под Локусы Герольдов (DoomBC — Хаос, стр. 27-32), где книга
+//      раздаёт перебросы россыпью: «раз в Раунд перебросить любой тест A».
 //    equipment: { equipMode:"direct"|"choice", equipQty,
 //                 // direct — конкретный предмет из дропдауна (кэш компендиумов
 //                 // GRANTABLE_CATEGORIES, см. equipmentOptionsHtml/_equipIndex):
@@ -94,6 +107,33 @@
 //      flags.warhammer-dbc.grantedByItem — общий deleteItem-откат подхватывает
 //      его так же, как Черты/Таланты. Отмена диалога выбора (choice) — просто
 //      ничего не выдаётся, без ошибки.
+//    armour: { armourLocation:"all"|"head"|"body"|"leftArm"|"rightArm"|
+//               "leftLeg"|"rightLeg", op:"add"|"subtract", armourValue }
+//      → ActiveEffect НА ПРЕДМЕТЕ на system.armorBonus.<локация> — ту самую
+//      СКЛАДЫВАЕМУЮ надбавку AP, которой пользуются Естественная Броня и
+//      подкожные импланты (см. AP_LOCATIONS в constants/effect-keys.mjs). Фаза
+//      "initial": поле хранимое, расчёт листа читает его в середине
+//      prepareDerivedData, рядом с бронёй от Черт, а не после. "all" — шесть
+//      изменений разом, по одному на локацию.
+//      Заведено потому, что Черта «Natural Armour (X)» раздаёт AP только СРАЗУ
+//      НА ВСЕ шесть локаций, и выдать «+4 только в торс» (Чёрный Панцирь) ею
+//      было нечем: rescaleTraitByRating масштабирует значение, но не сужает
+//      набор локаций.
+//    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg }
+//      → ВСТРОЕННАЯ АТАКА: то же создание предмета-оружия на акторе, что и у
+//      equipment режима "direct", но с двумя отличиями, ради которых она и
+//      заведена отдельным видом. Первое: выданное оружие сразу
+//      system.equipped = true — и боевой HUD (equippedWeapons() в apps/hud.mjs),
+//      и вкладка БОЙ (combatMeleeWeapons/combatRangedWeapons в sheets/
+//      sheet-helpers.mjs) отбирают оружие ровно по этому полю, так что надетому
+//      предмету не нужно ни строчки нового кода, чтобы там появиться. Второе:
+//      на предмете ставится flags.warhammer-dbc.integralAttack, по которому
+//      хуки preUpdateItem/preDeleteItem (warhammer-dbc.mjs) не дают его ни снять,
+//      ни удалить, пока источник на акторе и активен — это часть тела (Кислотный
+//      Плевок Железы Бетчера) или машины (Пинок Дредноута), а не снаряжение,
+//      которое игрок волен отложить.
+//      Живёт и снимается тем же syncGrantedEquipment, что и equipment "direct":
+//      сняли имплант в Хирургиконе — атака ушла вместе с ним.
 //    loyalty: { loyaltyMinionType:""|"human"|"beast"|"machine"|"daemon",
 //               loyaltyOp:"add"|"subtract", loyaltyValue }
 //      → ОДНОРАЗОВАЯ ПЕРМАНЕНТНАЯ правка system.loyalty.value у ВСЕХ Миньонов
@@ -144,19 +184,34 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF }      from "../constants/skills.mjs";
+import { skillGrantOutcome, findSameTalent, createOrRankTalent } from "../rules/duplicate-grants.mjs";
+import { refundXP, skillStepsCost, talentCost, skillReason, talentReason }
+  from "./duplicate-refund.mjs";
 import { MINION_TYPES, minionsOf, loyaltyAfterChange } from "./minions.mjs";
 import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics.mjs";
 import { specOptions, findGroupEntry }        from "../constants/skill-specializations.mjs";
+import { dynamicAptKind }                     from "../constants/advancement.mjs";
+import { masteryTargets, masteryAptitudes, masteryLabel } from "../rules/mastery-targets.mjs";
+import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.mjs";
+import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
+import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
+import { MINION_GROUPS, MINION_TIERS }         from "../constants/minions.mjs";
+import { isMinionTalent }                      from "../rules/minion-build.mjs";
+import { applyMinionSlot, promptMinionSlot }   from "./minion-talent.mjs";
 import { executeItemCode }                    from "./item-script.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } from "./compendium-browser.mjs";
 import { AVAILABILITY }                       from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive }                       from "./effects.mjs";
-import { expectedPhase }                      from "../constants/effect-keys.mjs";
+import { expectedPhase, AP_LOCATIONS }        from "../constants/effect-keys.mjs";
 import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
+import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
+import { hasRuleFlag }                      from "../rules/flags.mjs";
+import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
+import { entryWhenOk, whenConditions } from "../rules/mech-when.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -218,7 +273,12 @@ const KIND_LABELS = {
   weaponProp: "Оружие: Свойство",
   movement: "Движение: Скорость", terrainIgnore: "Движение: Ландшафт (игнор)",
   fatigue: "Усталость",
+  reroll: "Переброс",
+  testMod: "Модификатор теста",
+  capability: "Возможность",
+  armour: "Очки Брони (локация)",
   equipment: "Снаряжение",
+  integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
   group: "Вложенная группа",
   script: "Код"
@@ -227,6 +287,27 @@ const KIND_LABELS = {
 // вкладки МЕХАНИКА уже уровень 1, поэтому подгрупп-в-подгруппах допускается 4.
 const MAX_GROUP_DEPTH = 5;
 const WEIGHT_SCOPE_LABELS = { all: "Общее", carry: "Ношение", lift: "Подъём", push: "Толкание" };
+// Области «Переброса» (kind:"reroll"). Совпадают с областями `target` в
+// docs/rules-format.md: одна и та же область обязана значить одно и то же и в
+// «+10 к тестам Ловкости», и в «перебросить тест Ловкости».
+const REROLL_SCOPES = [
+  ["all",        "любой тест"],
+  ["char",       "тест характеристики"],
+  ["skill",      "тест навыка"],
+  ["attack",     "тест атаки"],
+  ["initiative", "Инициатива"],
+  ["social",     "социальные навыки"],
+  ["shield",     "тесты на щиты"],
+  ["opposed",    "встречные тесты"]
+];
+const REROLL_SCOPE_LABEL = (e) => {
+  switch (e.rerollScope) {
+    case "char":  return e.rerollChar ? `тест ${CHARACTERISTICS[e.rerollChar]?.label || e.rerollChar}` : "";
+    case "skill": return e.skillKey ? `тест «${SKILLS_DEF[e.skillKey]?.label || e.skillKey}»` : "";
+    default: return REROLL_SCOPES.find(([v]) => v === e.rerollScope)?.[1] || "";
+  }
+};
+
 // «Усталость» (kind:"fatigue") — каскад «действие → уточнение». Действие пока
 // одно; список оставлен на вырост, чтобы будущее («Снять уровень», «Порог
 // потери сознания») не ломало уже сохранённые записи.
@@ -244,7 +325,9 @@ const WEAPON_PROP_ACTIONS_RATED = [["increase", "Увеличить рейтин
 function specChoiceLabel(entry) {
   if (entry.specKey === "__choice__") {
     const n = (entry.specChoiceKeys || []).length;
-    return n ? `по выбору из ${n}` : "по выбору (не выбрано ни одной)";
+    if (!n) return "по выбору (не выбрано ни одной)";
+    const need = Math.max(1, Number(entry.specChoiceCount) || 1);
+    return need > 1 ? `любые ${need} из ${n}` : `по выбору из ${n}`;
   }
   return entry.specialty || "?";
 }
@@ -342,10 +425,15 @@ export function initEquipmentIndex() {
     Hooks.on(h, doc => { if (doc?.pack && packIds.has(doc.pack)) _refreshEquipmentIndex(); });
 }
 
-/** <optgroup> по категориям для дропдауна режима «Непосредственно предмет». */
-function equipmentOptionsHtml(selectedUuid) {
+/**
+ * <optgroup> по категориям для дропдауна режима «Непосредственно предмет».
+ * onlyPacks — сузить список паков (интегральной атакой может быть только
+ * оружие: её кладут в руки боевому HUD, а он умеет бросать лишь weapon).
+ */
+function equipmentOptionsHtml(selectedUuid, onlyPacks = null) {
   if (!_equipIndex) return `<option value="">— компендиумы ещё загружаются, переоткройте лист —</option>`;
-  return GRANTABLE_CATEGORIES.map(({ pack, label }) => {
+  const cats = onlyPacks ? GRANTABLE_CATEGORIES.filter(c => onlyPacks.includes(c.pack)) : GRANTABLE_CATEGORIES;
+  return cats.map(({ pack, label }) => {
     const items = _equipIndex[pack] || [];
     if (!items.length) return "";
     const opts = items.map(it => optHtml(it.uuid, it.name, it.uuid === selectedUuid)).join("");
@@ -368,15 +456,32 @@ export function blankMechEntry(kind = "characteristic") {
     charKey: "s", field: "total", op: "add", value: 1,
     // trait/talent
     sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "", specialization: "",
-    // skill / rollmod — specKey:"__choice__" => specChoiceKeys (несколько
-    // кандидатов, актор выбирает один при получении, см. resolveEntrySpecChoice).
-    skillScope: "plain", skillKey: "", specKey: "", specialty: "", specChoiceKeys: [], rank: "untrained",
+    // «Миньон Хаоса» — один Талант на двадцать разных слуг (стр. 111): пара
+    // «группа + сила» решает и уровень Таланта, и что покажет блок в СОЦИУМе.
+    minionGroup: "", minionTier: "",
+    // skill / rollmod — specKey:"__choice__" => specChoiceKeys (кандидаты) и
+    // specChoiceCount (сколько РАЗНЫХ из них берёт актор при получении,
+    // см. resolveEntrySpecChoice): «Общие знания (любые 4)».
+    skillScope: "plain", skillKey: "", specKey: "", specialty: "",
+    specChoiceKeys: [], specChoiceCount: 1, rank: "untrained",
     // weight
     weightScope: "all", weightMode: "kg", weightValue: 1,
     // movement (op — общее поле)
     movementTarget: "spd", movementValue: 1,
+    // armour (op — общее поле): "all" = все шесть локаций разом
+    armourLocation: "body", armourValue: 1,
     // terrainIgnore
     ignoreTerrainProps: [],
+    // reroll — «Переброс»: живой запрос, читается в момент броска
+    // (module/rules/item-rules.mjs), при получении предмета ничего не делает.
+    rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
+    // testMod — «Модификатор теста»: тот же живой запрос, области общие
+    // с «Перебросом» (rerollChar/skillKey переиспользуются как уточнение).
+    modScope: "all", modValueMode: "flat", modCharBonus: "inf",
+    // reroll: чей бросок перебрасывается — свой или навязанный цели.
+    rerollWho: "self",
+    // capability — имя возможности из constants/capabilities.mjs
+    capabilityKey: "",
     // fatigue — каскад: действие → характеристика (см. шапку файла)
     fatigueAction: "threshold", fatigueThresholdChar: "t",
     // equipment
@@ -384,6 +489,11 @@ export function blankMechEntry(kind = "characteristic") {
     equipSourceUuid: "", equipSourceName: "", equipSourceImg: "",
     equipCategoryPack: "weapons", equipWeaponType: "", equipWeaponProp: "",
     equipArmorType: "", equipMaxAvailability: 5,
+    // Качество выданного («Narthecium (Good.Q)») и фильтры небоевых паков:
+    // ступень Таланта, потолок Пси-Рейтинга.
+    equipQuality: "common", equipTalentTier: "", equipMaxPsyRating: "", equipImplantCategory: "",
+    // Бюджет выбора (rules/pick-budget.mjs): штуками или опытом.
+    equipBudgetMode: "count", equipBudgetValue: 1,
     // loyalty — тип миньона ("" = любой), знак и величина (см. шапку файла)
     loyaltyMinionType: "", loyaltyOp: "add", loyaltyValue: 1,
     // weaponProp — «Свойство» перетаскивается (weaponPropKey/Label/HasRating[2]),
@@ -394,7 +504,14 @@ export function blankMechEntry(kind = "characteristic") {
     weaponPropNewKey: "", weaponPropNewLabel: "", weaponPropNewHasRating: false, weaponPropNewHasRating2: false,
     weaponPropNewValue: "1", weaponPropNewValue2: "0",
     // script / rollmod (label) / poolMax (value, shared with characteristic)
-    label: "", code: ""
+    label: "", code: "",
+    // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
+    // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
+    // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
+    // stardragons, ИЛИ legion XIX» — так у Железы Бетчера сразу три линии, где
+    // она не работает, одной записью, а не тремя её копиями). negate
+    // переворачивает смысл целиком: «выдать этим» ⇄ «выдать всем, КРОМЕ этих».
+    when: { negate: false, conditions: [] }
   };
 }
 
@@ -459,10 +576,34 @@ export function describeMechEntry(entry) {
       const sign = entry.op === "subtract" ? "−" : "+";
       return `Движение: ${label} ${sign}${entry.movementValue}`;
     }
+    case "armour": {
+      const loc = entry.armourLocation === "all"
+        ? "все локации" : (AP_LOCATIONS[entry.armourLocation] ?? entry.armourLocation);
+      if (entry.armourValue === "" || entry.armourValue == null) return `Очки Брони: ${loc} (не задано)`;
+      const sign = entry.op === "subtract" ? "−" : "+";
+      return `Очки Брони: ${loc} ${sign}${entry.armourValue}`;
+    }
     case "terrainIgnore": {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
       return `Ландшафт: игнорирует — ${labels.join(", ")}`;
+    }
+    case "capability": {
+      if (!entry.capabilityKey) return "Возможность: (не выбрана)";
+      return `Возможность: ${CAPABILITIES[entry.capabilityKey]?.label || entry.capabilityKey}`;
+    }
+    case "testMod": {
+      const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
+      if (!scope) return "Модификатор теста: (область не выбрана)";
+      const val = entry.modValueMode === "charBonus"
+        ? `+Бонус ${CHARACTERISTICS[entry.modCharBonus]?.label || entry.modCharBonus}`
+        : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
+      return `Модификатор теста: ${scope} — ${val}`;
+    }
+    case "reroll": {
+      const modeLabel = entry.rerollMode === "keepWorst" ? "худший из двух" : "лучший из двух";
+      const scope = REROLL_SCOPE_LABEL(entry);
+      return scope ? `Переброс: ${scope} — ${modeLabel}` : "Переброс: (область не выбрана)";
     }
     case "fatigue": {
       if (entry.fatigueAction !== "threshold") return "Усталость: (действие не выбрано)";
@@ -485,6 +626,10 @@ export function describeMechEntry(entry) {
       }
       if (!entry.equipSourceUuid) return "Снаряжение: (выберите предмет)";
       return `Снаряжение: ${entry.equipSourceName || "?"} ×${qty}`;
+    }
+    case "integralAttack": {
+      if (!entry.equipSourceUuid) return "Интегральная атака: (выберите оружие)";
+      return `Интегральная атака: ${entry.equipSourceName || "?"} — надета всегда, снять и удалить нельзя`;
     }
     case "loyalty": {
       const typeLabel = entry.loyaltyMinionType
@@ -567,13 +712,28 @@ function isEntryComplete(e) {
       return !!e.weightScope && numOk(e.weightValue);
     case "movement":
       return !!e.movementTarget && numOk(e.movementValue);
+    case "armour":
+      return !!e.armourLocation && numOk(e.armourValue);
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "fatigue":
       return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
+    case "reroll":
+      if (e.rerollScope === "char")  return !!e.rerollChar;
+      if (e.rerollScope === "skill") return !!e.skillKey;
+      return !!e.rerollScope;
+    case "testMod":
+      if (e.modScope === "char")  return !!e.rerollChar;
+      if (e.modScope === "skill") return !!e.skillKey;
+      if (e.modValueMode === "charBonus") return !!e.modCharBonus;
+      return !!e.modScope && numOk(e.value);
+    case "capability":
+      return !!e.capabilityKey;
     case "equipment":
       if (!numOk(e.equipQty) || Number(e.equipQty) <= 0) return false;
       return e.equipMode === "choice" ? !!e.equipCategoryPack : !!e.equipSourceUuid;
+    case "integralAttack":
+      return !!e.equipSourceUuid;
     case "loyalty":
       return numOk(e.loyaltyValue);
     case "rollmod":
@@ -593,6 +753,19 @@ function isEntryComplete(e) {
     default:
       return false;
   }
+}
+
+/** Человекочитаемое описание entry.when — суффикс к превью записи (пусто, если условий нет). */
+function describeMechWhen(when) {
+  const conditions = whenConditions(when);
+  if (!conditions.length) return "";
+  const names = conditions.map(c => {
+    const lg = getLegion(c.legion);
+    const ch = c.chapter ? getChapter(c.legion, c.chapter) : null;
+    const base = ch ? `${lg?.num ?? c.legion} ${ch.name}` : `${lg?.num ?? c.legion} ${lg?.name ?? c.legion}`;
+    return c.ageAtLeast ? `${base}, Возраст ≥ ${c.ageAtLeast}` : base;
+  });
+  return ` · Когда: Геносемя ${when.negate ? "≠" : "="} ${names.join(" или ")}`;
 }
 
 /**
@@ -717,30 +890,74 @@ export async function reconcileCohesionForActor(actor) {
   }
 }
 
+// ── Коллектор простых ИЛИ/спец-выборов ───────────────────────────────────
+// По умолчанию showMechChoiceDialog/showSpecChoiceDialog сами открывают
+// Dialog. Вызывающий, который хочет собрать эти выборы в СВОЙ UI (Мастер
+// создания персонажа — Этап 3), оборачивает свой вызов в withMechCollector:
+// пока коллектор активен, оба диалога отдают выбор ЕМУ вместо Dialog, а он
+// сам решает, как и когда его получить (напр. отрисовать строку в форме
+// шага и ждать клика). Бюджетные покупки (kind:"equipment" →
+// openCompendiumBrowser) коллектор НЕ перехватывает — им нужен полноценный
+// экран (дерево компендиума, поиск), в маленькую форму шага не влезают,
+// остаются отдельным окном независимо от коллектора.
+let _activeMechCollector = null;
+
+/**
+ * @param {{choose:(item,entries)=>Promise, chooseSpec:(label,choices,need)=>Promise}} collector
+ * @param {() => Promise<any>} fn
+ */
+export function withMechCollector(collector, fn) {
+  const prev = _activeMechCollector;
+  _activeMechCollector = collector;
+  const restore = () => { _activeMechCollector = prev; };
+  return Promise.resolve().then(fn).then(r => { restore(); return r; }, e => { restore(); throw e; });
+}
+
 /** Диалог выбора ОДНОЙ специализации из нескольких кандидатов («по выбору»). */
-function showSpecChoiceDialog(skillLabel, choices) {
+function showSpecChoiceDialog(skillLabel, choices, need = 1) {
+  if (_activeMechCollector) return _activeMechCollector.chooseSpec(skillLabel, choices, need);
   return new Promise(resolve => {
     let resolved = false;
+    // Одну выбирают радиокнопками, несколько — галочками: у рас сплошь
+    // «Общие знания (любые 4)», и там нужны РАЗНЫЕ четыре, а не одна четырежды.
+    const many = need > 1;
     const rows = choices.map((c, i) => `<label class="grant-choice-row">
-      <input type="radio" name="spec-choice" value="${i}" ${i === 0 ? "checked" : ""}/>
+      <input type="${many ? "checkbox" : "radio"}" name="spec-choice" value="${i}" ${!many && i === 0 ? "checked" : ""}/>
       <span>${esc(c.display)}</span></label>`).join("");
     new Dialog({
       title: `Выбор специализации — ${skillLabel}`,
-      content: `<div class="wh-grant-choice"><p>Выберите специализацию:</p>${rows}</div>`,
+      content: `<div class="wh-grant-choice">
+        <p>${many ? `Выберите ${need} разных специализации:` : "Выберите специализацию:"}</p>
+        ${rows}
+        ${many ? `<p class="grant-choice-count" data-need="${need}"></p>` : ""}</div>`,
       buttons: {
         pick: {
           icon: '<i class="fas fa-check"></i>', label: "Применить",
           callback: html => {
             if (resolved) return;
+            const picked = [...html.find('input[name="spec-choice"]:checked')]
+              .map(el => choices[parseInt(el.value)]).filter(Boolean);
             resolved = true;
-            const idx = parseInt(html.find('input[name="spec-choice"]:checked').val());
-            resolve(choices[idx] ?? null);
+            resolve(many ? picked : (picked[0] ?? null));
           }
         },
-        skip: { label: "Пропустить", callback: () => { if (!resolved) { resolved = true; resolve(null); } } }
+        skip: { label: "Пропустить", callback: () => { if (!resolved) { resolved = true; resolve(many ? [] : null); } } }
       },
       default: "pick",
-      close: () => { if (!resolved) { resolved = true; resolve(null); } }
+      close: () => { if (!resolved) { resolved = true; resolve(many ? [] : null); } },
+      render: html => {
+        if (!many) return;
+        // Кнопка «Применить» ждёт ровно нужное число: недобор молча съел бы
+        // слоты, перебор выдал бы лишнее.
+        const btn = html.closest(".app").find('button[data-button="pick"]');
+        const upd = () => {
+          const n = html.find('input[name="spec-choice"]:checked').length;
+          html.find(".grant-choice-count").text(`Выбрано ${n} из ${need}`);
+          btn.prop("disabled", n !== need);
+        };
+        html.find('input[name="spec-choice"]').on("change", upd);
+        upd();
+      }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 380 }).render(true);
   });
 }
@@ -752,14 +969,15 @@ function showSpecChoiceDialog(skillLabel, choices) {
  * Пропуск диалога (Пропустить/закрыть) → null, вызывающий код не применяет запись.
  */
 async function resolveEntrySpecChoice(entry) {
-  if (entry.specKey !== "__choice__") return entry;
+  if (entry.specKey !== "__choice__") return [entry];
   const def = GROUP_SKILLS_DEF[entry.skillKey];
   const keys = new Set(entry.specChoiceKeys || []);
   const choices = specOptions(entry.skillKey).filter(c => keys.has(c.key));
-  if (!choices.length) return null;
-  const chosen = await showSpecChoiceDialog(def?.label || entry.skillKey, choices);
-  if (!chosen) return null;
-  return { ...entry, specKey: chosen.key, specialty: chosen.display };
+  if (!choices.length) return [];
+  const need = Math.min(Math.max(1, Number(entry.specChoiceCount) || 1), choices.length);
+  const chosen = await showSpecChoiceDialog(def?.label || entry.skillKey, choices, need);
+  const list = Array.isArray(chosen) ? chosen : (chosen ? [chosen] : []);
+  return list.map(c => ({ ...entry, specKey: c.key, specialty: c.display }));
 }
 
 /** Применяет одну запись механики: создаёт ActiveEffect/предмет, правит навык, либо исполняет код. */
@@ -771,6 +989,12 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     return;
   }
 
+  // Условие «Когда» не пройдено — запись пропускается БЕЗ отметки applied,
+  // чтобы она осталась кандидатом на будущее: сменит актор Геносемя позже
+  // (Мастер поправит легион/орден на листе) — следующий прогон Механики её
+  // подхватит, а не будет молча считать «уже разобрана и мимо».
+  if (!entryWhenOk(actor, entry)) return;
+
   // Каждая запись отыгрывается по одному разу — Порча не бросается дважды,
   // выданная Черта не приезжает второй копией. Долговечные записи при этом
   // ничего не делают (их эффекты ведёт syncMechanicsEffects), но отметку
@@ -780,8 +1004,17 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
 
   if (entry.kind === "skill" || entry.kind === "rollmod") {
     const resolved = await resolveEntrySpecChoice(entry);
-    if (!resolved) return;
-    entry = resolved;
+    if (!resolved.length) return;
+    // «Любые N» разворачиваются в N записей с уже выбранными специализациями.
+    // Отметку о применении несёт каждая своя — иначе вторая и третья сочлись бы
+    // за уже применённые и молча пропали.
+    if (resolved.length > 1) {
+      for (const e of resolved) {
+        await applyMechEntry(actor, { ...e, id: `${entry.id}:${e.specKey}` }, sourceItem, fromChoice, applied);
+      }
+      return;
+    }
+    entry = resolved[0];
   }
 
   if (entry.kind === "corruption") {
@@ -853,6 +1086,14 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     return;
   }
 
+  if (entry.kind === "reroll" || entry.kind === "testMod" || entry.kind === "capability") {
+    // Живой запрос, как terrainIgnore выше: правило собирается в момент броска
+    // (rulesFromItemMechanics в module/rules/item-rules.mjs). Писать и
+    // откатывать нечего — уйдёт предмет или выключат Локус, и переброс сам
+    // перестанет предлагаться.
+    return;
+  }
+
   if (entry.kind === "fatigue") {
     // Тоже живой запрос: fatigueGraceForActor() (rules/fatigue-grace.mjs)
     // читает Механику в момент теста, писать и откатывать нечего.
@@ -865,13 +1106,34 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       // Живой выбор в момент выдачи — Обозреватель компендиумов, сужен фильтрами
       // категории/типа/свойства/типа брони/макс. Редкости (см. compendium-browser.mjs
       // pickMode). Отмена (null) — просто ничего не выдаём, без ошибки.
-      uuid = await openCompendiumBrowser(false, {
-        pack: entry.equipCategoryPack,
-        weaponFolderId: entry.equipCategoryPack === "weapons" ? (entry.equipWeaponType || null) : null,
-        weaponProp:  entry.equipCategoryPack === "weapons" ? (entry.equipWeaponProp  || null) : null,
-        armorType:   entry.equipCategoryPack === "armor"   ? (entry.equipArmorType   || null) : null,
-        maxAvailability: Number.isFinite(Number(entry.equipMaxAvailability)) ? Number(entry.equipMaxAvailability) : null
+      const filters = {};
+      if (entry.equipCategoryPack === "weapons" && entry.equipWeaponType) filters.folderId = entry.equipWeaponType;
+      if (entry.equipCategoryPack === "weapons" && entry.equipWeaponProp) filters.weaponProp = entry.equipWeaponProp;
+      if (entry.equipCategoryPack === "armor"   && entry.equipArmorType)  filters.armorType = entry.equipArmorType;
+      if (entry.equipTalentTier !== "" && entry.equipTalentTier != null)   filters.talentTier = Number(entry.equipTalentTier);
+      if (entry.equipMaxPsyRating !== "" && entry.equipMaxPsyRating != null) filters.maxPsyRating = Number(entry.equipMaxPsyRating);
+      if (entry.equipCategoryPack === "implants" && entry.equipImplantCategory) filters.implantCategory = entry.equipImplantCategory;
+      if (Number.isFinite(Number(entry.equipMaxAvailability))) filters.maxAvailability = Number(entry.equipMaxAvailability);
+
+      const budget = normalizeBudget({ mode: entry.equipBudgetMode, value: entry.equipBudgetValue });
+      const picked = await openCompendiumBrowser(false, {
+        pack: entry.equipCategoryPack, filters, budget,
+        prompt: describeMechEntry(entry),
+        // Цена в опыте считается для ЭТОГО актора: у Талантов она зависит от
+        // Склонностей и культуры, а не лежит в записи компендиума.
+        xpCost: budget.mode === BUDGET_XP ? (it => pickXPCost(actor, it)) : null
       });
+      if (!picked) return;
+      // Бюджет больше одной штуки — Обозреватель отдаёт список.
+      const list = Array.isArray(picked) ? picked : [picked];
+      if (list.length > 1) {
+        for (const u of list) {
+          await applyMechEntry(actor, { ...entry, equipMode: "direct", equipSourceUuid: u, equipQty: 1,
+                                        id: `${entry.id}:${u}` }, sourceItem, fromChoice, applied);
+        }
+        return;
+      }
+      uuid = list[0];
       if (!uuid) return;
     }
     const src = uuid ? await fromUuid(uuid).catch(() => null) : null;
@@ -882,11 +1144,24 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     delete data._id;
     const qty = Math.max(1, parseInt(entry.equipQty) || 1);
     if ("quantity" in (data.system || {})) data.system.quantity = qty;
+    // «Narthecium (Good.Q)» — качество часть выдачи, а не украшение: от него
+    // зависят и Надёжность, и модификаторы. Ставим только там, где поле есть.
+    if (entry.equipQuality && entry.equipQuality !== "common"
+        && "quality" in (data.system || {})) data.system.quality = entry.equipQuality;
     // equipEntryId — какая именно запись Механики это выдала; читает
     // syncGrantedEquipment ниже, чтобы не плодить дубли и опознавать «своё»
     // при пересинхронизации по активности источника (импланты — installed/disabled).
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id, equipEntryId: entry.id } };
-    await actor.createEmbeddedDocuments("Item", [data]);
+    // Многократный Талант (system.hasRating — Enemy и т.п.), уже взятый
+    // раньше, не задваивается: createOrRankTalent поднимает ему ранг вместо
+    // создания второго предмета. Для любых других выдач — обычное создание.
+    await createOrRankTalent(actor, data);
+    return;
+  }
+
+  if (entry.kind === "integralAttack") {
+    const data = await buildIntegralAttackData(entry, sourceItem);
+    if (data) await actor.createEmbeddedDocuments("Item", [data]);
     return;
   }
 
@@ -923,6 +1198,26 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       img: entry.sourceImg || "icons/svg/aura.svg", system: {}
     };
     delete data._id;
+
+    // Привязка «Мастерства» хранится в записи ключом Навыка, а на самом Таланте
+    // живёт подписью («Запретные знания (Демоны)»): по ней его читают на листе и
+    // с ней же сравнивают повторную выдачу. Разводим одно и другое здесь, до
+    // проверки на повтор, — иначе ключ никогда не совпал бы с подписью и второе
+    // «Мастерство» тем же Навыком легло бы вторым предметом.
+    const isMastery = entry.kind === "talent" && dynamicAptKind(data.name) === "skill";
+    const specKey   = entry.specialization || data.system?.specialization || "";
+    const spec      = isMastery && specKey ? (masteryLabel(specKey) || specKey) : specKey;
+
+    // Тот же Талант из второго источника повторить нечем — вместо копии
+    // возвращается его цена: столько он стоил бы самому персонажу.
+    if (entry.kind === "talent") {
+      const same = findSameTalent(actor.items, { name: data.name, system: { specialization: spec } });
+      if (same) {
+        await refundXP(actor, talentCost(actor, same),
+          talentReason(same.name, same.system?.specialization));
+        return;
+      }
+    }
     if (entry.kind === "trait") {
       if (entry.rating !== "" && entry.rating != null && data.system) {
         rescaleTraitByRating(data, entry.rating);   // пока system.rating — рейтинг шаблона
@@ -932,11 +1227,49 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     } else {
       data.system = {
         ...(data.system || {}),
-        specialization: entry.specialization || data.system?.specialization || "",
+        specialization: spec,
         granted: true, purchased: false, cost: 0
       };
+      // «Мастерство» наследует склонности того Навыка, которым овладело
+      // (стр. 62). Выдано оно даром, но склонности всё равно нужны: по ним
+      // считается цена следующих покупок, а не его собственная.
+      if (isMastery && specKey) {
+        const apts = masteryAptitudes(specKey);
+        if (apts.length) { data.system.aptitudes = apts; data.system.aptSource = specKey; }
+      }
+      // Талант Миньона без пары «группа + сила» — Миньон ниоткуда: блок в
+      // СОЦИУМе не поймёт, какой это слот, а счётчик занятых поедет.
+      if (entry.kind === "talent" && isMinionTalent({ type: "talent", name: data.name })) {
+        if (entry.minionGroup && entry.minionTier) {
+          const def = MINION_TIERS[entry.minionTier];
+          applyMinionSlot(data, {
+            group: entry.minionGroup, tier: entry.minionTier,
+            talentTier: def?.talentTier ?? 1,
+            label: `${MINION_GROUPS[entry.minionGroup]?.label || entry.minionGroup}, ${def?.label || entry.minionTier}`
+          });
+        } else {
+          // Книга называет не всё: «Minion (Средний)» задаёт силу, а группу
+          // оставляет на выбор. Недостающее спрашиваем тем же окном, что и при
+          // покупке с листа, — выдумывать за книгу нельзя.
+          const pick = await promptMinionSlot(actor, src || { name: data.name, system: data.system });
+          if (!pick) return;
+          // То, что книга назвала, за ней и остаётся: спрашивали недостающее.
+          const tier = entry.minionTier || pick.tier;
+          const group = entry.minionGroup || pick.group;
+          const def = MINION_TIERS[tier];
+          applyMinionSlot(data, {
+            group, tier, talentTier: def?.talentTier ?? pick.talentTier,
+            label: `${MINION_GROUPS[group]?.label || group}, ${def?.label || tier}`
+          });
+        }
+      }
     }
-    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), grantedByItem: sourceItem.id } };
+    // abilityEntryId — не для отката при удалении предмета-источника (тот
+    // работает по одному grantedByItem), а для ЖИВОЙ пересинхронизации:
+    // syncGrantedAbilities ниже по нему отличает свою выдачу от чужой и от
+    // копии, которую ГМ положил руками.
+    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
+      grantedByItem: sourceItem.id, abilityEntryId: entry.id } };
     await actor.createEmbeddedDocuments("Item", [data]);
     return;
   }
@@ -949,8 +1282,18 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     const idx = found ? arr.findIndex(e =>
       (found.specKey && e.specKey === found.specKey) || (!found.specKey && e.specialty === found.specialty)) : -1;
     if (idx >= 0) {
-      arr[idx].rank        = higherRank(arr[idx].rank || "untrained", entry.rank);
-      arr[idx].grantedRank = higherRank(arr[idx].grantedRank || "untrained", entry.rank);
+      // Тот же групповой Навык из второго источника: ступень выше, а на
+      // потолке — возврат опыта (rules/duplicate-grants.mjs).
+      const prev = arr[idx].rank || "untrained";
+      const out  = skillGrantOutcome(prev, entry.rank);
+      arr[idx].rank        = out.rank;
+      arr[idx].grantedRank = higherRank(arr[idx].grantedRank || "untrained", out.rank);
+      if (out.refundSteps.length) {
+        await refundXP(actor,
+          skillStepsCost(actor, entry.skillKey, out.refundSteps, { group: true, specialty: arr[idx].specialty }),
+          skillReason(`${GROUP_SKILLS_DEF[entry.skillKey]?.label || entry.skillKey}`
+            + ` (${arr[idx].specialty || arr[idx].specKey || "?"})`, entry.rank, prev));
+      }
     } else {
       arr.push({
         specialty: entry.specialty || entry.specKey || "?",
@@ -961,8 +1304,16 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     await actor.update({ [`system.groupSkills.${entry.skillKey}`]: arr });
   } else {
     const cur = actor.system.skills?.[entry.skillKey] || {};
-    const newRank    = higherRank(cur.rank || "untrained", entry.rank);
-    const newGranted = higherRank(cur.grantedRank || "untrained", entry.rank);
+    // Тот же Навык из второго источника поднимает ступень, а на потолке
+    // возвращает цену третьей покупки (rules/duplicate-grants.mjs).
+    const out = skillGrantOutcome(cur.rank || "untrained", entry.rank);
+    const newRank    = out.rank;
+    const newGranted = higherRank(cur.grantedRank || "untrained", out.rank);
+    if (out.refundSteps.length) {
+      await refundXP(actor,
+        skillStepsCost(actor, entry.skillKey, out.refundSteps, { entryChar: entry.char }),
+        skillReason(SKILLS_DEF[entry.skillKey]?.label || entry.skillKey, entry.rank, cur.rank));
+    }
     const upd = {
       [`system.skills.${entry.skillKey}.rank`]: newRank,
       [`system.skills.${entry.skillKey}.grantedRank`]: newGranted
@@ -983,6 +1334,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
 
 /** Диалог выбора одной записи из ИЛИ-группы при получении предмета. */
 function showMechChoiceDialog(item, entries) {
+  if (_activeMechCollector) return _activeMechCollector.choose(item, entries);
   return new Promise(resolve => {
     let resolved = false;
     const rows = entries.map((e, i) => `<label class="grant-choice-row">
@@ -1046,22 +1398,50 @@ export async function syncWeaponPropItemEffects(item) {
   await item.update({ "system.effects.mechAddProps": addProps, "system.effects.mechRemoveProps": removeProps });
 }
 
-// Записи kind:"equipment" (equipMode:"direct" — фиксированный предмет, не
-// «выбор») из АНД-цепочек: верхнеуровневая группа + вложенные АНД-подгруппы.
+/**
+ * Данные предмета для записи kind:"integralAttack" — общий сборщик для первой
+ * выдачи (applyMechEntry) и для пересинхронизации (syncGrantedEquipment):
+ * оба пути обязаны класть на актора ОДИН И ТОТ ЖЕ предмет, иначе снятая и
+ * заново выданная интегральная атака отличалась бы от первоначальной.
+ *
+ * Источник не нашёлся (запись ссылается на удалённый предмет пака) — вернём
+ * null и ничего не выдадим: подделывать боевой профиль заглушкой нельзя, в
+ * отличие от kind:"equipment", где заглушкой становится безобидный gear.
+ */
+async function buildIntegralAttackData(entry, sourceItem) {
+  const src = entry.equipSourceUuid ? await fromUuid(entry.equipSourceUuid).catch(() => null) : null;
+  if (!src) {
+    ui.notifications?.warn(`${sourceItem.name}: интегральная атака «${entry.equipSourceName || "?"}» не найдена в компендиуме.`);
+    return null;
+  }
+  const data = src.toObject();
+  delete data._id;
+  // Надета всегда: и HUD, и вкладка БОЙ отбирают оружие по system.equipped,
+  // а снять её игрок не сможет — см. preUpdateItem в warhammer-dbc.mjs.
+  data.system = { ...(data.system || {}), equipped: true };
+  data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
+    grantedByItem: sourceItem.id, equipEntryId: entry.id, integralAttack: true } };
+  return data;
+}
+
+// Записи, выдающие предмет на актора «намертво»: kind:"equipment" в режиме
+// "direct" (фиксированный предмет, не «выбор») и kind:"integralAttack" — из
+// АНД-цепочек: верхнеуровневая группа + вложенные АНД-подгруппы.
 // ИЛИ-ветки сознательно пропускаются — там выбор делается ОДИН РАЗ диалогом
 // в момент выдачи (showMechChoiceDialog/applyMechEntry), переигрывать его
 // при каждой пересинхронизации активности источника не нужно и не должно.
-function collectDirectEquipmentEntries(groups) {
+function collectDirectEquipmentEntries(groups, actor = null) {
   const out = [];
   const walk = (entries, operator) => {
     if (operator === "OR") return;
     for (const e of entries) {
-      if (e.kind === "equipment" && e.equipMode !== "choice" && isEntryComplete(e)) out.push(e);
+      if (e.kind === "integralAttack" && isEntryComplete(e)) out.push(e);
+      else if (e.kind === "equipment" && e.equipMode !== "choice" && isEntryComplete(e)) out.push(e);
       else if (e.kind === "group" && e.group) walk(e.group.entries || [], e.group.operator);
     }
   };
   for (const g of groups) walk(g.entries || [], g.operator);
-  return out;
+  return out.filter(e => entryWhenOk(actor, e));
 }
 
 /**
@@ -1082,7 +1462,7 @@ function collectDirectEquipmentEntries(groups) {
 export async function syncGrantedEquipment(sourceItem) {
   const actor = sourceItem.parent;
   if (!(actor instanceof Actor)) return;
-  const entries = collectDirectEquipmentEntries(getItemMechanics(sourceItem));
+  const entries = collectDirectEquipmentEntries(getItemMechanics(sourceItem), actor);
   if (!entries.length) return;
 
   const grantedNow = actor.items.filter(i =>
@@ -1097,6 +1477,11 @@ export async function syncGrantedEquipment(sourceItem) {
   const toCreate = [];
   for (const e of entries) {
     if (haveIds.has(e.id)) continue;
+    if (e.kind === "integralAttack") {
+      const data = await buildIntegralAttackData(e, sourceItem);
+      if (data) toCreate.push(data);
+      continue;
+    }
     const src = e.equipSourceUuid ? await fromUuid(e.equipSourceUuid).catch(() => null) : null;
     const data = src ? src.toObject() : {
       name: e.equipSourceName || "?", type: "gear",
@@ -1111,6 +1496,72 @@ export async function syncGrantedEquipment(sourceItem) {
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
 }
 
+// Записи, выдающие Черту или Талант, из тех же АНД-цепочек. ИЛИ-ветки
+// пропускаются по той же причине, что и у снаряжения: выбор там сделан один
+// раз диалогом, переигрывать его на каждом включении нельзя.
+function collectDirectAbilityEntries(groups, actor = null) {
+  const out = [];
+  const walk = (entries, operator) => {
+    if (operator === "OR") return;
+    for (const e of entries) {
+      if ((e.kind === "trait" || e.kind === "talent") && isEntryComplete(e)) out.push(e);
+      else if (e.kind === "group" && e.group) walk(e.group.entries || [], e.group.operator);
+    }
+  };
+  for (const g of groups) walk(g.entries || [], g.operator);
+  return out.filter(e => entryWhenOk(actor, e));
+}
+
+/**
+ * Живая пересинхронизация выдачи Черт и Талантов с активностью источника —
+ * сестра syncGrantedEquipment выше, и заведена ровно тогда, когда у источника
+ * появилось выключаемое состояние: подспособность переключаемой способности
+ * (Локус Герольда, module/rules/toggle-abilities.mjs). Пока источниками были
+ * только Черты, Таланты и Расы, «активен всегда» держалось само собой, и
+ * разовой выдачи при createItem хватало.
+ *
+ * Отличие от первой выдачи (applyMechEntry) сознательное: там Талант умеет
+ * не задвоиться и вернуть опыт за совпадение (findSameTalent/refundXP), здесь
+ * — нет. Локус даёт Hatred на бой, а не покупает его персонажу: возвращать за
+ * него опыт при каждом переключении значило бы печатать опыт кнопкой.
+ * Поэтому включение кладёт СВОЮ копию с меткой abilityEntryId, а выключение
+ * снимает ровно её, не трогая одноимённый Талант, купленный персонажем.
+ */
+export async function syncGrantedAbilities(sourceItem) {
+  const actor = sourceItem.parent;
+  if (!(actor instanceof Actor)) return;
+  const entries = collectDirectAbilityEntries(getItemMechanics(sourceItem), actor);
+  if (!entries.length) return;
+
+  const grantedNow = actor.items.filter(i =>
+    i.getFlag(FLAG, "grantedByItem") === sourceItem.id && i.getFlag(FLAG, "abilityEntryId"));
+
+  if (!isItemActive(sourceItem)) {
+    if (grantedNow.length) await actor.deleteEmbeddedDocuments("Item", grantedNow.map(i => i.id));
+    return;
+  }
+
+  const haveIds = new Set(grantedNow.map(i => i.getFlag(FLAG, "abilityEntryId")));
+  const toCreate = [];
+  for (const e of entries) {
+    if (haveIds.has(e.id)) continue;
+    const src = await resolveMechSource(e);
+    const data = src ? src.toObject() : {
+      name: e.sourceName || "?", type: e.kind,
+      img: e.sourceImg || "icons/svg/aura.svg", system: {}
+    };
+    delete data._id;
+    if (e.kind === "trait" && e.rating !== "" && e.rating != null && "rating" in (data.system || {})) {
+      data.system.rating = Number(e.rating) || 0;
+    }
+    if (e.kind === "talent" && e.specialization) data.system.specialization = e.specialization;
+    data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
+      grantedByItem: sourceItem.id, abilityEntryId: e.id } };
+    toCreate.push(data);
+  }
+  if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
+}
+
 // ── Живая пересборка эффектов ───────────────────────────────────────────────
 //
 // Долговечные записи — не разовое действие «получил предмет → применили», а
@@ -1120,7 +1571,7 @@ export async function syncGrantedEquipment(sourceItem) {
 //
 // Разовых записей (Порча, Раны, Слаженность, выдача предмета/Черты/Таланта,
 // Код) это не касается: повтор бросил бы кубик заново и выдал второй предмет.
-export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax"]);
+export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax", "armour"]);
 
 /** Эффект, отыгрывающий одну долговечную запись. Метка — id самой записи. */
 function mechEffectData(entry, sourceItem) {
@@ -1150,6 +1601,15 @@ function mechEffectData(entry, sourceItem) {
     const key = "system.fate.max";
     changes.push({ key, type: "add", value: Number(entry.value) || 0,
                    phase: expectedPhase(key), priority: 0 });
+  } else if (entry.kind === "armour") {
+    const locs = entry.armourLocation === "all"
+      ? Object.keys(AP_LOCATIONS) : [entry.armourLocation];
+    for (const loc of locs) {
+      const key = `system.armorBonus.${loc}`;
+      changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
+                     value: Number(entry.armourValue) || 0,
+                     phase: expectedPhase(key), priority: 0 });
+    }
   }
   return {
     name: describeMechEntry(entry), img: sourceItem.img,
@@ -1184,8 +1644,13 @@ function collectMechEntries(groups) {
  * эффект ГМа и след миграции остаются на месте.
  */
 export async function syncMechanicsEffects(item) {
+  const actor = item.parent instanceof Actor ? item.parent : null;
   const { durable, allIds } = collectMechEntries(getItemMechanics(item));
-  const wanted = new Map(durable.map(e => [e.id, mechEffectData(e, item)]));
+  // durableIds — ВСЕ И-ветвенные долговечные записи, даже те, чьё «Когда»
+  // сейчас не выполнено: их эффект должен ИСЧЕЗНУТЬ (не просто не появиться),
+  // а не остаться от прошлого раза, когда условие ещё выполнялось.
+  const durableIds = new Set(durable.map(e => e.id));
+  const wanted = new Map(durable.filter(e => entryWhenOk(actor, e)).map(e => [e.id, mechEffectData(e, item)]));
 
   const toDelete = [], toCreate = [];
   const seen = new Set();
@@ -1195,7 +1660,12 @@ export async function syncMechanicsEffects(item) {
     // Запись убрали с листа — уносим и её эффект.
     if (!allIds.has(entryId)) { toDelete.push(fx.id); continue; }
     const want = wanted.get(entryId);
-    if (!want) continue;                       // ИЛИ-ветка либо разовая запись
+    if (!want) {
+      // И-ветвенная запись, чьё «Когда» сейчас не выполнено, — эффект следом
+      // за ней. ИЛИ-ветку/разовую запись (durableIds её не содержит) не трогаем.
+      if (durableIds.has(entryId)) toDelete.push(fx.id);
+      continue;
+    }
     seen.add(entryId);
     const same = fx.name === want.name
       && JSON.stringify(fx.system?.changes ?? []) === JSON.stringify(want.system.changes);
@@ -1222,8 +1692,39 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
     const chosen = await showMechChoiceDialog(sourceItem, entries);
     if (chosen) await applyMechEntry(actor, chosen, sourceItem, true, applied);
   } else {
-    for (const e of entries) await applyMechEntry(actor, e, sourceItem, false, applied);
+    // Опрос вложенных ИЛИ-подгрупп (showMechChoiceDialog) сам по себе ничего
+    // не пишет в актора — запись происходит только внутри applyMechEntry,
+    // ПОСЛЕ ответа. Поэтому вопросы для соседних вложенных ИЛИ-подгрупп этой
+    // И-группы можно задать ОДНОВРЕМЕННО (в Мастере создания коллектор
+    // получает все строки выбора сразу, а не одну за другой) — а сама
+    // ЗАПИСЬ в актора всё равно идёт строго по одной, в неизменном исходном
+    // порядке ниже. Порядок применения (и то, от чего зависят «Когда» и
+    // общие поля вроде Порчи/Ран) не меняется — меняется только момент, в
+    // который задаётся вопрос, а не момент записи.
+    const picks = await Promise.all(entries.map(e => resolveDirectOrGroup(e, applied, sourceItem)));
+    for (let i = 0; i < entries.length; i++) {
+      const pick = picks[i];
+      if (pick) { if (pick.chosen) await applyMechEntry(actor, pick.chosen, sourceItem, true, applied); }
+      else await applyMechEntry(actor, entries[i], sourceItem, false, applied);
+    }
   }
+}
+
+/**
+ * Если запись — прямая вложенная ИЛИ-подгруппа (>1 незавершённой альтернативы,
+ * ещё не отвеченная), заранее спрашивает выбор БЕЗ применения — вызывается
+ * для всех соседей одной И-группы одновременно (Promise.all в
+ * applyGroupEntries), чтобы все их вопросы дошли до коллектора Мастера
+ * разом, а не по очереди. Для любой другой записи (включая уже отвеченную
+ * ИЛИ-подгруппу или не-ИЛИ-подгруппу) возвращает undefined — применяющий
+ * цикл в applyGroupEntries обрабатывает её как раньше, через applyMechEntry.
+ */
+async function resolveDirectOrGroup(entry, applied, sourceItem) {
+  if (entry.kind !== "group") return undefined;
+  const subEntries = (entry.group?.entries || []).filter(isEntryComplete);
+  if (entry.group?.operator !== "OR" || subEntries.length <= 1) return undefined;
+  if (subEntries.some(e => applied.has(e.id))) return undefined;
+  return { chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };
 }
 
 /**
@@ -1252,19 +1753,61 @@ export function allMechEntryIds(item) {
   return collectMechEntries(getItemMechanics(item)).allIds;
 }
 
+// Очередь применений — по одной на предмет.
+//
+// Идемпотентность держится на флаге mechanicsApplied, а он читается в НАЧАЛЕ
+// применения и пишется в КОНЦЕ. Пока два применения одного предмета не
+// перекрывались, этого хватало. Но стартов бывает несколько и они независимы:
+// прямой вызов из applyRace рядом с хуком createItem (для этого и заведён
+// SKIP_MECHANICS_HOOK), а на холодном мире — и просто два хука, разошедшиеся
+// во времени из-за сетевых round-trip'ов на каждую выдачу. Оба читают ещё
+// ПУСТОЙ флаг, оба считают себя первыми и оба выдают всё целиком: Черта
+// Геносемя раздавала 38 органов вместо 19, архетип Апотекарий — два Нартеция.
+// Ловилось только вживую: Hooks в тестовом стенде — пустышка, и одиночный
+// прогон ничего про эту гонку не доказывал.
+//
+// Лечится не подавлением второго вызова, а его ОЧЕРЕДЬЮ: второй ждёт первого и
+// начинает, когда флаг уже записан, — то есть видит применённое и пропускает
+// его. Законный повтор (ГМ дописал запись на листе) при этом работает как
+// прежде, просто не внахлёст. Ключ — uuid: он уникален и у вложенных
+// предметов, тогда как id повторяется между акторами.
+const _mechRuns = new Map();
+
+export function applyItemMechanics(item) {
+  const key = item?.uuid || item?.id;
+  if (!key) return _applyItemMechanics(item);
+  // Провал предыдущего применения не должен рвать очередь следующему.
+  const run = (_mechRuns.get(key) ?? Promise.resolve())
+    .catch(() => {})
+    .then(() => _applyItemMechanics(item));
+  _mechRuns.set(key, run);
+  // Хвост очереди убираем, только если за это время его не сменил новый вызов.
+  run.catch(() => {}).finally(() => { if (_mechRuns.get(key) === run) _mechRuns.delete(key); });
+  return run;
+}
+
 /**
  * Применяет механику предмета к актору. Зовётся из хуков createItem и
  * updateItem (warhammer-dbc.mjs): дописать запись на предмет, который УЖЕ у
  * актора, — обычный сценарий, и он обязан работать так же, как настройка
  * предмета в списке мира до броска на лист.
  */
-export async function applyItemMechanics(item) {
+async function _applyItemMechanics(item) {
   const actor = item.parent;
   if (!(actor instanceof Actor)) return;
 
   const applied = appliedEntryIds(item);
   const before  = applied.size;
-  for (const group of getItemMechanics(item)) await applyGroupEntries(actor, group, item, applied);
+  // Верхнеуровневые группы Механики предмета независимы друг от друга — то
+  // же самое «И» между соседями, что и entries ВНУТРИ одной группы. Заворачиваем
+  // их в синтетическую И-группу kind:"group", чтобы пройти через ОБЩИЙ путь
+  // applyGroupEntries — тогда их прямые ИЛИ-подгруппы (напр. независимые
+  // ИЛИ-выборы Навыка у одного архетипа) опрашиваются одновременно, а не по
+  // очереди, той же гарантированно безопасной веткой (см. комментарий там).
+  await applyGroupEntries(actor, {
+    operator: "AND",
+    entries: getItemMechanics(item).map(g => ({ kind: "group", group: g, id: g.id }))
+  }, item, applied);
   await syncMechanicsEffects(item);
   await syncWeaponPropItemEffects(item);
   // Источник мог родиться неактивным (напр. Имплант создан ещё не
@@ -1285,8 +1828,8 @@ function optHtml(value, label, selected) {
   return `<option value="${esc(value)}" ${selected ? "selected" : ""}>${esc(label)}</option>`;
 }
 
-function buildEntryFieldsHtml(groupId, ent, isGM) {
-  const dis = isGM ? "" : "disabled";
+function buildEntryFieldsHtml(groupId, ent, canEdit) {
+  const dis = canEdit ? "" : "disabled";
   if (ent.kind === "corruption") {
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-corruption-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
@@ -1322,14 +1865,35 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     const dropInner = ent.sourceUuid
       ? `<img src="${esc(ent.sourceImg || "icons/svg/item-bag.svg")}" class="grant-drop-img"/>
          <span class="grant-drop-name">${esc(ent.sourceName || "?")}</span>
-         ${isGM ? `<button type="button" class="grant-drop-clear" data-action="grantDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
-      : `<span class="grant-drop-placeholder">${isGM ? `Перетащите ${ent.kind === "trait" ? "Черту" : "Талант"} сюда` : "—"}</span>`;
+         ${canEdit ? `<button type="button" class="grant-drop-clear" data-action="grantDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
+      : `<span class="grant-drop-placeholder">${canEdit ? `Перетащите ${ent.kind === "trait" ? "Черту" : "Талант"} сюда` : "—"}</span>`;
     let out = `<div class="grant-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}">${dropInner}</div>`;
     if (ent.kind === "trait" && ent.sourceHasRating) {
       out += `<input type="number" class="grant-entry-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.rating ?? "")}" placeholder="Рейтинг" ${dis}/>`;
     }
     if (ent.kind === "talent" && ent.sourceUuid) {
-      out += `<input type="text" class="grant-entry-spec" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.specialization || "")}" placeholder="Специализация" ${dis}/>`;
+      // «Мастерство» владеет конкретным Навыком (стр. 62), и от того, каким,
+      // зависят его склонности и цена. Поэтому у него не строка, а список: с
+      // произвольной подписью привязку было бы не с чем сверить.
+      // «Миньон Хаоса» — один Талант на двадцать слуг: пара «группа + сила»
+      // решает и уровень Таланта, и что покажет блок в СОЦИУМе.
+      if (isMinionTalent({ type: "talent", name: ent.sourceName })) {
+        const gOpts = Object.entries(MINION_GROUPS)
+          .map(([k, d]) => optHtml(k, d.label, (ent.minionGroup || "") === k)).join("");
+        const tOpts = Object.entries(MINION_TIERS)
+          .map(([k, d]) => optHtml(k, d.label, (ent.minionTier || "") === k)).join("");
+        out += `<select class="mech-minion-group" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+            ${optHtml("", "— группа —", !ent.minionGroup)}${gOpts}</select>
+          <select class="mech-minion-tier" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+            ${optHtml("", "— сила —", !ent.minionTier)}${tOpts}</select>`;
+      } else if (dynamicAptKind(ent.sourceName) === "skill") {
+        const opts = masteryTargets()
+          .map(t => optHtml(t.key, t.label, ent.specialization === t.key)).join("");
+        out += `<select class="grant-entry-spec" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+          ${optHtml("", "— выберите Навык —", !ent.specialization)}${opts}</select>`;
+      } else {
+        out += `<input type="text" class="grant-entry-spec" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.specialization || "")}" placeholder="Специализация" ${dis}/>`;
+      }
     }
     return out;
   }
@@ -1358,12 +1922,86 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
       <input type="number" class="mech-move-value" step="1" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.movementValue ?? "")}" ${dis}/>`;
   }
 
+  if (ent.kind === "armour") {
+    const locOpts = [optHtml("all", "Все локации", (ent.armourLocation || "body") === "all")]
+      .concat(Object.entries(AP_LOCATIONS)
+        .map(([k, l]) => optHtml(k, l, (ent.armourLocation || "body") === k))).join("");
+    const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
+    return `<select class="mech-armour-loc" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${locOpts}</select>
+      <select class="mech-armour-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
+      <input type="number" class="mech-armour-value" step="1" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.armourValue ?? "")}" ${dis}/>`;
+  }
+
   if (ent.kind === "terrainIgnore") {
     const chosen = new Set(ent.ignoreTerrainProps || []);
     const opts = TERRAIN_PROPS.map(p =>
       `<option value="${esc(p.key)}" ${chosen.has(p.key) ? "selected" : ""}>${esc(p.label)} (${p.mod >= 0 ? "+" : ""}${p.mod})</option>`
     ).join("");
     return `<select class="mech-terrain-ignore" multiple size="6" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>`;
+  }
+
+  if (ent.kind === "capability") {
+    const opts = CAPABILITY_OPTIONS
+      .map(([k, l]) => `<option value="${esc(k)}" ${ent.capabilityKey === k ? "selected" : ""}>${esc(l)}</option>`).join("");
+    return `<select class="mech-capability-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="">— возможность —</option>${opts}</select>
+      <input type="text" class="mech-reroll-label" placeholder="подпись" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
+  if (ent.kind === "testMod") {
+    const scopeOpts = REROLL_SCOPES
+      .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const modeOpts = [["flat", "число"], ["charBonus", "бонус характеристики"]]
+      .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const charSel = (cls, val) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
+      Object.entries(CHARACTERISTICS).map(([k, c]) =>
+        `<option value="${k}" ${val === k ? "selected" : ""}>${esc(c.label || k)}</option>`).join("")}</select>`;
+    let detail = "";
+    if (ent.modScope === "char") detail = charSel("mech-reroll-char", ent.rerollChar);
+    else if (ent.modScope === "skill") {
+      detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
+          `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
+    }
+    const valueField = ent.modValueMode === "charBonus"
+      ? charSel("mech-mod-char", ent.modCharBonus)
+      : `<input type="number" class="mech-entry-value" value="${esc(ent.value)}"
+                data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+    return `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
+      ${detail}
+      <select class="mech-mod-valuemode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      ${valueField}
+      <input type="text" class="mech-reroll-label" placeholder="подпись в диалоге" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
+  if (ent.kind === "reroll") {
+    const scopeOpts = REROLL_SCOPES
+      .map(([v, l]) => `<option value="${v}" ${ent.rerollScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const modeOpts = [["keepBest", "лучший из двух"], ["keepWorst", "худший из двух"]]
+      .map(([v, l]) => `<option value="${v}" ${ent.rerollMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    // Уточнение показывается только там, где оно есть: у «любого теста»,
+    // атаки, Инициативы и социальных навыков области хватает самой по себе.
+    let detail = "";
+    if (ent.rerollScope === "char") {
+      const opts = Object.entries(CHARACTERISTICS)
+        .map(([k, c]) => `<option value="${k}" ${ent.rerollChar === k ? "selected" : ""}>${esc(c.label || k)}</option>`).join("");
+      detail = `<select class="mech-reroll-char" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>`;
+    } else if (ent.rerollScope === "skill") {
+      const opts = Object.entries(SKILLS_DEF)
+        .map(([k, d]) => `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("");
+      detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="">— навык —</option>${opts}</select>`;
+    }
+    const whoOpts = [["self", "свой бросок"], ["target", "навязать цели"]]
+      .map(([v, l]) => `<option value="${v}" ${ent.rerollWho === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    return `<select class="mech-reroll-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
+      ${detail}
+      <select class="mech-reroll-who" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${whoOpts}</select>
+      <select class="mech-reroll-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      <input type="text" class="mech-reroll-label" placeholder="подпись в диалоге" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
   }
 
   if (ent.kind === "fatigue") {
@@ -1378,6 +2016,16 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
       ? `<select class="mech-fatigue-char" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${charOpts}</select>`
       : "";
     return `<select class="mech-fatigue-action" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${actionOpts}</select>${charSelect}`;
+  }
+
+  if (ent.kind === "integralAttack") {
+    // Тот же класс, что у «Снаряжения»: обработчик .mech-equip-source в
+    // item-sheet.mjs пишет equipSourceUuid/Name по id группы и записи, вида
+    // записи не касаясь, — своего слушателя тут заводить незачем.
+    return `<select class="mech-equip-source" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+      <option value="">— выберите оружие —</option>
+      ${equipmentOptionsHtml(ent.equipSourceUuid, ["weapons"])}
+    </select>`;
   }
 
   if (ent.kind === "equipment") {
@@ -1410,11 +2058,34 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
           .concat(Object.entries(ARMOR_TYPES).map(([v, l]) => optHtml(v, l, (ent.equipArmorType || "") === v))).join("");
         out += `<select class="mech-equip-atype" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${atOpts}</select>`;
       }
+      if (cat === "talents") {
+        // «7 талантов 1 уровня» — это ступень Таланта, а не его цена.
+        const tierOpts = [`<option value="">— любая ступень —</option>`]
+          .concat([1, 2, 3].map(t => optHtml(String(t), `Ступень ${t}`, String(ent.equipTalentTier ?? "") === String(t)))).join("");
+        out += `<select class="mech-equip-tier" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${tierOpts}</select>`;
+      }
+      if (cat === "psychic-powers") {
+        out += `<input type="number" class="mech-equip-pr" min="0" step="1" placeholder="до ПР"
+          data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipMaxPsyRating ?? "")}" ${dis}/>`;
+      }
       const availOpts = Object.entries(AVAILABILITY)
         .map(([v, l]) => optHtml(v, l, String(ent.equipMaxAvailability ?? 5) === v)).join("");
       out += `<select class="mech-equip-avail" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${availOpts}</select>`;
+
+      // Бюджет: штуками («7 талантов») или опытом («500хр на Психосилы»).
+      const bmOpts = BUDGET_MODES.map(m => optHtml(m.key, m.label, (ent.equipBudgetMode || "count") === m.key)).join("");
+      out += `<select class="mech-equip-budget-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${bmOpts}</select>
+        <input type="number" class="mech-equip-budget-value" min="0" step="1" placeholder="Бюджет"
+          data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipBudgetValue ?? 1)}" ${dis}/>`;
     }
-    out += `<input type="number" class="mech-equip-qty" min="1" step="1" placeholder="Кол-во" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipQty ?? 1)}" ${dis}/>`;
+    // Качество — часть выдачи: «Narthecium (Good.Q)» отличается от обычного и
+    // Надёжностью, и модификаторами.
+    const qOpts = ITEM_QUALITY_LIST
+      .map(k => optHtml(k, ITEM_QUALITY[k].label, (ent.equipQuality || "common") === k)).join("");
+    out += `<select class="mech-equip-quality" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${qOpts}</select>`;
+    if (mode === "direct") {
+      out += `<input type="number" class="mech-equip-qty" min="1" step="1" placeholder="Кол-во" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipQty ?? 1)}" ${dis}/>`;
+    }
     return out;
   }
 
@@ -1451,8 +2122,8 @@ function buildEntryFieldsHtml(groupId, ent, isGM) {
     const dropZone = (slot, key, label) => {
       const inner = key
         ? `<span class="grant-drop-name">${esc(label || key)}</span>
-           ${isGM ? `<button type="button" class="wprop-drop-clear" data-action="wpropDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}" title="Убрать">✕</button>` : ""}`
-        : `<span class="grant-drop-placeholder">${isGM ? "Перетащите Свойство оружия сюда" : "—"}</span>`;
+           ${canEdit ? `<button type="button" class="wprop-drop-clear" data-action="wpropDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}" title="Убрать">✕</button>` : ""}`
+        : `<span class="grant-drop-placeholder">${canEdit ? "Перетащите Свойство оружия сюда" : "—"}</span>`;
       return `<div class="grant-drop-zone wprop-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}" data-slot="${slot}">${inner}</div>`;
     };
     const action = ent.weaponPropAction || "add";
@@ -1521,9 +2192,16 @@ function buildSkillSelectorHtml(groupId, ent, dis) {
       out += `<input type="text" class="grant-entry-spec-custom" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.specialty)}" placeholder="Название специализации" ${dis}/>`;
     }
     // «По выбору» — отметьте checkbox'ами НЕСКОЛЬКО кандидатов; актор выбирает
-    // ОДИН из них диалогом в момент получения предмета (resolveEntrySpecChoice).
+    // из них диалогом в момент получения предмета (resolveEntrySpecChoice).
+    // Сколько именно — задаёт счётчик: у рас сплошь «Общие знания (любые 4)»,
+    // и четырьмя отдельными записями это не написать — диалог четырежды
+    // предложил бы тот же список, а повторный выбор занял бы один слот.
     if (isChoice) {
       const chosen = new Set(ent.specChoiceKeys || []);
+      out += `<label class="grant-spec-choice-count" title="Сколько РАЗНЫХ специализаций выбирает актор при получении">
+        любые <input type="number" class="grant-entry-spec-count" data-group-id="${groupId}" data-entry-id="${ent.id}"
+                     min="1" value="${Math.max(1, Number(ent.specChoiceCount) || 1)}" ${dis}/>
+      </label>`;
       const rows = specs.map(s => `<label class="grant-spec-choice-row">
         <input type="checkbox" class="grant-entry-spec-choice" data-group-id="${groupId}" data-entry-id="${ent.id}" data-key="${esc(s.key)}" ${chosen.has(s.key) ? "checked" : ""} ${dis}/>
         <span>${esc(s.display)}</span></label>`).join("");
@@ -1541,7 +2219,41 @@ function buildSkillSelectorHtml(groupId, ent, dis) {
  * после ручной правки JSON) — иначе выбор в <select> не совпал бы ни с
  * одним <option> и вид записи visually «съехал» бы на другой.
  */
-function buildEntryHtml(groupId, ent, isGM, depth = 1) {
+/**
+ * Условие «Когда» — общая строка под записью, для ЛЮБОГО вида (kind), не
+ * только Импланта: гейт по Геносемени актора (см. entryWhenOk). Ни одного
+ * варианта не заполнено — условия нет, запись работает как раньше, всем.
+ * Орден не выбран в варианте (значение «весь легион / своя банда») — этот
+ * вариант держит только легион, подходит и наследникам без своей более узкой
+ * записи. Несколько вариантов — ИЛИ, с общим переключателем «не» на всех разом
+ * (Железа Бетчера не работает СРАЗУ у трёх линий — три варианта одной записи).
+ */
+function buildEntryWhenHtml(groupId, ent, canEdit) {
+  const dis = canEdit ? "" : "disabled";
+  const w = ent.when || {};
+  const conditions = (w.conditions || []).length ? w.conditions : [{ legion: "", chapter: "" }];
+  const d = `data-group-id="${groupId}" data-entry-id="${ent.id}"`;
+  const rows = conditions.map((c, i) => `<div class="grant-when-row">
+    <select class="grant-when-legion" ${d} data-when-idx="${i}" ${dis}>${buildLegionOptions(c.legion || "")}</select>
+    <select class="grant-when-chapter" ${d} data-when-idx="${i}" ${dis}>${buildChapterOptions(c.legion || "", c.chapter || "")}</select>
+    <label class="grant-when-age-label" title="Дополнительно — не меньше этого Возраста (вкладка Записи)">
+      Возраст ≥ <input type="number" class="grant-when-age" ${d} data-when-idx="${i}" min="0"
+                        value="${c.ageAtLeast ?? ""}" placeholder="—" ${dis}/>
+    </label>
+    ${canEdit && conditions.length > 1 ? `<button type="button" class="grant-when-row-remove" data-action="grantWhenRemove" ${d} data-when-idx="${i}" title="Убрать вариант">✕</button>` : ""}
+  </div>`).join("");
+  return `<div class="grant-entry-when">
+    <span class="grant-when-label">Когда Геносемя</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-negate" ${d} ${w.negate ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <div class="grant-when-rows">${rows}</div>
+    ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
+  </div>`;
+}
+
+function buildEntryHtml(groupId, ent, canEdit, depth = 1) {
   const kindEntries = Object.entries(KIND_LABELS)
     .filter(([k]) => k !== "group" || ent.kind === "group" || depth < MAX_GROUP_DEPTH);
   const kindOpts = kindEntries.map(([k, l]) => optHtml(k, l, ent.kind === k)).join("");
@@ -1549,12 +2261,13 @@ function buildEntryHtml(groupId, ent, isGM, depth = 1) {
   const isGroup  = ent.kind === "group";
   return `<div class="grant-entry ${isScript ? "grant-entry-script" : ""} ${isGroup ? "grant-entry-group" : ""}" data-group-id="${groupId}" data-entry-id="${ent.id}">
     <div class="grant-entry-row">
-      <select class="grant-entry-kind" data-group-id="${groupId}" data-entry-id="${ent.id}" ${isGM ? "" : "disabled"}>${kindOpts}</select>
-      ${buildEntryFieldsHtml(groupId, ent, isGM)}
-      ${isGM ? `<button type="button" class="grant-entry-remove" data-action="grantEntryRemove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
+      <select class="grant-entry-kind" data-group-id="${groupId}" data-entry-id="${ent.id}" ${canEdit ? "" : "disabled"}>${kindOpts}</select>
+      ${buildEntryFieldsHtml(groupId, ent, canEdit)}
+      ${canEdit ? `<button type="button" class="grant-entry-remove" data-action="grantEntryRemove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
     </div>
-    <div class="grant-entry-preview">${esc(describeMechEntry(ent))}</div>
-    ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), isGM, depth + 1, true) : ""}
+    ${buildEntryWhenHtml(groupId, ent, canEdit)}
+    <div class="grant-entry-preview">${esc(describeMechEntry(ent) + describeMechWhen(ent.when))}</div>
+    ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), canEdit, depth + 1, true) : ""}
   </div>`;
 }
 
@@ -1563,25 +2276,58 @@ function buildEntryHtml(groupId, ent, isGM, depth = 1) {
  * «✕ Удалить группу» (удаление — через «✕» самой записи-контейнера у
  * родителя, отдельной кнопки не нужно), но оставляет переключатель И/ИЛИ.
  */
-function buildGroupHtml(grp, isGM, depth = 1, nested = false) {
-  const entriesHtml = (grp.entries || []).map(e => buildEntryHtml(grp.id, e, isGM, depth)).join("")
+function buildGroupHtml(grp, canEdit, depth = 1, nested = false) {
+  const entriesHtml = (grp.entries || []).map(e => buildEntryHtml(grp.id, e, canEdit, depth)).join("")
     || `<div class="grant-empty-hint"><em>Записей нет</em></div>`;
   const opHint = grp.operator === "OR" ? "актор выбирает одну запись" : "применяются все записи";
   return `<div class="grant-group ${nested ? "grant-group-nested" : ""}" data-group-id="${grp.id}">
     <div class="grant-group-head">
       <span class="grant-op-badge grant-op-${grp.operator}">${grp.operator === "OR" ? "ИЛИ" : "И"}</span>
       <span class="grant-op-hint">${opHint}</span>
-      ${isGM ? `<button type="button" class="grant-op-toggle" data-action="grantOpToggle" data-group-id="${grp.id}" title="Переключить И/ИЛИ">⇄</button>` : ""}
-      ${isGM && !nested ? `<button type="button" class="grant-group-remove" data-action="grantGroupRemove" data-group-id="${grp.id}" title="Удалить группу">✕</button>` : ""}
+      ${canEdit ? `<button type="button" class="grant-op-toggle" data-action="grantOpToggle" data-group-id="${grp.id}" title="Переключить И/ИЛИ">⇄</button>` : ""}
+      ${canEdit && !nested ? `<button type="button" class="grant-group-remove" data-action="grantGroupRemove" data-group-id="${grp.id}" title="Удалить группу">✕</button>` : ""}
     </div>
     <div class="grant-entries">${entriesHtml}</div>
-    ${isGM ? `<button type="button" class="grant-entry-add" data-action="grantEntryAdd" data-group-id="${grp.id}">➕ Запись</button>` : ""}
+    ${canEdit ? `<button type="button" class="grant-entry-add" data-action="grantEntryAdd" data-group-id="${grp.id}">➕ Запись</button>` : ""}
   </div>`;
 }
 
-/** Собирает HTML всех групп механики предмета — идёт в контекст листа предмета. */
-export function buildMechanicsTabHtml(item, isGM) {
-  return getItemMechanics(item).map(g => buildGroupHtml(g, isGM)).join("");
+/**
+ * Записать механику предмета. Настраивают её все за столом, а не один Мастер:
+ * Черты, Таланты и снаряжение лежат в компендиумах и в мире, и своими для
+ * игрока не бывают. Клиенту чужой предмет писать не дают, поэтому без прав на
+ * документ правка уходит Мастеру по системному сокету (обработчик —
+ * warhammer-dbc.mjs), а он пишет её у себя.
+ *
+ * Досчёт system.effects.mechAddProps/mechRemoveProps идёт при КАЖДОМ
+ * сохранении, а не только из полей weaponProp: иначе смена kind или удаление
+ * записи не подчистили бы то, что раньше построил kind:"weaponProp".
+ *
+ * Пересборку эффектов отсюда НЕ зовём: на неё подписан хук updateItem — он
+ * ловит любую правку Механики, не только с листа предмета.
+ */
+export async function saveItemMechanics(item, groups) {
+  if (!item) return;
+  if (item.isOwner) {
+    await item.setFlag("warhammer-dbc", "mechanics", groups);
+    await syncWeaponPropItemEffects(item);
+    return;
+  }
+  if (!game.users?.activeGM) {
+    return ui.notifications?.warn(
+      "Правка не сохранена: предмет не ваш, а Мастера нет в игре — записать её некому.");
+  }
+  game.socket?.emit("system.warhammer-dbc",
+    { action: "itemMechanics", uuid: item.uuid, groups, userId: game.user.id });
+}
+
+/**
+ * Собирает HTML всех групп механики предмета — идёт в контекст листа предмета.
+ * `canEdit` — можно ли вообще править этот предмет: запертый компендиум не
+ * перепишет и Мастер. Роль здесь ни при чём — механику настраивают все.
+ */
+export function buildMechanicsTabHtml(item, canEdit) {
+  return getItemMechanics(item).map(g => buildGroupHtml(g, canEdit)).join("");
 }
 
 // ══════════════════ ТРЕБОВАНИЯ (условия-предпосылки) ══════════════════
@@ -1602,7 +2348,8 @@ export const REQ_KIND_LABELS = {
   reqTrait:      "Черта",
   reqRace:       "Раса",
   reqArchetype:  "Элитный архетип",
-  reqPatron:     "Покровительство Бога"
+  reqPatron:     "Покровительство Бога",
+  reqCapability: "Возможность"
 };
 
 /** Сравнение имён: регистр и лишние пробелы значения не имеют. */
@@ -1617,7 +2364,10 @@ export function blankReqEntry(kind = "reqSkill") {
     // reqTalent / reqTrait — источник перетаскивается, рейтинг необязателен
     sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "",
     // reqRace / reqArchetype / reqPatron
-    raceKey: "", archetypeName: "", patronKey: ""
+    raceKey: "", archetypeName: "", patronKey: "",
+    // reqCapability — имя из constants/capabilities.mjs. Так книжное «доступно
+    // только пилоту Дредноута» становится проверяемым условием, а не примечанием.
+    capabilityKey: ""
   };
 }
 
@@ -1657,6 +2407,10 @@ export function describeReqEntry(e) {
       return e.patronKey
         ? `Покровительство: ${WARP_GODS_MAP[e.patronKey]?.label || e.patronKey}`
         : "Покровительство: (не выбрано)";
+    case "reqCapability":
+      return e.capabilityKey
+        ? (CAPABILITIES[e.capabilityKey]?.label || e.capabilityKey)
+        : "Возможность: (не выбрана)";
     default:
       return "(неизвестное требование)";
   }
@@ -1672,6 +2426,7 @@ export function isReqComplete(e) {
     case "reqRace":      return !!e.raceKey;
     case "reqArchetype": return !!e.archetypeName;
     case "reqPatron":    return !!e.patronKey;
+    case "reqCapability": return !!e.capabilityKey;
     default:             return false;
   }
 }
@@ -1729,6 +2484,11 @@ export function actorMeetsReq(actor, e) {
     }
     case "reqPatron":
       return actor.system.patronGod === e.patronKey;
+    // Возможность спрашивается у общего реестра правил (module/rules/flags.mjs),
+    // а не у полей актора: «пилот Дредноута» — это ссылка с ЧУЖОГО актора
+    // (место экипажа саркофага), и в system персонажа её нет вовсе.
+    case "reqCapability":
+      return hasRuleFlag(actor, e.capabilityKey);
     default:
       return false;
   }
@@ -1801,6 +2561,12 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
       const names = [...new Set(ELITE_ARCHETYPES.map(a => a.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ru"));
       const opts = names.map(n => optHtml(n, n, e.archetypeName === n)).join("");
       return `<select class="req-archetype" ${d} ${dis}><option value="">— выберите архетип —</option>${opts}</select>`;
+    }
+        case "reqCapability": {
+      const opts = CAPABILITY_OPTIONS
+        .map(([k, l]) => `<option value="${esc(k)}" ${e.capabilityKey === k ? "selected" : ""}>${esc(l)}</option>`).join("");
+      return `<select class="req-capability-key" ${d} ${dis}>
+        <option value="">— возможность —</option>${opts}</select>`;
     }
     case "reqPatron": {
       const opts = WARP_GODS.map(g => optHtml(g.key, g.label, e.patronKey === g.key)).join("");

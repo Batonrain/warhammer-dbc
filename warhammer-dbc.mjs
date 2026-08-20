@@ -9,7 +9,7 @@ import { SKILLS_DEF,
          GROUP_SKILLS_DEF }           from "./module/constants/skills.mjs";
 import { HIT_LOCATIONS, MELEE_STANCES,
          BALANCE_PARRY_MOD,
-         MELEE_TECHNIQUES }           from "./module/constants/combat.mjs";
+         MELEE_BASES, MELEE_MANEUVERS, MELEE_CONTESTS } from "./module/constants/combat.mjs";
 import { ITEM_TYPES, WEAPON_CLASSES,
          DAMAGE_TYPES,
          AVAILABILITY }               from "./module/constants/items.mjs";
@@ -27,6 +27,7 @@ import { WarhammerStarSystemSheet }   from "./module/sheets/star-system-sheet.mj
 import { WarhammerHordeSheet }        from "./module/sheets/horde-sheet.mjs";
 import { WarhammerVehicleSheet }      from "./module/sheets/vehicle-sheet.mjs";
 import { WarhammerDaemonSheet }       from "./module/sheets/daemon-sheet.mjs";
+import { WarhammerMinionSheet }       from "./module/sheets/minion-sheet.mjs";
 import { WarhammerDemonPrinceSheet }  from "./module/sheets/demon-prince-sheet.mjs";
 import { WarhammerSquadSheet }        from "./module/sheets/squad-sheet.mjs";
 import { WarhammerFormationSheet }    from "./module/sheets/formation-sheet.mjs";
@@ -35,7 +36,9 @@ import { WarhammerActiveEffectConfig } from "./module/sheets/active-effect-confi
 import { refreshCalendarWidget, initTimeFlow } from "./module/apps/imperial-calendar.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
-import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex } from "./module/apps/mechanics.mjs";
+import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
+         saveItemMechanics } from "./module/apps/mechanics.mjs";
+import { isItemActive }              from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
@@ -65,11 +68,12 @@ import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
 import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
-import { setSystemPackLocks }         from "./module/apps/pack-locks.mjs";
+import { setSystemPackLocks,
+         warnEmptySystemPacks }      from "./module/apps/pack-locks.mjs";
 import { importBooks }                from "./module/apps/books.mjs";
 import { registerHandlebarsHelpers }  from "./module/helpers/handlebars.mjs";
 import { registerHooks }              from "./module/hooks.mjs";
-import { registerCharacterStartButton } from "./module/apps/character-start.mjs";
+import { registerCharacterStartButton, openStartedCharacter, NEW_CHARACTER_NAME } from "./module/apps/character-start.mjs";
 import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
@@ -89,6 +93,7 @@ Hooks.once("init", () => {
   foundry.applications.handlebars.loadTemplates([
     // Актор
     "systems/warhammer-dbc/templates/actor/parts/header.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/minion-header.hbs",
     "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs",
     "systems/warhammer-dbc/templates/apps/nexus-card.hbs",
     "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs",
@@ -119,6 +124,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/psychic-power.hbs", // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/implant.hbs",       // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/tech-power.hbs",    // ← НОВОЕ
+    "systems/warhammer-dbc/templates/item/parts/infoguard.hbs",     // ← НОВОЕ
     "systems/warhammer-dbc/templates/actor/parts/tab-tech.hbs",     // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/navigator-power.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-nav.hbs",
@@ -136,6 +142,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/aspiration.hbs",           // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/archetype.hbs",            // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/faction.hbs",
+    "systems/warhammer-dbc/templates/item/parts/elite-archetype.hbs",
     "systems/warhammer-dbc/templates/item/parts/faction-roster.hbs",
     "systems/warhammer-dbc/templates/item/parts/race.hbs",
     "systems/warhammer-dbc/templates/item/parts/subrace.hbs",
@@ -169,7 +176,7 @@ Hooks.once("init", () => {
     RACES, SUBRACES, CHARACTERISTICS, IMPROVEMENTS,
     IMPROVEMENT_BONUS, SKILL_RANKS, SKILLS_DEF, GROUP_SKILLS_DEF,
     ITEM_TYPES, WEAPON_CLASSES, DAMAGE_TYPES, AVAILABILITY,
-    HIT_LOCATIONS, MELEE_TECHNIQUES, MELEE_STANCES,
+    HIT_LOCATIONS, MELEE_BASES, MELEE_MANEUVERS, MELEE_CONTESTS, MELEE_STANCES,
     BALANCE_PARRY_MOD, AMMO_CATEGORIES, WEAPON_PROPERTIES
   };
 
@@ -211,6 +218,11 @@ Hooks.once("init", () => {
   foundry.documents.collections.Actors.registerSheet("warhammer-dbc",
     WarhammerDaemonSheet, {
       types: ["daemon"], makeDefault: true, label: "Лист демона WH"
+    }
+  );
+  foundry.documents.collections.Actors.registerSheet("warhammer-dbc",
+    WarhammerMinionSheet, {
+      types: ["minion"], makeDefault: true, label: "Лист миньона WH"
     }
   );
   foundry.documents.collections.Actors.registerSheet("warhammer-dbc",
@@ -512,6 +524,14 @@ Hooks.once("ready", () => {
     try {
       // Баннер Сессии/Сцены — у ВСЕХ клиентов (не только у активного ГМа).
       if (data.action === "sessionSceneBanner") { showFateTurnBanner(data.text); return; }
+      // Ответ Мастера на просьбу завести персонажа: лист и Мастер создания
+      // открываются у того, кто просил, — остальные это сообщение пропускают.
+      if (data.action === "characterStarted") {
+        if (data.userId !== game.user.id) return;
+        const actor = await fromUuid(data.uuid).catch(() => null);
+        if (actor) await openStartedCharacter(actor);
+        return;
+      }
       if (game.user !== game.users.activeGM) return;      // применяет ровно один ГМ
       const requester = game.users.get(data?.userId);
       if (!requester) return;
@@ -560,6 +580,45 @@ Hooks.once("ready", () => {
         if (!_validSquadChange(before, next, requester))
           return console.warn("Warhammer DBC | Изменение состава формирования отклонено.");
         await fm.update({ "system.posts": data.posts, "system.attached": next.members });
+      }
+      else if (data.action === "itemMechanics") {
+        // Механику предмета настраивают все за столом, но писать чужой предмет
+        // клиенту не дают — правка приходит сюда и ложится нашей рукой.
+        const item = await fromUuid(data.uuid).catch(() => null);
+        if (!(item instanceof Item) || !Array.isArray(data.groups)) return;
+        await saveItemMechanics(item, data.groups);
+      }
+      else if (data.action === "itemUpdate") {
+        // Общий релей (relayItemUpdate, module/helpers/utils.mjs) для блоков листа
+        // предмета, которые обязаны работать не только у владельца — напр.
+        // «Особенность комплекта» силовой брони (module/apps/armour-history.mjs).
+        // В отличие от itemMechanics (пишет только через доверенный
+        // saveItemMechanics), здесь клиент присылает произвольный object для
+        // item.update() — без сужения путей любой подключённый клиент мог бы
+        // socket-сообщением переписать ЛЮБОЕ поле ЛЮБОГО предмета в игре, а не
+        // только «Особенность брони» и «Инфограждение». Сейчас все настоящие
+        // вызыватели пишут только под system.history.* (armour-history.mjs,
+        // item-sheet.mjs) или system.infoguard (module/apps/infoguard.mjs) —
+        // разрешаем ровно эти два пути, остальное отклоняем.
+        const item = await fromUuid(data.uuid).catch(() => null);
+        if (!(item instanceof Item) || !data.data || typeof data.data !== "object") return;
+        const allowed = Object.keys(data.data).every(k => k === "system.history"
+          || k.startsWith("system.history.") || k === "system.infoguard");
+        if (!allowed) return console.warn("Warhammer DBC | itemUpdate отклонён: путь вне system.history.*/system.infoguard", data.data);
+        await item.update(data.data);
+      }
+      else if (data.action === "startCharacter") {
+        // Игрок нажал «Начать создание персонажа», а права заводить Актёров у
+        // его роли нет. Лист создаём мы и сразу отдаём его во владение
+        // просителю — дальше он сам работает Мастером создания.
+        const actor = await Actor.create({
+          name: NEW_CHARACTER_NAME,
+          type: "character",
+          ownership: { [requester.id]: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER }
+        });
+        if (!actor) return;
+        game.socket.emit("system.warhammer-dbc",
+          { action: "characterStarted", userId: requester.id, uuid: actor.uuid });
       }
       else if (data.action === "cogitatorDiary") {
         // Игрок ведёт запись на странице-дневнике когитатора — пишет ГМ.
@@ -1138,6 +1197,9 @@ Hooks.on("applyActiveEffect", (targetDoc, change) => {
 Hooks.once("ready", async () => {
   if (!game.user.isGM) return;
   await setSystemPackLocks(!_libsUnlocked());
+  // Пустой компендиум системы = база под него не собрана. Молча это выглядит
+  // как «контент забыли», поэтому ГМу говорится сразу и с командой починки.
+  warnEmptySystemPacks(game.packs);
   await migrateAllItemEffects();
 });
 
@@ -1456,4 +1518,57 @@ Hooks.on("deleteItem", async (item, options, userId) => {
     _twinDeleting.delete(partnerId);
     console.error("Warhammer DBC | не удалось удалить парный предмет", err);
   }
+});
+
+/* ═══════════════════════ ИНТЕГРАЛЬНЫЕ АТАКИ ═══════════════════════════════
+ * Оружие с флагом warhammer-dbc.integralAttack — это не снаряжение, а часть
+ * тела или машины: Кислотный Плевок Железы Бетчера, Пинок Дредноута. Его
+ * нельзя ни снять, ни выбросить, пока источник на месте и работает.
+ *
+ * Два происхождения, и правило для них одно:
+ *   • выдано записью kind:"integralAttack" Конструктора — на оружии стоит
+ *     grantedByItem, и оно живёт ровно пока источник активен (isItemActive:
+ *     имплант — installed и не disabled). Снятие источника убирает атаку само
+ *     — через syncGrantedEquipment и общий откат deleteItem выше;
+ *   • вложено в актора инлайн, источника-предмета нет вовсе (Пинок в шасси
+ *     Дредноута). Такую атаку убирает только ГМ — правкой самого шасси.
+ *
+ * Почему хуки, а не блокировка кнопок на листе: удаление идёт через
+ * item.delete() из контекстного меню (sheets/context-menu.mjs), снятие — через
+ * equipItem() (sheets/tabs/gear.mjs), и есть ещё макросы и перетаскивание.
+ * Хук закрывает все пути разом, как и у пары боевых профилей выше.
+ */
+const INTEGRAL_FLAG = "integralAttack";
+
+/**
+ * Защищена ли эта интегральная атака прямо сейчас.
+ * Источник уже удалён или выключен — не защищена: именно так её и убирают
+ * штатные откаты, и мешать им нельзя, иначе снятый имплант оставит за собой
+ * неудаляемое оружие.
+ */
+function _integralProtected(item) {
+  if (!item.getFlag("warhammer-dbc", INTEGRAL_FLAG)) return false;
+  const actor = item.parent;
+  if (!(actor instanceof Actor)) return false;
+  const sourceId = item.getFlag("warhammer-dbc", "grantedByItem");
+  if (!sourceId) return !game.user.isGM;   // инлайн в шасси — только ГМ вправе
+  const source = actor.items.get(sourceId);
+  if (!source) return false;               // источник ушёл — идёт штатный откат
+  return isItemActive(source);
+}
+
+Hooks.on("preDeleteItem", (item) => {
+  if (!_integralProtected(item)) return true;
+  ui.notifications?.warn(
+    `«${item.name}» — интегральная атака: она есть, пока работает то, что её даёт. Убрать можно только источник.`);
+  return false;
+});
+
+Hooks.on("preUpdateItem", (item, changed) => {
+  // Ловим только попытку СНЯТЬ: надеть её обратно никто не мешает, а прочие
+  // правки оружия (боезапас, модификации, переименование) не запрещены вовсе.
+  if (changed?.system?.equipped !== false) return true;
+  if (!_integralProtected(item)) return true;
+  ui.notifications?.warn(`«${item.name}» — интегральная атака: снять её нельзя.`);
+  return false;
 });

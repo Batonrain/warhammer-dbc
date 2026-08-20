@@ -22,6 +22,7 @@
 //  кнопка «↻ Обновить» в шапке диалога форсирует пересборку.
 // ════════════════════════════════════════════════════════════════════════
 import { matchesFilters, normalizePick } from "./compendium-filters.mjs";
+import { budgetLabel, budgetReady, budgetFits, budgetState, BUDGET_XP } from "../rules/pick-budget.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const TAB_DEFS = [
@@ -88,7 +89,16 @@ export const CATEGORIES = [
  *  обычному просмотру не мешают, просто едут с остальными данными узла. */
 async function buildPackTree(pack) {
   const index = await pack.getIndex({
-    fields: ["system.armorType", "system.availability", "system.properties"]
+    // tier и cost нужны фильтрам «Талант такой-то ступени» и «Психосила до
+    // такого-то ПР», а cost — ещё и бюджету в опыте (rules/pick-budget.mjs).
+    // benefit/description — то же, что показывает лист по стрелочке у уже
+    // взятых Талантов/Черт (см. templates/actor/parts/tab-abilities.hbs);
+    // здесь тот же текст нужен ДО покупки — стрелочка есть только в pickMode
+    // (renderItemsHtml), но поле читаем для всех категорий разом, второй
+    // проход по компендиуму дороже лишних двух строк в индексе.
+    fields: ["system.armorType", "system.availability", "system.properties",
+             "system.tier", "system.cost", "system.aptitudes", "system.category",
+             "system.benefit", "system.description"]
   });
   const folders = pack.folders?.contents ?? [];
   const byParent = new Map();
@@ -120,7 +130,13 @@ async function buildPackTree(pack) {
         // боковую панель, и с чужим родом дроп молча ничего не делает.
         doc: pack.metadata?.type || "Item",
         folderId, armorType: it.system?.armorType,
-        availability: it.system?.availability, properties: it.system?.properties || []
+        availability: it.system?.availability, properties: it.system?.properties || [],
+        tier: it.system?.tier, cost: it.system?.cost, aptitudes: it.system?.aptitudes || [],
+        category: it.system?.category,
+        // Действие/эффект приоритетнее общего описания — у Талантов и Черт
+        // именно в benefit лежит механический текст (см. item-picker.mjs),
+        // у остальных типов benefit нет, и в ход идёт description.
+        desc: it.system?.benefit || it.system?.description || ""
       }))
     };
   };
@@ -232,8 +248,11 @@ async function buildAllTrees(force = false) {
 // Категории, которые можно «выдать» предметом (kind:"equipment" в Конструкторе,
 // module/apps/mechanics.mjs) — подмножество CATEGORIES с одним источником-паком.
 // Метки берутся из CATEGORIES, чтобы не разъезжались с обычным браузером.
+// Не только снаряжение: «7 талантов 1 уровня» и «500хр на Психосилы» — тот же
+// приём «компендиум с фильтрами плюс счётчик», просто пак другой.
 const GRANTABLE_PACKS = ["weapons", "armor", "gear", "ammunition", "implants",
-  "weapon-mods", "armor-mods", "tools", "shields"];
+  "weapon-mods", "armor-mods", "tools", "shields",
+  "talents", "traits", "psychic-powers", "tech-powers", "chemistry"];
 export const GRANTABLE_CATEGORIES = GRANTABLE_PACKS.map(pack => ({
   pack, label: CATEGORIES.find(c => c.sources.length === 1 && c.sources[0].pack === pack)?.label || pack
 }));
@@ -247,11 +266,21 @@ function pruneTree(node, pred) {
   return { folders, items };
 }
 
+// Строка предмета + стрелочка раскрытия описания — тот же приём, что у уже
+// взятых Талантов/Черт на листе (▸ у tab-abilities.hbs) и у пикера
+// module/sheets/item-picker.mjs (.pick-exp/.pick-desc): раньше почитать, что
+// даёт запись, ДО покупки можно было только открыв её отдельный лист.
 function renderItemsHtml(items) {
   return items.map(it => `
-    <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}">
-      <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
-      <span class="cbrowse-item-name">${esc(it.name)}</span>
+    <div class="cbrowse-row">
+      <div class="cbrowse-row-head">
+        <button type="button" class="cbrowse-exp pick-exp" title="Показать описание">▸</button>
+        <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}">
+          <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
+          <span class="cbrowse-item-name">${esc(it.name)}</span>
+        </div>
+      </div>
+      <div class="cbrowse-desc pick-desc" style="display:none;">${esc(it.desc || "—")}</div>
     </div>`).join("");
 }
 
@@ -332,12 +361,26 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
     // Шапка требования: что нужно выбрать и сколько уже выбрано. Показывается
     // только когда есть что сказать — при обычном выборе одного предмета без
     // пояснения она лишняя.
-    const multi = !!pick && pick.count > 1;
+    // Бюджет: штуками («7 талантов 1 уровня») или опытом («500хр на Психосилы»).
+    // Одна штука без пояснения — прежний одиночный выбор, шапка ему не нужна.
+    const budget = pick?.budget ?? null;
+    const multi = !!pick && (budget?.mode === BUDGET_XP || budget?.value > 1);
+    // Цена одной записи в опыте зависит от того, кому выдают, поэтому приходит
+    // снаружи; без неё берётся собственная цена записи компендиума.
+    const xpCost = pickMode?.xpCost || null;
+    const byUuid = new Map();
+    for (const c of cats) {
+      const collect = node => {
+        for (const it of node.items || []) byUuid.set(it.uuid, it);
+        for (const f of node.folders || []) collect(f);
+      };
+      collect(c.tree);
+    }
     const headHtml = (pick && (pick.prompt || multi)) ? `
       <div class="cbrowse-pick-head">
         ${pick.prompt ? `<div class="cbrowse-pick-prompt">${esc(pick.prompt)}</div>` : ""}
         ${multi ? `<div class="cbrowse-pick-state">
-          <span>Выбрано <span class="cbrowse-pick-n">0</span> из ${pick.count}</span>
+          <span class="cbrowse-pick-n">${esc(budgetLabel([], budget, xpCost))}</span>
           <button type="button" class="cbrowse-pick-confirm" disabled>Готово</button>
         </div>` : ""}
       </div>` : "";
@@ -360,11 +403,12 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
         let activeTab = "all";
         // Выбранное при count > 1. Порядок сохраняется: он же порядок выдачи.
         const chosen = [];
+        const picked = () => chosen.map(u => byUuid.get(u)).filter(Boolean);
         const syncPickState = () => {
           html.find(".cbrowse-item").each((_, el) =>
             el.classList.toggle("cbrowse-picked", chosen.includes(el.dataset.uuid)));
-          html.find(".cbrowse-pick-n").text(chosen.length);
-          html.find(".cbrowse-pick-confirm").prop("disabled", chosen.length !== pick.count);
+          html.find(".cbrowse-pick-n").text(budgetLabel(picked(), budget, xpCost));
+          html.find(".cbrowse-pick-confirm").prop("disabled", !budgetReady(picked(), budget, xpCost));
         };
 
         html.find(".cbrowse-item").on("click", async ev => {
@@ -373,8 +417,12 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
           if (multi) {
             const at = chosen.indexOf(uuid);
             if (at >= 0) chosen.splice(at, 1);
-            else if (chosen.length >= pick.count)
-              return ui.notifications.warn(`Уже выбрано ${pick.count} — снимите лишнее, чтобы выбрать другое.`);
+            else if (!budgetFits(picked(), byUuid.get(uuid), budget, xpCost)) {
+              const st = budgetState(picked(), budget, xpCost);
+              return ui.notifications.warn(st.mode === BUDGET_XP
+                ? `Не хватает опыта: осталось ${st.left} из ${st.value}.`
+                : `Уже выбрано ${st.value} — снимите лишнее, чтобы выбрать другое.`);
+            }
             else chosen.push(uuid);
             return syncPickState();
           }
@@ -383,9 +431,23 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
           doc.sheet?.render(true);
         });
 
+        // Стрелочка раскрытия описания — прочитать, что даёт запись, ДО
+        // выбора/покупки (тот же приём, что у Талантов/Черт на листе и в
+        // module/sheets/item-picker.mjs). Отдельная кнопка вне .cbrowse-item,
+        // поэтому клик по ней не запускает ни выбор, ни драг.
+        html.find(".cbrowse-exp").on("click", ev => {
+          ev.preventDefault();
+          const row = ev.currentTarget.closest(".cbrowse-row");
+          const desc = row?.querySelector(".cbrowse-desc");
+          if (!desc) return;
+          const open = desc.style.display !== "none";
+          desc.style.display = open ? "none" : "block";
+          ev.currentTarget.textContent = open ? "▸" : "▾";
+        });
+
         html.find(".cbrowse-pick-confirm").on("click", ev => {
           ev.preventDefault();
-          if (chosen.length !== pick.count) return;
+          if (!budgetReady(picked(), budget, xpCost)) return;
           finish(chosen.slice());
           dlg.close();
         });

@@ -240,6 +240,8 @@
 
 .atk-stance-badge { font-size: 0.82em; color: var(--wh-red); font-weight: bold; }
 .atk-ammo-badge   { font-size: 0.82em; color: #3a6a3a; font-weight: bold; }
+.atk-base-badge   { font-size: 0.82em; color: var(--wh-red); font-weight: bold; }
+.atk-training-warn { font-size: 0.82em; color: #b8860b; font-weight: bold; }
 
 /* ── Прицельная атака ── */
 #atk-aim {
@@ -611,15 +613,16 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-atk-v2 .av-section { display: flex; flex-direction: column; gap: 3px; }
 .wh-atk-v2 .av-sec-lbl { font-size: .72em; letter-spacing: .04em; color: #5aa37e; text-transform: uppercase; }
 
-/* Сводка выбранного хвата/профиля (read-only; выбор — в HUD) */
+/* Сводка эффектов выбранного хвата/профиля — обновляется вместе с выбором ниже */
 .wh-atk-v2 .av-gripnote {
   font-size: .82em; line-height: 1.4; color: #b8ffd8;
   padding: 5px 8px; border-radius: 4px;
   border: 1px solid rgba(111,230,255,.25); background: rgba(111,230,255,.06);
 }
+.wh-atk-v2 .av-gripnote:empty { display: none; }
 .wh-atk-v2 .av-gripnote .wh-ri { margin-right: 5px; vertical-align: -1px; }
 
-/* Пилюли режима/прицеливания (радио спрятан, подсветка активного) */
+/* Пилюли режима/прицеливания/Стойки-Базы-Приёма-Хвата-Профиля (радио спрятан) */
 .wh-atk-v2 .av-pills { display: flex; flex-wrap: wrap; gap: 4px; }
 .wh-atk-v2 .av-pill { cursor: pointer; }
 .wh-atk-v2 .av-pill input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -633,6 +636,12 @@ body.wh-aiming #board, body.wh-aiming canvas {
   background: linear-gradient(180deg, #4dffa6, #2f9e6a); color: #04100a;
   border-color: #4dffa6; box-shadow: 0 0 8px rgba(77,255,166,.4);
 }
+/* Недоступно без Рукопашной Тренировки/не подходит категории оружия (стр. 62) */
+.wh-atk-v2 .av-pill.av-pill-disabled { cursor: not-allowed; }
+.wh-atk-v2 .av-pill.av-pill-disabled span {
+  border-color: #3a3a3a; color: #7a7a7a; background: rgba(60,60,60,.15);
+}
+.wh-atk-v2 .av-pill.av-pill-disabled:hover span { border-color: #3a3a3a; color: #7a7a7a; }
 
 /* Ситуативные модификаторы — сворачиваемо */
 .wh-atk-v2 .av-adv { border-top: 1px dashed #1f6f4a; padding-top: 4px; }
@@ -1156,7 +1165,7 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-item-picker .cbrowse-folder.pick-collapsed .cbrowse-folder-body { display: none; }
 .wh-item-picker .cbrowse-folder-body { padding: 0 0 0 4px; }
 .wh-item-picker .cbrowse-item {
-  display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 20px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 2px; cursor: pointer;
   border-bottom: 1px solid rgba(77,255,166,.08); font-size: .88em; color: #d8ffe8;
 }
 .wh-item-picker .cbrowse-item:hover { background: rgba(77,255,166,.08); color: #4dffa6; }
@@ -1165,6 +1174,20 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-item-picker .cbrowse-item.pick-hidden { display: none; }
 .wh-item-picker .cbrowse-item-img { flex: 0 0 auto; width: 18px; height: 18px; border: none; border-radius: 2px; }
 .wh-item-picker .cbrowse-item-name { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Строка предмета + стрелочка описания (см. renderItemsHtml в
+   compendium-browser.mjs) — обёртка нужна, чтобы стрелочка и раскрытая
+   панель не были частью самого .cbrowse-item: он draggable и кликабелен
+   целиком (выбор/открытие листа), а стрелочка — отдельный элемент рядом,
+   без конфликта с драгом. Скрытие поиском по-прежнему решает .cbrowse-item
+   (JS не тронут) — :has() гасит всю строку целиком, когда предмет внутри неё
+   спрятан. */
+.wh-item-picker .cbrowse-row { padding-left: 18px; }
+.wh-item-picker .cbrowse-row:has(.cbrowse-item.pick-hidden) { display: none; }
+.wh-item-picker .cbrowse-row-head { display: flex; align-items: center; gap: 2px; }
+.wh-item-picker .cbrowse-row-head .cbrowse-item { flex: 1 1 auto; min-width: 0; }
+/* Внешний вид самой кнопки и панели описания — от .pick-exp/.pick-desc (см.
+   выше); .cbrowse-exp/.cbrowse-desc только отдают JS свой селектор, отдельный
+   от одноимённого пикера Талантов/Черт (module/sheets/item-picker.mjs). */
 
 /* Панель вкладок (Все/Способности/Мистика/Арсенал/Машины/Пустолёты) — вторая
    липкая строка под поиском, как у .pick-top-gate; сдвигает липкие заголовки
@@ -1329,8 +1352,15 @@ body.wh-aiming #board, body.wh-aiming canvas {
   padding: 18px 14px; text-align: center; font-size: .88em; color: #8fb8a2;
 }
 
-/* Полоса прокрутки — часть окна, а не подарок браузера. */
-.wh-race-picker .window-content { scrollbar-width: thin; scrollbar-color: #2f9e6a #06120c; }
+/* Полоса прокрутки — часть окна, а не подарок браузера.
+   DialogV2 (в отличие от старого AppV1 Dialog, на котором стоят соседние
+   пикеры — Таланты, Черты, Снаряжение) не включает прокрутку .window-content
+   сам: без явного overflow-y список рас длиннее окна просто обрезался по
+   рамке, и до нижних рас было не долистать никаким колесом мыши. */
+.wh-race-picker .window-content {
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: #2f9e6a #06120c;
+}
 .wh-race-picker .window-content::-webkit-scrollbar { width: 10px; }
 .wh-race-picker .window-content::-webkit-scrollbar-track { background: #06120c; }
 .wh-race-picker .window-content::-webkit-scrollbar-thumb {
@@ -1342,3 +1372,39 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-race-picker .pick-search:focus-visible,
 .wh-race-picker .pick-add:focus-visible,
 .wh-race-picker .pick-exp:focus-visible { outline: 2px solid #4dffa6; outline-offset: 1px; }
+
+/* ── Пикер Элитных архетипов ──────────────────────────────────────────────────
+   Устроен как пикер Талантов и берёт его классы; здесь только своё: счётчик
+   уже взятых (от него удваивается цена) и предупреждение при несоответствии. */
+.wh-elite-picker .elite-taken {
+  flex: 0 0 auto; font-size: .78em; padding: 2px 9px; border-radius: 9px;
+  background: rgba(200, 200, 120, .14); color: #dcd88a; white-space: nowrap; cursor: help;
+}
+.wh-elite-warn .elite-warn-list {
+  margin: 6px 0; padding-left: 20px; color: #ff9a9a; font-size: .9em;
+}
+.wh-elite-warn .elite-warn-manual { font-size: .85em; opacity: .7; font-style: italic; }
+
+/* Строка архетипа в две линии: имя с ценой сверху, требования под именем.
+   Одной строкой они не живут — у иного архетипа требований с десяток, и имя
+   ужималось до «Берсерк К…», а сами требования обрывались на середине. */
+.wh-elite-picker .pick-head.elite-head { padding-bottom: 1px; }
+.wh-elite-picker .pick-head.elite-head .pick-name { white-space: normal; }
+.wh-elite-picker .elite-req-line {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  /* Отступ слева равен ширине стрелки раскрытия — требования встают ровно под
+     именем, а не под ней. */
+  padding: 0 6px 5px 27px;
+}
+.wh-elite-picker .elite-req-line .pick-req {
+  flex: 0 0 auto; white-space: normal; overflow: visible; text-overflow: clip;
+  padding: 1px 6px; border-radius: 7px; background: rgba(120, 200, 160, .1);
+}
+.wh-elite-picker .elite-req-line .pick-req-fail {
+  background: rgba(255, 107, 107, .14);
+}
+/* Требования из книги, ещё не заведённые Конструктором: читать можно, сверить
+   с листом нельзя — поэтому без цвета выполнения, простым текстом. */
+.wh-elite-picker .elite-req-line .pick-req-book {
+  background: none; padding: 0; opacity: .65; font-style: italic; cursor: help;
+}

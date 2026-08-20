@@ -86,4 +86,17 @@ describe("fatigueGraceForActor", () => {
   it("читает Механику и у литерала без getFlag", () => {
     expect(fatigueGraceForActor(actor([item([group(fatigueEntry("t"))], false)]))).toBe(3);
   });
+
+  // entry.when — тот же гейт по Геносемени, что у разовой выдачи/testMod
+  // (module/rules/mech-when.mjs): чужому легиону запись не должна доставаться
+  // даже в живом запросе, не только при выдаче предмета.
+  it("entry.when — Бонус Воли достаётся только своему легиону", () => {
+    const gated = { ...fatigueEntry("wp"), when: { negate: false, conditions: [{ legion: "XII" }] } };
+    const wrongLegion = { ...actor([item([group(gated)])]), system: {
+      characteristics: { t: { bonus: 3 }, wp: { bonus: 5 } }, geneSeed: { legion: "VI", chapter: "" } } };
+    const rightLegion = { ...actor([item([group(gated)])]), system: {
+      characteristics: { t: { bonus: 3 }, wp: { bonus: 5 } }, geneSeed: { legion: "XII", chapter: "" } } };
+    expect(fatigueGraceForActor(wrongLegion)).toBe(0);
+    expect(fatigueGraceForActor(rightLegion)).toBe(5);
+  });
 });

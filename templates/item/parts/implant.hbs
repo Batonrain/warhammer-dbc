@@ -15,6 +15,7 @@
       <option value="psybernetic"  {{#if (eq system.category "psybernetic")}}selected{{/if}}>Псибернетика</option>
       <option value="archeotech"   {{#if (eq system.category "archeotech")}}selected{{/if}}>Археотех</option>
       <option value="bioimplant"   {{#if (eq system.category "bioimplant")}}selected{{/if}}>Биоимплант (Друкхари)</option>
+      <option value="astartes"     {{#if (eq system.category "astartes")}}selected{{/if}}>Импланты Астартес</option>
     </select>
     <label class="wr-label">Качество</label>
     <select name="system.quality" class="wr-select-sm">
@@ -37,6 +38,12 @@
   <div class="item-section-title">ЭФФЕКТ</div>
   <textarea name="system.effect" class="item-textarea" placeholder="Что даёт имплант...">{{system.effect}}</textarea>
 </div>
+
+{{#if susAnHealHtml}}
+<div class="item-section">
+  {{{susAnHealHtml}}}
+</div>
+{{/if}}
 
 {{#if implantMech.any}}
 <div class="item-section implant-mech">

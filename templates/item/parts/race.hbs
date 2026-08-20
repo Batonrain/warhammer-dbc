@@ -30,8 +30,13 @@
     <input type="checkbox" name="system.hasGeneSeed" {{#if system.hasGeneSeed}}checked{{/if}}/>
   </div>
 
-  <div class="weapon-row"><label class="wr-label">Навыки</label>
+  {{!-- Навыки выдаёт вкладка МЕХАНИКА: там они видны записями и работают при
+        получении расы, а не только в Мастере создания. Поле осталось для
+        записей, где строку ещё не перевели, и прячется, когда она пуста. --}}
+  {{#if system.skills}}
+  <div class="weapon-row"><label class="wr-label">Навыки (строкой, устарело)</label>
     <textarea name="system.skills" rows="2" class="wr-input-lg">{{system.skills}}</textarea></div>
+  {{/if}}
   <div class="weapon-row"><label class="wr-label">Снаряжение</label>
     <textarea name="system.gear" rows="2" class="wr-input-lg">{{system.gear}}</textarea></div>
   <div class="weapon-row"><label class="wr-label">Таланты</label>

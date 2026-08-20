@@ -30,6 +30,7 @@ import { MentalTraumaData }   from "./item/mental-trauma.mjs";
 import { HomeworldData }      from "./item/homeworld.mjs";
 import { DivinationData }     from "./item/divination.mjs";
 import { ArchetypeData }      from "./item/archetype.mjs";
+import { EliteArchetypeData } from "./item/elite-archetype.mjs";
 import { RaceData }           from "./item/race.mjs";
 import { SubraceData }        from "./item/subrace.mjs";
 import { ArmourHistoryEntryData } from "./item/armour-history-entry.mjs";
@@ -47,6 +48,7 @@ import { SmallCraftData }     from "./item/small-craft.mjs";
 import { RitualData }         from "./item/ritual.mjs";
 import { FactionData }        from "./item/faction.mjs";
 
+import { MinionData }        from "./actor/minion.mjs";
 import { DaemonData }      from "./actor/daemon.mjs";
 import { DemonPrinceData } from "./actor/demon-prince.mjs";
 import { HordeData }       from "./actor/horde.mjs";
@@ -85,6 +87,8 @@ export const ITEM_DATA_MODELS = {
   homeworld:          HomeworldData,
   divination:         DivinationData,
   archetype:          ArchetypeData,
+  // Элитные архетипы (корбук стр. 114-164) — своя библиотека.
+  eliteArchetype:     EliteArchetypeData,
   race:               RaceData,
   subrace:            SubraceData,
   armourHistoryEntry: ArmourHistoryEntryData,
@@ -111,6 +115,8 @@ export const ITEM_DATA_MODELS = {
 export const ACTOR_DATA_MODELS = {
   // Простые акторы (wdbc-ff4.1.7)
   daemon:      DaemonData,
+  // Миньон — слуга по Таланту (корбук стр. 111-113)
+  minion:      MinionData,
   demonPrince: DemonPrinceData,
   horde:       HordeData,
   vehicle:     VehicleData,
