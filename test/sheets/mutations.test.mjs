@@ -59,6 +59,32 @@ describe("бросок Мутации / Дара Бога", () => {
     expect(captured.created[0].name).toBe("Ведьмоискатель");
   });
 
+  it("Порча за Провал закрывает сдвиг", async () => {
+    captured.dice = [42];
+    await rollMutationOrGift(mutant());
+    // Сдвиг +3 при отмеченном «от Порчи за Провал» не применяется: 42, а не 45.
+    await submit({ "#mg-type": "mutation", "#mg-shift": "3", "#mg-fail": true });
+
+    expect(captured.created[0].name).toBe("Иллюзия Нормальности");
+  });
+
+  it("мутация с субмутациями сразу бросает субмутацию и пишет её в предмет", async () => {
+    // d100 = 3 → «Животный Гибрид» (таблица субмутаций), d10 = 4 → «Кошка».
+    captured.dice = [3, 4];
+    await rollMutationOrGift(mutant());
+    const done = submit({ "#mg-type": "mutation", "#mg-shift": "0" });
+
+    // Окно субмутации открывается следом за выдачей мутации.
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await captured.dialog.buttons.ok.callback(fakeHtml({ "#sm-shift": "0" }));
+    await done;
+
+    expect(captured.rolls).toEqual(["1d100", "1d10"]);
+    expect(captured.updates).toContainEqual(expect.objectContaining({
+      "system.submutation.name": "Кошка"
+    }));
+  });
+
   it("карточка в чат несёт бросок, сдвиг и итог", async () => {
     captured.dice = [42];
     await rollMutationOrGift(mutant());
