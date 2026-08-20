@@ -513,7 +513,7 @@
   {{!-- ═══════════════════ ВКЛАДКА: ОСКВЕРНЕНИЕ ═══════════════════ --}}
   {{#if isDefile}}{{#with defile}}
   <div class="wv-defile" style="--gc:{{godMeta.color}};">
-    <div class="dfl-intro">Ритуал Создания Демонического Оружия — заключение духа Нерождённого в оружие-сосуд (корбук 429-432). Перетащите оружие из вкладки СНАРЯЖЕНИЕ листа, выберите демона и ритуалиста, соберите резонанс и оскверните.</div>
+    <div class="dfl-intro">Ритуал Создания Демонического Оружия — заключение духа Нерождённого в оружие-сосуд (корбук 429-432). Перетащите оружие из вкладки СНАРЯЖЕНИЕ листа, выберите демона и ритуалиста, соберите резонанс и оскверните. Сосудом может быть и <b>скакун или байк</b> (стр. 478): перетащите его актора — порог получит −10, и ещё −10, если демон не демонический зверь, а свойства выпадут по своей таблице.</div>
 
     {{!-- Ряд 1: сосуд (широкий) + демон --}}
     <div class="dfl-top">
@@ -524,9 +524,9 @@
           <div class="dfl-wmeta"><div class="dfl-wname">{{weaponName}}</div><div class="dfl-wline">{{weaponLine}}</div></div>
           <button type="button" class="dfl-wclear" data-act="defileClear" title="Убрать">✕</button>
         </div>
-        {{#if alreadyDaemon}}<div class="dfl-warn">⚠ Это оружие уже демоническое.</div>{{/if}}
+        {{#if alreadyDaemon}}<div class="dfl-warn">⚠ {{#if isMountVessel}}Этот скакун уже одержим.{{else}}Это оружие уже демоническое.{{/if}}</div>{{/if}}
         {{else}}
-        <div class="dfl-drop-hint"><span class="dfl-drop-ico">⚒</span> Перетащите сюда оружие-сосуд<br/><span class="dfl-drop-sub">из вкладки СНАРЯЖЕНИЕ листа персонажа</span></div>
+        <div class="dfl-drop-hint"><span class="dfl-drop-ico">⚒</span> Перетащите сюда оружие-сосуд<br/><span class="dfl-drop-sub">из вкладки СНАРЯЖЕНИЕ листа — или актора-скакуна (байк)</span></div>
         {{/if}}
       </div>
 
@@ -591,9 +591,9 @@
       </div>
       <div class="dfl-actions">
         <button type="button" class="dfl-btn" data-act="defileRitual" {{#unless hasWeapon}}disabled{{/unless}}>🎲 Провести ритуал (тест)</button>
-        <button type="button" class="dfl-btn primary" data-act="defileApply" {{#unless hasWeapon}}disabled{{/unless}}>⛧ Осквернить оружие</button>
+        <button type="button" class="dfl-btn primary" data-act="defileApply" {{#unless hasWeapon}}disabled{{/unless}}>⛧ Осквернить {{#if isMountVessel}}скакуна{{else}}оружие{{/if}}</button>
       </div>
-      <div class="dfl-common"><b>Общие свойства демон-оружия:</b> {{#each common as |c|}}{{c}} {{/each}}</div>
+      <div class="dfl-common"><b>Общие свойства {{#if isMountVessel}}Одержимых скакунов и байков{{else}}демон-оружия{{/if}}:</b> {{#each common as |c|}}{{c}} {{/each}}</div>
     </div>
   </div>
   {{/with}}{{/if}}

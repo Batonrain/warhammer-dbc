@@ -1,11 +1,11 @@
 {
-  "name": "Легион / Legion",
+  "name": "Манёвренный / Maneuverable",
   "type": "vehicleTrait",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "system": {
-    "description": "Машина для Космодесантников. Персонажи Размером меньше 1 или с S.b меньше 8 получают −20 на все тесты управления ей. Космодесантники обычно не могут управлять машинами без этого Трейта.\n\nБАЙК (стр. 478): байк рассчитан на размер и силу Космодесантника. Персонаж размером меньше 1 и с S.b меньше 6 не может им пользоваться. Аналогично, космодесантник не может пользоваться мелким байком, рассчитанным на размер и вес обычного человека — тот просто сломается под Астартес.",
+    "description": "Байк рассчитан на крутые маневры, а скакун имеет больше 4-х ног или длинный хвост для балансирования. Всадник на нём получает +20 на тесты поворотов и заноса.",
     "notes": "",
-    "benefit": "Предназначена для Космодесантников.",
+    "benefit": "+20 на тесты поворотов и Заноса.",
     "availability": 0,
     "hasRating": false,
     "rating": 0,
@@ -36,7 +36,7 @@
       "flickerfield": false
     }
   },
-  "_id": "sz9Poj71p7PISYqM",
+  "_id": "R1yQkUnDlMKiptDO",
   "effects": [],
   "folder": null,
   "sort": 0,
@@ -52,9 +52,9 @@
     "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1783195371864,
-    "modifiedTime": 1783871637797,
+    "createdTime": 1786996388785,
+    "modifiedTime": 1786996388785,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!sz9Poj71p7PISYqM"
+  "_key": "!items!R1yQkUnDlMKiptDO"
 }
