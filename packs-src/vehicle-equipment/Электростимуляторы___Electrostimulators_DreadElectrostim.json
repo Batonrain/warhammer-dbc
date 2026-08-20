@@ -1,0 +1,37 @@
+{
+  "name": "Электростимуляторы / Electrostimulators",
+  "type": "vehicleGear",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Пилот или оператор с модулем управления стимулятором (при установке можно выбрать один из вариантов или оба) может за свободное действие запустить электростимулятор и восстановить пилоту 10 + 2×W.b Здравомыслия. Через 2×W.b минут пилот теряет всё полученное этим Здравомыслие (если не потерял раньше) и получает 1d5 непоглощаемого урона, что может вызвать дополнительную потерю Здравомыслия.",
+    "notes": "",
+    "availability": 1,
+    "quality": "common",
+    "active": false,
+    "bookSource": "DoomBC — Машины, «Снаряжение Дредноутов» (стр. 58)"
+  },
+  "_id": "DreadElectrostim",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!DreadElectrostim"
+}

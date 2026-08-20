@@ -9,6 +9,9 @@ import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
          REPAIR_CONDITIONS, REPAIR_PACE } from "../constants/vehicle.mjs";
 import { DAMAGE_TYPES }    from "../constants/items.mjs";
+import { ablativeDamage }  from "../rules/mount.mjs";
+import { isDreadnought, pilotUuidOf, pilotDamageThreshold, pilotWoundsAfter }
+  from "../rules/dreadnought.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -279,7 +282,12 @@ export async function applyDamageToVehicle(actor, damageData) {
   const armour  = actor.system.armour || {};
   const ap      = Number(armour[side]) || 0;
   const effAP   = Math.max(0, ap - (Number(penetration) || 0));
-  const net     = deflected ? 0 : Math.max(0, (Number(rawDamage) || 0) - effAP);
+  const rawNet  = deflected ? 0 : Math.max(0, (Number(rawDamage) || 0) - effAP);
+  // Аблативное Бронирование байка (стр. 478): пока Структура полна, любой
+  // непоглощённый урон срезается до 1. У большой техники этой Черты нет, и
+  // расчёт для неё не меняется.
+  const net     = ablativeDamage(rawNet, actor);
+  const ablated = net !== rawNet;
 
   const curVal  = Number(actor.system.structure?.value) || 0;
   const curCrit = Number(actor.system.structure?.critical) || 0;
@@ -294,6 +302,32 @@ export async function applyDamageToVehicle(actor, damageData) {
       gotCrit = true;
     }
     await actor.update({ "system.structure.value": newVal, "system.structure.critical": newCrit });
+  }
+
+  // ── Пилот Дредноута (Книга Машин, стр. 57) ───────────────────────────────
+  // Толчок от удара по машине достаёт и того, кто в саркофаге: при ≥½W.b
+  // пилота (окр.▲) непоглощённого урона по машине пилот получает ровно тот
+  // же урон в свои Раны — без брони и T.b, саркофаг лишь передаёт удар, а не
+  // принимает отдельное попадание (rules/dreadnought.mjs).
+  let pilotLine = "";
+  if (net > 0 && isDreadnought(actor)) {
+    const pilotUuid = pilotUuidOf(actor);
+    const pilot = pilotUuid ? await fromUuid(pilotUuid).catch(() => null) : null;
+    if (pilot) {
+      const wb = pilot.system?.characteristics?.wp?.bonus ?? 0;
+      const threshold = pilotDamageThreshold(wb);
+      if (net >= threshold) {
+        const before = Number(pilot.system?.wounds?.value) || 0;
+        const after  = pilotWoundsAfter(pilot.system, net);
+        await pilot.update({ "system.wounds.value": after.value, "system.wounds.critical": after.critical });
+        pilotLine = `
+    <div class="dmg-critical-block">
+      <b>Резонанс саркофага — ${esc(pilot.name)}</b>
+      <div class="dmg-tb-note">Урон по машине ≥ ½W.b пилота (${threshold}) — пилот тоже ранен.</div>
+      <div class="roll-damage-meta">Раны пилота: <b>${before}</b> → <b>${after.value}</b>${after.overflow ? ` (крит. ${after.critical})` : ""}</div>
+    </div>`;
+      }
+    }
   }
 
   const dtLabel = DAMAGE_TYPES[damageType] || damageType;
@@ -333,11 +367,13 @@ export async function applyDamageToVehicle(actor, damageData) {
           <div class="roll-section-head">Итог</div>
           ${net > 0
             ? `<div class="roll-hit-line"><span class="roll-hit-idx">В Структуру</span><span class="roll-hit-dmg roll-hit-dmg-bad">${net}</span></div>
-               <div class="roll-damage-meta">Структура: <b>${curVal}</b> → <b>${newVal}</b>${gotCrit ? ` (крит. ${newCrit})` : ""}</div>`
+               <div class="roll-damage-meta">Структура: <b>${curVal}</b> → <b>${newVal}</b>${gotCrit ? ` (крит. ${newCrit})` : ""}${
+                 ablated ? ` · <span class="dmg-tb-note">Аблативное Бронирование: ${rawNet} → 1</span>` : ""}</div>`
             : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${effAP})</span></div>`
           }
         </div>
         ${critLine}
+        ${pilotLine}
       </div>`
   }, game.settings.get("core", "rollMode")));
 }
