@@ -13,11 +13,13 @@
       "ws": 5,
       "s": 5
     },
-    "talents": "Frenzy",
+    "talents": "",
     "removesTraits": [],
     "description": "+5 WS, +5 S; не может потерять покровительство Кхорна. Trait Brutal Charge (2); Natural Weapons → Deadly Natural Weapons; Талант Frenzy. Талант Khorngor Butcher.",
     "notes": "",
-    "bookSource": "DoomBC — Основная книга"
+    "bookSource": "DoomBC — Основная книга",
+    "skills": "",
+    "gear": ""
   },
   "_id": "DBpnsL5iimkOSDB1",
   "effects": [],
@@ -198,9 +200,64 @@
               "code": ""
             }
           ]
+        },
+        {
+          "id": "DBpnsL5igeu",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.FP1xN9yNXHr9vWw8",
+              "sourceName": "Frenzy / Ярость",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "choice",
+              "equipQty": 1,
+              "label": "",
+              "code": "",
+              "id": "DBpnsL5itbb",
+              "kind": "talent"
+            }
+          ]
         }
       ]
     }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": null,
+    "systemVersion": null,
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
   },
   "_key": "!items!DBpnsL5iimkOSDB1"
 }

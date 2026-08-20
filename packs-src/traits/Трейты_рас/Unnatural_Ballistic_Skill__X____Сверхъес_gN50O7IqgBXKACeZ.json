@@ -26,8 +26,73 @@
     "bookSource": "DoomBC — Основная книга"
   },
   "_id": "gN50O7IqgBXKACeZ",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Unnatural Ballistic Skill (X) / Сверхъестественный BS (X) (перенесено)",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "disabled": false,
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.bs.bonusFx",
+            "type": "add",
+            "value": 2,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "gaPEfpKwN0HogdYS",
+      "type": "base",
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786993503756,
+        "modifiedTime": 1786993503756,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!gN50O7IqgBXKACeZ.gaPEfpKwN0HogdYS"
+    }
+  ],
   "sort": 0,
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786993503763,
+    "modifiedTime": 1786993503763,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
   "_key": "!items!gN50O7IqgBXKACeZ"
 }

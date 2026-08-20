@@ -1,0 +1,66 @@
+{
+  "name": "12. Сус-ан Мембрана / Sus-an Membrane",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "folder": "UjIC7NnQmIxPWhgg",
+  "system": {
+    "description": "Известная также как Гибернатор — тонкая круглая мембрана серого вещества, что накладывается на мозг сверху и после особой химиотерапии сливается с корой больших полушарий. Она изменяет архитектуру мозга и выделяет ретровирусы, вносящие небольшие изменения в каждую клетку тела десантника, позволяя ему входить в анабиоз при тяжёлых ранениях.\n\nВозраст имплантации: 15–17 лет.",
+    "notes": "Имплантация. Операция занимает смену работы и требует комбинированного теста Medicae(А)–10 и For.Lore (Astartes Implants)(I)+20. При Провале аспирант получает R Критический Эффект <Провалы> в голову, а орган уничтожается без шанса спасти его.",
+    "category": "astartes",
+    "quality": "common",
+    "effect": "Когда космодесантник получает Критический Эффект «смерть», но его Раны не опустились ниже −15, он может пройти тест W+30 и вместо смерти войти в замедленную анимацию. Десантник в замедленной анимации находится без сознания и Беспомощен. При проверке такого десантника диагноз проводится со штрафом −60 (For.Lore (Astartes Implants) снимает этот штраф, а любые бонусы к этому знанию добавляются к броску диагностики), и неудача показывает, что десантник мёртв. Вывод десантника из замедленной анимации требует операции в полноценном апотекарионе и теста Medicae–40; при этом главный медик должен иметь For.Lore (Astartes Implants)+0. Операция занимает 12−Успехи часов, до минимума в 3. Неудача приводит к потере пациентом случайной конечности, Критический Провал — к смерти пациента.",
+    "installed": "кора больших полушарий",
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, ГЕНОСЕМЯ (стр. 485-487)",
+    "effects": {
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    },
+    "weaponProps": []
+  },
+  "_id": "OoELGAc9jhCR6cUf",
+  "effects": [],
+  "sort": 1200000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "installed": true,
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1786993505255,
+    "modifiedTime": 1786993505255
+  },
+  "_key": "!items!OoELGAc9jhCR6cUf"
+}

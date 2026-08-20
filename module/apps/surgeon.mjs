@@ -20,7 +20,7 @@ const IMPL_CAT = {
   mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус",
   mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика",
   cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех",
-  skitarii: "Скитарии", bioimplant: "Биоимплант",
+  skitarii: "Скитарии", bioimplant: "Биоимплант", astartes: "Импланты Астартес",
 };
 
 // SVG-иконки систем (без эмодзи).

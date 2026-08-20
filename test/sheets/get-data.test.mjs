@@ -137,6 +137,11 @@ describe("показатели листа", () => {
     expect(ctxOf({ meleeStance: "aggressive" }).combatStanceLabel).toBe("Агрессивная");
     expect(ctxOf({}).combatStanceLabel).toBe("Стандартная");
   });
+
+  it("база рукопашной подписана для свёрнутого заголовка", () => {
+    expect(ctxOf({ meleeBase: "charge" }).combatBaseLabel).toBe("Натиск");
+    expect(ctxOf({}).combatBaseLabel).toBe("Стандартная Атака");
+  });
 });
 
 describe("раса и подраса", () => {
@@ -154,6 +159,14 @@ describe("раса и подраса", () => {
     expect(ctxOf({ race: "azuriane" }).subraceHint).toBe("");
     expect(ctxOf({ race: "" }).subraceHint).toMatch(/сначала выберите расу/i);
     expect(ctxOf({ race: "astartes" }).subraceHint).toMatch(/субрас нет/i);
+  });
+
+  // У Астартес субрас не бывает вовсе — их место занимают Легион и Орден,
+  // поэтому слот не показывается совсем, а не стоит с вечным «Субрас нет».
+  it("у Астартес слота субрасы нет, у прочих он остаётся", () => {
+    expect(ctxOf({ race: "astartes" }).showSubrace).toBe(false);
+    expect(ctxOf({ race: "ynnari" }).showSubrace).toBe(true);
+    expect(ctxOf({ race: "" }).showSubrace).toBe(true);
   });
 
   it("выключенная «Книга Эльдар» убирает свои расы из списка", () => {
@@ -212,6 +225,50 @@ describe("раса и подраса", () => {
   it("фигура на вкладке ТЕЛО: по умолчанию мужская", () => {
     expect(ctxOf({}).bodyTypes.find(b => b.selected).key).toBe("male");
     expect(ctxOf({ bodyType: "female" }).bodyTypes.find(b => b.selected).key).toBe("female");
+  });
+});
+
+// Регресс: гайд по имплантам Геносемени на вкладке СПОСОБНОСТИ пропал вместе
+// со старой системой органов (снята целиком в Derbius#28), а новая система
+// (органы предметами-имплантами через Конструктор Черты) вкладку не питает —
+// список эффектов, о котором писал игрок, был именно этим гайдом. Собирает
+// его buildGetData, а не characterContext, поэтому берём контекст целиком,
+// как и для склейки Талантов/Черт выше.
+describe("Геносемя: гайд по имплантам на вкладке СПОСОБНОСТИ", () => {
+  const organ = (name, effect) => ({
+    id: `org-${name}`, type: "implant", name, system: { category: "astartes", effect, description: "" }
+  });
+
+  async function abilitiesCtx(items) {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      race: "astartes", items, characteristics: {}, skills: {}, groupSkills: {}
+    });
+    sheet.actor.items.contents = sheet.actor.items;
+    return sheet._prepareContext({});
+  }
+
+  it("органы Астартес на листе собираются в гайд по имени (числовой порядок)", async () => {
+    const ctx = await abilitiesCtx([
+      organ("2. Оссмодула / Ossmodula", "Костная масса и плотность скелета."),
+      organ("1. Второе Сердце / Second Heart", "Второе сердце, дублирующее кровоток.")
+    ]);
+    expect(ctx.geneSeedOrgans.map(o => o.name)).toEqual([
+      "1. Второе Сердце / Second Heart",
+      "2. Оссмодула / Ossmodula"
+    ]);
+    expect(ctx.geneSeedOrgans[0].effect).toBe("Второе сердце, дублирующее кровоток.");
+  });
+
+  it("чужие импланты (Механикус, бионика) в гайд Геносемени не попадают", async () => {
+    const ctx = await abilitiesCtx([
+      organ("1. Второе Сердце / Second Heart", "…"),
+      { id: "impl-motive", type: "implant", name: "Мотивный Банк", system: { category: "mechanicus", effect: "…" } }
+    ]);
+    expect(ctx.geneSeedOrgans).toHaveLength(1);
+  });
+
+  it("без выданных органов гайд пуст, а не роняет сборку контекста", async () => {
+    expect((await abilitiesCtx([])).geneSeedOrgans).toEqual([]);
   });
 });
 
@@ -343,6 +400,65 @@ describe("Одержимый", () => {
     const gods = new Set(p.talents.map(t => t.god));
     expect(gods).toEqual(new Set(["Неделимый", p.meta.godLabel]));
     expect(p.talents.some(t => t.god === p.meta.godLabel)).toBe(true);
+  });
+});
+
+describe("одинаковые Таланты и Черты на листе", () => {
+  let n = 0;
+  const talent = (name, system = {}) =>
+    ({ id: `tal${++n}`, type: "talent", name, system: { tier: 1, aptitudes: [], ...system } });
+  const trait = (name, system = {}) => ({ id: `tr${++n}`, type: "trait", name, system });
+
+  // Списки способностей собирает buildGetData, а не characterContext, поэтому
+  // берём весь контекст листа целиком.
+  async function abilitiesCtx(items) {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      items, characteristics: {}, skills: {}, groupSkills: {}
+    });
+    sheet.actor.items.contents = sheet.actor.items;
+    return sheet._prepareContext({});
+  }
+
+  it("две Черты Nimble (5) — одна строка с рейтингом (10)", async () => {
+    const ctx = await abilitiesCtx([
+      trait("Nimble / Проворный", { hasRating: true, rating: 5 }),
+      trait("Nimble / Проворный", { hasRating: true, rating: 5 })
+    ]);
+    expect(ctx.traits).toHaveLength(1);
+    expect(ctx.traits[0].name).toBe("Nimble / Проворный");
+    expect(ctx.traits[0].ratingDisplay).toBe("(10)");
+  });
+
+  it("три Сопротивления — один Талант со списком специализаций", async () => {
+    const ctx = await abilitiesCtx([
+      talent("Resistance / Сопротивление", { specialization: "Poison" }),
+      talent("Resistance / Сопротивление", { specialization: "Cold" }),
+      talent("Resistance / Сопротивление", { specialization: "Heat" })
+    ]);
+    expect(ctx.abilityTalents).toHaveLength(1);
+    expect(ctx.abilityTalents[0].name).toBe("Resistance / Сопротивление (Poison, Cold, Heat)");
+    expect(ctx.abilityTalents[0].specialization).toBe("Poison, Cold, Heat");
+  });
+
+  it("во вкладке «Развитие» каждая специализация — своя строка со своей ценой", async () => {
+    const ctx = await abilitiesCtx([
+      talent("Resistance / Сопротивление", { specialization: "Cold", cost: 200, purchased: true }),
+      talent("Resistance / Сопротивление", { specialization: "Heat", cost: 300, purchased: true })
+    ]);
+    expect(ctx.purchasedTalents.map(p => [p.name, p.cost])).toEqual([
+      ["Resistance / Сопротивление (Cold)", 200],
+      ["Resistance / Сопротивление (Heat)", 300]
+    ]);
+  });
+
+  it("склейка не роняет Талант из его группы по типам", async () => {
+    const ctx = await abilitiesCtx([
+      talent("Nerves of Steel / Стальные Нервы"),
+      talent("Nerves of Steel / Стальные Нервы")
+    ]);
+    const shown = ctx.abilityTalentGroups.flatMap(g => g.items);
+    expect(shown).toHaveLength(1);
+    expect(shown[0].name).toBe("Nerves of Steel / Стальные Нервы");
   });
 });
 
