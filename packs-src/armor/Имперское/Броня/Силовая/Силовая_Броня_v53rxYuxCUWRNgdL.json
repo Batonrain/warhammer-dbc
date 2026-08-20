@@ -21,7 +21,96 @@
     "properties": [],
     "strengthBonus": 20,
     "wpBonus": 0,
-    "special": "Без подготовки Max.A 35, если носитель не подключён через MIU или не имеет таланта Armour Training (Power Armour). +4 к S.b в расчёте подъёмного веса."
+    "special": "Без подготовки Max.A 35, если носитель не подключён через MIU или не имеет таланта Armour Training (Power Armour). +4 к S.b в расчёте подъёмного веса.",
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, слева"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, слева",
+          "variants": [
+            {
+              "key": "holster",
+              "label": "кобура",
+              "size": "2x1"
+            }
+          ]
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, справа"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, справа",
+          "variants": [
+            {
+              "key": "holster",
+              "label": "кобура",
+              "size": "2x1"
+            }
+          ]
+        }
+      ],
+      "magLocks": [
+        {
+          "size": "4x1",
+          "count": 2,
+          "note": "бёдра"
+        },
+        {
+          "size": "3x1",
+          "count": 2,
+          "note": "бока кирасы"
+        },
+        {
+          "size": "2x1",
+          "count": 2,
+          "note": "голени спереди",
+          "awkward": true
+        },
+        {
+          "size": "2x1",
+          "count": 2,
+          "note": "голени сзади",
+          "awkward": "veryAwkward"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "предплечья",
+          "variants": [
+            {
+              "key": "shield",
+              "label": "щит",
+              "size": "3x3"
+            }
+          ]
+        },
+        {
+          "size": "4x1",
+          "count": 1,
+          "note": "пояс сзади",
+          "awkward": true
+        },
+        {
+          "size": "5x3",
+          "count": 1,
+          "note": "ранец сзади",
+          "awkward": "veryAwkward"
+        }
+      ]
+    }
   },
   "_id": "v53rxYuxCUWRNgdL",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

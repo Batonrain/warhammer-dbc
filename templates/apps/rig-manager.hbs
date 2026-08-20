@@ -26,6 +26,48 @@
       </div>
       {{#if rig.comfortHint}}<div class="wr-hint">{{rig.comfortHint}}</div>{{/if}}
 
+      {{#if (eq rig.type "armor")}}
+      {{!-- Схема силовой брони (стр. 27): своя раскладка, не копия иллюстрации
+           книги — те же 12 замков и пояс, отрисованные в стиле этого окна.
+           Клик по зоне подсвечивает соответствующие карточки слотов ниже. --}}
+      <div class="wr-schema">
+        <svg viewBox="0 0 260 400" xmlns="http://www.w3.org/2000/svg">
+          <g class="wr-sil">
+            <circle cx="130" cy="26" r="20"/>
+            <path d="M80,50 L180,50 L170,150 L90,150 Z"/>
+            <rect x="48" y="55" width="28" height="55" rx="8"/>
+            <rect x="184" y="55" width="28" height="55" rx="8"/>
+            <rect x="90" y="190" width="80" height="60" rx="6"/>
+            <rect x="88" y="320" width="30" height="30" rx="6"/>
+            <rect x="142" y="320" width="30" height="30" rx="6"/>
+          </g>
+          <rect class="wr-sr" data-slot-region="предплечья" x="42" y="112" width="30" height="55" rx="6"><title>Предплечья — 2×(1×1, может держать щит)</title></rect>
+          <rect class="wr-sr" data-slot-region="предплечья" x="188" y="112" width="30" height="55" rx="6"><title>Предплечья — 2×(1×1, может держать щит)</title></rect>
+          <rect class="wr-sr" data-slot-region="бока кирасы" x="78" y="60" width="14" height="70" rx="4"><title>Бока кирасы — 2×3×1</title></rect>
+          <rect class="wr-sr" data-slot-region="бока кирасы" x="168" y="60" width="14" height="70" rx="4"><title>Бока кирасы — 2×3×1</title></rect>
+          <rect class="wr-sr wr-sr-slot" data-slot-region="пояс спереди, слева" x="90" y="155" width="35" height="30" rx="4"><title>Пояс спереди, слева — 4×1×1 (2 меняются на кобуру)</title></rect>
+          <rect class="wr-sr wr-sr-slot" data-slot-region="пояс спереди, справа" x="135" y="155" width="35" height="30" rx="4"><title>Пояс спереди, справа — 4×1×1 (2 меняются на кобуру)</title></rect>
+          <rect class="wr-sr" data-slot-region="бёдра" x="85" y="255" width="35" height="60" rx="6"><title>Бёдра — 2×4×1</title></rect>
+          <rect class="wr-sr" data-slot-region="бёдра" x="140" y="255" width="35" height="60" rx="6"><title>Бёдра — 2×4×1</title></rect>
+          <rect class="wr-sr wr-sr-awkward" data-slot-region="голени спереди" x="86" y="325" width="34" height="55" rx="6"><title>Голени спереди — 2×2×1, неудобные</title></rect>
+          <rect class="wr-sr wr-sr-awkward" data-slot-region="голени спереди" x="140" y="325" width="34" height="55" rx="6"><title>Голени спереди — 2×2×1, неудобные</title></rect>
+          <text class="wr-sl" x="130" y="15" text-anchor="middle">СПЕРЕДИ</text>
+        </svg>
+        <div class="wr-schema-back">
+          <div class="wr-schema-back-h">СЗАДИ</div>
+          <div class="wr-sr-chip wr-sr-awkward" data-slot-region="пояс сзади"><title>Пояс сзади — 1×4×1, неудобный</title>пояс сзади</div>
+          <div class="wr-sr-chip wr-sr-very" data-slot-region="голени сзади"><title>Голени сзади — 2×2×1, очень неудобные</title>голени сзади</div>
+          <div class="wr-sr-chip wr-sr-very" data-slot-region="ранец сзади"><title>Ранец сзади — 1×5×3, очень неудобный</title>ранец сзади</div>
+        </div>
+        <div class="wr-schema-legend">
+          <span class="wr-leg"><i class="wr-sr-swatch"></i>магнитный замок</span>
+          <span class="wr-leg"><i class="wr-sr-swatch wr-sr-slot"></i>карман/кобура (не маг.)</span>
+          <span class="wr-leg"><i class="wr-sr-swatch wr-sr-awkward"></i>неудобный</span>
+          <span class="wr-leg"><i class="wr-sr-swatch wr-sr-very"></i>очень неудобный</span>
+        </div>
+      </div>
+      {{/if}}
+
       {{#if rig.container}}
       {{!-- Рюкзак-контейнер --}}
       <div class="wr-bp">
@@ -49,7 +91,7 @@
       <div class="wr-slots">
         {{#each rig.slots as |sl|}}
         <div class="wr-slot {{#if sl.isMag}}mag{{/if}} {{#if sl.item}}filled{{/if}}">
-          <div class="wr-slot-top"><span class="wr-slot-size">{{sl.size}}</span>{{#if sl.isMag}}<span class="wr-badge mag">МАГ</span>{{/if}}{{#if sl.awkward}}<span class="wr-badge">неудобный</span>{{/if}}</div>
+          <div class="wr-slot-top"><span class="wr-slot-size">{{sl.size}}</span>{{#if sl.isMag}}<span class="wr-badge mag">МАГ</span>{{/if}}{{#if sl.awkward}}<span class="wr-badge">{{#if (eq sl.awkward "veryAwkward")}}очень неудобный{{else}}неудобный{{/if}}</span>{{/if}}</div>
           {{#if sl.note}}<div class="wr-slot-note">{{sl.note}}</div>{{/if}}
           {{#if sl.variants.length}}
           {{!-- Слот с заменами: кобура ↔ ножны ↔ петля. Смена варианта освобождает слот. --}}

@@ -40,7 +40,43 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "VwRjVtRcyebCTCcs",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "gUKjZNGIudunQIsc",
+              "kind": "weight",
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "untrained",
+              "weightScope": "carry",
+              "weightMode": "index",
+              "weightValue": 2,
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {
