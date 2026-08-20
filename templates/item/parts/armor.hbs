@@ -122,6 +122,27 @@
              value="{{system.strengthBonus}}" min="0" class="wr-input-xs"/>
     </div>
   </div>
+
+  {{!-- Разгрузка (стр. 27): 12 магнитных замков и пояс — правится JSON'ом
+       пака, здесь только сводка + признак «Разгрузка». --}}
+  <div class="item-section">
+    <div class="weapon-row">
+      <label class="wr-label"><input type="checkbox" name="system.isRig" {{#if system.isRig}}checked{{/if}}/> Разгрузка</label>
+      <label class="wr-label">Удобство</label>
+      <select name="system.rig.comfort" class="wr-select-sm">
+        {{#each rigComfort as |lbl key|}}
+        <option value="{{key}}" {{#if (eq ../system.rig.comfort key)}}selected{{/if}}>{{lbl}}</option>
+        {{/each}}
+      </select>
+      <label class="wr-label"><input type="checkbox" name="system.rig.backSlot" {{#if system.rig.backSlot}}checked{{/if}}/> Занимает спину</label>
+    </div>
+    {{#if system.rig.slots.length}}
+    <div class="wprop-hint">Слоты: {{#each system.rig.slots}}<span class="roll-wprop">{{this.size}}×{{this.count}}{{#if this.note}} ({{this.note}}){{/if}}</span> {{/each}}</div>
+    {{/if}}
+    {{#if system.rig.magLocks.length}}
+    <div class="wprop-hint">Магнитные замки: {{#each system.rig.magLocks}}<span class="roll-wprop">{{this.size}}×{{this.count}}{{#if this.note}} ({{this.note}}){{/if}}{{#if this.awkward}} · {{#if (eq this.awkward "veryAwkward")}}оч. неудобно{{else}}неудобно{{/if}}{{/if}}</span> {{/each}}</div>
+    {{/if}}
+  </div>
   {{/if}}
 
   {{!-- Аспектная броня Аэльдари — доп. блок --}}
@@ -356,6 +377,7 @@
   </div>
 </div>
 {{/if}}
+{{> "systems/warhammer-dbc/templates/item/parts/infoguard.hbs"}}
 {{#if armourHistory}}
 <div class="item-section pa-history">
   <div class="item-section-title">ОСОБЕННОСТЬ КОМПЛЕКТА</div>
@@ -381,7 +403,7 @@
     {{#if armourHistory.needsChoice}}
     <div class="pa-hist-choice">
       <label>{{armourHistory.choiceLabel}}</label>
-      <input type="text" name="system.history.choice" value="{{armourHistory.choice}}" placeholder="{{armourHistory.choicePlaceholder}}"/>
+      <input type="text" class="pa-hist-choice-input" value="{{armourHistory.choice}}" placeholder="{{armourHistory.choicePlaceholder}}"/>
     </div>
     {{/if}}
     {{#if armourHistory.zoneRoll}}
