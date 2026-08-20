@@ -29,8 +29,11 @@ function parseDelta(raw, allowDice) {
  * @param {boolean} [opts.allowDice=false] — разрешить формулу XdY(+Z) вместо целого числа
  * @param {number|null} [opts.clampMin=0]  — минимум после прибавления (null — без ограничения)
  * @param {number|null} [opts.clampMax=null] — максимум после прибавления
+ * @param {number} [opts.bonusPercent=0] — надбавка сверху на положительное значение
+ *   (Ловит на Лету / Fast Learner (X): +X% к опыту, ГМ округляет вверх — на
+ *   отрицательные и нулевые правки не действует, книга говорит только про «получает»)
  */
-export async function promptStatAdd(actor, { label, path, allowDice = false, clampMin = 0, clampMax = null } = {}) {
+export async function promptStatAdd(actor, { label, path, allowDice = false, clampMin = 0, clampMax = null, bonusPercent = 0 } = {}) {
   const hint = allowDice ? "целое число, либо XdY+Z, напр. 2d10+3" : "целое число";
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: `${label} — добавить` },
@@ -64,6 +67,12 @@ export async function promptStatAdd(actor, { label, path, allowDice = false, cla
   } else {
     amount = parsed.flat;
     formulaText = `${amount >= 0 ? "+" : ""}${amount}`;
+  }
+
+  if (bonusPercent > 0 && amount > 0) {
+    const base = amount;
+    amount = Math.ceil(amount * (1 + bonusPercent / 100));
+    formulaText += ` → Ловит на Лету +${bonusPercent}%: ${base} → ${amount}`;
   }
 
   const cur = Number(foundry.utils.getProperty(actor, path)) || 0;
