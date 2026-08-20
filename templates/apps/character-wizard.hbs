@@ -18,6 +18,7 @@
 
     <div class="atk-dlg-row"><label>Раса:</label>
       <select class="wiz-race-sel">
+        <option value="" disabled {{#unless raceChosen}}selected{{/unless}}>— выбрать —</option>
         {{#each raceGroups as |g|}}
         <optgroup label="{{g.label}}">
           {{#each g.races as |r|}}
@@ -114,6 +115,9 @@
     {{/if}}
 
     {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
+
+    {{> "systems/warhammer-dbc/templates/apps/wizard-mech-choices.hbs"}}
+    {{#if originPendingNote}}<div class="apt-warn">{{originPendingNote}}</div>{{/if}}
 
     {{else if (eq stepId "characteristics")}}
     <div class="atk-dlg-header"><span class="atk-weapon-name">🎲 Характеристики</span></div>
@@ -237,42 +241,7 @@
     </div>
     {{/if}}
 
-    {{#if pendingMechChoices.length}}
-    <div class="wiz-gen">
-      <div class="wiz-gen-lbl">Механика архетипа предлагает выбор:</div>
-      {{#each pendingMechChoices as |r|}}
-      {{#if (eq r.type "or")}}
-      <div class="atk-dlg-row wtc-row"><label class="wtc-lbl">{{r.itemName}}:</label>
-        <select class="wtc-sel wiz-mech-or-sel" data-key="{{r.key}}">
-          <option value="" disabled selected>— выбрать —</option>
-          {{#each r.options as |o|}}<option value="{{o.idx}}">{{o.label}}</option>{{/each}}
-        </select>
-        <button type="button" class="wiz-mini-btn wiz-mech-skip" data-key="{{r.key}}" data-many="0" title="Пропустить">✕</button>
-      </div>
-      {{else}}
-      <div class="atk-dlg-row wtc-row">
-        <label class="wtc-lbl">{{r.skillLabel}} {{#if r.many}}<span class="wtc-x">×{{r.need}}</span>{{/if}}</label>
-        <div class="wtc-inputs">
-          {{#each r.choices as |c|}}
-          <label class="apt-chip">
-            {{#if ../many}}
-            <input type="checkbox" class="wiz-mech-spec-check" data-key="{{../key}}" data-idx="{{c.idx}}" {{#if c.picked}}checked{{/if}}/>
-            {{else}}
-            <input type="radio" class="wiz-mech-spec-radio" name="mech-spec-{{../key}}" value="{{c.idx}}" data-key="{{../key}}"/>
-            {{/if}}
-            {{c.label}}
-          </label>
-          {{/each}}
-        </div>
-        {{#if r.many}}
-        <button type="button" class="wiz-mini-btn wiz-mech-spec-confirm" data-key="{{r.key}}" {{#unless (eq r.pickedCount r.need)}}disabled{{/unless}}>Готово ({{r.pickedCount}}/{{r.need}})</button>
-        {{/if}}
-        <button type="button" class="wiz-mini-btn wiz-mech-skip" data-key="{{r.key}}" data-many="{{#if r.many}}1{{else}}0{{/if}}" title="Пропустить">✕</button>
-      </div>
-      {{/if}}
-      {{/each}}
-    </div>
-    {{/if}}
+    {{> "systems/warhammer-dbc/templates/apps/wizard-mech-choices.hbs"}}
 
     {{#if archPendingNote}}<div class="apt-warn">{{archPendingNote}}</div>{{/if}}
     {{else}}
@@ -380,7 +349,7 @@
     {{#if isLastStep}}
     <button type="button" class="wh-slot-btn" data-action="wizFinish" {{#if finishDisabled}}disabled{{/if}}>{{#if confirmingGear}}Применяется…{{else}}Готово{{/if}}</button>
     {{else}}
-    <button type="button" class="wh-slot-btn" data-action="wizNext" {{#if nextDisabled}}disabled{{/if}}>{{#if confirmingArchetype}}Применяется…{{else}}Далее →{{/if}}</button>
+    <button type="button" class="wh-slot-btn" data-action="wizNext" {{#if nextDisabled}}disabled{{/if}}>{{#if (or confirmingOrigin confirmingArchetype)}}Применяется…{{else}}Далее →{{/if}}</button>
     {{/if}}
   </footer>
 </form>

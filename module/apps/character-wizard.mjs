@@ -69,6 +69,14 @@ const POWER_ARMOUR_MARKS = [
 // любой id Foundry, сверен с пользователем), а не один произвольный предмет.
 const STANDARD_SYSTEMS_FOLDER = "PJGdkJLkUXdx2JTp";
 
+// «L. <Категория>» в gear-тексте (см. _matchLegionCategoryGear) — категория
+// текста → id папки компендиума warhammer-dbc.weapons. Проверено на
+// «Power Weapon» → «Имперское/Рукопашное/Силовое» (id сверен по packs-src).
+// Новую категорию добавлять сюда же строкой, без смены разбора текста.
+const LEGION_CATEGORY_FOLDERS = {
+  "power weapon": "x3vbtW2ZuzQfcPFG"
+};
+
 export const WIZARD_STEPS = [
   { id: "origin",          label: "Происхождение" },
   { id: "characteristics", label: "Характеристики" },
@@ -176,6 +184,7 @@ export class CharacterWizard extends Application {
       isLastStep:  this.stepIndex === WIZARD_STEPS.length - 1,
 
       raceGroups, subraceOpts,
+      raceChosen: !!sys.race,
       hasSubrace: subraceOpts.length > 0,
       isAstartes,
       legionOptions:  isAstartes ? buildLegionOptions(sys.geneSeed?.legion || "") : "",
@@ -201,21 +210,54 @@ export class CharacterWizard extends Application {
       ...(this.step.id === "gear" ? this._gearStepContext() : {}),
       // «Далее» с Этапа 2 ждёт полного выбора Склонностей — иначе цена
       // покупок и возврат за совпавшую выдачу считались бы не по тем данным.
-      // На Этапе 3 «Далее»/«Назад» блокируются, пока идёт применение Механики
-      // архетипа (в т.ч. пока не отвечены собранные в форму ИЛИ/спец-выборы) —
-      // прерывать это на середине означало бы бросить актора частично выданным.
-      // На Этапе 5 «Готово» блокируется, пока резолвятся предметы снаряжения.
+      // На Этапе 3 «Далее» ЗАБЛОКИРОВАНА, только пока есть строки выбора без
+      // ответа (или конфликт между строками — см. _allMechChoicesPicked), ЛИБО
+      // пока applyArchetype молча довершает что-то без вопросов (бюджетная
+      // покупка и т.п.) — сами строки выбора кнопку не блокируют, отвечать на
+      // них и жать «Далее» можно сразу. «Назад» по-прежнему блокирована на
+      // всё время применения — прерывать его на середине означало бы бросить
+      // актора частично выданным. На Этапе 5 «Готово» блокируется, пока
+      // резолвятся предметы снаряжения.
       nextDisabled: (this.step.id === "characteristics" && !this._aptReady())
-        || this._confirmingArchetype,
+        // До старта применения — обычная проверка «раса выбрана». После
+        // старта system.race читать для этого нельзя (см. _advanceOriginStep):
+        // applyRace временно обнуляет его на всё время своей работы, включая
+        // паузу на строках выбора — блокировка держится тем же, чем и у
+        // Архетипа: строки без ответа/конфликт, либо тихое применение без вопросов.
+        || (this.step.id === "origin" && (this._originApplyPromise
+              ? (this.pendingMechChoices.length ? !this._allMechChoicesPicked() : this._confirmingOrigin)
+              : !this.actor.system.race))
+        || (this.step.id === "archetype" && (this.pendingMechChoices.length
+              ? !this._allMechChoicesPicked()
+              : this._confirmingArchetype)),
       finishDisabled: this._confirmingGear,
-      backDisabled: this.stepIndex === 0 || this._confirmingArchetype || this._confirmingGear,
+      backDisabled: this.stepIndex === 0 || this._confirmingOrigin || this._confirmingArchetype || this._confirmingGear,
+      confirmingOrigin: this._confirmingOrigin,
       confirmingArchetype: this._confirmingArchetype,
       confirmingGear: this._confirmingGear,
+      originPendingNote: ((this._originApplyPromise || this.actor.system.race) && !this.pendingMechChoices.length)
+        ? "Если у Расы/Субрасы есть покупки по бюджету — откроется отдельным окном сразу после «Далее»."
+        : "",
       pendingMechChoices: this.pendingMechChoices.map(r => r.type === "or"
-        ? { type: "or", key: r.key, itemName: r.itemName,
-            options: r.options.map((o, idx) => ({ idx, label: o.label })) }
+        ? { type: "or", key: r.key, itemName: r.itemName, skipped: r.pending?.kind === "skip",
+            options: r.options.map((o, idx) => ({
+              idx, label: o.label,
+              // Тот же Навык уже выбран в ДРУГОЙ ещё не применённой строке —
+              // нельзя выбрать его снова здесь (см. _claimedSkillKeys).
+              disabled: !!(o.entry?.skillKey && this._claimedSkillKeys(r.key).has(o.entry.skillKey)),
+              selected: r.pending?.kind === "pick" && r.pending.value === o.entry
+            })) }
         : { type: "spec", key: r.key, skillLabel: r.skillLabel, need: r.need, many: r.need > 1,
-            choices: r.choices.map((c, idx) => ({ idx, label: c.display, picked: r.picked.includes(idx) })),
+            skipped: r.pending?.kind === "skip",
+            choices: r.choices.map((c, idx) => ({
+              idx, label: c.display, picked: r.picked.includes(idx),
+              // Радио (одиночный выбор, need===1) хранит ответ в r.pending, а
+              // не в r.picked (тот только для чекбоксов «любые N») — иначе
+              // после перерисовки (теперь она случается чаще: строка больше
+              // не исчезает сразу по ответу) выбранная радиокнопка визуально
+              // сбрасывалась бы, хотя JS-состояние ответ уже помнит.
+              checked: r.need === 1 && r.pending?.kind === "pick" && r.pending.value === c
+            })),
             pickedCount: r.picked.length })
     };
   }
@@ -393,15 +435,20 @@ export class CharacterWizard extends Application {
   /**
    * Собирает ИЛИ/спец-выборы Конструктора в форму шага вместо всплывающих
    * Dialog: каждый вызов кладёт запись в pendingMechChoices и перерисовывает
-   * шаг, а промис резолвится только когда сама форма (через _resolveMechChoice)
-   * получит от игрока ответ. applyGroupEntries внутри applyArchetype идёт
-   * строго последовательно (for…of await), поэтому следующий выбор (если
-   * есть) появится в форме только после того, как отвечен предыдущий.
+   * шаг. В отличие от более раннего варианта, дропдаун/чекбоксы строки САМИ
+   * промис БОЛЬШЕ НЕ резолвят — они только копят «текущий выбор» в
+   * row.pending (см. _setMechPick), а настоящее применение (row.resolve)
+   * происходит ЕДИНЫМ пакетом по кнопке «Далее» (_resolveAllPendingMechChoices),
+   * не раньше. applyGroupEntries внутри applyArchetype/applyRace идёт строго
+   * последовательно (for…of await), поэтому вложенный выбор (если ответ на
+   * текущий его раскрывает) появится в форме только после пакетного резолва
+   * текущей партии — «Далее» в таком случае просто не переходит на
+   * следующий шаг, а показывает новую партию, и его нужно нажать ещё раз.
    */
   _mechCollector() {
-    // Окно могли закрыть, пока applyArchetype ещё внутри цепочки await —
-    // это НЕ отменяет сам промис (JS не умеет отменять чужой await), и
-    // следующий выбор Конструктора всё равно попробует прийти в коллектор.
+    // Окно могли закрыть, пока applyArchetype/applyRace ещё внутри цепочки
+    // await — это НЕ отменяет сам промис (JS не умеет отменять чужой await),
+    // и следующий выбор Конструктора всё равно попробует прийти в коллектор.
     // Без этой проверки он лёг бы в pendingMechChoices и звал render()
     // закрытого приложения, а его resolve никто и никогда не вызвал бы —
     // Конструктор навсегда завис бы на середине выдачи.
@@ -409,6 +456,7 @@ export class CharacterWizard extends Application {
       ? Promise.resolve(row.type === "spec" && row.need > 1 ? [] : null)
       : new Promise(resolve => {
           row.resolve = resolve;
+          row.pending = undefined; // ничего не решено — блокирует пакетный резолв
           this.pendingMechChoices.push(row);
           this.render(false);
         });
@@ -425,40 +473,139 @@ export class CharacterWizard extends Application {
     };
   }
 
-  /** Ответ на строку из pendingMechChoices — снимает её из очереди и резолвит промис Конструктора. */
-  _resolveMechChoice(key, value) {
-    const i = this.pendingMechChoices.findIndex(r => r.key === key);
-    if (i < 0) return;
-    const [row] = this.pendingMechChoices.splice(i, 1);
-    row.resolve(value);
+  /**
+   * Запоминает ТЕКУЩИЙ выбор строки без применения — { kind:"pick", value }
+   * для дропдауна/радио и «Готово» многовыбора, { kind:"skip", value:null }
+   * для крестика. `undefined` (строка ещё не тронута) намеренно отличается
+   * от `{kind:"skip"}` — оба в итоге дают null Конструктору, но только явный
+   * skip разрешает пакетный резолв, тогда как нетронутая строка его
+   * блокирует (см. _allMechChoicesPicked) — молчание не должно тихо стать
+   * пропуском.
+   */
+  _setMechPick(key, pending) {
+    const row = this.pendingMechChoices.find(r => r.key === key);
+    if (!row) return;
+    row.pending = pending;
     this.render(false);
   }
 
   /**
-   * Закрепляет Этап 3: кладёт архетип предметом (applyArchetype ждёт его
-   * Механику СИНХРОННО — характеристики/Таланты/Навыки/снаряжение и покупки
-   * по бюджету, включая Психосилы/Техночудеса через kind:"equipment", что бы
-   * ГМ ни настроил на вкладке МЕХАНИКА; их диалоги/Обозреватель компендиумов
-   * всплывают по очереди, «Далее» ждёт всех), плюс старый текстовый путь
-   * (arch.trait/talents/gear, навыки культуры легиона) — тот же набор, что
-   * раньше выдавал applyCreation целиком. Бросок Ран —
-   * по формуле архетипа, один раз (снимок _wasEmpty.wounds с Этапа 1).
+   * Ключи Навыков, уже занятые ТЕКУЩИМ (ещё не применённым) выбором ДРУГИХ
+   * ИЛИ-строк — не даёт двум строкам одновременно указывать на один Навык
+   * (пример пользователя: «Скрытность +0 или Атлетика +0» в одной строке и
+   * «Скрытность +10 или Атлетика +10» в другой — выбор Навыка в одной строке
+   * убирает его из вариантов другой).
    */
-  async _confirmArchetype() {
-    const actor = this.actor;
-    const sys = actor.system;
-    const archKey = sys.archetype || "";
-    if (!archKey) return;
+  _claimedSkillKeys(excludeKey) {
+    const set = new Set();
+    for (const r of this.pendingMechChoices) {
+      if (r.key === excludeKey || r.type !== "or" || r.pending?.kind !== "pick") continue;
+      const sk = r.pending.value?.skillKey;
+      if (sk) set.add(sk);
+    }
+    return set;
+  }
 
-    if (!actorArchetypeItem(actor)) {
-      this._confirmingArchetype = true;
-      try {
-        await withMechCollector(this._mechCollector(), () => applyArchetype(actor, archKey));
-      } finally {
-        this._confirmingArchetype = false;
-      }
+  /**
+   * Все ли видимые строки Конструктора имеют явное решение (выбор или
+   * пропуск) И ни одна пара ИЛИ-строк не указывает на один и тот же Навык
+   * одновременно? Второе — подстраховка поверх disabled-опций в разметке:
+   * та просто мешает выбрать конфликт руками, а это ловит его на случай,
+   * если выбор одной строки поменялся ПОСЛЕ того, как в другой уже стоял
+   * тот же Навык (порядок кликов игрока не гарантирован).
+   */
+  _allMechChoicesPicked() {
+    if (!this.pendingMechChoices.every(r => r.pending !== undefined)) return false;
+    const seen = new Set();
+    for (const r of this.pendingMechChoices) {
+      if (r.type !== "or" || r.pending?.kind !== "pick") continue;
+      const sk = r.pending.value?.skillKey;
+      if (!sk) continue;
+      if (seen.has(sk)) return false;
+      seen.add(sk);
+    }
+    return true;
+  }
+
+  /**
+   * Пакетный резолв ВСЕХ видимых строк их текущим выбором — вызывается
+   * только из «Далее» (_advanceArchetypeStep/_advanceOriginStep), никогда по
+   * change конкретной строки. Снимок делается ДО резолва: резолв может
+   * синхронно (в той же микрозадаче) вернуть НОВЫЕ строки от applyGroupEntries
+   * (вложенный выбор внутри выбранной ветки) — их эта партия не трогает, они
+   * останутся в pendingMechChoices для следующего клика «Далее».
+   */
+  _resolveAllPendingMechChoices() {
+    const batch = this.pendingMechChoices.splice(0, this.pendingMechChoices.length);
+    for (const row of batch) {
+      const p = row.pending;
+      if (!p || p.kind === "skip") { row.resolve(row.type === "spec" && row.need > 1 ? [] : null); continue; }
+      row.resolve(p.value);
+    }
+  }
+
+  /**
+   * «Далее» на Этапе 3 — конечный автомат вместо одного цельного await:
+   * первый клик запускает applyArchetype В ФОНЕ (withMechCollector наполняет
+   * pendingMechChoices вместо диалогов, «Далее» тут же снова доступен, если
+   * появились строки выбора — см. nextDisabled), каждый следующий клик либо
+   * применяет ПАКЕТОМ то, что сейчас стоит в строках (не переходя дальше —
+   * это может раскрыть ВЛОЖЕННЫЙ выбор следующим кликом), либо, когда
+   * applyArchetype реально завершился и строк больше нет, довершает шаг и
+   * возвращает true — сигнал _onNext перейти на следующий Этап.
+   */
+  async _advanceArchetypeStep() {
+    const actor = this.actor;
+    const archKey = actor.system.archetype || "";
+    if (!archKey) return false;
+
+    if (!this._archetypeApplyPromise && actorArchetypeItem(actor)) {
+      // Архетип уже применён в ПРОШЛЫЙ РАЗ (напр. другой экземпляр Мастера,
+      // переоткрытый на уже готовом акторе) — новых строк выбора не будет.
+      // Проверка _archetypeApplyPromise обязательна: applyArchetype создаёт
+      // сам предмет архетипа СРАЗУ, задолго до Mechanics-выборов, так что
+      // actorArchetypeItem(actor) становится true уже после первого клика
+      // ЭТОЙ сессии — без этого условия второй клик проскакивал сюда мимо
+      // pendingMechChoices и бросал 5 незакрытых строк / завершал шаг раньше
+      // времени, оставляя applyArchetype висеть в фоне (найдено живой проверкой).
+      await this._finishArchetypeStep(archKey);
+      return true;
     }
 
+    if (this.pendingMechChoices.length) {
+      if (!this._allMechChoicesPicked()) return false; // подстраховка — nextDisabled должен был отловить раньше
+      this._resolveAllPendingMechChoices();
+      this.render(false);
+      return false; // applyArchetype продолжает работу в фоне; следующий клик увидит новую партию либо конец
+    }
+
+    if (!this._archetypeApplyPromise) {
+      this._confirmingArchetype = true;
+      this.render(false); // сразу показать «Применяется…», не дожидаясь первой строки выбора
+      this._archetypeApplyPromise = withMechCollector(this._mechCollector(), () => applyArchetype(actor, archKey))
+        .finally(() => {
+          this._confirmingArchetype = false;
+          if (!this._isClosing) this.render(false); // без этого кнопка не «оживёт» сама, когда фон молча закончил
+        });
+      return false; // дать коллектору шанс наполнить первую партию строк
+    }
+
+    if (this._confirmingArchetype) return false; // всё ещё идёт молча (напр. бюджетная покупка в Обозревателе)
+
+    await this._finishArchetypeStep(archKey);
+    return true;
+  }
+
+  /**
+   * Хвост прежнего _confirmArchetype: Черта архетипа, импланты, флаги
+   * психайкера/техножреца, Таланты-развилки (уже выбраны прямо в форме шага
+   * через talentPicks — здесь только собираем и создаём предметы, без
+   * диалога), Навыки культуры легиона, бросок стартовых Ран по формуле
+   * архетипа (один раз, снимок _wasEmpty.wounds с Этапа 1).
+   */
+  async _finishArchetypeStep(archKey) {
+    const actor = this.actor;
+    const sys = actor.system;
     const { race, arch } = resolveCreation({
       raceKey: sys.race, subraceKey: sys.subrace, archKey,
       ynnariPast: sys.ynnariPast, harlequinPast: sys.harlequinPast
@@ -501,6 +648,7 @@ export class CharacterWizard extends Application {
       const w = await rollFormula(actor, arch?.wounds, "Стартовые Раны");
       if (w) await actor.update({ "system.wounds.max": w, "system.wounds.value": w });
     }
+    this._archetypeApplyPromise = null; // гигиена — actorArchetypeItem уже делает его неактуальным
   }
 
   // ── Этап 4: Стремления и Уровень стартовой игры ──────────────────────────
@@ -644,7 +792,7 @@ export class CharacterWizard extends Application {
   /**
    * Закрепляет Этап 2: итоговая база = сумма расы/Прошлого/субрасы (без
    * архетипа — он ещё не выбран) + раскиданный бросок, но только в поля,
-   * пустые ДО Мастера (снимок _wasEmpty из _confirmOrigin). Бесчестие кидает
+   * пустые ДО Мастера (снимок _wasEmpty из _advanceOriginStep). Бесчестие кидает
    * формулу «19+1d5» (или расовую) тем же правилом, что и старый Мастер.
    */
   async _confirmCharacteristics() {
@@ -768,6 +916,26 @@ export class CharacterWizard extends Application {
     return m ? Number(m[1]) : null;
   }
 
+  /**
+   * «L. <Категория> (до R<N>, <Кач>.Q)» (пример — Чемпион, «L. Power Weapon
+   * (до R3, Good.Q)») — «L.» значит Легион-тир: любой предмет заданной
+   * категории редкости не выше N, а ВЫБРАННОМУ экземпляру после выбора
+   * нужно проставить Качество и добавить свойство Legion — готового
+   * Legion-варианта на каждый силовой тип оружия в компендиуме просто нет
+   * (в отличие от, скажем, «Болтер (Астартес)», где Legion уже встроен в
+   * сам предмет). Категория определяется папкой компендиума —
+   * LEGION_CATEGORY_FOLDERS ниже, пока известна только «Power Weapon».
+   * Не совпало (неизвестная категория/формат) — null, строка идёт по
+   * обычному пути (см. вызов в _gearLayout).
+   */
+  _matchLegionCategoryGear(text) {
+    const m = /^L\.\s*(.+?)\s*\(до\s*R(\d+),\s*(\w+)\.?Q\)\s*$/i.exec(String(text).trim());
+    if (!m) return null;
+    const folderId = LEGION_CATEGORY_FOLDERS[m[1].trim().toLowerCase()];
+    if (!folderId) return null;
+    return { folderId, maxAvailability: Number(m[2]), quality: m[3].toLowerCase() };
+  }
+
   /** Раскладка текста снаряжения на layout (фикс/выбор) + сами группы выбора. Без резолва в предметы. */
   _gearLayout() {
     const sys = this.actor.system;
@@ -836,9 +1004,11 @@ export class CharacterWizard extends Application {
       const toCreate = [];
       const done = resolved.map(() => false);
       const manualIdx = [];
-      const stdSysIdx = []; // «N Стандартные системы» — свой бюджетный поток, не по одной
+      const stdSysIdx = [];   // «N Стандартные системы» — свой бюджетный поток, не по одной
+      const legionIdx = [];   // «L. <Категория> (до R<N>, <Кач>.Q)» — свой поток с пост-обработкой
       resolved.forEach((r, i) => {
         if (this._matchStandardSystemsCount(r) != null) { stdSysIdx.push(i); return; }
+        if (this._matchLegionCategoryGear(r)) { legionIdx.push(i); return; }
         if (/\bлюб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
         const k = norm(clean(r));
         const ref = k ? index.get(k) : null;
@@ -867,6 +1037,30 @@ export class CharacterWizard extends Application {
         const docs = await Promise.all(uuids.map(u => fromUuid(u).catch(() => null)));
         const objs = docs.filter(Boolean).map(d => d.toObject());
         if (objs.length) { await actor.createEmbeddedDocuments("Item", objs); done[i] = objs.length === need; }
+      }
+
+      // «L. <Категория> (до R<N>, <Кач>.Q)» — фильтр по папке+редкости
+      // (см. _matchLegionCategoryGear), а после выбора выбранному экземпляру
+      // ПРОГРАММНО проставляются Качество и свойство Legion: готового
+      // Legion-варианта на каждый тип оружия категории в компендиуме нет
+      // (не как у «Болтер (Астартес)», где Legion уже часть самого предмета).
+      for (const i of legionIdx) {
+        const spec = this._matchLegionCategoryGear(resolved[i]);
+        const uuid = await openCompendiumBrowser(false, {
+          count: 1, pack: "weapons",
+          filters: { folderId: spec.folderId, maxAvailability: spec.maxAvailability },
+          prompt: `Стартовое снаряжение: ${resolved[i]}`
+        });
+        if (!uuid) continue;
+        const doc = await fromUuid(uuid).catch(() => null);
+        if (!doc) continue;
+        const obj = doc.toObject();
+        obj.system.quality = spec.quality;
+        const props = Array.isArray(obj.system.weaponProps) ? obj.system.weaponProps : [];
+        if (!props.some(p => p?.key === "legion")) props.push({ key: "legion" });
+        obj.system.weaponProps = props;
+        await actor.createEmbeddedDocuments("Item", [obj]);
+        done[i] = true;
       }
 
       // Точных совпадений не нашлось — спрашиваем игрока по очереди, а не
@@ -927,7 +1121,10 @@ export class CharacterWizard extends Application {
     });
 
     on(".wiz-name-inp",  "change", ev => this.actor.update({ name: ev.currentTarget.value || "Новый персонаж" }));
-    on(".wiz-race-sel",  "change", ev => this.actor.update({ "system.race": ev.currentTarget.value, "system.subrace": "" }).then(() => this.render(false)));
+    on(".wiz-race-sel",  "change", ev => {
+      if (ev.currentTarget.value === "") return; // плейсхолдер «— выбрать —», не настоящая раса
+      this.actor.update({ "system.race": ev.currentTarget.value, "system.subrace": "" }).then(() => this.render(false));
+    });
     on(".wiz-subrace-sel", "change", ev => this.actor.update({ "system.subrace": ev.currentTarget.value }));
     on(".wiz-align-sel", "change", ev => this.actor.update({ "system.alignment": ev.currentTarget.value }));
 
@@ -1017,18 +1214,22 @@ export class CharacterWizard extends Application {
     });
     on(".wiz-apt", "change", ev => { this._toggleApt(ev.currentTarget.value); this.render(false); });
 
-    // ── Этап 3: ИЛИ/спец-выборы Конструктора, собранные в форму шага ──
+    // ── Этап 3/1: ИЛИ/спец-выборы Конструктора, собранные в форму шага ──
+    // Ни один из этих обработчиков больше НЕ применяет выбор сразу — только
+    // запоминает его в row.pending. Применение — пакетом, по «Далее»
+    // (см. _resolveAllPendingMechChoices, вызывается из _advanceArchetypeStep/
+    // _advanceOriginStep).
     on(".wiz-mech-or-sel", "change", ev => {
       const val = ev.currentTarget.value;
-      if (val === "") return; // плейсхолдер «— выбрать —», не настоящий вариант
       const key = ev.currentTarget.dataset.key;
+      if (val === "") { this._setMechPick(key, undefined); return; } // плейсхолдер «— выбрать —» — снова не решено
       const row = this.pendingMechChoices.find(r => r.key === key);
-      if (row) this._resolveMechChoice(key, row.options[Number(val)]?.entry ?? null);
+      if (row) this._setMechPick(key, { kind: "pick", value: row.options[Number(val)]?.entry ?? null });
     });
     on(".wiz-mech-spec-radio", "change", ev => {
       const key = ev.currentTarget.dataset.key;
       const row = this.pendingMechChoices.find(r => r.key === key);
-      if (row) this._resolveMechChoice(key, row.choices[Number(ev.currentTarget.value)] ?? null);
+      if (row) this._setMechPick(key, { kind: "pick", value: row.choices[Number(ev.currentTarget.value)] ?? null });
     });
     on(".wiz-mech-spec-check", "change", ev => {
       const key = ev.currentTarget.dataset.key;
@@ -1037,16 +1238,24 @@ export class CharacterWizard extends Application {
       if (!row) return;
       if (ev.currentTarget.checked) { if (!row.picked.includes(idx)) row.picked.push(idx); }
       else row.picked = row.picked.filter(i => i !== idx);
+      // «Готово» ниже пересобирает row.pending из picked заново при каждом
+      // клике по чекбоксу тоже — так «Далее» может отправить пакет, даже
+      // если игрок забыл явно нажать «Готово», как только набрано ровно need.
+      row.pending = row.picked.length === row.need
+        ? { kind: "pick", value: row.picked.map(i => row.choices[i]) } : undefined;
       this.render(false);
     });
     on(".wiz-mech-spec-confirm", "click", ev => {
       const key = ev.currentTarget.dataset.key;
       const row = this.pendingMechChoices.find(r => r.key === key);
-      if (row) this._resolveMechChoice(key, row.picked.map(i => row.choices[i]));
+      if (row) this._setMechPick(key, { kind: "pick", value: row.picked.map(i => row.choices[i]) });
     });
     on(".wiz-mech-skip", "click", ev => {
-      const many = ev.currentTarget.dataset.many === "1";
-      this._resolveMechChoice(ev.currentTarget.dataset.key, many ? [] : null);
+      const key = ev.currentTarget.dataset.key;
+      const row = this.pendingMechChoices.find(r => r.key === key);
+      // Повторный клик по уже пропущенной строке отменяет пропуск — возврат
+      // к «ничего не решено», а не переключение на какой-то выбор наугад.
+      this._setMechPick(key, row?.pending?.kind === "skip" ? undefined : { kind: "skip", value: null });
     });
 
     // ── Этап 3: выбор архетипа + Таланты-развилки прямо в форме шага ──
@@ -1088,39 +1297,65 @@ export class CharacterWizard extends Application {
   }
 
   async _onNext() {
-    if (this._confirmingArchetype) return; // защита от повторного клика, пока ждём Конструктор
-    if (this.step.id === "origin") await this._confirmOrigin();
-    if (this.step.id === "characteristics") {
-      const ok = await this._confirmCharacteristics();
-      if (!ok) { ui.notifications?.warn("Выберите Склонности — ровно 4 Характеристики и 4 прочих."); return; }
-      // Родной мир с Int-зависимым выбором специализаций (см. Этап 1) —
-      // применяем именно сейчас, Интеллект уже посчитан.
-      if (this._pendingHomeworldKey) {
-        const key = this._pendingHomeworldKey;
-        this._pendingHomeworldKey = null;
-        await applyHomeworld(this.actor, key);
+    // Защита от повторного клика, пока предыдущий клик ещё внутри своего await
+    // (батч-резолв Конструктора и пр.) — не то же самое, что _confirmingArchetype:
+    // тот теперь бывает false ровно тогда, когда строки выбора ждут ответа, и
+    // «Далее» в этот момент как раз ДОЛЖНА быть кликабельна.
+    if (this._advancingStep) return;
+    this._advancingStep = true;
+    try {
+      if (this.step.id === "origin") {
+        const done = await this._advanceOriginStep();
+        if (!done) return;
       }
+      if (this.step.id === "characteristics") {
+        const ok = await this._confirmCharacteristics();
+        if (!ok) { ui.notifications?.warn("Выберите Склонности — ровно 4 Характеристики и 4 прочих."); return; }
+        // Родной мир с Int-зависимым выбором специализаций (см. Этап 1) —
+        // применяем именно сейчас, Интеллект уже посчитан.
+        if (this._pendingHomeworldKey) {
+          const key = this._pendingHomeworldKey;
+          this._pendingHomeworldKey = null;
+          await applyHomeworld(this.actor, key);
+        }
+      }
+      if (this.step.id === "archetype") {
+        const done = await this._advanceArchetypeStep();
+        if (!done) return;
+      }
+      if (this.step.id === "aspirations") await this._confirmAspirations();
+      this._goStep(this.stepIndex + 1);
+    } finally {
+      this._advancingStep = false;
     }
-    if (this.step.id === "archetype") await this._confirmArchetype();
-    if (this.step.id === "aspirations") await this._confirmAspirations();
-    this._goStep(this.stepIndex + 1);
   }
 
   /**
-   * Закрепляет выбор Этапа 1: раса/субраса/легион/Прошлое были только
-   * зеркальными полями (`system.race` и т.п.) — здесь они превращаются в
-   * настоящие выдачи (embedded-предметы, Черты, характеристики расы), как
-   * при нажатии «Применить» в шапке листа. Родной мир и Предсказание уже
-   * применены — их дропдауны пишут сразу по выбору, как и на самом листе.
+   * «Далее» на Этапе 1 — тот же конечный автомат, что _advanceArchetypeStep:
+   * первый клик запускает применение Расы/Субразы/Легиона/Прошлого В ФОНЕ
+   * (withMechCollector наполняет pendingMechChoices вместо диалогов вместо
+   * прямых вопросов Механики), каждый следующий клик либо применяет ПАКЕТОМ
+   * то, что сейчас стоит в строках (не переходя дальше — вложенный выбор
+   * может раскрыться следующим кликом), либо, когда применение реально
+   * завершилось и строк больше нет, довершает шаг и возвращает true.
    */
-  async _confirmOrigin() {
+  async _advanceOriginStep() {
     const actor = this.actor;
     const sys = actor.system;
-    const createTraits = (list, source) => actor.sheet?._createTraitsFromList?.(list, source);
+    // Проверка «раса выбрана» — только ПЕРЕД стартом применения. После него
+    // sys.race читать для этого нельзя: applyRace (clearRace внутри) на всё
+    // время своей работы, включая паузу на строках выбора Конструктора,
+    // временно обнуляет system.race и восстанавливает его только в самом
+    // конце — то есть посреди каскада выбора это поле ЗАКОНОМЕРНО пустое
+    // (найдено живой проверкой: клик «Далее» на второй-третьей строке молча
+    // выходил отсюда, будто раса не выбрана, и каскад «зависал»).
+    if (!this._originApplyPromise && !sys.race) return false; // подстраховка — nextDisabled должен был отловить раньше
 
     // Снимок ДО applyRace: та пишет расовую часть суммы в те же поля, и без
-    // снимка Этап 2 больше не отличил бы «персонаж только создаётся» от
-    // «Мастер просто перезапустили на уже развитом персонаже».
+    // снимка Этап 2 не отличил бы «персонаж только создаётся» от «Мастер
+    // просто перезапущен на уже развитом персонаже». Место — здесь, а не в
+    // хвосте (_finishOriginStep): к моменту хвоста applyRace могла уже
+    // отработать и переписать поля характеристик.
     if (!this._wasEmpty) {
       const chars = actor.system.characteristics;
       this._wasEmpty = {};
@@ -1128,15 +1363,75 @@ export class CharacterWizard extends Application {
       this._wasEmpty.wounds = (actor.system.wounds?.max || 0) === 0;
     }
 
+    if (!this._originApplyPromise && this._originAlreadyApplied()) {
+      // Раса/Субраса уже применены в ПРОШЛЫЙ РАЗ (другой экземпляр Мастера,
+      // переоткрытый на уже готовом акторе) — новых строк выбора не будет.
+      // Проверка _originApplyPromise обязательна по той же причине, что и у
+      // Архетипа (см. _advanceArchetypeStep): предмет-носитель Расы создаётся
+      // СРАЗУ внутри applyRace, задолго до Mechanics-выборов, так что
+      // actorRaceItem(actor) стало бы true уже после первого клика ЭТОЙ
+      // сессии — без этого условия второй клик проскакивал бы сюда мимо
+      // pendingMechChoices.
+      await this._finishOriginStep();
+      return true;
+    }
+
+    if (this.pendingMechChoices.length) {
+      if (!this._allMechChoicesPicked()) return false; // подстраховка — nextDisabled должен был отловить раньше
+      this._resolveAllPendingMechChoices();
+      this.render(false);
+      return false; // применение продолжает работу в фоне; следующий клик увидит новую партию либо конец
+    }
+
+    if (!this._originApplyPromise) {
+      this._confirmingOrigin = true;
+      this.render(false); // сразу показать «Применяется…», не дожидаясь первой строки выбора
+      this._originApplyPromise = withMechCollector(this._mechCollector(), () => this._applyOriginItems())
+        .finally(() => {
+          this._confirmingOrigin = false;
+          if (!this._isClosing) this.render(false); // без этого кнопка не «оживёт» сама, когда фон молча закончил
+        });
+      return false; // дать коллектору шанс наполнить первую партию строк
+    }
+
+    if (this._confirmingOrigin) return false; // всё ещё идёт молча (напр. бюджетная покупка в Обозревателе)
+
+    await this._finishOriginStep();
+    return true;
+  }
+
+  /** Раса и (если выбрана) Субраса уже стоят на акторе своими носителями. */
+  _originAlreadyApplied() {
+    const actor = this.actor;
+    const sys = actor.system;
+    if (sys.race && !actorRaceItem(actor)) return false;
+    if (sys.subrace && !actorSubraceItem(actor)) return false;
+    return true;
+  }
+
+  /**
+   * Раса/субраса/легион/Прошлое были только зеркальными полями
+   * (`system.race` и т.п.) — здесь они превращаются в настоящие выдачи
+   * (embedded-предметы, Черты, характеристики расы), как при нажатии
+   * «Применить» в шапке листа. Родной мир и Предсказание уже применены —
+   * их дропдауны пишут сразу по выбору, как и на самом листе.
+   */
+  async _applyOriginItems() {
+    const actor = this.actor;
+    const sys = actor.system;
+    const createTraits = (list, source) => actor.sheet?._createTraitsFromList?.(list, source);
+
     if (sys.race && !actorRaceItem(actor)) await applyRace(actor, sys.race);
     if (sys.subrace && !actorSubraceItem(actor)) await applySubrace(actor, sys.subrace);
     if (sys.race === "astartes" && sys.geneSeed?.legion) await applyLegion(actor, { createTraits });
     if (sys.race === "ynnari" && sys.ynnariPast) await applyYnnari(actor, { createTraits });
     if (sys.race === "harlequin" && sys.harlequinPast) await applyHarlequin(actor, { createTraits });
+  }
 
-    // Азуриане — псайкеры (трейт Psyker, «Древнее Мастерство»); то же для
-    // Иннари/Арлекина с Прошлым Азуриан. Флаг зависит от расы, а не от
-    // архетипа — потому и здесь, а не в _confirmArchetype.
+  /** Хвост Этапа 1: флаг псайкера Азуриан — зависит от расы, а не от архетипа. */
+  async _finishOriginStep() {
+    const actor = this.actor;
+    const sys = actor.system;
     const pastKey = sys.race === "ynnari" ? sys.ynnariPast : sys.race === "harlequin" ? sys.harlequinPast : "";
     if (sys.race === "azuriane" || pastKey === "azuriane") await actor.update({ "system.isPsyker": true });
   }
