@@ -1,0 +1,56 @@
+{
+  "name": "Скорбные Пасти",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "e52a4870",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Мандрагора",
+    "god": "",
+    "req": "Intimidate+10, Scholastic Lore (Occult)+10, Trade (Musician)+10; 2500 xp",
+    "charBonus": "+5 I, −5 W",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Daemonic (+3) / Демонический",
+      "Mark of Revenge / Метка Мести",
+      "The Time Has Come / Время Пришло",
+      "The Exalted Mandrake / Возвышенный Мандрагор"
+    ],
+    "talents": [
+      "Ice Kingdom / Ледяное Царство",
+      "Whisper of Death / Шёпот Смерти",
+      "Fear Incarnate / Воплощение Страха",
+      "Dark Omens / Тёмные Предзнаменования",
+      "Sentence / Приговор",
+      "Game Has Only Just Begun / Игра Только Началась"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "xBVUalozUHaWsI3u",
+  "effects": [],
+  "folder": "BSny4tDCVx9m6PGl",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!xBVUalozUHaWsI3u"
+}

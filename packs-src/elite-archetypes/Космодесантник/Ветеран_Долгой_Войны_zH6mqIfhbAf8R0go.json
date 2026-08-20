@@ -1,0 +1,56 @@
+{
+  "name": "Ветеран Долгой Войны",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "22e7bd66",
+    "cost": 20000,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Космодесантник",
+    "god": "Неделимый",
+    "req": "Hatred (любые 3 Имперские фракции), 20 000 xp потрачено, 2000 xp",
+    "charBonus": "+5 WS или +5 BS, +5 W или +5 F",
+    "freeTalents": "Hatred (Imperium)",
+    "gear": "",
+    "traits": [
+      "Archenemy / Архивраг",
+      "Adaptation / Адаптация"
+    ],
+    "talents": [
+      "Builder of Bridges / Строитель Мостов",
+      "Diabolist / Дьяболист",
+      "Hub Reaver / Разоритель Хабов",
+      "Lord Reaper / Лорд Жнец",
+      "Proselyte / Прозелит",
+      "Shadow Stalker / Крадущийся в Тенях",
+      "Slayer of Champions / Убийца Чемпионов",
+      "War Sage / Боевой Мудрец"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "zH6mqIfhbAf8R0go",
+  "effects": [],
+  "folder": "EhPnOPbmMLPmxVvL",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!zH6mqIfhbAf8R0go"
+}

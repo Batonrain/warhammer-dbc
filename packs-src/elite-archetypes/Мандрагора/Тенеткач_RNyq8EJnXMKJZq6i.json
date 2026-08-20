@@ -1,0 +1,53 @@
+{
+  "name": "Тенеткач",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "c74afcc8",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Мандрагора",
+    "god": "",
+    "req": "Deceive+10, Scholastic Lore (Occult)+10; 2500 xp",
+    "charBonus": "+5 W",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Daemonic (+3) / Демонический",
+      "Lord of Darkness / Владыка Тьмы",
+      "The Exalted Mandrake / Возвышенный Мандрагор"
+    ],
+    "talents": [
+      "Eternal Darkness / Вечная Тьма",
+      "Embrace of Darkness / Объятия Тьмы",
+      "Cold of Darkness / Холод Тьмы",
+      "Stalker / Преследователь"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "RNyq8EJnXMKJZq6i",
+  "effects": [],
+  "folder": "BSny4tDCVx9m6PGl",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!RNyq8EJnXMKJZq6i"
+}

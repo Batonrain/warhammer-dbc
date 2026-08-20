@@ -1,0 +1,55 @@
+{
+  "name": "Электрожрец",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "185a3385",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Человек",
+    "god": "Неделимый",
+    "req": "W 40, A 40, For.Lore (Mechanicum)+10, Трейт Mechanicum Implants, Техночудеса: Voltagheist Shield, Luminen Shock, Electroepithany, 2500 xp",
+    "charBonus": "+5 S, +5 A, +5 T",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Electropriest Coils / Катушки Электрожреца",
+      "Power From Flesh / Сила Из Плоти",
+      "Motive Stimulation / Мотивирующая Стимуляция"
+    ],
+    "talents": [
+      "Voltagheist Blast / Вольтагейст Взрыв",
+      "Voltagheist Bubble / Вольтагейст Пузырь",
+      "Voltaic Absorption / Вольтаическое Поглощение",
+      "Voltaic Confluence / Вольтаическое Слияние",
+      "Motive Sight / Мотивное Зрение",
+      "Conduit March / Проводниковый Марш"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "yybk1faGxSF2volp",
+  "effects": [],
+  "folder": "sq3IdHf4cO8fQP2j",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!yybk1faGxSF2volp"
+}

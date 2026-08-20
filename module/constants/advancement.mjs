@@ -7,6 +7,8 @@
 //  «Общая» (general) считается у всех — участвует в совпадениях всегда.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { specChar } from "./skill-specializations.mjs";
+
 // Склонности характеристик (стр. 24): Хар → [склонность хар-ки, склонность спец.].
 export const CHAR_APTITUDES = {
   ws:  ["ws",  "offence"],
@@ -145,9 +147,15 @@ export function resolveTalentAptitudes(talentName, ownApts, specKey, defs = {}) 
   const kind = dynamicAptKind(talentName);
   if (!kind || !specKey) return Array.isArray(ownApts) ? ownApts : [];
   if (kind === "char") return CHAR_APTITUDES[specKey] || (Array.isArray(ownApts) ? ownApts : []);
-  const def = (defs.skills || {})[specKey] || (defs.groupSkills || {})[specKey];
-  return def ? [def.char, def.apt2].filter(Boolean)
-             : (Array.isArray(ownApts) ? ownApts : []);
+
+  // Привязка «Мастерства» бывает и специализацией группы — «forbiddenLore:daemons».
+  // Первая склонность тогда берётся у самой специализации: Навигация (Варп) —
+  // это Воля, а не Интеллект группы.
+  const [groupKey, spec] = String(specKey).split(":");
+  const def = (defs.skills || {})[groupKey] || (defs.groupSkills || {})[groupKey];
+  if (!def) return Array.isArray(ownApts) ? ownApts : [];
+  const char = spec ? specChar(groupKey, spec, def.char) : def.char;
+  return [char, def.apt2].filter(Boolean);
 }
 
 // ════════════════════════════════════════════════════════════════════════

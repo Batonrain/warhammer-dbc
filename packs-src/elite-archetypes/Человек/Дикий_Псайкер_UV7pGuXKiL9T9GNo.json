@@ -1,0 +1,56 @@
+{
+  "name": "Дикий Псайкер",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "8722dec8",
+    "cost": 3000,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Человек",
+    "god": "Неделимый",
+    "req": "Psyker, 3000 xp",
+    "charBonus": "+10 W, −5 S, −5 T, +2d5 Cor",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Broken Chains / Порванные Цепи",
+      "Chain Rejection / Отторжение Цепей",
+      "Shield of Chains / Щит Цепей"
+    ],
+    "talents": [
+      "Chain Scars / Шрамы Цепей",
+      "Heart Fire / Пламя Сердца",
+      "Residual Absorption / Остаточное Поглощение",
+      "Chains of Alacrity / Цепи Стремительности",
+      "Death Eater / Пожиратель Смерти",
+      "Power Overwhelming / Мощь Переполняет",
+      "Withering Charge / Иссушающий Заряд"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "UV7pGuXKiL9T9GNo",
+  "effects": [],
+  "folder": "sq3IdHf4cO8fQP2j",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!UV7pGuXKiL9T9GNo"
+}

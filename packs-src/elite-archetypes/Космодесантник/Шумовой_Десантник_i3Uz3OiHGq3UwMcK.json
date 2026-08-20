@@ -1,0 +1,55 @@
+{
+  "name": "Шумовой Десантник",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "75800eb9",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Космодесантник",
+    "god": "Слаанеш",
+    "req": "Покровительство Слаанеш, BS 45, P 50, 2500 xp",
+    "charBonus": "+5 BS, +5 P, +6 Cor",
+    "freeTalents": "Exotic Weapon Training (Sonic), Heightened Senses (All), Resistance (Interrogate, Stun)",
+    "gear": "Sonic Blaster",
+    "traits": [
+      "Intoxicating Uproar / Пьянящий Рёв",
+      "Dread Wail / Грозный Вопль"
+    ],
+    "talents": [
+      "Sing For Me! / Спой Мне!",
+      "Distilled Torment / Дистиллированная Мука",
+      "Nectar Of The Gods / Нектар Богов",
+      "Pain Is Pleasure / Боль Это Наслаждение",
+      "Sweet Cacophony / Сладкая Какофония",
+      "Dirge of Despair / Песнь Отчаянья",
+      "Wall of Discord / Стена Диссонанса"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "i3Uz3OiHGq3UwMcK",
+  "effects": [],
+  "folder": "EhPnOPbmMLPmxVvL",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!i3Uz3OiHGq3UwMcK"
+}

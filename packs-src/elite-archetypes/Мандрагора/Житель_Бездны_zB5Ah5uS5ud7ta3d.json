@@ -1,0 +1,55 @@
+{
+  "name": "Житель Бездны",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "023f689e",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Мандрагора",
+    "god": "",
+    "req": "BS 40, T 40; 2500 xp",
+    "charBonus": "+5 BS, +5 T",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Daemonic (+4) / Демонический",
+      "The Conductor of Dark Energy / Проводник Тёмной Энергии",
+      "The Exalted Mandrake / Возвышенный Мандрагор"
+    ],
+    "talents": [
+      "Dark Flesh / Тёмная Плоть",
+      "Dark Hand / Тёмная Длань",
+      "Hungry Darkness / Голодная Тьма",
+      "Doom Runes / Губительные Руны",
+      "The Hands of Death / Руки Несмерти",
+      "Herald of Darkness / Герольд Тьмы"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "zB5Ah5uS5ud7ta3d",
+  "effects": [],
+  "folder": "BSny4tDCVx9m6PGl",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!zB5Ah5uS5ud7ta3d"
+}

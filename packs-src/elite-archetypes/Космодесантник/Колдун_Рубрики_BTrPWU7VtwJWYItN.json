@@ -1,0 +1,54 @@
+{
+  "name": "Колдун Рубрики",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "bec64d3d",
+    "cost": 3000,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Космодесантник",
+    "god": "Тзинч",
+    "req": "Покровительство Тзинча, W 50, I 45, Psyker, PR 5, Command +0, 3000 xp",
+    "charBonus": "+5 W, +5 F, +9 Cor",
+    "freeTalents": "Peer (Thousand Sons)",
+    "gear": "",
+    "traits": [
+      "Rubric of Ahriman / Рубрика Аримана",
+      "Golem Master / Повелитель Големов",
+      "Shield of Rubric / Щит Рубрики"
+    ],
+    "talents": [
+      "Infernal Shells / Инфернальные Снаряды",
+      "Nexus Of Souls / Узы Душ",
+      "Psychic Echo / Психическое Эхо",
+      "Sekhmet / Сехмет",
+      "Reborn in Dust / Возрождён во Прахе"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "BTrPWU7VtwJWYItN",
+  "effects": [],
+  "folder": "EhPnOPbmMLPmxVvL",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!BTrPWU7VtwJWYItN"
+}

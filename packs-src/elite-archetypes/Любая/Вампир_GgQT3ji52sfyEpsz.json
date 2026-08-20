@@ -1,0 +1,55 @@
+{
+  "name": "Вампир",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "769f1af3",
+    "cost": 2000,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Любая",
+    "god": "Слаанеш",
+    "req": "Покровительство Слаанеш, 2000 xp",
+    "charBonus": "+5 S, +5 A, −5 W, +1d5 Cor",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Pact Protection / Защита Пакта",
+      "The Thirst / Жажда",
+      "Soul Drinker / Испивающий Души",
+      "Supreme Avarice / Высшая Алчность"
+    ],
+    "talents": [
+      "Pact Stage 1 / Стадия Пакта 1",
+      "Pact Stage 2 / Стадия Пакта 2",
+      "Pact Stage 3 / Стадия Пакта 3",
+      "Pact Stage 4 / Стадия Пакта 4",
+      "Pact Stage 5 / Стадия Пакта 5"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "GgQT3ji52sfyEpsz",
+  "effects": [],
+  "folder": "YekrvgAYNWWLLaG5",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!GgQT3ji52sfyEpsz"
+}
