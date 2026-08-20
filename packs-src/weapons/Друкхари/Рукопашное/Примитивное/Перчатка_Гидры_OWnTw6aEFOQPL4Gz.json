@@ -63,7 +63,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Кулаки"
   },
   "_id": "OWnTw6aEFOQPL4Gz",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

@@ -67,7 +67,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Крюк"
   },
   "_id": "1JAt6TPcbI7b51Ee",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

@@ -62,7 +62,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Щит"
   },
   "_id": "tX26GHnEovts2mBr",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

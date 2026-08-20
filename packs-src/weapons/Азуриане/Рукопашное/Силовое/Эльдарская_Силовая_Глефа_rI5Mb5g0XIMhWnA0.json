@@ -71,7 +71,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Глефа"
   },
   "_id": "rI5Mb5g0XIMhWnA0",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

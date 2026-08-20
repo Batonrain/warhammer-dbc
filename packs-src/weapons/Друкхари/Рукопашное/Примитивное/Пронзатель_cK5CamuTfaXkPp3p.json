@@ -60,7 +60,8 @@
       "standard": false,
       "reloads": 10
     },
-    "drukhari": true
+    "drukhari": true,
+    "meleeCategory": "Копьё"
   },
   "_id": "cK5CamuTfaXkPp3p",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

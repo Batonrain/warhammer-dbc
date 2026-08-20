@@ -72,7 +72,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Меч"
   },
   "_id": "jFpR9xTLFb1LreZQ",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

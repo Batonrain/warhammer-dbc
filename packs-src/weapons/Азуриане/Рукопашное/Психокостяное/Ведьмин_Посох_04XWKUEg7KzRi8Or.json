@@ -72,7 +72,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Посох"
   },
   "_id": "04XWKUEg7KzRi8Or",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

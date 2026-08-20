@@ -65,7 +65,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Кистень"
   },
   "_id": "fsd2cLUubJ2DMHSg",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

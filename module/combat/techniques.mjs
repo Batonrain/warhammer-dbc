@@ -1,4 +1,3 @@
-import { MELEE_STANCES, MELEE_TECHNIQUES } from "../constants/combat.mjs";
 import { CHARACTERISTICS }                  from "../constants/characteristics.mjs";
 import { _degWord }                         from "../helpers/utils.mjs";
 import { rollIcon }                         from "../constants/roll-icons.mjs";
@@ -6,7 +5,8 @@ import { rollIcon }                         from "../constants/roll-icons.mjs";
 export async function _showContestDialog(actor, techDef) {
   const wsTotal  = actor.system.characteristics.ws?.total ?? 0;
   const athTotal = actor.system.characteristics.s?.total  ?? 0;
-  const isKnock  = techDef.label === "Повалить";
+  // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
+  const isKnock  = techDef.label === "Повалить" || techDef.label === "Напролом";
 
   // Определяем характеристику по умолчанию
   const defaultChar = isKnock ? "s" : "ws";

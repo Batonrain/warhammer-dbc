@@ -59,7 +59,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Когти"
   },
   "_id": "R7YYf3zE1HA7D0Vx",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

@@ -65,7 +65,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Меч"
   },
   "_id": "2WXKHPz6aspMXtXS",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",

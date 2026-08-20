@@ -11,7 +11,7 @@ import { fateTerm } from "../helpers/utils.mjs";
 import { beginTargeting } from "../combat/aim.mjs";
 import { _reloadWeapon } from "../combat/reload.mjs";
 import { _toggleShield } from "../combat/shield.mjs";
-import { MELEE_TECHNIQUES, GRIPS, parseGrips } from "../constants/combat.mjs";
+import { GRIPS, parseGrips } from "../constants/combat.mjs";
 import { SHIP_TPL, shipHudData, wireShipHud } from "./ship-hud.mjs";
 
 const SYSTEM = "warhammer-dbc";
