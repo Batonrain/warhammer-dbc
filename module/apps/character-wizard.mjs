@@ -886,10 +886,10 @@ export class CharacterWizard extends Application {
    */
   _guessGearPack(text) {
     const t = String(text).toLowerCase();
-    if (/\b(bolter|pistol|rifle|shotgun|sword|axe|blade|knife|mace|spear|chain\w*|flamer|cannon|gun|launcher|carbine|autogun|lasgun|las\s*pistol|whip|club|hammer|dagger|talon)\b|оруж|пистолет|винтовк|дробовик|меч|нож|топор|клинок|булав/.test(t)) return "weapons";
-    if (/\b(armour|armor|carapace|flak|xenomesh|wychsuit)\b|брон|доспех|латы|панцир/.test(t)) return "armor";
+    if (/\b(bolter|pistol|rifle|shotgun|sword|axe|blade|knife|mace|spear|chain\w*|flamer|cannon|gun|launcher|carbine|autogun|lasgun|las\s*pistol|whip|club|hammer|dagger|talon)\b|оруж|пистолет|винтовк|дробовик|\bмеч\b|\bнож\b|топор|клинок|булав/.test(t)) return "weapons";
+    if (/\b(armour|armor|carapace|flak|xenomesh|wychsuit)\b|брон|доспех|\bлаты\b|панцир/.test(t)) return "armor";
     if (/\b(ammo|rounds?|clip|magazine)\b|патрон|обойм|магазин|боеприпас/.test(t)) return "ammunition";
-    if (/\bshield\b|щит/.test(t)) return "shields";
+    if (/\bshield\b|щит\b/.test(t)) return "shields";
     if (/\b(toolkit|tool\s*kit)\b|инструмент|набор\s+инструментов/.test(t)) return "tools";
     return null;
   }
@@ -996,7 +996,7 @@ export class CharacterWizard extends Application {
       // «(Астартес)» — часть настоящего имени предмета (отличает Легион-версию
       // от обычной), а не квалификатор вроде «(Good.Q)» — не срезаем именно её.
       const clean = txt => String(txt).replace(/^\s*\d+×?\s*/, "").replace(/^l\.\s*/i, "").replace(/\((?!Астартес\))[^)]*\)/g, "")
-        .replace(/\s*до\s*R\s*\d+\b/gi, "").replace(/\b(Best|Good|Common|Poor)\.?Q\b/gi, "").trim();
+        .replace(/\bдо\s*R\s*\d+\b/gi, "").replace(/\b(Best|Good|Common|Poor)\.?Q\b/gi, "").trim();
 
       // done[r] — по КОНКРЕТНОЙ строке (индексу resolved), не общим флагом:
       // иначе один успешный ручной выбор красил бы «сделано» и все строки,
@@ -1009,7 +1009,7 @@ export class CharacterWizard extends Application {
       resolved.forEach((r, i) => {
         if (this._matchStandardSystemsCount(r) != null) { stdSysIdx.push(i); return; }
         if (this._matchLegionCategoryGear(r)) { legionIdx.push(i); return; }
-        if (/люб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
+        if (/\bлюб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
         const k = norm(clean(r));
         const ref = k ? index.get(k) : null;
         if (ref) { toCreate.push({ i, ref }); return; }
