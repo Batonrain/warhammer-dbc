@@ -1,0 +1,50 @@
+{
+  "name": "Countenance of Slaanesh / Лик Слаанеш",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Образ Тёмного Принца, прекрасный и ужасный в его совершенстве формы и безграничной жестокости желаний, накладывается на внешность персонажа, придавая ему частичное сходство с его Богом. Он получает бонус +10 на все тесты социальных взаимодействий, поднимающийся до +30 со смертными последователями Слаанеш. Демоны Слаанеш рангом ниже Герольда автоматически считают его одним из их рода и признают его авторитет в Командовании, если его Inf 30+ и ими не командует кто-то более могущественный.\n\nЗа свободное действие персонаж может потратить Очко Бесчестия, чтобы усилить сходство лика с оригиналом до предела, получив рейтинг Страха 3 до начала своего следующего Хода. Этот Страх не работает на других Слаанешитов, а Кхорниты, провалившие тест на Страх от него, вместо бросков на Шок впадают в Ярость.",
+    "source": "Дары Слаанеш, d100 1…5",
+    "roll": "1…5",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "YXV2wWWT2P8KrasN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020341,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!YXV2wWWT2P8KrasN"
+}

@@ -1,0 +1,50 @@
+{
+  "name": "Blood-Anointed / Кровопомазаник",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Воля Кхорна защищает его чемпиона от смерти на пути к славной битве. Если персонаж в свой предыдущий Ход не совершал стрелковых атак и либо был связан в рукопашной, либо двигался в направлении к противнику, он получает не перегружающийся щит-дефлектор 1-44 от всех стрелковых атак и взрывов (в т.ч. от мин), поднимающийся до 1-88, если он хотя бы частично измазан или забрызган кровью.",
+    "source": "Дары Кхорн, d100 16…18",
+    "roll": "16…18",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "spk68FmJ1HlmFCw0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122022104,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!spk68FmJ1HlmFCw0"
+}

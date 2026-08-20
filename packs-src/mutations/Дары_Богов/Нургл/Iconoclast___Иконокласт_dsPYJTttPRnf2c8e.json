@@ -1,0 +1,50 @@
+{
+  "name": "Iconoclast / Иконокласт",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Нургл одаривает своего чемпиона презрением ко всему прекрасному и вознаграждает его за уничтожение ненавистных ему плодов тщеславия и самовлюблённости артистов. Когда он уничтожает предмет искусства, персонаж может пройти тест на от Cor−30 до Cor+30 в зависимости от качества предмета (по решению ГМа), чтобы восстановить одно Очко Бесчестия.",
+    "source": "Дары Нургл, d100 26…29",
+    "roll": "26…29",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "dsPYJTttPRnf2c8e",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020947,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!dsPYJTttPRnf2c8e"
+}

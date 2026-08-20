@@ -1,0 +1,50 @@
+{
+  "name": "Black Physician / Чёрный Врач",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Печально известный вирус Чёрных Врачей струится в крови чемпиона. За полное действие он может нанести себе 1 непоглощаемого R Dmg в руку, чтобы пустить себе кровь и заразить её брызгами до 3-х трупов не далее 2 м от себя. В начале его следующего Хода трупы встают как зомби, сохраняя все свои Характеристики, кроме A и I, которые опускаются до 10. Запас Ран зомби вдвое выше, чем был при жизни. Зомби теряет все свои Навыки и Таланты, кроме талантов владения оружием. Зомби слушаются приказов своего создателя и выполняют их буквально. Персонаж может контролировать до Cor.b зомби: если он создаст больше, неконтролируемые зомби будут враждебны всему, кроме других зомби.",
+    "source": "Дары Нургл, d100 63…66",
+    "roll": "63…66",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "feB0oqMmFgRlSYu9",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021064,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!feB0oqMmFgRlSYu9"
+}

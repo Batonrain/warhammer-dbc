@@ -1,0 +1,73 @@
+{
+  "name": "Retribution / Возмездие",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "7XIWvIQncI4e71zW",
+  "system": {
+    "kind": "hull",
+    "power": 0,
+    "space": 0,
+    "sp": 85,
+    "rarity": 0,
+    "quality": "common",
+    "hulls": "",
+    "aspects": "In-build: Бронированный нос, 1/0",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [
+      {
+        "key": "inbuild"
+      }
+    ],
+    "hull": {
+      "spaceMax": 130,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "Н1, ПБ3, ЛБ3, НП1",
+      "hullIntegrity": 110
+    },
+    "chars": {
+      "speed": 5,
+      "manoeuvrability": -5,
+      "detection": 10,
+      "voidShields": 0,
+      "armour": 22,
+      "turretRating": 4
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 0,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "JFrcW6peM9yWblH7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!JFrcW6peM9yWblH7"
+}

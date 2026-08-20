@@ -1,0 +1,50 @@
+{
+  "name": "Countenance of Tzeentch / Лик Тзинча",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Образ Архитектора Судеб, переменчивый и обманчивый, накладывается на внешность персонажа, придавая ему частичное сходство с его Богом. Он получает бонус +10 на все тесты Deceive и Scrutiny, поднимающийся до +30 против его союзников. Демоны Тзинча рангом ниже Герольда автоматически считают его одним из их рода и признают его авторитет в Командовании, если его Inf 30+ и ими не командует кто-то более могущественный.\n\nЗа свободное действие персонаж может потратить Очко Бесчестия, чтобы усилить сходство лика с оригиналом до предела, получив рейтинг Страха 3 до начала своего следующего Хода. Этот Страх не работает на других Тзинчитов, а Нурглиты, провалившие тест на Страх от него, вместо бросков на Шок в течение 1 Раунда должны перебрасывать Успехи на любые тесты, кроме атак по персонажу или тестов на то, чтобы убраться от него как можно дальше.",
+    "source": "Дары Тзинч, d100 1…5",
+    "roll": "1…5",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "Lci03nSWXLRbQ8ys",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019423,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Lci03nSWXLRbQ8ys"
+}

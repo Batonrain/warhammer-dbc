@@ -1,0 +1,72 @@
+{
+  "name": "Rite of Blood Rebirth / Ритуал Возрождения Крови",
+  "type": "ritual",
+  "img": "icons/svg/book.svg",
+  "folder": "Ty6J9LvdHEQWGLi2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
+    "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
+    "ritualType": "alchymantia",
+    "record": 0,
+    "assistMin": 0,
+    "assistMax": 0,
+    "procedure": "",
+    "result": "",
+    "cost": "",
+    "failureCost": "",
+    "testSkillScope": "group",
+    "testSkillKey": "scholasticLore",
+    "testSpecialty": "Occult",
+    "testChar": "int",
+    "testMod": 10
+  },
+  "_id": "5JXYbP08xScQf3Qg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "8rpzHtCoKsYNObQV",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "vHXhWb4BvD9yjzQr",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "Occult",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285534944,
+    "modifiedTime": 1786285534944,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!5JXYbP08xScQf3Qg"
+}

@@ -1,0 +1,50 @@
+{
+  "name": "Witch-Seeker / Ведьмоискатель",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Кхорн награждает своего чемпиона чутьём на колдунов и ведьм и знанием их бесчестных трусливых путей. Чемпион может определять псайкеров на нюх, ощущая их по неприятному запаху тестом Awareness+0, поднимающемся до Awareness+30, если псайкер поддерживает психосилу или манифестировал силы в течение этой сцены или боя. Он также получает бонус +30 на тесты Survival для выслеживания псайкеров, если он способен чуять их запах. На 3+ Успехах на определение псайкера персонаж также определяет психосилы, которые псайкер использовал, как если бы он Критически преуспел в тесте Пси-чутья.",
+    "source": "Дары Кхорн, d100 44…47",
+    "roll": "44…47",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "GAmzJhPpC820sYt8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019105,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!GAmzJhPpC820sYt8"
+}

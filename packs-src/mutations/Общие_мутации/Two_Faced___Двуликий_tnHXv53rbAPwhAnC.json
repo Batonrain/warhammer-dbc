@@ -1,0 +1,50 @@
+{
+  "name": "Two-Faced / Двуликий",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Одна половина лица и тела персонажа искажается мутациями, оставляя вторую половину нетронутой переменами. Мутации очень заметны, искажая кожу, отращивая рога, отростки, чешую или шерсть, изменяя форму и цвет глаз и даже отращивая дополнительные рудиментарные конечности (нефункциональные) по усмотрению ГМа, но в конечном счёте они сугубо косметические.",
+    "source": "Общие мутации, d100 19",
+    "roll": "19",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "tnHXv53rbAPwhAnC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122022224,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!tnHXv53rbAPwhAnC"
+}

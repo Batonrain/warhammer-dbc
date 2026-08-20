@@ -1,0 +1,50 @@
+{
+  "name": "Strange Voice / Странный Голос",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Порча, струящаяся сквозь тело персонажа, искажает его голос. Голос абсолютно случаен, разнясь от глубокого мощного хриплого баса до писклявого фальцета Гретчина, до тембра и высоты, свойственной ребёнку, а не взрослому, до способности общаться только шёпотом или только криком по усмотрению ГМа. По решению ГМа это может давать бонусы или штрафы на разные социальные взаимодействия.",
+    "source": "Общие мутации, d100 79",
+    "roll": "79",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "Sg0mQSuCUp96Moxw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122019887,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Sg0mQSuCUp96Moxw"
+}

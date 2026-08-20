@@ -1,0 +1,50 @@
+{
+  "name": "Immortal Beauty / Бессмертная Красота",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Лицо и тело персонажа слегка искажаются, приближаясь к его идеалу красоты. Когда он тяжело или критически ранен или лишился части тела, он получает Трейт Regeneration (1), при этом регенерировавшие участки всегда немного ближе к его идеалу красоты, чем были до ранения. Когда он легко ранен, лёгкие порезы, ушибы и ссадины сходят с него в течение секунд, но это не восстанавливает ему Раны, лишь косметически заживляя повреждения.",
+    "source": "Дары Слаанеш, d100 26…29",
+    "roll": "26…29",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "sBzuRTFAO2ZN2Kmt",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021983,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!sBzuRTFAO2ZN2Kmt"
+}

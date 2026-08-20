@@ -1,0 +1,76 @@
+{
+  "name": "Emperor / Император",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "7XIWvIQncI4e71zW",
+  "system": {
+    "kind": "hull",
+    "power": 0,
+    "space": 0,
+    "sp": 90,
+    "rarity": 0,
+    "quality": "common",
+    "hulls": "",
+    "aspects": "In-build: Ангарный отсек системы Юпитера (ПБ и ЛБ), 2/2. Limited: усиление брони носа",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [
+      {
+        "key": "inbuild"
+      },
+      {
+        "key": "limited"
+      }
+    ],
+    "hull": {
+      "spaceMax": 86,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "Н1, ПБ3, ЛБ3, НП1",
+      "hullIntegrity": 120
+    },
+    "chars": {
+      "speed": 3,
+      "manoeuvrability": 10,
+      "detection": 35,
+      "voidShields": 0,
+      "armour": 21,
+      "turretRating": 5
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 0,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "QTt3ZlQ8q6fiF32H",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!QTt3ZlQ8q6fiF32H"
+}

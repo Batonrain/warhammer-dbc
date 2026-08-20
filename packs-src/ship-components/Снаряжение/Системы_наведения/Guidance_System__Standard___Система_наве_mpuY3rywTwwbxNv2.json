@@ -1,0 +1,36 @@
+{
+  "name": "Guidance System: Standard / Система наведения: Стандартная",
+  "type": "cargo",
+  "img": "systems/warhammer-dbc/assets/item-icons/cargo.svg",
+  "folder": "yvp5jTBwwTZHoBBk",
+  "system": {
+    "cargoType": "equipment",
+    "lc": 0,
+    "quantity": 1,
+    "quality": "common",
+    "rarity": 0,
+    "baseRarity": "",
+    "description": "TR 20. Идёт в комплекте с боеголовкой; не меняет правила залпа.",
+    "notes": ""
+  },
+  "_id": "mpuY3rywTwwbxNv2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782082311827,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!mpuY3rywTwwbxNv2"
+}

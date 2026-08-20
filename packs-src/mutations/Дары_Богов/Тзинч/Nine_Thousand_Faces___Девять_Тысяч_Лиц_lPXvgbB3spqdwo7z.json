@@ -1,0 +1,50 @@
+{
+  "name": "Nine Thousand Faces / Девять Тысяч Лиц",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Владыка Обмана делает плоть своего слуги текучей и податливой, имитируя облики других. За полное действие он может перестроить своё тело, чтобы обрести внешность и голос другого известного ему персонажа той же расы. Потратив Очко Бесчестия, он может исказить свою внешность, приняв облик существа другой расы, раздувая или сжимая свою плоть, если это меняет его Размер. Его снаряжение не меняется.",
+    "source": "Дары Тзинч, d100 67…69",
+    "roll": "67…69",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "lPXvgbB3spqdwo7z",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021438,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!lPXvgbB3spqdwo7z"
+}
