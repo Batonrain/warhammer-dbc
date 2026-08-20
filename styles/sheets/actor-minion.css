@@ -1,0 +1,64 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Лист МИНЬОНА (корбук стр. 111-113): своя шапка, всё остальное — от листа
+   персонажа. Строка шапки короче хозяйской: Тип, Сила и Лояльность слева,
+   карточка Хозяина справа.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.warhammer-dbc .minion-header .header-row-minion {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px;
+}
+
+.warhammer-dbc .minion-header .minion-loyalty-cell .fate-values { align-items: center; }
+.warhammer-dbc .minion-header .minion-loyalty-sync {
+  margin-left: 4px;
+  padding: 0 5px;
+  cursor: pointer;
+}
+
+.warhammer-dbc .minion-speech-row {
+  margin-top: 3px;
+  font-style: italic;
+}
+
+/* ── Карточка Хозяина ──
+   Стоит на месте хозяйского блока ресурсов и работает как ссылка: курсор и
+   подсветка говорят, что по ней кликают, а не просто смотрят. */
+.warhammer-dbc .minion-master {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.warhammer-dbc .minion-master-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 10px;
+  min-width: 120px;
+  max-width: 190px;
+  cursor: pointer;
+  text-align: center;
+  border: 1px solid var(--wh-border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.warhammer-dbc .minion-master-card:hover { border-color: var(--wh-accent); }
+.warhammer-dbc .minion-master-card.empty { cursor: default; opacity: 0.75; }
+.warhammer-dbc .minion-master-card.empty:hover { border-color: var(--wh-border); }
+
+.warhammer-dbc .minion-master-img {
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+  border: 1px solid var(--wh-border);
+  border-radius: 50%;
+}
+.warhammer-dbc .minion-master-name { font-size: 0.9em; line-height: 1.15; }
+.warhammer-dbc .minion-master-label {
+  font-size: 0.72em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wh-text-mid);
+}

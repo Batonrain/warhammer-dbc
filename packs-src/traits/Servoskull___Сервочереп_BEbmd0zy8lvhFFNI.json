@@ -1,0 +1,51 @@
+{
+  "name": "Servoskull / Сервочереп",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Даёт Трейты Size (−2), Hoverer и Machine (Рейтинг по силе Миньона). Считается имеющим только одну руку — встроенное оружие (пистолет, компактную винтовку или нож) либо одноручный инструмент, который нельзя выпустить, но со всеми тестами на его использование идёт бонус +15. Несколько лёгких мехатентрилов сообща поднимают предметы Размером −2 и меньше, но использовать их и атаковать ими нельзя. Комплексный Трейт Миньона: стоит 2 Очка Трейтов, доступен только Миньону-Машине (корбук стр. 112).",
+    "notes": "",
+    "benefit": "Size (−2), Hoverer, Machine; одна «рука» со встроенным оружием и +15 на тесты с ним.",
+    "source": "миньоны",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "BEbmd0zy8lvhFFNI",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786913698330,
+    "modifiedTime": 1786913698330,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!BEbmd0zy8lvhFFNI"
+}

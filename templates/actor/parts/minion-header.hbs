@@ -1,0 +1,88 @@
+{{!-- Шапка Миньона (корбук стр. 111-113).
+
+      Короче хозяйской: ни Архетипа, ни Родного мира, ни Предсказания, ни
+      Стремлений — путь слуги определяет Талант Хозяина. Вместо них Лояльность,
+      Сила и Группа, а справа — аватар Хозяина, открывающий его лист. --}}
+<header class="sheet-header minion-header">
+  <div class="portrait-block">
+    <img class="profile-img" data-action="minionAvatar" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
+  </div>
+
+  <div class="header-main">
+    <div class="header-name-row">
+      <label class="header-label">Имя</label>
+      <input class="actor-name" name="name" type="text" value="{{actor.name}}" placeholder="Имя Миньона"/>
+    </div>
+
+    <div class="header-grid">
+      <div class="header-rows">
+        <div class="header-row-fixed header-row-minion">
+          <div class="header-cell">
+            <label title="Чем этот слуга думает: от группы идут Лояльность и максимум Миньонов">Тип Миньона</label>
+            <select name="system.minionType" class="minion-group-select">
+              <option value="">— выберите —</option>
+              {{#each minion.groupOptions as |g|}}
+              <option value="{{g.key}}" {{#if g.selected}}selected{{/if}}>{{g.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="header-cell">
+            <label title="Сила задаёт уровень Таланта, бюджеты создания и Редкость снаряжения">Сила Миньона</label>
+            <select name="system.minionTier" class="minion-tier-select">
+              <option value="">— выберите —</option>
+              {{#each minion.tierOptions as |t|}}
+              <option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="header-cell minion-loyalty-cell">
+            <label title="Базовая Лояльность равна Характеристике Хозяина{{#if minion.loyaltyFrom}} ({{minion.loyaltyFrom}}){{/if}} и меняется вместе с ней">Лояльность</label>
+            <div class="fate-values">
+              <input type="number" name="system.loyalty.value" value="{{minion.loyalty.value}}" min="0" max="{{minion.loyalty.max}}"/>
+              <span>/</span>
+              <input type="number" name="system.loyalty.max" value="{{minion.loyalty.max}}" min="0"/>
+              <button type="button" class="fate-btn minion-loyalty-sync" data-action="minionSyncLoyalty"
+                      title="Перечитать Лояльность у Хозяина{{#if minion.loyaltyFrom}} ({{minion.loyaltyFrom}}){{/if}}">🔄</button>
+            </div>
+          </div>
+
+          {{#if minion.isHorde}}
+          {{!-- У Орды Миньонов Ран нет вовсе: её место занимает Магнитуда,
+                равная бонусу Бесчестия Хозяина ×5 (стр. 113). --}}
+          <div class="header-cell">
+            <label title="Магнитуда Орды Миньонов = бонус Бесчестия Хозяина × 5">Магнитуда</label>
+            <div class="fate-values">
+              <input type="number" name="system.magnitude.value" value="{{minion.magnitude.value}}" min="0"/>
+              <span>/</span>
+              <input type="number" name="system.magnitude.max" value="{{minion.magnitude.max}}" min="0"/>
+            </div>
+          </div>
+          {{/if}}
+        </div>
+
+        {{#if minion.speech}}
+        <div class="header-row-fixed minion-speech-row">
+          <span class="gene-seed-hint">{{minion.speech}}</span>
+        </div>
+        {{/if}}
+      </div>
+
+      <div class="header-resources minion-master">
+        {{#if minion.master}}
+        <div class="minion-master-card" data-action="minionOpenMaster" title="Открыть лист Хозяина: {{minion.master.name}}">
+          <img class="minion-master-img" src="{{minion.master.img}}" alt=""/>
+          <div class="minion-master-name">{{minion.master.name}}</div>
+          <div class="minion-master-label">Хозяин</div>
+        </div>
+        {{else}}
+        <div class="minion-master-card empty">
+          <div class="minion-master-label">Хозяин не назначен</div>
+          <div class="gene-seed-hint">Миньон заводится кнопкой «+» в блоке МИНЬОНЫ на вкладке СОЦИУМ Хозяина.</div>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</header>

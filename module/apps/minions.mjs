@@ -2,10 +2,12 @@
 // ════════════════════════════════════════════════════════════════════════
 //  Миньоны (корбук стр. 111-113).
 //
-//  Миньон — НЕ отдельный тип актора: это обычный Персонаж или Демон, у
-//  которого проставлен Хозяин (system.masterUuid), тип, уровень и Лояльность.
-//  Лист у него свой обычный целиком — характеристики, навыки и снаряжение
-//  задаются по таблицам книги вручную, как у любого актора.
+//  Здесь остались только справочники групп и уровней да две связи, которыми
+//  пользуется Конструктор Механики: кто чей слуга и как меняется Лояльность.
+//  Всё остальное переехало: расчёты создания — в rules/minion-build.mjs, окно
+//  генератора — в apps/minion-creator.mjs, панель Хозяина — в
+//  sheets/tabs/minions-panel.mjs, а сам слуга стал типом актора `minion` со
+//  своим листом.
 //
 //  Ссылку хранит МИНЬОН, а не Хозяин, и список миньонов собирается перебором
 //  акторов. Хранить список на Хозяине значило бы держать одну связь в двух
@@ -17,8 +19,7 @@
 //  I у машины, W у демона.
 //
 //  Функции принимают актора и список акторов мира, а не game — поэтому
-//  проверяются без запуска Foundry. Foundry остаётся только в
-//  syncMinionLoyalty() и обработчиках панели.
+//  проверяются без запуска Foundry.
 // ════════════════════════════════════════════════════════════════════════
 
 export const MINION_TYPES = {
@@ -63,59 +64,4 @@ export function loyaltyAfterChange(minion, delta) {
   const max = Number(minion?.system?.loyalty?.max)   || 0;
   const next = cur + (Number(delta) || 0);
   return Math.max(0, max ? Math.min(max, next) : next);
-}
-
-/** Контекст панелей «МИНЬОН» и «МОИ МИНЬОНЫ» для вкладки ЗАПИСИ. */
-export function minionsContext(actor, actors = []) {
-  const s = actor?.system ?? {};
-  const masterUuid = s.masterUuid || "";
-  const byName = (a, b) => String(a.name).localeCompare(String(b.name), "ru");
-
-  return {
-    isMinionCapable: MINION_ACTOR_TYPES.includes(actor?.type),
-    canHaveMinions:  MASTER_ACTOR_TYPES.includes(actor?.type),
-    masterUuid,
-    // Хозяином может быть кто угодно из подходящих типов, кроме самого актора:
-    // сам себе Хозяином быть нельзя, и список не должен это предлагать.
-    masterOptions: [...actors]
-      .filter(a => MASTER_ACTOR_TYPES.includes(a?.type) && a.id !== actor?.id)
-      .sort(byName)
-      .map(a => ({ uuid: a.uuid, name: a.name, selected: a.uuid === masterUuid })),
-    minionTypeOptions: Object.entries(MINION_TYPES)
-      .map(([key, def]) => ({ key, label: def.label, selected: s.minionType === key })),
-    minionTierOptions: Object.entries(MINION_TIERS)
-      .map(([key, label]) => ({ key, label, selected: s.minionTier === key })),
-    minionLoyaltyValue: s.loyalty?.value ?? 0,
-    minionLoyaltyMax:   s.loyalty?.max   ?? 0,
-    myMinions: minionsOf(actor, actors).sort(byName).map(m => ({
-      uuid: m.uuid, name: m.name,
-      typeLabel: MINION_TYPES[m.system.minionType]?.label || "—",
-      tierLabel: MINION_TIERS[m.system.minionTier] || "—",
-      loyaltyValue: m.system.loyalty?.value ?? 0,
-      loyaltyMax:   m.system.loyalty?.max   ?? 0
-    }))
-  };
-}
-
-/** Кнопка «🔄»: пересчитать Лояльность (и текущую, и максимум) от Хозяина. */
-export async function syncMinionLoyalty(actor) {
-  const masterUuid = actor.system?.masterUuid;
-  if (!masterUuid) return ui.notifications?.warn("У этого актора не выбран Хозяин.");
-  const master = await fromUuid(masterUuid).catch(() => null);
-  if (!master) return ui.notifications?.warn("Хозяин не найден — возможно, был удалён.");
-  if (!actor.system?.minionType) return ui.notifications?.warn("Не выбран Тип миньона.");
-  const base = baseLoyaltyFor(master, actor.system.minionType);
-  await actor.update({ "system.loyalty.max": base, "system.loyalty.value": base });
-}
-
-/** Обработчики панели — общие для листов Персонажа, Демона и Принца Демонов. */
-export function activateMinionListeners(html, actor) {
-  html.find(".minion-loyalty-sync-btn").on("click", async ev => {
-    ev.preventDefault();
-    await syncMinionLoyalty(actor);
-  });
-  html.find(".minion-open-link").on("click", async ev => {
-    const doc = await fromUuid(ev.currentTarget.dataset.uuid).catch(() => null);
-    doc?.sheet?.render(true);
-  });
 }
