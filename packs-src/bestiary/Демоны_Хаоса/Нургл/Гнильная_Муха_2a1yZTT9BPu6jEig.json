@@ -1910,7 +1910,55 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Гнильная Муха (стр. 16)",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовая",
+                "hint": "Обычная Гнильная Муха из статблока."
+              },
+              {
+                "key": "elevated",
+                "label": "Возвышенная Гнильная Муха",
+                "hint": "WS до 34, I до 12, W до 45, F до 14, Раны до 25, Athletics+20, Dodge+10, Linguistics (True Tongue); Таланты Double Team, Hard Target, Sprint.",
+                "system": {
+                  "characteristics.ws.base": 34,
+                  "characteristics.int.base": 12,
+                  "characteristics.wp.base": 45,
+                  "characteristics.fel.base": 14,
+                  "wounds.max": 25,
+                  "wounds.value": 25,
+                  "skills.athletics.rank": "veteran",
+                  "skills.dodge.rank": "trained"
+                },
+                "groupSkills": [
+                  {
+                    "group": "linguistics",
+                    "specialty": "True Tongue",
+                    "rank": "knows"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.icosn3iRFLevn5hw",
+                  "Compendium.warhammer-dbc.talents.OeCK9J0LbqRikxFd",
+                  "Compendium.warhammer-dbc.talents.hJFYGzxmhxwJ1Kx9"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

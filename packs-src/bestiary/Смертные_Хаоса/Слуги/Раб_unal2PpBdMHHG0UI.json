@@ -698,7 +698,39 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Раб (стр. 41)",
+        "groups": [
+          {
+            "key": "training",
+            "label": "Обработка",
+            "mode": "one",
+            "default": "broken",
+            "options": [
+              {
+                "key": "broken",
+                "label": "Сломленный",
+                "hint": "Прошёл обработку надзирателями: Талант «Сломленный». Реквизиция по Редкости −3."
+              },
+              {
+                "key": "unbroken",
+                "label": "Необученный",
+                "hint": "Без Таланта «Сломленный»: волю ещё не выбили. Реквизиция по Редкости −4.",
+                "remove": [
+                  {
+                    "type": "talent",
+                    "name": "Сломленный"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

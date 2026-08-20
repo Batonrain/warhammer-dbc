@@ -1253,7 +1253,49 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Нурглинги (стр. 8)",
+        "groups": [
+          {
+            "key": "scale",
+            "label": "Масштаб",
+            "mode": "one",
+            "default": "swarm",
+            "options": [
+              {
+                "key": "swarm",
+                "label": "Рой",
+                "hint": "Профиль статблока: бурлящая масса размером с человека."
+              },
+              {
+                "key": "single",
+                "label": "Одиночный Нурглинг",
+                "hint": "Размер −2, SPD 0 (0,5/1/1,5/3), 2 Раны, W до 25; атаки бьют 1d5 вместо 1d10 и не дают Экстремального Урона. Теряет Fear и Swarm.",
+                "system": {
+                  "size": -2,
+                  "characteristics.wp.base": 25,
+                  "wounds.max": 2,
+                  "wounds.value": 2
+                },
+                "remove": [
+                  {
+                    "type": "trait",
+                    "name": "Fear (1) / Страх (1)"
+                  },
+                  {
+                    "type": "trait",
+                    "name": "Swarm (1d5)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

@@ -1031,6 +1031,240 @@
         "modifiedTime": null
       },
       "_key": "!actors.items!asiavOkfoAvW3qk7.sgKpsPFr3JOCKwDv"
+    },
+    {
+      "name": "Нож",
+      "type": "weapon",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "weaponClass": "melee",
+        "weaponType": "lowtech",
+        "range": 1,
+        "balance": 0,
+        "grips": "1р (Об)",
+        "profileLabel": "Нож",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d5",
+        "damageType": "rending",
+        "penetration": 0,
+        "quality": "common",
+        "availability": -3,
+        "weight": 0.2,
+        "attackBonus": 0,
+        "special": "Нож; Хват 1р [Об]; Досягаемость 1",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "precise"
+          },
+          {
+            "key": "primitive"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        }
+      },
+      "_id": "r3qz0Bn88X8g7EDA",
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "Bh2eMXBlRSXAdCgx": 3
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "gripsAuto": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "13.346",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1784645463257,
+        "modifiedTime": 1784646561800,
+        "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+      },
+      "_key": "!actors.items!asiavOkfoAvW3qk7.r3qz0Bn88X8g7EDA"
+    },
+    {
+      "name": "Пилотопор",
+      "type": "weapon",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "weaponClass": "melee",
+        "weaponType": "chain",
+        "range": 3,
+        "balance": -1,
+        "grips": "1р (2р, Кл)",
+        "profileLabel": "Топор",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+3",
+        "damageType": "rending",
+        "penetration": 2,
+        "quality": "common",
+        "availability": 0,
+        "weight": 1.9,
+        "attackBonus": 0,
+        "special": "Топор; Хват 1р [2р, Кл]; Досягаемость 3",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "tearing"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        }
+      },
+      "_id": "70ZI2fYQLwp1MQFo",
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "Bh2eMXBlRSXAdCgx": 3
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "gripsAuto": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "13.346",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1784645463257,
+        "modifiedTime": 1784646561800,
+        "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+      },
+      "_key": "!actors.items!asiavOkfoAvW3qk7.70ZI2fYQLwp1MQFo"
+    },
+    {
+      "name": "Импровизированная Броня",
+      "type": "armor",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "armorType": "simple",
+        "stacks": false,
+        "maxAgility": 40,
+        "equipped": false,
+        "head": 0,
+        "body": 3,
+        "leftArm": 2,
+        "rightArm": 2,
+        "leftLeg": 2,
+        "rightLeg": 2,
+        "quality": "common",
+        "availability": -3,
+        "weight": 6,
+        "properties": [
+          "primitive",
+          "soft"
+        ],
+        "strengthBonus": 0,
+        "wpBonus": 0,
+        "special": ""
+      },
+      "_id": "aSMYfymHR9RFscAb",
+      "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "TcTwVVgsrGiUR4X7": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "13.346",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1781990283526,
+        "modifiedTime": 1782752979796,
+        "lastModifiedBy": "0avJJRhWNcjVNZyk"
+      },
+      "_key": "!actors.items!asiavOkfoAvW3qk7.aSMYfymHR9RFscAb"
     }
   ],
   "prototypeToken": {
@@ -1207,6 +1441,116 @@
                 },
                 "add": [
                   "Compendium.warhammer-dbc.tools.Jt9L6Db9UgNmSElz"
+                ]
+              }
+            ]
+          },
+          {
+            "key": "melee",
+            "label": "Рукопашное оружие",
+            "mode": "one",
+            "default": "chainaxe",
+            "options": [
+              {
+                "key": "chainaxe",
+                "label": "Пилотопор",
+                "hint": "Как на листе."
+              },
+              {
+                "key": "chainsword",
+                "label": "Пиломеч",
+                "hint": "Заменяет «Пилотопор».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Пилотопор"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.pcGw5BXNa6babCXF"
+                ]
+              },
+              {
+                "key": "shockMaul",
+                "label": "Шоковая Палица",
+                "hint": "Заменяет «Пилотопор».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Пилотопор"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.Ka5brh3MV2wUKBpN"
+                ]
+              },
+              {
+                "key": "mace",
+                "label": "Булава",
+                "hint": "Заменяет «Пилотопор».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Пилотопор"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.NBfTELkUW2lopbDw"
+                ]
+              },
+              {
+                "key": "warhammer",
+                "label": "Боевой Молот",
+                "hint": "Заменяет «Пилотопор».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Пилотопор"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.4zlZFSoy2Rbr7Srx"
+                ]
+              }
+            ]
+          },
+          {
+            "key": "pistol",
+            "label": "Пистолет",
+            "mode": "one",
+            "default": "autopistol",
+            "options": [
+              {
+                "key": "autopistol",
+                "label": "Автопистолет",
+                "hint": "Как на листе."
+              },
+              {
+                "key": "laspistol",
+                "label": "Лазпистолет",
+                "hint": "Заменяет «Автопистолет».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автопистолет"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.EOu2CvpyKh10VTt9"
+                ]
+              },
+              {
+                "key": "shotgunPistol",
+                "label": "Дробовик Пистолет",
+                "hint": "Заменяет «Автопистолет».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автопистолет"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.j6HFZ05x1TcfemuF"
                 ]
               }
             ]

@@ -1,0 +1,51 @@
+{
+  "name": "Sorcerous Barrier / Чародейский Барьер",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Демоны Тзинча защищены мерцающим барьером разноцветного колдовского пламени, что порой вспыхивает вокруг них, отражая атаки.",
+    "notes": "",
+    "benefit": "Не перегружающийся колдовской щит-купол 1-35. Включается и выключается за свободное действие.",
+    "source": "Демон Тзинча",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Хаос, I. ДЕМОНЫ («Особенности Демонов», стр. 5)"
+  },
+  "_id": "o7FLuy0NJp3Qlrtv",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!o7FLuy0NJp3Qlrtv"
+}

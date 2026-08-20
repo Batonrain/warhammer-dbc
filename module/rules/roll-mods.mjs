@@ -27,3 +27,37 @@ export function ruleRollModsHtml(actor, context) {
       <div class="atk-mods-list">${rows}</div></div>`
   };
 }
+
+/**
+ * Перебросы, доступные на этом тесте: Локусы Герольдов и всё, что книга даёт
+ * тем же оборотом («раз в Раунд перебросить любой тест A»).
+ *
+ * Радиокнопки, а не галочки: два переброса на один бросок не складываются —
+ * игрок выбирает, каким воспользоваться. «Без переброса» стоит по умолчанию,
+ * потому что переброс почти всегда расходуемый: раз в Раунд, за Очко Бесчестия.
+ *
+ * Сколько перебросов уже потрачено за Раунд, здесь не считается: система не
+ * ведёт учёт Раундов на акторе, и молчаливый счётчик соврал бы. Это остаётся
+ * за столом, как и прежде.
+ */
+export function ruleRerollsHtml(actor, context) {
+  // Только СВОИ перебросы: навязанные цели бросает она сама, у себя.
+  const rerolls = (resolveTest({ actor, ...context }).rerolls || []).filter(r => r.who !== "target");
+  if (!rerolls.length) return { html: "", rerolls };
+  const rows = rerolls.map((r, i) => `
+    <label class="attack-mod-check rule-reroll">
+      <input type="radio" name="rule-reroll" class="rule-reroll-opt" data-idx="${i}"
+             data-mode="${r.mode}" data-rolls="${r.rolls}"/>
+      <span>${r.label} <b>(${r.mode === "keepWorst" ? "худший" : "лучший"} из ${r.rolls})</b></span>
+    </label>`).join("");
+  return {
+    rerolls,
+    html: `<div class="atk-dlg-modifiers rule-rerolls">
+      <div class="atk-mods-title">Перебросы</div>
+      <div class="atk-mods-list">
+        <label class="attack-mod-check rule-reroll">
+          <input type="radio" name="rule-reroll" class="rule-reroll-opt" data-idx="-1" checked/>
+          <span>без переброса</span>
+        </label>${rows}</div></div>`
+  };
+}

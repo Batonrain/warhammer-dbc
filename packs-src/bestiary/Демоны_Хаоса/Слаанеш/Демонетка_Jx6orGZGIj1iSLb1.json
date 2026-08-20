@@ -1946,7 +1946,169 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Демонетка (стр. 11)",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовая",
+                "hint": "Рядовая Демонетка из статблока."
+              },
+              {
+                "key": "seductressWs",
+                "label": "Соблазнительница: клинки",
+                "hint": "+10 WS, +5 A, Dodge+20; Crippling Strike, Precise Blow, Show-Off.",
+                "system": {
+                  "characteristics.int.base": 34,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 44,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.ws.base": "+10",
+                  "characteristics.ag.base": "+5",
+                  "skills.dodge.rank": "veteran"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.cAnFwFZLJQiFgP32",
+                  "Compendium.warhammer-dbc.talents.hgr4BacJ2x2F3Nwq",
+                  "Compendium.warhammer-dbc.talents.eGGyH6i9CZ26emZs"
+                ]
+              },
+              {
+                "key": "seductressAg",
+                "label": "Соблазнительница: ловкость",
+                "hint": "+5 WS, +10 A, Dodge+20; Precise Blow, Razor's Edge, Riding the Momentum.",
+                "system": {
+                  "characteristics.int.base": 34,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 44,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.ws.base": "+5",
+                  "characteristics.ag.base": "+10",
+                  "skills.dodge.rank": "veteran"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.hgr4BacJ2x2F3Nwq",
+                  "Compendium.warhammer-dbc.talents.qwbNFMxqpgbGKKuo",
+                  "Compendium.warhammer-dbc.talents.mbCwHtdHvkLV8fST"
+                ]
+              },
+              {
+                "key": "seductressStrength",
+                "label": "Соблазнительница: сила",
+                "hint": "+5 WS, +10 S, Athletics+10; Disarm, Pounce, Hamstring.",
+                "system": {
+                  "characteristics.int.base": 34,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 44,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.ws.base": "+5",
+                  "characteristics.s.base": "+10",
+                  "skills.athletics.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.1WYssoM7RId2SxUJ",
+                  "Compendium.warhammer-dbc.talents.E3JPxSvwwvlsTCOl",
+                  "Compendium.warhammer-dbc.talents.zljFiU00FP2qPkKi"
+                ]
+              },
+              {
+                "key": "seductressThrow",
+                "label": "Соблазнительница: дротики",
+                "hint": "+10 BS, +5 A, Awareness+10; Balearic, Deadeye Shot, Running Throw.",
+                "system": {
+                  "characteristics.int.base": 34,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 44,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.bs.base": "+10",
+                  "characteristics.ag.base": "+5",
+                  "skills.awareness.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.NKhllB954TtF9SrN",
+                  "Compendium.warhammer-dbc.talents.Ix5BHGUhyaJti1GN",
+                  "Compendium.warhammer-dbc.talents.qiUvybWEQNUjrCXL"
+                ]
+              },
+              {
+                "key": "seductressAcrobat",
+                "label": "Соблазнительница: акробатика",
+                "hint": "+10 A, +5 P, Charm+20, Dodge+20; Assassin Strike, Catfall, Jumper.",
+                "system": {
+                  "characteristics.int.base": 34,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 44,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.ag.base": "+10",
+                  "characteristics.per.base": "+5",
+                  "skills.charm.rank": "veteran",
+                  "skills.dodge.rank": "veteran"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.HWCaGGK0DHjzQ7MO",
+                  "Compendium.warhammer-dbc.talents.wpXWVsFxaMd35EKJ",
+                  "Compendium.warhammer-dbc.talents.ZQyRh77wlnBDlDJb"
+                ]
+              },
+              {
+                "key": "seductressCharm",
+                "label": "Соблазнительница: обольщение",
+                "hint": "+5 A, +10 F, Charm+20, Command+0, Deceive+10; Bring It Down!, Mimic.",
+                "system": {
+                  "characteristics.int.base": 34,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": "+10",
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.ag.base": "+5",
+                  "skills.charm.rank": "veteran",
+                  "skills.command.rank": "knows",
+                  "skills.deceive.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.KDknoeFwdwTPf4Vl",
+                  "Compendium.warhammer-dbc.talents.XDrQdNmw2L2rIqXa"
+                ]
+              },
+              {
+                "key": "seeker",
+                "label": "Искатель (верхом на Скакуне Слаанеш)",
+                "hint": "P до 45, W до 41, Survival+10; Таланты Mount Sense и Hussar.",
+                "system": {
+                  "characteristics.per.base": 45,
+                  "characteristics.wp.base": 41,
+                  "skills.survival.rank": "trained"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.talents.rB4GcZ6DvXJBSrMi",
+                  "Compendium.warhammer-dbc.talents.Kv5ylZ21Jz7GUIgV"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,
