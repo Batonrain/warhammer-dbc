@@ -322,6 +322,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", armorType: "simple", stacks: false,
       maxAgility: 100, propRatings: {}, apSecond: {}, equipped: false,
+      // Выключаемая Силовая броня (data/item/armor.mjs): умолчание true.
+      active: true,
       head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
       quality: "common", availability: 0, weight: 0, properties: [],
       strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
