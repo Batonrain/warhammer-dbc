@@ -88,7 +88,10 @@
   <div class="req-groups" data-req="req">{{{ritualReqHtml}}}</div>
 </div>
 
-{{!-- Требования к ассистентам: тот же конструктор, отдельный набор групп --}}
+{{!-- Требования к ассистентам: тот же конструктор, отдельный набор групп.
+      При вилке «0—0» ритуал проводится в одиночку — блок выключен целиком:
+      требовать нечего с тех, кого не позовут. --}}
+{{#if ritualHasAssists}}
 <div class="item-section">
   <div class="item-section-title">
     ТРЕБОВАНИЯ К АССИСТЕНТАМ
@@ -100,6 +103,7 @@
   <div class="trait-fx-hint">Кого можно взять в помощники. Пусто — годится любой (кроме общего правила стр. 25: тот же Навык хотя бы на «Знает»).</div>
   <div class="req-groups" data-req="assistReq">{{{ritualAssistReqHtml}}}</div>
 </div>
+{{/if}}
 
 <div class="item-section">
   <div class="item-section-title">РИТУАЛ</div>
