@@ -46,7 +46,54 @@
   },
   "folder": "QoiEzJ5FFywJIo98",
   "_id": "7TsG5lXNAQHElfTD",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Bionic Heart / Бионическое Сердце (перенесено)",
+      "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+      "disabled": true,
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.t.totalFx",
+            "type": "add",
+            "value": 1,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "JDSHBqateyh1YzMx",
+      "type": "base",
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786993505099,
+        "modifiedTime": 1786993505099,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!7TsG5lXNAQHElfTD.JDSHBqateyh1YzMx"
+    }
+  ],
   "sort": 0,
   "ownership": {
     "default": 0,

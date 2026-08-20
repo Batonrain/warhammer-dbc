@@ -915,6 +915,12 @@
 .warhammer-dbc .godgift-god {
   font-size: 0.8em; text-align: center; color: var(--wh-accent, #4dffa6); white-space: nowrap;
 }
+/* Выпавшая субмутация (стр. 440) — рядом с названием мутации и над описанием. */
+.warhammer-dbc .godgift-sub { font-size: 0.85em; color: var(--wh-accent, #4dffa6); opacity: 0.9; }
+.warhammer-dbc .godgift-subtext {
+  margin-bottom: 4px; padding-left: 6px;
+  border-left: 2px solid var(--wh-accent, #4dffa6);
+}
 
 /* ── Навигатор ─────────────────────────────────────────────── */
 .warhammer-dbc .nav-add-btn {

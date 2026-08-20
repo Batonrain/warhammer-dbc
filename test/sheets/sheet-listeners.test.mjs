@@ -99,7 +99,7 @@ describe("лист навешивает слушатели вкладок", () =
       ".skill-rank-select:change", ".grant-toggle[data-talent]:click",  // РАЗВИТИЕ
       ".haem-advance-btn:click", ".haem-toggle-btn:click",              // ГЕМУНКУЛ
       ".elite-pick-btn:click", ".elite-add-btn:click",                  // шапка
-      ".stance-radio:change", ".technique-btn:click",                   // БОЙ
+      ".stance-radio:change", ".base-radio:change", ".technique-btn:click", // БОЙ
       ".weapon-attack-roll:click", ".pain-absorb-btn:click",
       ".apt-char-add-btn:click", ".fatigue-add-btn:click"               // уже вынесенные
     ]) expect(handlers, key).toHaveProperty(key);
@@ -456,6 +456,15 @@ describe("вкладка БОЙ", () => {
     await handlers[".stance-radio:change"](ev({}, "aggressive"));
 
     expect(sheet.actor.updates[0]).toEqual({ "system.meleeStance": "aggressive" });
+  });
+
+  it("переключатель Базы пишет её в актора", async () => {
+    const sheet = sheetFor(fighter());
+    const handlers = wire(sheet);
+
+    await handlers[".base-radio:change"](ev({}, "charge"));
+
+    expect(sheet.actor.updates[0]).toEqual({ "system.meleeBase": "charge" });
   });
 
   it("состязательный приём открывает свой диалог, а не окно атаки", () => {
