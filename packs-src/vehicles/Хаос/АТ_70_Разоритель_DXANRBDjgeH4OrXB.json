@@ -1,7 +1,7 @@
 {
   "name": "АТ-70 Разоритель",
   "type": "vehicle",
-  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-machines/at-70-razoritel.webp",
   "folder": "jZY32SR34Yij7h3k",
   "system": {
     "vehicleClass": "АТ-70",

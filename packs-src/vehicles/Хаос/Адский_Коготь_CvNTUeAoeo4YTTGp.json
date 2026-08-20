@@ -1,7 +1,7 @@
 {
   "name": "Адский Коготь",
   "type": "vehicle",
-  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-machines/adskiy-kogot.webp",
   "folder": "jZY32SR34Yij7h3k",
   "system": {
     "vehicleClass": "Hell Talon",
