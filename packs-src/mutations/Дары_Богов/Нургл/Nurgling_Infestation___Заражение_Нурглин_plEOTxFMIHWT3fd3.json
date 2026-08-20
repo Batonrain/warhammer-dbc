@@ -1,0 +1,50 @@
+{
+  "name": "Nurgling Infestation / Заражение Нурглингами",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раны персонажа открывают крохотные порталы в царство Нургла, сквозь которые пробираются в реальность его слуги. Когда персонаж получает непоглощённый урон, рядом с ним манифестируется Нурглинг в Истинной Форме, дружественный ему и считающий его своим командиром. Если непоглощённый урон был 3 или выше, количество Нурглингов увеличивается до 1d5, а если он был 7 или выше — до 1d10.",
+    "source": "Дары Нургл, d100 74…77",
+    "roll": "74…77",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "plEOTxFMIHWT3fd3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021767,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!plEOTxFMIHWT3fd3"
+}

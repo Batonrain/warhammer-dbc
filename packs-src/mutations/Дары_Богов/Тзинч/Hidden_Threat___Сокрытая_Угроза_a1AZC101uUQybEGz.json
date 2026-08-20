@@ -1,0 +1,50 @@
+{
+  "name": "Hidden Threat / Сокрытая Угроза",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "5KL7j88ys3Dly6AK",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Вуаль обмана скрывает внезапную атаку чемпиона Тзинча от его цели. Он может потратить Очко Бесчестия, чтобы дать своей следующей атаке тип Незримое, скрывая свои движения, звуки и визуальные следы атаки за божественной иллюзией. Тесты пси-чутья или ноосферного сканирования на засекание такой атаки получают штраф −50. Сокрытие работает как морок на разум наблюдателей и не действует на машины и существ, иммунных к телепатии.",
+    "source": "Дары Тзинч, d100 81…84",
+    "roll": "81…84",
+    "god": "tzeentch",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "a1AZC101uUQybEGz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020603,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!a1AZC101uUQybEGz"
+}

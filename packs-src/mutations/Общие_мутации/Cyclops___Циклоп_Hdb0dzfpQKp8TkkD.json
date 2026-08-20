@@ -1,0 +1,50 @@
+{
+  "name": "Cyclops / Циклоп",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Один глаз персонажа затягивается кожей и исчезает. Это даёт ему штраф −5 на тесты зрения, и любые попытки определить дистанцию на глаз без авточувств шлема проваливаются. Персонаж время от времени видит будущее в исчезнувшем глазу, но только будущее, в котором он умирает. Это даёт дополнительный шанс на Избегание от атак, которые имеют шанс опустить персонажа до −7 и меньше Ран — он может Избегать, даже если атака внезапная, и Избегать два раза, если знает об атаке (это не даёт доп. реакции). Особо ужасные видения смерти могут пошатнуть персонажа: по решению Мастера он должен пройти тест на W или в свой следующий Ход потерять одно полудействие.",
+    "source": "Общие мутации, d100 21",
+    "roll": "21",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "Hdb0dzfpQKp8TkkD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122019214,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Hdb0dzfpQKp8TkkD"
+}

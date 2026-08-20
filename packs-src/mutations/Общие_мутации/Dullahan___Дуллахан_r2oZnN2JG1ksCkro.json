@@ -1,0 +1,50 @@
+{
+  "name": "Dullahan / Дуллахан",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Тело персонажа исчезает в другом измерении, оставляя только голову с гладкой кожей там, где была шея. Персонаж уменьшает свой Размер до −2, но его SPD рассчитывается как для размера 0. Все попадания по нему считаются попаданиями в голову. Он всё ещё нуждается в еде, воде и воздухе, но все его органы находятся в другом измерении. Его волосы превращаются в длинные тонкие щупальца, неотличимые от нормальных волос. Индивидуально слишком слабые, они могут использовать инструменты и оружие, считаясь как Трейт Multiple Arms (6), но для того, чтобы стоять, персонаж использует 2 из своих «конечностей», а чтобы ходить — 4. Волосы-щупальца не прочнее обычных волос, но они регенерируют любые повреждения в считанные секунды.",
+    "source": "Общие мутации, d100 30",
+    "roll": "30",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "r2oZnN2JG1ksCkro",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122021885,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!r2oZnN2JG1ksCkro"
+}

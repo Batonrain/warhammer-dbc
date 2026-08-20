@@ -1,0 +1,50 @@
+{
+  "name": "The Hunter / Загонщик",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Псарни Кровавого Бога связаны с душой его чемпиона, ожидая его приказа, чтобы наброситься на свою излюбленную дичь. Если в пределах видимости чемпиона есть псайкер, он может за полное действие потратить Очко Бесчестия и призвать Гончую Плоти в Истинной Форме. Гончая действует в его инициативу и нападает на ближайшего псайкера. Убив свою добычу, гончая возвращается в Варп.",
+    "source": "Дары Кхорн, d100 81…84",
+    "roll": "81…84",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "cSEite9LGCwihpKz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020835,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!cSEite9LGCwihpKz"
+}

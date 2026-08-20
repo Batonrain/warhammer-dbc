@@ -1,0 +1,50 @@
+{
+  "name": "Janus / Янус",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Пара глаз и рот вырастают на затылке персонажа, проявляясь в виде визора или линз и вокс-решётки на его броне, если она закрывает это место. За полудействие он может заставить любой из них исчезнуть с затылка и вырасти где угодно на его теле, аналогично проявляясь сквозь броню. Дополнительные глаза могут обеспечивать ему обзор сзади или за углом, а дополнительный рот может говорить независимо от основного, несмотря на то, что он не связан с его голосовыми связками и лёгкими, позволяя, кроме прочего, одновременно общаться и зачитывать ритуалы. Дополнительный рот не приспособлен для еды и питья.",
+    "source": "Общие мутации, d100 40",
+    "roll": "40",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "eLDRGEq34e06UAYC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122020983,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!eLDRGEq34e06UAYC"
+}

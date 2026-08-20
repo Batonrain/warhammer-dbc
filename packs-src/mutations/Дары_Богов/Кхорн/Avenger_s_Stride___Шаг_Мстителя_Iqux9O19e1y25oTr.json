@@ -1,0 +1,50 @@
+{
+  "name": "Avenger's Stride / Шаг Мстителя",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "bn1lwhxhWG4mrJIl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Время и пространство изгибаются под мощью ненависти и гнева чемпиона, напитанные его болью. Раз в Раунд, когда чемпион получает непоглощённый урон от Ненавистного врага с расстояния до дистанции полудвижения, он может подвигаться к нему на расстояние до полудвижения и совершить по нему стандартную рукопашную атаку. Это движение не вызывает свободные атаки. Движение происходит в искусственном времени и для наблюдателей выглядит как телепортация.",
+    "source": "Дары Кхорн, d100 67…69",
+    "roll": "67…69",
+    "god": "khorne",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "Iqux9O19e1y25oTr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019275,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Iqux9O19e1y25oTr"
+}

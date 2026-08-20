@@ -1,0 +1,35 @@
+{
+  "name": "Warhead: Sonic (Eldar) / Боеголовка: Звуковая (эльдар)",
+  "type": "cargo",
+  "img": "systems/warhammer-dbc/assets/item-icons/cargo.svg",
+  "folder": "9IUXJFJLiOCRnPuh",
+  "system": {
+    "cargoType": "ammo",
+    "lc": 1,
+    "quantity": 1,
+    "quality": "common",
+    "rarity": 5,
+    "baseRarity": "",
+    "description": "SPD 10, Урон 2d10+5, Крит 10+, Дальн. 20. Terminal Penetration (5); урон игнорирует броню."
+  },
+  "_id": "aXweqA8NO00jG8F7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782082311827,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!aXweqA8NO00jG8F7"
+}

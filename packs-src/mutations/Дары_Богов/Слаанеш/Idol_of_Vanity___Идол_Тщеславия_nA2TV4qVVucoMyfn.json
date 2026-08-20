@@ -1,0 +1,50 @@
+{
+  "name": "Idol of Vanity / Идол Тщеславия",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "MV2Y8wtkSBP3CqJw",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Обожание и восхищение последователей питают чемпиона их силой. Один раз в Раунд персонаж может получить бонус +5 к одному тесту за каждого подчинённого или Миньона или +10 за каждую орду под его контролем, что способны его видеть, но взамен каждый подчинённый, Миньон или орда получают штраф −10 на все тесты до начала следующего Хода персонажа. Это засекается пси-чутьём как психосила.",
+    "source": "Дары Слаанеш, d100 81…84",
+    "roll": "81…84",
+    "god": "slaanesh",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "nA2TV4qVVucoMyfn",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122021565,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!nA2TV4qVVucoMyfn"
+}

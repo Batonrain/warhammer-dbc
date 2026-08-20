@@ -1,0 +1,50 @@
+{
+  "name": "Organ of Chaos / Орган Хаоса",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Какая-то часть тела персонажа замещается частью случайного демона по усмотрению ГМа, например рога Кровопускателя, когти Фурии, язык демонетки или глаз Чумоноса; для персонажа с Покровительством Бога это часть одного из демонов его Бога. Даёт Трейт Unnatural Characteristic (+1) соответственно заменённому органу и демону по решению ГМа и незначительную способность, например, язык Демонетки может дать Unnatural F (+1), и поцелуй персонажа считается попаданием со свойством Hallucinogenic (0).\n\nОрган может быть явно видимым или выглядеть как нормальный, проявляя свою истинную природу только в драматические моменты, вроде вызова Прорыва, впадения в Ярость, Критического Попадания и т. п. Если он явно виден по умолчанию, в драматические моменты он проявляется сильнее, по решению ГМа.",
+    "source": "Общие мутации, d100 23…24",
+    "roll": "23…24",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "UxwqSTbL0hbBcGJO",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122020084,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!UxwqSTbL0hbBcGJO"
+}

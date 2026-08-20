@@ -1,0 +1,50 @@
+{
+  "name": "Fusion / Слияние",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Боги даровали персонажу способность вселяться в чужие тела. Он получает Трейт Possession. Если он успешно проводит атаку Одержимостью, его тело и снаряжение становятся бесплотными и втягиваются в хост, материализуясь обратно рядом с хостом, когда он покидает его, будь это по собственной воле или если Хост был уничтожен. Он не может быть внутри хоста дольше Cor.b часов в день, покидая его, если достигает дневного лимита.",
+    "source": "Общие мутации, d100 101…104",
+    "roll": "101…104",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "5ptME0bBf9Co4XoQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122018587,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!5ptME0bBf9Co4XoQ"
+}

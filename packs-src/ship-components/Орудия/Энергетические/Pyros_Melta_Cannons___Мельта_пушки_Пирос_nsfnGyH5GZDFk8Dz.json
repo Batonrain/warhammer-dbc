@@ -1,0 +1,69 @@
+{
+  "name": "Pyros Melta Cannons / Мельта-пушки Пирос",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "uAcNrAEAaTsG5EhG",
+  "system": {
+    "kind": "weapon",
+    "power": 9,
+    "space": 6,
+    "sp": 1,
+    "rarity": 0,
+    "quality": "common",
+    "hulls": "Все",
+    "aspects": "",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [],
+    "hull": {
+      "spaceMax": 0,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "",
+      "hullIntegrity": 0
+    },
+    "chars": {
+      "speed": 0,
+      "manoeuvrability": 0,
+      "detection": 0,
+      "voidShields": 0,
+      "armour": 0,
+      "turretRating": 0
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 6,
+      "damage": "1d10+4",
+      "crit": 4,
+      "range": 4,
+      "arc": ""
+    }
+  },
+  "_id": "nsfnGyH5GZDFk8Dz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782040606538,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!nsfnGyH5GZDFk8Dz"
+}

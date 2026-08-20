@@ -1,0 +1,50 @@
+{
+  "name": "Vulture / Стервятник",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Агония и отчаяние умирающих питают чемпиона силой. Когда в пределах 7м от него находится хотя бы три персонажа с −5 Ран или меньше или свежих трупа, умерших в течение того же боя или сцены, но не от эффектов, что уничтожают их тела или головы, персонаж в начале своего Хода получает одно Очко Бесчестия, которое пропадёт в начале его следующего Хода, если он его не потратит.",
+    "source": "Дары Нургл, d100 88…91",
+    "roll": "88…91",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "McBi5K4SKdRDYpSi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122019479,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!McBi5K4SKdRDYpSi"
+}

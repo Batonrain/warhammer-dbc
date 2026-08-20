@@ -1,0 +1,50 @@
+{
+  "name": "Unseen Beggar / Незримый Нищий",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Повелитель Разложения скрывает своего чемпиона от чужого взора, проецируя на него ауру безразличия и презрения, которыми укутаны нищие и попрошайки. Если персонаж носит только снаряжение Качеством Poor.Q, он может за полудействие наложить на себя чары этого дара, выглядя в глазах всех наблюдателей, обладающих душами, как ещё один нищий, не стоящий их внимания. Он может так же за полудействие развеять эти чары и вернуть себе свой истинный облик.",
+    "source": "Дары Нургл, d100 81…84",
+    "roll": "81…84",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "cJN5lUBiBd46hOzL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020820,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!cJN5lUBiBd46hOzL"
+}

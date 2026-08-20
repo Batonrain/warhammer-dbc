@@ -1,0 +1,50 @@
+{
+  "name": "Eye Stalks / Глаза-Стебельки",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Непостоянная натура Хаоса искажает глаза персонажа, заставляя их вылезти из глазниц на длинных подвижных стебельках. Он получает +10 к P и способность смотреть назад, не поворачивая головы, но открытые глаза на стебельках не получают преимуществ Авточувств, ретинального дисплея и визоров, а штраф на попадание по его глазам уменьшается с обычных −50 до −35. Большинство закрытых шлемов требуют модификации, чтобы быть совместимыми с этой мутацией.",
+    "source": "Общие мутации, d100 33",
+    "roll": "33",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "loevdqDGs1X0MtBS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122021480,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!loevdqDGs1X0MtBS"
+}

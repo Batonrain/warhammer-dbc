@@ -1,0 +1,73 @@
+{
+  "name": "Enlightenment / Просветление",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "KhRTQU1eH580NrdK",
+  "system": {
+    "kind": "hull",
+    "power": 0,
+    "space": 0,
+    "sp": 63,
+    "rarity": 0,
+    "quality": "common",
+    "hulls": "",
+    "aspects": "In-build: Бронированный нос, 1/0",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [
+      {
+        "key": "inbuild"
+      }
+    ],
+    "hull": {
+      "spaceMax": 65,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "Н1, ПБ2, ЛБ1, НП1",
+      "hullIntegrity": 74
+    },
+    "chars": {
+      "speed": 5,
+      "manoeuvrability": 7,
+      "detection": 20,
+      "voidShields": 0,
+      "armour": 20,
+      "turretRating": 2
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 0,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "gBW4D8sans3FVuB1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!gBW4D8sans3FVuB1"
+}

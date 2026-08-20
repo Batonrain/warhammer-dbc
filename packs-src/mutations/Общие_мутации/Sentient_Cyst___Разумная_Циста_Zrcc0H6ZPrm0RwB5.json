@@ -1,0 +1,50 @@
+{
+  "name": "Sentient Cyst / Разумная Циста",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zRLNTH5F8WcvnnI4",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Новый цистообразный орган вырастает в теле персонажа. Он обладает собственным разумом, волей и целями, отличными от целей персонажа. Когда концентрация персонажа ослабевает, разум цисты может перехватить контроль на несколько мгновений. Когда персонаж проваливает тест на социальные взаимодействия, он получает ещё +3 Провалов, так как циста вставляет несколько слов или фраз в его речь, что делают всё ещё хуже, возможно оскорбляя собеседника или раскрывая ему секреты персонажа.",
+    "source": "Общие мутации, d100 57",
+    "roll": "57",
+    "god": "",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "Zrcc0H6ZPrm0RwB5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233721830,
+    "modifiedTime": 1786122020552,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Zrcc0H6ZPrm0RwB5"
+}

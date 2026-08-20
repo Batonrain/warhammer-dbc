@@ -1,0 +1,79 @@
+{
+  "name": "«Voss» Torpedo Tube / Торпедный аппарат «Восс»",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "ACarBlkEaTdWVIfj",
+  "system": {
+    "kind": "weapon",
+    "power": 1,
+    "space": 5,
+    "sp": 1,
+    "rarity": 1,
+    "quality": "common",
+    "hulls": "Все",
+    "aspects": "Location Requirements: Н, К. Penetrating: Void Shields",
+    "description": "",
+    "notes": "",
+    "essential": false,
+    "external": false,
+    "damaged": false,
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [
+      {
+        "key": "locationReq"
+      },
+      {
+        "key": "explosive"
+      },
+      {
+        "key": "penetrating"
+      }
+    ],
+    "hull": {
+      "spaceMax": 0,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "",
+      "hullIntegrity": 0
+    },
+    "chars": {
+      "speed": 0,
+      "manoeuvrability": 0,
+      "detection": 0,
+      "voidShields": 0,
+      "armour": 0,
+      "turretRating": 0
+    },
+    "weapon": {
+      "wType": "torpedo",
+      "strength": 2,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "tTYk8CEvZieoczgt",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782041478009,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!tTYk8CEvZieoczgt"
+}

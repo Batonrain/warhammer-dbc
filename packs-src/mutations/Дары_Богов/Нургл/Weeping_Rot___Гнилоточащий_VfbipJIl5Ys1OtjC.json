@@ -1,0 +1,50 @@
+{
+  "name": "Weeping Rot / Гнилоточащий",
+  "type": "mutation",
+  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
+  "folder": "zE3hBVdemaFVAHp8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Пузыри, заполненные гнилостной жидкостью, вырастают под кожей и между органами чемпиона, готовые лопнуть и выпустить своё содержимое наружу, смывая с него горящий прометий и кислоту и вымывая осколки с ядом из его ран. Персонаж получает иммунитет к Горению и свойствам Crippling и Corrosive (хотя его снаряжение получает эффекты от последнего), а также к ядам, что попадают в него через раны.",
+    "source": "Дары Нургл, d100 19…21",
+    "roll": "19…21",
+    "god": "nurgle",
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
+  },
+  "_id": "VfbipJIl5Ys1OtjC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1785233722339,
+    "modifiedTime": 1786122020115,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VfbipJIl5Ys1OtjC"
+}
