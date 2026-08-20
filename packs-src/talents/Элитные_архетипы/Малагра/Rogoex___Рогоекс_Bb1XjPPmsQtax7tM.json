@@ -8,7 +8,7 @@
     "notes": "",
     "benefit": "Раскрывает функции поведенческих анализаторов в кортексе, позволяющие предсказывать мыслительные процессы других посвящённых. Может использовать For.Lore(Mechanicum)(I) вместо Scrutiny, Intimidate и Interrogate против персонажей с Имплантами Механикум и Латами Скитарии.",
     "tier": 2,
-    "requirement": "Неделимый, For.Lore (Mechanicum)+20",
+    "requirement": "For.Lore (Mechanicum)+20",
     "aptitudes": [],
     "aptSource": "",
     "aspirations": [],

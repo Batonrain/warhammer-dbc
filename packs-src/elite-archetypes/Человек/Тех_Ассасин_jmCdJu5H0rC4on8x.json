@@ -1,0 +1,54 @@
+{
+  "name": "Тех-Ассасин",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "fa1deb1b",
+    "cost": 4000,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Человек",
+    "god": "Неделимый",
+    "req": "Не Секутор, Архимагос или Малагра, WS 45, A 45, Трейт Mechanicum Implants, 4000 xp",
+    "charBonus": "+5 WS, +5 A, +2 Cor",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Assassin Frame / Фрейм Ассасина",
+      "Paradox Veil / Вуаль Парадокса"
+    ],
+    "talents": [
+      "Modular Autonomy / Модульная Автономия",
+      "Cranial Mantle / Черепная Мантия",
+      "Disjoint / Разделение",
+      "Scorpio / Скорпион",
+      "Chrysalis / Куколка",
+      "Bisection / Рассечение"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "jmCdJu5H0rC4on8x",
+  "effects": [],
+  "folder": "sq3IdHf4cO8fQP2j",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!jmCdJu5H0rC4on8x"
+}

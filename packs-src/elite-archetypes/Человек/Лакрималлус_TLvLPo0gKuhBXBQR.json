@@ -1,0 +1,54 @@
+{
+  "name": "Лакрималлус",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "2511f8e2",
+    "cost": 2000,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Человек",
+    "god": "Неделимый",
+    "req": "I 45, P 40, Трейт Mechanicum Implants, Medicae, Tech-Use+10, 2000 xp",
+    "charBonus": "+5 I, +5 P",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Cyberembrace / Киберобъятья",
+      "Toilseer / Трудовидец"
+    ],
+    "talents": [
+      "Chains of Production / Цепи Производства",
+      "Cyber-Shepherd / Кибер-Пастырь",
+      "Inhuman Resources / Бесчеловечные Ресурсы",
+      "Thrall Overclock / Разгон Траллов",
+      "Assembly Line / Сборочная Линия",
+      "Rapid Embrace / Быстрые Объятья"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "TLvLPo0gKuhBXBQR",
+  "effects": [],
+  "folder": "sq3IdHf4cO8fQP2j",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!TLvLPo0gKuhBXBQR"
+}

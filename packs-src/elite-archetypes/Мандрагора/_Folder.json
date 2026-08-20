@@ -1,0 +1,15 @@
+{
+  "name": "Мандрагора",
+  "type": "Item",
+  "_id": "BSny4tDCVx9m6PGl",
+  "sorting": "a",
+  "color": null,
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0"
+  },
+  "_key": "!folders!BSny4tDCVx9m6PGl"
+}

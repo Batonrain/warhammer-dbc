@@ -8,7 +8,7 @@
     "notes": "",
     "benefit": "Командные алгоритмы позволяют дирижировать ордами траллов в бою. Может давать Команды Ордам тех-траллов, как если бы они были одиночными персонажами, но только через Tech-Use(I).",
     "tier": 1,
-    "requirement": "Неделимый, Binary Dominion",
+    "requirement": "Binary Dominion",
     "aptitudes": [],
     "aptSource": "",
     "aspirations": [],

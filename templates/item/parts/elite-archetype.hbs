@@ -1,0 +1,78 @@
+{{!-- ═══════════════════════════════════════════════════════════════════════
+      ЭЛИТНЫЙ АРХЕТИП (корбук стр. 114-164) — ступень поверх обычного
+      Архетипа. Поля намеренно текстовые: в книге там оговорки на каждом шагу
+      («2000 xp», «Two Weapon Wielder (Both)»), и числами их не записать.
+      ═══════════════════════════════════════════════════════════════════════ --}}
+<div class="item-section">
+  <div class="item-section-title">ЭЛИТНЫЙ АРХЕТИП</div>
+
+  <div class="wr-grid">
+    <label class="wr-row">
+      <span class="wr-label" title="Кому архетип доступен. В книге бывает перечень: «Друкхари, Развалина, Сслит»">Раса</span>
+      <input type="text" name="system.race" value="{{system.race}}" placeholder="Друкхари"/>
+    </label>
+
+    <label class="wr-row">
+      <span class="wr-label" title="Покровительство Бога. У друкхари его не бывает — поле пустое">Покровительство</span>
+      <input type="text" name="system.god" value="{{system.god}}" placeholder="—"/>
+    </label>
+
+    <label class="wr-row">
+      <span class="wr-label" title="Бонусы Характеристик при взятии архетипа">Бонусы Характеристик</span>
+      <input type="text" name="system.charBonus" value="{{system.charBonus}}" placeholder="+5 WS, +5 A"/>
+    </label>
+
+    <label class="wr-row">
+      <span class="wr-label" title="Базовая цена в опыте. Каждый следующий Элитный архетип персонажа вдвое дороже предыдущего">Цена (опыт)</span>
+      <input type="number" name="system.cost" value="{{system.cost}}" min="0"/>
+    </label>
+  </div>
+
+  <label class="wr-row wr-row-wide">
+    <span class="wr-label" title="Текст требований из книги — для чтения. Машинная проверка живёт в Конструкторе ниже">Требования (текст книги)</span>
+    <textarea name="system.req" class="item-textarea" placeholder="A 60, WS 50, Acrobatics+20…">{{system.req}}</textarea>
+  </label>
+
+  <label class="wr-row wr-row-wide">
+    <span class="wr-label" title="Таланты, которые архетип даёт даром при взятии">Бесплатные Таланты</span>
+    <textarea name="system.freeTalents" class="item-textarea" placeholder="Reaper, Sprint…">{{system.freeTalents}}</textarea>
+  </label>
+
+  <label class="wr-row wr-row-wide">
+    <span class="wr-label">Снаряжение</span>
+    <textarea name="system.gear" class="item-textarea" placeholder="—">{{system.gear}}</textarea>
+  </label>
+
+  <div class="weapon-row">
+    <label class="wr-label">Источник</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}" class="wr-input-md"/>
+    <label class="wr-label" title="Ключ — только для справки, здесь не правится">Ключ</label>
+    <input type="text" value="{{system.key}}" class="wr-input-md" readonly/>
+  </div>
+</div>
+
+{{!-- Трейты и Дополнительные Таланты здесь только перечислены: сами записи
+      лежат в библиотеках Черт и Талантов, в папке «Элитные архетипы». Держать
+      их текст ещё и тут значило бы править одно и то же в двух местах. --}}
+{{#if system.traits.length}}
+<div class="item-section">
+  <div class="item-section-title">ТРЕЙТЫ АРХЕТИПА</div>
+  <div class="trait-fx-hint">Сами Трейты — в библиотеке Черт, папка «Элитные архетипы».</div>
+  <ul class="elite-list">
+    {{#each system.traits as |t|}}<li>{{t}}</li>{{/each}}
+  </ul>
+</div>
+{{/if}}
+
+{{#if system.talents.length}}
+<div class="item-section">
+  <div class="item-section-title">ДОПОЛНИТЕЛЬНЫЕ ТАЛАНТЫ</div>
+  <div class="trait-fx-hint">Покупаются за опыт как обычные; сами Таланты — в библиотеке Талантов.</div>
+  <ul class="elite-list">
+    {{#each system.talents as |t|}}<li>{{t}}</li>{{/each}}
+  </ul>
+</div>
+{{/if}}
+
+{{!-- Требования настраиваются на вкладке МЕХАНИКА, под Конструктором выдачи:
+      там всё, что у архетипа настраивается, а здесь — книжная справка. --}}

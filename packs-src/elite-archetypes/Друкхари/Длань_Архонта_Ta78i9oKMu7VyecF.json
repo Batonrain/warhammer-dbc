@@ -1,0 +1,57 @@
+{
+  "name": "Длань Архонта",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "3ddbbb0f",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Друкхари, Сслит",
+    "god": "",
+    "req": "Все характеристики (кроме Cor и Inf) от 30, 29 Inf, Peer с Архонтом, Гемункулом, Суккубом или Клэйвексом; 2500 xp",
+    "charBonus": "+3 ко всем характеристикам",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Fear (1) / Страх",
+      "Established Role / Установленная Роль",
+      "Equalize The Odds / Уравнивание Шансов"
+    ],
+    "talents": [
+      "Archsybarite / Архисибарит",
+      "Disciple of Yaelindra / Ученик Яэлиндры",
+      "Elixicant / Элексикант",
+      "Flayer / Свежеватель",
+      "Kabalite Agent / Агент Кабалит",
+      "Kabalite Gunner / Кабалитский Стрелок",
+      "Crimson Duellist / Багряный Дуэлянт",
+      "Skysplinter Assassin / Ассасин Клана «Осколок Неба»"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "Ta78i9oKMu7VyecF",
+  "effects": [],
+  "folder": "cyxnHXXm4TknH7Qx",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!Ta78i9oKMu7VyecF"
+}

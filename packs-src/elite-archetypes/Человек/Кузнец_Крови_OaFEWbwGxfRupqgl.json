@@ -1,0 +1,53 @@
+{
+  "name": "Кузнец Крови",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "7c8f0a65",
+    "cost": 2500,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Человек",
+    "god": "Кхорн",
+    "req": "Покровительство Кхорна, WS 50, W 45, For.Lore (Daemons)+10, Trade (Weaponsmith)+10, 2500 xp",
+    "charBonus": "+5 WS, +5 S, +5 W, −5 F, +8 Cor",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [
+      "Valourous Accord / Соглашение Доблести",
+      "Ring of Blood / Кольцо Крови"
+    ],
+    "talents": [
+      "Bound by Blood / Связанный Кровью",
+      "Fealty / Присяга",
+      "Daemon Plate / Демонические Латы",
+      "Unforge / Расковать",
+      "Blood Shield / Кровавый Щит"
+    ],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "OaFEWbwGxfRupqgl",
+  "effects": [],
+  "folder": "sq3IdHf4cO8fQP2j",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!OaFEWbwGxfRupqgl"
+}
