@@ -41,7 +41,9 @@
         </label>
         <label class="psy-rune-field">
           <span class="psy-rf-lbl">Базовый PR</span>
-          <input type="number" class="psy-rating-input" value="{{system.psyker.rating}}" min="0" title="Равен уровню Таланта Psy Rating"/>
+          <input type="number" class="psy-rating-input" value="{{system.psyker.rating}}" min="0"
+                 {{#if system.psyker.ratingFromTalent}}disabled title="Равен Рейтингу Таланта Psy Rating / Пси-Рейтинг — снимите Талант, чтобы вводить вручную"
+                 {{else}}title="Ручной ввод — на листе нет Таланта Psy Rating / Пси-Рейтинг"{{/if}}/>
         </label>
         <div class="psy-rune-field readonly" title="бPR − 1 за каждую поддерживаемую силу. При тPR 0 новые силы манифестировать нельзя.">
           <span class="psy-rf-lbl">Текущий тPR</span>

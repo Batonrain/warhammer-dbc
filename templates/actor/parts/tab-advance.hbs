@@ -71,7 +71,7 @@
   {{!-- Психосилы --}}
   <div class="stat-panel" style="margin-top:8px;"> <div class="panel-title">ПСИХОСИЛЫ</div> <div class="psy-header-small"> <label>Природа Дара:
         <select class="psy-class-select"> <option value="bound" {{#if (eq system.psyker.class "bound")}}selected{{/if}}>Связанный</option> <option value="unbound" {{#if (eq system.psyker.class "unbound")}}selected{{/if}}>Несвязанный</option> <option value="daemonic" {{#if (eq system.psyker.class "daemonic")}}selected{{/if}}>Демонический</option> </select> </label> <label>Базовый PR:
-        <input type="number" class="psy-rating-input" value="{{system.psyker.rating}}" min="0"/> </label> <label>Текущий PR:
+        <input type="number" class="psy-rating-input" value="{{system.psyker.rating}}" min="0" {{#if system.psyker.ratingFromTalent}}disabled title="Равен Рейтингу Таланта Psy Rating / Пси-Рейтинг"{{/if}}/> </label> <label>Текущий PR:
         <span class="psy-stat-value">{{system.psyker.currentRating}}</span> </label> </div> <table class="items-table"> <thead><tr><th>Название</th><th class="col-narrow">Цена</th></tr></thead> <tbody> {{#if psyPowers.length}}
           {{#each psyPowers as |p|}}
           <tr> <td class="apt-char-name-cell">{{p.name}}{{#if p.disciplineLabel}} <em style="opacity:.7">· {{p.disciplineLabel}}</em>{{/if}}</td> <td class="advtal-cost-cell"> <input type="number" class="psy-cost-input" data-item-id="{{p.id}}" value="{{p.cost}}" min="0"/> </td> </tr> {{/each}}
