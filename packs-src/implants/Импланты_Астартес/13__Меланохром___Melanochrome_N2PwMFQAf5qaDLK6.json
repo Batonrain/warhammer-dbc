@@ -1,0 +1,66 @@
+{
+  "name": "13. Меланохром / Melanochrome",
+  "type": "implant",
+  "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
+  "folder": "UjIC7NnQmIxPWhgg",
+  "system": {
+    "description": "Известный также как Кожещит — имплантируется в центр спины и подсоединяется к лимфатической системе, выпуская в неё ретровирусы, что генетически модифицируют клетки эпителия кожи, заменяя в нём меланин более продвинутым пигментом, способным поглощать ионизирующую радиацию помощнее ультрафиолета и сформированным в хроматофоры, меняющие оттенок кожи за считанные минуты.\n\nВозраст имплантации: 15–17 лет.",
+    "notes": "Имплантация. Операция занимает смену работы и требует комбинированного теста Medicae(I)–10 и For.Lore (Astartes Implants)(I)+20. При Провале аспирант получает R Критический Эффект <Провалы> в торс.",
+    "category": "astartes",
+    "quality": "common",
+    "effect": "Кожа космодесантника темнеет при сильном ультрафиолетовом и прочем ионизирующем облучении и светлеет без него в течение считанных минут. Под действием мощной радиации его кожа становится чёрной как уголь и даёт десантнику ограниченную стойкость к фоновой радиации, но не к оружию со свойством Rad.",
+    "installed": "центр спины, лимфатическая система",
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, ГЕНОСЕМЯ (стр. 485-487)",
+    "effects": {
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "shield": {
+      "enabled": false,
+      "shieldNature": "technological",
+      "shieldType": "deflector",
+      "ratingMin": 1,
+      "ratingMax": 10,
+      "overloadThreshold": 0,
+      "isSpecialRating": false,
+      "currentRating": 0,
+      "equipped": false,
+      "status": "inactive"
+    },
+    "weaponProps": []
+  },
+  "_id": "N2PwMFQAf5qaDLK6",
+  "effects": [],
+  "sort": 1300000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "installed": true,
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1786993505223,
+    "modifiedTime": 1786993505223
+  },
+  "_key": "!items!N2PwMFQAf5qaDLK6"
+}

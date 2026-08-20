@@ -1,0 +1,21 @@
+{
+  "name": "Импланты Астартес",
+  "type": "Item",
+  "folder": null,
+  "sorting": "a",
+  "_id": "UjIC7NnQmIxPWhgg",
+  "description": "19 органов Геносемени в порядке имплантации. Выдаются Чертой Gene-Seed.",
+  "sort": 0,
+  "color": "#c0392b",
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!UjIC7NnQmIxPWhgg"
+}
