@@ -1,0 +1,37 @@
+{
+  "name": "Матрица Осирис / Osiris Matrix",
+  "type": "vehicleGear",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Саркофаг оборудован Психическим Капюшоном, а система жизнеобеспечения изменена, чтобы не мешать психической концентрации пилота. Пилот может манифестировать и поддерживать психосилы, но получает −3 к тПР: саркофаг всё ещё частично мешает концентрации.",
+    "notes": "",
+    "availability": 4,
+    "quality": "common",
+    "active": false,
+    "bookSource": "DoomBC — Машины, «Снаряжение Дредноутов» (стр. 58)"
+  },
+  "_id": "DreadOsirisMatri",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!DreadOsirisMatri"
+}

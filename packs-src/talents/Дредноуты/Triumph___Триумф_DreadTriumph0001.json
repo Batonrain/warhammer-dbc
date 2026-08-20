@@ -1,0 +1,56 @@
+{
+  "name": "Triumph / Триумф",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "system": {
+    "description": "Пилот черпает силу из побед над достойными врагами.",
+    "notes": "",
+    "benefit": "Убив рукопашной атакой или выстрелом в упор сильного противника (вражеского чемпиона, монстра или машину), может потратить 1 Очко Бесчестия и 1 Реакцию, чтобы вырвать у цели голову или кабину водителя и посвятить её Кхорну, восстановив 2d10 Здравомыслия.",
+    "tier": 2,
+    "requirement": "Покровительство Кхорна",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "khorne",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Машины, «Таланты Дредноутов» (стр. 58)"
+  },
+  "_id": "DreadTriumph0001",
+  "effects": [],
+  "folder": "DreadTalentsFld1",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!DreadTriumph0001"
+}

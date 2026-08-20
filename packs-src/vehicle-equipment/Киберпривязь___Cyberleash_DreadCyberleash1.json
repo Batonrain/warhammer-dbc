@@ -1,0 +1,37 @@
+{
+  "name": "Киберпривязь / Cyberleash",
+  "type": "vehicleGear",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "Сеть контрольных устройств, перехватывающих управление пилота над Дредноутом. Идёт в комплекте с до 5 управляющими модулями для ретинального дисплея. Носящий модуль может в свой Ход за свободное действие или вне своего Хода за реакцию: уменьшить WS, BS и/или SPD Дредноута до любой величины (превращая все атаки в промахи, если снижает атакующую Характеристику до 0 в ответ на эту атаку); причинить пилоту невыносимую боль, Оглушив его на 1 Раунд; заставить Дредноут двигаться в свой Ход в заданном направлении и с заданной скоростью, независимо от команд пилота.",
+    "notes": "",
+    "availability": 2,
+    "quality": "common",
+    "active": false,
+    "bookSource": "DoomBC — Машины, «Снаряжение Дредноутов» (стр. 58)"
+  },
+  "_id": "DreadCyberleash1",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!DreadCyberleash1"
+}
