@@ -36,7 +36,7 @@ export const RACES = {
     size: 1,
     hasGeneSeed: true,
     skills:  "Athletics, Awareness, Common Lore (War, любое 1), Dodge, Forbidden Lore (Astartes, Horus Heresy and Long War), Linguistics (Low Gothic), Linguistics (Battle Cant или High Gothic), Navigate (Surface), Operate (Surface), Parry",
-    gear:    "Power Armour Mk III-VII, Light Bolter или Bolt Pistol, Astartes Combat Knife",
+    gear:    "Power Armour Mk III-VII, 4 Стандартные системы, Болтер (Астартес) или Болт Пистолет (Астартес), Боевой Нож Астартес",
     talents: [
       "Ambidextrous", "Bulging Biceps", "Legion Weapon Training",
       "Heightened Senses (Hearing, Sight)", "Jaded", "Nerves of Steel",

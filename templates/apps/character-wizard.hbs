@@ -1,0 +1,356 @@
+{{#if missing}}
+<p class="cstart-hint">Персонаж не найден — окно можно закрыть.</p>
+{{else}}
+<form class="wh-wizard-form wh-char-wizard">
+  <nav class="wiz-steps">
+    {{#each steps as |s|}}
+    <span class="wiz-step-chip{{#if s.active}} active{{/if}}{{#if s.done}} done{{/if}}">{{s.label}}</span>
+    {{/each}}
+  </nav>
+
+  <div class="wiz-step-body">
+    {{#if (eq stepId "origin")}}
+    <div class="atk-dlg-header"><span class="atk-weapon-name">🧙 Происхождение</span></div>
+
+    <div class="atk-dlg-row"><label>Имя:</label>
+      <input type="text" class="wiz-name-inp" value="{{name}}" placeholder="Имя персонажа"/>
+    </div>
+
+    <div class="atk-dlg-row"><label>Раса:</label>
+      <select class="wiz-race-sel">
+        <option value="" disabled {{#unless raceChosen}}selected{{/unless}}>— выбрать —</option>
+        {{#each raceGroups as |g|}}
+        <optgroup label="{{g.label}}">
+          {{#each g.races as |r|}}
+          <option value="{{r.key}}" {{#if r.selected}}selected{{/if}}>{{r.label}}</option>
+          {{/each}}
+        </optgroup>
+        {{/each}}
+      </select>
+    </div>
+
+    {{#if hasSubrace}}
+    <div class="atk-dlg-row"><label>Субраса:</label>
+      <select class="wiz-subrace-sel">
+        <option value="">— нет —</option>
+        {{#each subraceOpts as |s|}}
+        <option value="{{s.key}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{/if}}
+
+    {{#unless isAeldari}}
+    <div class="atk-dlg-row"><label>Мировоззрение:</label>
+      <select class="wiz-align-sel">
+        <option value="loyalist" {{#if (eq alignment "loyalist")}}selected{{/if}}>Лоялист</option>
+        <option value="renegade" {{#if (eq alignment "renegade")}}selected{{/if}}>Ренегат</option>
+        <option value="heretic" {{#if (eq alignment "heretic")}}selected{{/if}}>Хаосит</option>
+      </select>
+    </div>
+    {{/unless}}
+
+    {{#if isAstartes}}
+    <div class="wiz-legion">
+      <div class="wiz-gen-lbl">Легион Астартес (геносемя и культура выбираются отдельно):</div>
+      <div class="atk-dlg-row"><label>Легион (геносемя):</label><select class="wiz-legion-sel">{{{legionOptions}}}</select></div>
+      <div class="atk-dlg-row"><label>Орден / Банда:</label><select class="wiz-chapter-sel">{{{chapterOptions}}}</select></div>
+      <div class="atk-dlg-row" title="Геносемя сохраняешь, а культуру можно перенять у другого легиона."><label>Культура (легион):</label><select class="wiz-cult-sel">{{{cultureOptions}}}</select></div>
+    </div>
+    {{/if}}
+
+    {{#if isYnnari}}
+    <div class="atk-dlg-row"><label>Прошлое:</label>
+      <select class="wiz-ynnari-past-sel">
+        <option value="">— Прошлое —</option>
+        {{#each ynnariPastOptions as |p|}}
+        <option value="{{p.key}}" {{#if (eq p.key ../ynnariPast)}}selected{{/if}}>{{p.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{/if}}
+    {{#if isHarlequin}}
+    <div class="atk-dlg-row"><label>Прошлое:</label>
+      <select class="wiz-harlequin-past-sel">
+        <option value="">— Прошлое —</option>
+        {{#each harlequinPastOptions as |p|}}
+        <option value="{{p.key}}" {{#if (eq p.key ../harlequinPast)}}selected{{/if}}>{{p.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    <div class="atk-dlg-row"><label>Маска:</label><select class="wiz-masque-sel">{{{masqueOptions}}}</select></div>
+    {{/if}}
+
+    {{#if showWorldOrigin}}
+    <div class="atk-dlg-row"><label>Мир-Корабль:</label><select class="wiz-world-sel">{{{worldOptions}}}</select></div>
+    <div class="atk-dlg-row"><label>Корсарская Банда:</label><select class="wiz-band-sel">{{{bandOptions}}}</select></div>
+    {{/if}}
+    {{#if isDrukhari}}
+    <div class="atk-dlg-row"><label>Кабал:</label><select class="wiz-drukhari-faction-sel">{{{drukhariFactionOptions}}}</select></div>
+    <div class="atk-dlg-row"><label>Округ:</label><select class="wiz-drukhari-district-sel">{{{drukhariDistrictOptions}}}</select></div>
+    {{/if}}
+
+    {{#if homeworld}}
+    <div class="atk-dlg-row"><label title="Три модификатора Характеристик и Особенность">Родной мир:</label>
+      <select class="wiz-hw-sel">
+        <option value="">— не выбрано —</option>
+        <option value="random">🎲 Выбрать случайно</option>
+        {{#each homeworld.options as |o|}}
+        <option value="{{o.key}}" {{#if o.selected}}selected{{/if}} title="{{o.chars}}">{{o.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if homeworld.deferredNote}}<div class="apt-warn">{{homeworld.deferredNote}}</div>{{/if}}
+    {{/if}}
+    {{#if divination}}
+    <div class="atk-dlg-row"><label title="Эффект по таблице к100">Предсказание:</label>
+      <select class="wiz-dv-sel">
+        <option value="">— не выбрано —</option>
+        <option value="random">🎲 Бросить к100</option>
+        {{#each divination.options as |o|}}
+        <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{/if}}
+
+    {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
+
+    {{> "systems/warhammer-dbc/templates/apps/wizard-mech-choices.hbs"}}
+    {{#if originPendingNote}}<div class="apt-warn">{{originPendingNote}}</div>{{/if}}
+
+    {{else if (eq stepId "characteristics")}}
+    <div class="atk-dlg-header"><span class="atk-weapon-name">🎲 Характеристики</span></div>
+
+    <div class="wiz-gen">
+      <div class="wiz-gen-lbl">1. Выбери набор бросков (можно перебросить):</div>
+      <div class="wiz-sets">
+        {{#each charSets as |s|}}
+        <div class="wiz-set{{#if s.active}} active{{/if}}" data-set="{{s.index}}" title="Выбрать набор {{s.index}}">
+          <div class="wiz-set-head"><span class="wiz-set-name">Набор {{s.index}}</span>
+            <span class="wiz-set-sum">Σ {{s.sum}}</span>
+            <a class="wiz-set-reroll" data-set="{{s.index}}" title="Перебросить набор">↻</a>
+          </div>
+          <div class="wiz-set-vals">{{#each s.vals as |v|}}<span>{{v}}</span>{{/each}}</div>
+        </div>
+        {{/each}}
+      </div>
+
+      <div class="wiz-gen-lbl">2. Раскидай значения по характеристикам — перетащи или кликни значение, затем характеристику:
+        <button type="button" class="wiz-mini-btn wiz-char-auto" title="Разложить по убыванию">↕ по порядку</button>
+        <button type="button" class="wiz-mini-btn wiz-char-clear" title="Снять все значения">✕ сброс</button>
+      </div>
+      <div class="wiz-chips wiz-chips-pool">
+        {{#if charChips.length}}
+        {{#each charChips as |c|}}
+        <span class="wiz-chip{{#if c.armed}} armed{{/if}}" draggable="true" data-vi="{{c.vi}}">{{c.val}}</span>
+        {{/each}}
+        {{else}}
+        <span class="wiz-chips-empty">все значения разложены</span>
+        {{/if}}
+      </div>
+      <div class="wiz-slots">
+        {{#each charSlots as |s|}}
+        <div class="wiz-slot{{#if s.has}} filled{{else}} empty{{/if}}" data-char="{{s.key}}" title="{{s.label}}: база {{s.base}}{{#if s.has}} + {{s.val}}{{/if}}">
+          <span class="ws-abbr">{{s.abbr}}</span>
+          <span class="ws-chip"{{#if s.has}} draggable="true" data-vi="{{s.vi}}"{{/if}}>{{#if s.has}}{{s.val}}{{else}}—{{/if}}</span>
+          <span class="ws-total">{{s.total}}</span>
+          <span class="ws-base">база {{s.base}}</span>
+        </div>
+        {{/each}}
+      </div>
+      <div class="roll-threshold" style="font-size:0.8em;">Итог = база расы/Прошлого/субрасы + раскиданное значение. Бонус архетипа добавится на Этапе 3.</div>
+    </div>
+
+    <div class="wiz-gen wh-apts">
+      <div class="wiz-gen-lbl">3. Склонности — ровно <b>4</b> Характеристики и <b>4</b> прочих:</div>
+      <div class="cstart-hint">По ним считается цена Характеристик, Навыков и Талантов, а значит и возврат опыта, когда один и тот же Навык или Талант приходит из двух источников.</div>
+      <div class="apt-group">
+        <div class="apt-group-lbl">Характеристики <span class="apt-count{{#if aptChar.full}} apt-count-full{{/if}}">{{aptChar.on}} / {{aptChar.want}}</span></div>
+        <div class="apt-list">
+          {{#each aptChar.items as |i|}}
+          <label class="apt-chip"><input type="checkbox" class="wiz-apt" value="{{i.key}}" {{#if i.checked}}checked{{/if}} {{#if i.disabled}}disabled{{/if}}/> {{i.label}}</label>
+          {{/each}}
+        </div>
+      </div>
+      <div class="apt-group">
+        <div class="apt-group-lbl">Прочие <span class="apt-count{{#if aptOther.full}} apt-count-full{{/if}}">{{aptOther.on}} / {{aptOther.want}}</span></div>
+        <div class="apt-list">
+          {{#each aptOther.items as |i|}}
+          <label class="apt-chip"><input type="checkbox" class="wiz-apt" value="{{i.key}}" {{#if i.checked}}checked{{/if}} {{#if i.disabled}}disabled{{/if}}/> {{i.label}}</label>
+          {{/each}}
+        </div>
+      </div>
+      {{#unless aptReady}}<div class="apt-warn">Выберите Склонности — без них не посчитать ни цены, ни возвраты.</div>{{/unless}}
+    </div>
+
+    {{else if (eq stepId "archetype")}}
+    <div class="atk-dlg-header"><span class="atk-weapon-name">⚔️ Архетип</span></div>
+
+    {{#if hasArchetypes}}
+    <div class="atk-dlg-row"><label>Архетип:</label>
+      <select class="wiz-arch-sel">
+        <option value="">— не выбран —</option>
+        {{#each archGroups as |g|}}
+        {{#if g.label}}
+        <optgroup label="{{g.label}}">
+          {{#each g.opts as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option>{{/each}}
+        </optgroup>
+        {{else}}
+        {{#each g.opts as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option>{{/each}}
+        {{/if}}
+        {{/each}}
+      </select>
+    </div>
+    {{#if archDesc}}<div class="cstart-hint">{{archDesc}}</div>{{/if}}
+
+    {{#if talentFixedNames.length}}
+    <div class="wiz-gen">
+      <div class="wiz-gen-lbl">Таланты (даются без выбора):</div>
+      <ul class="wiz-talent-fixed-list">{{#each talentFixedNames as |n|}}<li>{{n}}</li>{{/each}}</ul>
+    </div>
+    {{/if}}
+
+    {{#if talentChoiceRows.length}}
+    <div class="wiz-gen">
+      <div class="wiz-gen-lbl">Таланты на выбор:</div>
+      {{#each talentChoiceRows as |c|}}
+      {{#if (eq c.type "or")}}
+      <div class="atk-dlg-row wtc-row"><label class="wtc-lbl">Выбор:</label>
+        <select class="wtc-sel wiz-talent-pick" data-ci="{{c.i}}" data-cj="0">
+          {{#each c.options as |o|}}<option value="{{o.value}}" {{#if (eq o.value c.picked)}}selected{{/if}}>{{o.label}}</option>{{/each}}
+        </select>
+      </div>
+      {{else}}
+      <div class="atk-dlg-row wtc-row"><label class="wtc-lbl">{{c.label}} <span class="wtc-x">×{{c.count}}</span></label>
+        <div class="wtc-inputs">
+          {{#each c.slots as |s|}}
+          {{#if s.opts}}
+          <select class="wtc-sel wtc-mini wiz-talent-pick" data-ci="{{c.i}}" data-cj="{{s.j}}">
+            <option value="">— выбери —</option>
+            {{#each s.opts as |o|}}<option value="{{o}}" {{#if (eq o s.picked)}}selected{{/if}}>{{o}}</option>{{/each}}
+          </select>
+          {{else}}
+          <input type="text" class="wtc-inp wiz-talent-pick" data-ci="{{c.i}}" data-cj="{{s.j}}" value="{{s.picked}}" placeholder="специализация"/>
+          {{/if}}
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{> "systems/warhammer-dbc/templates/apps/wizard-mech-choices.hbs"}}
+
+    {{#if archPendingNote}}<div class="apt-warn">{{archPendingNote}}</div>{{/if}}
+    {{else}}
+    <p class="cstart-hint">{{archNote}}</p>
+    {{/if}}
+
+    {{else if (eq stepId "aspirations")}}
+    <div class="atk-dlg-header"><span class="atk-weapon-name">🎖️ Стремления и уровень игры</span></div>
+
+    <div class="wiz-gen">
+      <div class="wiz-gen-lbl">Стремления — Гордыня, Позор, Мотивация:</div>
+      {{#each aspirationSlots as |a|}}
+      <div class="atk-dlg-row wiz-aspir-row">
+        <label>{{a.label}}:</label>
+        <div class="aspir-controls">
+          {{#if a.custom}}
+          <input type="text" class="aspir-custom-name" data-index="{{a.idx}}" value="{{a.name}}" placeholder="Своё стремление"/>
+          <input type="text" class="aspir-custom-mods" data-index="{{a.idx}}" value="{{a.mods}}" placeholder="Модификаторы"/>
+          {{else}}
+          <select class="aspir-select" data-index="{{a.idx}}" title="{{#if a.mods}}{{a.mods}}{{else}}Выберите Стремление{{/if}}">
+            <option value="">— выбрать —</option>
+            {{#each a.options as |e|}}<option value="{{e.id}}" {{#if (eq e.id a.id)}}selected{{/if}} title="{{e.mods}}">{{e.name}}</option>{{/each}}
+            <option value="__custom__">Своё…</option>
+          </select>
+          {{/if}}
+          <button type="button" class="aspir-remove" data-index="{{a.idx}}" title="Очистить">✕</button>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+
+    <div class="wiz-gen wh-cstart">
+      <div class="wiz-gen-lbl">Уровень стартовой игры (стр. 23):</div>
+      {{#if startAlreadyApplied}}
+      <div class="cstart-hint">Опыт этому персонажу уже выдавался — повторное «Далее» его не тронет.</div>
+      {{else}}
+      <div class="cstart-hint">Бесчестие и Порча стартового персонажа не превышают {{startCap}}.</div>
+      <table class="items-table cstart-table{{#if startIsAstartes}} cstart-astartes{{/if}}">
+        <thead><tr>
+          <th></th><th class="cstart-col-astartes">XP Десантника</th>
+          <th class="cstart-col-mortal">XP прочих</th><th>Влияние</th><th>Порча</th>
+        </tr></thead>
+        <tbody>
+          {{#each startLevels as |l|}}
+          <tr>
+            <td class="cstart-pick"><input type="radio" class="wiz-start-level" name="wiz-cstart-level" value="{{l.key}}" {{#if l.selected}}checked{{/if}}/></td>
+            <td class="cstart-xp cstart-col-astartes">{{l.astartes}}</td>
+            <td class="cstart-xp cstart-col-mortal">{{l.mortal}}</td>
+            <td class="cstart-bonus">+{{l.infamy}}</td>
+            <td class="cstart-bonus">+{{l.corruption}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+        <tfoot><tr class="cstart-extra">
+          <td>сверх того</td>
+          <td colspan="2"><input type="number" class="wiz-start-xp" value="{{startExtraXp}}" step="50" title="Дополнительный опыт"/></td>
+          <td><input type="number" class="wiz-start-inf" value="{{startExtraInf}}" title="Дополнительное Влияние"/></td>
+          <td><input type="number" class="wiz-start-cor" value="{{startExtraCor}}" title="Дополнительная Порча"/></td>
+        </tr></tfoot>
+      </table>
+      {{/if}}
+    </div>
+
+    {{else if (eq stepId "gear")}}
+    <div class="atk-dlg-header"><span class="atk-weapon-name">🎒 Снаряжение</span></div>
+
+    {{#if hasGear}}
+    {{#if gearFixed.length}}
+    <div class="wiz-gen">
+      <div class="wiz-gen-lbl">Снаряжение (без выбора):</div>
+      <ul class="wiz-talent-fixed-list">{{#each gearFixed as |g|}}<li>{{g}}</li>{{/each}}</ul>
+    </div>
+    {{/if}}
+
+    {{#if gearChoices.length}}
+    <div class="wiz-gen">
+      <div class="wiz-gen-lbl">Снаряжение на выбор:</div>
+      {{#each gearChoices as |c|}}
+      <div class="atk-dlg-row wtc-row"><label class="wtc-lbl">Выбор:</label>
+        <select class="wtc-sel wiz-gear-sel" data-ci="{{c.ci}}">
+          {{#each c.options as |o|}}<option value="{{o}}" {{#if (eq o c.picked)}}selected{{/if}}>{{o}}</option>{{/each}}
+        </select>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{#if gearIsAstartes}}
+    <div class="cstart-hint">+ 4 базовые Системы силовой брони на выбор — добавьте вручную на вкладке «Снаряжение».</div>
+    {{/if}}
+
+    <div class="cstart-hint">По «Готово» найденные предметы добавятся на лист автоматически; для того, что не найдётся один-в-один по имени, откроется Обозреватель компендиумов — выберите сами, по одному.</div>
+    {{else}}
+    <p class="cstart-hint">У выбранной расы/архетипа нет текстового снаряжения для разбора — добавьте нужное вручную на вкладке «Снаряжение» после «Готово».</p>
+    {{/if}}
+
+    {{else}}
+    <div class="atk-dlg-header"><span class="atk-weapon-name">{{stepLabel}}</span></div>
+    <p class="cstart-hint">Этот этап Мастера ещё в разработке — переходите дальше, здесь пока нечего заполнять.</p>
+    {{/if}}
+  </div>
+
+  <footer class="wiz-footer">
+    <button type="button" class="wh-slot-btn" data-action="wizBack" {{#if backDisabled}}disabled{{/if}}>← Назад</button>
+    {{#if isLastStep}}
+    <button type="button" class="wh-slot-btn" data-action="wizFinish" {{#if finishDisabled}}disabled{{/if}}>{{#if confirmingGear}}Применяется…{{else}}Готово{{/if}}</button>
+    {{else}}
+    <button type="button" class="wh-slot-btn" data-action="wizNext" {{#if nextDisabled}}disabled{{/if}}>{{#if (or confirmingOrigin confirmingArchetype)}}Применяется…{{else}}Далее →{{/if}}</button>
+    {{/if}}
+  </footer>
+</form>
+{{/if}}

@@ -41,11 +41,20 @@ export function describeV2Sheet(SheetClass, files) {
   });
 
   describe(`${SheetClass.name}: шаблон и класс сходятся`, () => {
-    const inTemplate = [...new Set([...TEMPLATE.matchAll(/data-action="(\w+)"/g)].map(m => m[1]))];
+    // Пункты window.controls (меню окна ApplicationV2, «шапка» с иконкой) Foundry
+    // рендерит сам — в собственном hbs листа у них нет data-action, поэтому их
+    // тоже считаем «вызванными», иначе такой обработчик ложно выглядит мёртвым.
+    const inControls = (SheetClass.DEFAULT_OPTIONS.window?.controls ?? []).map(c => c.action).filter(Boolean);
+    const inTemplate = [...new Set([...TEMPLATE.matchAll(/data-action="(\w+)"/g)].map(m => m[1]).concat(inControls))];
     const declared = Object.keys(SheetClass.DEFAULT_OPTIONS.actions ?? {});
 
+    // Действия самого Foundry: объявлять их у себя незачем — ядро уже умеет, а
+    // дубль означал бы второй обработчик той же кнопки. `editImage` открывает
+    // выбор картинки документа (DocumentSheetV2).
+    const CORE_ACTIONS = ["editImage"];
+
     it("у каждого data-action есть обработчик", () => {
-      expect(inTemplate.filter(a => !declared.includes(a))).toEqual([]);
+      expect(inTemplate.filter(a => !declared.includes(a) && !CORE_ACTIONS.includes(a))).toEqual([]);
     });
 
     it("каждый обработчик кем-то вызывается", () => {
@@ -60,6 +69,23 @@ export function describeV2Sheet(SheetClass, files) {
       const inMarkup = [...new Set([...TEMPLATE.matchAll(/data-tab="(\w+)"/g)].map(m => m[1]))];
       expect(inMarkup.sort()).toEqual(group.tabs.map(t => t.id).sort());
       expect(group.tabs.map(t => t.id)).toContain(group.initial);
+    });
+
+    // Foundry расставляет .active только в changeTab, то есть по клику. При
+    // любой другой перерисовке — а submitOnChange перерисовывает лист на каждое
+    // изменение поля — класс не возвращается, и раздел, у которого active нет в
+    // самой разметке, пропадает с экрана до следующего клика по вкладке. Именно
+    // так «ломались» листы Отряда, Формирования и Звёздной системы.
+    it("каждый раздел помечает себя active из контекста", () => {
+      const group = SheetClass.TABS?.primary;
+      if (!group) return;
+
+      const sections = [...TEMPLATE.matchAll(/<div class="tab[^"]*"[^>]*data-tab="(\w+)"[^>]*data-group="primary"/g)];
+      const withoutActive = sections
+        .filter(m => !/\{\{#if \(eq (\.\.\/)?tab "\w+"\)\}\}active/.test(m[0]))
+        .map(m => m[1]);
+
+      expect(withoutActive).toEqual([]);
     });
   });
 }

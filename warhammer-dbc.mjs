@@ -111,6 +111,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/apps/surgeon-slot.hbs",        // ← хирургикон (партиал слота)
     "systems/warhammer-dbc/templates/apps/hud.hbs",                 // ← боевой HUD
     "systems/warhammer-dbc/templates/apps/ship-hud.hbs",            // ← HUD корабля
+    "systems/warhammer-dbc/templates/apps/wizard-mech-choices.hbs", // ← Мастер создания
     // Предмет
     "systems/warhammer-dbc/templates/item/parts/weapon.hbs",
     "systems/warhammer-dbc/templates/item/parts/ammo.hbs",

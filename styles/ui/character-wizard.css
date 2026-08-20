@@ -1,0 +1,72 @@
+/* Единый Мастер создания персонажа (module/apps/character-wizard.mjs).
+   Формы полей переиспользуют .wh-wizard-form/.atk-dlg-row/.wiz-* из
+   ui/dialogs.css — здесь только шаги-чипсы и футер с навигацией.
+
+   Каркас — та же схема, что у Разгрузки (ui/rig-manager.css): окно
+   V1-приложения само не скроллит контент, а .wiz-step-body раньше рос
+   без ограничения высоты и выталкивал футер («Далее»/«Готово») за
+   пределы окна — кнопка физически не помещалась на экран. Форма
+   становится колонкой на всю высоту .window-content, тело — единственный
+   растущий/скроллящийся элемент, шаги-чипсы и футер остаются на месте. */
+.wh-char-wizard .window-content { padding: 8px; overflow: hidden; }
+.wh-wizard-form.wh-char-wizard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.wh-char-wizard .wiz-steps {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--wh-border, #7a5c2e);
+  margin-bottom: 8px;
+}
+
+.wh-char-wizard .wiz-step-chip {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--wh-text-dim, #a8926a);
+  border: 1px solid transparent;
+}
+
+.wh-char-wizard .wiz-step-chip.active {
+  color: var(--wh-text-light, #e8d5a3);
+  border-color: var(--wh-border, #7a5c2e);
+  background: var(--wh-panel-dark, #2a1c10);
+}
+
+.wh-char-wizard .wiz-step-chip.done { color: #7fbf7f; }
+
+.wh-char-wizard .wiz-step-body {
+  flex: 1 1 auto;
+  min-height: 0; /* классическая ловушка flexbox: без этого ребёнок не сжимается и не скроллит, а раздувает родителя */
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.wh-char-wizard .wiz-footer {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--wh-border, #7a5c2e);
+  margin-top: 8px;
+}
+
+/* Foundry-ядро стилит любую <button> внутри .app как width:100% (body.game
+   .app button) — .wh-slot-btn выставляет flex:0 0 auto, но flex-basis:auto
+   всё равно берёт этот унаследованный width:100%, а не размер по контенту.
+   Без явного width сама «Далее →» растягивалась на всю ширину футера и
+   выталкивала «Готово»/вторую кнопку за правый край окна — кнопка физически
+   пропадала с экрана, хотя в DOM была на месте. !important обязателен: ядро
+   и система лежат в разных @layer, и слой системы проигрывает слою ядра для
+   обычных объявлений. */
+.wh-char-wizard .wiz-footer button {
+  width: auto !important;
+}
