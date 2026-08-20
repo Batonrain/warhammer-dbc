@@ -11,6 +11,8 @@ import { resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
          buildPropertyChatBlock, buildTargetEffectButtons } from "../combat/weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { meleeStrengthBonus } from "../combat/attack-outcome.mjs";
+import { rollHordePsychTest, psychHealLocked, PSYCH_TESTS } from "../combat/horde-psych.mjs";
+import { hordeContacts, hordeMeleeTargets } from "../combat/horde-tokens.mjs";
 import { attachItemPicker } from "./item-picker.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
@@ -97,6 +99,8 @@ function onItemEquip(event, target) {
   return it?.update({ "system.equipped": !it.system?.equipped });
 }
 function onPick(event, target)      { return this._openItemPicker(target.dataset.kind); }
+/** Психологический тест: массивные потери, Страх, Запугивание. */
+function onPsychTest(event, target) { return this._psychTestDialog(target.dataset.kind); }
 
 export class WarhammerHordeSheet
   extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
@@ -124,7 +128,8 @@ export class WarhammerHordeSheet
       itemDelete: whenEditable(onItemDelete),
       itemEquip:  whenEditable(onItemEquip),
       weaponRoll: whenEditable(onWeaponRoll),
-      pick:       whenEditable(onPick)
+      pick:       whenEditable(onPick),
+      psychTest:  whenEditable(onPsychTest)
     }
   };
 
@@ -208,6 +213,16 @@ export class WarhammerHordeSheet
         summary: i.system?.summary || i.system?.description || "" }));
 
     context.stateLabel = { steady: "Боеспособна", weakened: "Ослаблена потерями", broken: "Сломлена — рассыпается" }[context.d.state] || "";
+
+    // Психологические тесты: три кнопки с уже посчитанным порогом.
+    context.psychTests = Object.entries(PSYCH_TESTS)
+      .map(([key, def]) => ({ key, label: def.label, hint: def.sub }));
+    context.psychLock = psychHealLocked(this.actor);
+
+    // Орда против Орды: соседние Орды и за сколько персонажей каждая считается.
+    // Токена на сцене может не быть — тогда панель просто молчит.
+    context.hordeContacts = this._contacts();
+
     context.isGM = game.user.isGM;
     return context;
   }
@@ -247,11 +262,77 @@ export class WarhammerHordeSheet
     const start = Number(s.magnitude?.start) || 0;
     const cur   = Number(s.magnitude?.value) || 0;
     const psych = Number(s.psychDamage) || 0;
+
+    // Орда, автоматически проходящая тесты на Страх и Запугивание, иммунна к
+    // психологическому урону — кнопка не должна снимать ей Магнитуду.
+    if (dPsych > 0 && s.immuneFear) {
+      return ui.notifications.info(
+        "Эта Орда автоматически проходит тесты на Страх и Запугивание — психологического урона она не получает.");
+    }
+    // Лечится только психологический урон и только тот, что действительно есть:
+    // обычные потери восполняются рекрутами и отдыхом, а не речью.
+    if (dPsych < 0) {
+      const lock = psychHealLocked(this.actor);
+      if (lock) {
+        return ui.notifications.warn(
+          `⚠️ Орда потеряла больше половины состава: психологический урон не восстанавливается ещё ${lock.hoursLeft} ч.`);
+      }
+      const healable = Math.min(-dPsych, psych);
+      if (!healable) return ui.notifications.info("Психологического урона у Орды нет.");
+      dPsych = -healable;
+      dMag   = healable;
+    }
+
     const newVal   = Math.max(0, cur + dMag);
     const cap = start > 0 ? start : Infinity;
     const clamped  = Math.min(newVal, cap);
     const newPsych = Math.max(0, psych + dPsych);
     await this.actor.update({ "system.magnitude.value": clamped, "system.psychDamage": newPsych });
+  }
+
+  /**
+   * Соседние Орды по расстановке токенов: в рукопашной чужая Орда считается за
+   * столько персонажей, сколько клеток базового контакта она выставила.
+   * Без сцены и токена панель пуста — считать нечего.
+   */
+  _contacts() {
+    const token = this.actor.getActiveTokens?.()?.[0];
+    if (!token) return [];
+    try { return hordeContacts(token); }
+    catch (e) { console.warn("Warhammer DBC | horde contacts:", e); return []; }
+  }
+
+  /** Целей в рукопашной с учётом соседних Орд (см. rules/horde-geometry.mjs). */
+  _meleeTargets(magnitudeTargets) {
+    const token = this.actor.getActiveTokens?.()?.[0];
+    if (!token) return { targets: magnitudeTargets, note: "" };
+    try { return hordeMeleeTargets(token, { magnitudeTargets }); }
+    catch (e) {
+      console.warn("Warhammer DBC | horde melee targets:", e);
+      return { targets: magnitudeTargets, note: "" };
+    }
+  }
+
+  /** Диалог психологического теста: порог считается сам, ГМ вводит модификатор. */
+  async _psychTestDialog(kind) {
+    const def = PSYCH_TESTS[kind];
+    if (!def) return;
+    const d = this.actor.system.derived || {};
+    const mod = await foundry.applications.api.DialogV2.prompt({
+      window: { title: `${def.label} — ${this.actor.name}` },
+      classes: ["warhammer-dbc", "wh-holo"],
+      content: `<div class="wh-attack-form">
+        <div class="atk-horde-info">${esc(def.sub)}</div>
+        <div class="atk-dlg-row"><label>Базовый порог:</label>
+          <span>W + Магнитуда${d.wpPenalty ? ` ${d.wpPenalty} (Ослаблена)` : ""} = <b>${d.psychTestThreshold ?? 0}</b></span></div>
+        <div class="atk-dlg-row"><label>Модификатор:</label>
+          <input id="h-psych-mod" type="number" value="0" data-tooltip="Рейтинг Страха, степень Запугивания и прочее"/></div>
+      </div>`,
+      ok: { label: "Бросок!", icon: "fas fa-dice-d10",
+            callback: (event, button) => parseInt(button.form.querySelector("#h-psych-mod")?.value) || 0 }
+    }).catch(() => null);
+    if (mod === null || mod === undefined) return;
+    return rollHordePsychTest(this.actor, kind, { mod });
   }
 
   async _magReset() {
@@ -273,10 +354,12 @@ export class WarhammerHordeSheet
 
   async _rollChar(key) {
     const meta = CHARACTERISTICS[key];
+    // Ослабленная Орда (потеряно больше половины) катит Волю с −10.
+    const penalty = (key === "wp") ? (this.actor.system.derived?.wpPenalty || 0) : 0;
     return this._rollTest({
       label:     meta?.label || key,
-      threshold: this.actor.system.characteristics?.[key]?.total ?? 0,
-      prefix:    meta?.abbr || key
+      threshold: (this.actor.system.characteristics?.[key]?.total ?? 0) + penalty,
+      prefix:    penalty ? `${meta?.abbr || key} (Ослаблена ${penalty})` : (meta?.abbr || key)
     });
   }
 
@@ -357,7 +440,10 @@ export class WarhammerHordeSheet
     const meta = CHARACTERISTICS[key];
     const charVal = this.actor.system.characteristics?.[key]?.total ?? 0;
     const d = this.actor.system.derived || {};
-    const targets = isMelee ? d.meleeTargets : d.rangedShots;
+    // В рукопашной с другой Ордой целей столько, сколько клеток базового
+    // контакта чужой строй выставил, — но не больше, чем позволяет Магнитуда.
+    const melee = isMelee ? this._meleeTargets(d.meleeTargets) : null;
+    const targets = isMelee ? melee.targets : d.rangedShots;
 
     // Свойства оружия — напоминание.
     const modFx  = getModEffects(this.actor, w);
@@ -374,6 +460,7 @@ export class WarhammerHordeSheet
       return `<label class="attack-mod-check"><input type="checkbox" class="h-mod" data-value="${v}"/><span>${m.label} (${v >= 0 ? "+" : ""}${v})</span></label>`;
     }).join("");
 
+    const hordeVsNote = melee?.note ? `<div class="atk-horde-info">${esc(melee.note)}</div>` : "";
     const rangeInfo = (!isMelee && sys.range > 0)
       ? `<div class="atk-range-info"><div class="atk-range-title">Дистанции (Rng = ${sys.range}м)</div>
           <div class="atk-range-grid"><span class="atr-zone atr-pb">В упор →+30</span><span class="atr-zone atr-sh">Кор. →+10</span><span class="atr-zone atr-cb">Боевая →±0</span><span class="atr-zone atr-lg">Дальняя →−10</span><span class="atr-zone atr-ex">Экстр. →−30</span></div></div>` : "";
@@ -383,6 +470,7 @@ export class WarhammerHordeSheet
     const content = `<div class="wh-attack-form wh-horde-attack">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(w.name)}</span><span class="atk-weapon-class">${WEAPON_CLASSES[sys.weaponClass] || ""}</span></div>
       <div class="atk-horde-info">Орда · целей: <b>${targets}</b> · Магнитуда даёт <b>${d.magDamageStr}</b> к урону при попадании. Прицеливания и Избирательных атак у Орд нет.</div>
+      ${hordeVsNote}
       ${wpBadges ? `<div class="atk-dlg-modifiers"><div class="atk-mods-title">Свойства оружия</div><div class="atk-wprops-list">${wpBadges}</div></div>` : ""}
       ${rangeInfo}
       <div class="atk-dlg-row"><label>Характеристика:</label><span class="atk-horde-char">${meta?.abbr || key} (${charVal})</span></div>
@@ -463,11 +551,18 @@ export class WarhammerHordeSheet
 
     // Кнопки: применить урон всегда (попадание или «промах»); Уклонение — только при промахе
     // (обычное попадание Орды Избегать нельзя — это шквал/навал).
+    // Свойства, дающие лишние попадания, едут и отсюда: Орда против Орды —
+    // обычный случай, и Взрывное с Распылением там работают так же.
     const applyBtn = `<button class="wh-apply-dmg-btn" type="button"
       data-damage="${dmgRoll.total}" data-penetration="${pen}" data-damage-type="${dtype}"
       data-hit-location="${hitLoc}" data-weapon-name="${w.name}" data-attacker="${actor.name}"
+      data-attacker-uuid="${actor.uuid || ""}"
       data-felling="${wp.fellingRating || 0}" data-primitive="${wp.primitive ? 1 : 0}"
-      data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}">
+      data-ignore-shield="${wp.ignoreShield ? 1 : 0}" data-warp-soak="${wp.warpSoak ? 1 : 0}"
+      data-blast="${wp.blastRating || 0}" data-flame="${wp.flame ? 1 : 0}"
+      data-power-field="${wp.powerField ? 1 : 0}" data-spray="${wp.spray ? 1 : 0}"
+      data-devastating="${wp.devastatingRating || 0}"
+      data-weapon-range="${Number(sys.range) || 0}" data-melee="${isMelee ? 1 : 0}">
       Применить урон: <b>${dmgRoll.total}</b> → ${hitLoc}</button>`;
     const dodgeBtn = !hit
       ? `<div class="roll-defense-section"><div class="roll-section-head">Защита цели <span class="roll-head-hint">— промах Орды можно Избегать</span></div>

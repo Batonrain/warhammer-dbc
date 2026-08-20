@@ -1,0 +1,37 @@
+{
+  "name": "Academics / Учёные",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "btwkmmd9c9k6MWt3",
+  "system": {
+    "key": "academics",
+    "aliases": [
+      "Academics"
+    ],
+    "isLore": true,
+    "description": "Исследователи, архивариусы и наставники — те, чьё оружие знание.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга",
+    "parentKey": "",
+    "alsoIn": []
+  },
+  "_id": "FctnAcademics000",
+  "effects": [],
+  "sort": 2200000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnAcademics000"
+}

@@ -6,6 +6,8 @@
 // шаблон из _prepareContext.
 
 import { describe, it, expect, beforeEach } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
 import { WarhammerItemSheet } from "../../module/sheets/item-sheet.mjs";
@@ -19,6 +21,8 @@ describeV2Sheet(WarhammerItemSheet, {
     "templates/item/item-sheet.hbs",
     "templates/item/parts/armor.hbs",
     "templates/item/parts/component.hbs",
+    "templates/item/parts/gear.hbs",
+    "templates/item/parts/infoguard.hbs",
     "templates/item/parts/psychic-power.hbs",
     "templates/item/parts/ritual.hbs",
     "templates/item/parts/talent.hbs",
@@ -81,5 +85,30 @@ describe("_prepareContext", () => {
     const ctx = await ctxOf(item("weapon", { weaponProps: [{ key: "нет-такого" }] }));
 
     expect(ctx.weaponPropsActive).toEqual([]);
+  });
+});
+
+// Часть на тип предмета лист подключает сам — по `{{#if (eq item.type …)}}`.
+// Партиал, который предзагружен, но никуда не вставлен, ничего не ломает и
+// молчит: на листе просто нет целого раздела. Так пропали иерархия Фракции и
+// поле «Входит в состав» — их часть выпала при слиянии веток, а предзагрузка
+// осталась, и потерю никто не заметил.
+describe("части листа предмета подключены, а не только предзагружены", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const read = p => fs.readFileSync(path.join(root, p), "utf8");
+
+  it("каждая предзагруженная часть предмета встречается в разметке", () => {
+    const main = read("warhammer-dbc.mjs");
+    const sheet = read("templates/item/item-sheet.hbs");
+
+    const preloaded = [...main.matchAll(/"systems\/warhammer-dbc\/(templates\/item\/parts\/[\w-]+\.hbs)"/g)]
+      .map(m => m[1]);
+    // Части, которые вставляет не лист, а другая часть — ищем и в них.
+    const partials = preloaded.map(p => read(p)).join("\n");
+
+    const unused = [...new Set(preloaded)]
+      .filter(p => !sheet.includes(p) && !partials.includes(p));
+
+    expect(unused).toEqual([]);
   });
 });

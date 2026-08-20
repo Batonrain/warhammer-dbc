@@ -14,6 +14,7 @@ import { SQUAD_LEAD_TYPES, SQUAD_MEMBER_TYPES, SQUAD_TYPE_LABEL,
          DETAIL_COMMANDS, TACTICS_TALENTS, COMMAND_REFERENCE,
          MORALE_RULES, BROKEN_SQUAD_RULE,
          cohesionBonus, riskCap } from "../constants/squad.mjs";
+import { commandReachFor, presenceNumber } from "../rules/command.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
@@ -224,11 +225,27 @@ export class WarhammerSquadSheet
       // Живучесть по типу актора — чтобы отряд читался с одного взгляда.
       hp: isHorde   ? `Магн. ${sys.magnitude?.value ?? 0}/${sys.magnitude?.start ?? 0}`
         : isVehicle ? `Стр. ${sys.structure?.value ?? 0}/${sys.structure?.max ?? 0}`
-        : (sys.wounds ? `Раны ${sys.wounds.value ?? 0}/${sys.wounds.max ?? 0}` : "")
+        : (sys.wounds ? `Раны ${sys.wounds.value ?? 0}/${sys.wounds.max ?? 0}` : ""),
+      // Что до него вообще доходит от Командования: Орде — лишь эффекты 1 и 3
+      // Присутствия. Правило общее с панелью «Под моим Присутствием»
+      // (rules/command.mjs), чтобы Орда читалась одинаково на обоих путях.
+      reach: commandReachFor(type, this.actor.system.presence?.benefit || "")
     };
   }
 
   async _prepareContext(options) {
+    // submitOnChange перерисовывает весь лист на КАЖДОЕ изменение поля (Риск,
+    // Слаженность, отметки Детальной Команды и т.п.). Активная вкладка обязана
+    // пережить этот цикл: единственный надёжный момент её прочитать — здесь,
+    // до того как _prepareContext построит новый context.tab, а this.element
+    // ещё хранит СТАРЫЙ DOM с верной .active-меткой (changeTab выставляет её
+    // по клику и нигде больше не трогает). Если это разошлось с this.tabGroups
+    // (нашли живьём: лист откатывался на «ОТРЯД» вместо вкладки игрока), берём
+    // за истину то, что фактически было на экране, а не внутреннее состояние.
+    const liveTab = this.element
+      ?.querySelector('.sheet-tabs[data-group="primary"] .item.active')?.dataset.tab;
+    if (liveTab && this.tabGroups) this.tabGroups.primary = liveTab;
+
     const context = await super._prepareContext(options);
     context.actor = this.actor;
     context.tab = this.tabGroups?.primary ?? WarhammerSquadSheet.TABS.primary.initial;
@@ -694,6 +711,7 @@ export class WarhammerSquadSheet
     const coh = Number(sys.derived?.cohesion) || 0;
     const cohMod = cohesionBonus(coh, isCo);
     const title = { presence: "Командное Присутствие", short: "Короткая Команда", detail: "Детальная Команда" }[kind];
+    const missed = ok ? this._notReachedBy(kind, extra) : "";
 
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -706,10 +724,31 @@ export class WarhammerSquadSheet
           ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}${capped ? `, срезано Риском ${sys.risk} до ${cap}` : ""}</span>`
           : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`}</div>
         ${effect}
+        ${missed}
       </div>`,
       rolls: [roll],
       sound: CONFIG.sounds.dice
     }, game.settings.get("core", "rollMode")));
+  }
+
+  /**
+   * До кого отданное не дошло. Орде из состава Команды не достаются вовсе, а
+   * из Присутствия — только эффекты 1 и 3, и молчать об этом нельзя: игрок
+   * иначе раздаст бонус всему отряду, включая толпу.
+   */
+  _notReachedBy(kind, extra = {}) {
+    const benefit = kind === "presence"
+      ? (extra.benefit || this.actor.system.presence?.benefit || "extreme") : "";
+    const missed = (this.actor.system.members || [])
+      .map(m => this._memberData(m))
+      .filter(m => !m.missing && (kind === "presence" ? !m.reach.presenceApplies : !m.reach.commands));
+    if (!missed.length) return "";
+
+    const names = missed.map(m => esc(m.name)).join(", ");
+    const why = kind === "presence"
+      ? `выбранное преимущество (эффект ${presenceNumber(benefit)}) до них не доходит`
+      : "Команды на них не действуют — только эффекты 1 и 3 Присутствия";
+    return `<div class="sq-chat-note sq-chat-missed">Не получают: <b>${names}</b> — ${why}.</div>`;
   }
 
   /** Покупка/отмена эффекта Детальной Команды за накопленные Успехи. */

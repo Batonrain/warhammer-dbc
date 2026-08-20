@@ -1,0 +1,37 @@
+{
+  "name": "Ordo Hereticus / Ордо Еретикус",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "bcyJ8PgZ6Way7XvC",
+  "system": {
+    "key": "ordo-hereticus",
+    "parentKey": "inquisition",
+    "alsoIn": [],
+    "aliases": [
+      "Ordo Hereticus"
+    ],
+    "isLore": true,
+    "description": "Орден Инквизиции, что ищет измену внутри самого Империума.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnOrdoHeretic0",
+  "effects": [],
+  "sort": 3400000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnOrdoHeretic0"
+}
