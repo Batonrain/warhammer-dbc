@@ -6,7 +6,7 @@
     "description": "",
     "notes": "",
     "weaponClass": "melee",
-    "weaponType": "exotic",
+    "weaponType": "grav",
     "range": 4,
     "balance": -2,
     "grips": "2р",
@@ -77,7 +77,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Молот"
   },
   "_id": "eyb2ZoZ11prg4Kz2",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-hammer.svg",

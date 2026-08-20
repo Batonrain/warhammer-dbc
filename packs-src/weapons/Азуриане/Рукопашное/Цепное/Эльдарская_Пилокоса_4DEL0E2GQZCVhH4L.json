@@ -80,7 +80,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Крюк"
   },
   "_id": "4DEL0E2GQZCVhH4L",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

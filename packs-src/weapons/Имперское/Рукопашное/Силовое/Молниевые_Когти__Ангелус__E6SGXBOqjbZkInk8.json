@@ -59,7 +59,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Когти"
   },
   "_id": "E6SGXBOqjbZkInk8",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

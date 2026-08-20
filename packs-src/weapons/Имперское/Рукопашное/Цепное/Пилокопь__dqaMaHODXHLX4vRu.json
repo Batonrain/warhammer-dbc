@@ -79,7 +79,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Копьё"
   },
   "_id": "dqaMaHODXHLX4vRu",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

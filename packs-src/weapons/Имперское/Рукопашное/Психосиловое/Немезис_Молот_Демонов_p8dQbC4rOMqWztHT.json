@@ -89,7 +89,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Молот"
   },
   "_id": "p8dQbC4rOMqWztHT",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-hammer.svg",

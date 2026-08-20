@@ -106,7 +106,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Топор"
   },
   "_id": "zl43B3jKkGhLScMX",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",
