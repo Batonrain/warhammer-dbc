@@ -1885,7 +1885,79 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Розовый Ужас (стр. 14)",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Рядовой Розовый Ужас из статблока."
+              },
+              {
+                "key": "iridescent",
+                "label": "Радужный Ужас",
+                "hint": "BS до 55, I до 42, W до 50, F до 34, Раны до 22, Command+10; Трейт Warp Gifted (5) — рейтинг проставьте вручную — и две психосилы на выбор.",
+                "system": {
+                  "characteristics.bs.base": 55,
+                  "characteristics.int.base": 42,
+                  "characteristics.wp.base": 50,
+                  "characteristics.fel.base": 34,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "skills.command.rank": "trained"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.traits.SDkAbCYsgbM1sa3B"
+                ],
+                "pick": [
+                  {
+                    "label": "Психосила 1",
+                    "from": [
+                      "Compendium.warhammer-dbc.psychic-powers.FuFS5qpozUZ496Wo",
+                      "Compendium.warhammer-dbc.psychic-powers.BnGl4yuKLfjKP7yu",
+                      "Compendium.warhammer-dbc.psychic-powers.aXjpPUVWUOR4GTh2",
+                      "Compendium.warhammer-dbc.psychic-powers.yUs75Z0TrL3yTrqQ",
+                      "Compendium.warhammer-dbc.psychic-powers.7lGcX1Svtpuy3Yp9",
+                      "Compendium.warhammer-dbc.psychic-powers.nuPwm3bMiV11z7Al",
+                      "Compendium.warhammer-dbc.psychic-powers.F0kxIsEHE6SfLdJx",
+                      "Compendium.warhammer-dbc.psychic-powers.k0zeTMWrZlIxfOmo",
+                      "Compendium.warhammer-dbc.psychic-powers.bd5p7GHtIOpTkvOT",
+                      "Compendium.warhammer-dbc.psychic-powers.ZDPb18M2NtaksqpU",
+                      "Compendium.warhammer-dbc.psychic-powers.k1dIp1uCt8Mhu7rC"
+                    ]
+                  },
+                  {
+                    "label": "Психосила 2",
+                    "from": [
+                      "Compendium.warhammer-dbc.psychic-powers.FuFS5qpozUZ496Wo",
+                      "Compendium.warhammer-dbc.psychic-powers.BnGl4yuKLfjKP7yu",
+                      "Compendium.warhammer-dbc.psychic-powers.aXjpPUVWUOR4GTh2",
+                      "Compendium.warhammer-dbc.psychic-powers.yUs75Z0TrL3yTrqQ",
+                      "Compendium.warhammer-dbc.psychic-powers.7lGcX1Svtpuy3Yp9",
+                      "Compendium.warhammer-dbc.psychic-powers.nuPwm3bMiV11z7Al",
+                      "Compendium.warhammer-dbc.psychic-powers.F0kxIsEHE6SfLdJx",
+                      "Compendium.warhammer-dbc.psychic-powers.k0zeTMWrZlIxfOmo",
+                      "Compendium.warhammer-dbc.psychic-powers.bd5p7GHtIOpTkvOT",
+                      "Compendium.warhammer-dbc.psychic-powers.ZDPb18M2NtaksqpU",
+                      "Compendium.warhammer-dbc.psychic-powers.k1dIp1uCt8Mhu7rC"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

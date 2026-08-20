@@ -1,4 +1,5 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
 import { MELEE_STANCES }                           from "../constants/combat.mjs";
 import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
@@ -14,6 +15,43 @@ import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
 import { qualityEffects, buildQualityChatBlock }    from "../constants/quality.mjs";
 import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../constants/drukhari-splinter.mjs";
 import { vehicleHitLocation }                        from "../constants/vehicle.mjs";
+import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
+
+/**
+ * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
+ * свойства Extreme (wp.extremeThreshold), а без него — собственный максимум
+ * кубика. Сработавшее даёт отдельный бросок 1d5 на Критический Результат и
+ * переводит его в Критический Эффект (кроме техники — там Экстремальный уходит
+ * в отрицательную Структуру при применении урона, а не по этой таблице).
+ *
+ * Общий код для оружия, психосил и техночудес (module/sheets/tabs/psychic.mjs,
+ * tech.mjs): раньше те считали урон в обход этой проверки и не подхватывали ни
+ * Экстремальный урон, ни другие дайс-моды свойств атаки (см. applyDamageDiceMods,
+ * который вызывающая сторона обязана применить к формуле ДО броска).
+ *
+ * @param {Roll}    dmgRoll  уже брошенный урон — проверяются его кубы
+ * @param {object}  wp       агрегат aggregateAuto(...) для этой атаки
+ */
+export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation = "Торс", targetIsVehicle = false }) {
+  let hasExtreme = false;
+  if (dmgRoll.terms) {
+    for (const term of dmgRoll.terms) {
+      if (term.faces && term.results) {
+        const thr = wp.extremeThreshold < 10 ? wp.extremeThreshold : term.faces;
+        for (const r of term.results) {
+          if (r.active && r.result >= thr) hasExtreme = true;
+        }
+      }
+    }
+  }
+  let extremeLevel = 0, critEffect = null, exRoll = null;
+  if (hasExtreme) {
+    exRoll = await new Roll("1d5").evaluate();
+    extremeLevel = exRoll.total;
+    if (!targetIsVehicle) critEffect = getCriticalEffect(damageType, hitLocation, extremeLevel);
+  }
+  return { hasExtreme, extremeLevel, critEffect, exRoll };
+}
 
 export async function _executeAttackRoll(actor, item, charKey, threshold, rofMode, aimTarget, opts = {}) {
   const sys     = item.system;
@@ -85,9 +123,25 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // forcedRoll задаётся при перебросе/+10 за Очко Судьбы — повторяем ту же
   // атаку с заданным значением d100 (а не бросаем заново).
-  const roll     = (opts.forcedRoll != null)
-    ? await new Roll(String(Math.max(1, Math.min(100, opts.forcedRoll)))).evaluate()
-    : await new Roll("1d100").evaluate();
+  //
+  // opts.reroll — другое: переброс от правила (Локус Буйства и подобные,
+  // module/rules/item-rules.mjs). Он не повторяет прошлую атаку, а катает
+  // несколько кубов сразу и оставляет один. Какой — решает pickReroll: на d100
+  // «лучший» это МЕНЬШИЙ, и это знание живёт в одном месте на всю систему.
+  // forcedRoll старше: если атаку переигрывают, перебрасывать уже нечего.
+  let rerollDropped = [];
+  let roll;
+  if (opts.forcedRoll != null) {
+    roll = await new Roll(String(Math.max(1, Math.min(100, opts.forcedRoll)))).evaluate();
+  } else if (opts.reroll) {
+    const rolls = [];
+    for (let i = 0; i < Math.max(2, opts.reroll.rolls || 2); i++) rolls.push(await new Roll("1d100").evaluate());
+    const picked = pickReroll(rolls.map(r => r.total), opts.reroll.mode);
+    roll = rolls[picked.index];
+    rerollDropped = picked.dropped;
+  } else {
+    roll = await new Roll("1d100").evaluate();
+  }
   const rv       = roll.total;
   const rollMode = game.settings.get("core", "rollMode");
   const hit      = rv <= threshold;
@@ -147,7 +201,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // на предмете — ставится kind:"script" Конструктора при получении). «Одиночная
   // атака» — по формулировке пользователя это НЕ конкретно RoF-режим "single":
   // для стрелкового — да, "single" (Одиночный выстрел); для рукопашного — приём
-  // "Обычная Атака" (module/constants/combat.mjs, MELEE_TECHNIQUES.standard) или
+  // "Обычная Атака" (module/constants/combat.mjs, MELEE_MANEUVERS.standard) или
   // вовсе без выбранного приёма (обычный клик по оружию, минуя вкладку «Приёмы»),
   // при режиме "melee"/"charge" (Натиск — тоже обычная атака, просто со штрафом/
   // бонусом на попадание, не меняет число ударов). Everywhere — ровно 1 попадание
@@ -231,16 +285,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         allRolls.push(second);
         if (second.total > dmgRoll.total) dmgRoll = second;
       }
-      let hasExtreme = false;
       let deflagrateHit = false;
       if (dmgRoll.terms) {
         for (const term of dmgRoll.terms) {
           if (term.faces && term.results) {
-            // Экстремальное (X): порог = рейтинг; иначе максимум кубика
-            const thr = wp.extremeThreshold < 10 ? wp.extremeThreshold : term.faces;
             for (const r of term.results) {
-              if (r.active && r.result >= thr) hasExtreme = true;
-              if (r.active && r.result >= 7)   deflagrateHit = true;
+              if (r.active && r.result >= 7) deflagrateHit = true;
             }
           }
         }
@@ -269,18 +319,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         msPenalty = 3 * i;
         total = Math.max(0, total - msPenalty);
       }
-      let extremeLevel = 0, critEffect = null;
-      if (hasExtreme) {
-        const exRoll = await new Roll("1d5").evaluate();
-        allRolls.push(exRoll);
-        extremeLevel = exRoll.total;
-        // У техники Экстремальный урон переводится в её Критический Эффект через
-        // отрицательную Структуру (при применении урона), а не по таблице существ.
-        if (!targetIsVehicle) {
-          const thisLoc = locForHit(i);
-          critEffect = getCriticalEffect(effDmgType, thisLoc, extremeLevel);
-        }
-      }
+      // У техники Экстремальный урон переводится в её Критический Эффект через
+      // отрицательную Структуру (при применении урона), а не по таблице существ.
+      const { hasExtreme, extremeLevel, critEffect, exRoll } = await rollExtremeDamage(dmgRoll, {
+        wp, damageType: effDmgType, hitLocation: locForHit(i), targetIsVehicle
+      });
+      if (exRoll) allRolls.push(exRoll);
       damageRolls.push({ total, extremeLevel, hasExtreme, critEffect, bonusNote, deflagrateNote, msPenalty });
     }
   }
@@ -298,6 +342,22 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         hits: Math.min(Math.ceil(deg / 2), supCap), cap: supCap }
     : null;
 
+  // ── «Прячась в Орде» ─────────────────────────────────────────────────────
+  // Цель стоит внутри союзной Орды (токены наложены), и не-Избирательный
+  // выстрел половиной попаданий уходит в толпу: одиночный — по чётности броска,
+  // очередь — каждым нечётным попаданием.
+  const targetToken = [...(game.user?.targets ?? [])][0] ?? null;
+  const shelter = hit && targetToken
+    ? hidingInHordeSplit(targetToken, {
+        hitsCount, rv, isMelee,
+        burst: rofMode === "semi" || rofMode === "full",
+        selective: !!aimTarget?.value
+      })
+    : null;
+  const hordeHits = shelter
+    ? shelter.mask.map(inHorde => inHorde ? (shelter.horde?.uuid || "") : "")
+    : null;
+
   const techOpts = opts.techniqueOpts || {};
 
   // Перезарядка: оружие с Recharge и Максимальный режим стреляют раз в 2 хода.
@@ -311,7 +371,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     speaker: ChatMessage.getSpeaker({ actor }),
     content: attackCard({
       actorName: actor.name, weaponName: item.name, wp,
-      threshold, rv, hit, deg, hitsCount, hits,
+      threshold, rv, hit, deg, hitsCount, hits, rerollDropped,
       modeLine: (isMelee && rofMode === "melee") ? "Рукопашная" : rofLabel,
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
@@ -325,18 +385,33 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         condLabels: opts.ammoCondLabels || [], warning: ammoWarning
       },
       band, suppression, corVal, corEffects: sys.corEffects || [],
+      // Урон по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый Дождь»,
+      // uuid — чтобы найти Таланты и Размер стрелка.
+      weaponRange: Number(sys.range) || 0,
+      burst: rofMode === "semi" || rofMode === "full",
+      attackerUuid: actor.uuid || "",
+      hordeHits,
       // Выжигание Души: Психосиловое оружие в руках псайкера при попадании.
       soulBurnActorId: (hit && wp.forcePR && isPsyker) ? actor.id : null,
       defense: {
         dodgeMod: techOpts.targetDodgeMod ?? 0,
         parryMod: techOpts.targetParryMod ?? 0,
+        // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
+        // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
+        // кнопках защиты в карточке.
+        forcedDefenceReroll: opts.forcedDefenceReroll || "",
         targetIsVehicle, note: techOpts.chatNote
       },
       notes: {
+        shelter: shelter
+          ? `Цель прикрыта Ордой «${shelter.hordeToken.name ?? shelter.horde?.name}»: `
+            + `${shelter.count} из ${hitsCount} попадан${shelter.count === 1 ? "ия уходит" : "ий уходят"} в толпу.`
+          : "",
         attack:    opts.attackNote,
         technique: { label: techOpts.techniqueLabel, stance: techOpts.stanceLabel, note: techOpts.chatNote },
         aiming:    opts.aimingLabel,
         aim:       aimTarget?.value ? aimTarget.label.replace(/\s*\(.*\)/, "") : "",
+        mount:     opts.mountNote || "",
         allOut:    !!opts.isAllOut,
         off:       offNote,
         maximal:   maximalOn,

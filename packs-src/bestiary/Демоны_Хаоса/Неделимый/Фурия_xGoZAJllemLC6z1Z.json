@@ -1454,7 +1454,96 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Фурия (стр. 9)",
+        "groups": [
+          {
+            "key": "dedication",
+            "label": "Посвящение",
+            "mode": "one",
+            "default": "none",
+            "options": [
+              {
+                "key": "none",
+                "label": "Без покровительства",
+                "hint": "Дикая Фурия: Трейт Bestial, уязвима к Угасанию."
+              },
+              {
+                "key": "slaanesh",
+                "label": "Слаанеш",
+                "hint": "+10 A, Трейт Alluring Presence; теряет Bestial.",
+                "remove": [
+                  {
+                    "type": "trait",
+                    "name": "Bestial"
+                  }
+                ],
+                "system": {
+                  "characteristics.ag.base": "+10"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.traits.dBIVlP7q2G5LbwvT"
+                ]
+              },
+              {
+                "key": "nurgle",
+                "label": "Нургл",
+                "hint": "+10 T, Трейт Mockery of Life; теряет Bestial.",
+                "remove": [
+                  {
+                    "type": "trait",
+                    "name": "Bestial"
+                  }
+                ],
+                "system": {
+                  "characteristics.t.base": "+10"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.traits.yr53iZEVtEjVRSA7"
+                ]
+              },
+              {
+                "key": "khorne",
+                "label": "Кхорн",
+                "hint": "+10 S, Трейт Blood for the Blood God; теряет Bestial.",
+                "remove": [
+                  {
+                    "type": "trait",
+                    "name": "Bestial"
+                  }
+                ],
+                "system": {
+                  "characteristics.s.base": "+10"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.traits.R80pW6juBamR1VKY"
+                ]
+              },
+              {
+                "key": "tzeentch",
+                "label": "Тзинч",
+                "hint": "+10 W, Трейт Sorcerous Barrier; теряет Bestial.",
+                "remove": [
+                  {
+                    "type": "trait",
+                    "name": "Bestial"
+                  }
+                ],
+                "system": {
+                  "characteristics.wp.base": "+10"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.traits.o7FLuy0NJp3Qlrtv"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

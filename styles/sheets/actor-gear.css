@@ -136,6 +136,14 @@
   color: var(--wh-text-mid);
 }
 
+/* Инфограждение — узкая колонка со значением (module/apps/infoguard.mjs) */
+.gear-infoguard-cell {
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+}
+
 /* Подсветка экипированной строки */
 .item-row-equipped {
   background: rgba(100, 60, 20, 0.08);
@@ -339,6 +347,18 @@
   padding: 3px 6px;
 }
 .warhammer-dbc .gear-modsub-name { font-weight: bold; color: var(--wh-text-dark); }
+/* Интегральная атака: часть тела или машины, снять её нельзя — метка объясняет
+   игроку, почему галочка «Экип.» в этой строке недоступна. */
+.warhammer-dbc .gear-integral-badge {
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--wh-text-mid, #6a5a48);
+  border: 1px solid var(--wh-text-mid, #6a5a48);
+  border-radius: 3px;
+  padding: 0 3px;
+  opacity: 0.75;
+}
 .warhammer-dbc .gear-modsub-group {
   font-size: 0.85em;
   color: var(--wh-text-mid, #6a5a48);
@@ -461,3 +481,43 @@
   text-shadow: 0 0 6px rgba(77,255,166,0.4);
 }
 .warhammer-dbc .talent-group-count { opacity: 0.55; font-weight: 500; margin-left: 6px; }
+
+/* ── Переключаемые подспособности (Локус Герольда и подобные) ──────────────
+   Вложены в таблицы ТАЛАНТОВ и ЧЕРТ под своей способностью; кнопка ●/○ —
+   включить/выключить. См. module/rules/toggle-abilities.mjs. */
+.warhammer-dbc .toggle-head-row .toggle-head-cell {
+  padding: 3px 10px 3px 26px; font-size: 0.72em; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: #9bd8ff;
+  background: rgba(120,190,255,0.06);
+  border-top: 1px dashed rgba(120,190,255,0.3);
+}
+.warhammer-dbc .toggle-mode-hint {
+  margin-left: 8px; opacity: 0.5; font-weight: 500; text-transform: none; letter-spacing: 0;
+}
+.warhammer-dbc .toggle-row > td { background: rgba(120,190,255,0.03); }
+.warhammer-dbc .toggle-row.is-on > td { background: rgba(120,190,255,0.11); }
+.warhammer-dbc .toggle-btn-cell { text-align: center; width: 1%; padding-left: 18px; }
+.warhammer-dbc .toggle-ability-btn {
+  width: 20px; height: 20px; line-height: 1; padding: 0; cursor: pointer;
+  border: 1px solid rgba(120,190,255,0.45); border-radius: 50%;
+  background: transparent; color: rgba(155,216,255,0.65); font-size: 0.8em;
+}
+.warhammer-dbc .toggle-ability-btn:hover { border-color: #9bd8ff; color: #9bd8ff; }
+.warhammer-dbc .toggle-ability-btn.is-on {
+  color: #0b1a24; background: #9bd8ff; border-color: #9bd8ff;
+  box-shadow: 0 0 8px rgba(155,216,255,0.55);
+}
+.warhammer-dbc .toggle-name-cell { padding-left: 4px; }
+.warhammer-dbc .toggle-row.is-on .toggle-name { font-weight: 700; color: #cfeaff; }
+.warhammer-dbc .toggle-hint { display: block; opacity: 0.6; font-size: 0.82em; }
+
+/* Переброс в карточке броска: показываем отброшенные кубы, иначе потраченная
+   возможность выглядит как «мастер что-то посчитал». */
+.warhammer-dbc .roll-reroll-note,
+.wh-roll-result .roll-reroll-note {
+  font-size: 0.82em; opacity: 0.65; margin-top: 2px;
+}
+
+/* Панель «Возможности сейчас»: пометка, считает ли систему сама. */
+.warhammer-dbc .cap-auto-cell { text-align: center; font-size: 0.8em; opacity: 0.75; }
+.warhammer-dbc .cap-manual { color: #e0b062; }

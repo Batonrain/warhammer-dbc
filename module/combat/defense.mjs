@@ -4,8 +4,9 @@ import { _degWord, esc }       from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
+import { pickReroll }     from "../rules/reroll-pick.mjs";
 
-export async function _performDodge(actor, extraMod = 0, attackDeg = null) {
+export async function _performDodge(actor, extraMod = 0, attackDeg = null, forcedReroll = "") {
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
   const dodgeSkill = actor.system.skills?.dodge;
   const rankBonus  = SKILL_RANKS[dodgeSkill?.rank ?? "untrained"]?.bonus ?? -20;
@@ -16,9 +17,15 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null) {
   const cloneBonus = actor.system.cloneField?.bonus ?? 0;
   const threshold  = agTotal + rankBonus + stBonus + extraMod + cloneBonus;
 
-  const roll     = await new Roll("1d100").evaluate();
-  const rv       = roll.total;
-  const passed   = rv <= threshold;
+  // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
+  // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
+  // ХУДШИЙ из двух — то есть больший на d100.
+  const rolled = [];
+  for (let i = 0; i < (forcedReroll ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+  const picked = pickReroll(rolled.map(r => r.total), forcedReroll || "keepBest");
+  const roll   = rolled[picked.index];
+  const rv     = picked.value;
+  const passed = rv <= threshold;
   const deg      = passed
     ? Math.floor((threshold - rv) / 10) + 1
     : Math.floor((rv - threshold) / 10) + 1;
@@ -34,6 +41,7 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null) {
   if (stBonus   !== 0)   modParts.push(`стойка ${stBonus >= 0 ? "+" : ""}${stBonus}`);
   if (extraMod  !== 0)   modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
   if (cloneBonus !== 0)  modParts.push(`клон-поле +${cloneBonus}`);
+  if (picked.dropped.length) modParts.push(`навязанный переброс, отброшено ${picked.dropped.join(", ")}`);
 
   const oppLine = opposed
     ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Встречная проверка — атака: <b>${attackDeg}</b> ${_degWord(attackDeg)}</div>`

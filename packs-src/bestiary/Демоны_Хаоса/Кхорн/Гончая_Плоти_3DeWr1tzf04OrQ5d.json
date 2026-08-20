@@ -1965,7 +1965,55 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Гончая Плоти (стр. 17)",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовая",
+                "hint": "Обычная Гончая Плоти из статблока."
+              },
+              {
+                "key": "bloodHound",
+                "label": "Гончая Крови",
+                "hint": "WS до 54, I до 21, W до 52, F до 14, Раны до 21, Athletics+30, Dodge+20, Linguistics (True Tongue); Таланты Sprint, Step Aside, Wrestler.",
+                "system": {
+                  "characteristics.ws.base": 54,
+                  "characteristics.int.base": 21,
+                  "characteristics.wp.base": 52,
+                  "characteristics.fel.base": 14,
+                  "wounds.max": 21,
+                  "wounds.value": 21,
+                  "skills.athletics.rank": "expert",
+                  "skills.dodge.rank": "veteran"
+                },
+                "groupSkills": [
+                  {
+                    "group": "linguistics",
+                    "specialty": "True Tongue",
+                    "rank": "knows"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.hJFYGzxmhxwJ1Kx9",
+                  "Compendium.warhammer-dbc.talents.qbE7QyGmIN3a2IGH",
+                  "Compendium.warhammer-dbc.talents.V9mX9JTX8bU2LA5h"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

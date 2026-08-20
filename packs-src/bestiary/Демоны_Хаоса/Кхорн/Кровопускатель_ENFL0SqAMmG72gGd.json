@@ -2187,7 +2187,165 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Кровопускатель (стр. 13)",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Рядовой Кровопускатель из статблока."
+              },
+              {
+                "key": "reaperCleave",
+                "label": "Кровожнец: рубка",
+                "hint": "+10 WS, +5 S, Athletics+20; Cleave, Iron Jaw, Overpower.",
+                "system": {
+                  "characteristics.int.base": 42,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 32,
+                  "wounds.max": 24,
+                  "wounds.value": 24,
+                  "characteristics.ws.base": "+10",
+                  "characteristics.s.base": "+5",
+                  "skills.athletics.rank": "veteran"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.ewjvO676ybP8Rt35",
+                  "Compendium.warhammer-dbc.talents.MwsgkXBIE7WyHWlH",
+                  "Compendium.warhammer-dbc.talents.guzsY9d89MOROljE"
+                ]
+              },
+              {
+                "key": "reaperParry",
+                "label": "Кровожнец: парирование",
+                "hint": "+10 WS, +5 P, Parry+30; Blade Reader, Blade Shield, Deflect Shot.",
+                "system": {
+                  "characteristics.int.base": 42,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 32,
+                  "wounds.max": 24,
+                  "wounds.value": 24,
+                  "characteristics.ws.base": "+10",
+                  "characteristics.per.base": "+5",
+                  "skills.parry.rank": "expert"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.F4EAXuY8Tl3QriuY",
+                  "Compendium.warhammer-dbc.talents.xF5sKlmjpjmxWv6g",
+                  "Compendium.warhammer-dbc.talents.7twJ4O20suX7yVHb"
+                ]
+              },
+              {
+                "key": "reaperWrath",
+                "label": "Кровожнец: устрашение",
+                "hint": "+10 WS, +5 W, Intimidate+20; Hatred (Все!), One Will Go Down, Pity the Weak.",
+                "system": {
+                  "characteristics.int.base": 42,
+                  "characteristics.wp.base": "+5",
+                  "characteristics.fel.base": 32,
+                  "wounds.max": 24,
+                  "wounds.value": 24,
+                  "characteristics.ws.base": "+10",
+                  "skills.intimidate.rank": "veteran"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.x4C4FheBkX5nS2Wt",
+                  "Compendium.warhammer-dbc.talents.F2qIaEdjex3sF9Ll",
+                  "Compendium.warhammer-dbc.talents.CDBT1ysueixWMths"
+                ]
+              },
+              {
+                "key": "reaperSpeed",
+                "label": "Кровожнец: скорость",
+                "hint": "+5 WS, +10 A, Dodge+10; Lightning Attack, Lightning Reflexes, Step Aside.",
+                "system": {
+                  "characteristics.int.base": 42,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 32,
+                  "wounds.max": 24,
+                  "wounds.value": 24,
+                  "characteristics.ws.base": "+5",
+                  "characteristics.ag.base": "+10",
+                  "skills.dodge.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.JOJ2ar3ngUpPHWPd",
+                  "Compendium.warhammer-dbc.talents.D5cYACbielvSDp49",
+                  "Compendium.warhammer-dbc.talents.qbE7QyGmIN3a2IGH"
+                ]
+              },
+              {
+                "key": "reaperBrawl",
+                "label": "Кровожнец: борьба",
+                "hint": "+5 WS, +10 S, Athletics+20; Meat Shield, Slam, Wrestler.",
+                "system": {
+                  "characteristics.int.base": 42,
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": 32,
+                  "wounds.max": 24,
+                  "wounds.value": 24,
+                  "characteristics.ws.base": "+5",
+                  "characteristics.s.base": "+10",
+                  "skills.athletics.rank": "veteran"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.FQyWrNhm2FTAnhw8",
+                  "Compendium.warhammer-dbc.talents.TrwORRVTKqjLimmW",
+                  "Compendium.warhammer-dbc.talents.V9mX9JTX8bU2LA5h"
+                ]
+              },
+              {
+                "key": "reaperCommand",
+                "label": "Кровожнец: командование",
+                "hint": "+5 I, +10 F, Command+10; Cold Fury, Combat Formation, Frontline Commander.",
+                "system": {
+                  "characteristics.int.base": "+5",
+                  "characteristics.wp.base": 48,
+                  "characteristics.fel.base": "+10",
+                  "wounds.max": 24,
+                  "wounds.value": 24,
+                  "skills.command.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.pj2nKLs8aBfjAQof",
+                  "Compendium.warhammer-dbc.talents.ISxUYkVfUQPpRDRh",
+                  "Compendium.warhammer-dbc.talents.ELysbd2Z4XVFAOc6"
+                ]
+              },
+              {
+                "key": "skullCrusher",
+                "label": "Кровокрушитель (верхом на Джаггернауте)",
+                "hint": "S до 52, W до 41, Survival+10; Таланты Mount Sense и Hussar.",
+                "system": {
+                  "characteristics.s.base": 52,
+                  "characteristics.wp.base": 41,
+                  "skills.survival.rank": "trained"
+                },
+                "add": [
+                  "Compendium.warhammer-dbc.talents.rB4GcZ6DvXJBSrMi",
+                  "Compendium.warhammer-dbc.talents.Kv5ylZ21Jz7GUIgV"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

@@ -1904,7 +1904,129 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, I. ДЕМОНЫ, Катарт (стр. 10)",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Обычный Катарт из статблока."
+              },
+              {
+                "key": "martyrDodge",
+                "label": "Мученик: уклонение",
+                "hint": "+5 WS, +10 A, Dodge+20; Crippling Strike, Precise Blow, Sure Strike.",
+                "system": {
+                  "characteristics.int.base": 36,
+                  "characteristics.wp.base": 52,
+                  "characteristics.fel.base": 33,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.ws.base": "+5",
+                  "characteristics.ag.base": "+10",
+                  "skills.dodge.rank": "veteran"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.cAnFwFZLJQiFgP32",
+                  "Compendium.warhammer-dbc.talents.hgr4BacJ2x2F3Nwq",
+                  "Compendium.warhammer-dbc.talents.XNb5thmTPU4e8Cd5"
+                ]
+              },
+              {
+                "key": "martyrParry",
+                "label": "Мученик: парирование",
+                "hint": "+5 WS, +10 P, Parry+20; Counter Attack, High Guard, Riposte.",
+                "system": {
+                  "characteristics.int.base": 36,
+                  "characteristics.wp.base": 52,
+                  "characteristics.fel.base": 33,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.ws.base": "+5",
+                  "characteristics.per.base": "+10",
+                  "skills.parry.rank": "veteran"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.XRwdNtC6banb0SXE",
+                  "Compendium.warhammer-dbc.talents.9UA0mDpGKwUpyZvU",
+                  "Compendium.warhammer-dbc.talents.Nme80v8dgLZ6rZsM"
+                ]
+              },
+              {
+                "key": "martyrStrength",
+                "label": "Мученик: сила",
+                "hint": "+5 WS, +10 S, Athletics+0; Crushing Blow, Blademaster.",
+                "system": {
+                  "characteristics.int.base": 36,
+                  "characteristics.wp.base": 52,
+                  "characteristics.fel.base": 33,
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.ws.base": "+5",
+                  "characteristics.s.base": "+10",
+                  "skills.athletics.rank": "knows"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.oizk4tHEmPOWRN0C",
+                  "Compendium.warhammer-dbc.talents.1GLVhVWRNTA8VWmx"
+                ]
+              },
+              {
+                "key": "martyrGuile",
+                "label": "Мученик: обаяние",
+                "hint": "+5 WS, +10 F, Charm+10, Deceive+10; Double Team, Inspire Wrath, Mimic.",
+                "system": {
+                  "characteristics.int.base": 36,
+                  "characteristics.wp.base": 52,
+                  "characteristics.fel.base": "+10",
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "characteristics.ws.base": "+5",
+                  "skills.charm.rank": "trained",
+                  "skills.deceive.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.icosn3iRFLevn5hw",
+                  "Compendium.warhammer-dbc.talents.w9lFpVoUDm8pxLb4",
+                  "Compendium.warhammer-dbc.talents.XDrQdNmw2L2rIqXa"
+                ]
+              },
+              {
+                "key": "martyrCommand",
+                "label": "Мученик: командование",
+                "hint": "+5 W, +10 F, Command+10; Bring It Down!, Frontline Commander.",
+                "system": {
+                  "characteristics.int.base": 36,
+                  "characteristics.wp.base": "+5",
+                  "characteristics.fel.base": "+10",
+                  "wounds.max": 22,
+                  "wounds.value": 22,
+                  "skills.command.rank": "trained"
+                },
+                "groupSkills": [],
+                "add": [
+                  "Compendium.warhammer-dbc.talents.KDknoeFwdwTPf4Vl",
+                  "Compendium.warhammer-dbc.talents.ELysbd2Z4XVFAOc6"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

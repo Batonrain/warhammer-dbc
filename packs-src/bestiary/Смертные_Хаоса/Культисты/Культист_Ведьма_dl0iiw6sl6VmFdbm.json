@@ -1216,7 +1216,56 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Ведьма (стр. 48)",
+        "groups": [
+          {
+            "key": "pistol",
+            "label": "Пистолет",
+            "mode": "one",
+            "default": "laspistol",
+            "options": [
+              {
+                "key": "laspistol",
+                "label": "Лазпистолет",
+                "hint": "Как на листе."
+              },
+              {
+                "key": "autopistol",
+                "label": "Автопистолет",
+                "hint": "Заменяет лазпистолет.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Лазпистолет"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.iRLgAx9TCq0D5TB1"
+                ]
+              },
+              {
+                "key": "shotgunPistol",
+                "label": "Дробовик-Пистолет",
+                "hint": "Заменяет лазпистолет.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Лазпистолет"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.j6HFZ05x1TcfemuF"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,
