@@ -1,0 +1,23 @@
+{
+  "name": "Байки",
+  "type": "Actor",
+  "sorting": "m",
+  "_id": "KwscQz6BOjvizxCo",
+  "description": "",
+  "folder": null,
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786996794624,
+    "modifiedTime": 1786996794624,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!folders!KwscQz6BOjvizxCo"
+}

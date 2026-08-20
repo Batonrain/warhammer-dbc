@@ -1,0 +1,60 @@
+{
+  "name": "Лезвия (X) / Blades (X)",
+  "type": "vehicleTrait",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "system": {
+    "description": "На скакуне или байке есть лезвия или шипы, режущие врагов, мимо которых он проносится. Если у всадника есть Навыки Survival+10 или Operate+10 соответственно, раз в Ход, когда всадник проезжает мимо врага (в т.ч. Натиском и Верховой Атакой), он может свободным действием пройти тест на Survival−10 или Operate−10 соответственно, чтобы попасть по этому врагу лезвиями и нанести попадание с профилем Х. Цель может Избегать от этого попадания как от рукопашной атаки. Продвижение Survival и Operate соответственно до +20 и +30 позволяет проводить эту атаку 2 и 3 раза в Ход, но только против разных целей на пути движения.",
+    "notes": "",
+    "benefit": "Свободным действием — попадание с профилем X по врагу на пути.",
+    "availability": 0,
+    "hasRating": true,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "hasRating3": false,
+    "rating3": 0,
+    "effects": {
+      "openTopped": false,
+      "manoeuvreMod": 0,
+      "spdMod": 0,
+      "spdDamageReduce": 0,
+      "noMove": false,
+      "swerveDisabled": false,
+      "fullMoveSpdMult": 0,
+      "smallMoveOnly": false,
+      "ignoreDifficultTerrain": false,
+      "critHalved": false,
+      "trackHitsToHull": false,
+      "siege": false,
+      "reloadRapid": false,
+      "commandBonus": 0,
+      "repairBonus": 0,
+      "deflectorShield": false,
+      "deflectorDaemonic": false,
+      "ignoreCrewCrits": false,
+      "autonomous": false,
+      "flickerfield": false
+    }
+  },
+  "_id": "4A9x8nvte0CiTGgM",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786996388785,
+    "modifiedTime": 1786996388785,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!4A9x8nvte0CiTGgM"
+}

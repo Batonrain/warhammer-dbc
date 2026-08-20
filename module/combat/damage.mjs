@@ -6,7 +6,9 @@ import { _degWord, esc }       from "../helpers/utils.mjs";
 import { getCriticalEffect } from "../../critical-tables.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
+import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { ablativeDamage } from "../rules/mount.mjs";
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
 const LOCATION_TO_ARMOR = {
@@ -139,6 +141,10 @@ export async function applyDamageToActor(actor, damageData) {
       vehicleLocation: VEH_PARTS.includes(damageData.hitLocation) ? damageData.hitLocation : "Корпус"
     });
   }
+  // Орда: Ран у неё нет, Поглощение лежит одним числом, а попадания всегда идут
+  // в торс — общий расчёт зон брони и Критических Ран ей не подходит.
+  if (actor.type === "horde") return applyDamageToHorde(actor, damageData);
+
   const {
     rawDamage,       // число — урон до поглощения
     penetration,     // число — бронепробитие
@@ -198,8 +204,12 @@ export async function applyDamageToActor(actor, damageData) {
     // Итоговое поглощение = эффективный AP + T.b (всегда)
     totalAbsorption = effArmorAP + tb;
   }
-  // Непоглощённый урон
-  const netDamage = Math.max(0, rawDamage - totalAbsorption);
+  // Непоглощённый урон. Аблативное Бронирование скакуна (стр. 478) срезает
+  // его до 1, пока запас Ран полон, — первый же удар снимает слой, и дальше
+  // Черта молчит до полного восстановления.
+  const rawNet = Math.max(0, rawDamage - totalAbsorption);
+  const netDamage = ablativeDamage(rawNet, actor);
+  const ablated = netDamage !== rawNet;
 
   const currentWounds   = system.wounds?.value    ?? 0;
   const maxWounds       = system.wounds?.max      ?? 0;
@@ -258,7 +268,8 @@ export async function applyDamageToActor(actor, damageData) {
       </div>`;
 
   const woundsLine = netDamage > 0
-    ? `Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>`
+    ? `Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${
+        ablated ? ` <span class="dmg-tb-note">(Аблативное Бронирование: ${rawNet} → 1)</span>` : ""}`
     : `Урон поглощён полностью`;
 
   const critLine = gotCritical ? `
