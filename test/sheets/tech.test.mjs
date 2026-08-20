@@ -122,6 +122,29 @@ describe("activateTechMiracle", () => {
     expect(captured.chat[0].content).toContain("Энергия");
   });
 
+  // Раньше у техночудес не было поля для свойств атаки вовсе: Экстремальный
+  // урон и Рвущее для них не считались — только текстом в «Эффекте». Теперь
+  // sys.weaponProps идёт через тот же движок, что у оружия и психосил
+  // (module/combat/attack.mjs: applyDamageDiceMods + rollExtremeDamage).
+  it("урон Техночуда подхватывает Рвущее и Экстремальный урон, как у оружия", async () => {
+    const a = actor();
+    const miracle = item({ system: {
+      testSkill: "techUse", damage: "1d10+2", damageType: "energy",
+      weaponProps: [{ key: "tearing", rating: 0, rating2: 0 }]
+    } });
+    // Очередь кубов: тест активации (успех), затем 2 куба Рвущего (10 держим,
+    // 3 сбрасываем), затем 1d5 Экстремального урона.
+    captured.dice = [10, 10, 3, 4];
+
+    await activateTechMiracle(a, miracle);
+
+    expect(captured.rolls).toContain("2d10kh1+2");
+    expect(captured.rolls).toContain("1d5");
+    expect(captured.chat[0].content).toContain("Урон (Энергетический, Проб. 0): <b>12</b>");
+    expect(captured.chat[0].content).toContain("Экстремальный урон");
+    expect(captured.chat[0].content).toContain("d5: 4");
+  });
+
   it("провал тратит Когницию, но не тратит Энергию", async () => {
     const a = actor();
     const miracle = item({ system: { cognitionCost: 2, energyCost: 3, testSkill: "techUse" } });

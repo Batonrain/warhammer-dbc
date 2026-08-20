@@ -15,6 +15,8 @@ export function qualityEffectsField() {
   }, { label: "Эффекты качества" });
 }
 
+import { infoguardField } from "./infoguard.mjs";
+
 export class GearData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -23,6 +25,7 @@ export class GearData extends foundry.abstract.TypeDataModel {
     return {
       description:  new StringField({ initial: "", label: "Описание" }),
       notes:        new StringField({ initial: "", label: "Заметки" }),
+      infoguard:    infoguardField(),
       quantity:     new NumberField({ initial: 1, integer: true, nullable: false, label: "Количество" }),
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
       availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),

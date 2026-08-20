@@ -5,6 +5,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { qualityEffectsField } from "./gear.mjs";
+import { infoguardField } from "./infoguard.mjs";
 
 export class ToolData extends foundry.abstract.TypeDataModel {
 
@@ -14,6 +15,7 @@ export class ToolData extends foundry.abstract.TypeDataModel {
     return {
       description:  new StringField({ initial: "", label: "Описание" }),
       notes:        new StringField({ initial: "", label: "Заметки" }),
+      infoguard:    infoguardField(),
       // Инструмент рисуется тем же gear.hbs, что и Снаряжение (wdbc-fl3).
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       quantity:     new NumberField({ initial: 1, integer: true, nullable: false, label: "Количество" }),

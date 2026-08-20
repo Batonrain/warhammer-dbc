@@ -139,6 +139,35 @@ describe("psychic manifestation", () => {
     expect(captured.chat[0].content).toContain("Манифестация удалась");
   });
 
+  // Раньше урон психосилы бросался в обход движка свойств оружия: Рвущее не
+  // добавляло куб, а Экстремальный урон не проверялся вовсе. Теперь атака
+  // психосилы идёт через тот же rollExtremeDamage/applyDamageDiceMods, что и
+  // обычное оружие (module/combat/attack.mjs).
+  it("урон атакующей психосилы подхватывает Рвущее и Экстремальный урон, как у оружия", async () => {
+    const a = actor();
+    const power = item({ system: {
+      testChar: "wp", powerType: "attack", testMod: 0,
+      damage: "1d10+2", damageType: "energy",
+      weaponProps: [{ key: "tearing", rating: 0, rating2: 0 }]
+    } });
+    // Очередь кубов: психотест (успех), затем 2 куба Рвущего (10 держим, 3 сбрасываем),
+    // затем 1d5 Экстремального урона.
+    captured.dice = [5, 10, 3, 4];
+
+    await executePsychotest(a, power, {
+      mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    // Формула получила лишний куб Рвущего и kh1 — то же, что делает
+    // applyDamageDiceMods у обычного оружия.
+    expect(captured.rolls).toContain("2d10kh1+2");
+    expect(captured.rolls).toContain("1d5");
+    expect(captured.chat[0].content).toContain("Урон (Энергетический, Проб. 0): <b>12</b>");
+    expect(captured.chat[0].content).toContain("Экстремальный урон");
+    expect(captured.chat[0].content).toContain("d5: 4");
+  });
+
   it("callback диалога передаёт значения формы в психотест", async () => {
     const a = actor();
     showManifestDialog(a, item({ system: { testChar: "wp", powerType: "utility" } }));

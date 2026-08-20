@@ -11,6 +11,10 @@ import { ironModForQuality, leastQuality } from "../../constants/implant-mechani
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
+import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock,
+         aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
+import { rollExtremeDamage } from "../../combat/attack.mjs";
+import { rollInfoguard, infoguardInteractionSection } from "../../apps/infoguard.mjs";
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
 export async function activateTechMiracle(actor, item) {
@@ -122,6 +126,12 @@ export async function activateTechMiracle(actor, item) {
   // Славословие: при успехе компиляция расходуется (одноразово)
   if (isSlavo && success) await item.update({ "system.compiled": false });
 
+  // Свойства атаки Техночуда — тот же движок, что у оружия и психосил (стр.
+  // 166-170): раньше поля для них не было вовсе, и Экстремальный урон/Рвущее/
+  // Проверенное для техночудес не считались — только текстом в «Эффекте».
+  const atkProps = resolveWeaponPropsList(sys.weaponProps);
+  const wp       = aggregateAuto(atkProps);
+
   // Урон (если задан и активация удалась)
   let dmgSection = "";
   if (success && sys.damage) {
@@ -131,12 +141,23 @@ export async function activateTechMiracle(actor, item) {
       chars = foundry.utils.deepClone(chars);
       chars.int.bonus = (chars.int.bonus || 0) + ironIbDelta;
     }
-    const f = resolveCharFormula(String(sys.damage).replace(/\bX\b/gi, sys.rating || 0), chars, actor.system.corruptionBonus ?? 0);
+    const f = applyDamageDiceMods(
+      resolveCharFormula(String(sys.damage).replace(/\bX\b/gi, sys.rating || 0), chars, actor.system.corruptionBonus ?? 0),
+      wp
+    );
     try {
       const dmgRoll = await new Roll(f).evaluate();
       allRolls.push(dmgRoll);
+      // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия/психосил.
+      const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: sys.damageType, hitLocation: "Торс" });
+      if (ext.exRoll) allRolls.push(ext.exRoll);
       const dt  = DAMAGE_TYPES[sys.damageType] || sys.damageType;
       const pen = sys.penetration || 0;
+      const extStr = ext.hasExtreme ? `
+          <div class="roll-extreme-block">
+            <b>Экстремальный урон</b> · d5: ${ext.extremeLevel}
+            ${ext.critEffect ? `<div class="roll-crit-effect">${ext.critEffect}</div>` : ""}
+          </div>` : "";
       dmgSection = `
           <div class="roll-damage-section">
             <div class="roll-damage-label">Урон (${dt}, Проб. ${pen}): <b>${dmgRoll.total}</b></div>
@@ -146,8 +167,16 @@ export async function activateTechMiracle(actor, item) {
               data-weapon-name="${item.name}" data-attacker="${actor.name}">
               Применить урон: ${dmgRoll.total} → Торс
             </button>
-          </div>`;
+          </div>${extStr}`;
     } catch(e) { ui.notifications.warn(`Не удалось бросить урон: ${sys.damage}`); console.error(e); }
+  }
+
+  // Свойства атаки: памятки + кнопки эффектов на цель — то же, что у оружия/психосил.
+  let attackPropsSection = "";
+  if (success && atkProps.length) {
+    const propBlock  = buildPropertyChatBlock(atkProps);
+    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true, netDamageKnown: false });
+    attackPropsSection = (propBlock || "") + (effectBtns || "");
   }
 
   const cogIco = techIcon("cognition");
@@ -157,6 +186,11 @@ export async function activateTechMiracle(actor, item) {
     enCost  ? `${enIco} Энергия −<b>${enCost}</b>`    : "",
     (sys.sustained && sys.sustainCost) ? `Поддержание ${sys.sustainCost} ${cogIco}/Ход` : ""
   ].filter(Boolean).join(" | ");
+
+  // Автоматизация «vs Инфограждение» (Numerica Curse/Delving, Scrapcode
+  // Injection, Techsorcism Purge) и усиливающих чудес (Techsorcism Ward,
+  // Vox Warding) — module/apps/infoguard.mjs.
+  const infoguardSection = await infoguardInteractionSection(actor, item, { success });
 
   const rollMode = game.settings.get("core", "rollMode");
   const techDice = (await Promise.all(allRolls.map(r => r.render()))).join("");
@@ -179,6 +213,8 @@ export async function activateTechMiracle(actor, item) {
               : `<span class="roll-failure">Сбой — ${deg} ${_degWord(deg)}</span>`}
           </div>
           ${dmgSection}
+          ${attackPropsSection}
+          ${infoguardSection}
           ${sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : ""}
           <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${techDice}</details>
         </div>`,
@@ -271,6 +307,10 @@ export function activateTechListeners(html, actor, { rollSkill } = {}) {
   });
   html.find(".tech-scan-btn").click(() => {
     if (rollSkill) rollTechScan(actor, rollSkill);
+  });
+  html.find(".tech-infoguard-roll-btn").click(ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) rollInfoguard(item);
   });
   // Кнопки генерации ⚙/⚡ от имплантов Кибернетики Механикум
   html.find(".tech-gen-btn").click(ev => {

@@ -33,6 +33,12 @@ const AIM_LOCATIONS = {
  * потолка — самого RoF, а не его половины. Рукопашная даёт одно попадание, если
  * его не умножили Стремительная, Молниеносная или Мульти-удар (стр. 169).
  *
+ * Мульти-удар (X) считает ТОЙ ЖЕ формулой, что и Стремительная атака — доп.
+ * попадание за каждый нечётный Успех после первого (3, 5, 7…) — но с потолком
+ * в собственный рейтинг X. Раньше код прибавлял весь рейтинг сразу, независимо
+ * от числа Успехов на попадание: оружие с Мульти-ударом(4) било вчетверо даже
+ * на голом успехе (deg=1), хотя по книге на deg=1 доп. попаданий не бывает.
+ *
  * @returns {{count: number, label: string}}
  */
 export function hitCount({ hit, isMelee, rofMode, deg, wp, sys = {}, isSwift = false, isLightning = false }) {
@@ -43,7 +49,8 @@ export function hitCount({ hit, isMelee, rofMode, deg, wp, sys = {}, isSwift = f
     let count = 1;
     if (isSwift)     count = Math.ceil(deg / 2);
     if (isLightning) count = Math.ceil(deg / 2) + 1;
-    if (wp.multiStrikeRating > 0) count += wp.multiStrikeRating;
+    if (wp.multiStrikeRating > 0)
+      count = Math.max(count, Math.min(wp.multiStrikeRating, Math.ceil(deg / 2)));
     return { count, label };
   }
 
