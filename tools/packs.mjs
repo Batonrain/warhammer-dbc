@@ -51,3 +51,21 @@ export const JOURNAL_PACKS = BOOK_PACKS.map(b => ({
   ...b,
   ...PACKS.find(p => p.name === b.pack)
 }));
+
+/**
+ * Занятая база: запущенная Foundry держит LevelDB открытой, и ни собрать, ни
+ * извлечь паки, пока мир загружен, нельзя. Ядро сообщает об этом стеком про
+ * LEVEL_DATABASE или EPERM — по нему не догадаешься, что достаточно закрыть
+ * мир, поэтому переводим на человеческий.
+ */
+export function isPacksBusy(error) {
+  const text = `${error?.code || ""} ${error?.message || ""}`;
+  return /LEVEL_|LOCK|EPERM|EBUSY|resource temporarily unavailable/i.test(text);
+}
+
+/** Совет вместо стека: что именно сделать, чтобы базы освободились. */
+export function reportBusy(error, action = "собрать") {
+  console.error(`Не удалось ${action} компендиумы: базы заняты.`);
+  console.error("Их держит запущенная Foundry — закройте мир (кнопка «Return to Setup») и повторите.");
+  console.error(`Ядро сказало: ${error?.code || error?.message || error}`);
+}

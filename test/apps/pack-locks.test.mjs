@@ -13,7 +13,8 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { setSystemPackLocks } from "../../module/apps/pack-locks.mjs";
+import { setSystemPackLocks, emptySystemPacks, warnEmptySystemPacks } from "../../module/apps/pack-locks.mjs";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 /** Пак-заглушка: помнит состояние замка и все его смены. */
 function packStub(collection, locked, { packageName = "warhammer-dbc", broken = false } = {}) {
@@ -75,5 +76,52 @@ describe("замки компендиумов системы по настрой
     expect(await setSystemPackLocks(true)).toBe(1);
 
     expect(ok.calls).toEqual([true]);
+  });
+});
+
+// Пак объявлен в system.json, но база под него не собрана: Foundry заводит
+// пустую сама, и ГМ видит компендиум без содержимого — неотличимо от «контент
+// забыли». Так пропали «Расы» и заметили это далеко не сразу.
+describe("пустые компендиумы системы", () => {
+  /** Пак с индексом: size — сколько документов в нём видит Foundry. */
+  const indexed = (collection, size, { packageName = "warhammer-dbc", label } = {}) =>
+    ({ collection, metadata: { packageName, label }, index: { size } });
+
+  it("пустой пак системы называется по ярлыку", () => {
+    const empty = indexed("warhammer-dbc.races", 0, { label: "Расы — Библиотека (DBC)" });
+    const full  = indexed("warhammer-dbc.gear", 112, { label: "Снаряжение" });
+
+    expect(emptySystemPacks([empty, full])).toEqual(["Расы — Библиотека (DBC)"]);
+  });
+
+  it("без ярлыка сгодится идентификатор пака", () => {
+    expect(emptySystemPacks([indexed("warhammer-dbc.races", 0)])).toEqual(["warhammer-dbc.races"]);
+  });
+
+  it("чужие и мировые паки не наши: молчим о них", () => {
+    const foreign = indexed("dnd5e.items", 0, { packageName: "dnd5e" });
+    const world   = indexed("world.my-notes", 0, { packageName: "world" });
+
+    expect(emptySystemPacks([foreign, world])).toEqual([]);
+  });
+
+  it("пак без индекса считается пустым, а не роняет проверку", () => {
+    expect(emptySystemPacks([{ collection: "warhammer-dbc.races", metadata: { packageName: "warhammer-dbc" } }]))
+      .toEqual(["warhammer-dbc.races"]);
+  });
+
+  it("ГМу говорится один раз и с командой починки", () => {
+    resetCaptured();
+    warnEmptySystemPacks([indexed("warhammer-dbc.races", 0, { label: "Расы" })]);
+
+    expect(captured.errors.length).toBe(1);
+    expect(captured.errors[0]).toContain("Расы");
+    expect(captured.errors[0]).toContain("packs:build");
+  });
+
+  it("когда всё на месте — ни слова", () => {
+    resetCaptured();
+    expect(warnEmptySystemPacks([indexed("warhammer-dbc.gear", 112)])).toEqual([]);
+    expect(captured.errors).toEqual([]);
   });
 });

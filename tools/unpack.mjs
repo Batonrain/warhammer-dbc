@@ -14,8 +14,9 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NAME_LIMIT, safe } from "./pack-file-name.mjs";
-import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs } from "./packs.mjs";
+import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
 import { bookSource } from "./book-source.mjs";
+import { writeStamp } from "./pack-stamp.mjs";
 
 // ── Имена файлов исходника ────────────────────────────────────────────────
 const transformFolderName = (doc) => (doc.name ? safe(doc.name) : doc._id);
@@ -38,9 +39,15 @@ for (const p of LIBRARY_PACKS) {
   if (!hasDb(p)) continue;
   // clean снимает файлы удалённых документов, omitVolatile не переписывает
   // файл, если изменились только метки времени в _stats.
-  await extractPack(abs(p.dir), abs(p.src), {
-    folders: true, clean: true, omitVolatile: true, transformFolderName, transformName
-  });
+  try {
+    await extractPack(abs(p.dir), abs(p.src), {
+      folders: true, clean: true, omitVolatile: true, transformFolderName, transformName
+    });
+  } catch (e) {
+    // Запущенная Foundry держит базы открытыми — из стека ядра это не следует.
+    if (isPacksBusy(e)) { reportBusy(e, "снять"); process.exit(1); }
+    throw e;
+  }
   console.log(`извлечён ${p.name} → ${p.src}`);
   done++;
 }
@@ -70,4 +77,9 @@ try {
   rmSync(tmp, { recursive: true, force: true });
 }
 
+// Правки сняты в исходники — базы и packs-src снова сведены. Сборка сверяется
+// с этой отметкой и без неё считала бы ручные правки несохранёнными вечно.
+writeStamp();
+
 console.log(`Готово: ${done} из ${LIBRARY_PACKS.length + JOURNAL_PACKS.length}.`);
+console.log("Правки в исходниках — их можно коммитить: git add packs-src");
