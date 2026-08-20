@@ -1,7 +1,7 @@
 {
   "name": "Сабля",
   "type": "vehicle",
-  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-machines/sablya.webp",
   "folder": "u6LoSVAx56ISVsHm",
   "system": {
     "vehicleClass": "Sabre",

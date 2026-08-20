@@ -1,7 +1,7 @@
 {
   "name": "Скорпиус Дезинтегратор",
   "type": "vehicle",
-  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-machines/skorpius-dezintegrator.webp",
   "folder": "HuVo4wgcawl9Rvu6",
   "system": {
     "vehicleClass": "Scorpius",
