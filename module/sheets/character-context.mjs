@@ -29,12 +29,24 @@ import { BODY_TYPES }                            from "../constants/body-map.mjs
 import { isHaemonculus }                         from "../constants/haemonculus.mjs";
 import { HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
-import { isHelmetMod }                           from "../combat/armor-mods.mjs";
+import { isHelmetMod,
+         disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { divinationSheetContext }                from "../apps/divinations.mjs";
 import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
+import { MELEE_STANCES, MELEE_BASES,
+         MELEE_MANEUVERS, MELEE_CONTESTS }        from "../constants/combat.mjs";
+
+// "WS +10" / "WS −20" — модификатор Приёма как короткая метка на кнопке
+// (templates/actor/parts/tab-combat.hbs, .tech-mod). Состязания используют
+// свой modLabel ("WS vs WS" / "Ath vs Ath") — это не WS-модификатор, а тип
+// встречного теста, wsBonus у них всегда 0 и ничего не говорит игроку.
+function wsModLabel(bonus) {
+  const n = Number(bonus) || 0;
+  return n < 0 ? `WS −${Math.abs(n)}` : `WS +${n}`;
+}
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -49,13 +61,27 @@ export function characterContext(actor) {
   // ── Архетип (шапка): селектор из компендиума, только доступные текущей расе ──
   context.archetype = archetypeSheetContext(actor);
 
-  // ── Бой: метка стойки/базы для свёрнутого заголовка ─────────────────────
-  const _STANCE_NAMES = { standard: "Стандартная", aggressive: "Агрессивная",
-    defensive: "Защитная", covering: "Прикрывающая", springing: "Пружинящая", rapidstrike: "Частокол" };
-  context.combatStanceLabel = _STANCE_NAMES[system.meleeStance] || "Стандартная";
-  const _BASE_NAMES = { standard: "Стандартная Атака", charge: "Натиск",
-    fullatk: "Полная Атака", careful: "Осторожная Атака" };
-  context.combatBaseLabel = _BASE_NAMES[system.meleeBase] || "Стандартная Атака";
+  // ── Бой: Стойка/База/Приёмы — метки и карточки читаются прямо из
+  // MELEE_STANCES/MELEE_BASES/MELEE_MANEUVERS/MELEE_CONTESTS (combat.mjs),
+  // а не дублируются здесь и в hbs по отдельности (см. doombc-stances-bases-book-accuracy,
+  // doombc-aggressive-stance-fix — тексты уже дважды расходились из-за дублирования).
+  const meleeStanceKey = system.meleeStance in MELEE_STANCES ? system.meleeStance : "standard";
+  const meleeBaseKey   = system.meleeBase   in MELEE_BASES   ? system.meleeBase   : "standard";
+  context.combatStanceLabel = MELEE_STANCES[meleeStanceKey].label;
+  context.combatBaseLabel   = MELEE_BASES[meleeBaseKey].label;
+
+  context.combatStanceOptions = Object.entries(MELEE_STANCES).map(([key, s]) => ({
+    key, label: s.label, desc: s.shortDesc, active: key === meleeStanceKey
+  }));
+  context.combatBaseOptions = Object.entries(MELEE_BASES).map(([key, b]) => ({
+    key, label: b.label, desc: b.shortDesc, active: key === meleeBaseKey
+  }));
+  context.combatManeuverOptions = Object.entries(MELEE_MANEUVERS).map(([key, m]) => ({
+    key, label: m.label, modLabel: wsModLabel(m.wsBonus)
+  }));
+  context.combatContestOptions = Object.entries(MELEE_CONTESTS).map(([key, c]) => ({
+    key, label: c.label, modLabel: c.modLabel
+  }));
 
   // ── Снаряжение: сенсор нагрузки (когитатор) ─────────────────────────────
   const _enc = system.encumbrance || {};
@@ -105,6 +131,23 @@ export function characterContext(actor) {
       kept:     helmetMods.filter(i => !isHelmetMod(i)).map(i => i.name)
     };
   } else context.helmetless = null;
+
+  // Перевес выключенной силовой брони: секунд до следующего теста T+0 «раз
+  // в T.b часов» (стр. 233) — таймер держит флаг актора, ставит/снимает его
+  // хук в hooks.mjs (module/combat/armor-mods.mjs), здесь только чтение для
+  // кнопки на листе.
+  if (system.disabledArmourOverload) {
+    const tb = Number(system.characteristics?.t?.bonus) || 0;
+    const testAt = actor.getFlag?.("warhammer-dbc", "disabledArmourOverloadTestAt");
+    const remaining = disabledArmourPeriodicTestRemaining(testAt, game.time?.worldTime ?? 0, tb);
+    context.disabledArmourPeriodicReady = remaining <= 0;
+    context.disabledArmourPeriodicRemainingLabel = remaining > 0
+      ? `${Math.floor(remaining / 3600)}ч ${String(Math.floor((remaining % 3600) / 60)).padStart(2, "0")}м`
+      : null;
+  } else {
+    context.disabledArmourPeriodicReady = false;
+    context.disabledArmourPeriodicRemainingLabel = null;
+  }
 
   context.races = raceEntries();
   // Сгруппированный список рас для optgroup — расы выключенных подсистем
