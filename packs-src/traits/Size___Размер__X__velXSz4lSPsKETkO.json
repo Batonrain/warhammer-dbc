@@ -1,0 +1,99 @@
+{
+  "name": "Size / Размер (X)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Определяет размер существа (см. таблицу Размеров). Влияет на SPD, заметность и попадания. Задайте «Модификатор Размера» в авто-эффектах согласно категории.",
+    "notes": "",
+    "benefit": "Категория Размера.",
+    "source": "раса/размер",
+    "hasRating": true,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 1,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "velXSz4lSPsKETkO",
+  "effects": [
+    {
+      "name": "Size / Размер (X) (перенесено)",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "disabled": false,
+      "system": {
+        "changes": [
+          {
+            "key": "system.sizeMod",
+            "type": "add",
+            "value": 1,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "bnq6v4ipMYpB8Jj1",
+      "type": "base",
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786993503958,
+        "modifiedTime": 1786993503958,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!velXSz4lSPsKETkO.bnq6v4ipMYpB8Jj1"
+    }
+  ],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781652440036,
+    "modifiedTime": 1786121962177,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!velXSz4lSPsKETkO"
+}

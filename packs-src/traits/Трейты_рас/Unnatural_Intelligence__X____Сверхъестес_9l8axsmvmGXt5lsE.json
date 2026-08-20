@@ -1,0 +1,98 @@
+{
+  "name": "Unnatural Intelligence (X) / Сверхъестественный Интеллект (X)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "NQHsbl75bk7fCc77",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "+2 к Бонусу Интеллекта.",
+    "source": "раса",
+    "hasRating": true,
+    "rating": 2,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "int",
+      "charBonusValue": 2,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "9l8axsmvmGXt5lsE",
+  "effects": [
+    {
+      "name": "Unnatural Intelligence (X) / Сверхъестественный Интеллект (X) (перенесено)",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "disabled": false,
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.int.bonusFx",
+            "type": "add",
+            "value": 2,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "Ywv7DyVJkNBOLrVa",
+      "type": "base",
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1786993503007,
+        "modifiedTime": 1786993503007,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!9l8axsmvmGXt5lsE.Ywv7DyVJkNBOLrVa"
+    }
+  ],
+  "sort": 0,
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786993503018,
+    "modifiedTime": 1786993503018,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!9l8axsmvmGXt5lsE"
+}
