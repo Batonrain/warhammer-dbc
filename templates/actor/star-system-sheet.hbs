@@ -34,7 +34,7 @@
 <section class="sheet-body">
 
   {{!-- ───────────── ОБЗОР ───────────── --}}
-  <div class="tab ship-tab" data-tab="overview" data-group="primary">
+  <div class="tab ship-tab {{#if (eq tab "overview")}}active{{/if}}" data-tab="overview" data-group="primary">
 
     <div class="ss-toolbar">
       <button type="button" class="body-create" data-action="bodyCreate"><i class="fas fa-plus"></i> Тело</button>
@@ -138,7 +138,7 @@
   </div>
 
   {{!-- ───────────── ЗАПИСИ ───────────── --}}
-  <div class="tab ship-tab" data-tab="notes" data-group="primary">
+  <div class="tab ship-tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
     <div class="item-section">
       <div class="item-section-title">ОПИСАНИЕ</div>
       <textarea name="system.description" class="item-textarea" placeholder="Описание системы...">{{system.description}}</textarea>

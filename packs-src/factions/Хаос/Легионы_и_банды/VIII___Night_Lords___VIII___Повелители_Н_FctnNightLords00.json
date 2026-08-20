@@ -1,0 +1,37 @@
+{
+  "name": "VIII – Night Lords / VIII – Повелители Ночи",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "jGHG1Q1rkY3fSkfV",
+  "system": {
+    "key": "night-lords",
+    "parentKey": "traitor-legions",
+    "alsoIn": [],
+    "aliases": [
+      "Night Lords"
+    ],
+    "isLore": true,
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnNightLords00",
+  "effects": [],
+  "sort": 4007000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnNightLords00"
+}

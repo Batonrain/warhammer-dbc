@@ -51,9 +51,29 @@
         <span class="horde-chip"><span class="hi hi-arrow-down"></span> Потери: <b>{{d.lost}}</b></span>
         <span class="horde-chip" data-tooltip="Ослаблена при потере >50%">50%: <b>{{d.halfThreshold}}</b></span>
         <span class="horde-chip" data-tooltip="Сломлена при 25% и ниже">25%: <b>{{d.quarterThreshold}}</b></span>
+        {{#if d.roundDamage}}<span class="horde-chip" data-tooltip="Порог теста W+Магнитуда — {{d.massDamageThreshold}}">За Раунд: <b>{{d.roundDamage}}</b></span>{{/if}}
         {{#if d.immune}}<span class="horde-chip immune">✦ Несломляема</span>{{/if}}
         <label class="horde-immune-toggle" data-tooltip="Иммунна к псих. урону, не может быть Сломлена"><input type="checkbox" name="system.immuneFear" {{checked system.immuneFear}}/> авто-Страх</label>
       </div>
+      {{#if psychLock}}
+      <div class="horde-hint horde-lock">Ослаблена потерями: психологический урон не восстанавливается ещё {{psychLock.hoursLeft}} ч.</div>
+      {{/if}}
+    </section>
+
+    {{!-- Психологические тесты --}}
+    <section class="horde-panel">
+      <div class="horde-panel-title">ПСИХОЛОГИЯ <span class="dim">— порог W + Магнитуда{{#if d.wpPenalty}} {{d.wpPenalty}}{{/if}} = {{d.psychTestThreshold}}</span></div>
+      <div class="horde-psych-btns">
+        {{#each psychTests as |p|}}
+        <button type="button" class="hbtn horde-psych-btn" data-action="psychTest" data-kind="{{p.key}}"
+                data-tooltip="{{p.hint}}">{{p.label}}</button>
+        {{/each}}
+      </div>
+      {{#if d.immune}}
+      <p class="horde-hint">Орда автоматически проходит тесты на Страх и Запугивание — психологического урона не получает и Сломлена быть не может.</p>
+      {{else}}
+      <p class="horde-hint">Провал стоит Магнитуды: массивные потери ×3, Страх ×2, Запугивание ×1. Лечится Командованием и социалкой.</p>
+      {{/if}}
     </section>
 
     {{!-- Размер и боевые показатели --}}
@@ -66,8 +86,17 @@
         <div class="horde-stat"><span class="horde-stat-lbl">Выстрелов</span><b class="horde-stat-val">{{d.rangedShots}}</b></div>
         <div class="horde-stat"><span class="horde-stat-lbl">Бонус W/Страх</span><b class="horde-stat-val">+{{d.psychTestBonus}}</b></div>
         <div class="horde-stat"><span class="horde-stat-lbl">Врагов в бл.</span><input type="number" name="system.enemiesInMelee" value="{{system.enemiesInMelee}}" min="0" class="horde-stat-input" data-tooltip="Уменьшает число выстрелов"/></div>
+        <div class="horde-stat"><span class="horde-stat-lbl">Отд. стрелки</span><input type="number" name="system.detachedMagnitude" value="{{system.detachedMagnitude}}" min="0" class="horde-stat-input" data-tooltip="Расчёты тяжёлого оружия: стреляют отдельно, своими атаками без бонусов Орды, и вычитаются из Магнитуды при расчёте её стрельбы"/></div>
       </div>
       <div class="horde-size-note">{{d.magSizeLabel}}</div>
+      {{#if hordeContacts.length}}
+      <div class="horde-mag-meta horde-contacts">
+        <span class="horde-chip" data-tooltip="Чужая Орда считается за столько персонажей, сколько клеток базового контакта она выставила">Орда против Орды:</span>
+        {{#each hordeContacts as |c|}}
+        <span class="horde-chip">{{c.name}} — <b>{{c.targets}}</b> цел.</span>
+        {{/each}}
+      </div>
+      {{/if}}
     </section>
 
     {{!-- Характеристики --}}

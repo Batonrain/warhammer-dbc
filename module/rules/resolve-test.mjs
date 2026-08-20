@@ -106,6 +106,9 @@ function effectAppliesTo(target, ctx) {
   const scope = String(target ?? "all").trim().toLowerCase();
   if (scope === "all" || scope === "") return true;
   if (scope === "initiative") return ctx.kind === "initiative";
+  // Нестабильность — свой вид теста, а не тест Воли: демон бросает его по W, но
+  // «+10 к тестам Воли» и «+Inf на Нестабильность» — разные правила книги.
+  if (scope === "instability") return ctx.kind === "instability";
   if (scope === "social") return isSocialSkill(ctx.skill);
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
@@ -120,15 +123,22 @@ function effectAppliesTo(target, ctx) {
  * Бонус Ловкости ЦЕЛИ, а он у каждой цели свой. Такие правила пишут `valueFrom`,
  * и значение считается на каждый бросок.
  *
- * Известен один источник — `targetCharBonus`. Неизвестный не превращается молча
- * в ноль, а жалуется: правило, тихо давшее «+0», ищется днями.
+ * Известны два источника: `targetCharBonus` (бонус характеристики ЦЕЛИ) и
+ * `selfCharBonus` (бонус характеристики самого бросающего). Неизвестный не
+ * превращается молча в ноль, а жалуется: правило, тихо давшее «+0», ищется днями.
  *
  * @returns {?number} null, если источник значения не распознан
  */
 function effectValue(effect, ctx, ruleId) {
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
-  const { targetCharBonus, multiplier = 1 } = effect.valueFrom;
+  const { targetCharBonus, selfCharBonus, multiplier = 1 } = effect.valueFrom;
+  // Своя характеристика: «+Inf герольда на тесты Нестабильности» (Локус Цепей).
+  // Числа в данных быть не может — Бесчестие у каждого своё.
+  if (selfCharBonus) {
+    const bonus = ctx?.actor?.system?.characteristics?.[selfCharBonus]?.bonus ?? 0;
+    return bonus * multiplier || 0;
+  }
   if (targetCharBonus) {
     const bonus = ctx?.targetActor?.system?.characteristics?.[targetCharBonus]?.bonus ?? 0;
     // «|| 0» убирает минус ноль: без цели галочка иначе подписывалась бы «−0».
@@ -178,10 +188,57 @@ export function rollModsFromRules(rules, ctx = {}) {
         mods.push({ ruleId: rule.id, label, value: 0, halvePenalty: true });
       }
       // Остальные виды эффектов на бросок не влияют: они про урон, броню и
-      // производные поля, и подключаются вместе с фазами 5–6.
+      // производные поля, и подключаются вместе с фазами 5–6. Переброс
+      // (`rollMode`) — не модификатор: его не с чем складывать, он меняет сам
+      // бросок, и потому едет отдельным списком (rerollsFromRules ниже).
     }
   }
   return mods;
+}
+
+/** Режимы переброса, которые понимает бросок. Умолчание — «лучший из двух». */
+const REROLL_MODES = new Set(["keepBest", "keepWorst"]);
+
+/**
+ * Перебросы, доступные на ЭТОМ броске. Книга даёт их россыпью — «раз в Раунд
+ * перебросить любой тест A» (Локус Грации), «перебросить любой тест атаки»
+ * (Локус Буйства), «перебрасывать все тесты на щиты» (Локус Преломления) — и
+ * все они одной формы: бросить несколько раз и оставить лучший.
+ *
+ * Отдельно от `rollModsFromRules` по существу дела, а не для порядка: галочки
+ * там складываются в одно число, а переброс складывать не с чем. Диалог
+ * показывает их своей строкой, и игрок решает, тратить ли переброс здесь.
+ *
+ * Область отбирается тем же `effectAppliesTo`, что и у модификаторов: «+10 к
+ * тестам Ловкости» и «переброс теста Ловкости» обязаны срабатывать на одних и
+ * тех же бросках, иначе одно и то же слово книги значило бы разное.
+ */
+export function rerollsFromRules(rules, ctx = {}) {
+  const out = [];
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "rollMode") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+
+      const mode = effect.mode ?? "keepBest";
+      if (!REROLL_MODES.has(mode)) {
+        console.error(`Warhammer DBC | правило «${rule?.id ?? "без id"}»: неизвестный режим переброса «${mode}»`);
+        continue;
+      }
+      // Один бросок — не переброс. Молча превратить это в «лучший из одного»
+      // значило бы показать игроку кнопку, которая ничего не делает.
+      const rolls = effect.rolls == null ? 2 : Number(effect.rolls);
+      if (!Number.isFinite(rolls) || rolls < 2) {
+        console.error(`Warhammer DBC | правило «${rule?.id ?? "без id"}»: перебросу нужно не меньше двух бросков, задано ${effect.rolls}`);
+        continue;
+      }
+      // who — чей бросок: свой или навязанный цели. Диалог показывает игроку
+      // только свои; чужие уезжают на кнопки защиты в карточке атаки.
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls,
+                 who: effect.who === "target" ? "target" : "self" });
+    }
+  }
+  return out;
 }
 
 /**
@@ -191,12 +248,16 @@ export function rollModsFromRules(rules, ctx = {}) {
  * отбора — так сторонний модуль дописывает правила, и они просеиваются по `when`
  * наравне с остальными.
  *
- * @returns {{ctx: object, rules: object[], mods: object[]}}
+ * @returns {{ctx: object, rules: object[], mods: object[], rerolls: object[]}}
  */
 export function resolveTest(input = {}) {
   const ctx = buildTestContext(input);
   const bag = gatherRules(ctx.actor, ctx);
   callHook("dbc.collectRules", ctx, bag);
   const rules = selectRules(bag, ctx.actor, ctx);
-  return { ctx, rules, mods: rollModsFromRules(rules, ctx) };
+  return {
+    ctx, rules,
+    mods: rollModsFromRules(rules, ctx),
+    rerolls: rerollsFromRules(rules, ctx)
+  };
 }

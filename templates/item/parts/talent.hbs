@@ -31,8 +31,18 @@
   </div>
   <div class="weapon-row">
     <label class="wr-label">Специализации</label>
+    {{!-- «Мастерство» владеет конкретным Навыком (стр. 62), и от того, каким,
+          зависят его склонности и цена. Поэтому у него подсказка списком — все
+          Навыки и специализации групп; поле осталось текстовым, чтобы своё
+          вписывалось по-прежнему. --}}
     <input type="text" name="system.specialization" value="{{system.specialization}}" class="wr-input-special"
+           {{#if masteryList}}list="mastery-targets"{{/if}}
            placeholder="напр. WS, BS, S… (для специализированных Талантов)"/>
+    {{#if masteryList}}
+    <datalist id="mastery-targets">
+      {{#each masteryList as |t|}}<option value="{{t.label}}"></option>{{/each}}
+    </datalist>
+    {{/if}}
   </div>
 
   <div class="weapon-row">
@@ -125,6 +135,41 @@
   <textarea name="system.benefit" class="item-textarea"
             placeholder="Что даёт мутация...">{{system.benefit}}</textarea>
 </div>
+
+{{!-- Субмутация (стр. 440): таблица берётся из текста выше, бросок d10 со
+      сдвигом на ⅓Inf.b записывает одну строку в предмет. --}}
+{{#if submutation}}
+<div class="item-section pa-history">
+  <div class="item-section-title">СУБМУТАЦИЯ</div>
+  <div class="pa-hist-bar">
+    <select class="sub-entry-select" title="Выбрать субмутацию вручную">
+      <option value="">— субмутация —</option>
+      {{#each submutation.entries as |e|}}
+      <option value="{{e.key}}" {{#if e.selected}}selected{{/if}}>{{e.label}}{{#if e.blocked}} ✖{{/if}}</option>
+      {{/each}}
+    </select>
+    <button type="button" class="pa-btn" data-action="subPick" title="Записать выбранную строку">Записать</button>
+    {{#if submutation.rollable}}
+    <button type="button" class="pa-btn" data-action="subRoll"
+            title="Бросок d{{submutation.die}} по таблице субмутаций; сдвиг до ⅓Inf.b (окр.▼) вверх или вниз, если мутация не от Порчи за Провал"><i class="fas fa-dice-d10"></i> к{{submutation.die}} субмутация</button>
+    {{else}}
+    <button type="button" class="pa-btn" data-action="subRoll"
+            title="Строка этой таблицы определяется покровителем персонажа">Определить по покровителю</button>
+    {{/if}}
+    {{#if submutation.name}}<button type="button" class="pa-btn pa-clear" data-action="subClear" title="Снять субмутацию"><i class="fas fa-times"></i></button>{{/if}}
+  </div>
+
+  {{#if submutation.name}}
+  <div class="pa-hist-card">
+    <div class="pa-hist-name">{{submutation.label}} — {{submutation.name}}{{#if submutation.godLabel}} ({{submutation.godLabel}}){{/if}}
+      {{#if submutation.rollLine}}<span class="pa-hist-roll">{{submutation.rollLine}}</span>{{/if}}</div>
+    <div class="pa-hist-desc">{{submutation.text}}</div>
+  </div>
+  {{else}}
+  <div class="trait-fx-hint">Субмутация не определена. ✖ в списке — строка цвета враждебного Бога (Кхорн — Слаанеш, Тзинч — Нургл): по правилу книги её брать нельзя.</div>
+  {{/if}}
+</div>
+{{/if}}
 {{/if}}
 
 {{!-- Ментальное расстройство --}}

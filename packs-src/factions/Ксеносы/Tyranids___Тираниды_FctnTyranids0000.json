@@ -1,0 +1,37 @@
+{
+  "name": "Tyranids / Тираниды",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "pf8bDeHXX50Ey4zj",
+  "system": {
+    "key": "tyranids",
+    "parentKey": "xenos",
+    "alsoIn": [],
+    "aliases": [
+      "Tyranids"
+    ],
+    "isLore": true,
+    "description": "Рой из-за пределов галактики: живое оружие, пожирающее биомассу целых миров.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "FctnTyranids0000",
+  "sort": 3150000,
+  "_key": "!items!FctnTyranids0000",
+  "effects": [],
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  }
+}
