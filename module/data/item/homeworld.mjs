@@ -13,11 +13,11 @@ export class HomeworldData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, ObjectField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, ObjectField, ArrayField } = foundry.data.fields;
     return {
       key:           new StringField({ initial: "", label: "Ключ" }),
-      description:   new StringField({ initial: "", label: "Описание" }),
-      notes:         new StringField({ initial: "", label: "Заметки" }),
+      description:   new HTMLField({ initial: "", label: "Описание" }),
+      notes:         new HTMLField({ initial: "", label: "Заметки" }),
       source:        new StringField({ initial: "", label: "Откуда получен" }),
       bookSource:    new StringField({ initial: "", label: "Книга-источник" }),
       featureName:   new StringField({ initial: "", label: "Особенность" }),

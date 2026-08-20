@@ -20,9 +20,10 @@ export class WeaponPropertyData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField } = foundry.data.fields;
     return {
-      description: new StringField({ initial: "", label: "Описание" }),
+      description: new HTMLField({ initial: "", label: "Описание" }),
+      notes:       new HTMLField({ initial: "", label: "Заметки" }),
       reminder:    new StringField({ initial: "", label: "Напоминание в чат" }),
       category:    new StringField({
         initial: "both", choices: WEAPON_PROPERTY_CATEGORIES, label: "Применимо"

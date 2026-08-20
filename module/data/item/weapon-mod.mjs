@@ -13,11 +13,11 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const props = label => new ArrayField(new ObjectField(), { label });
     return {
-      description:  new StringField({ initial: "", label: "Описание" }),
-      notes:        new StringField({ initial: "", label: "Заметки" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       category:     new StringField({ initial: "ranged", label: "Категория" }),
       modGroup:     new StringField({ initial: "other", label: "Группа" }),
       requirement:  new StringField({ initial: "", label: "Требование" }),

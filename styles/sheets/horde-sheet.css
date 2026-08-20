@@ -172,6 +172,7 @@
 /* Текст / правила */
 .horde-textarea { width: 100%; min-height: 110px; padding: 6px 8px; resize: vertical; line-height: 1.5; }
 .horde-textarea.tall { min-height: 210px; }
+prose-mirror.horde-textarea button.toggle:enabled { display: block; }
 .horde-gm .horde-panel-title { color: #ff9a9a; }
 .horde-rules p { font-size: 0.84em; line-height: 1.55; margin: 5px 0; color: #d2ffe6; }
 .horde-rules b { color: #eafff4; }

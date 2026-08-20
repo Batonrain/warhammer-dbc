@@ -12,9 +12,10 @@ export class ComponentData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str  = (initial, label) => new StringField({ initial, label });
+    const html = (initial, label) => new HTMLField({ initial, label });
     const list = label => new ArrayField(new ObjectField(), { label });
     return {
       kind:          str("supplemental", "Вид компонента"),
@@ -27,8 +28,8 @@ export class ComponentData extends foundry.abstract.TypeDataModel {
       qualityCustom: new BooleanField({ initial: false, label: "Своё качество" }),
       hulls:         str("", "Корпуса"),
       aspects:       str("", "Аспекты"),
-      description:   str("", "Описание"),
-      notes:         str("", "Заметки"),
+      description:   html("", "Описание"),
+      notes:         html("", "Заметки"),
       essential:     new BooleanField({ initial: false, label: "Основной" }),
       external:      new BooleanField({ initial: false, label: "Внешний" }),
       damaged:       new BooleanField({ initial: false, label: "Повреждён" }),

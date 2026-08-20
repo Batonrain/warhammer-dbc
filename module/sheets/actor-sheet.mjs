@@ -19,6 +19,7 @@ import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { createDisorderItem, activateDisorderListeners } from "./tabs/disorders.mjs";
 import { activateDiseaseListeners } from "./tabs/diseases.mjs";
 import { fatiguePenalty, activateConditionsListeners } from "./tabs/conditions.mjs";
+import { disabledArmourPenalty } from "../combat/armor-mods.mjs";
 import { painChatMsg } from "./tabs/pain.mjs";
 import { applyHealing } from "./tabs/healing.mjs";
 import { activateDrugListeners } from "./tabs/drugs.mjs";
@@ -694,6 +695,11 @@ export class WarhammerCharacterSheet
     // Блок «ЗДРАВОМЫСЛИЕ» там же: видим, только если какой-то Дредноут в мире
     // держит этого персонажа своим пилотом (rules/dreadnought.mjs, стр. 57-58).
     Object.assign(context, dreadnoughtPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // ── ЗАПИСИ: prose-mirror с переключаемым режимом (как у Journal Entries) —
+    // пока не открыт на правку, показывается обогащённый HTML (ссылки/секреты).
+    context.notesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
+      this.actor.system.notes, { relativeTo: this.actor, secrets: this.actor.isOwner });
 
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
     context.combatStanceCollapsed = !!this._combatCollapse?.stance;
@@ -1592,9 +1598,13 @@ export class WarhammerCharacterSheet
     const fatiguePenalty = this._getFatiguePenalty(defaultChar);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
     const helmetBonus = this._getHelmetlessBonus(charKey);
+    // Выключенная силовая броня: −10 физическому действию, −40 Уклонению/
+    // Парированию (стр. 233) — skill берётся из rollContext, если он у этого
+    // навыка есть (Dodge/Parry передают его отдельным ключом, не через charKey).
+    const armourPenalty = disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
 
     // Мод препаратов уже входит в target (через char.total → итог навыка)
-    const eff      = target + modifier + fatiguePenalty + helmetBonus;
+    const eff      = target + modifier + fatiguePenalty + helmetBonus + armourPenalty;
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
@@ -1628,6 +1638,7 @@ export class WarhammerCharacterSheet
           <div class="roll-threshold">
             ${charAbbr}: <b>${target}</b>${modStr}
             ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
+            ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${eff}</b>
           </div>
@@ -1663,9 +1674,11 @@ export class WarhammerCharacterSheet
     const fatiguePenalty = this._getFatiguePenalty(charKey);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
     const helmetBonus = this._getHelmetlessBonus(charKey);
+    // Выключенная силовая броня: −10 физической характеристике (стр. 233).
+    const armourPenalty = disabledArmourPenalty(this.actor, { charKey });
 
     // Мод препаратов уже входит в target (через char.total)
-    const eff      = target + modifier + fatiguePenalty + helmetBonus;
+    const eff      = target + modifier + fatiguePenalty + helmetBonus + armourPenalty;
     const roll     = await new Roll("1d100").evaluate();
     const rv       = roll.total;
     const rollMode = game.settings.get("core", "rollMode");
@@ -1686,6 +1699,7 @@ export class WarhammerCharacterSheet
           <div class="roll-threshold">
             Цель: <b>${target}</b>${modStr}
             ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
+            ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${eff}</b>
           </div>

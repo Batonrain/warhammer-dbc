@@ -10,7 +10,7 @@ export class ArchetypeData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, ObjectField, SchemaField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, ObjectField, SchemaField } = foundry.data.fields;
     return {
       key:             new StringField({ initial: "", label: "Ключ" }),
       race:            new StringField({ initial: "", label: "Раса" }),
@@ -29,8 +29,8 @@ export class ArchetypeData extends foundry.abstract.TypeDataModel {
       psykerClass:     new StringField({ initial: "", label: "Класс псайкера" }),
       grantsWarPlate:  new BooleanField({ initial: false, label: "Выдаёт силовую броню" }),
       grantsImplants:  new BooleanField({ initial: false, label: "Выдаёт импланты" }),
-      description:     new StringField({ initial: "", label: "Описание" }),
-      notes:           new StringField({ initial: "", label: "Заметки" }),
+      description:     new HTMLField({ initial: "", label: "Описание" }),
+      notes:           new HTMLField({ initial: "", label: "Заметки" }),
       trait: new SchemaField({
         name:    new StringField({ initial: "", label: "Название" }),
         benefit: new StringField({ initial: "", label: "Действие" })

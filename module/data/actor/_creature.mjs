@@ -38,7 +38,7 @@ const CONDITION_COUNTERS = {
  * @param {boolean} [options.granted] добавить поля «выдано» (только Персонаж)
  */
 export function creatureSchema({ granted = false } = {}) {
-  const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+  const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
   const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
   const str  = (initial, label) => new StringField({ initial, label });
   const bool = (initial, label) => new BooleanField({ initial, label });
@@ -283,7 +283,7 @@ export function creatureSchema({ granted = false } = {}) {
       prejudices: str("", "Предубеждения"),
       souvenir:   str("", "Памятная вещь")
     }, { label: "Внешность" }),
-    notes:          str("", "Заметки"),
+    notes:          new HTMLField({ initial: "", label: "Заметки" }),
     craftAvailable: bool(false, "Доступно ремесло"),
     possessed:      bool(false, "Одержим"),
     possession: new SchemaField({

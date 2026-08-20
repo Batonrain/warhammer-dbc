@@ -208,6 +208,11 @@ export class WarhammerStarSystemSheet
     context.derived = sys.derived || {};
     const isGM = game.user.isGM;
     context.isGM = isGM;
+    // ── Описание/Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
+    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
+    context.descriptionEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.description || "", enrichOpts);
+    context.warpRoutesEnriched  = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.warpRoutes  || "", enrichOpts);
+    context.gmNotesEnriched     = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.gmNotes     || "", enrichOpts);
 
     const regions = game.settings.get("warhammer-dbc", "regions") || [];
     const currentRegion = (sys.region || "").trim();

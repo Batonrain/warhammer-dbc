@@ -54,6 +54,13 @@
 .warhammer-dbc .veh-check-inline { flex-direction: row !important; align-items: center; gap: 5px; }
 .warhammer-dbc .veh-full-label { display: flex; flex-direction: column; font-size: 0.78em; color: var(--wh-panel-mid); gap: 2px; margin-top: 5px; }
 .warhammer-dbc .veh-full-label textarea { background: var(--wh-input-bg); border: 1px solid var(--wh-border); font-family: inherit; resize: vertical; }
+.warhammer-dbc .veh-full-label prose-mirror.veh-notes-pm {
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border); font-family: inherit;
+  min-height: 130px; display: flex;
+}
+.warhammer-dbc .veh-full-label prose-mirror.veh-notes-pm-short { min-height: 100px; }
+.warhammer-dbc .veh-full-label prose-mirror.veh-notes-pm .editor-content { padding: 4px 6px; }
+.warhammer-dbc .veh-full-label prose-mirror.veh-notes-pm button.toggle:enabled { display: block; }
 
 .warhammer-dbc .veh-derived-row { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 7px; font-size: 0.82em; }
 .warhammer-dbc .veh-derived-row span { white-space: nowrap; }

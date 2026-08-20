@@ -97,7 +97,7 @@
         актора со своей шапкой (Хозяин, Тип, Сила, Лояльность), а перечень слуг
         Хозяина — блок «МИНЬОНЫ» на вкладке СОЦИУМ. --}}
 
-  <div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <textarea name="system.notes" class="notes-textarea" placeholder="Записи...">{{system.notes}}</textarea> </div>
+  <div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <prose-mirror name="system.notes" class="notes-textarea" toggled value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror> </div>
   <div class="notes-section-panel"> <div class="panel-title">СТАТУС</div>
     <div class="status-checks">
       <label class="checkbox-label"> <input type="checkbox" name="system.isPsyker" {{#if system.isPsyker}}checked{{/if}}/> <span>Пси-Пробуждение</span> </label>

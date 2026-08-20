@@ -396,6 +396,9 @@ export class WarhammerShipSheet
     context.editable = this.isEditable;
     context.system    = sys;
     context.derived   = sys.derived || {};
+    // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
+    context.notesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
+      sys.notes || "", { relativeTo: this.actor, secrets: this.actor.isOwner });
     const _down = (s) => !!s.damaged || (s.status && s.status !== "intact");
     context.shipTypes = SHIP_TYPES;
     context.shipChars = SHIP_CHARS;
