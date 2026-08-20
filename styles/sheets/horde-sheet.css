@@ -146,6 +146,15 @@
 .horde-move { color: #4dffa6; font-size: 1em; }
 .horde-hint { font-size: 0.76em; color: #7fbf9f; line-height: 1.45; margin: 7px 0 0; background: rgba(0,0,0,0.2);
   border-left: 3px solid #2f9e6a; padding: 5px 8px; border-radius: 3px; }
+/* Запрет лечения психологического урона у Ослабленной Орды — предупреждение. */
+.horde-lock { color: #ffd98a; border-left-color: #6a5a2a; }
+
+/* Психологические тесты: Страх, Запугивание, массивные потери. */
+.horde-psych-btns { display: flex; flex-wrap: wrap; gap: 5px; }
+.horde-psych-btn { width: auto; height: 24px; padding: 0 10px; font-size: 0.8em; }
+
+/* Соседние Орды («Орда против Орды») — под сеткой боевых показателей. */
+.horde-contacts .horde-chip:first-child { border-color: #6a5a2a; color: #ffd98a; }
 
 /* Списки */
 .horde-add { background: rgba(15,58,38,0.7); color: #d8ffe8; border: 1px solid #2f9e6a; border-radius: 4px; width: 24px; height: 20px; font-size: 0.95em; line-height: 1; padding: 0; cursor: pointer; }
@@ -175,6 +184,17 @@
 .horde-atk .roll-damage-line { margin-top: 3px; font-size: 0.9em; }
 .horde-atk .roll-dmg-big { font-size: 1.3em; color: #4dffa6; }
 .horde-atk .roll-defense-note { font-size: 0.82em; color: #7fbf9f; font-style: italic; margin-top: 5px; }
+
+/* Карточка урона ПО Орде и её психологические тесты (тоже в чате) */
+.horde-dmg .horde-chip { display: inline-block; font-size: 0.75em; border: 1px solid #6a5a2a;
+  background: rgba(120,95,40,0.2); color: #ffd98a; border-radius: 8px; padding: 0 6px; margin-left: 5px; }
+.horde-mass-dmg .wh-horde-psych-btn,
+.horde-psych .wh-horde-psych-btn { width: 100%; padding: 5px 10px; margin-top: 5px; cursor: pointer;
+  background: rgba(120,95,40,0.25); color: #ffd98a; border: 1px solid #6a5a2a; border-radius: 4px; }
+.horde-mass-dmg .wh-horde-psych-btn:hover { background: rgba(120,95,40,0.45); }
+/* «Прячась в Орде»: пометка в карточке атаки и кнопка попадания в толпу. */
+.horde-shelter-note { color: #9fe8c4; }
+.wh-apply-dmg-horde { border-color: #6a5a2a !important; color: #ffd98a !important; }
 
 /* Диалог атаки Орды (вне scope .wh-horde) */
 .wh-horde-attack .atk-horde-info { font-size: 0.85em; color: #9fe8c4; background: rgba(47,158,106,0.12);

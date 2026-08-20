@@ -21,8 +21,13 @@ function hordeWith(patch = {}, itemList = []) {
   // раскладывается по полям вручную, чтобы не затереть остальные записи группы.
   for (const [group, entries] of Object.entries(patch)) {
     if (entries === null || typeof entries !== "object") { system[group] = entries; continue; }
-    for (const [key, value] of Object.entries(entries))
-      Object.assign(system[group][key], value);
+    for (const [key, value] of Object.entries(entries)) {
+      // Ветка группы может быть и объектом (характеристика с базой и рангом),
+      // и числом (Магнитуда): Object.assign на числе молча ничего не делает,
+      // и патч { magnitude: { value: 20 } } терялся целиком.
+      if (value !== null && typeof value === "object") Object.assign(system[group][key], value);
+      else system[group][key] = value;
+    }
   }
   const items = Object.assign([...itemList], { get: () => null });
   // Через прототип: расчёт Орды вынесен в метод (_prepareHordeData), и голый
@@ -104,5 +109,67 @@ describe("Броня Орды", () => {
     const system = hordeWith({}, [armour(8, false)]);
     expect(system.derived.armourAP).toBe(0);
     expect(system.derived.absorptionTotal).toBe(0);
+  });
+});
+
+describe("Боевые показатели Орды", () => {
+  const mag = (value, over = {}) =>
+    hordeWith({ magnitude: { value, start: value }, ...over });
+
+  it("целей в ближнем бою — Магнитуда/5, но не меньше одной", () => {
+    expect(mag(47).derived.meleeTargets).toBe(9);
+    expect(mag(3).derived.meleeTargets).toBe(1);
+  });
+
+  it("выстрелов — Магнитуда/10 минус половина врагов в рукопашной", () => {
+    expect(mag(45).derived.rangedShots).toBe(4);
+    expect(mag(45, { enemiesInMelee: 5 }).derived.rangedShots).toBe(2);
+  });
+
+  it("число выстрелов не уходит в минус", () => {
+    expect(mag(12, { enemiesInMelee: 20 }).derived.rangedShots).toBe(0);
+  });
+
+  it("отдельные стрелки вычитаются из Магнитуды в расчёте стрельбы", () => {
+    // Расчёты тяжёлого оружия бьют своими атаками, а Орде остаётся 30 из 50.
+    expect(mag(50).derived.rangedShots).toBe(5);
+    expect(mag(50, { detachedMagnitude: 20 }).derived.rangedShots).toBe(3);
+  });
+
+  it("на ближний бой отдельные стрелки не влияют", () => {
+    expect(mag(50, { detachedMagnitude: 20 }).derived.meleeTargets).toBe(10);
+  });
+
+  it("отдельных стрелков не бывает больше самой Магнитуды", () => {
+    const system = mag(10, { detachedMagnitude: 99 });
+    expect(system.derived.detached).toBe(10);
+    expect(system.derived.rangedShots).toBe(0);
+  });
+});
+
+describe("Ослабленная Орда", () => {
+  it("получает −10 к тестам Воли и порогу психологического теста", () => {
+    const system = hordeWith({
+      magnitude: { value: 20, start: 60 },
+      characteristics: { wp: { base: 30 } }
+    });
+    expect(system.derived.state).toBe("weakened");
+    expect(system.derived.wpPenalty).toBe(-10);
+    expect(system.derived.wpTestThreshold).toBe(20);
+    expect(system.derived.psychTestThreshold).toBe(40);   // 30 W − 10 + 20 Магнитуды
+  });
+
+  it("боеспособная Орда штрафа не несёт", () => {
+    const system = hordeWith({
+      magnitude: { value: 50, start: 60 },
+      characteristics: { wp: { base: 30 } }
+    });
+    expect(system.derived.wpPenalty).toBe(0);
+    expect(system.derived.psychTestThreshold).toBe(80);
+  });
+
+  it("часы без лечения психологического урона считаются от W.b", () => {
+    const system = hordeWith({ characteristics: { wp: { base: 34 } } });
+    expect(system.derived.noRecoveryHours).toBe(7);       // 10 − 3
   });
 });

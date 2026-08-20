@@ -50,7 +50,9 @@ export function aggregateAuto(props) {
     independent: false, wrist: false, crunch: false, cheapShot: false,
     smokeRating: 0, lingerRating: 0, lingerDrift: 0, revolver: false,
     combi: false, cognis: false, arcing: false, arcRating: 0, arcDamage: 0,
-    shrinkTemplate: 0, difficultTerrain: 0
+    shrinkTemplate: 0, difficultTerrain: 0,
+    // Свойства, дающие Орде дополнительные попадания (rules/horde-damage.mjs).
+    blastRating: 0, flame: false
   };
 
   for (const p of props) {
@@ -90,6 +92,8 @@ export function aggregateAuto(props) {
     if (au.lance)         a.lance = true;
     if (au.taintedCorB)   a.taintedCorB = true;
     if (au.spray)         a.spray = true;
+    if (au.blast)         a.blastRating = Math.max(a.blastRating, r);
+    if (au.flame)         a.flame = true;
     if (au.forcePR)       a.forcePR = true;
     if (au.deflagrate) { a.deflagrate = true; a.deflagrateRating = Math.max(a.deflagrateRating, r); }
     if (au.warpSoak)      a.warpSoak = true;
