@@ -103,6 +103,30 @@ describe("прочие требования — «чего ты добился»
     })).warn).toBe(false);
   });
 
+  it("совмещённая специализация («Варп, Демоны и Псайкеры») закрывает требование на любую из трёх", () => {
+    // Sorcerer/Witch/Psyker книгой выдают ОДНУ запись For.Lore (Warp, Daemons
+    // and Psykers) — она заменяет все три (skill-specializations.mjs, combines).
+    const withCombo = who({
+      groupSkills: { forbiddenLore: [{ specKey: "warpDaemonsPsykers", specialty: "Варп, Демоны и Псайкеры", rank: "trained" }] }
+    });
+    for (const specKey of ["daemons", "warp", "psykers", "Демоны", "Warp", "Psykers"]) {
+      const req = { ...blankEliteReq(), secondary: [
+        { kind: "skill", scope: "group", skillKey: "forbiddenLore", specKey, rank: "knows" }
+      ] };
+      expect(checkEliteRequirements(req, withCombo).warn).toBe(false);
+    }
+    // Ранг всё ещё спрашивается у самой совмещённой записи, а не игнорируется.
+    const tooLow = { ...blankEliteReq(), secondary: [
+      { kind: "skill", scope: "group", skillKey: "forbiddenLore", specKey: "daemons", rank: "expert" }
+    ] };
+    expect(checkEliteRequirements(tooLow, withCombo).warn).toBe(true);
+    // Не заменяет специализацию, которая в combines не входит.
+    const heresy = { ...blankEliteReq(), secondary: [
+      { kind: "skill", scope: "group", skillKey: "forbiddenLore", specKey: "heresy", rank: "knows" }
+    ] };
+    expect(checkEliteRequirements(heresy, withCombo).warn).toBe(true);
+  });
+
   it("Характеристика, Бесчестие и потраченный опыт", () => {
     const req = { ...blankEliteReq(), secondary: [
       { kind: "characteristic", charKey: "ws", value: 50 },
