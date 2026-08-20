@@ -267,7 +267,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "VII", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "VII",
+                    "chapter": ""
+                  }
+                ]
+              }
             },
             {
               "id": "b6JXwUq0lSjQdV3o",
@@ -340,7 +348,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "XVIII", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "XVIII",
+                    "chapter": ""
+                  }
+                ]
+              }
             },
             {
               "id": "c7KYzVr2mTpL4Ehb",
@@ -413,7 +429,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "XVIII", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "XVIII",
+                    "chapter": ""
+                  }
+                ]
+              }
             },
             {
               "id": "d8LmAsF3nUqR5Zvc",
@@ -486,7 +510,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "XVIII", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "XVIII",
+                    "chapter": ""
+                  }
+                ]
+              }
             },
             {
               "id": "n3PqYtXe8LmB6Vhd",
@@ -559,7 +591,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "XVIII", "chapter": "stormgiants" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "XVIII",
+                    "chapter": "stormgiants"
+                  }
+                ]
+              }
             }
           ]
         }

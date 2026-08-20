@@ -339,7 +339,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "XIX", "chapter": "carcharodons" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "XIX",
+                    "chapter": "carcharodons"
+                  }
+                ]
+              }
             },
             {
               "id": "p6RtVwLd0Kh3ZuBn",
@@ -412,7 +420,16 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "VI", "chapter": "", "ageAtLeast": 30 } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "VI",
+                    "chapter": "",
+                    "ageAtLeast": 30
+                  }
+                ]
+              }
             }
           ]
         }

@@ -195,7 +195,15 @@
               "weaponPropNewValue2": "0",
               "label": "Ухо Лимана: усиленный слух (Дети Императора)",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "III", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "III",
+                    "chapter": ""
+                  }
+                ]
+              }
             },
             {
               "id": "g5Or0CqYiZ3MudFw",
@@ -268,7 +276,15 @@
               "weaponPropNewValue2": "0",
               "label": "Ухо Лимана: наездник (Воины Богомолы)",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "V", "chapter": "mantis" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "V",
+                    "chapter": "mantis"
+                  }
+                ]
+              }
             }
           ]
         }

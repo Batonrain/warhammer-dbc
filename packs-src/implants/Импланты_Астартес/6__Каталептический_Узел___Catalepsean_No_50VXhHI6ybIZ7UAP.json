@@ -129,7 +129,15 @@
               "rerollChar": "wp",
               "label": "Каталептический Узел: против ментальных потрясений (Уничтожители)",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "V", "chapter": "destroyers" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "V",
+                    "chapter": "destroyers"
+                  }
+                ]
+              }
             },
             {
               "id": "m1Zv7SbDwE2oQjXf",
@@ -206,7 +214,15 @@
               "rerollChar": "wp",
               "label": "Каталептический Узел: стойкость товарищества (Пожиратели Миров)",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "XII", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "XII",
+                    "chapter": ""
+                  }
+                ]
+              }
             }
           ]
         }

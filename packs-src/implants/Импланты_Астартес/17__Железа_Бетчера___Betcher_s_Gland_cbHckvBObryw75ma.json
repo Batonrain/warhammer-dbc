@@ -123,11 +123,23 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": true, "conditions": [
-                { "legion": "VII", "chapter": "" },
-                { "legion": "X", "chapter": "stardragons" },
-                { "legion": "XIX", "chapter": "" }
-              ] }
+              "when": {
+                "negate": true,
+                "conditions": [
+                  {
+                    "legion": "VII",
+                    "chapter": ""
+                  },
+                  {
+                    "legion": "X",
+                    "chapter": "stardragons"
+                  },
+                  {
+                    "legion": "XIX",
+                    "chapter": ""
+                  }
+                ]
+              }
             }
           ]
         }

@@ -123,7 +123,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": true, "conditions": [ { "legion": "XIX", "chapter": "" } ] }
+              "when": {
+                "negate": true,
+                "conditions": [
+                  {
+                    "legion": "XIX",
+                    "chapter": ""
+                  }
+                ]
+              }
             },
             {
               "id": "WNB7ypz7eNHQv3Qf",
@@ -196,7 +204,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": true, "conditions": [ { "legion": "XIX", "chapter": "" } ] }
+              "when": {
+                "negate": true,
+                "conditions": [
+                  {
+                    "legion": "XIX",
+                    "chapter": ""
+                  }
+                ]
+              }
             },
             {
               "id": "q8TzWmXe2VoR6Nhb",
@@ -273,7 +289,15 @@
               "rerollChar": "t",
               "label": "Мукраноид: против жара (Саламандры)",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "XVIII", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "XVIII",
+                    "chapter": ""
+                  }
+                ]
+              }
             },
             {
               "id": "r9UaXnYf3WpS7Oic",
@@ -350,7 +374,15 @@
               "rerollChar": "t",
               "label": "Мукраноид: против жара, ещё (Чёрные Драконы)",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "XVIII", "chapter": "blackdragons" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "XVIII",
+                    "chapter": "blackdragons"
+                  }
+                ]
+              }
             }
           ]
         }

@@ -199,7 +199,15 @@
               "rerollChar": "t",
               "label": "Оолитическая Почка: против болезней и ядов (Гвардия Смерти)",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "XIV", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "XIV",
+                    "chapter": ""
+                  }
+                ]
+              }
             }
           ]
         }

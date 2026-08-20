@@ -195,7 +195,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "VIII", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "VIII",
+                    "chapter": ""
+                  }
+                ]
+              }
             }
           ]
         }

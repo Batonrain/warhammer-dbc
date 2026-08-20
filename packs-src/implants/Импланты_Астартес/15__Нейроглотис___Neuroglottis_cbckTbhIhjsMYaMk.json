@@ -125,7 +125,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "VI", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "VI",
+                    "chapter": ""
+                  }
+                ]
+              }
             },
             {
               "id": "sVQe1uPYzhKUltjc",
@@ -198,7 +206,15 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [ { "legion": "VI", "chapter": "" } ] }
+              "when": {
+                "negate": false,
+                "conditions": [
+                  {
+                    "legion": "VI",
+                    "chapter": ""
+                  }
+                ]
+              }
             }
           ]
         }
