@@ -1,0 +1,97 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Генератор Миньона (стр. 111-113), блок «МИНЬОНЫ» на вкладке СОЦИУМ и
+   диалоги выбора группы/силы при покупке Таланта.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Блок «МИНЬОНЫ» ── */
+.warhammer-dbc .social-minions .panel-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.warhammer-dbc .social-minions .minion-count {
+  font-weight: 400; font-size: 0.82em; color: var(--wh-accent);
+}
+.warhammer-dbc .social-minions .minion-tally {
+  font-weight: 400; font-size: 0.76em; color: var(--wh-text-mid);
+}
+.warhammer-dbc .minion-add-btn {
+  margin-left: auto; width: 24px; height: 22px; line-height: 1;
+  cursor: pointer; border: 1px solid #2f9e6a; border-radius: 4px;
+  background: #123a26; color: #d8ffe8;
+}
+.warhammer-dbc .minion-add-btn:hover { background: #1b5c3b; }
+
+.warhammer-dbc .minion-cards {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px;
+}
+.warhammer-dbc .minion-card {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px; cursor: pointer; text-align: center;
+  border: 1px solid var(--wh-border); border-radius: 6px; background: rgba(0,0,0,0.16);
+}
+.warhammer-dbc .minion-card:hover { border-color: var(--wh-accent); }
+.warhammer-dbc .minion-card-img {
+  width: 56px; height: 56px; object-fit: cover;
+  border: 1px solid var(--wh-border); border-radius: 50%;
+}
+.warhammer-dbc .minion-card-name { font-size: 0.86em; line-height: 1.15; }
+.warhammer-dbc .minion-card-meta,
+.warhammer-dbc .minion-card-loyalty { font-size: 0.72em; color: var(--wh-text-mid); }
+.warhammer-dbc .minion-slot-chip {
+  display: inline-block; margin: 0 4px 3px 0; padding: 1px 6px;
+  font-size: 0.74em; border: 1px solid var(--wh-border); border-radius: 10px;
+}
+
+/* ── Диалог выбора при покупке Таланта ── */
+.wh-minion-slot .minion-slot-line { font-size: 0.82em; margin-top: 4px; }
+.wh-minion-slot .minion-slot-ok   { margin-top: 5px; font-size: 0.8em; color: #7fd6a2; }
+.wh-minion-slot .minion-slot-miss { margin-top: 5px; font-size: 0.8em; color: #e2a04a; }
+
+/* ── Генератор ── */
+.wh-minion-creator .mc-head {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--wh-border);
+}
+.wh-minion-creator .mc-derived { font-size: 0.8em; color: var(--wh-text-mid); }
+.wh-minion-creator .mc-btn {
+  margin-left: auto; padding: 2px 8px; cursor: pointer;
+  border: 1px solid var(--wh-border); border-radius: 4px; background: rgba(0,0,0,0.2);
+}
+.wh-minion-creator .mc-step { margin-bottom: 12px; }
+.wh-minion-creator .mc-step h3 {
+  margin: 0 0 4px; font-size: 0.9em; letter-spacing: 0.05em; text-transform: uppercase;
+}
+.wh-minion-creator .mc-line { font-size: 0.82em; margin-bottom: 4px; }
+.wh-minion-creator .mc-hint  { font-size: 0.76em; color: var(--wh-text-mid); margin-bottom: 4px; }
+.wh-minion-creator .mc-issues { font-size: 0.78em; color: #e2704a; margin-top: 4px; }
+.wh-minion-creator .mc-rolls { font-size: 0.84em; margin: 4px 0; }
+
+/* Остаток бюджета: ноль — ровно по книге, минус — перерасход (не запрет). */
+.wh-minion-creator .mc-badge { padding: 0 5px; border-radius: 8px; background: rgba(255,255,255,0.08); }
+.wh-minion-creator .mc-badge.exact { color: #7fd6a2; }
+.wh-minion-creator .mc-badge.over  { color: #e2704a; background: rgba(226,112,74,0.14); }
+
+.wh-minion-creator .mc-chars {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 5px;
+}
+.wh-minion-creator .mc-char { display: flex; flex-direction: column; font-size: 0.76em; }
+.wh-minion-creator .mc-char input { width: 100%; text-align: center; }
+
+.wh-minion-creator .mc-add { display: flex; gap: 6px; margin-bottom: 5px; }
+.wh-minion-creator .mc-add .mc-btn { margin-left: 0; }
+.wh-minion-creator .mc-rows,
+.wh-minion-creator .mc-drop { display: flex; flex-direction: column; gap: 3px; }
+.wh-minion-creator .mc-drop {
+  min-height: 46px; padding: 5px;
+  border: 1px dashed var(--wh-border); border-radius: 5px;
+}
+.wh-minion-creator .mc-drop-over { border-color: var(--wh-accent); background: rgba(255,255,255,0.05); }
+.wh-minion-creator .mc-row {
+  display: flex; align-items: center; gap: 6px; font-size: 0.82em;
+  padding: 2px 4px; border-radius: 4px; background: rgba(0,0,0,0.16);
+}
+.wh-minion-creator .mc-row-img { width: 22px; height: 22px; object-fit: cover; border-radius: 3px; }
+.wh-minion-creator .mc-row-name { flex: 1; }
+.wh-minion-creator .mc-row-meta { font-size: 0.9em; color: var(--wh-text-mid); }
+.wh-minion-creator .mc-cost input { width: 42px; text-align: center; }
+.wh-minion-creator .mc-up { font-size: 0.9em; color: var(--wh-text-mid); }
+.wh-minion-creator .mc-del { cursor: pointer; border: none; background: none; color: #e2704a; }
+.wh-minion-creator .mc-convert { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.wh-minion-creator .mc-convert input { width: 48px; text-align: center; }

@@ -29,19 +29,24 @@ const PART = n => `templates/actor/parts/${n}.hbs`;
 describeV2Sheet(WarhammerCharacterSheet, {
   sheet: "module/sheets/actor-sheet.mjs",
   template: ["templates/actor/character-sheet.hbs",
-    ...["header", "infamy-strip", "tab-stats", "tab-combat", "tab-abilities", "tab-psy",
-        "tab-tech", "tab-nav", "tab-gear", "tab-advance", "tab-notes", "tab-effects",
-        "tab-possession", "tab-haemonculus"].map(PART)]
+    // toggle-rows — часть внутри части: вкладка Способностей подключает её под
+    // каждой способностью с подспособностями (Локус Герольда). Кнопка вкл./выкл.
+    // живёт только там, и без этой строки договор «каждый обработчик кем-то
+    // вызывается» считал бы её мёртвой.
+    ...["header", "infamy-strip", "tab-stats", "tab-combat", "tab-abilities", "toggle-rows",
+        "tab-psy", "tab-tech", "tab-nav", "tab-gear", "tab-advance", "tab-notes", "tab-effects",
+        "tab-possession", "tab-haemonculus", "tab-social"].map(PART)]
 });
 
 describeV2Sheet(WarhammerDaemonSheet, {
   sheet: "module/sheets/daemon-sheet.mjs",
-  template: "templates/actor/daemon-sheet.hbs"
+  // Вкладку СОЦИУМ демон подключает частью — «+» Миньонов живёт там.
+  template: ["templates/actor/daemon-sheet.hbs", PART("tab-social")]
 });
 
 describeV2Sheet(WarhammerDemonPrinceSheet, {
   sheet: "module/sheets/demon-prince-sheet.mjs",
-  template: "templates/actor/demon-prince-sheet.hbs"
+  template: ["templates/actor/demon-prince-sheet.hbs", PART("tab-social")]
 });
 
 describe("окно листа", () => {
@@ -168,6 +173,38 @@ describe("слоты Расы и Субрасы", () => {
 
     expect(updates).toEqual([]);
     expect(captured.errors.length).toBeGreaterThan(0);
+  });
+
+  // Жалоба игрока: покупка Элитного архетипа не попадала в блок «Опыт».
+  // Причина — дроп предмета прямо на лист (в обход elite-picker.mjs) шёл
+  // обычным созданием предмета: paidCost оставался умолчанием 0, множитель за
+  // уже взятые архетипы не считался, опыт не списывался. Дроп обязан идти
+  // через buyEliteArchetype — тем же путём, что кнопка пикера.
+  it("Элитный архетип, брошенный на лист напрямую, покупается через buyEliteArchetype", async () => {
+    resetCaptured();
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {},
+      experience: { total: 500, current: 500 }
+    });
+    const updates = [];
+    sheet.actor.update = async data => { updates.push(data); };
+    globalThis.Item.implementation = {
+      fromDropData: async () => ({
+        type: "eliteArchetype", name: "Испытанный Инквизитор",
+        system: { cost: 300, requirements: { primary: [], secondary: [] } },
+        toObject() { return foundry.utils.deepClone({ ...this, toObject: undefined }); }
+      })
+    };
+
+    await WarhammerCharacterSheet.prototype._onDropItem.call(sheet, {}, {});
+
+    // paidCost посчитан (множитель ×1 — первый архетип) и лёг на созданный
+    // предмет: голый дроп оставил бы его умолчанием 0.
+    expect(captured.created.length).toBe(1);
+    expect(captured.created[0].system.paidCost).toBe(300);
+    // Списание ушло в журнал опыта актора, а не потерялось.
+    const logUpdate = updates.find(u => "system.experience.log" in u);
+    expect(logUpdate?.["system.experience.log"]?.at(-1)?.amount).toBe(-300);
   });
 });
 

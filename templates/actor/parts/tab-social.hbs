@@ -33,7 +33,7 @@
     <div class="social-skills">
       {{#each socialSkills as |sk|}}
       <div class="social-skill">
-        <a class="social-skill-name skill-roll" data-skill="{{sk.key}}" title="Бросок: {{sk.label}}">{{sk.label}}</a>
+        <a class="social-skill-name skill-roll" data-action="skillRoll" data-skill="{{sk.key}}" title="Бросок: {{sk.label}}">{{sk.label}}</a>
         <span class="social-skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span>
       </div>
       {{/each}}
@@ -104,26 +104,128 @@
     {{else}}<div class="gene-seed-hint">Ни в одном Отряде, Формировании, экипаже или расчёте не числится.</div>{{/if}}
   </div>
 
-  {{!-- ── Миньоны ── --}}
-  {{#if canHaveMinions}}
-  <div class="notes-section-panel">
-    <div class="panel-title">МИНЬОНЫ</div>
-    {{#if myMinions.length}}
-    <table class="items-table">
-      <thead><tr><th>Имя</th><th class="col-narrow">Тип</th><th class="col-narrow">Уровень</th><th class="col-narrow">Лояльность</th></tr></thead>
-      <tbody>
-        {{#each myMinions as |m|}}
-        <tr class="item-row">
-          <td class="item-name-cell minion-open-link" data-uuid="{{m.uuid}}" title="Открыть лист">{{m.name}}</td>
-          <td class="godgift-god">{{m.typeLabel}}</td>
-          <td class="godgift-god">{{m.tierLabel}}</td>
-          <td class="godgift-god">{{m.loyaltyValue}}/{{m.loyaltyMax}}</td>
-        </tr>
+  {{!-- ── Командование вне Отряда ──
+        Командовать можно и теми, кто в Отряд не сведён. Слаженности и Риска у
+        такой группы нет — это свойства сведённого отряда, — поэтому порог
+        теста здесь чистый Command(F). --}}
+  <div class="notes-section-panel cmd-free">
+    <div class="panel-title">
+      ПОД МОИМ ПРИСУТСТВИЕМ
+      <span class="minion-count" title="Сколько подчинённых вне Отряда">{{followerCount}}</span>
+      <span class="gene-seed-hint" style="font-weight:400;">— перетащите актора или возьмите выделенные токены</span>
+      <button type="button" class="cmd-take-tokens" title="Взять под Присутствие все выделенные на сцене токены">Взять выделенные</button>
+    </div>
+
+    {{!-- Броски Команд --}}
+    <div class="cmd-rolls">
+      <button type="button" class="cmd-roll-btn{{#if presenceActive}} cmd-on{{/if}}" data-cmd-roll="presence"
+              title="Command(F)+0. Одно преимущество на выбор, меняется в начале Хода">
+        Присутствие{{#if presenceActive}} ✦{{/if}}</button>
+      <button type="button" class="cmd-roll-btn{{#if shortActive}} cmd-on{{/if}}" data-cmd-roll="short"
+              title="Полудействие. Бонус = Успехи × множитель приказа">
+        Короткая{{#if shortActive}} +{{shortBonus}}{{/if}}</button>
+      <button type="button" class="cmd-roll-btn{{#if detailActive}} cmd-on{{/if}}" data-cmd-roll="detail"
+              title="Полное действие. Успехи тратятся на эффекты">
+        Детальная{{#if detailActive}} {{detailSuccesses}}{{/if}}</button>
+      <button type="button" class="cmd-clear" title="Снять всё отданное — конец боя или потеря Командования">Сбросить</button>
+    </div>
+
+    <div class="cmd-presence-row">
+      <label>Преимущество Присутствия:</label>
+      <select data-cmd-benefit>
+        {{#each presenceBenefits as |b|}}
+        <option value="{{b.key}}" {{#if b.selected}}selected{{/if}} title="{{b.desc}}">{{b.number}}. {{b.label}}</option>
         {{/each}}
-      </tbody>
-    </table>
+      </select>
+    </div>
+
+    {{#if detailActive}}
+    <div class="cmd-detail-picks">
+      {{#each detailCommands as |c|}}
+      <button type="button" class="cmd-detail-pick{{#if c.picked}} cmd-picked{{/if}}{{#unless c.afford}} cmd-poor{{/unless}}"
+              data-key="{{c.key}}" title="{{c.desc}}"><span class="sq-chat-cost">{{c.cost}}</span> {{c.label}}</button>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{!-- Список подчинённых --}}
+    <div class="cmd-followers-zone" data-tooltip="Перетащите актора сюда">
+      {{#each followers as |f|}}
+      <div class="cmd-follower{{#if f.missing}} sq-member-missing{{/if}}" data-index="{{f.idx}}">
+        <img class="cmd-follower-img social-open-actor" data-uuid="{{f.uuid}}" src="{{f.img}}" alt="{{f.name}}" title="Открыть лист"/>
+        <div class="cmd-follower-main">
+          <div class="cmd-follower-line">
+            <a class="cmd-follower-name social-open-actor" data-uuid="{{f.uuid}}">{{f.name}}</a>
+            <span class="godgift-god">{{f.typeLabel}}</span>
+            {{#unless f.reach.commands}}<span class="sq-member-badge sq-badge-limited"
+              title="{{#each f.reach.notes}}{{this}} {{/each}}">Только Присутствие 1 и 3</span>{{/unless}}
+            {{#unless f.reach.presenceApplies}}<span class="sq-member-badge sq-badge-off"
+              title="Выбранное преимущество Присутствия до него не доходит">Присутствие мимо</span>{{/unless}}
+          </div>
+          <div class="cmd-follower-stats">
+            {{#if f.hp}}<span>{{f.hp}}</span>{{/if}}
+            {{#if f.wp}}<span title="Воля">W {{f.wp}}</span>{{/if}}
+            {{#if f.psychDamage}}<span class="cmd-psych" title="Психологический урон — его и лечит тест Командования">Псих. {{f.psychDamage}}</span>{{/if}}
+          </div>
+          <input type="text" class="cmd-follower-note" data-index="{{f.idx}}" value="{{f.note}}" placeholder="Заметка (роль, приказ…)"/>
+        </div>
+        <div class="cmd-follower-acts">
+          {{#if f.isHorde}}
+          <a class="cmd-rally" data-uuid="{{f.uuid}}" title="Речь к Орде: тест Командования лечит ей психологический урон"><i class="fas fa-bullhorn"></i></a>
+          {{/if}}
+          <a class="cmd-follower-remove" data-index="{{f.idx}}" title="Вывести из-под Присутствия"><i class="fas fa-times"></i></a>
+        </div>
+      </div>
+      {{else}}
+      <div class="gene-seed-hint">Никого. Перетащите сюда актора или выделите токены на сцене и нажмите «Взять выделенные».</div>
+      {{/each}}
+    </div>
+
+    {{#if commandedHordes.length}}
+    <div class="gene-seed-hint cmd-horde-hint">Ордам доходят только эффекты 1 и 3 Присутствия; Короткие и Детальные Команды на них не действуют, а тест Командования лечит им психологический урон.</div>
+    {{/if}}
+  </div>
+
+  {{!-- ── Миньоны (стр. 111-113) ──
+        Блока нет, пока не куплен Талант «Миньон Хаоса»: слуг даёт Талант.
+        В шапке — сколько их какой группы и каков максимум (наименьший бонус
+        Характеристики по имеющимся группам). «+» появляется, когда Талантов
+        куплено больше, чем заведено слуг. --}}
+  {{#if hasMinionTalent}}
+  <div class="notes-section-panel social-minions">
+    <div class="panel-title">
+      МИНЬОНЫ
+      <span class="minion-count" title="Занято слуг из максимума: максимум — наименьший бонус Характеристики по имеющимся группам (стр. 111)">
+        {{minionCount}} / {{minionCapacity}}
+      </span>
+      {{#each minionTally as |t|}}<span class="minion-tally">{{t.label}}: {{t.count}}</span>{{/each}}
+      {{#if freeSlots.length}}
+      <button type="button" class="minion-add-btn" data-action="minionCreate"
+              title="Создать Миньона по купленному Таланту: свободных Талантов — {{freeSlots.length}}">+</button>
+      {{/if}}
+    </div>
+
+    {{#if minionRows.length}}
+    <div class="minion-cards">
+      {{#each minionRows as |m|}}
+      <div class="minion-card minion-open-link" data-uuid="{{m.uuid}}" title="Открыть лист: {{m.name}}">
+        <img class="minion-card-img" src="{{m.img}}" alt=""/>
+        <div class="minion-card-name">{{m.name}}</div>
+        <div class="minion-card-meta">{{m.groupLabel}} · {{m.tierLabel}}</div>
+        <div class="minion-card-loyalty">
+          {{#if m.magnitude}}Магнитуда {{m.magnitude}}{{else}}Лояльность {{m.loyaltyValue}}/{{m.loyaltyMax}}{{/if}}
+        </div>
+      </div>
+      {{/each}}
+    </div>
     {{else}}
-    <div class="gene-seed-hint">Миньонов нет. Привязка заводится на листе самого миньона — там выбирается Хозяин.</div>
+    <div class="gene-seed-hint">Талант куплен, а слуги ещё нет — нажмите «+», чтобы собрать его по правилам книги.</div>
+    {{/if}}
+
+    {{#if freeSlots.length}}
+    <div class="gene-seed-hint">Свободных Талантов: {{freeSlots.length}} —
+      {{#each freeSlots as |s|}}<span class="minion-slot-chip">{{s.label}}</span>{{/each}}
+    </div>
     {{/if}}
   </div>
   {{/if}}

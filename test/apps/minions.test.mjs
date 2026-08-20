@@ -1,6 +1,15 @@
+// test/apps/minions.test.mjs
+//
+// Связь «слуга — Хозяин», которой пользуется Конструктор Механики: кто чей
+// миньон, от какой Характеристики Хозяина идёт Лояльность и как она меняется.
+//
+// Всё, что было про панели на «Записях», ушло вместе с ними: слуга теперь
+// отдельный тип актора, а перечень слуг Хозяина — блок «МИНЬОНЫ» на вкладке
+// СОЦИУМ (test/sheets/minions-panel.test.mjs).
+
 import { describe, it, expect } from "vitest";
 import {
-  MINION_TYPES, MINION_TIERS, minionsOf, baseLoyaltyFor, loyaltyAfterChange, minionsContext
+  MINION_TYPES, minionsOf, baseLoyaltyFor, loyaltyAfterChange
 } from "../../module/apps/minions.mjs";
 
 /** Подставные акторы: обычные литералы, никакого Foundry. */
@@ -68,57 +77,5 @@ describe("loyaltyAfterChange", () => {
   // иначе прибавка миньону без синхронизации молча пропадала бы.
   it("нулевой максимум потолком не считается", () => {
     expect(loyaltyAfterChange(minion({ value: 0, max: 0 }), 7)).toBe(7);
-  });
-});
-
-describe("minionsContext", () => {
-  const m = master();
-  const a = minion({ id: "a", name: "Борис", minionType: "beast", minionTier: "greater", value: 12, max: 31 });
-  const b = minion({ id: "b", name: "Аня" });
-  const stranger = minion({ id: "c", name: "Чужой", masterUuid: "Actor.zzz" });
-  const world = [m, a, b, stranger];
-
-  it("Хозяин видит своих миньонов по алфавиту, с подписями типа и уровня", () => {
-    const ctx = minionsContext(m, world);
-    expect(ctx.canHaveMinions).toBe(true);
-    expect(ctx.myMinions.map(x => x.name)).toEqual(["Аня", "Борис"]);
-    expect(ctx.myMinions[1]).toMatchObject({
-      typeLabel: MINION_TYPES.beast.label, tierLabel: MINION_TIERS.greater,
-      loyaltyValue: 12, loyaltyMax: 31
-    });
-  });
-
-  it("неизвестный тип и уровень показываются прочерком, а не пустотой", () => {
-    const ctx = minionsContext(m, [m, minion({ id: "x", minionType: "", minionTier: "" })]);
-    expect(ctx.myMinions[0]).toMatchObject({ typeLabel: "—", tierLabel: "—" });
-  });
-
-  it("сам себе Хозяином не предлагается", () => {
-    const ctx = minionsContext(m, world);
-    expect(ctx.masterOptions.some(o => o.uuid === m.uuid)).toBe(false);
-  });
-
-  it("в Хозяева идут только подходящие типы акторов", () => {
-    const ship = { id: "sh", uuid: "Actor.sh", name: "Корабль", type: "ship", system: {} };
-    const prince = { id: "dp", uuid: "Actor.dp", name: "Принц", type: "demonPrince", system: {} };
-    const ctx = minionsContext(a, [a, ship, prince, m]);
-    expect(ctx.masterOptions.map(o => o.uuid)).toEqual(["Actor.dp", "Actor.m1"]);
-  });
-
-  it("выбранный Хозяин и текущие тип с уровнем помечены выбранными", () => {
-    const ctx = minionsContext(a, world);
-    expect(ctx.isMinionCapable).toBe(true);
-    expect(ctx.masterOptions.find(o => o.selected)?.uuid).toBe("Actor.m1");
-    expect(ctx.minionTypeOptions.find(o => o.selected)?.key).toBe("beast");
-    expect(ctx.minionTierOptions.find(o => o.selected)?.key).toBe("greater");
-  });
-
-  // Принц Демонов Хозяином быть может, а чьим-то миньоном — нет: панель
-  // «МИНЬОН» у него не показывается.
-  it("Принц Демонов — только Хозяин, техника — ни то, ни другое", () => {
-    const prince = { id: "dp", uuid: "Actor.dp", name: "Принц", type: "demonPrince", system: {} };
-    const vehicle = { id: "v", uuid: "Actor.v", name: "Танк", type: "vehicle", system: {} };
-    expect(minionsContext(prince, [prince])).toMatchObject({ isMinionCapable: false, canHaveMinions: true });
-    expect(minionsContext(vehicle, [vehicle])).toMatchObject({ isMinionCapable: false, canHaveMinions: false });
   });
 });

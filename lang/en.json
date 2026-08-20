@@ -12,7 +12,8 @@
       "daemon": "Демон",
       "demonPrince": "Демон-Принц",
       "squad": "Отряд",
-      "formation": "Формирование"
+      "formation": "Формирование",
+      "minion": "Миньон"
     },
     "Item": {
       "weapon": "Оружие",
@@ -52,7 +53,8 @@
       "vehicleTrait": "Черта техники",
       "celestialBody": "Небесное тело",
       "race": "Раса",
-      "subrace": "Субраса"
+      "subrace": "Субраса",
+      "eliteArchetype": "Элитный архетип"
     }
   }
 }
