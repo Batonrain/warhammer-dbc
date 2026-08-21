@@ -445,7 +445,7 @@ function pickFromList({ title, prompt, options, withLabel = false }) {
             : sel.value;
         }
       },
-      { action: "cancel", label: "Отмена" }
+      { action: "cancel", label: "Отмена", callback: () => null }
     ],
     rejectClose: false
   });
