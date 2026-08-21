@@ -1305,7 +1305,16 @@ export class WarhammerActor extends Actor {
 
     // ── Движение (авторасчёт) ─────────────────────────────────────────────
     const agBonus = chars.ag?.bonus ?? 0;
-    // 0 = Человек; трейт Размера сдвигает SPD (прямой мод)
+    // 0 = Человек; трейт Размера сдвигает SPD (прямой мод). Трейт «Size/Hulking»
+    // выдаётся как embedded ActiveEffect с ключом system.sizeMod, фаза "initial"
+    // (см. packs-src/traits) — на этом месте он уже применён (Foundry вызывает
+    // applyActiveEffects("initial") ДО prepareDerivedData), поэтому traitSizeMod
+    // (легаси-петля выше, которая нарочно пропускает migratedEffect-предметы,
+    // чтобы не посчитать их дважды) складывается С этим значением, а не
+    // затирает его — иначе SPD/Инициатива персонажа с расовым Размером считались
+    // бы без него, при этом бейдж «Размер» на листе показывал бы верное число
+    // (было найдено на живых данных: sizeMod=1, sizeTotal=0 у всех Астартес).
+    traitSizeMod += Number(system.sizeMod) || 0;
     const size    = (system.size ?? 0) + traitSizeMod;
     system.sizeMod   = traitSizeMod;          // вклад Черт в Размер
     system.sizeTotal = size;                  // итоговый Размер (база + Черты)
