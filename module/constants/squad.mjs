@@ -8,7 +8,7 @@
 export const SQUAD_LEAD_TYPES = ["character", "daemon", "demonPrince"];
 
 /** Типы акторов, которые могут быть участниками отряда (подчинёнными). */
-export const SQUAD_MEMBER_TYPES = ["character", "daemon", "demonPrince", "horde", "vehicle"];
+export const SQUAD_MEMBER_TYPES = ["character", "daemon", "demonPrince", "horde", "vehicle", "minion"];
 
 /** Человекочитаемые названия типов акторов (для подсказок при неверном дропе). */
 export const SQUAD_TYPE_LABEL = {
@@ -17,6 +17,7 @@ export const SQUAD_TYPE_LABEL = {
   demonPrince: "Демон-Принц",
   horde:       "Орда",
   vehicle:     "Техника",
+  minion:      "Миньон",
   ship:        "Корабль",
   starSystem:  "Звёздная система",
   squad:       "Отряд"

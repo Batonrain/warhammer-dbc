@@ -97,6 +97,20 @@ describe("_prepareContext: живучесть участника по его т�
 
     expect(ctx.members.map(m => m.hp)).toEqual(["Магн. 20/30", "Стр. 15/40", "Раны 8/12"]);
   });
+
+  // Миньон — обычное существо, Раны считаются как у персонажа; но Орда
+  // Миньонов (minionTier "horde") Ран не имеет вовсе — вместо них Магнитуда,
+  // хранящаяся в system.magnitude.max (а не .start, как у настоящей Орды).
+  it("миньон показывает Раны, а Орда Миньонов — Магнитуду из .max", async () => {
+    resolveAs({
+      "Actor.m1": { name: "Прислужник", type: "minion", system: { minionTier: "lesser", wounds: { value: 5, max: 9 } } },
+      "Actor.m2": { name: "Свора",      type: "minion", system: { minionTier: "horde", magnitude: { value: 12, max: 20 } } }
+    });
+    const members = [{ id: "m1", uuid: "Actor.m1" }, { id: "m2", uuid: "Actor.m2" }];
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(squadActor({ members })), {});
+
+    expect(ctx.members.map(m => m.hp)).toEqual(["Раны 5/9", "Магн. 12/20"]);
+  });
 });
 
 // Кнопки «События миссии» несли класс sq-event, а обработчик искал
