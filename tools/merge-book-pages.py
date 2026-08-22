@@ -108,7 +108,6 @@ def main():
 
     to_apply = []      # (ключ, новая_страница) — от edited, применяется в live
     conflicts = []     # ключ — обе стороны поменяли по-разному
-    theirs_only = []   # ключ — поменяла только другая сессия, edited не трогал
     structural = []    # ключи, которых не было в base — новые/удалённые разделы
 
     all_keys = set(base_flat) | set(edited_flat) | set(live_flat)
@@ -178,8 +177,13 @@ def main():
                     page["pdfPage"] = new_page["pdfPage"]
                 applied += 1
 
+    # Формат ровно как у распаковщика (tools/unpack.mjs:
+    # `JSON.stringify(source, null, 1) + "\n"`): отступ в ОДИН пробел и перевод
+    # строки в конце. Иначе первый же --apply переписывает файл книги целиком, и
+    # третий шаг CI (packs:build && packs:unpack && git diff --exit-code) видит
+    # дифф на всю книгу вместо правленых страниц.
     with open(args.live, "w", encoding="utf-8") as f:
-        json.dump(live_doc, f, ensure_ascii=False, indent=2)
+        json.dump(live_doc, f, ensure_ascii=False, indent=1)
         f.write("\n")
 
     print(f"\nПрименено страниц: {applied}. {args.live} обновлён.")
