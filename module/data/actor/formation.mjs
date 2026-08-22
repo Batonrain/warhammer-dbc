@@ -9,7 +9,7 @@ export class FormationData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str  = (initial, label) => new StringField({ initial, label });
     const bool = label => new BooleanField({ initial: false, label });
@@ -58,8 +58,8 @@ export class FormationData extends foundry.abstract.TypeDataModel {
       }, { label: "Посты" }),
       attached:      new ArrayField(new ObjectField(), { label: "Приданные части" }),
       initiativeMod: num(0, "Модификатор Инициативы"),
-      notes:         str("", "Заметки"),
-      gmNotes:       str("", "Заметки ГМ")
+      notes:         new HTMLField({ initial: "", label: "Заметки" }),
+      gmNotes:       new HTMLField({ initial: "", label: "Заметки ГМ" })
     };
   }
 }

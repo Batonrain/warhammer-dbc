@@ -5,6 +5,8 @@ import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
 import { pickReroll }     from "../rules/reroll-pick.mjs";
+import { fatiguePenalty } from "../sheets/tabs/conditions.mjs";
+import { disabledArmourPenalty } from "./armor-mods.mjs";
 
 export async function _performDodge(actor, extraMod = 0, attackDeg = null, forcedReroll = "") {
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
@@ -15,7 +17,12 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null, force
   // Клонирующее Поле: голограммы срывают прицел — бонус носителю на физическое
   // избегание. Сила зависит от редкости поля (Poor.Q режет её вдвое).
   const cloneBonus = actor.system.cloneField?.bonus ?? 0;
-  const threshold  = agTotal + rankBonus + stBonus + extraMod + cloneBonus;
+  // Эта кнопка (карточка атаки в чате) раньше не учитывала ни Усталость, ни
+  // выключенную силовую броню (стр. 233, −40 на физическую РЕАКЦИЮ) — путь
+  // отдельный от вкладки Навыков (_rollSkill), которая их уже учитывала.
+  const fatigue       = fatiguePenalty(actor, "ag");
+  const armourPenalty = disabledArmourPenalty(actor, { skillKey: "dodge" });
+  const threshold  = agTotal + rankBonus + stBonus + extraMod + cloneBonus + fatigue + armourPenalty;
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
@@ -41,6 +48,8 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null, force
   if (stBonus   !== 0)   modParts.push(`стойка ${stBonus >= 0 ? "+" : ""}${stBonus}`);
   if (extraMod  !== 0)   modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
   if (cloneBonus !== 0)  modParts.push(`клон-поле +${cloneBonus}`);
+  if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
+  if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
   if (picked.dropped.length) modParts.push(`навязанный переброс, отброшено ${picked.dropped.join(", ")}`);
 
   const oppLine = opposed
@@ -122,8 +131,12 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null) {
   const parryProps = resolveWeaponPropsList(mergeWeaponPropEntries(meleeWeapon, modFx));
   const pwp         = aggregateAuto(parryProps);
   const defBonus    = pwp.defensive ? 15 : 0;
+  // Та же правка, что у _performDodge выше — эта кнопка тоже не учитывала
+  // ни Усталость, ни выключенную силовую броню.
+  const fatigue       = fatiguePenalty(actor, "ws");
+  const armourPenalty = disabledArmourPenalty(actor, { skillKey: "parry" });
 
-  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod;
+  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + fatigue + armourPenalty;
 
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
@@ -144,6 +157,8 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null) {
   if (stBonus !== 0)     modParts.push(`стойка ${stBonus >= 0 ? "+" : ""}${stBonus}`);
   if (defBonus !== 0)    modParts.push(`Защитное +${defBonus}`);
   if (extraMod !== 0)    modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
+  if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
+  if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
 
   const oppLine = opposed
     ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Встречная проверка — атака: <b>${attackDeg}</b> ${_degWord(attackDeg)}</div>`

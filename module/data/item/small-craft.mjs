@@ -9,12 +9,12 @@ export class SmallCraftData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, NumberField } = foundry.data.fields;
+    const { StringField, HTMLField, NumberField } = foundry.data.fields;
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str = (initial, label) => new StringField({ initial, label });
     return {
-      description:  str("", "Описание"),
-      notes:        str("", "Заметки"),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       craftKind:    str("fighter", "Класс судна"),
       faction:      str("", "Фракция"),
       cr:           num(0, "Боевой рейтинг"),

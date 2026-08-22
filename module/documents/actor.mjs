@@ -2,7 +2,8 @@ import { IMPROVEMENT_BONUS, SKILL_RANKS } from "../constants/characteristics.mjs
 import { HAEM_STAGES, isHaemonculus } from "../constants/haemonculus.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }   from "../constants/skills.mjs";
 import { carryRow }                        from "../helpers/utils.mjs";
-import { getArmorModEffects, armorModApForLocation, armorAgilityCap } from "../combat/armor-mods.mjs";
+import { getArmorModEffects, armorModApForLocation, armorAgilityCap,
+         disabledArmourOverloadTier, disabledArmourWeight } from "../combat/armor-mods.mjs";
 import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
 import { fieldModeEffects } from "../constants/drukhari-armor-fields.mjs";
@@ -30,6 +31,7 @@ import { HORDE_SIZE_LABELS, hordeSizeFor, hordeMagDamageDice, hordeState,
          massDamageThreshold, WEAKENED_WP_PENALTY, noRecoveryHours }
   from "../rules/horde-damage.mjs";
 import { sanityMax, madnessLevels } from "../rules/dreadnought.mjs";
+import { psyRatingFromTalents } from "../rules/psyker.mjs";
 
 /**
  * Расчёт движения по таблице Warhammer FFG.
@@ -1319,7 +1321,16 @@ export class WarhammerActor extends Actor {
 
     // ── Движение (авторасчёт) ─────────────────────────────────────────────
     const agBonus = chars.ag?.bonus ?? 0;
-    // 0 = Человек; трейт Размера сдвигает SPD (прямой мод)
+    // 0 = Человек; трейт Размера сдвигает SPD (прямой мод). Трейт «Size/Hulking»
+    // выдаётся как embedded ActiveEffect с ключом system.sizeMod, фаза "initial"
+    // (см. packs-src/traits) — на этом месте он уже применён (Foundry вызывает
+    // applyActiveEffects("initial") ДО prepareDerivedData), поэтому traitSizeMod
+    // (легаси-петля выше, которая нарочно пропускает migratedEffect-предметы,
+    // чтобы не посчитать их дважды) складывается С этим значением, а не
+    // затирает его — иначе SPD/Инициатива персонажа с расовым Размером считались
+    // бы без него, при этом бейдж «Размер» на листе показывал бы верное число
+    // (было найдено на живых данных: sizeMod=1, sizeTotal=0 у всех Астартес).
+    traitSizeMod += Number(system.sizeMod) || 0;
     const size    = (system.size ?? 0) + traitSizeMod;
     system.sizeMod   = traitSizeMod;          // вклад Черт в Размер
     system.sizeTotal = size;                  // итоговый Размер (база + Черты)
@@ -1332,8 +1343,16 @@ export class WarhammerActor extends Actor {
     // цель "SPD"), ставится ActiveEffect'ом в фазе "initial" (см. mechanics.mjs),
     // т.е. уже на месте к этому моменту расчёта.
     const spdBonus = Number(system.movement.spdBonus) || 0;
-    if (traitSpeedMod || spdBonus) {
-      spd = Math.max(0.5, spd + traitSpeedMod + spdBonus);
+    // Перевес выключенной силовой брони (стр. 233) — SPD −1 с тира 1 и выше;
+    // остальные последствия каскада (штраф теста, только Полное действие на
+    // движение, Беспомощность) — не расчёт, а игровое событие, выведены
+    // read-only на лист (system.disabledArmourOverload) для ручного учёта,
+    // не блокируются здесь. См. wdbc-rdd.
+    const overload = disabledArmourOverloadTier(this, disabledArmourWeight(this));
+    system.disabledArmourOverload = overload;
+    const overloadSpdMod = overload?.spdMod || 0;
+    if (traitSpeedMod || spdBonus || overloadSpdMod) {
+      spd = Math.max(0.5, spd + traitSpeedMod + spdBonus + overloadSpdMod);
       halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
     }
 
@@ -1379,8 +1398,15 @@ export class WarhammerActor extends Actor {
     system.techFocus       = techFocusInstalled;
 
     // ── Пси-Рейтинг ────────────────────────────────────────────────────────
-    // Текущий PR = базовый − сумма цен поддержания активных психосил (обычно по 1).
+    // Базовый PR — по умолчанию хранимое поле (бестиарий/NPC задают его прямо
+    // статблоком, без Таланта). Если на акторе есть Талант «Psy Rating /
+    // Пси-Рейтинг» — он замещает хранимое значение, предмет становится
+    // источником истины (psyRatingFromTalents в module/rules/psyker.mjs).
     if (system.psyker) {
+      const derivedPR = psyRatingFromTalents(this.items);
+      system.psyker.ratingFromTalent = derivedPR !== null;
+      if (derivedPR !== null) system.psyker.rating = derivedPR;
+
       let sustainedCost = 0;
       for (const i of this.items) {
         if (i.type === "psychicPower" && i.system.isSustained) sustainedCost += (i.system.sustainCost ?? 1);

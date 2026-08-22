@@ -8,7 +8,7 @@ export class CargoData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField } = foundry.data.fields;
     const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
     const bool = label => new BooleanField({ initial: false, label });
     return {
@@ -26,10 +26,10 @@ export class CargoData extends foundry.abstract.TypeDataModel {
       price:        num(0, "Цена"),
       origin:       new StringField({ initial: "", label: "Происхождение" }),
       consignee:    new StringField({ initial: "", label: "Получатель" }),
-      description:  new StringField({ initial: "", label: "Описание" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
       // В template.json объявлено не было, но лежит у четырёх грузов пака —
       // лист предмета показывает «Заметки» всем типам.
-      notes:        new StringField({ initial: "", label: "Заметки" })
+      notes:        new HTMLField({ initial: "", label: "Заметки" })
     };
   }
 }

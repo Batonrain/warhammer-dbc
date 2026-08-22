@@ -19,7 +19,7 @@
 //  погашенный ключ остаётся занятым.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { hasLegacyEffects, legacyEffectsToChanges } from "../constants/effect-keys.mjs";
+import { hasLegacyEffects, legacyEffectsToChanges, expectedPhase } from "../constants/effect-keys.mjs";
 import { implantTableEffects }                      from "../constants/implant-mechanics.mjs";
 import { isItemActive }                             from "../apps/effects.mjs";
 import { characteristicEffectKey, describeMechEntry, allMechEntryIds,
@@ -276,6 +276,32 @@ export async function repairBlackCarapaceStacking(item) {
   return 1;
 }
 
+// Починка бага: ключ `system.sizeMod` (Размер от Черт — «Size / Размер (X)»,
+// «Hulking / Громила») уезжал с фазой "final" — она ложится ПОСЛЕ
+// prepareDerivedData, а SPD/Движение считаются как раз внутри него из
+// traitSizeMod (documents/actor.mjs). Бейдж «Размер» на листе оттого выглядел
+// верным (final успевал к рендеру), а Движение — как у персонажа без Размера
+// вовсе (найдено на живых данных: sizeMod=1, sizeTotal=0 у всех Астартес мира).
+// Верная фаза для этого ключа теперь в INITIAL_PHASE_KEYS (effect-keys.mjs);
+// чинит любой ключ не по одному sizeMod, а по общему правилу expectedPhase —
+// та же проверка, что listItemEffects даёт GM как hasWrongPhase.
+export async function repairEffectPhases(item) {
+  let fixed = 0;
+  for (const effect of item.effects ?? []) {
+    const changes = effect.system?.changes ?? [];
+    if (!changes.length) continue;
+    let touched = false;
+    const fixedChanges = changes.map(c => {
+      const want = expectedPhase(c.key);
+      if (c.phase === want) return c;
+      touched = true;
+      return { ...c, phase: want };
+    });
+    if (touched) { await effect.update({ "system.changes": fixedChanges }); fixed++; }
+  }
+  return fixed;
+}
+
 // Починка бага ранней версии миграции: charValueBonuses (обычные +X к
 // характеристике — Родные миры, импланты и т.п.) переводились в
 // system.characteristics.<стат>.value — поля, которого не существует ни в
@@ -396,6 +422,9 @@ export async function migrateAllItemEffects() {
     // До выравнивания фаз: снимает саму запись Механики и её ActiveEffect у
     // «Чёрного Панцира» — нечего будет выравнивать по фазе, эффект удалён.
     repaired += await repairBlackCarapaceStacking(item);
+    // Порядок не важен относительно шагов выше — просто выравнивает фазу
+    // changes по expectedPhase, ключи и наличие эффектов уже устоялись.
+    repaired += await repairEffectPhases(item);
     deduped  += await dropMechanicsDuplicates(item);
     if (await migrateItemEffects(item)) migrated++;
   }

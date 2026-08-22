@@ -60,8 +60,8 @@
   </div>
   <div class="weapon-row"><label class="wr-label">Примечание к навыкам</label>
     <textarea name="system.skillsNote" rows="2" class="wr-input-lg">{{system.skillsNote}}</textarea></div>
-  <div class="weapon-row"><label class="wr-label">Описание</label>
-    <textarea name="system.description" rows="3" class="wr-input-lg">{{system.description}}</textarea></div>
+  {{!-- Описание — общий блок с rich-text редактором внизу вкладки ИНФО (общий
+        для всех типов предметов), здесь отдельного дубликата больше нет. --}}
   <div class="weapon-row"><label class="wr-label">Книга</label>
     <input type="text" name="system.bookSource" value="{{system.bookSource}}" class="wr-input-lg"/></div>
 </div>

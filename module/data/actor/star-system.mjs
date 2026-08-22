@@ -9,19 +9,20 @@ export class StarSystemData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, ObjectField, ArrayField } = foundry.data.fields;
+    const { StringField, HTMLField, BooleanField, ObjectField, ArrayField } = foundry.data.fields;
     const str = label => new StringField({ initial: "", label });
+    const html = label => new HTMLField({ initial: "", label });
     return {
-      description:    str("Описание"),
+      description:    html("Описание"),
       sector:         str("Сектор"),
       region:         str("Регион"),
-      warpRoutes:     str("Варп-маршруты"),
+      warpRoutes:     html("Варп-маршруты"),
       dominantStar:   str("Главная звезда"),
       starConfig:     str("Конфигурация звёзд"),
       systemFeatures: new ArrayField(new StringField(), { label: "Особенности системы" }),
       inhabitants:    new ArrayField(new StringField(), { label: "Обитатели" }),
       xenosSpecies:   str("Ксеносы"),
-      gmNotes:        str("Заметки ГМ"),
+      gmNotes:        html("Заметки ГМ"),
       journalUuid:    str("Журнал"),
       discovered:     new BooleanField({ initial: false, label: "Открыта" }),
       inProtectorate: new BooleanField({ initial: false, label: "В протекторате" }),

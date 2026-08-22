@@ -236,9 +236,8 @@ export const HOMEWORLDS = [
       desc: "Получите Hatred (выбрать), с которыми связан мир-крепость, и это работает также на стрелковых навыках."
     },
     choices: [{
-      key: "fortress-hatred", label: "Hatred", type: "text",
+      key: "fortress-hatred", label: "Hatred", type: "target",
       hint: "Укажите, кого ненавидит персонаж — с этим врагом связан его мир-крепость.",
-      placeholder: "Например: Ork, Chaos, Xenos",
       talentTemplate: "Hatred ({v})"
     }]
   },
@@ -261,9 +260,8 @@ export const HOMEWORLDS = [
       desc: "Персонаж получает Good Reputation (выбрать), связанный с тем, кто владел станцией."
     },
     choices: [{
-      key: "station-rep", label: "Good Reputation", type: "text",
+      key: "station-rep", label: "Good Reputation", type: "target",
       hint: "Укажите, среди кого у персонажа доброе имя — по прежнему владельцу станции.",
-      placeholder: "Например: Adeptus Mechanicus, Rogue Traders",
       talentTemplate: "Good Reputation ({v})"
     }]
   },

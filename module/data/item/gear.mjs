@@ -7,7 +7,7 @@
 
 /** Подсказки по качеству предмета: три текста, по одному на ступень. */
 export function qualityEffectsField() {
-  const { StringField, SchemaField } = foundry.data.fields;
+  const { HTMLField, StringField, SchemaField } = foundry.data.fields;
   return new SchemaField({
     poor: new StringField({ initial: "", label: "Низкое" }),
     good: new StringField({ initial: "", label: "Хорошее" }),
@@ -21,10 +21,10 @@ export class GearData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     return {
-      description:  new StringField({ initial: "", label: "Описание" }),
-      notes:        new StringField({ initial: "", label: "Заметки" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       infoguard:    infoguardField(),
       quantity:     new NumberField({ initial: 1, integer: true, nullable: false, label: "Количество" }),
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),

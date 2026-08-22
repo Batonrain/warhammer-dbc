@@ -121,7 +121,10 @@ export async function setAptitudes(actor, list) {
   const apts = charAptitudeSet(actor.system.aptitudes);
   const defs = { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF };
   const talUpd = actor.items
-    .filter(it => it.type === "talent" && it.system?.purchased)
+    // costManual — ГМ вписал цену руками (вкладка «Развитие»): пересчёт по
+    // Склонностям её не трогает, иначе правка терялась бы на следующую же
+    // смену Склонности (wdbc-cct).
+    .filter(it => it.type === "talent" && it.system?.purchased && !it.system?.costManual)
     .map(it => {
       // Mastery / Beyond Human считаем по склонностям привязанной Х-ки/Навыка
       // (aptSource), а не по записи компендиума (стр. 62).
@@ -345,14 +348,50 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
         ? resolveTalentAptitudes(item.name, item.system.aptitudes || [], item.system.aptSource,
             { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF })
         : (item.system.aptitudes || []);
+      // costManual снимается вместе с ★: обе ветки ставят цену сами, и оставить
+      // талант помеченным «цена вручную» значило бы навсегда исключить его из
+      // пересчёта по Склонностям — с числом, которое ГМ руками не вписывал.
       await item.update({
-        "system.granted": false, "system.purchased": true,
+        "system.granted": false, "system.purchased": true, "system.costManual": false,
         "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
           { name: item.name, patron: actor.system.patronGod })
       });
     } else {
-      await item.update({ "system.granted": true, "system.purchased": false, "system.cost": 0 });
+      await item.update({ "system.granted": true, "system.purchased": false,
+                          "system.costManual": false, "system.cost": 0 });
     }
+  });
+
+  // Ручная цена таланта-предмета (wdbc-cct): не все Таланты редактируются на
+  // «Способностях» (там только выданные генерацией отмечаются ★, число не
+  // тронуть), а старый ручной список advanceTalents — отдельные строки без
+  // связи с реальным предметом. Здесь — то же поле system.cost, что считает
+  // авто-цена, просто со взведённым costManual, чтобы setAptitudes его
+  // больше не перезаписывал при смене Склонностей.
+  html.find(".advtal-cost-input").on("change", async ev => {
+    const id = ev.currentTarget.dataset.talent;
+    const item = actor.items.get(id);
+    if (!item) return;
+    const value = Math.max(0, parseInt(ev.currentTarget.value) || 0);
+    await item.update({ "system.cost": value, "system.costManual": true });
+  });
+
+  // Вернуть авто-цену по Склонностям — снимает ручную правку и сразу же
+  // пересчитывает, а не просто снимает флаг до следующей смены Склонности.
+  html.find(".advtal-cost-reset").click(async ev => {
+    ev.preventDefault();
+    const item = actor.items.get(ev.currentTarget.dataset.talent);
+    if (!item) return;
+    const apts = charAptitudeSet(actor.system.aptitudes);
+    const a = item.system.aptSource
+      ? resolveTalentAptitudes(item.name, item.system.aptitudes || [], item.system.aptSource,
+          { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF })
+      : (item.system.aptitudes || []);
+    await item.update({
+      "system.costManual": false,
+      "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
+        { name: item.name, patron: actor.system.patronGod })
+    });
   });
 
   html.find(".grant-toggle[data-group]").click(ev => {

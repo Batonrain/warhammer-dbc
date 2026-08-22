@@ -13,7 +13,7 @@ export class SubraceData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
     return {
       key:           new StringField({ initial: "", label: "Ключ" }),
       parentKey:     new StringField({ initial: "", label: "Раса-родитель" }),
@@ -24,8 +24,8 @@ export class SubraceData extends foundry.abstract.TypeDataModel {
       talents:       new StringField({ initial: "", label: "Стартовые таланты" }),
       // Имена расовых Черт, которые субраса снимает.
       removesTraits: new ArrayField(new StringField(), { label: "Снимает Черты" }),
-      description:   new StringField({ initial: "", label: "Описание" }),
-      notes:         new StringField({ initial: "", label: "Заметки" }),
+      description:   new HTMLField({ initial: "", label: "Описание" }),
+      notes:         new HTMLField({ initial: "", label: "Заметки" }),
       bookSource:    new StringField({ initial: "", label: "Книга-источник" })
     };
   }

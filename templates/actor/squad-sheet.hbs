@@ -417,14 +417,16 @@
     <div class="stat-panel sq-panel">
       <div class="panel-title">ЗАПИСИ ОБ ОТРЯДЕ</div>
       <div class="panel-body">
-        <textarea name="system.notes" class="sq-textarea" placeholder="История отряда, отношения внутри, боевой путь…">{{system.notes}}</textarea>
+        <prose-mirror name="system.notes" class="sq-textarea" toggled
+                      value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror>
       </div>
     </div>
     {{#if isGM}}
     <div class="stat-panel sq-panel sq-panel-gm">
       <div class="panel-title">ЗАМЕТКИ ГМА</div>
       <div class="panel-body">
-        <textarea name="system.gmNotes" class="sq-textarea" placeholder="Скрытые мотивы, планы предательств, реальная Слаженность…">{{system.gmNotes}}</textarea>
+        <prose-mirror name="system.gmNotes" class="sq-textarea" toggled
+                      value="{{system.gmNotes}}">{{{gmNotesEnriched}}}</prose-mirror>
       </div>
     </div>
     {{/if}}

@@ -174,6 +174,11 @@ export class WarhammerVehicleSheet
     context.system  = sys;
     context.derived = sys.derived || {};
 
+    // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
+    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
+    context.notesEnriched   = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.notes || "", enrichOpts);
+    context.gmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.gmNotes || "", enrichOpts);
+
     context.chassisTypes  = CHASSIS_TYPES;
     context.chassisNote   = CHASSIS_NOTES[sys.chassis?.type] || "";
     context.vehicleTypes  = VEHICLE_TYPES;

@@ -23,11 +23,11 @@ export class RitualData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, NumberField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField } = foundry.data.fields;
     const num = label => new NumberField({ initial: 0, integer: true, nullable: false, label });
     return {
-      description:    new StringField({ initial: "", label: "Описание" }),
-      notes:          new StringField({ initial: "", label: "Заметки" }),
+      description:    new HTMLField({ initial: "", label: "Описание" }),
+      notes:          new HTMLField({ initial: "", label: "Заметки" }),
       source:         new StringField({ initial: "", label: "Откуда получено" }),
       bookSource:     new StringField({ initial: "", label: "Книга-источник" }),
 

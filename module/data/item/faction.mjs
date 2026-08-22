@@ -30,7 +30,7 @@ export class FactionData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, ArrayField, BooleanField } = foundry.data.fields;
+    const { HTMLField, StringField, ArrayField, BooleanField } = foundry.data.fields;
     return {
       // Устойчивый ключ, на который ссылаются другие фракции и Таланты.
       // Выдаётся при создании из названия (module/documents/item.mjs,
@@ -57,8 +57,8 @@ export class FactionData extends foundry.abstract.TypeDataModel {
       // Forbidden Lore). Верхние уровни годятся, отделение — нет, поэтому
       // это признак записи, а не вывод из глубины.
       isLore: new BooleanField({ initial: false, label: "Годится как Знание" }),
-      description: new StringField({ initial: "", label: "Описание" }),
-      notes:       new StringField({ initial: "", label: "Заметки" }),
+      description: new HTMLField({ initial: "", label: "Описание" }),
+      notes:       new HTMLField({ initial: "", label: "Заметки" }),
       bookSource:  new StringField({ initial: "", label: "Книга-источник" })
     };
   }

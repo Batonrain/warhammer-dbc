@@ -1,0 +1,46 @@
+{
+  "name": "Corruption of the Soul Gifts the Flesh / Порча души одаривает плоть",
+  "type": "divination",
+  "img": "icons/svg/eye.svg",
+  "system": {
+    "key": "gift",
+    "roll": "01",
+    "rollMin": 1,
+    "rollMax": 1,
+    "text": "Порча души одаривает плоть",
+    "effect": "Сделайте бросок по таблице Даров один раз.",
+    "source": "Родные миры и Предсказания",
+    "bookSource": "Родные миры и Предсказания",
+    "charModLabel": "",
+    "choices": {},
+    "effects": {
+      "charValueBonuses": []
+    }
+  },
+  "_id": "A6jUcwiX6I3nwSyr",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": []
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786027360702,
+    "modifiedTime": 1786229468447,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!A6jUcwiX6I3nwSyr"
+}

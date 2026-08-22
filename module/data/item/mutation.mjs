@@ -19,10 +19,10 @@ export class MutationData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, NumberField, ObjectField, SchemaField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, ObjectField, SchemaField } = foundry.data.fields;
     return {
-      description: new StringField({ initial: "", label: "Описание" }),
-      notes:       new StringField({ initial: "", label: "Заметки" }),
+      description: new HTMLField({ initial: "", label: "Описание" }),
+      notes:       new HTMLField({ initial: "", label: "Заметки" }),
       benefit:     new StringField({ initial: "", label: "Действие" }),
       source:      new StringField({ initial: "", label: "Откуда получена" }),
       bookSource:  new StringField({ initial: "", label: "Книга-источник" }),

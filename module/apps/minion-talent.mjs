@@ -8,9 +8,13 @@
 //  вписывается потом руками: купленный «просто Миньон» не сказал бы ни во
 //  сколько он обошёлся, ни кого по нему создавать.
 //
-//  Выбор ложится в два места. В system.specialization — для глаз: там он виден
+//  Выбор ложится в три места. В system.specialization — для глаз: там он виден
 //  в списке Талантов на листе. В флаг warhammer-dbc.minionSlot — для машины: по
-//  нему считаются слоты в блоке СОЦИУМа и предлагается генератор.
+//  нему считаются слоты в блоке СОЦИУМа и предлагается генератор. В
+//  system.aptSource — для цены: вторая склонность берётся у Характеристики
+//  выбранной группы (masterChar), а не из статичной записи пака (там лежит
+//  только "social" — верно для группы «Человек», для остальных нет), см.
+//  DYNAMIC_APT_TALENTS в constants/advancement.mjs (wdbc-ije).
 //
 //  Тот же приём, что у Mastery и Beyond Human (promptDynamicAptTalent рядом):
 //  Талант, у которого цена зависит от выбора, спрашивает выбор до оплаты.
@@ -18,7 +22,7 @@
 
 import { MINION_GROUPS, MINION_TIERS, MINION_TIER_ORDER,
          MINION_TALENT_FLAG } from "../constants/minions.mjs";
-import { talentRequirements } from "../rules/minion-build.mjs";
+import { talentRequirements, isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 /** Подпись пары для списка Талантов: «Демон, Высший». */
@@ -108,10 +112,47 @@ export function applyMinionSlot(obj, pick) {
   obj.system = obj.system || {};
   obj.system.specialization = pick.label;
   obj.system.tier = pick.talentTier;
+  // Вторая склонность цены (стр. 23, 111) — от Характеристики выбранной
+  // группы (masterChar: Fel у Человека и т.д.), не статичная запись пака —
+  // тот же механизм "aptSource", что у Mastery/Beyond Human (advance.mjs,
+  // DYNAMIC_APT_TALENTS в constants/advancement.mjs), иначе цена никогда не
+  // доходит до Дружественной категории даже при обеих нужных склонностях
+  // (wdbc-ije).
+  obj.system.aptSource = MINION_GROUPS[pick.group]?.masterChar || "";
   obj.flags = obj.flags || {};
   obj.flags["warhammer-dbc"] = {
     ...(obj.flags["warhammer-dbc"] || {}),
     [MINION_TALENT_FLAG]: { group: pick.group, tier: pick.tier }
   };
   return obj;
+}
+
+/**
+ * Разовая миграция: «Миньон Хаоса», купленный ДО того, как цена стала
+ * зависеть от Характеристики группы (wdbc-ije), несёт пару группа+сила во
+ * флаге, но не несёт aptSource — их обычный пересчёт цены (setAptitudes,
+ * sheets/tabs/advance.mjs) молча продолжал бы использовать старую статичную
+ * запись пака (только "social"), даже если игрок довписывал вторую нужную
+ * склонность вручную. Здесь только простановка aptSource; сама цена
+ * пересчитывается штатным setAptitudes актора — не дублируем формулу.
+ */
+export async function backfillMinionAptSource() {
+  let fixed = 0;
+  for (const actor of game.actors ?? []) {
+    const items = actor.items.filter(it => isMinionTalent(it) && !it.system?.aptSource);
+    if (!items.length) continue;
+    const updates = items
+      .map(it => ({ it, group: minionSlotOf(it).group }))
+      .filter(({ group }) => MINION_GROUPS[group])
+      .map(({ it, group }) => ({ _id: it.id, "system.aptSource": MINION_GROUPS[group].masterChar }));
+    if (!updates.length) continue;
+    try {
+      await actor.updateEmbeddedDocuments("Item", updates);
+      const { setAptitudes } = await import("../sheets/tabs/advance.mjs");
+      await setAptitudes(actor, actor.system.aptitudes || []);
+      fixed += updates.length;
+    } catch (e) { console.warn(`Warhammer DBC | Довыдача aptSource Миньонам ${actor.name}:`, e); }
+  }
+  if (fixed) console.log(`Warhammer DBC | Миньон Хаоса: проставлен aptSource и пересчитана цена у ${fixed} Талантов.`);
+  return fixed;
 }

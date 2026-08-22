@@ -45,11 +45,11 @@ export const DIVINATIONS = [
     text: "Будь благом братьям и погибелью врагам",
     effect: "Талант Hatred (любая) и Peer (повязанные с персонажем).",
     choices: [
-      { key: "boon-hatred", label: "Hatred", type: "text",
-        hint: "Кого персонаж ненавидит.", placeholder: "Например: Xenos",
+      { key: "boon-hatred", label: "Hatred", type: "target",
+        hint: "Кого персонаж ненавидит.",
         talentTemplate: "Hatred ({v})" },
-      { key: "boon-peer", label: "Peer", type: "text",
-        hint: "С кем персонаж повязан.", placeholder: "Например: Warband",
+      { key: "boon-peer", label: "Peer", type: "target",
+        hint: "С кем персонаж повязан.",
         talentTemplate: "Peer ({v})" }
     ]
   },

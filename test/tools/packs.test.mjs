@@ -37,27 +37,39 @@ describe("исходники паков-библиотек", () => {
 // библиотекам констант больше нет — значит, битая ссылка молча оставит игрока
 // без боевого профиля и предупреждением в чате.
 describe("двупрофильные предметы", () => {
-  /** Все документы паков: имя → тип. */
+  /**
+   * Имена оружия и ссылки linkedWeapon по всем документам паков.
+   *
+   * Раньше здесь был единый byName: имя → тип (последний документ с этим
+   * именем выигрывал слот). Носитель и его боевой профиль иногда специально
+   * называются одинаково (Икона Хаоса, Нуль Жезл, Возвышенная Икона, Force
+   * Rod) — оба документа с этим именем существуют законно, просто в разных
+   * паках. При таком совпадении byName.get(name) отдавал тип ПОСЛЕДНЕГО
+   * обработанного пака, а не именно "weapon", и ссылка ложно считалась
+   * битой. Рантайм (_twinLookup в warhammer-dbc.mjs) ищет только в паке
+   * warhammer-dbc.weapons — здесь проверка повторяет ровно эту область
+   * поиска, а не общий неймспейс по всем паками.
+   */
   function packIndex() {
-    const byName = new Map();
-    const links  = [];
+    const weaponNames = new Set();
+    const links = [];
     for (const pack of LIBRARY_PACKS) {
       const dir = abs(pack.src);
       if (!existsSync(dir)) continue;
       for (const e of readdirSync(dir, { withFileTypes: true, recursive: true })) {
         if (e.isDirectory() || !e.name.endsWith(".json") || e.name.startsWith("_")) continue;
         const doc = JSON.parse(readFileSync(join(e.parentPath ?? e.path, e.name), "utf8"));
-        byName.set(doc.name, doc.type);
+        if (doc.type === "weapon") weaponNames.add(doc.name);
         if (doc.system?.linkedWeapon) links.push({ name: doc.name, link: doc.system.linkedWeapon });
       }
     }
-    return { byName, links };
+    return { weaponNames, links };
   }
 
   it("каждая ссылка на боевой профиль ведёт к оружию из паков", () => {
-    const { byName, links } = packIndex();
+    const { weaponNames, links } = packIndex();
     expect(links.length).toBeGreaterThan(0);
-    const broken = links.filter(l => byName.get(l.link) !== "weapon");
+    const broken = links.filter(l => !weaponNames.has(l.link));
     expect(broken).toEqual([]);
   });
 });

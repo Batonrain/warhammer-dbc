@@ -255,6 +255,10 @@ export class WarhammerSquadSheet
     context.system  = sys;
     context.derived = sys.derived || {};
     context.isGM    = game.user.isGM;
+    // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
+    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
+    context.notesEnriched   = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.notes || "", enrichOpts);
+    context.gmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.gmNotes || "", enrichOpts);
 
     // ── Командная вертикаль ──
     context.posts     = SQUAD_POST_ORDER.map(k => this._postData(k));

@@ -16,11 +16,11 @@ export class ArmorModData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const ap = label => new NumberField({ initial: 0, nullable: false, label });
     return {
-      description:  new StringField({ initial: "", label: "Описание" }),
-      notes:        new StringField({ initial: "", label: "Заметки" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       category:     new StringField({ initial: "armor", label: "Категория" }),
       modGroup:     new StringField({ initial: "general", label: "Группа" }),
       requirement:  new StringField({ initial: "", label: "Требование" }),

@@ -33,7 +33,10 @@ export const CREATION_ROLL_CHARS = ["ws", "bs", "s", "t", "ag", "int", "per", "w
 // ── Склонности (стр. 23-24) ─────────────────────────────────────────────────
 // Персонаж выбирает четыре Характеристики и четыре прочих. «Общее» есть у всех
 // и в выбор не входит — charAptitudeSet добавляет его сам.
-export const APT_CHAR_KEYS  = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf"];
+// Влияние (inf) в выбор не входит: Склонности «Влияние» нет ни в книге, ни в
+// APTITUDES (constants/characteristics.mjs), ни в CHAR_APTITUDES — фишка с
+// таким ключом рисовалась с пустой подписью (APTITUDES.inf === undefined).
+export const APT_CHAR_KEYS  = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 export const APT_OTHER_KEYS = ["offence", "defence", "finesse", "fieldcraft",
                                "knowledge", "leadership", "social", "tech", "psyker"];
 export const APT_PICK = { char: 4, other: 4 };
