@@ -1,0 +1,47 @@
+{
+  "name": "It Won't Hurt… / Будет Не Больно…",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Первая Помощь без анестезии: цель получает 1d5 Усталости, но восстанавливает столько же Ран; Алхимик получает 1 Очко Боли. Имея друкхарийскую аптечку или лучшие инструменты, может тестом Medicae(I)−20−5×Отрицательные Раны воскресить только что аккуратно убитое тело. Жертва получает 3d10 урона во все характеристики и даёт Алхимику 2 Очка Боли +1 за каждую характеристику, упавшую до 0. Если T жертвы упало до 0, она не погибает, а входит в агонизирующее состояние: нескончаемая боль во всём теле без потери сознания.",
+    "source": "архетип",
+    "bookSource": "",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "KXyuQ0jEMlo36oUI",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!KXyuQ0jEMlo36oUI"
+}

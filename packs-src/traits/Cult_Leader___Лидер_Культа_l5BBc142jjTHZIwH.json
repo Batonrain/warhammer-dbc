@@ -1,0 +1,47 @@
+{
+  "name": "Cult Leader / Лидер Культа",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Имеет фанатичный культ: добровольные жертвы для ритуалов, Навыки +10 для ритуалов. Может использовать I вместо W или W вместо I с Преимуществом. Игнорирует требования по Inf для Миньонов-демонов.",
+    "source": "архетип",
+    "bookSource": "",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "l5BBc142jjTHZIwH",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!l5BBc142jjTHZIwH"
+}
