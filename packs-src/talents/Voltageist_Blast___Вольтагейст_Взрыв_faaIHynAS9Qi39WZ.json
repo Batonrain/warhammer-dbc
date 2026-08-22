@@ -1,0 +1,48 @@
+{
+  "name": "Voltageist Blast / Вольтагейст Взрыв",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Совершая Натиск с Техночудом Voltageist Shield в Процессах, может в конце своего Хода потратить 3⚙, чтобы центрировать на себе взрыв (1d10+W.b E(El), Pen 0, Blast(½W.b окр.▲), Shocking), не задевающий его самого и до W.b выбранных союзников; цели могут потратить 2 оставшихся Успеха на Уклонение, чтобы совершить Отскок. Не работает в Вакууме и в жидкостях.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": ""
+  },
+  "_id": "faaIHynAS9Qi39WZ",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!faaIHynAS9Qi39WZ"
+}

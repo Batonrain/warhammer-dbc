@@ -3,9 +3,9 @@
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
-    "description": "+1 SPD пешком; не сбивается с ног; устойчивость в невесомости и на нестабильном грунте.",
+    "description": "Скват получает −1 SPD и не может двигаться пешком быстрее 3×SPD, но использует Awareness(P) вместо Athletics(A) для тестов Трудного Ландшафта (на 3+ Успеха тот не замедляет вовсе).",
     "notes": "",
-    "benefit": "+1 SPD; устойчивость.",
+    "benefit": "−1 SPD, максимум 3×SPD пешком; вместо A использует Awareness(P) на Трудном Ландшафте (3+ Успеха — не замедляет).",
     "source": "Скват",
     "hasRating": false,
     "rating": 0,

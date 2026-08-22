@@ -1,0 +1,47 @@
+{
+  "name": "Malagra Cortex / Кортекс Малагры",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Кортикальные импланты Малагры экранированы лучшими гексаграмматическими кодами и защищают его от вторжения чужой воли в его разум.",
+    "notes": "",
+    "benefit": "Утраивает Успехи во встречных тестах на сопротивление Техночудесам Ноотеургии и Аниматеургии, удваивает Успехи на сопротивление психосилам, контролирующим разум или читающим мысли. Может генерировать свою отдельную Ноосферу, недоступную другим, и исполнять в ней код Техночудес Мотивотеургии и Кибертеургии незаметно и в безопасности от чужого Ноосферного влияния.",
+    "source": "",
+    "bookSource": "",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "Me1DU8naow0ibt0I",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!Me1DU8naow0ibt0I"
+}
