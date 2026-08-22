@@ -4,9 +4,9 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
-    "description": "",
+    "description": "Сверхъестественная Характеристика: +X к бонусу Ловкости, и +½X (окр.▼) степеней успеха на все успешные тесты Ловкости (общее правило Unnatural-трейтов).",
     "notes": "",
-    "benefit": "+2 к Бонусу Ловкости.",
+    "benefit": "+X к Бонусу Ловкости; дополнительно +½X (окр.▼) степени успеха на все успешные тесты Ловкости.",
     "source": "раса",
     "hasRating": true,
     "rating": 2,

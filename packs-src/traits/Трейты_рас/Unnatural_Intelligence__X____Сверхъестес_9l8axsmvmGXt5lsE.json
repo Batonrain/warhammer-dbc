@@ -4,9 +4,9 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
-    "description": "",
+    "description": "Сверхъестественная Характеристика: +X к бонусу Интеллекта, и +½X (окр.▼) степеней успеха на все успешные тесты Интеллекта (общее правило Unnatural-трейтов).",
     "notes": "",
-    "benefit": "+2 к Бонусу Интеллекта.",
+    "benefit": "+X к Бонусу Интеллекта; дополнительно +½X (окр.▼) степени успеха на все успешные тесты Интеллекта.",
     "source": "раса",
     "hasRating": true,
     "rating": 2,
