@@ -71,6 +71,22 @@ describe("matchesFilters", () => {
       expect(matchesFilters(item({ availability: 0 }), { maxAvailability: 0 })).toBe(true);
     });
   });
+
+  describe("minAvailability", () => {
+    it("пропускает не ниже порога, включая равное", () => {
+      expect(matchesFilters(item({ availability: 3 }), { minAvailability: 2 })).toBe(true);
+      expect(matchesFilters(item({ availability: 2 }), { minAvailability: 2 })).toBe(true);
+      expect(matchesFilters(item({ availability: 1 }), { minAvailability: 2 })).toBe(false);
+    });
+
+    it("вместе с maxAvailability задаёт диапазон («Редкость 2-4» — Очки Снаряжения)", () => {
+      const filters = { minAvailability: 2, maxAvailability: 4 };
+      expect(matchesFilters(item({ availability: 1 }), filters)).toBe(false);
+      expect(matchesFilters(item({ availability: 2 }), filters)).toBe(true);
+      expect(matchesFilters(item({ availability: 4 }), filters)).toBe(true);
+      expect(matchesFilters(item({ availability: 5 }), filters)).toBe(false);
+    });
+  });
 });
 
 describe("normalizePick", () => {
