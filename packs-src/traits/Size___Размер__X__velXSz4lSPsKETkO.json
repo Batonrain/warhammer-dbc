@@ -36,7 +36,7 @@
             "key": "system.sizeMod",
             "type": "add",
             "value": 1,
-            "phase": "final",
+            "phase": "initial",
             "priority": 0
           }
         ]

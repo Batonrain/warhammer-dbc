@@ -141,15 +141,18 @@
   <div class="tab ship-tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
     <div class="item-section">
       <div class="item-section-title">ОПИСАНИЕ</div>
-      <textarea name="system.description" class="item-textarea" placeholder="Описание системы...">{{system.description}}</textarea>
+      <prose-mirror name="system.description" class="item-textarea" toggled
+                    value="{{system.description}}">{{{descriptionEnriched}}}</prose-mirror>
     </div>
     <div class="item-section">
       <div class="item-section-title">ВАРП-МАРШРУТЫ / ТОЧКА МАНДЕВИЛЯ</div>
-      <textarea name="system.warpRoutes" class="item-textarea" placeholder="Маршруты, опасности перехода...">{{system.warpRoutes}}</textarea>
+      <prose-mirror name="system.warpRoutes" class="item-textarea" toggled
+                    value="{{system.warpRoutes}}">{{{warpRoutesEnriched}}}</prose-mirror>
     </div>
     <div class="item-section">
       <div class="item-section-title">ЗАМЕТКИ ГМа</div>
-      <textarea name="system.gmNotes" class="item-textarea item-textarea-tall" placeholder="Тайны, зацепки...">{{system.gmNotes}}</textarea>
+      <prose-mirror name="system.gmNotes" class="item-textarea item-textarea-tall" toggled
+                    value="{{system.gmNotes}}">{{{gmNotesEnriched}}}</prose-mirror>
     </div>
   </div>
 

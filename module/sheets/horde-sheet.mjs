@@ -161,6 +161,10 @@ export class WarhammerHordeSheet
     const system = this.actor.system;
     context.actor = this.actor;
     context.system = system;
+    // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
+    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
+    context.notesEnriched   = await foundry.applications.ux.TextEditor.implementation.enrichHTML(system.notes || "", enrichOpts);
+    context.gmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(system.gmNotes || "", enrichOpts);
     // Активная вкладка: changeTab дальше сам переставляет .active по DOM, отсюда
     // берётся только состояние на первый рендер и на перерисовку.
     context.tab = this.tabGroups?.primary ?? WarhammerHordeSheet.TABS.primary.initial;

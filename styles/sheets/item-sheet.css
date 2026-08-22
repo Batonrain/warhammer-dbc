@@ -176,6 +176,13 @@
 
 .item-textarea-tall { min-height: 200px; }
 
+/* ── prose-mirror вместо textarea (Описание/Заметки): та же рамка/фон через
+      .item-textarea выше, но контейнеру редактора нужен flex, а не block —
+      иначе тулбар и текст ProseMirror схлопываются. */
+prose-mirror.item-textarea { display: flex; }
+/* Кнопка «Изменить»: у ядра прячется до наведения — здесь видна всегда. */
+prose-mirror.item-textarea button.toggle:enabled { display: block; }
+
 /* ── Таблица дистанций ── */
 .weapon-range-table {
   margin: 4px 8px 6px;
@@ -561,6 +568,13 @@
 }
 
 .item-textarea-tall { min-height: 200px; }
+
+/* ── prose-mirror вместо textarea (Описание/Заметки): та же рамка/фон через
+      .item-textarea выше, но контейнеру редактора нужен flex, а не block —
+      иначе тулбар и текст ProseMirror схлопываются. */
+prose-mirror.item-textarea { display: flex; }
+/* Кнопка «Изменить»: у ядра прячется до наведения — здесь видна всегда. */
+prose-mirror.item-textarea button.toggle:enabled { display: block; }
 
 /* ── Таблица дистанций ── */
 .weapon-range-table {

@@ -261,12 +261,14 @@
   <div class="tab {{#if (eq tab "notes")}}active{{/if}}" data-group="primary" data-tab="notes">
     <section class="horde-panel">
       <div class="horde-panel-title">ЗАМЕТКИ</div>
-      <textarea name="system.notes" class="horde-textarea tall" placeholder="Описание, тактика, лор…">{{system.notes}}</textarea>
+      <prose-mirror name="system.notes" class="horde-textarea tall" toggled
+                    value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror>
     </section>
     {{#if isGM}}
     <section class="horde-panel horde-gm">
       <div class="horde-panel-title">ЗАМЕТКИ ГМА <span class="dim">— только Мастер</span></div>
-      <textarea name="system.gmNotes" class="horde-textarea" placeholder="Секреты, условия восстановления Магнитуды…">{{system.gmNotes}}</textarea>
+      <prose-mirror name="system.gmNotes" class="horde-textarea" toggled
+                    value="{{system.gmNotes}}">{{{gmNotesEnriched}}}</prose-mirror>
     </section>
     {{/if}}
   </div>

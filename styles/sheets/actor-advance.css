@@ -538,7 +538,9 @@
 .warhammer-dbc .aspir-del-cell { width: 26px; text-align: center; }
 .warhammer-dbc .aspir-remove { cursor: pointer; background: none; border: none; color: var(--wh-red); font-weight: bold; }
 
-/* Купленные через пикер Таланты-предметы в списке «Развитие» (только чтение) */
+/* Купленные через пикер Таланты-предметы в списке «Развитие»: имя — только
+   чтение, цена — редактируемая (wdbc-cct: авто-цена по Склонностям, но ГМ
+   может вписать свою — см. .advtal-cost-input/.advtal-cost-reset ниже). */
 .advtal-bought .advtal-bought-name {
   display: block;
   padding: 2px 4px;
@@ -550,13 +552,28 @@
   color: var(--wh-accent, #4dffa6);
   opacity: .8;
 }
-.advtal-bought .advtal-bought-cost {
-  display: block;
-  padding: 2px 4px;
-  text-align: center;
-  font-weight: 600;
-  color: var(--wh-accent, #4dffa6);
+.warhammer-dbc .advtal-cost-cell { display: flex; align-items: center; gap: 2px; }
+.warhammer-dbc .advtal-cost-input {
+  text-align: center; font-weight: 600; color: var(--wh-accent, #4dffa6);
 }
+.warhammer-dbc .advtal-cost-input:disabled {
+  opacity: .6; cursor: not-allowed;
+}
+/* Цена вписана руками — заметная рамка, чтобы не выглядело так, будто
+   авто-расчёт просто «завис» на этом числе. */
+.warhammer-dbc .advtal-bought.is-cost-manual .advtal-cost-input {
+  border-color: #ffd97a; color: #ffd97a; box-shadow: 0 0 5px rgba(255,217,122,.35);
+}
+.warhammer-dbc .advtal-cost-reset {
+  flex: 0 0 auto;
+  width: 16px; height: 16px; min-width: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; line-height: 1; font-size: 10px;
+  color: #ffd97a; background: transparent;
+  border: 1px solid rgba(255, 217, 122, .5); border-radius: 3px;
+  cursor: pointer;
+}
+.warhammer-dbc .advtal-cost-reset:hover { background: rgba(255, 217, 122, .18); }
 .advtal-bought { background: rgba(77, 255, 166, .05); }
 
 /* Кнопка ★ — «уровень выдан архетипом/расой» (бесплатный, стр. 5-21).
@@ -581,8 +598,8 @@
   text-shadow: 0 0 6px rgba(255, 217, 122, .55);
 }
 
-/* Талант, помеченный ★ как выданный архетипом — приглушаем цену (она 0). */
-.warhammer-dbc .advtal-bought.is-granted .advtal-bought-cost { color: #4a6b58; }
+/* Талант, помеченный ★ как выданный архетипом — приглушаем цену (она 0, поле выключено). */
+.warhammer-dbc .advtal-bought.is-granted .advtal-cost-input { color: #4a6b58; }
 .warhammer-dbc .advtal-bought.is-granted .advtal-bought-name::before { color: #ffd97a; }
 /* Две кнопки в служебной ячейке — компактный ряд. У .advtal-item-remove не было
    своих стилей, поэтому Foundry растягивал её на всю ширину и строка раздувалась. */

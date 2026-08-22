@@ -113,6 +113,32 @@ describe("склейка специализаций", () => {
   });
 });
 
+describe("специализация «Миньона Хаоса» — составная метка, не список (wdbc-cof)", () => {
+  it("«Группа, Сила» одной покупки не режется по запятой на два обрывка", () => {
+    const groups = mergeAbilityItems([
+      talent("Minion of Chaos / Миньон Хаоса", { specialization: "Демон, Высший" })
+    ]);
+    expect(groups[0].specs).toEqual(["Демон, Высший"]);
+  });
+
+  it("разные покупки (разные пары) видны раздельно, не расползаются на фрагменты", () => {
+    const groups = mergeAbilityItems([
+      talent("Minion of Chaos / Миньон Хаоса", { specialization: "Демон, Высший" }),
+      talent("Minion of Chaos / Миньон Хаоса", { specialization: "Человек, Низший" })
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].items).toHaveLength(2);
+    expect(groups[0].specs).toEqual(["Демон, Высший", "Человек, Низший"]);
+  });
+
+  it("для сравнения: обычный Талант с такой же кажущейся структурой по-прежнему режется по запятой", () => {
+    const groups = mergeAbilityItems([
+      talent("Resistance / Сопротивление", { specialization: "Cold, Heat" })
+    ]);
+    expect(groups[0].specs).toEqual(["Cold", "Heat"]);
+  });
+});
+
 describe("что склеивать нельзя", () => {
   it("разные имена остаются разными строками", () => {
     const groups = mergeAbilityItems([

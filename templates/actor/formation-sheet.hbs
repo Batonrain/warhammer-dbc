@@ -539,14 +539,16 @@
     <div class="stat-panel fm-panel">
       <div class="panel-title">ЗАПИСИ О ЧАСТИ</div>
       <div class="panel-body">
-        <textarea name="system.notes" class="fm-textarea" placeholder="Боевой путь, репутация, знамёна, отношения с командованием…">{{system.notes}}</textarea>
+        <prose-mirror name="system.notes" class="fm-textarea" toggled
+                      value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror>
       </div>
     </div>
     {{#if isGM}}
     <div class="stat-panel fm-panel fm-panel-gm">
       <div class="panel-title">ЗАМЕТКИ ГМА</div>
       <div class="panel-body">
-        <textarea name="system.gmNotes" class="fm-textarea" placeholder="Скрытые приказы, реальная численность, планы предательства…">{{system.gmNotes}}</textarea>
+        <prose-mirror name="system.gmNotes" class="fm-textarea" toggled
+                      value="{{system.gmNotes}}">{{{gmNotesEnriched}}}</prose-mirror>
       </div>
     </div>
     {{/if}}

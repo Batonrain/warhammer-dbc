@@ -42,6 +42,7 @@ import { isItemActive }              from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
 import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
+import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
@@ -300,6 +301,11 @@ Hooks.once("init", () => {
 
   // Версия довыдачи носителей Механики Стремлениям, выбранным до автоматизации (одноразовая)
   game.settings.register("warhammer-dbc", "aspirationGrantsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия довыдачи aptSource Миньонам Хаоса, купленным до привязки цены к Характеристике группы (одноразовая)
+  game.settings.register("warhammer-dbc", "minionAptSourceVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -648,7 +654,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, runActorSetup, backfillAspirationGrants });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -685,6 +691,18 @@ Hooks.once("ready", async () => {
     await backfillAspirationGrants();
     await game.settings.set("warhammer-dbc", "aspirationGrantsVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Довыдача Стремлений:", e); }
+});
+
+// ── Одноразовая довыдача: aptSource Миньонам Хаоса, купленным до фикса цены ───
+// Ручной перезапуск: game.warhammerDBC.backfillMinionAptSource()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "minionAptSourceVersion") || 0) >= VERSION) return;
+  try {
+    await backfillMinionAptSource();
+    await game.settings.set("warhammer-dbc", "minionAptSourceVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Довыдача aptSource Миньонам:", e); }
 });
 
 // ── Боевой HUD (панель внизу вместо хотбара) ──────────────────────────────────
