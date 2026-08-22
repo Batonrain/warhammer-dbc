@@ -1,6 +1,7 @@
 import { CHARACTERISTICS }                  from "../constants/characteristics.mjs";
 import { _degWord }                         from "../helpers/utils.mjs";
 import { rollIcon }                         from "../constants/roll-icons.mjs";
+import { MELEE_STANCES }                    from "../constants/combat.mjs";
 
 export async function _showContestDialog(actor, techDef) {
   const wsTotal  = actor.system.characteristics.ws?.total ?? 0;
@@ -8,17 +9,31 @@ export async function _showContestDialog(actor, techDef) {
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
   const isKnock  = techDef.label === "Повалить" || techDef.label === "Напролом";
 
+  // Стойка (стр. 15) даёт бонус «на все тесты WS», но Агрессивная явно
+  // исключает встречные тесты против Финта — то есть Давление его получает,
+  // а Финт нет. techDef.stanceWs отмечает это на самом Давлении (только
+  // оно из контестов — настоящий тест WS vs WS без исключения книги).
+  const stanceKey      = actor.system.meleeStance || "standard";
+  const stanceWsBonus  = techDef.stanceWs ? (MELEE_STANCES[stanceKey]?.wsBonus ?? 0) : 0;
+
   // Определяем характеристику по умолчанию
   const defaultChar = isKnock ? "s" : "ws";
-  const baseVal     = isKnock ? athTotal : wsTotal;
+  const baseVal     = (isKnock ? athTotal : wsTotal) + stanceWsBonus;
 
   // Строим опции для выбора характеристики
   const charOptions = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
-    const val = actor.system.characteristics[key]?.total ?? 0;
+    let val = actor.system.characteristics[key]?.total ?? 0;
+    if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
     return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>
       ${meta.abbr} — ${meta.label} (${val})
     </option>`;
   }).join("");
+
+  const stanceBonusNote = stanceWsBonus
+    ? `<div style="font-size:0.85em;color:#8fd0ff;margin-bottom:6px;">
+         ${rollIcon("sword")}Стойка: ${MELEE_STANCES[stanceKey].label} (${stanceWsBonus >= 0 ? "+" : ""}${stanceWsBonus}), уже в WS выше
+       </div>`
+    : "";
 
   new Dialog({
     title: techDef.label,
@@ -36,6 +51,7 @@ export async function _showContestDialog(actor, techDef) {
                     background:rgba(0,0,0,0.05);border-left:3px solid #7a5c2e;">
           ${techDef.note}
         </div>
+        ${stanceBonusNote}
 
         <div class="atk-dlg-row">
           <label>Характеристика:</label>
@@ -115,7 +131,8 @@ export async function _showContestDialog(actor, techDef) {
       // При смене характеристики — обновляем базовое значение
       html.find("#contest-char").on("change", ev => {
         const key = ev.currentTarget.value;
-        const val = actor.system.characteristics[key]?.total ?? 0;
+        let val = actor.system.characteristics[key]?.total ?? 0;
+        if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
         html.find("#contest-self").val(val);
         _updateTotal(html);
       });

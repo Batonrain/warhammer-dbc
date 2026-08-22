@@ -1515,7 +1515,15 @@ export class WarhammerCharacterSheet
             };
           }
         },
-        { action: "cancel", label: "Отмена" }
+        // Без callback DialogV2 вернул бы строку "cancel" вместо null — она
+        // непустая, проходит проверку `if (!result) return` у вызывающих
+        // (_rollSkill/_rollCharacteristic), и деструктуризация полей из строки
+        // молча даёт undefined всюду: бросок всё равно уходит, с порогом NaN.
+        // callback обязан вернуть именно false, не null/undefined: DialogV2
+        // резолвит результат как `(await callback(...)) ?? button.action`
+        // (scripts/foundry.mjs, DialogV2#_onSubmit) — null/undefined там же
+        // подменяются на action и возвращают ровно ту же строку "cancel".
+        { action: "cancel", label: "Отмена", callback: () => false }
       ],
       render: (event, dialog) => {
         const root = dialog.element;
