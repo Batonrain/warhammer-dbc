@@ -19,13 +19,50 @@ export const CORE_RULES = [
     // Рейтинг в названии Черты у разных рас записан по-разному («Nimble» и
     // «Nimble (10)»), а сравнение имён отбрасывает скобки на конце
     // (rules/predicates.mjs), поэтому в условии достаточно короткого имени.
+    //
+    // Книга снимает штраф, если цель Оглушена или Беспомощна — это штраф за
+    // скорость цели, а обездвиженная цель ей не пользуется (CONDITIONS_DEF.
+    // stunned/helpless).
+    //
+    // Имплант «Чёрный Панцирь / Black Carapace» (DoomBC — ГЕНОСЕМЯ) прямо
+    // пишет: «позволяет сохранять Трейт Nimble в силовой броне» — то есть без
+    // него силовая броня штраф гасит целиком (targetKeepsNimbleInArmour).
     id: "core.nimble",
     label: "Проворный (цель уворачивается)",
-    when: { targetHasTrait: "Nimble" },
+    when: {
+      targetHasTrait: "Nimble",
+      targetLacksCondition: ["stunned", "helpless"],
+      targetKeepsNimbleInArmour: true
+    },
     effects: [{
       kind: "rollBonus",
       target: "attack",
       valueFrom: { targetCharBonus: "ag", multiplier: -1 }
+    }]
+  },
+  {
+    // Таблица Размера (стр. 30): каждая ступень Размера цели — ±10 к попаданию
+    // по ней атакующим, знак совпадает со знаком Размера. Гейт targetHasSize
+    // не даёт строке с «(+0)» лезть в чек-лист против обычного человека.
+    id: "core.sizeToHit",
+    label: "Размер цели",
+    when: { targetHasSize: true },
+    effects: [{
+      kind: "rollBonus",
+      target: "attack",
+      valueFrom: { targetSize: true, multiplier: 10 }
+    }]
+  },
+  {
+    // Та же таблица, обратный столбец: Размер даёт МИНУС к собственным тестам
+    // Скрытности (крупнее — заметнее), знак противоположен столбцу попадания.
+    id: "core.sizeStealth",
+    label: "Размер (Скрытность)",
+    when: { hasSize: true },
+    effects: [{
+      kind: "rollBonus",
+      target: "skill:stealth",
+      valueFrom: { selfSize: true, multiplier: -10 }
     }]
   }
 ];

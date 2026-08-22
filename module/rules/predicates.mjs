@@ -52,11 +52,32 @@ function hasNamed(actor, names) {
  * Итоговый Размер актора: базовый `system.size` плюс вклад Черт `system.sizeMod`.
  * Лист кладёт сумму в `system.sizeTotal` (documents/actor.mjs), но у подставного
  * актора в тесте её может не быть, поэтому считаем сами.
+ *
+ * Экспортирована: тем же способом читает Размер cor.sizeToHit/core.sizeStealth
+ * (rules/resolve-test.mjs, valueFrom.targetSize/selfSize) — второй копии
+ * формулы заводить не стали.
  */
-function sizeOf(actor) {
+export function sizeOf(actor) {
   const sys = actor?.system ?? {};
   if (sys.sizeTotal != null) return Number(sys.sizeTotal) || 0;
   return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0);
+}
+
+// Силовая/аспектная броня — то же множество, что POWER_ARMOR_TYPES в
+// combat/armor-mods.mjs; не импортируем оттуда, чтобы rules/ не тянуло
+// зависимость на combat/ (предикаты обязаны жить без Foundry, а armor-mods.mjs
+// уже завязан на живой актор).
+const POWER_ARMOUR_TYPES = new Set(["power", "aspect"]);
+
+function wearsPowerArmour(actor) {
+  return (actor?.items ?? []).some(i =>
+    i?.type === "armor" && i?.system?.equipped && POWER_ARMOUR_TYPES.has(i?.system?.armorType));
+}
+
+/** Хирургически установленный (не просто лежащий в инвентаре) имплант с этим именем. */
+function hasInstalledImplant(actor, name) {
+  return (actor?.items ?? []).some(i => i?.type === "implant" && itemHasName(i, name) &&
+    i?.flags?.["warhammer-dbc"]?.installed && !i?.flags?.["warhammer-dbc"]?.disabled);
 }
 
 /**
@@ -91,6 +112,31 @@ export const PREDICATES = {
   // (rules/match-context.mjs) имя `target` занято флагом «бросок нацелен», и на
   // этапе 2 плана оба контекста сошлись в одном объекте.
   targetHasTrait: (actor, ctx, value) => hasNamed(ctx?.targetActor, value),
+
+  // Противоположность targetHasTrait по состояниям, не по Чертам: «нет ни
+  // одного из перечисленных состояний X» (ключи — CONDITIONS_DEF в
+  // sheets/sheet-helpers.mjs, напр. "stunned"/"helpless"). Список — не «и»,
+  // как у hasTalent, а поэлементное «нет», иначе «Оглушён ИЛИ Беспомощен» было
+  // бы не выразить одним условием. Нужна как есть, а не через отрицание в
+  // данных — `when` в rules/collect.mjs требует ото ВСЕХ условий true разом
+  // (AND), готового «not» нет, поэтому отрицание зашито в саму функцию.
+  targetLacksCondition: (actor, ctx, value) =>
+    list(value).every(key => !ctx?.targetActor?.system?.conditions?.[key]),
+
+  // Ненулевой Размер — гейт core.sizeToHit/core.sizeStealth (rules/library/
+  // core.mjs): без него строка с «(+0)» лезла бы в чек-лист на каждом броске
+  // против обычного человека, а не только там, где Размер реально что-то даёт.
+  hasSize:       (actor, ctx) => sizeOf(actor) !== 0,
+  targetHasSize: (actor, ctx) => sizeOf(ctx?.targetActor) !== 0,
+
+  // «Позволяет сохранять Трейт Nimble в силовой броне» (имплант «Чёрный
+  // Панцирь / Black Carapace», DoomBC — ГЕНОСЕМЯ) — без брони условие не
+  // проверяется вовсе, Проворный сам по себе Чёрного Панциря не требует.
+  targetKeepsNimbleInArmour: (actor, ctx) => {
+    const t = ctx?.targetActor;
+    if (!wearsPowerArmour(t)) return true;
+    return hasInstalledImplant(t, "Black Carapace");
+  },
 
   // Принадлежность к фракции — своя и у цели. Обе считают нижестоящие: условие
   // «Хаос» подходит и роте в составе его легиона, обратное неверно.

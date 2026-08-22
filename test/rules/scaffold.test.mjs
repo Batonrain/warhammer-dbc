@@ -15,8 +15,10 @@ describe("каркас module/rules", () => {
         import("../../module/rules/library/aeldari.mjs")
       ]);
 
-    // Восемь условий этапа 1 плюс два про фракции (hasFaction/targetHasFaction).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(10);
+    // Восемь условий этапа 1 плюс два про фракции (hasFaction/targetHasFaction),
+    // targetLacksCondition (снятие штрафа «Проворный» у Оглушённых), hasSize/
+    // targetHasSize (гейт Размера) и targetKeepsNimbleInArmour (Чёрный Панцирь).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(14);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

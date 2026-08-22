@@ -52,7 +52,7 @@ beforeEach(() => {
 
 afterEach(() => {
   clearRuleSources();
-  for (const [key, fn] of Object.entries(DEFAULT_SOURCES)) registerRuleSource(key, fn);
+  for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
 });
 
 describe("правила в диалоге атаки", () => {
