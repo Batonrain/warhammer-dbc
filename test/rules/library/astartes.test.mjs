@@ -17,8 +17,12 @@ describe("правила Астартес", () => {
   });
 
   it("у актора расы astartes собираются все правила расы", () => {
+    // core.sizeStealth тоже подходит: у фикстуры Размер 1 (см. actor выше), а
+    // это правило проверяет только собственный Размер, без цели/вида броска
+    // (rules/library/core.mjs) — оно из источника «core», не «race», но
+    // collectRules() собирает оба сразу.
     const ids = collectRules(actor()).map(r => r.id);
-    expect(ids).toEqual(ASTARTES_RULES.map(r => r.id));
+    expect(ids).toEqual(["core.sizeStealth", ...ASTARTES_RULES.map(r => r.id)]);
   });
 
   it("Сверхъестественная Сила и Стойкость дают +4 к бонусу", () => {
