@@ -6,12 +6,13 @@ import { openGearPicker } from "./gear-picker.mjs";
 // module/sheets/actor-sheet.mjs
 
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+import { BODY_TYPES } from "../constants/body-map.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }    from "../constants/skills.mjs";
 import { ITEM_TYPES, GEAR_ITEM_TYPES } from "../constants/items.mjs";
 import { _degWord, splitTopLevel, esc } from "../helpers/utils.mjs";
 import { ruSpec } from "../apps/creation.mjs";
 import { openCharacterWizard } from "../apps/character-wizard.mjs";
-import { onConvertToHorde } from "../apps/horde-convert.mjs";
+import { onConvertToHorde, convertActorToHorde } from "../apps/horde-convert.mjs";
 import { buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog, showAttackDialogNoWeapon } from "./attack-dialog.mjs";
@@ -46,7 +47,7 @@ import { computeWoundDamage } from "./tabs/wounds.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
 import { activatePossessionListeners } from "./tabs/possession.mjs";
 import { activateAdvanceListeners } from "./tabs/advance.mjs";
-import { activateItemContextMenu } from "./context-menu.mjs";
+import { activateItemContextMenu, openContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
@@ -65,7 +66,7 @@ import { applyDivination } from "../apps/divinations.mjs";
 import { applyRace, applySubrace, clearRace, clearSubrace,
          actorRaceItem, actorSubraceItem,
          applyLegion, applyYnnari, applyHarlequin } from "../apps/races.mjs";
-import { raceDef, raceKeyOf } from "../apps/race-library.mjs";
+import { raceDef, raceKeyOf, isAeldariRace } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
@@ -534,17 +535,11 @@ export class WarhammerCharacterSheet
     classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
     position: { width: 1000, height: 940 },
     window: {
-      resizable: true,
-      // Кнопка «Мастер» раньше стояла в шапке листа (header.hbs) рядом с
-      // Мировоззрением; перенесена сюда, чтобы не путать с кнопкой «Начать
-      // создание персонажа» на панели Актёры (apps/character-start.mjs) —
-      // та заводит НОВОГО актора, а этот пункт лишь перезапускает Мастера
-      // на уже существующем.
-      controls: [{
-        icon: "fa-solid fa-hat-wizard",
-        label: "Перезапустить мастера создания",
-        action: "charWizard"
-      }]
+      resizable: true
+      // «Перезапустить мастера создания» и «В Орду» раньше жили здесь
+      // (window.controls) и в блоке ПРЕОБРАЗОВАНИЕ на вкладке ЗАПИСИ
+      // соответственно — переехали в кастомную кнопку-меню у шапки листа
+      // (см. _attachFrameListeners ниже, иконка Механикум).
     },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
@@ -559,10 +554,9 @@ export class WarhammerCharacterSheet
       infamyPlus: whenEditable(onInfamyPlus),
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
-      // Мастера зовут из двух мест: панель «Актёры» — для нового персонажа,
-      // пункт «Перезапустить мастера создания» в window.controls (выше) —
-      // чтобы пройти его заново на уже созданном.
-      charWizard: whenEditable(function () { this.openCreationWizard(); }),
+      // «Перезапустить мастера создания» больше не data-action: кнопка-меню
+      // Механикум (_attachFrameListeners) зовёт this.openCreationWizard()
+      // напрямую, минуя карту действий.
       convertToHorde: whenEditable(onConvertToHorde),
       // «+» в блоке МИНЬОНЫ на вкладке СОЦИУМ — генератор слуги (стр. 111-113).
       minionCreate:   whenEditable(onMinionCreate),
@@ -818,6 +812,52 @@ export class WarhammerCharacterSheet
    */
   openCreationWizard() {
     return openCharacterWizard(this.actor);
+  }
+
+  /**
+   * «Сменить телосложение» из меню «Настройки листа» — раньше был блок
+   * радиокнопок на вкладке ЗАПИСИ (убран оттуда), задаёт набор PNG-масок
+   * фигуры на вкладке «ТЕЛО» и в Хирургиконе.
+   */
+  async _changeBodyType() {
+    const current = this.actor.system.bodyType || "male";
+    const choice = await foundry.applications.api.DialogV2.wait({
+      window: { title: "Сменить телосложение" },
+      classes: ["warhammer-dbc", "wh-holo"],
+      content: `<p>Определяет силуэт на вкладке «ТЕЛО» и в Хирургиконе. «Другое» использует нейтральный набор — отдельной графики под него нет.</p>`,
+      buttons: Object.entries(BODY_TYPES).map(([key, label]) => ({
+        action: key, label, default: key === current
+      })),
+      rejectClose: false
+    });
+    if (choice && choice !== current) await this.actor.update({ "system.bodyType": choice });
+  }
+
+  /**
+   * Переключатели в меню «Настройки листа» — те же поля, что раньше жили в
+   * блоке СТАТУС на вкладке ЗАПИСИ (блок оттуда убран для типов, у которых
+   * есть эта кнопка — дублировать было незачем). Каждый — ручной оверрайд
+   * поверх автоопределения: Одержимость/Пси-Пробуждение/Техножрец открывают
+   * свои вкладки и без подходящей Черты/Архетипа, «Ремёсла» нужны в первую
+   * очередь НПС (у персонажей с игроком-владельцем крафт и так доступен),
+   * «Фактор Прибыли» просто зеркалит system.isRogueTrader.
+   *
+   * @param {string[]} keys  какие из пяти показать и в каком порядке — состав
+   *                         отличается по типу актора (см. _sheetSettingsEntries).
+   */
+  _sheetToggleEntries(keys) {
+    const sys = this.actor.system;
+    const toggle = (key) => this.actor.update({ [`system.${key}`]: !sys[key] });
+    const all = {
+      possessed:      { cls: "wh-ctx-tog-possessed", label: "Одержимость" },
+      isPsyker:       { cls: "wh-ctx-tog-psyker", label: "Пси-Пробуждение" },
+      isTechpriest:   { cls: "wh-ctx-tog-techpriest", label: "Техножрец" },
+      craftAvailable: { cls: "wh-ctx-tog-craft", label: "Доступен для ремёсел" },
+      isRogueTrader:  { cls: "wh-ctx-tog-rogue", label: "Фактор Прибыли" }
+    };
+    return keys.map(key => ({
+      ...all[key], checkbox: true, checked: !!sys[key], onClick: () => toggle(key)
+    }));
   }
 
   /** Создаёт Черты из списка {name,benefit,rating,hasRating,effects}, пропуская существующие по имени. */
@@ -1087,6 +1127,99 @@ export class WarhammerCharacterSheet
     }
 
     return super._onDropItem(event, data);
+  }
+
+  /**
+   * Кнопка-меню «Настройки листа» в шапке — рядом со штатным «Toggle Controls»
+   * (this.window.close.insertAdjacentElement("beforebegin", …) ставит её
+   * между ним и крестиком закрытия). У всех типов, что проходят через этот
+   * класс (Персонаж, Демон, Принц Демона, Миньон) — но состав пунктов у
+   * каждого свой (_sheetSettingsEntries), и если для типа пунктов нет вовсе,
+   * кнопка не рисуется — незачем открывать пустое меню. У Формирования,
+   * Отряда, Корабля, Техники и Звёздной системы этот класс не используется
+   * вовсе (свои классы листов) — там пунктов и не просили.
+   *
+   * Once, не на каждый рендер: вызывается ядром только при isFirstRender
+   * (см. ApplicationV2._render), как и родная привязка ContextMenu к
+   * «Toggle Controls» в том же месте.
+   */
+  _attachFrameListeners() {
+    super._attachFrameListeners();
+    if (!this.hasFrame || !this._sheetSettingsEntries().length) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "header-control icon wh-mechanicus-control";
+    btn.dataset.tooltip = "Настройки листа";
+    btn.setAttribute("aria-label", "Настройки листа");
+    btn.innerHTML = `<img src="systems/warhammer-dbc/assets/ui-icons/adeptus-mechanicus.webp" alt=""/>`;
+    this.window.close.insertAdjacentElement("beforebegin", btn);
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!this.isEditable) return;
+      const entries = this._sheetSettingsEntries();
+      if (entries.length) openContextMenu(event, entries);
+    });
+  }
+
+  /**
+   * Состав меню «Настройки листа» по типу актора (таблица от пользователя):
+   *  - Персонаж — Мастер, Сменить телосложение, [разделитель], все 5 флажков,
+   *    В Орду.
+   *  - Демон — Пси-Пробуждение, Доступен для ремёсел, В Орду. Нет ни Мастера,
+   *    ни поля system.bodyType, ни трёх остальных флажков.
+   *  - Принц Демона — Фактор Прибыли, Пси-Пробуждение, Доступен для ремёсел.
+   *    Без «В Орду»: своя кнопка уже есть на вкладке ЗАПИСИ, дублировать не
+   *    просили.
+   *  - Миньон — Пси-Пробуждение, В Орду, Сменить телосложение, Доступен для
+   *    ремёсел, Одержимость, Техножрец. Без Мастера и Фактора Прибыли.
+   * Пустой массив ⇒ кнопка в шапке вообще не рисуется (см. _attachFrameListeners) —
+   * у Формирования/Отряда/Корабля/Техники/Звёздной системы этот класс не
+   * используется (свои классы листов), там пунктов и не просили.
+   */
+  _sheetSettingsEntries() {
+    const type = this.actor.type;
+    const wizard = {
+      cls: "wh-ctx-charwizard", label: "🧙 Перезапустить мастера создания",
+      onClick: () => this.openCreationWizard()
+    };
+    // Астартес всегда мужчины — выбора и раньше не было (блок на ЗАПИСЯХ
+    // прятался тем же условием); у Демона поля system.bodyType нет вовсе.
+    const bodytype = this.actor.system.race !== "astartes" ? {
+      cls: "wh-ctx-bodytype", label: "🧍 Сменить телосложение",
+      onClick: () => this._changeBodyType()
+    } : null;
+    const horde = {
+      cls: "wh-ctx-tohorde", label: "☠ Превратить в Орду",
+      onClick: () => convertActorToHorde(this.actor)
+    };
+
+    if (type === "character") {
+      // Техножрец/Фактор Прибыли — имперские понятия; у Аэльдари (и ветвей)
+      // их не показывали и в старом блоке СТАТУС (там же — Мировоззрение).
+      const aeldari = isAeldariRace(this.actor.system.race);
+      const keys = ["possessed", "isPsyker", ...(aeldari ? [] : ["isTechpriest"]), "craftAvailable",
+        ...(aeldari ? [] : ["isRogueTrader"])];
+      return [
+        wizard, bodytype, { sep: true },
+        ...this._sheetToggleEntries(keys),
+        horde
+      ].filter(Boolean);
+    }
+    if (type === "daemon") {
+      return [...this._sheetToggleEntries(["isPsyker", "craftAvailable"]), horde];
+    }
+    if (type === "demonPrince") {
+      return this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]);
+    }
+    if (type === "minion") {
+      const [psyker] = this._sheetToggleEntries(["isPsyker"]);
+      return [
+        psyker, horde, bodytype,
+        ...this._sheetToggleEntries(["craftAvailable", "possessed", "isTechpriest"])
+      ].filter(Boolean);
+    }
+    return [];
   }
 
   _onRender(context, options) {

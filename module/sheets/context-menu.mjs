@@ -19,15 +19,23 @@ export function closeContextMenus(jq = globalThis.$) {
  * Показать меню у курсора.
  *
  * @param {object} ev      событие contextmenu (нужны clientX/clientY)
- * @param {Array}  entries пункты: { cls, label, onClick } либо разделитель { sep: true }
+ * @param {Array}  entries пункты: { cls, label, onClick } (обычный) либо
+ *                         { cls, label, checkbox: true, checked, onClick }
+ *                         (переключатель — та же семантика клика, чекбокс
+ *                         только рисует текущее состояние; сам onClick сам
+ *                         решает, на что переключить) либо разделитель { sep: true }
  * @param {Function} jq    jQuery (подменяется в тестах)
  */
 export function openContextMenu(ev, entries, jq = globalThis.$) {
   jq(".wh-context-menu").remove();
 
   const items = entries
-    .map(e => e.sep ? `<div class="wh-ctx-sep"></div>`
-                    : `<div class="wh-ctx-item ${e.cls}">${e.label}</div>`)
+    .map(e => {
+      if (e.sep) return `<div class="wh-ctx-sep"></div>`;
+      if (e.checkbox) return `<label class="wh-ctx-item wh-ctx-checkbox ${e.cls}">`
+        + `<input type="checkbox" ${e.checked ? "checked" : ""}/> <span>${e.label}</span></label>`;
+      return `<div class="wh-ctx-item ${e.cls}">${e.label}</div>`;
+    })
     .join("");
   const menu = jq(`<div class="wh-context-menu">${items}</div>`)
     .css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });

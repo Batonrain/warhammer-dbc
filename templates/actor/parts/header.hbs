@@ -78,4 +78,7 @@
     </div>
   </div> <div class="header-checks"> {{#unless isAeldari}}
       <label class="checkbox-label align-label"> <span>Мировоззрение</span> <select name="system.alignment" class="alignment-select"> <option value="loyalist" {{#if (eq system.alignment "loyalist")}}selected{{/if}}>Лоялист</option> <option value="renegade" {{#if (eq system.alignment "renegade")}}selected{{/if}}>Ренегат</option> <option value="heretic" {{#if (eq system.alignment "heretic")}}selected{{/if}}>Хаосит</option> </select> </label> {{/unless}}
-      <button type="button" class="char-wizard-btn" data-action="charWizard" title="Пройти Мастера создания на этом персонаже">Мастер</button>  </div> </div> </header>
+  </div> </div> </header>
+{{!-- «Мастер»/«В Орду» жили здесь и в window.controls дублем — оба варианта
+      заменены кнопкой-меню Механикум у шапки листа (actor-sheet.mjs,
+      _attachFrameListeners). --}}

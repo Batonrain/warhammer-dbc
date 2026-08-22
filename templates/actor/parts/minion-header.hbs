@@ -84,5 +84,10 @@
         {{/if}}
       </div>
     </div>
+
+    {{!-- Фракция — своя у Миньона, не только у Хозяина (по просьбе
+          пользователя): предметы-Фракции, тот же общий механизм, что у
+          Персонажа/Демона/Принца/Орды (module/apps/actor-factions.mjs). --}}
+    {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
   </div>
 </header>

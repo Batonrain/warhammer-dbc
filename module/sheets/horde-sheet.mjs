@@ -16,6 +16,8 @@ import { hordeContacts, hordeMeleeTargets } from "../combat/horde-tokens.mjs";
 import { attachItemPicker } from "./item-picker.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { convertHordeToActor } from "../apps/horde-convert.mjs";
+import { openContextMenu } from "./context-menu.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
@@ -229,6 +231,34 @@ export class WarhammerHordeSheet
 
     context.isGM = game.user.isGM;
     return context;
+  }
+
+  /**
+   * Кнопка-меню «Настройки листа» в шапке — тот же приём, что у
+   * WarhammerCharacterSheet (actor-sheet.mjs), но своя копия: у Орды другой
+   * базовый класс листа. Единственный пункт — «В Персонажа», обратное
+   * превращение (см. apps/horde-convert.mjs, convertHordeToActor).
+   */
+  _attachFrameListeners() {
+    super._attachFrameListeners();
+    if (!this.hasFrame) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "header-control icon wh-mechanicus-control";
+    btn.dataset.tooltip = "Настройки листа";
+    btn.setAttribute("aria-label", "Настройки листа");
+    btn.innerHTML = `<img src="systems/warhammer-dbc/assets/ui-icons/adeptus-mechanicus.webp" alt=""/>`;
+    this.window.close.insertAdjacentElement("beforebegin", btn);
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!this.isEditable) return;
+      openContextMenu(event, [{
+        cls: "wh-ctx-tocharacter",
+        label: "🧍 В Персонажа",
+        onClick: () => convertHordeToActor(this.actor)
+      }]);
+    });
   }
 
   /**

@@ -188,10 +188,23 @@
   box-sizing: border-box;
 }
 
-/* ── Таблица навыков (редактирование) ── */
+/* ── Таблица навыков (редактирование) ──
+   Панель — flex-колонка, скролл-бокс тянется на всё, что останется под
+   заголовком: раньше высота была захардкожена (340px) и не совпадала с
+   реальной высотой соседней панели Характеристик (та выше — почти всегда
+   больше 340px), из-за чего под обрезанным скроллом оставалась пустая
+   полоса самой панели. Теперь высота берётся от grid-строки (обе панели в
+   .advance-bottom растягиваются по умолчанию), а не от догадки в px. */
+.warhammer-dbc .advance-skills-edit {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .warhammer-dbc .skills-advance-scroll {
   overflow-y: auto;
-  max-height: 340px;
+  flex: 1;
+  min-height: 0;
 }
 
 .warhammer-dbc .skills-advance-table {
