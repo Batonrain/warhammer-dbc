@@ -59,6 +59,7 @@ import { refreshVeilOverlay } from "./module/apps/veil-overlay.mjs";
 import { openSceneNexus, refreshSceneNexus, execSceneTeleport } from "./module/apps/scene-nexus.mjs";
 import { openEnvironment, refreshEnvironment, refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
+import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/apps/callouts.mjs";
 import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
@@ -711,6 +712,7 @@ Hooks.once("ready", () => initHUD());
 Hooks.once("init", () => initTokenVariants());
 Hooks.once("init", () => initDifficultTerrainHud());
 Hooks.once("init", () => initEquipmentIndex());
+Hooks.once("init", () => registerCalloutHooks());
 
 // ── Виджет «Окружающая Среда» (левый-нижний угол, видят все) ──────────────────
 Hooks.once("ready",     () => refreshEnvWidget());
@@ -819,6 +821,23 @@ Hooks.on("getSceneControlButtons", (controls) => {
       openEnvironment();
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
     };
+    const CALLOUT_ICON = "fa-solid fa-map-pin";
+    const CALLOUT_CLEAR_ICON = "fa-solid fa-trash";
+    const triggerCallout = () => {
+      // Не тот же приём, что у остальных триггеров: там открывается окно и
+      // канвас можно сразу вернуть на «tokens». Здесь мы создаём Drawing/Tile
+      // на СЦЕНЕ, и без слоя «Инструменты рисования» их не выделить и не
+      // подвинуть после клика — ждём конца добавления и остаёмся на нём.
+      addCallout().finally(() => {
+        try { ui.controls?.activate?.({ control: "drawings" }); } catch (e) {}
+      });
+    };
+    // «Очистить» — отдельная ОДНОкнопочная группа, а не второй tool внутри
+    // «Коллаутов»: несколько tools в одной группе без своего canvas-layer
+    // однажды уже сломало рендер всей панели контролов (см. память сессии),
+    // а по одной кнопке на группу — доказанно безопасный, уже везде
+    // использующийся здесь шаблон.
+    const triggerClearCallouts = () => { clearAllCallouts(); };
     const trigger = () => {
       openSystemsOverview();
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
@@ -873,6 +892,18 @@ Hooks.on("getSceneControlButtons", (controls) => {
         tools: [{ name: "open", title: "Окружающая Среда", icon: ENV_ICON,
                   button: true, onClick: () => triggerEnv() }]
       });
+      if (game.user.isGM) controls.push({
+        name: "wh-callouts", title: "Коллауты", icon: CALLOUT_ICON, layer: null,
+        visible: true, activeTool: "open",
+        tools: [{ name: "open", title: "Добавить коллаут", icon: CALLOUT_ICON,
+                  button: true, onClick: () => triggerCallout() }]
+      });
+      if (game.user.isGM) controls.push({
+        name: "wh-callouts-clear", title: "Очистить коллауты", icon: CALLOUT_CLEAR_ICON, layer: null,
+        visible: true, activeTool: "open",
+        tools: [{ name: "open", title: "Очистить все коллауты на сцене", icon: CALLOUT_CLEAR_ICON,
+                  button: true, onClick: () => triggerClearCallouts() }]
+      });
     } else if (controls && typeof controls === "object") {
       // Foundry v13 — объект-словарь групп (onChange, без устаревшего onClick)
       controls["wh-systems"] = {
@@ -926,6 +957,24 @@ Hooks.on("getSceneControlButtons", (controls) => {
         tools: {
           open: { name: "open", title: "Окружающая Среда", icon: ENV_ICON,
                   order: 1, button: true, onChange: () => triggerEnv() }
+        },
+        activeTool: "open"
+      };
+      if (game.user.isGM) controls["wh-callouts"] = {
+        name: "wh-callouts", title: "Коллауты", icon: CALLOUT_ICON, order: 97, visible: true,
+        onChange: (_event, active) => { if (active) triggerCallout(); },
+        tools: {
+          open: { name: "open", title: "Добавить коллаут", icon: CALLOUT_ICON,
+                  order: 1, button: true, onChange: () => triggerCallout() }
+        },
+        activeTool: "open"
+      };
+      if (game.user.isGM) controls["wh-callouts-clear"] = {
+        name: "wh-callouts-clear", title: "Очистить коллауты", icon: CALLOUT_CLEAR_ICON, order: 98, visible: true,
+        onChange: (_event, active) => { if (active) triggerClearCallouts(); },
+        tools: {
+          open: { name: "open", title: "Очистить все коллауты на сцене", icon: CALLOUT_CLEAR_ICON,
+                  order: 1, button: true, onChange: () => triggerClearCallouts() }
         },
         activeTool: "open"
       };
