@@ -144,7 +144,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   }
   const rv       = roll.total;
   const rollMode = game.settings.get("core", "rollMode");
-  const hit      = rv <= threshold;
+  // Беспомощная цель (стр. ...): рукопашная/выстрел в упор или в рукопашной
+  // против неё автоматически успешны, независимо от того, что выпало на
+  // d100 — рвётся из attack-dialog.mjs (opts.forceHit), а не проверяется тут
+  // заново, потому что «в упор/в рукопашной» — ситуативная галочка игрока,
+  // не хранимое состояние на акторе.
+  const hit      = !!opts.forceHit || rv <= threshold;
 
   // ── Заклинивание (только для дальнобойного оружия со свойством надёжности) ──
   const jamAt    = jamThreshold(wp);
@@ -186,8 +191,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     label: hitLocLabel, hitsCount, targetIsVehicle, vehiclePart: vehPart
   });
 
+  // Math.max(1, …) не меняет обычный бросок (rv<=threshold уже даёт >=1) —
+  // защищает только forceHit, когда рвущий d100 сам по себе был бы промахом.
   const deg = hit
-    ? Math.floor((threshold - rv) / 10) + 1
+    ? Math.max(1, Math.floor((threshold - rv) / 10) + 1)
     : Math.floor((rv - threshold) / 10) + 1;
 
   // Попадания и расход патронов
@@ -319,6 +326,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         msPenalty = 3 * i;
         total = Math.max(0, total - msPenalty);
       }
+      // Беспомощная цель: весь урон попадания ×2 ДО Поглощения (которое
+      // применяется позже, отдельно, когда урон принимают по кнопке карточки).
+      if (opts.doubleDamage) total *= 2;
       // У техники Экстремальный урон переводится в её Критический Эффект через
       // отрицательную Структуру (при применении урона), а не по таблице существ.
       const { hasExtreme, extremeLevel, critEffect, exRoll } = await rollExtremeDamage(dmgRoll, {
@@ -408,6 +418,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
             + `${shelter.count} из ${hitsCount} попадан${shelter.count === 1 ? "ия уходит" : "ий уходят"} в толпу.`
           : "",
         attack:    opts.attackNote,
+        helpless:  opts.doubleDamage
+          ? "🪢 Цель Беспомощна: попадание автоматическое, урон ×2 (до Поглощения)."
+          : "",
         technique: { label: techOpts.techniqueLabel, stance: techOpts.stanceLabel, note: techOpts.chatNote },
         aiming:    opts.aimingLabel,
         aim:       aimTarget?.value ? aimTarget.label.replace(/\s*\(.*\)/, "") : "",

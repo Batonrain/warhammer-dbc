@@ -270,6 +270,7 @@ export function attackCard({
             rerollDropped.length ? `<em class="roll-reroll-note"> (переброс, отброшено ${rerollDropped.join(", ")})</em>` : ""}</span>
         </div>
         <div class="roll-outcome">${outcomeHtml}</div>
+        ${notes.helpless ? `<div class="roll-allout-note">${notes.helpless}</div>` : ""}
         ${hit && hitsCount > 0
           ? `<div class="roll-location">Место попадания: <b>${hitLocLabel}</b> (${locRoll})</div>`
           : ""}
