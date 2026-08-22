@@ -348,13 +348,17 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
         ? resolveTalentAptitudes(item.name, item.system.aptitudes || [], item.system.aptSource,
             { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF })
         : (item.system.aptitudes || []);
+      // costManual снимается вместе с ★: обе ветки ставят цену сами, и оставить
+      // талант помеченным «цена вручную» значило бы навсегда исключить его из
+      // пересчёта по Склонностям — с числом, которое ГМ руками не вписывал.
       await item.update({
-        "system.granted": false, "system.purchased": true,
+        "system.granted": false, "system.purchased": true, "system.costManual": false,
         "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
           { name: item.name, patron: actor.system.patronGod })
       });
     } else {
-      await item.update({ "system.granted": true, "system.purchased": false, "system.cost": 0 });
+      await item.update({ "system.granted": true, "system.purchased": false,
+                          "system.costManual": false, "system.cost": 0 });
     }
   });
 
