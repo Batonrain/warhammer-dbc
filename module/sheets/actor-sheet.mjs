@@ -45,7 +45,7 @@ import { computeWoundDamage } from "./tabs/wounds.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
 import { activatePossessionListeners } from "./tabs/possession.mjs";
 import { activateAdvanceListeners } from "./tabs/advance.mjs";
-import { activateItemContextMenu } from "./context-menu.mjs";
+import { activateItemContextMenu, openContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
@@ -533,17 +533,11 @@ export class WarhammerCharacterSheet
     classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
     position: { width: 1000, height: 940 },
     window: {
-      resizable: true,
-      // Кнопка «Мастер» раньше стояла в шапке листа (header.hbs) рядом с
-      // Мировоззрением; перенесена сюда, чтобы не путать с кнопкой «Начать
-      // создание персонажа» на панели Актёры (apps/character-start.mjs) —
-      // та заводит НОВОГО актора, а этот пункт лишь перезапускает Мастера
-      // на уже существующем.
-      controls: [{
-        icon: "fa-solid fa-hat-wizard",
-        label: "Перезапустить мастера создания",
-        action: "charWizard"
-      }]
+      resizable: true
+      // «Перезапустить мастера создания» и «В Орду» раньше жили здесь
+      // (window.controls) и в блоке ПРЕОБРАЗОВАНИЕ на вкладке ЗАПИСИ
+      // соответственно — переехали в кастомную кнопку-меню у шапки листа
+      // (см. _attachFrameListeners ниже, иконка Механикум).
     },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
@@ -558,10 +552,9 @@ export class WarhammerCharacterSheet
       infamyPlus: whenEditable(onInfamyPlus),
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
-      // Мастера зовут из двух мест: панель «Актёры» — для нового персонажа,
-      // пункт «Перезапустить мастера создания» в window.controls (выше) —
-      // чтобы пройти его заново на уже созданном.
-      charWizard: whenEditable(function () { this.openCreationWizard(); }),
+      // «Перезапустить мастера создания» больше не data-action: кнопка-меню
+      // Механикум (_attachFrameListeners) зовёт this.openCreationWizard()
+      // напрямую, минуя карту действий.
       convertToHorde: whenEditable(onConvertToHorde),
       // «+» в блоке МИНЬОНЫ на вкладке СОЦИУМ — генератор слуги (стр. 111-113).
       minionCreate:   whenEditable(onMinionCreate),
@@ -1081,6 +1074,50 @@ export class WarhammerCharacterSheet
     }
 
     return super._onDropItem(event, data);
+  }
+
+  /**
+   * Кнопка-меню «Настройки листа» в шапке — рядом со штатным «Toggle Controls»
+   * (this.window.close.insertAdjacentElement("beforebegin", …) ставит её
+   * между ним и крестиком закрытия). У Персонажа и Демона; у Демона пункт
+   * «Перезапустить мастера создания» не показывается — Мастер только для
+   * Персонажа. У Принца Демона и Миньона кнопки нет: не просили, и своя
+   * кнопка «В Орду» у них остаётся на вкладке ЗАПИСИ (tab-notes.hbs).
+   *
+   * Once, не на каждый рендер: вызывается ядром только при isFirstRender
+   * (см. ApplicationV2._render), как и родная привязка ContextMenu к
+   * «Toggle Controls» в том же месте.
+   */
+  _attachFrameListeners() {
+    super._attachFrameListeners();
+    const type = this.actor.type;
+    if ((type !== "character" && type !== "daemon") || !this.hasFrame) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "header-control icon wh-mechanicus-control";
+    btn.dataset.tooltip = "Настройки листа";
+    btn.setAttribute("aria-label", "Настройки листа");
+    btn.innerHTML = `<img src="systems/warhammer-dbc/assets/ui-icons/adeptus-mechanicus.webp" alt=""/>`;
+    this.window.close.insertAdjacentElement("beforebegin", btn);
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!this.isEditable) return;
+      const entries = [];
+      if (type === "character") {
+        entries.push({
+          cls: "wh-ctx-charwizard",
+          label: "🧙 Перезапустить мастера создания",
+          onClick: () => this.openCreationWizard()
+        });
+      }
+      entries.push({
+        cls: "wh-ctx-tohorde",
+        label: "☠ Превратить в Орду",
+        onClick: () => onConvertToHorde.call(this, event)
+      });
+      openContextMenu(event, entries);
+    });
   }
 
   _onRender(context, options) {
