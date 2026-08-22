@@ -19,13 +19,18 @@
 const { Application } = foundry.appv1.api;
 
 import { disabledRaceKeys }      from "../constants/features.mjs";
+import { BODY_TYPES }            from "../constants/body-map.mjs";
 import { raceGroupList, subracesOf, raceDef } from "./race-library.mjs";
 import { applyRace, applySubrace, applyLegion, applyYnnari, applyHarlequin,
          actorRaceItem, actorSubraceItem }    from "./races.mjs";
 import { buildLegionOptions, buildChapterOptions,
          buildCultureLegionOptions }          from "../constants/legions.mjs";
-import { applyHomeworld, homeworldSheetContext, needsIntBonusChoice } from "./homeworlds.mjs";
-import { applyDivination, divinationSheetContext } from "./divinations.mjs";
+import { applyHomeworldPicks, homeworldSheetContext, needsIntBonusChoice, rollRandomHomeworldKey,
+         homeworldChoiceBlocksHtml, wireHomeworldChoiceBlocks, readHomeworldChoicePicks } from "./homeworlds.mjs";
+import { HOMEWORLD_BY_KEY, hasChoices as homeworldHasChoices } from "../constants/homeworlds.mjs";
+import { applyDivinationPicks, divinationSheetContext, rollRandomDivinationKey } from "./divinations.mjs";
+import { DIVINATION_BY_KEY, hasChoices as divinationHasChoices } from "../constants/divinations.mjs";
+import { grantChoiceBlocksHtml, wireGrantChoiceBlocks, readGrantChoicePicks } from "./origin-shared.mjs";
 import { characterContext }      from "../sheets/character-context.mjs";
 import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
 import { CREATION_ROLL_CHARS, creationBonusRolls, rollCharSet, creationCharSum,
@@ -114,6 +119,12 @@ export class CharacterWizard extends Application {
     // используется на Этапе 2: без снимка «пусто ли» перестало бы отличать
     // новый лист от персонажа, которого просто открыли Мастером повторно.
     this._wasEmpty = null;
+    // Бросок Стартового Бесчестия отыгран этой сессией Мастера — см.
+    // _confirmCharacteristics: живая проверка "characteristics.inf.base===0"
+    // для защиты от повторного броска не годится (raceCharsUpdate внутри
+    // applyRace на Этапе 1 УЖЕ пишет расовую базу в то же поле, напр. 19 у
+    // Астартес, — бросок выше неё молча ни разу не срабатывал, wdbc-31b).
+    this._infamyRolled = false;
     // Состояние Этапа 2 (метод «Генерация») — переживает render() внутри
     // шага, но не должно переживать возврат на Этап 1 и повторный заход.
     this.charSets = null;
@@ -152,6 +163,18 @@ export class CharacterWizard extends Application {
     // здесь и по-настоящему применяется по подтверждению Этапа 2 (см.
     // _onNext), когда Int.b уже посчитан.
     this._pendingHomeworldKey = null;
+    // Строки выбора Родного мира (Hatred/Peer/etc, «Общие знания» и т.п.) —
+    // раньше показывались всплывающим Dialog (promptChoices, apps/homeworlds.mjs),
+    // теперь инлайн в форме шага, тем же принципом, что у Расы/Архетипа/
+    // Стремлений. factionTargets — asyncные результаты Обозревателя для
+    // пикера цели (wireTargetChoice, apps/target-choice.mjs), их DOM не
+    // хранит, поэтому переживают перерисовку только на this.
+    this._hwTargetState = { factionTargets: {} };
+    // Предсказание с выбором (напр. «Будь благом братьям и погибелью
+    // врагам» — Hatred+Peer) — та же инлайн-строка вместо Dialog, отдельное
+    // состояние от Родного мира (оба могут ждать ответа одновременно).
+    this._pendingDivinationKey = null;
+    this._dvTargetState = { factionTargets: {} };
   }
 
   get actor() { return game.actors.get(this.actorId); }
@@ -187,9 +210,20 @@ export class CharacterWizard extends Application {
       raceChosen: !!sys.race,
       hasSubrace: subraceOpts.length > 0,
       isAstartes,
+      // Телосложение (та же вкладка «ЗАПИСИ», см. character-context.mjs) —
+      // задаёт маски силуэта на вкладке «ТЕЛО»; у Астартес выбора нет, они
+      // всегда мужчины (см. isAstartes-гейт в самом шаблоне).
+      bodyTypes: Object.entries(BODY_TYPES).map(([key, label]) =>
+        ({ key, label, selected: (sys.bodyType || "male") === key })),
       legionOptions:  isAstartes ? buildLegionOptions(sys.geneSeed?.legion || "") : "",
       chapterOptions: isAstartes ? buildChapterOptions(sys.geneSeed?.legion || "", sys.geneSeed?.chapter || "") : "",
       cultureOptions: isAstartes ? buildCultureLegionOptions(sys.geneSeed?.cultureLegion || "") : "",
+      // Культура от банды/ордена — тот же выбор, что и на листе (Заметки,
+      // hasCultureOverride в sheet-helpers.mjs), сюда раньше не был перенесён:
+      // Мастер предлагал культуру только на уровне легиона целиком (wdbc-k8p).
+      hasCultureOverride: isAstartes && !!sys.geneSeed?.cultureLegion,
+      cultureChapterOptions: isAstartes
+        ? buildChapterOptions(sys.geneSeed?.cultureLegion || "", sys.geneSeed?.cultureChapter || "") : "",
       alignment: sys.alignment || "loyalist",
 
       isAeldari: cc.isAeldari, isYnnari: cc.isYnnari, isHarlequin: cc.isHarlequin, isDrukhari: cc.isDrukhari,
@@ -201,7 +235,9 @@ export class CharacterWizard extends Application {
       ynnariPast: sys.ynnariPast || "", harlequinPast: sys.harlequinPast || "",
 
       homeworld:  this._homeworldStepContext(),
-      divination: divinationSheetContext(actor),
+      homeworldChoice: this._homeworldChoiceContext(),
+      divination: this._divinationStepContext(),
+      divinationChoice: this._divinationChoiceContext(),
       ...actorFactionsContext(actor),
 
       ...(this.step.id === "characteristics" ? this._charStepContext() : {}),
@@ -265,10 +301,10 @@ export class CharacterWizard extends Application {
   /**
    * Контекст дропдауна Родного мира для Этапа 1. Обычный
    * `homeworldSheetContext` метит «выбрано» по реально гранту (embedded-
-   * предмету) — а мир с Int-зависимым выбором намеренно повисает
-   * неприменённым до Этапа 2 (см. _pendingHomeworldKey), поэтому здесь
-   * подменяем «выбрано» на отложенный ключ, чтобы селект не откатывался
-   * обратно на «— не выбрано —» после выбора игрока.
+   * предмету) — а мир с выбором намеренно повисает неприменённым, пока
+   * игрок не ответит на строки ниже (см. _pendingHomeworldKey), поэтому
+   * здесь подменяем «выбрано» на отложенный ключ, чтобы селект не
+   * откатывался обратно на «— не выбрано —» после выбора игрока.
    */
   _homeworldStepContext() {
     const ctx = homeworldSheetContext(this.actor);
@@ -278,10 +314,68 @@ export class CharacterWizard extends Application {
       return {
         ...ctx, current: key,
         options: ctx.options.map(o => ({ ...o, selected: o.key === key })),
-        deferredNote: "Этот мир даёт выбор специализаций по Интеллекту — уточнится сразу после Этапа 2 («Характеристики»), когда станет известен бонус Интеллекта."
+        // Int-зависимый мир (Исследовательская станция) — единственный
+        // случай, где строки выбора реально не могут появиться раньше Этапа
+        // 2: число специализаций считается от Бонуса Интеллекта, а его ещё
+        // нет. Остальные choice-миры показывают строки сразу же, см.
+        // _homeworldChoiceContext.
+        deferredNote: needsIntBonusChoice(key)
+          ? "Этот мир даёт выбор специализаций по Интеллекту — уточнится сразу после Этапа 2 («Характеристики»), когда станет известен бонус Интеллекта."
+          : ""
       };
     }
     return ctx;
+  }
+
+  /**
+   * Строки выбора отложенного Родного мира — инлайн вместо всплывающего
+   * Dialog (та же «гайдлайна», что у Расы/Архетипа/Стремлений: игрок видит
+   * выбор сразу в форме шага). Int-зависимый мир (needsIntBonusChoice)
+   * показывает строки только на Этапе 2, когда Int.b уже посчитан —
+   * до этого здесь пусто, а вместо строк — deferredNote выше.
+   */
+  _homeworldChoiceContext() {
+    const key = this._pendingHomeworldKey;
+    if (!key) return null;
+    const hw = HOMEWORLD_BY_KEY[key];
+    if (!hw || !homeworldHasChoices(hw)) return null;
+    const needsInt = needsIntBonusChoice(key);
+    if (needsInt && this.step.id !== "characteristics") return null;
+    if (!needsInt && this.step.id !== "origin") return null;
+    return {
+      hwLabel: hw.label,
+      featureName: hw.feature.name,
+      featureDesc: hw.feature.desc,
+      blocksHtml: homeworldChoiceBlocksHtml(hw, this.actor)
+    };
+  }
+
+  /**
+   * Контекст дропдауна Предсказания для Этапа 1 — тот же приём, что и у
+   * Родного мира выше: пока выбор не отвечен (см. _pendingDivinationKey),
+   * подменяем «выбрано» на отложенный ключ.
+   */
+  _divinationStepContext() {
+    const ctx = divinationSheetContext(this.actor);
+    if (!ctx) return ctx;
+    if (this._pendingDivinationKey) {
+      const key = this._pendingDivinationKey;
+      return { ...ctx, current: key, options: ctx.options.map(o => ({ ...o, selected: o.key === key })) };
+    }
+    return ctx;
+  }
+
+  /** Строки выбора отложенного Предсказания — инлайн вместо Dialog, см. _homeworldChoiceContext. */
+  _divinationChoiceContext() {
+    const key = this._pendingDivinationKey;
+    if (!key) return null;
+    const def = DIVINATION_BY_KEY[key];
+    if (!def || !divinationHasChoices(def)) return null;
+    return {
+      dvText: def.text,
+      dvEffect: def.effect,
+      blocksHtml: grantChoiceBlocksHtml({ charChoices: def.charChoices, choices: def.choices, actor: this.actor })
+    };
   }
 
   // ── Этап 3: Архетип, Умения/Таланты, Раны ────────────────────────────────
@@ -471,6 +565,47 @@ export class CharacterWizard extends Application {
         skillLabel, choices, need, picked: []
       })
     };
+  }
+
+  /**
+   * Вариант коллектора для Стремлений: там выбор УЖЕ применяется сразу по
+   * change дропдауна (activateAspirationListeners общая с листом актора —
+   * см. её вызов в _activateListeners), поэтому строка резолвится СРАЗУ по
+   * ответу в форме, без ожидания «Далее» — в отличие от _mechCollector выше.
+   * Одна строка максимум: у Стремления либо нет Механики с выбором вовсе,
+   * либо один простой ИЛИ («Fel+5 или Per+5») — второй вопрос подряд для
+   * того же Стремления книгой не встречается.
+   */
+  _mechCollectorImmediate() {
+    const push = (row) => this._isClosing
+      ? Promise.resolve(row.type === "spec" && row.need > 1 ? [] : null)
+      : new Promise(resolve => {
+          row.resolve = resolve;
+          this.pendingAspirationChoice = row;
+          this.render(false);
+        });
+    return {
+      choose: (item, entries) => push({
+        type: "or", key: entries.map(e => e.id).join(","),
+        itemName: item.name,
+        options: entries.map(e => ({ entry: e, label: describeMechEntry(e) }))
+      }),
+      chooseSpec: (skillLabel, choices, need) => push({
+        type: "spec", key: skillLabel + ":" + choices.map(c => c.key).join(","),
+        skillLabel, choices, need, picked: []
+      })
+    };
+  }
+
+  /** Отвечает на строку _mechCollectorImmediate — резолвит сразу, «Далее» ждать не нужно. */
+  _resolveAspirationChoice(pending) {
+    const row = this.pendingAspirationChoice;
+    if (!row) return;
+    this.pendingAspirationChoice = null;
+    const skipValue = row.type === "spec" && row.need > 1 ? [] : null;
+    const value = (!pending || pending.kind === "skip") ? skipValue : pending.value;
+    row.resolve(value);
+    this.render(false);
   }
 
   /**
@@ -665,8 +800,16 @@ export class CharacterWizard extends Application {
       return { idx, label: t.label, options, custom: false, id: a?.id || a || "", name: e?.name || "", mods: e?.mods || "" };
     });
 
+    const pac = this.pendingAspirationChoice;
+    const pendingAspirationChoice = !pac ? null : pac.type === "or"
+      ? { type: "or", itemName: pac.itemName,
+          options: pac.options.map((o, idx) => ({ idx, label: o.label })) }
+      : { type: "spec", skillLabel: pac.skillLabel, need: pac.need, many: pac.need > 1,
+          choices: pac.choices.map((c, idx) => ({ idx, label: c.display })) };
+
     return {
       aspirationSlots,
+      pendingAspirationChoice,
       startLevels: START_LEVELS.map(l => ({ ...l, selected: l.key === this.startLevelKey })),
       startCap: START_CAP,
       startExtraXp: this.startExtraXp, startExtraInf: this.startExtraInf, startExtraCor: this.startExtraCor,
@@ -807,10 +950,14 @@ export class CharacterWizard extends Application {
       }
       await actor.update(updates);
 
-      // Та же живая проверка поверх снимка, что и у Ран — бросок не должен
-      // повториться при повторном подтверждении того же шага.
-      if (this._wasEmpty.inf && (actor.system.characteristics?.inf?.base || 0) === 0) {
+      // НЕ живая проверка поверх снимка (как у Ран) — applyRace (Этап 1)
+      // пишет расовую базу Влияния в то же поле раньше, чем мы сюда доходим
+      // (Астартес: 19), и "всё ещё 0" было бы ложно даже на первом,
+      // единственно верном проходе. Защита от повтора — свой отдельный флаг
+      // сессии Мастера, не значение поля.
+      if (this._wasEmpty.inf && !this._infamyRolled) {
         const infv = await rollFormula(actor, startingInfamyFormula(sum.inf, true), "Стартовое Бесчестие");
+        this._infamyRolled = true;
         if (infv) await actor.update({ "system.characteristics.inf.base": infv });
       }
     } else {
@@ -986,7 +1133,14 @@ export class CharacterWizard extends Application {
       const { layout, choiceDefs } = this._gearLayout();
       const resolved = layout.map(x => x.fixed != null ? x.fixed : (this.gearPicks[x.ci] ?? choiceDefs[x.ci][0]));
 
-      const packNames = ["weapons", "armor", "gear", "ammunition", "shields", "tools", "armour-systems"];
+      // "traits" — в строке снаряжения (Архетип.gear) попадаются не только
+      // предметы инвентаря, но и Черты ("Mechanicum Implants" у Технодесантника
+      // и т.п.): без пака в индексе точное совпадение не находилось, и такая
+      // строка уходила в ручной подбор через Обозреватель — с неугаданным паком
+      // (гадалка по ключевым словам не знает про Черты) он открывался на первой
+      // попавшейся вкладке (Бестиарий), а сама Черта — не выбор, а то, что
+      // положено автоматически.
+      const packNames = ["weapons", "armor", "gear", "ammunition", "shields", "tools", "armour-systems", "traits"];
       const packs = packNames.map(p => game.packs.get(`warhammer-dbc.${p}`)).filter(Boolean);
       const index = new Map();
       const norm = s => String(s || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
@@ -998,6 +1152,18 @@ export class CharacterWizard extends Application {
       const clean = txt => String(txt).replace(/^\s*\d+×?\s*/, "").replace(/^l\.\s*/i, "").replace(/\((?!Астартес\))[^)]*\)/g, "")
         .replace(/\s*до\s*R\s*\d+\b/gi, "").replace(/\b(Best|Good|Common|Poor)\.?Q\b/gi, "").trim();
 
+      // Уже на акторе (в т.ч. бильнгвально, «Bolter (Astartes) / Болтер
+      // (Астартес)» = «Болтер (Астартес)») — сюда попадает и то, что реально
+      // выдано раньше (повторный проход Мастера), и совпадение строк
+      // Расы/Архетипа (оба перечисляют один и тот же болтер текстом — тогда
+      // «эквип» дублировался бы уже на первом проходе). Ключ — та же norm(),
+      // которой резолвится сам предмет, split("/") — обе половины двуязычного
+      // имени.
+      const onActor = new Set();
+      for (const it of actor.items) for (const part of String(it.name).split("/")) {
+        const k = norm(part.trim()); if (k) onActor.add(k);
+      }
+
       // done[r] — по КОНКРЕТНОЙ строке (индексу resolved), не общим флагом:
       // иначе один успешный ручной выбор красил бы «сделано» и все строки,
       // которые игрок в Обозревателе просто закрыл крестиком (пропустил).
@@ -1006,20 +1172,36 @@ export class CharacterWizard extends Application {
       const manualIdx = [];
       const stdSysIdx = [];   // «N Стандартные системы» — свой бюджетный поток, не по одной
       const legionIdx = [];   // «L. <Категория> (до R<N>, <Кач>.Q)» — свой поток с пост-обработкой
+      const grantedKeys = new Set();
       resolved.forEach((r, i) => {
         if (this._matchStandardSystemsCount(r) != null) { stdSysIdx.push(i); return; }
         if (this._matchLegionCategoryGear(r)) { legionIdx.push(i); return; }
         if (/люб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
         const k = norm(clean(r));
         const ref = k ? index.get(k) : null;
-        if (ref) { toCreate.push({ i, ref }); return; }
-        manualIdx.push(i);
+        if (!ref) { manualIdx.push(i); return; }
+        // Предмет уже есть (на акторе или уже поставлен в очередь этим же
+        // проходом) — не плодим вторую копию, но строку помечаем «сделано»:
+        // формально она удовлетворена, и Обозреватель по ней не откроется.
+        if (onActor.has(k) || grantedKeys.has(k)) { done[i] = true; return; }
+        grantedKeys.add(k);
+        toCreate.push({ i, ref });
       });
+      // Броня, выданная этим же проходом (обычно — выбранная марка силовой
+      // брони), — цель авто-подключения «N Стандартных систем» ниже: та же
+      // связка installedOn, что и ручная установка на вкладке «Снаряжение»
+      // (combat/armor-mods.mjs), просто проставленная сразу, а не оставленная
+      // висеть отдельным предметом до первого ручного клика (wdbc-cgu).
+      let newArmorId = null;
       if (toCreate.length) {
         const docs = await Promise.all(toCreate.map(({ ref }) => ref.pack.getDocument(ref.id)));
         const objs = [];
         toCreate.forEach(({ i }, idx) => { if (docs[idx]) { objs.push(docs[idx].toObject()); done[i] = true; } });
-        if (objs.length) await actor.createEmbeddedDocuments("Item", objs);
+        if (objs.length) {
+          const created = await actor.createEmbeddedDocuments("Item", objs);
+          const armor = created.find(it => it.type === "armor");
+          if (armor) newArmorId = armor.id;
+        }
       }
 
       // «N Стандартные системы» — не «предмет за предметом», а один бюджетный
@@ -1036,6 +1218,11 @@ export class CharacterWizard extends Application {
         if (!uuids.length) continue;
         const docs = await Promise.all(uuids.map(u => fromUuid(u).catch(() => null)));
         const objs = docs.filter(Boolean).map(d => d.toObject());
+        // Системы — armorMod (system.installedOn) — подключаются сразу к
+        // броне, выданной тем же проходом, если она нашлась. Не нашлась
+        // (архетип без своей марки/броня выбирается позже вручную) — предметы
+        // всё равно создаются, просто неустановленными, как раньше.
+        if (newArmorId) for (const o of objs) o.system.installedOn = newArmorId;
         if (objs.length) { await actor.createEmbeddedDocuments("Item", objs); done[i] = objs.length === need; }
       }
 
@@ -1109,6 +1296,18 @@ export class CharacterWizard extends Application {
     on("[data-action='wizFinish']", "click", async () => {
       if (this._confirmingGear) return;
       if (this.step.id === "gear" && !this._gearDone) await this._confirmGear();
+      // Лёгкое уведомление ГМ (wdbc-agc) — не блокирует персонажа, просто
+      // просит проверить: раньше Мастер завершался молча, и ГМ узнавал о
+      // новом персонаже только случайно наткнувшись на него в списке.
+      // Не игроку — свою же карточку видеть незачем (whisper только GM).
+      if (!game.user.isGM) {
+        ChatMessage.create({
+          content: `<div class="wh-roll-result"><div class="roll-header">🧙 Создание персонажа завершено</div>
+            <div class="roll-outcome">Игрок <b>${esc(game.user.name)}</b> закончил Мастера создания для <b>${esc(this.actor.name)}</b> — стоит проверить.</div></div>`,
+          whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
+          speaker: { alias: this.actor.name }
+        });
+      }
       // _confirmGear() кончает своим render(false) (снять «Применяется…»),
       // который сам не awaited — вызванный сразу вслед close() иногда
       // проигрывал этой гонке: рендер из finally долетал ПОСЛЕ close() и
@@ -1127,24 +1326,70 @@ export class CharacterWizard extends Application {
     });
     on(".wiz-subrace-sel", "change", ev => this.actor.update({ "system.subrace": ev.currentTarget.value }));
     on(".wiz-align-sel", "change", ev => this.actor.update({ "system.alignment": ev.currentTarget.value }));
+    on(".wiz-body-type-sel", "change", ev => this.actor.update({ "system.bodyType": ev.currentTarget.value }));
 
     on(".wiz-legion-sel", "change", ev => this.actor.update({ "system.geneSeed.legion": ev.currentTarget.value, "system.geneSeed.chapter": "" }).then(() => this.render(false)));
     on(".wiz-chapter-sel", "change", ev => this.actor.update({ "system.geneSeed.chapter": ev.currentTarget.value }));
-    on(".wiz-cult-sel",    "change", ev => this.actor.update({ "system.geneSeed.cultureLegion": ev.currentTarget.value }));
+    on(".wiz-cult-sel",    "change", ev => this.actor.update({ "system.geneSeed.cultureLegion": ev.currentTarget.value, "system.geneSeed.cultureChapter": "" }).then(() => this.render(false)));
+    on(".wiz-cult-chapter-sel", "change", ev => this.actor.update({ "system.geneSeed.cultureChapter": ev.currentTarget.value }));
 
-    on(".wiz-hw-sel", "change", ev => {
-      const key = ev.currentTarget.value;
+    on(".wiz-hw-sel", "change", async ev => {
+      let key = ev.currentTarget.value;
+      // «Выбрать случайно» — бросаем СРАЗУ здесь, а не внутри applyHomeworld:
+      // тот после броска сам звал бы Dialog для строк выбора выпавшего мира,
+      // а нам нужно решить (defer/показать инлайн), какой мир ни выпади бы.
+      if (key === "random") key = await rollRandomHomeworldKey();
+      this._hwTargetState = { factionTargets: {} };  // сброс на новый мир — старые пикеры цели больше не в силе
+      const hw = HOMEWORLD_BY_KEY[key];
       if (key && needsIntBonusChoice(key)) {
-        // Диалог выбора специализаций отложен до Этапа 2 (см. _onNext) —
-        // на Этапе 1 Интеллект ещё не посчитан, «доступно» показало бы 0.
+        // Строки выбора отложены до Этапа 2 (см. _onNext) — на Этапе 1
+        // Интеллект ещё не посчитан, «доступно» показало бы 0.
+        this._pendingHomeworldKey = key;
+        this.render(false);
+        return;
+      }
+      if (key && hw && homeworldHasChoices(hw)) {
+        // Есть выбор (Hatred/пакеты/специализации) — показываем строки инлайн
+        // прямо здесь (_homeworldChoiceContext) и применяем на «Далее»
+        // (_advanceOriginStep), а не всплывающим Dialog.
         this._pendingHomeworldKey = key;
         this.render(false);
         return;
       }
       this._pendingHomeworldKey = null;
-      applyHomeworld(this.actor, key).then(() => this.render(false));
+      applyHomeworldPicks(this.actor, key, {}).then(() => this.render(false));
     });
-    on(".wiz-dv-sel", "change", ev => applyDivination(this.actor, ev.currentTarget.value).then(() => this.render(false)));
+    // Оживляет строки выбора Родного мира, показанные инлайн выше (живой
+    // счётчик специализаций, пикер цели Таланта) — html здесь тот же jQuery-
+    // корень, что и Dialog-контент у promptChoices, wireHomeworldChoiceBlocks
+    // одна на оба случая.
+    {
+      const hwChoice = this._homeworldChoiceContext();
+      if (hwChoice) wireHomeworldChoiceBlocks(html, HOMEWORLD_BY_KEY[this._pendingHomeworldKey], this._hwTargetState);
+    }
+    on(".wiz-dv-sel", "change", async ev => {
+      let key = ev.currentTarget.value;
+      if (key === "random") {
+        const r = await rollRandomDivinationKey();
+        if (!r) return;  // бросок ушёл мимо таблицы — ничего не меняем, как раньше
+        key = r.key;
+      }
+      this._dvTargetState = { factionTargets: {} };
+      const def = DIVINATION_BY_KEY[key];
+      if (key && def && divinationHasChoices(def)) {
+        // Есть выбор (напр. Hatred+Peer у «Будь благом братьям…») — строки
+        // инлайн прямо здесь (_divinationChoiceContext), применяем на «Далее».
+        this._pendingDivinationKey = key;
+        this.render(false);
+        return;
+      }
+      this._pendingDivinationKey = null;
+      applyDivinationPicks(this.actor, key, {}).then(() => this.render(false));
+    });
+    {
+      const dvChoice = this._divinationChoiceContext();
+      if (dvChoice) wireGrantChoiceBlocks(html, { choices: DIVINATION_BY_KEY[this._pendingDivinationKey]?.choices || [] }, this._dvTargetState);
+    }
     // Фракция — переиспользуем как есть (дроп + кнопка «＋», Обозреватель компендиумов).
     activateFactionFieldListeners(html, this.actor);
 
@@ -1270,7 +1515,27 @@ export class CharacterWizard extends Application {
     });
 
     // ── Этап 4: Стремления (переиспользуем как есть) + Уровень стартовой игры ──
-    activateAspirationListeners(html, this.actor);
+    // withCollector направляет ИЛИ-выбор Механики Стремления (если он есть —
+    // «Fel+5 или Per+5» и т.п.) в форму шага вместо всплывающего Dialog, тем
+    // же приёмом, что Раса/Архетип (см. _mechCollectorImmediate — резолвится
+    // сразу по ответу, «Далее» ждать не нужно: сам список Стремлений
+    // применяется по change, как на обычном листе).
+    activateAspirationListeners(html, this.actor,
+      fn => withMechCollector(this._mechCollectorImmediate(), fn));
+    on(".wiz-aspir-choice-or", "change", ev => {
+      const val = ev.currentTarget.value;
+      if (val === "") return;
+      const row = this.pendingAspirationChoice;
+      this._resolveAspirationChoice({ kind: "pick", value: row?.options[Number(val)]?.entry ?? null });
+    });
+    on(".wiz-aspir-choice-spec", "change", ev => {
+      const row = this.pendingAspirationChoice;
+      this._resolveAspirationChoice({ kind: "pick", value: row?.choices[Number(ev.currentTarget.value)] ?? null });
+    });
+    on(".wiz-aspir-choice-skip", "click", ev => {
+      ev.preventDefault();
+      this._resolveAspirationChoice({ kind: "skip", value: null });
+    });
     on(".wiz-start-level", "change", ev => { this.startLevelKey = ev.currentTarget.value; this.render(false); });
     on(".wiz-start-xp",  "change", ev => { this.startExtraXp  = parseInt(ev.currentTarget.value)  || 0; });
     on(".wiz-start-inf", "change", ev => { this.startExtraInf = parseInt(ev.currentTarget.value) || 0; });
@@ -1312,11 +1577,19 @@ export class CharacterWizard extends Application {
         const ok = await this._confirmCharacteristics();
         if (!ok) { ui.notifications?.warn("Выберите Склонности — ровно 4 Характеристики и 4 прочих."); return; }
         // Родной мир с Int-зависимым выбором специализаций (см. Этап 1) —
-        // применяем именно сейчас, Интеллект уже посчитан.
-        if (this._pendingHomeworldKey) {
+        // применяем именно сейчас, Интеллект уже посчитан; строки читаем из
+        // DOM формы этого же шага (_homeworldChoiceContext их сюда и
+        // показывает), а не всплывающим Dialog.
+        if (this._pendingHomeworldKey && needsIntBonusChoice(this._pendingHomeworldKey)) {
           const key = this._pendingHomeworldKey;
+          const hw = HOMEWORLD_BY_KEY[key];
           this._pendingHomeworldKey = null;
-          await applyHomeworld(this.actor, key);
+          if (hw) {
+            const picks = homeworldHasChoices(hw)
+              ? readHomeworldChoicePicks(this.element, hw, this._hwTargetState)
+              : {};
+            await applyHomeworldPicks(this.actor, key, picks);
+          }
         }
       }
       if (this.step.id === "archetype") {
@@ -1434,6 +1707,45 @@ export class CharacterWizard extends Application {
     const sys = actor.system;
     const pastKey = sys.race === "ynnari" ? sys.ynnariPast : sys.race === "harlequin" ? sys.harlequinPast : "";
     if (sys.race === "azuriane" || pastKey === "azuriane") await actor.update({ "system.isPsyker": true });
+    await this._applyPendingHomeworldChoice();
+    await this._applyPendingDivinationChoice();
+  }
+
+  /**
+   * Применяет отложенное Предсказание с инлайн-строками выбора (см.
+   * _divinationChoiceContext) — читает ответы прямо из DOM формы шага, как
+   * раньше их читал callback «Принять» в promptGrantChoices, только без
+   * самого Dialog.
+   */
+  async _applyPendingDivinationChoice() {
+    const key = this._pendingDivinationKey;
+    if (!key) return;
+    const def = DIVINATION_BY_KEY[key];
+    this._pendingDivinationKey = null;
+    const shape = { choices: def?.choices || [] };
+    const picks = def && divinationHasChoices(def)
+      ? readGrantChoicePicks(this.element, shape, this._dvTargetState)
+      : {};
+    await applyDivinationPicks(this.actor, key, picks);
+  }
+
+  /**
+   * Применяет отложенный Родной мир с инлайн-строками выбора (см.
+   * _homeworldChoiceContext) — читает ответы прямо из DOM формы шага, как
+   * раньше их читал callback «Принять» в promptChoices, только без самого
+   * Dialog. Int-зависимый мир (needsIntBonusChoice) сюда не попадает — его
+   * строки только на Этапе 2, читает _applyPendingHomeworldChoiceOnStep2.
+   */
+  async _applyPendingHomeworldChoice() {
+    const key = this._pendingHomeworldKey;
+    if (!key || needsIntBonusChoice(key)) return;
+    const hw = HOMEWORLD_BY_KEY[key];
+    if (!hw) return;
+    this._pendingHomeworldKey = null;
+    const picks = homeworldHasChoices(hw)
+      ? readHomeworldChoicePicks(this.element, hw, this._hwTargetState)
+      : {};
+    await applyHomeworldPicks(this.actor, key, picks);
   }
 }
 

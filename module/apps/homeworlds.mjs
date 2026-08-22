@@ -19,6 +19,8 @@ import { esc } from "../helpers/utils.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
 import { friendlySpecKey } from "../rules/friendly-specialties.mjs";
+import { targetChoiceHtml, wireTargetChoice, readTargetChoice, targetChoiceLabel } from "./target-choice.mjs";
+import { openCompendiumBrowser } from "./compendium-browser.mjs";
 
 const PACK = "warhammer-dbc.homeworlds";
 const FLAG = "warhammer-dbc";
@@ -95,11 +97,7 @@ export function needsIntBonusChoice(key) {
 export async function applyHomeworld(actor, key) {
   if (!isFeatureEnabled("homeworlds")) return;
 
-  if (key === "random") {
-    const roll = await new Roll(`1d${HOMEWORLDS.length}`).evaluate();
-    key = HOMEWORLDS[roll.total - 1].key;
-    ui.notifications?.info(`Происхождение брошено: ${HOMEWORLD_BY_KEY[key].label}.`);
-  }
+  if (key === "random") key = await rollRandomHomeworldKey();
 
   const hw = HOMEWORLD_BY_KEY[key];
   if (!key || !hw) { await clearHomeworld(actor); return; }
@@ -115,8 +113,41 @@ export async function applyHomeworld(actor, key) {
   await grantHomeworld(actor, hw, picks || {});
 }
 
-/** Диалог выборов мира: характеристика, пакеты, специализации, свободный текст. */
-function promptChoices(hw, actor) {
+/** Бросок «Выбрать случайно» — вынесено отдельно: Мастер создания сперва
+ *  бросает и узнаёт ключ, а уже потом решает, показывать ли строки выбора
+ *  инлайн или мир без выбора применить сразу (см. character-wizard.mjs). */
+export async function rollRandomHomeworldKey() {
+  const roll = await new Roll(`1d${HOMEWORLDS.length}`).evaluate();
+  const key = HOMEWORLDS[roll.total - 1].key;
+  ui.notifications?.info(`Происхождение брошено: ${HOMEWORLD_BY_KEY[key].label}.`);
+  return key;
+}
+
+/**
+ * То же самое, но с уже готовыми picks — не спрашивает Dialog'ом. Для
+ * Мастера создания: там выборы читаются прямо из формы шага (см.
+ * readHomeworldChoicePicks), а не из всплывающего окна.
+ * @param {Actor} actor
+ * @param {string} key    ключ мира (не "random" — тот резолвится раньше)
+ * @param {object} picks  форма из readHomeworldChoicePicks (или {})
+ */
+export async function applyHomeworldPicks(actor, key, picks) {
+  if (!isFeatureEnabled("homeworlds")) return;
+  const hw = HOMEWORLD_BY_KEY[key];
+  if (!key || !hw) { await clearHomeworld(actor); return; }
+  await clearHomeworld(actor);
+  await grantHomeworld(actor, hw, picks || {});
+}
+
+/**
+ * HTML всех блоков выбора мира: характеристика, пакеты, цель Таланта,
+ * специализации. Общее для диалога (дропдаун на листе персонажа, actor-
+ * sheet.mjs — там мир меняют не по шагам, окно уместно) и инлайн-показа в
+ * Мастере создания (character-wizard.mjs — тот же принцип, что уже был у
+ * выборов Расы/Архетипа/Стремлений: строки выбора видны прямо в форме шага,
+ * без всплывающего Dialog).
+ */
+export function homeworldChoiceBlocksHtml(hw, actor) {
   const intBonus = actor.system.characteristics?.int?.bonus ?? 0;
   const blocks = [];
 
@@ -138,11 +169,12 @@ function promptChoices(hw, actor) {
         <div class="hw-choice-hint">${esc(ch.hint || "")}</div>
         <select data-choice="${ch.key}">${opts}</select></div>`);
     }
-    else if (ch.type === "text") {
-      blocks.push(`<div class="hw-choice">
-        <div class="hw-choice-label">${esc(ch.label)}</div>
-        <div class="hw-choice-hint">${esc(ch.hint || "")}</div>
-        <input type="text" data-choice="${ch.key}" placeholder="${esc(ch.placeholder || "")}"/></div>`);
+    else if (ch.type === "target") {
+      // Против кого сработает Талант (Hatred/Good Reputation) — пикер
+      // вид+значение (rules/talent-targets.mjs), не свободный текст: строка
+      // не даёт targetMatches() ничего сопоставить, талант формально есть,
+      // но никогда не срабатывает.
+      blocks.push(targetChoiceHtml(ch));
     }
     else if (ch.type === "many") {
       // Число специализаций считается от Бонуса Интеллекта на момент выбора.
@@ -175,6 +207,80 @@ function promptChoices(hw, actor) {
     }
   }
 
+  return blocks.join("");
+}
+
+/** Открытие Обозревателя для цели-фракции — общее и диалогу, и инлайн-показу. */
+function openFactionTargetBrowser(prompt) {
+  return openCompendiumBrowser(false, { filters: { type: "faction" }, prompt });
+}
+
+/**
+ * Оживляет уже отрисованные блоки choicesHtml: живой счётчик «выбрано N/M»
+ * специализаций, пикер цели Таланта. `h` — jQuery-корень содержимого (у
+ * Dialog это аргумент render/ok, у Мастера создания — this.element).
+ */
+export function wireHomeworldChoiceBlocks(h, hw, state) {
+  // Строки перерисовываются заново при КАЖДОМ рендере Мастера (не только по
+  // ответу на них самих — соседняя Раса персонажа тоже зовёт render), а
+  // свежая HTML всегда начинается с первого пункта списка. Без восстановления
+  // ответ тихо терялся при любом несвязанном клике рядом (найдено живой
+  // проверкой на пикере цели — тот же приём здесь).
+  const snap = (state.formSnapshot ??= {});
+  if (hw.charChoice) {
+    const sel = h.find("#hw-charchoice");
+    if (snap.charChoice != null) sel.val(snap.charChoice);
+    sel.on("change", () => { snap.charChoice = sel.val(); });
+  }
+  h.find("select[data-choice]").each((_, el) => {
+    const $el = h.find(el), key = `one:${el.dataset.choice}`;
+    if (snap[key] != null) $el.val(snap[key]);
+    $el.on("change", () => { snap[key] = $el.val(); });
+  });
+  h.find("select.hw-many-sel").each((_, el) => {
+    const $el = h.find(el), g = el.dataset.many;
+    const idx = h.find(`select.hw-many-sel[data-many="${g}"]`).index(el);
+    const key = `many:${g}:${idx}`;
+    if (snap[key] != null) $el.val(snap[key]);
+    $el.on("change", () => { snap[key] = $el.val(); });
+  });
+  h.find("select.hw-many-sel").on("change", ev => {
+    const k = ev.currentTarget.dataset.many;
+    let n = 0;
+    h.find(`select.hw-many-sel[data-many="${k}"]`).each((_, el) => { if (el.value) n++; });
+    const box = h.find(`[data-count-for="${k}"]`);
+    const max = parseInt(box.text().split("/")[1]) || 0;
+    box.text(`Выбрано: ${n} / ${max}`);
+    box.toggleClass("hw-over", n > max);
+  }).trigger("change");  // счётчик сразу отражает восстановленные значения, не только новые клики
+  for (const ch of (hw.choices || []).filter(c => c.type === "target"))
+    wireTargetChoice(h, ch, state, openFactionTargetBrowser);
+}
+
+/** Читает ответы уже отрисованных блоков в форму picks, которую ждёт grantHomeworld. */
+export function readHomeworldChoicePicks(h, hw, state) {
+  const out = { charChoice: null, one: {}, target: {}, many: {} };
+  if (hw.charChoice) out.charChoice = parseInt(h.find("#hw-charchoice").val()) || 0;
+  h.find("select[data-choice]").each((_, el) => { out.one[el.dataset.choice] = parseInt(el.value) || 0; });
+  for (const ch of (hw.choices || []).filter(c => c.type === "target"))
+    out.target[ch.key] = readTargetChoice(h, ch, state);
+  h.find("select.hw-many-sel").each((_, el) => {
+    const val = String(el.value || "");
+    if (!val) return;
+    const k = el.dataset.many;
+    const sep = val.indexOf(":");
+    const group = val.slice(0, sep), specKey = val.slice(sep + 1);
+    const specDef = (SKILL_SPECIALIZATIONS[group] || []).find(s => s.key === specKey);
+    (out.many[k] ||= []).push({ group, specialty: specDef?.ru || specDef?.label || specKey });
+  });
+  return out;
+}
+
+/** Диалог выборов мира — используется дропдауном на листе персонажа (actor-sheet.mjs); Мастер создания выборы показывает инлайн, см. homeworldChoiceBlocksHtml выше. */
+function promptChoices(hw, actor) {
+  const blocksHtml = homeworldChoiceBlocksHtml(hw, actor);
+  const state = { factionTargets: {} };
+
   return new Promise(resolve => {
     let done = false;
     new Dialog({
@@ -182,41 +288,17 @@ function promptChoices(hw, actor) {
       content: `<form class="hw-choice-form">
         <div class="hw-choice-head">${esc(hw.feature.name)}</div>
         <div class="hw-choice-desc">${esc(hw.feature.desc)}</div>
-        ${blocks.join("")}
+        ${blocksHtml}
       </form>`,
       buttons: {
         ok: { icon: '<i class="fas fa-check"></i>', label: "Принять", callback: h => {
           if (done) return; done = true;
-          const out = { charChoice: null, one: {}, text: {}, many: {} };
-          if (hw.charChoice) out.charChoice = parseInt(h.find("#hw-charchoice").val()) || 0;
-          h.find("select[data-choice]").each((_, el) => { out.one[el.dataset.choice] = parseInt(el.value) || 0; });
-          h.find("input[data-choice]").each((_, el) => { out.text[el.dataset.choice] = String(el.value || "").trim(); });
-          h.find("select.hw-many-sel").each((_, el) => {
-            const val = String(el.value || "");
-            if (!val) return;
-            const k = el.dataset.many;
-            const sep = val.indexOf(":");
-            const group = val.slice(0, sep), specKey = val.slice(sep + 1);
-            const specDef = (SKILL_SPECIALIZATIONS[group] || []).find(s => s.key === specKey);
-            (out.many[k] ||= []).push({ group, specialty: specDef?.ru || specDef?.label || specKey });
-          });
-          resolve(out);
+          resolve(readHomeworldChoicePicks(h, hw, state));
         }},
         cancel: { label: "Отмена", callback: () => { if (!done) { done = true; resolve(null); } } }
       },
       default: "ok",
-      render: h => {
-        // Живой счётчик для «выберите N специализаций».
-        h.find("select.hw-many-sel").on("change", ev => {
-          const k = ev.currentTarget.dataset.many;
-          let n = 0;
-          h.find(`select.hw-many-sel[data-many="${k}"]`).each((_, el) => { if (el.value) n++; });
-          const box = h.find(`[data-count-for="${k}"]`);
-          const max = parseInt(box.text().split("/")[1]) || 0;
-          box.text(`Выбрано: ${n} / ${max}`);
-          box.toggleClass("hw-over", n > max);
-        });
-      },
+      render: h => wireHomeworldChoiceBlocks(h, hw, state),
       close: () => { if (!done) { done = true; resolve(null); } }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "hw-choice-dialog"], width: 480 }).render(true);
   });
@@ -236,9 +318,12 @@ async function grantHomeworld(actor, hw, picks) {
     }
   }
 
-  // Пакеты выбора (type: "one") и свободный текст (type: "text").
+  // Пакеты выбора (type: "one") и цель Таланта (type: "target").
   const grants = { skills: [], groupSkills: [], talents: [], traits: [],
                    wounds: 0, corruptionRoll: null, ...cloneGrants(hw.grants) };
+  // Имя → цель (rules/talent-targets.mjs) для buildTalents ниже — тот же
+  // приём, что и в origin-shared.mjs applyGrants (см. комментарий там).
+  const talentTargets = {};
 
   for (const ch of (hw.choices || [])) {
     if (ch.type === "one") {
@@ -248,11 +333,16 @@ async function grantHomeworld(actor, hw, picks) {
       mergeGrants(grants, o.grants);
       for (const [stat, value] of Object.entries(o.grants?.chars || {})) charBonuses.push({ stat, value });
     }
-    else if (ch.type === "text") {
-      const v = picks.text?.[ch.key] || "";
+    else if (ch.type === "target") {
+      const v = picks.target?.[ch.key];
       if (!v) continue;
-      chosenLabels[ch.label] = v;
-      if (ch.talentTemplate) grants.talents.push(ch.talentTemplate.replace("{v}", v));
+      const label = targetChoiceLabel(v);
+      chosenLabels[ch.label] = label;
+      if (ch.talentTemplate) {
+        const name = ch.talentTemplate.replace("{v}", label);
+        grants.talents.push(name);
+        talentTargets[name] = v;
+      }
     }
     else if (ch.type === "many") {
       const list = picks.many?.[ch.key] || [];
@@ -298,7 +388,7 @@ async function grantHomeworld(actor, hw, picks) {
   if (grants.traits.length) created.push(...await buildTraits(grants.traits, hw.label, worldItem));
 
   // ── Таланты: тянем описание из библиотеки по английской части имени ──
-  if (grants.talents.length) created.push(...await buildTalents(grants.talents, hw.label, worldItem));
+  if (grants.talents.length) created.push(...await buildTalents(grants.talents, hw.label, worldItem, talentTargets));
 
   if (created.length) await actor.createEmbeddedDocuments("Item", created);
 
@@ -369,8 +459,14 @@ function mergeGrants(base, add) {
   if (add.corruptionRoll) base.corruptionRoll = add.corruptionRoll;
 }
 
-/** Таланты по именам: описание из компендиума, скобки — в специализацию. */
-async function buildTalents(names, worldLabel, worldItem) {
+/**
+ * Таланты по именам: описание из компендиума, скобки — в специализацию.
+ * @param {object} [targetsByName]  имя → цель (rules/talent-targets.mjs) из
+ *   пикера вида+значения (choices[].type "target") — пишется в
+ *   system.targets, чтобы targetMatches() реально находил цель, а не только
+ *   показывал её в скобках имени.
+ */
+async function buildTalents(names, worldLabel, worldItem, targetsByName = {}) {
   let lib = [];
   try {
     const pack = game.packs.get("warhammer-dbc.talents");
@@ -390,6 +486,8 @@ async function buildTalents(names, worldLabel, worldItem) {
     data.name = src ? src.name : full;
     data.system = { ...(data.system || {}), specialization: spec,
                     source: `${HOMEWORLD_SOURCE} — ${worldLabel}` };
+    const target = targetsByName[full];
+    if (target) data.system.targets = [target];
     data.flags = { ...(data.flags || {}), [FLAG]: { [GRANT]: TAG, grantedByItem: worldItem?.id } };
     return data;
   });

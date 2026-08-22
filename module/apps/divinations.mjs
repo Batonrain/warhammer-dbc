@@ -65,11 +65,9 @@ export async function applyDivination(actor, key) {
 
   let rolled = null;
   if (key === "random") {
-    rolled = await new Roll("1d100").evaluate();
-    const d = divinationByRoll(rolled.total);
-    if (!d) return;
-    key = d.key;
-    ui.notifications?.info(`Предсказание (к100 = ${rolled.total}): ${d.text}.`);
+    const r = await rollRandomDivinationKey();
+    if (!r) return;
+    key = r.key; rolled = r.rolled;
   }
 
   if (!key) { await clearDivination(actor); return; }
@@ -89,6 +87,36 @@ export async function applyDivination(actor, key) {
     if (picks === null) return;                       // окно закрыли — ничего не меняем
   }
 
+  await clearDivination(actor);
+  await grantDivination(actor, key, def, entry, picks || {}, rolled);
+}
+
+/** Бросок «Бросить к100» — вынесено отдельно: Мастер создания сперва
+ *  бросает и узнаёт ключ, а уже потом решает, показывать ли строки выбора
+ *  инлайн (см. character-wizard.mjs). */
+export async function rollRandomDivinationKey() {
+  const rolled = await new Roll("1d100").evaluate();
+  const d = divinationByRoll(rolled.total);
+  if (!d) return null;
+  ui.notifications?.info(`Предсказание (к100 = ${rolled.total}): ${d.text}.`);
+  return { key: d.key, rolled };
+}
+
+/**
+ * То же самое, но с уже готовыми picks — не спрашивает Dialog'ом. Для
+ * Мастера создания: строки выбора читаются прямо из формы шага (см.
+ * origin-shared.mjs readGrantChoicePicks), а не из всплывающего окна.
+ * @param {Actor} actor
+ * @param {string} key      ключ предсказания (не "random" — тот резолвится раньше)
+ * @param {object} picks    форма из readGrantChoicePicks (или {})
+ * @param {Roll}   [rolled] бросок к100 — для карточки в чат, если ключ пришёл со «Случайно»
+ */
+export async function applyDivinationPicks(actor, key, picks, rolled = null) {
+  if (!isFeatureEnabled("divinations")) return;
+  if (!key) { await clearDivination(actor); return; }
+  const entry = packEntries(DIVINATION_TAG, () => []).find(e => e.key === key);
+  const def   = DIVINATION_BY_KEY[key];
+  if (!def && !entry) return;
   await clearDivination(actor);
   await grantDivination(actor, key, def, entry, picks || {}, rolled);
 }

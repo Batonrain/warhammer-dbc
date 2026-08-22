@@ -980,8 +980,13 @@ async function resolveEntrySpecChoice(entry) {
   return list.map(c => ({ ...entry, specKey: c.key, specialty: c.display }));
 }
 
-/** Применяет одну запись механики: создаёт ActiveEffect/предмет, правит навык, либо исполняет код. */
-async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, applied = new Set()) {
+/**
+ * Применяет одну запись механики: создаёт ActiveEffect/предмет, правит навык,
+ * либо исполняет код. `preAsked` — результат resolveEntrySpecChoice, уже
+ * полученный ЗАРАНЕЕ через resolveDirectAsk (Promise.all соседей в
+ * applyGroupEntries) — если задан, повторно диалог/коллектор не зовём.
+ */
+async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, applied = new Set(), preAsked = null) {
   // Подгруппа — не запись, а узел И/ИЛИ: отыгрываются её листья, отметку
   // получают тоже они.
   if (entry.kind === "group") {
@@ -1003,7 +1008,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
   applied.add(entry.id);
 
   if (entry.kind === "skill" || entry.kind === "rollmod") {
-    const resolved = await resolveEntrySpecChoice(entry);
+    const resolved = preAsked ?? await resolveEntrySpecChoice(entry);
     if (!resolved.length) return;
     // «Любые N» разворачиваются в N записей с уже выбранными специализациями.
     // Отметку о применении несёт каждая своя — иначе вторая и третья сочлись бы
@@ -1124,11 +1129,18 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
         xpCost: budget.mode === BUDGET_XP ? (it => pickXPCost(actor, it)) : null
       });
       if (!picked) return;
-      // Бюджет больше одной штуки — Обозреватель отдаёт список.
+      // Бюджет больше одной штуки — Обозреватель отдаёт список. Расходуемые
+      // типы (гранаты, боеприпасы — STACKABLE_TYPES в compendium-browser.mjs)
+      // можно взять по нескольку одного и того же — тот же uuid встречается в
+      // списке несколько раз подряд. Схлопываем в count ДО раздачи: иначе
+      // вторая и третья одинаковая запись получили бы тот же составной id
+      // (`${entry.id}:${u}`) и applied.has() тихо съел бы их как «уже применено».
       const list = Array.isArray(picked) ? picked : [picked];
       if (list.length > 1) {
-        for (const u of list) {
-          await applyMechEntry(actor, { ...entry, equipMode: "direct", equipSourceUuid: u, equipQty: 1,
+        const counts = new Map();
+        for (const u of list) counts.set(u, (counts.get(u) || 0) + 1);
+        for (const [u, qty] of counts) {
+          await applyMechEntry(actor, { ...entry, equipMode: "direct", equipSourceUuid: u, equipQty: qty,
                                         id: `${entry.id}:${u}` }, sourceItem, fromChoice, applied);
         }
         return;
@@ -1692,39 +1704,59 @@ async function applyGroupEntries(actor, group, sourceItem, applied) {
     const chosen = await showMechChoiceDialog(sourceItem, entries);
     if (chosen) await applyMechEntry(actor, chosen, sourceItem, true, applied);
   } else {
-    // Опрос вложенных ИЛИ-подгрупп (showMechChoiceDialog) сам по себе ничего
-    // не пишет в актора — запись происходит только внутри applyMechEntry,
-    // ПОСЛЕ ответа. Поэтому вопросы для соседних вложенных ИЛИ-подгрупп этой
-    // И-группы можно задать ОДНОВРЕМЕННО (в Мастере создания коллектор
-    // получает все строки выбора сразу, а не одну за другой) — а сама
-    // ЗАПИСЬ в актора всё равно идёт строго по одной, в неизменном исходном
-    // порядке ниже. Порядок применения (и то, от чего зависят «Когда» и
-    // общие поля вроде Порчи/Ран) не меняется — меняется только момент, в
-    // который задаётся вопрос, а не момент записи.
-    const picks = await Promise.all(entries.map(e => resolveDirectOrGroup(e, applied, sourceItem)));
+    // Опрос вложенных ИЛИ-подгрупп (showMechChoiceDialog) и прямых записей
+    // spec-выбора (showSpecChoiceDialog — «Общие знания», «Учёные знания» и
+    // т.п., specKey:"__choice__") сам по себе ничего не пишет в актора —
+    // запись происходит только внутри applyMechEntry, ПОСЛЕ ответа. Поэтому
+    // вопросы для СОСЕДНИХ записей этой И-группы можно задать ОДНОВРЕМЕННО
+    // (в Мастере создания коллектор получает все строки выбора сразу, а не
+    // одну за другой — иначе Расы с несколькими spec-выборами всплывали по
+    // одной строке за клик «Далее», в отличие от Архетипов с ИЛИ-подгруппами,
+    // см. wdbc-2ot) — а сама ЗАПИСЬ в актора всё равно идёт строго по одной,
+    // в неизменном исходном порядке ниже. Порядок применения (и то, от чего
+    // зависят «Когда» и общие поля вроде Порчи/Ран) не меняется — меняется
+    // только момент, в который задаётся вопрос, а не момент записи.
+    const picks = await Promise.all(entries.map(e => resolveDirectAsk(e, applied, sourceItem, actor)));
     for (let i = 0; i < entries.length; i++) {
       const pick = picks[i];
-      if (pick) { if (pick.chosen) await applyMechEntry(actor, pick.chosen, sourceItem, true, applied); }
-      else await applyMechEntry(actor, entries[i], sourceItem, false, applied);
+      const entry = entries[i];
+      if (pick?.type === "or") {
+        if (pick.chosen) await applyMechEntry(actor, pick.chosen, sourceItem, true, applied);
+      } else if (pick?.type === "spec") {
+        await applyMechEntry(actor, entry, sourceItem, false, applied, pick.resolved);
+      } else {
+        await applyMechEntry(actor, entry, sourceItem, false, applied);
+      }
     }
   }
 }
 
 /**
- * Если запись — прямая вложенная ИЛИ-подгруппа (>1 незавершённой альтернативы,
- * ещё не отвеченная), заранее спрашивает выбор БЕЗ применения — вызывается
+ * Прямая запись, чей опрос можно задать заранее, БЕЗ применения — вызывается
  * для всех соседей одной И-группы одновременно (Promise.all в
  * applyGroupEntries), чтобы все их вопросы дошли до коллектора Мастера
- * разом, а не по очереди. Для любой другой записи (включая уже отвеченную
- * ИЛИ-подгруппу или не-ИЛИ-подгруппу) возвращает undefined — применяющий
- * цикл в applyGroupEntries обрабатывает её как раньше, через applyMechEntry.
+ * разом, а не по очереди. Две формы:
+ *   - вложенная ИЛИ-подгруппа (>1 незавершённой альтернативы, ещё не
+ *     отвеченная) — showMechChoiceDialog;
+ *   - прямая запись kind:"skill"/"rollmod" со specKey:"__choice__" — то же
+ *     самое resolveEntrySpecChoice, что applyMechEntry звал бы сама, просто
+ *     раньше по времени.
+ * Для любой другой записи (включая уже отвеченную/не подходящую по «Когда»)
+ * возвращает undefined — применяющий цикл в applyGroupEntries обрабатывает
+ * её как раньше, через applyMechEntry.
  */
-async function resolveDirectOrGroup(entry, applied, sourceItem) {
-  if (entry.kind !== "group") return undefined;
-  const subEntries = (entry.group?.entries || []).filter(isEntryComplete);
-  if (entry.group?.operator !== "OR" || subEntries.length <= 1) return undefined;
-  if (subEntries.some(e => applied.has(e.id))) return undefined;
-  return { chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };
+async function resolveDirectAsk(entry, applied, sourceItem, actor) {
+  if (entry.kind === "group") {
+    const subEntries = (entry.group?.entries || []).filter(isEntryComplete);
+    if (entry.group?.operator !== "OR" || subEntries.length <= 1) return undefined;
+    if (subEntries.some(e => applied.has(e.id))) return undefined;
+    return { type: "or", chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };
+  }
+  if ((entry.kind === "skill" || entry.kind === "rollmod") && entry.specKey === "__choice__"
+      && !applied.has(entry.id) && entryWhenOk(actor, entry)) {
+    return { type: "spec", resolved: await resolveEntrySpecChoice(entry) };
+  }
+  return undefined;
 }
 
 /**

@@ -12,6 +12,8 @@ import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { matchSpec } from "../constants/skill-specializations.mjs";
 import { blankMechEntry } from "./mechanics.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { targetChoiceHtml, wireTargetChoice, readTargetChoice, targetChoiceLabel } from "./target-choice.mjs";
+import { openCompendiumBrowser } from "./compendium-browser.mjs";
 
 const FLAG = "warhammer-dbc";
 const GRANT = "originGrant";           // помечает всё выданное (для отката)
@@ -86,10 +88,14 @@ export function initPackCaches() {
 // ── Диалог выборов ───────────────────────────────────────────────────────
 
 /**
- * Спрашивает про все выборы разом.
- * @returns {Promise<object|null>} null — окно закрыли, менять ничего не нужно
+ * HTML всех блоков выбора (характеристика/пакеты/цель Таланта/специализации)
+ * — общее для диалога (дропдаун Предсказания на листе персонажа, actor-
+ * sheet.mjs — мир там меняют не по шагам, окно уместно) и инлайн-показа в
+ * Мастере создания (character-wizard.mjs, тот же принцип, что уже был у
+ * выборов Расы/Архетипа/Стремлений/Родного мира — строки видны прямо в
+ * форме шага, без всплывающего Dialog).
  */
-export function promptGrantChoices({ title, head, desc, charChoices = [], choices = [], actor }) {
+export function grantChoiceBlocksHtml({ charChoices = [], choices = [], actor }) {
   const intBonus = actor?.system?.characteristics?.int?.bonus ?? 0;
   const blocks = [];
 
@@ -109,11 +115,12 @@ export function promptGrantChoices({ title, head, desc, charChoices = [], choice
         <div class="hw-choice-label">${esc(ch.label)}</div>
         <div class="hw-choice-hint">${esc(ch.hint || "")}</div>
         <select data-choice="${ch.key}">${opts}</select></div>`);
-    } else if (ch.type === "text") {
-      blocks.push(`<div class="hw-choice">
-        <div class="hw-choice-label">${esc(ch.label)}</div>
-        <div class="hw-choice-hint">${esc(ch.hint || "")}</div>
-        <input type="text" data-choice="${ch.key}" placeholder="${esc(ch.placeholder || "")}"/></div>`);
+    } else if (ch.type === "target") {
+      // Против кого сработает Талант (Hatred/Peer/Good Reputation) — пикер
+      // вид+значение (rules/talent-targets.mjs), а не свободный текст: строка
+      // не даёт targetMatches() ничего сопоставить, и талант формально есть,
+      // но никогда не срабатывает (wdbc-a4l, разбор игрока).
+      blocks.push(targetChoiceHtml(ch));
     } else if (ch.type === "many") {
       const count = ch.countFormula === "intBonus2" ? intBonus * 2 : (ch.count || 0);
       const rows = (ch.groups || []).map(g =>
@@ -127,6 +134,77 @@ export function promptGrantChoices({ title, head, desc, charChoices = [], choice
     }
   }
 
+  return blocks.join("");
+}
+
+function openFactionTargetBrowser(prompt) {
+  return openCompendiumBrowser(false, { filters: { type: "faction" }, prompt });
+}
+
+/**
+ * Оживляет уже отрисованные блоки: живой счётчик специализаций, пикер цели
+ * Таланта. `h` — jQuery-корень содержимого (у Dialog — аргумент render/ok,
+ * у Мастера создания — this.element).
+ */
+export function wireGrantChoiceBlocks(h, { choices = [] }, state) {
+  // Строки перерисовываются заново при КАЖДОМ рендере Мастера (не только по
+  // ответу на них самих), а свежая HTML всегда начинается с пустых полей.
+  // Без восстановления ответ тихо терялся при любом несвязанном клике рядом
+  // (найдено живой проверкой на пикере цели — тот же приём здесь).
+  const snap = (state.formSnapshot ??= {});
+  h.find("select[data-charchoice]").each((_, el) => {
+    const $el = h.find(el), key = `charChoice:${el.dataset.charchoice}`;
+    if (snap[key] != null) $el.val(snap[key]);
+    $el.on("change", () => { snap[key] = $el.val(); });
+  });
+  h.find("select[data-choice]").each((_, el) => {
+    const $el = h.find(el), key = `one:${el.dataset.choice}`;
+    if (snap[key] != null) $el.val(snap[key]);
+    $el.on("change", () => { snap[key] = $el.val(); });
+  });
+  h.find("input[data-many]").each((_, el) => {
+    const $el = h.find(el), key = `many:${el.dataset.many}:${el.dataset.group}`;
+    if (snap[key] != null) $el.val(snap[key]);
+    $el.on("input", () => { snap[key] = $el.val(); });
+  });
+  h.find("input[data-many]").on("input", ev => {
+    const k = ev.currentTarget.dataset.many;
+    let n = 0;
+    h.find(`input[data-many="${k}"]`).each((_, el) =>
+      { n += String(el.value || "").split(",").map(s => s.trim()).filter(Boolean).length; });
+    const box = h.find(`[data-count-for="${k}"]`);
+    const max = parseInt(box.text().split("/")[1]) || 0;
+    box.text(`Выбрано: ${n} / ${max}`);
+    box.toggleClass("hw-over", n > max);
+  }).trigger("input");  // счётчик сразу отражает восстановленные значения, не только новый ввод
+  for (const ch of choices.filter(c => c.type === "target")) wireTargetChoice(h, ch, state, openFactionTargetBrowser);
+}
+
+/** Читает ответы уже отрисованных блоков в форму picks, которую ждёт applyGrants. */
+export function readGrantChoicePicks(h, { choices = [] }, state) {
+  const out = { charChoices: [], one: {}, target: {}, many: {} };
+  h.find("select[data-charchoice]").each((_, el) =>
+    { out.charChoices[parseInt(el.dataset.charchoice)] = parseInt(el.value) || 0; });
+  h.find("select[data-choice]").each((_, el) => { out.one[el.dataset.choice] = parseInt(el.value) || 0; });
+  for (const ch of choices.filter(c => c.type === "target")) out.target[ch.key] = readTargetChoice(h, ch, state);
+  h.find("input[data-many]").each((_, el) => {
+    (out.many[el.dataset.many] ||= []).push(...String(el.value || "").split(",")
+      .map(s => s.trim()).filter(Boolean).map(s => ({ group: el.dataset.group, specialty: s })));
+  });
+  return out;
+}
+
+/**
+ * Диалог выборов — используется дропдауном Предсказания на листе персонажа
+ * (actor-sheet.mjs); Мастер создания выборы показывает инлайн, см.
+ * grantChoiceBlocksHtml выше.
+ * @returns {Promise<object|null>} null — окно закрыли, менять ничего не нужно
+ */
+export function promptGrantChoices({ title, head, desc, charChoices = [], choices = [], actor }) {
+  const blocksHtml = grantChoiceBlocksHtml({ charChoices, choices, actor });
+  const state = { factionTargets: {} };
+  const shape = { choices };
+
   return new Promise(resolve => {
     let done = false;
     new Dialog({
@@ -134,37 +212,17 @@ export function promptGrantChoices({ title, head, desc, charChoices = [], choice
       content: `<form class="hw-choice-form">
         <div class="hw-choice-head">${esc(head)}</div>
         <div class="hw-choice-desc">${esc(desc)}</div>
-        ${blocks.join("")}
+        ${blocksHtml}
       </form>`,
       buttons: {
         ok: { icon: '<i class="fas fa-check"></i>', label: "Принять", callback: h => {
           if (done) return; done = true;
-          const out = { charChoices: [], one: {}, text: {}, many: {} };
-          h.find("select[data-charchoice]").each((_, el) =>
-            { out.charChoices[parseInt(el.dataset.charchoice)] = parseInt(el.value) || 0; });
-          h.find("select[data-choice]").each((_, el) => { out.one[el.dataset.choice] = parseInt(el.value) || 0; });
-          h.find("input[data-choice]").each((_, el) => { out.text[el.dataset.choice] = String(el.value || "").trim(); });
-          h.find("input[data-many]").each((_, el) => {
-            (out.many[el.dataset.many] ||= []).push(...String(el.value || "").split(",")
-              .map(s => s.trim()).filter(Boolean).map(s => ({ group: el.dataset.group, specialty: s })));
-          });
-          resolve(out);
+          resolve(readGrantChoicePicks(h, shape, state));
         }},
         cancel: { label: "Отмена", callback: () => { if (!done) { done = true; resolve(null); } } }
       },
       default: "ok",
-      render: h => {
-        h.find("input[data-many]").on("input", ev => {
-          const k = ev.currentTarget.dataset.many;
-          let n = 0;
-          h.find(`input[data-many="${k}"]`).each((_, el) =>
-            { n += String(el.value || "").split(",").map(s => s.trim()).filter(Boolean).length; });
-          const box = h.find(`[data-count-for="${k}"]`);
-          const max = parseInt(box.text().split("/")[1]) || 0;
-          box.text(`Выбрано: ${n} / ${max}`);
-          box.toggleClass("hw-over", n > max);
-        });
-      },
+      render: h => wireGrantChoiceBlocks(h, shape, state),
       close: () => { if (!done) { done = true; resolve(null); } }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "hw-choice-dialog"], width: 480 }).render(true);
   });
@@ -189,6 +247,11 @@ export async function applyGrants(actor, { def, picks = {}, tag, owner, sourceLa
     corruption: def.grants?.corruption || 0,
     corruptionRoll: def.grants?.corruptionRoll || null
   };
+  // Цель Таланта (Hatred/Peer/Good Reputation) из пикера вида+значения —
+  // g.talents остаётся плоским списком строк (имя показывается в сводке),
+  // а структурная запись system.targets для конкретного имени лежит здесь
+  // отдельно и подхватывается buildTalents ниже.
+  const talentTargets = {};
 
   // Выборы, которые сами что-то выдают.
   for (const ch of (def.choices || [])) {
@@ -200,9 +263,13 @@ export async function applyGrants(actor, { def, picks = {}, tag, owner, sourceLa
       g.talents.push(...(o.grants.talents || []));
       g.traits.push(...(o.grants.traits || []));
       if (o.grants.wounds) g.wounds += o.grants.wounds;
-    } else if (ch.type === "text") {
-      const v = picks.text?.[ch.key] || "";
-      if (v && ch.talentTemplate) g.talents.push(ch.talentTemplate.replace("{v}", v));
+    } else if (ch.type === "target") {
+      const v = picks.target?.[ch.key];
+      if (v && ch.talentTemplate) {
+        const name = ch.talentTemplate.replace("{v}", targetChoiceLabel(v));
+        g.talents.push(name);
+        talentTargets[name] = v;
+      }
     }
   }
 
@@ -222,7 +289,7 @@ export async function applyGrants(actor, { def, picks = {}, tag, owner, sourceLa
       flags: { [FLAG]: { [GRANT]: tag, grantedByItem: owner?.id } }
     });
   }
-  if (g.talents.length) created.push(...await buildTalents(g.talents, sourceLabel, tag, owner));
+  if (g.talents.length) created.push(...await buildTalents(g.talents, sourceLabel, tag, owner, talentTargets));
   if (created.length) await actor.createEmbeddedDocuments("Item", created);
 
   const update = {};
@@ -305,8 +372,14 @@ export async function clearGrantedBy(actor, tag, ownerItem) {
   if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
 }
 
-/** Таланты по именам: описание из библиотеки, скобки — в специализацию. */
-async function buildTalents(names, sourceLabel, tag, owner) {
+/**
+ * Таланты по именам: описание из библиотеки, скобки — в специализацию.
+ * @param {object} [targetsByName]  имя → цель (rules/talent-targets.mjs) из
+ *   пикера вида+значения (choices[].type "target") — пишется в
+ *   system.targets, чтобы targetMatches() реально находил цель Ненависти/
+ *   Связей/Доброго Имени, а не только показывал её в скобках имени.
+ */
+async function buildTalents(names, sourceLabel, tag, owner, targetsByName = {}) {
   let lib = [];
   try {
     const pack = game.packs.get("warhammer-dbc.talents");
@@ -323,6 +396,8 @@ async function buildTalents(names, sourceLabel, tag, owner) {
     const data = src ? src.toObject() : { name: full, type: "talent", system: {} };
     delete data._id;
     data.system = { ...(data.system || {}), specialization: spec, source: sourceLabel };
+    const target = targetsByName[full];
+    if (target) data.system.targets = [target];
     data.flags  = { ...(data.flags || {}), [FLAG]: { [GRANT]: tag, grantedByItem: owner?.id } };
     return data;
   });
