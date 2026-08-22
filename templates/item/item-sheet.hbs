@@ -135,8 +135,8 @@
 
     <div class="item-section">
       <div class="item-section-title">ОПИСАНИЕ</div>
-      <textarea name="system.description" class="item-textarea"
-                placeholder="Описание...">{{system.description}}</textarea>
+      <prose-mirror name="system.description" class="item-textarea" toggled
+                    value="{{system.description}}">{{{descriptionEnriched}}}</prose-mirror>
     </div>
 
   </div>
@@ -224,8 +224,8 @@
   <div class="tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="item-primary">
     <div class="item-section">
       <div class="item-section-title">ЗАМЕТКИ</div>
-      <textarea name="system.notes" class="item-textarea item-textarea-tall"
-                placeholder="Заметки...">{{system.notes}}</textarea>
+      <prose-mirror name="system.notes" class="item-textarea item-textarea-tall" toggled
+                    value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror>
     </div>
   </div>
 

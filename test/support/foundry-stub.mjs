@@ -82,6 +82,10 @@ class StringFieldStub extends DataFieldStub {
   cast(value) { return String(value); }
 }
 
+// Как у настоящего Foundry (common/data/fields.mjs): HTMLField — просто
+// StringField с другим полем ввода на листе (prose-mirror вместо textarea).
+class HTMLFieldStub extends StringFieldStub {}
+
 class NumberFieldStub extends DataFieldStub {
   // `?? 0` здесь нельзя: у nullable-поля умолчание null — осмысленное значение,
   // и оно означает «поля нет». Так отличают щит от прочего оружия
@@ -205,7 +209,11 @@ globalThis.foundry = {
           captured.rerender = form => { self.form = form; config.render?.(null, self); };
           captured.press = async (action, form) => {
             const btn = config.buttons.find(b => b.action === action);
-            captured.settle(await btn.callback?.(null, { form }, self) ?? null);
+            // Как настоящий DialogV2 (scripts/foundry.mjs, #_onSubmit):
+            // `(await callback(...)) ?? button.action`. Не `?? null` — иначе
+            // заглушка мягче живого Foundry и не ловит кнопки, чей callback
+            // возвращает null (результатом там становится строка-action).
+            captured.settle(await btn.callback?.(null, { form }, self) ?? btn.action ?? null);
           };
           return new Promise(resolve => {
             captured.settle = resolve;
@@ -215,7 +223,12 @@ globalThis.foundry = {
       }
     },
     sheets: { ActorSheetV2: ApplicationStub, ItemSheetV2: ApplicationStub,
-              DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub }
+              DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub },
+    ux: {
+      // Тестам содержимое не важно — только что вызов не падает и возвращает
+      // строку (её кладут в контекст листа как notesEnriched и т.п.).
+      TextEditor: { implementation: { enrichHTML: async html => String(html ?? "") } }
+    }
   },
   utils: {
     mergeObject: (a, b) => ({ ...a, ...b }),
@@ -233,6 +246,7 @@ globalThis.foundry = {
   data: {
     fields: {
       StringField:  StringFieldStub,
+      HTMLField:    HTMLFieldStub,
       NumberField:  NumberFieldStub,
       BooleanField: BooleanFieldStub,
       ObjectField:  ObjectFieldStub,

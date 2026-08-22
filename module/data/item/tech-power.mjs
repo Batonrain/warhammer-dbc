@@ -15,12 +15,12 @@ export class TechPowerData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
     const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
     const list = label => new ArrayField(new ObjectField(), { label });
     return {
-      description:   new StringField({ initial: "", label: "Описание" }),
-      notes:         new StringField({ initial: "", label: "Заметки" }),
+      description:   new HTMLField({ initial: "", label: "Описание" }),
+      notes:         new HTMLField({ initial: "", label: "Заметки" }),
       discipline:    new StringField({ initial: "", label: "Дисциплина" }),
       subtype:       new StringField({ initial: "", label: "Подтип" }),
       miracleType:   new StringField({ initial: "imperative", label: "Тип чуда" }),

@@ -378,6 +378,8 @@
   background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
   padding: 6px 8px; font-family: inherit; font-size: 0.86em; line-height: 1.5; color: var(--wh-text);
 }
+.warhammer-dbc prose-mirror.sq-textarea .editor-content { padding: 0; }
+.warhammer-dbc prose-mirror.sq-textarea button.toggle:enabled { display: block; }
 
 /* ══════════════ ДИАЛОГИ КОМАНД ══════════════ */
 

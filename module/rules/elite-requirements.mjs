@@ -32,6 +32,7 @@
 import { WARP_GODS } from "../constants/veil.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
+import { specCovers, matchSpec } from "../constants/skill-specializations.mjs";
 
 /** Покровительства для выбора: боги Варпа плюс «любое». */
 export const PATRON_ANY = "any";
@@ -125,7 +126,15 @@ function skillOk(entry, who) {
 
   const list = (who.groupSkills?.[entry.skillKey] || []).filter(e => rankIdx(e.rank) >= want);
   if (entry.specKey) {
-    return list.some(e => e.specKey === entry.specKey || e.specialty === entry.specKey);
+    // entry.specKey в требованиях Элитных архетипов пишут и ключом
+    // («daemons»), и текстом («Демоны») — matchSpec понимает оба, отсюда и
+    // canonical-ключ для сверки с combines.
+    // Совмещённая запись («Варп, Демоны и Псайкеры» и т.п., см. specCovers)
+    // закрывает требование по любой из объединённых специализаций — тем же
+    // рангом, что и она сама.
+    const wantDef = matchSpec(entry.skillKey, entry.specKey);
+    return list.some(e => e.specKey === entry.specKey || e.specialty === entry.specKey
+      || (wantDef && specCovers(entry.skillKey, e.specKey, wantDef.key)));
   }
   // «Любые N специализаций этой группы» — считаем разные, а не повторы одной.
   return new Set(list.map(e => e.specKey || e.specialty)).size >= wantCount(entry);

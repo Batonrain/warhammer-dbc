@@ -8,10 +8,10 @@ export class MentalDisorderData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, NumberField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField } = foundry.data.fields;
     return {
-      description: new StringField({ initial: "", label: "Описание" }),
-      notes:       new StringField({ initial: "", label: "Заметки" }),
+      description: new HTMLField({ initial: "", label: "Описание" }),
+      notes:       new HTMLField({ initial: "", label: "Заметки" }),
       // Лист рисуется talent.hbs, где строка «Источник» есть давно; без поля
       // в схеме Foundry молча выбрасывал введённое (wdbc-fl3).
       bookSource:  new StringField({ initial: "", label: "Книга-источник" }),

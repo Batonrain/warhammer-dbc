@@ -256,7 +256,7 @@ export class VeilMystic extends Application {
     const opts = (cur) => skills.map(s => ({ value: s.value, label: s.label, selected: s.value === cur }));
 
     return {
-      ships, shipName: ship?.name || "", hasNav: !!nav,
+      ships, shipId: J.shipId, shipName: ship?.name || "", hasNav: !!nav,
       gellar: J.gellar, occulum: J.occulum, warpEngineDmg: J.warpEngineDmg, emergency: J.emergency,
       entryLoc: J.entryLoc, entryLocations: ENTRY_LOCATIONS.map(l => ({ ...l, selected: l.key === J.entryLoc })),
       stability: J.stability, stabilityMult: J.stabilityMult,

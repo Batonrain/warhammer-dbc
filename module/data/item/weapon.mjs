@@ -17,12 +17,12 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
     const list = label => new ArrayField(new ObjectField(), { label });
     return {
-      description:  new StringField({ initial: "", label: "Описание" }),
-      notes:        new StringField({ initial: "", label: "Заметки" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       infoguard:    infoguardField(),
       rangeBands:   list("Полосы дальности"),
       // Второй профиль: ключи те же, что у основного, но набор задаёт предмет.
@@ -58,6 +58,10 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       quality:      new StringField({ initial: "common", label: "Качество" }),
       availability: num(0, "Доступность"),
       weight:       num(0, "Вес"),
+      // Расходное оружие (гранаты и т.п.) — тот же приём, что у Снаряжения/
+      // Боеприпасов (data/item/gear.mjs, ammo.mjs): несколько одинаковых
+      // предметов лежат ОДНОЙ записью с числом, а не N раздельными.
+      quantity:     new NumberField({ initial: 1, integer: true, nullable: false, label: "Количество" }),
       attackBonus:  num(0, "Бонус к попаданию"),
       special:      new StringField({ initial: "", label: "Особенности" }),
       equipped:     new BooleanField({ initial: false, label: "Снаряжено" }),

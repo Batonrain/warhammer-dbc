@@ -78,10 +78,11 @@ const ev = (dataset = {}, value) => ({
 
 /** Талант-предмет на листе: ★ переключает «выдан» ↔ «куплен». */
 function talentItem({ id = "tal-1", name = "Меткий стрелок", tier = 1,
-                      aptitudes = [], granted = true, cost = 0 } = {}) {
+                      aptitudes = [], granted = true, purchased = !granted,
+                      cost = 0, costManual = false } = {}) {
   const it = {
     id, name, type: "talent",
-    system: { tier, aptitudes, granted, purchased: !granted, cost },
+    system: { tier, aptitudes, granted, purchased, cost, costManual },
     updates: [],
     async update(data) { it.updates.push(data); Object.assign(it.system, {}); return data; }
   };
@@ -175,7 +176,27 @@ describe("вкладка РАЗВИТИЕ: характеристики и на�
     await handlers[".grant-toggle[data-talent]:click"](ev({ talent: "tal-1" }));
 
     expect(talent.updates[0]).toEqual({
-      "system.granted": false, "system.purchased": true, "system.cost": 150
+      "system.granted": false, "system.purchased": true,
+      "system.costManual": false, "system.cost": 150
+    });
+  });
+
+  // ★ сама ставит цену — и «снимаю» (по Склонностям), и «ставлю» (0). Оставить
+  // при этом взведённым costManual значило бы исключить талант из пересчёта по
+  // Склонностям навсегда, причём с числом, которого ГМ руками не вписывал.
+  it("★ снимает пометку «цена вручную» в обе стороны", async () => {
+    const bought = talentItem({ aptitudes: ["ws", "offence"], granted: true, costManual: true });
+    const s1 = sheetFor({ aptitudes: ["ws", "offence"], items: [bought] });
+    await wire(s1)[".grant-toggle[data-talent]:click"](ev({ talent: "tal-1" }));
+    expect(bought.updates[0]["system.costManual"]).toBe(false);
+
+    const granted = talentItem({ aptitudes: ["ws", "offence"], granted: false,
+                                 cost: 150, costManual: true });
+    const s2 = sheetFor({ aptitudes: ["ws", "offence"], items: [granted] });
+    await wire(s2)[".grant-toggle[data-talent]:click"](ev({ talent: "tal-1" }));
+    expect(granted.updates[0]).toEqual({
+      "system.granted": true, "system.purchased": false,
+      "system.costManual": false, "system.cost": 0
     });
   });
 

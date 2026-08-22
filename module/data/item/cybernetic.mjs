@@ -8,10 +8,10 @@ export class CyberneticData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, NumberField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField } = foundry.data.fields;
     return {
-      description:  new StringField({ initial: "", label: "Описание" }),
-      notes:        new StringField({ initial: "", label: "Заметки" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       // Кибернетика рисуется тем же gear.hbs, что и Снаряжение (wdbc-fl3).
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       installed:    new StringField({ initial: "", label: "Куда установлено" }),

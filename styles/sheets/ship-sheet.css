@@ -391,6 +391,8 @@
 .warhammer-dbc .ship-panel-title button + button { margin-left: 6px; }
 .warhammer-dbc .ship-notes { width: 100%; min-height: 240px; resize: vertical;
   background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); font-family: inherit; }
+.warhammer-dbc prose-mirror.ship-notes .editor-content { padding: 4px 6px; }
+.warhammer-dbc prose-mirror.ship-notes button.toggle:enabled { display: block; }
 
 .warhammer-dbc .ship-hi-max { font-size: 1.2em; font-weight: bold; }
 .warhammer-dbc .ship-warn { background: #f4e4c0; border-color: #a37a20 !important; color: #6a4a10; font-size: 0.85em; }

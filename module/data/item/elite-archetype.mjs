@@ -18,7 +18,7 @@ export class EliteArchetypeData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, ArrayField, NumberField, SchemaField, ObjectField } = foundry.data.fields;
+    const { StringField, HTMLField, ArrayField, NumberField, SchemaField, ObjectField } = foundry.data.fields;
     const str = (initial, label) => new StringField({ initial, label });
     const list = label => new ArrayField(new StringField(), { label });
     const reqList = label => new ArrayField(new ObjectField(), { label });
@@ -51,8 +51,8 @@ export class EliteArchetypeData extends foundry.abstract.TypeDataModel {
       // Имена записей библиотек — сами Черты и Таланты лежат там.
       traits:      list("Трейты архетипа"),
       talents:     list("Дополнительные Таланты"),
-      description: str("", "Описание"),
-      notes:       str("", "Заметки"),
+      description: new HTMLField({ initial: "", label: "Описание" }),
+      notes:       new HTMLField({ initial: "", label: "Заметки" }),
       bookSource:  str("", "Книга-источник")
     };
   }

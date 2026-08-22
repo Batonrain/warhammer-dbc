@@ -25,9 +25,10 @@
         </div>
 
         <div class="tech-gauge tech-gauge-en">
-          <div class="tg-head">{{{techIcon "energy"}}} <span class="tg-lbl">КАТУШКА ПОТЕНЦИИ</span>{{#if system.energy.bonusMax}}<span class="tg-bonus" title="Бонус от имплантов (Мотивные Банки и т.п.)">+{{system.energy.bonusMax}} = <b>{{system.energy.maxTotal}}</b></span>{{/if}}</div>
+          <div class="tg-head">{{{techIcon "energy"}}} <span class="tg-lbl">КАТУШКА ПОТЕНЦИИ</span>{{#if system.energy.bonusMax}}<span class="tg-bonus" title="Автобонус от установленных имплантов (Катушка Потенции по Качеству, Мотивные Банки и т.п.)">+{{system.energy.bonusMax}} = <b>{{system.energy.maxTotal}}</b></span>{{/if}}</div>
           <div class="tg-body">
-            <div class="tg-readout"><input type="number" class="energy-input" value="{{system.energy.value}}" min="0"/><span class="tg-slash">/</span><input type="number" class="energy-max-input tg-maxinput" value="{{system.energy.max}}" min="0" title="База максимума Катушки Потенции"/></div>
+            <div class="tg-readout"><input type="number" class="energy-input" value="{{system.energy.value}}" min="0"/><span class="tg-slash">/</span><input type="number" class="energy-max-input tg-maxinput" value="{{system.energy.max}}" min="0" title="Бонусный макс. Энергии — вручную, сверх автобонуса от имплантов (Катушка Потенции и т.п.)"/></div>
+            <div class="tg-maxcap">Бонусный макс. Энергии</div>
             <div class="tg-coil">{{#each energy.pips as |p|}}<i class="tg-cell {{#if p.on}}on{{/if}}"></i>{{/each}}{{#unless energy.pips.length}}<span class="tg-empty">— катушка не установлена —</span>{{/unless}}</div>
           </div>
         </div>

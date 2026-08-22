@@ -9,6 +9,8 @@
     "benefit": "Можно брать множество раз; за каждое взятие +1 PR. Максимум PR = W.b + Cor.b (не-Хаоситы — только до W.b).",
     "tier": 3,
     "requirement": "PR 0",
+    "hasRating": true,
+    "rating": 1,
     "aptitudes": [
       "general"
     ],

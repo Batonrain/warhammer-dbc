@@ -363,10 +363,12 @@
   {{!-- ───────────── ЗАПИСИ ───────────── --}}
   <div class="tab veh-tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
     <label class="veh-full-label">Заметки
-      <textarea name="system.notes" rows="6">{{system.notes}}</textarea>
+      <prose-mirror name="system.notes" class="veh-notes-pm" toggled
+                    value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror>
     </label>
     <label class="veh-full-label">Заметки ГМа
-      <textarea name="system.gmNotes" rows="5">{{system.gmNotes}}</textarea>
+      <prose-mirror name="system.gmNotes" class="veh-notes-pm veh-notes-pm-short" toggled
+                    value="{{system.gmNotes}}">{{{gmNotesEnriched}}}</prose-mirror>
     </label>
   </div>
 

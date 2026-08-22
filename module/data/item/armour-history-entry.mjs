@@ -9,14 +9,14 @@ export class ArmourHistoryEntryData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField } = foundry.data.fields;
     const num = label => new NumberField({ initial: 0, integer: true, nullable: false, label });
     return {
       table:             new StringField({ initial: "", label: "Таблица" }),
       rollMin:           num("Бросок от"),
       rollMax:           num("Бросок до"),
-      description:       new StringField({ initial: "", label: "Описание" }),
-      notes:             new StringField({ initial: "", label: "Заметки" }),
+      description:       new HTMLField({ initial: "", label: "Описание" }),
+      notes:             new HTMLField({ initial: "", label: "Заметки" }),
       effect:            new StringField({ initial: "", label: "Эффект" }),
       hasChoice:         new BooleanField({ initial: false, label: "Требует выбора" }),
       choiceLabel:       new StringField({ initial: "", label: "Подпись выбора" }),

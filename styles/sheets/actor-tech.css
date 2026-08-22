@@ -101,6 +101,7 @@
 .warhammer-dbc .tech-tab .tg-max { font-size: 1.25em; font-weight: 700; color: #9fb0c4; }
 .warhammer-dbc .tech-tab .tg-maxinput { font-size: 1em !important; width: 42px !important; color: #9fb0c4 !important; }
 .warhammer-dbc .tech-tab .tg-empty { font-size: 0.78em; font-style: italic; color: #6b7583; }
+.warhammer-dbc .tech-tab .tg-maxcap { font-size: 0.68em; color: #6b7583; margin: -4px 0 6px; }
 
 /* пипсы данных / ячейки катушки */
 .warhammer-dbc .tech-tab .tg-pips, .warhammer-dbc .tech-tab .tg-coil { display: flex; flex-wrap: wrap; gap: 4px; }
