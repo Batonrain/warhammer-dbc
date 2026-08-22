@@ -50,12 +50,25 @@
     </div>
     {{/unless}}
 
+    {{#unless isAstartes}}
+    <div class="atk-dlg-row"><label>Телосложение:</label>
+      <select class="wiz-body-type-sel">
+        {{#each bodyTypes as |b|}}
+        <option value="{{b.key}}" {{#if b.selected}}selected{{/if}}>{{b.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{/unless}}
+
     {{#if isAstartes}}
     <div class="wiz-legion">
       <div class="wiz-gen-lbl">Легион Астартес (геносемя и культура выбираются отдельно):</div>
       <div class="atk-dlg-row"><label>Легион (геносемя):</label><select class="wiz-legion-sel">{{{legionOptions}}}</select></div>
       <div class="atk-dlg-row"><label>Орден / Банда:</label><select class="wiz-chapter-sel">{{{chapterOptions}}}</select></div>
       <div class="atk-dlg-row" title="Геносемя сохраняешь, а культуру можно перенять у другого легиона."><label>Культура (легион):</label><select class="wiz-cult-sel">{{{cultureOptions}}}</select></div>
+      {{#if hasCultureOverride}}
+      <div class="atk-dlg-row"><label>Культура (орден/банда):</label><select class="wiz-cult-chapter-sel">{{{cultureChapterOptions}}}</select></div>
+      {{/if}}
     </div>
     {{/if}}
 
@@ -102,6 +115,13 @@
     </div>
     {{#if homeworld.deferredNote}}<div class="apt-warn">{{homeworld.deferredNote}}</div>{{/if}}
     {{/if}}
+    {{#if homeworldChoice}}
+    <div class="hw-choice-dialog wiz-hw-choices">
+      <div class="hw-choice-head">{{homeworldChoice.featureName}}</div>
+      <div class="hw-choice-desc">{{homeworldChoice.featureDesc}}</div>
+      {{{homeworldChoice.blocksHtml}}}
+    </div>
+    {{/if}}
     {{#if divination}}
     <div class="atk-dlg-row"><label title="Эффект по таблице к100">Предсказание:</label>
       <select class="wiz-dv-sel">
@@ -113,6 +133,13 @@
       </select>
     </div>
     {{/if}}
+    {{#if divinationChoice}}
+    <div class="hw-choice-dialog wiz-hw-choices">
+      <div class="hw-choice-head">{{divinationChoice.dvText}}</div>
+      <div class="hw-choice-desc">{{divinationChoice.dvEffect}}</div>
+      {{{divinationChoice.blocksHtml}}}
+    </div>
+    {{/if}}
 
     {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
 
@@ -121,6 +148,14 @@
 
     {{else if (eq stepId "characteristics")}}
     <div class="atk-dlg-header"><span class="atk-weapon-name">🎲 Характеристики</span></div>
+
+    {{#if homeworldChoice}}
+    <div class="hw-choice-dialog wiz-hw-choices">
+      <div class="hw-choice-head">Родной мир: {{homeworldChoice.hwLabel}} — {{homeworldChoice.featureName}}</div>
+      <div class="hw-choice-desc">{{homeworldChoice.featureDesc}}</div>
+      {{{homeworldChoice.blocksHtml}}}
+    </div>
+    {{/if}}
 
     <div class="wiz-gen">
       <div class="wiz-gen-lbl">1. Выбери набор бросков (можно перебросить):</div>
@@ -272,6 +307,28 @@
       </div>
       {{/each}}
     </div>
+
+    {{#if pendingAspirationChoice}}
+    <div class="wiz-gen">
+      {{#if (eq pendingAspirationChoice.type "or")}}
+      <div class="atk-dlg-row wtc-row"><label class="wtc-lbl">{{pendingAspirationChoice.itemName}}:</label>
+        <select class="wtc-sel wiz-aspir-choice-or">
+          <option value="" disabled selected>— выбрать —</option>
+          {{#each pendingAspirationChoice.options as |o|}}<option value="{{o.idx}}">{{o.label}}</option>{{/each}}
+        </select>
+        <button type="button" class="wiz-mini-btn wiz-aspir-choice-skip" title="Пропустить">✕</button>
+      </div>
+      {{else}}
+      <div class="atk-dlg-row wtc-row"><label class="wtc-lbl">{{pendingAspirationChoice.skillLabel}}:</label>
+        <select class="wtc-sel wiz-aspir-choice-spec">
+          <option value="" disabled selected>— выбрать —</option>
+          {{#each pendingAspirationChoice.choices as |c|}}<option value="{{c.idx}}">{{c.label}}</option>{{/each}}
+        </select>
+        <button type="button" class="wiz-mini-btn wiz-aspir-choice-skip" title="Пропустить">✕</button>
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
 
     <div class="wiz-gen wh-cstart">
       <div class="wiz-gen-lbl">Уровень стартовой игры (стр. 23):</div>

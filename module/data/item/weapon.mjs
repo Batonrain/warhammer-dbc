@@ -58,6 +58,10 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       quality:      new StringField({ initial: "common", label: "Качество" }),
       availability: num(0, "Доступность"),
       weight:       num(0, "Вес"),
+      // Расходное оружие (гранаты и т.п.) — тот же приём, что у Снаряжения/
+      // Боеприпасов (data/item/gear.mjs, ammo.mjs): несколько одинаковых
+      // предметов лежат ОДНОЙ записью с числом, а не N раздельными.
+      quantity:     new NumberField({ initial: 1, integer: true, nullable: false, label: "Количество" }),
       attackBonus:  num(0, "Бонус к попаданию"),
       special:      new StringField({ initial: "", label: "Особенности" }),
       equipped:     new BooleanField({ initial: false, label: "Снаряжено" }),

@@ -25,7 +25,18 @@ function slotsOf(actor) {
   return arr;
 }
 
-export function activateAspirationListeners(html, actor) {
+/**
+ * @param {Function} [withCollector] — оборачивает вызов grantAspiration.
+ *   На листе актора не передаётся (обычный async-вызов) — ИЛИ-выбор Механики
+ *   Стремления (если он есть — напр. «Fel+5 или Per+5») там всплывает
+ *   диалогом, как и раньше. Мастер создания передаёт свою обёртку
+ *   (withMechCollector) — тот же диалог тогда перехватывается и рисуется
+ *   строкой прямо в форме шага, без всплывающего окна (wdbc-2ot, «тот же
+ *   принцип на прочих этапах»). Пока привязка Стремления к Механике
+ *   (grantAspiration) не смержена отдельным PR — обёртке нечего оборачивать,
+ *   параметр принят для совместимости сигнатуры с вызовом из Мастера.
+ */
+export function activateAspirationListeners(html, actor, withCollector = fn => fn()) {
   html.find(".aspir-remove").click(async ev => {
     ev.preventDefault();
     const i = parseInt(ev.currentTarget.dataset.index);

@@ -309,7 +309,7 @@ const TYPES = {
       balance: 0, grips: "", profileLabel: "", meleeCategory: "", profiles: [], reload: "1",
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
       damage: "", damageType: "impact", penetration: 0, quality: "common",
-      availability: 0, weight: 0, attackBonus: 0, special: "", equipped: false,
+      availability: 0, weight: 0, quantity: 1, attackBonus: 0, special: "", equipped: false,
       loadedAmmoId: "", weaponProps: [], needsRecharge: false, legacyWeapon: false,
       sacred: false,
       daemonWeapon: {

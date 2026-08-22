@@ -1251,6 +1251,23 @@ body.wh-aiming #board, body.wh-aiming canvas {
 }
 .wh-item-picker .cbrowse-item.cbrowse-picked .cbrowse-item-name::after { content: " ✓"; }
 
+/* Пара +/− у расходуемых типов (гранаты, боеприпасы и т.п. — STACKABLE_TYPES
+   в compendium-browser.mjs): несколько одинаковых предметов берутся кликами
+   по +, счётчик виден сразу, не только по классу cbrowse-picked строки. */
+.wh-item-picker .cbrowse-qty-controls {
+  display: flex; align-items: center; gap: 3px; margin-left: auto; flex: 0 0 auto;
+}
+.wh-item-picker .cbrowse-qty-controls button {
+  width: 18px; height: 18px; line-height: 16px; padding: 0; font-size: 0.85em;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.25);
+  border-radius: 3px; color: inherit; cursor: pointer;
+}
+.wh-item-picker .cbrowse-qty-controls button:hover { background: rgba(77,255,166,.2); }
+.wh-item-picker .cbrowse-qty-n { min-width: 1.2em; text-align: center; font-variant-numeric: tabular-nums; }
+.wh-item-picker .cbrowse-qty-controls.cbrowse-qty-active .cbrowse-qty-n {
+  color: #4dffa6; font-weight: 700;
+}
+
 /* Кнопка в шапке вкладки компендиумов (Hooks.on("renderCompendiumDirectory")). */
 .wh-compendium-browser-btn {
   display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
