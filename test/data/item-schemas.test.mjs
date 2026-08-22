@@ -257,6 +257,8 @@ const TYPES = {
       // Уровень (Enemy 1-3) и цели (Hatred/Peer/Enemy/Good Reputation) —
       // добавлены вместе с деревом фракций, в template.json их не было.
       hasRating: false, rating: 0, targets: [],
+      // Ручная цена (вкладка «Развитие», wdbc-cct) — тоже позже template.json.
+      costManual: false,
       effects: { initMod: 0, fearRating: 0, speedMod: 0 }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]

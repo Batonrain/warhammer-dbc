@@ -578,7 +578,22 @@ body.wh-aiming #board, body.wh-aiming canvas {
 /* ═══════════════════════════════════════════════════════════════════════
    Переработанное окно атаки (wh-atk-dialog / wh-atk-v2) — зелёный когитатор
    ═══════════════════════════════════════════════════════════════════════ */
-.wh-atk-dialog .window-content { padding: 0; }
+/* Без явного overflow-y+max-height DialogV2 не скроллит .window-content сам —
+   окно просто растёт бесконечно вниз (кнопка «Бросок!» и развёрнутые
+   ситуативные модификаторы уезжают за экран), см. тот же приём у
+   .wh-race-picker выше. */
+.wh-atk-dialog .window-content {
+  padding: 0;
+  overflow-y: auto; overflow-x: hidden;
+  max-height: calc(100vh - 160px);
+  scrollbar-width: thin; scrollbar-color: #2f9e6a #06120c;
+}
+.wh-atk-dialog .window-content::-webkit-scrollbar { width: 10px; }
+.wh-atk-dialog .window-content::-webkit-scrollbar-track { background: #06120c; }
+.wh-atk-dialog .window-content::-webkit-scrollbar-thumb {
+  background: #2f9e6a; border-radius: 5px; border: 2px solid #06120c;
+}
+.wh-atk-dialog .window-content::-webkit-scrollbar-thumb:hover { background: #4dffa6; }
 .wh-atk-v2 { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; }
 
 .wh-atk-v2 .av-header { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }

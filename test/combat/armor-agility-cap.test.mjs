@@ -62,4 +62,18 @@ describe("потолок Ловкости от брони", () => {
     const bare = { id: "a1", type: "armor", system: { equipped: true } };
     expect(armorAgilityCap(actorWith(bare))).toBe(100);
   });
+
+  it("выключенная силовая броня — Max.A 35 по умолчанию (стр. 233)", () => {
+    const disabled = { id: "a1", type: "armor", system: { equipped: true, armorType: "power", active: false } };
+    const a = actorWith(disabled);
+    a.getFlag = () => undefined;
+    expect(armorAgilityCap(a)).toBe(35);
+  });
+
+  it("провал теста-развилки (флаг disabledArmourMaxAgilityForced10) роняет Max.A выключенной силовой до 10", () => {
+    const disabled = { id: "a1", type: "armor", system: { equipped: true, armorType: "power", active: false } };
+    const a = actorWith(disabled);
+    a.getFlag = () => true;
+    expect(armorAgilityCap(a)).toBe(10);
+  });
 });

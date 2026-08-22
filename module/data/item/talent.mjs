@@ -62,6 +62,10 @@ export class TalentData extends foundry.abstract.TypeDataModel {
         img:   new StringField({ initial: "", label: "Значок" })
       }), { label: "Цели" }),
       cost:           new NumberField({ initial: 0, integer: true, nullable: false, label: "Цена в опыте" }),
+      // ГМ вписал цену руками (вкладка «Развитие») — setAptitudes её больше
+      // не трогает при пересчёте по смене Склонностей, иначе правка молча
+      // терялась бы на следующий же клик по ＋/✕ у Склонности (wdbc-cct).
+      costManual:     new BooleanField({ initial: false, label: "Цена задана вручную" }),
       purchased:      new BooleanField({ initial: false, label: "Куплен" }),
       granted:        new BooleanField({ initial: false, label: "Выдан генерацией" }),
       effects:        new ObjectField({ initial: emptyEffects, label: "Механика" })

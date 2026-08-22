@@ -372,7 +372,11 @@ export async function openItemPicker(actor, kind) {
             const pick = await promptMinionSlot(actor, d);
             if (!pick) return;                       // отмена — ничего не покупаем
             applyMinionSlot(obj, pick);
-            obj.system.cost = talentCostXP(pick.talentTier, d.system.aptitudes || [], charApts,
+            // Склонности — не статичная запись пака, а через aptSource
+            // (Характеристика выбранной группы, см. applyMinionSlot):
+            // тот же resolveTalentAptitudes, что у Mastery/Beyond Human.
+            const minionApts = resolveTalentAptitudes(d.name, d.system.aptitudes || [], obj.system.aptSource);
+            obj.system.cost = talentCostXP(pick.talentTier, minionApts, charApts,
               talentCategory(actor, d.name, d.folder),
               { name: d.name, patron: actor.system.patronGod });
           } else if (dyn) {

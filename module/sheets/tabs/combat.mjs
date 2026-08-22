@@ -14,6 +14,7 @@ import { _showContestDialog } from "../../combat/techniques.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
+import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { on } from "../../helpers/utils.mjs";
 
 export function activateCombatListeners(root, actor) {
@@ -46,6 +47,10 @@ export function activateCombatListeners(root, actor) {
 
   // ── Лечение и Очки Боли ──────────────────────────────────────────────────
   on(root, ".wounds-heal-btn", "click", () => showHealingDialog(actor));
+
+  // ── Перевес выключенной силовой брони: тест раз в T.b часов (стр. 233) ──
+  on(root, ".disabled-armour-periodic-test-btn", "click", () => useDisabledArmourPeriodicTest(actor));
+  on(root, ".disabled-armour-fork-test-btn", "click", () => promptDisabledArmourForkTest(actor));
 
   on(root, ".pain-absorb-btn", "click", () => painChange(actor, +1, "absorb"));
   on(root, ".pain-spend-btn", "click", () => painChange(actor, -1, "spend"));

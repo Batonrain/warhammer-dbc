@@ -42,6 +42,14 @@
     <label class="wr-label" style="margin-left:10px;">Макс. Ловкость</label>
     <input type="number" name="system.maxAgility"
            value="{{system.maxAgility}}" min="0" class="wr-input-xs"/>
+
+    {{#if (eq system.armorType "power")}}
+    <label class="wr-label drug-fx-cb-label" style="margin-left:10px;"
+           title="Выключенная силовая броня получает Max.A 35 и больше не нейтрализует свой вес в расчёте переносимого веса (стр. 233).">
+      <input type="checkbox" name="system.active" {{#if system.active}}checked{{/if}}/>
+      Включена
+    </label>
+    {{/if}}
   </div>
 
   {{!-- Строка 2: AP по частям тела --}}
