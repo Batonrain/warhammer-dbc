@@ -209,7 +209,11 @@ globalThis.foundry = {
           captured.rerender = form => { self.form = form; config.render?.(null, self); };
           captured.press = async (action, form) => {
             const btn = config.buttons.find(b => b.action === action);
-            captured.settle(await btn.callback?.(null, { form }, self) ?? null);
+            // Как настоящий DialogV2 (scripts/foundry.mjs, #_onSubmit):
+            // `(await callback(...)) ?? button.action`. Не `?? null` — иначе
+            // заглушка мягче живого Foundry и не ловит кнопки, чей callback
+            // возвращает null (результатом там становится строка-action).
+            captured.settle(await btn.callback?.(null, { form }, self) ?? btn.action ?? null);
           };
           return new Promise(resolve => {
             captured.settle = resolve;

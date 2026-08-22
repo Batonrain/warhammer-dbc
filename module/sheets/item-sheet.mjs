@@ -427,6 +427,12 @@ function onApropRemove(event, target) {
  * @returns {Promise<?string|?{key: string, label: string}>} null — отмена.
  */
 function pickFromList({ title, prompt, options, withLabel = false }) {
+  // `false`, а не `null`, во всех callback'ах ниже: DialogV2 резолвит результат
+  // как `(await callback(...)) ?? button.action` (scripts/foundry.mjs,
+  // DialogV2#_onSubmit) — `null`/`undefined` там подменяются на сам action и
+  // возвращают строку «cancel»/«ok». Она непустая, проходит `if (!kind) return`
+  // у вызывающих и уезжает дальше как настоящий выбор. `false` переживает `??`
+  // и здесь же переводится обратно в задокументированный null.
   return foundry.applications.api.DialogV2.wait({
     window: { title },
     classes: ["warhammer-dbc", "wh-holo"],
@@ -439,16 +445,16 @@ function pickFromList({ title, prompt, options, withLabel = false }) {
         action: "ok", label: "Далее", default: true,
         callback: (event, button) => {
           const sel = button.form.querySelector(".wh-pick-select");
-          if (!sel?.value) return null;
+          if (!sel?.value) return false;
           return withLabel
             ? { key: sel.value, label: sel.selectedOptions[0].textContent }
             : sel.value;
         }
       },
-      { action: "cancel", label: "Отмена" }
+      { action: "cancel", label: "Отмена", callback: () => false }
     ],
     rejectClose: false
-  });
+  }).then(res => res === false ? null : res);
 }
 
 export class WarhammerItemSheet
