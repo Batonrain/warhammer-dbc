@@ -318,7 +318,8 @@ function renderNodeHtml(node, multi) {
 /**
  * @param {boolean} force  Пересобрать кэш деревьев.
  * @param {object|null} pickMode  Режим выбора. Поля:
- *   pack     — сузить окно до ОДНОЙ категории по id пака (как раньше);
+ *   pack     — сузить окно до категории(й) по id пака: строка — одна, массив
+ *              строк — несколько сразу (напр. «Оружие/Броня/Снаряжение»);
  *   filters  — условия отбора, см. ITEM_FILTERS: {type, folderId, weaponProp,
  *              armorType, maxAvailability}. Без `pack` фильтры применяются ко
  *              всем категориям сразу — так «покажи только Фракции» работает
@@ -348,9 +349,12 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
     let pickSuffix = "";
     if (pick) {
       const pred = it => matchesFilters(it, pick.filters);
-      // Пак задан — сужаем до его категории; не задан — фильтруем все и
+      // Пак задан — сужаем до его категории (одной или нескольких сразу,
+      // напр. «Оружие/Броня/Снаряжение» разом для Очков Снаряжения —
+      // character-wizard.mjs, EQUIP_SHOP_PACKS); не задан — фильтруем все и
       // оставляем те, где после отбора что-то осталось.
-      const source = pick.pack ? allCats.filter(c => c.packId === pick.pack) : allCats;
+      const packs = Array.isArray(pick.pack) ? pick.pack : (pick.pack ? [pick.pack] : null);
+      const source = packs ? allCats.filter(c => packs.includes(c.packId)) : allCats;
       cats = source
         .map(c => { const tree = pruneTree(c.tree, pred); return { ...c, tree, count: countNode(tree) }; })
         .filter(c => c.count > 0);
