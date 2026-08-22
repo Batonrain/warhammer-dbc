@@ -846,6 +846,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     });
   };
 
+  // .then ниже: DialogV2 резолвит результат как `(await callback(...)) ?? action`
+  // (scripts/foundry.mjs, #_onSubmit) — вернуть отсюда null нельзя, он подменится
+  // на строку «roll»/«cancel». Кнопки возвращают false, а «отменой» его делает
+  // этот же .then — контракт «null — отмена» остаётся прежним.
   return foundry.applications.api.DialogV2.wait({
     window: { title: `Атака: ${item.name}` },
     classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "wh-atk-dialog"],
@@ -868,7 +872,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
                   <span class="roll-failure">Автоматический провал (Ослеплён)</span>
                 </div></div>`
             });
-            return null;
+            return false;
           }
 
           const sel = resolveSelection(f);
@@ -882,7 +886,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
                   <span class="roll-failure">Защитная Стойка без щита — атака запрещена (стр. 15)</span>
                 </div></div>`
             });
-            return null;
+            return false;
           }
 
           // Стойка/База — персистентны на акторе (как радио на вкладке БОЙ),
@@ -951,7 +955,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           return true;
         }
       },
-      { action: "cancel", label: "Отмена", callback: () => null }
+      // `false`, а не `null`: `null` DialogV2 подменяет на сам action («cancel»)
+      // — см. комментарий у pickFromList (sheets/item-sheet.mjs).
+      { action: "cancel", label: "Отмена", callback: () => false }
     ],
     render: (event, dialog) => {
       const form    = dialog.element.querySelector("form");
@@ -1015,7 +1021,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           ?.addEventListener("toggle", () => dialog.setPosition({ height: "auto" }));
       updateTotal();
     }
-  });
+  }).then(res => res === false ? null : res);
 }
 
 export async function showAttackDialogWithTechnique(actor, item, techDef, stanceDef, techKey) {
