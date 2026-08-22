@@ -762,6 +762,14 @@ export class WarhammerActor extends Actor {
     let traitArmourAll = 0;
     // Пер-локационная броня от имплантов/черт (напр. Боевые Латы Скитарии 6/7/7/5/5)
     const traitArmorLoc = { head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0 };
+    // Чёрный Панцирь (импланты Астартес): «БЕЗ БРОНИ считается как нагрудник
+    // с АР 4» — это ЗАМЕНА при отсутствии брони на торсе, а не складываемая
+    // надбавка (в отличие от обычной Естественной Брони выше). Раньше был
+    // заведён как складываемая запись Конструктора (kind:"armour") и давал
+    // +4 АР в торс ПОВЕРХ силовой брони (wdbc bug-report 2026-08-22). Флаг
+    // участвует ниже в best("body") — том же «лучшее из», что и у брони/щита,
+    // не в сумме traitArmorLoc/fxArmor.
+    let hasBlackCarapaceBackup = false;
     let traitFearRating = 0;
     let traitSizeMod = 0;
     let traitInitMod = 0;
@@ -788,6 +796,9 @@ export class WarhammerActor extends Actor {
       // «Не работает» — орган на месте (виден на карте тела), но неисправен:
       // его эффекты не считаются, пока GM/игрок не переключит статус обратно.
       if (t === "implant" && item.getFlag("warhammer-dbc", "disabled")) continue;
+      if (t === "implant" && /Чёрный Панцирь|Black Carapace/i.test(item.name)) {
+        hasBlackCarapaceBackup = true;
+      }
       // Бионические конечности: +2 к эффективному Поглощению этой частью тела.
       if (t === "implant" && item.system.category === "bionic") {
         const k = classifyImplant(item.name, item.system.installed)?.kind;
@@ -1115,7 +1126,10 @@ export class WarhammerActor extends Actor {
     // поэтому не суммируем, а берём лучшее по каждой зоне — как и прочие AP.
     const shieldAP = shieldArmorByLocation(this);
     system.shieldArmor = shieldAP;
-    const best = (k) => Math.max(armorFromItems[k], armorManual[k] || 0, shieldAP[k] || 0);
+    const best = (k) => Math.max(
+      armorFromItems[k], armorManual[k] || 0, shieldAP[k] || 0,
+      (k === "body" && hasBlackCarapaceBackup) ? 4 : 0
+    );
     // Складываемая надбавка AP от эффектов (естественная броня Черт, броня
     // имплантов, что угодно ещё). Хранимое поле схемы — эффекты целятся в него
     // в фазе "initial", то есть ДО этого расчёта, тем же приёмом, что и
@@ -1194,7 +1208,7 @@ export class WarhammerActor extends Actor {
       if (item.type === "armor" && s.equipped && ((s.armorType === "power" && s.active) || s.weightless)) {
         continue; // несёт свой вес сама
       }
-      if (["gear","drug","tool","ammo"].includes(item.type)) {
+      if (["gear","drug","tool","ammo","weapon"].includes(item.type)) {
         totalWeight += w * (parseInt(s.quantity) || 1);
       } else {
         totalWeight += w;

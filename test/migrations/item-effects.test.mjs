@@ -32,7 +32,7 @@ import { legacyEffectsToChanges } from "../../module/constants/effect-keys.mjs";
 import { migrateItemEffects, repairCharValueEffectKeys, dropMechanicsDuplicates,
          repairCharBonusEffectKeys, repairDeadArmourKeys, migrateAllItemEffects,
          adoptMechanicsEffects, MIGRATE_EFFECT_TYPES,
-         legacyOnlyKeys } from "../../module/migrations/item-effects.mjs";
+         legacyOnlyKeys, repairBlackCarapaceStacking } from "../../module/migrations/item-effects.mjs";
 import { describeMechEntry, characteristicEffectKey } from "../../module/apps/mechanics.mjs";
 
 const PACKS_SRC = path.resolve(import.meta.dirname, "../../packs-src");
@@ -342,6 +342,60 @@ describe("починка мёртвого ключа брони", () => {
 
     expect(item.effects).toHaveLength(1);
     expect(item.getFlag("warhammer-dbc", "migratedEffect")).toBe(true);
+  });
+});
+
+// wdbc bug-report 2026-08-22: «Чёрный Панцирь» давал АР4 в торс складываемым
+// эффектом Конструктора (kind:"armour") — стакался с носимой бронёй сверх
+// нормы. Верное поведение (best("body") в documents/actor.mjs) больше не
+// использует эту запись, а старую снимаем здесь — и у уже выданных копий на
+// акторах, и в самом компендиуме.
+describe("починка стакающейся брони Чёрного Панциря", () => {
+  const mechEntry = { id: "bc-armour-entry", kind: "armour", armourLocation: "body", armourValue: 4 };
+  const withMechanics = (extraProps = {}) => itemDoc({
+    type: "implant", name: "19. Чёрный Панцирь / Black Carapace",
+    flags: { mechanics: [{ id: "grp-1", operator: "AND", entries: [mechEntry] }], ...extraProps },
+    fx: [{ name: "Очки Брони: Тело +4",
+      system: { changes: [{ key: "system.armorBonus.body", type: "add", value: 4, phase: "initial", priority: 0 }] },
+      flags: { "warhammer-dbc": { mechEntry: "bc-armour-entry" } } }]
+  });
+
+  it("снимает складываемую запись и её эффект", async () => {
+    const item = withMechanics();
+
+    expect(await repairBlackCarapaceStacking(item)).toBe(1);
+
+    expect(item.getFlag("warhammer-dbc", "mechanics")).toEqual([]);
+    expect(item.effects).toEqual([]);
+  });
+
+  it("не трогает, если гонка с хуком уже удалила эффект (best-effort)", async () => {
+    const item = withMechanics();
+    // Имитация Hooks.on("updateItem") (warhammer-dbc.mjs), который в реальном
+    // мире успевает снять тот же эффект между setFlag и нашим deleteEmbeddedDocuments.
+    const realSetFlag = item.setFlag;
+    item.setFlag = async (scope, key, value) => {
+      const r = await realSetFlag(scope, key, value);
+      item.effects = [];
+      return r;
+    };
+
+    await expect(repairBlackCarapaceStacking(item)).resolves.toBe(1);
+    expect(item.getFlag("warhammer-dbc", "mechanics")).toEqual([]);
+  });
+
+  it("предмет без этой записи не трогается", async () => {
+    const item = itemDoc({ type: "implant", name: "19. Чёрный Панцирь / Black Carapace" });
+
+    expect(await repairBlackCarapaceStacking(item)).toBe(0);
+  });
+
+  it("другой имплант с armour-записью в торс не трогается (не по имени)", async () => {
+    const item = withMechanics();
+    item.name = "Реберный Панцирь";
+
+    expect(await repairBlackCarapaceStacking(item)).toBe(0);
+    expect(item.getFlag("warhammer-dbc", "mechanics")).toHaveLength(1);
   });
 });
 

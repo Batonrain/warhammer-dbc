@@ -227,6 +227,55 @@ export async function repairDeadArmourKeys(item) {
   return fixed;
 }
 
+// Починка бага: «Чёрный Панцирь» (имплант Астартес) через запись Конструктора
+// kind:"armour" давал АР 4 в торс как СКЛАДЫВАЕМУЮ надбавку — тем же путём,
+// что обычная Естественная Броня Черт. Но по тексту самого предмета: «БЕЗ
+// БРОНИ считается как нагрудник с АР 4» — это замена/подстраховка на случай
+// отсутствия брони на торсе, а не бонус поверх неё. Из-за складывания
+// космодесантник в силовой броне получал +4 АР в торс сверх номинала
+// (найдено тестером 2026-08-22). Верное поведение (лучшее из двух, не сумма)
+// теперь даёт спец-случай по имени в documents/actor.mjs (best("body")) —
+// здесь только снимается старая складываемая запись Механики и порождённый
+// ею ActiveEffect, чтобы бонус не считался дважды. Задевает и уже выданные
+// копии импланта на акторах, и сам компендиум (packs-src поправлен тем же
+// фиксом, но уже собранный LevelDB-пак живого мира — нет).
+const BLACK_CARAPACE_RE = /Чёрный Панцирь|Black Carapace/i;
+
+export async function repairBlackCarapaceStacking(item) {
+  if (item.type !== "implant" || !BLACK_CARAPACE_RE.test(item.name)) return 0;
+  const groups = item.getFlag(SYSTEM, "mechanics");
+  if (!Array.isArray(groups) || !groups.length) return 0;
+
+  const removedIds = [];
+  const keptGroups = groups
+    .map(g => {
+      const entries = (g.entries || []).filter(e => {
+        const isStackingBodyArmour = e.kind === "armour" && e.armourLocation === "body" && Number(e.armourValue) > 0;
+        if (isStackingBodyArmour) removedIds.push(e.id);
+        return !isStackingBodyArmour;
+      });
+      return { ...g, entries };
+    })
+    .filter(g => (g.entries || []).length);
+  if (!removedIds.length) return 0;
+
+  const toDelete = (item.effects ?? [])
+    .filter(fx => removedIds.includes(fx.getFlag?.(SYSTEM, "mechEntry")))
+    .map(fx => fx.id);
+  // setFlag на живом акторе сам триггерит Hooks.on("updateItem") →
+  // applyItemMechanics/syncMechanicsEffects (warhammer-dbc.mjs) и снимает тот
+  // же эффект — на стенде тестов хуков нет, поэтому чистим и сами, но уже
+  // ПОСЛЕ setFlag эффект может не существовать (гонка с хуком в реальном
+  // мире), отсюда try/catch: тест — единственный источник правды, здесь
+  // просто best-effort подчистка.
+  await item.setFlag(SYSTEM, "mechanics", keptGroups);
+  if (toDelete.length) {
+    try { await item.deleteEmbeddedDocuments("ActiveEffect", toDelete); }
+    catch (e) { /* хук уже снял эффект сам — ничего страшного */ }
+  }
+  return 1;
+}
+
 // Починка бага ранней версии миграции: charValueBonuses (обычные +X к
 // характеристике — Родные миры, импланты и т.п.) переводились в
 // system.characteristics.<стат>.value — поля, которого не существует ни в
@@ -344,6 +393,9 @@ export async function migrateAllItemEffects() {
     // второй — тот же AP дважды. У модификаций она, наоборот, снимает флаг,
     // и перенос обязан увидеть предмет уже без него.
     repaired += await repairDeadArmourKeys(item);
+    // До выравнивания фаз: снимает саму запись Механики и её ActiveEffect у
+    // «Чёрного Панцира» — нечего будет выравнивать по фазе, эффект удалён.
+    repaired += await repairBlackCarapaceStacking(item);
     deduped  += await dropMechanicsDuplicates(item);
     if (await migrateItemEffects(item)) migrated++;
   }
