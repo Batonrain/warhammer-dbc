@@ -69,6 +69,17 @@
 }
 .hw-choice-dialog .hw-choice-count.hw-over { color: #ff8a8a; }
 
+/* ── Строка выбора цели Таланта (Hatred/Peer/Good Reputation) ─── */
+.hw-choice-dialog .hw-target-choice select { margin-bottom: 4px; }
+.hw-choice-dialog .hw-target-faction-btn {
+  width: auto; background: #0c2418; border: 1px solid #2f9e6a; border-radius: 3px;
+  padding: 3px 9px; font-family: inherit; font-size: 0.82em; color: #9af2c4; cursor: pointer;
+}
+.hw-choice-dialog .hw-target-faction-btn:hover { background: #143a28; color: #d8ffe8; }
+.hw-choice-dialog .hw-target-faction-label {
+  display: block; margin-top: 4px; font-size: 0.85em; font-weight: bold; color: #d8ffe8;
+}
+
 /* ── Галочки Особенности в окнах бросков ───────────────── */
 .hw-mods .atk-mods-title { color: #4dffa6; }
 .hw-roll-mod span b { color: #4dffa6; }

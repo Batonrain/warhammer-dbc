@@ -12,7 +12,7 @@ export class ShipData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str = (initial, label) => new StringField({ initial, label });
     return {
@@ -55,7 +55,7 @@ export class ShipData extends foundry.abstract.TypeDataModel {
         rating:     str("", "Выучка")
       }, { label: "Экипаж" }),
       officers: new ArrayField(new ObjectField(), { label: "Должности" }),
-      notes:    str("", "Заметки")
+      notes:    new HTMLField({ initial: "", label: "Заметки" })
     };
   }
 }

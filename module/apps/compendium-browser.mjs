@@ -266,33 +266,51 @@ function pruneTree(node, pred) {
   return { folders, items };
 }
 
+// Типы, у которых несколько одинаковых предметов лежат ОДНОЙ записью с
+// числом (data/item/gear.mjs, ammo.mjs, weapon.mjs — поле quantity), а не
+// N раздельными копиями. То же самое множество, что actor.mjs учитывает при
+// подсчёте общего веса (там же — карта «вес × quantity», а не «вес за штуку»).
+// Расходники Обозревателя (гранаты, боеприпасы, аптечки, химия) — их и
+// нужно уметь брать по нескольку в бюджетном выборе (wdbc-2ot).
+const STACKABLE_TYPES = new Set(["weapon", "gear", "ammo", "drug", "tool"]);
+
 // Строка предмета + стрелочка раскрытия описания — тот же приём, что у уже
 // взятых Талантов/Черт на листе (▸ у tab-abilities.hbs) и у пикера
 // module/sheets/item-picker.mjs (.pick-exp/.pick-desc): раньше почитать, что
-// даёт запись, ДО покупки можно было только открыв её отдельный лист.
-function renderItemsHtml(items) {
-  return items.map(it => `
+// даёт запись, ДО покупки можно было только открыв её отдельный лист. Для
+// расходуемых типов (STACKABLE_TYPES) добавлена пара +/− — видна только
+// когда предмет реально выбран (syncPickState переключает cbrowse-stackable).
+function renderItemsHtml(items, multi) {
+  return items.map(it => {
+    const stackable = multi && STACKABLE_TYPES.has(it.type);
+    return `
     <div class="cbrowse-row">
       <div class="cbrowse-row-head">
         <button type="button" class="cbrowse-exp pick-exp" title="Показать описание">▸</button>
-        <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}">
+        <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}" data-stackable="${stackable}">
           <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
           <span class="cbrowse-item-name">${esc(it.name)}</span>
+          ${stackable ? `<span class="cbrowse-qty-controls">
+            <button type="button" class="cbrowse-qty-minus" data-uuid="${esc(it.uuid)}" title="Убрать один">−</button>
+            <span class="cbrowse-qty-n">0</span>
+            <button type="button" class="cbrowse-qty-plus" data-uuid="${esc(it.uuid)}" title="Добавить ещё один">+</button>
+          </span>` : ""}
         </div>
       </div>
       <div class="cbrowse-desc pick-desc" style="display:none;">${esc(it.desc || "—")}</div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 }
 
-function renderNodeHtml(node) {
-  let html = renderItemsHtml(node.items || []);
+function renderNodeHtml(node, multi) {
+  let html = renderItemsHtml(node.items || [], multi);
   html += (node.folders || []).map(f => `
     <div class="cbrowse-folder pick-collapsed">
       <div class="cbrowse-folder-head">
         <span class="pick-caret">▸</span>${esc(f.name)}
         <span class="pick-count">${countNode(f)}</span>
       </div>
-      <div class="cbrowse-folder-body">${renderNodeHtml(f)}</div>
+      <div class="cbrowse-folder-body">${renderNodeHtml(f, multi)}</div>
     </div>`).join("");
   return html;
 }
@@ -349,22 +367,27 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
       .map(t => `<button type="button" class="cbrowse-tab${t.key === "all" ? " active" : ""}" data-tab="${t.key}">${esc(t.label)}</button>`)
       .join("");
 
+    // Бюджет: штуками («7 талантов 1 уровня») или опытом («500хр на Психосилы»).
+    // Одна штука без пояснения — прежний одиночный выбор: клик по строке сразу
+    // отдаёт uuid и закрывает окно, +/- расходников тут смысла не имеют (закрыть
+    // окно ими нечем — кнопка «Готово» не рисуется вовсе) — раньше STACKABLE_TYPES
+    // решался только типом предмета, и одиночный выбор Оружия/Брони/etc навсегда
+    // застревал в счётчике без способа подтвердить (wdbc-a4l live-тест).
+    const budget = pick?.budget ?? null;
+    const multi = !!pick && (budget?.mode === BUDGET_XP || budget?.value > 1);
+
     const body = cats.map(c => `
       <div class="pick-group pick-collapsed" data-tabs="${esc(c.tabs.join(" "))}" data-all-tab="${c.allTab}">
         <div class="pick-group-head">
           <span class="pick-caret">▸</span>${esc(c.label)}
           <span class="pick-count">${c.count}</span>
         </div>
-        <div class="pick-group-body">${renderNodeHtml(c.tree)}</div>
+        <div class="pick-group-body">${renderNodeHtml(c.tree, multi)}</div>
       </div>`).join("");
 
     // Шапка требования: что нужно выбрать и сколько уже выбрано. Показывается
     // только когда есть что сказать — при обычном выборе одного предмета без
     // пояснения она лишняя.
-    // Бюджет: штуками («7 талантов 1 уровня») или опытом («500хр на Психосилы»).
-    // Одна штука без пояснения — прежний одиночный выбор, шапка ему не нужна.
-    const budget = pick?.budget ?? null;
-    const multi = !!pick && (budget?.mode === BUDGET_XP || budget?.value > 1);
     // Цена одной записи в опыте зависит от того, кому выдают, поэтому приходит
     // снаружи; без неё берётся собственная цена записи компендиума.
     const xpCost = pickMode?.xpCost || null;
@@ -402,33 +425,67 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
       render: html => {
         let activeTab = "all";
         // Выбранное при count > 1. Порядок сохраняется: он же порядок выдачи.
+        // Расходуемые типы (STACKABLE_TYPES) могут повторяться — тот же uuid
+        // несколько раз подряд означает «несколько штук», а не переиспользуется
+        // как индекс/множество.
         const chosen = [];
         const picked = () => chosen.map(u => byUuid.get(u)).filter(Boolean);
+        const countOf = uuid => chosen.reduce((n, u) => n + (u === uuid ? 1 : 0), 0);
         const syncPickState = () => {
           html.find(".cbrowse-item").each((_, el) =>
-            el.classList.toggle("cbrowse-picked", chosen.includes(el.dataset.uuid)));
+            el.classList.toggle("cbrowse-picked", countOf(el.dataset.uuid) > 0));
+          html.find(".cbrowse-qty-controls").each((_, el) => {
+            const uuid = el.querySelector(".cbrowse-qty-minus")?.dataset.uuid;
+            const n = countOf(uuid);
+            el.querySelector(".cbrowse-qty-n").textContent = n;
+            el.classList.toggle("cbrowse-qty-active", n > 0);
+          });
           html.find(".cbrowse-pick-n").text(budgetLabel(picked(), budget, xpCost));
           html.find(".cbrowse-pick-confirm").prop("disabled", !budgetReady(picked(), budget, xpCost));
+        };
+        const warnBudget = uuid => {
+          const st = budgetState(picked(), budget, xpCost);
+          ui.notifications.warn(st.mode === BUDGET_XP
+            ? `Не хватает опыта: осталось ${st.left} из ${st.value}.`
+            : `Уже выбрано ${st.value} — снимите лишнее, чтобы выбрать другое.`);
+        };
+        const addOne = uuid => {
+          if (!budgetFits(picked(), byUuid.get(uuid), budget, xpCost)) return warnBudget(uuid);
+          chosen.push(uuid);
+          syncPickState();
+        };
+        const removeOne = uuid => {
+          const at = chosen.indexOf(uuid);
+          if (at < 0) return;
+          chosen.splice(at, 1);
+          syncPickState();
         };
 
         html.find(".cbrowse-item").on("click", async ev => {
           const uuid = ev.currentTarget.dataset.uuid;
           if (pick && !multi) { finish(uuid); dlg.close(); return; }
           if (multi) {
+            // Расходуемые типы (гранаты, боеприпасы и т.п.) копятся кликами —
+            // снять лишнее можно кнопкой «−» рядом со счётчиком, не тем же
+            // кликом по строке (иначе непонятно, как взять больше одной).
+            if (ev.currentTarget.dataset.stackable === "true") return addOne(uuid);
             const at = chosen.indexOf(uuid);
             if (at >= 0) chosen.splice(at, 1);
-            else if (!budgetFits(picked(), byUuid.get(uuid), budget, xpCost)) {
-              const st = budgetState(picked(), budget, xpCost);
-              return ui.notifications.warn(st.mode === BUDGET_XP
-                ? `Не хватает опыта: осталось ${st.left} из ${st.value}.`
-                : `Уже выбрано ${st.value} — снимите лишнее, чтобы выбрать другое.`);
-            }
+            else if (!budgetFits(picked(), byUuid.get(uuid), budget, xpCost)) return warnBudget(uuid);
             else chosen.push(uuid);
             return syncPickState();
           }
           const doc = await fromUuid(uuid).catch(() => null);
           if (!doc) return ui.notifications.warn("Предмет не найден (возможно, компендиум изменился — нажмите ↻).");
           doc.sheet?.render(true);
+        });
+        html.find(".cbrowse-qty-plus").on("click", ev => {
+          ev.preventDefault(); ev.stopPropagation();
+          addOne(ev.currentTarget.dataset.uuid);
+        });
+        html.find(".cbrowse-qty-minus").on("click", ev => {
+          ev.preventDefault(); ev.stopPropagation();
+          removeOne(ev.currentTarget.dataset.uuid);
         });
 
         // Стрелочка раскрытия описания — прочитать, что даёт запись, ДО
@@ -508,9 +565,14 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
           html.find(".cbrowse-folder").each((_, el) => {
             const hits = [...el.querySelectorAll(".cbrowse-item")].filter(i => !i.classList.contains("pick-hidden")).length;
             el.style.display = hits ? "" : "none";
-            el.classList.toggle("pick-collapsed", !q);
+            // В режиме выбора вложенная папка тоже раскрыта сразу, как и
+            // категория верхнего уровня (.pick-group выше) — иначе уже
+            // отмеченные предметы могли спрятаться за свёрнутой подпапкой
+            // («Стандартные системы» внутри «Системы силовой брони»), и
+            // «выбрано N из M» не было видно, что именно выбрано.
+            el.classList.toggle("pick-collapsed", pick ? false : !q);
             const caret = el.querySelector(":scope > .cbrowse-folder-head .pick-caret");
-            if (caret) caret.textContent = q ? "▾" : "▸";
+            if (caret) caret.textContent = (pick || q) ? "▾" : "▸";
           });
         };
 

@@ -14,6 +14,7 @@ import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
+import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
 
 export function registerHooks() {
 
@@ -820,6 +821,26 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolvePendingSusAnHeals(combat, { force: true });
+  });
+
+  // ── Таймер периодического теста перевеса выключенной силовой брони ──────
+  // (combat/armor-mods.mjs, стр. 233) — тир перевеса производный, «было/стало»
+  // хуку update* не видно, поэтому синхронизация идёт по текущему состоянию
+  // на каждое релевантное изменение: вес брони меняется через её собственный
+  // updateItem (active/equipped), Ношение/Подъём/Толкание — через updateActor
+  // (характеристики, снаряжение).
+  Hooks.on("updateActor", async actor => {
+    await syncDisabledArmourOverloadTimer(actor);
+  });
+  // Хук стреляет у всех, кто в игре, — авто-диалог теста-развилки (S+0/
+  // Athletics(S)+10, стр. 233) должен всплыть только у того, кто саму броню
+  // отключил (userId), иначе окно выбора получат все клиенты разом.
+  Hooks.on("updateItem", async (item, changes, options, userId) => {
+    if (item.type !== "armor" || !item.actor) return;
+    await syncDisabledArmourOverloadTimer(item.actor);
+    if (userId === game.user?.id && changes?.system?.active === false) {
+      await promptDisabledArmourForkTest(item.actor);
+    }
   });
 }
 

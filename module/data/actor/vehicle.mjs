@@ -12,7 +12,7 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str = (initial, label) => new StringField({ initial, label });
     return {
@@ -42,8 +42,8 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
       traits:       str("", "Черты"),
       stations:     new ArrayField(new ObjectField(), { label: "Места экипажа" }),
       damageStates: new ArrayField(new ObjectField(), { label: "Состояния повреждений" }),
-      notes:        str("", "Заметки"),
-      gmNotes:      str("", "Заметки ГМ"),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
+      gmNotes:      new HTMLField({ initial: "", label: "Заметки ГМ" }),
       // Доступность машины: в template.json объявлена не была, но лежит у всех
       // 56 машин пака.
       availability: num(0, "Доступность")

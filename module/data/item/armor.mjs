@@ -13,7 +13,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     /** Запись истории комплекта: таблица, бросок и его последствия. */
     const historyEntry = () => ({
@@ -26,8 +26,8 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       choice: new StringField({ initial: "", label: "Выбор" })
     });
     return {
-      description:  new StringField({ initial: "", label: "Описание" }),
-      notes:        new StringField({ initial: "", label: "Заметки" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       infoguard:    infoguardField(),
       armorType:    new StringField({ initial: "simple", label: "Тип брони" }),
       stacks:       new BooleanField({ initial: false, label: "Складывается" }),

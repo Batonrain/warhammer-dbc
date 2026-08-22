@@ -21,6 +21,7 @@
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "./skills.mjs";
 import { SKILL_RANKS } from "./characteristics.mjs";
+import { matchSpec, specCovers } from "./skill-specializations.mjs";
 
 /** Сокращения характеристик из требований → ключи системы. */
 const CHAR_ALIASES = {
@@ -262,7 +263,15 @@ function checkAtom(actor, atom) {
       const arr = sys.groupSkills?.[atom.group];
       if (!Array.isArray(arr) || !GROUP_SKILLS_DEF[atom.group]) return null;
       const want = norm(atom.specialty);
-      const fit = arr.filter(e => !want || norm(e?.specialty).includes(want));
+      // Требуемая специализация может быть закрыта совмещённой записью
+      // («Варп, Демоны и Псайкеры» и т.п., см. specCovers) — текстовое
+      // совпадение (norm/includes) этого не увидит, если её подпись хранится
+      // на другом языке, поэтому специализация требования сверяется ещё и по
+      // ключу через matchSpec/specCovers.
+      const wantDef = atom.specialty ? matchSpec(atom.group, atom.specialty) : null;
+      const fit = arr.filter(e => !want
+        || norm(e?.specialty).includes(want)
+        || (wantDef && specCovers(atom.group, e?.specKey, wantDef.key)));
       if (!fit.length) return false;
       return fit.some(e => rankBonus(e.rank) >= atom.bonus);
     }

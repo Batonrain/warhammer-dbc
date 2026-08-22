@@ -148,6 +148,20 @@ export function specDef(group, key) {
   return SPEC[group]?.[key] || null;
 }
 
+/**
+ * Удовлетворяет ли специализация `haveKey` требованию/тесту на `wantKey` —
+ * тем же ключом, либо совмещённой записью (`combines`, стр. 58-61: «Варп,
+ * Демоны и Псайкеры» заменяет любую из трёх и бросается как одна). Общий
+ * хелпер для requirements/roll-подбора, чтобы не дублировать
+ * `def?.combines?.includes(wantKey)` в каждом месте, где сверяют specKey.
+ */
+export function specCovers(group, haveKey, wantKey) {
+  if (!haveKey || !wantKey) return false;
+  if (haveKey === wantKey) return true;
+  const def = specDef(group, haveKey);
+  return !!def?.combines?.includes(wantKey);
+}
+
 const norm = (s) => String(s || "").toLowerCase().replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
 
 /**

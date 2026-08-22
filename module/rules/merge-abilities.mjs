@@ -22,6 +22,8 @@
 //  без заглушки (test/rules/merge-abilities.test.mjs).
 // ════════════════════════════════════════════════════════════════════════════
 
+import { isMinionTalent } from "./minion-build.mjs";
+
 /**
  * Хвостовая скобка с рейтингом: «Nimble (10)», «Сверхъест. Сила (X)».
  * Только число или заглушка X — латинская и русская, в паках встречаются обе.
@@ -54,7 +56,15 @@ export function mergeKey(name) {
  */
 export function itemSpecs(item) {
   const s = item?.system ?? {};
-  const fromSpec = String(s.specialization ?? "").split(",").map(x => x.trim());
+  // «Миньон Хаоса» (apps/minion-talent.mjs) кладёт в specialization ОДНУ
+  // составную метку «Группа, Сила» («Демон, Высший») — не список нескольких
+  // специализаций через запятую, как у остальных Талантов. Обычное
+  // split(",") резало её на два бессмысленных обрывка и при нескольких
+  // покупках с разными парами сливало всё в кашу без счёта — «неверное
+  // количество взятых миньонов» (wdbc-cof).
+  const fromSpec = isMinionTalent(item)
+    ? [String(s.specialization ?? "").trim()]
+    : String(s.specialization ?? "").split(",").map(x => x.trim());
   const fromTargets = (Array.isArray(s.targets) ? s.targets : []).map(t => String(t?.name ?? "").trim());
   return [...fromSpec, ...fromTargets].filter(Boolean);
 }

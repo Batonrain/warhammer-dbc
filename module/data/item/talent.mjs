@@ -20,10 +20,10 @@ export class TalentData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, ArrayField, SchemaField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, ArrayField, SchemaField } = foundry.data.fields;
     return {
-      description:    new StringField({ initial: "", label: "Описание" }),
-      notes:          new StringField({ initial: "", label: "Заметки" }),
+      description:    new HTMLField({ initial: "", label: "Описание" }),
+      notes:          new HTMLField({ initial: "", label: "Заметки" }),
       benefit:        new StringField({ initial: "", label: "Действие" }),
       bookSource:     new StringField({ initial: "", label: "Книга-источник" }),
       tier:           new NumberField({ initial: 1, integer: true, nullable: false, label: "Ступень" }),
@@ -62,6 +62,10 @@ export class TalentData extends foundry.abstract.TypeDataModel {
         img:   new StringField({ initial: "", label: "Значок" })
       }), { label: "Цели" }),
       cost:           new NumberField({ initial: 0, integer: true, nullable: false, label: "Цена в опыте" }),
+      // ГМ вписал цену руками (вкладка «Развитие») — setAptitudes её больше
+      // не трогает при пересчёте по смене Склонностей, иначе правка молча
+      // терялась бы на следующий же клик по ＋/✕ у Склонности (wdbc-cct).
+      costManual:     new BooleanField({ initial: false, label: "Цена задана вручную" }),
       purchased:      new BooleanField({ initial: false, label: "Куплен" }),
       granted:        new BooleanField({ initial: false, label: "Выдан генерацией" }),
       effects:        new ObjectField({ initial: emptyEffects, label: "Механика" })

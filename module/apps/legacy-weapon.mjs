@@ -278,9 +278,12 @@ export async function legacyPrompt(label, initial = "") {
     buttons: [
       { action: "ok", label: "Готово", default: true,
         callback: (_e, button) => button.form.elements.value.value },
-      { action: "cancel", label: "Отмена", callback: () => null }
+      // `false`, а не `null`: `null` DialogV2 подменяет на сам action («cancel»),
+      // и вызывающий (`if (name === null) return`) заводил бы Мутацию с именем
+      // «cancel». См. комментарий у pickFromList (sheets/item-sheet.mjs).
+      { action: "cancel", label: "Отмена", callback: () => false }
     ]
-  });
+  }).then(res => res === false ? null : res);
 }
 
 /** Своя Мутация вместо броска — книга разрешает это для 3-й и 4-й (стр. 428). */

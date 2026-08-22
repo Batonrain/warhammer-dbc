@@ -19,7 +19,7 @@ export class AspirationData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, NumberField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField } = foundry.data.fields;
     return {
       // Ключ «таблица:номер» — по нему запись находит вкладка ЗАПИСИ.
       key:         new StringField({ initial: "", label: "Ключ" }),
@@ -28,7 +28,8 @@ export class AspirationData extends foundry.abstract.TypeDataModel {
       }),
       n:           new NumberField({ initial: 0, integer: true, nullable: false, label: "Номер в таблице" }),
       mods:        new StringField({ initial: "", label: "Модификаторы" }),
-      description: new StringField({ initial: "", label: "Описание" }),
+      description: new HTMLField({ initial: "", label: "Описание" }),
+      notes:       new HTMLField({ initial: "", label: "Заметки" }),
       bookSource:  new StringField({ initial: "", label: "Книга-источник" })
     };
   }

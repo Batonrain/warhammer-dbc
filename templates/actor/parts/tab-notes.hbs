@@ -82,7 +82,7 @@
         актора со своей шапкой (Хозяин, Тип, Сила, Лояльность), а перечень слуг
         Хозяина — блок «МИНЬОНЫ» на вкладке СОЦИУМ. --}}
 
-  <div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <textarea name="system.notes" class="notes-textarea" placeholder="Записи...">{{system.notes}}</textarea> </div>
+  <div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <prose-mirror name="system.notes" class="notes-textarea" toggled value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror> </div>
   {{!-- Блок СТАТУС убран: все пять флажков продублированы в меню «Настройки
         листа» у шапки (actor-sheet.mjs, _sheetToggleEntries — состав пунктов
         свой у каждого типа) — там же ручной оверрайд поверх автоопределения

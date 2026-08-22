@@ -28,14 +28,18 @@ import { packDocuments, leaves, isEmpty } from "../support/pack-docs.mjs";
 const TYPES = {
   weaponProperty: {
     pack: "weapon-properties",
+    // `notes` добавлено следом за `description`: общий блок ЗАПИСИ на листе
+    // предмета рисуется для любого типа, а в схеме поля не было — правка
+    // молча терялась.
     defaults: {
-      description: "", reminder: "", category: "both",
+      description: "", notes: "", reminder: "", category: "both",
       hasRating: false, hasRating2: false, autoKey: "", bookSource: ""
     }
   },
   aspiration: {
     pack: "aspirations",
-    defaults: { key: "", table: "pride", n: 0, mods: "", description: "", bookSource: "" }
+    // `notes` — по той же причине, что и у weaponProperty выше.
+    defaults: { key: "", table: "pride", n: 0, mods: "", description: "", notes: "", bookSource: "" }
   },
   trait: {
     pack: "traits",
@@ -253,6 +257,8 @@ const TYPES = {
       // Уровень (Enemy 1-3) и цели (Hatred/Peer/Enemy/Good Reputation) —
       // добавлены вместе с деревом фракций, в template.json их не было.
       hasRating: false, rating: 0, targets: [],
+      // Ручная цена (вкладка «Развитие», wdbc-cct) — тоже позже template.json.
+      costManual: false,
       effects: { initMod: 0, fearRating: 0, speedMod: 0 }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
@@ -303,7 +309,7 @@ const TYPES = {
       balance: 0, grips: "", profileLabel: "", meleeCategory: "", profiles: [], reload: "1",
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
       damage: "", damageType: "impact", penetration: 0, quality: "common",
-      availability: 0, weight: 0, attackBonus: 0, special: "", equipped: false,
+      availability: 0, weight: 0, quantity: 1, attackBonus: 0, special: "", equipped: false,
       loadedAmmoId: "", weaponProps: [], needsRecharge: false, legacyWeapon: false,
       sacred: false,
       daemonWeapon: {
@@ -349,8 +355,6 @@ const TYPES = {
     defaults: {
       description: "", notes: "", infoguard: 0, armorType: "simple", stacks: false,
       maxAgility: 100, propRatings: {}, apSecond: {}, equipped: false,
-      // Выключаемая Силовая броня (data/item/armor.mjs): умолчание true.
-      active: true,
       head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
       quality: "common", availability: 0, weight: 0, properties: [],
       strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
@@ -363,7 +367,8 @@ const TYPES = {
       // Текст особенностей комплекта — заполнен у 65 предметов пака, а в
       // template.json объявлен не был.
       special: "",
-      weightless: false
+      weightless: false,
+      active: true
     }
   },
   // ── Силы (wdbc-ff4.1.4) ────────────────────────────────────────────────────
@@ -438,7 +443,8 @@ const TYPES = {
   torpedo: {
     // Предметов этого типа в паках нет — торпеды заводит сам ГМ.
     pack: null,
-    defaults: { warhead: "plasma", navSystem: "standard", quantity: 0, description: "" }
+    // `notes` — по той же причине, что и у weaponProperty выше.
+    defaults: { warhead: "plasma", navSystem: "standard", quantity: 0, description: "", notes: "" }
   },
   celestialBody: {
     // Небесные тела лежат предметами в акторах starSystem, отдельного пака нет.

@@ -9,11 +9,11 @@ export class AmmoData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     return {
-      description:        new StringField({ initial: "", label: "Описание" }),
-      notes:              new StringField({ initial: "", label: "Заметки" }),
+      description:        new HTMLField({ initial: "", label: "Описание" }),
+      notes:              new HTMLField({ initial: "", label: "Заметки" }),
       weaponTypes:        new ArrayField(new StringField(), { label: "Подходит к типам оружия" }),
       ammoCategory:       new StringField({ initial: "bullets", label: "Категория" }),
       rarity:             num(0, "Редкость"),

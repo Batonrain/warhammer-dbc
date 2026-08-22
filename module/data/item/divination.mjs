@@ -9,7 +9,7 @@ export class DivinationData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, NumberField, ObjectField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, ObjectField } = foundry.data.fields;
     const num = label => new NumberField({ initial: 0, integer: true, nullable: false, label });
     return {
       key:          new StringField({ initial: "", label: "Ключ" }),
@@ -22,8 +22,8 @@ export class DivinationData extends foundry.abstract.TypeDataModel {
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       charModLabel: new StringField({ initial: "", label: "Модификаторы характеристик" }),
       choices:      new ObjectField({ label: "Выборы при генерации" }),
-      description:  new StringField({ initial: "", label: "Описание" }),
-      notes:        new StringField({ initial: "", label: "Заметки" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       effects:      new ObjectField({ initial: () => ({ charValueBonuses: [] }), label: "Механика" })
     };
   }

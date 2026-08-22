@@ -36,7 +36,6 @@ export const APTITUDES = {
   per:        "Восприятие (P)",
   wp:         "Воля (W)",
   fel:        "Товарищество (F)",
-  inf:        "Влияние (Inf)",
   offence:    "Нападение",
   defence:    "Защита",
   finesse:    "Искусность",

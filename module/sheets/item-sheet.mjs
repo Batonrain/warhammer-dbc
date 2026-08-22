@@ -427,6 +427,12 @@ function onApropRemove(event, target) {
  * @returns {Promise<?string|?{key: string, label: string}>} null — отмена.
  */
 function pickFromList({ title, prompt, options, withLabel = false }) {
+  // `false`, а не `null`, во всех callback'ах ниже: DialogV2 резолвит результат
+  // как `(await callback(...)) ?? button.action` (scripts/foundry.mjs,
+  // DialogV2#_onSubmit) — `null`/`undefined` там подменяются на сам action и
+  // возвращают строку «cancel»/«ok». Она непустая, проходит `if (!kind) return`
+  // у вызывающих и уезжает дальше как настоящий выбор. `false` переживает `??`
+  // и здесь же переводится обратно в задокументированный null.
   return foundry.applications.api.DialogV2.wait({
     window: { title },
     classes: ["warhammer-dbc", "wh-holo"],
@@ -439,16 +445,16 @@ function pickFromList({ title, prompt, options, withLabel = false }) {
         action: "ok", label: "Далее", default: true,
         callback: (event, button) => {
           const sel = button.form.querySelector(".wh-pick-select");
-          if (!sel?.value) return null;
+          if (!sel?.value) return false;
           return withLabel
             ? { key: sel.value, label: sel.selectedOptions[0].textContent }
             : sel.value;
         }
       },
-      { action: "cancel", label: "Отмена" }
+      { action: "cancel", label: "Отмена", callback: () => false }
     ],
     rejectClose: false
-  });
+  }).then(res => res === false ? null : res);
 }
 
 export class WarhammerItemSheet
@@ -862,6 +868,13 @@ export class WarhammerItemSheet
     context.legacy        = legacyContext(this.item);
     context.system = this.item.system;
 
+    // ── Описание/Заметки: prose-mirror с переключаемым режимом (как у Journal
+    // Entries) — пока не открыт на правку, показывается обогащённый HTML.
+    context.descriptionEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
+      context.system.description || "", { relativeTo: this.item, secrets: this.item.isOwner });
+    context.notesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
+      context.system.notes || "", { relativeTo: this.item, secrets: this.item.isOwner });
+
     context.system.balanceStr      = String(context.system.balance      ?? "0");
     // availabilityStr всегда строка для корректного сравнения в HBS
     context.system.availabilityStr = String(context.system.availability ?? "0");
@@ -1200,6 +1213,8 @@ export class WarhammerItemSheet
     // ── Небесное тело (звёздная система) ─────────────────────────────────────
     if (this.item.type === "celestialBody") {
       const sys = context.system;
+      context.cbGmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
+        sys.gmNotes || "", { relativeTo: this.item, secrets: this.item.isOwner });
       const opts = (obj) => Object.entries(obj).map(([key, v]) => ({ key, label: v.label ?? v }));
       context.cbBodyTypes  = Object.entries(BODY_TYPES).map(([key, v]) => ({ key, label: v.label, icon: v.icon }));
       context.cbZones      = opts(ZONES);

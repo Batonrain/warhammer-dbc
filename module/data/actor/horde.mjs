@@ -12,7 +12,7 @@ export class HordeData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, SchemaField,
+    const { StringField, HTMLField, BooleanField, NumberField, SchemaField,
             ArrayField, ObjectField } = foundry.data.fields;
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str = label => new StringField({ initial: "", label });
@@ -73,8 +73,8 @@ export class HordeData extends foundry.abstract.TypeDataModel {
       detachedMagnitude: num(0, "Отдельные стрелки"),
       immuneFear:     new BooleanField({ initial: false, label: "Иммунитет к Страху" }),
       traits:  str("Черты"),
-      notes:   str("Заметки"),
-      gmNotes: str("Заметки ГМ")
+      notes:   new HTMLField({ initial: "", label: "Заметки" }),
+      gmNotes: new HTMLField({ initial: "", label: "Заметки ГМ" })
     };
   }
 }

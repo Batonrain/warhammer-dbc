@@ -8,7 +8,7 @@ export class DiseaseData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField } = foundry.data.fields;
     return {
       diseaseType: new StringField({ initial: "warp", label: "Природа" }),
       severity:    new StringField({ initial: "", label: "Тяжесть" }),
@@ -19,8 +19,8 @@ export class DiseaseData extends foundry.abstract.TypeDataModel {
       vectors:     new StringField({ initial: "", label: "Пути передачи" }),
       cure:        new StringField({ initial: "", label: "Лечение" }),
       active:      new BooleanField({ initial: false, label: "Действует" }),
-      description: new StringField({ initial: "", label: "Описание" }),
-      notes:       new StringField({ initial: "", label: "Заметки" })
+      description: new HTMLField({ initial: "", label: "Описание" }),
+      notes:       new HTMLField({ initial: "", label: "Заметки" })
     };
   }
 }

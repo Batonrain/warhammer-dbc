@@ -12,14 +12,15 @@ export class CelestialBodyData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str  = label => new StringField({ initial: "", label });
+    const html = label => new HTMLField({ initial: "", label });
     const bool = label => new BooleanField({ initial: false, label });
     const res  = label => num(0, label);
     return {
-      description:        str("Описание"),
-      notes:              str("Заметки"),
+      description:        html("Описание"),
+      notes:              html("Заметки"),
       bodyType:           new StringField({ initial: "planet", label: "Тип тела" }),
       zone:               str("Зона системы"),
       parentId:           str("Вращается вокруг"),
@@ -46,7 +47,7 @@ export class CelestialBodyData extends foundry.abstract.TypeDataModel {
       allegiance:         str("Принадлежность"),
       xenosSpecies:       str("Ксеносы"),
       xenosCustom:        str("Ксеносы (своё)"),
-      gmNotes:            str("Заметки ГМ"),
+      gmNotes:            html("Заметки ГМ"),
       signal:             bool("Сигнал на карте"),
       scouted:            bool("Разведано"),
       revealed:           bool("Тайны раскрыты"),

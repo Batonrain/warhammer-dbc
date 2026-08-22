@@ -250,6 +250,10 @@ export class WarhammerFormationSheet
     context.system  = sys;
     context.derived = sys.derived || {};
     context.isGM    = game.user.isGM;
+    // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
+    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
+    context.notesEnriched   = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.notes || "", enrichOpts);
+    context.gmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.gmNotes || "", enrichOpts);
 
     // Подсистема «Книга Битв» может быть выключена в настройках системы: лист
     // уже созданного формирования продолжает работать, но об этом стоит сказать.
