@@ -819,7 +819,10 @@ export function buildGetData(actor) {
         cost,
         tier: i.system?.tier || 1,
         // ★ — «выдан архетипом/расой, опыт не тратится»
-        isGranted: !!i.system?.granted || (cost === 0 && !i.system?.purchased)
+        isGranted: !!i.system?.granted || (cost === 0 && !i.system?.purchased),
+        // Цена вписана ГМом руками (wdbc-cct) — держится, пока не сбросят
+        // явно кнопкой ↺: авто-пересчёт по Склонностям такую цену не трогает.
+        costManual: !!i.system?.costManual
       };
     })
     .sort((a, b) => (a.tier - b.tier) || a.name.localeCompare(b.name, "ru"));
