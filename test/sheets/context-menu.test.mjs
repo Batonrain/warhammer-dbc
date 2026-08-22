@@ -95,6 +95,23 @@ describe("openContextMenu", () => {
     expect(jq.state.documentOff).toEqual(["click.wh-ctx"]);
   });
 
+  it("пункт-чекбокс рисует текущее состояние и переключает клюком по себе", () => {
+    const jq = fakeJq();
+    let checked = false;
+
+    const menu = openContextMenu(contextEvent(), [
+      { cls: "wh-ctx-tog", label: "Пробуждение", checkbox: true, checked: true,
+        onClick: () => { checked = true; } }
+    ], jq);
+
+    expect(menu.html).toContain('<label class="wh-ctx-item wh-ctx-checkbox wh-ctx-tog">');
+    expect(menu.html).toContain('<input type="checkbox" checked/>');
+    expect(menu.html).toContain("Пробуждение");
+
+    menu.handlers[".wh-ctx-tog:click"]({ stopPropagation: () => {} });
+    expect(checked).toBe(true);
+  });
+
   it("одноразовое закрытие вешается с задержкой — клик-открытие не схлопывает меню", async () => {
     vi.useFakeTimers();
     const jq = fakeJq();

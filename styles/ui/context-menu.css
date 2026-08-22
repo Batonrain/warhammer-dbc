@@ -25,6 +25,10 @@
 
 .wh-ctx-item:last-child { border-bottom: none; }
 .wh-ctx-item:hover { background: #15492f; color: #eafff4; }
+
+/* ── Пункт-чекбокс (переключатели «Настройки листа») ── */
+.wh-ctx-checkbox { display: flex; align-items: center; gap: 8px; }
+.wh-ctx-checkbox input[type="checkbox"] { margin: 0; cursor: pointer; }
 .wh-ctx-sep { height: 1px; background: rgba(47,158,106,0.4); margin: 2px 0; padding: 0; }
 .wh-ctx-rename:hover { color: #6fe6ff; }
 .wh-ctx-delete:hover { background: #3a1414; color: #ff8a8a; }

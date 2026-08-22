@@ -7,6 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import { hordeSystemFrom, hordeNameFrom, hordeItemsFrom,
+         actorSystemFromHorde, actorNameFromHorde,
          HORDE_KEPT_ITEM_TYPES } from "../../module/rules/horde-convert.mjs";
 import { SKILLS_DEF } from "../../module/constants/skills.mjs";
 
@@ -127,5 +128,90 @@ describe("hordeNameFrom", () => {
     expect(hordeNameFrom("Сол Гореш")).toBe("Сол Гореш — Орда");
     expect(hordeNameFrom("  Кровопускатель ")).toBe("Кровопускатель — Орда");
     expect(hordeNameFrom("")).toBe("Существо — Орда");
+  });
+});
+
+// «В Персонажа» — обратное превращение (не настоящий откат, см. комментарий
+// у actorSystemFromHorde): проверяем то немногое, что Орда хранит без потерь
+// (Раны из Магнитуды, Ранг навыков, Групповые навыки, Размер), и что всё
+// остальное (вид/архетип/текстовые Черты) уходит в Заметки, а не теряется.
+describe("actorSystemFromHorde", () => {
+  const horde = {
+    speciesName: "Астартес", faction: "III когорта", descriptor: "Тактик",
+    characteristics: { s: { total: 48, bonus: 4 }, ag: { total: 35, bonus: 3 } },
+    skills: { dodge: { rank: "trained" }, awareness: { rank: "veteran" } },
+    groupSkills: { commonLore: [{ specialty: "Империум", rank: "trained" }] },
+    magnitude: { value: 14, start: 20 },
+    sizeMod: 1,
+    traits: "Стойкий",
+    notes: "Ветеран III когорты"
+  };
+
+  it("характеристики переезжают Итогом в Базу, Продвижение и Сверхъестественное — нулём", () => {
+    const s = actorSystemFromHorde(horde);
+    expect(s.characteristics.s).toEqual({ base: 48, advance: 0, supernatural: 0, total: 48, bonus: 4, cost: 0 });
+  });
+
+  it("Влияния у Орды не было — характеристика не восстанавливается", () => {
+    expect(actorSystemFromHorde(horde).characteristics.inf).toBeUndefined();
+  });
+
+  it("навыки переезжают рангом, для всех навыков схемы", () => {
+    const s = actorSystemFromHorde(horde);
+    expect(s.skills.dodge).toEqual({ rank: "trained", cost: 0 });
+    expect(s.skills.charm).toEqual({ rank: "untrained", cost: 0 });
+    expect(Object.keys(s.skills).sort()).toEqual(Object.keys(SKILLS_DEF).sort());
+  });
+
+  it("групповые навыки переезжают записями со специализацией", () => {
+    expect(actorSystemFromHorde(horde).groupSkills.commonLore)
+      .toEqual([{ specialty: "Империум", rank: "trained", cost: 0 }]);
+  });
+
+  it("Магнитуда становится Ранами: начальная — максимумом, текущая — текущими", () => {
+    expect(actorSystemFromHorde(horde).wounds).toEqual({ value: 14, max: 20 });
+  });
+
+  it("текущие Раны не превышают максимум и не уходят в минус", () => {
+    expect(actorSystemFromHorde({ magnitude: { value: 99, start: 20 } }).wounds).toEqual({ value: 20, max: 20 });
+    expect(actorSystemFromHorde({ magnitude: { value: -5, start: 12 } }).wounds.value).toBe(0);
+  });
+
+  it("Размер возвращается из sizeMod", () => {
+    expect(actorSystemFromHorde(horde).size).toBe(1);
+  });
+
+  it("Фракция у Персонажа/Демона — предметы-Фракции, не строка: не структурное поле", () => {
+    expect(actorSystemFromHorde(horde).faction).toBeUndefined();
+  });
+
+  it("вид/фракция/архетип/текстовые Черты — не структурные поля, а справка в Заметках", () => {
+    const s = actorSystemFromHorde(horde);
+    expect(s.notes).toContain("Вид (из Орды): Астартес");
+    expect(s.notes).toContain("Фракция (из Орды): III когорта");
+    expect(s.notes).toContain("Архетип/особенность (из Орды): Тактик");
+    expect(s.notes).toContain("Черты (текст, из Орды): Стойкий");
+    expect(s.notes).toContain("Ветеран III когорты");
+  });
+
+  it("пустой ввод не падает", () => {
+    expect(() => actorSystemFromHorde({})).not.toThrow();
+    expect(actorSystemFromHorde({}).notes).toBe("");
+  });
+});
+
+describe("actorNameFromHorde", () => {
+  it("снимает суффикс «— Орда», добавленный hordeNameFrom", () => {
+    expect(actorNameFromHorde("Сол Гореш — Орда")).toBe("Сол Гореш");
+    expect(actorNameFromHorde("Кровопускатель — Орда")).toBe("Кровопускатель");
+  });
+
+  it("имя без суффикса остаётся как есть", () => {
+    expect(actorNameFromHorde("Толпа рабов")).toBe("Толпа рабов");
+  });
+
+  it("пустое имя не роняет, даёт заглушку", () => {
+    expect(actorNameFromHorde("")).toBe("Существо");
+    expect(actorNameFromHorde()).toBe("Существо");
   });
 });

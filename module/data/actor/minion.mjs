@@ -29,6 +29,9 @@ export class MinionData extends foundry.abstract.TypeDataModel {
     return {
       ...creatureSchema(),
       isMinion: new BooleanField({ initial: true, label: "Миньон" }),
+      // Силуэт на вкладке ТЕЛО и в Хирургиконе — то же поле, что у Персонажа
+      // и Принца Демона (creatureSchema его не несёт, там оно не общее).
+      bodyType: new StringField({ initial: "male", label: "Телосложение" }),
       // Талант, которым этот слуга куплен: слот занимается именно им, а не
       // парой «группа + сила» — Талантов одной пары бывает несколько.
       slotTalentId: new StringField({ initial: "", label: "Талант-слот" }),

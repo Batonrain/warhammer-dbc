@@ -106,6 +106,79 @@ export function hordeNameFrom(name) {
   return `${String(name || "Существо").trim()} — Орда`;
 }
 
+/**
+ * Обратное превращение: система Персонажа/Демона по системе Орды.
+ *
+ * Настоящего отката нет — прямое превращение уже необратимо теряет разбивку
+ * характеристик (База/Продвижение/Сверхъестественное слиты в одно Итого),
+ * цену навыков в опыте, метки «выдано архетипом», Расу/Архетип как ключи (у
+ * Орды это готовые подписи, а не ключи) и Броню по зонам (Поглощение Орды —
+ * одно число, уже включающее бонус Стойкости, so writing it straight back
+ * into Броню задвоило бы Стойкость). Всё это НЕ восстанавливается — только
+ * то, что Орда хранит без потерь: Раны (из Магнитуды), Ранг навыков,
+ * Групповые навыки, Размер, снаряжение/Таланты/Черты-предметы. Остальное —
+ * подписями в Заметки, чтобы ГМ не потерял информацию, а руками расставил.
+ *
+ * @param {object} system  actor.system Орды
+ * @returns {object}       system нового Персонажа/Демона (без race/archetype —
+ *                          те остаются пустыми, см. заметки)
+ */
+export function actorSystemFromHorde(system = {}) {
+  const chars = {};
+  for (const key of Object.keys(CHARACTERISTICS)) {
+    if (key === "inf") continue; // у Орды не было — оставляем 0, ГМ поставит сам
+    const c = system.characteristics?.[key] || {};
+    const total = num(c.total);
+    chars[key] = { base: total, advance: 0, supernatural: 0, total, bonus: num(c.bonus), cost: 0 };
+  }
+
+  const skills = {};
+  for (const key of Object.keys(SKILLS_DEF)) {
+    skills[key] = { rank: system.skills?.[key]?.rank || "untrained", cost: 0 };
+  }
+
+  const groupSkills = {};
+  for (const key of Object.keys(GROUP_SKILLS_DEF)) {
+    const entries = system.groupSkills?.[key];
+    groupSkills[key] = Array.isArray(entries)
+      ? entries.map(e => ({ specialty: e.specialty || "", rank: e.rank || "untrained", cost: 0 }))
+      : [];
+  }
+
+  // Магнитуда → Раны: обратное «раны становятся Магнитудой» из hordeSystemFrom.
+  const max   = Math.max(0, num(system.magnitude?.start));
+  const value = Math.min(max, Math.max(0, num(system.magnitude?.value)));
+
+  // То, что структурно не восстановить, — читаемой справкой в Заметки, а не
+  // молча теряется. Раса/Архетип/Черты(текст)/Фракция Орды — готовые подписи
+  // или строка не той формы (Фракция у Персонажа/Демона — предметы-Фракции,
+  // а не system.faction: у creatureSchema такого поля нет вовсе, запись туда
+  // Foundry молча отбросила бы при валидации), поэтому в структурные поля
+  // не идут — только текстом.
+  const noteLines = [];
+  if (system.speciesName) noteLines.push(`Вид (из Орды): ${system.speciesName}`);
+  if (system.faction)     noteLines.push(`Фракция (из Орды): ${system.faction}`);
+  if (system.descriptor)  noteLines.push(`Архетип/особенность (из Орды): ${system.descriptor}`);
+  if (system.traits)      noteLines.push(`Черты (текст, из Орды): ${system.traits}`);
+  if (system.notes)       noteLines.push(system.notes);
+  const notesHtml = noteLines.map(l => `<p>${l}</p>`).join("");
+
+  return {
+    wounds: { value, max },
+    characteristics: chars,
+    skills,
+    groupSkills,
+    size: num(system.sizeMod),
+    notes: notesHtml
+  };
+}
+
+/** Имя нового Персонажа/Демона из имени Орды — снимает суффикс « — Орда», если он есть. */
+export function actorNameFromHorde(name) {
+  const base = String(name || "Существо").trim().replace(/\s*—\s*Орда\s*$/i, "");
+  return base || "Существо";
+}
+
 /** Предметы, которые переносим: снаряжение, Таланты, Черты. */
 export function hordeItemsFrom(items = []) {
   return items.filter(i => HORDE_KEPT_ITEM_TYPES.includes(i.type));
