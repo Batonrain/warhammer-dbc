@@ -1,23 +1,25 @@
 {
-  "name": "Порча души одаривает плоть",
+  "name": "Even One Who Has Nothing Can Give His Life / Даже не имеющий ничего может отдать свою жизнь",
   "type": "divination",
   "img": "icons/svg/eye.svg",
   "system": {
-    "key": "gift",
-    "roll": "01",
-    "rollMin": 1,
-    "rollMax": 1,
-    "text": "Порча души одаривает плоть",
-    "effect": "Сделайте бросок по таблице Даров один раз.",
+    "key": "givelife",
+    "roll": "96-99",
+    "rollMin": 96,
+    "rollMax": 99,
+    "text": "Даже не имеющий ничего может отдать свою жизнь",
+    "effect": "Когда персонаж сжигает Inf для Чудесного Спасения, бросьте 1к10. При результате 10 он выживает, но не снижает свой Inf.",
     "source": "Родные миры и Предсказания",
     "bookSource": "Родные миры и Предсказания",
     "charModLabel": "",
     "choices": {},
     "effects": {
       "charValueBonuses": []
-    }
+    },
+    "description": "",
+    "notes": ""
   },
-  "_id": "A6jUcwiX6I3nwSyr",
+  "_id": "APkJAK2o3fjjCbsM",
   "effects": [],
   "folder": null,
   "sort": 0,
@@ -35,12 +37,12 @@
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1786027360702,
-    "modifiedTime": 1786229468447,
+    "createdTime": 1786003756749,
+    "modifiedTime": 1786230667586,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr",
     "compendiumSource": null,
     "duplicateSource": null,
     "exportSource": null
   },
-  "_key": "!items!A6jUcwiX6I3nwSyr"
+  "_key": "!items!APkJAK2o3fjjCbsM"
 }

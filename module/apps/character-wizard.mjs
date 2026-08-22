@@ -883,13 +883,19 @@ export class CharacterWizard extends Application {
    * не подошёл ни один предмет», Обозреватель сам закрывается), а у пака
    * целиком предметов десятки, риск пустой категории на практике нулевой.
    * Не угадал — вернёт null, Обозреватель откроется как раньше, без сужения.
+   *
+   * Границы слова у кириллицы пишутся lookaround'ами по буквам обоих
+   * алфавитов, а не `\b`: `\b` в JS считает словом только ASCII, поэтому
+   * `/\bмеч\b/` не совпадает НИ С ЧЕМ — ни «меч», ни «силовой меч» (обе
+   * стороны «м»/«ч» тоже не-ASCII, границы нет). Тот же приём ниже у
+   * «люб…» и «до R\d».
    */
   _guessGearPack(text) {
     const t = String(text).toLowerCase();
-    if (/\b(bolter|pistol|rifle|shotgun|sword|axe|blade|knife|mace|spear|chain\w*|flamer|cannon|gun|launcher|carbine|autogun|lasgun|las\s*pistol|whip|club|hammer|dagger|talon)\b|оруж|пистолет|винтовк|дробовик|меч|нож|топор|клинок|булав/.test(t)) return "weapons";
-    if (/\b(armour|armor|carapace|flak|xenomesh|wychsuit)\b|брон|доспех|латы|панцир/.test(t)) return "armor";
+    if (/\b(bolter|pistol|rifle|shotgun|sword|axe|blade|knife|mace|spear|chain\w*|flamer|cannon|gun|launcher|carbine|autogun|lasgun|las\s*pistol|whip|club|hammer|dagger|talon)\b|оруж|пистолет|винтовк|дробовик|(?<![A-Za-zА-Яа-яЁё])меч(?![A-Za-zА-Яа-яЁё])|(?<![A-Za-zА-Яа-яЁё])нож(?![A-Za-zА-Яа-яЁё])|топор|клинок|булав/.test(t)) return "weapons";
+    if (/\b(armour|armor|carapace|flak|xenomesh|wychsuit)\b|брон|доспех|(?<![A-Za-zА-Яа-яЁё])латы(?![A-Za-zА-Яа-яЁё])|панцир/.test(t)) return "armor";
     if (/\b(ammo|rounds?|clip|magazine)\b|патрон|обойм|магазин|боеприпас/.test(t)) return "ammunition";
-    if (/\bshield\b|щит/.test(t)) return "shields";
+    if (/\bshield\b|(?<![A-Za-zА-Яа-яЁё])щит(?![A-Za-zА-Яа-яЁё])/.test(t)) return "shields";
     if (/\b(toolkit|tool\s*kit)\b|инструмент|набор\s+инструментов/.test(t)) return "tools";
     return null;
   }
@@ -996,7 +1002,7 @@ export class CharacterWizard extends Application {
       // «(Астартес)» — часть настоящего имени предмета (отличает Легион-версию
       // от обычной), а не квалификатор вроде «(Good.Q)» — не срезаем именно её.
       const clean = txt => String(txt).replace(/^\s*\d+×?\s*/, "").replace(/^l\.\s*/i, "").replace(/\((?!Астартес\))[^)]*\)/g, "")
-        .replace(/\s*до\s*R\s*\d+\b/gi, "").replace(/\b(Best|Good|Common|Poor)\.?Q\b/gi, "").trim();
+        .replace(/\s*(?<![A-Za-zА-Яа-яЁё])до\s*R\s*\d+\b/gi, "").replace(/\b(Best|Good|Common|Poor)\.?Q\b/gi, "").trim();
 
       // done[r] — по КОНКРЕТНОЙ строке (индексу resolved), не общим флагом:
       // иначе один успешный ручной выбор красил бы «сделано» и все строки,
@@ -1009,7 +1015,7 @@ export class CharacterWizard extends Application {
       resolved.forEach((r, i) => {
         if (this._matchStandardSystemsCount(r) != null) { stdSysIdx.push(i); return; }
         if (this._matchLegionCategoryGear(r)) { legionIdx.push(i); return; }
-        if (/люб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
+        if (/(?<![A-Za-zА-Яа-яЁё])люб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
         const k = norm(clean(r));
         const ref = k ? index.get(k) : null;
         if (ref) { toCreate.push({ i, ref }); return; }
