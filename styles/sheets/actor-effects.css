@@ -265,6 +265,7 @@
 .warhammer-dbc .condition-tag.cond-fatigued      { border-color:#c0801a; background:rgba(192,128,26,0.10); }
 .warhammer-dbc .condition-tag.cond-poisoned      { border-color:#27ae60; background:rgba(39,174,96,0.10); }
 .warhammer-dbc .condition-tag.cond-prone         { border-color:#7f8c8d; background:rgba(127,140,141,0.10); }
+.warhammer-dbc .condition-tag.cond-helpless      { border-color:#ff6b6b; background:rgba(255,107,107,0.12); }
 .warhammer-dbc .condition-tag.cond-unconscious   { border-color:#2c3e50; background:rgba(44,62,80,0.12); }
 .warhammer-dbc .condition-tag.cond-blinded       { border-color:#5d4037; background:rgba(93,64,55,0.10); }
 .warhammer-dbc .condition-tag.cond-deafened      { border-color:#546e7a; background:rgba(84,110,122,0.10); }

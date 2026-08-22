@@ -128,6 +128,9 @@ const DEVIATIONS = {
     // База рукопашной атаки (стр. 13) — заведена отдельно от Приёма гораздо
     // позже template.json, тем же приёмом, что и meleeStance когда-то.
     meleeBase: "standard",
+    // Состояние «Беспомощный» заведено гораздо позже template.json (auto-успех
+    // и удвоенный урон против него — attack-dialog.mjs/attack.mjs).
+    "conditions.helpless": false,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

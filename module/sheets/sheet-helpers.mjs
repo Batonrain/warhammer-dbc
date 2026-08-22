@@ -57,6 +57,7 @@ export const CONDITIONS_DEF = {
   fatigued:      { label: "Усталость",       icon: "😓", hasLevel: true,  levelField: "fatiguedLevel",      css: "cond-fatigued"       },
   poisoned:      { label: "Отравление",      icon: "☠️", hasLevel: false, levelField: null,                 css: "cond-poisoned"       },
   prone:         { label: "Повален",         icon: "🧎", hasLevel: false, levelField: null,                 css: "cond-prone"          },
+  helpless:      { label: "Беспомощный",     icon: "🪢", hasLevel: false, levelField: null,                 css: "cond-helpless"       },
   unconscious:   { label: "Без сознания",    icon: "😵", hasLevel: false, levelField: null,                 css: "cond-unconscious"    },
   blinded:       { label: "Ослеплён",        icon: "🙈", hasLevel: true,  levelField: "blindedRounds",      css: "cond-blinded"        },
   deafened:      { label: "Оглох",           icon: "🔇", hasLevel: false, levelField: null,                 css: "cond-deafened"       },

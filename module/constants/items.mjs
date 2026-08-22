@@ -229,6 +229,7 @@ export const DRUG_CONDITIONS = {
   stunned:        "Оглушение",
   pinned:         "Подавление",
   prone:          "Повален",
+  helpless:       "Беспомощный",
   unconscious:    "Без сознания",
   fatigued:       "Усталость",
   crippling:      "Калечение",

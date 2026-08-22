@@ -23,7 +23,7 @@ export const HIT_LOCATIONS = ["head", "leftArm", "rightArm", "body", "leftLeg", 
 /** Состояния (conditions) — набор один и тот же у всех существ. */
 const CONDITION_FLAGS = [
   "bleeding", "haemorrhaging", "stunned", "fatigued", "poisoned", "prone",
-  "unconscious", "blinded", "deafened", "burning", "radiation",
+  "helpless", "unconscious", "blinded", "deafened", "burning", "radiation",
   "hallucinogenic", "pinned", "crippling", "addicted"
 ];
 /** Состояния со счётчиком: имя поля → суффикс счётчика. */
