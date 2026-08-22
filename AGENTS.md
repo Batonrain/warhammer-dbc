@@ -147,6 +147,49 @@ false`. В логах сервера при этом «Launching World | Complet
   `packs-src`, проверьте, не нужен ли живым мирам починочный проход: у игроков
   предметы лежат снимками на акторах, и пак их не догонит.
 
+## Время, активация и источники — правила для новой механики
+
+Четыре решения, которые нужно принять для каждой новой механики новой книги.
+Не готовый код — где механизм уже есть, подключаться к нему, а не изобретать
+второй.
+
+**Привязка к времени** — единица в тексте книги сама выбирает механизм:
+
+| В книге | Механизм |
+| --- | --- |
+| минуты/часы/дни/недели/месяцы/годы | `game.time.worldTime`: штатная Duration (в секундах) `ActiveEffect` — движок сам сверяет её с `worldTime` при любой прокрутке виджета «Летоисчисление» ([module/apps/imperial-calendar.mjs](../module/apps/imperial-calendar.mjs)), либо прямое чтение `worldTime` в правиле/расчёте |
+| раунды/ходы | `game.combat.round`/`.turn`: штатная Duration в раундах/ходах `ActiveEffect`, либо готовый примитив «раз-в-раунд» — `isRoundCapabilityAvailable`/`markRoundCapabilityUsed` в [module/apps/game-session.mjs](../module/apps/game-session.mjs) |
+| сцены/сессии | НЕ новый таймер — метка `flags.warhammer-dbc.usageLimit = {scope:"scene"\|"session", used}` на предмете (у возможностей без предмета-носителя — `flags.warhammer-dbc.usageLimits.<имя>` на акторе), которую откатывают кнопки «🎬 Сцена»/«⏻ Сессия», уже встроенные в тело календаря — [module/apps/game-session.mjs](../module/apps/game-session.mjs) |
+
+**Активация записи Конструктора.** Механика, которую игрок включает/выключает
+сам (система силовой брони и подобное) — не заводить своё поле, использовать
+пару, отработанную на Модификациях брони:
+`activatable`/`active` (BooleanField) в схеме предмета
+([module/data/item/armor-mod.mjs](../module/data/item/armor-mod.mjs)) → новый
+`case` типа в `isItemActive()`
+([module/apps/effects.mjs](../module/apps/effects.mjs)) → кнопка-тумблер
+ВКЛ/выкл в строке предмета на листе, по образцу `armormod-active-toggle`
+([templates/actor/parts/tab-gear.hbs](../templates/actor/parts/tab-gear.hbs)),
+не отдельная вкладка.
+
+**Активатор источника в Настройках.**
+[module/constants/features.mjs](../module/constants/features.mjs) — реестр
+«книга → флажок». Новая книга получает запись в `FEATURES` с уникальным
+`key`; выключенный флажок обязан гасить всё, что книга приносит. Сейчас через
+`actorTypes`/`raceKeys`/`sheetTypes` гасятся типы актора, расы и поля листа —
+для типов ПРЕДМЕТОВ и компендиумов книги такого гейта в реестре ещё нет, это
+расширение `FEATURES` и мест, где дёргается `isFeatureEnabled(key)`, а не
+готовый механизм.
+
+**Компендиумы: пак на тип документа × источник, не общий.** Новая книга не
+подмешивается строками в существующие паки (`weapons`, `armor`, `talents`...)
+— заводит свои: тот же тип документа, отдельный пак-библиотека (так уже
+устроены Книга Машин — `vehicle-weapons`, Книга Пустоты — `ship-components`).
+Общие `weapons`/`armor`/`talents`/`traits` держат core вперемешку с частью
+старых книг по полю `bookSource` — унаследованный долг, а не образец: новыми
+источниками его не увеличивать. Пак заводится в `system.json` (`packs`) и
+сразу получает свою папку в `packFolders`, см. [[doombc-compendium-folders]].
+
 ## Тесты
 
 `vitest`, живой Foundry нет: глобали подменяет `test/support/foundry-stub.mjs`.
