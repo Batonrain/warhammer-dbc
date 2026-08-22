@@ -15,11 +15,11 @@ export class VehicleTraitData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField } = foundry.data.fields;
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     return {
-      description:  new StringField({ initial: "", label: "Описание" }),
-      notes:        new StringField({ initial: "", label: "Заметки" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       benefit:      new StringField({ initial: "", label: "Действие" }),
       availability: num(0, "Доступность"),
       hasRating:    new BooleanField({ initial: false, label: "Есть рейтинг" }),

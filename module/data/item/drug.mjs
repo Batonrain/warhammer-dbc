@@ -12,7 +12,7 @@ export class DrugData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
     const text = label => new StringField({ initial: "", label });
     /** Правки всех девяти характеристик — одинаковый набор у эффекта и пост-эффекта. */
@@ -20,8 +20,8 @@ export class DrugData extends foundry.abstract.TypeDataModel {
       Object.fromEntries(CHARS.map(c => [c, num(0, c.toUpperCase())])), { label });
 
     return {
-      description:    text("Описание"),
-      notes:          text("Заметки"),
+      description:    new HTMLField({ initial: "", label: "Описание" }),
+      notes:          new HTMLField({ initial: "", label: "Заметки" }),
       drugCategory:   new StringField({ initial: "medicine", label: "Категория" }),
       deliveryMethod: new StringField({ initial: "injection", label: "Способ приёма" }),
       quantity:       num(1, "Количество"),

@@ -24,10 +24,10 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     return {
-      description:   new StringField({ initial: "", label: "Описание" }),
-      notes:         new StringField({ initial: "", label: "Заметки" }),
+      description:   new HTMLField({ initial: "", label: "Описание" }),
+      notes:         new HTMLField({ initial: "", label: "Заметки" }),
       category:      new StringField({ initial: "mechanicus", label: "Категория" }),
       quality:       new StringField({ initial: "common", label: "Качество" }),
       effect:        new StringField({ initial: "", label: "Эффект" }),

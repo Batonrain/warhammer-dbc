@@ -8,10 +8,10 @@ export class ForcefieldData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField } = foundry.data.fields;
     return {
-      description:       new StringField({ initial: "", label: "Описание" }),
-      notes:             new StringField({ initial: "", label: "Заметки" }),
+      description:       new HTMLField({ initial: "", label: "Описание" }),
+      notes:             new HTMLField({ initial: "", label: "Заметки" }),
       shieldNature:      new StringField({ initial: "technological", label: "Природа" }),
       shieldType:        new StringField({ initial: "dome", label: "Тип" }),
       ratingMin:         new NumberField({ initial: 1, integer: true, nullable: false, label: "Рейтинг от" }),

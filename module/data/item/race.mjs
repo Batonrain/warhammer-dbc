@@ -13,7 +13,7 @@ export class RaceData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, NumberField, BooleanField, ObjectField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, BooleanField, ObjectField, ArrayField } = foundry.data.fields;
     return {
       key:         new StringField({ initial: "", label: "Ключ" }),
       // Группа задаёт и optgroup в списках, и признак аэльдари: набор рас
@@ -24,8 +24,8 @@ export class RaceData extends foundry.abstract.TypeDataModel {
       skills:      new StringField({ initial: "", label: "Навыки" }),
       gear:        new StringField({ initial: "", label: "Снаряжение" }),
       talents:     new StringField({ initial: "", label: "Стартовые таланты" }),
-      description: new StringField({ initial: "", label: "Описание" }),
-      notes:       new StringField({ initial: "", label: "Заметки" }),
+      description: new HTMLField({ initial: "", label: "Описание" }),
+      notes:       new HTMLField({ initial: "", label: "Заметки" }),
       hasGeneSeed: new BooleanField({ initial: false, label: "Геносемя" }),
       pastRaces:   new ArrayField(new StringField(), { label: "Возможное Прошлое" }),
       // Ниже — книжная справка: система по ней ничего не считает, но текст из

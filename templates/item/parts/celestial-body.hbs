@@ -211,7 +211,8 @@
   <label class="ss-reveal-toggle"><input type="checkbox" name="system.revealed" {{#if system.revealed}}checked{{/if}}/> Показать эти данные игрокам (по мере разведки)</label>
   {{/if}}
   <div class="weapon-row"><label class="wr-label">Истинная природа / тайна</label></div>
-  <textarea name="system.gmNotes" class="item-textarea" placeholder="что здесь на самом деле, подвох, зацепки…">{{system.gmNotes}}</textarea>
+  <prose-mirror name="system.gmNotes" class="item-textarea" toggled
+                value="{{system.gmNotes}}">{{{cbGmNotesEnriched}}}</prose-mirror>
 
   <div class="item-section-title" style="margin-top:8px;">ОБОРОНА</div>
   <div class="weapon-row">

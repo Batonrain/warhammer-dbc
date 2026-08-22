@@ -671,7 +671,8 @@
 
     <div class="ship-panel">
       <div class="ship-panel-title">ЗАПИСИ</div>
-      <textarea name="system.notes" class="ship-notes" placeholder="История корабля, странности, экипаж…">{{system.notes}}</textarea>
+      <prose-mirror name="system.notes" class="ship-notes" toggled
+                    value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror>
     </div>
   </div>
 

@@ -114,6 +114,12 @@
   padding: 6px 8px;
   box-sizing: border-box;
 }
+/* ── prose-mirror вместо textarea, как у Journal Entries: пока не открыт
+      на правку — обогащённый HTML без тулбара, кнопка «Изменить» открывает
+      полный редактор. Ядро Foundry прячет саму кнопку до наведения — здесь
+      она видна всегда, чтобы вход в правку был явным. ── */
+.warhammer-dbc prose-mirror.notes-textarea button.toggle:enabled { display: block; }
+.warhammer-dbc prose-mirror.notes-textarea .editor-content { padding: 6px 8px; }
 /* ── Легион / орден Астартес (вкладка Записи) ── */
 .warhammer-dbc .legion-info { display: flex; flex-direction: column; gap: 5px; padding: 7px 9px; }
 .warhammer-dbc .legion-info-title { font-weight: bold; font-size: 0.95em; color: var(--wh-text-dark, #2a1a0a); border-bottom: 1px solid var(--wh-border-light); padding-bottom: 3px; }

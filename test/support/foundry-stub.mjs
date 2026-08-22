@@ -82,6 +82,10 @@ class StringFieldStub extends DataFieldStub {
   cast(value) { return String(value); }
 }
 
+// Как у настоящего Foundry (common/data/fields.mjs): HTMLField — просто
+// StringField с другим полем ввода на листе (prose-mirror вместо textarea).
+class HTMLFieldStub extends StringFieldStub {}
+
 class NumberFieldStub extends DataFieldStub {
   // `?? 0` здесь нельзя: у nullable-поля умолчание null — осмысленное значение,
   // и оно означает «поля нет». Так отличают щит от прочего оружия
@@ -215,7 +219,12 @@ globalThis.foundry = {
       }
     },
     sheets: { ActorSheetV2: ApplicationStub, ItemSheetV2: ApplicationStub,
-              DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub }
+              DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub },
+    ux: {
+      // Тестам содержимое не важно — только что вызов не падает и возвращает
+      // строку (её кладут в контекст листа как notesEnriched и т.п.).
+      TextEditor: { implementation: { enrichHTML: async html => String(html ?? "") } }
+    }
   },
   utils: {
     mergeObject: (a, b) => ({ ...a, ...b }),
@@ -233,6 +242,7 @@ globalThis.foundry = {
   data: {
     fields: {
       StringField:  StringFieldStub,
+      HTMLField:    HTMLFieldStub,
       NumberField:  NumberFieldStub,
       BooleanField: BooleanFieldStub,
       ObjectField:  ObjectFieldStub,

@@ -11,10 +11,10 @@ export class ToolData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { StringField, BooleanField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, NumberField, ObjectField, ArrayField } = foundry.data.fields;
     return {
-      description:  new StringField({ initial: "", label: "Описание" }),
-      notes:        new StringField({ initial: "", label: "Заметки" }),
+      description:  new HTMLField({ initial: "", label: "Описание" }),
+      notes:        new HTMLField({ initial: "", label: "Заметки" }),
       infoguard:    infoguardField(),
       // Инструмент рисуется тем же gear.hbs, что и Снаряжение (wdbc-fl3).
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),

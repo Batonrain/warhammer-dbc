@@ -36,8 +36,8 @@
   <div class="weapon-row"><label class="wr-label">Снимает Черты</label>
     <textarea name="system.removesTraits" rows="2" class="wr-input-lg">{{#each system.removesTraits}}{{this}}
 {{/each}}</textarea></div>
-  <div class="weapon-row"><label class="wr-label">Описание</label>
-    <textarea name="system.description" rows="3" class="wr-input-lg">{{system.description}}</textarea></div>
+  {{!-- Описание — общий блок с rich-text редактором внизу вкладки ИНФО (общий
+        для всех типов предметов), здесь отдельного дубликата больше нет. --}}
   <div class="weapon-row"><label class="wr-label">Книга</label>
     <input type="text" name="system.bookSource" value="{{system.bookSource}}" class="wr-input-lg"/></div>
 </div>
