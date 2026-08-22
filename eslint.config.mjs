@@ -15,7 +15,7 @@ export default [
         Actor: "readonly", Item: "readonly", ActiveEffect: "readonly",
         canvas: "readonly", fromUuid: "readonly", renderTemplate: "readonly",
         Folder: "readonly", JournalEntry: "readonly", FilePicker: "readonly",
-        fromUuidSync: "readonly", Handlebars: "readonly", $: "readonly"
+        fromUuidSync: "readonly", Handlebars: "readonly", $: "readonly", PIXI: "readonly"
       }
     },
     rules: {
