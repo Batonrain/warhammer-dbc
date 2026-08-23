@@ -143,11 +143,57 @@ describe("targetHasTrait", () => {
   });
 });
 
+describe("targetKeepsNimbleInArmour", () => {
+  const armor = (armorType, equipped = true) => ({ type: "armor", system: { armorType, equipped } });
+  const blackCarapace = (installed = true) => ({
+    type: "implant", name: "19. Чёрный Панцирь / Black Carapace",
+    flags: { "warhammer-dbc": { installed } }
+  });
+
+  it("нет силовой брони — условие не проверяется, штраф остаётся", () => {
+    const targetActor = actor({ items: [armor("flak")] });
+    expect(PREDICATES.targetKeepsNimbleInArmour(actor(), { targetActor })).toBe(true);
+  });
+
+  it("силовая броня без Чёрного Панциря гасит Nimble", () => {
+    const targetActor = actor({ items: [armor("power")] });
+    expect(PREDICATES.targetKeepsNimbleInArmour(actor(), { targetActor })).toBe(false);
+  });
+
+  it("силовая броня с установленным Чёрным Панцирем — Nimble сохраняется", () => {
+    const targetActor = actor({ items: [armor("power"), blackCarapace(true)] });
+    expect(PREDICATES.targetKeepsNimbleInArmour(actor(), { targetActor })).toBe(true);
+  });
+
+  it("Чёрный Панцирь не установлен (лежит в инвентаре) — не считается", () => {
+    const targetActor = actor({ items: [armor("power"), blackCarapace(false)] });
+    expect(PREDICATES.targetKeepsNimbleInArmour(actor(), { targetActor })).toBe(false);
+  });
+
+  it("снятая силовая броня штраф не гасит", () => {
+    const targetActor = actor({ items: [armor("power", false)] });
+    expect(PREDICATES.targetKeepsNimbleInArmour(actor(), { targetActor })).toBe(true);
+  });
+});
+
+describe("hasSize и targetHasSize", () => {
+  it("нулевой Размер — false", () => {
+    expect(PREDICATES.hasSize(actor())).toBe(false);
+    expect(PREDICATES.targetHasSize(actor(), { targetActor: actor() })).toBe(false);
+  });
+
+  it("ненулевой Размер — true", () => {
+    expect(PREDICATES.hasSize(actor({ sizeMod: 1 }))).toBe(true);
+    expect(PREDICATES.targetHasSize(actor(), { targetActor: actor({ sizeMod: 1 }) })).toBe(true);
+  });
+});
+
 describe("общее требование к предикатам", () => {
   const value = {
     race: ["human"], subrace: ["navigator"], sizeMax: 1, charMin: { s: 40 },
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
-    targetHasTrait: "Daemonic",
+    targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
+    hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
     // Принадлежность к фракции — своя и у цели (дерево фракций).
     hasFaction: "chaos", targetHasFaction: "chaos"
   };

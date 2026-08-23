@@ -17,7 +17,7 @@
 import { gatherRules, selectRules } from "./collect.mjs";
 import { isKnownEffectKind } from "./effects.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
-import { itemHasName } from "./predicates.mjs";
+import { itemHasName, sizeOf } from "./predicates.mjs";
 
 /**
  * Социальный ли навык. Своего перечня здесь нет намеренно: признак уже лежит
@@ -123,16 +123,18 @@ function effectAppliesTo(target, ctx) {
  * Бонус Ловкости ЦЕЛИ, а он у каждой цели свой. Такие правила пишут `valueFrom`,
  * и значение считается на каждый бросок.
  *
- * Известны два источника: `targetCharBonus` (бонус характеристики ЦЕЛИ) и
- * `selfCharBonus` (бонус характеристики самого бросающего). Неизвестный не
- * превращается молча в ноль, а жалуется: правило, тихо давшее «+0», ищется днями.
+ * Источники: `targetCharBonus`/`selfCharBonus` (бонус характеристики цели или
+ * самого бросающего) и `targetSize`/`selfSize` (Размер цели или бросающего —
+ * стр. 30, «Проворный» и таблица Размера дают +10/−10 за каждую ступень).
+ * Неизвестный источник не превращается молча в ноль, а жалуется: правило,
+ * тихо давшее «+0», ищется днями.
  *
  * @returns {?number} null, если источник значения не распознан
  */
 function effectValue(effect, ctx, ruleId) {
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
-  const { targetCharBonus, selfCharBonus, multiplier = 1 } = effect.valueFrom;
+  const { targetCharBonus, selfCharBonus, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;
   // Своя характеристика: «+Inf герольда на тесты Нестабильности» (Локус Цепей).
   // Числа в данных быть не может — Бесчестие у каждого своё.
   if (selfCharBonus) {
@@ -144,6 +146,8 @@ function effectValue(effect, ctx, ruleId) {
     // «|| 0» убирает минус ноль: без цели галочка иначе подписывалась бы «−0».
     return bonus * multiplier || 0;
   }
+  if (selfSize)   return sizeOf(ctx?.actor) * multiplier || 0;
+  if (targetSize) return sizeOf(ctx?.targetActor) * multiplier || 0;
 
   console.error(`Warhammer DBC | правило «${ruleId ?? "без id"}»: неизвестный источник значения ${JSON.stringify(effect.valueFrom)}`);
   return null;

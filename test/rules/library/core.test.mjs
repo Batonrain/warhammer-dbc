@@ -55,4 +55,85 @@ describe("правила основной книги", () => {
     const { mods } = resolveTest({ actor: actor(), skill: "medicae", char: "int", targetActor: nimbleTarget(4) });
     expect(mods).toEqual([]);
   });
+
+  it("Оглушённая цель штрафа не даёт: скоростью не воспользоваться", () => {
+    const target = nimbleTarget(4);
+    target.system.conditions = { stunned: true };
+    expect(attackOn(target).mods).toEqual([]);
+  });
+
+  it("сняли Оглушение — штраф вернулся", () => {
+    const target = nimbleTarget(4);
+    target.system.conditions = { stunned: false };
+    expect(attackOn(target).mods[0].value).toBe(-4);
+  });
+
+  it("Беспомощная цель тоже штрафа не даёт", () => {
+    const target = nimbleTarget(4);
+    target.system.conditions = { helpless: true };
+    expect(attackOn(target).mods).toEqual([]);
+  });
+});
+
+describe("core.nimble и силовая броня", () => {
+  const armor = armorType => ({ type: "armor", system: { armorType, equipped: true } });
+  const blackCarapace = (installed = true) => ({
+    type: "implant", name: "19. Чёрный Панцирь / Black Carapace",
+    flags: { "warhammer-dbc": { installed } }
+  });
+
+  it("силовая броня без Чёрного Панциря гасит штраф целиком", () => {
+    const target = nimbleTarget(4);
+    target.items.push(armor("power"));
+    expect(attackOn(target).mods).toEqual([]);
+  });
+
+  it("с установленным Чёрным Панцирем штраф остаётся", () => {
+    const target = nimbleTarget(4);
+    target.items.push(armor("power"), blackCarapace());
+    expect(attackOn(target).mods.find(m => m.ruleId === "core.nimble")?.value).toBe(-4);
+  });
+
+  it("Чёрный Панцирь не установлен (в инвентаре) — штраф всё равно гасится", () => {
+    const target = nimbleTarget(4);
+    target.items.push(armor("power"), blackCarapace(false));
+    expect(attackOn(target).mods).toEqual([]);
+  });
+
+  it("небронированная (flak) броня Nimble не трогает", () => {
+    const target = nimbleTarget(4);
+    target.items.push(armor("flak"));
+    expect(attackOn(target).mods.find(m => m.ruleId === "core.nimble")?.value).toBe(-4);
+  });
+});
+
+describe("core.sizeToHit и core.sizeStealth (стр. 30, таблица Размера)", () => {
+  const sized = sizeMod => actor({ sizeMod });
+
+  it("Размер 1 даёт атакующим +10", () => {
+    const { mods } = attackOn(sized(1));
+    expect(mods).toEqual([expect.objectContaining({ ruleId: "core.sizeToHit", value: 10 })]);
+  });
+
+  it("отрицательный Размер даёт отрицательный штраф", () => {
+    expect(attackOn(sized(-1)).mods[0].value).toBe(-10);
+  });
+
+  it("масштаб линейный: Размер 2 даёт +20", () => {
+    expect(attackOn(sized(2)).mods[0].value).toBe(20);
+  });
+
+  it("Размер 0 — строки в чек-листе нет вовсе, не «(+0)»", () => {
+    expect(attackOn(sized(0)).mods).toEqual([]);
+  });
+
+  it("Скрытность: тот же Размер даёт МИНУС собственному тесту (обратный знак)", () => {
+    const { mods } = resolveTest({ actor: sized(1), skill: "stealth", char: "ag" });
+    expect(mods).toEqual([expect.objectContaining({ ruleId: "core.sizeStealth", value: -10 })]);
+  });
+
+  it("Скрытность обычного человека не трогается", () => {
+    const { mods } = resolveTest({ actor: sized(0), skill: "stealth", char: "ag" });
+    expect(mods).toEqual([]);
+  });
 });
