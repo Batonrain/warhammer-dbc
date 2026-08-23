@@ -130,3 +130,13 @@
 
 /* добавление силы/приёма и + кнопки в таблицах остаются функциональны */
 .warhammer-dbc .combat-cog .items-empty td { color: #6f9a84; font-style: italic; }
+
+/* ── Уровень Ранения (стр. книги «Уровни Ранения») ─────────── */
+.warhammer-dbc .combat-cog .wounds-tier-badge {
+  font-size: 0.78em; letter-spacing: 0.02em; text-transform: none;
+  padding: 1px 9px; border-radius: 9px; font-weight: 700; text-shadow: none; cursor: help;
+}
+.warhammer-dbc .combat-cog .wounds-tier-badge.wt-healthy { color: #05120c; background: var(--cg); box-shadow: 0 0 8px -1px var(--cg); }
+.warhammer-dbc .combat-cog .wounds-tier-badge.wt-light   { color: #05120c; background: var(--cg-dim); box-shadow: 0 0 8px -1px var(--cg-dim); }
+.warhammer-dbc .combat-cog .wounds-tier-badge.wt-heavy   { color: #150a00; background: var(--cg-fire); box-shadow: 0 0 8px -1px var(--cg-fire); }
+.warhammer-dbc .combat-cog .wounds-tier-badge.wt-dying   { color: #1a0505; background: var(--cg-red); box-shadow: 0 0 10px -1px var(--cg-red); animation: cogStatusBlink 1s steps(2) infinite; }

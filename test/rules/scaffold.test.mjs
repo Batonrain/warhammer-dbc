@@ -17,8 +17,9 @@ describe("каркас module/rules", () => {
 
     // Восемь условий этапа 1 плюс два про фракции (hasFaction/targetHasFaction),
     // targetLacksCondition (снятие штрафа «Проворный» у Оглушённых), hasSize/
-    // targetHasSize (гейт Размера) и targetKeepsNimbleInArmour (Чёрный Панцирь).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(14);
+    // targetHasSize (гейт Размера), targetKeepsNimbleInArmour (Чёрный Панцирь)
+    // и woundTier (Уровень Ранения, rules/wound-tier.mjs).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(15);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

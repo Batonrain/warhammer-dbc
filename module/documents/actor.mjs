@@ -32,6 +32,7 @@ import { HORDE_SIZE_LABELS, hordeSizeFor, hordeMagDamageDice, hordeState,
   from "../rules/horde-damage.mjs";
 import { sanityMax, madnessLevels } from "../rules/dreadnought.mjs";
 import { psyRatingFromTalents } from "../rules/psyker.mjs";
+import { woundLevel } from "../rules/wound-tier.mjs";
 
 /**
  * Расчёт движения по таблице Warhammer FFG.
@@ -1055,6 +1056,19 @@ export class WarhammerActor extends Actor {
     }
 
     const tb = chars.t?.bonus ?? 0;
+
+    // Уровень Ранения (корбук, «Уровни Ранения» — стр. книги): определяет
+    // скорость лечения (уже читал sheets/tabs/healing.mjs через woundLevel) и
+    // теперь ещё подпись/цвет блока РАНЫ на листе (tab-combat.hbs). Кладём
+    // прямо на system.wounds — тот же приём, что у corruption.limit/sanity.max
+    // чуть выше: поле не объявлено в схеме, но prepareDerivedData бесплатно
+    // добавляет производные свойства поверх схемных.
+    if (system.wounds) {
+      const wLvl = woundLevel(system);
+      system.wounds.tier = wLvl.displayKey;
+      system.wounds.tierLabel = wLvl.displayLabel;
+      system.wounds.tierLost = wLvl.lost;
+    }
 
     // ── Броня ─────────────────────────────────────────────────────────────
     const armorFromItems = {
