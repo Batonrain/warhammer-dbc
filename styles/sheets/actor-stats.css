@@ -2,10 +2,13 @@
    Warhammer DBC — Показатели: характеристики и навыки
 ═══════════════════════════════════════════════════════ */
 
-/* ── Layout показателей ── */
+/* ── Layout показателей ──
+   Раньше здесь стояли ещё Безумие/Порча по бокам (grid 120px 1fr 120px) —
+   переехали на вкладку ТЕЛО, единственный оставшийся ребёнок — Характеристики
+   на всю ширину. .panel-side/.side-* остались (переиспользуются в ТЕЛО). */
 .warhammer-dbc .stats-layout {
   display: grid;
-  grid-template-columns: 120px 1fr 120px;
+  grid-template-columns: 1fr;
   gap: 8px;
   margin-bottom: 8px;
 }
@@ -166,7 +169,7 @@
 
 .warhammer-dbc .skills-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0;
 }
 
@@ -215,24 +218,46 @@
 .warhammer-dbc .skill-neg { color: var(--wh-red); }
 .warhammer-dbc .skill-pos { color: var(--wh-xp-current); }
 
-/* ── Групповые навыки — заголовок группы ── */
+/* ── Групповые навыки — плитка на каждую группу (Знания/Языки/Ремёсла и т.п.) ──
+   Раньше это была одна общая колонка со сплошным списком и заголовками-
+   вставками между специализациями; теперь каждая группа — свой блок с
+   заголовком на всю ширину, блоки текут рядами (flex-wrap) и переносятся по
+   ширине окна, как в макете пользователя. */
+.warhammer-dbc .skill-groups-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid var(--wh-border-light);
+}
+
+.warhammer-dbc .skill-group-box {
+  flex: 1 1 200px;
+  min-width: 160px;
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment3);
+  overflow: hidden;
+}
+
+.warhammer-dbc .skill-group-empty {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  flex: 1 1 auto;
+}
+
 .warhammer-dbc .skill-group-header {
   font-size: 0.78em;
   font-weight: bold;
   color: var(--wh-text-light);
   background: var(--wh-panel-mid);
-  padding: 2px 6px;
-  margin: 4px 0 1px;
-  border-radius: 2px;
+  padding: 3px 8px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-/* Первый заголовок без отступа сверху */
-.warhammer-dbc .skills-column-groups
-  .skill-group-header:first-child {
-  margin-top: 0;
-}
+.warhammer-dbc .skill-group-body { padding: 2px 0; }
 
 /* Специализация — чуть меньше и с отступом */
 .warhammer-dbc .skill-row-grouped {

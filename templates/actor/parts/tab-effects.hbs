@@ -3,7 +3,8 @@
   {{!-- ══════════════ ХИРУРГИКОН-КОГИТАТОР: сводка тела ══════════════ --}}
   <div class="bc-hero">
 
-    {{!-- ── Голо-скан фигуры ─────────────────────────────────────────── --}}
+    {{!-- ── Голо-скан фигуры + ХИРУРГЕОН прямо под ним ─────────────────── --}}
+    <div class="bc-figure-col">
     <div class="bc-figure-panel"> <div class="bc-figure-head"> <span class="bc-figure-title">◄ БИО-СКАН ►</span> <span class="bc-figure-serial">SUBJECT // {{actor.name}}</span> </div> <div class="bc-figure-stage"> {{#if body.mechMark}}<img class="bc-mechanicus-mark" src="/systems/warhammer-dbc/assets/mechanicus.png" title="Кибер-Мантия Механикум"/>{{/if}}
         <div class="body-photo {{#if body.skinColor}}has-skin{{/if}}" {{#if body.skinColor}}style="--skin:{{body.skinColor}};"{{/if}}> {{{body.implantsBack}}}
           {{#each body.layers as |L|}}
@@ -13,12 +14,27 @@
         {{#if body.mechCount}}<span class="bc-leg bc-leg-mech">● механодендриты: {{body.mechCount}}</span>{{/if}}
       </div> </div>
 
+      {{!-- Кнопка хирургикона — теперь прямо под Био-сканом, не в bc-side --}}
+      <button type="button" class="bc-surgeon-btn bc-surgeon-btn--sm" title="Открыть хирургеон — установка/снятие имплантов"> <img class="bc-surgeon-ic" src="/systems/warhammer-dbc/assets/mechanicus.png" alt=""/> <span class="bc-surgeon-btn-label">ХИРУРГЕОН</span> <span class="bc-surgeon-btn-sub">установка имплантов</span> </button>
+    </div>{{!-- /bc-figure-col --}}
+
     {{!-- ── Правая колонка: кардиограмма, витальные, реестр имплантов ── --}}
     <div class="bc-side">
 
-      {{!-- Кардиограмма --}}
+      {{!-- Кардиограмма (укорочена) + Усталость (компактно) рядом, на месте
+            освободившейся высоты кардиомонитора. --}}
+      <div class="bc-ecg-row">
       <div class="bc-ecg ecg--{{body.ecg.key}}"> <div class="bc-ecg-head"> <span class="bc-ecg-title">КАРДИО-МОНИТОР</span> <label class="bc-ecg-death" title="Констатация смерти — остановить кардиомонитор"><input type="checkbox" class="bc-death-toggle" {{#if body.ecg.dead}}checked{{/if}}/> смерть</label> <span class="bc-ecg-status">{{body.ecg.label}}</span> </div> <div class="bc-ecg-screen"> <svg class="bc-ecg-wave" viewBox="0 0 300 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"> <defs> <linearGradient id="ecgSweep-{{actor.id}}" x1="0" y1="0" x2="1" y2="0"> <stop offset="0" stop-color="#fff" stop-opacity="0"/> <stop offset="0.70" stop-color="#fff" stop-opacity="0"/> <stop offset="0.95" stop-color="#fff" stop-opacity="0.95"/> <stop offset="1" stop-color="#fff" stop-opacity="1"/> </linearGradient> <mask id="ecgMask-{{actor.id}}"> <rect class="bc-ecg-sweep" x="-300" y="0" width="300" height="80" fill="url(#ecgSweep-{{actor.id}})"/> </mask> </defs> <path class="bc-ecg-base" d="{{body.ecg.path}}"/> <g mask="url(#ecgMask-{{actor.id}})"><path class="bc-ecg-lead" d="{{body.ecg.path}}"/></g> <rect class="bc-ecg-bar" x="-1.5" y="0" width="3" height="80"/> </svg> </div> <div class="bc-ecg-read"> <span class="bc-ecg-hp">РАНЫ <b>{{body.ecg.value}}</b>/{{body.ecg.max}}</span> <span class="bc-ecg-pct">{{body.ecg.pct}}%</span> {{#if body.ecg.crit}}<span class="bc-ecg-crit">КРИТ −{{body.ecg.crit}}</span>{{/if}}
         <span class="bc-ecg-bpm">{{body.ecg.bpm}} <small>уд/мин</small></span> </div> </div>
+
+      {{!-- Усталость — переехала сюда из шапки листа, компактно рядом с
+            кардиомонитором. Классы .fatigue-*/.fate-cell не менялись. --}}
+      <div class="stat-panel panel-side bc-fatigue-compact stats-cog"> <div class="panel-body side-body bc-fatigue-body"> <div class="header-cell fate-cell fatigue-cell"> <label class="fatigue-label"> Усталость
+          {{#if system.fatigue.value}}
+          <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cog)">−10</span> {{/if}}
+        </label> <div class="fate-values fatigue-values"> <input type="number" name="system.fatigue.value" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input
+                   {{#if system.fatigue.value}}fatigue-nonzero{{/if}}"/> <span>/</span> <input type="number" name="system.fatigue.max" value="{{system.fatigue.max}}" min="0" title="Порог (= T.b + W.b)"/> </div> <div class="fatigue-step-btns"> <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button> <button type="button" class="fatigue-btn fatigue-remove-btn" title="Снять 1 Усталость">−1</button> </div> <div class="fatigue-bar" title="Усталость {{fatiguePct}}%"><div class="fatigue-fill load-{{fatigueLevel}}" style="width:{{fatiguePct}}%;"></div></div> <div class="fatigue-btns"> <button type="button" class="fatigue-btn fatigue-rest-btn" title="Час отдыха (−1 Усталость)">Отдых</button> <button type="button" class="fatigue-btn fatigue-btn-sleep fatigue-sleep-btn" title="Полноценный сон (снять всю Усталость)">Сон</button> </div> </div> </div> </div>
+      </div>{{!-- /bc-ecg-row --}}
 
       {{!-- Витальные счётчики (светящиеся) --}}
       <div class="bc-vitals"> <div class="bc-vital {{#if body.conditionCount}}is-alert{{/if}}"> <span class="bc-vital-n">{{body.conditionCount}}</span> <span class="bc-vital-l">Состояния</span> </div> <div class="bc-vital bc-vital-dis {{#if body.diseaseCount}}is-alert{{/if}}"> <span class="bc-vital-n">{{body.diseaseCount}}</span> <span class="bc-vital-l">Болезни</span> </div> <div class="bc-vital bc-vital-psy {{#if body.disorderCount}}is-alert{{/if}}"> <span class="bc-vital-n">{{body.disorderCount}}</span> <span class="bc-vital-l">Психика</span> </div> <div class="bc-vital bc-vital-drug {{#if body.drugCount}}is-alert{{/if}}"> <span class="bc-vital-n">{{body.drugCount}}</span> <span class="bc-vital-l">Препараты</span> </div> </div>
@@ -42,8 +58,21 @@
         {{/each}}
       </div>
 
-      {{!-- Кнопка хирургикона (компактная) --}}
-      <button type="button" class="bc-surgeon-btn bc-surgeon-btn--sm" title="Открыть хирургеон — установка/снятие имплантов"> <img class="bc-surgeon-ic" src="/systems/warhammer-dbc/assets/mechanicus.png" alt=""/> <span class="bc-surgeon-btn-label">ХИРУРГЕОН</span> <span class="bc-surgeon-btn-sub">установка имплантов</span> </button>
+      {{!-- Безумие / Порча — переехали сюда с вкладки ПОКАЗАТЕЛИ, рядом друг с
+            другом (в две колонки). Весь функционал (кнопки бросков, +/−,
+            полосы) сохранён без изменений, просто другое место на листе. На
+            ПОКАЗАТЕЛЯХ у Характеристик остались только простые значения
+            COR/INS для взгляда без переключения вкладки. Классы
+            .stat-panel/.side-* не менялись; класс stats-cog — тот же, что
+            красит эти самые элементы на ПОКАЗАТЕЛЯХ (actor-stats-cog.css) в
+            фосфорную зелень безусловно (.side-bar/.side-fill/.side-pct/
+            .side-code вообще не имеют иного вида) — вид получается тем же
+            самым, без копирования правил. --}}
+      <div class="bc-trackers bc-trackers-2col stats-cog">
+        <div class="stat-panel panel-side"> <div class="panel-title">БЕЗУМИЕ <span class="side-code">// PSY</span></div> <div class="panel-body side-body"> <div class="side-main-val"> <input type="number" name="system.insanity.value" value="{{system.insanity.value}}" min="0"/> <button type="button" class="stat-add-btn" data-action="statAdd" data-stat="insanity" title="Добавить Безумие (число или XdY+Z, напр. 2d10+3)">＋</button> </div> <div class="side-bar"><div class="side-fill load-{{insanityLevel}}" style="width:{{insanityPct}}%;"></div><span class="side-pct">{{insanityPct}}</span></div> <button type="button" class="side-roll-btn fear-roll" title="Тест Страха → таблица Шока">Страх</button> <button type="button" class="side-roll-btn trauma-roll" title="Тест Ментальной Травмы → таблица Травмы">Травма</button> <button type="button" class="side-roll-btn disorder-roll" title="Случайное Ментальное Расстройство (d100)">Расстройство</button> {{#if mentalTraumas.length}}<button type="button" class="side-roll-btn trauma-suppress" title="Подавление активной Ментальной Травмы (стр. 473)">Подавить Травму</button>{{/if}} {{#if mentalDisorders.length}}<button type="button" class="side-roll-btn disorder-suppress" title="Подавление активного Ментального Расстройства (стр. 473)">Подавить Расстройство</button>{{/if}} </div> </div>
+        <div class="stat-panel panel-side"> <div class="panel-title">ПОРЧА <span class="side-code">// COR</span></div> <div class="panel-body side-body"> <div class="side-main-val"> <input type="number" name="system.corruption.value" value="{{system.corruption.value}}" min="0"/> <button type="button" class="stat-add-btn" data-action="statAdd" data-stat="corruption" title="Добавить Порчу (число или XdY+Z, напр. 2d10+3)">＋</button> </div> <div class="side-bar"><div class="side-fill load-{{corruptionLevel}}" style="width:{{corruptionPct}}%;"></div><span class="side-pct">{{corruptionPct}}%</span></div> <div class="side-bonus-row"> <span class="side-bonus-label">Бонус</span> <span class="side-bonus-val">{{system.corruptionBonus}}</span> </div> <div class="side-bonus-row"> <span class="side-bonus-label" title="База 100 + бонусы Путей">Лимит</span> <span class="side-bonus-val">{{system.corruption.limit}}</span> </div> <button type="button" class="side-roll-btn corruption-roll" title="Проверка Воли на Порчу"> Проверка
+            </button> </div> </div>
+      </div>{{!-- /bc-trackers --}}
 
     </div>
   </div>

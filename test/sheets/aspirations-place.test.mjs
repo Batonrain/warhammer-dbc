@@ -1,8 +1,10 @@
 // test/sheets/aspirations-place.test.mjs
 //
-// Стремления выбираются в шапке листа — и только там. Раньше выбор жил на
-// вкладке «Записи», а шапка повторяла его текстом: одно поле на две
-// поверхности, и игрок искал, где же его менять.
+// Стремления выбираются на вкладке «Записи» — и только там. Раньше (до
+// 23.08.2026) выбор жил в шапке листа; при разборе шапки на этапе переноса
+// Мировоззрения/Геносемени/Культуры/Фракции/Происхождения/Предсказания в
+// Записи и Настройки листа Стремления вернули туда же, откуда когда-то
+// переехали в шапку — одно поле снова на одной поверхности.
 //
 // Проверяется разметка, а не рендер: Foundry в тестах не запускается, но
 // расползание этих двух шаблонов видно и по их содержимому.
@@ -18,22 +20,17 @@ const HEADER = read("templates/actor/parts/header.hbs");
 const NOTES  = read("templates/actor/parts/tab-notes.hbs");
 
 describe("место Стремлений на листе", () => {
-  it("выбор, «Своё» и очистка живут в шапке", () => {
-    expect(HEADER).toContain("aspirationSlots");
-    expect(HEADER).toContain("aspir-select");
-    expect(HEADER).toContain("aspir-custom-name");
-    expect(HEADER).toContain("aspir-custom-mods");
-    expect(HEADER).toContain("aspir-remove");
+  it("выбор, «Своё» и очистка живут на «Записях»", () => {
+    expect(NOTES).toContain("aspirationSlots");
+    expect(NOTES).toContain("aspir-select");
+    expect(NOTES).toContain("aspir-custom-name");
+    expect(NOTES).toContain("aspir-custom-mods");
+    expect(NOTES).toContain("aspir-remove");
+    expect(NOTES).toContain("СТРЕМЛЕНИЯ");
   });
 
-  it("на «Записях» Стремлений не осталось вовсе", () => {
-    expect(NOTES).not.toContain("aspir");
-    expect(NOTES).not.toContain("СТРЕМЛЕНИЯ");
-  });
-
-  it("шапка не показывает Стремления вторым, нередактируемым местом", () => {
-    // header-readonly-val остался у Геносемени и Культуры, но не в строке Стремлений.
-    const row = HEADER.slice(HEADER.indexOf("header-row-aspir"));
-    expect(row).not.toContain("header-readonly-val");
+  it("в шапке Стремлений не осталось вовсе", () => {
+    expect(HEADER).not.toContain("aspir");
+    expect(HEADER).not.toContain("aspirationSlots");
   });
 });

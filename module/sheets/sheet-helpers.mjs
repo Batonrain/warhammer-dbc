@@ -355,27 +355,39 @@ export function buildGetData(actor) {
   context.characteristics = CHARACTERISTICS;
 
   // ── Навыки ────────────────────────────────────────────────────────────────
-  const skillKeys = Object.keys(SKILLS_DEF);
-  const half      = Math.ceil(skillKeys.length / 2);
-  context.skillsCol1 = skillKeys.slice(0, half).map(k => buildSkillDisplay(k, system));
-  context.skillsCol2 = skillKeys.slice(half).map(k  => buildSkillDisplay(k, system));
+  // Четыре колонки вместо двух — базовые Навыки почти все умещаются в один
+  // экран без прокрутки. Размер колонки почти ровный (21 Навык → 6/5/5/5),
+  // остаток уходит в первые колонки.
+  const skillKeys    = Object.keys(SKILLS_DEF);
+  const SKILL_COLS    = 4;
+  const skillColBase = Math.floor(skillKeys.length / SKILL_COLS);
+  const skillColRem  = skillKeys.length % SKILL_COLS;
+  const skillCols = [];
+  for (let c = 0, idx = 0; c < SKILL_COLS; c++) {
+    const size = skillColBase + (c < skillColRem ? 1 : 0);
+    skillCols.push(skillKeys.slice(idx, idx + size).map(k => buildSkillDisplay(k, system)));
+    idx += size;
+  }
+  [context.skillsCol1, context.skillsCol2, context.skillsCol3, context.skillsCol4] = skillCols;
 
-  context.groupSkillsDisplay = [];
-  for (const [groupKey, entries] of Object.entries(system.groupSkills || {})) {
-    const def = GROUP_SKILLS_DEF[groupKey];
-    if (!def || !Array.isArray(entries) || entries.length === 0) continue;
-    entries.forEach((entry, idx) => {
-      context.groupSkillsDisplay.push({
-        groupKey,
-        entryIndex:     idx,
-        specialty:      entry.specialty,
-        label:          `${def.label}: ${entry.specialty}`,
-        groupLabel:     def.label,
-        isFirstInGroup: idx === 0,
-        rank:           entry.rank,
-        total:          entry.total ?? -20,
-        tip:            skillTip(def, `${def.label}: ${entry.specialty}`)
-      });
+  // Групповые навыки (Знания/Языки/Ремёсла и т.п.) — своя плитка на каждую
+  // группу (заголовок + список специализаций), а не одна общая колонка со
+  // сплошным перечнем: пустые группы вовсе не рисуются. Порядок плиток — по
+  // GROUP_SKILLS_DEF, а не по порядку ключей в system.groupSkills (тот зависит
+  // от того, в каком порядке специализации заводились на листе).
+  context.skillGroupBoxes = [];
+  for (const [groupKey, def] of Object.entries(GROUP_SKILLS_DEF)) {
+    const entries = system.groupSkills?.[groupKey];
+    if (!Array.isArray(entries) || entries.length === 0) continue;
+    context.skillGroupBoxes.push({
+      groupKey,
+      label: def.label,
+      entries: entries.map((entry, idx) => ({
+        entryIndex: idx,
+        specialty:  entry.specialty,
+        total:      entry.total ?? -20,
+        tip:        skillTip(def, `${def.label}: ${entry.specialty}`)
+      }))
     });
   }
 
