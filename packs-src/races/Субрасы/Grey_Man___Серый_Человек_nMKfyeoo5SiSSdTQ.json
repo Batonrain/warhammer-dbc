@@ -1,0 +1,42 @@
+{
+  "name": "Grey Man / Серый Человек",
+  "type": "subrace",
+  "img": "icons/svg/oak.svg",
+  "folder": "jT8qmJ96CX5W9mG5",
+  "system": {
+    "key": "grayman",
+    "parentKey": "halfEldar",
+    "cost": 0,
+    "effect": "",
+    "god": "",
+    "charMods": {},
+    "talents": "",
+    "removesTraits": [],
+    "description": "",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "nMKfyeoo5SiSSdTQ",
+  "effects": [],
+  "sort": 0,
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": []
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": null,
+    "systemVersion": null,
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!nMKfyeoo5SiSSdTQ"
+}

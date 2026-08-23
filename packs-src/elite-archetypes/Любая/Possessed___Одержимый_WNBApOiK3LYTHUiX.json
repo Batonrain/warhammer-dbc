@@ -1,0 +1,48 @@
+{
+  "name": "Possessed / Одержимый",
+  "type": "eliteArchetype",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "key": "2ce2087e",
+    "cost": 0,
+    "requirements": {
+      "primary": [],
+      "secondary": []
+    },
+    "race": "Любая",
+    "god": "",
+    "req": "",
+    "charBonus": "",
+    "freeTalents": "",
+    "gear": "",
+    "traits": [],
+    "talents": [],
+    "description": "",
+    "notes": "ЗАГОТОВКА — требования, бонусы и таланты не заполнены. Заведён только затем, чтобы наличие этого архетипа автоматически открывало вкладку ОДЕРЖИМОСТЬ на листе персонажа (см. character-context.mjs, hasPossessedArchetype).",
+    "bookSource": ""
+  },
+  "_id": "WNBApOiK3LYTHUiX",
+  "effects": [],
+  "folder": "YekrvgAYNWWLLaG5",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": []
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!WNBApOiK3LYTHUiX"
+}
