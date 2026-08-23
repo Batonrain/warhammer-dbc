@@ -1,11 +1,11 @@
 {
-  "name": "Scourge / Хлыст",
+  "name": "Blade / Клинок",
   "type": "weapon",
   "system": {
     "description": "",
     "notes": "",
     "grips": "1р",
-    "profileLabel": "Хлыст",
+    "profileLabel": "Клинок",
     "profiles": [],
     "reload": "–",
     "magazineCur": 0,
@@ -22,10 +22,10 @@
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "flexible"
+        "key": "reinforced"
       },
       {
-        "key": "reinforced"
+        "key": "tearing"
       }
     ],
     "needsRecharge": false,
@@ -59,13 +59,13 @@
     "weaponClass": "melee",
     "weaponType": "primitive",
     "range": 0,
-    "balance": -2,
-    "damage": "1d10+2",
+    "balance": 1,
+    "damage": "1d10+4",
     "damageType": "rending",
-    "penetration": 2,
+    "penetration": 4,
     "meleeCategory": "Природное"
   },
-  "_id": "hLR1sJGz8m2AHwTg",
+  "_id": "15uokP8kCAge1DPA",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],
   "sort": 0,
@@ -84,5 +84,6 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!hLR1sJGz8m2AHwTg"
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_key": "!items!15uokP8kCAge1DPA"
 }

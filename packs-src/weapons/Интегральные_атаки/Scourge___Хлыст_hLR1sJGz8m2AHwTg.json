@@ -1,16 +1,16 @@
 {
-  "name": "Tongue / Язык",
+  "name": "Scourge / Хлыст",
   "type": "weapon",
   "system": {
     "description": "",
     "notes": "",
     "grips": "1р",
-    "profileLabel": "Язык",
+    "profileLabel": "Хлыст",
     "profiles": [],
     "reload": "–",
     "magazineCur": 0,
     "magazineMax": 0,
-    "rof_single": 1,
+    "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
     "quality": "common",
@@ -22,10 +22,10 @@
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "independent"
+        "key": "flexible"
       },
       {
-        "key": "recharge"
+        "key": "reinforced"
       }
     ],
     "needsRecharge": false,
@@ -56,15 +56,16 @@
       "reloads": 10
     },
     "bookSource": "",
-    "weaponClass": "ranged",
-    "weaponType": "exotic",
-    "range": 10,
-    "damage": "1d10+S.b",
+    "weaponClass": "melee",
+    "weaponType": "primitive",
+    "range": 0,
+    "balance": -2,
+    "damage": "1d10+2",
     "damageType": "rending",
     "penetration": 2,
-    "meleeCategory": ""
+    "meleeCategory": "Природное"
   },
-  "_id": "DaPS9uyFwefyMxlw",
+  "_id": "hLR1sJGz8m2AHwTg",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],
   "sort": 0,
@@ -83,5 +84,6 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!DaPS9uyFwefyMxlw"
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_key": "!items!hLR1sJGz8m2AHwTg"
 }

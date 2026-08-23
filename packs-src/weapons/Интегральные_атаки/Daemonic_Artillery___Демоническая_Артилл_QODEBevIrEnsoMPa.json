@@ -1,11 +1,11 @@
 {
-  "name": "Flame Spit / Огненный Плевок",
+  "name": "Daemonic Artillery / Демоническая Артиллерия",
   "type": "weapon",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Linger в книге дан как «1d5» (раунды); движок поддерживает только фиксированный рейтинг — взято среднее значение d5, округлённое (3).",
     "grips": "1р",
-    "profileLabel": "Плевок",
+    "profileLabel": "Артиллерия",
     "profiles": [],
     "reload": "–",
     "magazineCur": 0,
@@ -17,22 +17,36 @@
     "availability": 0,
     "weight": 0.5,
     "attackBonus": 0,
-    "special": "Daemonic видят сквозь дым. Перезарядка 30 мин.",
+    "special": "Сгустки едкой демонической желчи на большие расстояния. Перезарядка.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "flame"
+        "key": "arcing"
+      },
+      {
+        "key": "blast",
+        "rating": 5
+      },
+      {
+        "key": "flush"
+      },
+      {
+        "key": "corrosive",
+        "rating": 2
       },
       {
         "key": "independent"
       },
       {
-        "key": "smoke",
-        "rating": 5
+        "key": "linger",
+        "rating": 3
       },
       {
         "key": "recharge"
+      },
+      {
+        "key": "tainted"
       }
     ],
     "needsRecharge": false,
@@ -65,13 +79,13 @@
     "bookSource": "",
     "weaponClass": "ranged",
     "weaponType": "exotic",
-    "range": 10,
-    "damage": "1d10+5",
-    "damageType": "energy",
+    "range": 150,
+    "damage": "1d10",
+    "damageType": "chemical",
     "penetration": 2,
     "meleeCategory": ""
   },
-  "_id": "s2bEz5JrltZpPcqg",
+  "_id": "QODEBevIrEnsoMPa",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],
   "sort": 0,
@@ -90,5 +104,6 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!s2bEz5JrltZpPcqg"
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_key": "!items!QODEBevIrEnsoMPa"
 }

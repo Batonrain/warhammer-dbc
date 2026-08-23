@@ -1,31 +1,38 @@
 {
-  "name": "Mantis Scythe / Богомолья Коса",
+  "name": "Flame Spit / Огненный Плевок",
   "type": "weapon",
   "system": {
     "description": "",
     "notes": "",
     "grips": "1р",
-    "profileLabel": "Коса",
+    "profileLabel": "Плевок",
     "profiles": [],
     "reload": "–",
     "magazineCur": 0,
     "magazineMax": 0,
-    "rof_single": 0,
+    "rof_single": 1,
     "rof_semi": 0,
     "rof_full": 0,
     "quality": "common",
     "availability": 0,
     "weight": 0.5,
     "attackBonus": 0,
-    "special": "+10 на Захват/Борьбу за каждую косу; удар косой по цели в Борьбе.",
+    "special": "Daemonic видят сквозь дым. Перезарядка 30 мин.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "razorSharp"
+        "key": "flame"
       },
       {
-        "key": "reinforced"
+        "key": "independent"
+      },
+      {
+        "key": "smoke",
+        "rating": 5
+      },
+      {
+        "key": "recharge"
       }
     ],
     "needsRecharge": false,
@@ -56,16 +63,15 @@
       "reloads": 10
     },
     "bookSource": "",
-    "weaponClass": "melee",
-    "weaponType": "primitive",
-    "range": 0,
-    "balance": 0,
-    "damage": "1d10+3",
-    "damageType": "rending",
-    "penetration": 3,
-    "meleeCategory": "Природное"
+    "weaponClass": "ranged",
+    "weaponType": "exotic",
+    "range": 10,
+    "damage": "1d10+5",
+    "damageType": "energy",
+    "penetration": 2,
+    "meleeCategory": ""
   },
-  "_id": "5Ol0b8UHOjPnIH2w",
+  "_id": "s2bEz5JrltZpPcqg",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],
   "sort": 0,
@@ -84,5 +90,6 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!5Ol0b8UHOjPnIH2w"
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_key": "!items!s2bEz5JrltZpPcqg"
 }

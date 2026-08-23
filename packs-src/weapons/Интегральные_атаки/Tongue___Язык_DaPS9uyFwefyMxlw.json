@@ -1,16 +1,16 @@
 {
-  "name": "Pincer / Клешня",
+  "name": "Tongue / Язык",
   "type": "weapon",
   "system": {
     "description": "",
     "notes": "",
-    "grips": "П+Л",
-    "profileLabel": "Клешня",
+    "grips": "1р",
+    "profileLabel": "Язык",
     "profiles": [],
     "reload": "–",
     "magazineCur": 0,
     "magazineMax": 0,
-    "rof_single": 0,
+    "rof_single": 1,
     "rof_semi": 0,
     "rof_full": 0,
     "quality": "common",
@@ -22,10 +22,10 @@
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "crunch"
+        "key": "independent"
       },
       {
-        "key": "reinforced"
+        "key": "recharge"
       }
     ],
     "needsRecharge": false,
@@ -56,16 +56,15 @@
       "reloads": 10
     },
     "bookSource": "",
-    "weaponClass": "melee",
-    "weaponType": "primitive",
-    "range": 0,
-    "balance": -2,
-    "damage": "2d10+3",
+    "weaponClass": "ranged",
+    "weaponType": "exotic",
+    "range": 10,
+    "damage": "1d10+S.b",
     "damageType": "rending",
-    "penetration": 5,
-    "meleeCategory": "Природное"
+    "penetration": 2,
+    "meleeCategory": ""
   },
-  "_id": "9hkM3tsj3URRyYC7",
+  "_id": "DaPS9uyFwefyMxlw",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],
   "sort": 0,
@@ -84,5 +83,6 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!9hkM3tsj3URRyYC7"
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_key": "!items!DaPS9uyFwefyMxlw"
 }

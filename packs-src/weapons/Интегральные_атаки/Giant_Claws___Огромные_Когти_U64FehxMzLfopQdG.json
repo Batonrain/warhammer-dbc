@@ -1,45 +1,28 @@
 {
-  "name": "Daemonic Breath / Демоническое Дыхание",
+  "name": "Giant Claws / Огромные Когти",
   "type": "weapon",
   "system": {
     "description": "",
-    "notes": "Linger в книге дан как «1d5» (раунды); движок поддерживает только фиксированный рейтинг — взято среднее значение d5, округлённое (3).",
+    "notes": "",
     "grips": "1р",
-    "profileLabel": "Дыхание",
+    "profileLabel": "Когти",
     "profiles": [],
     "reload": "–",
     "magazineCur": 0,
     "magazineMax": 0,
-    "rof_single": 1,
+    "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
     "quality": "common",
     "availability": 0,
     "weight": 0.5,
     "attackBonus": 0,
-    "special": "Поток чёрной демонической крови. Перезарядка.",
+    "special": "",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "corrosive",
-        "rating": 2
-      },
-      {
-        "key": "independent"
-      },
-      {
-        "key": "linger",
-        "rating": 3
-      },
-      {
-        "key": "spray"
-      },
-      {
-        "key": "recharge"
-      },
-      {
-        "key": "tainted"
+        "key": "reinforced"
       }
     ],
     "needsRecharge": false,
@@ -70,15 +53,16 @@
       "reloads": 10
     },
     "bookSource": "",
-    "weaponClass": "ranged",
-    "weaponType": "exotic",
-    "range": 10,
-    "damage": "1d10",
-    "damageType": "chemical",
-    "penetration": 2,
-    "meleeCategory": ""
+    "weaponClass": "melee",
+    "weaponType": "primitive",
+    "range": 0,
+    "balance": 0,
+    "damage": "1d10+4",
+    "damageType": "rending",
+    "penetration": 4,
+    "meleeCategory": "Природное"
   },
-  "_id": "dvphB0FBov0nVVYy",
+  "_id": "U64FehxMzLfopQdG",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],
   "sort": 0,
@@ -97,5 +81,6 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!dvphB0FBov0nVVYy"
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_key": "!items!U64FehxMzLfopQdG"
 }

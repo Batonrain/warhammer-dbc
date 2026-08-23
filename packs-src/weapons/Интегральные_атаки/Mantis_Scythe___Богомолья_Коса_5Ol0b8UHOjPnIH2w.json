@@ -1,11 +1,11 @@
 {
-  "name": "Giant Claws / Огромные Когти",
+  "name": "Mantis Scythe / Богомолья Коса",
   "type": "weapon",
   "system": {
     "description": "",
     "notes": "",
     "grips": "1р",
-    "profileLabel": "Когти",
+    "profileLabel": "Коса",
     "profiles": [],
     "reload": "–",
     "magazineCur": 0,
@@ -17,10 +17,13 @@
     "availability": 0,
     "weight": 0.5,
     "attackBonus": 0,
-    "special": "",
+    "special": "+10 на Захват/Борьбу за каждую косу; удар косой по цели в Борьбе.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
+      {
+        "key": "razorSharp"
+      },
       {
         "key": "reinforced"
       }
@@ -57,12 +60,12 @@
     "weaponType": "primitive",
     "range": 0,
     "balance": 0,
-    "damage": "1d10+4",
+    "damage": "1d10+3",
     "damageType": "rending",
-    "penetration": 4,
+    "penetration": 3,
     "meleeCategory": "Природное"
   },
-  "_id": "U64FehxMzLfopQdG",
+  "_id": "5Ol0b8UHOjPnIH2w",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],
   "sort": 0,
@@ -81,5 +84,6 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!U64FehxMzLfopQdG"
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_key": "!items!5Ol0b8UHOjPnIH2w"
 }
