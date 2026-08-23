@@ -3,12 +3,12 @@
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
-    "description": "Благословлён (или проклят) Богами: имеет одну или несколько мутаций (1−100 по таблице или по выбору).",
+    "description": "Благословлён (или проклят) Богами: имеет X мутаций (выбранных или по таблице 1-100). Стартовая Сог миньона с этим Трейтом не может быть ниже X×20.",
     "notes": "",
-    "benefit": "Имеет мутацию.",
+    "benefit": "Имеет X мутаций.",
     "source": "Хаос/мутация",
-    "hasRating": false,
-    "rating": 0,
+    "hasRating": true,
+    "rating": 1,
     "hasRating2": false,
     "rating2": 0,
     "effects": {

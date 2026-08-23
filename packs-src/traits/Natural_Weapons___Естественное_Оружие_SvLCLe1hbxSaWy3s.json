@@ -7,8 +7,8 @@
     "notes": "",
     "benefit": "Естественное оружие (профиль).",
     "source": "биология",
-    "hasRating": false,
-    "rating": 0,
+    "hasRating": true,
+    "rating": 1,
     "hasRating2": false,
     "rating2": 0,
     "effects": {
