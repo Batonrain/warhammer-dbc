@@ -1292,12 +1292,14 @@ export class WarhammerActor extends Actor {
     system.experience.spentTalents = autoTalentCost;
 
     // Автосумма цен психосил и техночудес (item.system.cost) — синхронно с
-    // вкладками «ПСИ»/«Техно».
-    let autoPsyCost = 0;
+    // вкладками «ПСИ»/«Техно», но каждая идёт в свою строку Опыта.
+    let autoPsyCost = 0, autoTechCost = 0;
     for (const it of this.items) {
-      if (it.type === "psychicPower" || it.type === "techPower") autoPsyCost += (parseInt(it.system?.cost) || 0);
+      if (it.type === "psychicPower") autoPsyCost += (parseInt(it.system?.cost) || 0);
+      else if (it.type === "techPower") autoTechCost += (parseInt(it.system?.cost) || 0);
     }
     system.experience.spentPsy = autoPsyCost;
+    system.experience.spentTech = autoTechCost;
 
     // Элитные архетипы (стр. 114): цена лежит на самом предмете и уже посчитана
     // с множителем за предыдущие. Сумма по предметам, а не отдельный счётчик:
@@ -1313,6 +1315,7 @@ export class WarhammerActor extends Actor {
       (system.experience.spentSkills  || 0) +
       (system.experience.spentTalents || 0) +
       (system.experience.spentPsy     || 0) +
+      (system.experience.spentTech    || 0) +
       (system.experience.spentElite   || 0) +
       (system.experience.spentOther   || 0);
 
