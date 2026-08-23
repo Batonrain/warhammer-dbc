@@ -1,6 +1,8 @@
-{{!-- Обёртка листа — <div>: сама форма теперь корневой элемент окна (ApplicationV2),
-     а классы и переменные темы патрона нужны CSS ровно там же, где были. --}}
-<div class="warhammer-dbc character-sheet{{#if isHeretic}} chaos-heretic chaos-god-{{chaosPatron.key}}{{/if}}"{{#if isHeretic}} style="--gc:{{chaosPatron.color}};--gc2:{{chaosPatron.gc2}};--glow:{{chaosPatron.glow}};--dp-hue:{{chaosPatron.hue}};--dp-sat:{{chaosPatron.sat}};--dp-bright:{{chaosPatron.bright}};--patron-star:{{chaosPatron.star}};--patron-sigil:url('/{{chaosPatron.sigil}}');--patron-sigil-size:{{chaosPatron.sigilSize}}"{{/if}}> {{> "systems/warhammer-dbc/templates/actor/parts/header.hbs"}}
+{{!-- Обёртка листа — <div>: сама форма теперь корневой элемент окна (ApplicationV2,
+     PARTS.body.root=true), поэтому классы wh-*/chaos-heretic и переменные темы
+     патрона на реальный DOM не попадают — их навешивает actor-sheet.mjs
+     (_applyThemeClasses/_applyChaosPatronTheme) на this.element после рендера. --}}
+<div class="warhammer-dbc character-sheet"> {{> "systems/warhammer-dbc/templates/actor/parts/header.hbs"}}
 
   {{#if infamy}}{{> "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs" infamy}}{{/if}}
 
