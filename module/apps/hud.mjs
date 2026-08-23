@@ -261,6 +261,7 @@ function hudData(actor) {
     { on: c.deafened,     label: "ОГЛОХ" },
     { on: c.poisoned,     label: "ОТРАВЛЕН", bad: true },
     { on: c.burning,      label: "ГОРИТ", bad: true },
+    { on: c.helpless,     label: "БЕСПОМОЩЕН", bad: true },
     { on: c.unconscious,  label: "БЕЗ СОЗН.", bad: true },
     { on: (Number(sys.fatigue?.value) || 0) > 0, label: "УСТАЛ" }
   ].filter(l => l.on);

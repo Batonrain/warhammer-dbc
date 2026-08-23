@@ -22,6 +22,12 @@ export const CONDITION_ICONS = {
   prone: { color: "#9fb4ff", body:
     `<circle cx="3.6" cy="9" r="1.8" fill="currentColor"/>
      <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M5.6 10.6H13M6.2 10.6L9 8"/>` },
+  helpless: { color: "#ff6b6b", body:
+    `<g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+     <path d="M3 4.5H13M4.5 4.5V11.5M11.5 4.5V11.5"/>
+     <path d="M4.5 8H11.5"/></g>
+     <circle cx="4.5" cy="4.5" r="1.3" fill="currentColor" stroke="none"/>
+     <circle cx="11.5" cy="4.5" r="1.3" fill="currentColor" stroke="none"/>` },
   unconscious: { color: "#b6c2cc", body:
     `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 5L6 7.5M6 5L3.5 7.5M10 5L12.5 7.5M12.5 5L10 7.5M5 11.5C7 10 9 10 11 11.5"/>` },
   blinded: { color: "#cf9fff", body:

@@ -89,6 +89,9 @@ function readAttackForm(form, ammoConds) {
       ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2 }
       : null,
     autoFail:   all(".atk-mod-cb[data-autofail]:checked").length > 0,
+    // Беспомощная цель в упор/в рукопашной (см. specificMods выше) — авто-
+    // успех и удвоенный урон вместо обычного порога, отдельно от autoFail.
+    autoSuccess: all(".atk-mod-cb[data-autosuccess]:checked").length > 0,
     char:       el("#atk-char")?.value,
     modifier:   parseInt(el("#atk-modifier")?.value) || 0,
     rofMode:    el(ROF)?.value,
@@ -105,6 +108,8 @@ function readAttackForm(form, ammoConds) {
     aimBonus:   attr(AIM, "bonus"),
     // Отмеченные ситуативные: сумма — в порог, список — в сводку заголовка.
     sitPicked:  all(".atk-mod-cb:checked"),
+    // data-value уже 0 у автоуспеха (см. makeMods выше), поэтому отдельно
+    // исключать его из суммы не нужно — селектор тот же, что и раньше.
     sitMods:    all(".atk-mod-cb:not([data-autofail]):checked")
       .reduce((n, cb) => n + (parseInt(cb.dataset.value) || 0), 0),
     ammoSel,
@@ -209,7 +214,22 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Стойка цели меняет порог атаки по ней">🎯 Цель: ${esc(targetStanceDef.label)} (${targetStanceMod >= 0 ? "+" : ""}${targetStanceMod})</span>`
     : "";
 
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod;
+  // Беспомощная цель: рукопашная (и выстрел в упор/в рукопашной, стр. ...) бьёт
+  // автоматически и удваивает урон до Поглощения; прочая стрельба — только
+  // +30. Рукопашный случай безусловен (badge), стрелковый «в упор/в рукопашной»
+  // зависит от дистанции конкретного выстрела — это ситуативный факт, а не
+  // хранимое состояние, поэтому решается галочкой рядом с прочими такими же
+  // («Дистанция в упор» и т.п.) в specificMods ниже, не авточтением флага.
+  const targetHelpless      = !!attackCtx.targetActor?.system?.conditions?.helpless;
+  const helplessAutoMelee   = targetHelpless && isMelee;
+  const helplessRangedMod   = (targetHelpless && !isMelee) ? 30 : 0;
+  const targetHelplessBadge = helplessAutoMelee
+    ? `<span class="atk-training-warn" title="Беспомощная цель: рукопашная бьёт автоматически">🪢 Цель Беспомощна: авто-успех, урон ×2</span>`
+    : helplessRangedMod
+      ? `<span class="atk-training-warn" title="Беспомощная цель: бонус к стрельбе">🪢 Цель Беспомощна (+${helplessRangedMod})</span>`
+      : "";
+
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + helplessRangedMod;
   // Melee Training (стр. 62) — используется ниже resolveSelection, чтобы
   // ограничить доступные Стойку/Хват/Приём. Категория неизвестна (данные
   // ещё не дошли из packs-src, см. память doombc-arsenal-weapon-training) —
@@ -364,7 +384,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${lockNoteHtml}${targetStanceBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${lockNoteHtml}${targetStanceBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
   }
 
   function pillsHtml(name, options, currentKey, keyField = "key") {
@@ -564,21 +584,33 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { label: "Короткая дистанция",      value:  10 },
     { label: "Боевая дистанция",        value:   0 },
     { label: "Дальняя дистанция",       value: -10 },
-    { label: "Экстремальная дистанция", value: -30 }
+    { label: "Экстремальная дистанция", value: -30 },
+    // Беспомощная цель, выстрел в упор/в рукопашной: как рукопашная — авто-
+    // успех и удвоенный урон, а не просто +30 (см. targetHelpless выше). Это
+    // ситуативный факт про конкретный выстрел (дистанция), а не хранимое
+    // состояние — поэтому галочка, а не автоматика, ровно как «Дистанция в упор».
+    ...(targetHelpless ? [{
+      id: "atk-helpless-close", label: "Беспомощная цель: в упор / в рукопашной",
+      value: 0, autosuccess: true,
+      note: "заменяет +30 на авто-успех и ×2 урона"
+    }] : [])
   ];
 
   const makeMods = arr => arr.map(m => {
     const isAF      = m.autofail === true;
+    const isAS      = m.autosuccess === true;
     const isChecked = m.autoCheck === true;
     // Погашенный правилом цели модификатор не прячем: игрок должен видеть,
     // ПОЧЕМУ бонуса нет, а не гадать, куда делся пункт списка.
     const dispVal   = m.immune ? "иммунитет"
-                    : (isAF ? "провал" : (m.value >= 0 ? `+${m.value}` : `${m.value}`));
+                    : (isAF ? "провал" : (isAS ? "авто-успех, ×2" : (m.value >= 0 ? `+${m.value}` : `${m.value}`)));
     const note      = m.note ? ` [${m.note}]` : "";
     return `<label class="attack-mod-check${isChecked ? " atk-mod-auto" : ""}${m.immune ? " atk-mod-immune" : ""}">
       <input type="checkbox" class="atk-mod-cb"
-             data-value="${isAF ? 0 : m.value}"
+             ${m.id ? `id="${m.id}"` : ""}
+             data-value="${(isAF || isAS) ? 0 : m.value}"
              ${isAF    ? 'data-autofail="true"' : ""}
+             ${isAS    ? 'data-autosuccess="true"' : ""}
              ${m.immune ? "disabled" : ""}
              ${isChecked ? "checked" : ""}/>
       <span>${m.label} (${dispVal})${note}${isChecked ? " 😓" : ""}</span>
@@ -916,11 +948,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
             stanceLabel:    sel.stDef.label
           } : techniqueOpts;
 
+          // Беспомощная цель: рукопашная — всегда, стрелковая — только если
+          // отмечена галочка «в упор / в рукопашной» (см. specificMods выше).
+          const helplessAutoHit = helplessAutoMelee || f.autoSuccess;
+
           await _executeAttackRoll(
             actor, item, f.char, thresholdOf(f),
             f.rofMode || rofModes[0]?.value,
             aimTargets.find(t => t.value === f.aimVal),
             {
+              forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
               isSwift: f.swift, isLightning: f.lightning, isAllOut: f.allOut,
               // Переброс от правила (Локус Буйства): бросок катает несколько
               // кубов и оставляет один — см. combat/attack.mjs.
@@ -994,6 +1031,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           display.style.color = "#8b0000";
           return;
         }
+        if (helplessAutoMelee || f.autoSuccess) {
+          display.textContent = "АВТО-УСПЕХ ×2";
+          display.style.color = "#ff6b6b";
+          return;
+        }
         display.textContent = thresholdOf(f);
         display.style.color = "";
         // Блок ситуативных свёрнут по умолчанию, поэтому его сводка должна быть
@@ -1055,16 +1097,23 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // WS уже включает мод препаратов (см. prepareDerivedData)
   const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue;
 
+  // Беспомощная цель, рукопашная (в т.ч. безоружная) — авто-успех и ×2 урона,
+  // как и в showAttackDialog (см. helplessAutoMelee там же).
+  const targetHelpless = !!([...(game.user?.targets ?? [])][0]?.actor)?.system?.conditions?.helpless;
+
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
-  const hit      = rv <= final;
+  const hit      = targetHelpless || rv <= final;
   const deg      = hit
-    ? Math.floor((final - rv) / 10) + 1
+    ? Math.max(1, Math.floor((final - rv) / 10) + 1)
     : Math.floor((rv - final) / 10) + 1;
   const rollMode = game.settings.get("core", "rollMode");
   const outcome  = hit
     ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}</span>`
     : `<span class="roll-failure">Промах — ${deg} ${_degWord(deg)}</span>`;
+  const helplessNote = targetHelpless
+    ? `<div class="roll-allout-note">🪢 Цель Беспомощна: попадание автоматическое, урон ×2 (до Поглощения).</div>`
+    : "";
 
   const defButtons = hit ? `
     <div class="roll-defense-section">
@@ -1086,15 +1135,16 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
     try {
       const dmgRoll = await new Roll(dmgFormula).evaluate();
       allRolls.push(dmgRoll);
+      const dmgTotal = targetHelpless ? dmgRoll.total * 2 : dmgRoll.total;
       const dtLabel = DAMAGE_TYPES[techDef.damageType] || techDef.damageType || "Ударный";
       unarmedDmgSection = `
         <div class="roll-damage-section">
-          <div class="roll-damage-label">Урон (${dtLabel}, Проб. ${techDef.pen || 0})${astartesProfile ? " · профиль Астартес" : ""}: <b>${dmgRoll.total}</b>${techDef.props ? ` · ${techDef.props}` : ""}</div>
+          <div class="roll-damage-label">Урон (${dtLabel}, Проб. ${techDef.pen || 0})${astartesProfile ? " · профиль Астартес" : ""}: <b>${dmgTotal}</b>${techDef.props ? ` · ${techDef.props}` : ""}</div>
           <button class="wh-apply-dmg-btn" type="button"
-            data-damage="${dmgRoll.total}" data-penetration="${techDef.pen || 0}"
+            data-damage="${dmgTotal}" data-penetration="${techDef.pen || 0}"
             data-damage-type="${techDef.damageType || "impact"}" data-hit-location="Торс"
             data-primitive="1" data-weapon-name="${techDef.label}" data-attacker="${actor.name}">
-            Применить урон: ${dmgRoll.total} → Торс
+            Применить урон: ${dmgTotal} → Торс
           </button>
         </div>`;
     } catch (e) { console.error("Безоружный урон:", e); }
@@ -1119,6 +1169,7 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
         </div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${outcome}</div>
+        ${helplessNote}
         ${unarmedDmgSection}
         ${defButtons}
       </div>`,
