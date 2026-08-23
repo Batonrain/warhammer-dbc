@@ -36,6 +36,7 @@ import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { refundXP, talentCost, talentReason } from "../apps/duplicate-refund.mjs";
+import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
 import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-panel.mjs";
@@ -1331,6 +1332,9 @@ export class WarhammerCharacterSheet
 
     // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
     activateSocialListeners(html, this.actor, { editable: this.isEditable });
+
+    // ── Ритуалы (стр. 393-425) ─────────────────────────────────────────────
+    activateRitualListeners(html, this.actor);
 
     activatePsychicListeners(html, this.actor, {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts),

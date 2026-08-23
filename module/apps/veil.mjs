@@ -167,9 +167,9 @@ export class VeilMystic extends Application {
     const ritualItems = (actor?.items ?? []).filter(i => i.type === "ritual");
     if (!ritualItems.find(i => i.id === R.itemId)) R.itemId = "";
     const ritualItem = ritualItems.find(i => i.id === R.itemId) || null;
-    // Требования ритуалиста — тем же checkRequirements, которым гейтит
-    // проведение кнопка ниже. Требования к ассистентам сюда не входят: их
-    // проверяют по каждому помощнику отдельно.
+    // Требования ритуалиста — тем же checkRequirements, которым отмечает строку
+    // раздела «Ритуалы» на листе (sheets/tabs/rituals.mjs). Требования к
+    // ассистентам сюда не входят: их проверяют по каждому помощнику отдельно.
     const req = ritualItem
       ? checkRequirements(actor, getItemRequirements(ritualItem, "req"))
       : { ok: true, failed: [] };

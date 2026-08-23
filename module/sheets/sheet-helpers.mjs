@@ -42,6 +42,7 @@ import { condIconHTML, CONDITION_ICONS }            from "../constants/condition
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE }                   from "../constants/vitals.mjs";
+import { ritualsContext }                            from "./tabs/rituals.mjs";
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
@@ -868,6 +869,9 @@ export function buildGetData(actor) {
     name:    i.name,
     benefit: i.system.benefit || ""
   }));
+
+  // ── Ритуалы (стр. 393-425) ──────────────────────────────────────────────
+  context.rituals = ritualsContext(actor);
 
   // ── Черты (трейты) ──────────────────────────────────────────────────────
   // Как и Таланты, одинаковые Черты из разных источников склеиваются в одну
