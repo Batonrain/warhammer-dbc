@@ -17,6 +17,7 @@ import { isAeldariRace } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
+import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
 
 const PACK = "warhammer-dbc.archetypes";
 const FLAG = "warhammer-dbc";
@@ -111,6 +112,25 @@ export async function clearArchetype(actor) {
 }
 
 /**
+ * Импланты Механикум / Боевые Латы Скитарии — та же выдача, что у Мастера
+ * создания (apps/creation.mjs::grantMechanicusImplants/grantSkitariiWarPlate),
+ * продублирована здесь мелкой копией, а не импортом: creation.mjs сам
+ * импортирует applyArchetype из этого файла, обратный импорт дал бы цикл.
+ * Идемпотентно — сверяет по имени уже стоящие Импланты, повторный вызов
+ * (смена архетипа туда-обратно) не задвоит выдачу.
+ */
+async function grantArchetypeImplants(actor, { grantsImplants, grantsWarPlate }) {
+  if (!grantsImplants && !grantsWarPlate) return;
+  const existing = new Set(actor.items.filter(i => i.type === "implant").map(i => i.name));
+  if (grantsImplants) {
+    const toAdd = MECHANICUS_IMPLANTS.filter(d => !existing.has(d.name)).map(d => foundry.utils.deepClone(d));
+    if (toAdd.length) await actor.createEmbeddedDocuments("Item", toAdd);
+  } else if (grantsWarPlate && !existing.has(SKITARII_WAR_PLATE.name)) {
+    await actor.createEmbeddedDocuments("Item", [foundry.utils.deepClone(SKITARII_WAR_PLATE)]);
+  }
+}
+
+/**
  * Выбор архетипа: снимает прежний, кладёт embedded-копию выбранного,
  * обновляет system.archetype (селектор в шапке читает именно его, см.
  * archetypeSheetContext).
@@ -121,6 +141,14 @@ export async function clearArchetype(actor) {
  * Мастер создания) не может дождаться результата: диалоги ИЛИ-выбора и
  * бюджетный Обозреватель компендиумов (kind:"equipment") всплывали бы уже
  * ПОСЛЕ того, как applyArchetype «завершился».
+ *
+ * isPsyker/isTechpriest/psykerClass/grantsImplants/grantsWarPlate раньше
+ * применял только Мастер создания (одноразовым чтением сырых полей архетипа,
+ * apps/creation.mjs) — при смене архетипа этим же селектором позже статус
+ * псайкера/техножреца и импланты никогда не выставлялись. charBonus и
+ * сигнатурная Черта архетипа сюда не входят — они уже переехали в саму
+ * Механику носителя (flags.mechanics, kind:"characteristic"/"trait") и
+ * применяются как часть applyItemMechanics выше.
  * @param {Actor} actor
  * @param {string} key   ключ/uuid-хвост записи компендиума (см. docToDef) или ""
  */
@@ -139,5 +167,12 @@ export async function applyArchetype(actor, key) {
   data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}), [GRANT]: TAG } };
   const [created] = await actor.createEmbeddedDocuments("Item", [data], { [SKIP_MECHANICS_HOOK]: true });
   if (created) await applyItemMechanics(created);
-  await actor.update({ "system.archetype": key });
+
+  const s = src.system ?? {};
+  const upd = { "system.archetype": key };
+  if (s.isPsyker) upd["system.isPsyker"] = true;
+  if (s.isTechpriest) upd["system.isTechpriest"] = true;
+  if (s.psykerClass) upd["system.psyker.class"] = s.psykerClass;
+  await actor.update(upd);
+  await grantArchetypeImplants(actor, s);
 }
