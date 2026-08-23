@@ -83,49 +83,4 @@
   </div>
   {{/if}}
 
-  {{!-- Ритуалы (стр. 393-425). Пополняются драг-н-дропом предмета-ритуала на
-        лист (штатный _onDropItem Foundry, свой обработчик не нужен) либо
-        кнопкой «＋» — Обозревателем компендиумов. Раскрытие строки ведёт общий
-        .ability-detail-toggle, а открытие и удаление — общее контекстное меню
-        строки предмета по ПКМ, как у талантов и черт (wdbc-5qk). --}}
-  <div class="ability-section-panel"> <div class="panel-title"> РИТУАЛЫ
-      <button type="button" class="ritual-add-btn" title="Выбрать ритуал в Обозревателе компендиумов">＋</button> </div>
-    <table class="items-table rituals-table"> <thead> <tr>
-      <th class="ability-toggle-col"></th>
-      <th class="col-wide">Название</th>
-      <th class="col-narrow">Тип</th>
-      <th class="col-narrow" title="Уровень Записи">Запись</th>
-      <th class="col-narrow" title="Ассистенты: мин.—макс.">Асс.</th>
-    </tr> </thead> <tbody>
-      {{#if rituals.length}}
-        {{#each rituals as |r|}}
-        <tr class="item-row{{#unless r.meetsReq}} ritual-row-unmet{{/unless}}" data-item-id="{{r.id}}">
-          <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{r.id}}" title="Показать/скрыть описание">▸</button></td>
-          <td class="item-name-cell">
-            {{#if r.meetsReq}}<span class="ritual-req-ok" title="Требования выполнены">✓</span>
-            {{else}}<span class="ritual-req-fail" title="Требования не выполнены">✗</span>{{/if}}
-            {{r.name}}</td>
-          <td>{{r.typeLabel}}</td>
-          <td>{{r.record}}</td>
-          <td>{{r.assistLabel}}</td>
-        </tr>
-        <tr class="ability-detail-row" data-item-id="{{r.id}}" style="display:none;"> <td colspan="5">
-          <div class="ability-detail-text">
-            {{!-- Каждая группа — своя строка: у ИЛИ-группы текст уже начинается
-                  с «одно из: …», склеивать группы между собой нельзя. --}}
-            {{#if r.reqLines.length}}<div><b>Требования:</b> {{#each r.reqLines}}<span>{{this}}</span>{{#unless @last}}, {{/unless}}{{/each}}</div>{{/if}}
-            {{#if r.reqFailed.length}}<div class="ritual-req-fail"><b>Не выполнено:</b> {{#each r.reqFailed}}<span>{{this}}</span>{{#unless @last}}, {{/unless}}{{/each}}</div>{{/if}}
-            {{#if r.assistReqLines.length}}<div><b>Требования к ассистентам:</b> {{#each r.assistReqLines}}<span>{{this}}</span>{{#unless @last}}, {{/unless}}{{/each}}</div>{{/if}}
-            {{#if r.description}}<div>{{r.description}}</div>{{/if}}
-            {{#if r.procedure}}<div><b>Ритуал:</b> {{r.procedure}}</div>{{/if}}
-            {{#if r.result}}<div><b>Результат:</b> {{r.result}}</div>{{/if}}
-            {{#if r.cost}}<div><b>Цена:</b> {{r.cost}}</div>{{/if}}
-            {{#if r.failureCost}}<div><b>Цена ошибки:</b> {{r.failureCost}}</div>{{/if}}
-            {{#unless r.hasAnyText}}<em>Описание не заполнено — см. книгу</em>{{/unless}}
-          </div>
-        </td> </tr>
-        {{/each}}
-      {{else}}
-        <tr class="items-empty"> <td colspan="5"><em>Нет ритуалов — перетащите сюда или нажмите ＋</em></td> </tr> {{/if}}
-    </tbody> </table> </div>
   </div>{{!-- /tab abilities --}}

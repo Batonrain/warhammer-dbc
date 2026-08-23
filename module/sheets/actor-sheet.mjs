@@ -36,7 +36,6 @@ import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { refundXP, talentCost, talentReason } from "../apps/duplicate-refund.mjs";
-import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
 import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-panel.mjs";
@@ -65,7 +64,7 @@ import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
 import { applyRace, applySubrace, clearRace, clearSubrace,
          actorRaceItem, actorSubraceItem,
-         applyLegion, applyYnnari, applyHarlequin } from "../apps/races.mjs";
+         applyYnnari, applyHarlequin } from "../apps/races.mjs";
 import { raceDef, raceKeyOf, isAeldariRace } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
@@ -510,7 +509,6 @@ async function onGeneApply() {
   const def = raceDef("astartes");
   return this._applyStartingTalents(def?.talents ? [def.talents] : [], def?.label || "Астартес");
 }
-function onLegionApply()    { return applyLegion(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onYnnariApply()    { return applyYnnari(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onHarlequinApply() { return applyHarlequin(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 
@@ -583,7 +581,6 @@ export class WarhammerCharacterSheet
       mutgiftAdd: whenEditable(onMutgiftAdd),
       mutgiftRoll: whenEditable(onMutgiftRoll),
       geneApply:      whenEditable(onGeneApply),
-      legionApply:    whenEditable(onLegionApply),
       ynnariApply:    whenEditable(onYnnariApply),
       harlequinApply: whenEditable(onHarlequinApply),
       racePick:     whenEditable(onRacePick),
@@ -1334,9 +1331,6 @@ export class WarhammerCharacterSheet
 
     // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
     activateSocialListeners(html, this.actor, { editable: this.isEditable });
-
-    // ── Ритуалы (стр. 393-425) ─────────────────────────────────────────────
-    activateRitualListeners(html, this.actor);
 
     activatePsychicListeners(html, this.actor, {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts),
