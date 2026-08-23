@@ -11,6 +11,7 @@ import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice } from "./attack-outcome.mjs";
 import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
+import { rollScatter }                               from "./scatter.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
 import { qualityEffects, buildQualityChatBlock }    from "../constants/quality.mjs";
 import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../constants/drukhari-splinter.mjs";
@@ -281,6 +282,19 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   const damageRolls = [];
   const allRolls    = [roll];
+
+  // Взрывное «под цель» (Избирательная, −20, attack-dialog.mjs): промах не
+  // пропадает бесследно — взрыв смещается по розе смещения (module/combat/
+  // scatter.mjs), и может всё ещё задеть исходную цель или тех, кто рядом.
+  // Без этого прицела промах Взрывного — обычный промах, как и у любого
+  // другого оружия (не додумываем точку, откуда мог бы лететь снаряд).
+  let blastScatter = null;
+  if (!hit && aimTarget?.value === "underfoot" && wp.blastRating > 0) {
+    const sc = await rollScatter();
+    allRolls.push(sc.distRoll, sc.dirRoll);
+    blastScatter = { distance: sc.distance, dir: sc.dir, radius: wp.blastRating };
+  }
+
   if (hit && hitsCount > 0 && (effDamage || isMelee)) {
     for (let i = 0; i < hitsCount; i++) {
       let dmgRoll = await new Roll(dmgFormula).evaluate();
@@ -424,6 +438,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         technique: { label: techOpts.techniqueLabel, stance: techOpts.stanceLabel, note: techOpts.chatNote },
         aiming:    opts.aimingLabel,
         aim:       aimTarget?.value ? aimTarget.label.replace(/\s*\(.*\)/, "") : "",
+        blastScatter,
         mount:     opts.mountNote || "",
         allOut:    !!opts.isAllOut,
         off:       offNote,
