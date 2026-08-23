@@ -183,7 +183,8 @@ export class WarhammerHordeSheet
         total, bonus,
         bonusModified: bonus !== naturalBonus,
         base:  system.characteristics?.[k]?.base ?? 0,
-        advance: system.characteristics?.[k]?.advance ?? 0
+        advance: system.characteristics?.[k]?.advance ?? 0,
+        charDamage: system.charDamage?.[k] ?? 0
       };
     });
 

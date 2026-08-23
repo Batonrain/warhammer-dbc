@@ -484,9 +484,13 @@ export class WarhammerActor extends Actor {
    * показатели по текущей Магнитуде, движение, состояние (Ослаблена/Сломлена).
    */
   _prepareHordeData(system) {
-    // Характеристики: total = база + продвижение; бонус = ⌊total/10⌋.
-    for (const char of Object.values(system.characteristics || {})) {
-      char.total = (Number(char.base) || 0) + (Number(char.advance) || 0);
+    // Характеристики: total = база + продвижение + Мод. (знаковый ручной
+    // модификатор, как у Персонажа/Демона/Миньона/Принца Демона); бонус = ⌊total/10⌋.
+    const charDamage = system.charDamage || {};
+    for (const [key, char] of Object.entries(system.characteristics || {})) {
+      const dmgMod = charDamage[key] || 0;
+      char.charDamage = dmgMod;
+      char.total = (Number(char.base) || 0) + (Number(char.advance) || 0) + dmgMod;
       char.bonus = Math.floor(char.total / 10);
     }
     // Навыки: значение = характеристика навыка + надбавка ранга. Считается так

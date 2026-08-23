@@ -29,6 +29,15 @@ export class HordeData extends foundry.abstract.TypeDataModel {
       }, { label: def.label });
     }
 
+    // Знаковый ручной модификатор к Итогу характеристики («Мод.» на листе,
+    // как у Персонажа/Демона/Миньона/Принца Демона) — плюс прибавляет, минус
+    // вычитает. У Орды нет Влияния, поэтому и здесь его нет.
+    const charDamageFields = {};
+    for (const [key, def] of Object.entries(CHARACTERISTICS)) {
+      if (key === "inf") continue;
+      charDamageFields[key] = num(0, def.label);
+    }
+
     // Навыки орды — как у существ, но без покупки за опыт: у орды есть только
     // ранг (его ставит ГМ прямо на листе) и выведенное из него значение.
     const skillFields = {};
@@ -54,6 +63,7 @@ export class HordeData extends foundry.abstract.TypeDataModel {
       faction:     str("Фракция"),
       descriptor:  str("Описание"),
       characteristics: new SchemaField(charFields, { label: "Характеристики" }),
+      charDamage:      new SchemaField(charDamageFields, { label: "Мод. характеристик" }),
       skills:          new SchemaField(skillFields, { label: "Навыки" }),
       groupSkills:     new SchemaField(groupSkillFields, { label: "Групповые навыки" }),
       magnitude: new SchemaField({
