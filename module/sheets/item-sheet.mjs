@@ -799,8 +799,8 @@ export class WarhammerItemSheet
     ent.sourceUuid       = src.uuid;
     ent.sourceName       = src.name;
     ent.sourceImg        = src.img;
-    ent.sourceHasRating  = src.type === "trait" ? !!src.system.hasRating : false;
-    ent.rating           = (src.type === "trait" && src.system.hasRating) ? (src.system.rating ?? 0) : "";
+    ent.sourceHasRating  = !!src.system.hasRating;
+    ent.rating           = src.system.hasRating ? (src.system.rating ?? 0) : "";
     ent.specialization   = src.type === "talent" ? (src.system.specialization || "") : "";
     await saveMechanics(this.item, groups);
   }
