@@ -832,11 +832,10 @@ Hooks.on("getSceneControlButtons", (controls) => {
         try { ui.controls?.activate?.({ control: "drawings" }); } catch (e) {}
       });
     };
-    // «Очистить» — отдельная ОДНОкнопочная группа, а не второй tool внутри
-    // «Коллаутов»: несколько tools в одной группе без своего canvas-layer
-    // однажды уже сломало рендер всей панели контролов (см. память сессии),
-    // а по одной кнопке на группу — доказанно безопасный, уже везде
-    // использующийся здесь шаблон.
+    // 23.08.2026: «Очистить» больше не отдельная scene-control группа — все
+    // 8 пунктов (см. openWhHub ниже) собраны в одно меню-диалог за
+    // единственной иконкой «Doom BC». Бэкап до этой правки:
+    // warhammer-dbc.mjs.bak-20260823-scenecontrols.
     const triggerClearCallouts = () => { clearAllCallouts(); };
     const trigger = () => {
       openSystemsOverview();
@@ -852,6 +851,38 @@ Hooks.on("getSceneControlButtons", (controls) => {
     };
     const triggerTarot = () => {
       openTarotReader();
+      setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
+    };
+    // Единственная точка входа в панели Doom BC — окно-меню со всеми 5(+3
+    // для ГМ) пунктами кнопками, вместо отдельной scene-control группы на
+    // каждый. Опробованный до этого нативный flyout Foundry (несколько tools
+    // в одной группе) не раскрывался без настоящего canvas-слоя — клик по
+    // группе сразу исполнял activeTool, остальные tools были недостижимы
+    // (проверено вживую 23.08.2026, панель при этом не ломалась).
+    const openWhHub = () => {
+      const buttons = [
+        { action: "systems", icon: "fa-solid fa-table-list", label: "Звёздные системы", callback: () => trigger() },
+        { action: "craft", icon: "fa-solid fa-flask", label: "Мастерская", callback: () => triggerCraft() },
+        { action: "cog", icon: COG_ICON, label: "Когитаторы", callback: () => triggerCog() },
+        { action: "veil", icon: VEIL_ICON, label: "Завеса и Мистика", callback: () => triggerVeil() },
+        { action: "nexus", icon: NEXUS_ICON, label: "Нексус Сцен", callback: () => triggerNexus() }
+      ];
+      if (game.user.isGM) buttons.push(
+        { action: "env", icon: ENV_ICON, label: "Окружающая Среда", callback: () => triggerEnv() },
+        { action: "calloutAdd", icon: CALLOUT_ICON, label: "Добавить коллаут", callback: () => triggerCallout() },
+        { action: "calloutClear", icon: CALLOUT_CLEAR_ICON, label: "Очистить коллауты", callback: () => triggerClearCallouts() }
+      );
+      foundry.applications.api.DialogV2.wait({
+        window: { title: "Doom BC" },
+        classes: ["warhammer-dbc", "wh-holo"],
+        position: { width: 320 },
+        content: "<p>Выберите раздел:</p>",
+        buttons,
+        rejectClose: false
+      });
+    };
+    const triggerHub = () => {
+      openWhHub();
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
     };
     if (Array.isArray(controls)) {
@@ -905,76 +936,15 @@ Hooks.on("getSceneControlButtons", (controls) => {
                   button: true, onClick: () => triggerClearCallouts() }]
       });
     } else if (controls && typeof controls === "object") {
-      // Foundry v13 — объект-словарь групп (onChange, без устаревшего onClick)
-      controls["wh-systems"] = {
-        name: "wh-systems", title: "Звёздные системы", icon: ICON, order: 90, visible: true,
-        onChange: (_event, active) => { if (active) trigger(); },
+      // Foundry v13 — объект-словарь групп (onChange, без устаревшего onClick).
+      // Одна группа с одним tool, открывающим меню-диалог openWhHub —
+      // было 8 однокнопочных групп, стало 1 иконка (см. openWhHub выше).
+      controls["wh-hub"] = {
+        name: "wh-hub", title: "Doom BC", icon: ICON, order: 90, visible: true,
+        onChange: (_event, active) => { if (active) triggerHub(); },
         tools: {
-          open: { name: "open", title: "Обзор систем", icon: "fa-solid fa-table-list",
-                  order: 1, button: true, onChange: () => trigger() }
-        },
-        activeTool: "open"
-      };
-      controls["wh-craft"] = {
-        name: "wh-craft", title: "Крафт и Исследования", icon: CRAFT_ICON, order: 91, visible: true,
-        onChange: (_event, active) => { if (active) triggerCraft(); },
-        tools: {
-          open: { name: "open", title: "Мастерская", icon: "fa-solid fa-flask",
-                  order: 1, button: true, onChange: () => triggerCraft() }
-        },
-        activeTool: "open"
-      };
-      controls["wh-cog"] = {
-        name: "wh-cog", title: "Когитаторы", icon: COG_ICON, order: 92, visible: true,
-        onChange: (_event, active) => { if (active) triggerCog(); },
-        tools: {
-          open: { name: "open", title: "Когитаторы", icon: "fa-solid fa-terminal",
-                  order: 1, button: true, onChange: () => triggerCog() }
-        },
-        activeTool: "open"
-      };
-      controls["wh-veil"] = {
-        name: "wh-veil", title: "Завеса и Мистика", icon: VEIL_ICON, order: 94, visible: true,
-        onChange: (_event, active) => { if (active) triggerVeil(); },
-        tools: {
-          open: { name: "open", title: "Завеса и Мистика", icon: VEIL_ICON,
-                  order: 1, button: true, onChange: () => triggerVeil() }
-        },
-        activeTool: "open"
-      };
-      controls["wh-nexus"] = {
-        name: "wh-nexus", title: "Нексус Сцен", icon: NEXUS_ICON, order: 95, visible: true,
-        onChange: (_event, active) => { if (active) triggerNexus(); },
-        tools: {
-          open: { name: "open", title: "Нексус Сцен", icon: NEXUS_ICON,
-                  order: 1, button: true, onChange: () => triggerNexus() }
-        },
-        activeTool: "open"
-      };
-      if (game.user.isGM) controls["wh-env"] = {
-        name: "wh-env", title: "Окружающая Среда", icon: ENV_ICON, order: 96, visible: true,
-        onChange: (_event, active) => { if (active) triggerEnv(); },
-        tools: {
-          open: { name: "open", title: "Окружающая Среда", icon: ENV_ICON,
-                  order: 1, button: true, onChange: () => triggerEnv() }
-        },
-        activeTool: "open"
-      };
-      if (game.user.isGM) controls["wh-callouts"] = {
-        name: "wh-callouts", title: "Коллауты", icon: CALLOUT_ICON, order: 97, visible: true,
-        onChange: (_event, active) => { if (active) triggerCallout(); },
-        tools: {
-          open: { name: "open", title: "Добавить коллаут", icon: CALLOUT_ICON,
-                  order: 1, button: true, onChange: () => triggerCallout() }
-        },
-        activeTool: "open"
-      };
-      if (game.user.isGM) controls["wh-callouts-clear"] = {
-        name: "wh-callouts-clear", title: "Очистить коллауты", icon: CALLOUT_CLEAR_ICON, order: 98, visible: true,
-        onChange: (_event, active) => { if (active) triggerClearCallouts(); },
-        tools: {
-          open: { name: "open", title: "Очистить все коллауты на сцене", icon: CALLOUT_CLEAR_ICON,
-                  order: 1, button: true, onChange: () => triggerClearCallouts() }
+          open: { name: "open", title: "Doom BC", icon: ICON,
+                  order: 1, button: true, onChange: () => triggerHub() }
         },
         activeTool: "open"
       };
