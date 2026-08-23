@@ -6,8 +6,8 @@
   "system": {
     "kind": "drive",
     "power": -78,
-    "space": 10,
-    "sp": 4,
+    "space": 12,
+    "sp": 6,
     "rarity": 5,
     "quality": "common",
     "hulls": "Крейсера",
@@ -27,6 +27,10 @@
       },
       {
         "key": "inertialess"
+      },
+      {
+        "key": "fasterThanLight",
+        "rating": 1.5
       }
     ],
     "hull": {

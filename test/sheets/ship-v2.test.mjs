@@ -57,17 +57,32 @@ describe("_prepareContext", () => {
     expect(ctx.hasHangar).toBe(false);
   });
 
-  // Корпус — единственный узел, который не тратит энергию и пространство:
-  // он их даёт. Прочерк вместо нуля, чтобы в столбце не читалось «0 из 45».
-  it("корпус идёт первым, энергия и пространство у него — прочерк", async () => {
+  // Узлы сортируются просто по имени: Корпус больше не среди них (см. ниже).
+  it("узлы идут по алфавиту", async () => {
     const ctx = await ctxOf(shipActor([
       component({ id: "c2", name: "Ауспики", system: { kind: "augur" } }),
-      component({ id: "c1", name: "Корпус", system: { kind: "hull", power: 45, space: 40 } })
+      component({ id: "c1", name: "Жизнеобеспечение", system: { kind: "lifeSustainer" } })
     ]));
 
-    expect(ctx.components.map(c => c.name)).toEqual(["Корпус", "Ауспики"]);
-    expect(ctx.components[0].power).toBe("—");
-    expect(ctx.components[0].space).toBe("—");
+    expect(ctx.components.map(c => c.name)).toEqual(["Ауспики", "Жизнеобеспечение"]);
+  });
+
+  // Корпус — отдельный тип предмета (не узел): выбирается пикером в шапке
+  // (sheets/hull-picker.mjs), не попадает в список Узлов, виден как hullSlot.
+  it("Корпус — не узел: своя слот в шапке, вне списка Узлов", async () => {
+    const ctx = await ctxOf(shipActor([
+      component({ id: "c2", name: "Ауспики", system: { kind: "augur" } }),
+      { id: "h1", name: "Тиамат / Тиамат", img: "h.png", type: "shipHull",
+        system: { hullClass: "Линкоры", sp: 80 } }
+    ]));
+
+    expect(ctx.components.map(c => c.name)).toEqual(["Ауспики"]);
+    expect(ctx.hullSlot).toEqual({ id: "h1", img: "h.png", name: "Тиамат / Тиамат", hullClass: "Линкоры" });
+  });
+
+  it("hullSlot — null, если Корпус не выбран", async () => {
+    const ctx = await ctxOf(shipActor());
+    expect(ctx.hullSlot).toBeNull();
   });
 
   it("ангар появляется только с отсеком МЛА, вместимость — по S отсеков", async () => {

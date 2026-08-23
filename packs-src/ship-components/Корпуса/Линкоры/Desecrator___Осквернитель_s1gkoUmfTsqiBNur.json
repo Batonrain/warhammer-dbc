@@ -1,26 +1,18 @@
 {
   "name": "Desecrator / Осквернитель",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "7XIWvIQncI4e71zW",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Линкоры",
     "sp": 95,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Торпедный аппарат Марс (Н), 1/2. In-build: Ангарный отсек системы Юпитера (ПБ и ЛБ), 2/2",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -33,24 +25,16 @@
       "spaceMax": 88,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "2НП, 1Н, 2ПБ, 2ЛБ",
+      "weaponCapacity": "2НП, 1Н, 2ПБ, 2 ЛБ",
       "hullIntegrity": 100
     },
     "chars": {
-      "speed": 4,
+      "speed": 5,
       "manoeuvrability": 0,
       "detection": 14,
       "voidShields": 0,
-      "armour": 20,
+      "armour": 22,
       "turretRating": 4
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "s1gkoUmfTsqiBNur",
