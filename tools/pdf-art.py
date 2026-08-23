@@ -77,14 +77,20 @@ for pno, page in enumerate(doc, 1):
         base = translit(name_for(page, r, pno))
         used[base] += 1
         name = base if used[base] == 1 else f"{base}-{used[base]}"
-        pix = pymupdf.Pixmap(doc, xref)
-        if smask:                                   # альфа-канал хранится отдельной картинкой
-            pix = pymupdf.Pixmap(pix, pymupdf.Pixmap(doc, smask))
-        if pix.colorspace and pix.colorspace.n > 3:  # CMYK Pixmap не умеет в PNG
-            pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
         path = os.path.join(root, f"{name}.webp")
         print(f"стр.{pno:>3}  {w}x{h}  → assets/art/{slug}/{name}.webp")
         if not dry:                                  # webp мимо pymupdf: он умеет только png/jpg
+            pix = pymupdf.Pixmap(doc, xref)
+            if smask:                                # альфа-канал хранится отдельной картинкой
+                mask = pymupdf.Pixmap(doc, smask)
+                if pix.alpha:                         # своя альфа уже есть — merge с маской её не примет
+                    pix = pymupdf.Pixmap(pix, 0)
+                try:
+                    pix = pymupdf.Pixmap(pix, mask)
+                except pymupdf.mupdf.FzErrorArgument:  # несовместимая пара — берём картинку без альфы
+                    pass
+            if pix.colorspace and pix.colorspace.n > 3:  # CMYK Pixmap не умеет в PNG
+                pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
             Image.open(io.BytesIO(pix.tobytes("png"))).save(path, "WEBP", quality=88, method=6)
         saved += 1
 print(f"\nвсего иллюстраций: {saved} (отсеяно декора: {len(decor)} шт.)")
