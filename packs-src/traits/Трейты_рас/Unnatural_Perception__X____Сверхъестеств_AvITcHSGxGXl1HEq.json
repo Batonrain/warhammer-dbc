@@ -4,9 +4,9 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "folder": "NQHsbl75bk7fCc77",
   "system": {
-    "description": "",
+    "description": "Сверхъестественная Характеристика: +X к бонусу Восприятия, и +½X (окр.▼) степеней успеха на все успешные тесты Восприятия (общее правило Unnatural-трейтов).",
     "notes": "",
-    "benefit": "+2 к Бонусу Per.",
+    "benefit": "+X к Бонусу Восприятия; дополнительно +½X (окр.▼) степени успеха на все успешные тесты Восприятия.",
     "source": "раса",
     "hasRating": true,
     "rating": 2,

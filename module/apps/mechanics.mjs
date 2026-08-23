@@ -553,7 +553,8 @@ export function describeMechEntry(entry) {
     case "talent": {
       if (!entry.sourceUuid) return "Талант: (перетащите предмет)";
       const spec = entry.specialization ? ` (${entry.specialization})` : "";
-      return `Талант: ${entry.sourceName || "?"}${spec}`;
+      const rating = entry.rating !== "" && entry.rating != null ? ` (рейтинг ${entry.rating})` : "";
+      return `Талант: ${entry.sourceName || "?"}${spec}${rating}`;
     }
     case "skill": {
       if (!entry.skillKey) return "Навык: (не выбран)";
@@ -1242,6 +1243,13 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
         specialization: spec,
         granted: true, purchased: false, cost: 0
       };
+      // Рейтинговый Талант (Psy Rating, Enemy…): рейтинг задаётся записью
+      // Механики, а не берётся из значения по умолчанию в компендиуме —
+      // иначе Ведьма/Псайкер/Чародей получали бы Пси-Рейтинг 1 вместо 3/2.
+      if (entry.kind === "talent" && data.system.hasRating
+          && entry.rating !== "" && entry.rating != null) {
+        data.system.rating = Number(entry.rating) || 0;
+      }
       // «Мастерство» наследует склонности того Навыка, которым овладело
       // (стр. 62). Выдано оно даром, но склонности всё равно нужны: по ним
       // считается цена следующих покупок, а не его собственная.
@@ -1900,7 +1908,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
          ${canEdit ? `<button type="button" class="grant-drop-clear" data-action="grantDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
       : `<span class="grant-drop-placeholder">${canEdit ? `Перетащите ${ent.kind === "trait" ? "Черту" : "Талант"} сюда` : "—"}</span>`;
     let out = `<div class="grant-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}">${dropInner}</div>`;
-    if (ent.kind === "trait" && ent.sourceHasRating) {
+    if ((ent.kind === "trait" || ent.kind === "talent") && ent.sourceHasRating) {
       out += `<input type="number" class="grant-entry-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.rating ?? "")}" placeholder="Рейтинг" ${dis}/>`;
     }
     if (ent.kind === "talent" && ent.sourceUuid) {

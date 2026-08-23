@@ -3,9 +3,9 @@
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
-    "description": "Благословение Слаанеш: +Очки Бесчестья и связанные эффекты на усмотрение ГМа.",
+    "description": "Нага начинает игру с покровительством Слаанеш и не может его потерять.",
     "notes": "",
-    "benefit": "Благословение Слаанеш.",
+    "benefit": "Впервые набирая 30/60/90 Inf, может выбрать либо +2 руки (Multiple Arms +2), либо +2 к максимуму Очков Бесчестья.",
     "source": "Нага",
     "hasRating": false,
     "rating": 0,
