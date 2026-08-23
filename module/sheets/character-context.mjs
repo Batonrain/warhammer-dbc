@@ -33,6 +33,21 @@ import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
+import { itemHasName }                           from "../rules/predicates.mjs";
+
+/**
+ * Есть ли у актора Элитный архетип с этим именем — предметом, строкой в шапке
+ * (`system.eliteArchetype`) или в списке дополнительных (`eliteArchetypesExtra`).
+ * Тот же трёхисточниковый пример, что и в sheets/item-picker.mjs (talentGroupLock):
+ * архетип бывает и предметом (куплен пикером), и строкой (вписан руками/со
+ * старого листа) — обе формы должны отпирать одно и то же.
+ */
+function hasEliteArchetype(actor, name) {
+  const sys = actor.system || {};
+  if (itemHasName({ name: sys.eliteArchetype }, name)) return true;
+  if ((sys.eliteArchetypesExtra || []).some(k => itemHasName({ name: k }, name))) return true;
+  return (actor.items ?? []).some(i => i.type === "eliteArchetype" && itemHasName(i, name));
+}
 import { divinationSheetContext }                from "../apps/divinations.mjs";
 import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
@@ -287,8 +302,22 @@ export function characterContext(actor) {
   if (context.isHaemonculus) context.haem = haemonculusContext(actor);
 
   // ── Одержимый (DoomBC_Core 129-132): синергия хоста и Двойного Духа ──────
-  context.possessed = context.isHeretic && !!system.possessed;
+  // Вкладка теперь отпирается ещё и Элитным архетипом «Одержимый» — не только
+  // ручным чекбоксом у Хаосита.
+  context.hasPossessedArchetype = hasEliteArchetype(actor, "Одержимый");
+  context.possessed = (context.isHeretic && !!system.possessed) || context.hasPossessedArchetype;
   if (context.possessed) context.possession = possessionContext(actor);
+
+  // ── Мистика (бывш. Пси): вкладка доступна всегда, но психосилы внутри
+  // показываем только Псайкерам (Черта) и Чернокнижникам (Элитный архетип) —
+  // остальным там теперь ещё и Ритуалы (переехали со СПОСОБНОСТЕЙ), которые
+  // от этого условия не зависят.
+  context.hasMysticPowers = actor.items.some(i => i.type === "trait" && itemHasName(i, "Псайкер"))
+    || hasEliteArchetype(actor, "Чернокнижник");
+
+  // ── Тех: вкладка доступна ещё и по Черте «Импланты Механикум», не только
+  // по ручному чекбоксу «Техножрец».
+  context.hasMechImplants = actor.items.some(i => i.type === "trait" && itemHasName(i, "Импланты Механикум"));
 
   const _charApts = charAptitudeSet(system.aptitudes);
   context.chars = Object.entries(CHARACTERISTICS).map(([key, meta]) => ({
