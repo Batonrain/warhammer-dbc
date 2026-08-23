@@ -38,6 +38,8 @@ function blankState(group, tier, talentId) {
     group, tier, talentId,
     chars: Object.fromEntries(CHAR_KEYS.map(k => [k, 0])),
     rolls: [],                                  // броски Человека, ещё не разложенные
+    charAssign: {},                             // key характеристики → индекс броска в rolls
+    armedVi: null,                              // взведённый (кликнутый) бросок, ждёт своей Характеристики
     skills: [],                                 // { key, upgraded }
     talents: [], traits: [], gear: [],          // { uuid, name, img, cost, tier, rarity }
     convert: { talentsToSkills: 0, traitsToTalents: 0, gearToTraits: 0 }
@@ -121,11 +123,32 @@ function charsStepHtml(state) {
   const issues = charIssues(state.chars, state.group, state.tier);
   const isHuman = state.group === "human";
 
-  const rows = CHAR_KEYS.map(key => `
-    <label class="mc-char">
+  // У Человека поле Характеристики — не просто ввод: это слот, куда кликом
+  // кладётся один из выпавших бросков (см. .mc-chip/.mc-char-slot в bind()).
+  // Ручной ввод остаётся рядом — им же делают "раскидку +5/-5" после распределения.
+  const assign = state.charAssign || {};
+  const usedVis = new Set(Object.values(assign));
+
+  const rows = CHAR_KEYS.map(key => {
+    const clearBtn = isHuman && key in assign
+      ? `<button type="button" class="mc-del mc-char-clear" data-key="${key}" title="Вернуть бросок в пул">✕</button>`
+      : "";
+    return `
+    <label class="mc-char${isHuman ? " mc-char-slot" : ""}" data-key="${key}">
       <span>${esc(CHARACTERISTICS[key].label || key.toUpperCase())}</span>
-      <input type="number" class="mc-char-input" data-key="${key}" value="${state.chars[key] || 0}" min="0"/>
-    </label>`).join("");
+      <span class="mc-char-input-row">
+        <input type="number" class="mc-char-input" data-key="${key}" value="${state.chars[key] || 0}" min="0"/>
+        ${clearBtn}
+      </span>
+    </label>`;
+  }).join("");
+
+  const chipsHtml = isHuman && state.rolls.length
+    ? `<div class="mc-chips">${state.rolls.map((r, vi) => usedVis.has(vi) ? "" :
+        `<button type="button" class="mc-chip${state.armedVi === vi ? " armed" : ""}" data-vi="${vi}">${r}</button>`
+      ).join("")}</div>
+       <div class="mc-hint">Нажмите на выпавшее число, затем — на Характеристику, чтобы поставить его на место.</div>`
+    : "";
 
   const humanHead = isHuman
     ? `<div class="mc-line">
@@ -133,7 +156,7 @@ function charsStepHtml(state) {
          ${budget.chars.roll.count}${budget.chars.roll.drop ? `, отбрасывая ${budget.chars.roll.drop} наименьших` : ""}.
          <button type="button" class="mc-btn" id="mc-roll">🎲 Бросить</button>
        </div>
-       ${state.rolls.length ? `<div class="mc-rolls">Выпало: ${state.rolls.map(r => `<b>${r}</b>`).join(" · ")}</div>` : ""}`
+       ${chipsHtml}`
     : `<div class="mc-line">Очков: <b>${budget.chars.points}</b>, осталось ${badge(left)} · в одну не больше ${cap}</div>`;
 
   const limits = [
@@ -466,11 +489,50 @@ function openCreator(master, state) {
       for (let i = 0; i < spec.count; i++) values.push((await new Roll("2d10").evaluate()).total);
       let n = 0;
       state.rolls = rollHumanChars(state.tier, () => values[n++]);
+      state.charAssign = {};
+      state.armedVi = null;
+      state.chars = Object.fromEntries(CHAR_KEYS.map(k => [k, 0]));
       rebuild();
     });
 
+    // Клик по выпавшему числу — «взводим» его; повторный клик по тому же снимает взвод.
+    box.querySelectorAll(".mc-chip").forEach(chip => chip.addEventListener("click", ev => {
+      ev.preventDefault();
+      const vi = Number(ev.currentTarget.dataset.vi);
+      state.armedVi = state.armedVi === vi ? null : vi;
+      rebuild();
+    }));
+
+    // Клик по Характеристике при взведённом броске — раскладка, как на Этапе 2
+    // обычного персонажа. Если бросок уже стоял в другом слоте — снимаем его оттуда.
+    box.querySelectorAll(".mc-char-slot").forEach(slot => slot.addEventListener("click", ev => {
+      if (ev.target.closest(".mc-char-clear")) return;
+      if (state.armedVi === null) return;
+      ev.preventDefault();
+      const key = slot.dataset.key;
+      const vi = state.armedVi;
+      for (const k of Object.keys(state.charAssign)) {
+        if (state.charAssign[k] === vi) delete state.charAssign[k];
+      }
+      state.charAssign[key] = vi;
+      state.chars[key] = state.rolls[vi];
+      state.armedVi = null;
+      rebuild();
+    }));
+
+    box.querySelectorAll(".mc-char-clear").forEach(btn => btn.addEventListener("click", ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const key = ev.currentTarget.dataset.key;
+      delete state.charAssign[key];
+      state.chars[key] = 0;
+      rebuild();
+    }));
+
     box.querySelectorAll(".mc-char-input").forEach(input => input.addEventListener("change", ev => {
-      state.chars[ev.currentTarget.dataset.key] = Number(ev.currentTarget.value) || 0;
+      const key = ev.currentTarget.dataset.key;
+      delete state.charAssign[key];
+      state.chars[key] = Number(ev.currentTarget.value) || 0;
       rebuild();
     }));
 
