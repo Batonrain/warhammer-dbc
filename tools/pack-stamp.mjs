@@ -42,7 +42,11 @@ export function readStamp() {
 }
 
 /**
- * Когда базу пака трогали в последний раз — самый свежий mtime её файлов.
+ * Когда базу пака в самом деле записывали последний раз — самый свежий mtime
+ * её файлов данных (`.ldb`). Служебные файлы LevelDB (LOG, LOG.old,
+ * MANIFEST-*, CURRENT, пустой текущий `NNNNNN.log`) не считаются: просто
+ * открытие мира в Foundry трогает их у КАЖДОГО загруженного пака, даже если
+ * внутри ничего не редактировали, и без фильтра это выглядело бы как правка.
  * Пака нет вовсе → 0: собирать нечего, терять нечего.
  */
 export function latestDbChange(dir) {
@@ -50,6 +54,7 @@ export function latestDbChange(dir) {
   if (!existsSync(path)) return 0;
   let latest = 0;
   for (const name of readdirSync(path)) {
+    if (!name.endsWith(".ldb")) continue;
     try { latest = Math.max(latest, statSync(join(path, name)).mtimeMs); }
     catch { /* файл исчез между чтением каталога и stat — не наша забота */ }
   }
