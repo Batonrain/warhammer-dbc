@@ -182,7 +182,9 @@ def main():
     # строки в конце. Иначе первый же --apply переписывает файл книги целиком, и
     # третий шаг CI (packs:build && packs:unpack && git diff --exit-code) видит
     # дифф на всю книгу вместо правленых страниц.
-    with open(args.live, "w", encoding="utf-8") as f:
+    # newline="\n": иначе на Windows текстовый режим переводит \n в \r\n,
+    # и файл расходится с форматом распаковщика.
+    with open(args.live, "w", encoding="utf-8", newline="\n") as f:
         json.dump(live_doc, f, ensure_ascii=False, indent=1)
         f.write("\n")
 

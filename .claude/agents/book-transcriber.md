@@ -37,7 +37,7 @@ python tools/pdf-text.py <книга.pdf> <страницы> [--cols=2] [--coord
 Скелет книги из закладок PDF — если у `entries[]`/`pages[]` ещё нет разбивки или она неполная (сверять, а не плодить дубли):
 
 ```bash
-python tools/book-outline.py <файл.pdf> [--out=packs-src/books/<slug>.json]
+python tools/book-outline.py <файл.pdf> [--json=packs-src/books/<slug>.json]
 ```
 
 Арты по закладкам — вырезает картинки страниц в `assets/art/<slug>/`:

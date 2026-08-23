@@ -37,7 +37,7 @@ for lvl, title, pg, end in spans:
 
 out = {"pdfPages": doc.page_count, "entries": chapters}
 if opts.get("json"):
-    json.dump(out, open(opts["json"], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    json.dump(out, open(opts["json"], "w", encoding="utf-8", newline="\n"), ensure_ascii=False, indent=1)
 for c in chapters:
     print(f"\n### {c['name']}  (PDF {c['pdfPage']}–{c['pdfEnd']}), разделов {len(c['pages'])}")
     for p in c["pages"]:
