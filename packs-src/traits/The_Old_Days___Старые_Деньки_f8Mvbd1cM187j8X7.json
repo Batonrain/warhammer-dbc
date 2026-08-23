@@ -1,0 +1,47 @@
+{
+  "name": "The Old Days / Старые Деньки",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Обезоружив противника — сразу безоружный удар. +20 vs Snare/Monofilament. Переброс физ. избегания против зверей/чудовищ. Элитный архетип Гладиатор стоит на 1000 опыта дешевле, и его покупка не увеличивает цену других элитных архетипов.",
+    "source": "архетип",
+    "bookSource": "",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "f8Mvbd1cM187j8X7",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!f8Mvbd1cM187j8X7"
+}

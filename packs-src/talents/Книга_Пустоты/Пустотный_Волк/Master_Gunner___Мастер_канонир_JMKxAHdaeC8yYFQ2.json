@@ -8,7 +8,7 @@
     "notes": "",
     "benefit": "Раз в СХ персонаж может перебрасывать один проваленный тест при действиях Стрельбы.",
     "tier": 3,
-    "requirement": "WS 40",
+    "requirement": "BS 40",
     "aptitudes": [
       "bs",
       "offence"
@@ -27,7 +27,7 @@
       "fearRating": 0,
       "speedMod": 0
     },
-    "bookSource": "DoomBC — Основная книга"
+    "bookSource": "DoomBC — Книга Пустоты, Таланты, стр. 219-229"
   },
   "_id": "JMKxAHdaeC8yYFQ2",
   "effects": [],

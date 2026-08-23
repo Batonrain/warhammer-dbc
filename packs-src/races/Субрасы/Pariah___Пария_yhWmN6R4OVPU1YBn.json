@@ -1,0 +1,105 @@
+{
+  "name": "Pariah / Пария",
+  "type": "subrace",
+  "img": "icons/svg/oak.svg",
+  "folder": "jT8qmJ96CX5W9mG5",
+  "system": {
+    "key": "pariah",
+    "parentKey": "human",
+    "cost": 1500,
+    "effect": "Аура чернокнижия (W.b×3 м): иммунитет к психосилам/демоническим дарам; psychics −6PR×3; демоны −30; не имеет Порчи/Судьбы; −30 социальные (кроме запугивания), −60 к псайкерам/демонам. Не может брать Архетипы Ведьма и Псайкер.",
+    "god": "",
+    "charMods": {},
+    "talents": "",
+    "removesTraits": [],
+    "description": "Аура чернокнижия (W.b×3 м): иммунитет к психосилам/демоническим дарам; psychics −6PR×3; демоны −30; не имеет Порчи/Судьбы; −30 социальные (кроме запугивания), −60 к псайкерам/демонам. Не может брать Архетипы Ведьма и Псайкер.",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга"
+  },
+  "_id": "yhWmN6R4OVPU1YBn",
+  "effects": [],
+  "sort": 0,
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "tadE2Vz0s1V078AL",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "Ars2ReYgMtdmZY7j",
+              "kind": "trait",
+              "group": null,
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.x8rVwVWA6EabOqsv",
+              "sourceName": "Pariah / Пария",
+              "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
+              "equipCategoryPack": "weapons",
+              "equipWeaponType": "",
+              "equipWeaponProp": "",
+              "equipArmorType": "",
+              "equipMaxAvailability": 5,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "",
+              "code": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": null,
+    "systemVersion": null,
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!yhWmN6R4OVPU1YBn"
+}
