@@ -280,9 +280,31 @@ def main():
     for node in body.children:
         if not isinstance(node, Tag):
             continue
+        if node.name == "h1" or node.name in HEADING_LEVELS:
+            if not node.get_text(strip=True) and not node.find("img"):
+                # совсем пустой заголовок (случайно применённый стиль
+                # "Заголовок N" к пустой строке в Google Docs) — не несёт
+                # ни текста, ни картинки, пропускаем целиком без разрыва
+                # текущей страницы/главы (сверка Некрон: множество пустых
+                # <h2></h2> плодили безымянные главы/страницы).
+                continue
         if node.name == "h1":
-            flush_page()
             name = unescape(node.get_text(" ", strip=True))
+            next_tag = node.find_next_sibling(lambda t: isinstance(t, Tag))
+            is_real_chapter = name or (next_tag is not None and next_tag.name == "h1")
+            if not is_real_chapter and cur_page is not None:
+                # декоративный портрет посреди раздела, размеченный в
+                # Google Docs как <h1> без текста (не разворот-обложка главы,
+                # за которым обычно идёт ещё один <h1> с названием) — не рвёт
+                # текущую страницу/главу, просто вставляется картинкой
+                # (сверка Некрон: Lychguard, Lord и другие теряли весь текст,
+                # уходивший в отдельную безымянную главу после портрета).
+                figs = "".join(
+                    f for f in (render_image(img, slug, art_map) for img in node.find_all("img")) if f
+                )
+                cur_page["html"] += figs
+                continue
+            flush_page()
             cur_chapter = {"name": name, "pages": []}
             entries.append(cur_chapter)
             # обложка главы — картинка прямо внутри <h1>, без своего текста
@@ -299,6 +321,18 @@ def main():
             # каждый уровень заголовка (h2+) — своя запись pages[], как у
             # book-outline.py для PDF-закладок: плоский список с полем level,
             # не вложенность внутри html одной большой страницы.
+            heading_name_probe = unescape(node.get_text(" ", strip=True))
+            if not heading_name_probe and cur_page is not None and node.find("img"):
+                # заголовок без текста, только картинка (портрет юнита между
+                # названием и статами, размеченный как отдельный <hN> вместо
+                # обычного <img> в абзаце) — не начинает новую страницу,
+                # иначе весь текст после него уходил в безымянную страницу
+                # (сверка Некрон: Lokhust Lord, Skorpekh Lord и другие).
+                figs = "".join(
+                    f for f in (render_image(img, slug, art_map) for img in node.find_all("img")) if f
+                )
+                cur_page["html"] += figs
+                continue
             flush_page()
             if cur_chapter is None:
                 cur_chapter = {"name": title, "pages": []}
