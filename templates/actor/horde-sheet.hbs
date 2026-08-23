@@ -108,7 +108,7 @@
           <span class="horde-char-abbr">{{c.abbr}}</span>
           <input type="number" name="system.characteristics.{{c.key}}.base" value="{{c.base}}" class="horde-char-in" data-tooltip="База"/>
           <input type="number" name="system.characteristics.{{c.key}}.advance" value="{{c.advance}}" class="horde-char-in adv" data-tooltip="Продвижение"/>
-          <span class="horde-char-total">{{c.total}}<i>{{c.bonus}}</i></span>
+          <span class="horde-char-total">{{c.total}}{{#if c.bonusModified}}<i>{{c.bonus}}</i>{{/if}}</span>
           <button type="button" class="hbtn horde-char-roll" data-action="rollChar" data-char="{{c.key}}" data-tooltip="Бросок {{c.label}}"><span class="hi hi-die"></span></button>
         </div>
         {{/each}}

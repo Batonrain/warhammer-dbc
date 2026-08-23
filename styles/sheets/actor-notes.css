@@ -146,8 +146,7 @@
 }
 .warhammer-dbc .status-checks input[type="checkbox"] { width: 14px; height: 14px; }
 
-/* ── Строка «Фактор Прибыли» в таблице характеристик ── */
-.warhammer-dbc .char-pf-row .char-pf-dash { text-align: center; opacity: 0.6; }
+/* ── Ячейка «Фактор Прибыли» в сетке характеристик ── */
 .warhammer-dbc .char-pf-input {
   width: 52px; text-align: center; font-weight: bold;
   background: var(--wh-input-bg, #0c2418); color: #eafff4;
