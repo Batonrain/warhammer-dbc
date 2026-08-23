@@ -111,7 +111,7 @@ export const RACES = {
     ],
     skills: "Acrobatics+10, Athletics, Awareness, Common Lore (Druchii), Common Lore (любые 2), Dodge, Deceive, Inquiry, Linguistics (LamEldannar Druchii), Linguistics (Low Gothic), Stealth, Survival, Scrutiny, Scholastic Lore (любое 1), Intimidate",
     talents: ["Catfall, Decadence, Heightened Senses (любые 3), Light Sleeper, Resistance (Poisons), Jaded, Melee Training (любые 3), Weapon Training (любые 4)"],
-    gear: "5 элементов Снаряжения и Инструментов до R1; стрелковое оружие до R1; Hekatarii Blade; Xenomesh Armour (Good.Q) или Kabalite Armour, или Wychsuit",
+    gear: "5 элементов Снаряжения и Инструментов до R1; стрелковое оружие до R1; Hekatrix Blade; Xenomesh Armour (Good.Q) или Kabalite Armour, или Wychsuit",
     archetypes: ["freeShooter", "assassin", "forsaken", "duelist", "pitFighter", "alchemist", "kabalite"],
     desc: "Тёмные аэльдари Комморры (Недорождённые); питаются чужой болью, копят Очки Боли. Субрасы: Истиннорождённый, Мандрагора, Развалина." },
   ynnari:    { label: "Иннари",     subraces: [],

@@ -50,6 +50,10 @@ import { TALENT_ALIAS, TALENT_CHOICE_SEP } from "../sheets/actor-sheet.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "./actor-factions.mjs";
+import { EQUIP_SHOP_ROWS, EQUIP_SHOP_ROW_BY_KEY, EQUIP_SHOP_PACKS, equipPointsTotal, equipPointsLeft,
+         canAffordRow, startingAmmoQuantity, SACRIFICE_MOD_COUNT, SACRIFICE_MOD_MAX_AVAILABILITY }
+  from "../rules/equip-shop.mjs";
+import { ITEM_QUALITY_LIST, capUpgradeQuality, normQuality } from "../constants/quality.mjs";
 
 // Текст расы Астартес («Power Armour Mk III-VII» в race.gear) называет
 // ДИАПАЗОН марок, а не одну фиксированную вещь — игрок выбирает одну марку
@@ -81,6 +85,17 @@ const STANDARD_SYSTEMS_FOLDER = "PJGdkJLkUXdx2JTp";
 const LEGION_CATEGORY_FOLDERS = {
   "power weapon": "x3vbtW2ZuzQfcPFG"
 };
+
+// Те же типы, что STACKABLE_TYPES в compendium-browser.mjs (quantity вместо N
+// раздельных копий) — свой список здесь, а не импорт: тот приватный модулю.
+const EQUIP_STACKABLE_TYPES = new Set(["weapon", "gear", "ammo", "drug", "tool"]);
+
+/** Следующая ступень Качества вверх по ITEM_QUALITY_LIST; на «Высшем» и выше остаётся на месте (не выпрыгивает в Arts.Q апгрейдом). */
+function nextQuality(q) {
+  const i = ITEM_QUALITY_LIST.indexOf(q);
+  if (i < 0 || i === ITEM_QUALITY_LIST.length - 1) return q;
+  return ITEM_QUALITY_LIST[i + 1];
+}
 
 export const WIZARD_STEPS = [
   { id: "origin",          label: "Происхождение" },
@@ -157,6 +172,17 @@ export class CharacterWizard extends Application {
     this.gearPicks = {};
     this._confirmingGear = false;
     this._gearDone = false;
+    // Очки Снаряжения (стр. 24) — пул Inf.b + ручной бонус ГМа, тратится по
+    // фиксированной таблице (module/rules/equip-shop.mjs) кнопками прямо на
+    // Этапе 5, независимо от текстового снаряжения Расы/Архетипа выше.
+    // spent — сколько уже потрачено этой сессией Мастера (не переживает
+    // закрытие/переоткрытие, как и остальное состояние шагов).
+    this._equipSpent = 0;
+    this._equipBonusPoints = 0;
+    // Пока идёт одна покупка (Обозреватель компендиумов/диалог выбора уже
+    // полученного предмета) — блокируем остальные кнопки лавки, тот же приём,
+    // что у _confirmingGear.
+    this._confirmingEquipShop = false;
     // Родной мир с выбором «N специализаций = Int.b×2» (Исследовательская
     // станция) нельзя применить прямо на Этапе 1 — Интеллект появляется
     // только на Этапе 2, диалог показал бы «доступно 0». Ключ мира копится
@@ -1089,6 +1115,48 @@ export class CharacterWizard extends Application {
     return { folderId, maxAvailability: Number(m[2]), quality: m[3].toLowerCase() };
   }
 
+  /**
+   * «N элементов [Снаряжения/Инструментов] до R<N> (…Качество…)» (пример —
+   * Человек, «5 элементов Снаряжения/Инструментов до R1 (2 Good.Q, 1 Best.Q)»)
+   * — раньше «/» резался как «А или Б» (_splitGearChoice считает его выбором
+   * между ПРЕДМЕТАМИ, а тут это две КАТЕГОРИИ через дробь одного набора) и
+   * получалось два обрывка фразы, ни один не совпадал с реальным предметом,
+   * а число N терялось — Обозреватель открывался на count:1 (wdbc-ревизия
+   * снаряжения, 22.08.2026). Теперь «/» (и «и» — Друкхари/Сслиты пишут через
+   * союз) между категориями читается как ИЛИ по смыслу книги: игрок берёт N
+   * предметов ЛЮБОГО состава из объединения категорий, не выбор одной штуки
+   * из двух половин фразы. Категория не распозналась или её вообще нет
+   * («5 элементов до R1» без слов) — общий набор «Снаряжение+Инструменты»,
+   * это и есть подразумеваемый смысл голой фразы.
+   * Смесь Качества в скобках («2 Good.Q, 1 Best.Q») не проверяется —
+   * Обозреватель не считает состав по Качеству отдельно, состав — на совести
+   * игрока, как и раньше у ручного подбора.
+   */
+  _matchGearBudget(text) {
+    const m = /^(\d+)\s+элемент\w*\s*(?:([^()]*?)\s+)?до\s*R\s*(-?\d+)/iu.exec(String(text).trim());
+    if (!m) return null;
+    const count = Number(m[1]);
+    const maxAvailability = Number(m[3]);
+    const cats = String(m[2] || "");
+    const packs = new Set();
+    if (/снаряжен/iu.test(cats)) packs.add("gear");
+    if (/инструмент/iu.test(cats)) packs.add("tools");
+    if (!packs.size) { packs.add("gear"); packs.add("tools"); }
+    return { count, maxAvailability, packs: [...packs] };
+  }
+
+  /**
+   * Ведущее число строки («3 Splinter Pistol», «2 Hekatrix Blade (Best.Q)»)
+   * — количество одного и того же ИМЕННОГО предмета, а не группа выбора и не
+   * абстрактный бюджет. `clean()` (см. _confirmGear) уже срезает его для
+   * поиска имени, но само число раньше нигде не сохранялось — Обозреватель/
+   * точное совпадение всегда создавали ровно 1 экземпляр, а не N.
+   */
+  _matchLeadingCount(text) {
+    const m = /^\s*(\d+)\s*[×x]?\s*[А-ЯЁA-Z]/u.exec(String(text));
+    return m ? Number(m[1]) : 1;
+  }
+
   /** Раскладка текста снаряжения на layout (фикс/выбор) + сами группы выбора. Без резолва в предметы. */
   _gearLayout() {
     const sys = this.actor.system;
@@ -1119,7 +1187,26 @@ export class CharacterWizard extends Application {
       })),
       gearIsAstartes: isAstartes,
       gearDone: this._gearDone,
-      hasGear: layout.length > 0 || isAstartes
+      hasGear: layout.length > 0 || isAstartes,
+      equipShop: this._equipShopContext()
+    };
+  }
+
+  /**
+   * Очки Снаряжения (стр. 24): помимо снаряжения от Расы/Архетипа/Элитного
+   * архетипа, персонаж получает Inf.b очков и тратит их по фиксированной
+   * таблице. `left` пересчитывается заново при каждом рендере — источник
+   * истины сам актор (Inf.b) и накопленный this._equipSpent, а не снимок.
+   */
+  _equipShopContext() {
+    const infBonus = this.actor.system.characteristics?.inf?.bonus ?? 0;
+    const total = equipPointsTotal(infBonus, this._equipBonusPoints);
+    const left = equipPointsLeft(total, this._equipSpent);
+    return {
+      infBonus, bonusPoints: this._equipBonusPoints, total, spent: this._equipSpent, left,
+      rows: EQUIP_SHOP_ROWS.map(r => ({ ...r, disabled: !canAffordRow(r, left) || this._confirmingEquipShop })),
+      sacrificing: this._confirmingEquipShop,
+      sacrificeCount: SACRIFICE_MOD_COUNT
     };
   }
 
@@ -1178,10 +1265,12 @@ export class CharacterWizard extends Application {
       const manualIdx = [];
       const stdSysIdx = [];   // «N Стандартные системы» — свой бюджетный поток, не по одной
       const legionIdx = [];   // «L. <Категория> (до R<N>, <Кач>.Q)» — свой поток с пост-обработкой
+      const gearBudgetIdx = []; // «N элементов [Снаряжения/Инструментов] до R<N>» — свой бюджетный поток
       const grantedKeys = new Set();
       resolved.forEach((r, i) => {
         if (this._matchStandardSystemsCount(r) != null) { stdSysIdx.push(i); return; }
         if (this._matchLegionCategoryGear(r)) { legionIdx.push(i); return; }
+        if (this._matchGearBudget(r)) { gearBudgetIdx.push(i); return; }
         if (/(?<![A-Za-zА-Яа-яЁё])люб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
         const k = norm(clean(r));
         const ref = k ? index.get(k) : null;
@@ -1191,7 +1280,7 @@ export class CharacterWizard extends Application {
         // формально она удовлетворена, и Обозреватель по ней не откроется.
         if (onActor.has(k) || grantedKeys.has(k)) { done[i] = true; return; }
         grantedKeys.add(k);
-        toCreate.push({ i, ref });
+        toCreate.push({ i, ref, count: this._matchLeadingCount(r) });
       });
       // Броня, выданная этим же проходом (обычно — выбранная марка силовой
       // брони), — цель авто-подключения «N Стандартных систем» ниже: та же
@@ -1202,7 +1291,20 @@ export class CharacterWizard extends Application {
       if (toCreate.length) {
         const docs = await Promise.all(toCreate.map(({ ref }) => ref.pack.getDocument(ref.id)));
         const objs = [];
-        toCreate.forEach(({ i }, idx) => { if (docs[idx]) { objs.push(docs[idx].toObject()); done[i] = true; } });
+        toCreate.forEach(({ i, count }, idx) => {
+          const doc = docs[idx];
+          if (!doc) return;
+          done[i] = true;
+          // Ведущее число строки («3 Splinter Pistol») — quantity для расходуемых
+          // типов, отдельные копии для остальных; 1 (по умолчанию) — как раньше.
+          if (count > 1 && EQUIP_STACKABLE_TYPES.has(doc.type)) {
+            const obj = doc.toObject();
+            obj.system.quantity = (Number(obj.system.quantity) || 1) * count;
+            objs.push(obj);
+          } else {
+            for (let n = 0; n < count; n++) objs.push(doc.toObject());
+          }
+        });
         if (objs.length) {
           const created = await actor.createEmbeddedDocuments("Item", objs);
           const armor = created.find(it => it.type === "armor");
@@ -1256,6 +1358,36 @@ export class CharacterWizard extends Application {
         done[i] = true;
       }
 
+      // «N элементов [Снаряжения/Инструментов] до R<N>» — не «предмет за
+      // предметом», а один бюджетный выбор N штук из общих категорий
+      // снаряжения (см. _matchGearBudget) — тем же Обозревателем, что и «N
+      // Стандартные системы» выше, но без привязки к одной конкретной папке.
+      for (const i of gearBudgetIdx) {
+        const budget = this._matchGearBudget(resolved[i]);
+        const picked = await openCompendiumBrowser(false, {
+          pack: budget.packs, filters: { maxAvailability: budget.maxAvailability },
+          count: budget.count,
+          prompt: `Стартовое снаряжение: ${resolved[i]}`
+        });
+        const uuids = Array.isArray(picked) ? picked : (picked ? [picked] : []);
+        if (!uuids.length) continue;
+        const counts = new Map();
+        for (const u of uuids) counts.set(u, (counts.get(u) || 0) + 1);
+        const objs = [];
+        for (const [uuid, qty] of counts) {
+          const doc = await fromUuid(uuid).catch(() => null);
+          if (!doc) continue;
+          if (qty > 1 && EQUIP_STACKABLE_TYPES.has(doc.type)) {
+            const obj = doc.toObject();
+            obj.system.quantity = (Number(obj.system.quantity) || 1) * qty;
+            objs.push(obj);
+          } else {
+            for (let n = 0; n < qty; n++) objs.push(doc.toObject());
+          }
+        }
+        if (objs.length) { await actor.createEmbeddedDocuments("Item", objs); done[i] = true; }
+      }
+
       // Точных совпадений не нашлось — спрашиваем игрока по очереди, а не
       // угадываем САМ ПРЕДМЕТ: тот же Обозреватель, что и для бюджетных
       // покупок. Категорию (пак) при этом угадать МОЖНО — сужаем окно до
@@ -1285,11 +1417,205 @@ export class CharacterWizard extends Application {
         speaker: { alias: actor.name }
       });
 
+      await this._grantStartingAmmo();
+
       this._gearDone = true;
     } finally {
       this._confirmingGear = false;
       this.render(false);
     }
+  }
+
+  // ── Очки Снаряжения (стр. 24) ────────────────────────────────────────────
+
+  /** Клик «Купить» по строке таблицы — списывает очки, только если резолв реально что-то дал. */
+  async _buyEquipRow(key) {
+    const row = EQUIP_SHOP_ROW_BY_KEY[key];
+    if (!row || this._confirmingEquipShop) return;
+    const { left } = this._equipShopContext();
+    if (!canAffordRow(row, left)) return;
+    this._confirmingEquipShop = true;
+    this.render(false);
+    try {
+      let ok = false;
+      if (row.kind === "buy") ok = await this._equipBuyItems(row);
+      else if (row.kind === "quality") ok = await this._equipUpgradeQuality(row);
+      else if (row.kind === "special") ok = await this._equipSpecialWeapon(row);
+      if (ok) this._equipSpent += row.cost;
+    } finally {
+      this._confirmingEquipShop = false;
+      this.render(false);
+    }
+  }
+
+  /** Строки "buy" — N предметов заданной Редкости из общих категорий снаряжения. */
+  async _equipBuyItems(row) {
+    const filters = { maxAvailability: row.maxAvailability };
+    if (row.minAvailability != null) filters.minAvailability = row.minAvailability;
+    const picked = await openCompendiumBrowser(false, {
+      pack: EQUIP_SHOP_PACKS, filters, count: row.count,
+      prompt: `Очки Снаряжения: ${row.label}`
+    });
+    const uuids = Array.isArray(picked) ? picked : (picked ? [picked] : []);
+    if (!uuids.length) return false;
+    // Расходуемые типы (STACKABLE_TYPES у Обозревателя) могут повторяться —
+    // тот же приём, что у бюджетных покупок Механики (mechanics.mjs): схлопнуть
+    // в quantity ДО раздачи, иначе повтор создал бы вторую отдельную копию.
+    const counts = new Map();
+    for (const u of uuids) counts.set(u, (counts.get(u) || 0) + 1);
+    const objs = [];
+    for (const [uuid, qty] of counts) {
+      const doc = await fromUuid(uuid).catch(() => null);
+      if (!doc) continue;
+      if (qty > 1 && EQUIP_STACKABLE_TYPES.has(doc.type)) {
+        const obj = doc.toObject();
+        obj.system.quantity = (Number(obj.system.quantity) || 1) * qty;
+        objs.push(obj);
+      } else {
+        for (let i = 0; i < qty; i++) objs.push(doc.toObject());
+      }
+    }
+    if (!objs.length) return false;
+    await this.actor.createEmbeddedDocuments("Item", objs);
+    return true;
+  }
+
+  /** Строки "quality" — поднять Качество уже полученных предметов на row.steps ступеней. */
+  async _equipUpgradeQuality(row) {
+    const candidates = this.actor.items.filter(it =>
+      ["weapon", "armor", "gear", "tool", "ammo", "drug", "forcefield", "cybernetic", "implant"].includes(it.type)
+      && (Number(it.system?.availability) || 0) <= row.maxAvailability
+      && (row.minAvailability == null || (Number(it.system?.availability) || 0) >= row.minAvailability));
+    if (!candidates.length) { ui.notifications.warn("На листе нет подходящих по Редкости предметов для этой траты."); return false; }
+    const picked = await this._pickOwnedItems(candidates, row.label, row.count);
+    if (!picked.length) return false;
+    for (const item of picked) {
+      let q = normQuality(item.system.quality);
+      for (let i = 0; i < row.steps; i++) q = capUpgradeQuality(nextQuality(q));
+      await item.update({ "system.quality": q });
+    }
+    return true;
+  }
+
+  /** Строки "special" — Рунический/Оружие Наследия/Демоническое: лёгкая пометка, доработка — на листе. */
+  async _equipSpecialWeapon(row) {
+    const candidates = this.actor.items.filter(it =>
+      it.type === "weapon" && (Number(it.system?.availability) || 0) <= row.maxAvailability);
+    if (!candidates.length) { ui.notifications.warn("На листе нет оружия подходящей Редкости для этой траты."); return false; }
+    const picked = await this._pickOwnedItems(candidates, row.label, 1);
+    if (!picked.length) return false;
+    const item = picked[0];
+    const notes = {
+      rune: ["system.daemonWeapon.runic", "Рунический — довооружите деталями на листе предмета, если нужно."],
+      legacy: ["system.legacyWeapon", "Оружие Наследия — полная История/Характер/Мутации через кнопку «Наследие» на листе предмета."],
+      daemonic: ["system.daemonWeapon.bound", "Демоническое — впишите Бога/имя демона/Связывание на листе предмета."]
+    }[row.special];
+    if (!notes) return false;
+    await item.update({ [notes[0]]: true });
+    ChatMessage.create({
+      content: `<div class="wh-roll-result"><div class="roll-header">Очки Снаряжения — ${esc(this.actor.name)}</div>
+        <div class="roll-outcome"><b>${esc(item.name)}</b> помечено: ${esc(row.label)}.</div>
+        <div style="font-size:.85em;opacity:.8;">${esc(notes[1])}</div></div>`,
+      whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
+      speaker: { alias: this.actor.name }
+    });
+    return true;
+  }
+
+  /**
+   * Пожертвовать оружием/бронёй/кибернетикой ради 3 модификаций Редкостью не
+   * более 2 (стр. 24, отдельно от таблицы очков — своих Очков не стоит).
+   */
+  async _sacrificeEquip() {
+    if (this._confirmingEquipShop) return;
+    const candidates = this.actor.items.filter(it => ["weapon", "armor", "cybernetic", "implant"].includes(it.type));
+    if (!candidates.length) { ui.notifications.warn("На листе нет оружия/брони/кибернетики для жертвы."); return; }
+    this._confirmingEquipShop = true;
+    this.render(false);
+    try {
+      const picked = await this._pickOwnedItems(candidates, "Пожертвовать за 3 модификации (Редкость ≤2)", 1);
+      if (!picked.length) return;
+      const sacrificed = picked[0];
+      const modsPack = sacrificed.type === "armor" ? "armor-mods" : "weapon-mods";
+      const uuids = await openCompendiumBrowser(false, {
+        pack: modsPack, filters: { maxAvailability: SACRIFICE_MOD_MAX_AVAILABILITY },
+        count: SACRIFICE_MOD_COUNT,
+        prompt: `Жертва «${sacrificed.name}»: ${SACRIFICE_MOD_COUNT} модификации Редкостью не более ${SACRIFICE_MOD_MAX_AVAILABILITY}`
+      });
+      const list = Array.isArray(uuids) ? uuids : (uuids ? [uuids] : []);
+      if (!list.length) return;
+      const docs = await Promise.all(list.map(u => fromUuid(u).catch(() => null)));
+      const objs = docs.filter(Boolean).map(d => d.toObject());
+      await sacrificed.delete();
+      if (objs.length) await this.actor.createEmbeddedDocuments("Item", objs);
+    } finally {
+      this._confirmingEquipShop = false;
+      this.render(false);
+    }
+  }
+
+  /**
+   * Диалог выбора N предметов из уже полученных актором — тот же приём, что
+   * `legacyPrompt` в apps/legacy-weapon.mjs (DialogV2.wait), только с чекбоксами
+   * вместо текстового поля. Возвращает выбранные документы (может быть меньше
+   * need, если игрок отменил или отметил не всё).
+   */
+  async _pickOwnedItems(items, promptLabel, need = 1) {
+    const rows = items.map((it, i) => `<label class="atk-dlg-row" style="display:flex;gap:6px;align-items:center;">
+      <input type="checkbox" name="pick" value="${i}"/> ${esc(it.name)}
+      <span style="opacity:.6;font-size:.85em;">(R${it.system?.availability ?? 0}${it.system?.quality ? `, ${it.system.quality}` : ""})</span>
+    </label>`).join("");
+    const result = await foundry.applications.api.DialogV2.wait({
+      window: { title: "Очки Снаряжения" },
+      classes: ["warhammer-dbc", "wh-holo"],
+      content: `<form><div class="atk-dlg-row"><b>${esc(promptLabel)}</b> — отметьте ${need > 1 ? `до ${need}` : "один"}:</div>${rows}</form>`,
+      rejectClose: false,
+      buttons: [
+        { action: "ok", label: "Готово", default: true,
+          callback: (_e, button) => [...button.form.querySelectorAll('input[name="pick"]:checked')].map(el => Number(el.value)) },
+        { action: "cancel", label: "Отмена", callback: () => [] }
+      ]
+    });
+    const idxs = (result || []).slice(0, need);
+    return idxs.map(i => items[i]).filter(Boolean);
+  }
+
+  /**
+   * Боеприпасы после завершения выбора снаряжения (стр. 24): 4 полных
+   * магазина или 20 стандартных — что больше, для каждого оружия на листе.
+   * Только оружие, которое реально расходует боеприпас (magazineMax>0) и у
+   * которого ещё нет заряженного/подходящего боеприпаса — повторный проход
+   * Мастера (напр. переоткрытый на готовом персонаже) не сыплет новыми пачками.
+   */
+  async _grantStartingAmmo() {
+    const actor = this.actor;
+    const weapons = actor.items.filter(it => it.type === "weapon" && (Number(it.system?.magazineMax) || 0) > 0);
+    if (!weapons.length) return;
+    let ammoLib = [];
+    try {
+      const pack = game.packs.get("warhammer-dbc.ammunition");
+      if (pack) ammoLib = await pack.getDocuments();
+    } catch (e) { /* пак недоступен — пропускаем автовыдачу молча, не блокируем Готово */ }
+    if (!ammoLib.length) return;
+    const objs = [];
+    for (const w of weapons) {
+      const already = actor.items.some(it => it.type === "ammo" &&
+        (it.system?.weaponTypes || []).includes(w.system?.weaponType || w.type));
+      if (already) continue;
+      // «Стандартный» боеприпас — без модификаторов профиля (не спецбоеприпас),
+      // подходящий по weaponTypes; первый совпавший, порядок пака — по алфавиту.
+      const wt = w.system?.weaponType || "";
+      const std = ammoLib.find(a =>
+        (a.system.weaponTypes || []).includes(wt) &&
+        !a.system.attackMod && !a.system.damageMod && !a.system.penetrationMod && !a.system.rangeMod);
+      if (!std) continue;
+      const need = startingAmmoQuantity(w.system.magazineMax);
+      const obj = std.toObject();
+      delete obj._id;
+      obj.system.quantity = need;
+      objs.push(obj);
+    }
+    if (objs.length) await actor.createEmbeddedDocuments("Item", objs);
   }
 
   activateListeners(html) {
@@ -1324,6 +1650,12 @@ export class CharacterWizard extends Application {
     on(".wiz-gear-sel", "change", ev => {
       this.gearPicks[Number(ev.currentTarget.dataset.ci)] = ev.currentTarget.value;
     });
+    on(".wiz-equip-bonus", "change", ev => {
+      this._equipBonusPoints = Math.max(0, Number(ev.currentTarget.value) || 0);
+      this.render(false);
+    });
+    on(".wiz-equip-buy", "click", ev => this._buyEquipRow(ev.currentTarget.dataset.rowKey));
+    on(".wiz-equip-sacrifice", "click", () => this._sacrificeEquip());
 
     on(".wiz-name-inp",  "change", ev => this.actor.update({ name: ev.currentTarget.value || "Новый персонаж" }));
     on(".wiz-race-sel",  "change", ev => {

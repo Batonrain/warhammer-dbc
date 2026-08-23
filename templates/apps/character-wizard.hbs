@@ -395,6 +395,31 @@
     <p class="cstart-hint">У выбранной расы/архетипа нет текстового снаряжения для разбора — добавьте нужное вручную на вкладке «Снаряжение» после «Готово».</p>
     {{/if}}
 
+    <div class="wiz-gen wiz-equip-shop">
+      <div class="wiz-gen-lbl">Очки Снаряжения — потрачено {{equipShop.spent}} из {{equipShop.total}} (Inf.b {{equipShop.infBonus}} + бонус)</div>
+      <div class="atk-dlg-row"><label>Бонусные очки (по решению ГМ):</label>
+        <input type="number" class="wiz-equip-bonus" value="{{equipShop.bonusPoints}}" min="0"/>
+      </div>
+      <table class="wiz-equip-shop-table">
+        <thead><tr><th>Цена</th><th>Результат</th><th></th></tr></thead>
+        <tbody>
+          {{#each equipShop.rows as |r|}}
+          <tr>
+            <td class="wiz-equip-cost">{{r.cost}}</td>
+            <td>{{r.label}}</td>
+            <td><button type="button" class="wh-slot-btn wiz-equip-buy" data-row-key="{{r.key}}" {{#if r.disabled}}disabled{{/if}}>Купить</button></td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      <div class="atk-dlg-row">
+        <button type="button" class="wh-slot-btn wiz-equip-sacrifice" {{#if equipShop.sacrificing}}disabled{{/if}}>
+          Пожертвовать предметом за {{equipShop.sacrificeCount}} модификации…
+        </button>
+      </div>
+      <div class="cstart-hint">После «Готово» на оружие с магазином автоматически довыдадутся боеприпасы (4 полных магазина или 20 штук, что больше).</div>
+    </div>
+
     {{else}}
     <div class="atk-dlg-header"><span class="atk-weapon-name">{{stepLabel}}</span></div>
     <p class="cstart-hint">Этот этап Мастера ещё в разработке — переходите дальше, здесь пока нечего заполнять.</p>
