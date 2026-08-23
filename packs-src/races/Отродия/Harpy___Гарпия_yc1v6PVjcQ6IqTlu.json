@@ -797,6 +797,45 @@
               "kind": "talent"
             }
           ]
+        },
+        {
+          "id": "jGyMKyOd1nwhDnPA",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "vmKSHXieJQg5sUdj",
+              "kind": "integralAttack",
+              "group": null,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.89mS3BzjUKrGFRdH",
+              "equipSourceName": "Fist / Удар кулаком",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "equipCategoryPack": "weapons",
+              "equipMode": "direct",
+              "equipQty": 1
+            },
+            {
+              "id": "EdMvzev5X99FXoHo",
+              "kind": "integralAttack",
+              "group": null,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.U2TAAlVnZpdRQscO",
+              "equipSourceName": "Kick / Пинок",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "equipCategoryPack": "weapons",
+              "equipMode": "direct",
+              "equipQty": 1
+            },
+            {
+              "id": "M3VjqIK3bhYIaaPd",
+              "kind": "integralAttack",
+              "group": null,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.xP2os46ZgH3HqoGj",
+              "equipSourceName": "Headbutt / Удар головой",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "equipCategoryPack": "weapons",
+              "equipMode": "direct",
+              "equipQty": 1
+            }
+          ]
         }
       ]
     }

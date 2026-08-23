@@ -21,19 +21,16 @@ const EL_ID = "wh-hud";
 // Типы психосил, требующие цели (перед манифестацией — перекрестие).
 const PSY_TARGETED = new Set(["attack", "psychicShoot", "psychicBlade", "touch", "change", "duration", "indirect"]);
 
-// Безоружные удары (стр. 40). Урон I(Cr), Pen 0, +S.b; в квадратных скобках —
-// профиль Астартес (используется автоматически, если раса персонажа astartes).
-// _showAttackDialogNoWeapon кидает урон и добавляет кнопку применения.
-const UNARMED_STRIKES = {
-  fist: { key: "fist", icon: "fa-hand-fist", label: "Удар кулаком", wsBonus: 0,
-    damage: "1d5-3+S.b", damageAstartes: "1d10+S.b", damageType: "impact", pen: 0,
-    props: "Primitive", chatNote: "" },
-  kick: { key: "kick", icon: "fa-shoe-prints", label: "Пинок", wsBonus: 0,
-    damage: "1d5-1+S.b", damageAstartes: "1d10+2+S.b", damageType: "impact", pen: 0,
-    props: "Imprecise, Primitive", chatNote: "Досягаемость 2 м." },
-  headbutt: { key: "headbutt", icon: "fa-user", label: "Удар головой", wsBonus: 0,
-    damage: "1d5-4+S.b", damageAstartes: "1d10-1+S.b", damageType: "impact", pen: 0,
-    props: "Cheap Shot, Imprecise, Primitive", chatNote: "" }
+// Безоружные удары (стр. 40) — теперь обычные предметы-оружие (integralAttack,
+// packs-src/weapons/Интегральные_атаки), выданные любому персонажу расой
+// (Mechanics kind:"integralAttack" на каждом предмете-расе). Кнопки здесь —
+// просто быстрый доступ к ним же: клик ищет предмет по имени и открывает
+// обычный диалог атаки (профиль/Приём/Стойка/Хват выбираются уже в нём же —
+// в т.ч. усиленный профиль «Unarmed Warrior», если Талант куплен).
+const UNARMED_ITEM_NAMES = {
+  fist: "Fist / Удар кулаком",
+  kick: "Kick / Пинок",
+  headbutt: "Headbutt / Удар головой"
 };
 
 // Профиль удара стрелковым оружием в упор (импровизированная рукопашная, стр. 40):
@@ -406,11 +403,16 @@ function wire(el, actor) {
     beginTargeting(actor, w, () => actor.sheet._showAttackDialogNoWeapon?.(gunMeleeStrike(w)), `${w.name} (в упор)`);
   }));
 
-  // Безоружные удары (кулак/пинок/головой) — перекрестие → рукопашная без оружия.
+  // Безоружные удары (кулак/пинок/головой) — перекрестие → обычный диалог
+  // атаки предмета-удара (integralAttack, надет всегда). Нет предмета —
+  // старому актору расу не переприменяли после этой правки, тихо ничего не
+  // делаем (тот же приём, что и у остальных HUD-кнопок без предмета/цели).
   el.querySelectorAll("[data-unarmed]").forEach(b => b.addEventListener("click", () => {
     if (!own) return;
-    const strike = UNARMED_STRIKES[b.dataset.unarmed] || UNARMED_STRIKES.fist;
-    beginTargeting(actor, null, () => actor.sheet._showAttackDialogNoWeapon?.(strike), strike.label);
+    const name = UNARMED_ITEM_NAMES[b.dataset.unarmed] || UNARMED_ITEM_NAMES.fist;
+    const item = actor.items.find(i => i.type === "weapon" && i.name === name);
+    if (!item) return;
+    beginTargeting(actor, item, () => actor.sheet._showAttackDialog?.(item), item.name);
   }));
 
   // Силовое поле — вкл/выкл.

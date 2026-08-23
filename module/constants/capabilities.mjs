@@ -133,6 +133,31 @@ export const CAPABILITIES = {
     label: "Считается имеющим все специализации Melee Training",
     source: "Arms Master / Оружейный Мастер (стр. 62)",
     reader: "module/rules/weapon-training.mjs — meleeTrainingStatus"
+  },
+
+  // ── Безоружный бой (стр. 40) ──────────────────────────────────────────────
+  "unarmed.warriorProfile": {
+    label: "Профили безоружных ударов улучшены: d5 в уроне → d10",
+    source: "Unarmed Warrior / Безоружный Воин",
+    reader: "module/sheets/attack-dialog.mjs — profileOptions (requiresCapability у альт-профиля Кулака/Пинка/Удара головой)"
+  },
+
+  // ── Приёмы Талантов (стр. 14: «Дополнительные [Приёмы] можно найти в
+  //    разделе «Таланты»») — MELEE_MANEUVERS.swift/lightning ─────────────────
+  "technique.swiftAttack": {
+    label: "Доступен Приём «Быстрая Атака»: попадание за каждый нечётный Успех (до WS.b)",
+    source: "Swift Attack / Быстрая Атака",
+    reader: "module/sheets/attack-dialog.mjs — computeManeuverOptions; module/combat/attack-outcome.mjs — hitCount(isSwift)"
+  },
+  "technique.lightningAttack": {
+    label: "Доступен Приём «Молниеносная Атака»: попадание за каждый Успех (до WS.b)",
+    source: "Lightning Attack / Молниеносная Атака",
+    reader: "module/sheets/attack-dialog.mjs — computeManeuverOptions; module/combat/attack-outcome.mjs — hitCount(isLightning)"
+  },
+  "technique.counterAttack": {
+    label: "После успешного Парирования может тут же атаковать тем же оружием со штрафом −10 (раз в Раунд)",
+    source: "Counter Attack / Контратака",
+    reader: "module/combat/defense.mjs — _performParry; module/hooks.mjs — кнопка «Контратака» в карточке чата"
   }
 };
 

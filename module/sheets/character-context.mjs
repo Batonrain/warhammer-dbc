@@ -36,17 +36,7 @@ import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { divinationSheetContext }                from "../apps/divinations.mjs";
 import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
-import { MELEE_STANCES, MELEE_BASES,
-         MELEE_MANEUVERS, MELEE_CONTESTS }        from "../constants/combat.mjs";
-
-// "WS +10" / "WS −20" — модификатор Приёма как короткая метка на кнопке
-// (templates/actor/parts/tab-combat.hbs, .tech-mod). Состязания используют
-// свой modLabel ("WS vs WS" / "Ath vs Ath") — это не WS-модификатор, а тип
-// встречного теста, wsBonus у них всегда 0 и ничего не говорит игроку.
-function wsModLabel(bonus) {
-  const n = Number(bonus) || 0;
-  return n < 0 ? `WS −${Math.abs(n)}` : `WS +${n}`;
-}
+import { MELEE_BASES, MELEE_CONTESTS }           from "../constants/combat.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -61,27 +51,32 @@ export function characterContext(actor) {
   // ── Архетип (шапка): селектор из компендиума, только доступные текущей расе ──
   context.archetype = archetypeSheetContext(actor);
 
-  // ── Бой: Стойка/База/Приёмы — метки и карточки читаются прямо из
-  // MELEE_STANCES/MELEE_BASES/MELEE_MANEUVERS/MELEE_CONTESTS (combat.mjs),
-  // а не дублируются здесь и в hbs по отдельности (см. doombc-stances-bases-book-accuracy,
-  // doombc-aggressive-stance-fix — тексты уже дважды расходились из-за дублирования).
-  const meleeStanceKey = system.meleeStance in MELEE_STANCES ? system.meleeStance : "standard";
-  const meleeBaseKey   = system.meleeBase   in MELEE_BASES   ? system.meleeBase   : "standard";
-  context.combatStanceLabel = MELEE_STANCES[meleeStanceKey].label;
-  context.combatBaseLabel   = MELEE_BASES[meleeBaseKey].label;
-
-  context.combatStanceOptions = Object.entries(MELEE_STANCES).map(([key, s]) => ({
-    key, label: s.label, desc: s.shortDesc, active: key === meleeStanceKey
-  }));
-  context.combatBaseOptions = Object.entries(MELEE_BASES).map(([key, b]) => ({
-    key, label: b.label, desc: b.shortDesc, active: key === meleeBaseKey
-  }));
-  context.combatManeuverOptions = Object.entries(MELEE_MANEUVERS).map(([key, m]) => ({
-    key, label: m.label, modLabel: wsModLabel(m.wsBonus)
-  }));
-  context.combatContestOptions = Object.entries(MELEE_CONTESTS).map(([key, c]) => ({
-    key, label: c.label, modLabel: c.modLabel
-  }));
+  // ── Бой: Состязания — Стойка/База/обычные Приёмы теперь выбираются прямо в
+  // диалоге атаки (module/sheets/attack-dialog.mjs) и своей постоянной панели
+  // на листе больше не имеют. Состязания (Повалить/Финт/Давление/Напролом) в
+  // диалог не переехали — это отдельный встречный тест без диалога атаки
+  // вовсе (module/combat/techniques.mjs, _showContestDialog), поэтому свою
+  // панель на вкладке БОЙ сохраняют: без неё их вообще нечем запустить.
+  const meleeBaseKey  = system.meleeBase in MELEE_BASES ? system.meleeBase : "standard";
+  // Тот же экипированный рукопашный/метательный предмет, что берёт клик по
+  // кнопке Состязания (module/sheets/tabs/combat.mjs) — его категория решает,
+  // какие кнопки показывать (Повалить книгой ограничен Оружием и Базой, стр.
+  // 14). Без экипированного рукопашного оружия категория неизвестна — тот же
+  // «мягкий» пропуск, что и в диалоге атаки.
+  const meleeItem     = actor.items.find(i =>
+    i.type === "weapon" && i.system.equipped &&
+    (i.system.weaponClass === "melee" || i.system.weaponClass === "thrown")
+  );
+  const meleeCategory = meleeItem?.system?.meleeCategory || "";
+  // Финт/Давление/Напролом книгой в этом разделе не ограничены (приходят из
+  // Талантов, у которых своих ограничений в этом коде нет) — только Повалить.
+  context.combatContestOptions = Object.entries(MELEE_CONTESTS)
+    .filter(([key, c]) => {
+      const categoryOk = !c.categories || !meleeCategory || c.categories.includes(meleeCategory);
+      const baseOk     = !c.bases || c.bases.includes(meleeBaseKey);
+      return categoryOk && baseOk;
+    })
+    .map(([key, c]) => ({ key, label: c.label, modLabel: c.modLabel }));
 
   // ── Снаряжение: сенсор нагрузки (когитатор) ─────────────────────────────
   const _enc = system.encumbrance || {};

@@ -109,7 +109,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
 
 /** Кнопки защиты цели. Уклонение и Парирование гасятся приёмом или Гибким. */
 function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, deg }) {
+                          forcedDefenceReroll = "" }, { wp, deg, attackerUuid = "" }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
   return `
@@ -128,7 +128,7 @@ function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, n
           ? `<button class="wh-parry-btn wh-dodge-disabled" disabled>
                Парирование (невозможно${wp.flexible ? " — Гибкое" : ""})
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-attack-deg="${deg}" data-force-reroll="${forcedDefenceReroll}">
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-attack-deg="${deg}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
@@ -297,7 +297,7 @@ export function attackCard({
       <summary>Показать кубы</summary>
       ${blocks.dice}
     </details>` : ""}
-        ${hit ? defenseSection(defense, { wp, deg }) : ""}
+        ${hit ? defenseSection(defense, { wp, deg, attackerUuid }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,
                                                 attackerUuid, hordeHits })}

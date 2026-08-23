@@ -38,7 +38,22 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "5nQzT8vXhK2wR6mD",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "2fJpN4sYcG9xW7bE",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "technique.counterAttack",
+              "label": ""
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {
