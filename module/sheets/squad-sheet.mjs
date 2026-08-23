@@ -18,6 +18,7 @@ import { commandReachFor, presenceNumber } from "../rules/command.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
+import { MINION_TIERS } from "../constants/minions.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 
@@ -207,6 +208,10 @@ export class WarhammerSquadSheet
     const type = doc?.type || m.type || "character";
     const isHorde   = type === "horde";
     const isVehicle = type === "vehicle";
+    // Орда Миньонов (minionTier === "horde") живёт Магнитудой, а не Ранами,
+    // как и обычная Орда — но поле хранится в system.magnitude.max, а не
+    // .start (minion.mjs), потому считаем её отдельно от SQUAD_TYPE_LABEL.
+    const isMinionHorde = type === "minion" && !!MINION_TIERS[sys.minionTier]?.isHorde;
     return {
       id: m.id, uuid: m.uuid || "",
       name: doc?.name || m.name || "(недоступен)",
@@ -223,8 +228,9 @@ export class WarhammerSquadSheet
       multiCap: sys.characteristics?.per?.bonus != null
         ? Math.floor(sys.characteristics.per.bonus / 2) : null,
       // Живучесть по типу актора — чтобы отряд читался с одного взгляда.
-      hp: isHorde   ? `Магн. ${sys.magnitude?.value ?? 0}/${sys.magnitude?.start ?? 0}`
-        : isVehicle ? `Стр. ${sys.structure?.value ?? 0}/${sys.structure?.max ?? 0}`
+      hp: isHorde       ? `Магн. ${sys.magnitude?.value ?? 0}/${sys.magnitude?.start ?? 0}`
+        : isMinionHorde ? `Магн. ${sys.magnitude?.value ?? 0}/${sys.magnitude?.max ?? 0}`
+        : isVehicle     ? `Стр. ${sys.structure?.value ?? 0}/${sys.structure?.max ?? 0}`
         : (sys.wounds ? `Раны ${sys.wounds.value ?? 0}/${sys.wounds.max ?? 0}` : ""),
       // Что до него вообще доходит от Командования: Орде — лишь эффекты 1 и 3
       // Присутствия. Правило общее с панелью «Под моим Присутствием»
