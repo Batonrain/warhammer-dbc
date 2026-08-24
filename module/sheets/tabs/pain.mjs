@@ -5,7 +5,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { rollIcon } from "../../constants/roll-icons.mjs";
-import { computeWoundDamage } from "./wounds.mjs";
+import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { esc } from "../../helpers/utils.mjs";
 
 /** Краткое сообщение о Боли в чат. */
@@ -58,7 +58,7 @@ export function openPainSoulBurnDialog(actor) {
           const absorbed = Math.min(dmg, painUsed * 3);
           const remaining = dmg - absorbed;
           const updates = { "system.fate.value": cur - painUsed };
-          if (remaining > 0) Object.assign(updates, computeWoundDamage(actor.system, remaining));
+          if (remaining > 0) Object.assign(updates, woundLossUpdates(actor.system, remaining));
           await actor.update(updates);
           const lines = [
             `Входящий урон: <b>${dmg}</b>`,

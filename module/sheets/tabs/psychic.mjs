@@ -20,7 +20,7 @@ import { psychicHitCount } from "../../combat/attack-outcome.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
-import { computeWoundDamage } from "./wounds.mjs";
+import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
 
 /**
@@ -426,7 +426,7 @@ export async function executePsychotest(actor, item, opts) {
 
   // Телесная Конверсия — цена в Ранах (платится при использовании Пути)
   if (PATH.woundCost) {
-    Object.assign(actorUpdates, computeWoundDamage(actor.system, PATH.woundCost));
+    Object.assign(actorUpdates, woundLossUpdates(actor.system, PATH.woundCost));
   }
 
   // ── Авто-урон (для атакующих сил при успехе) ──────────────────────────────

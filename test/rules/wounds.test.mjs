@@ -6,7 +6,7 @@
 // книгой (просто клампило в 0, Критические не наступали никогда).
 
 import { describe, it, expect } from "vitest";
-import { woundLossAfter, applyWoundLoss, woundDeathThreshold } from "../../module/rules/wounds.mjs";
+import { woundLossAfter, woundLossUpdates, applyWoundLoss, woundDeathThreshold } from "../../module/rules/wounds.mjs";
 
 function actor({ value = 10, critical = 0, max = 10 } = {}) {
   const updates = [];
@@ -44,6 +44,23 @@ describe("woundLossAfter: чистый расчёт", () => {
   });
 });
 
+describe("woundLossUpdates: кусок для общего actor.update()", () => {
+  it("урон даёт value/critical и сброс firstAidUsed", () => {
+    expect(woundLossUpdates({ wounds: { value: 2, critical: 1 } }, 5)).toEqual({
+      "system.wounds.value": 0,
+      "system.wounds.critical": 4,
+      "system.wounds.firstAidUsed": false
+    });
+  });
+
+  it("нулевой урон firstAidUsed не трогает", () => {
+    expect(woundLossUpdates({ wounds: { value: 8, critical: 0 } }, 0)).toEqual({
+      "system.wounds.value": 8,
+      "system.wounds.critical": 0
+    });
+  });
+});
+
 describe("applyWoundLoss: применение к актору", () => {
   it("пишет новые Раны/Критические в actor.update", async () => {
     const a = actor({ value: 10, critical: 0 });
@@ -61,6 +78,15 @@ describe("applyWoundLoss: применение к актору", () => {
     const result = await applyWoundLoss(a, 7);
     expect(result).toMatchObject({ newWounds: 0, newCritical: 5, overflow: true, gotCritical: true });
     expect(a.system.wounds.critical).toBe(5);
+  });
+
+  it("фактический урон сбрасывает firstAidUsed — Первая Помощь снова доступна", async () => {
+    // Раньше это делал только computeWoundDamage (tabs/wounds.mjs); без
+    // сброса здесь Первая Помощь оставалась бы запертой навсегда после
+    // первого применения (гейт в tabs/healing.mjs).
+    const a = actor({ value: 10, critical: 0 });
+    await applyWoundLoss(a, 4);
+    expect(a.updates[0]["system.wounds.firstAidUsed"]).toBe(false);
   });
 
   it("нулевой урон не шлёт update вовсе", async () => {

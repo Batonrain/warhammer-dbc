@@ -43,7 +43,7 @@ import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-pan
 import { dreadnoughtPanelContext } from "./tabs/dreadnought-panel.mjs";
 import { SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf, dailyWillTestOutcome,
          electrostimulatorBoost, ferumInfernusActive } from "../rules/dreadnought.mjs";
-import { computeWoundDamage } from "./tabs/wounds.mjs";
+import { woundLossUpdates } from "../rules/wounds.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
 import { activatePossessionListeners } from "./tabs/possession.mjs";
 import { activateAdvanceListeners } from "./tabs/advance.mjs";
@@ -311,7 +311,7 @@ async function onElectrostimRollback(event) {
   const next = Math.max(0, cur - amount);
 
   const roll = await new Roll("1d5").evaluate();
-  const woundUpdates = computeWoundDamage(this.actor.system, roll.total);
+  const woundUpdates = woundLossUpdates(this.actor.system, roll.total);
 
   await this.actor.update({
     "system.sanity.value": next,
