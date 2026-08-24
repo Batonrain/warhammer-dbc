@@ -402,6 +402,16 @@
   color: #7a4a00;
   font-size: 0.82em;
 }
+/* Тактическая карта (wdbc-8k0i): измеренная дистанция — тот же баннер, что
+   у предупреждения про подзарядку выше, только нейтрального синего тона. */
+.wh-attack-dialog .atk-distance-hint {
+  margin: 4px 0;
+  padding: 3px 6px;
+  background: #d8ecf7;
+  border-left: 3px solid #4a90c0;
+  color: #1a4a66;
+  font-size: 0.82em;
+}
 
 /* ═══════════════ Когитатор-стиль диалогов (атака, навыки, мастер, боеприпасы) ═══════════════ */
 .wh-attack-dialog, .wh-roll-dialog-window, .wh-rename-dialog, .wh-ammo-dialog {
@@ -429,6 +439,7 @@
 .wh-attack-dialog .atr-lg { background: #3a2410; border-color: #cc8844; color: #ffd9a8; }
 .wh-attack-dialog .atr-ex { background: #3a1414; border-color: #cc5a5a; color: #ffb8b8; }
 .wh-attack-dialog .atk-recharge-warn { background: #3a2a10; border-color: #cc8a00; color: #ffd98a; }
+.wh-attack-dialog .atk-distance-hint { background: #10303a; border-color: #4aa0cc; color: #a8dcff; }
 /* Чекбоксы/радио — зелёный акцент */
 .wh-attack-dialog input[type="checkbox"],
 .wh-attack-dialog input[type="radio"] { accent-color: #4dffa6 !important; }

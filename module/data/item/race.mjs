@@ -28,6 +28,9 @@ export class RaceData extends foundry.abstract.TypeDataModel {
       notes:       new HTMLField({ initial: "", label: "Заметки" }),
       hasGeneSeed: new BooleanField({ initial: false, label: "Геносемя" }),
       pastRaces:   new ArrayField(new StringField(), { label: "Возможное Прошлое" }),
+      // wdbc-8k0i: крупная База токена (3×3 вместо 2×2) — не путать с `size`
+      // ниже (справочный бонус к SPD из характеристики «Размер»).
+      largeBase:   new BooleanField({ initial: false, label: "Крупная База (3×3)" }),
       // Ниже — книжная справка: система по ней ничего не считает, но текст из
       // книги терять нельзя, поэтому он виден на листе расы.
       size:        new NumberField({ initial: 0, integer: true, label: "Размер" }),

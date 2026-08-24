@@ -36,6 +36,9 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       propRatings:  new ObjectField({ label: "Рейтинги свойств" }),
       apSecond:     new ObjectField({ label: "Второй профиль AP" }),
       equipped:     new BooleanField({ initial: false, label: "Надета" }),
+      // wdbc-8k0i: пока надета — токен носителя 3×3 вместо стандартных 2×2
+      // (Терминаторская броня и т.п.), см. module/combat/tactical-map.mjs.
+      largeBase:    new BooleanField({ initial: false, label: "Крупная База (3×3) пока надета" }),
       // Вкл/выкл — те же поля и то же имя (`active`), что у armorMod
       // («Включаемая система», см. data/item/armor-mod.mjs), сознательно не
       // повторяем там ещё и `activatable`: у брони это не «может ли эта
