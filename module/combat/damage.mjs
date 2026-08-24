@@ -9,6 +9,7 @@ import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { ablativeDamage } from "../rules/mount.mjs";
+import { applyWoundLoss } from "../rules/wounds.mjs";
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
 const LOCATION_TO_ARMOR = {
@@ -211,35 +212,11 @@ export async function applyDamageToActor(actor, damageData) {
   const netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
 
-  const currentWounds   = system.wounds?.value    ?? 0;
-  const maxWounds       = system.wounds?.max      ?? 0;
-  const currentCritical = system.wounds?.critical ?? 0;
+  const { currentWounds, newWounds, newCritical, gotCritical } =
+    await applyWoundLoss(actor, netDamage);
 
-  let newWounds   = currentWounds;
-  let newCritical = currentCritical;
-  let critEffect  = null;
-  let gotCritical = false;
-
-  if (netDamage > 0) {
-    if (currentWounds >= netDamage) {
-      // Просто вычитаем раны
-      newWounds = currentWounds - netDamage;
-    } else {
-      // Раны кончились — идём в Отрицательные (Критические)
-      const overflow  = netDamage - currentWounds;
-      newWounds       = 0;
-      newCritical     = currentCritical + overflow;
-      gotCritical     = true;
-
-      // Критический эффект по таблице
-      critEffect = getCriticalEffect(damageType, hitLocation, newCritical);
-    }
-
-    await actor.update({
-      "system.wounds.value":    newWounds,
-      "system.wounds.critical": newCritical
-    });
-  }
+  // Критический эффект по таблице — только при уходе в Критические.
+  const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
   const rollMode = game.settings.get("core", "rollMode");
