@@ -36,7 +36,7 @@
           <label class="dp-inst" title="Рейтинг Warp Instability">Нестабильн.
             <input type="number" name="system.instabilityRating" value="{{dp.instability}}" min="0"/>
           </label>
-          <label class="dp-psy-cb" title="Демонический Псайкер — вкладка ПСИ">
+          <label class="dp-psy-cb" title="Демонический Псайкер — вкладка МИСТИКА">
             <input type="checkbox" name="system.isPsyker" {{#if dp.showPsy}}checked{{/if}}/> Псайкер
           </label>
         </div>
@@ -86,7 +86,7 @@
     <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a>
     <a class="item {{#if (eq tab "effects")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="effects">ТЕЛО</a>
     <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a> <a class="item {{#if (eq tab "social")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="social">СОЦИУМ</a>
-    {{#if dp.showPsy}}<a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">ПСИ</a>{{/if}}
+    {{#if dp.showPsy}}<a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">МИСТИКА</a>{{/if}}
     <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a>
     <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a>
     <a class="item dp-tab-apotheosis {{#if (eq tab "apotheosis")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="apotheosis">АПОФЕОЗ</a>
