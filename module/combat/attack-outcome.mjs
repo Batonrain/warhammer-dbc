@@ -23,9 +23,7 @@ const ROF_LABELS = {
 /** Куда смотрит Избирательная атака (стр. 35). */
 const AIM_LOCATIONS = {
   torso: "Торс", leg: "Нога", arm: "Рука",
-  head: "Голова", joint: "Сочленение / Шея", eye: "Глаз (Голова)",
-  // Взрывное «под цель» (attack-dialog.mjs) — целятся не в тело, а под ноги.
-  underfoot: "Взрыв (под целью)"
+  head: "Голова", joint: "Сочленение / Шея", eye: "Глаз (Голова)"
 };
 
 /**
@@ -101,7 +99,10 @@ export function hitLocation({ rv, hit, shift = 0, aimTarget = null }) {
   const reversed = parseInt(String(rv).padStart(2, "0").split("").reverse().join(""));
   const locRoll  = Math.min(Math.max(reversed + (Number(shift) || 0), 1), 100);
 
-  if (aimTarget?.value) return { locRoll, label: AIM_LOCATIONS[aimTarget.value] ?? "Торс" };
+  // Взрывное «под цель» (underfoot) часть тела не называет: взрыв накрывает
+  // область, и место попадания каждому бросается обычным порядком.
+  if (aimTarget?.value && aimTarget.value !== "underfoot")
+    return { locRoll, label: AIM_LOCATIONS[aimTarget.value] ?? "Торс" };
   if (!hit)             return { locRoll, label: "Торс" };
 
   const loc = HIT_LOCATIONS.find(l => locRoll >= l.min && locRoll <= l.max);

@@ -224,7 +224,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const hasLocShiftTalent = (actor.items ?? []).some(i =>
     (i.type === "trait" || i.type === "talent") && i.getFlag("warhammer-dbc", "hitLocationShift"));
   const canShiftLoc = hit && hitsCount === 1 && (isRangedSingle || isMeleeStandard)
-    && !aimTarget?.value && agBonus > 0 && hasLocShiftTalent;
+    && (!aimTarget?.value || aimTarget.value === "underfoot") && agBonus > 0 && hasLocShiftTalent;
 
   // Тратим патроны
   let ammoWarning = "";

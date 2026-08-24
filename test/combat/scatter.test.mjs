@@ -17,6 +17,8 @@ describe("роза смещения", () => {
 
     expect(sc.distance).toBe(6);
     expect(sc.dir).toEqual({ n: 3, label: "Вправо", icon: "➡️" });
+    // Именно d10 + d8 и именно в этом порядке — индексация розы держится на d8.
+    expect(captured.rolls).toEqual(["1d10", "1d8"]);
   });
 
   it("крайние значения розы — 1 «Вперёд» и 8 «Вперёд-влево»", async () => {
