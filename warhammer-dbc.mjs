@@ -63,6 +63,7 @@ import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/app
 import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
+import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
 import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
@@ -1497,6 +1498,35 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
     const a = found?.actor ?? found; // на случай, если uuid указывал на Token
     if (a instanceof Actor) await reconcileCohesionForActor(a);
   }
+});
+
+// ── Ауры (wdbc-1pa) — живой пересчёт «кто задет», module/regions/auras.mjs ──
+// Триггеры: движение/появление/исчезновение токена на сцене и изменения
+// предметов актора, которые могли поменять набор/активность аур-источников
+// (сам флаг, экипировка, включение мода/поддержания). checkAuras — debounce
+// 150мс, лишние вызовы дёшевы.
+Hooks.on("canvasReady", () => checkAuras(canvas.scene));
+Hooks.on("createToken", doc => checkAuras(doc.parent));
+Hooks.on("deleteToken", doc => {
+  // Связанный актор уходит со сцены вместе с токеном — зачистка прогона его
+  // больше не увидит, выданная аура осталась бы на листе навсегда.
+  if (game.user.isGM && doc.actorLink && doc.actor) clearAuraGrants(doc.actor, doc.parent?.id);
+  checkAuras(doc.parent);
+});
+Hooks.on("updateToken", (doc, changes) => {
+  if (["x", "y", "elevation", "hidden", "disposition"].some(k => k in changes)) {
+    checkAuras(doc.parent);
+  }
+});
+// Предметы, выданные самим прогоном (auraSource), пересчёт не планируют:
+// иначе каждый sweep порождал бы второй, холостой.
+Hooks.on("createItem", item => { if (item.actor && !item.getFlag("warhammer-dbc", "auraSource")) checkAuras(canvas.scene); });
+Hooks.on("deleteItem", item => { if (item.actor && !item.getFlag("warhammer-dbc", "auraSource")) checkAuras(canvas.scene); });
+Hooks.on("updateItem", (item, changes) => {
+  if (!item.actor) return;
+  const touched = ["flags", "system.equipped", "system.activatable", "system.active"]
+    .some(k => k in changes || foundry.utils.hasProperty(changes, k));
+  if (touched) checkAuras(canvas.scene);
 });
 
 // ── «Пламенная вера» (Мир-храм): шанс не потратить Очко ──────────────────────
