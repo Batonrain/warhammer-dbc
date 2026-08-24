@@ -10,7 +10,8 @@ import { MELEE_STANCES, MELEE_BASES }                from "../constants/combat.m
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { isAeldariRace }                             from "../apps/race-library.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
-import { getLegion, getChapter }               from "../constants/legions.mjs";
+import { getLegion, getChapter, buildChapterOptions,
+         buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/disciplines.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
