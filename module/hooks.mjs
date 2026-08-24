@@ -4,6 +4,7 @@ import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
+import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor } from "./combat/damage.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
@@ -472,9 +473,8 @@ async function _applyWeaponPropEffect(ds) {
     const dmgRoll = await new Roll(dmgFormula).evaluate();
     allRolls.push(dmgRoll);
     const dmg = dmgRoll.total;
-    const cur = actor.system.wounds?.value ?? 0;
-    await actor.update({ "system.wounds.value": Math.max(0, cur - dmg) });
-    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${cur} → ${Math.max(0, cur - dmg)}</div>`;
+    const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
+    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
   }
 
   const messageData = ChatMessage.applyRollMode({
@@ -550,21 +550,15 @@ async function _executeSoulBurn(attacker, target) {
   if (burned) {
     const dRoll = await new Roll(`${net}d10`).evaluate(); allRolls.push(dRoll);
     const dmg   = dRoll.total;
-    const curW  = target.system.wounds?.value    ?? 0;
-    const curC  = target.system.wounds?.critical ?? 0;
     // Непоглощаемый урон напрямую в Раны (затем в Критические)
-    let newW = curW, newC = curC;
-    if (curW >= dmg) newW = curW - dmg;
-    else { newC = curC + (dmg - curW); newW = 0; }
-    await target.update({ "system.wounds.value": newW, "system.wounds.critical": newC });
+    const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
+      await applyWoundLoss(target, dmg);
 
-    const maxW   = target.system.wounds?.max ?? 0;
-    const deathThreshold = maxW + 7;   // живые: −(Макс Ран+7)
-    const soulDestroyed  = newC >= deathThreshold;
+    const soulDestroyed = newCritical >= woundDeathThreshold(maxWounds);
     dmgNote = `
       <div class="roll-damage-section">
         <div class="roll-damage-label">${rollIcon("fire","#ff8a3a")}Непоглощаемый E урон: <b>${dmg}</b> (${net}d10 за ${net} Успех(ов))</div>
-        <div class="roll-threshold">Раны: <b>${curW}</b> → <b>${newW}</b>${newC > curC ? ` | Крит. раны: <b>${newC}</b>` : ""}</div>
+        <div class="roll-threshold">Раны: <b>${currentWounds}</b> → <b>${newWounds}</b>${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>
         ${soulDestroyed ? `<div class="roll-threshold" style="color:#8b0000;"><b>${rollIcon("skull","#ff6b6b")}Душа разорвана на куски — цель уничтожена!</b></div>` : ""}
       </div>`;
   }

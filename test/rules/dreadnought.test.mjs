@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import {
   isDreadnought, pilotUuidOf, dreadnoughtOf, isDreadnoughtPilot,
   sanityMax, madnessLevels, DREADNOUGHT_PILOT_FLAG,
-  pilotDamageThreshold, pilotWoundsAfter,
+  pilotDamageThreshold,
   SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf,
   dailyWillTestOutcome, hasElectrostimulators, electrostimulatorBoost,
   hasFerumInfernus, ferumInfernusThreshold, ferumInfernusActive
@@ -122,25 +122,6 @@ describe("Урон Дредноуту ранит пилота: порог", () =
   });
   it("отрицательный бонус не уводит порог в минус", () => {
     expect(pilotDamageThreshold(-3)).toBe(0);
-  });
-});
-
-describe("Урон Дредноуту ранит пилота: Раны пилота", () => {
-  it("урон меньше текущих Ран — просто вычитается", () => {
-    const after = pilotWoundsAfter({ wounds: { value: 10, critical: 0 } }, 4);
-    expect(after).toEqual({ value: 6, critical: 0, overflow: false });
-  });
-  it("урон точно добивает до нуля — без перехода в критические", () => {
-    const after = pilotWoundsAfter({ wounds: { value: 4, critical: 0 } }, 4);
-    expect(after).toEqual({ value: 0, critical: 0, overflow: false });
-  });
-  it("урон больше Ран — остаток идёт в Критические", () => {
-    const after = pilotWoundsAfter({ wounds: { value: 3, critical: 1 } }, 7);
-    expect(after).toEqual({ value: 0, critical: 5, overflow: true });
-  });
-  it("нулевой урон ничего не меняет", () => {
-    const after = pilotWoundsAfter({ wounds: { value: 8, critical: 0 } }, 0);
-    expect(after).toEqual({ value: 8, critical: 0, overflow: false });
   });
 });
 

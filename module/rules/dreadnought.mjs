@@ -162,24 +162,6 @@ export function pilotDamageThreshold(pilotWpBonus) {
 }
 
 /**
- * Раны пилота ПОСЛЕ удара по Дредноуту: тот же непоглощённый урон машины идёт
- * пилоту напрямую — саркофаг передаёт толчок, а не наносит отдельное попадание
- * со своей броней. Подсчёт переполнения в Критические Раны — тот же приём, что
- * в combat/damage.mjs (applyDamageToActor), но здесь без брони/T.b и без
- * отдельного Критического Эффекта: это резонанс удара, а не прямое попадание.
- *
- * @param {{wounds?:{value?:number,critical?:number}}} pilotSystem  actor.system пилота
- * @param {number} netDamage  непоглощённый урон, что получила машина
- */
-export function pilotWoundsAfter(pilotSystem, netDamage) {
-  const current  = Number(pilotSystem?.wounds?.value) || 0;
-  const critical = Number(pilotSystem?.wounds?.critical) || 0;
-  const net = Math.max(0, Number(netDamage) || 0);
-  if (current >= net) return { value: current - net, critical, overflow: false };
-  return { value: 0, critical: critical + (net - current), overflow: true };
-}
-
-/**
  * Четыре Таланта Дредноутов (стр. 58), чьё выполненное условие даёт разовое
  * восстановление 2d10 Здравомыслия за 1 Очко Бесчестия. `match` узнаёт Талант
  * на листе тем же приёмом, что и «Ядро Воспоминаний» выше; `hint` — короткая
