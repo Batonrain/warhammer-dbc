@@ -153,6 +153,48 @@ describe("карточка атаки", () => {
     expect(card({ soulBurnActorId: "actor-1" })).toContain('data-attacker-id="actor-1"');
     expect(card()).not.toContain("wh-soulburn-btn");
   });
+
+  // ── Взрывное ────────────────────────────────────────────────────────────
+  it("Взрывное: одно попадание подписывается «Взрыв», а не «Попадание»", () => {
+    const html = card({ wp: { blastRating: 3 } });
+    expect(html).toContain("Взрыв 1");
+    expect(html).not.toContain("Попадание 1<");
+  });
+
+  it("Взрывное: несколько шаблонов очереди — отдельная заметка про Уклонение", () => {
+    const html = card({
+      wp: { blastRating: 3 }, hitsCount: 2,
+      hits: [{ total: 10, loc: "Торс" }, { total: 8, loc: "Торс" }]
+    });
+    expect(html).toContain("Взрыв 1");
+    expect(html).toContain("Взрыв 2");
+    expect(html).toContain("отдельный шаблон, размещается до Уклонения");
+  });
+
+  it("Взрывное: одно попадание не печатает заметку про несколько шаблонов", () => {
+    expect(card({ wp: { blastRating: 3 } })).not.toContain("отдельный шаблон");
+  });
+
+  it("Взрывное: кнопка урона подсказывает отметить всех в радиусе", () => {
+    expect(card({ wp: { blastRating: 5 } })).toContain("отметьте всех в радиусе 5м");
+    expect(card()).not.toContain("отметьте всех в радиусе");
+  });
+
+  it("Взрывное «под цель»: промах печатает смещение по розе", () => {
+    const html = card({
+      hit: false, deg: 2, hits: [], hitsCount: 0,
+      notes: { blastScatter: { distance: 6, radius: 3, dir: { n: 3, label: "Вправо", icon: "➡️" } } }
+    });
+    expect(html).toContain("Взрыв мимо цели");
+    expect(html).toContain("<b>6м</b>");
+    expect(html).toContain("Вправо");
+    expect(html).toContain("направление 3/8");
+    expect(html).toContain("Радиус взрыва <b>3м</b>");
+  });
+
+  it("без смещения заметка о промахе взрыва не печатается", () => {
+    expect(card({ hit: false, deg: 2, hits: [], hitsCount: 0 })).not.toContain("Взрыв мимо цели");
+  });
 });
 
 describe("карточка заклинившего оружия", () => {

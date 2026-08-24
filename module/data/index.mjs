@@ -39,6 +39,7 @@ import { PsychicPowerData }   from "./item/psychic-power.mjs";
 import { TechPowerData }      from "./item/tech-power.mjs";
 import { NavigatorPowerData } from "./item/navigator-power.mjs";
 import { ComponentData }      from "./item/component.mjs";
+import { ShipHullData }       from "./item/ship-hull.mjs";
 import { CargoData }          from "./item/cargo.mjs";
 import { TorpedoData }        from "./item/torpedo.mjs";
 import { CelestialBodyData }  from "./item/celestial-body.mjs";
@@ -99,6 +100,7 @@ export const ITEM_DATA_MODELS = {
   navigatorPower: NavigatorPowerData,
   // Корабль и техника (wdbc-ff4.1.6)
   component:     ComponentData,
+  shipHull:      ShipHullData,
   cargo:         CargoData,
   torpedo:       TorpedoData,
   celestialBody: CelestialBodyData,
