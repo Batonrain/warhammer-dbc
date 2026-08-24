@@ -19,6 +19,7 @@ import { qualityEffects, buildQualityChatBlock }    from "../constants/quality.m
 import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../constants/drukhari-splinter.mjs";
 import { vehicleHitLocation }                        from "../constants/vehicle.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
+import { applyGrappleOnHit }                          from "./grapple.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -386,6 +387,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     : null;
 
   const techOpts = opts.techniqueOpts || {};
+
+  // Стр. 12: успешный Приём «Захват» связывает обоих Борьбой (module/combat/
+  // grapple.mjs) — состояние conditions.grappling, как у Оглушения/Беспомощного.
+  // Не блокирует построение карточки: чат-сообщение о связывании уходит своим,
+  // отдельным сообщением следом.
+  if (hit && techOpts.technique === "grapple") applyGrappleOnHit(actor, targetToken, hit, techOpts);
 
   // Перезарядка: оружие с Recharge и Максимальный режим стреляют раз в 2 хода.
   const needsRecharge = !isMelee && (wp.recharge || maximalOn);

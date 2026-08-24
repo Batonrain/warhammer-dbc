@@ -64,7 +64,18 @@ export const CONDITIONS_DEF = {
   hallucinogenic:{ label: "Галлюцинации",    icon: "🌀", hasLevel: false, levelField: null,                 css: "cond-hallucinogenic" },
   pinned:        { label: "Подавление",      icon: "📌", hasLevel: false, levelField: null,                 css: "cond-pinned"         },
   crippling:     { label: "Калечение",       icon: "🦯", hasLevel: false, levelField: null,                 css: "cond-crippling"      },
-  addicted:      { label: "Зависимость",     icon: "💊", hasLevel: false, levelField: null,                 css: "cond-addicted"       }
+  addicted:      { label: "Зависимость",     icon: "💊", hasLevel: false, levelField: null,                 css: "cond-addicted"       },
+  // ── Стр. 30-31 (Раны и Урон, «Статусы») ──────────────────────────────────
+  dazed:         { label: "Ступор",          icon: "🌀", hasLevel: false, levelField: null,                 css: "cond-dazed"          },
+  suffocating:   { label: "Удушье",          icon: "🫁", hasLevel: true,  levelField: "suffocatingRounds",  css: "cond-suffocating"    },
+  gangrene:      { label: "Гангрена",        icon: "🟢", hasLevel: false, levelField: null,                 css: "cond-gangrene"       },
+  lostHands:     { label: "Потеря кистей",   icon: "✋", hasLevel: true,  levelField: "lostHandsCount",      css: "cond-lost-hands"     },
+  lostArms:      { label: "Потеря рук",      icon: "💪", hasLevel: true,  levelField: "lostArmsCount",       css: "cond-lost-arms"      },
+  lostFeet:      { label: "Потеря стоп",     icon: "🦶", hasLevel: true,  levelField: "lostFeetCount",       css: "cond-lost-feet"      },
+  lostLegs:      { label: "Потеря ног",      icon: "🦵", hasLevel: true,  levelField: "lostLegsCount",       css: "cond-lost-legs"      },
+  lostEyes:      { label: "Потеря глаз",     icon: "👁️", hasLevel: true, levelField: "lostEyesCount",       css: "cond-lost-eyes"      },
+  // ── Стр. 12 («Борьба») — связаны Захватом ────────────────────────────────
+  grappling:     { label: "Борьба",          icon: "🤼", hasLevel: false, levelField: null,                 css: "cond-grappling"      }
 };
 // Прикрепляем SVG-глиф и цвет к каждому состоянию (замена эмодзи).
 for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
@@ -743,6 +754,10 @@ export function buildGetData(actor) {
       skinColor:     bodyState.overlays.skin ? implantCatColor(bodyState.overlays.skin) : "",
       mechMark:      rawImplants.some(i => /cyber-?mantle|кибер-?мантия/i.test(i.name)),
       ecg:      buildEcg(system, deceased),
+      // Отдельно от ecg.dead: тот флагуется ещё и при wounds.value<=0 без
+      // констатации («НЕТ СИГНАЛА»), а Спасение/Воскресить (стр. 232-233,
+      // module/sheets/tabs/death.mjs) должны показываться ровно по флагу.
+      deceased,
       legend,
       mechCount:    bodyState.mechadendrites,
       conditionCount: context.activeConditions.length,

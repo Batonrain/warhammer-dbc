@@ -190,7 +190,11 @@
         диалоге атаки; Состязания (Повалить/Финт/Давление/Напролом) в диалог
         не переехали (отдельный встречный тест, module/combat/techniques.mjs),
         поэтому свою панель сохраняют. --}}
-  <div class="combat-section-panel combat-collapsible {{#if combatTechCollapsed}}collapsed{{/if}}"> <div class="panel-title combat-collapse-head" data-action="combatCollapse" data-collapse="tech"><span class="cc-caret">▾</span> СОСТЯЗАНИЯ</div> <div class="combat-collapse-body"><div class="technique-grid"> {{#each combatContestOptions as |c|}}<button type="button" class="technique-btn technique-btn-contest" data-technique="{{c.key}}"> <span class="tech-name">{{c.label}}</span> <span class="tech-mod">{{c.modLabel}}</span> </button> {{/each}}</div></div> </div>{{!-- /состязания --}}
+  <div class="combat-section-panel combat-collapsible {{#if combatTechCollapsed}}collapsed{{/if}}"> <div class="panel-title combat-collapse-head" data-action="combatCollapse" data-collapse="tech"><span class="cc-caret">▾</span> СОСТЯЗАНИЯ</div> <div class="combat-collapse-body"><div class="technique-grid"> {{#each combatContestOptions as |c|}}<button type="button" class="technique-btn technique-btn-contest" data-technique="{{c.key}}"> <span class="tech-name">{{c.label}}</span> <span class="tech-mod">{{c.modLabel}}</span> </button> {{/each}}
+  {{!-- Борьба (стр. 12) — только пока актор связан Захватом (conditions.grappling,
+        module/combat/grapple.mjs выставляет его после попадания Приёмом «Захват»). --}}
+  {{#if system.conditions.grappling}}<button type="button" class="technique-btn technique-btn-contest grapple-btn" style="border-color:#e08a3a;"> <span class="tech-name">🤼 Борьба</span> <span class="tech-mod">связан Захватом</span> </button>{{/if}}
+  </div></div> </div>{{!-- /состязания --}}
 
   {{!-- ═══ ВЕРХОМ (стр. 477-478) ═══
         Пока скакун не выбран — только полоса-приглашение с зоной переноса.

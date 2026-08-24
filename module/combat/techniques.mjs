@@ -4,21 +4,23 @@ import { rollIcon }                         from "../constants/roll-icons.mjs";
 import { MELEE_STANCES }                    from "../constants/combat.mjs";
 
 export async function _showContestDialog(actor, techDef) {
-  const wsTotal  = actor.system.characteristics.ws?.total ?? 0;
-  const athTotal = actor.system.characteristics.s?.total  ?? 0;
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
   const isKnock  = techDef.label === "Повалить" || techDef.label === "Напролом";
 
   // Стойка (стр. 15) даёт бонус «на все тесты WS», но Агрессивная явно
   // исключает встречные тесты против Финта — то есть Давление его получает,
   // а Финт нет. techDef.stanceWs отмечает это на самом Давлении (только
-  // оно из контестов — настоящий тест WS vs WS без исключения книги).
+  // оно из контестов — настоящий тест WS вs WS без исключения книги).
   const stanceKey      = actor.system.meleeStance || "standard";
   const stanceWsBonus  = techDef.stanceWs ? (MELEE_STANCES[stanceKey]?.wsBonus ?? 0) : 0;
 
-  // Определяем характеристику по умолчанию
-  const defaultChar = isKnock ? "s" : "ws";
-  const baseVal     = (isKnock ? athTotal : wsTotal) + stanceWsBonus;
+  // Определяем характеристику по умолчанию. techDef.defaultChar — явное
+  // указание (действия Борьбы, стр. 12: Athletics(S) или Acrobatics(A) —
+  // ни то, ни другое не WS/Повалить-Напролом, поэтому нужна отдельная ручка,
+  // а не растягивать isKnock ещё сильнее).
+  const defaultChar = techDef.defaultChar || (isKnock ? "s" : "ws");
+  const baseVal     = (actor.system.characteristics[defaultChar]?.total ?? 0)
+                     + (defaultChar === "ws" ? stanceWsBonus : 0);
 
   // Строим опции для выбора характеристики
   const charOptions = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
@@ -65,7 +67,7 @@ export async function _showContestDialog(actor, techDef) {
 
         <div class="atk-dlg-row">
           <label>Доп. модификатор:</label>
-          <input id="contest-mod" type="number" value="0"/>
+          <input id="contest-mod" type="number" value="${techDef.defaultMod ?? 0}"/>
         </div>
 
         <div class="atk-dlg-row atk-total-row">

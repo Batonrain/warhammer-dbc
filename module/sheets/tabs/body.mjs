@@ -9,6 +9,7 @@ import { openSurgeon } from "../../apps/surgeon.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { syncGrantedEquipment } from "../../apps/mechanics.mjs";
 import { on } from "../../helpers/utils.mjs";
+import { showDeathSaveDialog, doResurrect } from "./death.mjs";
 
 /** Переключить фигуру муж./жен. Значение приходит из data-атрибута кнопки. */
 export async function toggleBodyType(actor, current) {
@@ -95,6 +96,11 @@ export function activateBodyListeners(root, actor, { openSurgeonWindow = openSur
   on(root, ".bc-death-toggle", "change", async ev => {
     await setDeceased(actor, ev.currentTarget.checked);
   });
+
+  // Стр. 232-233 («Смерть»): Спасение — Чудесное/Божественная Защита/
+  // Замедленная Анимация; Воскресить — без формулы, только пока «мёртв».
+  on(root, ".bc-death-save-btn", "click", () => showDeathSaveDialog(actor));
+  on(root, ".bc-resurrect-btn", "click", () => doResurrect(actor));
 
   on(root, ".bc-side-btn", "click", async ev => {
     ev.preventDefault();

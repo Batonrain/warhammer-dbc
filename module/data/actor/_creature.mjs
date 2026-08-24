@@ -24,12 +24,20 @@ export const HIT_LOCATIONS = ["head", "leftArm", "rightArm", "body", "leftLeg", 
 const CONDITION_FLAGS = [
   "bleeding", "haemorrhaging", "stunned", "fatigued", "poisoned", "prone",
   "helpless", "unconscious", "blinded", "deafened", "burning", "radiation",
-  "hallucinogenic", "pinned", "crippling", "addicted"
+  "hallucinogenic", "pinned", "crippling", "addicted",
+  // Стр. 30-31 (Раны и Урон, «Статусы») — Ступор и Удушье не имели своих
+  // полей; Гангрена и Потеря Конечностей (по частям тела) — тоже.
+  "dazed", "suffocating", "gangrene",
+  "lostHands", "lostArms", "lostFeet", "lostLegs", "lostEyes",
+  // Стр. 12 («Борьба») — состояние двух персонажей, связанных Захватом.
+  "grappling"
 ];
 /** Состояния со счётчиком: имя поля → суффикс счётчика. */
 const CONDITION_COUNTERS = {
   bleeding: "Level", haemorrhaging: "Level", stunned: "Rounds",
-  fatigued: "Level", blinded: "Rounds", burning: "Level", radiation: "Level"
+  fatigued: "Level", blinded: "Rounds", burning: "Level", radiation: "Level",
+  suffocating: "Rounds",
+  lostHands: "Count", lostArms: "Count", lostFeet: "Count", lostLegs: "Count", lostEyes: "Count"
 };
 
 /**
