@@ -1,26 +1,18 @@
 {
   "name": "Lunar / Лунный",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "KhRTQU1eH580NrdK",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Крейсеры",
     "sp": 60,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [],
     "hull": {
       "spaceMax": 75,
@@ -36,14 +28,6 @@
       "voidShields": 0,
       "armour": 20,
       "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "TpkYrZaSH68f6TMT",

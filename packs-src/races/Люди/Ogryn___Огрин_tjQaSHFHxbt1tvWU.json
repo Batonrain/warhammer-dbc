@@ -1,7 +1,7 @@
 {
   "name": "Ogryn / Огрин",
   "type": "race",
-  "img": "icons/svg/oak.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-core/Ogryn.webp",
   "folder": "r25Oz24EUTucQ8Be",
   "system": {
     "key": "ogryn",
@@ -748,6 +748,45 @@
               "code": "",
               "id": "tjQaSHFHtal",
               "kind": "talent"
+            }
+          ]
+        },
+        {
+          "id": "h5dikYc3SVjsSrHv",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "3DIuNay4dd4S55TK",
+              "kind": "integralAttack",
+              "group": null,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.89mS3BzjUKrGFRdH",
+              "equipSourceName": "Fist / Удар кулаком",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "equipCategoryPack": "weapons",
+              "equipMode": "direct",
+              "equipQty": 1
+            },
+            {
+              "id": "g6uF2wz2xYT9Fpgk",
+              "kind": "integralAttack",
+              "group": null,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.U2TAAlVnZpdRQscO",
+              "equipSourceName": "Kick / Пинок",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "equipCategoryPack": "weapons",
+              "equipMode": "direct",
+              "equipQty": 1
+            },
+            {
+              "id": "gq4xhAKiOFLb95a0",
+              "kind": "integralAttack",
+              "group": null,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.xP2os46ZgH3HqoGj",
+              "equipSourceName": "Headbutt / Удар головой",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "equipCategoryPack": "weapons",
+              "equipMode": "direct",
+              "equipQty": 1
             }
           ]
         }

@@ -38,7 +38,22 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "7wLpQ9tXaN3kR5mZ",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "1yGdM8sVfE2xB6qA",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "technique.lightningAttack",
+              "label": ""
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

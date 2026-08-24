@@ -12,8 +12,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, fakeForm, checkbox } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor, ammoFor, setTargets } from "../support/combat-fixtures.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
-import { showAttackDialog, showAttackDialogWithTechnique,
-         showAttackDialogNoWeapon } from "../../module/sheets/attack-dialog.mjs";
+import { showAttackDialog, showAttackDialogNoWeapon } from "../../module/sheets/attack-dialog.mjs";
 
 const DEFAULT_SOURCES = getRuleSources();
 
@@ -193,6 +192,20 @@ describe("избирательные попадания", () => {
     expect(html).not.toContain("Сочленение");
     expect(html).not.toContain("Глаз");
   });
+
+  // Взрывное: можно целиться под цель вместо неё самой (−20, Избирательная) —
+  // тогда промах смещает взрыв по розе, а не пропадает бесследно (attack.mjs,
+  // module/combat/scatter.mjs), а не только предупреждает как noCalledShot.
+  it("Взрывное добавляет прицел «Под цель», обычное оружие — нет", () => {
+    const blast = weaponFor({ weaponProps: [{ key: "blast", rating: 3 }] });
+    showAttackDialog(attacker({ items: [blast] }), blast);
+    expect(captured.dialog.content).toContain('value="underfoot"');
+    expect(captured.dialog.content).toContain("Под цель (Взрывное, −20)");
+
+    const plain = weaponFor();
+    showAttackDialog(attacker({ items: [plain] }), plain);
+    expect(captured.dialog.content).not.toContain("underfoot");
+  });
 });
 
 describe("свойства оружия и полосы дальности", () => {
@@ -271,12 +284,31 @@ describe("бросок из диалога", () => {
     expect(thresholdInCard()).toBe(60);        // 45 − 5 + 10 + 20 − 10
   });
 
-  it("особые атаки прибавляются к порогу", async () => {
+  it("особые атаки (Атака всем телом) прибавляются к порогу", async () => {
     const weapon = weaponFor();
     const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
-    await pressRoll(p, { "#atk-swift": true, "#atk-allout": true });
+    await pressRoll(p, { "#atk-allout": true });
 
-    expect(thresholdInCard()).toBe(75);        // 45 + 10 + 20
+    expect(thresholdInCard()).toBe(65);        // 45 + 20
+  });
+
+  // Быстрая/Молниеносная Атака переехали в Приём (стр. 14) — доступны только
+  // с соответствующим Талантом (requiresCapability), их штраф теперь идёт
+  // через обычный bonus Приёма (mDef.wsBonus), не отдельной галочкой.
+  it("Быстрая Атака — Приём с requiresCapability, штраф −10 входит в порог как обычный Приём", async () => {
+    registerRuleSource("test", () => [{ id: "a", label: "Тест",
+      effects: [{ kind: "grantFlag", target: "technique.swiftAttack" }] }]);
+    const weapon = weaponFor({ weaponClass: "melee" });
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    expect(captured.dialog.content).toMatch(/name="atk-maneuver" value="swift"/);
+
+    // Промах намеренно (96 > порога): множитель попаданий Быстрой Атаки
+    // потребовал бы своей очереди кубов урона на каждое попадание — здесь
+    // важен только порог в карточке, не сам исход.
+    captured.dice = [96];
+    await pressRoll(p, { "input[name='atk-maneuver']:checked": "swift", "#atk-allout": true });
+
+    expect(thresholdInCard()).toBe(65);        // 45 WS + 10 База − 10 Быстрая Атака + 20 Атака всем телом
   });
 
   it("прицеливание тратится броском", async () => {
@@ -390,18 +422,18 @@ describe("правила реестра в диалоге", () => {
 
 describe("приём с оружием", () => {
   it("бонус приёма входит в порог, а Приём и Стойка — выбираемые пилюли в окне", () => {
+    // Предустановленный Приём — просто techniqueOpts.technique у showAttackDialog
+    // (отдельной showAttackDialogWithTechnique больше нет: с БОЙ-панели её
+    // некому звать — обычные Приёмы теперь выбираются только в этом окне).
     const sword = weaponFor({ weaponClass: "melee" }, { name: "Цепной меч" });
-    const techDef = { label: "Пила", wsBonus: -10, note: "WS −10.",
-                      chatNote: "⚡ Игнорирует силовые щиты", targetDodgeMod: 0, targetParryMod: 0 };
-    showAttackDialogWithTechnique(attacker({ items: [sword] }), sword,
-      techDef, { label: "Агрессивная" }, "saw");
+    showAttackDialog(attacker({ items: [sword] }), sword, { technique: "saw" });
 
     expect(dialogThreshold()).toBe(45);        // WS 45 + База «Стандартная» 10 − 10 Пила
     // Приём открыт с предустановленным ключом "saw" — пилюля отмечена, а не
     // застывшая надпись: игрок волен выбрать другой Приём прямо в этом окне.
     expect(captured.dialog.content).toMatch(/name="atk-maneuver" value="saw" checked/);
     expect(captured.dialog.content).toContain("Пила");
-    // Стойка не привязана к техDef — читается из актора (по умолчанию Стандартная).
+    // Стойка читается из актора (по умолчанию Стандартная).
     expect(captured.dialog.content).toMatch(/name="atk-stance" value="standard" checked/);
   });
 });
@@ -410,22 +442,24 @@ describe("приём с оружием", () => {
 const talentFor = (name, specialization) => ({ type: "talent", name, system: { specialization } });
 
 describe("Арсенал: доступность Стойки/Хвата/Базы/Приёма в окне", () => {
-  it("без Рукопашной Тренировки — только Обычная Атака/Стандартная Стойка/1-й Хват, остальное disabled", () => {
+  it("без Рукопашной Тренировки — только Обычная Атака/Стандартная Стойка/1-й Хват, остальное скрыто из разметки", () => {
     const sword = weaponFor({ weaponClass: "melee", meleeCategory: "Меч", grips: "1р (2р)" });
     showAttackDialog(attacker({ items: [sword] }), sword);
     const html = captured.dialog.content;
 
     expect(html).toMatch(/name="atk-maneuver" value="standard"[^>]*checked/);
-    expect(html).toMatch(/name="atk-maneuver" value="sweep"[^>]*disabled/);
-    expect(html).toMatch(/name="atk-stance" value="aggressive"[^>]*disabled/);
-    expect(html).toMatch(/name="atk-grip" value="2р"[^>]*disabled/);
+    // Недоступные варианты не дизейблятся серым, а совсем убираются из
+    // разметки — не текущий выбор, поэтому пилюли нет вовсе.
+    expect(html).not.toMatch(/name="atk-maneuver" value="sweep"/);
+    expect(html).not.toMatch(/name="atk-stance" value="aggressive"/);
+    expect(html).not.toMatch(/name="atk-grip" value="2р"/);
     // База книгой не ограничена Талантом — Стандартная/Натиск/Полная/Осторожная
     // доступны и без Тренировки; Верховая Атака недоступна отдельно (не верхом).
-    expect(html).not.toMatch(/name="atk-base" value="standard"[^>]*disabled/);
-    expect(html).not.toMatch(/name="atk-base" value="charge"[^>]*disabled/);
-    expect(html).not.toMatch(/name="atk-base" value="fullatk"[^>]*disabled/);
-    expect(html).not.toMatch(/name="atk-base" value="careful"[^>]*disabled/);
-    expect(html).toMatch(/name="atk-base" value="mounted"[^>]*disabled/);
+    expect(html).toMatch(/name="atk-base" value="standard"/);
+    expect(html).toMatch(/name="atk-base" value="charge"/);
+    expect(html).toMatch(/name="atk-base" value="fullatk"/);
+    expect(html).toMatch(/name="atk-base" value="careful"/);
+    expect(html).not.toMatch(/name="atk-base" value="mounted"/);
     expect(html).toContain("Без Тренировки (Меч)");
   });
 
@@ -436,10 +470,13 @@ describe("Арсенал: доступность Стойки/Хвата/Баз�
     const html = captured.dialog.content;
 
     expect(html).not.toContain("Без Тренировки");
+    expect(html).toMatch(/name="atk-stance" value="aggressive"/);
     expect(html).not.toMatch(/name="atk-stance" value="aggressive"[^>]*disabled/);
+    expect(html).toMatch(/name="atk-grip" value="2р"/);
     expect(html).not.toMatch(/name="atk-grip" value="2р"[^>]*disabled/);
-    // «Захват» — категории Когти/Кулаки/Крюк/Укус, «Меч» туда не входит.
-    expect(html).toMatch(/name="atk-maneuver" value="grapple"[^>]*disabled/);
+    // «Захват» — категории Когти/Кулаки/Крюк/Укус, «Меч» туда не входит —
+    // не текущий выбор, поэтому пилюля скрыта.
+    expect(html).not.toMatch(/name="atk-maneuver" value="grapple"/);
     expect(html).not.toMatch(/name="atk-maneuver" value="sweep"[^>]*disabled/);
   });
 
@@ -461,37 +498,128 @@ describe("Арсенал: доступность Стойки/Хвата/Баз�
   it("Верховая Атака доступна только персонажу верхом на байке/скакуне", () => {
     const sword = weaponFor({ weaponClass: "melee" });
     showAttackDialog(attacker({ items: [sword] }), sword);
-    expect(captured.dialog.content).toMatch(/name="atk-base" value="mounted"[^>]*disabled/);
+    // Не верхом и не текущий выбор — пилюля Верховой Атаки скрыта совсем.
+    expect(captured.dialog.content).not.toMatch(/name="atk-base" value="mounted"/);
 
     resetCaptured();
     showAttackDialog(attacker({ items: [sword], mount: { uuid: "Actor.mount-1" } }), sword);
+    expect(captured.dialog.content).toMatch(/name="atk-base" value="mounted"/);
     expect(captured.dialog.content).not.toMatch(/name="atk-base" value="mounted"[^>]*disabled/);
   });
 
   it("Пружинящая Стойка требует Баланс не ниже 0", () => {
     const knife = weaponFor({ weaponClass: "melee", balance: -1 });
     showAttackDialog(attacker({ items: [knife] }), knife);
-    expect(captured.dialog.content).toMatch(/name="atk-stance" value="springing"[^>]*disabled/);
+    expect(captured.dialog.content).not.toMatch(/name="atk-stance" value="springing"/);
 
     resetCaptured();
     const sword = weaponFor({ weaponClass: "melee", balance: 0 });
     showAttackDialog(attacker({ items: [sword] }), sword);
+    expect(captured.dialog.content).toMatch(/name="atk-stance" value="springing"/);
     expect(captured.dialog.content).not.toMatch(/name="atk-stance" value="springing"[^>]*disabled/);
   });
 
   it("Частокол доступен только Глефе/Копью/Штыку и запрещает Натиск, пока выбран", () => {
     const mace = weaponFor({ weaponClass: "melee", meleeCategory: "Булава" });
     showAttackDialog(attacker({ items: [mace] }), mace);
-    expect(captured.dialog.content).toMatch(/name="atk-stance" value="rapidstrike"[^>]*disabled/);
+    expect(captured.dialog.content).not.toMatch(/name="atk-stance" value="rapidstrike"/);
 
     resetCaptured();
     const spear = weaponFor({ weaponClass: "melee", meleeCategory: "Копьё" });
     const training = talentFor("Melee Training / Рукопашная Тренировка", "Копьё");
     showAttackDialog(attacker({ items: [spear, training], meleeStance: "rapidstrike" }), spear);
     const html = captured.dialog.content;
+    expect(html).toMatch(/name="atk-stance" value="rapidstrike"/);
     expect(html).not.toMatch(/name="atk-stance" value="rapidstrike"[^>]*disabled/);
-    // Актор уже в Частоколе при открытии окна — Натиск сразу недоступен.
-    expect(html).toMatch(/name="atk-base" value="charge"[^>]*disabled/);
+    // Актор уже в Частоколе при открытии окна — Натиск недоступен и не текущий
+    // выбор (текущая База — Стандартная), поэтому пилюля скрыта совсем.
+    expect(html).not.toMatch(/name="atk-base" value="charge"/);
+  });
+
+  it("Частокол — исключение из «мягкого» пропуска: без meleeCategory всё равно скрыт", () => {
+    // В отличие от Приёмов (categoryOk = ... || !meleeCategory), Частокол
+    // требует реальную геометрию древкового оружия — неизвестная категория
+    // (данные ещё не пришли из пака) не должна предлагать его как попало.
+    const sword = weaponFor({ weaponClass: "melee" });   // meleeCategory не задан
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    expect(captured.dialog.content).not.toMatch(/name="atk-stance" value="rapidstrike"/);
+  });
+
+  it("Профиль меняет категорию оружия (стр. 14) — Приём/Стойка пересчитываются под альт-профиль", () => {
+    // «Психокостяная Алебарда»-подобное оружие: основная категория «Глефа»,
+    // альт-профиль «Посох» (метка профиля и есть категория этой «головы»).
+    const halberd = weaponFor({
+      weaponClass: "melee", meleeCategory: "Глефа", grips: "2р (Бл)",
+      profiles: [{ label: "Посох", damage: "1d10+1" }]
+    }, { name: "Психокостяная Алебарда" });
+    const trainGlefa = talentFor("Melee Training / Рукопашная Тренировка", "Глефа");
+    const trainPosoh = talentFor("Melee Training / Рукопашная Тренировка", "Посох");
+    const actor = attacker({ items: [halberd, trainGlefa, trainPosoh] });
+
+    // Основной профиль — категория «Глефа»: Оглушить (Булава/Кистень/Кулаки/
+    // Молот/Посох/Щит) недоступен, Частокол (Глефа/Копьё/Штык) — доступен.
+    showAttackDialog(actor, halberd);
+    let html = captured.dialog.content;
+    expect(html).not.toMatch(/name="atk-maneuver" value="stun"/);
+    expect(html).toMatch(/name="atk-stance" value="rapidstrike"/);
+
+    // Профиль «Посох» (idx 0) — категория меняется на «Посох»: наоборот,
+    // Оглушить доступен, а Частокол больше не подходит категории.
+    resetCaptured();
+    showAttackDialog(actor, halberd, { profileIdx: 0 });
+    html = captured.dialog.content;
+    expect(html).toMatch(/name="atk-maneuver" value="stun"/);
+    expect(html).not.toMatch(/name="atk-stance" value="rapidstrike"/);
+  });
+
+  it("Профиль с requiresCapability (Unarmed Warrior, стр. 40) скрыт без нужной способности", () => {
+    const fist = weaponFor({
+      weaponClass: "melee", meleeCategory: "Кулаки", grips: "1р",
+      profiles: [{ label: "Unarmed Warrior", damage: "1d10", requiresCapability: "unarmed.warriorProfile" }]
+    }, { name: "Fist / Удар кулаком" });
+    showAttackDialog(attacker({ items: [fist] }), fist);
+    expect(captured.dialog.content).not.toMatch(/name="atk-profile" value="0"/);
+
+    resetCaptured();
+    registerRuleSource("test", () => [{ id: "a", label: "Тест",
+      effects: [{ kind: "grantFlag", target: "unarmed.warriorProfile" }] }]);
+    showAttackDialog(attacker({ items: [fist] }), fist);
+    const html = captured.dialog.content;
+    expect(html).toMatch(/name="atk-profile" value="0"/);
+    expect(html).not.toMatch(/name="atk-profile" value="0"[^>]*disabled/);
+  });
+
+  it("Приём завязан на текущую Базу (стр. 14) — Оглушить доступен только с совместимой Базой", () => {
+    // Оглушить: «База: Стандартная Атака, Натиск, Полная Атака» (MELEE_MANEUVERS.stun.bases).
+    const hammer = weaponFor({ weaponClass: "melee", meleeCategory: "Молот" });
+    const training = talentFor("Melee Training / Рукопашная Тренировка", "Молот");
+    showAttackDialog(attacker({ items: [hammer, training], meleeBase: "careful" }), hammer);
+    expect(captured.dialog.content).not.toMatch(/name="atk-maneuver" value="stun"/);
+
+    resetCaptured();
+    showAttackDialog(attacker({ items: [hammer, training], meleeBase: "standard" }), hammer);
+    const html = captured.dialog.content;
+    expect(html).toMatch(/name="atk-maneuver" value="stun"/);
+    expect(html).not.toMatch(/name="atk-maneuver" value="stun"[^>]*disabled/);
+  });
+
+  it("Приём без bases (Захват) доступен при любой Базе", () => {
+    const claws = weaponFor({ weaponClass: "melee", meleeCategory: "Когти" });
+    const training = talentFor("Melee Training / Рукопашная Тренировка", "Когти");
+    showAttackDialog(attacker({ items: [claws, training], meleeBase: "careful" }), claws);
+    expect(captured.dialog.content).toMatch(/name="atk-maneuver" value="grapple"/);
+  });
+
+  it("Стойка — только в пешем бою (стр. 15): верхом доступна только Стандартная", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword], mount: { uuid: "Actor.mount-1" } }), sword);
+    expect(captured.dialog.content).not.toMatch(/name="atk-stance" value="aggressive"/);
+
+    resetCaptured();
+    showAttackDialog(attacker({ items: [sword] }), sword);   // не верхом
+    const html = captured.dialog.content;
+    expect(html).toMatch(/name="atk-stance" value="aggressive"/);
+    expect(html).not.toMatch(/name="atk-stance" value="aggressive"[^>]*disabled/);
   });
 
   it("Защитная Стойка без щита блокирует бросок; со щитом — нет", async () => {
@@ -529,9 +657,64 @@ describe("Арсенал: доступность Стойки/Хвата/Баз�
   });
 });
 
+describe("метка профиля — не категория (стр. 14)", () => {
+  // «Unarmed Warrior», «Подавительный», «Булава (нимб втянут)» — метки
+  // профилей, которых нет в MELEE_CATEGORIES: они не «другая голова» оружия
+  // и не должны давать trained:false с ложным замком на Приёмы/Стойки.
+  // Неизвестная метка трактуется как пустая категория — мягкий пропуск.
+  it("профиль с неизвестной меткой не запирает тренировку", () => {
+    const sword = weaponFor({ weaponClass: "melee", meleeCategory: "Меч",
+      profiles: [{ label: "Подавительный", damage: "1d10" }] });
+    // Без Melee Training (Меч): основной профиль честно заперт…
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    expect(captured.dialog.content).toContain("Без Тренировки (Меч)");
+
+    // …а альт-профиль с меткой-не-категорией — нет: категория неизвестна,
+    // фильтр не применяется (тот же приём, что у предмета без meleeCategory).
+    resetCaptured();
+    showAttackDialog(attacker({ items: [sword] }), sword, { profileIdx: 0 });
+    const html = captured.dialog.content;
+    expect(html).not.toContain("Без Тренировки");
+    expect(html).toMatch(/name="atk-stance" value="aggressive"/);
+  });
+});
+
+describe("недоступный, но отмеченный вариант не уходит в бросок", () => {
+  // readAttackForm читает :checked независимо от disabled — если смена Базы
+  // сделала выбранный Приём недоступным, он сбрасывается на standard и в
+  // перерисованных пилюлях, и в самом броске (resolveSelectionSafe).
+  it("смена Базы делает выбранный Приём недоступным — в форме standard", async () => {
+    // Оглушить: «База: Стандартная/Натиск/Полная» — с Осторожной несовместим.
+    const hammer   = weaponFor({ weaponClass: "melee", meleeCategory: "Молот" });
+    // getFlag нужен конвейеру броска (поиск «сдвинуть место попадания»).
+    const training = { ...talentFor("Melee Training / Рукопашная Тренировка", "Молот"),
+      getFlag: () => undefined };
+    const p = showAttackDialog(attacker({ items: [hammer, training], meleeBase: "standard" }), hammer);
+
+    const pillsEl = { innerHTML: "" };
+    const form = attackForm({
+      "#atk-char": "ws",
+      "input[name='atk-base']:checked": "careful",
+      "input[name='atk-maneuver']:checked": "stun",
+      "#atk-maneuver-pills": pillsEl,
+      "#atk-total-display": textNode(), ".av-adv-hint": textNode()
+    });
+    captured.rerender(form);
+
+    // Перерисованные пилюли Приёма: Оглушить исчез, отмечена Обычная Атака.
+    expect(pillsEl.innerHTML).toMatch(/value="standard" checked/);
+    expect(pillsEl.innerHTML).not.toContain('value="stun"');
+
+    // И бросок с той же формой уходит с Приёмом «Обычная Атака», не «Оглушить».
+    await captured.press("roll", form);
+    expect(captured.chat.at(-1).content).not.toContain("Оглушить");
+    await p;
+  });
+});
+
 describe("приём без оружия", () => {
   const kick = { label: "Пинок", wsBonus: -10, damage: "1d5-1+S.b",
-                 damageAstartes: "1d10+2+S.b", damageType: "impact", pen: 0 };
+                 damageType: "impact", pen: 0 };
 
   it("порог собирается из WS, приёма, стойки и усталости", async () => {
     captured.dice = [30, 4];
@@ -563,20 +746,6 @@ describe("приём без оружия", () => {
     const card = captured.chat.at(-1).content;
     expect(card).toContain('data-damage="6"');
     expect(card).toContain("Применить урон: 6 → Торс");
-    expect(card).not.toContain("профиль Астартес");
-  });
-
-  it("правило «профиль Астартес» переключает формулу удара", async () => {
-    clearRuleSources();
-    registerRuleSource("test", () => [{ id: "a", label: "Астартес",
-      effects: [{ kind: "grantFlag", target: "unarmed.astartesProfile" }] }]);
-    captured.dice = [10, 8];
-    await showAttackDialogNoWeapon(attacker(), kick);
-
-    // 1d10+2+S.b: 8 + 2 + 4 = 14.
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain('data-damage="14"');
-    expect(card).toContain("профиль Астартес");
   });
 });
 
@@ -687,7 +856,7 @@ describe("Локус Сокрушения: раз в Раунд База «По�
 
   describe("голыми руками (showAttackDialogNoWeapon)", () => {
     const kick = { label: "Пинок", wsBonus: -10, damage: "1d5-1+S.b",
-                   damageAstartes: "1d10+2+S.b", damageType: "impact", pen: 0 };
+                   damageType: "impact", pen: 0 };
 
     it("подменяет Базу на «Полная Атака» (+30 вместо +10)", async () => {
       globalThis.game.combat = { round: 1 };

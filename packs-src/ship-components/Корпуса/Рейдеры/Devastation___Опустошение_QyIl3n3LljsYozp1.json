@@ -1,29 +1,18 @@
 {
   "name": "Devastation / Опустошение",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "aIu3pJTuNwSeYJoY",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Рейдеры",
     "sp": 60,
     "rarity": 0,
     "quality": "common",
     "qualityPicks": [],
     "qualityCustom": false,
-    "hulls": "",
     "aspects": "In-build: Ангар системы Опустошение (ПБ и ЛБ), 2/2",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "status": "intact",
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -37,24 +26,16 @@
       "spaceMax": 75,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "НП1, ПБ2, ЛБ2",
+      "weaponCapacity": "НП1, ЛБ2, ПБ2",
       "hullIntegrity": 70
     },
     "chars": {
       "speed": 7,
-      "manoeuvrability": 10,
+      "manoeuvrability": 5,
       "detection": 10,
       "voidShields": 0,
-      "armour": 25,
+      "armour": 20,
       "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "QyIl3n3LljsYozp1",

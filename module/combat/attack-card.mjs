@@ -34,8 +34,12 @@ export function jamCard({ weaponName = "", rv = 0, blocks = {} } = {}) {
         </div>`;
 }
 
-/** Строки «Попадание N — урон — место» с Экстремальным уроном под каждой. */
-function hitLines(hits) {
+/**
+ * Строки «Попадание N — урон — место» с Экстремальным уроном под каждой.
+ * Взрывное: каждое попадание очереди — отдельный шаблон (см. правило ниже),
+ * поэтому подписывается «Взрыв N», а не «Попадание N».
+ */
+function hitLines(hits, { blastRating = 0 } = {}) {
   return hits.map((d, i) => {
     const extStr = d.hasExtreme ? `
       <div class="roll-extreme-block">
@@ -48,8 +52,9 @@ function hitLines(hits) {
       ? `<span class="roll-bonus-dice">+${d.deflagrateNote} выгор.</span>` : "";
     const msStr = d.msPenalty
       ? `<span class="roll-hit-pen">−${d.msPenalty} мульти-удар</span>` : "";
+    const idxLabel = blastRating > 0 ? `Взрыв ${i + 1}` : `Попадание ${i + 1}`;
     return `<div class="roll-hit-line">
-      <span class="roll-hit-idx">Попадание ${i + 1}</span>
+      <span class="roll-hit-idx">${idxLabel}</span>
       <span class="roll-hit-dmg">${d.total}</span>
       <span class="roll-hit-loc">${d.loc}</span>
       ${bonusStr || deflStr || msStr ? `<span class="roll-hit-extra">${bonusStr}${deflStr}${msStr}</span>` : ""}
@@ -97,7 +102,8 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     data-melee="${isMelee ? 1 : 0}"
     data-burst="${burst ? 1 : 0}"
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
-    Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}
+    Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
+      wp.blastRating > 0 ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}
   </button>`;
   }).join("");
   return `
@@ -109,7 +115,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
 
 /** Кнопки защиты цели. Уклонение и Парирование гасятся приёмом или Гибким. */
 function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, deg }) {
+                          forcedDefenceReroll = "" }, { wp, deg, attackerUuid = "" }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
   return `
@@ -128,7 +134,7 @@ function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, n
           ? `<button class="wh-parry-btn wh-dodge-disabled" disabled>
                Парирование (невозможно${wp.flexible ? " — Гибкое" : ""})
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-attack-deg="${deg}" data-force-reroll="${forcedDefenceReroll}">
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-attack-deg="${deg}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
@@ -218,11 +224,19 @@ export function attackCard({
     ? `, S.b +${sbEff}${wp.mightySB ? " (Могучее ×2)" : wp.containedSB ? " (Сдержанное)" : ""}${sbHalf ? " (½ хват)" : ""}`
     : "";
   const taintedNote = taintedAdd ? `, Порча +${taintedAdd}` : "";
+  // Общее напоминание о свойстве Взрывное едет отдельным блоком (blocks.props/
+  // targetEffects — module/combat/weapon-properties.mjs); здесь — только то, что
+  // касается именно ЭТОЙ очереди попаданий (несколько шаблонов из одной атаки).
+  const blastNote = (wp.blastRating > 0 && hits.length > 1) ? `
+    <div class="roll-wprop-note">
+      💥 Каждый Взрыв этой очереди — отдельный шаблон, размещается до Уклонения.
+    </div>` : "";
   const damageSection = hits.length ? `
     <div class="roll-damage-section">
       <div class="roll-section-head">Урон</div>
       <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${sbNote}${taintedNote}</div>
-      ${hitLines(hits)}
+      ${blastNote}
+      ${hitLines(hits, { blastRating: wp.blastRating })}
     </div>` : "";
 
   const tech = notes.technique || {};
@@ -277,6 +291,13 @@ export function attackCard({
         ${notes.shelter ? `<div class="roll-wprop-note horde-shelter-note">🛡️ ${notes.shelter}</div>` : ""}
         ${locShift ? locShiftSection(locShift, actorName) : ""}
         ${notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : ""}
+        ${notes.blastScatter ? `
+    <div class="roll-allout-note">
+      💥 Взрыв мимо цели — смещение <b>${notes.blastScatter.distance}м</b>
+      ${notes.blastScatter.dir.icon} <b>${notes.blastScatter.dir.label}</b>
+      (роза, направление ${notes.blastScatter.dir.n}/8) от точки прицела.
+      Радиус взрыва <b>${notes.blastScatter.radius}м</b> — проверьте, не задело ли исходную цель или тех, кто рядом.
+    </div>` : ""}
         ${notes.mount ? `<div class="roll-aim-note">${notes.mount}</div>` : ""}
         ${damageSection}
         ${notes.maximal
@@ -297,7 +318,7 @@ export function attackCard({
       <summary>Показать кубы</summary>
       ${blocks.dice}
     </details>` : ""}
-        ${hit ? defenseSection(defense, { wp, deg }) : ""}
+        ${hit ? defenseSection(defense, { wp, deg, attackerUuid }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,
                                                 attackerUuid, hordeHits })}

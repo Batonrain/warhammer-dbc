@@ -7,6 +7,13 @@ import { rollIcon }       from "../constants/roll-icons.mjs";
 import { pickReroll }     from "../rules/reroll-pick.mjs";
 import { fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { disabledArmourPenalty } from "./armor-mods.mjs";
+import { hasRuleFlag }    from "../rules/flags.mjs";
+import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
+import { equippedMeleeWeapon } from "./equipped-melee.mjs";
+
+// Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
+// тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
+export const COUNTER_ATTACK_CAPABILITY = "technique.counterAttack";
 
 export async function _performDodge(actor, extraMod = 0, attackDeg = null, forcedReroll = "") {
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
@@ -84,15 +91,14 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null, force
   await ChatMessage.create(messageData);
 }
 
-export async function _performParry(actor, extraMod = 0, attackDeg = null) {
+export async function _performParry(actor, extraMod = 0, attackDeg = null, attackerUuid = "") {
   const wsTotal    = actor.system.characteristics.ws?.total ?? 0;
   const parrySkill = actor.system.skills?.parry;
   const rankBonus  = SKILL_RANKS[parrySkill?.rank ?? "untrained"]?.bonus ?? -20;
 
-  const meleeWeapon = actor.items.find(i =>
-    i.type === "weapon" && i.system.equipped &&
-    (i.system.weaponClass === "melee" || i.system.weaponClass === "thrown")
-  );
+  // Интегральные атаки (кулак/пинок) надеты всегда — без фильтра они
+  // перехватывали бы парирование у настоящего оружия (см. equipped-melee.mjs).
+  const meleeWeapon = equippedMeleeWeapon(actor);
 
   // Эффекты модификаций парирующего оружия (баланс, Защитное/Power Field и т.п.)
   const modFx      = getModEffects(actor, meleeWeapon);
@@ -189,10 +195,26 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null) {
       </div>`;
   }
 
+  // Контратака (стр. 12, Талант Counter Attack): «успешно Парировав, персонаж
+  // может тут же атаковать этим же оружием со штрафом −10, раз в Раунд» — по
+  // выбору игрока, поэтому кнопка, а не авто-атака. Без активного Combat
+  // isRoundCapabilityAvailable считает её всегда доступной (раунд отследить
+  // нечем) — тот же приём, что у Локуса Сокрушения.
+  const counterAttackHtml = (parried && meleeWeapon
+      && hasRuleFlag(actor, COUNTER_ATTACK_CAPABILITY)
+      && isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY))
+    ? `<div class="roll-defense-section">
+         <button class="wh-counter-attack-btn" type="button"
+           data-weapon-id="${meleeWeapon.id}" data-attacker-uuid="${attackerUuid}">
+           ${rollIcon("sword")}Контратака (−10)
+         </button>
+       </div>`
+    : "";
+
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
-      <div class="wh-roll-result">
+      <div class="wh-roll-result" data-actor-uuid="${actor.uuid}">
         <div class="roll-header">${rollIcon("sword")}Парирование — ${esc(actor.name)}</div>
         <div class="roll-threshold">
           WS: <b>${wsTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
@@ -208,6 +230,7 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null) {
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${outcomeHtml}</div>
         ${powerFieldNote}
+        ${counterAttackHtml}
       </div>`,
     rolls: allRolls, sound: CONFIG.sounds.dice
   }, rollMode));

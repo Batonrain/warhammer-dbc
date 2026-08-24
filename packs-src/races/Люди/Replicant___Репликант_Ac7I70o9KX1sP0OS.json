@@ -1,7 +1,7 @@
 {
   "name": "Replicant / Репликант",
   "type": "race",
-  "img": "icons/svg/oak.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-core/Replicant.webp",
   "folder": "r25Oz24EUTucQ8Be",
   "system": {
     "key": "replicant",
@@ -1094,6 +1094,45 @@
               "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/gear.svg",
               "equipQuality": "common",
               "equipMaxAvailability": 5
+            }
+          ]
+        },
+        {
+          "id": "kQc2uNbEFeWVUT9w",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "vqwYIV5P5eoSjjvf",
+              "kind": "integralAttack",
+              "group": null,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.89mS3BzjUKrGFRdH",
+              "equipSourceName": "Fist / Удар кулаком",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "equipCategoryPack": "weapons",
+              "equipMode": "direct",
+              "equipQty": 1
+            },
+            {
+              "id": "9g1XnPNMjqUbd4Fx",
+              "kind": "integralAttack",
+              "group": null,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.U2TAAlVnZpdRQscO",
+              "equipSourceName": "Kick / Пинок",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "equipCategoryPack": "weapons",
+              "equipMode": "direct",
+              "equipQty": 1
+            },
+            {
+              "id": "e04LK2RqgbhvnWdk",
+              "kind": "integralAttack",
+              "group": null,
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.xP2os46ZgH3HqoGj",
+              "equipSourceName": "Headbutt / Удар головой",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "equipCategoryPack": "weapons",
+              "equipMode": "direct",
+              "equipQty": 1
             }
           ]
         }

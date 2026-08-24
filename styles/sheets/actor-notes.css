@@ -12,6 +12,13 @@
 
 /* ── Происхождение Аэльдари (Мир-Корабль / Корсарская Банда) ── */
 .warhammer-dbc .aeldari-origin-panel .origin-grid { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+
+/* ── Родной мир и Предсказание (переехали из шапки) ── */
+.warhammer-dbc .homeworld-panel .origin-grid { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Стремления (переехали из шапки): три слота в ряд, переносятся при узком окне ── */
+.warhammer-dbc .notes-aspir-row { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 8px; }
+.warhammer-dbc .notes-aspir-row .header-cell-aspir { flex: 1 1 220px; min-width: 180px; }
 .warhammer-dbc .origin-row { display: flex; align-items: center; gap: 8px; }
 .warhammer-dbc .origin-label { flex: 0 0 130px; font-weight: bold; font-size: 0.88em; color: var(--wh-text); }
 .warhammer-dbc .origin-select {
@@ -121,12 +128,6 @@
 .warhammer-dbc prose-mirror.notes-textarea button.toggle:enabled { display: block; }
 .warhammer-dbc prose-mirror.notes-textarea .editor-content { padding: 6px 8px; }
 /* ── Легион / орден Астартес (вкладка Записи) ── */
-.warhammer-dbc .legion-info { display: flex; flex-direction: column; gap: 5px; padding: 7px 9px; }
-.warhammer-dbc .legion-info-title { font-weight: bold; font-size: 0.95em; color: var(--wh-text-dark, #2a1a0a); border-bottom: 1px solid var(--wh-border-light); padding-bottom: 3px; }
-.warhammer-dbc .legion-block { font-size: 0.86em; line-height: 1.4; color: var(--wh-text); }
-.warhammer-dbc .legion-block-key { font-weight: bold; color: var(--wh-panel-mid); }
-.warhammer-dbc .legion-block.legion-curse .legion-block-key { color: #8a2bbf; }
-.warhammer-dbc .legion-block.legion-parent { font-size: 0.8em; opacity: 0.82; border-top: 1px dashed var(--wh-border-light); padding-top: 4px; margin-top: 2px; }
 
 /* Кнопка «Применить легион/орден» */
 .warhammer-dbc .legion-apply-btn {
@@ -146,8 +147,7 @@
 }
 .warhammer-dbc .status-checks input[type="checkbox"] { width: 14px; height: 14px; }
 
-/* ── Строка «Фактор Прибыли» в таблице характеристик ── */
-.warhammer-dbc .char-pf-row .char-pf-dash { text-align: center; opacity: 0.6; }
+/* ── Ячейка «Фактор Прибыли» в сетке характеристик ── */
 .warhammer-dbc .char-pf-input {
   width: 52px; text-align: center; font-weight: bold;
   background: var(--wh-input-bg, #0c2418); color: #eafff4;

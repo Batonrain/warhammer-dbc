@@ -10,9 +10,7 @@ import { MELEE_STANCES, MELEE_BASES }                from "../constants/combat.m
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { isAeldariRace }                             from "../apps/race-library.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
-import { buildLegionOptions, getLegion,
-         buildChapterOptions, getChapter,
-         buildCultureLegionOptions, resolveCulture }  from "../constants/legions.mjs";
+import { getLegion, getChapter }               from "../constants/legions.mjs";
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/disciplines.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
@@ -355,27 +353,39 @@ export function buildGetData(actor) {
   context.characteristics = CHARACTERISTICS;
 
   // ── Навыки ────────────────────────────────────────────────────────────────
-  const skillKeys = Object.keys(SKILLS_DEF);
-  const half      = Math.ceil(skillKeys.length / 2);
-  context.skillsCol1 = skillKeys.slice(0, half).map(k => buildSkillDisplay(k, system));
-  context.skillsCol2 = skillKeys.slice(half).map(k  => buildSkillDisplay(k, system));
+  // Четыре колонки вместо двух — базовые Навыки почти все умещаются в один
+  // экран без прокрутки. Размер колонки почти ровный (21 Навык → 6/5/5/5),
+  // остаток уходит в первые колонки.
+  const skillKeys    = Object.keys(SKILLS_DEF);
+  const SKILL_COLS    = 4;
+  const skillColBase = Math.floor(skillKeys.length / SKILL_COLS);
+  const skillColRem  = skillKeys.length % SKILL_COLS;
+  const skillCols = [];
+  for (let c = 0, idx = 0; c < SKILL_COLS; c++) {
+    const size = skillColBase + (c < skillColRem ? 1 : 0);
+    skillCols.push(skillKeys.slice(idx, idx + size).map(k => buildSkillDisplay(k, system)));
+    idx += size;
+  }
+  [context.skillsCol1, context.skillsCol2, context.skillsCol3, context.skillsCol4] = skillCols;
 
-  context.groupSkillsDisplay = [];
-  for (const [groupKey, entries] of Object.entries(system.groupSkills || {})) {
-    const def = GROUP_SKILLS_DEF[groupKey];
-    if (!def || !Array.isArray(entries) || entries.length === 0) continue;
-    entries.forEach((entry, idx) => {
-      context.groupSkillsDisplay.push({
-        groupKey,
-        entryIndex:     idx,
-        specialty:      entry.specialty,
-        label:          `${def.label}: ${entry.specialty}`,
-        groupLabel:     def.label,
-        isFirstInGroup: idx === 0,
-        rank:           entry.rank,
-        total:          entry.total ?? -20,
-        tip:            skillTip(def, `${def.label}: ${entry.specialty}`)
-      });
+  // Групповые навыки (Знания/Языки/Ремёсла и т.п.) — своя плитка на каждую
+  // группу (заголовок + список специализаций), а не одна общая колонка со
+  // сплошным перечнем: пустые группы вовсе не рисуются. Порядок плиток — по
+  // GROUP_SKILLS_DEF, а не по порядку ключей в system.groupSkills (тот зависит
+  // от того, в каком порядке специализации заводились на листе).
+  context.skillGroupBoxes = [];
+  for (const [groupKey, def] of Object.entries(GROUP_SKILLS_DEF)) {
+    const entries = system.groupSkills?.[groupKey];
+    if (!Array.isArray(entries) || entries.length === 0) continue;
+    context.skillGroupBoxes.push({
+      groupKey,
+      label: def.label,
+      entries: entries.map((entry, idx) => ({
+        entryIndex: idx,
+        specialty:  entry.specialty,
+        total:      entry.total ?? -20,
+        tip:        skillTip(def, `${def.label}: ${entry.specialty}`)
+      }))
     });
   }
 
@@ -727,7 +737,7 @@ export function buildGetData(actor) {
     const impl = buildImplantsSvg(bodyState, system.bodyType || "male");
 
     context.body = {
-      layers:        buildBodyLayers(bodyState, system.bodyType || "male"),
+      layers:        buildBodyLayers(bodyState, system.bodyType || "male", system.race),
       implantsBack:  impl.back,
       implantsFront: impl.front,
       skinColor:     bodyState.overlays.skin ? implantCatColor(bodyState.overlays.skin) : "",
@@ -997,16 +1007,12 @@ export function buildGetData(actor) {
   // ── Геносемя (для Астартес) ─────────────────────────────────────────────────
   context.isAstartes      = system.race === "astartes";
   context.geneSeedOrigin  = system.geneSeed?.origin || "";
-  context.legionOptions   = buildLegionOptions(system.geneSeed?.legion || "");
+  // Селекты панели «Происхождение и легион» ушли вместе с панелью — легион и
+  // культура задаются мастером создания (character-wizard.mjs, у него свои
+  // options-билдеры). Здесь остаётся только то, что читает шапка.
   context.selectedLegion  = getLegion(system.geneSeed?.legion || "");
-  context.chapterOptions  = buildChapterOptions(system.geneSeed?.legion || "", system.geneSeed?.chapter || "");
   context.selectedChapter = getChapter(system.geneSeed?.legion || "", system.geneSeed?.chapter || "");
-  // Культура — независимый выбор (можно перенять у другого легиона, стр. 489-506)
-  context.cultureLegionOptions  = buildCultureLegionOptions(system.geneSeed?.cultureLegion || "");
-  context.cultureChapterOptions = buildChapterOptions(system.geneSeed?.cultureLegion || "", system.geneSeed?.cultureChapter || "");
-  context.hasCultureOverride    = !!system.geneSeed?.cultureLegion;
-  context.resolvedCulture       = system.geneSeed?.cultureLegion
-    ? resolveCulture(system.geneSeed.cultureLegion, system.geneSeed?.cultureChapter) : null;
+  context.hasCultureOverride = !!system.geneSeed?.cultureLegion;
   // Применены ли уже расовые Черты (для подсказки кнопки)
   context.hasGeneSeedTrait = allItems.some(i => i.type === "trait" && /Gene-Seed|Геносемя/i.test(i.name));
 

@@ -11,6 +11,7 @@
 // и от переопределяемых им путей — Очки Бесчестия у Демон-Принца.
 
 import { CHARACTERISTICS }                       from "../constants/characteristics.mjs";
+import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
 import { aptitudeCat, charAptitudeSet,
          CHAR_APTITUDES }                        from "../constants/advancement.mjs";
 import { fateTerm }                              from "../helpers/utils.mjs";
@@ -33,20 +34,19 @@ import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
+import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
+
+/**
+ * Есть ли у актора Элитный архетип с этим именем — предметом, строкой в шапке
+ * (`system.eliteArchetype`) или в списке дополнительных (`eliteArchetypesExtra`).
+ * Тот же трёхисточниковый пример, что и в sheets/item-picker.mjs (talentGroupLock):
+ * архетип бывает и предметом (куплен пикером), и строкой (вписан руками/со
+ * старого листа) — обе формы должны отпирать одно и то же.
+ */
 import { divinationSheetContext }                from "../apps/divinations.mjs";
 import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
-import { MELEE_STANCES, MELEE_BASES,
-         MELEE_MANEUVERS, MELEE_CONTESTS }        from "../constants/combat.mjs";
-
-// "WS +10" / "WS −20" — модификатор Приёма как короткая метка на кнопке
-// (templates/actor/parts/tab-combat.hbs, .tech-mod). Состязания используют
-// свой modLabel ("WS vs WS" / "Ath vs Ath") — это не WS-модификатор, а тип
-// встречного теста, wsBonus у них всегда 0 и ничего не говорит игроку.
-function wsModLabel(bonus) {
-  const n = Number(bonus) || 0;
-  return n < 0 ? `WS −${Math.abs(n)}` : `WS +${n}`;
-}
+import { MELEE_BASES, MELEE_CONTESTS }           from "../constants/combat.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -61,27 +61,31 @@ export function characterContext(actor) {
   // ── Архетип (шапка): селектор из компендиума, только доступные текущей расе ──
   context.archetype = archetypeSheetContext(actor);
 
-  // ── Бой: Стойка/База/Приёмы — метки и карточки читаются прямо из
-  // MELEE_STANCES/MELEE_BASES/MELEE_MANEUVERS/MELEE_CONTESTS (combat.mjs),
-  // а не дублируются здесь и в hbs по отдельности (см. doombc-stances-bases-book-accuracy,
-  // doombc-aggressive-stance-fix — тексты уже дважды расходились из-за дублирования).
-  const meleeStanceKey = system.meleeStance in MELEE_STANCES ? system.meleeStance : "standard";
-  const meleeBaseKey   = system.meleeBase   in MELEE_BASES   ? system.meleeBase   : "standard";
-  context.combatStanceLabel = MELEE_STANCES[meleeStanceKey].label;
-  context.combatBaseLabel   = MELEE_BASES[meleeBaseKey].label;
-
-  context.combatStanceOptions = Object.entries(MELEE_STANCES).map(([key, s]) => ({
-    key, label: s.label, desc: s.shortDesc, active: key === meleeStanceKey
-  }));
-  context.combatBaseOptions = Object.entries(MELEE_BASES).map(([key, b]) => ({
-    key, label: b.label, desc: b.shortDesc, active: key === meleeBaseKey
-  }));
-  context.combatManeuverOptions = Object.entries(MELEE_MANEUVERS).map(([key, m]) => ({
-    key, label: m.label, modLabel: wsModLabel(m.wsBonus)
-  }));
-  context.combatContestOptions = Object.entries(MELEE_CONTESTS).map(([key, c]) => ({
-    key, label: c.label, modLabel: c.modLabel
-  }));
+  // ── Бой: Состязания — Стойка/База/обычные Приёмы теперь выбираются прямо в
+  // диалоге атаки (module/sheets/attack-dialog.mjs) и своей постоянной панели
+  // на листе больше не имеют. Состязания (Повалить/Финт/Давление/Напролом) в
+  // диалог не переехали — это отдельный встречный тест без диалога атаки
+  // вовсе (module/combat/techniques.mjs, _showContestDialog), поэтому свою
+  // панель на вкладке БОЙ сохраняют: без неё их вообще нечем запустить.
+  const meleeBaseKey  = system.meleeBase in MELEE_BASES ? system.meleeBase : "standard";
+  // Тот же экипированный рукопашный/метательный предмет, что берёт клик по
+  // кнопке Состязания (module/sheets/tabs/combat.mjs) — его категория решает,
+  // какие кнопки показывать (Повалить книгой ограничен Оружием и Базой, стр.
+  // 14). Без экипированного рукопашного оружия категория неизвестна — тот же
+  // «мягкий» пропуск, что и в диалоге атаки.
+  // Интегральные атаки (кулак/пинок) надеты всегда — берутся только фолбэком
+  // (см. equipped-melee.mjs), иначе категория «Кулаки» затирала бы меч.
+  const meleeItem     = equippedMeleeWeapon(actor);
+  const meleeCategory = meleeItem?.system?.meleeCategory || "";
+  // Финт/Давление/Напролом книгой в этом разделе не ограничены (приходят из
+  // Талантов, у которых своих ограничений в этом коде нет) — только Повалить.
+  context.combatContestOptions = Object.entries(MELEE_CONTESTS)
+    .filter(([key, c]) => {
+      const categoryOk = !c.categories || !meleeCategory || c.categories.includes(meleeCategory);
+      const baseOk     = !c.bases || c.bases.includes(meleeBaseKey);
+      return categoryOk && baseOk;
+    })
+    .map(([key, c]) => ({ key, label: c.label, modLabel: c.modLabel }));
 
   // ── Снаряжение: сенсор нагрузки (когитатор) ─────────────────────────────
   const _enc = system.encumbrance || {};
@@ -287,28 +291,56 @@ export function characterContext(actor) {
   if (context.isHaemonculus) context.haem = haemonculusContext(actor);
 
   // ── Одержимый (DoomBC_Core 129-132): синергия хоста и Двойного Духа ──────
-  context.possessed = context.isHeretic && !!system.possessed;
+  // Вкладка теперь отпирается ещё и Элитным архетипом «Одержимый» — не только
+  // ручным чекбоксом у Хаосита.
+  context.hasPossessedArchetype = hasEliteArchetype(actor, "Одержимый");
+  context.possessed = isPossessed(actor);
   if (context.possessed) context.possession = possessionContext(actor);
 
+  // ── Мистика (бывш. Пси): вкладка доступна всегда, но психосилы внутри
+  // показываем только Псайкерам (Черта) и Чернокнижникам (Элитный архетип) —
+  // остальным там теперь ещё и Ритуалы (переехали со СПОСОБНОСТЕЙ), которые
+  // от этого условия не зависят.
+  // system.isPsyker — канонический признак (его ставят архетипы Ведьмы и
+  // Псайкера-ренегата, мастер создания, азуриане); Черта «Псайкер» и
+  // Чернокнижник — дополнительные пути, у которых флага может не быть.
+  context.hasMysticPowers = !!system.isPsyker
+    || actor.items.some(i => i.type === "trait" && itemHasName(i, "Псайкер"))
+    || hasEliteArchetype(actor, "Чернокнижник");
+
+  // ── Тех: вкладка доступна ещё и по Черте «Импланты Механикум», не только
+  // по ручному чекбоксу «Техножрец».
+  context.hasMechImplants = actor.items.some(i => i.type === "trait" && itemHasName(i, "Импланты Механикум"));
+
   const _charApts = charAptitudeSet(system.aptitudes);
-  context.chars = Object.entries(CHARACTERISTICS).map(([key, meta]) => ({
-    key,
-    // Категория цены по склонностям (стр. 24) — для подсветки в «Развитии».
-    aptCat:       aptitudeCat(_charApts, CHAR_APTITUDES[key] || []),
-    label:        charLabel(key, system.alignment),
-    abbr:         meta.abbr,
-    base:         system.characteristics[key]?.base         ?? 0,
-    advance:      system.characteristics[key]?.advance      ?? 0,
-    supernatural: system.characteristics[key]?.supernatural ?? 0,
-    improvement:  system.characteristics[key]?.improvement  ?? "none",
-    grantedImp:   system.characteristics[key]?.grantedImp   ?? "none",
-    // Помечено ли улучшение как выданное архетипом/расой (кнопка ★).
-    isGranted:   (system.characteristics[key]?.grantedImp ?? "none") !== "none",
-    total:        system.characteristics[key]?.total        ?? 0,
-    bonus:        system.characteristics[key]?.bonus        ?? 0,
-    cost:         system.characteristics[key]?.cost         ?? 0,
-    charDamage:   system.charDamage?.[key]                  ?? 0
-  }));
+  context.chars = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
+    const total = system.characteristics[key]?.total ?? 0;
+    const bonus = system.characteristics[key]?.bonus ?? 0;
+    // Обычный Бонус, каким он был бы просто от Итога (floor/10) — если
+    // сохранённый Бонус отличается, значит его подняли Чертой/Талантом/
+    // Сверхъестественным и т.п., и на листе это стоит показать надстрочно.
+    const naturalBonus = Math.floor(total / 10);
+    return {
+      key,
+      // Категория цены по склонностям (стр. 24) — для подсветки в «Развитии».
+      aptCat:       aptitudeCat(_charApts, CHAR_APTITUDES[key] || []),
+      label:        charLabel(key, system.alignment),
+      abbr:         meta.abbr,
+      base:         system.characteristics[key]?.base         ?? 0,
+      advance:      system.characteristics[key]?.advance      ?? 0,
+      supernatural: system.characteristics[key]?.supernatural ?? 0,
+      improvement:  system.characteristics[key]?.improvement  ?? "none",
+      grantedImp:   system.characteristics[key]?.grantedImp   ?? "none",
+      // Помечено ли улучшение как выданное архетипом/расой (кнопка ★).
+      isGranted:   (system.characteristics[key]?.grantedImp ?? "none") !== "none",
+      total,
+      bonus,
+      naturalBonus,
+      bonusModified: bonus !== naturalBonus,
+      cost:         system.characteristics[key]?.cost         ?? 0,
+      charDamage:   system.charDamage?.[key]                  ?? 0
+    };
+  });
 
   context.absorption = system.absorption || {
     head: 0, body: 0, leftArm: 0, rightArm: 0,

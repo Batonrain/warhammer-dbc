@@ -15,11 +15,7 @@ const { showAttackDialog, beginTargeting } = vi.hoisted(() => ({
   beginTargeting:   vi.fn()
 }));
 
-vi.mock("../../module/sheets/attack-dialog.mjs", () => ({
-  showAttackDialog,
-  showAttackDialogWithTechnique: vi.fn(),
-  showAttackDialogNoWeapon: vi.fn()
-}));
+vi.mock("../../module/sheets/attack-dialog.mjs", () => ({ showAttackDialog }));
 vi.mock("../../module/combat/aim.mjs", () => ({ beginTargeting }));
 
 import { activateCombatListeners } from "../../module/sheets/tabs/combat.mjs";

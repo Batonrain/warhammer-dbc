@@ -38,7 +38,22 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "T3vQ7bXaqzR2mNsK",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "Wm4H9cLpXtY7jVfB",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "unarmed.warriorProfile",
+              "label": ""
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

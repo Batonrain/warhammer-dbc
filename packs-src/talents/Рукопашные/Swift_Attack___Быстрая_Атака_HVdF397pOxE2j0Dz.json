@@ -38,7 +38,22 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "9tKcR2wYbNq8mXvL",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "3jHpF6sVdE0xC4bQ",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "technique.swiftAttack",
+              "label": ""
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

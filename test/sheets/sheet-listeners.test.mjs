@@ -16,7 +16,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured, listenerHtml } from "../support/foundry-stub.mjs";
 import { weaponFor } from "../support/combat-fixtures.mjs";
 import { eliteRaceMatch } from "../../module/sheets/elite-picker.mjs";
-import { LEGIONS } from "../../module/constants/legions.mjs";
 
 // Динамический импорт: глобали Foundry должны быть на месте раньше листа.
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
@@ -68,9 +67,6 @@ function wire(sheet, nodes) {
   return html.handlers;
 }
 
-/** Дать отработать промисам обработчика, который ничего не возвращает. */
-const flush = () => new Promise(resolve => setTimeout(resolve, 0));
-
 const ev = (dataset = {}, value) => ({
   preventDefault: () => {}, stopPropagation: () => {},
   currentTarget: { dataset, value }
@@ -100,7 +96,7 @@ describe("лист навешивает слушатели вкладок", () =
       ".skill-rank-select:change", ".grant-toggle[data-talent]:click",  // РАЗВИТИЕ
       ".haem-advance-btn:click", ".haem-toggle-btn:click",              // ГЕМУНКУЛ
       ".elite-pick-btn:click", ".elite-add-btn:click",                  // шапка
-      ".stance-radio:change", ".base-radio:change", ".technique-btn:click", // БОЙ
+      ".technique-btn:click",                                           // БОЙ
       ".weapon-attack-roll:click", ".pain-absorb-btn:click",
       ".apt-char-add-btn:click", ".fatigue-add-btn:click"               // уже вынесенные
     ]) expect(handlers, key).toHaveProperty(key);
@@ -470,51 +466,16 @@ describe("вкладка БОЙ", () => {
     ...extra
   });
 
-  it("переключатель стойки пишет её в актора", async () => {
-    const sheet = sheetFor(fighter());
-    const handlers = wire(sheet);
-
-    await handlers[".stance-radio:change"](ev({}, "aggressive"));
-
-    expect(sheet.actor.updates[0]).toEqual({ "system.meleeStance": "aggressive" });
-  });
-
-  it("переключатель Базы пишет её в актора", async () => {
-    const sheet = sheetFor(fighter());
-    const handlers = wire(sheet);
-
-    await handlers[".base-radio:change"](ev({}, "charge"));
-
-    expect(sheet.actor.updates[0]).toEqual({ "system.meleeBase": "charge" });
-  });
-
-  it("состязательный приём открывает свой диалог, а не окно атаки", () => {
+  // Стойка/База/обычные Приёмы (Взмах, Выпад и т.д.) выбираются теперь прямо
+  // в диалоге атаки (test/sheets/attack-dialog.test.mjs) — своих кнопок на
+  // вкладке БОЙ у них больше нет. Кнопка .technique-btn осталась только для
+  // Состязаний (Повалить/Финт/Давление/Напролом, module/combat/techniques.mjs).
+  it("состязательный приём открывает свой диалог", () => {
     const handlers = wire(sheetFor(fighter()));
 
     handlers[".technique-btn:click"](ev({ technique: "knockdown" }));
 
     expect(captured.dialog.title).toBe("Повалить");
-  });
-
-  it("приём с надетым рукопашным оружием открывает окно атаки", async () => {
-    const blade = weaponFor({ weaponClass: "melee", equipped: true, damage: "1d10+3" },
-      { id: "w-1", name: "Цепной меч" });
-    blade.type = "weapon";                                   // приём ищет надетое среди оружия
-    const handlers = wire(sheetFor(fighter({ items: [blade] })));
-
-    handlers[".technique-btn:click"](ev({ technique: "sweep" }));
-    await flush();                                           // окно атаки собирается асинхронно
-
-    expect(captured.dialog.window.title).toBe("Атака: Цепной меч");
-  });
-
-  it("приём без оружия сразу бросает и сообщает в чат", async () => {
-    const handlers = wire(sheetFor(fighter()));
-
-    await handlers[".technique-btn:click"](ev({ technique: "sweep" }));
-
-    expect(captured.dialog).toBe(null);
-    expect(captured.chat.at(-1).content).toContain("Широкий Взмах");
   });
 
   it("кнопка атаки у оружия ближнего боя открывает окно сразу", () => {
@@ -688,40 +649,7 @@ describe("Применение расы, Прошлого и легиона", ()
     expect(traitNames().length).toBeGreaterThan(0);
   });
 
-  it("легион пересоздаёт свои Черты, убирая прежние", async () => {
-    const legion = LEGIONS.find(l => !l.curseChoices?.length);
-    const old = { id: "old-1", type: "trait", name: "Геносемя: прежний", system: { source: "Легион" } };
-    const sheet = sheetFor({ characteristics: {}, items: [old], geneSeed: { legion: legion.id } });
-
-    await actions.legionApply.call(sheet, ev());
-
-    expect(sheet.actor.deleted).toEqual(["old-1"]);
-    expect(traitNames().some(n => n.startsWith("Геносемя: "))).toBe(true);
-    expect(traitNames().some(n => n.startsWith("Культура: "))).toBe(true);
-  });
-
-  it("проклятье с вариантами спрашивает, и «Без проклятья» создаёт две Черты", async () => {
-    const legion = LEGIONS.find(l => l.curseChoices?.length);
-    const sheet = sheetFor({ characteristics: {}, geneSeed: { legion: legion.id } });
-
-    await actions.legionApply.call(sheet, ev());
-    expect(captured.dialog.buttons.c0.label).toBe(legion.curseChoices[0].name);
-
-    await captured.dialog.buttons.none.callback();
-    expect(traitNames().filter(n => n.startsWith("Проклятье: "))).toEqual([]);
-    expect(traitNames()).toHaveLength(2);                   // Геносемя + Культура
-  });
-
   // Слушатель ".race-select" (обнуление субрасы при смене расы) ушёл вместе с
   // activateRaceListeners и пока не восстановлен: селект в шапке до задачи со
   // слотами пишет ключ напрямую атрибутом name, без применения (wdbc-n1k).
-
-  it("без выбранного легиона кнопка объясняет порядок и ничего не создаёт", async () => {
-    const sheet = sheetFor({ characteristics: {}, geneSeed: {} });
-
-    await actions.legionApply.call(sheet, ev());
-
-    expect(captured.created).toEqual([]);
-    expect(captured.warnings).toHaveLength(1);
-  });
 });

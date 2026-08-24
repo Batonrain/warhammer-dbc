@@ -58,6 +58,8 @@ export const SHIP_PROPERTIES = {
                      desc:"Не требует пространства корпуса; уничтожается/повреждается только Критическим Попаданием." },
   fast:            { key:"fast", label:"Быстрый", en:"Fast (X)", rating:true, cat:"char",
                      desc:"+X к Скорости корабля.", auto:{ charKey:"speed", per:1 } },
+  fasterThanLight: { key:"fasterThanLight", label:"Быстрее света", en:"Faster Than Light (X)", rating:true, cat:"misc",
+                     desc:"Позволяет путешествовать между системами вне Варпа без Варп-двигателя; длительность пути — как при варп-странствии, умноженная на X." },
   flickeringShield:{ key:"flickeringShield", label:"Мерцающий щит", en:"Flickering Shield", cat:"misc",
                      desc:"Когда щит отменяет попадание — 1d10; на 3 и менее щит локально перегружается и не отменяет." },
   fragileCraft:    { key:"fragileCraft", label:"Хрупкое Судно", en:"Fragile Craft", cat:"misc",

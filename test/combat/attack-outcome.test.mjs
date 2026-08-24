@@ -68,9 +68,19 @@ describe("hitCount", () => {
     const swift     = hitCount({ hit: true, isMelee: true, rofMode: "melee", deg: 5, wp: noProps, sys: {}, isSwift: true });
     const lightning = hitCount({ hit: true, isMelee: true, rofMode: "melee", deg: 5, wp: noProps, sys: {}, isLightning: true });
     expect(base.count).toBe(1);
-    expect(swift.count).toBe(3);       // ceil(5/2)
-    expect(lightning.count).toBe(4);   // ceil(5/2) + 1
+    expect(swift.count).toBe(3);       // за каждый нечётный Успех: ceil(5/2)
+    expect(lightning.count).toBe(5);   // за каждый Успех: deg
     expect(base.label).toBe("Рукопашная");
+  });
+
+  // «…до WS.b» — тексты обоих Талантов (module/constants/combat.mjs): потолок
+  // числа попаданий — бонус WS атакующего. wsBonus 0 (не передан) не режет.
+  it("Стремительная и Молниеносная упираются в потолок WS.b", () => {
+    const at = (extra) => hitCount({ hit: true, isMelee: true, rofMode: "melee", deg: 9, wp: noProps, sys: {}, ...extra }).count;
+    expect(at({ isSwift: true,     wsBonus: 3 })).toBe(3);   // ceil(9/2)=5 → потолок 3
+    expect(at({ isLightning: true, wsBonus: 4 })).toBe(4);   // 9 → потолок 4
+    expect(at({ isSwift: true,     wsBonus: 0 })).toBe(5);   // потолок неизвестен — не режем
+    expect(at({ isLightning: true })).toBe(9);
   });
 
   it("Мульти-удар считает как Стремительная (1 доп. попадание за 2 Успеха сверх первого), с потолком в X", () => {
@@ -105,6 +115,13 @@ describe("hitLocation", () => {
   it("Избирательная атака кладёт попадание в выбранное место", () => {
     expect(hitLocation({ rv: 23, hit: true, aimTarget: { value: "head" } }).label).toBe("Голова");
     expect(hitLocation({ rv: 23, hit: true, aimTarget: { value: "eye" } }).label).toBe("Глаз (Голова)");
+  });
+
+  it("Взрывное «под цель» место не называет — бросается обычным порядком", () => {
+    const plain = hitLocation({ rv: 23, hit: true });
+    const under = hitLocation({ rv: 23, hit: true, aimTarget: { value: "underfoot" } });
+    expect(under.label).toBe(plain.label);
+    expect(under.label).not.toBe("Взрыв (под целью)");
   });
 
   it("сдвиг от Таланта двигает результат и не выходит за 1–100", () => {
