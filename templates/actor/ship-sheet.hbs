@@ -4,12 +4,26 @@
   <div class="ship-head-fields">
     <input class="ship-name" type="text" name="name" value="{{actor.name}}" placeholder="Название корабля"/>
     <div class="ship-head-row">
-      <label>Класс корпуса <input type="text" name="system.shipClass" value="{{system.shipClass}}" placeholder="напр. Иерихон"/></label>
       <label>Тип
         <select name="system.shipType">
           {{#each shipTypes as |l k|}}<option value="{{k}}" {{#if (eq @root.system.shipType k)}}selected{{/if}}>{{l}}</option>{{/each}}
         </select>
       </label>
+      <label>Корпус
+        <div class="wh-slot{{#unless hullSlot}} empty{{/unless}}" data-slot="hull">
+          {{#if hullSlot}}
+          <img class="wh-slot-img" src="{{hullSlot.img}}" alt=""/>
+          <span class="wh-slot-name">{{hullSlot.name}}</span>
+          <button type="button" class="wh-slot-btn" data-action="hullOpen" title="Открыть лист Корпуса">⤢</button>
+          <button type="button" class="wh-slot-btn" data-action="hullClear" title="Снять Корпус">✕</button>
+          {{else}}
+          <button type="button" class="wh-slot-add" data-action="hullPick">+ выберите Корпус</button>
+          {{/if}}
+        </div>
+      </label>
+    </div>
+    <div class="ship-head-row">
+      <label>Класс корпуса (заметка) <input type="text" name="system.shipClass" value="{{system.shipClass}}" placeholder="напр. Иерихон"/></label>
     </div>
     <div class="ship-head-row">
       <label>Капитан <input type="text" name="system.captain" value="{{system.captain}}"/></label>
@@ -137,14 +151,14 @@
         </tr></thead>
         <tbody>
         {{#each components as |c|}}
-        <tr class="ship-comp-row {{#if c.damaged}}comp-damaged{{/if}} {{#if c.isHull}}comp-hull{{/if}}" data-item-id="{{c.id}}">
+        <tr class="ship-comp-row {{#if c.damaged}}comp-damaged{{/if}}" data-item-id="{{c.id}}">
           <td class="cc-name"><a class="ship-comp-open" data-action="itemOpen"><img class="cc-img" src="{{c.img}}"/> {{c.name}}</a></td>
           <td class="cc-cat">{{c.kindLabel}}</td>
           <td class="cc-num">{{c.power}}</td>
           <td class="cc-num">{{c.space}}</td>
           <td class="cc-num">{{c.sp}}</td>
-          <td class="cc-dmg">{{#unless c.isHull}}<input class="ship-comp-toggle" type="checkbox" data-flag="external" {{#if c.external}}checked{{/if}}/>{{/unless}}</td>
-          <td class="cc-dmg">{{#unless c.isHull}}<input class="ship-comp-toggle" type="checkbox" data-flag="damaged" {{#if c.damaged}}checked{{/if}}/>{{/unless}}</td>
+          <td class="cc-dmg"><input class="ship-comp-toggle" type="checkbox" data-flag="external" {{#if c.external}}checked{{/if}}/></td>
+          <td class="cc-dmg"><input class="ship-comp-toggle" type="checkbox" data-flag="damaged" {{#if c.damaged}}checked{{/if}}/></td>
         </tr>
         {{#if c.aspects}}<tr class="ship-comp-special {{#if c.damaged}}comp-damaged{{/if}}" data-item-id="{{c.id}}"><td colspan="7">{{c.aspects}}</td></tr>{{/if}}
         {{/each}}

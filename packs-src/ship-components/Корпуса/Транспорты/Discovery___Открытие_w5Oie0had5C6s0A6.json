@@ -1,26 +1,18 @@
 {
   "name": "Discovery / Открытие",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "xU0HcgaUIV5kWjzf",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Транспорты",
     "sp": 45,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Главный грузовой трюм, 1/2. Hybrid Ship: плазменные двигатели, варп-двигатели, системы жизнеобеспечения, жилые отсеки/лёгкие крейсера. Hybrid Ship: пустотные щиты/крейсера. In-build: Мануфакторум, 1/2",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -49,14 +41,6 @@
       "voidShields": 0,
       "armour": 17,
       "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "w5Oie0had5C6s0A6",

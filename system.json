@@ -471,7 +471,7 @@
     },
     {
       "name": "book-void",
-      "label": "Книга Пустоты v.2",
+      "label": "Книга Пустоты",
       "path": "packs/book-void",
       "type": "JournalEntry",
       "system": "warhammer-dbc",
@@ -557,6 +557,66 @@
       "name": "book-power-armour",
       "label": "Силовая броня: без шлема и особенности",
       "path": "packs/book-power-armour",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-diseases",
+      "label": "Книга Болезней",
+      "path": "packs/book-diseases",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-daemonic-shells",
+      "label": "Книга Демонических Оболочек",
+      "path": "packs/book-daemonic-shells",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-toad-psykers",
+      "label": "Жабья Книга Псайкеров",
+      "path": "packs/book-toad-psykers",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-necrons",
+      "label": "Книга Некрон",
+      "path": "packs/book-necrons",
+      "type": "JournalEntry",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "book-tyranids",
+      "label": "Тираниды DBC",
+      "path": "packs/book-tyranids",
       "type": "JournalEntry",
       "system": "warhammer-dbc",
       "ownership": {
@@ -687,6 +747,41 @@
           "sorting": "m",
           "packs": [
             "book-battles"
+          ]
+        },
+        {
+          "name": "Книга Некрон",
+          "sorting": "m",
+          "packs": [
+            "book-necrons"
+          ]
+        },
+        {
+          "name": "Тираниды DBC",
+          "sorting": "m",
+          "packs": [
+            "book-tyranids"
+          ]
+        },
+        {
+          "name": "Книга Болезней",
+          "sorting": "m",
+          "packs": [
+            "book-diseases"
+          ]
+        },
+        {
+          "name": "Книга Демонических Оболочек",
+          "sorting": "m",
+          "packs": [
+            "book-daemonic-shells"
+          ]
+        },
+        {
+          "name": "Жабья Книга Псайкеров",
+          "sorting": "m",
+          "packs": [
+            "book-toad-psykers"
           ]
         },
         {

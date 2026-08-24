@@ -1,26 +1,18 @@
 {
   "name": "Retributor / Воздаятель",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "IHC1qrw10vbxBx6h",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 58,
+    "hullClass": "Гранд-крейсеры",
+    "sp": 70,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "viciousDesign",
@@ -28,27 +20,19 @@
       }
     ],
     "hull": {
-      "spaceMax": 75,
+      "spaceMax": 90,
       "powerGen": 0,
       "turnArc": "45°",
       "weaponCapacity": "ПБ3, ЛБ3",
-      "hullIntegrity": 95
+      "hullIntegrity": 90
     },
     "chars": {
       "speed": 5,
       "manoeuvrability": 5,
       "detection": 5,
       "voidShields": 0,
-      "armour": 22,
+      "armour": 19,
       "turretRating": 3
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "f24jUb5ZXPz9hEnF",
