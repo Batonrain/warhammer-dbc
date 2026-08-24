@@ -1,5 +1,6 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
 import { MELEE_STANCES }                           from "../constants/combat.mjs";
 import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
@@ -149,7 +150,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // d100 — рвётся из attack-dialog.mjs (opts.forceHit), а не проверяется тут
   // заново, потому что «в упор/в рукопашной» — ситуативная галочка игрока,
   // не хранимое состояние на акторе.
-  const hit      = !!opts.forceHit || rv <= threshold;
+  const { success: hit, deg } = testOutcome(rv, threshold, { autoSuccess: !!opts.forceHit });
 
   // ── Заклинивание (только для дальнобойного оружия со свойством надёжности) ──
   const jamAt    = jamThreshold(wp);
@@ -190,12 +191,6 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const locForHit = (i) => locationForHit(i, {
     label: hitLocLabel, hitsCount, targetIsVehicle, vehiclePart: vehPart
   });
-
-  // Math.max(1, …) не меняет обычный бросок (rv<=threshold уже даёт >=1) —
-  // защищает только forceHit, когда рвущий d100 сам по себе был бы промахом.
-  const deg = hit
-    ? Math.max(1, Math.floor((threshold - rv) / 10) + 1)
-    : Math.floor((rv - threshold) / 10) + 1;
 
   // Попадания и расход патронов
   const { count: hitsCount, label: rofLabel } = hitCount({

@@ -10,6 +10,7 @@ import { _degWord, esc }                               from "../helpers/utils.mj
 import { rollIcon }                                from "../constants/roll-icons.mjs";
 import { ruleFlagLabels }                          from "../rules/flags.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
+import { testOutcome }                             from "../rules/roll-outcome.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -29,8 +30,8 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const autoPass = infamy >= r.infamy;
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
-  const success  = autoPass || rv <= eff;
-  const dof      = success ? 0 : Math.floor((rv - eff) / 10) + 1;
+  const { success, deg } = testOutcome(rv, eff, { autoSuccess: autoPass });
+  const dof      = success ? 0 : deg;
   const allRolls = [roll];
   let shockHtml  = "";
   if (!success) {
@@ -90,8 +91,8 @@ export async function _executeTraumaRoll(actor, mod = 0) {
   const eff  = wp + mod;
   const roll = await new Roll("1d100").evaluate();
   const rv   = roll.total;
-  const success = rv <= eff;
-  const dof  = success ? 0 : Math.floor((rv - eff) / 10) + 1;
+  const { success, deg } = testOutcome(rv, eff);
+  const dof  = success ? 0 : deg;
   const allRolls = [roll];
   let traumaHtml = "";
   if (!success) {

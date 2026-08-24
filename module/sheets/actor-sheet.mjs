@@ -57,6 +57,7 @@ import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
          assistsBeyondCap, countedAssists }
   from "../rules/assists.mjs";
@@ -1762,10 +1763,9 @@ export class WarhammerCharacterSheet
       : "";
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
     const rollMode = game.settings.get("core", "rollMode");
-    const success  = rv <= eff;
+    const { success, deg: baseDeg } = testOutcome(rv, eff);
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
-    const deg      = assistDegrees(
-      Math.floor(Math.abs(success ? eff - rv : rv - eff) / 10) + 1, assistCount, success);
+    const deg      = assistDegrees(baseDeg, assistCount, success);
     const outcome  = success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
@@ -1823,10 +1823,9 @@ export class WarhammerCharacterSheet
     const roll     = await new Roll("1d100").evaluate();
     const rv       = roll.total;
     const rollMode = game.settings.get("core", "rollMode");
-    const success  = rv <= eff;
+    const { success, deg: baseDeg } = testOutcome(rv, eff);
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
-    const deg      = assistDegrees(
-      Math.floor(Math.abs(success ? eff - rv : rv - eff) / 10) + 1, assistCount, success);
+    const deg      = assistDegrees(baseDeg, assistCount, success);
     const outcome  = success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;

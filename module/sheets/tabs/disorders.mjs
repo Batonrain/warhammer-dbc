@@ -11,6 +11,7 @@ import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
+import { testOutcome } from "../../rules/roll-outcome.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
 function checkedRuleMods(form) {
@@ -225,8 +226,7 @@ export async function rollDisorderTest(actor, item) {
   const eff = charVal + (system.testMod || 0);
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
-  const success = rv <= eff;
-  const deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
+  const { success, deg } = testOutcome(rv, eff);
   const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
   await ChatMessage.create(ChatMessage.applyRollMode({

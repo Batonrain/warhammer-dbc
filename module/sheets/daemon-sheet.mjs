@@ -6,6 +6,7 @@
 import { WarhammerCharacterSheet, onSkillRoll } from "./actor-sheet.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
 import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_KEY_TRAITS,
          allegianceMeta, formDuration } from "../constants/demon-mechanics.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -153,8 +154,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     const picked = pickReroll(rolled.map(r => r.total), rr?.mode);
     const roll = rolled[picked.index];
     const rv = picked.value;
-    const success = rv <= threshold;
-    const deg = Math.floor(Math.abs(rv - threshold) / 10) + 1;
+    const { success, deg } = testOutcome(rv, threshold);
     const rollMode = game.settings.get("core", "rollMode");
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
