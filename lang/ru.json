@@ -46,6 +46,7 @@
       "archetype": "Архетип",
       "faction": "Фракция",
       "component": "Узел корабля",
+      "shipHull": "Корпус корабля",
       "cargo": "Груз",
       "torpedo": "Торпеда",
       "smallCraft": "Малое судно (МЛА)",

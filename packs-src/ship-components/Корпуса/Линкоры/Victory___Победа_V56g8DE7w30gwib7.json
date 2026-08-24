@@ -1,53 +1,37 @@
 {
   "name": "Victory / Победа",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "7XIWvIQncI4e71zW",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Линкоры",
     "sp": 98,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
-    "aspects": "In-build: усиление брони носа; НП только лэнсы; борт — 1 лэнс и 2 не-ангара; Н — торпеды/нова-орудие",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "Limited: усиление брони носа; НП только лэнсы; бортовое — 1 лэнс и 2 не ангары на борт; Н — торпеды или нова-пушка",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
-        "key": "inbuild"
+        "key": "limited"
       }
     ],
     "hull": {
-      "spaceMax": 120,
+      "spaceMax": 100,
       "powerGen": 0,
       "turnArc": "45°",
       "weaponCapacity": "Н1, ПБ3, ЛБ3, НП1",
-      "hullIntegrity": 120
+      "hullIntegrity": 110
     },
     "chars": {
       "speed": 3,
-      "manoeuvrability": -10,
-      "detection": 20,
+      "manoeuvrability": 0,
+      "detection": 25,
       "voidShields": 0,
       "armour": 22,
       "turretRating": 4
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "V56g8DE7w30gwib7",

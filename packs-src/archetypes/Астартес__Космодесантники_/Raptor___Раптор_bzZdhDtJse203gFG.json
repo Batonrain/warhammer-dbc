@@ -1,7 +1,7 @@
 {
   "name": "Raptor / Раптор",
   "type": "archetype",
-  "img": "icons/svg/upgrade.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-core/Raptor.webp",
   "folder": "LrQ76WufqFAvFdDy",
   "system": {
     "key": "raptor",

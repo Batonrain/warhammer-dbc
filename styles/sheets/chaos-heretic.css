@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════
    Warhammer DBC — Лист Хаосита: тема Бога-покровителя.
-   Форма несёт класс .chaos-heretic .chaos-god-<key> и переменные
+   Корень листа несёт класс .chaos-heretic.chaos-god-<key> и переменные
    --gc/--gc2/--glow/--dp-hue/--dp-sat/--dp-bright (из CHAOS_PATRONS).
    Данные-вкладки (когитаторная зелень) перекрашиваются одним
    hue-rotate в цвет Бога; Неделимый — тёмная бронза/коричневый мрак.
@@ -12,33 +12,33 @@
    контр-развёрнуты, чтобы сохранить истинные цвета. ПСИ/ТЕХ/НАВ/
    ОДЕРЖИМОСТЬ не трогаем (свои темы); полоса Очков и навигация красятся
    напрямую через --gc (см. ниже). */
-.warhammer-dbc .chaos-heretic .sheet-header,
-.warhammer-dbc .chaos-heretic .stats-cog,
-.warhammer-dbc .chaos-heretic .combat-cog,
-.warhammer-dbc .chaos-heretic .abil-cog,
-.warhammer-dbc .chaos-heretic .gear-cog,
-.warhammer-dbc .chaos-heretic .advance-cog,
-.warhammer-dbc .chaos-heretic .body-tab,
-.warhammer-dbc .chaos-heretic .notes-cog .notes-section-panel {
+.warhammer-dbc.chaos-heretic .sheet-header,
+.warhammer-dbc.chaos-heretic .stats-cog,
+.warhammer-dbc.chaos-heretic .combat-cog,
+.warhammer-dbc.chaos-heretic .abil-cog,
+.warhammer-dbc.chaos-heretic .gear-cog,
+.warhammer-dbc.chaos-heretic .advance-cog,
+.warhammer-dbc.chaos-heretic .body-tab,
+.warhammer-dbc.chaos-heretic .notes-cog .notes-section-panel {
   filter: hue-rotate(var(--dp-hue)) saturate(var(--dp-sat, 1)) brightness(var(--dp-bright, 1));
 }
 /* Контр-разворот: истинные цвета портрета и карточек Богов-покровителей.
    Двойной фильтр (родитель ↻ + потомок ↺) взаимно гасится. */
-.warhammer-dbc .chaos-heretic .profile-img,
-.warhammer-dbc .chaos-heretic .chaos-patron-opt {
+.warhammer-dbc.chaos-heretic .profile-img,
+.warhammer-dbc.chaos-heretic .chaos-patron-opt {
   filter: brightness(calc(1 / var(--dp-bright, 1))) saturate(calc(1 / var(--dp-sat, 1))) hue-rotate(calc(-1 * var(--dp-hue, 0deg)));
 }
 
 /* ── Полоса Очков и навигация — прямой цвет Бога (не ротируются) ── */
-.warhammer-dbc .chaos-heretic .sheet-tabs .item.active {
+.warhammer-dbc.chaos-heretic .sheet-tabs .item.active {
   color: #fff; box-shadow: inset 0 -2px 0 var(--gc), inset 0 0 22px -9px var(--glow);
   text-shadow: 0 0 8px var(--glow);
 }
-.warhammer-dbc .chaos-heretic .sheet-tabs .item:hover { text-shadow: 0 0 8px var(--glow); }
+.warhammer-dbc.chaos-heretic .sheet-tabs .item:hover { text-shadow: 0 0 8px var(--glow); }
 
 /* ── Полоса Очков Бесчестия у Хаосита: скрытый счётчик ──── */
-.warhammer-dbc .chaos-heretic .dp-ip-strip { font-family: "Consolas","Lucida Console","Courier New",monospace; }
-.warhammer-dbc .chaos-heretic .dp-ip-bound {
+.warhammer-dbc.chaos-heretic .dp-ip-strip { font-family: "Consolas","Lucida Console","Courier New",monospace; }
+.warhammer-dbc.chaos-heretic .dp-ip-bound {
   font-size: 0.72em; color: color-mix(in srgb, var(--gc) 70%, #b8a99a); font-style: italic; opacity: 0.85;
 }
 
@@ -92,6 +92,6 @@
 
 /* Усталость: на тёмном фоне листа хаосита значение и лейбл должны быть яркими
    (базовый var(--wh-red) может унаследоваться тёмным от пергаментной темы). */
-.warhammer-dbc .chaos-heretic .fatigue-value-input.fatigue-nonzero { color: #ff5a5a !important; }
-.warhammer-dbc .chaos-heretic .fatigue-cell > label,
-.warhammer-dbc .chaos-heretic .fatigue-label { color: #ff6b6b; }
+.warhammer-dbc.chaos-heretic .fatigue-value-input.fatigue-nonzero { color: #ff5a5a !important; }
+.warhammer-dbc.chaos-heretic .fatigue-cell > label,
+.warhammer-dbc.chaos-heretic .fatigue-label { color: #ff6b6b; }

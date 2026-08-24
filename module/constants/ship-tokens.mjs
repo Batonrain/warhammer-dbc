@@ -102,10 +102,13 @@ export function shipTokenSize(hullName, category) {
  *   { icon, tint, disposition, width, height } либо null (нет корпуса и типа).
  */
 export function computeShipIdentity(actor) {
-  const hull = actor.items.find(i => i.type === "component" && i.system?.kind === "hull");
+  const hull = actor.items.find(i => i.type === "shipHull");
   const shipType = actor.system?.shipType || "";
   const hullName = hull?.name || "";
-  const category = shipHullCategory(hullName, shipType);
+  // Свой тип предмета несёт класс корпуса напрямую (system.hullClass) — точнее
+  // и надёжнее старого поиска по имени+папке легаси-константы SHIP_COMPONENTS,
+  // который остаётся резервом для не мигрированных данных.
+  const category = hull?.system?.hullClass || shipHullCategory(hullName, shipType);
   if (!category) return null;
 
   const rel = actor.system?.shipRelation || "neutral";

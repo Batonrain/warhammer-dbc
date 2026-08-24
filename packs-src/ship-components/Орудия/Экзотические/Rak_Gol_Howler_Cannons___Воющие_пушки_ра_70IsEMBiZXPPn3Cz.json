@@ -6,7 +6,7 @@
   "system": {
     "kind": "weapon",
     "power": 5,
-    "space": 3,
+    "space": 5,
     "sp": 3,
     "rarity": 4,
     "quality": "common",

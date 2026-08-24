@@ -59,6 +59,8 @@ export const SHIP_COMPONENT_CATEGORIES = {
   warp:         "Варп-двигатель",
   voidShield:   "Пустотные щиты",
   bridge:       "Мостик",
+  occulum:      "Оккулум навигатора",
+  astropathic:  "Астропатический узел",
   lifeSustainer:"Жизнеобеспечение",
   quarters:     "Жилые отсеки",
   augur:        "Ауспики / Авгуры",
