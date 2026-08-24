@@ -879,69 +879,22 @@ Hooks.on("getSceneControlButtons", (controls) => {
         content: "<p>Выберите раздел:</p>",
         buttons,
         rejectClose: false
-      });
+      }).catch(e => console.error("warhammer-dbc | wh-hub", e));
     };
     const triggerHub = () => {
       openWhHub();
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
     };
-    if (Array.isArray(controls)) {
-      // Foundry v12 и ранее — массив групп
-      controls.push({
-        name: "wh-systems", title: "Звёздные системы", icon: ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Обзор систем", icon: "fa-solid fa-table-list",
-                  button: true, onClick: () => trigger() }]
-      });
-      controls.push({
-        name: "wh-craft", title: "Крафт и Исследования", icon: CRAFT_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Мастерская", icon: "fa-solid fa-flask",
-                  button: true, onClick: () => triggerCraft() }]
-      });
-      controls.push({
-        name: "wh-cog", title: "Когитаторы", icon: COG_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Когитаторы", icon: "fa-solid fa-terminal",
-                  button: true, onClick: () => triggerCog() }]
-      });
-      controls.push({
-        name: "wh-veil", title: "Завеса и Мистика", icon: VEIL_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Завеса и Мистика", icon: VEIL_ICON,
-                  button: true, onClick: () => triggerVeil() }]
-      });
-      controls.push({
-        name: "wh-nexus", title: "Нексус Сцен", icon: NEXUS_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Нексус Сцен", icon: NEXUS_ICON,
-                  button: true, onClick: () => triggerNexus() }]
-      });
-      if (game.user.isGM) controls.push({
-        name: "wh-env", title: "Окружающая Среда", icon: ENV_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Окружающая Среда", icon: ENV_ICON,
-                  button: true, onClick: () => triggerEnv() }]
-      });
-      if (game.user.isGM) controls.push({
-        name: "wh-callouts", title: "Коллауты", icon: CALLOUT_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Добавить коллаут", icon: CALLOUT_ICON,
-                  button: true, onClick: () => triggerCallout() }]
-      });
-      if (game.user.isGM) controls.push({
-        name: "wh-callouts-clear", title: "Очистить коллауты", icon: CALLOUT_CLEAR_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Очистить все коллауты на сцене", icon: CALLOUT_CLEAR_ICON,
-                  button: true, onClick: () => triggerClearCallouts() }]
-      });
-    } else if (controls && typeof controls === "object") {
-      // Foundry v13 — объект-словарь групп (onChange, без устаревшего onClick).
-      // Одна группа с одним tool, открывающим меню-диалог openWhHub —
-      // было 8 однокнопочных групп, стало 1 иконка (см. openWhHub выше).
+    // v13+ — объект-словарь групп (onChange, без устаревшего onClick); ветка
+    // v12 с массивом групп удалена — system.json требует минимум v14.
+    // Одна группа с одним tool, открывающим меню-диалог openWhHub —
+    // было 8 однокнопочных групп, стало 1 иконка (см. openWhHub выше).
+    // onChange только у tool'а: при смене контрола Foundry зовёт и групповой,
+    // и инструментный колбэк (#postActivate), двойная подписка открывала два
+    // одинаковых диалога друг на друге.
+    if (controls && typeof controls === "object" && !Array.isArray(controls)) {
       controls["wh-hub"] = {
         name: "wh-hub", title: "Doom BC", icon: ICON, order: 90, visible: true,
-        onChange: (_event, active) => { if (active) triggerHub(); },
         tools: {
           open: { name: "open", title: "Doom BC", icon: ICON,
                   order: 1, button: true, onChange: () => triggerHub() }
