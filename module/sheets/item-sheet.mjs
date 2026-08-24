@@ -1730,10 +1730,13 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
     });
+    // Значение — число ИЛИ формула mech-formula.mjs (ag*2, ceil(cor/2)…):
+    // строка хранится как есть, до числа её доводит mechFormulaTotalSafe в
+    // момент применения записи (mechEffectData/applyMechEntry).
     on(".mech-char-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (e) { e.value = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
+      if (e) { e.value = ev.currentTarget.value; saveMech(arr); }
     });
     // Вес (kind:"weight")
     on(".mech-weight-scope", "change", ev => {
@@ -1749,7 +1752,7 @@ export class WarhammerItemSheet
     on(".mech-weight-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (e) { e.weightValue = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
+      if (e) { e.weightValue = ev.currentTarget.value; saveMech(arr); }
     });
     // Движение (kind:"movement")
     on(".mech-move-target", "change", ev => {
@@ -1765,7 +1768,7 @@ export class WarhammerItemSheet
     on(".mech-move-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (e) { e.movementValue = ev.currentTarget.value === "" ? "" : (parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
+      if (e) { e.movementValue = ev.currentTarget.value; saveMech(arr); }
     });
     // Очки Брони по локации (kind:"armour")
     on(".mech-armour-loc", "change", ev => {
@@ -1781,7 +1784,7 @@ export class WarhammerItemSheet
     on(".mech-armour-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (e) { e.armourValue = ev.currentTarget.value === "" ? "" : (parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
+      if (e) { e.armourValue = ev.currentTarget.value; saveMech(arr); }
     });
     // Ландшафт — игнорирование свойств (kind:"terrainIgnore")
     on(".mech-terrain-ignore", "change", ev => {
@@ -1937,7 +1940,7 @@ export class WarhammerItemSheet
     on(".mech-poolmax-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (e) { e.value = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
+      if (e) { e.value = ev.currentTarget.value; saveMech(arr); }
     });
     // Код (kind:"script")
     on(".mech-script-label", "change", ev => {
@@ -1994,6 +1997,30 @@ export class WarhammerItemSheet
       e.when.negate = !!ev.currentTarget.checked;
       saveMech(arr);
     });
+    // ── «Когда субмутация» (entry.when.submutations) — независимый гейт по
+    // строке своей же таблицы субмутаций (см. mech-when.mjs). Список строк в
+    // разметке идёт прямо из parseSubmutations(item.system.benefit) — метка
+    // берётся из data-sub-label, а не индекса, чтобы правка текста таблицы не
+    // сдвигала уже расставленные галочки на постороннюю строку.
+    on(".grant-when-submutation", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      const subs = new Set(e.when.submutations || []);
+      const label = ev.currentTarget.dataset.subLabel;
+      if (ev.currentTarget.checked) subs.add(label); else subs.delete(label);
+      e.when.submutations = [...subs];
+      saveMech(arr);
+    });
+    on(".grant-when-sub-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateSub = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
     // Кнопки групп и условий — действия [data-action] выше; здесь поля записи.
     const patchReq = (ev, fn) => patchReqEntry(this.item, ev.currentTarget, fn);
@@ -2029,7 +2056,7 @@ export class WarhammerItemSheet
     on(".grant-entry-rating", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (e) { e.rating = ev.currentTarget.value === "" ? "" : (parseInt(ev.currentTarget.value) || 0); saveMech(arr); }
+      if (e) { e.rating = ev.currentTarget.value; saveMech(arr); }
     });
     on(".grant-entry-spec", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));

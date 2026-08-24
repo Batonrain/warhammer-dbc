@@ -158,6 +158,13 @@ export const CAPABILITIES = {
     label: "После успешного Парирования может тут же атаковать тем же оружием со штрафом −10 (раз в Раунд)",
     source: "Counter Attack / Контратака",
     reader: "module/combat/defense.mjs — _performParry; module/hooks.mjs — кнопка «Контратака» в карточке чата"
+  },
+
+  "weapon.trained.allRanged": {
+    label: "Считается имеющим все специализации Weapon Training",
+    source: "Оракул Стали (Дар Кхорна, стр. 453-460): «владение всеми видами оружия». " +
+            "Настоящую экзотику (weaponType:\"exotic\") не покрывает — она вообще не проверяется системой.",
+    reader: "module/rules/weapon-training.mjs — weaponTrainingPenalty"
   }
 };
 

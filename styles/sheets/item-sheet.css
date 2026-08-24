@@ -1352,6 +1352,16 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
 }
 .warhammer-dbc .grant-when-row-add:hover { background: #4dffa6; color: #04120b; }
 
+/* Условие «Когда субмутация» — независимый второй гейт под тем же, только у
+   Мутации с разобранной таблицей субмутаций (см. buildEntryWhenHtml). */
+.warhammer-dbc .grant-entry-when-sub { border-top-style: solid; }
+.warhammer-dbc .grant-when-sub-list {
+  display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px;
+  max-height: 140px; overflow-y: auto; padding-right: 4px;
+}
+.warhammer-dbc .grant-when-sub-row { display: flex; align-items: center; gap: 5px; font-size: .8em; }
+.warhammer-dbc .grant-when-sub-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* Сус-ан Мембрана: активное исцеление Призраков Смерти раз в сутки (module/apps/sus-an-heal.mjs) */
 .warhammer-dbc .sus-an-heal {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;

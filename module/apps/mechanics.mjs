@@ -211,10 +211,16 @@ import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
-import { entryWhenOk, whenConditions } from "../rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations } from "../rules/mech-when.mjs";
+import { parseSubmutations } from "../rules/submutations.mjs";
+import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const FLAG = "warhammer-dbc";
+// Подсказка полям «Значение»/«Рейтинг», принимающим формулу mech-formula.mjs
+// вместо голого числа — те же короткие ключи, что книга пишет как «X.b».
+const MECH_FORMULA_HINT = "Число или формула бонуса характеристики: ws/bs/s/t/ag/int/per/wp/fel/inf/cor "
+  + "(cor — Cor.b), + - * /, ceil()/floor()/round(). Напр.: ag*2, ceil(cor/2)";
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
 const higherRank = (a, b) => (SKILL_RANK_STEPS[a] ?? 0) >= (SKILL_RANK_STEPS[b] ?? 0) ? a : b;
 // Операции записи «± Характеристика» — только складываемые. Её эффект целится
@@ -694,6 +700,16 @@ function groupSpecOk(e) {
 
 function isEntryComplete(e) {
   const numOk = v => v !== "" && v != null && !Number.isNaN(Number(v));
+  // Значение/Рейтинг могут быть формулой mech-formula.mjs ("ag*2",
+  // "ceil(cor/2)"), не только голым числом — числовая проверка тогда молча
+  // отсеяла бы запись как «не заполнена». mechFormulaTotal бросает на
+  // синтаксически негодную строку — этого достаточно для проверки полноты,
+  // сами величины ({} вместо актора) тут не нужны.
+  const formulaOk = v => {
+    if (v === "" || v == null) return false;
+    if (numOk(v)) return true;
+    try { mechFormulaTotal(v, {}); return true; } catch (err) { return false; }
+  };
   switch (e.kind) {
     case "corruption":
       return !!(e.corruptionValue && String(e.corruptionValue).trim());
@@ -702,7 +718,7 @@ function isEntryComplete(e) {
     case "cohesion":
       return !!e.cohesionRole && !!(e.cohesionValue && String(e.cohesionValue).trim());
     case "characteristic":
-      return !!e.charKey && numOk(e.value);
+      return !!e.charKey && formulaOk(e.value);
     case "trait": case "talent":
       return !!e.sourceUuid;
     case "skill":
@@ -710,11 +726,11 @@ function isEntryComplete(e) {
       if (e.skillScope === "group" && !groupSpecOk(e)) return false;
       return true;
     case "weight":
-      return !!e.weightScope && numOk(e.weightValue);
+      return !!e.weightScope && formulaOk(e.weightValue);
     case "movement":
-      return !!e.movementTarget && numOk(e.movementValue);
+      return !!e.movementTarget && formulaOk(e.movementValue);
     case "armour":
-      return !!e.armourLocation && numOk(e.armourValue);
+      return !!e.armourLocation && formulaOk(e.armourValue);
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "fatigue":
@@ -742,7 +758,7 @@ function isEntryComplete(e) {
       if (e.skillScope === "group" && !groupSpecOk(e)) return false;
       return numOk(e.value);
     case "poolMax":
-      return numOk(e.value);
+      return formulaOk(e.value);
     case "weaponProp":
       if (!e.weaponPropKey) return false;
       if (e.weaponPropAction === "replace") return !!e.weaponPropNewKey;
@@ -756,17 +772,34 @@ function isEntryComplete(e) {
   }
 }
 
-/** Человекочитаемое описание entry.when — суффикс к превью записи (пусто, если условий нет). */
-function describeMechWhen(when) {
+/**
+ * Человекочитаемое описание entry.when — суффикс к превью записи (пусто, если
+ * условий нет). `item` — источник записи, только ради имён строк субмутации
+ * (сама таблица живёт в его system.benefit, entryWhenOk смотрит только на
+ * label — а тут для читаемости хочется ещё и название).
+ */
+function describeMechWhen(when, item = null) {
+  const parts = [];
   const conditions = whenConditions(when);
-  if (!conditions.length) return "";
-  const names = conditions.map(c => {
-    const lg = getLegion(c.legion);
-    const ch = c.chapter ? getChapter(c.legion, c.chapter) : null;
-    const base = ch ? `${lg?.num ?? c.legion} ${ch.name}` : `${lg?.num ?? c.legion} ${lg?.name ?? c.legion}`;
-    return c.ageAtLeast ? `${base}, Возраст ≥ ${c.ageAtLeast}` : base;
-  });
-  return ` · Когда: Геносемя ${when.negate ? "≠" : "="} ${names.join(" или ")}`;
+  if (conditions.length) {
+    const names = conditions.map(c => {
+      const lg = getLegion(c.legion);
+      const ch = c.chapter ? getChapter(c.legion, c.chapter) : null;
+      const base = ch ? `${lg?.num ?? c.legion} ${ch.name}` : `${lg?.num ?? c.legion} ${lg?.name ?? c.legion}`;
+      return c.ageAtLeast ? `${base}, Возраст ≥ ${c.ageAtLeast}` : base;
+    });
+    parts.push(`Геносемя ${when.negate ? "≠" : "="} ${names.join(" или ")}`);
+  }
+  const subs = whenSubmutations(when);
+  if (subs.length) {
+    const table = item?.type === "mutation" ? parseSubmutations(item.system?.benefit || "").entries : [];
+    const names = subs.map(label => {
+      const e = table.find(x => x.label === label);
+      return e ? `${label} — ${e.name}` : label;
+    });
+    parts.push(`субмутация ${when?.negateSub ? "≠" : "="} ${names.join(" или ")}`);
+  }
+  return parts.length ? ` · Когда: ${parts.join("; ")}` : "";
 }
 
 /**
@@ -999,7 +1032,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
   // чтобы она осталась кандидатом на будущее: сменит актор Геносемя позже
   // (Мастер поправит легион/орден на листе) — следующий прогон Механики её
   // подхватит, а не будет молча считать «уже разобрана и мимо».
-  if (!entryWhenOk(actor, entry)) return;
+  if (!entryWhenOk(actor, entry, sourceItem)) return;
 
   // Каждая запись отыгрывается по одному разу — Порча не бросается дважды,
   // выданная Черта не приезжает второй копией. Долговечные записи при этом
@@ -1077,7 +1110,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
   // (wdbc-473). Здесь остаётся только ИЛИ-ветка: выбранная в диалоге запись в
   // пересборку не попадает, и эффект ей нужен прямо сейчас.
   if (DURABLE_MECH_KINDS.has(entry.kind)) {
-    if (fromChoice) await sourceItem.createEmbeddedDocuments("ActiveEffect", [mechEffectData(entry, sourceItem)]);
+    if (fromChoice) await sourceItem.createEmbeddedDocuments("ActiveEffect", [mechEffectData(entry, sourceItem, actor)]);
     return;
   }
 
@@ -1231,11 +1264,17 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
         return;
       }
     }
+    // Рейтинг — формула Механики (mech-formula.mjs), не голое число: «cor/2»,
+    // «ceil(cor/2)» и т.п. считаются по актору-получателю в момент выдачи —
+    // «Multiple Arms (+1)» и «Unnatural S (½Cor.b, окр.▲)» заводятся одной
+    // записью, разница только в тексте поля.
+    const ratingTotal = (entry.rating !== "" && entry.rating != null)
+      ? mechFormulaTotalSafe(entry.rating, mechRollData(actor)) : null;
     if (entry.kind === "trait") {
-      if (entry.rating !== "" && entry.rating != null && data.system) {
-        rescaleTraitByRating(data, entry.rating);   // пока system.rating — рейтинг шаблона
+      if (ratingTotal !== null && data.system) {
+        rescaleTraitByRating(data, ratingTotal);   // пока system.rating — рейтинг шаблона
         data.system.hasRating = true;
-        data.system.rating = Number(entry.rating) || 0;
+        data.system.rating = ratingTotal;
       }
     } else {
       data.system = {
@@ -1246,9 +1285,8 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       // Рейтинговый Талант (Psy Rating, Enemy…): рейтинг задаётся записью
       // Механики, а не берётся из значения по умолчанию в компендиуме —
       // иначе Ведьма/Псайкер/Чародей получали бы Пси-Рейтинг 1 вместо 3/2.
-      if (entry.kind === "talent" && data.system.hasRating
-          && entry.rating !== "" && entry.rating != null) {
-        data.system.rating = Number(entry.rating) || 0;
+      if (entry.kind === "talent" && data.system.hasRating && ratingTotal !== null) {
+        data.system.rating = ratingTotal;
       }
       // «Мастерство» наследует склонности того Навыка, которым овладело
       // (стр. 62). Выдано оно даром, но склонности всё равно нужны: по ним
@@ -1454,7 +1492,7 @@ async function buildIntegralAttackData(entry, sourceItem) {
 // ИЛИ-ветки сознательно пропускаются — там выбор делается ОДИН РАЗ диалогом
 // в момент выдачи (showMechChoiceDialog/applyMechEntry), переигрывать его
 // при каждой пересинхронизации активности источника не нужно и не должно.
-function collectDirectEquipmentEntries(groups, actor = null) {
+function collectDirectEquipmentEntries(groups, actor = null, item = null) {
   const out = [];
   const walk = (entries, operator) => {
     if (operator === "OR") return;
@@ -1465,7 +1503,7 @@ function collectDirectEquipmentEntries(groups, actor = null) {
     }
   };
   for (const g of groups) walk(g.entries || [], g.operator);
-  return out.filter(e => entryWhenOk(actor, e));
+  return out.filter(e => entryWhenOk(actor, e, item));
 }
 
 /**
@@ -1486,7 +1524,7 @@ function collectDirectEquipmentEntries(groups, actor = null) {
 export async function syncGrantedEquipment(sourceItem) {
   const actor = sourceItem.parent;
   if (!(actor instanceof Actor)) return;
-  const entries = collectDirectEquipmentEntries(getItemMechanics(sourceItem), actor);
+  const entries = collectDirectEquipmentEntries(getItemMechanics(sourceItem), actor, sourceItem);
   if (!entries.length) return;
 
   const grantedNow = actor.items.filter(i =>
@@ -1523,7 +1561,7 @@ export async function syncGrantedEquipment(sourceItem) {
 // Записи, выдающие Черту или Талант, из тех же АНД-цепочек. ИЛИ-ветки
 // пропускаются по той же причине, что и у снаряжения: выбор там сделан один
 // раз диалогом, переигрывать его на каждом включении нельзя.
-function collectDirectAbilityEntries(groups, actor = null) {
+function collectDirectAbilityEntries(groups, actor = null, item = null) {
   const out = [];
   const walk = (entries, operator) => {
     if (operator === "OR") return;
@@ -1533,7 +1571,7 @@ function collectDirectAbilityEntries(groups, actor = null) {
     }
   };
   for (const g of groups) walk(g.entries || [], g.operator);
-  return out.filter(e => entryWhenOk(actor, e));
+  return out.filter(e => entryWhenOk(actor, e, item));
 }
 
 /**
@@ -1554,7 +1592,7 @@ function collectDirectAbilityEntries(groups, actor = null) {
 export async function syncGrantedAbilities(sourceItem) {
   const actor = sourceItem.parent;
   if (!(actor instanceof Actor)) return;
-  const entries = collectDirectAbilityEntries(getItemMechanics(sourceItem), actor);
+  const entries = collectDirectAbilityEntries(getItemMechanics(sourceItem), actor, sourceItem);
   if (!entries.length) return;
 
   const grantedNow = actor.items.filter(i =>
@@ -1576,7 +1614,7 @@ export async function syncGrantedAbilities(sourceItem) {
     };
     delete data._id;
     if (e.kind === "trait" && e.rating !== "" && e.rating != null && "rating" in (data.system || {})) {
-      data.system.rating = Number(e.rating) || 0;
+      data.system.rating = mechFormulaTotalSafe(e.rating, mechRollData(actor));
     }
     if (e.kind === "talent" && e.specialization) data.system.specialization = e.specialization;
     data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
@@ -1597,15 +1635,28 @@ export async function syncGrantedAbilities(sourceItem) {
 // Код) это не касается: повтор бросил бы кубик заново и выдал второй предмет.
 export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax", "armour"]);
 
-/** Эффект, отыгрывающий одну долговечную запись. Метка — id самой записи. */
-function mechEffectData(entry, sourceItem) {
+/**
+ * Эффект, отыгрывающий одну долговечную запись. Метка — id самой записи.
+ *
+ * `value`/`weightValue`/`movementValue`/`armourValue` — формула Механики
+ * (mech-formula.mjs), не голое число: «cor/2», «ag*2», «ceil(cor/2)» и т.п.,
+ * как их даёт книга («Flyer (A.b×2)», «Natural Armour (½Cor.b, окр.▲)»).
+ * Простое число внутри формулы работает как раньше. Считается ЗАНОВО при
+ * каждой пересинхронизации (см. syncMechanicsEffects) — если Cor или другая
+ * характеристика изменится, эффект подхватит новое значение при следующей
+ * правке Механики предмета или броске субмутации, но не мгновенно сам по
+ * себе (тот же уровень «живости», что у остальной Механики).
+ */
+function mechEffectData(entry, sourceItem, actor = null) {
+  const rd = mechRollData(actor);
+  const num = f => mechFormulaTotalSafe(f, rd);
   const changes = [];
   if (entry.kind === "characteristic") {
     const key = characteristicEffectKey(entry);
-    changes.push({ key, type: entry.op, value: Number(entry.value) || 0,
+    changes.push({ key, type: entry.op, value: num(entry.value),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "weight") {
-    const value = Number(entry.weightValue) || 0;
+    const value = num(entry.weightValue);
     if (entry.weightMode === "index") {
       const key = `system.encumbrance.indexBonus.${entry.weightScope}`;
       changes.push({ key, type: "add", value, phase: expectedPhase(key), priority: 0 });
@@ -1619,11 +1670,11 @@ function mechEffectData(entry, sourceItem) {
   } else if (entry.kind === "movement") {
     const key = entry.movementTarget === "spd"
       ? "system.movement.spdBonus" : `system.movement.${entry.movementTarget}`;
-    changes.push({ key, type: entry.op, value: Number(entry.movementValue) || 0,
+    changes.push({ key, type: entry.op, value: num(entry.movementValue),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "poolMax") {
     const key = "system.fate.max";
-    changes.push({ key, type: "add", value: Number(entry.value) || 0,
+    changes.push({ key, type: "add", value: num(entry.value),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "armour") {
     const locs = entry.armourLocation === "all"
@@ -1631,7 +1682,7 @@ function mechEffectData(entry, sourceItem) {
     for (const loc of locs) {
       const key = `system.armorBonus.${loc}`;
       changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
-                     value: Number(entry.armourValue) || 0,
+                     value: num(entry.armourValue),
                      phase: expectedPhase(key), priority: 0 });
     }
   }
@@ -1674,7 +1725,7 @@ export async function syncMechanicsEffects(item) {
   // сейчас не выполнено: их эффект должен ИСЧЕЗНУТЬ (не просто не появиться),
   // а не остаться от прошлого раза, когда условие ещё выполнялось.
   const durableIds = new Set(durable.map(e => e.id));
-  const wanted = new Map(durable.filter(e => entryWhenOk(actor, e)).map(e => [e.id, mechEffectData(e, item)]));
+  const wanted = new Map(durable.filter(e => entryWhenOk(actor, e, item)).map(e => [e.id, mechEffectData(e, item, actor)]));
 
   const toDelete = [], toCreate = [];
   const seen = new Set();
@@ -1765,7 +1816,7 @@ async function resolveDirectAsk(entry, applied, sourceItem, actor) {
     return { type: "or", chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };
   }
   if ((entry.kind === "skill" || entry.kind === "rollmod") && entry.specKey === "__choice__"
-      && !applied.has(entry.id) && entryWhenOk(actor, entry)) {
+      && !applied.has(entry.id) && entryWhenOk(actor, entry, sourceItem)) {
     return { type: "spec", resolved: await resolveEntrySpecChoice(entry) };
   }
   return undefined;
@@ -1902,7 +1953,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     return `<select class="mech-char-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${charOpts}</select>
       <select class="mech-char-field" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${fieldOpts}</select>
       <select class="mech-char-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
-      <input type="number" class="mech-char-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" ${dis}/>`;
+      <input type="text" class="mech-char-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. 1 или ag*2" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
 
   if (ent.kind === "trait" || ent.kind === "talent") {
@@ -1913,7 +1964,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       : `<span class="grant-drop-placeholder">${canEdit ? `Перетащите ${ent.kind === "trait" ? "Черту" : "Талант"} сюда` : "—"}</span>`;
     let out = `<div class="grant-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}">${dropInner}</div>`;
     if ((ent.kind === "trait" || ent.kind === "talent") && ent.sourceHasRating) {
-      out += `<input type="number" class="grant-entry-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.rating ?? "")}" placeholder="Рейтинг" ${dis}/>`;
+      out += `<input type="text" class="grant-entry-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.rating ?? "")}" placeholder="Рейтинг: 1 или ag*2" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
     }
     if (ent.kind === "talent" && ent.sourceUuid) {
       // «Мастерство» владеет конкретным Навыком (стр. 62), и от того, каким,
@@ -1955,7 +2006,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       .map(([v, l]) => optHtml(v, l, (ent.weightMode || "kg") === v)).join("");
     return `<select class="mech-weight-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
       <select class="mech-weight-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
-      <input type="number" class="mech-weight-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.weightValue ?? "")}" ${dis}/>`;
+      <input type="text" class="mech-weight-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.weightValue ?? "")}" placeholder="напр. 1 или ag*2" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
 
   if (ent.kind === "movement") {
@@ -1963,7 +2014,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-move-target" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${targetOpts}</select>
       <select class="mech-move-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
-      <input type="number" class="mech-move-value" step="1" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.movementValue ?? "")}" ${dis}/>`;
+      <input type="text" class="mech-move-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.movementValue ?? "")}" placeholder="напр. 1 или ag*2" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
 
   if (ent.kind === "armour") {
@@ -1973,7 +2024,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-armour-loc" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${locOpts}</select>
       <select class="mech-armour-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
-      <input type="number" class="mech-armour-value" step="1" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.armourValue ?? "")}" ${dis}/>`;
+      <input type="text" class="mech-armour-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.armourValue ?? "")}" placeholder="напр. 1 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
 
   if (ent.kind === "terrainIgnore") {
@@ -2152,7 +2203,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "poolMax") {
-    return `<input type="number" class="mech-poolmax-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="±значение" ${dis}/>`;
+    return `<input type="text" class="mech-poolmax-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. -1, 2 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
 
   if (ent.kind === "weaponProp") {
@@ -2271,8 +2322,15 @@ function buildSkillSelectorHtml(groupId, ent, dis) {
  * вариант держит только легион, подходит и наследникам без своей более узкой
  * записи. Несколько вариантов — ИЛИ, с общим переключателем «не» на всех разом
  * (Железа Бетчера не работает СРАЗУ у трёх линий — три варианта одной записи).
+ *
+ * Второй, независимый блок — «Когда субмутация»: показывается только у
+ * Мутации с разобранной таблицей субмутаций (parseSubmutations), список строк
+ * берётся прямо из её собственного текста — так автор Механики не может
+ * опечататься в подписи и рассинхронизироваться с таблицей. Одна и та же
+ * Мутация несёт по записи на каждый набор строк, чьё действие отличается —
+ * применяется только та, чья субмутация сейчас выпала (system.submutation).
  */
-function buildEntryWhenHtml(groupId, ent, canEdit) {
+function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
   const dis = canEdit ? "" : "disabled";
   const w = ent.when || {};
   const conditions = (w.conditions || []).length ? w.conditions : [{ legion: "", chapter: "" }];
@@ -2286,6 +2344,24 @@ function buildEntryWhenHtml(groupId, ent, canEdit) {
     </label>
     ${canEdit && conditions.length > 1 ? `<button type="button" class="grant-when-row-remove" data-action="grantWhenRemove" ${d} data-when-idx="${i}" title="Убрать вариант">✕</button>` : ""}
   </div>`).join("");
+
+  const subTable = item?.type === "mutation" ? parseSubmutations(item.system?.benefit || "").entries : [];
+  const subHtml = subTable.length ? (() => {
+    const chosen = new Set(w.submutations || []);
+    const boxes = subTable.map(e => `<label class="grant-when-sub-row">
+      <input type="checkbox" class="grant-when-submutation" ${d} data-sub-label="${esc(e.label)}" ${chosen.has(e.label) ? "checked" : ""} ${dis}/>
+      <span>${esc(e.label)} — ${esc(e.name)}</span>
+    </label>`).join("");
+    return `<div class="grant-entry-when grant-entry-when-sub">
+      <span class="grant-when-label">Когда субмутация</span>
+      <label class="grant-when-negate-label">
+        <input type="checkbox" class="grant-when-sub-negate" ${d} ${w.negateSub ? "checked" : ""} ${dis}/> не
+      </label>
+      <span>=</span>
+      <div class="grant-when-sub-list">${boxes}</div>
+    </div>`;
+  })() : "";
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -2294,10 +2370,10 @@ function buildEntryWhenHtml(groupId, ent, canEdit) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>`;
+  </div>${subHtml}`;
 }
 
-function buildEntryHtml(groupId, ent, canEdit, depth = 1) {
+function buildEntryHtml(groupId, ent, canEdit, depth = 1, item = null) {
   const kindEntries = Object.entries(KIND_LABELS)
     .filter(([k]) => k !== "group" || ent.kind === "group" || depth < MAX_GROUP_DEPTH);
   const kindOpts = kindEntries.map(([k, l]) => optHtml(k, l, ent.kind === k)).join("");
@@ -2309,9 +2385,9 @@ function buildEntryHtml(groupId, ent, canEdit, depth = 1) {
       ${buildEntryFieldsHtml(groupId, ent, canEdit)}
       ${canEdit ? `<button type="button" class="grant-entry-remove" data-action="grantEntryRemove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
     </div>
-    ${buildEntryWhenHtml(groupId, ent, canEdit)}
-    <div class="grant-entry-preview">${esc(describeMechEntry(ent) + describeMechWhen(ent.when))}</div>
-    ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), canEdit, depth + 1, true) : ""}
+    ${buildEntryWhenHtml(groupId, ent, canEdit, item)}
+    <div class="grant-entry-preview">${esc(describeMechEntry(ent) + describeMechWhen(ent.when, item))}</div>
+    ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), canEdit, depth + 1, true, item) : ""}
   </div>`;
 }
 
@@ -2320,8 +2396,8 @@ function buildEntryHtml(groupId, ent, canEdit, depth = 1) {
  * «✕ Удалить группу» (удаление — через «✕» самой записи-контейнера у
  * родителя, отдельной кнопки не нужно), но оставляет переключатель И/ИЛИ.
  */
-function buildGroupHtml(grp, canEdit, depth = 1, nested = false) {
-  const entriesHtml = (grp.entries || []).map(e => buildEntryHtml(grp.id, e, canEdit, depth)).join("")
+function buildGroupHtml(grp, canEdit, depth = 1, nested = false, item = null) {
+  const entriesHtml = (grp.entries || []).map(e => buildEntryHtml(grp.id, e, canEdit, depth, item)).join("")
     || `<div class="grant-empty-hint"><em>Записей нет</em></div>`;
   const opHint = grp.operator === "OR" ? "актор выбирает одну запись" : "применяются все записи";
   return `<div class="grant-group ${nested ? "grant-group-nested" : ""}" data-group-id="${grp.id}">
@@ -2334,6 +2410,46 @@ function buildGroupHtml(grp, canEdit, depth = 1, nested = false) {
     <div class="grant-entries">${entriesHtml}</div>
     ${canEdit ? `<button type="button" class="grant-entry-add" data-action="grantEntryAdd" data-group-id="${grp.id}">➕ Запись</button>` : ""}
   </div>`;
+}
+
+/**
+ * Задевает ли правка предмета (changed из хука updateItem) его Механику —
+ * предикат единственного хука пересборки (warhammer-dbc.mjs). Чистая функция,
+ * вынесена ради честного теста (mechanics-submutation-when.test.mjs): хук в
+ * стенде не зовётся, а стрельнёт он или нет — решает ровно это условие.
+ *
+ * Два триггера, оба через `!== undefined`, а не проверку на правду:
+ * — flags.mechanics: снятие последней группы приходит как mechanics: [] и
+ *   обязано дойти до пересборки, а не быть принятым за «механику не трогали»;
+ * — system.submutation: бросок/реролл/сброс субмутации (apps/submutations.mjs
+ *   пишет только system.submutation.*) меняет гейт when.submutations
+ *   (rules/mech-when.mjs) — без пересборки гейтованные записи не выдались бы
+ *   никогда.
+ */
+export function mechanicsRelevantChange(changed) {
+  return changed?.flags?.["warhammer-dbc"]?.mechanics !== undefined
+      || changed?.system?.submutation !== undefined;
+}
+
+// Поля-формулы записей по kind — те самые, что isEntryComplete гоняет через
+// formulaOk и МОЛЧА отсеивает при негодной строке. Чтобы отсев не был тихим,
+// saveItemMechanics при сохранении предупреждает автора (см. ниже).
+const FORMULA_FIELD_BY_KIND = {
+  characteristic: "value", poolMax: "value",
+  weight: "weightValue", movement: "movementValue", armour: "armourValue"
+};
+
+/** Непустые формулы записей (рекурсивно, с подгруппами), которые не разбираются. */
+function collectBrokenFormulas(entries) {
+  const bad = [];
+  for (const e of entries || []) {
+    if (e.kind === "group") { bad.push(...collectBrokenFormulas(e.group?.entries)); continue; }
+    const field = FORMULA_FIELD_BY_KIND[e.kind];
+    const v = field && e[field];
+    if (v == null || String(v).trim() === "") continue;
+    try { mechFormulaTotal(v, {}); } catch { bad.push(String(v)); }
+  }
+  return bad;
 }
 
 /**
@@ -2352,6 +2468,12 @@ function buildGroupHtml(grp, canEdit, depth = 1, nested = false) {
  */
 export async function saveItemMechanics(item, groups) {
   if (!item) return;
+  // Битую формулу isEntryComplete отсеет как «не заполнена» — молча. Само
+  // сохранение не блокируем (черновик дописывают в несколько заходов), но
+  // автору говорим сразу, а не через тихое исчезновение записи из выдачи.
+  const broken = collectBrokenFormulas((groups || []).flatMap(g => g.entries || []));
+  if (broken.length) ui.notifications?.warn(
+    `«${item.name}»: формула не разбирается, запись не применится: ${broken.map(f => `«${f}»`).join(", ")}`);
   if (item.isOwner) {
     await item.setFlag("warhammer-dbc", "mechanics", groups);
     await syncWeaponPropItemEffects(item);
@@ -2371,7 +2493,7 @@ export async function saveItemMechanics(item, groups) {
  * перепишет и Мастер. Роль здесь ни при чём — механику настраивают все.
  */
 export function buildMechanicsTabHtml(item, canEdit) {
-  return getItemMechanics(item).map(g => buildGroupHtml(g, canEdit)).join("");
+  return getItemMechanics(item).map(g => buildGroupHtml(g, canEdit, 1, false, item)).join("");
 }
 
 // ══════════════════ ТРЕБОВАНИЯ (условия-предпосылки) ══════════════════

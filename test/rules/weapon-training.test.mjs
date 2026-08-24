@@ -121,6 +121,20 @@ describe("weaponTrainingPenalty", () => {
     expect(weaponTrainingPenalty({ actor: a, weaponType: "solid" }).total).toBe(0);
   });
 
+  it("weapon.trained.allRanged (Оракул Стали) снимает штраф для любой категории, кроме настоящей экзотики", () => {
+    const a = actor([{
+      type: "mutation", name: "Оракул Стали",
+      system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { kind: "capability", capabilityKey: "weapon.trained.allRanged" }
+      ] }] } }
+    }]);
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "plasma" }).total).toBe(0);
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "grav" }).total).toBe(0);
+    // «Настоящая» экзотика системой вообще не проверяется — уже 0 и без флага.
+    expect(weaponTrainingPenalty({ actor: a, weaponType: "exotic" }).total).toBe(0);
+  });
+
   it("блочный обход (Legion) снимает штраф для любой покрытой категории", () => {
     const a = actor([{
       type: "talent", name: "Legion Weapon Training / Тренировка Легиона",
