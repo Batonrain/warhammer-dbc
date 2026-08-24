@@ -12,6 +12,14 @@
         </div> </div> </div>
   </div>{{!-- /stats-layout --}}
 
+  {{!-- У Демона нет вкладки ТЕЛО, куда панели переехали у остальных, —
+        оставляем ему редактирование Безумия/Порчи здесь. --}}
+  {{#if (eq actor.type "daemon")}}
+  <div class="bc-trackers bc-trackers-2col stats-cog">
+    {{> "systems/warhammer-dbc/templates/actor/parts/sanity-corruption-panels.hbs"}}
+  </div>
+  {{/if}}
+
   {{!-- Навыки: четыре колонки базовых Навыков + плитки групповых (Знания и т.п.) --}}
   <div class="skills-panel"> <div class="panel-title">НАВЫКИ</div> <div class="skills-grid">
       <div class="skills-column"> {{#each skillsCol1 as |sk|}}
