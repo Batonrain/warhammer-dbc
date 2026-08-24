@@ -77,12 +77,18 @@ export function registerHooks() {
     html.querySelectorAll(".wh-counter-attack-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const selectedToken = canvas.tokens?.controlled?.[0];
-        if (!selectedToken?.actor) {
-          return ui.notifications.warn("⚠️ Выберите токен парировавшего персонажа на сцене!");
+        // Кнопка запоминается ДО первого await: currentTarget живёт только
+        // пока событие обрабатывается синхронно (см. wh-saddle-btn ниже).
+        const el = ev.currentTarget;
+        // Актор — из data-actor-uuid карточки парирования (его кладёт
+        // _performParry), а не из выбранного токена: контратакует тот, кто
+        // парировал, и промах мышью по чужому токену тут ничего не решает.
+        const cardUuid = el.closest(".wh-roll-result")?.dataset.actorUuid;
+        const actor = cardUuid ? (await fromUuid(cardUuid).catch(() => null)) : null;
+        if (!actor) {
+          return ui.notifications.warn("⚠️ Парировавший персонаж карточки не найден.");
         }
-        const actor = selectedToken.actor;
-        const weapon = actor.items.get(ev.currentTarget.dataset.weaponId);
+        const weapon = actor.items.get(el.dataset.weaponId);
         if (!weapon) return ui.notifications.warn("⚠️ Оружие Контратаки не найдено на листе.");
         if (!isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY)) {
           return ui.notifications.warn("⚠️ Контратака уже потрачена в этом Раунде.");
@@ -91,15 +97,18 @@ export function registerHooks() {
 
         // Целимся в того, кого парировали, если его токен ещё на сцене —
         // без этого диалог атаки просто откроется без автоматического
-        // расчёта защиты цели (как «Бросок без цели»).
-        const attackerUuid = ev.currentTarget.dataset.attackerUuid;
+        // расчёта защиты цели (как «Бросок без цели»). Старые цели сбрасываем
+        // в любом случае: контратака не должна бить по цели прошлой атаки.
+        const attackerUuid = el.dataset.attackerUuid;
         if (attackerUuid) {
           const attackerActor = (await fromUuid(attackerUuid).catch(() => null));
           const token = canvas.tokens?.placeables?.find(t => t.actor?.uuid === attackerActor?.uuid);
-          if (token) game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
+          game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
           token?.setTarget(true, { user: game.user, releaseOthers: true });
         }
-        await actor.sheet._showAttackDialog?.(weapon, { modifier: -10 });
+        // forceBase: Контратака — атака со штрафом −10 с нейтральной Базой,
+        // персистентная «Полная Атака» (+30) сюда протекать не должна.
+        await actor.sheet._showAttackDialog?.(weapon, { modifier: -10, forceBase: "standard" });
       });
     });
 
