@@ -33,6 +33,15 @@ import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
+import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
+
+/**
+ * Есть ли у актора Элитный архетип с этим именем — предметом, строкой в шапке
+ * (`system.eliteArchetype`) или в списке дополнительных (`eliteArchetypesExtra`).
+ * Тот же трёхисточниковый пример, что и в sheets/item-picker.mjs (talentGroupLock):
+ * архетип бывает и предметом (куплен пикером), и строкой (вписан руками/со
+ * старого листа) — обе формы должны отпирать одно и то же.
+ */
 import { divinationSheetContext }                from "../apps/divinations.mjs";
 import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
@@ -287,8 +296,26 @@ export function characterContext(actor) {
   if (context.isHaemonculus) context.haem = haemonculusContext(actor);
 
   // ── Одержимый (DoomBC_Core 129-132): синергия хоста и Двойного Духа ──────
-  context.possessed = context.isHeretic && !!system.possessed;
+  // Вкладка теперь отпирается ещё и Элитным архетипом «Одержимый» — не только
+  // ручным чекбоксом у Хаосита.
+  context.hasPossessedArchetype = hasEliteArchetype(actor, "Одержимый");
+  context.possessed = isPossessed(actor);
   if (context.possessed) context.possession = possessionContext(actor);
+
+  // ── Мистика (бывш. Пси): вкладка доступна всегда, но психосилы внутри
+  // показываем только Псайкерам (Черта) и Чернокнижникам (Элитный архетип) —
+  // остальным там теперь ещё и Ритуалы (переехали со СПОСОБНОСТЕЙ), которые
+  // от этого условия не зависят.
+  // system.isPsyker — канонический признак (его ставят архетипы Ведьмы и
+  // Псайкера-ренегата, мастер создания, азуриане); Черта «Псайкер» и
+  // Чернокнижник — дополнительные пути, у которых флага может не быть.
+  context.hasMysticPowers = !!system.isPsyker
+    || actor.items.some(i => i.type === "trait" && itemHasName(i, "Псайкер"))
+    || hasEliteArchetype(actor, "Чернокнижник");
+
+  // ── Тех: вкладка доступна ещё и по Черте «Импланты Механикум», не только
+  // по ручному чекбоксу «Техножрец».
+  context.hasMechImplants = actor.items.some(i => i.type === "trait" && itemHasName(i, "Импланты Механикум"));
 
   const _charApts = charAptitudeSet(system.aptitudes);
   context.chars = Object.entries(CHARACTERISTICS).map(([key, meta]) => ({

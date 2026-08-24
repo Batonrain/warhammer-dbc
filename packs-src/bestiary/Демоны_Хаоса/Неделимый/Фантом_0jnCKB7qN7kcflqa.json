@@ -1,7 +1,7 @@
 {
   "name": "Фантом",
   "type": "daemon",
-  "img": "systems/warhammer-dbc/assets/Chaos.png",
+  "img": "systems/warhammer-dbc/assets/art/chaos/fantom.webp",
   "folder": "ZZIeAPJqdhz8A35F",
   "system": {
     "race": "",
@@ -1166,13 +1166,13 @@
   ],
   "prototypeToken": {
     "texture": {
-      "src": "systems/warhammer-dbc/assets/Chaos.png",
+      "src": "systems/warhammer-dbc/assets/art/chaos/fantom.webp",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "fit": "contain",
       "scaleX": 1,
       "scaleY": 1,
-      "tint": "#b477ff",
+      "tint": "#ffffff",
       "alphaThreshold": 0.75
     },
     "actorLink": true,

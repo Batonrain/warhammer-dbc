@@ -1,7 +1,7 @@
 {
   "name": "Гнильная Муха",
   "type": "daemon",
-  "img": "systems/warhammer-dbc/assets/Nurgle.png",
+  "img": "systems/warhammer-dbc/assets/art/chaos/gnilnaya-muha.webp",
   "folder": "sKzWggvXsfSyPl4y",
   "system": {
     "race": "",
@@ -1813,13 +1813,13 @@
   ],
   "prototypeToken": {
     "texture": {
-      "src": "systems/warhammer-dbc/assets/Nurgle.png",
+      "src": "systems/warhammer-dbc/assets/art/chaos/gnilnaya-muha.webp",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "fit": "contain",
       "scaleX": 1,
       "scaleY": 1,
-      "tint": "#8fbf3a",
+      "tint": "#ffffff",
       "alphaThreshold": 0.75
     },
     "actorLink": true,
