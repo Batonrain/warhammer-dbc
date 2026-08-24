@@ -239,7 +239,16 @@ globalThis.foundry = {
     escapeHTML: v => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;"),
     getProperty: () => undefined,
-    setProperty: () => true
+    setProperty: () => true,
+    // Настоящий debounce копит вызовы за delay мс; тестам синхронности не
+    // нужно — важно только что module/regions/auras.mjs не падает при импорте.
+    debounce: (fn, delay) => {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+      };
+    }
   },
   documents: { collections: {} },
   abstract: { TypeDataModel: TypeDataModelStub },

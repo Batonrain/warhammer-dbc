@@ -63,6 +63,7 @@ import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/app
 import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
+import { checkAuras } from "./module/regions/auras.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
@@ -1515,6 +1516,28 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
     const a = found?.actor ?? found; // на случай, если uuid указывал на Token
     if (a instanceof Actor) await reconcileCohesionForActor(a);
   }
+});
+
+// ── Ауры (wdbc-1pa) — живой пересчёт «кто задет», module/regions/auras.mjs ──
+// Триггеры: движение/появление/исчезновение токена на сцене и изменения
+// предметов актора, которые могли поменять набор/активность аур-источников
+// (сам флаг, экипировка, включение мода/поддержания). checkAuras — debounce
+// 150мс, лишние вызовы дёшевы.
+Hooks.on("canvasReady", () => checkAuras(canvas.scene));
+Hooks.on("createToken", doc => checkAuras(doc.parent));
+Hooks.on("deleteToken", doc => checkAuras(doc.parent));
+Hooks.on("updateToken", (doc, changes) => {
+  if (["x", "y", "elevation", "hidden", "disposition"].some(k => k in changes)) {
+    checkAuras(doc.parent);
+  }
+});
+Hooks.on("createItem", item => { if (item.actor) checkAuras(canvas.scene); });
+Hooks.on("deleteItem", item => { if (item.actor) checkAuras(canvas.scene); });
+Hooks.on("updateItem", (item, changes) => {
+  if (!item.actor) return;
+  const touched = ["flags", "system.equipped", "system.activatable", "system.active"]
+    .some(k => k in changes || foundry.utils.hasProperty(changes, k));
+  if (touched) checkAuras(canvas.scene);
 });
 
 // ── «Пламенная вера» (Мир-храм): шанс не потратить Очко ──────────────────────
