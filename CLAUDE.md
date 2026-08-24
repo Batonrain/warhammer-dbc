@@ -65,8 +65,9 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 языку. Второй копии здесь нет намеренно: одна вещь описана в одном месте.
 
 Коротко, чтобы не открывать: гейты — `npm test`, `npm run lint`,
-`npm run packs:build`; схемы документов в `module/data/`, а не в `template.json`;
-содержимое компендиумов правится в `packs-src/`, не в `packs/`.
+`npm run packs:build`; схемы документов в `module/data/`, перечень типов — в
+`system.json` → `documentTypes` (`template.json` удалён); содержимое
+компендиумов правится в `packs-src/`, не в `packs/`.
 
 Установка, сборка компендиумов и порядок релизов — [README.md](README.md).
 Замысел архитектуры — [docs/architecture-plan.md](docs/architecture-plan.md).

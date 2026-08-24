@@ -105,7 +105,6 @@ jobs:
         run: |
           zip -r system.zip \
             system.json \
-            template.json \
             warhammer-dbc.mjs \
             critical-tables.mjs \
             module \
