@@ -1,33 +1,25 @@
 {
   "name": "Exorcist / Экзорцист",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "IHC1qrw10vbxBx6h",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Гранд-крейсеры",
     "sp": 71,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Ангарный отсек системы Юпитера (ПБ, ЛБ), 2/2",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
       }
     ],
     "hull": {
-      "spaceMax": 75,
+      "spaceMax": 80,
       "powerGen": 0,
       "turnArc": "45°",
       "weaponCapacity": "ПБ3, ЛБ3",
@@ -40,14 +32,6 @@
       "voidShields": 0,
       "armour": 20,
       "turretRating": 3
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "8SLsh5nqTRfEibBm",

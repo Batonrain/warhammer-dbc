@@ -1,26 +1,18 @@
 {
   "name": "Bringer of Hell / Несущий ад",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "NfawZJdCJMS3OCWj",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 50,
+    "hullClass": "Лёгкие крейсеры",
+    "sp": 55,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
-    "aspects": "In-build: Молот Черепов (нос), 1/5. Особое",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "In-build: Молот Черепов (нос), 1/5. Vicious Design (1). Особое",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "orbitalStrike",
@@ -28,13 +20,17 @@
       },
       {
         "key": "inbuild"
+      },
+      {
+        "key": "viciousDesign",
+        "rating": 1
       }
     ],
     "hull": {
-      "spaceMax": 50,
+      "spaceMax": 60,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "Н1, НП1, ПБ1, ЛБ1",
+      "weaponCapacity": "Н1, НП1, ЛБ1,ПБ1",
       "hullIntegrity": 56
     },
     "chars": {
@@ -44,14 +40,6 @@
       "voidShields": 0,
       "armour": 18,
       "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "LIUVYhUS7l9dxH9Y",

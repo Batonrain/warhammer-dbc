@@ -15,6 +15,7 @@ import { createOrRankTalent } from "../rules/duplicate-grants.mjs";
 import { DREADNOUGHT_PILOT_FLAG } from "../rules/dreadnought.mjs";
 import { masteryTargets, masteryAptitudes } from "../rules/mastery-targets.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { isPossessed } from "../rules/predicates.mjs";
 import { isMinionTalent } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
@@ -60,7 +61,10 @@ export function talentGroupLock(actor, kind, parent, folderName) {
     return has ? null : `Нужен Элитный архетип «${folderName}»`;
   }
   if (parent === "Таланты одержимых") {
-    return sys.possessed ? null : "Нужна включённая опция «Одержимый» (вкладка Записи)";
+    // Тот же предикат, что открывает вкладку Одержимого на листе — иначе
+    // вкладка есть (Элитный архетип «Одержимый»), а Дары купить нельзя.
+    return isPossessed(actor) ? null
+      : "Нужна включённая опция «Одержимый» (вкладка Записи) или Элитный архетип «Одержимый»";
   }
   if (parent === "Таланты Астартес" && folderName === "Повелители Ночи") {
     return sys.geneSeed?.legion === "VIII" ? null : "Нужно Геносемя Повелителей Ночи (или одной из их варбанд)";

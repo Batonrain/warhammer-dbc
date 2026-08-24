@@ -87,6 +87,9 @@
 {{#if (eq item.type "component")}}
 {{> "systems/warhammer-dbc/templates/item/parts/component.hbs"}}
 {{/if}}
+{{#if (eq item.type "shipHull")}}
+{{> "systems/warhammer-dbc/templates/item/parts/ship-hull.hbs"}}
+{{/if}}
 {{#if (eq item.type "cargo")}}
 {{> "systems/warhammer-dbc/templates/item/parts/cargo.hbs"}}
 {{/if}}
