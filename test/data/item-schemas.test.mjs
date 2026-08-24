@@ -132,7 +132,7 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "armor", modGroup: "general",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
-      activatable: false, active: false,
+      activatable: false, active: false, runicWeaveSlots: 0,
       effects: {
         apAll: 0, apHead: 0, apBody: 0, apArms: 0, apLegs: 0,
         apVsEnergy: 0, apVsImpact: 0, apVsRending: 0, apVsBlast: 0,
@@ -542,6 +542,16 @@ const TYPES = {
     // Заводится провалом теста Травмы, в паках таких предметов нет.
     pack: null,
     defaults: { description: "", notes: "", testChar: "wp", testMod: 0 }
+  },
+
+  // ── Рунические Вязи (корбук стр. 433-434) ──────────────────────────────────
+  runicWeave: {
+    pack: "runic-weaves",
+    defaults: {
+      description: "", notes: "", availability: 0, craftDiff: 0, craftBank: 0,
+      surface: "", surfaceKinds: [], installedOnType: "", installedOn: "",
+      wornPosition: "", active: false, bookSource: ""
+    }
   },
 
   // ── Дерево принадлежностей ────────────────────────────────────────────────

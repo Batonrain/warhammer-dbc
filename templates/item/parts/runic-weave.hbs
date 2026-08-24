@@ -1,0 +1,124 @@
+{{!-- ══ РУНИЧЕСКАЯ ВЯЗЬ (корбук стр. 433-434) ══ --}}
+<div class="item-section">
+  <div class="item-section-title">ВЯЗЬ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Редкость (R)</label>
+    <select name="system.availability" class="wr-select-avail">
+      <option value="-5" {{#if (eqLoose system.availability -5)}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eqLoose system.availability -4)}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eqLoose system.availability -3)}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eqLoose system.availability -2)}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eqLoose system.availability -1)}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eqLoose system.availability 0)}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eqLoose system.availability 1)}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eqLoose system.availability 2)}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eqLoose system.availability 3)}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eqLoose system.availability 4)}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eqLoose system.availability 5)}}selected{{/if}}>+5 Уникально</option>
+    </select>
+    <label class="wr-label">Наносится на</label>
+    <input type="text" name="system.surface" value="{{system.surface}}" class="wr-input-md"
+           placeholder="напр. броня / одежда"/>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Сложность крафта</label>
+    <input type="number" name="system.craftDiff" value="{{system.craftDiff}}" step="10" class="wr-input-xs"/>
+    <label class="wr-label">Банк Успехов</label>
+    <input type="number" name="system.craftBank" value="{{system.craftBank}}" min="0" class="wr-input-xs"/>
+    <span class="wprop-hint">Scholastic Lore (Occult) — вязь наносит лично оккультист, владеющий Навыком хотя бы на +0.</span>
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">Виды поверхности</label>
+    {{#each runicWeaveSurfaceOptions as |opt|}}
+    <label class="drug-fx-cb-label">
+      <input type="checkbox" class="runic-weave-surface-cb" data-key="{{opt.key}}" {{#if opt.active}}checked{{/if}}/>
+      {{opt.label}}
+    </label>
+    {{/each}}
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">УСТАНОВКА</div>
+  <div class="weapon-row">
+    <label class="wr-label">Тип носителя</label>
+    <select name="system.installedOnType" class="wr-select-sm">
+      {{#each runicWeaveInstalledOnTypes as |lbl key|}}
+      <option value="{{key}}" {{#if (eq ../system.installedOnType key)}}selected{{/if}}>{{lbl}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{#if (eq system.installedOnType "carrier")}}
+  <div class="weapon-row">
+    <label class="wr-label">Установлена на</label>
+    <select name="system.installedOn" class="wr-select">
+      <option value="" {{#if (eq system.installedOn "")}}selected{{/if}}>— не установлена —</option>
+      {{#each runicWeaveInstallTargets as |a|}}
+      <option value="{{a.id}}" {{#if (eq @root.system.installedOn a.id)}}selected{{/if}}>
+        {{a.name}}{{#if a.equipped}} ✓{{/if}}{{#if a.isHolder}} (держатель){{/if}}
+      </option>
+      {{/each}}
+    </select>
+  </div>
+  {{#if runicWeaveHostIsHolder}}
+  <div class="weapon-row">
+    <label class="drug-fx-cb-label" title="Держатель (напр. Загадка Маата) — ручное переключение свободным действием, а не изнутри/снаружи">
+      <input type="checkbox" name="system.active" {{#if system.active}}checked{{/if}}/>
+      Активна (переключена в держателе)
+    </label>
+    {{#if runicWeaveSlotUsage}}
+    <span class="wprop-hint">Занято слотов: {{runicWeaveSlotUsage.used}}/{{runicWeaveSlotUsage.slots}}</span>
+    {{/if}}
+  </div>
+  {{else}}
+  <div class="weapon-row">
+    <label class="wr-label">Положение</label>
+    <select name="system.wornPosition" class="wr-select-sm">
+      {{#each runicWeavePositions as |lbl key|}}
+      <option value="{{key}}" {{#if (eq ../system.wornPosition key)}}selected{{/if}}>{{lbl}}</option>
+      {{/each}}
+    </select>
+  </div>
+  {{/if}}
+  {{#if system.installedOn}}
+  <div class="wprop-hint">
+    {{#if runicWeaveOverridden}}
+    ⚠ Перекрыта другой вязью на этом же предмете, что ближе к телу — не действует. На предмете может быть не более двух вязей (одна изнутри, одна снаружи); работает только ближайшая к телу.
+    {{else}}
+    ✓ Действует, пока носитель надет.
+    {{/if}}
+  </div>
+  {{/if}}
+  {{/if}}
+
+  {{#if (eq system.installedOnType "vehicle")}}
+  <div class="wprop-hint">
+    Сама вязь должна лежать embedded-предметом на акторе техники (бронетехника,
+    корбук стр. 434 — «Может быть нанесена на бронетехнику»). Перетащите этот
+    предмет на лист актора техники — владение им и есть нанесение, отдельного
+    носителя указывать не нужно.
+  </div>
+  {{/if}}
+
+  {{#if (eq system.installedOnType "region")}}
+  <div class="wprop-hint">
+    Носитель — «замкнутое помещение»/стены: разметьте комнату инструментом
+    Region на сцене, добавьте поведение «Руническая Вязь (помещение)» и
+    укажите в нём эту вязь по UUID ниже. Живой пересчёт — кто внутри — идёт
+    так же, как у Ауры (module/regions/runic-weave-zone.mjs).
+  </div>
+  <div class="weapon-row">
+    <label class="wr-label">UUID предмета</label>
+    <input type="text" value="{{runicWeaveUuid}}" class="wr-input-md" readonly onclick="this.select()"/>
+  </div>
+  {{/if}}
+</div>
+
+<div class="item-section">
+  <div class="weapon-row">
+    <label class="wr-label">Книга</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Core, стр. 433"/>
+  </div>
+</div>

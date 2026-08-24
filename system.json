@@ -290,6 +290,18 @@
       }
     },
     {
+      "name": "runic-weaves",
+      "label": "Рунические Вязи — Библиотека (DBC)",
+      "path": "packs/runic-weaves",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
       "name": "psychic-powers",
       "label": "Псайкана — Библиотека (DBC)",
       "path": "packs/psychic-powers",
@@ -684,7 +696,8 @@
               "sorting": "m",
               "packs": [
                 "psychic-powers",
-                "tech-powers"
+                "tech-powers",
+                "runic-weaves"
               ]
             },
             {
@@ -853,7 +866,8 @@
       "faction": {},
       "race": {},
       "subrace": {},
-      "eliteArchetype": {}
+      "eliteArchetype": {},
+      "runicWeave": {}
     }
   },
   "grid": {

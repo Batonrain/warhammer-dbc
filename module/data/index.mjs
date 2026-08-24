@@ -48,6 +48,7 @@ import { VehicleTraitData }   from "./item/vehicle-trait.mjs";
 import { SmallCraftData }     from "./item/small-craft.mjs";
 import { RitualData }         from "./item/ritual.mjs";
 import { FactionData }        from "./item/faction.mjs";
+import { RunicWeaveData }     from "./item/runic-weave.mjs";
 
 import { MinionData }        from "./actor/minion.mjs";
 import { DaemonData }      from "./actor/daemon.mjs";
@@ -110,7 +111,9 @@ export const ITEM_DATA_MODELS = {
   // Ритуалы (wdbc-5ed)
   ritual:        RitualData,
   // Дерево принадлежностей (фракции, шаг 1)
-  faction:       FactionData
+  faction:       FactionData,
+  // Рунические Вязи (корбук стр. 433-434)
+  runicWeave:    RunicWeaveData
 };
 
 /** Тип актора → класс схемы. Раскладывается в CONFIG.Actor.dataModels в init. */
