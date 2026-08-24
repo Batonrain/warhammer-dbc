@@ -121,12 +121,6 @@
 .warhammer-dbc prose-mirror.notes-textarea button.toggle:enabled { display: block; }
 .warhammer-dbc prose-mirror.notes-textarea .editor-content { padding: 6px 8px; }
 /* ── Легион / орден Астартес (вкладка Записи) ── */
-.warhammer-dbc .legion-info { display: flex; flex-direction: column; gap: 5px; padding: 7px 9px; }
-.warhammer-dbc .legion-info-title { font-weight: bold; font-size: 0.95em; color: var(--wh-text-dark, #2a1a0a); border-bottom: 1px solid var(--wh-border-light); padding-bottom: 3px; }
-.warhammer-dbc .legion-block { font-size: 0.86em; line-height: 1.4; color: var(--wh-text); }
-.warhammer-dbc .legion-block-key { font-weight: bold; color: var(--wh-panel-mid); }
-.warhammer-dbc .legion-block.legion-curse .legion-block-key { color: #8a2bbf; }
-.warhammer-dbc .legion-block.legion-parent { font-size: 0.8em; opacity: 0.82; border-top: 1px dashed var(--wh-border-light); padding-top: 4px; margin-top: 2px; }
 
 /* Кнопка «Применить легион/орден» */
 .warhammer-dbc .legion-apply-btn {

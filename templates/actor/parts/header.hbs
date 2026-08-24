@@ -26,8 +26,8 @@
           {{#if isAeldari}}
           <input type="text" name="system.lineageOrigin" value="{{system.lineageOrigin}}" placeholder="Происхождение" title="Мир-корабль / Кабал / линия происхождения"/> {{/if}}
         </div> </div>{{/if}} {{#if isAstartes}}
-      <div class="header-cell header-cell-readonly" title="Геносемя — редактируется на вкладке «Заметки» (Происхождение и легион)"> <label>Геносемя</label> <div class="header-readonly-val">{{#if headerGeneSeedName}}{{headerGeneSeedName}}{{else}}—{{/if}}</div> </div>
-      <div class="header-cell header-cell-readonly" title="Культура — редактируется на вкладке «Заметки» (Происхождение и легион)"> <label>Культура</label> <div class="header-readonly-val">{{#if headerCultureName}}{{headerCultureName}}{{else}}—{{/if}}</div> </div>
+      <div class="header-cell header-cell-readonly" title="Геносемя — задаётся мастером создания (меню листа → «Перезапустить мастера создания»)"> <label>Геносемя</label> <div class="header-readonly-val">{{#if headerGeneSeedName}}{{headerGeneSeedName}}{{else}}—{{/if}}</div> </div>
+      <div class="header-cell header-cell-readonly" title="Культура — задаётся мастером создания (меню листа → «Перезапустить мастера создания»)"> <label>Культура</label> <div class="header-readonly-val">{{#if headerCultureName}}{{headerCultureName}}{{else}}—{{/if}}</div> </div>
       {{/if}}</div>
     <div class="header-row-fixed header-row-archetype"> <div class="header-cell"> <label>Архетип</label> <select class="arch-select"> <option value="">— не выбран —</option> {{#each archetype.groups as |grp|}}
           {{#if grp.label}}
