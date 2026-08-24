@@ -1,26 +1,18 @@
 {
   "name": "Gothic / Готика",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "KhRTQU1eH580NrdK",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 61,
+    "hullClass": "Крейсеры",
+    "sp": 65,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Бронированный нос, 1/0. In-build: Торпедный аппарат Марс (нос), 1/2",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -33,7 +25,7 @@
       "spaceMax": 68,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "Н1, ПБ2, ЛБ2",
+      "weaponCapacity": "Н1, ЛБ2, ПБ2",
       "hullIntegrity": 70
     },
     "chars": {
@@ -43,14 +35,6 @@
       "voidShields": 0,
       "armour": 20,
       "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "aCcP5x28OubmDDxp",

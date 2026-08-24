@@ -65,6 +65,7 @@ import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/r
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
+import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
@@ -135,6 +136,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/parts/tab-nav.hbs",
     // Корабль
     "systems/warhammer-dbc/templates/item/parts/component.hbs",
+    "systems/warhammer-dbc/templates/item/parts/ship-hull.hbs",
     "systems/warhammer-dbc/templates/item/parts/cargo.hbs",
     "systems/warhammer-dbc/templates/item/parts/torpedo.hbs",
     "systems/warhammer-dbc/templates/item/parts/disease.hbs",
@@ -298,6 +300,11 @@ Hooks.once("init", () => {
 
   // Версия чистки остатков старой системы Органов Геносемени (одноразовая)
   game.settings.register("warhammer-dbc", "geneSeedCleanupVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия перевода Корпусов кораблей на тип shipHull (одноразовая)
+  game.settings.register("warhammer-dbc", "shipHullsVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -656,7 +663,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -681,6 +688,18 @@ Hooks.once("ready", async () => {
     await migrateRemoveGeneSeed();
     await game.settings.set("warhammer-dbc", "geneSeedCleanupVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Чистка Геносемени:", e); }
+});
+
+// ── Одноразовый перевод: Корпуса кораблей со старых узлов на тип shipHull ─────
+// Ручной перезапуск: game.warhammerDBC.migrateShipHulls()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "shipHullsVersion") || 0) >= VERSION) return;
+  try {
+    await migrateShipHulls();
+    await game.settings.set("warhammer-dbc", "shipHullsVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Корпуса кораблей:", e); }
 });
 
 // ── Одноразовая довыдача: Стремления, выбранные до автоматизации бонусов ──────
@@ -1202,7 +1221,9 @@ async function applyShipIdentity(actor) {
   } catch (e) { console.warn("Warhammer DBC | applyShipIdentity:", e); }
 }
 
-const _isHullComp = (item) => item?.type === "component" && item.system?.kind === "hull";
+// Корпус: новый тип shipHull; component[kind=hull] — легаси до миграции.
+const _isHullComp = (item) => item?.type === "shipHull"
+  || (item?.type === "component" && item.system?.kind === "hull");
 Hooks.on("createItem", (item) => { if (item.parent?.type === "ship" && _isHullComp(item)) applyShipIdentity(item.parent); });
 Hooks.on("deleteItem", (item) => { if (item.parent?.type === "ship" && _isHullComp(item)) applyShipIdentity(item.parent); });
 Hooks.on("updateItem", (item, ch) => { if (item.parent?.type === "ship" && _isHullComp(item) && ch.name !== undefined) applyShipIdentity(item.parent); });

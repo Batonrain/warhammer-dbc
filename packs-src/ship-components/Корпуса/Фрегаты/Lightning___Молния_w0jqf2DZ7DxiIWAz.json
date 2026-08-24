@@ -1,49 +1,33 @@
 {
   "name": "Lightning / Молния",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "VOyInFpl9FIDrRXg",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 40,
+    "hullClass": "Фрегаты",
+    "sp": 42,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [],
     "hull": {
-      "spaceMax": 36,
+      "spaceMax": 42,
       "powerGen": 0,
       "turnArc": "90°",
       "weaponCapacity": "1НП, 1Н",
-      "hullIntegrity": 30
+      "hullIntegrity": 35
     },
     "chars": {
       "speed": 9,
-      "manoeuvrability": 20,
+      "manoeuvrability": 12,
       "detection": 20,
       "voidShields": 0,
-      "armour": 16,
-      "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "armour": 18,
+      "turretRating": 2
     }
   },
   "_id": "w0jqf2DZ7DxiIWAz",

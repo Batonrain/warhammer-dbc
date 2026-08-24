@@ -1,8 +1,9 @@
 // test/sheets/ritual-row.test.mjs
 //
-// Строка ритуала на вкладке Способности (wdbc-5qk). Раздел нёс свой клик по
-// имени, свою кнопку «✕» и лишнюю колонку под неё — за поведение, которое у
-// таблиц Талантов и Черт уже даёт общее контекстное меню строки предмета
+// Строка ритуала на вкладке МИСТИКА (переехала со СПОСОБНОСТЕЙ, wdbc-5qk
+// изначально, перенос — отдельная правка). Раздел нёс свой клик по имени,
+// свою кнопку «✕» и лишнюю колонку под неё — за поведение, которое у таблиц
+// Талантов и Черт уже даёт общее контекстное меню строки предмета
 // (activateItemContextMenu вешается на всякую .item-row).
 //
 // Кнопка «＋» остаётся: контекстное меню умеет открывать и удалять, но не
@@ -17,7 +18,7 @@ import path from "node:path";
 import { activateRitualListeners } from "../../module/sheets/tabs/rituals.mjs";
 
 const hbs = fs.readFileSync(path.resolve(import.meta.dirname,
-  "../../templates/actor/parts/tab-abilities.hbs"), "utf8");
+  "../../templates/actor/parts/tab-psy.hbs"), "utf8");
 
 /** Разметка таблицы ритуалов — от её панели до конца таблицы. */
 const ritualsTable = hbs.slice(hbs.indexOf("rituals-table"), hbs.indexOf("</table>", hbs.indexOf("rituals-table")));

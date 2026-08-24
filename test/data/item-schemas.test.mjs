@@ -429,6 +429,17 @@ const TYPES = {
       weapon: { wType: "macrobattery", strength: 0, damage: "", crit: 0, range: 0, arc: "" }
     }
   },
+  shipHull: {
+    // Корпус — отдельный тип (не узел): выбирается пикером в шапке листа
+    // корабля (sheets/hull-picker.mjs), а не через список Узлов.
+    pack: "ship-components",
+    defaults: {
+      hullClass: "", sp: 0, rarity: 0, quality: "common", qualityPicks: [], qualityCustom: false,
+      aspects: "", description: "", notes: "", shipProps: [],
+      hull:  { spaceMax: 0, powerGen: 0, turnArc: "90°", weaponCapacity: "", hullIntegrity: 0 },
+      chars: { speed: 0, manoeuvrability: 0, detection: 0, voidShields: 0, armour: 0, turretRating: 0 }
+    }
+  },
   cargo: {
     pack: "ship-components",
     defaults: {

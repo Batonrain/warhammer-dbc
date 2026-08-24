@@ -1,53 +1,37 @@
 {
   "name": "Stronghold / Оплот",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "aIu3pJTuNwSeYJoY",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Рейдеры",
     "sp": 30,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Постановщик минных полей, 3/3",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
       }
     ],
     "hull": {
-      "spaceMax": 30,
+      "spaceMax": 20,
       "powerGen": 0,
       "turnArc": "90°",
       "weaponCapacity": "1НП",
-      "hullIntegrity": 30
+      "hullIntegrity": 20
     },
     "chars": {
       "speed": 9,
-      "manoeuvrability": 25,
+      "manoeuvrability": 20,
       "detection": 10,
       "voidShields": 0,
-      "armour": 20,
-      "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "armour": 10,
+      "turretRating": 2
     }
   },
   "_id": "nwqJKB8wkUIMgDd0",

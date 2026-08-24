@@ -1,7 +1,7 @@
 {
   "name": "Кровожад",
   "type": "daemon",
-  "img": "systems/warhammer-dbc/assets/Khorne.png",
+  "img": "systems/warhammer-dbc/assets/art/chaos/krovozhad.webp",
   "folder": "7EJTvmd7paKMHuwi",
   "system": {
     "race": "",
@@ -3576,13 +3576,13 @@
   ],
   "prototypeToken": {
     "texture": {
-      "src": "systems/warhammer-dbc/assets/Khorne.png",
+      "src": "systems/warhammer-dbc/assets/art/chaos/krovozhad.webp",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "fit": "contain",
       "scaleX": 1,
       "scaleY": 1,
-      "tint": "#e0202e",
+      "tint": "#ffffff",
       "alphaThreshold": 0.75
     },
     "actorLink": true,

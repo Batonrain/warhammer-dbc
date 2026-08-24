@@ -1,7 +1,7 @@
 {
   "name": "Sorcerer / Чародей",
   "type": "trait",
-  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-core/Sorcerer.webp",
   "system": {
     "description": "",
     "notes": "",

@@ -1,7 +1,7 @@
 {
   "name": "Культист Ведьма",
   "type": "character",
-  "img": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+  "img": "systems/warhammer-dbc/assets/art/chaos/vedma.webp",
   "folder": "bxRx0CNrjWZoicYj",
   "system": {
     "bodyType": "male",
@@ -1124,7 +1124,7 @@
     "width": 1,
     "height": 1,
     "texture": {
-      "src": "systems/warhammer-dbc/assets/actor-icons/character.svg",
+      "src": "systems/warhammer-dbc/assets/art/chaos/vedma.webp",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "fit": "contain",

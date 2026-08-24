@@ -52,7 +52,7 @@
       <span class="daemon-tn-cb"><input type="checkbox" name="system.trueNameKnown" {{#if daemon.trueNameKnown}}checked{{/if}}/> раскрыто</span>
     </label>
     {{#if daemon.canPsyker}}
-    <label class="daemon-psy-cb" title="Пси-пробуждение: демон использует Психосилы (появится вкладка ПСИ)">
+    <label class="daemon-psy-cb" title="Пси-пробуждение: демон использует Психосилы (появится вкладка МИСТИКА)">
       <input type="checkbox" name="system.isPsyker" {{#if daemon.isPsykerRaw}}checked{{/if}}/> Псайкер
     </label>
     {{/if}}
@@ -66,7 +66,7 @@
     <a class="item {{#if (eq tab "stats")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="stats">ПОКАЗАТЕЛИ</a>
     <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a>
     <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a> <a class="item {{#if (eq tab "social")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="social">СОЦИУМ</a>
-    {{#if daemon.showPsy}}<a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">ПСИ</a>{{/if}}
+    {{#if daemon.showPsy}}<a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">МИСТИКА</a>{{/if}}
     <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a>
     <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a>
     <a class="item {{#if (eq tab "daemonlore")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="daemonlore">ДЕМОНОЛОГИЯ</a>
