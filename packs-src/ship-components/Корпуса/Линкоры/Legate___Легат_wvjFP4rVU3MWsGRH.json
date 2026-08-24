@@ -1,26 +1,18 @@
 {
   "name": "Legate / Легат",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "7XIWvIQncI4e71zW",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Линкоры",
     "sp": 130,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "Deadly Ramming: 1d10. Особое",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "deadlyRamming"
@@ -33,24 +25,16 @@
       "spaceMax": 175,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "2Н, 2К, 2НП, 2ПБ, 2ЛБ",
+      "weaponCapacity": "2Н, 2К, 2НП, 3ПБ, 3ЛБ",
       "hullIntegrity": 200
     },
     "chars": {
-      "speed": 4,
+      "speed": 5,
       "manoeuvrability": 10,
-      "detection": 10,
+      "detection": 0,
       "voidShields": 0,
       "armour": 25,
       "turretRating": 4
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "wvjFP4rVU3MWsGRH",

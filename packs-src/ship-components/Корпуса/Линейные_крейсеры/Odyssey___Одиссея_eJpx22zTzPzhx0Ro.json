@@ -1,26 +1,18 @@
 {
   "name": "Odyssey / Одиссея",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "iXOvwOEpK2IF4XXq",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Линейные крейсеры",
     "sp": 65,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "Hybrid Ship: все/транспорты. In-build: Главный грузовой трюм, 4/8. Warp Speed: /2",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "hybridShip"
@@ -33,10 +25,10 @@
       }
     ],
     "hull": {
-      "spaceMax": 75,
+      "spaceMax": 70,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "ПБ3, ЛБ3",
+      "weaponCapacity": "ЛБ3, ПБ3",
       "hullIntegrity": 70
     },
     "chars": {
@@ -44,16 +36,8 @@
       "manoeuvrability": 0,
       "detection": 10,
       "voidShields": 0,
-      "armour": 17,
-      "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "armour": 20,
+      "turretRating": 3
     }
   },
   "_id": "eJpx22zTzPzhx0Ro",

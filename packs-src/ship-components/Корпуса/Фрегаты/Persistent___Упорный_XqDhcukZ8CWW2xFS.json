@@ -1,53 +1,37 @@
 {
   "name": "Persistent / Упорный",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "VOyInFpl9FIDrRXg",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 38,
+    "hullClass": "Фрегаты",
+    "sp": 34,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Главный грузовой трюм, 1/2",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
       }
     ],
     "hull": {
-      "spaceMax": 44,
+      "spaceMax": 38,
       "powerGen": 0,
       "turnArc": "90°",
-      "weaponCapacity": "1НП",
-      "hullIntegrity": 38
+      "weaponCapacity": "НП1",
+      "hullIntegrity": 32
     },
     "chars": {
       "speed": 6,
-      "manoeuvrability": 18,
-      "detection": 14,
+      "manoeuvrability": 20,
+      "detection": 10,
       "voidShields": 0,
-      "armour": 18,
-      "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "armour": 16,
+      "turretRating": 2
     }
   },
   "_id": "XqDhcukZ8CWW2xFS",

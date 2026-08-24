@@ -1,26 +1,18 @@
 {
   "name": "Apocalypse / Апокалипсис",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "7XIWvIQncI4e71zW",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Линкоры",
     "sp": 90,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Бронированный нос, 1/0. In-build: Нова-орудие модели Марс (Н), 1/3. All Power On (лэнсы; Rng ×2; не двигаться в свой ход)",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -43,14 +35,6 @@
       "voidShields": 0,
       "armour": 22,
       "turretRating": 4
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "SSOASsHQydNnqIca",

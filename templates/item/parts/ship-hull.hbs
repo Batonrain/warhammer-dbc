@@ -1,0 +1,113 @@
+<div class="item-section">
+  <div class="item-section-title">КОРПУС КОРАБЛЯ</div>
+  <div class="comp-row">
+    <label class="wr-label">Класс</label>
+    <input type="text" name="system.hullClass" value="{{system.hullClass}}" class="wr-input-md" placeholder="Фрегаты, Крейсеры…"/>
+    <label class="wr-label">Кач-во</label>
+    <select name="system.quality" class="wr-select-sm">
+      <option value="poor"   {{#if (eq system.quality "poor")}}selected{{/if}}>Poor.Q</option>
+      <option value="common" {{#if (eq system.quality "common")}}selected{{/if}}>Comm.Q</option>
+      <option value="good"   {{#if (eq system.quality "good")}}selected{{/if}}>Good.Q</option>
+      <option value="best"   {{#if (eq system.quality "best")}}selected{{/if}}>Best.Q</option>
+    </select>
+  </div>
+
+  {{#if quality.show}}
+  <div class="comp-quality {{#if quality.need}}incomplete{{/if}}">
+    <div class="comp-quality-head">
+      <span>КАЧЕСТВО: {{quality.label}}</span>
+      <span class="cq-sp">SP {{#if (gt quality.sp 0)}}+{{/if}}{{quality.sp}}</span>
+      {{#if quality.need}}<span class="cq-need">выберите ещё {{quality.need}}</span>{{/if}}
+    </div>
+    {{#if quality.custom}}
+      <div class="cq-note">У Корпуса свои зависимости от качества — они заменяют общие. Меняется только цена в SP.</div>
+    {{else}}
+      {{#if quality.fixed.length}}
+      <div class="cq-fixed">Всегда: {{#each quality.fixed}}{{this.label}}{{#unless @last}}, {{/unless}}{{/each}}</div>
+      {{/if}}
+      {{#if quality.options.length}}
+      <div class="cq-opts">
+        {{#each quality.options as |o|}}
+        <label class="cq-opt {{#if o.on}}on{{/if}}">
+          <input type="checkbox" class="comp-quality-pick" data-key="{{o.key}}" {{#if o.on}}checked{{/if}}/>
+          {{o.label}}
+        </label>
+        {{/each}}
+      </div>
+      {{/if}}
+      <div class="cq-result">Итог: SP {{quality.effSp}}</div>
+    {{/if}}
+    <label class="cq-custom">
+      <input type="checkbox" name="system.qualityCustom" {{#if system.qualityCustom}}checked{{/if}}/>
+      У Корпуса свои зависимости от качества
+    </label>
+  </div>
+  {{/if}}
+
+  <div class="comp-row">
+    <label class="wr-label">SP корпуса</label>
+    <input type="number" name="system.sp" value="{{system.sp}}" class="wr-input-xs"/>
+    <label class="wr-label">R</label>
+    <input type="number" name="system.rarity" value="{{system.rarity}}" class="wr-input-xs"/>
+  </div>
+</div>
+
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ КОРПУСА</div>
+  <div class="comp-row">
+    <label class="wr-label">SPC (Пространство)</label>
+    <input type="number" name="system.hull.spaceMax" value="{{system.hull.spaceMax}}" class="wr-input-xs"/>
+    <label class="wr-label">P.Gen (Выработка)</label>
+    <input type="number" name="system.hull.powerGen" value="{{system.hull.powerGen}}" class="wr-input-xs"/>
+    <label class="wr-label">HI (Прочность)</label>
+    <input type="number" name="system.hull.hullIntegrity" value="{{system.hull.hullIntegrity}}" class="wr-input-xs"/>
+  </div>
+  <div class="comp-row">
+    <label class="wr-label">Поворот (T)</label>
+    <input type="text" name="system.hull.turnArc" value="{{system.hull.turnArc}}" class="wr-input-sm"/>
+    <label class="wr-label">Орудийная оснащённость (WC)</label>
+    <input type="text" name="system.hull.weaponCapacity" value="{{system.hull.weaponCapacity}}" class="wr-input-lg" placeholder="Н1, ПБ1, ЛБ1"/>
+  </div>
+  <div class="comp-row comp-chars">
+    <label class="wr-label">SPD</label><input type="number" name="system.chars.speed" value="{{system.chars.speed}}" class="wr-input-xs"/>
+    <label class="wr-label">MN</label><input type="number" name="system.chars.manoeuvrability" value="{{system.chars.manoeuvrability}}" class="wr-input-xs"/>
+    <label class="wr-label">DT</label><input type="number" name="system.chars.detection" value="{{system.chars.detection}}" class="wr-input-xs"/>
+    <label class="wr-label">VS</label><input type="number" name="system.chars.voidShields" value="{{system.chars.voidShields}}" class="wr-input-xs"/>
+    <label class="wr-label">ARM</label><input type="number" name="system.chars.armour" value="{{system.chars.armour}}" class="wr-input-xs"/>
+    <label class="wr-label">TR</label><input type="number" name="system.chars.turretRating" value="{{system.chars.turretRating}}" class="wr-input-xs"/>
+  </div>
+</div>
+
+{{!-- ───────── Свойства Корпуса (Aspects) — автоматизированные ───────── --}}
+<div class="item-section">
+  <div class="item-section-title">СВОЙСТВА (ASPECTS)</div>
+  <div class="weapon-props-section">
+    <div class="weapon-props-head">
+      <label class="wr-label">Добавить свойство</label>
+      <select class="shipprop-add-select">
+        <option value="">＋ свойство корпуса…</option>
+        {{#each shipPropsAvailable as |d|}}
+        <option value="{{d.key}}">{{d.label}} ({{d.en}})</option>
+        {{/each}}
+      </select>
+    </div>
+    {{#if shipPropsActive.length}}
+    <div class="weapon-props-list">
+      {{#each shipPropsActive as |p|}}
+      <div class="wprop-chip" title="{{p.def.desc}}">
+        <span class="wprop-name">{{p.def.label}}</span>
+        {{#if p.def.rating}}
+        <input type="number" class="shipprop-rating" data-key="{{p.key}}" data-field="rating" value="{{p.rating}}" title="Рейтинг X"/>
+        {{/if}}
+        {{#if p.def.rating2}}
+        <span class="wprop-slash">/</span>
+        <input type="number" class="shipprop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
+        {{/if}}
+        <button type="button" class="shipprop-remove" data-action="shippropRemove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  <textarea name="system.aspects" class="item-textarea" style="margin-top:6px;" placeholder="Доп. заметки по свойствам Корпуса…">{{system.aspects}}</textarea>
+</div>

@@ -619,7 +619,7 @@ export class WarhammerCharacterSheet
         { id: "haemonculus", label: "ГЕМУНКУЛ" },
         { id: "abilities",   label: "СПОСОБНОСТИ" },
         { id: "social",      label: "СОЦИУМ" },
-        { id: "psy",         label: "ПСИ" },
+        { id: "psy",         label: "МИСТИКА" },
         { id: "tech",        label: "ТЕХ" },
         { id: "nav",         label: "НАВ" },
         { id: "gear",        label: "СНАРЯЖЕНИЕ" },

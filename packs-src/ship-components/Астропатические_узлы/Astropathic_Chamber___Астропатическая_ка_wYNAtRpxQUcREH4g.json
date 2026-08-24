@@ -1,0 +1,72 @@
+{
+  "name": "Astropathic Chamber / Астропатическая камера",
+  "type": "component",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "kqwUcdesK57mL2DD",
+  "system": {
+    "kind": "astropathic",
+    "power": 0,
+    "space": 0,
+    "sp": 0,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "hulls": "Все",
+    "aspects": "",
+    "description": "",
+    "notes": "",
+    "essential": true,
+    "external": false,
+    "damaged": false,
+    "status": "intact",
+    "lcBonus": 0,
+    "pcBonus": 0,
+    "modChar": "",
+    "modValue": 0,
+    "shipProps": [],
+    "hull": {
+      "spaceMax": 0,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "",
+      "hullIntegrity": 0
+    },
+    "chars": {
+      "speed": 0,
+      "manoeuvrability": 0,
+      "detection": 0,
+      "voidShields": 0,
+      "armour": 0,
+      "turretRating": 0
+    },
+    "weapon": {
+      "wType": "macrobattery",
+      "strength": 0,
+      "damage": "",
+      "crit": 0,
+      "range": 0,
+      "arc": ""
+    }
+  },
+  "_id": "wYNAtRpxQUcREH4g",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1787488664143,
+    "modifiedTime": 1787488664143,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!wYNAtRpxQUcREH4g"
+}

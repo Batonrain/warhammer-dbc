@@ -1,5 +1,5 @@
 {
-  "name": "Mezoa Hybrid Lance Battery / Гибридная лэнс-батарея «Мезоа»",
+  "name": "Mezoa Hybrid Lance Battery / Гибридная лэнс-батарея «Мезоя»",
   "type": "component",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "Z1C511rtr6V2afgG",
@@ -7,7 +7,7 @@
     "kind": "weapon",
     "power": 13,
     "space": 6,
-    "sp": 2,
+    "sp": 3,
     "rarity": 2,
     "quality": "common",
     "hulls": "Лёгкие крейсеры, Крейсеры, Линейные крейсеры, Гранд-крейсеры, Линкоры",
