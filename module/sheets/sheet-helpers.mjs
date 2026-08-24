@@ -727,7 +727,7 @@ export function buildGetData(actor) {
     const impl = buildImplantsSvg(bodyState, system.bodyType || "male");
 
     context.body = {
-      layers:        buildBodyLayers(bodyState, system.bodyType || "male"),
+      layers:        buildBodyLayers(bodyState, system.bodyType || "male", system.race),
       implantsBack:  impl.back,
       implantsFront: impl.front,
       skinColor:     bodyState.overlays.skin ? implantCatColor(bodyState.overlays.skin) : "",
