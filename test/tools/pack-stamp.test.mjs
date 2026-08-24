@@ -97,4 +97,28 @@ describe("latestDbChange — только настоящая запись в б�
     touch("000007.ldb", written);
     expect(latestDbChange(DIR)).toBe(written);
   });
+
+  // classic-level пишет документ в memtable + WAL, а в .ldb сбрасывает только
+  // при переполнении write-buffer или при следующем открытии базы. «Поправил
+  // пару предметов → выключил Foundry → сборка» оставляет правку ТОЛЬКО в
+  // непустом NNNNNN.log — фильтр по одним .ldb молча терял бы её.
+  it("непустой текущий журнал — несброшенная правка, а не служебный файл", () => {
+    mkdirSync(join(ROOT, DIR), { recursive: true });
+    const old = Date.parse("2026-08-01T00:00:00Z");
+    const edited = Date.parse("2026-08-24T00:00:00Z");
+    touch("000005.ldb", old);
+    writeFileSync(abs("000006.log"), "данные несброшенной записи");
+    const t = edited / 1000;
+    utimesSync(abs("000006.log"), t, t);
+    expect(latestDbChange(DIR)).toBe(edited);
+  });
+
+  it("пак, живущий одним журналом без .ldb, тоже виден сторожу", () => {
+    mkdirSync(join(ROOT, DIR), { recursive: true });
+    const edited = Date.parse("2026-08-24T00:00:00Z");
+    writeFileSync(abs("000003.log"), "данные");
+    const t = edited / 1000;
+    utimesSync(abs("000003.log"), t, t);
+    expect(latestDbChange(DIR)).toBe(edited);
+  });
 });
