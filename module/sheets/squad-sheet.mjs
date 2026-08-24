@@ -21,6 +21,12 @@ import { isFeatureEnabled } from "../constants/features.mjs";
 import { MINION_TIERS } from "../constants/minions.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
+         readTestKind, readDiceChoice, mergeReroll, wireTestKindLive } from "../rules/test-kind-widget.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
+import { criticalOutcome } from "../rules/roll-outcome.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
 
 /** Экранирование пользовательского текста для вставки в HTML чата. */
 /** Степени успеха/провала по правилу системы: |порог − бросок| / 10 + 1. */
@@ -618,6 +624,9 @@ export class WarhammerSquadSheet
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sq-mod" type="number" value="0"/></div>
       <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="sq-total">0</span></div>
       <div class="sq-cmd-risk">Риск ${eRisk.value}${eRisk.bonus ? ` (${eRisk.base} +1 — шлем снят)` : ""} — максимум Успехов: <b id="sq-cap">${capTxt}</b></div>
+      ${testKindHtml({ defaultKind: "base", label: title })}
+      ${diceModeHtml()}
+      <div id="auto-outcome-note" class="roll-dlg-note"></div>
     </div>`;
 
     return foundry.applications.api.DialogV2.wait({
@@ -630,13 +639,16 @@ export class WarhammerSquadSheet
           action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
           callback: async (event, button) => {
             const form  = button.form;
+            const val   = sel => form.querySelector(sel)?.value ?? null;
             const key   = String(form.querySelector("#sq-roller")?.value || "commander");
             const base  = parseInt(form.querySelector("#sq-base").value) || 0;
             const mod   = parseInt(form.querySelector("#sq-mod").value) || 0;
             const isCo  = key === "coordinator";
             const extra = { benefit: form.querySelector("#sq-benefit")?.value,
                             shortKey: form.querySelector("#sq-kind")?.value };
-            await this._executeCommand(kind, key, base + cohesionBonus(coh, isCo) + mod, extra);
+            const tk = readTestKind(val, { label: title });
+            const reroll = mergeReroll(null, readDiceChoice(val));
+            await this._executeCommand(kind, key, base + cohesionBonus(coh, isCo) + mod + tk.difficulty, extra, { ...tk, reroll });
           }
         },
         { action: "cancel", label: "Отмена" }
@@ -646,6 +658,17 @@ export class WarhammerSquadSheet
         const roller = form.querySelector("#sq-roller");
         const baseIn = form.querySelector("#sq-base");
         const modIn  = form.querySelector("#sq-mod");
+        const { updateAutoOutcomeNote } = wireTestKindLive(dialog.element, {
+          actor: this.actor, label: title,
+          getBaseEff: () => {
+            const isCo = String(roller?.value || "commander") === "coordinator";
+            const cb   = cohesionBonus(coh, isCo);
+            const base = parseInt(baseIn.value) || 0;
+            const mod  = parseInt(modIn.value) || 0;
+            const difficulty = parseInt(form.querySelector("#test-difficulty")?.value) || 0;
+            return base + cb + mod + difficulty;
+          }
+        });
         const upd = () => {
           const isCo = String(roller?.value || "commander") === "coordinator";
           const cb   = cohesionBonus(coh, isCo);
@@ -653,6 +676,7 @@ export class WarhammerSquadSheet
           const base = parseInt(baseIn.value) || 0;
           const mod  = parseInt(modIn.value) || 0;
           form.querySelector("#sq-total").textContent = base + cb + mod;
+          updateAutoOutcomeNote();
         };
         roller?.addEventListener("change", ev => {
           baseIn.value = ev.currentTarget.selectedOptions[0]?.dataset.base ?? -20;
@@ -664,16 +688,36 @@ export class WarhammerSquadSheet
     });
   }
 
-  /** Исполнение Команды: бросок, Успехи с учётом Риска, эффект и запись состояния. */
-  async _executeCommand(kind, rollerKey, threshold, extra = {}) {
+  /**
+   * Исполнение Команды: бросок, Успехи с учётом Риска, эффект и запись
+   * состояния. `tk` — Вид теста/Кубик из диалога (rules/test-kind-widget.mjs),
+   * необязателен: старые вызовы (без раскатки) продолжают работать Базовым
+   * тестом без Кубика.
+   */
+  async _executeCommand(kind, rollerKey, threshold, extra = {}, tk = {}) {
     const sys    = this.actor.system;
     const roller = this._postData(rollerKey);
     const isCo   = rollerKey === "coordinator";
 
-    const roll = await new Roll("1d100").evaluate();
-    const rv   = roll.total;
-    const ok   = rv <= threshold;
-    const deg  = degrees(threshold, rv);
+    // Переброс/Кубик — тот же путь, что у общего диалога Навыка/Характеристики.
+    const reroll = tk.reroll || null;
+    const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+    const rolls = [];
+    for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+    const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
+    const roll   = rolls[picked.index];
+    const rv     = picked.value;
+    const rerollNote = reroll
+      ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+      : "";
+
+    const outcome = await resolveKindOutcome(this.actor, {
+      kind: tk.kind || "base", baseEff: threshold, rv,
+      combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
+      ctx: { actor: this.actor, kind: "skill", skill: "command" }
+    });
+    const ok  = outcome.success;
+    const deg = outcome.deg;
 
     // Потолок Успехов от Риска — на Координатора не распространяется: он не
     // вдохновляет личным примером, а лишь советует.
@@ -726,13 +770,18 @@ export class WarhammerSquadSheet
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result sq-chat">
-        <div class="roll-header">${rollIcon("crown", "#4dffa6")}${esc(title)} — ${esc(this.actor.name)}</div>
+        <div class="roll-header">${rollIcon("crown", "#4dffa6")}${esc(title)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}</div>
         <div class="roll-threshold">${esc(roller.label)}: <b>${esc(roller.name)}</b> ·
           Слаженность ${cohMod >= 0 ? "+" : ""}${cohMod}${isCo ? " (половинный — Координатор)" : ""} → Порог <b>${threshold}</b></div>
+        ${outcome.combinedLine}
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        ${rerollNote}
+        ${outcome.critLine}
         <div class="roll-outcome">${ok
           ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}${capped ? `, срезано Риском ${sys.risk} до ${cap}` : ""}</span>`
           : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`}</div>
+        ${outcome.extendedLine}
+        ${outcome.opposedLine}
         ${effect}
         ${missed}
       </div>`,
@@ -813,6 +862,8 @@ export class WarhammerSquadSheet
       <div class="atk-dlg-row"><label>Command(I)−10:</label><input id="sq-b1" type="number" value="${cmdTarget}"/></div>
       <div class="atk-dlg-row"><label>Logic(I)−10:</label><input id="sq-b2" type="number" value="${logTarget}"/></div>
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sq-mod" type="number" value="0"/></div>
+      ${difficultyHtml()}
+      ${diceModeHtml()}
     </div>`;
 
     return foundry.applications.api.DialogV2.wait({
@@ -825,18 +876,31 @@ export class WarhammerSquadSheet
           action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", default: true,
           callback: async (event, button) => {
             const form = button.form;
+            const val  = sel => form.querySelector(sel)?.value ?? null;
             const mod = parseInt(form.querySelector("#sq-mod").value) || 0;
-            const t1  = (parseInt(form.querySelector("#sq-b1").value) || 0) + mod;
-            const t2  = (parseInt(form.querySelector("#sq-b2").value) || 0) + mod;
-            const roll = await new Roll("1d100").evaluate();
-            const rv = roll.total;
+            const difficulty = readDifficulty(val);
+            const t1  = (parseInt(form.querySelector("#sq-b1").value) || 0) + mod + difficulty;
+            const t2  = (parseInt(form.querySelector("#sq-b2").value) || 0) + mod + difficulty;
+            const reroll = mergeReroll(null, readDiceChoice(val));
+            const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+            const rolls = [];
+            for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+            const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
+            const roll = rolls[picked.index];
+            const rv = picked.value;
+            const rerollNote = reroll
+              ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+              : "";
             const ok1 = rv <= t1, ok2 = rv <= t2;
             const ok  = ok1 && ok2;
-            // Комбинированный тест: Успехи — по худшему порогу.
+            // Комбинированный тест (свой, книжный: успех по худшему порогу) —
+            // не трогаем, только Сложность/Кубик/Крит поверх него.
             const worst = Math.min(t1, t2);
             const deg   = degrees(worst, rv);
             const sux   = ok ? deg : 0;
             const power = Math.floor(Math.floor((cmd.int ?? 0) / 10) / 2);
+            const critLine = critLineHtml(criticalOutcome(rv,
+              resolveTest({ actor: this.actor, kind: "skill", skill: "command" }).crit));
 
             if (ok) await this.actor.update({ "system.briefing.successes": sux });
 
@@ -844,8 +908,11 @@ export class WarhammerSquadSheet
               speaker: ChatMessage.getSpeaker({ actor: this.actor }),
               content: `<div class="wh-roll-result sq-chat">
                 <div class="roll-header">${rollIcon("chart", "#4dffa6")}Брифинг — ${esc(this.actor.name)}</div>
-                <div class="roll-threshold">${esc(cmd.name)} · Command(I)−10: <b>${t1}</b> · Logic(I)−10: <b>${t2}</b></div>
+                <div class="roll-threshold">${esc(cmd.name)} · Command(I)−10: <b>${t1}</b> · Logic(I)−10: <b>${t2}</b>
+                  ${difficulty !== 0 ? ` (Сложность ${difficulty >= 0 ? "+" : ""}${difficulty})` : ""}</div>
                 <div class="roll-dice">Бросок: <b>${rv}</b></div>
+                ${rerollNote}
+                ${critLine}
                 <div class="roll-outcome">${ok
                   ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
                   : `<span class="roll-failure">Провал${!ok1 ? " (Command)" : ""}${!ok2 ? " (Logic)" : ""}</span>`}</div>
@@ -904,8 +971,12 @@ export class WarhammerSquadSheet
             const degC = okC ? degrees(cTgt, rc.total) : 0;
             const degW = okW ? degrees(wTgt, rw.total) : 0;
             // Встречный тест: побеждает успешный с бо́льшим числом Успехов;
-            // при равенстве — сопротивляющийся (приказ не продавлен).
+            // при равенстве — сопротивляющийся (приказ не продавлен). Своя
+            // механика, не трогаем — только Крит на броске Командира (сторона
+            // подчинённого не привязана к реальному актору с правилами).
             const cmdWins = okC && (!okW || degC > degW);
+            const critLine = critLineHtml(criticalOutcome(rc.total,
+              resolveTest({ actor: this.actor, kind: "skill", skill: "command" }).crit));
 
             await ChatMessage.create(ChatMessage.applyRollMode({
               speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -913,6 +984,7 @@ export class WarhammerSquadSheet
                 <div class="roll-header">${rollIcon("shield", "#4dffa6")}Приказ — ${esc(cmd.name)} → ${esc(tgt?.name || "")}</div>
                 ${text ? `<div class="sq-chat-order">«${esc(text)}»</div>` : ""}
                 <div class="roll-threshold">Command(F) <b>${cTgt}</b> → бросок <b>${rc.total}</b>${okC ? ` (${degC} ${_degWord(degC)})` : " — провал"}</div>
+                ${critLine}
                 <div class="roll-threshold">W подчинённого <b>${wTgt}</b> → бросок <b>${rw.total}</b>${okW ? ` (${degW} ${_degWord(degW)})` : " — провал"}</div>
                 <div class="roll-outcome">${cmdWins
                   ? `<span class="roll-success">Командир побеждает — подчинённый вынужден следовать приказу</span>`
@@ -967,6 +1039,8 @@ export class WarhammerSquadSheet
             const d1 = ok1 ? degrees(t1, r1.total) : 0;
             const d2 = ok2 ? degrees(t2, r2.total) : 0;
             const wins = ok1 && (!ok2 || d1 > d2);
+            const critLine = critLineHtml(criticalOutcome(r1.total,
+              resolveTest({ actor: this.actor, kind: "skill", skill: "command" }).crit));
 
             if (!wins) await this.actor.update({
               "system.presence.active": false, "system.shortCommand.active": false,
@@ -978,6 +1052,7 @@ export class WarhammerSquadSheet
               content: `<div class="wh-roll-result sq-chat">
                 <div class="roll-header">${rollIcon("skull", "#ff8a8a")}Героический Конец — ${esc(cmd.name)}</div>
                 <div class="roll-threshold">Command(W) <b>${t1}</b> → <b>${r1.total}</b>${ok1 ? ` (${d1} ${_degWord(d1)})` : " — провал"}</div>
+                ${critLine}
                 <div class="roll-threshold">Intimidate(W) врага <b>${t2}</b> → <b>${r2.total}</b>${ok2 ? ` (${d2} ${_degWord(d2)})` : " — провал"}</div>
                 <div class="roll-outcome">${wins
                   ? `<span class="roll-success">Командование держится ещё ${d1} Раунд(ов)${d1 >= 5 ? " — и он отдаёт Короткую Команду как Подвигом (через W)" : ""}</span>`

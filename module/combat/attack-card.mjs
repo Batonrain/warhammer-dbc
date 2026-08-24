@@ -239,6 +239,10 @@ export function attackCard({
   // Отброшенные перебросом кубы: без них потраченный Локус выглядит как
   // «мастер что-то посчитал», а не как использованная возможность.
   rerollDropped = [],
+  // Критический Успех/Провал (натуральные 1-5/96-100, стр. 25) — готовая
+  // строка из rules/test-kind-widget.mjs::critLineHtml, пустая, если не
+  // сработало. Не путать с «Критическим Эффектом» ниже (свойство Extreme).
+  critLine = "",
   hitsCount = 0, hits = [],
   hitLocLabel = "", locRoll = 0, locShift = null,
   isMelee = false, dtLabel = "", damageType = "", pen = 0,
@@ -321,6 +325,7 @@ export function attackCard({
           <span class="roll-stat"><label>Бросок</label><b>${rv}</b>${
             rerollDropped.length ? `<em class="roll-reroll-note"> (переброс, отброшено ${rerollDropped.join(", ")})</em>` : ""}</span>
         </div>
+        ${critLine}
         <div class="roll-outcome">${outcomeHtml}</div>
         ${notes.helpless ? `<div class="roll-allout-note">${notes.helpless}</div>` : ""}
         ${hit && hitsCount > 0

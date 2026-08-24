@@ -57,7 +57,9 @@ import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
-import { testOutcome } from "../rules/roll-outcome.mjs";
+import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice, mergeReroll,
+         wireTestKindLive } from "../rules/test-kind-widget.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
          assistsBeyondCap, countedAssists }
   from "../rules/assists.mjs";
@@ -1649,7 +1651,7 @@ export class WarhammerCharacterSheet
     return ruleRollModsHtml(this.actor, context);
   }
 
-  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null) {
+  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
     const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
@@ -1672,6 +1674,34 @@ export class WarhammerCharacterSheet
       return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>${meta.abbr} — ${meta.label} (${v})</option>`;
     }).join("");
 
+    // Второй тест Комбинированного — тот же список характеристик с итогами,
+    // что и у основного выбора: у Навыка/Характеристики он всегда есть,
+    // остальные диалоги обходятся текстовым полем по умолчанию (см.
+    // rules/test-kind-widget.mjs::testKindHtml).
+    const combinedSecondHtml = `
+      <div class="roll-dlg-row roll-dlg-subrow">
+        <label>Второй тест:</label>
+        <select id="combined-char-select">${charOptions}</select>
+      </div>`;
+
+    // Сумма модификатора: галочки Происхождения/предмета/правила + «ополовинить
+    // штраф» + ассистенты. Отдельной функцией, а не только в callback кнопки —
+    // её же использует живое предупреждение Автоуспеха/Автопровала ниже, и
+    // расходиться этим двум местам нельзя.
+    const modifierSumOf = formEl => {
+      let modifier = parseInt(formEl.querySelector("#skill-modifier")?.value) || 0;
+      let halve = false;
+      for (const sel of [".hw-mod:checked", ".item-mod:checked", ".rule-mod:checked"]) {
+        for (const cb of formEl.querySelectorAll(sel)) {
+          modifier += parseInt(cb.dataset.value) || 0;
+          if (cb.dataset.halve === "1") halve = true;
+        }
+      }
+      if (halve && modifier < 0) modifier = -Math.floor(Math.abs(modifier) / 2);
+      modifier += assistThresholdBonus(assistants.length);
+      return modifier;
+    };
+
     return foundry.applications.api.DialogV2.wait({
       window: { title: `Проверка: ${label}` },
       classes: ["wh-roll-dialog-window"],
@@ -1679,6 +1709,7 @@ export class WarhammerCharacterSheet
       content: `
           <div class="wh-skill-roll-form">
             <div class="roll-dlg-header"><span>${label}</span></div>
+            ${testKindHtml({ defaultKind, label, combinedSecondHtml, defaultCombinedTarget: defaultCharTotal })}
             ${hideCharSelect ? "" : `<div class="roll-dlg-row">
               <label>Бросок с:</label>
               <select id="skill-char-select">${charOptions}</select>
@@ -1701,41 +1732,34 @@ export class WarhammerCharacterSheet
             ${im.html}
             ${rl.html}
             ${rr.html}
+            ${diceModeHtml()}
+            <div id="auto-outcome-note" class="roll-dlg-note"></div>
           </div>`,
       buttons: [
         {
           action: "roll", icon: "fas fa-dice-d10", label: "Бросок", default: true,
           callback: (event, button) => {
             const form = button.form;
-            let modifier = parseInt(form.querySelector("#skill-modifier").value) || 0;
-            // Особенности родного мира: плюсы складываются, «Закалка» Схолы
-            // Прогениум ополовинивает итоговый штраф. Ситуативные модификаторы
-            // предметов (flags.warhammer-dbc.rollMods) и реестр правил
-            // (module/rules/) считаются по той же логике.
-            let halve = false;
-            for (const sel of [".hw-mod:checked", ".item-mod:checked", ".rule-mod:checked"]) {
-              for (const cb of form.querySelectorAll(sel)) {
-                modifier += parseInt(cb.dataset.value) || 0;
-                if (cb.dataset.halve === "1") halve = true;
-              }
-            }
-            if (halve && modifier < 0) modifier = -Math.floor(Math.abs(modifier) / 2);
-            // Ассистенты: +10 к порогу за каждого идут в общий модификатор, а
-            // прибавка к степени — отдельным полем: она применяется только при
-            // успехе, и решать это должен вызывающий код.
-            modifier += assistThresholdBonus(assistants.length);
-            // Выбранный переброс: −1 значит «без переброса».
+            const val  = sel => form.querySelector(sel)?.value ?? null;
+            const modifier = modifierSumOf(form);
+
+            // Именной переброс (выдан правилом) важнее общего выбора Кубика —
+            // если он есть, он и расходуется; иначе действует Преимущество/Помеха.
             const rerollEl = form.querySelector(".rule-reroll-opt:checked");
             const rerollIdx = parseInt(rerollEl?.dataset.idx ?? "-1");
+            const namedReroll = rerollIdx >= 0
+              ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2,
+                  label: rerollEl.parentElement?.textContent?.trim() || "Переброс" }
+              : null;
+            const reroll = mergeReroll(namedReroll, readDiceChoice(val));
+            const { kind, difficulty, combined, extended, opposed } = readTestKind(val, { label });
+
             return {
               charKey:  form.querySelector("#skill-char-select")?.value,
               target:   parseInt(form.querySelector("#skill-target").value) || 0,
-              modifier,
+              modifier, difficulty, kind, combined, extended, opposed,
               assistCount: assistants.length,
-              reroll: rerollIdx >= 0
-                ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2,
-                    label: rerollEl.parentElement?.textContent?.trim() || "Переброс" }
-                : null
+              reroll
             };
           }
         },
@@ -1751,10 +1775,36 @@ export class WarhammerCharacterSheet
       ],
       render: (event, dialog) => {
         const root = dialog.element;
-        root.querySelector("#skill-char-select")?.addEventListener("change", ev => {
+        const charSelectEl = root.querySelector("#skill-char-select");
+
+        // ── Автоуспех/Автопровал по итоговому Порогу — сам порог у этого
+        // диалога свой (Цель/Модификатор/Сложность/усталость/шлем/броня),
+        // остальное (показ подблоков Вида, прогресс банка Расширенного) —
+        // общее для любого диалога броска, см. rules/test-kind-widget.mjs.
+        const currentCharKey = () => hideCharSelect ? defaultChar : (charSelectEl?.value || defaultChar);
+        const { updateAutoOutcomeNote } = wireTestKindLive(root, {
+          actor: this.actor, label,
+          getBaseEff: () => {
+            const target     = parseInt(root.querySelector("#skill-target")?.value) || 0;
+            const modifier    = modifierSumOf(root);
+            const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
+            const charKey = currentCharKey();
+            return target + modifier + difficulty
+              + this._getFatiguePenalty(charKey)
+              + this._getHelmetlessBonus(charKey)
+              + disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
+          }
+        });
+
+        charSelectEl?.addEventListener("change", ev => {
           root.querySelector("#skill-target").value =
             (this.actor.system.characteristics[ev.currentTarget.value]?.total ?? 0) + rankBonus;
+          updateAutoOutcomeNote();
         });
+        root.querySelector("#skill-target")?.addEventListener("input", updateAutoOutcomeNote);
+        root.querySelector("#skill-modifier")?.addEventListener("input", updateAutoOutcomeNote);
+        root.querySelectorAll(".hw-mod, .item-mod, .rule-mod").forEach(cb =>
+          cb.addEventListener("change", updateAutoOutcomeNote));
 
         // ── Ассистенты: зона дропа, чипы, счётчик ──────────────────────────
         const zone  = root.querySelector("#assist-dropzone");
@@ -1781,6 +1831,7 @@ export class WarhammerCharacterSheet
               renderAssists();
             });
           });
+          updateAutoOutcomeNote();
         };
 
         zone.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("assist-dropzone-over"); });
@@ -1819,7 +1870,8 @@ export class WarhammerCharacterSheet
   async _rollSkill(label, baseTotal, defaultChar, rollContext = null) {
     const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext);
     if (!result) return;
-    const { charKey, target, modifier, assistCount = 0, reroll = null } = result;
+    const { charKey, target, modifier, difficulty = 0, kind = "base", combined, extended, opposed,
+             assistCount = 0, reroll = null } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(defaultChar);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
@@ -1830,7 +1882,7 @@ export class WarhammerCharacterSheet
     const armourPenalty = disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
 
     // Мод препаратов уже входит в target (через char.total → итог навыка)
-    const eff      = target + modifier + fatiguePenalty + helmetBonus + armourPenalty;
+    const baseEff  = target + modifier + difficulty + fatiguePenalty + helmetBonus + armourPenalty;
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
@@ -1847,10 +1899,14 @@ export class WarhammerCharacterSheet
       : "";
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
     const rollMode = game.settings.get("core", "rollMode");
-    const { success, deg: baseDeg } = testOutcome(rv, eff);
+
+    const outcome = await resolveKindOutcome(this.actor, {
+      kind, baseEff, rv, combined, extended, opposed,
+      ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill }
+    });
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
-    const deg      = assistDegrees(baseDeg, assistCount, success);
-    const outcome  = success
+    const deg      = assistDegrees(outcome.deg, assistCount, outcome.success);
+    const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
     const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
@@ -1859,18 +1915,23 @@ export class WarhammerCharacterSheet
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${label}</div>
+          <div class="roll-header">${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}</div>
           <div class="roll-threshold">
             ${charAbbr}: <b>${target}</b>${modStr}
+            ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
             ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
             ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
-            → Порог: <b>${eff}</b>
+            → Порог: <b>${baseEff}</b>
           </div>
-          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${success ? `, +${assistCount} к степени` : ""})</div>` : ""}
+          ${outcome.combinedLine}
+          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""}
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           ${rerollNote}
-          <div class="roll-outcome">${outcome}</div>
+          ${outcome.critLine}
+          <div class="roll-outcome">${outcomeHtml}</div>
+          ${outcome.extendedLine}
+          ${outcome.opposedLine}
         </div>`,
       rolls: [roll],
       sound: CONFIG.sounds.dice
@@ -1894,7 +1955,8 @@ export class WarhammerCharacterSheet
   async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false) {
     const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect);
     if (!result) return;
-    const { target, modifier, assistCount = 0 } = result;
+    const { target, modifier, difficulty = 0, kind = "base", combined, extended, opposed,
+             assistCount = 0, reroll = null } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(charKey);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
@@ -1903,14 +1965,28 @@ export class WarhammerCharacterSheet
     const armourPenalty = disabledArmourPenalty(this.actor, { charKey });
 
     // Мод препаратов уже входит в target (через char.total)
-    const eff      = target + modifier + fatiguePenalty + helmetBonus + armourPenalty;
-    const roll     = await new Roll("1d100").evaluate();
-    const rv       = roll.total;
+    const baseEff  = target + modifier + difficulty + fatiguePenalty + helmetBonus + armourPenalty;
+    // Переброс/Преимущество/Помеха — тот же путь, что у теста Навыка
+    // (rules/reroll-pick.mjs::pickReroll); раньше здесь бросался только один
+    // d100 и выбор диалога тихо игнорировался (см. ревизию главы «Тесты»).
+    const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+    const rolls = [];
+    for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+    const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
+    const roll   = rolls[picked.index];
+    const rv     = picked.value;
+    const rerollNote = reroll
+      ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+      : "";
     const rollMode = game.settings.get("core", "rollMode");
-    const { success, deg: baseDeg } = testOutcome(rv, eff);
+
+    const outcome = await resolveKindOutcome(this.actor, {
+      kind, baseEff, rv, combined, extended, opposed,
+      ctx: { actor: this.actor, kind: "skill", char: charKey }
+    });
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
-    const deg      = assistDegrees(baseDeg, assistCount, success);
-    const outcome  = success
+    const deg      = assistDegrees(outcome.deg, assistCount, outcome.success);
+    const outcomeHtml = outcome.success
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
     const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
@@ -1919,17 +1995,23 @@ export class WarhammerCharacterSheet
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${abbr} — ${label}</div>
+          <div class="roll-header">${abbr} — ${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}</div>
           <div class="roll-threshold">
             Цель: <b>${target}</b>${modStr}
+            ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
             ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
             ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
-            → Порог: <b>${eff}</b>
+            → Порог: <b>${baseEff}</b>
           </div>
-          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${success ? `, +${assistCount} к степени` : ""})</div>` : ""}
+          ${outcome.combinedLine}
+          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""}
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">${outcome}</div>
+          ${rerollNote}
+          ${outcome.critLine}
+          <div class="roll-outcome">${outcomeHtml}</div>
+          ${outcome.extendedLine}
+          ${outcome.opposedLine}
         </div>`,
       rolls: [roll],
       sound: CONFIG.sounds.dice

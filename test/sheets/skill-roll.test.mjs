@@ -155,3 +155,160 @@ describe("итоговый порог броска", () => {
     expect(await rollSkill({}, { roll: 46 })).toContain("Провал");
   });
 });
+
+describe("Вид теста: любой тест можно переключить (стр. 25-26)", () => {
+  /** Провести бросок навыка с произвольными полями/галочками и вернуть карточку и лист. */
+  async function rollSkillWith(system, { roll = 50, fields = {}, checks = {} } = {}) {
+    const s = sheet(system);
+    const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" });
+    captured.nextRoll = roll;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": "0", ...fields
+    }, checks));
+    await promise;
+    return { content: captured.chat.at(-1)?.content ?? "", sheet: s };
+  }
+
+  it("Комбинированный: Порог — наименьший из двух", async () => {
+    const { content } = await rollSkillWith({}, {
+      roll: 25,
+      fields: { "#test-kind": "combined", "#combined-char-select": "ag", "#combined-target": "20" }
+    });
+    // 25 меньше исходного Предела 45 (был бы Успех), но больше второго Предела
+    // 20, взятого как итоговый — тест проваливается.
+    expect(content).toContain("Комбинированный");
+    expect(content).toContain("итоговый Порог <b>20</b>");
+    expect(content).toContain("Провал");
+  });
+
+  it("Расширенный: банк Успехов копится на акторе между бросками", async () => {
+    const s = sheet({});
+    const fields = { "#test-kind": "extended", "#extended-label": "Вязь Зарока", "#extended-goal": "10" };
+    const roll = async rv => {
+      const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" });
+      captured.nextRoll = rv;
+      await captured.press("roll", fakeForm({
+        "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": "0", ...fields
+      }));
+      await promise;
+      return captured.chat.at(-1)?.content ?? "";
+    };
+
+    const first = await roll(35);
+    // Успех: 45-35=10 запаса → 1 полный десяток + 1 = 2 степени = +2 к банку.
+    expect(first).toContain("Банк <b>2</b>/10");
+    expect(s.actor.getFlag("warhammer-dbc", "extendedTests.вязь_зарока"))
+      .toEqual({ accumulated: 2, target: 10 });
+
+    // Тот же лист, тот же актор — второй бросок продолжает банк, а не начинает заново.
+    const second = await roll(25);
+    expect(second).toContain("Банк <b>5</b>/10");
+    expect(s.actor.getFlag("warhammer-dbc", "extendedTests.вязь_зарока"))
+      .toEqual({ accumulated: 5, target: 10 });
+  });
+
+  it("Встречный: с известным броском соперника карточка сама объявляет победителя", async () => {
+    const { content } = await rollSkillWith({}, {
+      roll: 30,
+      fields: { "#test-kind": "opposed", "#opposed-threshold": "50", "#opposed-roll": "60" }
+    });
+    // Мои 2 степени успеха против его 2 степеней провала → margin 2-(-2)=4.
+    expect(content).toContain("Вы побеждаете");
+    expect(content).toContain("margin <b>4</b>");
+  });
+
+  it("Встречный: соперник не указан — карточка помечена как половина теста, сравнения нет", async () => {
+    const { content } = await rollSkillWith({}, { fields: { "#test-kind": "opposed" } });
+    expect(content).toContain("Встречный");
+    expect(content).not.toContain("побеждает");
+  });
+});
+
+describe("Сложность: единая таблица, отдельная строка в карточке", () => {
+  async function rollSkillWith(system, { roll = 50, fields = {} } = {}) {
+    const s = sheet(system);
+    const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" });
+    captured.nextRoll = roll;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": "0", ...fields
+    }));
+    await promise;
+    return captured.chat.at(-1)?.content ?? "";
+  }
+
+  it("выбранная Сложность входит в Порог и показана своей строкой", async () => {
+    const content = await rollSkillWith({}, { roll: 30, fields: { "#test-difficulty": "-20" } });
+    expect(content).toContain("Порог: <b>25</b>");
+    expect(content).toContain("-20 (📊 Сложность)");
+    expect(content).toContain("Провал");
+  });
+});
+
+describe("Критические Успехи и Провалы (стр. 25)", () => {
+  async function rollSkillWith(system, { roll = 50 } = {}) {
+    const s = sheet(system);
+    const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" });
+    captured.nextRoll = roll;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": "0"
+    }));
+    await promise;
+    return captured.chat.at(-1)?.content ?? "";
+  }
+
+  it("натуральный бросок 1-5 — Критический Успех, независимо от Предела", () => {
+    return rollSkillWith({}, { roll: 4 }).then(content =>
+      expect(content).toContain("Критический Успех"));
+  });
+
+  it("натуральный бросок 96-100 — Критический Провал", () => {
+    return rollSkillWith({}, { roll: 97 }).then(content =>
+      expect(content).toContain("Критический Провал"));
+  });
+
+  it("вне диапазона — крит-строки нет", () => {
+    return rollSkillWith({}, { roll: 50 }).then(content =>
+      expect(content).not.toContain("Критический"));
+  });
+});
+
+describe("Кубик: Преимущество/Помеха доступны на любом тесте (стр. 26)", () => {
+  it("Преимущество бросает дважды и берёт меньший (лучший на d100)", async () => {
+    const s = sheet({});
+    const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" });
+    captured.dice = [80, 20];
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": "0"
+    }, { ".dice-mode-opt:checked": [{ value: "advantage" }] }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100", "1d100"]);
+    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>20</b>");
+  });
+
+  it("Помеха берёт больший", async () => {
+    const s = sheet({});
+    const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" });
+    captured.dice = [80, 20];
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-char-select": "int", "#skill-modifier": "0"
+    }, { ".dice-mode-opt:checked": [{ value: "disadvantage" }] }));
+    await promise;
+    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>80</b>");
+  });
+});
+
+describe("регрессия: тест Характеристики теперь тоже уважает переброс/Кубик", () => {
+  // Ревизия главы «Тесты» нашла, что _rollCharacteristic полностью игнорировал
+  // result.reroll — диалог показывал переброс, а бросок всегда был одиночным.
+  it("Преимущество даёт два броска и на тесте Характеристики, а не только Навыка", async () => {
+    const s = sheet({});
+    const promise = s._rollCharacteristic("Ловкость", "Ag", 45, "ag", true);
+    captured.dice = [90, 10];
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0"
+    }, { ".dice-mode-opt:checked": [{ value: "advantage" }] }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100", "1d100"]);
+    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>10</b>");
+  });
+});

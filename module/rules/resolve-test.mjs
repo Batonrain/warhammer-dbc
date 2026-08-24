@@ -250,6 +250,29 @@ export function rerollsFromRules(rules, ctx = {}) {
 }
 
 /**
+ * Расширение диапазона Критического Успеха/Провала (стр. 25) от эффектов
+ * `critRangeMod`. В отличие от `rollModsFromRules` это не галочки для игрока —
+ * диапазон не выбирают, он просто шире, пока действует правило, — поэтому сразу
+ * сумма по стороне, а не список.
+ *
+ * @returns {{successExtra:number, failExtra:number}}
+ */
+export function critModsFromRules(rules, ctx = {}) {
+  let successExtra = 0, failExtra = 0;
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "critRangeMod") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      const value = Number(effect.value) || 0;
+      const side = effect.side ?? "both";
+      if (side === "success" || side === "both") successExtra += value;
+      if (side === "failure" || side === "both") failExtra += value;
+    }
+  }
+  return { successExtra, failExtra };
+}
+
+/**
  * Фазы 1–3 целиком: контекст, сбор, отбор.
  *
  * Хук «dbc.collectRules» получает контекст и изменяемый список правил до
@@ -266,6 +289,7 @@ export function resolveTest(input = {}) {
   return {
     ctx, rules,
     mods: rollModsFromRules(rules, ctx),
-    rerolls: rerollsFromRules(rules, ctx)
+    rerolls: rerollsFromRules(rules, ctx),
+    crit: critModsFromRules(rules, ctx)
   };
 }

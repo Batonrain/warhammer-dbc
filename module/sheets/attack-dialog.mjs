@@ -38,6 +38,7 @@ import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
+import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -87,14 +88,18 @@ function readAttackForm(form, ammoConds) {
 
   const allOut = on("#atk-allout");
 
-  // Выбранный переброс: −1 значит «без переброса».
+  // Выбранный переброс: −1 значит «без переброса». Именной (от правила)
+  // важнее общего Кубика (Преимущество/Помеха) — тот же приём, что у диалога
+  // Навыка/Характеристики (rules/test-kind-widget.mjs).
   const rerollEl = el(".rule-reroll-opt:checked");
   const rerollIdx = parseInt(rerollEl?.dataset?.idx ?? "-1");
+  const namedReroll = rerollIdx >= 0
+    ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2 }
+    : null;
+  const diceChoice = el(".dice-mode-opt:checked")?.value ?? "normal";
 
   return {
-    reroll: rerollIdx >= 0
-      ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2 }
-      : null,
+    reroll: mergeReroll(namedReroll, diceChoice),
     autoFail:   all(".atk-mod-cb[data-autofail]:checked").length > 0,
     // Беспомощная цель в упор/в рукопашной (см. specificMods выше) — авто-
     // успех и удвоенный урон вместо обычного порога, отдельно от autoFail.
@@ -960,6 +965,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ${ammoCondHtml}
       ${ruleMods.html}
       ${ruleRerolls.html}
+      ${diceModeHtml()}
 
       <details class="av-adv">
         <summary>Ситуативные модификаторы<span class="av-adv-hint">— разверни, если нужны</span></summary>
@@ -1084,9 +1090,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               // галочка: множитель попаданий включается выбором пилюли.
               isSwift: sel.maneuverKey === "swift", isLightning: sel.maneuverKey === "lightning",
               isAllOut: f.allOut,
-              // Переброс от правила (Локус Буйства): бросок катает несколько
-              // кубов и оставляет один — см. combat/attack.mjs.
+              // Переброс от правила (Локус Буйства) или общий Кубик —
+              // бросок катает несколько кубов и оставляет один — см.
+              // combat/attack.mjs. crit — расширение диапазона Критического
+              // Успеха/Провала тем же правилом (kind:"critRangeMod"); сам
+              // натуральный диапазон 1-5/96-100 применяется уже в attack.mjs.
               reroll: f.reroll,
+              crit: resolveTest({ actor, ...attackCtx }).crit,
               forcedDefenceReroll,
               techniqueOpts: finalTechniqueOpts,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,

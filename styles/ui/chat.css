@@ -74,6 +74,10 @@
 .wh-roll-result .roll-success { color: #166316; font-weight: bold; }
 .wh-roll-result .roll-failure { color: #9a0000; font-weight: bold; }
 
+.wh-roll-result .roll-crit { margin: 3px 0; font-weight: bold; font-size: 1.02em; }
+.wh-roll-result .roll-crit-success { color: #166316; }
+.wh-roll-result .roll-crit-failure { color: #9a0000; }
+
 /* Затемняем «приглушённые» подписи-заметки для читаемости */
 .wh-roll-result [style*="5a4a30"] { color: #4a3320 !important; }
 
@@ -483,6 +487,8 @@
 .wh-roll-result .roll-threshold b { color: #e8fff2 !important; }
 .wh-roll-result .roll-success { color: #4dffa6 !important; }
 .wh-roll-result .roll-failure { color: #ff7a7a !important; }
+.wh-roll-result .roll-crit-success { color: #4dffa6 !important; }
+.wh-roll-result .roll-crit-failure { color: #ff7a7a !important; }
 /* Иконки исхода броска: зелёная галочка / ярко-красный крест (вместо ✅/❌) */
 .wh-roll-result .roll-outcome .roll-success::before,
 .wh-roll-result .roll-outcome .roll-failure::before {

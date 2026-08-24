@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { buildTestContext, resolveTest, rollModsFromRules } from "../../module/rules/resolve-test.mjs";
+import { buildTestContext, resolveTest, rollModsFromRules, critModsFromRules } from "../../module/rules/resolve-test.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 /** Снимок настоящих источников: тесты подменяют реестр и возвращают как было. */
@@ -166,6 +166,43 @@ describe("галочки из эффектов", () => {
     const { rules, mods } = resolveTest({ actor: actor(), skill: "medicae" });
     expect(rules.map(r => r.id)).toEqual(["bonus"]);
     expect(mods).toEqual([{ ruleId: "bonus", label: "Плюс", value: 10, halvePenalty: false }]);
+  });
+});
+
+describe("critModsFromRules", () => {
+  const rule = (side, value, target = "all") =>
+    ({ id: "r", label: "Правило", effects: [{ kind: "critRangeMod", target, side, value }] });
+
+  it("side «success» расширяет только Критический Успех", () => {
+    expect(critModsFromRules([rule("success", 5)], buildTestContext({ skill: "medicae" })))
+      .toEqual({ successExtra: 5, failExtra: 0 });
+  });
+
+  it("side «failure» расширяет только Критический Провал", () => {
+    expect(critModsFromRules([rule("failure", 5)], buildTestContext({ skill: "medicae" })))
+      .toEqual({ successExtra: 0, failExtra: 5 });
+  });
+
+  it("side «both» (по умолчанию) расширяет обе стороны", () => {
+    expect(critModsFromRules([rule("both", 3)], buildTestContext({ skill: "medicae" })))
+      .toEqual({ successExtra: 3, failExtra: 3 });
+  });
+
+  it("область сопоставляется так же, как у rollBonus", () => {
+    const rules = [rule("success", 5, "skill:medicae")];
+    expect(critModsFromRules(rules, buildTestContext({ skill: "medicae" }))).toEqual({ successExtra: 5, failExtra: 0 });
+    expect(critModsFromRules(rules, buildTestContext({ skill: "psyniscience" }))).toEqual({ successExtra: 0, failExtra: 0 });
+  });
+
+  it("несколько правил суммируются", () => {
+    const rules = [rule("success", 5), { ...rule("success", 3), id: "r2" }];
+    expect(critModsFromRules(rules, buildTestContext({ skill: "medicae" })).successExtra).toBe(8);
+  });
+
+  it("resolveTest отдаёт crit вместе с mods и rerolls", () => {
+    registerRuleSource("s", () => [rule("success", 5, "skill:medicae")]);
+    const { crit } = resolveTest({ actor: actor(), skill: "medicae" });
+    expect(crit).toEqual({ successExtra: 5, failExtra: 0 });
   });
 });
 
