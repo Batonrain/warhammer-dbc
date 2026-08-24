@@ -225,6 +225,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Стойка цели меняет порог атаки по ней">🎯 Цель: ${esc(targetStanceDef.label)} (${targetStanceMod >= 0 ? "+" : ""}${targetStanceMod})</span>`
     : "";
 
+  // Агрессивная Стойка (стр. 15): теряет 1 Реакцию в конце Хода, а если
+  // терять было нечего — до начала следующего Хода все рукопашные атаки по
+  // ней получают +20 (module/combat/action-economy.mjs, applyTurnEndStanceEffects
+  // ставит flags.warhammer-dbc.exposedAggressive). Снимается там же —
+  // resetActionEconomy в начале следующего Хода цели.
+  const targetExposed = isMelee && !!attackCtx.targetActor?.getFlag?.("warhammer-dbc", "exposedAggressive");
+  const exposedMod = targetExposed ? 20 : 0;
+  const exposedBadge = targetExposed
+    ? `<span class="atk-training-warn" title="Агрессивная Стойка: цель уже потеряла все Реакции в конце своего Хода">⚔️ Цель раскрыта (+20)</span>`
+    : "";
+
   // Беспомощная цель: рукопашная (и выстрел в упор/в рукопашной, стр. ...) бьёт
   // автоматически и удваивает урон до Поглощения; прочая стрельба — только
   // +30. Рукопашный случай безусловен (badge), стрелковый «в упор/в рукопашной»
@@ -240,7 +251,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ? `<span class="atk-training-warn" title="Беспомощная цель: бонус к стрельбе">🪢 Цель Беспомощна (+${helplessRangedMod})</span>`
       : "";
 
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + helplessRangedMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -496,7 +507,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не

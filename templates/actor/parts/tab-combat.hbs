@@ -1,6 +1,6 @@
 <div class="tab combat-cog {{#if (eq tab "combat")}}active{{/if}}" data-tab="combat" data-group="primary"> {{!-- Раны / Броня / Движение — три колонки --}}
   <div class="combat-layout"> {{!-- РАНЫ --}}
-    <div class="stat-panel"> <div class="panel-title">РАНЫ</div> <div class="panel-body wounds-body"> <div class="wounds-row wounds-tier-row"> <label>Состояние</label> <span class="wounds-tier-badge wt-{{system.wounds.tier}}" title="Уровни Ранения определяют скорость лечения (корбук): Легко ранен — потеряно до T.b×2 Ран включительно; Тяжело ранен — больше T.b×2; При смерти — Раны в минусе (Критический урон). Потеряно сейчас: {{system.wounds.tierLost}}, T.b×2 = {{system.absorption.toughnessBonus}}×2.">{{system.wounds.tierLabel}}</span> </div> <div class="wounds-row"> <label>Всего</label> <input type="number" name="system.wounds.max" value="{{system.wounds.max}}" min="0"/> </div> <div class="wounds-row"> <label>Текущие</label> <input type="number" name="system.wounds.value" value="{{system.wounds.value}}" min="0"/> </div> <div class="wounds-row"> <label>Критический урон</label> <input type="number" name="system.wounds.critical" value="{{system.wounds.critical}}" min="0"/> </div> <div class="wounds-row wounds-reactions-row"> <label title="Памятка: доступные реакции персонажа">Реакции</label> <input type="text" name="system.reactions" value="{{system.reactions}}" placeholder="напр. 1"/> </div> <div class="wounds-row wounds-heal-row"> <button type="button" class="wounds-heal-btn" title="Первая помощь / отдых / лечение — себя или выбранной цели (тест Медики)"><span class="wh-cond-ico" style="color:#ff8a8a;width:14px;height:14px;"><svg viewBox="0 0 16 16" width="14" height="14" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M8 14.2S1.8 10 1.8 5.7A3.4 3.4 0 0 1 8 3.9 3.4 3.4 0 0 1 14.2 5.7C14.2 10 8 14.2 8 14.2Z"/></svg></span> Лечение</button> </div> </div> </div> {{!-- БРОНЯ И ПОГЛОЩЕНИЕ --}}
+    <div class="stat-panel"> <div class="panel-title">РАНЫ</div> <div class="panel-body wounds-body"> <div class="wounds-row wounds-tier-row"> <label>Состояние</label> <span class="wounds-tier-badge wt-{{system.wounds.tier}}" title="Уровни Ранения определяют скорость лечения (корбук): Легко ранен — потеряно до T.b×2 Ран включительно; Тяжело ранен — больше T.b×2; При смерти — Раны в минусе (Критический урон). Потеряно сейчас: {{system.wounds.tierLost}}, T.b×2 = {{system.absorption.toughnessBonus}}×2.">{{system.wounds.tierLabel}}</span> </div> <div class="wounds-row"> <label>Всего</label> <input type="number" name="system.wounds.max" value="{{system.wounds.max}}" min="0"/> </div> <div class="wounds-row"> <label>Текущие</label> <input type="number" name="system.wounds.value" value="{{system.wounds.value}}" min="0"/> </div> <div class="wounds-row"> <label>Критический урон</label> <input type="number" name="system.wounds.critical" value="{{system.wounds.critical}}" min="0"/> </div> <div class="wounds-row wounds-heal-row"> <button type="button" class="wounds-heal-btn" title="Первая помощь / отдых / лечение — себя или выбранной цели (тест Медики)"><span class="wh-cond-ico" style="color:#ff8a8a;width:14px;height:14px;"><svg viewBox="0 0 16 16" width="14" height="14" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M8 14.2S1.8 10 1.8 5.7A3.4 3.4 0 0 1 8 3.9 3.4 3.4 0 0 1 14.2 5.7C14.2 10 8 14.2 8 14.2Z"/></svg></span> Лечение</button> </div> </div> </div> {{!-- БРОНЯ И ПОГЛОЩЕНИЕ --}}
     <div class="stat-panel"> <div class="panel-title">БРОНЯ И ПОГЛОЩЕНИЕ</div> <div class="panel-body armor-body"> <div class="armor-formula-legend"> <span class="afl-ap">AP брони</span> <span class="afl-op">−&nbsp;Пробитие</span> <span class="afl-op">+</span> <span class="afl-tb">T.b&nbsp;{{system.absorption.toughnessBonus}}</span> <span class="afl-op">=</span> <span class="afl-total">Поглощение</span> </div> <div class="armor-tb-note"> T.b (Бонус Стойкости) <b>игнорируется</b> бронепробитием —
           Pen уменьшает только AP брони
         </div> <div class="armor-diagram"> <div class="armor-head"> <div class="armor-loc-label">Голова</div> <div class="armor-loc-vals"> <span class="armor-ap-gear" title="AP брони">{{system.absorption.armorOnly.head}}</span> <span class="armor-tb-val" title="Бонус Стойкости">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.head}}</div> </div> <div class="armor-arms-row"> <div class="armor-limb"> <div class="armor-loc-label">Л. Рука</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.leftArm}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.leftArm}}</div> </div> <div class="armor-limb"> <div class="armor-loc-label">Корпус</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.body}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.body}}</div> </div> <div class="armor-limb"> <div class="armor-loc-label">П. Рука</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.rightArm}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.rightArm}}</div> </div> </div> <div class="armor-legs-row"> <div class="armor-limb"> <div class="armor-loc-label">Л. Нога</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.leftLeg}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.leftLeg}}</div> </div> <div class="armor-limb"> <div class="armor-loc-label">П. Нога</div> <div class="armor-loc-vals"> <span class="armor-ap-gear">{{system.absorption.armorOnly.rightLeg}}</span> <span class="armor-tb-val">+{{system.absorption.toughnessBonus}}</span> <span class="armor-eq">=</span> </div> <div class="armor-absorption-total">{{system.absorption.rightLeg}}</div> </div> </div> </div> <div class="armor-legend-row"> <span class="armor-ap-gear">AP брони</span> <span class="armor-tb-val">+T.b</span> <span class="armor-eq">=</span> <span class="armor-total">Поглощение</span> </div> {{#if armorVsTypeStr}}
@@ -41,6 +41,39 @@
         </div> </div> </div>{{!-- /движение --}}
 
   </div>{{!-- /combat-layout --}}
+
+  {{!-- ═══ ЭКОНОМИКА ДЕЙСТВИЙ (стр. 12): ОД / Реакции ═══
+        Только Полудействие/Полное действие/Реакция тратят пул — Свободное
+        действие бесплатно и кнопки не имеет. Восполняется автоматически в
+        начале Хода актора (updateCombat, module/combat/action-economy.mjs);
+        кнопки ниже — ручная трата для действий без своей кнопки в другом
+        месте листа (Уклонение/Парирование уже тратят Реакцию сами). --}}
+  {{#if actionEconomy}}
+  <div class="action-economy-bar{{#unless actionEconomy.encounterActive}} action-economy-idle{{/unless}}">
+    <div class="ae-pool" title="Очки Действия (стр. 12): Полудействие −1, Полное действие −2">
+      <span class="ae-pool-label">ОД</span>
+      <span class="ae-pool-value">{{actionEconomy.ap.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.ap.max}}</span>
+      <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="1" title="Списать 1 ОД (Полудействие)">−1</button>
+      <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="2" title="Списать 2 ОД (Полное действие)">−2</button>
+    </div>
+    <div class="ae-pool" title="Реакции (стр. 12): тратятся Уклонением/Парированием и подобными действиями вне своего Хода">
+      <span class="ae-pool-label">Реакции</span>
+      <span class="ae-pool-value">{{actionEconomy.reactions.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.reactions.max}}</span>
+      <button type="button" class="ae-spend-btn" data-ae-spend="reaction" data-ae-cost="1" title="Списать 1 Реакцию вручную">−1</button>
+    </div>
+    {{#if actionEconomy.defense}}
+    <div class="ae-pool" title="Доп. Реакции только на Избегание (Защитная Стойка, стр. 15) — тратятся раньше универсальных">
+      <span class="ae-pool-label">Реакции (Избегание)</span>
+      <span class="ae-pool-value">{{actionEconomy.defense.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.defense.max}}</span>
+    </div>
+    {{/if}}
+    {{#if actionEconomy.exposed}}
+    <span class="atk-training-warn" title="Агрессивная Стойка: в конце Хода терять было нечего — атаки по персонажу +20 до начала следующего Хода">⚔️ Раскрыт (+20 атакам по персонажу)</span>
+    {{/if}}
+    <span class="ae-status" title="{{#if actionEconomy.encounterActive}}Идёт бой — пул тратится и восполняется каждый Ход{{else}}Вне активного Encounter трата не считается{{/if}}">{{#if actionEconomy.encounterActive}}⚔️ В бою{{else}}Вне боя{{/if}}</span>
+    <button type="button" class="ae-reset-btn" title="Восполнить ОД и Реакции до максимума вручную">Сброс</button>
+  </div>
+  {{/if}}
 
   {{!-- ═══ ОЧКИ БОЛИ (Друкхари, талант «Через Боль») ═══ --}}
   {{#if system.painActive}}
