@@ -613,34 +613,6 @@ describe("Применение расы, Прошлого и легиона", ()
   const traitNames = () => captured.created.filter(d => d.type === "trait").map(d => d.name);
   const actions = WarhammerCharacterSheet.DEFAULT_OPTIONS.actions;
 
-  it("расовые бонусы идут только в пустые характеристики", async () => {
-    const sheet = sheetFor({ characteristics: { ws: { base: 45 }, bs: {} } });
-
-    await actions.geneApply.call(sheet, ev());
-
-    // clearRace внутри applyRace шлёт свои собственные update-вызовы первым
-    // делом (обнуляет ключи, см. Находку C2) — характеристики ищем по ключу,
-    // а не по позиции в списке апдейтов.
-    const upd = sheet.actor.updates.find(u => "system.characteristics.bs.base" in u);
-    expect(upd["system.characteristics.ws.base"]).toBeUndefined();   // занято — не трогаем
-    expect(upd["system.characteristics.bs.base"]).toBe(30);
-  });
-
-  // Находка I1 общего ревью (wdbc-n1k): раньше applyRaceData выдавала и
-  // Черты, и стартовые таланты; после переезда на applyRace (Черты —
-  // Конструктором с предмета-носителя) кнопка «Применить расовые бонусы»
-  // (Геносемя) талантов больше не выдаёт. splitTopLevel обязан разобрать
-  // «Resistance (Cold, Heat, Poisons)», не развалив её по запятым в скобках.
-  it("кнопка Геносемени выдаёт и стартовые таланты расы", async () => {
-    const sheet = sheetFor({ characteristics: {} });
-
-    await actions.geneApply.call(sheet, ev());
-
-    const talentNames = captured.created.filter(d => d.type === "talent").map(d => d.name);
-    expect(talentNames).toContain("Resistance (Cold, Heat, Poisons)");
-    expect(talentNames.length).toBe(9);   // 9 стартовых талантов Астартес в константах
-  });
-
   it("Иннари получает Черты Иннари поверх бонусов Прошлого", async () => {
     const sheet = sheetFor({ characteristics: {}, ynnariPast: "aeldari" });
 

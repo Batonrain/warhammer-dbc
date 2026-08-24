@@ -86,6 +86,43 @@
   {{!-- ══════════════ МЕХАНИЧЕСКИЕ ПАНЕЛИ (без изменения логики) ══════════════ --}}
   <div class="bc-panels"> <div class="effects-section-panel">
 
+  {{!-- ── ГЕНОСЕМЯ (перенесено со Способностей) ────────────────────────── --}}
+  {{#if isAstartes}}
+  <div class="ability-section-panel gene-seed-panel"> <div class="panel-title"> ГЕНОСЕМЯ </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> </div> <div class="gene-seed-hint">Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты Геносемени — гайд ниже.</div>
+    {{#if geneSeedOrgans.length}}
+    <table class="items-table gene-seed-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th class="col-wide">Орган</th> <th>Эффект</th> </tr> </thead> <tbody> {{#each geneSeedOrgans as |o|}}
+      <tr class="item-row" data-item-id="{{o.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{o.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{o.name}}</td> <td class="trait-fx-cell">{{o.effect}}</td> </tr>
+      <tr class="ability-detail-row" data-item-id="{{o.id}}" style="display:none;"> <td colspan="3"><div class="ability-detail-text">{{#if o.installed}}<b>Расположение:</b> {{o.installed}}<br/>{{/if}}{{#if o.description}}{{o.description}}{{else}}—{{/if}}</div></td> </tr>
+      {{/each}} </tbody> </table>
+    {{else}}
+    <div class="gene-seed-hint">Импланты Геносемени ещё не выданы — их даёт Конструктор Черты «Геносемя» (см. вкладку МЕХАНИКА этой Черты).</div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  {{!-- ── ИМПЛАНТЫ (перенесено со Снаряжения) ───────────────────────────── --}}
+  <section class="gear-cat {{#if gearCollapse.implants}}collapsed{{/if}}" data-cat="implants">
+    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="implants">
+      <span class="gear-cat-chevron">▾</span>
+      <span class="gear-cat-title">ИМПЛАНТЫ</span>
+      <span class="gear-cat-count">{{gearImplants.length}}</span>
+    </div>
+    <div class="gear-cat-body">
+      <table class="items-table gear-table">
+        <thead><tr><th>Имплант</th><th>Категория</th><th>Качество</th><th>Эффект</th></tr></thead>
+        <tbody>
+          {{#if gearImplants.length}}
+            {{#each gearImplants as |im|}}
+            <tr class="item-row" data-item-id="{{im.id}}"><td class="item-name-cell">{{im.name}}</td><td>{{im.category}}</td><td>{{im.quality}}</td><td class="implant-effect-cell">{{im.effect}}</td></tr>
+            {{/each}}
+          {{else}}
+            <tr class="items-empty"><td colspan="4"><em>Нет имплантов — перетащите из библиотеки</em></td></tr>
+          {{/if}}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   {{!-- ── АКТИВНЫЕ ПРЕПАРАТЫ ────────────────────────────────────────────── --}}
   {{#if activeDrugs.length}}
   <div class="effects-subsection"> <div class="panel-title">АКТИВНЫЕ ПРЕПАРАТЫ</div> {{#each activeDrugs as |drug|}}
