@@ -39,10 +39,12 @@ describe("правила Астартес", () => {
   });
 
   it("Геносемя и физиология отдают флаги-возможности", () => {
+    // Усиленный профиль безоружного удара сюда больше не зашит — теперь это
+    // Талант Unarmed Warrior (kind:"capability" в его Mechanics), который
+    // Астартес получают как один из стартовых, а не хардкод расы.
     const flags = effectsOf(collectRules(actor()))
       .filter(e => e.kind === "grantFlag").map(e => e.target);
-    expect(flags).toEqual(["talents.geneSeed", "healing.astartes", "unarmed.astartesProfile",
-      "weapons.legion"]);
+    expect(flags).toEqual(["talents.geneSeed", "healing.astartes", "weapons.legion"]);
   });
 
   it("у человека правил Астартес нет", () => {

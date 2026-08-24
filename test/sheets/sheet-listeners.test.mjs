@@ -67,9 +67,6 @@ function wire(sheet, nodes) {
   return html.handlers;
 }
 
-/** Дать отработать промисам обработчика, который ничего не возвращает. */
-const flush = () => new Promise(resolve => setTimeout(resolve, 0));
-
 const ev = (dataset = {}, value) => ({
   preventDefault: () => {}, stopPropagation: () => {},
   currentTarget: { dataset, value }
@@ -99,7 +96,7 @@ describe("лист навешивает слушатели вкладок", () =
       ".skill-rank-select:change", ".grant-toggle[data-talent]:click",  // РАЗВИТИЕ
       ".haem-advance-btn:click", ".haem-toggle-btn:click",              // ГЕМУНКУЛ
       ".elite-pick-btn:click", ".elite-add-btn:click",                  // шапка
-      ".stance-radio:change", ".base-radio:change", ".technique-btn:click", // БОЙ
+      ".technique-btn:click",                                           // БОЙ
       ".weapon-attack-roll:click", ".pain-absorb-btn:click",
       ".apt-char-add-btn:click", ".fatigue-add-btn:click"               // уже вынесенные
     ]) expect(handlers, key).toHaveProperty(key);
@@ -469,51 +466,16 @@ describe("вкладка БОЙ", () => {
     ...extra
   });
 
-  it("переключатель стойки пишет её в актора", async () => {
-    const sheet = sheetFor(fighter());
-    const handlers = wire(sheet);
-
-    await handlers[".stance-radio:change"](ev({}, "aggressive"));
-
-    expect(sheet.actor.updates[0]).toEqual({ "system.meleeStance": "aggressive" });
-  });
-
-  it("переключатель Базы пишет её в актора", async () => {
-    const sheet = sheetFor(fighter());
-    const handlers = wire(sheet);
-
-    await handlers[".base-radio:change"](ev({}, "charge"));
-
-    expect(sheet.actor.updates[0]).toEqual({ "system.meleeBase": "charge" });
-  });
-
-  it("состязательный приём открывает свой диалог, а не окно атаки", () => {
+  // Стойка/База/обычные Приёмы (Взмах, Выпад и т.д.) выбираются теперь прямо
+  // в диалоге атаки (test/sheets/attack-dialog.test.mjs) — своих кнопок на
+  // вкладке БОЙ у них больше нет. Кнопка .technique-btn осталась только для
+  // Состязаний (Повалить/Финт/Давление/Напролом, module/combat/techniques.mjs).
+  it("состязательный приём открывает свой диалог", () => {
     const handlers = wire(sheetFor(fighter()));
 
     handlers[".technique-btn:click"](ev({ technique: "knockdown" }));
 
     expect(captured.dialog.title).toBe("Повалить");
-  });
-
-  it("приём с надетым рукопашным оружием открывает окно атаки", async () => {
-    const blade = weaponFor({ weaponClass: "melee", equipped: true, damage: "1d10+3" },
-      { id: "w-1", name: "Цепной меч" });
-    blade.type = "weapon";                                   // приём ищет надетое среди оружия
-    const handlers = wire(sheetFor(fighter({ items: [blade] })));
-
-    handlers[".technique-btn:click"](ev({ technique: "sweep" }));
-    await flush();                                           // окно атаки собирается асинхронно
-
-    expect(captured.dialog.window.title).toBe("Атака: Цепной меч");
-  });
-
-  it("приём без оружия сразу бросает и сообщает в чат", async () => {
-    const handlers = wire(sheetFor(fighter()));
-
-    await handlers[".technique-btn:click"](ev({ technique: "sweep" }));
-
-    expect(captured.dialog).toBe(null);
-    expect(captured.chat.at(-1).content).toContain("Широкий Взмах");
   });
 
   it("кнопка атаки у оружия ближнего боя открывает окно сразу", () => {

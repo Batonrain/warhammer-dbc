@@ -41,14 +41,18 @@ const AIM_LOCATIONS = {
  *
  * @returns {{count: number, label: string}}
  */
-export function hitCount({ hit, isMelee, rofMode, deg, wp, sys = {}, isSwift = false, isLightning = false }) {
+export function hitCount({ hit, isMelee, rofMode, deg, wp, sys = {}, isSwift = false, isLightning = false, wsBonus = 0 }) {
   const label = isMelee ? "Рукопашная" : (ROF_LABELS[rofMode] ?? "Рукопашная");
   if (!hit) return { count: 0, label };
 
   if (isMelee) {
     let count = 1;
+    // Быстрая (стр. 14): попадание за каждый НЕЧЁТНЫЙ Успех; Молниеносная —
+    // за КАЖДЫЙ. Обе — до потолка WS.b атакующего (тексты обоих Талантов,
+    // module/constants/combat.mjs). wsBonus 0 — данных нет, потолок не режем.
     if (isSwift)     count = Math.ceil(deg / 2);
-    if (isLightning) count = Math.ceil(deg / 2) + 1;
+    if (isLightning) count = deg;
+    if ((isSwift || isLightning) && wsBonus > 0) count = Math.max(1, Math.min(count, wsBonus));
     if (wp.multiStrikeRating > 0)
       count = Math.max(count, Math.min(wp.multiStrikeRating, Math.ceil(deg / 2)));
     return { count, label };

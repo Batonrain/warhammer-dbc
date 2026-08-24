@@ -1439,8 +1439,12 @@ async function buildIntegralAttackData(entry, sourceItem) {
   // Надета всегда: и HUD, и вкладка БОЙ отбирают оружие по system.equipped,
   // а снять её игрок не сможет — см. preUpdateItem в warhammer-dbc.mjs.
   data.system = { ...(data.system || {}), equipped: true };
+  // equipSourceUuid — устойчивый идентификатор вида удара (кулак/пинок/…):
+  // кнопки HUD ищут предмет по нему, и переименование предмета игроком не
+  // должно убивать кнопку (см. apps/hud.mjs, UNARMED_SOURCE_IDS).
   data.flags = { ...(data.flags || {}), [FLAG]: { ...(data.flags?.[FLAG] || {}),
-    grantedByItem: sourceItem.id, equipEntryId: entry.id, integralAttack: true } };
+    grantedByItem: sourceItem.id, equipEntryId: entry.id, integralAttack: true,
+    equipSourceUuid: entry.equipSourceUuid } };
   return data;
 }
 

@@ -133,15 +133,6 @@ describe("показатели листа", () => {
     expect(ctxOf({}).armorVsTypeStr).toBe("");
   });
 
-  it("стойка рукопашной подписана для свёрнутого заголовка", () => {
-    expect(ctxOf({ meleeStance: "aggressive" }).combatStanceLabel).toBe("Агрессивная");
-    expect(ctxOf({}).combatStanceLabel).toBe("Стандартная");
-  });
-
-  it("база рукопашной подписана для свёрнутого заголовка", () => {
-    expect(ctxOf({ meleeBase: "charge" }).combatBaseLabel).toBe("Натиск");
-    expect(ctxOf({}).combatBaseLabel).toBe("Стандартная Атака");
-  });
 });
 
 describe("раса и подраса", () => {
@@ -466,13 +457,13 @@ describe("лист собирает контекст целиком", () => {
   it("вкладки, характеристики и состояние окна попадают в один контекст", async () => {
     const sheet = sheetOf(WarhammerCharacterSheet, { characteristics: {}, skills: {}, groupSkills: {} });
     sheet.actor.items.contents = sheet.actor.items;
-    sheet._combatCollapse = { stance: true, tech: false };
+    sheet._combatCollapse = { tech: true };
     sheet._gearCollapse = { weapon: true };
 
     const ctx = await sheet._prepareContext({});
     expect(ctx.skillsCol1.length).toBeGreaterThan(0);      // из buildGetData
     expect(ctx.chars.length).toBeGreaterThan(0);           // из сборки характеристик
-    expect(ctx.combatStanceCollapsed).toBe(true);          // состояние окна, не актора
+    expect(ctx.combatTechCollapsed).toBe(true);            // состояние окна, не актора
     expect(ctx.gearCollapse).toEqual({ weapon: true });
   });
 });

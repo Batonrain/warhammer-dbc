@@ -1,15 +1,16 @@
 // module/sheets/tabs/combat.mjs
 //
-// Вкладка БОЙ: стойка, приёмы рукопашной, кнопка атаки у оружия, лечение и
-// Очки Боли Друкхари. Сами расчёты живут по своим модулям (attack-dialog.mjs,
-// combat/techniques.mjs, healing.mjs, pain.mjs) — здесь только их кнопки.
+// Вкладка БОЙ: состязательные приёмы, кнопка атаки у оружия, лечение и Очки
+// Боли Друкхари. Стойка/База/обычные Приёмы выбираются прямо в диалоге атаки
+// (attack-dialog.mjs) и своих кнопок на этой вкладке больше не имеют.
+// Состязания (Повалить/Финт/Давление/Напролом) — отдельный встречный тест без
+// диалога атаки вовсе (combat/techniques.mjs), поэтому свои кнопки сохраняют.
 //
-// Функции принимают актора, а не лист. Свёртка «Стойки» и «Приёмов» осталась на
-// листе: это состояние окна, а не актора.
+// Функции принимают актора, а не лист. Свёртка «Состязаний» осталась на листе:
+// это состояние окна, а не актора.
 
-import { MELEE_STANCES, MELEE_MANEUVERS, MELEE_CONTESTS } from "../../constants/combat.mjs";
-import { showAttackDialog, showAttackDialogWithTechnique,
-         showAttackDialogNoWeapon } from "../attack-dialog.mjs";
+import { MELEE_CONTESTS } from "../../constants/combat.mjs";
+import { showAttackDialog } from "../attack-dialog.mjs";
 import { _showContestDialog } from "../../combat/techniques.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
@@ -56,36 +57,9 @@ export function activateCombatListeners(root, actor) {
   on(root, ".pain-spend-btn", "click", () => painChange(actor, -1, "spend"));
   on(root, ".pain-soulburn-btn", "click", () => openPainSoulBurnDialog(actor));
 
-  // ── Стойка ───────────────────────────────────────────────────────────────
-  on(root, ".stance-radio", "change", ev => {
-    actor.update({ "system.meleeStance": ev.currentTarget.value });
-  });
-
-  // ── База ─────────────────────────────────────────────────────────────────
-  on(root, ".base-radio", "change", ev => {
-    actor.update({ "system.meleeBase": ev.currentTarget.value });
-  });
-
-  // ── Приёмы (маневры + состязания) ───────────────────────────────────────
+  // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────
   on(root, ".technique-btn", "click", ev => {
-    const tech      = ev.currentTarget.dataset.technique;
-    const contestDef = MELEE_CONTESTS[tech];
-    const techDef   = MELEE_MANEUVERS[tech] || contestDef;
-    if (!techDef) return;
-
-    const meleeItem = actor.items.find(i =>
-      i.type === "weapon" && i.system.equipped &&
-      (i.system.weaponClass === "melee" || i.system.weaponClass === "thrown")
-    );
-    const stance    = actor.system.meleeStance || "standard";
-    const stanceDef = MELEE_STANCES[stance];
-
-    if (contestDef) {
-      _showContestDialog(actor, techDef);
-    } else if (meleeItem) {
-      showAttackDialogWithTechnique(actor, meleeItem, techDef, stanceDef, tech);
-    } else {
-      showAttackDialogNoWeapon(actor, techDef);
-    }
+    const techDef = MELEE_CONTESTS[ev.currentTarget.dataset.technique];
+    if (techDef) _showContestDialog(actor, techDef);
   });
 }

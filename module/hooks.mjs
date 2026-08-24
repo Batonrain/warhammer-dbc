@@ -1,7 +1,8 @@
-import { _performDodge, _performParry } from "./combat/defense.mjs";
+import { _performDodge, _performParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
-import { isRuleUsageUsed, markRuleUsageUsed } from "./apps/game-session.mjs";
+import { isRuleUsageUsed, markRuleUsageUsed,
+         isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor } from "./combat/damage.mjs";
@@ -62,7 +63,52 @@ export function registerHooks() {
         const attackDeg = ev.currentTarget.dataset.attackDeg != null
           ? parseInt(ev.currentTarget.dataset.attackDeg) : null;
         if (!await confirmHordeDefense(selectedToken.actor, "Парирование")) return;
-        await _performParry(selectedToken.actor, extraMod, attackDeg);
+        await _performParry(selectedToken.actor, extraMod, attackDeg,
+          ev.currentTarget.dataset.attackerUuid || "");
+      });
+    });
+
+    // Контратака (стр. 12, Талант Counter Attack): успешное Парирование
+    // предлагает тут же ударить в ответ тем же оружием — по выбору игрока.
+    // Раз-в-Раунд метится в момент клика (не после броска): открывшийся
+    // диалог всё равно можно отменить, но сама попытка уже потрачена — тот же
+    // компромисс, что у кнопок Уклонения/Парирования, которые тоже не
+    // «отменяются» после клика.
+    html.querySelectorAll(".wh-counter-attack-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        // Кнопка запоминается ДО первого await: currentTarget живёт только
+        // пока событие обрабатывается синхронно (см. wh-saddle-btn ниже).
+        const el = ev.currentTarget;
+        // Актор — из data-actor-uuid карточки парирования (его кладёт
+        // _performParry), а не из выбранного токена: контратакует тот, кто
+        // парировал, и промах мышью по чужому токену тут ничего не решает.
+        const cardUuid = el.closest(".wh-roll-result")?.dataset.actorUuid;
+        const actor = cardUuid ? (await fromUuid(cardUuid).catch(() => null)) : null;
+        if (!actor) {
+          return ui.notifications.warn("⚠️ Парировавший персонаж карточки не найден.");
+        }
+        const weapon = actor.items.get(el.dataset.weaponId);
+        if (!weapon) return ui.notifications.warn("⚠️ Оружие Контратаки не найдено на листе.");
+        if (!isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY)) {
+          return ui.notifications.warn("⚠️ Контратака уже потрачена в этом Раунде.");
+        }
+        await markRoundCapabilityUsed(actor, COUNTER_ATTACK_CAPABILITY);
+
+        // Целимся в того, кого парировали, если его токен ещё на сцене —
+        // без этого диалог атаки просто откроется без автоматического
+        // расчёта защиты цели (как «Бросок без цели»). Старые цели сбрасываем
+        // в любом случае: контратака не должна бить по цели прошлой атаки.
+        const attackerUuid = el.dataset.attackerUuid;
+        if (attackerUuid) {
+          const attackerActor = (await fromUuid(attackerUuid).catch(() => null));
+          const token = canvas.tokens?.placeables?.find(t => t.actor?.uuid === attackerActor?.uuid);
+          game.user.targets.forEach(t => t.setTarget(false, { user: game.user, releaseOthers: false }));
+          token?.setTarget(true, { user: game.user, releaseOthers: true });
+        }
+        // forceBase: Контратака — атака со штрафом −10 с нейтральной Базой,
+        // персистентная «Полная Атака» (+30) сюда протекать не должна.
+        await actor.sheet._showAttackDialog?.(weapon, { modifier: -10, forceBase: "standard" });
       });
     });
 

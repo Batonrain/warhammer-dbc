@@ -8,17 +8,15 @@ const actor = (over = {}) => ({
 });
 
 describe("флаги-возможности", () => {
-  it("Астартес лечится по своей физиологии и бьёт по усиленному профилю", () => {
+  it("Астартес лечится по своей физиологии", () => {
     const a = actor();
     expect(hasRuleFlag(a, "healing.astartes")).toBe(true);
-    expect(hasRuleFlag(a, "unarmed.astartesProfile")).toBe(true);
     expect(hasRuleFlag(a, "talents.geneSeed")).toBe(true);
   });
 
   it("у человека тех же возможностей нет", () => {
     const a = actor({ race: "human", size: 0 });
     expect(hasRuleFlag(a, "healing.astartes")).toBe(false);
-    expect(hasRuleFlag(a, "unarmed.astartesProfile")).toBe(false);
     expect(hasRuleFlag(a, "talents.geneSeed")).toBe(false);
   });
 
@@ -29,7 +27,7 @@ describe("флаги-возможности", () => {
 
   it("ruleFlags отдаёт все возможности актора", () => {
     expect([...ruleFlags(actor())].sort()).toEqual(
-      ["healing.astartes", "talents.geneSeed", "unarmed.astartesProfile", "weapons.legion"]);
+      ["healing.astartes", "talents.geneSeed", "weapons.legion"]);
   });
 
   describe("правило под условием", () => {

@@ -653,7 +653,7 @@ export class WarhammerCharacterSheet
   };
 
   _savedScrollTops = {};
-  _combatCollapse = { stance: false, base: false, tech: false };
+  _combatCollapse = { tech: false };
   // Свёрнутые категории вкладки снаряжения (ключ категории → свёрнута?).
   _gearCollapse = {};
   // Носители (оружие/броня), у которых свёрнут список установленных улучшений.
@@ -719,8 +719,6 @@ export class WarhammerCharacterSheet
       this.actor.system.notes, { relativeTo: this.actor, secrets: this.actor.isOwner });
 
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
-    context.combatStanceCollapsed = !!this._combatCollapse?.stance;
-    context.combatBaseCollapsed   = !!this._combatCollapse?.base;
     context.combatTechCollapsed   = !!this._combatCollapse?.tech;
     context.gearCollapse = this._gearCollapse || {};
 
