@@ -81,7 +81,11 @@ def para_inline_html(paragraph):
                     inner.append(_styled(run.text, run))
             text = "".join(inner)
             if text:
-                out.append(f'<a href="{href}">{text}</a>' if href else text)
+                # href — атрибут: помимо &/<> надо экранировать и кавычку,
+                # иначе URL с «"» разорвёт атрибут (та же причина, что _escape
+                # для текста ранов).
+                href_esc = _escape(href).replace('"', "&quot;") if href else None
+                out.append(f'<a href="{href_esc}">{text}</a>' if href else text)
     return "".join(out)
 
 
@@ -90,26 +94,55 @@ def para_plain_text(paragraph):
 
 
 def table_html(table):
+    """Как convert_block() таблиц в html-book-import.py: colspan/rowspan/th.
+
+    По XML, не по row.cells: python-docx для смёрженной ячейки отдаёт один и
+    тот же _tc во всех «накрытых» позициях, из-за чего старый обход с
+    seen_in_row терял и colspan, и rowspan — содержимое повторялось в каждой
+    строке вертикального слияния, а горизонтальное схлопывалось в одну <td>
+    без атрибута. В XML же всё явно: w:gridSpan — colspan, w:vMerge
+    restart/continue — начало/продолжение вертикального слияния,
+    w:tblHeader на строке — строка-шапка (<th>).
+    """
     rows_html = []
-    for row in table.rows:
+    trs = table._tbl.tr_lst
+    for ri, tr in enumerate(trs):
         cells_html = []
-        seen_in_row = set()  # только для горизонтального слияния (colspan) —
-        # python-docx для вертикально смёрженной ячейки отдаёт ТОТ ЖЕ id(_tc),
-        # что и в строке восстановления (rowspan), поэтому сет должен сбрасываться
-        # каждую строку — иначе вся "продолженная" строка вниз ошибочно считается
-        # уже отрисованной и пропадает целиком (известное ограничение rowspan
-        # не про это — это был баг, ронявший данные, а не просто терявший rowspan-вид)
-        for cell in row.cells:
-            key = id(cell._tc)
-            if key in seen_in_row:
-                continue  # смёрженная по горизонтали ячейка — уже отрисована в этой строке
-            seen_in_row.add(key)
+        is_header = tr.trPr is not None and tr.trPr.find(qn("w:tblHeader")) is not None
+        grid_col = 0
+        for tc in tr.tc_lst:
+            span = tc.grid_span
+            if tc.vMerge is not None and tc.vMerge != "restart":
+                # продолжение вертикального слияния — ячейка уже отрисована
+                # выше со своим rowspan
+                grid_col += span
+                continue
+            rowspan = 1
+            if tc.vMerge == "restart":
+                for tr2 in trs[ri + 1:]:
+                    gc2, cont = 0, False
+                    for tc2 in tr2.tc_lst:
+                        if gc2 == grid_col:
+                            cont = tc2.vMerge is not None and tc2.vMerge != "restart"
+                            break
+                        gc2 += tc2.grid_span
+                    if not cont:
+                        break
+                    rowspan += 1
+            tag = "th" if is_header else "td"
+            attrs = ""
+            if span > 1:
+                attrs += f' colspan="{span}"'
+            if rowspan > 1:
+                attrs += f' rowspan="{rowspan}"'
+            cell = docx.table._Cell(tc, table)
             parts = []
-            for p in cell.paragraphs:
-                t = para_inline_html(p).strip()
+            for para in cell.paragraphs:
+                t = para_inline_html(para).strip()
                 if t:
                     parts.append(f"<p>{t}</p>" if len(cell.paragraphs) > 1 else t)
-            cells_html.append(f"<td>{''.join(parts)}</td>")
+            cells_html.append(f"<{tag}{attrs}>{''.join(parts)}</{tag}>")
+            grid_col += span
         if cells_html:
             rows_html.append(f"<tr>{''.join(cells_html)}</tr>")
     if not rows_html:

@@ -60,6 +60,17 @@ def span_style(node, css):
     return info
 
 
+def _escape(text):
+    # Как в docx-book-import.py: BeautifulSoup отдаёт текст с УЖЕ декодированными
+    # сущностями («&amp;» -> «&»), и без обратного экранирования «&» и «<»
+    # уходили в итоговый HTML сырыми.
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _escape_attr(text):
+    return _escape(text).replace('"', "&quot;")
+
+
 def unwrap_google_link(href):
     m = re.match(r"https://www\.google\.com/url\?q=([^&]+)", href or "")
     if m:
@@ -80,7 +91,7 @@ def inline_html(node, css, slug=None, art_map=None):
     out = []
     for child in node.children:
         if isinstance(child, NavigableString):
-            out.append(str(child))
+            out.append(_escape(str(child)))
             continue
         if not isinstance(child, Tag):
             continue
@@ -91,7 +102,7 @@ def inline_html(node, css, slug=None, art_map=None):
                     out.append(fig)
             continue
         if child.name == "a":
-            href = unwrap_google_link(child.get("href"))
+            href = _escape_attr(unwrap_google_link(child.get("href")) or "")
             out.append(f'<a href="{href}">{inline_html(child, css, slug, art_map)}</a>')
             continue
         if child.name == "br":
