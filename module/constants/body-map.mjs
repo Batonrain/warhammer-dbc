@@ -8,6 +8,7 @@
 //  Механику эта модель НЕ трогает — только визуализирует.
 // ════════════════════════════════════════════════════════════════════════
 import { esc } from "../helpers/utils.mjs";
+import { AELDARI_RACES } from "./races.mjs";
 
 // ── Ключевые слова → тип импланта (ru + en) ─────────────────────────────────
 const IMPLANT_KINDS = [
@@ -567,14 +568,30 @@ const ADDON_LIB = [
 // нейтральный — отдельной графики под него нет.
 export const BODY_TYPES = { male: "Мужской", female: "Женский", other: "Другое" };
 const BODY_DIRS = { male: "sm/", female: "female/sm/", other: "sm/" };
-export function bodyDir(bodyType) {
+// Расовый набор масок переопределяет пол-набор целиком (шире/уже в плечах/
+// руках/ногах, тот же список файлов и та же система координат 500×800 —
+// генерируется tools/bulk-race-body.py). AELDARI_RACES — из constants/races.mjs
+// (весь блок "Аэльдари" в RACE_GROUPS: azuriane/drukhari/ynnari/halfEldar/
+// harlequin/exodite) делит один силуэт, остальные — по одному ключу расы.
+const RACE_BODY_DIRS = Object.assign(
+  Object.fromEntries(AELDARI_RACES.map(k => [k, "aeldari/"])),
+  {
+    astartes: "astartes/",
+    squat: "squat/",
+    ogryn: "ogryn/",
+    beastman: "beastman/",
+    replicant: "goliath/",   // Голиафы
+  }
+);
+export function bodyDir(bodyType, race) {
+  if (race && RACE_BODY_DIRS[race]) return "/systems/warhammer-dbc/assets/body/" + RACE_BODY_DIRS[race];
   return "/systems/warhammer-dbc/assets/body/" + (BODY_DIRS[bodyType] || BODY_DIRS.male);
 }
 
-export function buildBodyLayers(state, bodyType = "male") {
+export function buildBodyLayers(state, bodyType = "male", race = "") {
   const R = state.regions, O = state.overlays;
   const FLESH = "#6fe0a8", FLESH_DIM = "#2f8f5e";
-  const IMG = bodyDir(bodyType);
+  const IMG = bodyDir(bodyType, race);
   const part = (file, key) => ({ mask: IMG + file, key,
     color: R[key] === "flesh" ? FLESH : implantCatColor(R[key]), aug: R[key] !== "flesh" });
   const organ = (file, cat, extra = {}) => ({ mask: IMG + file,
