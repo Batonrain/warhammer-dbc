@@ -1,7 +1,7 @@
 {
   "name": "Боевой Танк Леман Русс «Разрушитель»",
   "type": "vehicle",
-  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-machines/razrushitel.webp",
   "folder": "4YpNrnjyLQcEIx4x",
   "system": {
     "vehicleClass": "Леман Русс",
@@ -881,7 +881,7 @@
     "width": 1,
     "height": 1,
     "texture": {
-      "src": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "src": "systems/warhammer-dbc/assets/art/doombc-machines/razrushitel.webp",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "fit": "contain",

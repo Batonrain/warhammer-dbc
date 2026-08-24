@@ -560,6 +560,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // глаза» — то есть закрыты ровно эти две цели, а по конечностям, торсу и
   // голове бить прицельно можно.
   if (wp.noCalledShot) aimTargets = aimTargets.filter(t => !t.precise);
+  // Взрывное: можно целиться не в цель, а ПОД неё — тогда промах не пропадает
+  // бесследно, а смещает взрыв по розе (attack.mjs, module/combat/scatter.mjs).
+  // Штраф и статус Избирательной — тот же механизм, что у обычного прицела в
+  // зону; ничего сверх aimVal/aimPenalty не требуется.
+  if (wp.blastRating > 0) {
+    aimTargets.splice(1, 0, { value: "underfoot", label: "Под цель (Взрывное, −20)", penalty: -20 });
+  }
   const aimHtml = aimTargets.map(t => {
     const pen = (t.precise && csMod) ? Math.min(0, t.penalty + csMod) : t.penalty;
     const lbl = t.value && !t.label.includes("(")

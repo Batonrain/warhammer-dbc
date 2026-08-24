@@ -14,6 +14,10 @@ import { esc } from "../helpers/utils.mjs";
 
 // Контекст для общего партиала infamy-strip.hbs.
 export function infamyContext(actor, godKey, { ip, ipMax, showCounter = true }) {
+  // Сохранённое значение может превышать новый максимум (Inf.b упал, старые
+  // миры со времён fate.max): changeInfamy клампит только при изменении,
+  // а отрисовка — здесь, иначе полоса и пипсы показывают 5/3.
+  ip = Math.max(0, Math.min(Number(ip) || 0, ipMax));
   const cor = actor.system.corruption?.value ?? 0;
   const ipAbilities = DP_INFAMY_ABILITIES.map(a => {
     const threshold = (a.key === "success" && godKey === "tzeentch") ? 0 : a.cor;

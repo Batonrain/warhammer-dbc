@@ -103,7 +103,10 @@ export function hitLocation({ rv, hit, shift = 0, aimTarget = null }) {
   const reversed = parseInt(String(rv).padStart(2, "0").split("").reverse().join(""));
   const locRoll  = Math.min(Math.max(reversed + (Number(shift) || 0), 1), 100);
 
-  if (aimTarget?.value) return { locRoll, label: AIM_LOCATIONS[aimTarget.value] ?? "Торс" };
+  // Взрывное «под цель» (underfoot) часть тела не называет: взрыв накрывает
+  // область, и место попадания каждому бросается обычным порядком.
+  if (aimTarget?.value && aimTarget.value !== "underfoot")
+    return { locRoll, label: AIM_LOCATIONS[aimTarget.value] ?? "Торс" };
   if (!hit)             return { locRoll, label: "Торс" };
 
   const loc = HIT_LOCATIONS.find(l => locRoll >= l.min && locRoll <= l.max);

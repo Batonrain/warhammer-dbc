@@ -1,26 +1,18 @@
 {
   "name": "Tetsujin / Тетсудзин",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "NfawZJdCJMS3OCWj",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Лёгкие крейсеры",
     "sp": 55,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [],
     "hull": {
       "spaceMax": 60,
@@ -34,16 +26,8 @@
       "manoeuvrability": 25,
       "detection": 15,
       "voidShields": 0,
-      "armour": 20,
+      "armour": 18,
       "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "VVpheLsFYvbsjAs3",

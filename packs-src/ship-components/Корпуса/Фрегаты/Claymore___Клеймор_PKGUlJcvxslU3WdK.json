@@ -1,49 +1,33 @@
 {
   "name": "Claymore / Клеймор",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "VOyInFpl9FIDrRXg",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Фрегаты",
     "sp": 38,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [],
     "hull": {
       "spaceMax": 38,
       "powerGen": 0,
       "turnArc": "90°",
       "weaponCapacity": "НП2",
-      "hullIntegrity": 38
+      "hullIntegrity": 30
     },
     "chars": {
       "speed": 8,
       "manoeuvrability": 18,
-      "detection": 15,
+      "detection": 12,
       "voidShields": 0,
       "armour": 17,
-      "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "turretRating": 1
     }
   },
   "_id": "PKGUlJcvxslU3WdK",

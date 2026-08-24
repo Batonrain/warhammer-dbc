@@ -220,7 +220,7 @@ export const HOMEWORLDS = [
     }
   },
   {
-    key: "imperial", label: "Имперский мир",
+    key: "imperial", label: "Цивилизованный мир",
     chars: { wp: 3, per: 3, int: -3 },
     feature: {
       name: "Благословенное Невежество",

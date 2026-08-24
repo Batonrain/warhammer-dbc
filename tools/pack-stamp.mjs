@@ -42,7 +42,12 @@ export function readStamp() {
 }
 
 /**
- * Когда базу пака трогали в последний раз — самый свежий mtime её файлов.
+ * Когда базу пака в самом деле записывали последний раз — самый свежий mtime
+ * её файлов данных: `.ldb` и непустых журналов `NNNNNN.log` (WAL, где живёт
+ * запись до сброса в SST). Служебные файлы LevelDB (LOG, LOG.old,
+ * MANIFEST-*, CURRENT, пустой текущий `NNNNNN.log`) не считаются: просто
+ * открытие мира в Foundry трогает их у КАЖДОГО загруженного пака, даже если
+ * внутри ничего не редактировали, и без фильтра это выглядело бы как правка.
  * Пака нет вовсе → 0: собирать нечего, терять нечего.
  */
 export function latestDbChange(dir) {
@@ -50,7 +55,17 @@ export function latestDbChange(dir) {
   if (!existsSync(path)) return 0;
   let latest = 0;
   for (const name of readdirSync(path)) {
-    try { latest = Math.max(latest, statSync(join(path, name)).mtimeMs); }
+    // Данные — это .ldb (SST) и НЕПУСТОЙ текущий журнал NNNNNN.log:
+    // classic-level пишет документ сперва в memtable + WAL, а в .ldb
+    // сбрасывает лишь при переполнении write-buffer или при следующем
+    // открытии базы. Правка, сделанная перед выключением Foundry, живёт
+    // только в логе; пустой текущий лог — служебный, его не считаем.
+    if (!name.endsWith(".ldb") && !/^\d+\.log$/.test(name)) continue;
+    try {
+      const st = statSync(join(path, name));
+      if (name.endsWith(".log") && st.size === 0) continue;
+      latest = Math.max(latest, st.mtimeMs);
+    }
     catch { /* файл исчез между чтением каталога и stat — не наша забота */ }
   }
   return latest;

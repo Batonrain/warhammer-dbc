@@ -74,6 +74,9 @@ export function creatureSchema({ granted = false } = {}) {
     }, { label: def.label });
   }
 
+  // Знаковый ручной модификатор к Итогу характеристики («Мод.» на листе):
+  // плюс прибавляет, минус вычитает. Имя поля (charDamage) сохранено ради
+  // совместимости с уже записанными данными акторов.
   const charDamageFields = {};
   for (const [key, def] of Object.entries(CHARACTERISTICS))
     charDamageFields[key] = num(0, def.label);
@@ -148,6 +151,7 @@ export function creatureSchema({ granted = false } = {}) {
       spentSkills:  num(0, "На навыки"),
       spentTalents: num(0, "На таланты"),
       spentPsy:     num(0, "На психосилы"),
+      spentTech:    num(0, "На техночудеса"),
       spentElite:   num(0, "На элитные архетипы"),
       spentOther:   num(0, "На прочее"),
       current:      num(0, "Свободно")
@@ -226,7 +230,7 @@ export function creatureSchema({ granted = false } = {}) {
     insanity:   new SchemaField({ value: num(0, "Значение"), threshold: num(0, "Порог") }, { label: "Безумие" }),
     corruption: new SchemaField({ value: num(0, "Значение"), threshold: num(0, "Порог") }, { label: "Порча" }),
     characteristics: new SchemaField(charFields, { label: "Характеристики" }),
-    charDamage:      new SchemaField(charDamageFields, { label: "Урон характеристикам" }),
+    charDamage:      new SchemaField(charDamageFields, { label: "Мод. характеристик" }),
     skills:          new SchemaField(skillFields, { label: "Навыки" }),
     groupSkills:     new SchemaField(groupSkillFields, { label: "Групповые навыки" }),
     armor:      new SchemaField(armorFields(), { label: "Броня" }),

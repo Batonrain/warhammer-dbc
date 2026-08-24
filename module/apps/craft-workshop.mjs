@@ -22,9 +22,17 @@ import { esc } from "../helpers/utils.mjs";
 
 const { Application } = foundry.appv1.api;
 
+/** Персонаж, которым владеет игрок (не ГМ) — такой всегда доступен для крафта,
+ *  вне зависимости от чекбокса «Доступен для крафта» (тот остаётся ручным
+ *  переключателем для НПС). */
+function _hasPlayerOwner(actor) {
+  return game.users.some(u => !u.isGM && actor.testUserPermission(u, "OWNER"));
+}
+
 function _crafterChoices() {
   return game.actors
-    .filter(a => a.type === "character" && a.system?.craftAvailable && (game.user.isGM || a.isOwner))
+    .filter(a => a.type === "character" && (a.system?.craftAvailable || _hasPlayerOwner(a))
+                 && (game.user.isGM || a.isOwner))
     .map(a => ({ id: a.id, name: a.name }))
     .sort((x, y) => x.name.localeCompare(y.name, "ru"));
 }

@@ -192,6 +192,20 @@ describe("избирательные попадания", () => {
     expect(html).not.toContain("Сочленение");
     expect(html).not.toContain("Глаз");
   });
+
+  // Взрывное: можно целиться под цель вместо неё самой (−20, Избирательная) —
+  // тогда промах смещает взрыв по розе, а не пропадает бесследно (attack.mjs,
+  // module/combat/scatter.mjs), а не только предупреждает как noCalledShot.
+  it("Взрывное добавляет прицел «Под цель», обычное оружие — нет", () => {
+    const blast = weaponFor({ weaponProps: [{ key: "blast", rating: 3 }] });
+    showAttackDialog(attacker({ items: [blast] }), blast);
+    expect(captured.dialog.content).toContain('value="underfoot"');
+    expect(captured.dialog.content).toContain("Под цель (Взрывное, −20)");
+
+    const plain = weaponFor();
+    showAttackDialog(attacker({ items: [plain] }), plain);
+    expect(captured.dialog.content).not.toContain("underfoot");
+  });
 });
 
 describe("свойства оружия и полосы дальности", () => {

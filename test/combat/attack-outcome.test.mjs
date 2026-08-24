@@ -117,6 +117,13 @@ describe("hitLocation", () => {
     expect(hitLocation({ rv: 23, hit: true, aimTarget: { value: "eye" } }).label).toBe("Глаз (Голова)");
   });
 
+  it("Взрывное «под цель» место не называет — бросается обычным порядком", () => {
+    const plain = hitLocation({ rv: 23, hit: true });
+    const under = hitLocation({ rv: 23, hit: true, aimTarget: { value: "underfoot" } });
+    expect(under.label).toBe(plain.label);
+    expect(under.label).not.toBe("Взрыв (под целью)");
+  });
+
   it("сдвиг от Таланта двигает результат и не выходит за 1–100", () => {
     expect(hitLocation({ rv: 23, hit: true, shift: -3 }).locRoll).toBe(29);
     expect(hitLocation({ rv: 1,  hit: true, shift: -50 }).locRoll).toBe(1);

@@ -105,14 +105,20 @@
 
 /* Характеристики */
 .horde-chars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.horde-char { display: flex; align-items: center; gap: 4px; border: 1px solid rgba(47,158,106,0.28); border-radius: 4px; padding: 3px 5px; background: rgba(15,58,38,0.3); }
-.horde-char-abbr { flex: 0 0 28px; font-weight: bold; color: #7fe0a8; font-size: 0.98em; }
-.horde-char-in { width: 32px; text-align: center; font-size: 0.86em; padding: 1px; }
+.horde-char { display: flex; align-items: center; gap: 3px; border: 1px solid rgba(47,158,106,0.28); border-radius: 4px; padding: 3px 4px; background: rgba(15,58,38,0.3); }
+.horde-char-abbr { flex: 0 0 24px; font-weight: bold; color: #7fe0a8; font-size: 0.98em; }
+.horde-char-in { width: 28px; text-align: center; font-size: 0.86em; padding: 1px; }
 .horde-char-in.adv { color: #9fe8c4; border-color: rgba(47,158,106,0.5); }
-.horde-char-total { flex: 1 1 auto; text-align: center; font-size: 1.3em; font-weight: bold; color: #eafff4; white-space: nowrap; }
+/* Мод.: знаковый ручной модификатор Итога (как «Мод.» на листе Персонажа) —
+   приглушён по умолчанию, подсвечивается вместе с рамкой .horde-char-modded. */
+.horde-char-in.mod { width: 26px; color: #8fbf9c; border-color: rgba(47,158,106,0.35); }
+.horde-char-modded { border-color: rgba(255,184,77,0.55); }
+.horde-char-modded .horde-char-in.mod { color: #ffb84d; border-color: #ffb84d; font-weight: bold; }
+.horde-char-modded .horde-char-total { color: #ffb84d; }
+.horde-char-total { flex: 1 1 auto; text-align: center; font-size: 1.2em; font-weight: bold; color: #eafff4; white-space: nowrap; }
 .horde-char-total i { display: inline-block; font-size: 0.5em; font-style: normal; font-weight: bold; color: #06120c;
   background: #4dffa6; border-radius: 3px; padding: 0 3px; margin-left: 3px; vertical-align: super; }
-.horde-char-roll { width: 22px; height: 22px; }
+.horde-char-roll { width: 20px; height: 20px; flex: 0 0 auto; }
 .horde-char-roll .hi { width: 12px; height: 12px; }
 
 /* Групповые навыки: строка шире обычной — в ней ещё и специализация */

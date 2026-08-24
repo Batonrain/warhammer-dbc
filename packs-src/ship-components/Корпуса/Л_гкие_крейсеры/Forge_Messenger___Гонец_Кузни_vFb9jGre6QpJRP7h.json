@@ -1,32 +1,24 @@
 {
   "name": "Forge Messenger / Гонец Кузни",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "NfawZJdCJMS3OCWj",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 50,
+    "hullClass": "Лёгкие крейсеры",
+    "sp": 55,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [],
     "hull": {
       "spaceMax": 42,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "Н1, ПБ1, НП1",
+      "weaponCapacity": "Н1, ПБ1, ЛБ1, НП1",
       "hullIntegrity": 50
     },
     "chars": {
@@ -36,14 +28,6 @@
       "voidShields": 0,
       "armour": 18,
       "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "vFb9jGre6QpJRP7h",

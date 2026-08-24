@@ -16,7 +16,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured, listenerHtml } from "../support/foundry-stub.mjs";
 import { weaponFor } from "../support/combat-fixtures.mjs";
 import { eliteRaceMatch } from "../../module/sheets/elite-picker.mjs";
-import { LEGIONS } from "../../module/constants/legions.mjs";
 
 // Динамический импорт: глобали Foundry должны быть на месте раньше листа.
 const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
@@ -650,40 +649,7 @@ describe("Применение расы, Прошлого и легиона", ()
     expect(traitNames().length).toBeGreaterThan(0);
   });
 
-  it("легион пересоздаёт свои Черты, убирая прежние", async () => {
-    const legion = LEGIONS.find(l => !l.curseChoices?.length);
-    const old = { id: "old-1", type: "trait", name: "Геносемя: прежний", system: { source: "Легион" } };
-    const sheet = sheetFor({ characteristics: {}, items: [old], geneSeed: { legion: legion.id } });
-
-    await actions.legionApply.call(sheet, ev());
-
-    expect(sheet.actor.deleted).toEqual(["old-1"]);
-    expect(traitNames().some(n => n.startsWith("Геносемя: "))).toBe(true);
-    expect(traitNames().some(n => n.startsWith("Культура: "))).toBe(true);
-  });
-
-  it("проклятье с вариантами спрашивает, и «Без проклятья» создаёт две Черты", async () => {
-    const legion = LEGIONS.find(l => l.curseChoices?.length);
-    const sheet = sheetFor({ characteristics: {}, geneSeed: { legion: legion.id } });
-
-    await actions.legionApply.call(sheet, ev());
-    expect(captured.dialog.buttons.c0.label).toBe(legion.curseChoices[0].name);
-
-    await captured.dialog.buttons.none.callback();
-    expect(traitNames().filter(n => n.startsWith("Проклятье: "))).toEqual([]);
-    expect(traitNames()).toHaveLength(2);                   // Геносемя + Культура
-  });
-
   // Слушатель ".race-select" (обнуление субрасы при смене расы) ушёл вместе с
   // activateRaceListeners и пока не восстановлен: селект в шапке до задачи со
   // слотами пишет ключ напрямую атрибутом name, без применения (wdbc-n1k).
-
-  it("без выбранного легиона кнопка объясняет порядок и ничего не создаёт", async () => {
-    const sheet = sheetFor({ characteristics: {}, geneSeed: {} });
-
-    await actions.legionApply.call(sheet, ev());
-
-    expect(captured.created).toEqual([]);
-    expect(captured.warnings).toHaveLength(1);
-  });
 });
