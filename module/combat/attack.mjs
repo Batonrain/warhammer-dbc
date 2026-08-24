@@ -200,7 +200,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Попадания и расход патронов
   const { count: hitsCount, label: rofLabel } = hitCount({
     hit, isMelee, rofMode, deg, wp, sys,
-    isSwift: opts.isSwift, isLightning: opts.isLightning
+    isSwift: opts.isSwift, isLightning: opts.isLightning,
+    // Потолок попаданий Быстрой/Молниеносной — бонус WS атакующего (стр. 14).
+    wsBonus: Number(actor.system?.characteristics?.ws?.bonus) || 0
   });
   let ammoSpent = 0;
 
