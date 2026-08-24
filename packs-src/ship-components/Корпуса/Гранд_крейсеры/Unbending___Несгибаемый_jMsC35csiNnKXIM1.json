@@ -1,49 +1,33 @@
 {
   "name": "Unbending / Несгибаемый",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "IHC1qrw10vbxBx6h",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 85,
+    "hullClass": "Гранд-крейсеры",
+    "sp": 68,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [],
     "hull": {
-      "spaceMax": 110,
+      "spaceMax": 80,
       "powerGen": 0,
       "turnArc": "45°",
       "weaponCapacity": "1Н, 2К, 2НП",
-      "hullIntegrity": 130
+      "hullIntegrity": 120
     },
     "chars": {
       "speed": 3,
       "manoeuvrability": -20,
       "detection": 20,
       "voidShields": 0,
-      "armour": 24,
+      "armour": 15,
       "turretRating": 4
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "jMsC35csiNnKXIM1",

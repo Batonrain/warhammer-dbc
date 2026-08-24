@@ -1,29 +1,18 @@
 {
   "name": "Goliath / Голиаф",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "xU0HcgaUIV5kWjzf",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Транспорты",
     "sp": 80,
     "rarity": 0,
     "quality": "common",
     "qualityPicks": [],
     "qualityCustom": false,
-    "hulls": "",
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "status": "intact",
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "dreadnought"
@@ -33,24 +22,16 @@
       "spaceMax": 150,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "3К, 3ПБ, 3ЛБ",
-      "hullIntegrity": 150
+      "weaponCapacity": "1НП, 3К, 3ЛБ, 3ПБ",
+      "hullIntegrity": 200
     },
     "chars": {
       "speed": 3,
       "manoeuvrability": -20,
       "detection": 0,
       "voidShields": 0,
-      "armour": 30,
+      "armour": 16,
       "turretRating": 4
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "nrpfguAm1qvyhkOD",

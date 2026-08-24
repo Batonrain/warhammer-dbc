@@ -46,7 +46,7 @@
       "strength": 6,
       "damage": "1d10+3",
       "crit": 5,
-      "range": 5,
+      "range": 9,
       "arc": ""
     }
   },
