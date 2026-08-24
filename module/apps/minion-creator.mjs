@@ -504,16 +504,14 @@ function openCreator(master, state) {
     }));
 
     // Клик по Характеристике при взведённом броске — раскладка, как на Этапе 2
-    // обычного персонажа. Если бросок уже стоял в другом слоте — снимаем его оттуда.
+    // обычного персонажа. Взвести можно только свободный бросок (чипы рендерятся
+    // без занятых), так что снимать его с другого слота не приходится.
     box.querySelectorAll(".mc-char-slot").forEach(slot => slot.addEventListener("click", ev => {
       if (ev.target.closest(".mc-char-clear")) return;
       if (state.armedVi === null) return;
       ev.preventDefault();
       const key = slot.dataset.key;
       const vi = state.armedVi;
-      for (const k of Object.keys(state.charAssign)) {
-        if (state.charAssign[k] === vi) delete state.charAssign[k];
-      }
       state.charAssign[key] = vi;
       state.chars[key] = state.rolls[vi];
       state.armedVi = null;
@@ -529,9 +527,10 @@ function openCreator(master, state) {
       rebuild();
     }));
 
+    // Ручная правка значения («раскидка +5/−5») бросок НЕ отвязывает: иначе
+    // фишка возвращалась бы в пул, и один выпавший бросок считался бы дважды.
     box.querySelectorAll(".mc-char-input").forEach(input => input.addEventListener("change", ev => {
       const key = ev.currentTarget.dataset.key;
-      delete state.charAssign[key];
       state.chars[key] = Number(ev.currentTarget.value) || 0;
       rebuild();
     }));
@@ -599,7 +598,9 @@ function openCreator(master, state) {
       rebuild();
     }));
 
-    box.querySelectorAll(".mc-del").forEach(btn => btn.addEventListener("click", ev => {
+    // :not(.mc-char-clear) — у кнопки возврата броска свой обработчик выше;
+    // общий, повешенный на тот же элемент, stopPropagation не остановит.
+    box.querySelectorAll(".mc-del:not(.mc-char-clear)").forEach(btn => btn.addEventListener("click", ev => {
       ev.preventDefault();
       const { kind, index } = ev.currentTarget.dataset;
       state[kind]?.splice(Number(index), 1);
