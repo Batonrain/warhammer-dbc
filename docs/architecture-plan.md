@@ -402,6 +402,45 @@ Foundry, и фазы 1–3 стало бы нечем проверять.
 существующий код листа. Сейчас: 18 тестов в
 [test/rules/resolve-test.test.mjs](../test/rules/resolve-test.test.mjs).
 
+**Фаза 5b, исход теста (wdbc-4l9i) ✅.** До этого шага бросок 1d100 и
+определение успеха/провала/степени успеха были переписаны вручную минимум в
+25 файлах — одна и та же формула книги своей копией на каждом месте. Общая
+реализация — [rules/roll-outcome.mjs](../module/rules/roll-outcome.mjs),
+`testOutcome(rv, threshold, { autoSuccess })`: чистая функция, `autoSuccess`
+покрывает вынужденный успех (Беспомощная цель, Infamy ≥ рейтинг Страха).
+Подключена у шести видов теста, названных в задаче: Характеристика и Навык
+([actor-sheet.mjs](../module/sheets/actor-sheet.mjs), `_rollCharacteristic` и
+`_rollSkill`), Атака ([attack.mjs](../module/combat/attack.mjs) и приём без
+оружия в [attack-dialog.mjs](../module/sheets/attack-dialog.mjs)), Страх и
+Ужас ([fear.mjs](../module/combat/fear.mjs), `_executeFearRoll` и
+`_executeTraumaRoll`), Безумие
+([tabs/disorders.mjs](../module/sheets/tabs/disorders.mjs)), и у той же
+формулы на Нестабильности Демона
+([daemon-sheet.mjs](../module/sheets/daemon-sheet.mjs)). Сам бросок кубика
+(`new Roll("1d100")`) и выбор переброса
+([reroll-pick.mjs](../module/rules/reroll-pick.mjs)) остаются на месте
+вызова — централизация единственной точки вызова кубика в план не входила.
+
+Не всё похожее по `grep` — тот же тест: у корабельного боя
+([ship-sheet.mjs](../module/sheets/ship-sheet.mjs), встречные тесты) и
+крафта/ритуалов ([craft.mjs](../module/constants/craft.mjs),
+[rituals.mjs](../module/constants/rituals.mjs), знаковая степень успеха) —
+своя арифметика, не сверенная построчно с книгой в рамках этого шага, и они
+намеренно не тронуты. Открытый список мест с той же дублированной формулой,
+но ещё не переведённых: техника, верховой бой, приёмы, Покров, Техно,
+Наркотики, Психосилы, психология Орды, местность, защита, Дредноут, Оружие
+Наследия, Инфогвардия, Sus An Heal, Командование, Принц-Демон, Орда-лист,
+Формация/Отряд, встречные тесты в [hooks.mjs](../module/hooks.mjs).
+
+Тесты: [test/rules/roll-outcome.test.mjs](../test/rules/roll-outcome.test.mjs)
+(8 тестов на `testOutcome` без Foundry); существующие
+[skill-roll.test.mjs](../test/sheets/skill-roll.test.mjs),
+[attack-parity.test.mjs](../test/combat/attack-parity.test.mjs),
+[attack-dialog.test.mjs](../test/sheets/attack-dialog.test.mjs),
+[attack-roll.test.mjs](../test/sheets/attack-roll.test.mjs) и
+[disorders.test.mjs](../test/sheets/disorders.test.mjs) остались зелёными без
+изменений — доказательство, что рефакторинг не поменял числа.
+
 ### 2.2. Подключить конвейер к тестам навыков ✅
 
 Точки входа найдены:

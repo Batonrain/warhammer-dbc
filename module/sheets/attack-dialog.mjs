@@ -36,6 +36,7 @@ import { isHandShield } from "../combat/hand-shield.mjs";
 import { CAPABILITIES } from "../constants/capabilities.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
@@ -1231,10 +1232,7 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
 
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
-  const hit      = targetHelpless || rv <= final;
-  const deg      = hit
-    ? Math.max(1, Math.floor((final - rv) / 10) + 1)
-    : Math.floor((rv - final) / 10) + 1;
+  const { success: hit, deg } = testOutcome(rv, final, { autoSuccess: targetHelpless });
   const rollMode = game.settings.get("core", "rollMode");
   const outcome  = hit
     ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}</span>`
