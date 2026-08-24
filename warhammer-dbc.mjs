@@ -65,6 +65,7 @@ import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/r
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
+import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
@@ -297,6 +298,11 @@ Hooks.once("init", () => {
 
   // Версия чистки остатков старой системы Органов Геносемени (одноразовая)
   game.settings.register("warhammer-dbc", "geneSeedCleanupVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия довыдачи цен Техночудес вложенным копиям у существующих акторов (одноразовая)
+  game.settings.register("warhammer-dbc", "techPowerCostsVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -655,7 +661,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -680,6 +686,18 @@ Hooks.once("ready", async () => {
     await migrateRemoveGeneSeed();
     await game.settings.set("warhammer-dbc", "geneSeedCleanupVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Чистка Геносемени:", e); }
+});
+
+// ── Одноразовая довыдача: цены Техночудес вложенным копиям старых актёров ─────
+// Ручной перезапуск: game.warhammerDBC.migrateTechPowerCosts()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "techPowerCostsVersion") || 0) >= VERSION) return;
+  try {
+    await migrateTechPowerCosts();
+    await game.settings.set("warhammer-dbc", "techPowerCostsVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Цены Техночудес:", e); }
 });
 
 // ── Одноразовая довыдача: Стремления, выбранные до автоматизации бонусов ──────
