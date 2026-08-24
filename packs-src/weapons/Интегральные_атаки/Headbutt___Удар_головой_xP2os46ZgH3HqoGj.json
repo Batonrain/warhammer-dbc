@@ -25,6 +25,22 @@
           }
         ],
         "requiresCapability": "unarmed.warriorProfile"
+      },
+      {
+        "label": "Горящая Голова",
+        "range": "",
+        "damage": "1d10",
+        "damageType": "energy",
+        "penetration": 0,
+        "weaponProps": [
+          {
+            "key": "cheapShot"
+          },
+          {
+            "key": "tainted"
+          }
+        ],
+        "requiresCapability": "mutation.burningHead"
       }
     ],
     "reload": "–",

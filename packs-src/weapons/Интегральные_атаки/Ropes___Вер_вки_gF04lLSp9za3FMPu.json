@@ -1,0 +1,87 @@
+{
+  "name": "Ropes / Верёвки",
+  "type": "weapon",
+  "system": {
+    "description": "",
+    "notes": "",
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 1,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "quality": "common",
+    "availability": 0,
+    "weight": 0,
+    "attackBonus": 0,
+    "special": "Успешное Уклонение требует 3 Успеха (6 при трате с предыдущего уклонения); свободное действие снимает Опутывание; нельзя использовать атаку повторно, пока держится предыдущее Опутывание — вне полей Конструктора, не автоматизировано.",
+    "equipped": true,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "snare",
+        "rating": 3
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    },
+    "bookSource": "",
+    "weaponClass": "pistol",
+    "weaponType": "exotic",
+    "range": 15,
+    "balance": 0,
+    "damage": "1d10",
+    "damageType": "rending",
+    "penetration": 0,
+    "meleeCategory": ""
+  },
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-ranged.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_id": "gF04lLSp9za3FMPu",
+  "_key": "!items!gF04lLSp9za3FMPu"
+}

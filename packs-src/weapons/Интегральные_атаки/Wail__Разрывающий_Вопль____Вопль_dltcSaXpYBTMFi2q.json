@@ -1,0 +1,96 @@
+{
+  "name": "Wail (Разрывающий Вопль) / Вопль",
+  "type": "weapon",
+  "system": {
+    "description": "",
+    "notes": "",
+    "grips": "",
+    "profileLabel": "",
+    "profiles": [],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 1,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "quality": "common",
+    "availability": 0,
+    "weight": 0,
+    "attackBonus": 0,
+    "special": "Субмутация «Разрывающий Вопль»: реальный урон 2d10 X, Pen 0, Concussive (2). Удваивает урон по постройкам/предметам из дерева, стекла, камня, рокрита — не автоматизировано.",
+    "equipped": true,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "independent"
+      },
+      {
+        "key": "recharge"
+      },
+      {
+        "key": "spray"
+      },
+      {
+        "key": "concussive",
+        "rating": 2
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    },
+    "bookSource": "",
+    "weaponClass": "pistol",
+    "weaponType": "exotic",
+    "range": 30,
+    "balance": 0,
+    "damage": "2d10",
+    "damageType": "blast",
+    "penetration": 0,
+    "meleeCategory": ""
+  },
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-ranged.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "folder": "mCeNfRO1LB6dGxU3",
+  "_id": "dltcSaXpYBTMFi2q",
+  "_key": "!items!dltcSaXpYBTMFi2q"
+}
