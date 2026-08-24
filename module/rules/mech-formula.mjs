@@ -22,6 +22,14 @@
 // Чистая функция, Foundry не нужен — проверяется test/rules/mech-formula.test.mjs.
 
 const KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf", "cor"];
+
+// Каноническая нотация системы — «X.b» (resolveCharFormula, module/helpers/
+// utils.mjs: WS.b, Cor.b, однобуквенные A/I/P/W/F как алиасы Ag/Int/Per/WP/Fel).
+// Автор, привыкший писать «Cor.b» в формулах урона, здесь получал бы молчаливую
+// ошибку — поэтому «X.b» принимается наравне с короткими ключами KEYS и
+// сводится к ним ДО подстановки значений: «Cor.b» ≡ «cor», «A.b» ≡ «ag».
+const DOTB_ALIASES = { a: "ag", i: "int", p: "per", w: "wp", f: "fel" };
+const DOTB_RE = /(?<![a-z])(ws|bs|ag|int|per|wp|fel|inf|cor|s|t|a|i|p|w|f)\.b(?![a-z0-9])/g;
 const FUNC_NAMES = ["ceil", "floor", "round", "abs"];
 const SAFE_REST = /^[\d.\s()+\-*/,]*$/;
 
@@ -43,11 +51,15 @@ export function mechRollData(actor) {
 export function mechFormulaTotal(formula, rollData = {}) {
   const raw = String(formula ?? "").trim();
   if (raw === "") return 0;
-  if (/^-?\d+(\.\d+)?$/.test(raw)) return Math.trunc(Number(raw));
+  // Голое число проходит как есть, С дробью: «0.5» (кг Веса) — это 0.5, а не 0.
+  // Усечение к целому — только у формульного пути ниже, там оно намеренное.
+  if (/^-?\d+(\.\d+)?$/.test(raw)) return Number(raw);
+
+  let expr = raw.toLowerCase();
+  expr = expr.replace(DOTB_RE, (m, tok) => DOTB_ALIASES[tok] || tok);
 
   // Длинные ключи раньше коротких — иначе "int" срежется по "in", которого нет,
   // но, например, случайный "ins" словил бы "in" как часть себя без \b-границы.
-  let expr = raw.toLowerCase();
   for (const k of [...KEYS].sort((a, b) => b.length - a.length)) {
     expr = expr.replace(new RegExp(`\\b${k}\\b`, "g"), String(Number(rollData[k]) || 0));
   }

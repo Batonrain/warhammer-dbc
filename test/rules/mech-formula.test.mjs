@@ -69,4 +69,17 @@ describe("mechFormulaTotal", () => {
   it("регистр не важен — 'AG*2' работает как 'ag*2'", () => {
     expect(mechFormulaTotal("AG*2", rd)).toBe(14);
   });
+
+  it("каноническая нотация «X.b» (resolveCharFormula) — наравне с короткими ключами", () => {
+    expect(mechFormulaTotal("Cor.b", rd)).toBe(9);
+    expect(mechFormulaTotal("WS.b", rd)).toBe(3);
+    expect(mechFormulaTotal("ceil(Cor.b/2)", rd)).toBe(5);   // как ceil(cor/2)
+    expect(mechFormulaTotal("A.b*2", rd)).toBe(14);          // однобуквенный алиас Ag
+    expect(mechFormulaTotal("ws.b + s", rd)).toBe(8);        // регистр не важен, смешение допустимо
+  });
+
+  it("голое число с точкой сохраняет дробь — 0.5 кг Веса это 0.5, не 0", () => {
+    expect(mechFormulaTotal("0.5", rd)).toBe(0.5);
+    expect(mechFormulaTotal("-1.5", rd)).toBe(-1.5);
+  });
 });

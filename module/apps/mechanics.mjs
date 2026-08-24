@@ -2199,7 +2199,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "poolMax") {
-    return `<input type="text" class="mech-poolmax-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. ±1 или ag*2" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
+    return `<input type="text" class="mech-poolmax-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. -1, 2 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
 
   if (ent.kind === "weaponProp") {
@@ -2427,6 +2427,27 @@ export function mechanicsRelevantChange(changed) {
       || changed?.system?.submutation !== undefined;
 }
 
+// Поля-формулы записей по kind — те самые, что isEntryComplete гоняет через
+// formulaOk и МОЛЧА отсеивает при негодной строке. Чтобы отсев не был тихим,
+// saveItemMechanics при сохранении предупреждает автора (см. ниже).
+const FORMULA_FIELD_BY_KIND = {
+  characteristic: "value", poolMax: "value",
+  weight: "weightValue", movement: "movementValue", armour: "armourValue"
+};
+
+/** Непустые формулы записей (рекурсивно, с подгруппами), которые не разбираются. */
+function collectBrokenFormulas(entries) {
+  const bad = [];
+  for (const e of entries || []) {
+    if (e.kind === "group") { bad.push(...collectBrokenFormulas(e.group?.entries)); continue; }
+    const field = FORMULA_FIELD_BY_KIND[e.kind];
+    const v = field && e[field];
+    if (v == null || String(v).trim() === "") continue;
+    try { mechFormulaTotal(v, {}); } catch { bad.push(String(v)); }
+  }
+  return bad;
+}
+
 /**
  * Записать механику предмета. Настраивают её все за столом, а не один Мастер:
  * Черты, Таланты и снаряжение лежат в компендиумах и в мире, и своими для
@@ -2443,6 +2464,12 @@ export function mechanicsRelevantChange(changed) {
  */
 export async function saveItemMechanics(item, groups) {
   if (!item) return;
+  // Битую формулу isEntryComplete отсеет как «не заполнена» — молча. Само
+  // сохранение не блокируем (черновик дописывают в несколько заходов), но
+  // автору говорим сразу, а не через тихое исчезновение записи из выдачи.
+  const broken = collectBrokenFormulas((groups || []).flatMap(g => g.entries || []));
+  if (broken.length) ui.notifications?.warn(
+    `«${item.name}»: формула не разбирается, запись не применится: ${broken.map(f => `«${f}»`).join(", ")}`);
   if (item.isOwner) {
     await item.setFlag("warhammer-dbc", "mechanics", groups);
     await syncWeaponPropItemEffects(item);
