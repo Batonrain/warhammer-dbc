@@ -66,6 +66,7 @@ import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
 import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
+import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
@@ -305,6 +306,11 @@ Hooks.once("init", () => {
 
   // Версия перевода Корпусов кораблей на тип shipHull (одноразовая)
   game.settings.register("warhammer-dbc", "shipHullsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия инверсии знака Мод. характеристик (было «Урон», вычиталось; одноразовая)
+  game.settings.register("warhammer-dbc", "charDamageSignVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -663,7 +669,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -700,6 +706,18 @@ Hooks.once("ready", async () => {
     await migrateShipHulls();
     await game.settings.set("warhammer-dbc", "shipHullsVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Корпуса кораблей:", e); }
+});
+
+// ── Одноразовая инверсия: знак Мод. характеристик (бывший «Урон в характеристику»)
+// Ручной перезапуск: game.warhammerDBC.migrateCharDamageSign()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "charDamageSignVersion") || 0) >= VERSION) return;
+  try {
+    await migrateCharDamageSign();
+    await game.settings.set("warhammer-dbc", "charDamageSignVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Знак Мод. характеристик:", e); }
 });
 
 // ── Одноразовая довыдача: Стремления, выбранные до автоматизации бонусов ──────

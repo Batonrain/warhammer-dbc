@@ -101,14 +101,15 @@
 
     {{!-- Характеристики --}}
     <section class="horde-panel">
-      <div class="horde-panel-title">ХАРАКТЕРИСТИКИ <span class="dim">— база / продвиж. · клик = бросок</span></div>
+      <div class="horde-panel-title">ХАРАКТЕРИСТИКИ <span class="dim">— база / продвиж. / мод. · клик = бросок</span></div>
       <div class="horde-chars">
         {{#each chars as |c|}}
-        <div class="horde-char">
+        <div class="horde-char {{#if c.charDamage}}horde-char-modded{{/if}}">
           <span class="horde-char-abbr">{{c.abbr}}</span>
           <input type="number" name="system.characteristics.{{c.key}}.base" value="{{c.base}}" class="horde-char-in" data-tooltip="База"/>
           <input type="number" name="system.characteristics.{{c.key}}.advance" value="{{c.advance}}" class="horde-char-in adv" data-tooltip="Продвижение"/>
-          <span class="horde-char-total">{{c.total}}<i>{{c.bonus}}</i></span>
+          <input type="number" name="system.charDamage.{{c.key}}" value="{{c.charDamage}}" class="horde-char-in mod" data-tooltip="Мод. к Итогу: число прибавляется, отрицательное — вычитает"/>
+          <span class="horde-char-total">{{c.total}}{{#if c.bonusModified}}<i>{{c.bonus}}</i>{{/if}}</span>
           <button type="button" class="hbtn horde-char-roll" data-action="rollChar" data-char="{{c.key}}" data-tooltip="Бросок {{c.label}}"><span class="hi hi-die"></span></button>
         </div>
         {{/each}}

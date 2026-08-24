@@ -171,14 +171,22 @@ export class WarhammerHordeSheet
     // берётся только состояние на первый рендер и на перерисовку.
     context.tab = this.tabGroups?.primary ?? WarhammerHordeSheet.TABS.primary.initial;
 
-    context.chars = CHAR_ORDER.map(k => ({
-      key: k, abbr: CHARACTERISTICS[k]?.abbr || k.toUpperCase(),
-      label: CHARACTERISTICS[k]?.label || k,
-      total: system.characteristics?.[k]?.total ?? 0,
-      bonus: system.characteristics?.[k]?.bonus ?? 0,
-      base:  system.characteristics?.[k]?.base ?? 0,
-      advance: system.characteristics?.[k]?.advance ?? 0
-    }));
+    context.chars = CHAR_ORDER.map(k => {
+      const total = system.characteristics?.[k]?.total ?? 0;
+      const bonus = system.characteristics?.[k]?.bonus ?? 0;
+      // Показать Бонус надстрочно только если он реально модифицирован
+      // (отличается от обычного floor(Итог/10)) — см. лист Персонажа.
+      const naturalBonus = Math.floor(total / 10);
+      return {
+        key: k, abbr: CHARACTERISTICS[k]?.abbr || k.toUpperCase(),
+        label: CHARACTERISTICS[k]?.label || k,
+        total, bonus,
+        bonusModified: bonus !== naturalBonus,
+        base:  system.characteristics?.[k]?.base ?? 0,
+        advance: system.characteristics?.[k]?.advance ?? 0,
+        charDamage: system.charDamage?.[k] ?? 0
+      };
+    });
 
     // Навыки — тем же блоком, что у персонажа, но ранг ставится прямо здесь:
     // покупки за опыт у орды нет, поэтому вместо ранга-цены — выпадающий список.

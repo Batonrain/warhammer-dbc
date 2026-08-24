@@ -494,9 +494,13 @@ export class WarhammerActor extends Actor {
    * показатели по текущей Магнитуде, движение, состояние (Ослаблена/Сломлена).
    */
   _prepareHordeData(system) {
-    // Характеристики: total = база + продвижение; бонус = ⌊total/10⌋.
-    for (const char of Object.values(system.characteristics || {})) {
-      char.total = (Number(char.base) || 0) + (Number(char.advance) || 0);
+    // Характеристики: total = база + продвижение + Мод. (знаковый ручной
+    // модификатор, как у Персонажа/Демона/Миньона/Принца Демона); бонус = ⌊total/10⌋.
+    const charDamage = system.charDamage || {};
+    for (const [key, char] of Object.entries(system.characteristics || {})) {
+      const dmgMod = charDamage[key] || 0;
+      char.charDamage = dmgMod;
+      char.total = (Number(char.base) || 0) + (Number(char.advance) || 0) + dmgMod;
       char.bonus = Math.floor(char.total / 10);
     }
     // Навыки: значение = характеристика навыка + надбавка ранга. Считается так
@@ -980,17 +984,17 @@ export class WarhammerActor extends Actor {
       const pathMod   = pathPassives.charBonus[key] || 0; // Unnatural от Путей
       const armorMod  = armorCharBonus[key] || 0; // +S/+W от брони (к значению)
       const valueMod  = traitCharValueBonus[key] || 0; // импланты/черты — к значению
-      const dmgMod    = charDamage[key]     || 0; // урон в характеристику (редактируемый дебафф)
+      const dmgMod    = charDamage[key]     || 0; // ручной Мод. к Итогу (знаковый: + прибавляет, − вычитает)
       const vitalMod  = vitalMods[key]      || 0; // Голод/Жажда — авто-дебафф
       char.drugMod    = drugMod;
       char.charDamage = dmgMod;
       char.vitalMod   = vitalMod;
-      // База не трогается; урон и потребности — отдельные временные модификаторы.
+      // База не трогается; Мод. и потребности — отдельные временные модификаторы.
       // totalFx — надбавка к ЗНАЧЕНИЮ от эффектов, парная к bonusFx ниже:
       // хранимое поле, фаза "initial", входит в расчёт ДО вывода Бонуса,
       // потолка Ловкости и навыков.
       char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod
-                   + (char.totalFx || 0) - dmgMod - vitalMod;
+                   + (char.totalFx || 0) + dmgMod - vitalMod;
       // Потолок брони режет готовое значение Ловкости — и Бонус ниже считается
       // уже от урезанного. Сверхъестественная Ловкость потолком не ограничена:
       // она прибавляется к Бонусу отдельным слагаемым, а не к значению.
