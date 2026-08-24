@@ -54,7 +54,8 @@ Object.assign(EFFECT_KEY_LABELS, {
   "system.fearRating":  "Рейтинг Страха",
   "system.sizeMod":     "Размер (модификатор)",
   "system.initiative":  "Инициатива",
-  "system.speed":       "Скорость"
+  "system.speed":       "Скорость",
+  "system.incomingDamageReduction": "Снижение входящего урона"
 });
 
 /** Все пути, куда разрешено целиться эффектам (используется тестами/миграцией). */
@@ -82,10 +83,12 @@ const INITIAL_PHASE_KEYS = [
   "system.armorBonus.",             // складываемая надбавка AP (см. AP_LOCATIONS)
   "system.encumbrance.indexBonus.", // сдвиг индекса грузоподъёмности (apps/mechanics.mjs)
   "system.movement.spdBonus",       // SPD — вход расчёта перемещений, а не его итог
-  "system.sizeMod"                  // Размер от Черт — сам вход SPD (documents/actor.mjs
+  "system.sizeMod",                 // Размер от Черт — сам вход SPD (documents/actor.mjs
                                      // складывает его в traitSizeMod ДО calcMovement);
                                      // "final" ложился поверх посчитанного SPD и не
                                      // успевал в движение, хотя бейдж на листе был верный
+  "system.incomingDamageReduction"  // плоское снижение урона (combat/damage.mjs читает
+                                     // ХРАНИМОЕ поле напрямую, не производное)
 ];
 
 /** Фаза, в которой ключ обязан применяться. */

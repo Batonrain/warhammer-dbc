@@ -131,6 +131,9 @@ const DEVIATIONS = {
     // Состояние «Беспомощный» заведено гораздо позже template.json (auto-успех
     // и удвоенный урон против него — attack-dialog.mjs/attack.mjs).
     "conditions.helpless": false,
+    // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от
+    // эффектов, заведено гораздо позже template.json — см. combat/damage.mjs.
+    incomingDamageReduction: 0,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]
