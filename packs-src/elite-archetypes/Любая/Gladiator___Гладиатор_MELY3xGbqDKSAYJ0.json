@@ -6,7 +6,12 @@
     "key": "d4bcfc3b",
     "cost": 2500,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "eldarReq304",
+          "kind": "notEldar"
+        }
+      ],
       "secondary": []
     },
     "race": "Любая",

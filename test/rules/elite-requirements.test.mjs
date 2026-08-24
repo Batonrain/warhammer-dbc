@@ -261,3 +261,25 @@ describe("пустые требования", () => {
     expect(checkEliteRequirements(undefined, {}).available).toBe(true);
   });
 });
+
+describe("«Не эльдар» — папка «Любая» доступна расам Основной книги, но не Эльдар", () => {
+  const req = { ...blankEliteReq(), primary: [{ kind: "notEldar" }] };
+
+  it("человеку доступен", () => {
+    expect(checkEliteRequirements(req, who({ race: "human" })).available).toBe(true);
+  });
+
+  it("Сслиту доступен — races помечает его «раса не-эльдар»", () => {
+    expect(checkEliteRequirements(req, who({ race: "sslyth" })).available).toBe(true);
+  });
+
+  it("Друкхари, Азуриане, Экзодиту, Иннари, Арлекину, Полуэльдару — недоступен", () => {
+    for (const race of ["drukhari", "azuriane", "exodite", "ynnari", "harlequin", "halfEldar"]) {
+      expect(checkEliteRequirements(req, who({ race })).available).toBe(false);
+    }
+  });
+
+  it("подпись объясняет требование", () => {
+    expect(describeEliteReq({ kind: "notEldar" })).toMatch(/не эльдар/i);
+  });
+});

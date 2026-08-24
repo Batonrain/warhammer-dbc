@@ -6,7 +6,15 @@
     "key": "0fea726e",
     "cost": 2500,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "eldarReq007",
+          "kind": "subrace",
+          "key": "truebornDrukhari",
+          "name": "Trueborn / Истиннорожденный",
+          "uuid": "Compendium.warhammer-dbc.races.Item.KQD8c2pvisKWU7Do"
+        }
+      ],
       "secondary": []
     },
     "race": "Друкхари Истиннорожденный",

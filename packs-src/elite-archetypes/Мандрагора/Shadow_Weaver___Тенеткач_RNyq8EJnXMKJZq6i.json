@@ -6,7 +6,15 @@
     "key": "c74afcc8",
     "cost": 2500,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "eldarReq020",
+          "kind": "subrace",
+          "key": "mandrake",
+          "name": "Mandragora / Мандрагора",
+          "uuid": "Compendium.warhammer-dbc.races.Item.sdFqvoiDScIWwQAW"
+        }
+      ],
       "secondary": []
     },
     "race": "Мандрагора",

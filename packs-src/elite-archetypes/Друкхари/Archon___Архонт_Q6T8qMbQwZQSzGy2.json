@@ -6,7 +6,15 @@
     "key": "84fa56ed",
     "cost": 3000,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "eldarReq001",
+          "kind": "race",
+          "key": "drukhari",
+          "name": "Drukhari / Друкхари",
+          "uuid": "Compendium.warhammer-dbc.races.Item.TeACrZE3JcfSfEAT"
+        }
+      ],
       "secondary": []
     },
     "race": "Друкхари",

@@ -48,6 +48,7 @@ export const PATRON_OPTIONS = [
 export const REQ_KINDS = [
   { key: "race",           label: "Раса",            drop: "race"    },
   { key: "subrace",        label: "Субраса",         drop: "subrace" },
+  { key: "notEldar",       label: "Не эльдар (расы Основной книги)" },
   { key: "trait",          label: "Черта",           drop: "trait"   },
   { key: "talent",         label: "Талант",          drop: "talent"  },
   { key: "patron",         label: "Покровительство"  },
@@ -65,6 +66,9 @@ export const reqDropType = kind => REQ_KINDS.find(k => k.key === kind)?.drop || 
 
 /** Пустая заготовка требований — её же кладёт схема предмета. */
 export const blankEliteReq = () => ({ primary: [], secondary: [] });
+
+/** Расы группы «Аэльдари» (races/Аэльдари) — для требования «Не эльдар». */
+export const ELDAR_RACE_KEYS = ["azuriane", "drukhari", "exodite", "ynnari", "harlequin", "halfEldar"];
 
 const num = v => Number(v) || 0;
 const RANKS = ["untrained", "knows", "trained", "veteran", "expert"];
@@ -148,6 +152,11 @@ function entryOk(entry, who) {
   switch (entry?.kind) {
     case "race":    return !entry.key || who.race === entry.key;
     case "subrace": return !entry.key || who.subrace === entry.key;
+    // «Любая» (папка Элитных архетипов) — доступны расам Основной книги, но не
+    // Эльдар: список — races/Аэльдари (Азуриане/Друкхари/Экзодит/Иннари/
+    // Арлекин/Полуэльдар). Сслит в этот список не входит (races помечает его
+    // «раса не-эльдар»), поэтому «Любая» ему доступна.
+    case "notEldar": return !ELDAR_RACE_KEYS.includes(who.race);
     case "trait": {
       const want = String(entry.name || "").trim();
       return !want || (who.traits || []).some(t => nameHit(t, want));
@@ -182,6 +191,7 @@ export function describeEliteReq(entry) {
   switch (entry?.kind) {
     case "race":    return `Раса: ${entry.name || entry.key || "?"}`;
     case "subrace": return `Субраса: ${entry.name || entry.key || "?"}`;
+    case "notEldar": return "Раса: не эльдар (Основная книга)";
     case "trait":   return `Черта: ${entry.name || "?"}`;
     case "patron":  return `Покровительство: ${PATRON_OPTIONS.find(p => p.key === entry.key)?.label || "?"}`;
     case "talent": {
