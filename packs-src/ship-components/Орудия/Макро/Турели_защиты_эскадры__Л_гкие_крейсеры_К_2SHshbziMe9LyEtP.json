@@ -47,7 +47,7 @@
     "weapon": {
       "wType": "macrobattery",
       "strength": 0,
-      "damage": "—",
+      "damage": "",
       "crit": 0,
       "range": 10,
       "arc": ""

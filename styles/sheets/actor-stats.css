@@ -2,10 +2,13 @@
    Warhammer DBC — Показатели: характеристики и навыки
 ═══════════════════════════════════════════════════════ */
 
-/* ── Layout показателей ── */
+/* ── Layout показателей ──
+   Раньше здесь стояли ещё Безумие/Порча по бокам (grid 120px 1fr 120px) —
+   переехали на вкладку ТЕЛО, единственный оставшийся ребёнок — Характеристики
+   на всю ширину. .panel-side/.side-* остались (переиспользуются в ТЕЛО). */
 .warhammer-dbc .stats-layout {
   display: grid;
-  grid-template-columns: 120px 1fr 120px;
+  grid-template-columns: 1fr;
   gap: 8px;
   margin-bottom: 8px;
 }
@@ -83,46 +86,77 @@
 
 .warhammer-dbc .side-roll-btn:hover { background: var(--wh-red); }
 
-/* ── Таблица характеристик (только чтение) ── */
-.warhammer-dbc .char-table-display {
-  width: 100%;
-  border-collapse: collapse;
+/* ── Сетка характеристик: сверху сокращение, снизу Итог (+Бонус надстрочно,
+   только если он отличается от floor(Итог/10) — т.е. реально модифицирован),
+   ниже — маленькое поле Мод. (знаковая правка Итога). ── */
+.warhammer-dbc .char-grid-body { padding: 6px !important; }
+
+.warhammer-dbc .char-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 4px;
 }
 
-.warhammer-dbc .char-table-display th {
-  background: var(--wh-panel-mid);
-  color: var(--wh-text-light);
-  padding: 4px 6px;
-  font-size: 0.82em;
-  text-align: center;
-  border: 1px solid var(--wh-panel-dark);
-}
-
-.warhammer-dbc .char-table-display td {
-  padding: 3px 5px;
-  border: 1px solid var(--wh-border-light);
-  text-align: center;
+.warhammer-dbc .char-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 2px 4px;
   background: var(--wh-parchment2);
+  border: 1px solid var(--wh-border-light);
+  border-radius: 3px;
+  text-align: center;
 }
 
-.warhammer-dbc .char-table-display tr:nth-child(even) td { background: var(--wh-parchment3); }
-.warhammer-dbc .char-table-display tr:hover td { background: var(--wh-input-bg); }
+.warhammer-dbc .char-cell:hover { background: var(--wh-input-bg); }
 
-.warhammer-dbc .char-name-cell {
-  text-align: left !important;
-  padding-left: 8px !important;
-}
-
-.warhammer-dbc .char-roll {
+.warhammer-dbc .char-cell-abbr {
+  font-size: 0.72em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--wh-link);
   text-decoration: none;
-  font-size: 0.88em;
   cursor: pointer;
 }
 
-.warhammer-dbc .char-roll:hover { color: var(--wh-link-hover); text-decoration: underline; }
-.warhammer-dbc .char-total-disp { font-weight: bold; }
-.warhammer-dbc .char-bonus-disp { font-weight: bold; color: var(--wh-red); }
+.warhammer-dbc .char-cell-abbr:hover { color: var(--wh-link-hover); text-decoration: underline; }
+
+.warhammer-dbc .char-cell-val {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-size: 1.15em;
+  font-weight: bold;
+  line-height: 1.1;
+}
+
+.warhammer-dbc .char-cell-bonus {
+  margin-left: 1px;
+  font-size: 0.55em;
+  font-weight: bold;
+  line-height: 1;
+  color: var(--wh-red);
+}
+
+.warhammer-dbc .char-cell-mod,
+.warhammer-dbc .char-cell-mod-spacer {
+  width: 34px;
+  height: 16px;
+}
+
+.warhammer-dbc .char-cell-mod {
+  padding: 0;
+  text-align: center;
+  font-size: 0.72em;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  color: var(--wh-text-mid);
+}
+
+.warhammer-dbc .char-cell-modded .char-cell-mod { color: var(--wh-red); font-weight: bold; border-color: var(--wh-red); }
+.warhammer-dbc .char-cell-modded .char-cell-val { color: var(--wh-red); }
 
 /* ── Навыки (показатели) ── */
 .warhammer-dbc .skills-panel {
@@ -135,7 +169,7 @@
 
 .warhammer-dbc .skills-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0;
 }
 
@@ -184,24 +218,46 @@
 .warhammer-dbc .skill-neg { color: var(--wh-red); }
 .warhammer-dbc .skill-pos { color: var(--wh-xp-current); }
 
-/* ── Групповые навыки — заголовок группы ── */
+/* ── Групповые навыки — плитка на каждую группу (Знания/Языки/Ремёсла и т.п.) ──
+   Раньше это была одна общая колонка со сплошным списком и заголовками-
+   вставками между специализациями; теперь каждая группа — свой блок с
+   заголовком на всю ширину, блоки текут рядами (flex-wrap) и переносятся по
+   ширине окна, как в макете пользователя. */
+.warhammer-dbc .skill-groups-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid var(--wh-border-light);
+}
+
+.warhammer-dbc .skill-group-box {
+  flex: 1 1 200px;
+  min-width: 160px;
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment3);
+  overflow: hidden;
+}
+
+.warhammer-dbc .skill-group-empty {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  flex: 1 1 auto;
+}
+
 .warhammer-dbc .skill-group-header {
   font-size: 0.78em;
   font-weight: bold;
   color: var(--wh-text-light);
   background: var(--wh-panel-mid);
-  padding: 2px 6px;
-  margin: 4px 0 1px;
-  border-radius: 2px;
+  padding: 3px 8px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-/* Первый заголовок без отступа сверху */
-.warhammer-dbc .skills-column-groups
-  .skill-group-header:first-child {
-  margin-top: 0;
-}
+.warhammer-dbc .skill-group-body { padding: 2px 0; }
 
 /* Специализация — чуть меньше и с отступом */
 .warhammer-dbc .skill-row-grouped {
@@ -212,15 +268,3 @@
   font-style: italic;
   font-size: 0.9em;
 }
-/* ── Дебафф характеристики (урон в характеристику, редактируемый) ─────────── */
-.warhammer-dbc .char-debuff-cell { text-align: center; }
-.warhammer-dbc .char-debuff-input {
-  width: 38px;
-  text-align: center;
-  background: var(--wh-input-bg);
-  border: 1px solid var(--wh-border);
-  color: var(--wh-red);
-  font-size: 0.9em;
-  padding: 1px 2px;
-}
-.warhammer-dbc .char-total-debuffed { color: var(--wh-red); font-weight: bold; }

@@ -1,26 +1,18 @@
 {
   "name": "Turbulent / Буйный",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "VOyInFpl9FIDrRXg",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 20,
+    "hullClass": "Фрегаты",
+    "sp": 42,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "Control Features: Command/-5",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "controlFeatures"
@@ -31,10 +23,10 @@
       }
     ],
     "hull": {
-      "spaceMax": 40,
+      "spaceMax": 42,
       "powerGen": 0,
       "turnArc": "90°",
-      "weaponCapacity": "1НП",
+      "weaponCapacity": "НП2",
       "hullIntegrity": 40
     },
     "chars": {
@@ -44,14 +36,6 @@
       "voidShields": 0,
       "armour": 20,
       "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "MXZJAjj9SFc3jFAZ",

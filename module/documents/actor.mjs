@@ -138,11 +138,14 @@ export class WarhammerActor extends Actor {
 
   /**
    * Производные данные корабля: бюджеты Энергии/Пространства/Очков и эфф.
-   * характеристики. Узлы — это вложенные Предметы типа "component"; корпус —
-   * узел с kind="hull" (задаёт SPC/P.Gen/HI/характеристики/поворот/WC).
+   * характеристики. Узлы — это вложенные Предметы типа "component"; Корпус —
+   * отдельный тип "shipHull" (задаёт SPC/P.Gen/HI/характеристики/поворот/WC),
+   * выбирается пикером в шапке листа (sheets/hull-picker.mjs), а не узлом
+   * среди прочих — на корабле он всегда один (apps/ship-hull.mjs).
    */
   _prepareShipData(system) {
     const comps = this.items.filter(i => i.type === "component");
+    const hullItem = this.items.find(i => i.type === "shipHull") || null;
     let powerUsed = 0, powerExtra = 0, spaceUsed = 0, spSpent = 0;
     let moraleMaxBonus = 0, crewMaxBonus = 0, shipAimer = 0;
     let lcBonus = 0, pcBonus = 0;
@@ -151,7 +154,6 @@ export class WarhammerActor extends Actor {
     let dpReduce = 0, dpFloor = 0, dpExtra = 0, silentRun = 0, augurVs = 0;
     let suppliesMax = 0;
     const mods = { speed: 0, manoeuvrability: 0, detection: 0, voidShields: 0, armour: 0, turretRating: 0, hullIntegrity: 0 };
-    let hullItem = null;
 
     // Применение авто-свойств узла (Aspects) к производным значениям корабля.
     const applyAuto = (props, isWeapon) => {
@@ -179,6 +181,15 @@ export class WarhammerActor extends Actor {
       }
     };
 
+    // Корпус — не узел (не в comps): свои SP/качество и авто-свойства считаем отдельно.
+    if (hullItem) {
+      const hs = hullItem.system;
+      const qm = shipQualityMods(hs);
+      hs.qualityMods = qm;                                  // для листа Корпуса
+      spSpent += (Number(hs.sp) || 0) + qm.sp;
+      applyAuto(hs.shipProps, false);
+    }
+
     for (const it of comps) {
       const s = it.system;
       // Качество узла меняет энергию, пространство, цену и профиль орудия.
@@ -187,7 +198,6 @@ export class WarhammerActor extends Actor {
       spSpent += (Number(s.sp) || 0) + qm.sp;
       lcBonus += Number(s.lcBonus) || 0;   // грузоподъёмность от грузовых узлов
       pcBonus += Number(s.pcBonus) || 0;   // пассажировместимость от пассажирских узлов
-      if (s.kind === "hull") { hullItem = it; applyAuto(s.shipProps, false); continue; }
       // Узел не работает, если помечен damaged ИЛИ его статус не «невредим»
       // (обесточен/повреждён/уничтожен — таблица повреждений).
       const dmg = !!s.damaged || (s.status && s.status !== "intact");
@@ -484,9 +494,13 @@ export class WarhammerActor extends Actor {
    * показатели по текущей Магнитуде, движение, состояние (Ослаблена/Сломлена).
    */
   _prepareHordeData(system) {
-    // Характеристики: total = база + продвижение; бонус = ⌊total/10⌋.
-    for (const char of Object.values(system.characteristics || {})) {
-      char.total = (Number(char.base) || 0) + (Number(char.advance) || 0);
+    // Характеристики: total = база + продвижение + Мод. (знаковый ручной
+    // модификатор, как у Персонажа/Демона/Миньона/Принца Демона); бонус = ⌊total/10⌋.
+    const charDamage = system.charDamage || {};
+    for (const [key, char] of Object.entries(system.characteristics || {})) {
+      const dmgMod = charDamage[key] || 0;
+      char.charDamage = dmgMod;
+      char.total = (Number(char.base) || 0) + (Number(char.advance) || 0) + dmgMod;
       char.bonus = Math.floor(char.total / 10);
     }
     // Навыки: значение = характеристика навыка + надбавка ранга. Считается так
@@ -970,17 +984,17 @@ export class WarhammerActor extends Actor {
       const pathMod   = pathPassives.charBonus[key] || 0; // Unnatural от Путей
       const armorMod  = armorCharBonus[key] || 0; // +S/+W от брони (к значению)
       const valueMod  = traitCharValueBonus[key] || 0; // импланты/черты — к значению
-      const dmgMod    = charDamage[key]     || 0; // урон в характеристику (редактируемый дебафф)
+      const dmgMod    = charDamage[key]     || 0; // ручной Мод. к Итогу (знаковый: + прибавляет, − вычитает)
       const vitalMod  = vitalMods[key]      || 0; // Голод/Жажда — авто-дебафф
       char.drugMod    = drugMod;
       char.charDamage = dmgMod;
       char.vitalMod   = vitalMod;
-      // База не трогается; урон и потребности — отдельные временные модификаторы.
+      // База не трогается; Мод. и потребности — отдельные временные модификаторы.
       // totalFx — надбавка к ЗНАЧЕНИЮ от эффектов, парная к bonusFx ниже:
       // хранимое поле, фаза "initial", входит в расчёт ДО вывода Бонуса,
       // потолка Ловкости и навыков.
       char.total   = (char.base || 0) + (char.advance || 0) + impBonus + drugMod + armorMod + valueMod
-                   + (char.totalFx || 0) - dmgMod - vitalMod;
+                   + (char.totalFx || 0) + dmgMod - vitalMod;
       // Потолок брони режет готовое значение Ловкости — и Бонус ниже считается
       // уже от урезанного. Сверхъестественная Ловкость потолком не ограничена:
       // она прибавляется к Бонусу отдельным слагаемым, а не к значению.

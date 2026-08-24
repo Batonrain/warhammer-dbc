@@ -152,3 +152,27 @@ export const PREDICATES = {
     return inFactions(ctx?.targetActor, value);
   }
 };
+
+/**
+ * Элитный архетип у актора — тремя источниками: строка в шапке
+ * (`system.eliteArchetype`), список дополнительных (`eliteArchetypesExtra`)
+ * или предмет типа eliteArchetype. Архетип бывает и предметом (куплен
+ * пикером), и строкой (вписан руками/со старого листа) — обе формы отпирают
+ * одно и то же. Раньше жил копиями в character-context и item-picker.
+ */
+export function hasEliteArchetype(actor, name) {
+  const sys = actor?.system || {};
+  if (itemHasName({ name: sys.eliteArchetype }, name)) return true;
+  if ((sys.eliteArchetypesExtra || []).some(k => itemHasName({ name: k }, name))) return true;
+  return [...(actor?.items ?? [])].some(i => i.type === "eliteArchetype" && itemHasName(i, name));
+}
+
+/**
+ * Одержимый (DoomBC_Core 129-132): ручной чекбокс Хаосита ЛИБО Элитный
+ * архетип «Одержимый». Один предикат на вкладку листа и на гейт папки
+ * «Таланты одержимых» в пикере — иначе вкладка открыта, а Дары не купить.
+ */
+export function isPossessed(actor) {
+  const sys = actor?.system || {};
+  return (sys.alignment === "heretic" && !!sys.possessed) || hasEliteArchetype(actor, "Одержимый");
+}

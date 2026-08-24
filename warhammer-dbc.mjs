@@ -65,6 +65,8 @@ import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/r
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
+import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
+import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs";
 import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
@@ -104,12 +106,14 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/toggle-rows.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs",  // ← НОВОЕ
+    "systems/warhammer-dbc/templates/actor/parts/sanity-corruption-panels.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-possession.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-haemonculus.hbs",
     "systems/warhammer-dbc/templates/apps/surgeon-slot.hbs",        // ← хирургикон (партиал слота)
@@ -135,6 +139,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/parts/tab-nav.hbs",
     // Корабль
     "systems/warhammer-dbc/templates/item/parts/component.hbs",
+    "systems/warhammer-dbc/templates/item/parts/ship-hull.hbs",
     "systems/warhammer-dbc/templates/item/parts/cargo.hbs",
     "systems/warhammer-dbc/templates/item/parts/torpedo.hbs",
     "systems/warhammer-dbc/templates/item/parts/disease.hbs",
@@ -298,6 +303,16 @@ Hooks.once("init", () => {
 
   // Версия чистки остатков старой системы Органов Геносемени (одноразовая)
   game.settings.register("warhammer-dbc", "geneSeedCleanupVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия перевода Корпусов кораблей на тип shipHull (одноразовая)
+  game.settings.register("warhammer-dbc", "shipHullsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия инверсии знака Мод. характеристик (было «Урон», вычиталось; одноразовая)
+  game.settings.register("warhammer-dbc", "charDamageSignVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -661,7 +676,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -686,6 +701,30 @@ Hooks.once("ready", async () => {
     await migrateRemoveGeneSeed();
     await game.settings.set("warhammer-dbc", "geneSeedCleanupVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Чистка Геносемени:", e); }
+});
+
+// ── Одноразовый перевод: Корпуса кораблей со старых узлов на тип shipHull ─────
+// Ручной перезапуск: game.warhammerDBC.migrateShipHulls()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "shipHullsVersion") || 0) >= VERSION) return;
+  try {
+    await migrateShipHulls();
+    await game.settings.set("warhammer-dbc", "shipHullsVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Корпуса кораблей:", e); }
+});
+
+// ── Одноразовая инверсия: знак Мод. характеристик (бывший «Урон в характеристику»)
+// Ручной перезапуск: game.warhammerDBC.migrateCharDamageSign()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "charDamageSignVersion") || 0) >= VERSION) return;
+  try {
+    await migrateCharDamageSign();
+    await game.settings.set("warhammer-dbc", "charDamageSignVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Знак Мод. характеристик:", e); }
 });
 
 // ── Одноразовая довыдача: цены Техночудес вложенным копиям старых актёров ─────
@@ -850,11 +889,10 @@ Hooks.on("getSceneControlButtons", (controls) => {
         try { ui.controls?.activate?.({ control: "drawings" }); } catch (e) {}
       });
     };
-    // «Очистить» — отдельная ОДНОкнопочная группа, а не второй tool внутри
-    // «Коллаутов»: несколько tools в одной группе без своего canvas-layer
-    // однажды уже сломало рендер всей панели контролов (см. память сессии),
-    // а по одной кнопке на группу — доказанно безопасный, уже везде
-    // использующийся здесь шаблон.
+    // 23.08.2026: «Очистить» больше не отдельная scene-control группа — все
+    // 8 пунктов (см. openWhHub ниже) собраны в одно меню-диалог за
+    // единственной иконкой «Doom BC». Бэкап до этой правки:
+    // warhammer-dbc.mjs.bak-20260823-scenecontrols.
     const triggerClearCallouts = () => { clearAllCallouts(); };
     const trigger = () => {
       openSystemsOverview();
@@ -872,127 +910,51 @@ Hooks.on("getSceneControlButtons", (controls) => {
       openTarotReader();
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
     };
-    if (Array.isArray(controls)) {
-      // Foundry v12 и ранее — массив групп
-      controls.push({
-        name: "wh-systems", title: "Звёздные системы", icon: ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Обзор систем", icon: "fa-solid fa-table-list",
-                  button: true, onClick: () => trigger() }]
-      });
-      controls.push({
-        name: "wh-craft", title: "Крафт и Исследования", icon: CRAFT_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Мастерская", icon: "fa-solid fa-flask",
-                  button: true, onClick: () => triggerCraft() }]
-      });
-      controls.push({
-        name: "wh-cog", title: "Когитаторы", icon: COG_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Когитаторы", icon: "fa-solid fa-terminal",
-                  button: true, onClick: () => triggerCog() }]
-      });
-      controls.push({
-        name: "wh-veil", title: "Завеса и Мистика", icon: VEIL_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Завеса и Мистика", icon: VEIL_ICON,
-                  button: true, onClick: () => triggerVeil() }]
-      });
-      controls.push({
-        name: "wh-nexus", title: "Нексус Сцен", icon: NEXUS_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Нексус Сцен", icon: NEXUS_ICON,
-                  button: true, onClick: () => triggerNexus() }]
-      });
-      if (game.user.isGM) controls.push({
-        name: "wh-env", title: "Окружающая Среда", icon: ENV_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Окружающая Среда", icon: ENV_ICON,
-                  button: true, onClick: () => triggerEnv() }]
-      });
-      if (game.user.isGM) controls.push({
-        name: "wh-callouts", title: "Коллауты", icon: CALLOUT_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Добавить коллаут", icon: CALLOUT_ICON,
-                  button: true, onClick: () => triggerCallout() }]
-      });
-      if (game.user.isGM) controls.push({
-        name: "wh-callouts-clear", title: "Очистить коллауты", icon: CALLOUT_CLEAR_ICON, layer: null,
-        visible: true, activeTool: "open",
-        tools: [{ name: "open", title: "Очистить все коллауты на сцене", icon: CALLOUT_CLEAR_ICON,
-                  button: true, onClick: () => triggerClearCallouts() }]
-      });
-    } else if (controls && typeof controls === "object") {
-      // Foundry v13 — объект-словарь групп (onChange, без устаревшего onClick)
-      controls["wh-systems"] = {
-        name: "wh-systems", title: "Звёздные системы", icon: ICON, order: 90, visible: true,
-        onChange: (_event, active) => { if (active) trigger(); },
+    // Единственная точка входа в панели Doom BC — окно-меню со всеми 5(+3
+    // для ГМ) пунктами кнопками, вместо отдельной scene-control группы на
+    // каждый. Опробованный до этого нативный flyout Foundry (несколько tools
+    // в одной группе) не раскрывался без настоящего canvas-слоя — клик по
+    // группе сразу исполнял activeTool, остальные tools были недостижимы
+    // (проверено вживую 23.08.2026, панель при этом не ломалась).
+    const openWhHub = () => {
+      const buttons = [
+        { action: "systems", icon: "fa-solid fa-table-list", label: "Звёздные системы", callback: () => trigger() },
+        { action: "craft", icon: "fa-solid fa-flask", label: "Мастерская", callback: () => triggerCraft() },
+        { action: "cog", icon: COG_ICON, label: "Когитаторы", callback: () => triggerCog() },
+        { action: "veil", icon: VEIL_ICON, label: "Завеса и Мистика", callback: () => triggerVeil() },
+        { action: "nexus", icon: NEXUS_ICON, label: "Нексус Сцен", callback: () => triggerNexus() }
+      ];
+      if (game.user.isGM) buttons.push(
+        { action: "env", icon: ENV_ICON, label: "Окружающая Среда", callback: () => triggerEnv() },
+        { action: "calloutAdd", icon: CALLOUT_ICON, label: "Добавить коллаут", callback: () => triggerCallout() },
+        { action: "calloutClear", icon: CALLOUT_CLEAR_ICON, label: "Очистить коллауты", callback: () => triggerClearCallouts() }
+      );
+      foundry.applications.api.DialogV2.wait({
+        window: { title: "Doom BC" },
+        classes: ["warhammer-dbc", "wh-holo"],
+        position: { width: 320 },
+        content: "<p>Выберите раздел:</p>",
+        buttons,
+        rejectClose: false
+      }).catch(e => console.error("warhammer-dbc | wh-hub", e));
+    };
+    const triggerHub = () => {
+      openWhHub();
+      setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
+    };
+    // v13+ — объект-словарь групп (onChange, без устаревшего onClick); ветка
+    // v12 с массивом групп удалена — system.json требует минимум v14.
+    // Одна группа с одним tool, открывающим меню-диалог openWhHub —
+    // было 8 однокнопочных групп, стало 1 иконка (см. openWhHub выше).
+    // onChange только у tool'а: при смене контрола Foundry зовёт и групповой,
+    // и инструментный колбэк (#postActivate), двойная подписка открывала два
+    // одинаковых диалога друг на друге.
+    if (controls && typeof controls === "object" && !Array.isArray(controls)) {
+      controls["wh-hub"] = {
+        name: "wh-hub", title: "Doom BC", icon: ICON, order: 90, visible: true,
         tools: {
-          open: { name: "open", title: "Обзор систем", icon: "fa-solid fa-table-list",
-                  order: 1, button: true, onChange: () => trigger() }
-        },
-        activeTool: "open"
-      };
-      controls["wh-craft"] = {
-        name: "wh-craft", title: "Крафт и Исследования", icon: CRAFT_ICON, order: 91, visible: true,
-        onChange: (_event, active) => { if (active) triggerCraft(); },
-        tools: {
-          open: { name: "open", title: "Мастерская", icon: "fa-solid fa-flask",
-                  order: 1, button: true, onChange: () => triggerCraft() }
-        },
-        activeTool: "open"
-      };
-      controls["wh-cog"] = {
-        name: "wh-cog", title: "Когитаторы", icon: COG_ICON, order: 92, visible: true,
-        onChange: (_event, active) => { if (active) triggerCog(); },
-        tools: {
-          open: { name: "open", title: "Когитаторы", icon: "fa-solid fa-terminal",
-                  order: 1, button: true, onChange: () => triggerCog() }
-        },
-        activeTool: "open"
-      };
-      controls["wh-veil"] = {
-        name: "wh-veil", title: "Завеса и Мистика", icon: VEIL_ICON, order: 94, visible: true,
-        onChange: (_event, active) => { if (active) triggerVeil(); },
-        tools: {
-          open: { name: "open", title: "Завеса и Мистика", icon: VEIL_ICON,
-                  order: 1, button: true, onChange: () => triggerVeil() }
-        },
-        activeTool: "open"
-      };
-      controls["wh-nexus"] = {
-        name: "wh-nexus", title: "Нексус Сцен", icon: NEXUS_ICON, order: 95, visible: true,
-        onChange: (_event, active) => { if (active) triggerNexus(); },
-        tools: {
-          open: { name: "open", title: "Нексус Сцен", icon: NEXUS_ICON,
-                  order: 1, button: true, onChange: () => triggerNexus() }
-        },
-        activeTool: "open"
-      };
-      if (game.user.isGM) controls["wh-env"] = {
-        name: "wh-env", title: "Окружающая Среда", icon: ENV_ICON, order: 96, visible: true,
-        onChange: (_event, active) => { if (active) triggerEnv(); },
-        tools: {
-          open: { name: "open", title: "Окружающая Среда", icon: ENV_ICON,
-                  order: 1, button: true, onChange: () => triggerEnv() }
-        },
-        activeTool: "open"
-      };
-      if (game.user.isGM) controls["wh-callouts"] = {
-        name: "wh-callouts", title: "Коллауты", icon: CALLOUT_ICON, order: 97, visible: true,
-        onChange: (_event, active) => { if (active) triggerCallout(); },
-        tools: {
-          open: { name: "open", title: "Добавить коллаут", icon: CALLOUT_ICON,
-                  order: 1, button: true, onChange: () => triggerCallout() }
-        },
-        activeTool: "open"
-      };
-      if (game.user.isGM) controls["wh-callouts-clear"] = {
-        name: "wh-callouts-clear", title: "Очистить коллауты", icon: CALLOUT_CLEAR_ICON, order: 98, visible: true,
-        onChange: (_event, active) => { if (active) triggerClearCallouts(); },
-        tools: {
-          open: { name: "open", title: "Очистить все коллауты на сцене", icon: CALLOUT_CLEAR_ICON,
-                  order: 1, button: true, onChange: () => triggerClearCallouts() }
+          open: { name: "open", title: "Doom BC", icon: ICON,
+                  order: 1, button: true, onChange: () => triggerHub() }
         },
         activeTool: "open"
       };
@@ -1219,7 +1181,9 @@ async function applyShipIdentity(actor) {
   } catch (e) { console.warn("Warhammer DBC | applyShipIdentity:", e); }
 }
 
-const _isHullComp = (item) => item?.type === "component" && item.system?.kind === "hull";
+// Корпус: новый тип shipHull; component[kind=hull] — легаси до миграции.
+const _isHullComp = (item) => item?.type === "shipHull"
+  || (item?.type === "component" && item.system?.kind === "hull");
 Hooks.on("createItem", (item) => { if (item.parent?.type === "ship" && _isHullComp(item)) applyShipIdentity(item.parent); });
 Hooks.on("deleteItem", (item) => { if (item.parent?.type === "ship" && _isHullComp(item)) applyShipIdentity(item.parent); });
 Hooks.on("updateItem", (item, ch) => { if (item.parent?.type === "ship" && _isHullComp(item) && ch.name !== undefined) applyShipIdentity(item.parent); });

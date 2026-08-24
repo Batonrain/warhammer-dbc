@@ -436,6 +436,10 @@
   color: var(--wh-text-light); flex-shrink: 0; transition: background 0.12s;
 }
 .warhammer-dbc .advtal-add-btn:hover { background: rgba(255,255,255,0.22); }
+/* table-layout:fixed + colgroup (см. hbs) — иначе при auto-раскладке широкое
+   имя таланта отжимает колонки Цена/★/✕ за пределы panel-scroll (overflow-x
+   hidden), и иконки становятся невидимыми. */
+.warhammer-dbc .advance-talents .items-table { table-layout: fixed; }
 .warhammer-dbc .advtal-input {
   width: 100%; background: var(--wh-input-bg); border: 1px solid var(--wh-border);
   color: var(--wh-text); font-family: inherit; font-size: 0.88em; padding: 1px 4px;
@@ -565,7 +569,10 @@
   color: var(--wh-accent, #4dffa6);
   opacity: .8;
 }
-.warhammer-dbc .advtal-cost-cell { display: flex; align-items: center; gap: 2px; }
+/* Обёртка внутри <td> — не .advtal-cost-cell (td) саму, иначе override
+   display:table-cell → flex ломает выравнивание ячейки в строке таблицы. */
+.warhammer-dbc .advtal-cost-wrap { display: flex; align-items: center; gap: 2px; }
+.warhammer-dbc .advtal-cost-wrap .advtal-input { width: auto; flex: 1 1 auto; min-width: 0; }
 .warhammer-dbc .advtal-cost-input {
   text-align: center; font-weight: 600; color: var(--wh-accent, #4dffa6);
 }

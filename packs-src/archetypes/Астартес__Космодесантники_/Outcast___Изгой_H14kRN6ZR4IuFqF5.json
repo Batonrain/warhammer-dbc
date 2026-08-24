@@ -1,7 +1,7 @@
 {
   "name": "Outcast / Изгой",
   "type": "archetype",
-  "img": "icons/svg/upgrade.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-core/Outcast.webp",
   "folder": "LrQ76WufqFAvFdDy",
   "system": {
     "key": "outcast",

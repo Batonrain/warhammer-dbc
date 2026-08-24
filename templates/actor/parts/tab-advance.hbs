@@ -7,13 +7,13 @@
           {{else}}
             <tr class="items-empty"><td colspan="2"><em>Добавь 8 склонностей кнопкой ＋</em></td></tr> {{/if}}
         </tbody> </table> </div> </div> <div class="stat-panel advance-talents"> <div class="panel-title"> ТАЛАНТЫ
-        <button type="button" class="advtal-add-btn" title="Добавить талант">＋</button> </div> <div class="panel-scroll"> <table class="items-table"> <thead><tr><th>Название</th><th class="col-narrow">Цена</th><th></th></tr></thead> <tbody> {{#each purchasedTalents as |p|}}
+        <button type="button" class="advtal-add-btn" title="Добавить талант">＋</button> </div> <div class="panel-scroll"> <table class="items-table"> <colgroup><col/><col style="width:56px;"/><col style="width:46px;"/></colgroup> <thead><tr><th>Название</th><th class="col-narrow">Цена</th><th></th></tr></thead> <tbody> {{#each purchasedTalents as |p|}}
             <tr class="advtal-bought {{#if p.isGranted}}is-granted{{/if}} {{#if p.costManual}}is-cost-manual{{/if}}" title="Талант-предмет с листа">
               <td class="apt-char-name-cell"><span class="advtal-bought-name">{{p.name}}</span></td>
-              <td class="advtal-cost-cell">
+              <td class="advtal-cost-cell"><div class="advtal-cost-wrap">
                 <input type="number" class="advtal-input advtal-cost-input" value="{{p.cost}}" data-talent="{{p.id}}" min="0" {{#if p.isGranted}}disabled title="Выдан бесплатно — сними ★, чтобы задать цену"{{else}}title="Цена в опыте — впиши свою, авто-пересчёт по Склонностям её больше не тронет"{{/if}}/>
                 {{#if p.costManual}}<button type="button" class="advtal-cost-reset" data-talent="{{p.id}}" title="Вернуть авто-цену по Склонностям">↺</button>{{/if}}
-              </td>
+              </div></td>
               <td class="apt-char-del-cell">
                 <button type="button" class="grant-toggle {{#if p.isGranted}}is-on{{/if}}" data-talent="{{p.id}}" title="Пометить как выданный архетипом/расой (бесплатный). Повторный клик вернёт авто-цену по склонностям.">★</button>
                 <button type="button" class="advtal-item-remove" data-item-id="{{p.id}}" title="Удалить талант с листа">✕</button>
