@@ -12,7 +12,7 @@ import { DAMAGE_TYPES }    from "../constants/items.mjs";
 import { ablativeDamage }  from "../rules/mount.mjs";
 import { isDreadnought, pilotUuidOf, pilotDamageThreshold }
   from "../rules/dreadnought.mjs";
-import { applyWoundLoss } from "../rules/wounds.mjs";
+import { applyWoundLoss, woundLossAfter } from "../rules/wounds.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -293,15 +293,11 @@ export async function applyDamageToVehicle(actor, damageData) {
   const curVal  = Number(actor.system.structure?.value) || 0;
   const curCrit = Number(actor.system.structure?.critical) || 0;
 
-  let newVal = curVal, newCrit = curCrit, gotCrit = false;
+  // Та же арифметика, что у Ран (rules/wounds.mjs): остаток сверх запаса
+  // Структуры уходит в Критические.
+  const { value: newVal, critical: newCrit, overflow: gotCrit } =
+    woundLossAfter(curVal, curCrit, net);
   if (net > 0) {
-    if (curVal >= net) {
-      newVal = curVal - net;
-    } else {
-      newCrit = curCrit + (net - curVal);
-      newVal  = 0;
-      gotCrit = true;
-    }
     await actor.update({ "system.structure.value": newVal, "system.structure.critical": newCrit });
   }
 
