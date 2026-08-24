@@ -15,7 +15,7 @@
     "prRequired": 7,
     "testChar": "wp",
     "testMod": -30,
-    "action": "attack",
+    "action": "half",
     "range": "Ближний бой",
     "sustainable": false,
     "sustainCost": 1,
