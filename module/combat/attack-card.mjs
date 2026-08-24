@@ -74,6 +74,43 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
                                     isMelee = false, burst = false, weaponRange = 0,
                                     attackerUuid = "", hordeHits = null }) {
   if (!hits.length) return "";
+  // Взрывное/Распыление — разовый Шаблон (Region-плейсмент, module/combat/
+  // templates.mjs): круг радиусом blastRating или конус 30° длиной Rng.
+  // Найденные внутри токены становятся целями — дальше кнопки ниже
+  // («Применить урон» → «Всем») работают как обычно, без изменений.
+  //
+  // Остаётся (Linger) — та же кнопка размещает не разовый, а персистентный
+  // Region (module/regions/linger-zone.mjs): попадание берётся из первого
+  // урона очереди (d[0], «один бросок урона на всех», как и у самого
+  // Взрывного/Спрея) и переносится на каждого, кто впервые за ход окажется
+  // в зоне следующие data-linger ходов стрелка. lingerDrift (Y, второй
+  // рейтинг свойства) — на сколько метров зона дрейфует каждый такой ход
+  // по розе смещения (0 — не дрейфует).
+  const lingerAttrs = (wp.lingerRating > 0 && hits.length) ? `
+      data-linger="${wp.lingerRating}"
+      data-linger-drift="${wp.lingerDrift ?? 0}"
+      data-damage="${hits[0].total}"
+      data-penetration="${pen}"
+      data-damage-type="${damageType}"
+      data-hit-location="${hits[0].loc}"
+      data-attacker="${actorName}"
+      data-attacker-uuid="${attackerUuid}"
+      data-felling="${wp.fellingRating ?? 0}"
+      data-primitive="${wp.primitive ? 1 : 0}"
+      data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
+      data-warp-soak="${wp.warpSoak ? 1 : 0}"
+      data-lance="${wp.lance ? 1 : 0}"
+      data-sanctified="${wp.sanctified ? 1 : 0}"
+      data-power-field="${wp.powerField ? 1 : 0}"` : "";
+  const templateBtn = (wp.blastRating > 0 || wp.spray) ? `
+    <button class="wh-place-template-btn" type="button"
+      data-shape="${wp.spray ? "cone" : "circle"}"
+      data-meters="${wp.spray ? weaponRange : wp.blastRating}"
+      data-weapon-name="${weaponName}"${lingerAttrs}>
+      🎯 ${wp.lingerRating > 0
+        ? `Разместить зону «Остаётся» (${wp.lingerRating} раунд.) и отметить цели`
+        : "Разместить шаблон и отметить цели"}
+    </button>` : "";
   const buttons = hits.map((d, i) => {
     // «Прячась в Орде»: попадание, уведённое в союзную Орду, применяется к ней,
     // а не к тому, в кого целились.
@@ -108,6 +145,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
   }).join("");
   return `
   <div class="roll-apply-dmg-section">
+    ${templateBtn}
     <div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>
     ${buttons}
   </div>`;

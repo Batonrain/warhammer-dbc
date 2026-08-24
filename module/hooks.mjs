@@ -17,6 +17,8 @@ import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
+import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens } from "./combat/templates.mjs";
+import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects } from "./combat/action-economy.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
@@ -305,6 +307,60 @@ export function registerHooks() {
           return applyDamageToActor(actor, damageData);
         }
         await showApplyDamageDialog(damageData);
+      });
+    });
+
+    // Шаблон зоны поражения (Взрывное/Распыление) — размещение мышью
+    // (module/combat/templates.mjs). Без Linger — разовый эфемерный Region:
+    // накрытые токены становятся целями, дальше «Применить урон» → «Всем»
+    // как обычно. С Linger (data-linger) — персистентный Region с зоной
+    // «Остаётся» (module/regions/linger-zone.mjs): попадание применяется
+    // САМО, на каждого впервые-за-ход внутри, следующие N раундов — ничего
+    // больше нажимать не нужно.
+    html.querySelectorAll(".wh-place-template-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const meters = parseFloat(ds.meters) || 0;
+        if (meters <= 0) return ui.notifications.warn("⚠️ У оружия не задан радиус/дальность зоны.");
+        const px = canvas.dimensions.distancePixels;
+        const shape = ds.shape === "cone" ? sprayConeShape(meters, px) : blastCircleShape(meters, px);
+
+        const rounds = parseInt(ds.linger || "0") || 0;
+        if (rounds > 0) {
+          if (!game.combat) return ui.notifications.warn("⚠️ Зона «Остаётся» отсчитывает раунды боя — начните бой.");
+          const damageData = {
+            rawDamage:    parseInt(ds.damage      || "0"),
+            penetration:  parseInt(ds.penetration || "0"),
+            damageType:   ds.damageType  || "impact",
+            hitLocation:  ds.hitLocation || "Торс",
+            weaponName:   ds.weaponName  || "",
+            attackerName: ds.attacker    || "",
+            attackerUuid: ds.attackerUuid || "",
+            felling:      parseInt(ds.felling || "0"),
+            primitive:    ds.primitive    === "1",
+            ignoreShield: ds.ignoreShield === "1",
+            warpSoak:     ds.warpSoak     === "1",
+            lance:        ds.lance        === "1",
+            sanctified:   ds.sanctified   === "1",
+            powerField:   ds.powerField   === "1"
+          };
+          const drift = parseFloat(ds.lingerDrift || "0") || 0;
+          const region = await placeLingerZone(shape, damageData, rounds, drift, ds.weaponName || "Остаётся");
+          if (!region) return; // ГМ отменил размещение (ПКМ)
+          ui.notifications.info(`Зона «Остаётся» размещена на ${rounds} ход(а/ов) стрелка`
+            + `${drift > 0 ? ` — дрейфует на ${drift}м каждый ход` : ""} — попадание применяется автоматически.`);
+          return;
+        }
+
+        const result = await placeAttackTemplate(shape, ds.weaponName || "Зона поражения");
+        if (!result) return; // ГМ отменил размещение (ПКМ)
+        if (!result.tokens.length) {
+          ui.notifications.info("В зоне шаблона никого нет.");
+          return;
+        }
+        targetTokens(result.tokens);
+        ui.notifications.info(`Отмечено целей: ${result.tokens.length}. Дальше — «Применить урон» → «Всем».`);
       });
     });
 
@@ -867,6 +923,21 @@ function _attachFateContextMenu(message, html) {
     if (!game.user.isGM) return;
     await resolvePendingSusAnHeals(combat, { force: true });
     _lastTurnCombatant.delete(combat.id);
+    // «На поле боя X ходов стрелка» вне боя не имеет смысла — считать больше не от чего.
+    await clearAllLingerZones();
+  });
+
+  // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни
+  // (X), И дрейф (Y) привязаны не к смене Раунда вообще, а именно к началу
+  // Хода АКТОРА, породившего зону (см. заголовок linger-zone.mjs) —
+  // поэтому своя отдельная пара Hooks.on, не переиспользует ни счётчики
+  // Орд/Сус-ан выше (те резолвят по Раунду), ни _lastTurnCombatant
+  // экономики действий ниже (тому «чей ход» нужен только для разницы
+  // prev/next, здесь достаточно текущего combat.combatant).
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.user.isGM) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    if (combat.combatant) await processShooterTurnStart(combat.combatant);
   });
 
   // ── Экономика действий (стр. 12): восполнить ОД/Реакции актору, чей Ход

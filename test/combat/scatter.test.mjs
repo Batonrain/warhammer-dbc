@@ -16,7 +16,7 @@ describe("роза смещения", () => {
     const sc = await rollScatter();
 
     expect(sc.distance).toBe(6);
-    expect(sc.dir).toEqual({ n: 3, label: "Вправо", icon: "➡️" });
+    expect(sc.dir).toEqual({ n: 3, label: "Вправо", icon: "➡️", deg: 90 });
     // Именно d10 + d8 и именно в этом порядке — индексация розы держится на d8.
     expect(captured.rolls).toEqual(["1d10", "1d8"]);
   });
@@ -32,5 +32,9 @@ describe("роза смещения", () => {
   it("роза — 8 направлений по часовой стрелке без повторов", () => {
     expect(SCATTER_ROSE).toHaveLength(8);
     expect(new Set(SCATTER_ROSE.map(d => d.n)).size).toBe(8);
+  });
+
+  it("deg — 45° шагом по часовой стрелке от «Вперёд» (0°)", () => {
+    expect(SCATTER_ROSE.map(d => d.deg)).toEqual([0, 45, 90, 135, 180, 225, 270, 315]);
   });
 });
