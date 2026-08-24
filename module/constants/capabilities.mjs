@@ -165,6 +165,11 @@ export const CAPABILITIES = {
     source: "Оракул Стали (Дар Кхорна, стр. 453-460): «владение всеми видами оружия». " +
             "Настоящую экзотику (weaponType:\"exotic\") не покрывает — она вообще не проверяется системой.",
     reader: "module/rules/weapon-training.mjs — weaponTrainingPenalty"
+  },
+  "mutation.burningHead": {
+    label: "Удар головой меняет профиль: 1d10 E, Pen 0, Cheap Shot, Tainted",
+    source: "Burning Head / Горящая Голова (Общие мутации, d100 43)",
+    reader: "module/sheets/attack-dialog.mjs — profileOptions (requiresCapability у альт-профиля Удара головой)"
   }
 };
 
