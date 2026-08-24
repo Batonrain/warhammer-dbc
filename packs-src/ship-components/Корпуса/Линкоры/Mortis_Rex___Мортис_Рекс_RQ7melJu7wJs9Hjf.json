@@ -1,26 +1,18 @@
 {
   "name": "Mortis Rex / Мортис Рекс",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "7XIWvIQncI4e71zW",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 100,
+    "hullClass": "Линкоры",
+    "sp": 120,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "dreadnought"
@@ -31,23 +23,15 @@
       "powerGen": 0,
       "turnArc": "45°",
       "weaponCapacity": "3К, 3НП, 2Н",
-      "hullIntegrity": 160
+      "hullIntegrity": 200
     },
     "chars": {
-      "speed": 3,
-      "manoeuvrability": 0,
+      "speed": 4,
+      "manoeuvrability": -10,
       "detection": 20,
       "voidShields": 0,
-      "armour": 24,
-      "turretRating": 4
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "armour": 22,
+      "turretRating": 6
     }
   },
   "_id": "RQ7melJu7wJs9Hjf",

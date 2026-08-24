@@ -1,33 +1,25 @@
 {
   "name": "Vigil / Бдение",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "VOyInFpl9FIDrRXg",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Фрегаты",
     "sp": 50,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Нова-орудие модели Марс (Н), 1/3",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
       }
     ],
     "hull": {
-      "spaceMax": 50,
+      "spaceMax": 30,
       "powerGen": 0,
       "turnArc": "90°",
       "weaponCapacity": "1Н",
@@ -38,16 +30,8 @@
       "manoeuvrability": 5,
       "detection": 30,
       "voidShields": 0,
-      "armour": 17,
-      "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "armour": 12,
+      "turretRating": 2
     }
   },
   "_id": "GYCUxitWzVUxdRBT",

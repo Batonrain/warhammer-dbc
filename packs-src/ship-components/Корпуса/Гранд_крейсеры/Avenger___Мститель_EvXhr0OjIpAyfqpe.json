@@ -1,26 +1,18 @@
 {
   "name": "Avenger / Мститель",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "IHC1qrw10vbxBx6h",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Гранд-крейсеры",
     "sp": 70,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [],
     "hull": {
       "spaceMax": 90,
@@ -34,16 +26,8 @@
       "manoeuvrability": -5,
       "detection": 10,
       "voidShields": 0,
-      "armour": 22,
-      "turretRating": 4
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "armour": 21,
+      "turretRating": 3
     }
   },
   "_id": "EvXhr0OjIpAyfqpe",

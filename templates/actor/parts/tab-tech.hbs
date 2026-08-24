@@ -107,7 +107,7 @@
             <td>{{m.actionLabel}}</td>
             <td>{{m.range}}</td>
             <td class="tech-num-cell">{{#if m.sustained}}<span class="tech-sust" title="Поддержание: {{m.sustainCost}} Когн./Ход">✓ {{m.sustainCost}}</span>{{else}}—{{/if}}</td>
-            <td class="psy-cost-cell"><input type="number" class="tech-cost-input" data-item-id="{{m.id}}" value="{{m.cost}}" min="0" title="Цена в опыте (идёт в «Потрачено на Психосилы/Техно»)"/></td>
+            <td class="psy-cost-cell"><input type="number" class="tech-cost-input" data-item-id="{{m.id}}" value="{{m.cost}}" min="0" title="Цена в опыте (идёт в «Потрачено на Техночудеса»)"/></td>
             <td class="psy-actions-cell"><button type="button" class="tech-activate-btn" data-item-id="{{m.id}}" title="Активировать (тест Tech-Use)">Активировать</button></td>
           </tr>
           <tr class="ability-detail-row" data-item-id="{{m.id}}" style="display:none;"><td colspan="10"><div class="ability-detail-text">{{#if m.effect}}{{m.effect}}{{else}}—{{/if}}</div></td></tr>
@@ -117,6 +117,7 @@
         {{/if}}
       </tbody>
     </table>
+    <div class="gene-seed-hint" style="padding:4px 2px 0;">Сумма цен Техночудес автоматически идёт в «Потрачено на Техночудеса» в Опыте.</div>
   </div>
 
   {{!-- ── НООСФЕРНЫЕ ДЕЙСТВИЯ ──────────────────────────────────────────────── --}}

@@ -40,7 +40,7 @@
     "weapon": {
       "wType": "other",
       "strength": 0,
-      "damage": "—",
+      "damage": "",
       "crit": 0,
       "range": 1,
       "arc": ""

@@ -1,7 +1,7 @@
 {
   "name": "Noble / Благородный",
   "type": "archetype",
-  "img": "icons/svg/upgrade.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-core/Noble.webp",
   "folder": "kHJKOoHhPhm8nU1k",
   "system": {
     "key": "noble",

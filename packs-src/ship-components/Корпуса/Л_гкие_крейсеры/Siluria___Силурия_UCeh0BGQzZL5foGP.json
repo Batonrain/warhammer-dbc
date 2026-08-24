@@ -1,26 +1,18 @@
 {
   "name": "Siluria / Силурия",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "NfawZJdCJMS3OCWj",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Лёгкие крейсеры",
     "sp": 45,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Ангарный отсек системы Юпитера (ПБ и ЛБ), 2/2",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -40,14 +32,6 @@
       "voidShields": 0,
       "armour": 17,
       "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "UCeh0BGQzZL5foGP",

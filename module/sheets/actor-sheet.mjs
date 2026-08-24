@@ -17,7 +17,8 @@ import { buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog, showAttackDialogNoWeapon } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
-import { createDisorderItem, activateDisorderListeners } from "./tabs/disorders.mjs";
+import { createDisorderItem, activateDisorderListeners,
+         openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
 import { activateDiseaseListeners } from "./tabs/diseases.mjs";
 import { fatiguePenalty, activateConditionsListeners } from "./tabs/conditions.mjs";
 import { disabledArmourPenalty } from "../combat/armor-mods.mjs";
@@ -36,7 +37,6 @@ import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { refundXP, talentCost, talentReason } from "../apps/duplicate-refund.mjs";
-import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
 import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-panel.mjs";
@@ -65,7 +65,7 @@ import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
 import { applyRace, applySubrace, clearRace, clearSubrace,
          actorRaceItem, actorSubraceItem,
-         applyLegion, applyYnnari, applyHarlequin } from "../apps/races.mjs";
+         applyYnnari, applyHarlequin } from "../apps/races.mjs";
 import { raceDef, raceKeyOf, isAeldariRace } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
@@ -443,9 +443,33 @@ function onCharRoll(event, target) {
     const pf = Number(this.actor.system.aspirations?.profitFactor) || 0;
     return this._rollCharacteristic("Фактор Прибыли", "PF", pf, "pf", true);
   }
+  if (key === "cor") {                      // Порча — чистый бросок значения, не тест Воли
+    const cor = Number(this.actor.system.corruption?.value) || 0;
+    return this._rollCharacteristic("Порча", "COR", cor, "cor", true);
+  }
   const meta  = CHARACTERISTICS[key];
   const total = this.actor.system.characteristics[key]?.total ?? 0;
   return this._rollCharacteristic(charLabel(key, this.actor.system.alignment), meta.abbr, total, key);
+}
+
+/**
+ * Клик по INS (Безумие) в табличке Характеристик — своего единого броска у
+ * Безумия нет (Страх/Травма/Расстройство — разные тесты), поэтому меню, а не
+ * прямой бросок. По просьбе пользователя добавлен ещё и «голый» бросок
+ * значения Безумия — мало ли зачем ГМ захочет именно его.
+ */
+function onInsanityMenu(event) {
+  event.preventDefault();
+  const actor  = this.actor;
+  const insVal = Number(actor.system.insanity?.value) || 0;
+  const entries = [
+    { cls: "wh-ctx-ins-fear",     label: "😱 Страх",               onClick: () => openFearDialog(actor) },
+    { cls: "wh-ctx-ins-trauma",   label: "💥 Травма",              onClick: () => openTraumaDialog(actor) },
+    { cls: "wh-ctx-ins-disorder", label: "🎲 Расстройство (d100)", onClick: () => rollDisorder(actor) },
+    { sep: true },
+    { cls: "wh-ctx-ins-raw",      label: "🧠 Безумие (напрямую)",  onClick: () => this._rollCharacteristic("Безумие", "INS", insVal, "ins", true) }
+  ];
+  openContextMenu(event, entries);
 }
 
 // Экспортирован: вкладка СОЦИУМ подключается частью и к Демону, и к
@@ -510,7 +534,6 @@ async function onGeneApply() {
   const def = raceDef("astartes");
   return this._applyStartingTalents(def?.talents ? [def.talents] : [], def?.label || "Астартес");
 }
-function onLegionApply()    { return applyLegion(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onYnnariApply()    { return applyYnnari(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onHarlequinApply() { return applyHarlequin(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 
@@ -532,7 +555,7 @@ export class WarhammerCharacterSheet
   extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
 
   static DEFAULT_OPTIONS = {
-    classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
+    classes: ["warhammer-dbc", "sheet", "actor", "character", "character-sheet", "wh-holo"],
     position: { width: 1000, height: 940 },
     window: {
       resizable: true
@@ -574,6 +597,7 @@ export class WarhammerCharacterSheet
       hibernationWeekTick: whenEditable(onHibernationWeekTick),
       initiativeRoll: whenEditable(onInitiativeRoll),
       charRoll: whenEditable(onCharRoll),
+      insanityMenu: whenEditable(onInsanityMenu),
       skillRoll: whenEditable(onSkillRoll),
       itemAdd: whenEditable(onItemAdd),
       rigOpen: whenEditable(onRigOpen),
@@ -583,7 +607,6 @@ export class WarhammerCharacterSheet
       mutgiftAdd: whenEditable(onMutgiftAdd),
       mutgiftRoll: whenEditable(onMutgiftRoll),
       geneApply:      whenEditable(onGeneApply),
-      legionApply:    whenEditable(onLegionApply),
       ynnariApply:    whenEditable(onYnnariApply),
       harlequinApply: whenEditable(onHarlequinApply),
       racePick:     whenEditable(onRacePick),
@@ -619,7 +642,7 @@ export class WarhammerCharacterSheet
         { id: "haemonculus", label: "ГЕМУНКУЛ" },
         { id: "abilities",   label: "СПОСОБНОСТИ" },
         { id: "social",      label: "СОЦИУМ" },
-        { id: "psy",         label: "ПСИ" },
+        { id: "psy",         label: "МИСТИКА" },
         { id: "tech",        label: "ТЕХ" },
         { id: "nav",         label: "НАВ" },
         { id: "gear",        label: "СНАРЯЖЕНИЕ" },
@@ -708,7 +731,6 @@ export class WarhammerCharacterSheet
       const ip = Math.max(0, Number(foundry.utils.getProperty(this.actor, this._infamyPath)) || 0);
       context.infamy = infamyContext(this.actor, this._infamyKey,
         { ip, ipMax: this._infamyMax, showCounter: this._infamyShowCounter });
-      context.chaosPatron = chaosPatronMeta(this._infamyKey);
       // Отметка радиокнопки — по ХРАНИМОМУ полю, а не по _infamyKey: тот
       // подставляет Неделимого, когда Бог не выбран, и селектор показывал бы
       // выбранным то, чего в акторе нет (wdbc-osz).
@@ -799,6 +821,44 @@ export class WarhammerCharacterSheet
       `wh-race-${sys.race || "none"}`, `wh-class-${cls}`);
   }
 
+  /** CSS-переменные, которые чинит патрон, — держим в одном месте, чтобы
+   *  выставлять/снимать их симметрично. */
+  static #CHAOS_PATRON_VARS = ["--gc", "--gc2", "--glow", "--dp-hue", "--dp-sat",
+    "--dp-bright", "--patron-star", "--patron-sigil", "--patron-sigil-size"];
+
+  /**
+   * Навешивает на корень листа тему Бога-покровителя: класс chaos-heretic/
+   * chaos-god-<key> и CSS-переменные --gc/--glow/сигил и т.п. Раньше эти
+   * данные шли инлайн-стилем на корневой <div> шаблона, но ApplicationV2
+   * с PARTS.body.root=true (см. _applyThemeClasses выше) отбрасывает
+   * корневой элемент шаблона целиком — навешиваем сюда явно, тем же
+   * источником (chaosPatronMeta по _infamyKey), что раньше шёл в шаблон.
+   */
+  _applyChaosPatronTheme() {
+    // Только лист Персонажа: Демон и Принц Демона наследуют этот класс и тоже
+    // ходят alignment="heretic" по умолчанию — без гейта их листы красились бы
+    // в тему патрона поверх собственной (hue-rotate шапки и вкладок).
+    if (this.actor.type !== "character") return;
+    const root = this.element;
+    if (!root) return;
+    root.classList.remove(...[...root.classList].filter(c => /^chaos-(heretic|god-)/.test(c)));
+    if (this.actor.system.alignment !== "heretic") {
+      for (const v of WarhammerCharacterSheet.#CHAOS_PATRON_VARS) root.style.removeProperty(v);
+      return;
+    }
+    const meta = chaosPatronMeta(this._infamyKey);
+    root.classList.add("chaos-heretic", `chaos-god-${meta.key}`);
+    root.style.setProperty("--gc", meta.color);
+    root.style.setProperty("--gc2", meta.gc2);
+    root.style.setProperty("--glow", meta.glow);
+    root.style.setProperty("--dp-hue", meta.hue);
+    root.style.setProperty("--dp-sat", meta.sat);
+    root.style.setProperty("--dp-bright", meta.bright);
+    root.style.setProperty("--patron-star", meta.star);
+    root.style.setProperty("--patron-sigil", `url('/${meta.sigil}')`);
+    root.style.setProperty("--patron-sigil-size", meta.sigilSize);
+  }
+
   /**
    * Мастер создания персонажа (module/apps/character-wizard.mjs) — пять
    * этапов в одном окне. Зовётся из панели «Актёры» (apps/character-start.mjs
@@ -857,6 +917,24 @@ export class WarhammerCharacterSheet
     };
     return keys.map(key => ({
       ...all[key], checkbox: true, checked: !!sys[key], onClick: () => toggle(key)
+    }));
+  }
+
+  /**
+   * Мировоззрение (Лоялист/Ренегат/Хаосит) — переехало из <select> в шапке
+   * (wdbc, 23.08.2026) в три взаимоисключающих пункта меню «Настройки листа»:
+   * галочка отмечает текущее значение, клик по любому пункту ставит его.
+   * Только для Персонажа — у Аэльдари (и ветвей) Мировоззрения нет вовсе,
+   * как и раньше не было select'а в шапке.
+   */
+  _alignmentEntries() {
+    const cur = this.actor.system.alignment || "loyalist";
+    const set = (value) => this.actor.update({ "system.alignment": value });
+    return [
+      ["loyalist", "Лоялист"], ["renegade", "Ренегат"], ["heretic", "Хаосит"]
+    ].map(([key, label]) => ({
+      cls: `wh-ctx-align-${key}`, label: `Мировоззрение: ${label}`,
+      checkbox: true, checked: cur === key, onClick: () => set(key)
     }));
   }
 
@@ -1060,13 +1138,22 @@ export class WarhammerCharacterSheet
   }
 
   // ── Очки Бесчестия (корбук 438) — переопределяется листом Демон-Принца ────
-  // Хаосит: пул = поле «Очки Бесчестья» в шапке (system.fate), счётчик в полосе
-  // скрыт; тема/сигил — по выбранному Богу-покровителю (system.patronGod).
+  // Хаосит: текущее значение хранится в том же поле, что и Судьба
+  // (system.fate.value — то же самое поле, реально видит его только полоса
+  // «ОЧКИ БЕСЧЕСТИЯ», в шапке ячейка Судьбы скрыта {{#unless infamy}}), а
+  // максимум — Inf.b (Влияние), а не system.fate.max: тот у обычного
+  // Персонажа просто ручное число Судьбы (роллится при создании, для
+  // Хаосита к делу отношения не имеет), максимум ОБ Демон-Принца точно так
+  // же считается от Inf.b — расхождение с system.fate.max было багом, а не
+  // альтернативной механикой. Тема/сигил — по выбранному Богу-покровителю
+  // (system.patronGod).
   get _infamyEnabled() { return true; }
   get _showPatronPicker() { return true; }   // Демон-Принц переопределяет на false (патрон в шапке)
   get _infamyPath() { return "system.fate.value"; }
-  get _infamyMax()  { return Math.max(0, Number(this.actor.system.fate?.max) || 0); }
-  get _infamyShowCounter() { return false; }
+  get _infamyMax()  { return Math.max(0, Number(this.actor.system.characteristics?.inf?.bonus) || 0); }
+  // Счётчик Очков Бесчестия переехал из шапки листа в саму полосу
+  // «ОЧКИ БЕСЧЕСТИЯ» (infamy-strip.hbs, showCounter) — как у Демон-Принца.
+  get _infamyShowCounter() { return true; }
   get _infamyKey()  { return this.actor.system.patronGod || "undivided"; }
   _infamyMeta()     { const p = chaosPatronMeta(this._infamyKey); return { gc: p.color, gc2: p.gc2, sigil: p.sigil }; }
   _ipChange(delta)  { return changeInfamy(this.actor, this._infamyPath, this._infamyMax, delta); }
@@ -1164,8 +1251,8 @@ export class WarhammerCharacterSheet
 
   /**
    * Состав меню «Настройки листа» по типу актора (таблица от пользователя):
-   *  - Персонаж — Мастер, Сменить телосложение, [разделитель], все 5 флажков,
-   *    В Орду.
+   *  - Персонаж — Мастер, Сменить телосложение, [разделитель], Мировоззрение
+   *    (3 пункта, кроме Аэльдари), [разделитель], все 5 флажков, В Орду.
    *  - Демон — Пси-Пробуждение, Доступен для ремёсел, В Орду. Нет ни Мастера,
    *    ни поля system.bodyType, ни трёх остальных флажков.
    *  - Принц Демона — Фактор Прибыли, Пси-Пробуждение, Доступен для ремёсел.
@@ -1202,6 +1289,7 @@ export class WarhammerCharacterSheet
         ...(aeldari ? [] : ["isRogueTrader"])];
       return [
         wizard, bodytype, { sep: true },
+        ...(aeldari ? [] : [...this._alignmentEntries(), { sep: true }]),
         ...this._sheetToggleEntries(keys),
         horde
       ].filter(Boolean);
@@ -1252,6 +1340,7 @@ export class WarhammerCharacterSheet
 
     // ── Визуальная темизация листа по расе / мировоззрению / классу ─────────
     this._applyThemeClasses();
+    this._applyChaosPatronTheme();
 
     // ── Третий Глаз навигатора: зрачок следит за курсором ──────────────────
     const eyeMove = el.querySelector(".nav-eye-move");
@@ -1334,9 +1423,6 @@ export class WarhammerCharacterSheet
 
     // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
     activateSocialListeners(html, this.actor, { editable: this.isEditable });
-
-    // ── Ритуалы (стр. 393-425) ─────────────────────────────────────────────
-    activateRitualListeners(html, this.actor);
 
     activatePsychicListeners(html, this.actor, {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts),

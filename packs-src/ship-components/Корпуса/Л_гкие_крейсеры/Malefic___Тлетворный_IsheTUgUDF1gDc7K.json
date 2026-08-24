@@ -1,26 +1,18 @@
 {
   "name": "Malefic / Тлетворный",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "NfawZJdCJMS3OCWj",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 50,
+    "hullClass": "Лёгкие крейсеры",
+    "sp": 56,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Гнездо демонов (Чумоносцы). Особое",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "viciousDesign",
@@ -38,8 +30,8 @@
       "spaceMax": 60,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "Н1, ПБ1, ЛБ1",
-      "hullIntegrity": 60
+      "weaponCapacity": "Н1, ПБ1, ЛБ1, НП1",
+      "hullIntegrity": 65
     },
     "chars": {
       "speed": 5,
@@ -48,14 +40,6 @@
       "voidShields": 0,
       "armour": 22,
       "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "IsheTUgUDF1gDc7K",

@@ -1,33 +1,25 @@
 {
   "name": "Boldness / Смелость",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "KhRTQU1eH580NrdK",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Крейсеры",
     "sp": 59,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Позолоченный корпус, 1/0",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
       }
     ],
     "hull": {
-      "spaceMax": 57,
+      "spaceMax": 74,
       "powerGen": 0,
       "turnArc": "45°",
       "weaponCapacity": "ЛБ2, ПБ2, НП1",
@@ -39,15 +31,7 @@
       "detection": 20,
       "voidShields": 0,
       "armour": 18,
-      "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "turretRating": 1
     }
   },
   "_id": "KeMvMj4b9bCdmDoZ",

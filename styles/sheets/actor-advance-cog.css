@@ -82,14 +82,14 @@
 .warhammer-dbc .notes-cog .origin-special { color: var(--cg-fire); }
 
 /* ═══════════════ СЕНСОРЫ ШАПКИ ═══════════════ */
-.warhammer-dbc .character-sheet .fate-pips { display: flex; gap: 3px; margin-top: 3px; justify-content: center; }
-.warhammer-dbc .character-sheet .fate-pip {
+.warhammer-dbc.character-sheet .fate-pips { display: flex; gap: 3px; margin-top: 3px; justify-content: center; }
+.warhammer-dbc.character-sheet .fate-pip {
   width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.06);
   border: 1px solid color-mix(in srgb, var(--cg-fire) 40%, #2a3038);
 }
-.warhammer-dbc .character-sheet .fate-pip.on { background: var(--cg-fire); border-color: var(--cg-fire); box-shadow: 0 0 8px -1px var(--cg-fire); }
-.warhammer-dbc .character-sheet .fatigue-bar { height: 5px; margin-top: 4px; border-radius: 3px; background: rgba(0,0,0,0.4); border: 1px solid var(--cg-line); overflow: hidden; }
-.warhammer-dbc .character-sheet .fatigue-fill { height: 100%; transition: width 0.3s ease; }
-.warhammer-dbc .character-sheet .fatigue-fill.load-ok    { background: linear-gradient(90deg, var(--cg-dim), var(--cg)); box-shadow: 0 0 6px var(--cg); }
-.warhammer-dbc .character-sheet .fatigue-fill.load-heavy { background: linear-gradient(90deg, #c8892a, var(--cg-fire)); box-shadow: 0 0 6px var(--cg-fire); }
-.warhammer-dbc .character-sheet .fatigue-fill.load-over  { background: linear-gradient(90deg, #a01810, var(--cg-red)); box-shadow: 0 0 6px var(--cg-red); }
+.warhammer-dbc.character-sheet .fate-pip.on { background: var(--cg-fire); border-color: var(--cg-fire); box-shadow: 0 0 8px -1px var(--cg-fire); }
+.warhammer-dbc.character-sheet .fatigue-bar { height: 5px; margin-top: 4px; border-radius: 3px; background: rgba(0,0,0,0.4); border: 1px solid var(--cg-line); overflow: hidden; }
+.warhammer-dbc.character-sheet .fatigue-fill { height: 100%; transition: width 0.3s ease; }
+.warhammer-dbc.character-sheet .fatigue-fill.load-ok    { background: linear-gradient(90deg, var(--cg-dim), var(--cg)); box-shadow: 0 0 6px var(--cg); }
+.warhammer-dbc.character-sheet .fatigue-fill.load-heavy { background: linear-gradient(90deg, #c8892a, var(--cg-fire)); box-shadow: 0 0 6px var(--cg-fire); }
+.warhammer-dbc.character-sheet .fatigue-fill.load-over  { background: linear-gradient(90deg, #a01810, var(--cg-red)); box-shadow: 0 0 6px var(--cg-red); }

@@ -936,8 +936,8 @@ export class WarhammerItemSheet
       (dw.properties || []).forEach(dp => { dp.godLabel = (DW_GODS_MAP[dp.god]?.label) || "Неделимый"; });
     }
 
-    // ── Узел корабля: свойства (Aspects) ───────────────────────────────────────
-    if (this.item.type === "component") {
+    // ── Узел/Корпус корабля: свойства (Aspects) ─────────────────────────────────
+    if (this.item.type === "component" || this.item.type === "shipHull") {
       const active     = context.system.shipProps || [];
       const activeKeys = new Set(active.map(p => p.key));
       context.shipPropsActive = active
