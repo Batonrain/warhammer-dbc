@@ -5,7 +5,8 @@
 
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
-import { computeWoundHealing, computeWoundDamage } from "./wounds.mjs";
+import { computeWoundHealing } from "./wounds.mjs";
+import { woundLossUpdates as computeWoundDamage } from "../../rules/wounds.mjs";
 import { woundLevel } from "../../rules/wound-tier.mjs";
 import { esc } from "../../helpers/utils.mjs";
 import { SECONDS_PER_DAY } from "../../constants/imperial-calendar.mjs";
