@@ -1,7 +1,7 @@
 {
   "name": "Ratling / Ратлинг",
   "type": "race",
-  "img": "icons/svg/oak.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-core/Ratling.webp",
   "folder": "r25Oz24EUTucQ8Be",
   "system": {
     "key": "ratling",

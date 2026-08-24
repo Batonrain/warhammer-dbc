@@ -1,26 +1,18 @@
 {
   "name": "Massacre / Резня",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "KhRTQU1eH580NrdK",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 60,
+    "hullClass": "Крейсеры",
+    "sp": 68,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Плазмопровода, 1/0",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -35,10 +27,10 @@
       }
     ],
     "hull": {
-      "spaceMax": 65,
+      "spaceMax": 75,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "НП1, ПБ2, ЛБ2",
+      "weaponCapacity": "НП1, ЛБ2, ПБ2",
       "hullIntegrity": 73
     },
     "chars": {
@@ -48,14 +40,6 @@
       "voidShields": 0,
       "armour": 20,
       "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "DbGvUKgBDD6abSHj",

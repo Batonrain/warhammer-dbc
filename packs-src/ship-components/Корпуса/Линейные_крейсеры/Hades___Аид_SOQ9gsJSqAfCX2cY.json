@@ -1,26 +1,18 @@
 {
   "name": "Hades / Аид",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "iXOvwOEpK2IF4XXq",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
+    "hullClass": "Линейные крейсеры",
     "sp": 70,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Флагманский мостик, 1/4",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -38,24 +30,16 @@
       "spaceMax": 78,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "Н1, ПБ2, ЛБ2",
+      "weaponCapacity": "Н1, НП1, ПБ2, ЛБ2",
       "hullIntegrity": 75
     },
     "chars": {
-      "speed": 5,
+      "speed": 7,
       "manoeuvrability": 5,
       "detection": 10,
       "voidShields": 0,
       "armour": 20,
       "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "SOQ9gsJSqAfCX2cY",

@@ -1,26 +1,18 @@
 {
   "name": "Pagan / Язычник",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "aIu3pJTuNwSeYJoY",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 33,
+    "hullClass": "Рейдеры",
+    "sp": 30,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Внутренние переборки, 1/0",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -48,14 +40,6 @@
       "voidShields": 0,
       "armour": 17,
       "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "lkzREvYIx9kKrWHz",

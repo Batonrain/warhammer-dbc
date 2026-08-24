@@ -44,7 +44,7 @@ export function divinationSheetContext(actor) {
     charLabel: item?.system?.charModLabel || "",
     // Список из компендиума; если он ещё не прочитан — из константной таблицы.
     options: packEntries(DIVINATION_TAG, () => DIVINATIONS.map(d => ({
-      key: d.key, name: `${rollLabel(d)} — ${d.text}`, roll: rollLabel(d)
+      key: d.key, name: d.text, roll: rollLabel(d)
     }))).map(o => ({ ...o, selected: o.key === cur }))
   };
 }

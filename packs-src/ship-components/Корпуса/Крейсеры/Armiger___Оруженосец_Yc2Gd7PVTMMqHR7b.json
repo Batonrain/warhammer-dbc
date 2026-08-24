@@ -1,0 +1,60 @@
+{
+  "name": "Armiger / Оруженосец",
+  "type": "shipHull",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "KhRTQU1eH580NrdK",
+  "system": {
+    "hullClass": "Крейсеры",
+    "sp": 53,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "In-build: Ангар системы Юпитера (ПБ и ЛБ), 2/2",
+    "description": "",
+    "notes": "",
+    "shipProps": [
+      {
+        "key": "inbuild"
+      },
+      {
+        "key": "repairDeck"
+      }
+    ],
+    "hull": {
+      "spaceMax": 64,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "1Н, 1ПБ, 1ЛБ, 1НП",
+      "hullIntegrity": 60
+    },
+    "chars": {
+      "speed": 8,
+      "manoeuvrability": 0,
+      "detection": 10,
+      "voidShields": 0,
+      "armour": 16,
+      "turretRating": 4
+    }
+  },
+  "_id": "Yc2Gd7PVTMMqHR7b",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Yc2Gd7PVTMMqHR7b"
+}

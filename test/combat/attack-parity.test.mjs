@@ -258,3 +258,42 @@ describe("щит", () => {
     expect(applyAttr("ignore-shield")).toBe("0");
   });
 });
+
+describe("Взрывное «под цель»", () => {
+  it("промах с прицелом «под цель» бросает розу смещения (d10 + d8)", async () => {
+    const weapon = weaponFor({ weaponProps: [{ key: "blast", rating: 3 }] });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [77, 6, 3];   // d100 атаки (промах), d10 дистанции, d8 направления
+
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single",
+      { value: "underfoot", label: "Под цель (Взрывное, −20)" }, {});
+
+    expect(card()).toContain("Промах");
+    expect(card()).toContain("Взрыв мимо цели");
+    expect(card()).toContain("<b>6м</b>");
+    expect(card()).toContain("Вправо");
+    expect(hits()).toEqual([]);   // промах — урона по-прежнему нет
+  });
+
+  it("обычный промах (без «под цель») розу не бросает", async () => {
+    const weapon = weaponFor({ weaponProps: [{ key: "blast", rating: 3 }] });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [77];
+
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
+
+    expect(card()).not.toContain("Взрыв мимо цели");
+  });
+
+  it("попадание Взрывного не бросает розу", async () => {
+    const weapon = weaponFor({ weaponProps: [{ key: "blast", rating: 3 }] });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [23, 6];
+
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single",
+      { value: "underfoot", label: "Под цель (Взрывное, −20)" }, {});
+
+    expect(card()).toContain("Попадание");
+    expect(card()).not.toContain("Взрыв мимо цели");
+  });
+});

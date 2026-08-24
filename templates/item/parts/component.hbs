@@ -3,12 +3,17 @@
   <div class="comp-row">
     <label class="wr-label">Тип узла</label>
     <select name="system.kind" class="wr-select">
-      <option value="hull"         {{#if (eq system.kind "hull")}}selected{{/if}}>Корпус</option>
+      {{!-- «Корпус» из выбора вида узла убран: Корпус теперь отдельный тип
+            предмета shipHull; висящий option плодил бы мёртвые узлы. Легаси
+            component[kind=hull] до миграции остаётся выбранным штатно. --}}
+      {{#if (eq system.kind "hull")}}<option value="hull" selected>Корпус (легаси)</option>{{/if}}
       <option value="drive"        {{#if (eq system.kind "drive")}}selected{{/if}}>Плазменный двигатель</option>
       <option value="warp"         {{#if (eq system.kind "warp")}}selected{{/if}}>Варп-двигатель</option>
       <option value="gellar"       {{#if (eq system.kind "gellar")}}selected{{/if}}>Поле Геллера</option>
       <option value="voidShield"   {{#if (eq system.kind "voidShield")}}selected{{/if}}>Пустотные щиты</option>
       <option value="bridge"       {{#if (eq system.kind "bridge")}}selected{{/if}}>Мостик</option>
+      <option value="occulum"      {{#if (eq system.kind "occulum")}}selected{{/if}}>Оккулум навигатора</option>
+      <option value="astropathic"  {{#if (eq system.kind "astropathic")}}selected{{/if}}>Астропатический узел</option>
       <option value="lifeSustainer"{{#if (eq system.kind "lifeSustainer")}}selected{{/if}}>Жизнеобеспечение</option>
       <option value="quarters"     {{#if (eq system.kind "quarters")}}selected{{/if}}>Жилые отсеки</option>
       <option value="augur"        {{#if (eq system.kind "augur")}}selected{{/if}}>Ауспики / Авгуры</option>

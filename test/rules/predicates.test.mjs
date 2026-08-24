@@ -208,3 +208,32 @@ describe("общее требование к предикатам", () => {
     expect(Object.keys(PREDICATES).sort()).toEqual(Object.keys(value).sort());
   });
 });
+
+// ── Общие предикаты листа: Элитный архетип и Одержимый ──────────────────────
+import { hasEliteArchetype, isPossessed } from "../../module/rules/predicates.mjs";
+
+describe("hasEliteArchetype — три источника, двуязычные имена", () => {
+  const actor = ({ elite = "", extra = [], items = [] } = {}) =>
+    ({ system: { eliteArchetype: elite, eliteArchetypesExtra: extra }, items });
+
+  it("строка в шапке, список дополнительных, предмет", () => {
+    expect(hasEliteArchetype(actor({ elite: "Чернокнижник" }), "Чернокнижник")).toBe(true);
+    expect(hasEliteArchetype(actor({ extra: ["Одержимый"] }), "Одержимый")).toBe(true);
+    expect(hasEliteArchetype(actor({ items: [{ type: "eliteArchetype", name: "Sorcerer / Чернокнижник" }] }), "Чернокнижник")).toBe(true);
+  });
+
+  it("чужое имя и пустой актор — false", () => {
+    expect(hasEliteArchetype(actor(), "Чернокнижник")).toBe(false);
+    expect(hasEliteArchetype(null, "Чернокнижник")).toBe(false);
+  });
+});
+
+describe("isPossessed — один предикат на вкладку и на пикер Даров", () => {
+  it("чекбокс Хаосита", () => {
+    expect(isPossessed({ system: { alignment: "heretic", possessed: true }, items: [] })).toBe(true);
+  });
+  it("чекбокс без heretic не считается, архетип «Одержимый» — считается", () => {
+    expect(isPossessed({ system: { alignment: "loyalist", possessed: true }, items: [] })).toBe(false);
+    expect(isPossessed({ system: { alignment: "loyalist", eliteArchetype: "Одержимый" }, items: [] })).toBe(true);
+  });
+});
