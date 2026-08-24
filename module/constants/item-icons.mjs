@@ -66,7 +66,7 @@ const TYPE_ICON = {
   talent: "talent", ability: "ability", trait: "trait",
   psychicPower: "psychicpower", techPower: "techpower",
   mutation: "mutation", navigatorPower: "navigatorpower",
-  mentalDisorder: "mentaldisorder", component: "component",
+  mentalDisorder: "mentaldisorder", component: "component", shipHull: "component",
   cargo: "cargo", torpedo: "torpedo", disease: "disease"
 };
 

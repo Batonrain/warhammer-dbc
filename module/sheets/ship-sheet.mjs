@@ -16,6 +16,8 @@ import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { actorHullItem, clearHull } from "../apps/ship-hull.mjs";
+import { openHullPicker } from "./hull-picker.mjs";
 
 const CRAFT_STATE = { stored: "На борту", prepared: "Подготовлена", launched: "В вылете", returning: "Возврат (топливо!)", rearming: "Перевооружение" };
 const CRAFT_STRENGTH = { full: "Полная", half: "Полусильная", destroyed: "Уничтожена" };
@@ -27,6 +29,7 @@ const CRAFT_FUEL = { fighter: 4, assaultBoat: 4, multipurpose: 4, bomber: 6, tor
 const KIND_LABELS = {
   hull: "Корпус", drive: "Плазм. двигатель", warp: "Варп-двигатель",
   gellar: "Поле Геллера", voidShield: "Пуст. щиты", bridge: "Мостик",
+  occulum: "Оккулум навигатора", astropathic: "Астропатический узел",
   lifeSustainer: "Жизнеобесп.", quarters: "Жилые отсеки", augur: "Ауспики",
   weapon: "Орудие", hold: "Трюм/Отсек", supplemental: "Улучшение", other: "Прочее"
 };
@@ -123,6 +126,11 @@ const creator = doc => async function () {
 };
 
 const onCreateComponent = creator({ name: "Новый узел", type: "component", system: { kind: "supplemental" } });
+
+// ── Корпус: выбор пикером в шапке, не узел среди прочих (apps/ship-hull.mjs) ──
+function onHullPick()  { return openHullPicker(this.actor); }
+function onHullOpen()  { return actorHullItem(this.actor)?.sheet?.render(true); }
+function onHullClear() { return clearHull(this.actor); }
 const onCreateTorpedo   = creator({ name: "Новая торпеда", type: "torpedo",
   system: { warhead: "plasma", navSystem: "standard", quantity: 1 } });
 
@@ -331,6 +339,9 @@ export class WarhammerShipSheet
       officerAdd:      whenEditable(onOfficerAdd),
       officerRemove:   whenEditable(onOfficerRemove),
       createComponent: whenEditable(onCreateComponent),
+      hullPick:        whenEditable(onHullPick),
+      hullOpen:        onHullOpen,
+      hullClear:       whenEditable(onHullClear),
       createCargo:     whenEditable(onCreateCargo),
       createTorpedo:   whenEditable(onCreateTorpedo),
       itemOpen:        whenEditable(onItemOpen),
@@ -400,19 +411,27 @@ export class WarhammerShipSheet
     context.notesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
       sys.notes || "", { relativeTo: this.actor, secrets: this.actor.isOwner });
     const _down = (s) => !!s.damaged || (s.status && s.status !== "intact");
+
+    // ── Слот «Корпус» в шапке — выбор через пикер (sheets/hull-picker.mjs),
+    // не узел среди прочих (apps/ship-hull.mjs::actorHullItem).
+    const hullItem = actorHullItem(this.actor);
+    context.hullSlot = hullItem
+      ? { id: hullItem.id, img: hullItem.img, name: hullItem.name,
+          hullClass: hullItem.system.hullClass || "" }
+      : null;
+
     context.shipTypes = SHIP_TYPES;
     context.shipChars = SHIP_CHARS;
     context.shipRelations = SHIP_RELATIONS;
 
     context.components = this.actor.items
       .filter(i => i.type === "component")
-      .sort((a, b) => (a.system.kind === "hull" ? -1 : b.system.kind === "hull" ? 1 : a.name.localeCompare(b.name)))
+      .sort((a, b) => a.name.localeCompare(b.name))
       .map(i => ({
         id: i.id, name: i.name, img: i.img,
         kind: i.system.kind, kindLabel: KIND_LABELS[i.system.kind] || i.system.kind,
-        isHull: i.system.kind === "hull",
-        power: i.system.kind === "hull" ? "—" : (i.system.power ?? 0),
-        space: i.system.kind === "hull" ? "—" : (i.system.space ?? 0),
+        power: i.system.power ?? 0,
+        space: i.system.space ?? 0,
         sp: i.system.sp ?? 0,
         external: !!i.system.external,
         damaged:  _down(i.system),
@@ -610,6 +629,13 @@ export class WarhammerShipSheet
   // В V2 сюда приходит документ предмета, а не данные перетаскивания (V1).
   async _onDropItem(event, item) {
     if (!this.actor.isOwner) { ui.notifications.warn("Добавлять узлы на корабль может только его владелец или ГМ."); return false; }
+    // Корпус на корабле всегда один — прежний снимаем перед вставкой нового,
+    // иначе дроп из компендиума просто добавил бы второй (в отличие от
+    // выбора пикером, apps/ship-hull.mjs::applyHull, который это уже делает).
+    if (item.type === "shipHull") {
+      const old = actorHullItem(this.actor);
+      if (old) await this.actor.deleteEmbeddedDocuments("Item", [old.id]);
+    }
     return super._onDropItem(event, item);
   }
   async _persistOfficers(officers) {
