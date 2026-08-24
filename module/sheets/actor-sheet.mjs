@@ -532,7 +532,7 @@ export class WarhammerCharacterSheet
   extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
 
   static DEFAULT_OPTIONS = {
-    classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
+    classes: ["warhammer-dbc", "sheet", "actor", "character", "character-sheet", "wh-holo"],
     position: { width: 1000, height: 940 },
     window: {
       resizable: true
