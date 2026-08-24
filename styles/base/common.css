@@ -152,7 +152,7 @@
 /* Друкхари: значения и текст ячеек без собственного цвета (наследуют тёмный
    цвет ядра Foundry) — делаем светлыми. Развитие: Итого/Всего/названия навыков;
    Способности: названия/уровень/склонности талантов и черт, «Преимущество». */
-.warhammer-dbc.wh-race-drukhari .char-total-disp,
+.warhammer-dbc.wh-race-drukhari .char-cell-val,
 .warhammer-dbc.wh-race-drukhari .char-total-edit,
 .warhammer-dbc.wh-race-drukhari .sa-total-cell,
 .warhammer-dbc.wh-race-drukhari .sa-name-cell,

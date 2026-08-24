@@ -1,14 +1,14 @@
 {
-  "name": "Life Sustainer Aetheric System (Cruisers+) / СЖО Эфирическая система (Крейсеры+)",
+  "name": "Life Sustainer Aetheric System (Cruisers+) / СЖО Эйфорическая система (Крейсеры+)",
   "type": "component",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "UvIRsfMZaRX3tfdH",
   "system": {
     "kind": "lifeSustainer",
     "power": 5,
-    "space": 5,
+    "space": 3,
     "sp": 1,
-    "rarity": 4,
+    "rarity": 1,
     "quality": "common",
     "hulls": "Лёгкие крейсеры, Крейсеры, Линейные крейсеры, Гранд-крейсеры, Линкоры",
     "aspects": "Особое",

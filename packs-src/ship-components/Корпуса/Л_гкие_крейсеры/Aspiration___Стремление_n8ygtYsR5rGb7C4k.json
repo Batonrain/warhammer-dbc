@@ -1,33 +1,25 @@
 {
   "name": "Aspiration / Стремление",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "NfawZJdCJMS3OCWj",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 54,
+    "hullClass": "Лёгкие крейсеры",
+    "sp": 57,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Торпедный аппарат системы Восс (нос), 1/1",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
       }
     ],
     "hull": {
-      "spaceMax": 56,
+      "spaceMax": 58,
       "powerGen": 0,
       "turnArc": "45°",
       "weaponCapacity": "Н2, ПБ1, ЛБ1",
@@ -40,14 +32,6 @@
       "voidShields": 0,
       "armour": 20,
       "turretRating": 2
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
     }
   },
   "_id": "n8ygtYsR5rGb7C4k",

@@ -50,7 +50,7 @@
       "strength": 6,
       "damage": "1d10+4",
       "crit": 4,
-      "range": 4,
+      "range": 5,
       "arc": ""
     }
   },

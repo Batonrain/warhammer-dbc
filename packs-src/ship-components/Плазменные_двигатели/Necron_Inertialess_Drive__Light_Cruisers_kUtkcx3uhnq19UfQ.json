@@ -7,7 +7,7 @@
     "kind": "drive",
     "power": -63,
     "space": 10,
-    "sp": 4,
+    "sp": 6,
     "rarity": 5,
     "quality": "common",
     "hulls": "Лёгкие крейсеры",
@@ -27,6 +27,10 @@
       },
       {
         "key": "inertialess"
+      },
+      {
+        "key": "fasterThanLight",
+        "rating": 1.5
       }
     ],
     "hull": {

@@ -5,52 +5,52 @@
    и не затрагиваются.
 ═══════════════════════════════════════════════════════ */
 
-.warhammer-dbc .character-sheet {
+.warhammer-dbc.character-sheet {
   --cg: #4dffa6; --cg-dim: #2f9e6a; --cg-line: #1f6f4a; --cg-fire: #ffb84d; --cg-red: #ff6b6b;
 }
 /* CRT-строки поверх тела листа (не скроллятся — эффект экрана) */
-.warhammer-dbc .character-sheet .sheet-body::after {
+.warhammer-dbc.character-sheet .sheet-body::after {
   content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3; opacity: 0.4;
   background: repeating-linear-gradient(0deg, rgba(77,255,166,0.03) 0 1px, transparent 1px 3px);
 }
 
 /* ── Кнопка «+» показателей (Безумие/Порча/Опыт/Благосклонность) — общая для всех вкладок ── */
-.warhammer-dbc .character-sheet .stat-add-btn {
+.warhammer-dbc.character-sheet .stat-add-btn {
   flex: none; width: 26px; height: 26px; line-height: 1; font-family: inherit; font-size: 1.05em; font-weight: 800;
   border-radius: 4px; cursor: pointer; transition: all 0.13s;
   background: color-mix(in srgb, var(--cg) 16%, transparent); border: 1px solid var(--cg-line); color: #d8ffe8;
 }
-.warhammer-dbc .character-sheet .stat-add-btn:hover {
+.warhammer-dbc.character-sheet .stat-add-btn:hover {
   border-color: var(--cg); box-shadow: 0 0 10px -3px var(--cg); color: #eafff4;
 }
-.warhammer-dbc .character-sheet .sheet-body { position: relative; }
+.warhammer-dbc.character-sheet .sheet-body { position: relative; }
 
 /* ── Панели-терминалы (кроме мистических — у них свои классы) ── */
-.warhammer-dbc .character-sheet .stat-panel,
-.warhammer-dbc .character-sheet .gear-section-panel {
+.warhammer-dbc.character-sheet .stat-panel,
+.warhammer-dbc.character-sheet .gear-section-panel {
   position: relative;
   box-shadow: inset 0 0 20px rgba(0,50,25,0.4), 0 0 12px -9px var(--cg);
 }
-.warhammer-dbc .character-sheet .gear-section-panel::before,
-.warhammer-dbc .character-sheet .gear-section-panel::after {
+.warhammer-dbc.character-sheet .gear-section-panel::before,
+.warhammer-dbc.character-sheet .gear-section-panel::after {
   content: ""; position: absolute; width: 8px; height: 8px; pointer-events: none; opacity: 0.6; border-color: var(--cg-dim); border-style: solid;
 }
-.warhammer-dbc .character-sheet .gear-section-panel::before { top: 3px; left: 3px; border-width: 1px 0 0 1px; }
-.warhammer-dbc .character-sheet .gear-section-panel::after  { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
-.warhammer-dbc .character-sheet .panel-title {
+.warhammer-dbc.character-sheet .gear-section-panel::before { top: 3px; left: 3px; border-width: 1px 0 0 1px; }
+.warhammer-dbc.character-sheet .gear-section-panel::after  { bottom: 3px; right: 3px; border-width: 0 1px 1px 0; }
+.warhammer-dbc.character-sheet .panel-title {
   letter-spacing: 0.11em; text-shadow: 0 0 6px rgba(77,255,166,0.5);
   display: flex; align-items: center; gap: 8px;
 }
 
 /* ── Шапка листа: рамка терминала ── */
-.warhammer-dbc .character-sheet .actor-name {
+.warhammer-dbc.character-sheet .actor-name {
   text-shadow: 0 0 8px rgba(77,255,166,0.5); letter-spacing: 0.02em;
 }
-.warhammer-dbc .character-sheet .sheet-tabs .item {
+.warhammer-dbc.character-sheet .sheet-tabs .item {
   transition: text-shadow 0.13s, color 0.13s;
 }
-.warhammer-dbc .character-sheet .sheet-tabs .item.active,
-.warhammer-dbc .character-sheet .sheet-tabs .item:hover { text-shadow: 0 0 8px var(--cg); }
+.warhammer-dbc.character-sheet .sheet-tabs .item.active,
+.warhammer-dbc.character-sheet .sheet-tabs .item:hover { text-shadow: 0 0 8px var(--cg); }
 
 /* ═══════════════ ВКЛАДКА СНАРЯЖЕНИЕ ═══════════════ */
 .warhammer-dbc .gear-cog { position: relative; font-family: "Consolas","Lucida Console","Courier New",monospace; }

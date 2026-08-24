@@ -1,7 +1,7 @@
 {
   "name": "Witch / Ведьма",
   "type": "archetype",
-  "img": "icons/svg/upgrade.svg",
+  "img": "systems/warhammer-dbc/assets/art/doombc-core/Witch.webp",
   "folder": "kHJKOoHhPhm8nU1k",
   "system": {
     "key": "witch",
