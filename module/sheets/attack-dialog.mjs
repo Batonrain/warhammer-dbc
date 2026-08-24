@@ -31,6 +31,7 @@ import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/gam
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS } from "../rules/mount.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
+import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { CAPABILITIES } from "../constants/capabilities.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
@@ -246,9 +247,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // т.п.), со своей категорией для Приёма/Стойки/Тренировки — метка профиля
   // и есть эта категория. «Основной» профиль (idx -1) — категория предмета.
   // Хват/Баланс — свойства физического древка, от Профиля не зависят.
+  // Метка профиля не всегда категория («Unarmed Warrior», «Подавительный»,
+  // «Булава (нимб втянут)») — неизвестная списку MELEE_CATEGORIES метка
+  // трактуется как пустая: тот же «мягкий» пропуск, что у предмета без
+  // meleeCategory, а не ложный гейт «нет Тренировки (Подавительный)».
   function categoryFor(pIdx) {
     const p = isMelee && pIdx >= 0 ? atkProfiles[pIdx] : null;
-    return p?.label || meleeCategory;
+    const raw = p?.label || meleeCategory;
+    return MELEE_CATEGORIES.some(c => sameCategory(c, raw)) ? raw : "";
   }
   // Melee Training (стр. 62) — используется ниже resolveSelection, чтобы
   // ограничить доступные Стойку/Хват/Приём. Категория неизвестна (данные
@@ -272,7 +278,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const fullAttackForced = isMelee
     && hasRuleFlag(actor, FULL_ATTACK_CAPABILITY)
     && isRoundCapabilityAvailable(actor, FULL_ATTACK_CAPABILITY);
-  const meleeBaseKey = fullAttackForced ? "fullatk" : (actor.system.meleeBase || "standard");
+  // forceBase — нейтральная стартовая База вместо персистентной (Контратака,
+  // стр. 12: это атака со штрафом −10, персистентная «Полная Атака» +30 сюда
+  // протекать не должна). Игрок волен сменить её в окне, как обычно.
+  const meleeBaseKey = fullAttackForced ? "fullatk"
+    : (techniqueOpts.forceBase || actor.system.meleeBase || "standard");
 
   // Верховая Атака (стр. 12) — только персонажам верхом на байке/скакуне,
   // ссылку на него держит сам всадник (module/rules/mount.mjs, тот же
@@ -449,6 +459,28 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       maneuverKey, mDef, maneuverBon, gKey, gDef, gWs, pIdx, prof,
       techBon: baseBon + maneuverBon, targetDodgeMod, targetParryMod, blocked, note
     };
+  }
+
+  /**
+   * То же, что resolveSelection, но недоступный, а всё ещё отмеченный вариант
+   * (disabled+checked пилюля: readAttackForm читает :checked независимо от
+   * disabled) сбрасывается на standard/базовый Хват. Одно место и для живого
+   * пересчёта (updateTotal), и для самого броска — иначе смена Базы, делающая
+   * выбранный Приём недоступным, всё равно уносила бы его в бросок.
+   */
+  function resolveSelectionSafe(f = {}) {
+    const sel = resolveSelection(f);
+    if (!isMelee) return sel;
+    const ok = (opts, key, field = "key") =>
+      opts.find(o => o[field] === key)?.allowed ?? true;
+    const fix = {};
+    if (!ok(computeStanceOptions(sel.pIdx), sel.stanceKey)) fix.stanceKey = "standard";
+    const stanceKey = fix.stanceKey ?? sel.stanceKey;
+    if (!ok(computeBaseOptions(stanceKey), sel.baseKey)) fix.baseKey = "standard";
+    const baseKey = fix.baseKey ?? sel.baseKey;
+    if (!ok(computeManeuverOptions(baseKey, sel.pIdx), sel.maneuverKey)) fix.maneuverKey = "standard";
+    if (gripList.length && !ok(computeGripOptions(sel.pIdx), sel.gKey)) fix.gripKey = primGrip;
+    return Object.keys(fix).length ? resolveSelection({ ...f, ...fix }) : sel;
   }
 
   const dyn0 = resolveSelection();
@@ -938,7 +970,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
    * из текущего выбора (resolveSelection), а не берётся из charVal.
    */
   const thresholdOf = f => {
-    const sel = resolveSelection(f);
+    const sel = resolveSelectionSafe(f);
     return attackThreshold({
       base: (actor.system.characteristics[f.char]?.total ?? 0)
             + (sys.attackBonus || 0) + wpAttackMod + sel.techBon + sel.stanceBon + ammoAtkMod + sel.gWs
@@ -978,7 +1010,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
             return false;
           }
 
-          const sel = resolveSelection(f);
+          const sel = resolveSelectionSafe(f);
 
           if (sel.blocked) {
             await ChatMessage.create({
@@ -1093,7 +1125,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         // Стойка/База/Приём/Хват/Профиль меняются прямо в форме — заголовок и
         // сводки эффектов должны обновляться вместе с порогом, иначе бейджи и
         // заметки показывают устаревший выбор до следующего открытия окна.
-        const sel = resolveSelection(f);
+        const sel = resolveSelectionSafe(f);
         if (badgesEl)       badgesEl.innerHTML       = badgesHtml(sel);
         if (noteEl)         noteEl.innerHTML         = sel.note;
         if (stanceNoteEl)   stanceNoteEl.innerHTML   = sel.stDef.note;

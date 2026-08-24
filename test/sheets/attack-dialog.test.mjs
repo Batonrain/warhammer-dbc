@@ -643,6 +643,61 @@ describe("Арсенал: доступность Стойки/Хвата/Баз�
   });
 });
 
+describe("метка профиля — не категория (стр. 14)", () => {
+  // «Unarmed Warrior», «Подавительный», «Булава (нимб втянут)» — метки
+  // профилей, которых нет в MELEE_CATEGORIES: они не «другая голова» оружия
+  // и не должны давать trained:false с ложным замком на Приёмы/Стойки.
+  // Неизвестная метка трактуется как пустая категория — мягкий пропуск.
+  it("профиль с неизвестной меткой не запирает тренировку", () => {
+    const sword = weaponFor({ weaponClass: "melee", meleeCategory: "Меч",
+      profiles: [{ label: "Подавительный", damage: "1d10" }] });
+    // Без Melee Training (Меч): основной профиль честно заперт…
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    expect(captured.dialog.content).toContain("Без Тренировки (Меч)");
+
+    // …а альт-профиль с меткой-не-категорией — нет: категория неизвестна,
+    // фильтр не применяется (тот же приём, что у предмета без meleeCategory).
+    resetCaptured();
+    showAttackDialog(attacker({ items: [sword] }), sword, { profileIdx: 0 });
+    const html = captured.dialog.content;
+    expect(html).not.toContain("Без Тренировки");
+    expect(html).toMatch(/name="atk-stance" value="aggressive"/);
+  });
+});
+
+describe("недоступный, но отмеченный вариант не уходит в бросок", () => {
+  // readAttackForm читает :checked независимо от disabled — если смена Базы
+  // сделала выбранный Приём недоступным, он сбрасывается на standard и в
+  // перерисованных пилюлях, и в самом броске (resolveSelectionSafe).
+  it("смена Базы делает выбранный Приём недоступным — в форме standard", async () => {
+    // Оглушить: «База: Стандартная/Натиск/Полная» — с Осторожной несовместим.
+    const hammer   = weaponFor({ weaponClass: "melee", meleeCategory: "Молот" });
+    // getFlag нужен конвейеру броска (поиск «сдвинуть место попадания»).
+    const training = { ...talentFor("Melee Training / Рукопашная Тренировка", "Молот"),
+      getFlag: () => undefined };
+    const p = showAttackDialog(attacker({ items: [hammer, training], meleeBase: "standard" }), hammer);
+
+    const pillsEl = { innerHTML: "" };
+    const form = attackForm({
+      "#atk-char": "ws",
+      "input[name='atk-base']:checked": "careful",
+      "input[name='atk-maneuver']:checked": "stun",
+      "#atk-maneuver-pills": pillsEl,
+      "#atk-total-display": textNode(), ".av-adv-hint": textNode()
+    });
+    captured.rerender(form);
+
+    // Перерисованные пилюли Приёма: Оглушить исчез, отмечена Обычная Атака.
+    expect(pillsEl.innerHTML).toMatch(/value="standard" checked/);
+    expect(pillsEl.innerHTML).not.toContain('value="stun"');
+
+    // И бросок с той же формой уходит с Приёмом «Обычная Атака», не «Оглушить».
+    await captured.press("roll", form);
+    expect(captured.chat.at(-1).content).not.toContain("Оглушить");
+    await p;
+  });
+});
+
 describe("приём без оружия", () => {
   const kick = { label: "Пинок", wsBonus: -10, damage: "1d5-1+S.b",
                  damageType: "impact", pen: 0 };
