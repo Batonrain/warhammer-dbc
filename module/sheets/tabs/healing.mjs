@@ -6,20 +6,8 @@
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
+import { woundLevel } from "../../rules/wound-tier.mjs";
 import { esc } from "../../helpers/utils.mjs";
-
-export function woundLevel(system) {
-  const value = system.wounds?.value ?? 0;
-  const max = system.wounds?.max ?? 0;
-  const crit = system.wounds?.critical ?? 0;
-  const tb = system.characteristics?.t?.bonus ?? 0;
-  const lost = Math.max(0, max - value);
-  let key = "light";
-  if (crit > 0) key = "critical";
-  else if (lost > tb * 2) key = "heavy";
-  const label = { light: "Лёгкое", heavy: "Тяжёлое", critical: "Критическое" }[key];
-  return { key, label, lost, tb, crit };
-}
 
 /** Диалог лечения: себя или выбранной цели (тест Медики/Стойкости). */
 export function showHealingDialog(medic) {

@@ -57,6 +57,27 @@ describe("sizeMax", () => {
   });
 });
 
+describe("woundTier", () => {
+  const woundTier = PREDICATES.woundTier;
+  const withTier = tier => actor({ wounds: { tier } });
+
+  it("тир актора есть в списке", () => {
+    expect(woundTier(withTier("heavy"), {}, ["heavy", "dying"])).toBe(true);
+  });
+
+  it("тир актора вне списка", () => {
+    expect(woundTier(withTier("healthy"), {}, ["heavy", "dying"])).toBe(false);
+  });
+
+  it("одиночное значение читается как список из одного", () => {
+    expect(woundTier(withTier("dying"), {}, "dying")).toBe(true);
+  });
+
+  it("тир не посчитан (нет system.wounds.tier) — не проходит", () => {
+    expect(woundTier(actor(), {}, ["healthy"])).toBe(false);
+  });
+});
+
 describe("charMin", () => {
   const charMin = PREDICATES.charMin;
 
@@ -191,6 +212,7 @@ describe("hasSize и targetHasSize", () => {
 describe("общее требование к предикатам", () => {
   const value = {
     race: ["human"], subrace: ["navigator"], sizeMax: 1, charMin: { s: 40 },
+    woundTier: ["heavy"],
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,

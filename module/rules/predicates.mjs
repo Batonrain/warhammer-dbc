@@ -100,6 +100,12 @@ export const PREDICATES = {
 
   sizeMax: (actor, ctx, value) => sizeOf(actor) <= Number(value),
 
+  // Уровень Ранения (documents/actor.mjs, rules/wound-tier.mjs): healthy/light/
+  // heavy/dying, тот же ключ, что подписан в блоке РАНЫ на листе. Список — «в
+  // списке», как у race/subrace/weaponClass: правило «Тяжело раненный или
+  // хуже» пишется woundTier: ["heavy", "dying"].
+  woundTier: (actor, ctx, value) => list(value).includes(actor?.system?.wounds?.tier),
+
   charMin: (actor, ctx, value) => Object.entries(value ?? {}).every(
     ([key, min]) => (Number(actor?.system?.characteristics?.[key]?.total) || 0) >= min),
 
