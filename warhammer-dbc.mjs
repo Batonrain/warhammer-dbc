@@ -63,7 +63,7 @@ import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/app
 import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
-import { checkAuras } from "./module/regions/auras.mjs";
+import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
@@ -1525,14 +1525,21 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
 // 150мс, лишние вызовы дёшевы.
 Hooks.on("canvasReady", () => checkAuras(canvas.scene));
 Hooks.on("createToken", doc => checkAuras(doc.parent));
-Hooks.on("deleteToken", doc => checkAuras(doc.parent));
+Hooks.on("deleteToken", doc => {
+  // Связанный актор уходит со сцены вместе с токеном — зачистка прогона его
+  // больше не увидит, выданная аура осталась бы на листе навсегда.
+  if (game.user.isGM && doc.actorLink && doc.actor) clearAuraGrants(doc.actor, doc.parent?.id);
+  checkAuras(doc.parent);
+});
 Hooks.on("updateToken", (doc, changes) => {
   if (["x", "y", "elevation", "hidden", "disposition"].some(k => k in changes)) {
     checkAuras(doc.parent);
   }
 });
-Hooks.on("createItem", item => { if (item.actor) checkAuras(canvas.scene); });
-Hooks.on("deleteItem", item => { if (item.actor) checkAuras(canvas.scene); });
+// Предметы, выданные самим прогоном (auraSource), пересчёт не планируют:
+// иначе каждый sweep порождал бы второй, холостой.
+Hooks.on("createItem", item => { if (item.actor && !item.getFlag("warhammer-dbc", "auraSource")) checkAuras(canvas.scene); });
+Hooks.on("deleteItem", item => { if (item.actor && !item.getFlag("warhammer-dbc", "auraSource")) checkAuras(canvas.scene); });
 Hooks.on("updateItem", (item, changes) => {
   if (!item.actor) return;
   const touched = ["flags", "system.equipped", "system.activatable", "system.active"]

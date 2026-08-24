@@ -116,3 +116,34 @@ describe("auraDescriptorsOf", () => {
     expect(d.affects).toBe("allies");
   });
 });
+
+// ── Дистанция по документам ─────────────────────────────────────────────────
+import { tokenDocDistance } from "../../module/regions/auras.mjs";
+
+describe("tokenDocDistance — замер по документам, без placeable", () => {
+  const grid = { size: 100, distance: 2 };   // клетка 100px = 2 метра
+
+  it("центр-к-центру в единицах сцены", () => {
+    const a = { x: 0,   y: 0, width: 1, height: 1 };
+    const b = { x: 300, y: 0, width: 1, height: 1 };
+    expect(tokenDocDistance(a, b, grid)).toBe(6);   // 3 клетки × 2 м
+  });
+
+  it("центр большого токена считается от его габарита", () => {
+    const big   = { x: 0,   y: 0, width: 2, height: 2 };  // центр (100,100)
+    const small = { x: 300, y: 50, width: 1, height: 1 }; // центр (350,100)
+    expect(tokenDocDistance(big, small, grid)).toBe(5);   // 250px = 2.5 кл × 2 м
+  });
+
+  it("высота участвует: аура не достаёт до токена на 10 м выше", () => {
+    const a = { x: 0, y: 0, width: 1, height: 1, elevation: 0 };
+    const b = { x: 0, y: 0, width: 1, height: 1, elevation: 10 };
+    expect(tokenDocDistance(a, b, grid)).toBe(10);
+  });
+
+  it("дефолты сетки не роняют замер", () => {
+    const a = { x: 0, y: 0, width: 1, height: 1 };
+    const b = { x: 100, y: 0, width: 1, height: 1 };
+    expect(tokenDocDistance(a, b, undefined)).toBe(1);
+  });
+});

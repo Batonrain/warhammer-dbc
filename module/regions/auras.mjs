@@ -80,6 +80,27 @@ export function auraAffects(descriptor, { isSelf, relationship, distance }) {
   return descriptor.affects === "enemies" ? relationship === "enemy" : relationship === "ally";
 }
 
+/**
+ * Дистанция между двумя токенами ПО ДОКУМЕНТАМ (x/y/width/height/elevation),
+ * в единицах сцены (метрах), центр-к-центру, с учётом высоты. Placeable
+ * (token.object) сознательно не используется: он существует только у сцены
+ * на канвасе — замер через него на фоновой сцене давал Infinity и молча
+ * стирал все выданные ауры; к тому же он ездит вместе с анимацией движения,
+ * а документ сразу несёт конечные координаты.
+ * @param {{x:number,y:number,width:number,height:number,elevation?:number}} a
+ * @param {{x:number,y:number,width:number,height:number,elevation?:number}} b
+ * @param {{size:number, distance:number}} grid  scene.grid
+ */
+export function tokenDocDistance(a, b, grid) {
+  const size = Number(grid?.size) || 100;
+  const unit = Number(grid?.distance) || 1;
+  const ax = a.x + (a.width * size) / 2, ay = a.y + (a.height * size) / 2;
+  const bx = b.x + (b.width * size) / 2, by = b.y + (b.height * size) / 2;
+  const flat = Math.hypot(ax - bx, ay - by) / size * unit;
+  const dz = (Number(a.elevation) || 0) - (Number(b.elevation) || 0);
+  return Math.hypot(flat, dz);
+}
+
 /* ---------------------------------------- Foundry-обвязка ---------------------------------------- */
 
 /**
@@ -92,19 +113,23 @@ export function auraAffects(descriptor, { isSelf, relationship, distance }) {
  */
 export async function sweepAurasOnScene(scene) {
   if (!game.user.isGM || !scene) return;
-  const tokens = scene.tokens.contents.filter(t => t.actor && !t.hidden);
-  if (!tokens.length) return;
+  // Зачистка идёт по ВСЕМ токенам сцены с актором (включая скрытых — иначе
+  // hidden уносил бы выданную ауру навсегда), а источниками и целями выдачи
+  // служат только видимые.
+  const allTokens = scene.tokens.contents.filter(t => t.actor);
+  if (!allTokens.length) return;
+  const visible = allTokens.filter(t => !t.hidden);
 
   /** @type {Map<string, Set<string>>} actorUuid -> Set(sourceItemUuid), кто должен быть задет */
   const desired = new Map();
-  for (const t of tokens) desired.set(t.actor.uuid, new Set());
+  for (const t of allTokens) desired.set(t.actor.uuid, new Set());
 
-  for (const source of tokens) {
+  for (const source of visible) {
     const descriptors = auraDescriptorsOf(source.actor);
     if (!descriptors.length) continue;
-    for (const target of tokens) {
+    for (const target of visible) {
       const isSelf = target === source;
-      const distance = isSelf ? 0 : (source.object?.distanceTo?.(target.object) ?? Infinity);
+      const distance = isSelf ? 0 : tokenDocDistance(source, target, scene.grid);
       const relationship = tokenRelationship(source.disposition, target.disposition);
       for (const d of descriptors) {
         if (auraAffects(d, { isSelf, relationship, distance })) {
@@ -115,15 +140,23 @@ export async function sweepAurasOnScene(scene) {
   }
 
   const bySourceUuid = new Map();
-  for (const t of tokens) for (const d of auraDescriptorsOf(t.actor)) bySourceUuid.set(d.sourceItemUuid, d);
+  for (const t of visible) for (const d of auraDescriptorsOf(t.actor)) bySourceUuid.set(d.sourceItemUuid, d);
 
-  for (const t of tokens) {
+  const seenActors = new Set();
+  for (const t of allTokens) {
     const actor = t.actor;
+    if (seenActors.has(actor.uuid)) continue;   // связанный актор двумя токенами — один проход
+    seenActors.add(actor.uuid);
     const want = desired.get(actor.uuid) ?? new Set();
     const have = new Map(); // sourceItemUuid -> [itemId,...]
     for (const item of actor.items) {
       const src = item.getFlag(FLAG, "auraSource");
       if (!src) continue;
+      // Маркер чужой сцены не трогаем: связанный актор может стоять на двух
+      // сценах, и прогон одной не должен стирать выданное другой. Маркеры без
+      // сцены (легаси) считаем своими.
+      const markScene = item.getFlag(FLAG, "auraScene");
+      if (markScene && markScene !== scene.id) continue;
       if (!have.has(src)) have.set(src, []);
       have.get(src).push(item.id);
     }
@@ -141,7 +174,7 @@ export async function sweepAurasOnScene(scene) {
         if (!source) continue;
         const data = source.toObject();
         delete data._id;
-        data.flags = foundry.utils.mergeObject(data.flags || {}, { [FLAG]: { auraSource: src } });
+        data.flags = foundry.utils.mergeObject(data.flags || {}, { [FLAG]: { auraSource: src, auraScene: scene.id } });
         toCreate.push(data);
       }
     }
@@ -149,7 +182,31 @@ export async function sweepAurasOnScene(scene) {
   }
 }
 
+/**
+ * Снять с актора всё, что выдано аурами сцены (или любыми, без sceneId) —
+ * для токена, покинувшего сцену: зачистка прогона его больше не увидит.
+ */
+export async function clearAuraGrants(actor, sceneId = null) {
+  if (!actor) return;
+  const ids = [...actor.items]
+    .filter(i => i.getFlag(FLAG, "auraSource")
+      && (!sceneId || !i.getFlag(FLAG, "auraScene") || i.getFlag(FLAG, "auraScene") === sceneId))
+    .map(i => i.id);
+  if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
+}
+
+// Прогоны строго по одному: sweep — длинный async, его собственные
+// createItem/deleteItem планируют следующий прогон через debounce, и без
+// очереди второй прогон читал бы состояние до записей первого — дубли выдач.
+let _sweepChain = Promise.resolve();
+function enqueueSweep(scene) {
+  _sweepChain = _sweepChain
+    .then(() => sweepAurasOnScene(scene))
+    .catch(e => console.error("warhammer-dbc | ауры:", e));
+  return _sweepChain;
+}
+
 export const checkAuras = foundry.utils.debounce(
-  scene => sweepAurasOnScene(scene ?? canvas.scene),
+  scene => enqueueSweep(scene ?? canvas.scene),
   150
 );
