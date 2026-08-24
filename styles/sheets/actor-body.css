@@ -27,6 +27,41 @@
 }
 @media (max-width: 640px) { .warhammer-dbc .bc-hero { grid-template-columns: 1fr; } }
 
+/* Левая колонка: Био-скан + ХИРУРГЕОН прямо под ним (раньше кнопка стояла
+   в bc-side справа — теперь это отдельная колонка bc-hero, вторая — bc-side). */
+.warhammer-dbc .bc-figure-col { display: flex; flex-direction: column; gap: 8px; }
+
+/* ── Кардиомонитор + Усталость рядом (Усталость встала на место укороченной
+   высоты кардиомонитора) ── */
+.warhammer-dbc .bc-ecg-row { display: flex; gap: 8px; align-items: stretch; }
+.warhammer-dbc .bc-ecg-row > .bc-ecg { flex: 1 1 60%; min-width: 0; }
+.warhammer-dbc .bc-ecg-row > .bc-fatigue-compact { flex: 1 1 40%; min-width: 120px; margin-bottom: 0; }
+/* Кардиомонитор укорочен (был 76px) — освобождённая высота ушла на Усталость рядом. */
+.warhammer-dbc .bc-ecg-screen { height: 44px; }
+/* Компактная Усталость: без общего panel-title (лейбл «Усталость» уже есть
+   внутри fatigue-cell), поля/кнопки чуть теснее, чтобы влезть в узкую половину ряда. */
+.warhammer-dbc .bc-fatigue-body { padding: 6px !important; display: flex; justify-content: center; }
+.warhammer-dbc .bc-fatigue-compact .fatigue-cell { width: 100%; align-items: center; }
+.warhammer-dbc .bc-fatigue-compact .fatigue-label,
+.warhammer-dbc .bc-fatigue-compact .fatigue-btns,
+.warhammer-dbc .bc-fatigue-compact .fatigue-step-btns { justify-content: center; }
+.warhammer-dbc .bc-fatigue-compact .fatigue-values input { width: 34px; }
+.warhammer-dbc .bc-fatigue-compact .fatigue-btn { font-size: 0.64em; padding: 0 3px; }
+
+/* ── Безумие / Порча (переехали с ПОКАЗАТЕЛЕЙ) — рядом друг с другом, две
+   колонки. Разметка и классы не менялись (.stat-panel/.side-*/.fatigue-*) —
+   их безусловно красит существующий класс stats-cog (actor-stats-cog.css):
+   .side-bar/.side-fill/.side-pct/.side-code вообще не имеют иного вида,
+   кроме как под этим классом (та же фосфорная зелень, что и на ПОКАЗАТЕЛЯХ,
+   не зависит от общей темы листа). Проще один раз навесить тот же класс на
+   обёртку, чем копировать/придумывать цвета заново — .bc-trackers.hbs. */
+.warhammer-dbc .bc-trackers { display: flex; flex-wrap: wrap; gap: 8px; }
+.warhammer-dbc .bc-trackers > .stat-panel { flex: 1 1 170px; min-width: 0; margin-bottom: 0; }
+/* Ровно две колонки, а не «пока влезает» — по прямому запросу пользователя:
+   Безумие и Порча должны стоять рядом, даже если станет тесно на узком окне. */
+.warhammer-dbc .bc-trackers-2col { display: grid; grid-template-columns: 1fr 1fr; }
+.warhammer-dbc .bc-trackers-2col > .stat-panel { min-width: 0; }
+
 /* Общий стиль монитор-панели */
 .warhammer-dbc .bc-figure-panel,
 .warhammer-dbc .bc-ecg,

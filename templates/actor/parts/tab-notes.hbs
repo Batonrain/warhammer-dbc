@@ -2,6 +2,56 @@
 
   {{!-- Телосложение переехало в меню «Настройки листа» у шапки (actor-sheet.mjs,
         _changeBodyType) — блок радиокнопок здесь больше не нужен. --}}
+
+  {{!-- Родной мир, Предсказание и Стремления — переехали из шапки Персонажа
+        (Демон/Принц/Миньон их там никогда не показывали, поэтому и здесь
+        только для actor.type "character"). Классы .hw-select/.dv-select/
+        .aspir-* те же, что были в шапке — их слушают actor-sheet.mjs и
+        activateAspirationListeners (tabs/aspirations.mjs) независимо от
+        места в DOM. --}}
+  {{#if (eq actor.type "character")}}
+  {{#if (or homeworld divination)}}
+  <div class="notes-section-panel homeworld-panel">
+    <div class="panel-title">РОДНОЙ МИР И ПРЕДСКАЗАНИЕ</div>
+    <div class="origin-grid">
+      {{#if homeworld}}
+      <div class="header-cell" title="Родной мир персонажа: три модификатора Характеристик и Особенность"> <label>Происхождение</label> <div class="hw-controls"> <select class="hw-select"> <option value="">— не выбрано —</option> <option value="random">🎲 Выбрать случайно</option> {{#each homeworld.options as |o|}}
+          <option value="{{o.key}}" {{#if o.selected}}selected{{/if}} title="{{o.chars}}">{{o.label}}</option> {{/each}}
+        </select> </div> </div>
+      {{/if}}
+      {{#if divination}}
+      <div class="header-cell" title="Предсказание судьбы: эффект по таблице к100"> <label>Предсказание</label> <div class="hw-controls"> <select class="dv-select"> <option value="">— не выбрано —</option> <option value="random">🎲 Бросить к100</option> {{#each divination.options as |o|}}
+          <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option> {{/each}}
+        </select> </div> </div>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="notes-section-panel">
+    <div class="panel-title">СТРЕМЛЕНИЯ</div>
+    <div class="notes-aspir-row">
+      {{#each aspirationSlots as |a|}}
+      <div class="header-cell header-cell-aspir"> <label>{{a.label}}</label>
+        <div class="aspir-controls">
+          {{#if a.custom}}
+          <input type="text" class="aspir-custom-name" data-index="{{a.idx}}" value="{{a.name}}" placeholder="Своё стремление"/>
+          <input type="text" class="aspir-custom-mods" data-index="{{a.idx}}" value="{{a.mods}}" placeholder="Модификаторы"/>
+          {{else}}
+          <select class="aspir-select" data-index="{{a.idx}}" title="{{#if a.mods}}{{a.mods}}{{else}}Выберите Стремление{{/if}}"> <option value="">— выбрать —</option>
+            {{#each a.options as |e|}}<option value="{{e.id}}" {{#if (eq e.id a.id)}}selected{{/if}} title="{{e.mods}}">{{e.name}}</option>{{/each}}
+            <option value="__custom__">Своё…</option>
+          </select>
+          {{/if}}
+          <button type="button" class="aspir-remove" data-index="{{a.idx}}" title="Очистить">✕</button>
+        </div>
+        <div class="aspir-mods-line" title="Модификаторы — справка: применяются к Базе вручную">{{#if a.mods}}{{a.mods}}{{else}}&nbsp;{{/if}}</div>
+      </div>
+      {{/each}}
+    </div>
+  </div>
+  {{/if}}
+
   {{#if showPatronPicker}}
   <div class="notes-section-panel chaos-patron-panel">
     <div class="panel-title">ПОКРОВИТЕЛЬ ХАОСА</div>

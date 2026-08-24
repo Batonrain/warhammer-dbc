@@ -1,37 +1,56 @@
-<div class="tab stats-cog {{#if (eq tab "stats")}}active{{/if}}" data-tab="stats" data-group="primary"> <div class="stats-layout"> {{!-- Безумие --}}
-    <div class="stat-panel panel-side"> <div class="panel-title">БЕЗУМИЕ <span class="side-code">// PSY</span></div> <div class="panel-body side-body"> <div class="side-main-val"> <input type="number" name="system.insanity.value" value="{{system.insanity.value}}" min="0"/> <button type="button" class="stat-add-btn" data-action="statAdd" data-stat="insanity" title="Добавить Безумие (число или XdY+Z, напр. 2d10+3)">＋</button> </div> <div class="side-bar"><div class="side-fill load-{{insanityLevel}}" style="width:{{insanityPct}}%;"></div><span class="side-pct">{{insanityPct}}</span></div> <button type="button" class="side-roll-btn fear-roll" title="Тест Страха → таблица Шока">Страх</button> <button type="button" class="side-roll-btn trauma-roll" title="Тест Ментальной Травмы → таблица Травмы">Травма</button> <button type="button" class="side-roll-btn disorder-roll" title="Случайное Ментальное Расстройство (d100)">Расстройство</button> {{#if mentalTraumas.length}}<button type="button" class="side-roll-btn trauma-suppress" title="Подавление активной Ментальной Травмы (стр. 473)">Подавить Травму</button>{{/if}} {{#if mentalDisorders.length}}<button type="button" class="side-roll-btn disorder-suppress" title="Подавление активного Ментального Расстройства (стр. 473)">Подавить Расстройство</button>{{/if}} </div> </div> {{!-- Характеристики --}}
+<div class="tab stats-cog {{#if (eq tab "stats")}}active{{/if}}" data-tab="stats" data-group="primary"> <div class="stats-layout"> {{!-- Характеристики (Безумие и Порча — счётчики с кнопками переехали на
+        вкладку ТЕЛО; здесь после Inf остаются только простые read-only
+        значения COR/INS, для быстрого взгляда без переключения вкладки). --}}
     <div class="stat-panel panel-chars"> <div class="panel-title">ХАРАКТЕРИСТИКИ</div> <div class="panel-body char-grid-body"> <div class="char-grid"> {{#each chars as |char|}}
           <div class="char-cell {{#if char.charDamage}}char-cell-modded{{/if}}" data-tooltip="{{char.label}}"> <a class="char-cell-abbr" data-action="charRoll" data-char="{{char.key}}" title="Проверка: {{char.label}}">{{char.abbr}}</a> <div class="char-cell-val"> {{char.total}}{{#if char.bonusModified}}<sup class="char-cell-bonus" title="Бонус {{char.abbr}}: {{char.bonus}} (изменён, обычно был бы {{char.naturalBonus}})">{{char.bonus}}</sup>{{/if}}
             </div> <input type="number" class="char-cell-mod" name="system.charDamage.{{char.key}}" value="{{char.charDamage}}" title="Мод. к Итогу {{char.abbr}}: число прибавляется к значению, отрицательное — вычитает"/> </div> {{/each}}
+          <div class="char-cell" data-tooltip="Порча"> <a class="char-cell-abbr" data-action="charRoll" data-char="cor" title="Бросок: Порча">COR</a> <div class="char-cell-val">{{system.corruption.value}}</div> <div class="char-cell-mod-spacer"></div> </div>
+          <div class="char-cell" data-tooltip="Безумие"> <a class="char-cell-abbr" data-action="insanityMenu" title="Безумие: Страх / Травма / Расстройство / бросок напрямую">INS</a> <div class="char-cell-val">{{system.insanity.value}}</div> <div class="char-cell-mod-spacer"></div> </div>
           {{#if system.isRogueTrader}}
           <div class="char-cell char-cell-pf" data-tooltip="Фактор Прибыли"> <a class="char-cell-abbr char-pf-label" data-action="charRoll" data-char="pf" title="Проверка: Фактор Прибыли">PF</a> <div class="char-cell-val"><input type="number" class="char-pf-input" name="system.aspirations.profitFactor" value="{{system.aspirations.profitFactor}}" min="0" title="Фактор Прибыли"/><sup class="char-cell-bonus" title="Бонус Фактора Прибыли">{{profitFactorBonus}}</sup></div> <div class="char-cell-mod-spacer"></div> </div>
           {{/if}}
-        </div> </div> </div> {{!-- Порча --}}
-    <div class="stat-panel panel-side"> <div class="panel-title">ПОРЧА <span class="side-code">// COR</span></div> <div class="panel-body side-body"> <div class="side-main-val"> <input type="number" name="system.corruption.value" value="{{system.corruption.value}}" min="0"/> <button type="button" class="stat-add-btn" data-action="statAdd" data-stat="corruption" title="Добавить Порчу (число или XdY+Z, напр. 2d10+3)">＋</button> </div> <div class="side-bar"><div class="side-fill load-{{corruptionLevel}}" style="width:{{corruptionPct}}%;"></div><span class="side-pct">{{corruptionPct}}%</span></div> <div class="side-bonus-row"> <span class="side-bonus-label">Бонус</span> <span class="side-bonus-val">{{system.corruptionBonus}}</span> </div> <div class="side-bonus-row"> <span class="side-bonus-label" title="База 100 + бонусы Путей">Лимит</span> <span class="side-bonus-val">{{system.corruption.limit}}</span> </div> <button type="button" class="side-roll-btn corruption-roll" title="Проверка Воли на Порчу"> Проверка
-        </button> </div> </div> </div>{{!-- /stats-layout --}}
+        </div> </div> </div>
+  </div>{{!-- /stats-layout --}}
 
-  {{!-- Навыки --}}
-  <div class="skills-panel"> <div class="panel-title">НАВЫКИ</div> <div class="skills-grid"> {{!-- Колонка 1 --}}
+  {{!-- У Демона нет вкладки ТЕЛО, куда панели переехали у остальных, —
+        оставляем ему редактирование Безумия/Порчи здесь. --}}
+  {{#if (eq actor.type "daemon")}}
+  <div class="bc-trackers bc-trackers-2col stats-cog">
+    {{> "systems/warhammer-dbc/templates/actor/parts/sanity-corruption-panels.hbs"}}
+  </div>
+  {{/if}}
+
+  {{!-- Навыки: четыре колонки базовых Навыков + плитки групповых (Знания и т.п.) --}}
+  <div class="skills-panel"> <div class="panel-title">НАВЫКИ</div> <div class="skills-grid">
       <div class="skills-column"> {{#each skillsCol1 as |sk|}}
-        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{sk.total}}
-          </span> </div> {{/each}}
-      </div> {{!-- Колонка 2 --}}
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
+      </div>
       <div class="skills-column"> {{#each skillsCol2 as |sk|}}
-        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{sk.total}}
-          </span> </div> {{/each}}
-      </div> {{!-- Колонка 3 — групповые навыки --}}
-      <div class="skills-column skills-column-groups"> {{#if groupSkillsDisplay}}
-          {{#each groupSkillsDisplay as |gsk|}}
-            {{#if gsk.isFirstInGroup}}
-            <div class="skill-group-header">{{gsk.groupLabel}}</div> {{/if}}
-            <div class="skill-row skill-row-grouped"> <a class="skill-roll skill-name skill-name-specialty" data-action="skillRoll" data-skill="group" data-group="true" data-groupkey="{{gsk.groupKey}}" data-index="{{gsk.entryIndex}}" data-tooltip="{{gsk.tip}}">{{gsk.specialty}}</a> <span class="skill-total {{#if (lt gsk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{gsk.total}}
-              </span> </div> {{/each}}
-        {{else}}
-          <div class="skill-row"> <span class="skill-name" style="color:var(--wh-text-mid);font-style:italic;"> Нет групповых навыков
-            </span> </div> {{/if}}
-      </div>{{!-- /skills-column-groups --}}
-
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
+      </div>
+      <div class="skills-column"> {{#each skillsCol3 as |sk|}}
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
+      </div>
+      <div class="skills-column"> {{#each skillsCol4 as |sk|}}
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
+      </div>
     </div>{{!-- /skills-grid --}}
+
+    {{!-- Групповые навыки — своя плитка на каждую группу (Знания/Языки/Ремёсла и т.п.),
+          а не общей колонкой: пустые группы вовсе не показываются. --}}
+    <div class="skill-groups-grid"> {{#if skillGroupBoxes.length}}
+        {{#each skillGroupBoxes as |grp|}}
+        <div class="skill-group-box">
+          <div class="skill-group-header">{{grp.label}}</div>
+          <div class="skill-group-body"> {{#each grp.entries as |e|}}
+            <div class="skill-row skill-row-grouped"> <a class="skill-roll skill-name skill-name-specialty" data-action="skillRoll" data-skill="group" data-group="true" data-groupkey="{{grp.groupKey}}" data-index="{{e.entryIndex}}" data-tooltip="{{e.tip}}">{{e.specialty}}</a> <span class="skill-total {{#if (lt e.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{e.total}}</span> </div> {{/each}}
+          </div>
+        </div>
+        {{/each}}
+      {{else}}
+        <div class="skill-group-box skill-group-empty"> <span class="skill-name" style="color:var(--wh-text-mid);font-style:italic;">Нет групповых навыков</span> </div>
+      {{/if}}
+    </div>{{!-- /skill-groups-grid --}}
   </div>{{!-- /skills-panel --}}
 
 </div>{{!-- /tab-stats --}}

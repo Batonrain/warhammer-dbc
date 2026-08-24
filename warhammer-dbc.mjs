@@ -112,6 +112,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs",  // ← НОВОЕ
+    "systems/warhammer-dbc/templates/actor/parts/sanity-corruption-panels.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-possession.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-haemonculus.hbs",
     "systems/warhammer-dbc/templates/apps/surgeon-slot.hbs",        // ← хирургикон (партиал слота)

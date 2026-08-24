@@ -12,6 +12,13 @@
 
 /* ── Происхождение Аэльдари (Мир-Корабль / Корсарская Банда) ── */
 .warhammer-dbc .aeldari-origin-panel .origin-grid { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+
+/* ── Родной мир и Предсказание (переехали из шапки) ── */
+.warhammer-dbc .homeworld-panel .origin-grid { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Стремления (переехали из шапки): три слота в ряд, переносятся при узком окне ── */
+.warhammer-dbc .notes-aspir-row { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 8px; }
+.warhammer-dbc .notes-aspir-row .header-cell-aspir { flex: 1 1 220px; min-width: 180px; }
 .warhammer-dbc .origin-row { display: flex; align-items: center; gap: 8px; }
 .warhammer-dbc .origin-label { flex: 0 0 130px; font-weight: bold; font-size: 0.88em; color: var(--wh-text); }
 .warhammer-dbc .origin-select {

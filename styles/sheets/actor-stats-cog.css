@@ -75,17 +75,27 @@
 .warhammer-dbc .stats-cog .skill-total { font-weight: 700; }
 .warhammer-dbc .stats-cog .skill-pos { color: var(--cg); text-shadow: 0 0 6px rgba(77,255,166,0.3); }
 .warhammer-dbc .stats-cog .skill-neg { color: #b86a6a; }
-.warhammer-dbc .stats-cog .skill-group-header {
-  font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cg-fire); opacity: 0.9;
-  border-bottom: 1px solid rgba(255,184,77,0.25); margin: 5px 0 2px; padding-bottom: 1px;
-}
 .warhammer-dbc .stats-cog .skills-panel {
   position: relative; margin-top: 8px; border-radius: 6px; overflow: hidden;
   border: 1px solid var(--cg-line); background: linear-gradient(180deg, #0a1c12, #06120c);
   box-shadow: inset 0 0 20px rgba(0,50,25,0.4), 0 0 12px -9px var(--cg);
 }
 .warhammer-dbc .stats-cog .skills-grid { padding: 6px 8px; }
-.warhammer-dbc .stats-cog .skills-column-groups { border-left: 1px solid rgba(77,255,166,0.12); padding-left: 8px; }
+
+/* Плитки групповых Навыков (Знания/Языки/Ремёсла) — свой заголовок на блок,
+   вместо прежней вставки-разделителя внутри одной колонки. */
+.warhammer-dbc .stats-cog .skill-groups-grid { padding: 6px 8px; border-top: 1px solid var(--cg-line); }
+.warhammer-dbc .stats-cog .skill-group-box {
+  border: 1px solid var(--cg-line); border-radius: 4px;
+  background: rgba(0,0,0,0.35);
+}
+.warhammer-dbc .stats-cog .skill-group-header {
+  font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.05em; color: #eafff4;
+  background: linear-gradient(180deg, rgba(77,255,166,0.18), rgba(77,255,166,0.06));
+  border-bottom: 1px solid var(--cg-line); padding: 3px 8px;
+  text-shadow: 0 0 6px rgba(77,255,166,0.3);
+}
+.warhammer-dbc .stats-cog .skill-group-body { padding: 2px 0; }
 
 /* ═══════════════ СПОСОБНОСТИ ═══════════════ */
 .warhammer-dbc .abil-cog { font-family: "Consolas","Lucida Console","Courier New",monospace; }
