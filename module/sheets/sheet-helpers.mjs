@@ -10,9 +10,7 @@ import { MELEE_STANCES, MELEE_BASES }                from "../constants/combat.m
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { isAeldariRace }                             from "../apps/race-library.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
-import { buildLegionOptions, getLegion,
-         buildChapterOptions, getChapter,
-         buildCultureLegionOptions, resolveCulture }  from "../constants/legions.mjs";
+import { getLegion, getChapter }               from "../constants/legions.mjs";
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/disciplines.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
@@ -739,7 +737,7 @@ export function buildGetData(actor) {
     const impl = buildImplantsSvg(bodyState, system.bodyType || "male");
 
     context.body = {
-      layers:        buildBodyLayers(bodyState, system.bodyType || "male"),
+      layers:        buildBodyLayers(bodyState, system.bodyType || "male", system.race),
       implantsBack:  impl.back,
       implantsFront: impl.front,
       skinColor:     bodyState.overlays.skin ? implantCatColor(bodyState.overlays.skin) : "",
@@ -1009,16 +1007,12 @@ export function buildGetData(actor) {
   // ── Геносемя (для Астартес) ─────────────────────────────────────────────────
   context.isAstartes      = system.race === "astartes";
   context.geneSeedOrigin  = system.geneSeed?.origin || "";
-  context.legionOptions   = buildLegionOptions(system.geneSeed?.legion || "");
+  // Селекты панели «Происхождение и легион» ушли вместе с панелью — легион и
+  // культура задаются мастером создания (character-wizard.mjs, у него свои
+  // options-билдеры). Здесь остаётся только то, что читает шапка.
   context.selectedLegion  = getLegion(system.geneSeed?.legion || "");
-  context.chapterOptions  = buildChapterOptions(system.geneSeed?.legion || "", system.geneSeed?.chapter || "");
   context.selectedChapter = getChapter(system.geneSeed?.legion || "", system.geneSeed?.chapter || "");
-  // Культура — независимый выбор (можно перенять у другого легиона, стр. 489-506)
-  context.cultureLegionOptions  = buildCultureLegionOptions(system.geneSeed?.cultureLegion || "");
-  context.cultureChapterOptions = buildChapterOptions(system.geneSeed?.cultureLegion || "", system.geneSeed?.cultureChapter || "");
-  context.hasCultureOverride    = !!system.geneSeed?.cultureLegion;
-  context.resolvedCulture       = system.geneSeed?.cultureLegion
-    ? resolveCulture(system.geneSeed.cultureLegion, system.geneSeed?.cultureChapter) : null;
+  context.hasCultureOverride = !!system.geneSeed?.cultureLegion;
   // Применены ли уже расовые Черты (для подсказки кнопки)
   context.hasGeneSeedTrait = allItems.some(i => i.type === "trait" && /Gene-Seed|Геносемя/i.test(i.name));
 

@@ -138,11 +138,14 @@ export class WarhammerActor extends Actor {
 
   /**
    * Производные данные корабля: бюджеты Энергии/Пространства/Очков и эфф.
-   * характеристики. Узлы — это вложенные Предметы типа "component"; корпус —
-   * узел с kind="hull" (задаёт SPC/P.Gen/HI/характеристики/поворот/WC).
+   * характеристики. Узлы — это вложенные Предметы типа "component"; Корпус —
+   * отдельный тип "shipHull" (задаёт SPC/P.Gen/HI/характеристики/поворот/WC),
+   * выбирается пикером в шапке листа (sheets/hull-picker.mjs), а не узлом
+   * среди прочих — на корабле он всегда один (apps/ship-hull.mjs).
    */
   _prepareShipData(system) {
     const comps = this.items.filter(i => i.type === "component");
+    const hullItem = this.items.find(i => i.type === "shipHull") || null;
     let powerUsed = 0, powerExtra = 0, spaceUsed = 0, spSpent = 0;
     let moraleMaxBonus = 0, crewMaxBonus = 0, shipAimer = 0;
     let lcBonus = 0, pcBonus = 0;
@@ -151,7 +154,6 @@ export class WarhammerActor extends Actor {
     let dpReduce = 0, dpFloor = 0, dpExtra = 0, silentRun = 0, augurVs = 0;
     let suppliesMax = 0;
     const mods = { speed: 0, manoeuvrability: 0, detection: 0, voidShields: 0, armour: 0, turretRating: 0, hullIntegrity: 0 };
-    let hullItem = null;
 
     // Применение авто-свойств узла (Aspects) к производным значениям корабля.
     const applyAuto = (props, isWeapon) => {
@@ -179,6 +181,15 @@ export class WarhammerActor extends Actor {
       }
     };
 
+    // Корпус — не узел (не в comps): свои SP/качество и авто-свойства считаем отдельно.
+    if (hullItem) {
+      const hs = hullItem.system;
+      const qm = shipQualityMods(hs);
+      hs.qualityMods = qm;                                  // для листа Корпуса
+      spSpent += (Number(hs.sp) || 0) + qm.sp;
+      applyAuto(hs.shipProps, false);
+    }
+
     for (const it of comps) {
       const s = it.system;
       // Качество узла меняет энергию, пространство, цену и профиль орудия.
@@ -187,7 +198,6 @@ export class WarhammerActor extends Actor {
       spSpent += (Number(s.sp) || 0) + qm.sp;
       lcBonus += Number(s.lcBonus) || 0;   // грузоподъёмность от грузовых узлов
       pcBonus += Number(s.pcBonus) || 0;   // пассажировместимость от пассажирских узлов
-      if (s.kind === "hull") { hullItem = it; applyAuto(s.shipProps, false); continue; }
       // Узел не работает, если помечен damaged ИЛИ его статус не «невредим»
       // (обесточен/повреждён/уничтожен — таблица повреждений).
       const dmg = !!s.damaged || (s.status && s.status !== "intact");

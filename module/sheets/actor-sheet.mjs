@@ -65,7 +65,7 @@ import { applyHomeworld, actorHomeworldKey } from "../apps/homeworlds.mjs";
 import { applyDivination } from "../apps/divinations.mjs";
 import { applyRace, applySubrace, clearRace, clearSubrace,
          actorRaceItem, actorSubraceItem,
-         applyLegion, applyYnnari, applyHarlequin } from "../apps/races.mjs";
+         applyYnnari, applyHarlequin } from "../apps/races.mjs";
 import { raceDef, raceKeyOf, isAeldariRace } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
@@ -534,7 +534,6 @@ async function onGeneApply() {
   const def = raceDef("astartes");
   return this._applyStartingTalents(def?.talents ? [def.talents] : [], def?.label || "Астартес");
 }
-function onLegionApply()    { return applyLegion(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onYnnariApply()    { return applyYnnari(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onHarlequinApply() { return applyHarlequin(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 
@@ -556,7 +555,7 @@ export class WarhammerCharacterSheet
   extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
 
   static DEFAULT_OPTIONS = {
-    classes: ["warhammer-dbc", "sheet", "actor", "character", "wh-holo"],
+    classes: ["warhammer-dbc", "sheet", "actor", "character", "character-sheet", "wh-holo"],
     position: { width: 1000, height: 940 },
     window: {
       resizable: true
@@ -608,7 +607,6 @@ export class WarhammerCharacterSheet
       mutgiftAdd: whenEditable(onMutgiftAdd),
       mutgiftRoll: whenEditable(onMutgiftRoll),
       geneApply:      whenEditable(onGeneApply),
-      legionApply:    whenEditable(onLegionApply),
       ynnariApply:    whenEditable(onYnnariApply),
       harlequinApply: whenEditable(onHarlequinApply),
       racePick:     whenEditable(onRacePick),
@@ -644,7 +642,7 @@ export class WarhammerCharacterSheet
         { id: "haemonculus", label: "ГЕМУНКУЛ" },
         { id: "abilities",   label: "СПОСОБНОСТИ" },
         { id: "social",      label: "СОЦИУМ" },
-        { id: "psy",         label: "ПСИ" },
+        { id: "psy",         label: "МИСТИКА" },
         { id: "tech",        label: "ТЕХ" },
         { id: "nav",         label: "НАВ" },
         { id: "gear",        label: "СНАРЯЖЕНИЕ" },
@@ -733,7 +731,6 @@ export class WarhammerCharacterSheet
       const ip = Math.max(0, Number(foundry.utils.getProperty(this.actor, this._infamyPath)) || 0);
       context.infamy = infamyContext(this.actor, this._infamyKey,
         { ip, ipMax: this._infamyMax, showCounter: this._infamyShowCounter });
-      context.chaosPatron = chaosPatronMeta(this._infamyKey);
       // Отметка радиокнопки — по ХРАНИМОМУ полю, а не по _infamyKey: тот
       // подставляет Неделимого, когда Бог не выбран, и селектор показывал бы
       // выбранным то, чего в акторе нет (wdbc-osz).
@@ -822,6 +819,44 @@ export class WarhammerCharacterSheet
     root.classList.remove(...[...root.classList].filter(c => /^wh-(align|race|class)-/.test(c)));
     root.classList.add(`wh-align-${sys.alignment || "loyalist"}`,
       `wh-race-${sys.race || "none"}`, `wh-class-${cls}`);
+  }
+
+  /** CSS-переменные, которые чинит патрон, — держим в одном месте, чтобы
+   *  выставлять/снимать их симметрично. */
+  static #CHAOS_PATRON_VARS = ["--gc", "--gc2", "--glow", "--dp-hue", "--dp-sat",
+    "--dp-bright", "--patron-star", "--patron-sigil", "--patron-sigil-size"];
+
+  /**
+   * Навешивает на корень листа тему Бога-покровителя: класс chaos-heretic/
+   * chaos-god-<key> и CSS-переменные --gc/--glow/сигил и т.п. Раньше эти
+   * данные шли инлайн-стилем на корневой <div> шаблона, но ApplicationV2
+   * с PARTS.body.root=true (см. _applyThemeClasses выше) отбрасывает
+   * корневой элемент шаблона целиком — навешиваем сюда явно, тем же
+   * источником (chaosPatronMeta по _infamyKey), что раньше шёл в шаблон.
+   */
+  _applyChaosPatronTheme() {
+    // Только лист Персонажа: Демон и Принц Демона наследуют этот класс и тоже
+    // ходят alignment="heretic" по умолчанию — без гейта их листы красились бы
+    // в тему патрона поверх собственной (hue-rotate шапки и вкладок).
+    if (this.actor.type !== "character") return;
+    const root = this.element;
+    if (!root) return;
+    root.classList.remove(...[...root.classList].filter(c => /^chaos-(heretic|god-)/.test(c)));
+    if (this.actor.system.alignment !== "heretic") {
+      for (const v of WarhammerCharacterSheet.#CHAOS_PATRON_VARS) root.style.removeProperty(v);
+      return;
+    }
+    const meta = chaosPatronMeta(this._infamyKey);
+    root.classList.add("chaos-heretic", `chaos-god-${meta.key}`);
+    root.style.setProperty("--gc", meta.color);
+    root.style.setProperty("--gc2", meta.gc2);
+    root.style.setProperty("--glow", meta.glow);
+    root.style.setProperty("--dp-hue", meta.hue);
+    root.style.setProperty("--dp-sat", meta.sat);
+    root.style.setProperty("--dp-bright", meta.bright);
+    root.style.setProperty("--patron-star", meta.star);
+    root.style.setProperty("--patron-sigil", `url('/${meta.sigil}')`);
+    root.style.setProperty("--patron-sigil-size", meta.sigilSize);
   }
 
   /**
@@ -1305,6 +1340,7 @@ export class WarhammerCharacterSheet
 
     // ── Визуальная темизация листа по расе / мировоззрению / классу ─────────
     this._applyThemeClasses();
+    this._applyChaosPatronTheme();
 
     // ── Третий Глаз навигатора: зрачок следит за курсором ──────────────────
     const eyeMove = el.querySelector(".nav-eye-move");

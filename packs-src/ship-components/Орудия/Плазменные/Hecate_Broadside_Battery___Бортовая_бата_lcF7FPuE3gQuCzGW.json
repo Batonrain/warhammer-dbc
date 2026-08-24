@@ -46,7 +46,7 @@
     },
     "weapon": {
       "wType": "macrobattery",
-      "strength": 2,
+      "strength": 5,
       "damage": "1d10+2",
       "crit": 4,
       "range": 11,

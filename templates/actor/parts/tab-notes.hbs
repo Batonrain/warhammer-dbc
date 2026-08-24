@@ -71,32 +71,6 @@
     <div class="chaos-patron-note">Выбор Бога окрашивает лист и определяет преимущество/недостаток Очков Бесчестия (корбук 438).</div>
   </div>
   {{/if}}
-  {{#if isAstartes}}
-  <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">ПРОИСХОЖДЕНИЕ И ЛЕГИОН (АСТАРТЕС)</div>
-    <div class="origin-grid">
-      <div class="origin-row"> <label class="origin-label">Легион (геносемя)</label> <select name="system.geneSeed.legion" class="origin-select">{{{legionOptions}}}</select> </div>
-      <div class="origin-row"> <label class="origin-label">Орден / Банда</label> <select name="system.geneSeed.chapter" class="origin-select">{{{chapterOptions}}}</select> </div>
-      <div class="origin-row"> <label class="origin-label" title="Геносемя ты сохраняешь, а культуру можно перенять у другого легиона (напр. Повелитель Ночи в Чёрном Легионе). �.">Культура (легион)</label> <select name="system.geneSeed.cultureLegion" class="origin-select">{{{cultureLegionOptions}}}</select> </div>
-      {{#if hasCultureOverride}}<div class="origin-row"> <label class="origin-label">Культура (орден)</label> <select name="system.geneSeed.cultureChapter" class="origin-select">{{{cultureChapterOptions}}}</select> </div>{{/if}}
-      {{#if selectedLegion}}<div class="origin-row"> <button type="button" class="legion-apply-btn" data-action="legionApply" title="Создать Черты «Геносемя/Культура/Проклятье» легиона (с авто-эффектами, где есть числовые бонусы)">Применить легион/орден</button> </div>{{/if}}
-      {{#if selectedLegion}}
-      <div class="origin-info legion-info">
-        <div class="legion-info-title">{{selectedLegion.num}} — {{selectedLegion.name}}{{#if selectedChapter}} · {{selectedChapter.name}}{{/if}}</div>
-        {{#if selectedChapter}}
-        <div class="legion-block"><span class="legion-block-key">Геносемя:</span> {{selectedChapter.geneseed}}</div>
-        {{#if resolvedCulture}}<div class="legion-block"><span class="legion-block-key">Культура ({{resolvedCulture.name}}):</span> {{resolvedCulture.culture}}</div>{{else}}<div class="legion-block"><span class="legion-block-key">Культура:</span> {{selectedChapter.culture}}</div>{{/if}}
-        <div class="legion-block legion-curse"><span class="legion-block-key">Проклятье:</span> {{selectedChapter.curse}}</div>
-        <div class="legion-block legion-parent"><span class="legion-block-key">Легион-основатель ({{selectedLegion.name}}):</span> Геносемя — {{selectedLegion.geneseed}} Культура — {{selectedLegion.culture}} Проклятье — {{selectedLegion.curse}}</div>
-        {{else}}
-        <div class="legion-block"><span class="legion-block-key">Геносемя:</span> {{selectedLegion.geneseed}}</div>
-        {{#if resolvedCulture}}<div class="legion-block"><span class="legion-block-key">Культура ({{resolvedCulture.name}}):</span> {{resolvedCulture.culture}}</div>{{else}}<div class="legion-block"><span class="legion-block-key">Культура:</span> {{selectedLegion.culture}}</div>{{/if}}
-        <div class="legion-block legion-curse"><span class="legion-block-key">Проклятье:</span> {{selectedLegion.curse}}</div>
-        {{/if}}
-      </div>
-      {{/if}}
-    </div>
-    <div class="gene-seed-hint">Выберите Легион — его мутации Геносемени, Культура и Проклятье показываются как справка (применяйте эффекты вручную/через Черты). Орден/Банда могут отличаться от легиона геносемени. Числовые бонусы расы применяются кнопкой «Применить расовые бонусы» на вкладке СПОСОБНОСТИ.</div>
-  </div> {{/if}}
   {{#if showWorldOrigin}}
   <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">ПРОИСХОЖДЕНИЕ (АЭЛЬДАРИ)</div>
     <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Мир-Корабль</label> <select name="system.world" class="origin-select">{{{worldOptions}}}</select> </div>

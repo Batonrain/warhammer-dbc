@@ -1,7 +1,7 @@
 {
   "name": "Скакун Слаанеш",
   "type": "daemon",
-  "img": "systems/warhammer-dbc/assets/Slaanesh.png",
+  "img": "systems/warhammer-dbc/assets/art/chaos/skakun-slaanesh.webp",
   "folder": "bdfwrN1SlthvExfv",
   "system": {
     "race": "",
@@ -1859,13 +1859,13 @@
   ],
   "prototypeToken": {
     "texture": {
-      "src": "systems/warhammer-dbc/assets/Slaanesh.png",
+      "src": "systems/warhammer-dbc/assets/art/chaos/skakun-slaanesh.webp",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "fit": "contain",
       "scaleX": 1,
       "scaleY": 1,
-      "tint": "#e85ad6",
+      "tint": "#ffffff",
       "alphaThreshold": 0.75
     },
     "actorLink": true,
