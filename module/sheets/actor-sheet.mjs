@@ -812,6 +812,10 @@ export class WarhammerCharacterSheet
    * источником (chaosPatronMeta по _infamyKey), что раньше шёл в шаблон.
    */
   _applyChaosPatronTheme() {
+    // Только лист Персонажа: Демон и Принц Демона наследуют этот класс и тоже
+    // ходят alignment="heretic" по умолчанию — без гейта их листы красились бы
+    // в тему патрона поверх собственной (hue-rotate шапки и вкладок).
+    if (this.actor.type !== "character") return;
     const root = this.element;
     if (!root) return;
     root.classList.remove(...[...root.classList].filter(c => /^chaos-(heretic|god-)/.test(c)));
