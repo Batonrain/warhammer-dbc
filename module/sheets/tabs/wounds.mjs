@@ -26,23 +26,3 @@ export function computeWoundHealing(system, amount) {
     "system.wounds.critical": critical
   };
 }
-
-/** Непоглощаемый урон в Раны: уменьшает текущие, переполнение → критический урон. */
-export function computeWoundDamage(system, amount) {
-  let value = system.wounds?.value ?? 0;
-  let critical = system.wounds?.critical ?? 0;
-  const dmg = Math.max(0, amount);
-  if (value >= dmg) {
-    value -= dmg;
-  } else {
-    critical += dmg - value;
-    value = 0;
-  }
-  const out = {
-    "system.wounds.value": value,
-    "system.wounds.critical": critical
-  };
-  // Новый урон → снова можно оказать Первую Помощь.
-  if (dmg > 0) out["system.wounds.firstAidUsed"] = false;
-  return out;
-}

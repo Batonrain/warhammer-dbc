@@ -30,6 +30,28 @@ export function woundLossAfter(currentWounds, currentCritical, amount) {
 }
 
 /**
+ * То же понижение Ран, но в виде updates-объекта — для мест, которые собирают
+ * ОДИН общий actor.update() из нескольких кусков (эффекты препарата,
+ * Поглощение Болью, цена психосилы в Ранах, откат Электростимуляторов).
+ * При фактическом уроне сбрасывает firstAidUsed: новый урон → снова можно
+ * оказать Первую Помощь (гейт в tabs/healing.mjs).
+ *
+ * @param {object} system  actor.system
+ * @param {number} amount  сколько Ран потеряно
+ * @returns {Record<string, number|boolean>} кусок для actor.update()
+ */
+export function woundLossUpdates(system, amount) {
+  const { value, critical } = woundLossAfter(
+    system?.wounds?.value, system?.wounds?.critical, amount);
+  const updates = {
+    "system.wounds.value":    value,
+    "system.wounds.critical": critical
+  };
+  if ((Number(amount) || 0) > 0) updates["system.wounds.firstAidUsed"] = false;
+  return updates;
+}
+
+/**
  * Применяет потерю Ран к актору: считает woundLossAfter() и сам пишет
  * actor.update(), если что-то реально меняется. amount <= 0 — update не
  * шлётся вовсе (нет смысла дёргать документ впустую).
@@ -51,7 +73,11 @@ export async function applyWoundLoss(actor, amount) {
   if (applied) {
     await actor.update({
       "system.wounds.value":    newWounds,
-      "system.wounds.critical": newCritical
+      "system.wounds.critical": newCritical,
+      // Новый урон → снова можно оказать Первую Помощь (гейт в
+      // tabs/healing.mjs). applied ⇔ amount > 0: при нулевом уроне
+      // woundLossAfter ничего не меняет и сюда не попадаем.
+      "system.wounds.firstAidUsed": false
     });
   }
 

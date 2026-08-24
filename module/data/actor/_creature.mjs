@@ -237,6 +237,12 @@ export function creatureSchema({ granted = false } = {}) {
     // Складываемая надбавка AP от эффектов (constants/effect-keys.mjs) —
     // отдельно от `armor`, который берётся по максимуму, а не суммируется.
     armorBonus: new SchemaField(armorFields(), { label: "Надбавка брони" }),
+    // Точка расширения (wdbc-ls9d): плоское снижение входящего урона ДО вычета
+    // из Ран, отдельно от AP/T.b — например, эффект-Черта «входящий урон −N».
+    // Складывается тем же приёмом, что armorBonus/indexBonus: ХРАНИМОЕ поле,
+    // эффекты целятся сюда в фазе "initial", несколько источников суммируются
+    // сами (см. combat/damage.mjs).
+    incomingDamageReduction: num(0, "Снижение входящего урона"),
     movement: new SchemaField({
       halfMove: num(0, "Полуход"), move: num(0, "Ход"),
       charge:   num(0, "Натиск"),  run:  num(0, "Бег"),

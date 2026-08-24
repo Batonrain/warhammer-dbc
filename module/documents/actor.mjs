@@ -768,6 +768,18 @@ export class WarhammerActor extends Actor {
         const stat = ae.charDamageStat;
         drugCharMods[stat] = (drugCharMods[stat] || 0) - ae.charDamageAmount;
       }
+
+      // «Снижает урон попадания» (specialEffects.reduceDamageOnHit): пока
+      // основной эффект активен, плюсуется к system.incomingDamageReduction —
+      // тому же полю, что читает конвейер урона (combat/damage.mjs). У
+      // пост-эффекта такого поля нет.
+      if (!ae.isAfterEffect) {
+        const red = Number(item.system.specialEffects?.reduceDamageOnHit) || 0;
+        if (red > 0) {
+          system.incomingDamageReduction =
+            (Number(system.incomingDamageReduction) || 0) + red;
+        }
+      }
     }
     system.drugCharMods = drugCharMods;
 

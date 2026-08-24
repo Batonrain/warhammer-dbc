@@ -9,7 +9,8 @@ import {
   removeDrugAddiction,
   activateDrugListeners
 } from "../../module/sheets/tabs/drugs.mjs";
-import { computeWoundHealing, computeWoundDamage } from "../../module/sheets/tabs/wounds.mjs";
+import { computeWoundHealing } from "../../module/sheets/tabs/wounds.mjs";
+import { woundLossUpdates } from "../../module/rules/wounds.mjs";
 
 function drug({ id = "drug-1", addicted = false, system = null } = {}) {
   const updates = [];
@@ -132,8 +133,8 @@ describe("drug special effects", () => {
     });
   });
 
-  it("computeWoundDamage переносит переполнение в критический урон и сбрасывает First Aid", () => {
-    expect(computeWoundDamage({
+  it("woundLossUpdates переносит переполнение в критический урон и сбрасывает First Aid", () => {
+    expect(woundLossUpdates({
       wounds: { value: 2, max: 10, critical: 1, firstAidUsed: true }
     }, 5)).toEqual({
       "system.wounds.value": 0,

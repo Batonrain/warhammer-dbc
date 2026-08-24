@@ -205,10 +205,15 @@ export async function applyDamageToActor(actor, damageData) {
     // Итоговое поглощение = эффективный AP + T.b (всегда)
     totalAbsorption = effArmorAP + tb;
   }
+  // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от эффектов
+  // (system.incomingDamageReduction, суммируется — см. _creature.mjs) —
+  // отдельно от AP/T.b, пробитием не уменьшается.
+  const incomingReduction = Number(system.incomingDamageReduction) || 0;
+
   // Непоглощённый урон. Аблативное Бронирование скакуна (стр. 478) срезает
   // его до 1, пока запас Ран полон, — первый же удар снимает слой, и дальше
   // Черта молчит до полного восстановления.
-  const rawNet = Math.max(0, rawDamage - totalAbsorption);
+  const rawNet = Math.max(0, rawDamage - totalAbsorption - incomingReduction);
   const netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
 
@@ -227,9 +232,14 @@ export async function applyDamageToActor(actor, damageData) {
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
 
+  const reductionNote = incomingReduction > 0
+    ? `<div class="dmg-tb-note">Доп. снижение входящего урона: <b>−${incomingReduction}</b></div>`
+    : "";
+
   const armorBreakdown = warpSoak
     ? `<div class="dmg-absorption-detail">
         ${rollIcon("warp","#c98bff")}Варп-Оружие: игнор брони/T.b — поглощение = W.b <b>${totalAbsorption}</b>
+        ${reductionNote}
       </div>`
     : `<div class="dmg-absorption-detail">
         AP брони: <b>${armorAP}</b>
@@ -242,6 +252,7 @@ export async function applyDamageToActor(actor, damageData) {
           ? `<span class="dmg-tb-note">(T.b не игнорируется пробитием)</span>`
           : ""}
         ${propNotes.length ? `<div class="dmg-tb-note">${propNotes.join(" · ")}</div>` : ""}
+        ${reductionNote}
       </div>`;
 
   const woundsLine = netDamage > 0
@@ -279,7 +290,7 @@ export async function applyDamageToActor(actor, damageData) {
                  <span class="roll-hit-idx">Непоглощённый урон</span>
                  <span class="roll-hit-dmg roll-hit-dmg-bad">${netDamage}</span>
                </div>`
-            : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${totalAbsorption})</span></div>`
+            : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${totalAbsorption + incomingReduction})</span></div>`
           }
           <div class="roll-damage-meta">${woundsLine}</div>
         </div>

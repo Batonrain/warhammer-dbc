@@ -7,7 +7,8 @@ import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
-import { computeWoundHealing, computeWoundDamage } from "./wounds.mjs";
+import { computeWoundHealing } from "./wounds.mjs";
+import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
 
 const DELIVERY_RU = {
@@ -94,7 +95,7 @@ export async function applyEffectExtras(target, fx) {
     try {
       const r = await new Roll(resolveCharFormula(fx.woundDamage, chars)).evaluate();
       rolls.push(r);
-      Object.assign(updates, computeWoundDamage(target.system, r.total));
+      Object.assign(updates, woundLossUpdates(target.system, r.total));
       lines.push(`${rollIcon("burst","#ff6b6b")}Непоглощаемый урон в Раны: <b>${fx.woundDamage}</b> = <b style="color:#8b0000;">${r.total}</b>`);
     } catch(e) {
       console.error("woundDamage:", e);
