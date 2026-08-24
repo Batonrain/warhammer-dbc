@@ -11,6 +11,7 @@
 // и от переопределяемых им путей — Очки Бесчестия у Демон-Принца.
 
 import { CHARACTERISTICS }                       from "../constants/characteristics.mjs";
+import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
 import { aptitudeCat, charAptitudeSet,
          CHAR_APTITUDES }                        from "../constants/advancement.mjs";
 import { fateTerm }                              from "../helpers/utils.mjs";
@@ -63,10 +64,9 @@ export function characterContext(actor) {
   // какие кнопки показывать (Повалить книгой ограничен Оружием и Базой, стр.
   // 14). Без экипированного рукопашного оружия категория неизвестна — тот же
   // «мягкий» пропуск, что и в диалоге атаки.
-  const meleeItem     = actor.items.find(i =>
-    i.type === "weapon" && i.system.equipped &&
-    (i.system.weaponClass === "melee" || i.system.weaponClass === "thrown")
-  );
+  // Интегральные атаки (кулак/пинок) надеты всегда — берутся только фолбэком
+  // (см. equipped-melee.mjs), иначе категория «Кулаки» затирала бы меч.
+  const meleeItem     = equippedMeleeWeapon(actor);
   const meleeCategory = meleeItem?.system?.meleeCategory || "";
   // Финт/Давление/Напролом книгой в этом разделе не ограничены (приходят из
   // Талантов, у которых своих ограничений в этом коде нет) — только Повалить.

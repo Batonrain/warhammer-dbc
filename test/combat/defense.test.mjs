@@ -120,3 +120,36 @@ describe("_performParry: кнопка Контратаки", () => {
     expect(captured.chat.at(-1).content).toContain("wh-counter-attack-btn");
   });
 });
+
+// Интегральные атаки (Кулак/Пинок/…, flags.warhammer-dbc.integralAttack)
+// надеты всегда — «первое надетое рукопашное» без фильтра доставалось бы
+// кулаку (Баланс −1 → −10) или пинку (Баланс −2 → «нельзя парировать»), а
+// настоящий меч игнорировался. См. module/combat/equipped-melee.mjs.
+describe("_performParry: интегральные атаки не перехватывают оружие", () => {
+  const integral = (name, id, balance) =>
+    equippedMelee({ balance }, { id, name,
+      flags: { "warhammer-dbc.integralAttack": true } });
+
+  it("надет меч и три интегральные — парирование выбирает меч", async () => {
+    const fist     = integral("Fist / Удар кулаком", "w-fist", -1);
+    const kick     = integral("Kick / Пинок", "w-kick", -2);
+    const headbutt = integral("Headbutt / Удар головой", "w-head", -1);
+    const sword    = equippedMelee({ balance: 0 }, { id: "w-sword", name: "Цепной меч" });
+    const actor    = attacker({ items: [fist, kick, headbutt, sword] });
+
+    await _performParry(actor, 0, null, "Actor.attacker-1");
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Оружие: Цепной меч");
+    expect(card).not.toContain("нельзя парировать");
+  });
+
+  it("другого рукопашного нет — интегральная остаётся фолбэком", async () => {
+    const fist  = integral("Fist / Удар кулаком", "w-fist", -1);
+    const actor = attacker({ items: [fist] });
+
+    await _performParry(actor, 0, null, "Actor.attacker-1");
+
+    expect(captured.chat.at(-1).content).toContain("Оружие: Fist / Удар кулаком");
+  });
+});

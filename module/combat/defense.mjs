@@ -9,6 +9,7 @@ import { fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { disabledArmourPenalty } from "./armor-mods.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
+import { equippedMeleeWeapon } from "./equipped-melee.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -95,10 +96,9 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null, attac
   const parrySkill = actor.system.skills?.parry;
   const rankBonus  = SKILL_RANKS[parrySkill?.rank ?? "untrained"]?.bonus ?? -20;
 
-  const meleeWeapon = actor.items.find(i =>
-    i.type === "weapon" && i.system.equipped &&
-    (i.system.weaponClass === "melee" || i.system.weaponClass === "thrown")
-  );
+  // Интегральные атаки (кулак/пинок) надеты всегда — без фильтра они
+  // перехватывали бы парирование у настоящего оружия (см. equipped-melee.mjs).
+  const meleeWeapon = equippedMeleeWeapon(actor);
 
   // Эффекты модификаций парирующего оружия (баланс, Защитное/Power Field и т.п.)
   const modFx      = getModEffects(actor, meleeWeapon);
