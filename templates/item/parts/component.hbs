@@ -3,7 +3,10 @@
   <div class="comp-row">
     <label class="wr-label">Тип узла</label>
     <select name="system.kind" class="wr-select">
-      <option value="hull"         {{#if (eq system.kind "hull")}}selected{{/if}}>Корпус</option>
+      {{!-- «Корпус» из выбора вида узла убран: Корпус теперь отдельный тип
+            предмета shipHull; висящий option плодил бы мёртвые узлы. Легаси
+            component[kind=hull] до миграции остаётся выбранным штатно. --}}
+      {{#if (eq system.kind "hull")}}<option value="hull" selected>Корпус (легаси)</option>{{/if}}
       <option value="drive"        {{#if (eq system.kind "drive")}}selected{{/if}}>Плазменный двигатель</option>
       <option value="warp"         {{#if (eq system.kind "warp")}}selected{{/if}}>Варп-двигатель</option>
       <option value="gellar"       {{#if (eq system.kind "gellar")}}selected{{/if}}>Поле Геллера</option>
