@@ -1,7 +1,7 @@
 {
   "name": "Повелитель Перемен",
   "type": "daemon",
-  "img": "systems/warhammer-dbc/assets/Tzeentch.png",
+  "img": "systems/warhammer-dbc/assets/art/chaos/povelitel-peremen.webp",
   "folder": "8e2XiwdLMgfsdiWS",
   "system": {
     "race": "",
@@ -3113,13 +3113,13 @@
   ],
   "prototypeToken": {
     "texture": {
-      "src": "systems/warhammer-dbc/assets/Tzeentch.png",
+      "src": "systems/warhammer-dbc/assets/art/chaos/povelitel-peremen.webp",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "fit": "contain",
       "scaleX": 1,
       "scaleY": 1,
-      "tint": "#33a6ff",
+      "tint": "#ffffff",
       "alphaThreshold": 0.75
     },
     "actorLink": true,
