@@ -2,7 +2,14 @@
 
       Короче хозяйской: ни Архетипа, ни Родного мира, ни Предсказания, ни
       Стремлений — путь слуги определяет Талант Хозяина. Вместо них Лояльность,
-      Сила и Группа, а справа — аватар Хозяина, открывающий его лист. --}}
+      Сила и Группа, а справа — аватар Хозяина, открывающий его лист.
+
+      Раса, Судьба и Усталость — те же поля и та же разметка, что у Персонажа
+      (общая creatureSchema, characterContext/buildGetData считают их для любого
+      актора). У обычного слуги они не нужны, но комплексный Трейт способен
+      сделать миньона Огрином или напичкать его Имплантами Астартес (тогда нужна
+      Раса), а «Избранный Судьбой» даёт Очки Судьбы — без полей в шапке взять их
+      было неоткуда. --}}
 <header class="sheet-header minion-header">
   <div class="portrait-block">
     <img class="profile-img" data-action="minionAvatar" src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
@@ -16,6 +23,60 @@
 
     <div class="header-grid">
       <div class="header-rows">
+        <div class="header-row-fixed header-row-race">
+          <div class="header-cell header-cell-slot">
+            <label>Раса</label>
+            <div class="wh-slot{{#unless raceSlot}} empty{{/unless}}" data-slot="race">
+              {{#if raceSlot}}
+              <img class="wh-slot-img" src="{{raceSlot.img}}" alt=""/>
+              <span class="wh-slot-name{{#unless raceSlot.applied}} pending{{/unless}}">{{raceSlot.name}}</span>
+              {{#if raceSlot.applied}}
+              <button type="button" class="wh-slot-btn" data-action="raceOpen" title="Открыть лист расы">⤢</button>
+              {{else}}
+              <button type="button" class="wh-slot-btn" data-action="raceApply" title="Применить расу">Применить</button>
+              {{/if}}
+              <button type="button" class="wh-slot-btn" data-action="raceClear" title="Снять расу">✕</button>
+              {{else}}
+              <button type="button" class="wh-slot-add" data-action="racePick">+ перетащите или нажмите</button>
+              {{/if}}
+            </div>
+          </div>
+          {{#if showSubrace}}
+          <div class="header-cell header-cell-subrace">
+            <label>Субраса</label>
+            <div class="subrace-controls">
+              <div class="wh-slot{{#unless subraceSlot}} empty{{/unless}}{{#if subraceHint}} locked{{/if}}" data-slot="subrace">
+                {{#if subraceSlot}}
+                <img class="wh-slot-img" src="{{subraceSlot.img}}" alt=""/>
+                <span class="wh-slot-name{{#unless subraceSlot.applied}} pending{{/unless}}">{{subraceSlot.name}}</span>
+                {{#if subraceSlot.applied}}
+                <button type="button" class="wh-slot-btn" data-action="subraceOpen" title="Открыть лист субрасы">⤢</button>
+                {{else}}
+                <button type="button" class="wh-slot-btn" data-action="subraceApply" title="Применить субрасу">Применить</button>
+                {{/if}}
+                <button type="button" class="wh-slot-btn" data-action="subraceClear" title="Снять субрасу">✕</button>
+                {{else}}
+                {{#if subraceHint}}
+                <span class="wh-slot-none" title="{{subraceHint}}">{{subraceHint}}</span>
+                {{else}}
+                <button type="button" class="wh-slot-add" data-action="subracePick">+ перетащите или нажмите</button>
+                {{/if}}
+                {{/if}}
+              </div>
+            </div>
+          </div>
+          {{/if}}
+          {{#if isAstartes}}
+          <div class="header-cell header-cell-readonly" title="Геносемя — редактируется на вкладке «Заметки» (Происхождение и легион)">
+            <label>Геносемя</label>
+            <div class="header-readonly-val">{{#if headerGeneSeedName}}{{headerGeneSeedName}}{{else}}—{{/if}}</div>
+          </div>
+          <div class="header-cell header-cell-readonly" title="Культура — редактируется на вкладке «Заметки» (Происхождение и легион)">
+            <label>Культура</label>
+            <div class="header-readonly-val">{{#if headerCultureName}}{{headerCultureName}}{{else}}—{{/if}}</div>
+          </div>
+          {{/if}}
+        </div>
         <div class="header-row-fixed header-row-minion">
           <div class="header-cell">
             <label title="Чем этот слуга думает: от группы идут Лояльность и максимум Миньонов">Тип Миньона</label>
@@ -69,19 +130,59 @@
         {{/if}}
       </div>
 
-      <div class="header-resources minion-master">
-        {{#if minion.master}}
-        <div class="minion-master-card" data-action="minionOpenMaster" title="Открыть лист Хозяина: {{minion.master.name}}">
-          <img class="minion-master-img" src="{{minion.master.img}}" alt=""/>
-          <div class="minion-master-name">{{minion.master.name}}</div>
-          <div class="minion-master-label">Хозяин</div>
+      <div class="header-resources">
+        <div class="header-cell fate-cell">
+          <label>{{fateLabel}}</label>
+          <div class="fate-values">
+            <input type="number" name="system.fate.value" value="{{system.fate.value}}" min="0" {{#if system.fateMaxAuto}}max="{{system.fate.max}}"{{/if}}/>
+            <span>/</span>
+            {{#if system.fateMaxAuto}}
+            <input type="number" value="{{system.fate.max}}" readonly title="Авторасчёт: W.b × (1 + «Бездонная Душа»)"/>
+            {{else}}
+            <input type="number" name="system.fate.max" value="{{system.fate.max}}" min="0"/>
+            {{/if}}
+          </div>
+          {{#if fatePips.length}}
+          <div class="fate-pips" title="Очки Судьбы">{{#each fatePips as |p|}}<i class="fate-pip {{#if p.on}}on{{/if}}"></i>{{/each}}</div>
+          {{/if}}
         </div>
-        {{else}}
-        <div class="minion-master-card empty">
-          <div class="minion-master-label">Хозяин не назначен</div>
-          <div class="gene-seed-hint">Миньон заводится кнопкой «+» в блоке МИНЬОНЫ на вкладке СОЦИУМ Хозяина.</div>
+        {{!-- ── Усталость ─────────────────────────────────────────────────── --}}
+        <div class="header-cell fate-cell fatigue-cell">
+          <label class="fatigue-label">
+            Усталость
+            {{#if system.fatigue.value}}
+            <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cog)">−10</span>
+            {{/if}}
+          </label>
+          <div class="fate-values fatigue-values">
+            <input type="number" name="system.fatigue.value" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input{{#if system.fatigue.value}} fatigue-nonzero{{/if}}"/>
+            <span>/</span>
+            <input type="number" name="system.fatigue.max" value="{{system.fatigue.max}}" min="0" title="Порог (= T.b + W.b)"/>
+          </div>
+          <div class="fatigue-step-btns">
+            <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button>
+            <button type="button" class="fatigue-btn fatigue-remove-btn" title="Снять 1 Усталость">−1</button>
+          </div>
+          <div class="fatigue-bar" title="Усталость {{fatiguePct}}%"><div class="fatigue-fill load-{{fatigueLevel}}" style="width:{{fatiguePct}}%;"></div></div>
+          <div class="fatigue-btns">
+            <button type="button" class="fatigue-btn fatigue-rest-btn" title="Час отдыха (−1 Усталость)">Отдых</button>
+            <button type="button" class="fatigue-btn fatigue-btn-sleep fatigue-sleep-btn" title="Полноценный сон (снять всю Усталость)">Сон</button>
+          </div>
         </div>
-        {{/if}}
+        <div class="minion-master">
+          {{#if minion.master}}
+          <div class="minion-master-card" data-action="minionOpenMaster" title="Открыть лист Хозяина: {{minion.master.name}}">
+            <img class="minion-master-img" src="{{minion.master.img}}" alt=""/>
+            <div class="minion-master-name">{{minion.master.name}}</div>
+            <div class="minion-master-label">Хозяин</div>
+          </div>
+          {{else}}
+          <div class="minion-master-card empty">
+            <div class="minion-master-label">Хозяин не назначен</div>
+            <div class="gene-seed-hint">Миньон заводится кнопкой «+» в блоке МИНЬОНЫ на вкладке СОЦИУМ Хозяина.</div>
+          </div>
+          {{/if}}
+        </div>
       </div>
     </div>
 
