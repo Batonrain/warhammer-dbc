@@ -89,6 +89,16 @@
 .warhammer-dbc .combat-cog .tech-action { color: #7fbf9c; }
 .warhammer-dbc .combat-cog .tech-mod { color: var(--cg-fire); text-shadow: 0 0 5px rgba(255,184,77,0.4); }
 
+/* движение — кнопки типов/механик (стр. 28-32), тот же стиль, что у приёмов */
+.warhammer-dbc .combat-cog .movement-actions-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.warhammer-dbc .combat-cog .wh-move-btn {
+  flex: 1 1 auto; min-width: 84px; padding: 3px 6px; font-size: 0.82em;
+  background: linear-gradient(180deg, #0c2418, #071510) !important; border: 1px solid var(--cg-line) !important;
+  color: #c8ffe4 !important; font-family: inherit; border-radius: 3px; transition: all 0.12s;
+}
+.warhammer-dbc .combat-cog .wh-move-btn:hover { border-color: var(--cg) !important; box-shadow: 0 0 12px -4px var(--cg); color: #eafff4 !important; transform: translateY(-1px); }
+.warhammer-dbc .combat-cog .wh-move-btn:active { background: rgba(77,255,166,0.14) !important; transform: none; }
+
 /* ── Таблицы оружия / карточки ──────────────────────────── */
 .warhammer-dbc .combat-cog .combat-weapons-table thead th,
 .warhammer-dbc .combat-cog .psy-powers-table thead th {

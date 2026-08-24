@@ -254,7 +254,10 @@ export function creatureSchema({ granted = false } = {}) {
     movement: new SchemaField({
       halfMove: num(0, "Полуход"), move: num(0, "Ход"),
       charge:   num(0, "Натиск"),  run:  num(0, "Бег"),
-      spdBonus: num(0, "Надбавка SPD")
+      spdBonus: num(0, "Надбавка SPD"),
+      // Высота полёта (стр. 30: Приземная/Низкая/Высокая) — состояние Хода,
+      // а не свойство персонажа, тот же приём, что system.mount.speed.
+      altitude: str("ground", "Высота полёта (ground/low/high)")
     }, { label: "Перемещение" }),
     initiative: num(0, "Инициатива"),
     size:       num(0, "Размер"),

@@ -29,6 +29,7 @@ import { buildMasqueOptions, getMasque }         from "../constants/harlequin-ma
 import { BODY_TYPES }                            from "../constants/body-map.mjs";
 import { isHaemonculus }                         from "../constants/haemonculus.mjs";
 import { HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
+import { actorCanFly }                           from "../combat/movement-actions.mjs";
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
 import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
@@ -108,6 +109,11 @@ export function characterContext(actor) {
       exposed: !!actor.getFlag("warhammer-dbc", "exposedAggressive")
     };
   }
+
+  // Кнопка «Полёт» на вкладке БОЙ (module/combat/movement-actions.mjs, стр.
+  // 30) видна только с Чертой Flyer/Hoverer — та же проверка, что и в самой
+  // кнопке Token HUD/меню, продублирована здесь только ради видимости кнопки.
+  context.movementCanFly = actorCanFly(actor);
 
   // ── Снаряжение: сенсор нагрузки (когитатор) ─────────────────────────────
   const _enc = system.encumbrance || {};

@@ -36,7 +36,20 @@ export function fatiguePenalty(actor, charKey) {
   return -10;
 }
 
-export async function addFatigue(actor, amount = 1) {
+/**
+ * Штраф Марша/Бега/Форсированного марша (стр. 29) на тесты Восприятия
+ * (P — навык `per`), пока марш активен. Значение хранится флагом
+ * marchPPenalty (module/combat/movement-actions.mjs, showMarchDialog);
+ * применяется тем же способом, что и fatiguePenalty выше, у единственного
+ * места, откуда реально катаются тесты Восприятия — общего пути броска
+ * Навыка на листе (actor-sheet.mjs, _getMarchPenalty).
+ */
+export function marchPenalty(actor, charKey) {
+  if ((charKey ?? "").toLowerCase() !== "per") return 0;
+  return Number(actor.getFlag?.("warhammer-dbc", "marchPPenalty")) || 0;
+}
+
+export async function addFatigue(actor, amount = 1, { slow = false } = {}) {
   const system = actor.system;
   const { tb, threshold } = fatigueThreshold(actor);
   const current = system.fatigue?.value ?? 0;
@@ -46,6 +59,14 @@ export async function addFatigue(actor, amount = 1) {
     "system.fatigue.value": newVal,
     "system.fatigue.max": threshold
   };
+
+  // Форсированный марш (стр. 29): Усталость от него восстанавливается
+  // вдвое медленнее — считаем отдельно, сколько очков текущей Усталости
+  // «медленные» (fatiguePeriodRest снимает их раз в 2 вызова, см. ниже).
+  if (slow && actor.setFlag) {
+    const slowNow = Number(actor.getFlag?.("warhammer-dbc", "slowFatigue")) || 0;
+    await actor.setFlag("warhammer-dbc", "slowFatigue", Math.min(newVal, slowNow + amount));
+  }
 
   if (threshold > 0 && newVal >= threshold) {
     const unconsciousMinutes = Math.max(1, 10 - tb);
@@ -98,14 +119,49 @@ export async function removeFatigue(actor, amount = 1) {
   }
 
   await actor.update(updates);
+
+  // Не может остаться «медленных» очков больше, чем самой Усталости.
+  if (actor.setFlag) {
+    const slowNow = Number(actor.getFlag?.("warhammer-dbc", "slowFatigue")) || 0;
+    if (slowNow > newVal) await actor.setFlag("warhammer-dbc", "slowFatigue", newVal);
+  }
 }
 
+/**
+ * Час отдыха: снимает 1 Усталость. Если часть текущей Усталости помечена
+ * «медленной» (Форсированный марш, стр. 29 — восстанавливается вдвое
+ * медленнее), каждая такая единица требует 2 вызовов этой функции —
+ * flags.warhammer-dbc.slowFatigueParity считает чётность вызова.
+ */
 export async function fatiguePeriodRest(actor) {
   const current = actor.system.fatigue?.value ?? 0;
   if (current <= 0) {
     ui.notifications.info(`${actor.name}: Усталость и так 0.`);
     return;
   }
+
+  const slowNow = Number(actor.getFlag?.("warhammer-dbc", "slowFatigue")) || 0;
+  if (slowNow > 0 && actor.setFlag) {
+    const parity = !!actor.getFlag?.("warhammer-dbc", "slowFatigueParity");
+    if (!parity) {
+      await actor.setFlag("warhammer-dbc", "slowFatigueParity", true);
+      const rollMode = game.settings.get("core", "rollMode");
+      await ChatMessage.create(ChatMessage.applyRollMode({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: `<div class="wh-roll-result">
+          <div class="roll-header">${rollIcon("spark","#4dffa6")}${esc(actor.name)} — Час отдыха</div>
+          <div class="roll-outcome">
+            <span class="roll-threshold">Усталость от Форсированного марша восстанавливается вдвое
+            медленнее — этот час зачтён наполовину, Усталость не снята.</span>
+          </div>
+        </div>`
+      }, rollMode));
+      return;
+    }
+    await actor.setFlag("warhammer-dbc", "slowFatigueParity", false);
+    await actor.setFlag("warhammer-dbc", "slowFatigue", Math.max(0, slowNow - 1));
+  }
+
   await removeFatigue(actor, 1);
 
   const rollMode = game.settings.get("core", "rollMode");
@@ -129,6 +185,8 @@ export async function fatigueSleep(actor) {
     "system.fatigue.max": threshold,
     "system.conditions.unconscious": false
   });
+  if (actor.getFlag?.("warhammer-dbc", "slowFatigue")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigue");
+  if (actor.getFlag?.("warhammer-dbc", "slowFatigueParity")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigueParity");
 
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({

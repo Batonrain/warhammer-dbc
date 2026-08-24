@@ -165,6 +165,9 @@ const DEVIATIONS = {
     // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от
     // эффектов, заведено гораздо позже template.json — см. combat/damage.mjs.
     incomingDamageReduction: 0,
+    // Высота полёта (стр. 30, wdbc-n1cy) — состояние Хода, заведено гораздо
+    // позже template.json, тем же приёмом, что mount.speed.
+    "movement.altitude": "ground",
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

@@ -18,6 +18,11 @@ import { showHealingDialog } from "./healing.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
+import {
+  declareHalfMove, declareFullMove, declareCharge, declareRun,
+  showClimbDialog, showJumpDialog, showSwimDialog, showFallDialog, showFlightDialog,
+  showMarchDialog
+} from "../../combat/movement-actions.mjs";
 import { on } from "../../helpers/utils.mjs";
 
 export function activateCombatListeners(root, actor) {
@@ -84,4 +89,21 @@ export function activateCombatListeners(root, actor) {
     }
   });
   on(root, ".ae-reset-btn", "click", () => resetActionEconomy(actor));
+
+  // ── Движение (стр. 28-32): боевые типы + отдельные механики + марши ─────
+  // Та же панель кнопок, что открывает Token HUD-кнопка «Движение»
+  // (module/combat/movement-actions.mjs).
+  const MOVE_ACTIONS = {
+    halfmove: declareHalfMove, fullmove: declareFullMove,
+    charge: declareCharge,     run: declareRun,
+    climb: showClimbDialog, jump: showJumpDialog, swim: showSwimDialog,
+    fall: showFallDialog,   fly: showFlightDialog,
+    "march-accelerated": a => showMarchDialog(a, "accelerated"),
+    "march-run":         a => showMarchDialog(a, "run"),
+    "march-forced":      a => showMarchDialog(a, "forced")
+  };
+  on(root, ".wh-move-btn", "click", ev => {
+    const fn = MOVE_ACTIONS[ev.currentTarget.dataset.moveAction];
+    if (fn) fn(actor);
+  });
 }

@@ -20,7 +20,7 @@ import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
 import { activateDiseaseListeners } from "./tabs/diseases.mjs";
-import { fatiguePenalty, activateConditionsListeners } from "./tabs/conditions.mjs";
+import { fatiguePenalty, marchPenalty, activateConditionsListeners } from "./tabs/conditions.mjs";
 import { disabledArmourPenalty } from "../combat/armor-mods.mjs";
 import { painChatMsg } from "./tabs/pain.mjs";
 import { applyHealing } from "./tabs/healing.mjs";
@@ -773,6 +773,11 @@ export class WarhammerCharacterSheet
 
   _getFatiguePenalty(charKey) {
     return fatiguePenalty(this.actor, charKey);
+  }
+
+  /** Марш/Бег/Форсированный марш (стр. 29): штраф на Восприятие, пока активен. */
+  _getMarchPenalty(charKey) {
+    return marchPenalty(this.actor, charKey);
   }
 
   /**
@@ -1791,6 +1796,7 @@ export class WarhammerCharacterSheet
             const charKey = currentCharKey();
             return target + modifier + difficulty
               + this._getFatiguePenalty(charKey)
+              + this._getMarchPenalty(charKey)
               + this._getHelmetlessBonus(charKey)
               + disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
           }
@@ -1874,6 +1880,7 @@ export class WarhammerCharacterSheet
              assistCount = 0, reroll = null } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(defaultChar);
+    const marchPen = this._getMarchPenalty(defaultChar);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
     const helmetBonus = this._getHelmetlessBonus(charKey);
     // Выключенная силовая броня: −10 физическому действию, −40 Уклонению/
@@ -1882,7 +1889,7 @@ export class WarhammerCharacterSheet
     const armourPenalty = disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
 
     // Мод препаратов уже входит в target (через char.total → итог навыка)
-    const baseEff  = target + modifier + difficulty + fatiguePenalty + helmetBonus + armourPenalty;
+    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty;
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
@@ -1920,6 +1927,7 @@ export class WarhammerCharacterSheet
             ${charAbbr}: <b>${target}</b>${modStr}
             ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
             ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
+            ${marchPen !== 0 ? ` ${marchPen} (🏃 Марш)` : ""}
             ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${baseEff}</b>
@@ -1959,13 +1967,14 @@ export class WarhammerCharacterSheet
              assistCount = 0, reroll = null } = result;
 
     const fatiguePenalty = this._getFatiguePenalty(charKey);
+    const marchPen = this._getMarchPenalty(charKey);
     // Снятый шлем: +5 ко всем тестам на основе Товарищества.
     const helmetBonus = this._getHelmetlessBonus(charKey);
     // Выключенная силовая броня: −10 физической характеристике (стр. 233).
     const armourPenalty = disabledArmourPenalty(this.actor, { charKey });
 
     // Мод препаратов уже входит в target (через char.total)
-    const baseEff  = target + modifier + difficulty + fatiguePenalty + helmetBonus + armourPenalty;
+    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty;
     // Переброс/Преимущество/Помеха — тот же путь, что у теста Навыка
     // (rules/reroll-pick.mjs::pickReroll); раньше здесь бросался только один
     // d100 и выбор диалога тихо игнорировался (см. ревизию главы «Тесты»).
@@ -2000,6 +2009,7 @@ export class WarhammerCharacterSheet
             Цель: <b>${target}</b>${modStr}
             ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
             ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
+            ${marchPen !== 0 ? ` ${marchPen} (🏃 Марш)` : ""}
             ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${baseEff}</b>

@@ -39,6 +39,7 @@ import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
+import { spendActionPoints, apCostForActionType } from "../combat/action-economy.mjs";
 import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 
@@ -252,6 +253,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Агрессивная Стойка: цель уже потеряла все Реакции в конце своего Хода">⚔️ Цель раскрыта (+20)</span>`
     : "";
 
+  // Бег (стр. 32): до начала следующего Хода бегущего вся Стрельба по нему
+  // −20, вся Рукопашная +20 (module/combat/movement-actions.mjs, declareRun
+  // ставит флаг; снимается resetActionEconomy — action-economy.mjs).
+  const targetRunning = !!attackCtx.targetActor?.getFlag?.("warhammer-dbc", "running");
+  const runningMod = targetRunning ? (isMelee ? 20 : -20) : 0;
+  const runningBadge = targetRunning
+    ? `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`
+    : "";
+
   // Беспомощная цель: рукопашная (и выстрел в упор/в рукопашной, стр. ...) бьёт
   // автоматически и удваивает урон до Поглощения; прочая стрельба — только
   // +30. Рукопашный случай безусловен (badge), стрелковый «в упор/в рукопашной»
@@ -267,7 +277,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ? `<span class="atk-training-warn" title="Беспомощная цель: бонус к стрельбе">🪢 Цель Беспомощна (+${helplessRangedMod})</span>`
       : "";
 
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -523,7 +533,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -1086,6 +1096,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
                   <span class="roll-failure">Защитная Стойка без щита — атака запрещена (стр. 15)</span>
                 </div></div>`
             });
+            return false;
+          }
+
+          // Экономика действий (стр. 12, wdbc-niv7): рукопашная атака тратит
+          // ОД по actionType выбранной Базы (MELEE_BASES) — Натиск/Полная
+          // Атака и т.п. уже несут это поле. Стрелковые режимы (rofModes)
+          // пока не несут своего actionType (нерешённая часть wdbc-niv7,
+          // не связанная с Движением) — для них ОД сознательно не тратятся.
+          const apCost = isMelee ? apCostForActionType(sel.bDef.actionType) : 0;
+          if (!await spendActionPoints(actor, apCost)) {
+            ui.notifications.warn("⚠️ Не хватает ОД.");
             return false;
           }
 
