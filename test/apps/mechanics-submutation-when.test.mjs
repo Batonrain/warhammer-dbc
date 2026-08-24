@@ -16,7 +16,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { applyItemMechanics, syncMechanicsEffects } from "../../module/apps/mechanics.mjs";
+import { applyItemMechanics, syncMechanicsEffects, mechanicsRelevantChange } from "../../module/apps/mechanics.mjs";
 import { entryWhenOk } from "../../module/rules/mech-when.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -123,6 +123,12 @@ describe("entryWhenOk — гейт по субмутации, чистая фу�
     expect(entryWhenOk(null, { when: w }, { system: { submutation: { label: "6" } } })).toBe(true);
   });
 
+  it("negateSub + субмутация ещё не выбрана — всё равно нет: запись не включается ДО броска", () => {
+    const w = when(["4"], true);
+    expect(entryWhenOk(null, { when: w }, { system: { submutation: { label: "" } } })).toBe(false);
+    expect(entryWhenOk(null, { when: w }, { system: {} })).toBe(false);
+  });
+
   it("свой negateSub не путается с общим negate Геносемени", () => {
     // negate:true задан, но условий Геносемени нет вовсе — на субмутацию не влияет.
     const w = { negate: true, conditions: [], submutations: ["4"], negateSub: false };
@@ -157,13 +163,34 @@ describe("applyItemMechanics — гейт на разовой выдаче Че�
     await applyItemMechanics(item);
     expect(item.parent.items).toHaveLength(0);
 
-    // Бросок субмутации пишет result в предмет (setSubmutation) — тот же путь,
-    // что update() из apps/submutations.mjs, и будит хук updateItem, который
-    // и зовёт applyItemMechanics повторно. Пропущенная запись должна её
-    // подхватить — как у Геносемени, изменившегося уже после первой попытки.
+    // Бросок субмутации (setSubmutation, apps/submutations.mjs) пишет только
+    // system.submutation.* — Hooks.on в стенде пустышка, хук updateItem тут НЕ
+    // стреляет, поэтому applyItemMechanics зовётся руками. Что живой хук на
+    // такую правку среагирует — отдельно доказывает тест предиката
+    // mechanicsRelevantChange ниже: хук — ровно «предикат → applyItemMechanics».
     await item.update({ "system.submutation.label": "4" });
     await applyItemMechanics(item);
     expect(item.parent.items.map(i => i.name)).toContain("Dark Sight / Ночное Зрение");
+  });
+});
+
+describe("mechanicsRelevantChange — предикат хука updateItem (warhammer-dbc.mjs)", () => {
+  it("правка групп Конструктора — да, и пустой список тоже (снятие последней группы)", () => {
+    expect(mechanicsRelevantChange({ flags: { [FLAG]: { mechanics: [{}] } } })).toBe(true);
+    expect(mechanicsRelevantChange({ flags: { [FLAG]: { mechanics: [] } } })).toBe(true);
+  });
+
+  it("бросок/реролл/сброс субмутации (system.submutation.*) — да: гейт when.submutations должен пересчитаться", () => {
+    expect(mechanicsRelevantChange({ system: { submutation: { label: "4" } } })).toBe(true);
+    expect(mechanicsRelevantChange({ system: { submutation: { label: "" } } })).toBe(true);
+  });
+
+  it("посторонняя правка — нет: ни рекурсии от собственных флагов, ни лишних пересборок", () => {
+    expect(mechanicsRelevantChange({ name: "Другое имя" })).toBe(false);
+    expect(mechanicsRelevantChange({ system: { benefit: "текст" } })).toBe(false);
+    expect(mechanicsRelevantChange({ flags: { [FLAG]: { mechanicsApplied: ["e1"] } } })).toBe(false);
+    expect(mechanicsRelevantChange({})).toBe(false);
+    expect(mechanicsRelevantChange(undefined)).toBe(false);
   });
 });
 

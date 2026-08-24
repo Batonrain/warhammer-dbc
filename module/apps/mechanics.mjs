@@ -2409,6 +2409,25 @@ function buildGroupHtml(grp, canEdit, depth = 1, nested = false, item = null) {
 }
 
 /**
+ * Задевает ли правка предмета (changed из хука updateItem) его Механику —
+ * предикат единственного хука пересборки (warhammer-dbc.mjs). Чистая функция,
+ * вынесена ради честного теста (mechanics-submutation-when.test.mjs): хук в
+ * стенде не зовётся, а стрельнёт он или нет — решает ровно это условие.
+ *
+ * Два триггера, оба через `!== undefined`, а не проверку на правду:
+ * — flags.mechanics: снятие последней группы приходит как mechanics: [] и
+ *   обязано дойти до пересборки, а не быть принятым за «механику не трогали»;
+ * — system.submutation: бросок/реролл/сброс субмутации (apps/submutations.mjs
+ *   пишет только system.submutation.*) меняет гейт when.submutations
+ *   (rules/mech-when.mjs) — без пересборки гейтованные записи не выдались бы
+ *   никогда.
+ */
+export function mechanicsRelevantChange(changed) {
+  return changed?.flags?.["warhammer-dbc"]?.mechanics !== undefined
+      || changed?.system?.submutation !== undefined;
+}
+
+/**
  * Записать механику предмета. Настраивают её все за столом, а не один Мастер:
  * Черты, Таланты и снаряжение лежат в компендиумах и в мире, и своими для
  * игрока не бывают. Клиенту чужой предмет писать не дают, поэтому без прав на

@@ -37,7 +37,7 @@ import { refreshCalendarWidget, initTimeFlow } from "./module/apps/imperial-cale
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
-         saveItemMechanics } from "./module/apps/mechanics.mjs";
+         saveItemMechanics, mechanicsRelevantChange } from "./module/apps/mechanics.mjs";
 import { isItemActive }              from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -1403,14 +1403,16 @@ Hooks.on("createItem", handleItemCreated);
 // нет — там только пересборка эффектов, чтобы вкладка «Эффекты» показывала то,
 // что настроено, ещё до броска на лист.
 //
-// Условие — именно `!== undefined`, а не проверка на правду: снятие последней
-// группы приходит как mechanics: [] и обязано дойти до пересборки, а не быть
-// принятым за «механику не трогали». Собственные записи Конструктора
-// (mechanicsApplied, rollMods, system.effects от weaponProp) ключа mechanics не
-// несут и сюда не возвращаются — рекурсии нет.
+// Что именно считается «правкой Механики» — mechanicsRelevantChange
+// (module/apps/mechanics.mjs): сами группы Конструктора (flags.mechanics) И
+// бросок/реролл субмутации (system.submutation.* из apps/submutations.mjs) —
+// он меняет гейт when.submutations, без пересборки гейтованные записи не
+// выдались бы никогда. Собственные записи Конструктора (mechanicsApplied,
+// rollMods, system.effects от weaponProp) под предикат не попадают — рекурсии
+// нет.
 Hooks.on("updateItem", async (item, changed, options, userId) => {
   if (game.user.id !== userId) return;
-  if (changed?.flags?.["warhammer-dbc"]?.mechanics === undefined) return;
+  if (!mechanicsRelevantChange(changed)) return;
   if (item.parent instanceof Actor) await applyItemMechanics(item);
   else await syncMechanicsEffects(item);
 });

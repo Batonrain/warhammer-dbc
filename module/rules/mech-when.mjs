@@ -75,8 +75,15 @@ export function entryWhenOk(actor, entry, item = null) {
   let subOk = true;
   if (subs.length && item) {
     const label = item.system?.submutation?.label || "";
-    const matches = !!label && subs.includes(label);
-    subOk = entry.when.negateSub ? !matches : matches;
+    if (!label) {
+      // Субмутация ещё не выбрана — гейт не пройден НЕЗАВИСИМО от negateSub:
+      // запись не должна включиться ДО броска (см. шапку), а «любая, КРОМЕ
+      // этой» — это всё ещё «какая-то выпала».
+      subOk = false;
+    } else {
+      const matches = subs.includes(label);
+      subOk = entry.when.negateSub ? !matches : matches;
+    }
   }
 
   return geneOk && subOk;
