@@ -70,7 +70,7 @@
     "weaponType": "primitive",
     "range": 0,
     "balance": -1,
-    "damage": "1d5-2",
+    "damage": "1d5-3",
     "damageType": "impact",
     "penetration": 0,
     "meleeCategory": "Кулаки"
