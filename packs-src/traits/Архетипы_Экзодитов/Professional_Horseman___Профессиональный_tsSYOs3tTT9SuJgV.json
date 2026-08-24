@@ -1,0 +1,47 @@
+{
+  "name": "Professional Horseman / Профессиональный Всадник",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Мастерство всадничества среди драконьих воинов неоспоримо. Если персонаж проваливает любой тест WS, S, P, он может потратить очко судьбы и преуспеть в нем с 1 успехом.",
+    "source": "Архетип: Драконий Воин",
+    "bookSource": "Книга Аэльдари: Ответвления",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "tsSYOs3tTT9SuJgV",
+  "effects": [],
+  "folder": "CrHBW5OrAywvborn",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!tsSYOs3tTT9SuJgV"
+}

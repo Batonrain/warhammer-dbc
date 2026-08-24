@@ -1,0 +1,48 @@
+{
+  "name": "The Beacon of Hope / Маяк Надежды",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "4emZkTeQiY3l6ZOv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж создаёт ауру 10×I.b метров, внутри которой все существа автоматически проходят тесты против страха от Демонов и игнорируют трейт Daemonic Presence; убитые в этой ауре существа не могут быть использованы для психосил, Путей Силы или сил Иннари. Персонаж может отключать/включать ауру за Полное действие. Все существа в ауре получают бонус I.b×5 на тесты на выход из ярости и должны проходить тест W+0−(5×I.b персонажа) для входа в ярость (не распространяется на Демонов Кхорна). Персонаж может дать клятву любому умирающему существу отомстить демоническим отродьям — пока исполняет клятву, получает +I.b ко всем характеристикам и знает точное местоположение каждого, кому должен отомстить.",
+    "tier": 3,
+    "requirement": "Ishar",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Избранный Иши",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "vrrQpN2wdkWfV827",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!vrrQpN2wdkWfV827"
+}

@@ -1,0 +1,47 @@
+{
+  "name": "Personal Sentinels / Личная Стража",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может вместо своей инициативы использовать инициативу того, кому он присягнул, действуя сразу после его хода. Он может двигаться вместе со своим повелителем, не тратя на это действия — но в свой ход сможет совершить лишь полное движение или полудвижение. Находясь в радиусе 3 метров от того, кому присягнул, персонаж даёт штраф −10 (складывающийся до −30) всем противникам на физические действия против своего повелителя. Парируя атаки, направленные на повелителя, персонаж не тратит Реакцию. Он может совершать движение на SPD×4 при использовании трейта Fanatic, не провоцируя атак по возможности при движении.",
+    "source": "Элитный архетип: Присягнувшие Клинки",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "KKWegp5SgkzQ4Amx",
+  "effects": [],
+  "folder": "1RuUwTtPpBl3V9ZN",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!KKWegp5SgkzQ4Amx"
+}

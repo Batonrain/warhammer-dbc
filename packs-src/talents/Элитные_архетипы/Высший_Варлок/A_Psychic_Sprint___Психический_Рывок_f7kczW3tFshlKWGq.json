@@ -1,0 +1,48 @@
+{
+  "name": "A Psychic Sprint / Психический Рывок",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ttqxLwqFCoWfX2In",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может пройти тест W−30+(3×эPR) и при успехе дать себе на этот и следующий раунд +эPR SPD. Совершение Полного Движения, Натиска и Бега при действии таланта требует на 1 ОД меньше. В бой можно применить лишь раз.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Высший Варлок",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "f7kczW3tFshlKWGq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!f7kczW3tFshlKWGq"
+}

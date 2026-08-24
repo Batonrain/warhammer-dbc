@@ -1,0 +1,48 @@
+{
+  "name": "Isha's Altar / Алтарь Иши",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "4emZkTeQiY3l6ZOv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Потратив 3 часа на создание алтаря из камня, дерева или психокости, персонаж создаёт алтарь. В начале хода персонажа алтарь излучает ауру радиусом 5×I.b, которая излечивает союзным персонажам T.b ран, снижает статус огня/отравления/обескровливания на 1 и укрепляет завесу на 3. Демоны в ауре в начале каждого хода получают неизбегаемое попадание 1d5+I.b E Dmg, Pen I.b, Felling (6), Crippling (3). Алтарь имеет I.b AP и I.b×3 Ран; персонаж может иметь до I.b активных алтарей. Потратив 3 дня, можно создать Возвышенный алтарь — лечит вдвое больше и даёт штраф на манифестацию психосил для Хаоситов, равный 5×I.b.",
+    "tier": 1,
+    "requirement": "Trade (Mason)+10",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Избранный Иши",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "8rGtwYK83PE2qr49",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!8rGtwYK83PE2qr49"
+}

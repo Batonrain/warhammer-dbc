@@ -1,0 +1,48 @@
+{
+  "name": "Cognition of Dance / Познание Танца",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "9O0IaIJXt3VLvehR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает дополнительную Реакцию, используемую только на уклонение. Успешно пройдя тест Парирования, получает бонус +5 к тестам Уклонения; успешно пройдя тест Уклонения — бонус +5 к тестам Парирования. Эти бонусы складываются вплоть до +30 и сгорают в конце битвы.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Танцор Войны",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "ta0SpxL2ZrOelBno",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!ta0SpxL2ZrOelBno"
+}

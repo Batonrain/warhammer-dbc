@@ -1,0 +1,48 @@
+{
+  "name": "Right to Choose / Право Избирать",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "0aJ9NwwhSLbU7LUl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может менять местами эффекты талантов The Beginning of the Hunt, The Middle of the Hunt и The End of the Hunt (например, применить эффекты Середины Охоты в Начале Охоты). Этот путь позволяет Возвыситься до Короля-В-Лесу.",
+    "tier": 3,
+    "requirement": "Lost Nobility, The End of the Hunt",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Лесной Владыка",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "CXM6wzE7UU9Wg1Yv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!CXM6wzE7UU9Wg1Yv"
+}

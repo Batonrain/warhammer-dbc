@@ -1,0 +1,48 @@
+{
+  "name": "Menshad Korum / Охотник В Погоне За Собой",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "908Vd6zlCzHDktpV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Немногие имеют достаточной психической стойкости, чтобы пытаться это сделать, и немногие — чтобы достичь успеха. Беря данный талант, персонаж перманентно теряет 1d5 W или 1 Очко Судьбы, взамен получая возможность изучить новый Путь Воина и достигнуть на нём этапа Заблудившегося, не теряя свой старый путь — это открывает персонажу возможность изучить сразу несколько талантов Экзарха. Данный талант можно брать до тех пор, пока W персонажа 40 или выше.",
+    "tier": 3,
+    "requirement": "Талант любого Экзарха",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Экзарх Аспекта",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "yLf3JdRpV27k4bGf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!yLf3JdRpV27k4bGf"
+}

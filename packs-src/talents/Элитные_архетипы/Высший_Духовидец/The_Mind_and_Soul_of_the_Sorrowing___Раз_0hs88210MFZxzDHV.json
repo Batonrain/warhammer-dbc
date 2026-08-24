@@ -1,0 +1,48 @@
+{
+  "name": "The Mind and Soul of the Sorrowing / Разум и Душа Горюющего",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "dnkpYudFCgf6ZHfT",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж равняет свои Unnatural I и Unnatural WP, выбирая среди них наибольшее число (например, если у персонажа Unnatural I (4), то его Unnatural WP тоже станет 4).",
+    "tier": 3,
+    "requirement": "Not Today",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Высший Духовидец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "0hs88210MFZxzDHV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!0hs88210MFZxzDHV"
+}

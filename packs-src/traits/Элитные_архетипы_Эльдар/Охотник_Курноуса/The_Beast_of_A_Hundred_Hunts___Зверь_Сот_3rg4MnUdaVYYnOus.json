@@ -1,0 +1,47 @@
+{
+  "name": "The Beast of A Hundred Hunts / Зверь Сотен Охот",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Раз в раунд за Полное действие персонаж может пройти Survival(P)-30 и принять один из звериных обликов Курноуса (Сокол — крылья, Flyer (A.b+P.b), Unnatural P (+4), когти; Медведь — Unnatural S,T (+2), Natural Armour (5) с шипами, укус+когти; Волк — Unnatural F (+2, до 6 при признанном авторитете), общее поле зрения с подчинёнными, +1 ОД на Командование; Кабан — Unnatural T (+3), Brutal Charge (4), Natural Armour (5), Regeneration (2), -6 SPD кроме Натиска/Бега; Змей — Natural Armour (2), укус+Toxic (3); Дракон — Natural Armour (T.b), Flyer (A.b), Unnatural S,T (+3), дальнобойная огненная атака). Облик держится P.b часов, после чего персонаж теряет сознание на 24-T.b часов.",
+    "source": "Элитный архетип: Охотник Курноуса",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "3rg4MnUdaVYYnOus",
+  "effects": [],
+  "folder": "JW11jvjFlHte6ysQ",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!3rg4MnUdaVYYnOus"
+}

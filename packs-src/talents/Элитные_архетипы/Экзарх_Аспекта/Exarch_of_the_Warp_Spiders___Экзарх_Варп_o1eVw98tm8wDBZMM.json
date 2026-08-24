@@ -1,0 +1,48 @@
+{
+  "name": "Exarch of the Warp Spiders / Экзарх Варп-Пауков",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "908Vd6zlCzHDktpV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может перебрасывать урон всех атак со свойством Monofilament, а также может потратить смену для работы над оружием со свойством Monofilament, увеличив свойство Monofilament на +1, но дав ему свойство Surge (2).",
+    "tier": 3,
+    "requirement": "Мастер/Заблудившийся на Пути Варп-Пауков",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Экзарх Аспекта",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "o1eVw98tm8wDBZMM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!o1eVw98tm8wDBZMM"
+}

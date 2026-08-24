@@ -1,0 +1,48 @@
+{
+  "name": "The Wild Hunt / Дикая Охота",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "LxuLQVd7e1MeL0Mc",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Охотник Курноуса получает дополнительные бонусы на своё оружие: Лук и Дротики — свойства Crippling (3/+1), Extreme (8/−1), Felling (4/+2), Mighty; рукопашное примитивное оружие — свойства Dueling Weapon, Power Field, Step by Step.",
+    "tier": 2,
+    "requirement": "Убить жертву с Inf +50",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Охотник Курноуса",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "liasqfeZvbuzD4rT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!liasqfeZvbuzD4rT"
+}

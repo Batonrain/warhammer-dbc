@@ -1,0 +1,48 @@
+{
+  "name": "Shadow Dance / Теневой Танец",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "9O0IaIJXt3VLvehR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает доступ к фокусам дисциплин Прорицание, Телекинез и Фантасмагория и может приобрести элитный архетип «Теневой Провидец» (Эсдаинн), игнорируя требование наличия Маски Сумерек. Этот путь позволяет Возвыситься до Танцора Дикой Охоты.",
+    "tier": 3,
+    "requirement": "Psyker, PR (7)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Танцор Войны",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "TIkvxiTbKQlxoOLS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!TIkvxiTbKQlxoOLS"
+}

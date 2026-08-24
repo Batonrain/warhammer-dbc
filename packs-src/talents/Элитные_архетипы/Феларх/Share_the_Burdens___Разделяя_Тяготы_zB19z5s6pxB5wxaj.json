@@ -1,0 +1,48 @@
+{
+  "name": "Share the Burdens / Разделяя Тяготы",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "iLGvfcjCX7IO9OyG",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает Unnatural Senses (40), распространяющееся только на манифестацию психосил (и их использование) и техночудеса, игнорируя их свойство Незримое. В качестве реакции на чужую психосилу или техночудо персонаж может разделить тяготы последствий между своими ближайшими подчинёнными (выбранными трейтом A Valuable Asset), распределяя эффекты между собой и подчинёнными поровну.",
+    "tier": 3,
+    "requirement": "Psy Rating (x5)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Феларх",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "zB19z5s6pxB5wxaj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!zB19z5s6pxB5wxaj"
+}

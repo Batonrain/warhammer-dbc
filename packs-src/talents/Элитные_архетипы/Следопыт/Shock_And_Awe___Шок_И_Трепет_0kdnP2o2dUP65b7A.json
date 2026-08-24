@@ -1,0 +1,48 @@
+{
+  "name": "Shock And Awe / Шок И Трепет",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CFDdwRpqR0FW20hm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если персонаж совершает избирательный выстрел в голову и убивает цель, её смерть становится особенно жестокой (детали на усмотрение игрока и ГМа). Труп (персонаж) получает Fear (3) против видевших убийство. Персонажи, обычно автоматически проходящие тест на страх, но не являющиеся Астартес/Нобами Орков/подобными, всё равно проходят тест, но с бонусом +20; сами Астартес/Нобы иммунны. Вместо обычного броска на Шок такие существа бросают 1d5: 1-2 = Шок 81-100, 3-4 = 101-120, 5 = 141-160.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Следопыт",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "0kdnP2o2dUP65b7A",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!0kdnP2o2dUP65b7A"
+}

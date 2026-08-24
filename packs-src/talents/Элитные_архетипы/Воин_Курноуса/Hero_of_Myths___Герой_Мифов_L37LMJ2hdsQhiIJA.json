@@ -1,0 +1,48 @@
+{
+  "name": "Hero of Myths / Герой Мифов",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kSwid5gHHzkFOLBz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За каждую разницу в размерах в пользу противника персонаж и его скакун получают бонус +10 ко всем тестам атаки против него; все успешные тесты атак получают +1 дополнительный успех. Используя копьё, за каждый нечётный размер противника оно наносит дополнительно +1d10 урона.",
+    "tier": 3,
+    "requirement": "Knightly Legacy",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Воин Курноуса",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "L37LMJ2hdsQhiIJA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!L37LMJ2hdsQhiIJA"
+}

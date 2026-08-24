@@ -1,0 +1,47 @@
+{
+  "name": "Khorne's Favorite / Любимец Кхорна",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж — цель Древнего Рока Кхорна (и его Демонов/Последователей); Демоны Слаанеш могут вмешиваться в дела Кхорна, чтобы не отдавать персонажа противоположному богу. Персонаж игнорирует демоническую природу целей для всех своих атак. Демоны Кхорна получают +20 на тесты Parry против персонажа.",
+    "source": "Элитный архетип: Принц Кхейна",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "DWML08uYSaOfqxlt",
+  "effects": [],
+  "folder": "STxRWl80fiV0ujnH",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!DWML08uYSaOfqxlt"
+}

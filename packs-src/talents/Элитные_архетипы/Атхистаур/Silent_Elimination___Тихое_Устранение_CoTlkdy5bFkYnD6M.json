@@ -1,0 +1,48 @@
+{
+  "name": "Silent Elimination / Тихое Устранение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "nXdslQkRlQTqIAhQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Пока персонаж незрим, все его рукопашные атаки становятся незримыми и врасплох. Атаковав цель врасплох со спины, получает бонус +20 на атаку и +1d10 к Dmg, ещё +1 к Dmg за каждый успех атаки. Убитая так первой атакой цель погибает без шума и криков (её всё ещё нужно подпереть, иначе может упасть). Биомониторы и отслеживающие состояние психосилы получают информацию о смерти только через I.b минут после неё.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Атхистаур (Мимик)",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "CoTlkdy5bFkYnD6M",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!CoTlkdy5bFkYnD6M"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Prevention / Недопущение",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "d7vBc3IpcDku9Y6b",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда в радиусе рукопашной атаки персонажа противник пытается выстрелить или манифестировать психосилу, персонаж может пройти тест WS+10 и при успехе совершить по противнику свободную атаку. Если атака вызвала критический эффект, цель не совершает действие и не восстанавливает потраченные на него ОД.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Авангард Связанных Душами",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "gwQ0IBQKmBN4eAfJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!gwQ0IBQKmBN4eAfJ"
+}

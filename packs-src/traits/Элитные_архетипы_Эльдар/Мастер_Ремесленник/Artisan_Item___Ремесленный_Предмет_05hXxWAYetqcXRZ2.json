@@ -1,0 +1,47 @@
+{
+  "name": "Artisan Item / Ремесленный Предмет",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Покупая таланты этого элитного архетипа, персонаж получает возможность создавать Ремесленные Предметы — Банк успехов ×36, качество на ступень выше Best.Q (Arts.Q), неуничтожимые, не подверженные демоничеству без прямого вмешательства божества. Эффекты действуют только для определённого носителя. Персонаж может находить незавершённые Ремесленные Предметы (Банк×20) через приключения, а также изготавливать Силовые Щиты и снаряжение Arts.Q с Банком×18. Заблудившийся на Пути Ремесленника не выбрасывает Ремесленные Предметы даже при срабатывании условий пути.",
+    "source": "Элитный архетип: Мастер-Ремесленник",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "05hXxWAYetqcXRZ2",
+  "effects": [],
+  "folder": "pABL1oK3dMYgiDBL",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!05hXxWAYetqcXRZ2"
+}

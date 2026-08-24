@@ -1,0 +1,48 @@
+{
+  "name": "High Ground / Возвышенность",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "d7vBc3IpcDku9Y6b",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж модифицирует Приём Повалить (база Стандартная Атака/Натиск/Полная Атака; оружие Когти/Крюк/Кулаки/Меч/Посох/Топор/Щит): персонаж и цель проходят встречный тест Parry(WS)+0 или WS+10 vs Athletics(S)+0 или Acrobatics(A)+0. Победив, персонаж сбивает цель с ног и проводит по ней свободную атаку; победив на 5+ Успехов — за каждый нечётный успех с 5 наносит ещё свободную атаку, вплоть до WS.b атак (каждая успешная с непоглощённым уроном даёт цели 1 усталость). Персонаж не получает штрафов от размера цели (цель получает, если меньше персонажа); приём нельзя проводить против целей на 2+ Размера больше персонажа. Если цель пытается встать рядом с персонажем, он может нанести по ней свободную атаку.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Авангард Связанных Душами",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "1NNfAxT0c6zPVObx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!1NNfAxT0c6zPVObx"
+}

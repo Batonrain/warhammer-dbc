@@ -1,0 +1,48 @@
+{
+  "name": "Role of the Spider / Роль Паука",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "nXdslQkRlQTqIAhQ",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж, вооружённый поцелуем арлекина, может потратить 1 час работы (или 1 очко судьбы и 10 минут) и создать моносетевую паутину с шаблоном Blast (10), истратив всю моносеть внутри. Обнаружение — тест Awareness(P)−30. Цели внутри паутины при Полном Действии или 2+ физических избеганиях получают неизбегаемое попадание моносетевым пистолетом; персонаж заранее решает, смертельна ли паутина. Убрать её — 5 минут работы адамантиумными инструментами, либо «всосать» обратно в поцелуй арлекина.",
+    "tier": 2,
+    "requirement": "Volunteer Actor",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Атхистаур (Мимик)",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "AtKBx4Vq4ELwRpGo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!AtKBx4Vq4ELwRpGo"
+}

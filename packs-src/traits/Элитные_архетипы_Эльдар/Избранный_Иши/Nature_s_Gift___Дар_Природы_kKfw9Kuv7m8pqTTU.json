@@ -1,0 +1,47 @@
+{
+  "name": "Nature's Gift / Дар Природы",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Под ногами персонажа независимо от местности всегда растёт новая жизнь — цветы, растения, корни (погибают при отходе на I.b метров на непригодной для них местности, остаются на подходящей). Растения могут помогать персонажу по решению ГМа (крафт, следы, охота, ориентация). В бою персонаж может за Полное действие создать перед собой Укрытие (дерево/кустарник) с AP 8; если не двигался с начала прошлого хода — получает дополнительную Реакцию от растительности.",
+    "source": "Элитный архетип: Избранный Иши",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "kKfw9Kuv7m8pqTTU",
+  "effects": [],
+  "folder": "OwykJzK9XnnIICZJ",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!kKfw9Kuv7m8pqTTU"
+}

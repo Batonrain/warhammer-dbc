@@ -1,0 +1,48 @@
+{
+  "name": "Quick Death / Быстрая Смерть",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "TZIP0WvwPS5LkPm8",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж добавляет полный BS.b к урону от стрелковых атак вместо ½ (окр.▲) BS.b. Совершая одиночный прицельный выстрел, добавляет к нему ещё +Unn. BS.b урона.",
+    "tier": 1,
+    "requirement": "Mighty Shot",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Маргорах (Шут Смерти)",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "dvKZMRkXhQCdpxmg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!dvKZMRkXhQCdpxmg"
+}

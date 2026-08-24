@@ -1,0 +1,47 @@
+{
+  "name": "The Antipode of Chaos / Антипод Хаоса",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж перестаёт получать порчу и безумие от любых источников. Не может получать Покровительство (и Метки Богов). Если его Inf выше, чем у одержимого/демонического предмета — может автоматически подчинить его своей воле. Не может заключать союзы с Хаосом без особой причины (только чтобы натравить Хаос на Хаос). Вступая в бой с хаоситами, лишает их 1 Очка Бесчестия; спасение от смерти от рук Агента Кабала стоит вдвое больше Очков Бесчестия.",
+    "source": "Элитный архетип: Агент Кабала",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "pgAJxF3ZyJwOy7ys",
+  "effects": [],
+  "folder": "6Ydx0866KzAXmKmH",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!pgAJxF3ZyJwOy7ys"
+}

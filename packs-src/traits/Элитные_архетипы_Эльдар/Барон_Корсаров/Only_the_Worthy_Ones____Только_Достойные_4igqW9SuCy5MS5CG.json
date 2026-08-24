@@ -1,0 +1,47 @@
+{
+  "name": "Only the Worthy Ones! / Только Достойные!",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает +10 на все социальные взаимодействия с преступным миром, повышающиеся до +15 при общении с другими корсарами, орксарами и пиратами. Он может форсировать победу на тестах Dodge и Parry, направленных на противодействие неважным противникам (рядовым бойцам и подобным). Если в битве отсутствуют сколько-нибудь серьёзные соперники для персонажа — Барон Корсаров всегда действует первым, обладая наивысшей инициативой в этом сражении (при желании он может снизить свою инициативу до желаемого уровня).",
+    "source": "Элитный архетип: Барон Корсаров",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "4igqW9SuCy5MS5CG",
+  "effects": [],
+  "folder": "rg7EN7pYKaYZ9Qkn",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!4igqW9SuCy5MS5CG"
+}

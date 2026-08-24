@@ -1,0 +1,47 @@
+{
+  "name": "Warlord of Kaela Mensha Khaine / Полководец Каэла Менша Кхейна",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает +10 на все тесты Командования теми, кто относится к тому же аспекту, что и он. Когда кто-то из его аспекта в радиусе W метров проваливает тест, связанный с аспектом, персонаж может единожды за бой перебросить этот тест, а затем совершить бросок W+10 как тест Ярости — при провале эльдар входит в ярость до конца боя (распространяется и на атаки, и на тесты от талантов/трейтов). Персонаж не может командовать и использовать бонусы на командование, находясь не в гуще событий; находясь в самой гуще событий — получает преимущество на один тест командования на своё усмотрение, плюс ещё одно преимущество за каждого убитого вражеского чемпиона своими руками (сгорает в конце битвы).",
+    "source": "Элитный архетип: Экзарх Аспекта",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "SHrn4K2t46oL50sx",
+  "effects": [],
+  "folder": "nWjkR7yZ3x3xHMYT",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!SHrn4K2t46oL50sx"
+}

@@ -1,0 +1,47 @@
+{
+  "name": "The Blade of Asuryan / Клинок Азуриана",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает +1 к базовому Психическому Рейтингу (PR). Он может применять любые психосилы на своё психосиловое оружие, запирая в нём эффект (в т.ч. урон) по обычным правилам манифестации, если тот эффект применим к оружию — вместо шаблона/конуса/ауры воздействуя точечно на цель при ударе. Персонаж может запирать до ½ WS.b (окр.▼) психосил в оружии одновременно; запертые психосилы не снижают текущий PR персонажа. Раз в Раунд после успешной рукопашной атаки психосиловым оружием персонаж может применить любую запертую психосилу на противника за Свободное действие. Существа, обычно способные видеть и уклоняться от психосил, получают штраф −2×WP.b персонажа на избегание такой атаки.",
+    "source": "Элитный архетип: Высший Варлок",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "3OTdj3zakAQLjprL",
+  "effects": [],
+  "folder": "iDFKSFP7nWyQIlYg",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!3OTdj3zakAQLjprL"
+}

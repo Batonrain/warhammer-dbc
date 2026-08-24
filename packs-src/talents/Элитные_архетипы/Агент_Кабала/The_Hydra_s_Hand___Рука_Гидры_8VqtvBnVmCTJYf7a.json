@@ -1,0 +1,48 @@
+{
+  "name": "The Hydra's Hand / Рука Гидры",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "S1J31uqIlWvIxe3Q",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж не получает штрафов общения с Альфа-Легионерами и лишает их штрафов на общение с собой; воспринимается ими как равный, может ими командовать и создавать ячейки. Знает технологии Альфа-Легиона и автоматически раскусывает их, снижает редкость их снаряжения на 1 в расчёте реквизиции и крафта. Знает Раптор-Формулу и Легионы Индуктиев времён Ереси Хоруса. Может модифицировать броню Астартес технологиями Кабала, убирая штраф скрытности и ограничения на A (не работает на терминаторские доспехи и экзокостюмы). Ветераны, приближённые к Альфарию и Омегону, могут знать истинную природу Кабала и противостоять персонажу.",
+    "tier": 3,
+    "requirement": "F.L (Astartes)+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Агент Кабала",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "8VqtvBnVmCTJYf7a",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!8VqtvBnVmCTJYf7a"
+}

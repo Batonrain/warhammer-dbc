@@ -1,0 +1,48 @@
+{
+  "name": "Exarch of the Dark Reapers / Экзарх Тёмных Жнецов",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "908Vd6zlCzHDktpV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если персонаж, начиная с прошлого раунда, не совершал движение, он получает бонус +10 на все одиночные атаки и короткие очереди и бонус +30 на все длинные очереди. Эти бонусы распространяются только на сюрикен-оружие и ракетное оружие.",
+    "tier": 3,
+    "requirement": "Мастер/Заблудившийся на Пути Тёмных Жнецов",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Экзарх Аспекта",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "Y4vfXjKebWXL4uhm",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!Y4vfXjKebWXL4uhm"
+}

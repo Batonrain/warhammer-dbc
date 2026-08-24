@@ -1,0 +1,48 @@
+{
+  "name": "Ardathair / Ардатхаир",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "cnirdSTMnpBj2xjj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может надевать одновременно 2 маски (в одной Маске может быть лишь один Ардатхаир). Взяв этот талант, Мастер Труппы открывает Путь Возвышения в Роль Рхана Дандре: Маска Смеха.",
+    "tier": 3,
+    "requirement": "Три Маски",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Атхаир (Мастер Труппы)",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "lXmJhxZUCodP5IDc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!lXmJhxZUCodP5IDc"
+}
