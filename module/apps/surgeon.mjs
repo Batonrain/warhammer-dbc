@@ -143,7 +143,7 @@ export class SurgeonWindow extends Application {
     const mid = Math.ceil(systems.length / 2);
     return {
       actorName: actor.name,
-      layers: buildBodyLayers(bodyState, this.actor.system.bodyType || "male"),
+      layers: buildBodyLayers(bodyState, this.actor.system.bodyType || "male", this.actor.system.race),
       implantsBack: impl.back, implantsFront: impl.front,
       systemsL: systems.slice(0, mid), systemsR: systems.slice(mid),
       implantTotal: items.filter(isInstalled).length,

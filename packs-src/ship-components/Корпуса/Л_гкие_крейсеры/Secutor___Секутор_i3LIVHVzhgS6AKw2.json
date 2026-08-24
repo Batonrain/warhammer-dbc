@@ -1,0 +1,57 @@
+{
+  "name": "Secutor / Секутор",
+  "type": "shipHull",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "NfawZJdCJMS3OCWj",
+  "system": {
+    "hullClass": "Лёгкие крейсеры",
+    "sp": 58,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "Hybrid Ship: Пустотные щиты/только крейсера",
+    "description": "",
+    "notes": "",
+    "shipProps": [
+      {
+        "key": "hybridShip"
+      }
+    ],
+    "hull": {
+      "spaceMax": 58,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "Н1, ПБ1, ЛБ1, НП1",
+      "hullIntegrity": 60
+    },
+    "chars": {
+      "speed": 5,
+      "manoeuvrability": 12,
+      "detection": 15,
+      "voidShields": 0,
+      "armour": 20,
+      "turretRating": 2
+    }
+  },
+  "_id": "i3LIVHVzhgS6AKw2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!i3LIVHVzhgS6AKw2"
+}

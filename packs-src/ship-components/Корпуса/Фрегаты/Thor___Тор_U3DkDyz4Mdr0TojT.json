@@ -1,26 +1,18 @@
 {
   "name": "Thor / Тор",
-  "type": "component",
+  "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "VOyInFpl9FIDrRXg",
   "system": {
-    "kind": "hull",
-    "power": 0,
-    "space": 0,
-    "sp": 40,
+    "hullClass": "Фрегаты",
+    "sp": 44,
     "rarity": 0,
     "quality": "common",
-    "hulls": "",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "aspects": "In-build: Торпедный аппарат Грифон (Н), 2/4",
     "description": "",
     "notes": "",
-    "essential": false,
-    "external": false,
-    "damaged": false,
-    "lcBonus": 0,
-    "pcBonus": 0,
-    "modChar": "",
-    "modValue": 0,
     "shipProps": [
       {
         "key": "inbuild"
@@ -31,27 +23,19 @@
       }
     ],
     "hull": {
-      "spaceMax": 40,
+      "spaceMax": 39,
       "powerGen": 0,
       "turnArc": "90°",
       "weaponCapacity": "2Н, 1НП",
-      "hullIntegrity": 36
+      "hullIntegrity": 45
     },
     "chars": {
-      "speed": 9,
+      "speed": 6,
       "manoeuvrability": 20,
-      "detection": 14,
+      "detection": 10,
       "voidShields": 0,
       "armour": 16,
-      "turretRating": 1
-    },
-    "weapon": {
-      "wType": "macrobattery",
-      "strength": 0,
-      "damage": "",
-      "crit": 0,
-      "range": 0,
-      "arc": ""
+      "turretRating": 2
     }
   },
   "_id": "U3DkDyz4Mdr0TojT",

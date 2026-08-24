@@ -82,8 +82,8 @@
 /* Имя и метка «Имя» у Хаосита: шапка hue-rotate'ится в цвет Бога, поэтому
    красим их в когитаторную зелень — фильтр сам доводит до читаемого цвета
    Бога (иначе фикс. красный проворачивался в грязно-фиолетовый). */
-.warhammer-dbc.wh-align-heretic .character-sheet .actor-name,
-.warhammer-dbc.wh-align-heretic .character-sheet .header-name-row .header-label {
+.warhammer-dbc.wh-align-heretic.character-sheet .actor-name,
+.warhammer-dbc.wh-align-heretic.character-sheet .header-name-row .header-label {
   color: #4dffa6;
 }
 
