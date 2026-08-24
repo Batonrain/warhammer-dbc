@@ -750,11 +750,8 @@ export const GOD_GIFT_LIBRARY = Object.entries(GOD_GIFTS).flatMap(([key, g]) =>
     }
   })));
 
-/**
- * Готовая запись предмета по имени — используется пикером и броском, чтобы
- * мутации работали ДАЖЕ без собранного компендиума (он наполняется на ready).
- */
-export function mutationItemData(name, godKey = "") {
+/** Запасной путь: библиотека константы, без Механики (см. mutationItemData). */
+function fallbackMutationItemData(name, godKey) {
   if (godKey) {
     const g = GOD_GIFTS[godKey];
     const x = g?.gifts.find(v => v.name === name);
@@ -764,6 +761,37 @@ export function mutationItemData(name, godKey = "") {
       || { name, type: "mutation", img: IMG_MUT, folder: "Общие мутации",
            system: { description: "", notes: "", benefit: "", source: "Общие мутации (стр. 440)",
                      bookSource: MUTATION_BOOK, roll: "", god: "", effects: { ...FX0 } } };
+}
+
+const normMutName = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+/**
+ * Готовая запись предмета по имени — используется пикером и броском.
+ *
+ * Сперва ищет документ в собранном компендиуме `warhammer-dbc.mutations` —
+ * только оттуда приезжает Механика (flags.warhammer-dbc.mechanics): она есть
+ * только в паке, MUTATION_LIBRARY/GOD_GIFT_LIBRARY несут лишь текст на случай,
+ * если компендиум ещё не собран (тот же приём, что resolveMechSource в
+ * apps/mechanics.mjs — индекс по имени, а не хранимый UUID, потому что здесь
+ * им просто неоткуда взяться). Имя Дара может повторяться у РАЗНЫХ Богов
+ * («Инфернальный Оруженосец» — и у Кхорна, и у Тзинча), поэтому индекс просит
+ * ещё и system.god и сверяет его с godKey — без этого поля в обычном индексе
+ * не бывает.
+ */
+export async function mutationItemData(name, godKey = "") {
+  const pack = (typeof game !== "undefined") ? game.packs?.get?.("warhammer-dbc.mutations") : null;
+  if (pack) {
+    try {
+      const index = await pack.getIndex({ fields: ["system.god"] });
+      const hit = index.find(e => normMutName(e.name) === normMutName(name)
+        && (godKey ? e.system?.god === godKey : !e.system?.god));
+      if (hit) {
+        const doc = await pack.getDocument(hit._id);
+        if (doc) return doc.toObject();
+      }
+    } catch (e) { /* пак недоступен/не собран — запасной путь ниже */ }
+  }
+  return fallbackMutationItemData(name, godKey);
 }
 
 /** Полный каталог для пикера: общие мутации + Дары по Богам. */

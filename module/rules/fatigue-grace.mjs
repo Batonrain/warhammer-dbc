@@ -61,7 +61,7 @@ export function fatigueGraceForActor(actor) {
   for (const item of actor?.items ?? []) {
     for (const entry of flattenMechEntries(mechanicsOf(item))) {
       if (!isFatigueEntry(entry)) continue;
-      if (!entryWhenOk(actor, entry)) continue;
+      if (!entryWhenOk(actor, entry, item)) continue;
       const key = entry.fatigueThresholdChar === "wp" ? "wp" : "t";
       const grace = Number(actor?.system?.characteristics?.[key]?.bonus) || 0;
       if (grace > best) best = grace;

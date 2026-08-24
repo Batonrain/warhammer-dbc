@@ -29,9 +29,15 @@ function ownedSpecs(actor, nameRe) {
     .flatMap(i => String(i.system?.specialization || "").split(",").map(s => s.trim()).filter(Boolean));
 }
 
+// allRanged зеркалит allMelee (Arms Master) — та же «считается имеющим все
+// специализации», только для Weapon Training, а не Melee Training (Оракул
+// Стали, Дар Кхорна: «владение всеми видами оружия»). «Настоящую» экзотику
+// (weaponType:"exotic") это не покрывает — она системой вообще не
+// проверяется, см. шапку файла.
 const BLANKET_MELEE_FLAGS = ["weapon.trained.legion", "weapon.trained.eldar",
                               "weapon.trained.drukhari", "weapon.trained.allMelee"];
-const BLANKET_RANGED_FLAGS = ["weapon.trained.legion", "weapon.trained.eldar", "weapon.trained.drukhari"];
+const BLANKET_RANGED_FLAGS = ["weapon.trained.legion", "weapon.trained.eldar",
+                               "weapon.trained.drukhari", "weapon.trained.allRanged"];
 
 /**
  * Владеет ли персонаж категорией рукопашного оружия (Melee Training, стр. 62).

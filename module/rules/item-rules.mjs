@@ -147,7 +147,7 @@ export function rulesFromItemMechanics(items, isActive = () => true, actor = nul
         walk(item, entry.group.entries, entry.group.operator);
         continue;
       }
-      if (!entryWhenOk(actor, entry)) continue;
+      if (!entryWhenOk(actor, entry, item)) continue;
       const rule = ruleFromEntry(item, entry);
       if (rule) out.push(rule);
     }

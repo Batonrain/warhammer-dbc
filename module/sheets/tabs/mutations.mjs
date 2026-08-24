@@ -17,13 +17,43 @@ import { rollSubmutation }             from "../../apps/submutations.mjs";
 import { esc } from "../../helpers/utils.mjs";
 
 /**
+ * Все записи таблицы, достижимые набором бросков ± Inf.b (или без сдвига,
+ * если результат от Порчи за Провал) — то же самое, что диалог показывает
+ * списком под формой. Вынесено отдельно ради теста: как именно ограничен
+ * сдвиг Бонусом Влияния, проверяется без Foundry — test/sheets/mutations.test.mjs.
+ *
+ * @param {"mutation"|"gift"} type
+ * @param {string}  god     Ключ Бога-покровителя (для type "gift").
+ * @param {number}  roll1   Первый бросок 1d100.
+ * @param {?number} roll2   Второй бросок Неделимого (только для type "mutation").
+ * @param {number}  infB    Бонус Влияния — задаёт диапазон сдвига в обе стороны.
+ * @param {boolean} failed  От Порчи за Провал — закрывает и сдвиг, и второй бросок.
+ * @returns {{name:string, range:string, text:string}[]} в порядке самой таблицы.
+ */
+export function mutationPool(type, god, roll1, roll2, infB, failed) {
+  const cat = mutationCatalog();
+  const source = type === "gift" ? (cat.gifts.find(g => g.god === god)?.items || []) : cat.common;
+  const rolls = (type === "mutation" && roll2 != null && !failed) ? [roll1, roll2] : [roll1];
+  const shifts = failed ? [0] : Array.from({ length: infB * 2 + 1 }, (_, i) => i - infB);
+  const achievable = new Set();
+  for (const r of rolls) for (const s of shifts) {
+    const name = type === "gift" ? giftByRoll(god, r + s)?.name : mutationByRoll(r + s);
+    if (name) achievable.add(name);
+  }
+  return source.filter(x => achievable.has(x.name));
+}
+
+/**
  * Бросок 1d100 по ОБЩЕМУ ПУЛУ — либо таблица Общих Мутаций (стр. 440), либо
  * таблица Даров выбранного Бога (стр. 453-460); тип выбирается в диалоге,
- * один и тот же бросок переинтерпретируется по нужной таблице. Сдвиг ±Inf.b
- * (если результат НЕ от Порчи за Провал) работает одинаково для обеих
- * веток — раньше был только у Мутаций. Неделимые бросают дважды и выбирают
- * результат — только для ветки Мутаций (по тексту книги, Дары привязаны к
- * конкретному Богу-покровителю и не имеют двойного броска).
+ * один и тот же бросок переинтерпретируется по нужной таблице.
+ *
+ * Сдвиг ±Inf.b больше не вводится вручную: диалог сам перебирает весь
+ * диапазон через mutationPool() и выводит ВСЕ достижимые записи таблицы
+ * разом списком внизу — клик по строке выбирает её как «Итог», стрелочка
+ * разворачивает краткое описание, чтобы выбор был осознанным. Порча за
+ * Провал закрывает и диапазон сдвига, и второй бросок Неделимых — тогда
+ * достижима только запись под самим броском.
  */
 export async function rollMutationOrGift(actor) {
   const infB = actor.system.characteristics?.inf?.bonus ?? 0;
@@ -34,31 +64,38 @@ export async function rollMutationOrGift(actor) {
   const defaultGod = GOD_GIFTS[patron] ? patron : Object.keys(GOD_GIFTS)[0];
   const godOptions = Object.entries(GOD_GIFTS)
     .map(([k, g]) => `<option value="${k}" ${k === defaultGod ? "selected" : ""}>${g.label}</option>`).join("");
-  const resultName = (type, god, val) => type === "gift" ? (giftByRoll(god, val)?.name || "—") : mutationByRoll(val);
+  const rollsLabel = roll2 ? `${roll1.total}, ${roll2.total}` : `${roll1.total}`;
+  const poolFor = (type, god, failed) => mutationPool(type, god, roll1.total, roll2?.total ?? null, infB, failed);
 
+  const optionRow = (x, god) => `
+    <div class="pick-row" data-name="${esc(x.name)}" data-god="${esc(god)}">
+      <div class="pick-head">
+        <button type="button" class="pick-exp" title="Показать описание">▸</button>
+        <span class="pick-name">${esc(x.name)}</span>
+        <span class="pick-req">d100 ${esc(x.range)}</span>
+      </div>
+      <div class="pick-desc" style="display:none;">${esc(x.text) || "<em>Описание ещё не перенесено из книги</em>"}</div>
+    </div>`;
+
+  const defaultName = mutationByRoll(roll1.total);
   const content = `
     <form class="wh-attack-form" style="padding:6px;">
       <div class="atk-dlg-row"><label>Тип:</label>
         <select id="mg-type" class="pm-input">
-          <option value="mutation">Мутация (Общие, стр. 440)</option>
-          <option value="gift">Дар Бога (стр. 453-460)</option>
+          <option value="mutation">Мутация</option>
+          <option value="gift">Дар Бога</option>
         </select></div>
       <div class="atk-dlg-row" id="mg-god-row"><label>Бог-покровитель:</label>
         <select id="mg-god" class="pm-input">${godOptions}</select></div>
-      <div class="atk-dlg-row"><label>Бросок:</label><span><b>${roll1.total}</b></span></div>
-      ${roll2 ? `<div class="atk-dlg-row"><label>Второй (Неделимый):</label><span><b>${roll2.total}</b></span></div>
-      <div class="atk-dlg-row" id="mg-which-row"><label>Использовать:</label>
-        <select id="mg-which"><option value="1">Первый (${roll1.total})</option><option value="2">Второй (${roll2.total})</option></select></div>` : ""}
+      <div class="atk-dlg-row"><label>Бросок:</label><span><b>${rollsLabel}</b></span></div>
       <div class="atk-dlg-row">
-        <label title="Мутация от Порчи за Провал не даёт ни сдвига, ни второго броска Неделимым">От Порчи за Провал:</label>
+        <label title="Мутация от Порчи за Провал не даёт ни сдвига ±Inf.b (${infB}), ни второго броска Неделимым — достижима только запись под самим броском">От Порчи за Провал:</label>
         <input type="checkbox" id="mg-fail"/>
       </div>
-      <div class="atk-dlg-row">
-        <label>Сдвиг (±Inf.b ${infB}):</label>
-        <input type="number" id="mg-shift" value="0" min="-${infB}" max="${infB}"
-               title="Только если результат НЕ от Порчи за Провал"/>
-      </div>
-      <div class="atk-dlg-row"><label>Итог:</label><b id="mg-result">${resultName("mutation", defaultGod, roll1.total)}</b></div>
+      <div class="atk-dlg-row"><label>Итог:</label><b id="mg-result">${defaultName}</b></div>
+      <input type="hidden" id="mg-pick-name" value="${esc(defaultName)}"/>
+      <input type="hidden" id="mg-pick-god" value=""/>
+      <div class="wh-item-picker mg-pool" id="mg-pool"></div>
     </form>`;
 
   new Dialog({
@@ -67,24 +104,17 @@ export async function rollMutationOrGift(actor) {
     buttons: {
       ok: { label: "Получить", callback: async (html) => {
         const type  = String(html.find("#mg-type").val() || "mutation");
-        const god   = String(html.find("#mg-god").val() || defaultGod);
-        // Порча за Провал закрывает и сдвиг, и выбор из двух бросков (стр. 440).
+        const god   = String(html.find("#mg-pick-god").val() || "");
         const failed = html.find("#mg-fail").is(":checked");
-        const base  = (roll2 && !failed && type === "mutation" && html.find("#mg-which").val() === "2") ? roll2.total : roll1.total;
-        const shift = failed ? 0
-          : Math.max(-infB, Math.min(infB, parseInt(html.find("#mg-shift").val()) || 0));
-        const val   = base + shift;
-        const name  = resultName(type, god, val);
-        const data  = foundry.utils.deepClone(mutationItemData(name, type === "gift" ? god : ""));
-        delete data.folder; delete data.folderParent;
+        const name  = String(html.find("#mg-pick-name").val() || defaultName);
+        const data  = foundry.utils.deepClone(await mutationItemData(name, type === "gift" ? god : ""));
+        delete data.folder; delete data.folderParent; delete data._id;
         const [item] = await actor.createEmbeddedDocuments("Item", [data]);
         ChatMessage.create({
           speaker: ChatMessage.getSpeaker({ actor: actor }),
           content: `<div class="wh-roll-result"><div class="roll-header">${type === "gift" ? `Дар ${GOD_GIFTS[god]?.label || god}` : "Мутация"}</div>
-            <div class="roll-statline"><span class="roll-stat"><label>Бросок</label><b>${base}</b></span>
-            ${shift ? `<span class="roll-stat"><label>Сдвиг</label><b>${shift > 0 ? "+" : ""}${shift}</b></span>` : ""}
-            <span class="roll-stat"><label>Итог</label><b>${val}</b></span></div>
-            <div class="roll-outcome"><b>${name}</b></div></div>`,
+            <div class="roll-statline"><span class="roll-stat"><label>Бросок</label><b>${rollsLabel}</b></span></div>
+            <div class="roll-outcome"><b>${esc(name)}</b></div></div>`,
           rolls: [roll1, ...(roll2 && !failed ? [roll2] : [])]
         });
         // Субмутация бросается сразу за мутацией — она часть той же выдачи
@@ -97,26 +127,47 @@ export async function rollMutationOrGift(actor) {
     },
     default: "ok",
     render: html => {
-      const syncVisibility = () => {
+      const select = (row, name, god) => {
+        html.find(".mg-pool .pick-row").each((_, r) => r.classList.remove("mg-selected"));
+        row?.classList.add("mg-selected");
+        html.find("#mg-pick-name").val(name);
+        html.find("#mg-pick-god").val(god);
+        html.find("#mg-result").text(name || "—");
+      };
+      const renderPool = () => {
         const type = html.find("#mg-type").val();
+        const god = html.find("#mg-god").val();
         const failed = html.find("#mg-fail").is(":checked");
-        html.find("#mg-god-row").toggle(type === "gift");
-        html.find("#mg-which-row").toggle(!!roll2 && type === "mutation" && !failed);
+        const pool = poolFor(type, god, failed);
+        const pickGod = type === "gift" ? god : "";
+        html.find("#mg-pool").html(pool.map(x => optionRow(x, pickGod)).join("")
+          || "<p><em>Нет доступных результатов</em></p>");
+        html.find(".mg-pool .pick-exp").on("click", ev => {
+          ev.preventDefault(); ev.stopPropagation();
+          const row = ev.currentTarget.closest(".pick-row");
+          const desc = row.querySelector(".pick-desc");
+          const open = desc.style.display !== "none";
+          desc.style.display = open ? "none" : "block";
+          ev.currentTarget.textContent = open ? "▸" : "▾";
+        });
+        html.find(".mg-pool .pick-head").on("click", ev => {
+          const row = ev.currentTarget.closest(".pick-row");
+          select(row, row.dataset.name, row.dataset.god);
+        });
+        // Умолчание — бросок без сдвига (первый бросок при Неделимом).
+        const base = type === "gift" ? giftByRoll(god, roll1.total)?.name : mutationByRoll(roll1.total);
+        const baseRow = pool.find(x => x.name === base) ? html.find(`.mg-pool .pick-row[data-name="${CSS.escape(base ?? "")}"]`)[0] : null;
+        select(baseRow, base || pool[0]?.name || "—", pickGod);
       };
-      const upd = () => {
-        const type  = html.find("#mg-type").val();
-        const god   = html.find("#mg-god").val();
-        const failed = html.find("#mg-fail").is(":checked");
-        const base  = (roll2 && !failed && type === "mutation" && html.find("#mg-which").val() === "2") ? roll2.total : roll1.total;
-        const shift = failed ? 0
-          : Math.max(-infB, Math.min(infB, parseInt(html.find("#mg-shift").val()) || 0));
-        html.find("#mg-result").text(resultName(type, god, base + shift));
-      };
-      syncVisibility();
-      html.find("#mg-type, #mg-fail").on("change", () => { syncVisibility(); upd(); });
-      html.find("#mg-god, #mg-shift, #mg-which").on("input change", upd);
+      html.find("#mg-type, #mg-fail").on("change", () => {
+        html.find("#mg-god-row").toggle(html.find("#mg-type").val() === "gift");
+        renderPool();
+      });
+      html.find("#mg-god").on("change", renderPool);
+      html.find("#mg-god-row").toggle(html.find("#mg-type").val() === "gift");
+      renderPool();
     }
-  }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 420 }).render(true);
+  }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 480 }).render(true);
 }
 
 /**
@@ -162,8 +213,8 @@ export async function openMutationPicker(actor) {
       html.find(".pick-add").on("click", async ev => {
         ev.preventDefault(); ev.stopPropagation();
         const { name, god } = ev.currentTarget.dataset;
-        const data = foundry.utils.deepClone(mutationItemData(name, god));
-        delete data.folder; delete data.folderParent;
+        const data = foundry.utils.deepClone(await mutationItemData(name, god));
+        delete data.folder; delete data.folderParent; delete data._id;
         const [item] = await actor.createEmbeddedDocuments("Item", [data]);
         ui.notifications.info(`Добавлено: ${name}`);
         // Мутация с субмутациями сразу спрашивает свою строку — как и при броске.

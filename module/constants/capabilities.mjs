@@ -133,6 +133,12 @@ export const CAPABILITIES = {
     label: "Считается имеющим все специализации Melee Training",
     source: "Arms Master / Оружейный Мастер (стр. 62)",
     reader: "module/rules/weapon-training.mjs — meleeTrainingStatus"
+  },
+  "weapon.trained.allRanged": {
+    label: "Считается имеющим все специализации Weapon Training",
+    source: "Оракул Стали (Дар Кхорна, стр. 453-460): «владение всеми видами оружия». " +
+            "Настоящую экзотику (weaponType:\"exotic\") не покрывает — она вообще не проверяется системой.",
+    reader: "module/rules/weapon-training.mjs — weaponTrainingPenalty"
   }
 };
 

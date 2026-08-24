@@ -26,7 +26,7 @@ function ignoredTerrainKeysForActor(actor) {
     for (const group of getItemMechanics(item)) {
       for (const entry of group.entries || []) {
         if (entry.kind !== "terrainIgnore") continue;
-        if (!entryWhenOk(actor, entry)) continue;
+        if (!entryWhenOk(actor, entry, item)) continue;
         for (const k of entry.ignoreTerrainProps || []) keys.add(k);
       }
     }
