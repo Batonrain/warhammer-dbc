@@ -17,7 +17,7 @@ import { isAeldariRace } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
-import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
+import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } from "../constants/implants.mjs";
 
 const PACK = "warhammer-dbc.archetypes";
 const FLAG = "warhammer-dbc";
@@ -160,6 +160,12 @@ async function grantArchetypeImplants(actor, { grantsImplants, grantsWarPlate })
   const existing = new Set(actor.items.filter(i => i.type === "implant").map(i => i.name));
   if (grantsImplants) {
     const toAdd = MECHANICUS_IMPLANTS.filter(d => !existing.has(d.name)).map(d => foundry.utils.deepClone(d));
+    // Без этой Черты требование "Трейт Mechanicum Implants" у Элитных
+    // архетипов Механикус (Архимагос, Секутор и т.д.) не проходит, хотя
+    // физические импланты выше уже выданы — см. grantMechanicumImplantsTrait
+    // в apps/creation.mjs (та же логика, продублирована по тем же причинам).
+    const hasTrait = actor.items.some(i => i.type === "trait" && i.name === MECHANICUM_IMPLANTS_TRAIT.name);
+    if (!hasTrait) toAdd.push(foundry.utils.deepClone(MECHANICUM_IMPLANTS_TRAIT));
     if (toAdd.length) await actor.createEmbeddedDocuments("Item", toAdd);
   } else if (grantsWarPlate && !existing.has(SKITARII_WAR_PLATE.name)) {
     await actor.createEmbeddedDocuments("Item", [foundry.utils.deepClone(SKITARII_WAR_PLATE)]);

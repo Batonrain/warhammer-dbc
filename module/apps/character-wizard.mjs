@@ -35,8 +35,8 @@ import { characterContext }      from "../sheets/character-context.mjs";
 import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
 import { CREATION_ROLL_CHARS, creationBonusRolls, rollCharSet, creationCharSum,
          rollFormula, APT_CHAR_KEYS, APT_OTHER_KEYS, APT_PICK, resolveCreation,
-         grantCreationSkills, grantMechanicusImplants, grantSkitariiWarPlate,
-         ruSpec } from "./creation.mjs";
+         grantCreationSkills, grantMechanicusImplants, grantMechanicumImplantsTrait,
+         grantSkitariiWarPlate, ruSpec } from "./creation.mjs";
 import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "./aspirations.mjs";
@@ -777,8 +777,10 @@ export class CharacterWizard extends Application {
     const createTraits = (list, source) => actor.sheet?._createTraitsFromList?.(list, source);
 
     if (arch?.trait) await createTraits([arch.trait], `Архетип: ${arch.name}`);
-    if (arch?.grantsImplants) await grantMechanicusImplants(actor);
-    else if (arch?.grantsWarPlate) await grantSkitariiWarPlate(actor);
+    if (arch?.grantsImplants) {
+      await grantMechanicusImplants(actor);
+      await grantMechanicumImplantsTrait(actor);
+    } else if (arch?.grantsWarPlate) await grantSkitariiWarPlate(actor);
 
     const flagUpdates = {};
     if (arch?.isPsyker)     flagUpdates["system.isPsyker"]     = true;
