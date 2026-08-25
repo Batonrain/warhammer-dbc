@@ -27,7 +27,54 @@
     "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Одержимый», стр. 129-132)"
   },
   "_id": "DzHtbbsi3cUQayKo",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Shared Defense / Общая Защита",
+      "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+      "system": {
+        "changes": [
+          {
+            "key": "system.reactions.max",
+            "type": "add",
+            "value": 1,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "eT4hW1sQd8FgJ3Zx",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "Реакция общая (движок не различает, какая душа управляет телом) — ограничение назначения соблюдается за столом.",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1787000000000,
+        "modifiedTime": 1787000000000,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!DzHtbbsi3cUQayKo.eT4hW1sQd8FgJ3Zx"
+    }
+  ],
   "sort": 0,
   "ownership": {
     "default": 0,

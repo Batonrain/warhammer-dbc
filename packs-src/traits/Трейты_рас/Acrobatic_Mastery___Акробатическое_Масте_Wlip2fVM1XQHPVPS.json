@@ -26,7 +26,54 @@
     "bookSource": "DoomBC — Основная книга"
   },
   "_id": "Wlip2fVM1XQHPVPS",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Acrobatic Mastery / Акробатическое Мастерство",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "system": {
+        "changes": [
+          {
+            "key": "system.reactions.max",
+            "type": "add",
+            "value": 2,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "zL2bK8rXc6PyW3Vd",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "Остальной текст (SPD-множители, свои формулы попаданий/успехов и т.п.) вне сферы экономики действий — не автоматизирован.",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1787000000000,
+        "modifiedTime": 1787000000000,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!Wlip2fVM1XQHPVPS.zL2bK8rXc6PyW3Vd"
+    }
+  ],
   "sort": 0,
   "flags": {
     "warhammer-dbc": {
