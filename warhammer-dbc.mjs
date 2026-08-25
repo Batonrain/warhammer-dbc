@@ -63,6 +63,7 @@ import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/app
 import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
+import { initMovementActionsHud } from "./module/combat/movement-actions.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
@@ -784,6 +785,7 @@ Hooks.once("ready", () => initHUD());
 // Варианты облика токена: кнопка в меню токена (игрок выбирает сам).
 Hooks.once("init", () => initTokenVariants());
 Hooks.once("init", () => initDifficultTerrainHud());
+Hooks.once("init", () => initMovementActionsHud());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());
 
@@ -1239,7 +1241,7 @@ Hooks.on("updateActor", async (doc, changes) => {
   }
 });
 
-// ── Тактическая карта (wdbc-8k0i): живой ресинк размера токена ──────────────
+// ── Тактическая карта (wdbc-8k0i): живой ресинк размера токена ────────────────
 // Раса (Огрин и т.п.) или надетая/снятая крупная броня (Терминаторская)
 // меняют Базу актора — prototypeToken.width/height И уже стоящие на сцене
 // токены обновляются сразу, без пересоздания токена (см. combat/tactical-map.mjs).

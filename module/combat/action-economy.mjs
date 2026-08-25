@@ -82,6 +82,9 @@ export async function resetActionEconomy(actor) {
   if (actor.getFlag("warhammer-dbc", "exposedAggressive")) {
     await actor.unsetFlag("warhammer-dbc", "exposedAggressive");
   }
+  if (actor.getFlag("warhammer-dbc", "running")) {
+    await actor.unsetFlag("warhammer-dbc", "running");
+  }
 }
 
 /**
@@ -130,6 +133,8 @@ export async function spendActionPoints(actor, cost) {
  */
 export function canSpendReaction(actor, { forDefense = false } = {}) {
   if (!isEncounterActive() || !hasActionEconomy(actor)) return true;
+  // Бег (стр. 32): до начала следующего Хода бегущий не может Реакции.
+  if (actor.getFlag("warhammer-dbc", "running")) return false;
   const universal = Number(actor.system.reactions?.value) || 0;
   const defense    = forDefense ? (Number(actor.system.reactions?.defenseValue) || 0) : 0;
   return (universal + defense) > 0;
