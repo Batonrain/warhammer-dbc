@@ -38,6 +38,21 @@ import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
 
 /**
+ * Текст всплывашки для ячейки «Итого» характеристики (title, поддерживает
+ * перенос строки \n) — из чего сложилось число: разборку строит
+ * documents/actor.mjs (char.totalBreakdown, тот же проход, что и сам total).
+ */
+function charTotalTooltip(total, breakdown) {
+  const lines = (breakdown || []).map(b => {
+    if (b.cap != null) return `${b.label}: не выше ${b.cap}`;
+    if (b.label === "База") return `${b.label}: ${b.value}`;
+    const sign = b.value > 0 ? "+" : "−";
+    return `${b.label}: ${sign}${Math.abs(b.value)}`;
+  });
+  return [`Итого: ${total}`, "", ...lines].join("\n");
+}
+
+/**
  * Есть ли у актора Элитный архетип с этим именем — предметом, строкой в шапке
  * (`system.eliteArchetype`) или в списке дополнительных (`eliteArchetypesExtra`).
  * Тот же трёхисточниковый пример, что и в sheets/item-picker.mjs (talentGroupLock):
@@ -365,6 +380,7 @@ export function characterContext(actor) {
       bonus,
       naturalBonus,
       bonusModified: bonus !== naturalBonus,
+      totalTooltip: charTotalTooltip(total, system.characteristics[key]?.totalBreakdown),
       cost:         system.characteristics[key]?.cost         ?? 0,
       charDamage:   system.charDamage?.[key]                  ?? 0
     };

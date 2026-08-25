@@ -1,4 +1,4 @@
-import { IMPROVEMENT_BONUS, SKILL_RANKS } from "../constants/characteristics.mjs";
+import { IMPROVEMENT_BONUS, IMPROVEMENTS, SKILL_RANKS } from "../constants/characteristics.mjs";
 import { HAEM_STAGES, isHaemonculus } from "../constants/haemonculus.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }   from "../constants/skills.mjs";
 import { carryRow }                        from "../helpers/utils.mjs";
@@ -65,6 +65,34 @@ function calcMovement(agBonus, size) {
   };
 }
 
+
+/**
+ * Именованный вклад предметов-носителей Механики (Архетип/Раса/Субраса/
+ * Элитный архетип/Предсказание/Происхождение и любой другой предмет со
+ * вкладкой МЕХАНИКА) в ЗНАЧЕНИЕ характеристики — по предмету, а не общей
+ * суммой totalFx: тултип ИТОГО (см. _prepareCharacteristics ниже) обязан
+ * показывать источник, а не только итоговую цифру. Читает то же самое поле
+ * (fx.system.changes на embedded ActiveEffect предмета-носителя), что и
+ * сводка вкладки «Эффекты» самого предмета (item-sheet.mjs, summarizeEffectChanges).
+ * kind:"characteristic" пишет только "add"/"subtract" (см. OP_OPTIONS в
+ * apps/mechanics.mjs — умножение там бессмысленно, надбавка копится с нуля).
+ */
+function characteristicMechContrib(actor, charKey) {
+  const targetKey = `system.characteristics.${charKey}.totalFx`;
+  const out = [];
+  for (const item of actor.items) {
+    let sum = 0;
+    for (const fx of item.effects ?? []) {
+      if (fx.disabled) continue;
+      for (const c of fx.system?.changes ?? []) {
+        if (c.key !== targetKey) continue;
+        sum += c.type === "subtract" ? -(Number(c.value) || 0) : (Number(c.value) || 0);
+      }
+    }
+    if (sum) out.push({ label: item.name, value: sum });
+  }
+  return out;
+}
 
 export class WarhammerActor extends Actor {
   prepareData() { super.prepareData(); }
@@ -1012,7 +1040,26 @@ export class WarhammerActor extends Actor {
       // Потолок брони режет готовое значение Ловкости — и Бонус ниже считается
       // уже от урезанного. Сверхъестественная Ловкость потолком не ограничена:
       // она прибавляется к Бонусу отдельным слагаемым, а не к значению.
-      if (key === "ag" && agilityCap !== null) char.total = Math.min(char.total, agilityCap);
+      const cappedByArmor = key === "ag" && agilityCap !== null && char.total > agilityCap;
+      if (cappedByArmor) char.total = Math.min(char.total, agilityCap);
+
+      // Разборка Итого для всплывашки на листе (вкладка ПРОДВИЖЕНИЕ): откуда
+      // взялось число — по тем же слагаемым, что и формула выше. «Механика
+      // предметов» — не общая цифра totalFx, а вклад каждого предмета-носителя
+      // (Архетип/Раса/Субраса/Элитный архетип/Предсказание/Происхождение и
+      // т.п.) по отдельности, см. characteristicMechContrib.
+      const breakdown = [{ label: "База", value: char.base || 0 }];
+      if (char.advance) breakdown.push({ label: "Продвижение", value: char.advance });
+      if (impBonus) breakdown.push({ label: `Улучшение (${IMPROVEMENTS[char.improvement] || char.improvement})`, value: impBonus });
+      if (armorMod) breakdown.push({ label: "Броня (надета)", value: armorMod });
+      if (drugMod) breakdown.push({ label: "Наркотики/лекарства", value: drugMod });
+      if (valueMod) breakdown.push({ label: "Черты/импланты", value: valueMod });
+      breakdown.push(...characteristicMechContrib(this, key));
+      if (dmgMod) breakdown.push({ label: "Мод. (ручной)", value: dmgMod });
+      if (vitalMod) breakdown.push({ label: "Голод/Жажда", value: -vitalMod });
+      if (cappedByArmor) breakdown.push({ label: "Потолок Ловкости (броня)", value: null, cap: agilityCap });
+      char.totalBreakdown = breakdown;
+
       // bonusFx — надбавка от эффектов (Конструктор, миграция легаси). Хранимое
       // поле, эффекты целятся в него в фазе "initial", то есть попадают сюда до
       // расчёта: иначе число меняло бы лист, но не доходило бы до брони, навыков
