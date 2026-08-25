@@ -113,8 +113,16 @@ export function archetypeSheetContext(actor) {
   });
   const rawCur = actor.system.archetype || "";
   // Обратная совместимость: раньше поле хранило ИМЯ архетипа (текст), не ключ.
-  const byKey  = entries.find(([k]) => k === rawCur);
-  const byName = !byKey ? entries.find(([, a]) => a.name === rawCur) : null;
+  let byKey  = entries.find(([k]) => k === rawCur);
+  let byName = !byKey ? entries.find(([, a]) => a.name === rawCur) : null;
+  // Уже выбранный архетип удерживается, даже если текущий фильтр доступа
+  // (субраса/вайтлист, чужая запись компендиума) его больше не отдаёт: иначе
+  // селектор пустеет и пересохранение шапки пишет "" поверх system.archetype.
+  if (rawCur && !byKey && !byName) {
+    const all = Object.entries(archetypeEntries());
+    const held = all.find(([k]) => k === rawCur) || all.find(([, a]) => a.name === rawCur);
+    if (held) { entries.push(held); byKey = held[0] === rawCur ? held : null; byName = byKey ? null : held; }
+  }
   const cur = byKey ? rawCur : (byName ? byName[0] : "");
   const grouped = {};
   for (const [k, a] of entries) (grouped[a.group || ""] ??= []).push({ key: k, name: a.name, selected: k === cur });
