@@ -10,7 +10,8 @@ import { MELEE_STANCES, MELEE_BASES }                from "../constants/combat.m
 import { PSY_POWER_TYPES, PSY_ACTIONS, PSY_NATURES } from "../constants/psyker.mjs";
 import { isAeldariRace }                             from "../apps/race-library.mjs";
 import { shieldCoverageLabel }                        from "../combat/hand-shield.mjs";
-import { getLegion, getChapter }               from "../constants/legions.mjs";
+import { getLegion, getChapter, buildChapterOptions,
+         buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/disciplines.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
@@ -1027,16 +1028,18 @@ export function buildGetData(actor) {
   // options-билдеры). Здесь остаётся только то, что читает шапка.
   context.selectedLegion  = getLegion(system.geneSeed?.legion || "");
   context.selectedChapter = getChapter(system.geneSeed?.legion || "", system.geneSeed?.chapter || "");
-  context.hasCultureOverride = !!system.geneSeed?.cultureLegion;
-  // Применены ли уже расовые Черты (для подсказки кнопки)
-  context.hasGeneSeedTrait = allItems.some(i => i.type === "trait" && /Gene-Seed|Геносемя/i.test(i.name));
-
-  // Гайд по имплантам Геносемени на вкладке СПОСОБНОСТИ — на него ссылается
-  // описание Черты «Геносемя» ("см. гайд на вкладке СПОСОБНОСТИ"). Органы
+  // Культура — независимый выбор (можно перенять у другого легиона, стр. 489-506)
+  context.cultureLegionOptions  = buildCultureLegionOptions(system.geneSeed?.cultureLegion || "");
+  context.cultureChapterOptions = buildChapterOptions(system.geneSeed?.cultureLegion || "", system.geneSeed?.cultureChapter || "");
+  context.hasCultureOverride    = !!system.geneSeed?.cultureLegion;
+  context.resolvedCulture       = system.geneSeed?.cultureLegion
+    ? resolveCulture(system.geneSeed.cultureLegion, system.geneSeed?.cultureChapter) : null;
+  // Гайд по имплантам Геносемени на вкладке ТЕЛО — на него ссылается
+  // описание Черты «Геносемя» ("см. гайд на вкладке ТЕЛО"). Органы
   // выдаёт Конструктор той Черты обычными предметами-имплантами категории
   // "astartes" (module/apps/mechanics.mjs, kind:"equipment"), поэтому гайд не
   // хранит свою копию текста, а читает то же поле system.effect, что и карточка
-  // импланта на вкладке СНАРЯЖЕНИЕ — расхождения быть не может по построению.
+  // импланта на вкладке ТЕЛО — расхождения быть не может по построению.
   context.geneSeedOrgans = allItems
     .filter(i => i.type === "implant" && i.system.category === "astartes")
     .map(i => ({

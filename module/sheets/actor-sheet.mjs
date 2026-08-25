@@ -69,7 +69,7 @@ import { applyDivination } from "../apps/divinations.mjs";
 import { applyRace, applySubrace, clearRace, clearSubrace,
          actorRaceItem, actorSubraceItem,
          applyYnnari, applyHarlequin } from "../apps/races.mjs";
-import { raceDef, raceKeyOf, isAeldariRace } from "../apps/race-library.mjs";
+import { raceKeyOf, isAeldariRace } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
@@ -526,17 +526,6 @@ function onMutgiftRoll(event) {
 // только разбор текстовых списков колбэком createTraits — его зовёт и Мастер
 // создания персонажа)
 //
-// Находка I1 общего ревью (wdbc-n1k): applyRace выдаёт только Черты
-// (Конструктором, с предмета-носителя) — поле talents в схеме расы читает
-// один потребитель, Мастер создания (apps/creation.mjs). Кнопка «Применить
-// расовые бонусы» раньше (applyRaceData) выдавала и таланты — без этого шага
-// она перестала бы выдавать 9 стартовых талантов Астартес. _applyStartingTalents
-// сама зовёт splitTopLevel — строку из библиотеки резать самим не нужно.
-async function onGeneApply() {
-  await applyRace(this.actor, "astartes");
-  const def = raceDef("astartes");
-  return this._applyStartingTalents(def?.talents ? [def.talents] : [], def?.label || "Астартес");
-}
 function onYnnariApply()    { return applyYnnari(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 function onHarlequinApply() { return applyHarlequin(this.actor, { createTraits: (l, s) => this._createTraitsFromList(l, s) }); }
 
@@ -609,7 +598,6 @@ export class WarhammerCharacterSheet
       talentAdd: whenEditable(onTalentAdd),
       mutgiftAdd: whenEditable(onMutgiftAdd),
       mutgiftRoll: whenEditable(onMutgiftRoll),
-      geneApply:      whenEditable(onGeneApply),
       ynnariApply:    whenEditable(onYnnariApply),
       harlequinApply: whenEditable(onHarlequinApply),
       racePick:     whenEditable(onRacePick),

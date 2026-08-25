@@ -49,7 +49,7 @@ export const RACES = {
       { name: "Size (1) / Размер (1)", benefit: "Размер +1 к SPD.", rating: 1, hasRating: true, effects: { sizeMod: 1 } },
       { name: "Unnatural Strength (4) / Сверхъестественная Сила (4)", benefit: "+4 к Бонусу Силы.", rating: 4, hasRating: true, effects: { charBonusStat: "s", charBonusValue: 4 } },
       { name: "Unnatural Toughness (4) / Сверхъестественная Стойкость (4)", benefit: "+4 к Бонусу Стойкости.", rating: 4, hasRating: true, effects: { charBonusStat: "t", charBonusValue: 4 } },
-      { name: "Gene-Seed / Геносемя", benefit: "Открывает все преимущества имплантов Геносемени (см. гайд на вкладке СПОСОБНОСТИ).", effects: {} }
+      { name: "Gene-Seed / Геносемя", benefit: "Открывает все преимущества имплантов Геносемени (см. гайд на вкладке ТЕЛО).", effects: {} }
     ],
     // Машинная часть Черт — module/rules/library/astartes.mjs.
     rules: ASTARTES_RULES,

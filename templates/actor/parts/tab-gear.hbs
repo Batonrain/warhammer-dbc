@@ -340,27 +340,5 @@
     </div>
   </section>
 
-  {{!-- ═══════════════════ ИМПЛАНТЫ ═══════════════════ --}}
-  <section class="gear-cat {{#if gearCollapse.implants}}collapsed{{/if}}" data-cat="implants">
-    <div class="gear-cat-head" data-action="gearCat" data-gear-cat="implants">
-      <span class="gear-cat-chevron">▾</span>
-      <span class="gear-cat-title">ИМПЛАНТЫ</span>
-      <span class="gear-cat-count">{{gearImplants.length}}</span>
-    </div>
-    <div class="gear-cat-body">
-      <table class="items-table gear-table">
-        <thead><tr><th>Имплант</th><th>Категория</th><th>Качество</th><th>Эффект</th></tr></thead>
-        <tbody>
-          {{#if gearImplants.length}}
-            {{#each gearImplants as |im|}}
-            <tr class="item-row" data-item-id="{{im.id}}"><td class="item-name-cell">{{im.name}}</td><td>{{im.category}}</td><td>{{im.quality}}</td><td class="implant-effect-cell">{{im.effect}}</td></tr>
-            {{/each}}
-          {{else}}
-            <tr class="items-empty"><td colspan="4"><em>Нет имплантов — перетащите из библиотеки</em></td></tr>
-          {{/if}}
-        </tbody>
-      </table>
-    </div>
-  </section>
 
 </div>{{!-- /tab gear --}}
