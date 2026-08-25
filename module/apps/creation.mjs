@@ -38,7 +38,7 @@ export const CREATION_ROLL_CHARS = ["ws", "bs", "s", "t", "ag", "int", "per", "w
 // таким ключом рисовалась с пустой подписью (APTITUDES.inf === undefined).
 export const APT_CHAR_KEYS  = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 export const APT_OTHER_KEYS = ["offence", "defence", "finesse", "fieldcraft",
-                               "knowledge", "leadership", "social", "tech", "psyker"];
+                               "knowledge", "social", "tech", "psyker"];
 export const APT_PICK = { char: 4, other: 4 };
 
 /** Фишки выбора для одной группы Склонностей. */
