@@ -6,8 +6,45 @@
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
+import { woundLossUpdates as computeWoundDamage } from "../../rules/wounds.mjs";
 import { woundLevel } from "../../rules/wound-tier.mjs";
 import { esc } from "../../helpers/utils.mjs";
+import { SECONDS_PER_DAY } from "../../constants/imperial-calendar.mjs";
+import { openSurgeon } from "../../apps/surgeon.mjs";
+import { addFatigue } from "./conditions.mjs";
+
+const NS = "warhammer-dbc";
+
+/** Части тела для Ампутации/Пришивания — ключ формы → состояние (стр. 30-31). */
+const LIMB_TYPES = {
+  hand: { label: "Кисть", flag: "lostHands", count: "lostHandsCount" },
+  arm:  { label: "Рука",  flag: "lostArms",  count: "lostArmsCount"  },
+  foot: { label: "Стопа", flag: "lostFeet",  count: "lostFeetCount"  },
+  leg:  { label: "Нога",  flag: "lostLegs",  count: "lostLegsCount"  },
+  eye:  { label: "Глаз",  flag: "lostEyes",  count: "lostEyesCount"  }
+};
+
+/** Уход при лечении болезней (стр. 232) — модификатор к тесту Medicae. */
+const DISEASE_CARE_MOD = { bedRest: 0, rest: -20, none: -40 };
+
+/** Бонус Медики медика — общий для всех режимов теста. */
+function medicSkill(medic) {
+  return medic.system.skills?.medicae?.total
+    ?? ((medic.system.characteristics?.int?.value ?? 20) - 20);
+}
+
+/**
+ * Раз в 10−T.b дней (стр. 232) — секунд до следующей попытки вывести из
+ * комы (0 — доступна прямо сейчас). Тот же приём, что и
+ * disabledArmourPeriodicTestRemaining (combat/armor-mods.mjs): чистая
+ * функция, testAt/worldTime приходят снаружи.
+ */
+export function comaWakeRemaining(testAt, worldTime, tb) {
+  const days = 10 - (Number(tb) || 0);
+  if (days <= 0 || testAt == null) return 0;
+  const remaining = Number(testAt) + days * SECONDS_PER_DAY - Number(worldTime);
+  return remaining > 0 ? remaining : 0;
+}
 
 /** Диалог лечения: себя или выбранной цели (тест Медики/Стойкости). */
 export function showHealingDialog(medic) {
@@ -24,7 +61,7 @@ export function showHealingDialog(medic) {
         <b>Постельный режим</b> (сутки, лёжа): Лёгкое T.b; Тяжёлое ½T.b (окр.▲); Критическое 1.<br/>
         <b>Мед. уход</b>: Medicae+0 (лёгкий/тяжёлый) сокращает период до 8 часов; Medicae−10 (критический) — лечится как тяжёлый, но раз в сутки.<br/>
         <b>Физиология Астартес</b>: всегда считается отдыхающим; реальный отдых = постельный режим; полный постельный режим не ускоряет сверх этого.<br/>
-        <b>Прижигание</b>: раскалённым предметом — 1d5 Усталости и 1d10 урона в Т, цель фиксируют или тест W−20; иногда останавливает заражение через рану.<br/>
+        <b>Прижигание</b>: раскалённым предметом — 1d5 Усталости и 1d10 урон в Т, цель фиксируют или тест W−20; иногда останавливает заражение через рану.<br/>
         <b>Бесполезные конечности/Ампутация</b>: лечение перелома — 5 мин + Medicae+0 (конечность бесполезна 2d10−T.b сут.). Без помощи 2×T.b ч — перманентно; ампутация Medicae−10 (провал → Кровотечение, обрубок Medicae−10 или Гангрена).<br/>
         <b>Пришивание конечностей</b>: Medicae−30 (нужно качественное снаряжение); успех — восстановление 1d10+3−T.b сут.<br/>
         <b>Бионика/Кибернетика</b>: установка Medicae−30; провал — 1d10 непогл. R; успех — 1d10+3−T.b сут. адаптации.<br/>
@@ -49,11 +86,31 @@ export function showHealingDialog(medic) {
           <option value="rest">Отдых (сутки)</option>
           <option value="bedRest">Постельный режим (сутки)</option>
           <option value="passive">Пассивное (сутки)</option>
+          <option value="cauterize">Прижигание</option>
+          <option value="amputate">Ампутация (Medicae−10)</option>
+          <option value="reattach">Пришивание конечности (Medicae−30)</option>
+          <option value="bionic">Бионика/Кибернетика (Medicae−30)</option>
+          <option value="coma">Вывод из комы (Medicae−40)</option>
+          <option value="disease">Лечение болезни</option>
         </select>
       </div>
-      <div class="atk-dlg-row"><label title="Medicae: критический лечится как тяжёлый; период до 8 часов"><input type="checkbox" id="heal-care"/> Мед. уход</label></div>
+      <div class="atk-dlg-row" data-mode="firstAid,rest,bedRest,passive"><label title="Medicae: критический лечится как тяжёлый; период до 8 часов"><input type="checkbox" id="heal-care"/> Мед. уход</label></div>
+      <div class="atk-dlg-row" data-mode="amputate,reattach"><label>Часть тела:</label>
+        <select id="heal-limb">
+          ${Object.entries(LIMB_TYPES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("")}
+        </select>
+      </div>
+      <div class="atk-dlg-row" data-mode="cauterize"><label title="Иначе — тест W−20, чтобы не вырваться (без доп. эффекта)"><input type="checkbox" id="heal-restrained"/> Пациент зафиксирован</label></div>
+      <div class="atk-dlg-row" data-mode="disease"><label>Уход:</label>
+        <select id="heal-disease-care">
+          <option value="bedRest">Постельный режим (+0)</option>
+          <option value="rest">Просто отдых (−20)</option>
+          <option value="none">Ни то ни другое (−40)</option>
+        </select>
+      </div>
+      <div class="atk-dlg-row" data-mode="disease"><label>Болезнь:</label><select id="heal-disease-item"><option value="">— не указано —</option></select></div>
       <div class="atk-dlg-row"><label>Мод. теста:</label><input type="number" id="heal-mod" value="0" style="width:60px;"/></div>
-      <div class="atk-dlg-row"><label title="Напр. Мастер-Хирургеон +2">Доп. Раны:</label><input type="number" id="heal-bonus" value="0" style="width:60px;"/></div>
+      <div class="atk-dlg-row" data-mode="firstAid,rest,bedRest,passive"><label title="Напр. Мастер-Хирургеон +2">Доп. Раны:</label><input type="number" id="heal-bonus" value="0" style="width:60px;"/></div>
       <div id="heal-note" class="atk-range-info" style="font-size:0.84em;"></div>
       ${refHtml}
     </div>`;
@@ -62,8 +119,27 @@ export function showHealingDialog(medic) {
   const patientOf = form =>
     (form.querySelector("#heal-patient")?.value === "target" ? tgt : medic);
 
+  const syncModeRows = form => {
+    const mode = form.querySelector("#heal-mode")?.value;
+    form.querySelectorAll("[data-mode]").forEach(row => {
+      row.style.display = row.dataset.mode.split(",").includes(mode) ? "" : "none";
+    });
+  };
+
+  const rebuildDiseaseSelect = (form, patient) => {
+    const sel = form.querySelector("#heal-disease-item");
+    if (!sel) return;
+    const diseases = patient?.items?.filter(i => i.type === "disease" && i.system?.active) ?? [];
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">— не указано —</option>`
+      + diseases.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
+    if (diseases.some(d => d.id === cur)) sel.value = cur;
+  };
+
   const updateNote = form => {
     const patient = patientOf(form);
+    syncModeRows(form);
+    rebuildDiseaseSelect(form, patient);
     if (!patient) return;
     const lvl = woundLevel(patient.system);
     const parts = [
@@ -72,6 +148,15 @@ export function showHealingDialog(medic) {
     ];
     if (hasRuleFlag(patient, "healing.astartes")) parts.push("<i>Физиология Астартес: всегда считается отдыхающим.</i>");
     if (patient.system.wounds?.firstAidUsed) parts.push('<span style="color:#a33;">⚠ Первая Помощь уже оказана (нужен новый урон).</span>');
+    const mode = form.querySelector("#heal-mode")?.value;
+    if (mode === "coma") {
+      const tb = patient.system.characteristics?.t?.bonus ?? 0;
+      const testAt = patient.getFlag?.(NS, "comaTestAt");
+      const remaining = comaWakeRemaining(testAt, game.time.worldTime, tb);
+      if (remaining > 0) {
+        parts.push(`<span style="color:#a33;">⚠ Следующая попытка доступна не раньше чем через ~${Math.ceil(remaining / SECONDS_PER_DAY)} сут.</span>`);
+      }
+    }
     form.querySelector("#heal-note").innerHTML = parts.join("<br/>");
   };
 
@@ -92,12 +177,22 @@ export function showHealingDialog(medic) {
             return;
           }
           const num = sel => parseInt(form.querySelector(sel)?.value) || 0;
-          await applyHealing(medic, patient, {
-            mode:  form.querySelector("#heal-mode")?.value,
-            care:  !!form.querySelector("#heal-care")?.checked,
-            mod:   num("#heal-mod"),
-            bonus: num("#heal-bonus")
-          });
+          const mode = form.querySelector("#heal-mode")?.value;
+          const opts = {
+            mode,
+            care:       !!form.querySelector("#heal-care")?.checked,
+            restrained: !!form.querySelector("#heal-restrained")?.checked,
+            mod:        num("#heal-mod"),
+            bonus:      num("#heal-bonus"),
+            limb:       form.querySelector("#heal-limb")?.value,
+            diseaseCare: form.querySelector("#heal-disease-care")?.value,
+            diseaseId:   form.querySelector("#heal-disease-item")?.value
+          };
+          if (mode === "bionic") {
+            runBionicInstall(medic, patient, opts);
+          } else {
+            await applyHealing(medic, patient, opts);
+          }
         }
       },
       { action: "cancel", label: "Отмена" }
@@ -111,8 +206,225 @@ export function showHealingDialog(medic) {
   });
 }
 
+/** Хвостовая часть общего сообщения в чат — общая на все режимы этого файла. */
+async function sendHealChatMsg(medic, patient, headerIcon, headerLabel, lines, rolls = []) {
+  const rollMode = game.settings.get("core", "rollMode");
+  const msg = ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: medic }),
+    content: `<div class="wh-roll-result"><div class="roll-header">${headerIcon}${headerLabel} — ${esc(patient.name)}</div><div class="roll-threshold">${lines.join("<br/>")}</div></div>`,
+    rolls,
+    sound: rolls.length ? CONFIG.sounds.dice : undefined
+  }, rollMode);
+  await ChatMessage.create(msg);
+}
+
+/** Прижигание (стр. 231): без теста, 1d5 Усталости + 1d10 урон в Т. */
+async function applyCauterize(medic, patient, { restrained }) {
+  const rolls = [];
+  const fatigueRoll = await new Roll("1d5").evaluate();
+  rolls.push(fatigueRoll);
+  const dmgRoll = await new Roll("1d10").evaluate();
+  rolls.push(dmgRoll);
+  const tb = patient.system.characteristics?.t?.bonus ?? 0;
+  const dmg = Math.max(0, dmgRoll.total - tb);
+
+  const updates = computeWoundDamage(patient.system, dmg);
+  const lines = [
+    `${rollIcon("fire","#ff8a3a")}<b>Прижигание</b>: Усталость <b>${fatigueRoll.total}</b>, урон <b>${dmgRoll.total}</b> − T.b(${tb}) = <b>${dmg}</b> непоглощаемого урона.`
+  ];
+  try {
+    await patient.update(updates);
+  } catch {
+    lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
+  }
+
+  if (!restrained) {
+    const wp = (patient.system.characteristics?.wp?.value ?? 0) - 20;
+    const roll = await new Roll("1d100").evaluate();
+    rolls.push(roll);
+    const success = roll.total <= wp;
+    lines.push(`${rollIcon("warn","#ffb84d")}Пациент не зафиксирован — тест W−20 → порог <b>${wp}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">не пытается вырваться</span>` : `<span class="roll-failure">пытается вырваться</span>`}`);
+  }
+
+  try { await addFatigue(patient, fatigueRoll.total); } catch {}
+
+  await sendHealChatMsg(medic, patient, rollIcon("fire","#ff8a3a"), "Прижигание", lines, rolls);
+}
+
+/** Ампутация (стр. 231): Medicae−10, провал → Кровотечение + обрубок. */
+async function applyAmputate(medic, patient, { mod, limb }) {
+  const def = LIMB_TYPES[limb];
+  if (!def) { ui.notifications.warn("Выберите часть тела для ампутации."); return; }
+
+  const eff = medicSkill(medic) + mod - 10;
+  const roll = await new Roll("1d100").evaluate();
+  const rolls = [roll];
+  const success = roll.total <= eff;
+  const lines = [
+    `${rollIcon("blood","#ff6b6b")}<b>Ампутация</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
+  ];
+
+  const curCount = patient.system.conditions?.[def.count] ?? 0;
+  const updates = {
+    [`system.conditions.${def.flag}`]: true,
+    [`system.conditions.${def.count}`]: curCount + 1
+  };
+  lines.push(`Конечность (${def.label}) удалена.`);
+
+  if (!success) {
+    const bleedLvl = patient.system.conditions?.bleedingLevel ?? 0;
+    updates["system.conditions.bleeding"] = true;
+    updates["system.conditions.bleedingLevel"] = bleedLvl + 1;
+    lines.push(`${rollIcon("blood","#ff6b6b")}Провал → <b>Кровотечение</b> (уровень ${bleedLvl + 1}).`);
+
+    const stumpEff = medicSkill(medic) + mod - 10;
+    const stumpRoll = await new Roll("1d100").evaluate();
+    rolls.push(stumpRoll);
+    const stumpOk = stumpRoll.total <= stumpEff;
+    lines.push(`Обработка обрубка: Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${stumpEff}</b>, бросок <b>${stumpRoll.total}</b> — ${stumpOk ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`);
+
+    if (!stumpOk) {
+      const gangRoll = await new Roll("1d100").evaluate();
+      rolls.push(gangRoll);
+      const gangrene = gangRoll.total <= 80;
+      lines.push(`Шанс Гангрены (80%): бросок <b>${gangRoll.total}</b> — ${gangrene ? `<span class="roll-failure">Гангрена началась</span>` : `<span class="roll-success">пронесло</span>`}`);
+      if (gangrene) updates["system.conditions.gangrene"] = true;
+    }
+  }
+
+  try { await patient.update(updates); } catch {
+    lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
+  }
+  await sendHealChatMsg(medic, patient, rollIcon("blood","#ff6b6b"), "Ампутация", lines, rolls);
+}
+
+/** Пришивание конечностей (стр. 231): Medicae−30. */
+async function applyReattach(medic, patient, { mod, limb }) {
+  const def = LIMB_TYPES[limb];
+  if (!def) { ui.notifications.warn("Выберите часть тела для пришивания."); return; }
+  const curCount = patient.system.conditions?.[def.count] ?? 0;
+  if (curCount <= 0) {
+    ui.notifications.warn(`У пациента нет потерянной части «${def.label}» для пришивания.`);
+    return;
+  }
+
+  const eff = medicSkill(medic) + mod - 30;
+  const roll = await new Roll("1d100").evaluate();
+  const rolls = [roll];
+  const success = roll.total <= eff;
+  const lines = [
+    `${rollIcon("wrench","#8fd0ff")}<b>Пришивание конечности</b> (${def.label}): Медика−30${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
+  ];
+
+  if (success) {
+    const tb = patient.system.characteristics?.t?.bonus ?? 0;
+    const daysRoll = await new Roll("1d10").evaluate();
+    rolls.push(daysRoll);
+    const days = Math.max(1, daysRoll.total + 3 - tb);
+    const newCount = curCount - 1;
+    const updates = { [`system.conditions.${def.count}`]: newCount };
+    if (newCount <= 0) updates[`system.conditions.${def.flag}`] = false;
+    try { await patient.update(updates); } catch {
+      lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
+    }
+    lines.push(`Конечность пришита. Восстановление: <b>${days}</b> сут. (1d10+3−T.b, мин. 1).`);
+  } else {
+    lines.push("Провал — спасённая конечность умирает и более не может быть использована.");
+  }
+  await sendHealChatMsg(medic, patient, rollIcon("wrench","#8fd0ff"), "Пришивание конечности", lines, rolls);
+}
+
+/** Вывод из комы (стр. 232): Medicae−40, раз в 10−T.b дней. */
+async function applyComaWake(medic, patient, { mod }) {
+  const tb = patient.system.characteristics?.t?.bonus ?? 0;
+  const testAt = patient.getFlag?.(NS, "comaTestAt");
+  const remaining = comaWakeRemaining(testAt, game.time.worldTime, tb);
+  if (remaining > 0) {
+    ui.notifications.warn(`Следующая попытка вывода из комы доступна не раньше чем через ~${Math.ceil(remaining / SECONDS_PER_DAY)} сут.`);
+    return;
+  }
+
+  const eff = medicSkill(medic) + mod - 40;
+  const roll = await new Roll("1d100").evaluate();
+  const success = roll.total <= eff;
+  const lines = [
+    `${rollIcon("spark","#4dffa6")}<b>Вывод из комы</b>: Медика−40${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех — пациент приходит в себя</span>` : `<span class="roll-failure">Провал</span>`}`
+  ];
+  try { await patient.setFlag(NS, "comaTestAt", game.time.worldTime); } catch {}
+  await sendHealChatMsg(medic, patient, rollIcon("spark","#4dffa6"), "Вывод из комы", lines, [roll]);
+}
+
+/** Лечение болезней (стр. 232): по умолчанию постельный режим, тест Medicae. */
+async function applyDiseaseCure(medic, patient, { mod, diseaseCare, diseaseId }) {
+  const careMod = DISEASE_CARE_MOD[diseaseCare] ?? 0;
+  const eff = medicSkill(medic) + mod + careMod;
+  const roll = await new Roll("1d100").evaluate();
+  const success = roll.total <= eff;
+  const careLabel = { bedRest: "постельный режим", rest: "просто отдых", none: "ни то ни другое" }[diseaseCare] ?? "постельный режим";
+  const disease = diseaseId ? patient.items?.get(diseaseId) : null;
+
+  const lines = [
+    disease ? `Болезнь: <b>${esc(disease.name)}</b>` : null,
+    `${rollIcon("skull","#9fd08a")}<b>Лечение болезни</b> (${careLabel}): Медика${careMod ? `${careMod >= 0 ? "+" : ""}${careMod}` : ""}${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
+    disease?.system?.cure ? `<span style="font-size:0.85em;">Лечение по тексту болезни: ${esc(disease.system.cure)}</span>` : null
+  ].filter(Boolean);
+
+  await sendHealChatMsg(medic, patient, rollIcon("skull","#9fd08a"), "Лечение болезни", lines, [roll]);
+}
+
+/**
+ * Бионика/Кибернетика (стр. 231): сперва открывает Хирургеон для установки
+ * импланта, и только ПОСЛЕ его закрытия — тест Medicae−30. Application v1
+ * (SurgeonWindow) сам вызывает Hooks.callAll(`close${constructor.name}`, ...)
+ * из своего close() — ждём этот хук вместо переопределения close() на
+ * инстансе, чтобы не трогать чужой класс.
+ */
+export function runBionicInstall(medic, patient, { mod }) {
+  const app = openSurgeon(patient);
+  if (!app) return;
+  Hooks.once(`close${app.constructor.name}`, () => {
+    resolveBionicTest(medic, patient, { mod });
+  });
+}
+
+async function resolveBionicTest(medic, patient, { mod }) {
+  const eff = medicSkill(medic) + mod - 30;
+  const roll = await new Roll("1d100").evaluate();
+  const rolls = [roll];
+  const success = roll.total <= eff;
+  const lines = [
+    `${rollIcon("gear","#c98bff")}<b>Установка бионики/кибернетики</b>: Медика−30${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
+  ];
+
+  if (success) {
+    const tb = patient.system.characteristics?.t?.bonus ?? 0;
+    const daysRoll = await new Roll("1d10").evaluate();
+    rolls.push(daysRoll);
+    const days = Math.max(1, daysRoll.total + 3 - tb);
+    lines.push(`Адаптация: <b>${days}</b> сут. (1d10+3−T.b, мин. 1).`);
+  } else {
+    const dmgRoll = await new Roll("1d10").evaluate();
+    rolls.push(dmgRoll);
+    const updates = computeWoundDamage(patient.system, dmgRoll.total);
+    updates["system.conditions.crippling"] = true;
+    lines.push(`Провал → <b>${dmgRoll.total}</b> непоглощаемого урона + <b>конечность бесполезна</b> (Калечение).`);
+    try { await patient.update(updates); } catch {
+      lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
+    }
+  }
+
+  await sendHealChatMsg(medic, patient, rollIcon("gear","#c98bff"), "Установка бионики/кибернетики", lines, rolls);
+}
+
 /** Расчёт и применение лечения к пациенту + сообщение в чат. */
-export async function applyHealing(medic, patient, { mode, care, mod, bonus }) {
+export async function applyHealing(medic, patient, opts) {
+  const { mode, care, mod, bonus } = opts;
+  if (mode === "cauterize") return applyCauterize(medic, patient, opts);
+  if (mode === "amputate")  return applyAmputate(medic, patient, opts);
+  if (mode === "reattach")  return applyReattach(medic, patient, opts);
+  if (mode === "coma")      return applyComaWake(medic, patient, opts);
+  if (mode === "disease")   return applyDiseaseCure(medic, patient, opts);
+
   const lvl = woundLevel(patient.system);
   const tb = lvl.tb;
   // Физиология Астартес — возможность от правил, а не раса пациента.
@@ -122,8 +434,7 @@ export async function applyHealing(medic, patient, { mode, care, mod, bonus }) {
   let heal = 0;
   const lblOf = { light: "Лёгкое", heavy: "Тяжёлое", critical: "Критическое" };
   const half = (n, up) => up ? Math.ceil(n / 2) : Math.floor(n / 2);
-  const medSkill = () => medic.system.skills?.medicae?.total
-    ?? ((medic.system.characteristics?.int?.value ?? 20) - 20);
+  const medSkill = () => medicSkill(medic);
 
   if (mode === "firstAid") {
     if (patient.system.wounds?.firstAidUsed) {
@@ -200,12 +511,5 @@ export async function applyHealing(medic, patient, { mode, care, mod, bonus }) {
     }
   }
 
-  const rollMode = game.settings.get("core", "rollMode");
-  const msg = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: medic }),
-    content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("heart","#ff8a8a")}Лечение — ${esc(patient.name)}</div><div class="roll-threshold">${lines.join("<br/>")}</div></div>`,
-    rolls,
-    sound: rolls.length ? CONFIG.sounds.dice : undefined
-  }, rollMode);
-  await ChatMessage.create(msg);
+  await sendHealChatMsg(medic, patient, rollIcon("heart","#ff8a8a"), "Лечение", lines, rolls);
 }
