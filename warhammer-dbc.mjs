@@ -38,6 +38,7 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange } from "./module/apps/mechanics.mjs";
+import { applyMechBlocks, applyMechBlocksForActor } from "./module/apps/mech-blocks-apply.mjs";
 import { isItemActive }              from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -1416,6 +1417,13 @@ export async function handleItemCreated(item, options, userId) {
   // ничего про эту гонку не доказывал.
   if (options?.[SKIP_MECHANICS_HOOK]) return;
   await applyItemMechanics(item);
+
+  // Новая блочная модель (doombc-req-condition-effect-plan) — живёт РЯДОМ со
+  // старым flags.mechanics, не вместо: предмет, ещё не переведённый на блоки,
+  // просто не несёт flags.mechBlocks, и applyMechBlocks тихо ничего не находит
+  // (getMechBlocks → []). Тот же SKIP_MECHANICS_HOOK-гейт выше, что и у
+  // applyItemMechanics — носитель Расы/Субраты уже получил её синхронно.
+  await applyMechBlocks(item, actor, { kind: "onGrant" });
 }
 
 Hooks.on("createItem", handleItemCreated);
@@ -1611,6 +1619,9 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
   if (options?.whSkipFateSave) return;
   if (typeof changes.system?.fate?.value !== "number") return;
   const spent = fateSpent(options?.whFatePrev, changes.system.fate.value);
+  // Живая врезка Condition "onResourceSpend" (doombc-req-condition-effect-plan)
+  // — независимо от Пламенной Веры ниже: факт траты, не факт «вернули ли».
+  if (spent) await applyMechBlocksForActor(doc, { kind: "onResourceSpend" });
   if (!spent || !hasRuleFlag(doc, FATE_SAVE_FLAG)) return;
 
   const rolls = [];
