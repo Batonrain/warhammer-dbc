@@ -56,7 +56,7 @@ describe("syncAuraFlag через applyItemMechanics", () => {
     });
     await applyItemMechanics(item);
     expect(item.getFlag(FLAG, "aura")).toEqual({
-      radius: 3, affects: "all", includesSelf: true,
+      managed: true, radius: 3, affects: "all", includesSelf: true,
       grant: [{ uuid: "Compendium.warhammer-dbc.traits.Item.6cf11ucGdzYt6ndt", rating: 1 }]
     });
   });
@@ -128,9 +128,21 @@ describe("syncAuraFlag через applyItemMechanics", () => {
     item.getFlag = (_s, k) => (k === "mechanics" ? [] : (k === "aura" ? item.__aura : undefined));
     item.setFlag = async (_s, k, v) => { if (k === "aura") item.__aura = v; return v; };
     item.unsetFlag = async (_s, k) => { if (k === "aura") item.__aura = undefined; return true; };
-    item.__aura = { radius: 3, affects: "allies", includesSelf: false, grant: ["Compendium.warhammer-dbc.traits.Item.x"] };
+    item.__aura = { managed: true, radius: 3, affects: "allies", includesSelf: false, grant: ["Compendium.warhammer-dbc.traits.Item.x"] };
     await applyItemMechanics(item);
     expect(item.getFlag(FLAG, "aura")).toBeFalsy();
+  });
+
+  it("ручной флаг (без managed) переживает синхронизацию без записей kind:aura", async () => {
+    // Ауру, настроенную ГМом руками до Конструктора, снимать нельзя.
+    const item = itemOnActor({ mechanics: [] });
+    const manual = { radius: 5, affects: "allies", includesSelf: false, grant: ["Item.abc"] };
+    item.getFlag = (_s, k) => (k === "mechanics" ? [] : (k === "aura" ? item.__aura : undefined));
+    item.setFlag = async (_s, k, v) => { if (k === "aura") item.__aura = v; return v; };
+    item.unsetFlag = async (_s, k) => { if (k === "aura") item.__aura = undefined; return true; };
+    item.__aura = manual;
+    await applyItemMechanics(item);
+    expect(item.getFlag(FLAG, "aura")).toEqual(manual);
   });
 
   it("гейт when.submutations — аура включена только при своей строке", async () => {

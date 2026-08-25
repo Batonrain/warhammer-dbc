@@ -1562,7 +1562,9 @@ export async function syncAuraFlag(item) {
   const entries = collectAuraEntries(getItemMechanics(item)).filter(e => entryWhenOk(actor, e, item));
   const cur = item.getFlag(FLAG, "aura") || null;
   if (!entries.length) {
-    if (cur) await item.unsetFlag(FLAG, "aura");
+    // Снимается только флаг, поставленный этой же синхронизацией (managed):
+    // ауру, настроенную ГМом руками до Конструктора, стирать нельзя.
+    if (cur?.managed) await item.unsetFlag(FLAG, "aura");
     return;
   }
   const rd = mechRollData(actor);
@@ -1572,6 +1574,7 @@ export async function syncAuraFlag(item) {
   // клонировала бы предмет как есть, и рейтинг разошёлся бы с текстом.
   // rating === null у записей без параметра («X» в имени шаблона нет).
   const want = {
+    managed: true,
     radius: mechFormulaTotalSafe(first.auraRadius, rd),
     affects: first.auraAffects === "enemies" || first.auraAffects === "all" ? first.auraAffects : "allies",
     includesSelf: !!first.auraIncludesSelf,
@@ -1580,7 +1583,7 @@ export async function syncAuraFlag(item) {
       rating: (e.rating !== "" && e.rating != null) ? mechFormulaTotalSafe(e.rating, rd) : null
     }))
   };
-  const same = cur && cur.radius === want.radius && cur.affects === want.affects
+  const same = cur && cur.managed === want.managed && cur.radius === want.radius && cur.affects === want.affects
     && cur.includesSelf === want.includesSelf
     && JSON.stringify(cur.grant || []) === JSON.stringify(want.grant);
   if (!same) await item.setFlag(FLAG, "aura", want);

@@ -113,10 +113,12 @@ describe("auraDescriptorsOf", () => {
     });
   });
 
-  it("grant в устаревшем формате (голый uuid, без rating) отфильтровывается", () => {
+  it("grant в устаревшем формате (голый uuid) нормализуется, а не теряется", () => {
+    // Старая документация в шапке auras.mjs предлагала ставить флаг руками
+    // именно так — миры с ручными аурами не должны молча терять выдачу.
     const item = itemWith({ aura: { radius: 5, affects: "allies", grant: ["Item.abc"] } });
     const [d] = auraDescriptorsOf(actorWith(item));
-    expect(d.grant).toEqual([]);
+    expect(d.grant).toEqual([{ uuid: "Item.abc", rating: null }]);
   });
 
   it("affects по умолчанию — allies, если значение неизвестно", () => {
