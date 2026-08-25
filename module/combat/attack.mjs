@@ -20,6 +20,7 @@ import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../const
 import { vehicleHitLocation }                        from "../constants/vehicle.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
+import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -388,6 +389,19 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   const techOpts = opts.techniqueOpts || {};
 
+  // Остаток пула неизрасходованных Успехов Уклонения/Парирования с ДРУГИХ
+  // атак этого же противника в этом Ходу (стр. 12, «Избегание множественных
+  // попаданий и атак» — вторая половина правила, module/combat/evasion-pool.mjs).
+  // Считается здесь: этот модуль один касается документов Foundry (актор цели),
+  // attack-card.mjs только рисует уже готовое число.
+  const defenderActor = targetToken?.actor ?? targetToken?.document?.actor ?? null;
+  const evasionPoolEntry = hit && defenderActor
+    ? getEvasionPool(defenderActor, actor.uuid || "") : null;
+  const evasionPool = evasionPoolEntry
+    ? { successes: evasionPoolEntry.successes,
+        ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount) }
+    : null;
+
   // Стр. 12: успешный Приём «Захват» связывает обоих Борьбой (module/combat/
   // grapple.mjs) — состояние conditions.grappling, как у Оглушения/Беспомощного.
   // Не блокирует построение карточки: чат-сообщение о связывании уходит своим,
@@ -425,6 +439,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       burst: rofMode === "semi" || rofMode === "full",
       attackerUuid: actor.uuid || "",
       hordeHits,
+      pool: evasionPool,
       // Выжигание Души: Психосиловое оружие в руках псайкера при попадании.
       soulBurnActorId: (hit && wp.forcePR && isPsyker) ? actor.id : null,
       defense: {
