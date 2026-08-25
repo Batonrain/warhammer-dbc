@@ -1,0 +1,48 @@
+{
+  "name": "A Click of the Mind / Щелчок Разума",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "S1J31uqIlWvIxe3Q",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если персонаж набрал более 450 успехов на Гипно-программирование, он может заложить в разум цели «агента», затем пройти тест Гипно-Программирование(W)+10, чтобы дать агенту успехи на дальнейшие соревновательные тесты. Может заложить сложный приказ или мириаду коротких, исполняемых по психической команде, сигнальному слову или условию. Агент поражает каждого, кто взглянет на заражённого — тест Успехи персонажа vs W+10, при провале цель тоже заражается, не зная об этом. Заразиться могут все существа, кроме Варп-созданий и Хаоситов. Обнаружение агента: для биологических Medicae(I)−60 или Psyniscience(P)−60, для механических Logic(I)−60 или Tech-Use(I)−60 (перебросить провал можно раз, дальше поиск критически проваливается неделю). Агент погибает по выполнении миссии или через 6 месяцев после заражения нулевого пациента.",
+    "tier": 3,
+    "requirement": "Гипно-Программирование(W)+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Агент Кабала",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "IWXxrRM0WYXjbjta",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!IWXxrRM0WYXjbjta"
+}

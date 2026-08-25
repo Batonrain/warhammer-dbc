@@ -1,0 +1,47 @@
+{
+  "name": "The Blade of Vaul / Клинок Ваула",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда на персонажа накладывают любую психосилу или он входит в её ауру, он может пройти тест Parry+10+(5×бPR) со штрафами (−10 за Редкую Дисциплину, на которую нет фокуса; −10 за Божественную категорию; −5×разница PR, если противник психически могущественнее; −5×успехи манифестации противника). При успехе персонаж может либо поглотить психосилу (или создать вокруг себя ауру радиусом 10 метров, в которой не действуют чужие ауры психосил), либо парировать её в любую сторону, которую видит, включая в другого персонажа.",
+    "source": "Элитный архетип: Высший Варлок",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "VpR8yMIyhz3kX9XC",
+  "effects": [],
+  "folder": "iDFKSFP7nWyQIlYg",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!VpR8yMIyhz3kX9XC"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Holy Hammer / Священный Молот",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "qJeFOziEtLd6ceM1",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж становится таким же прочным, как великий молот Ваула — способным выковать любое оружие и снаряжение независимо от сложности. Наделяется правом зваться Синдра. Увеличивает свой Unnatural I от данного Элитного Архетипа до 10 и максимальное число изучения таланта Sound Constitution на I.b. Считает редкость всех эльдарских или психокостяных предметов на 1 ниже в расчёте крафта. Может крафтить полный комплект психокостяных имплантов, считая их за имплант 4-й редкости.",
+    "tier": 3,
+    "requirement": "Пройти миссию по нахождению осколка Молота Ваула и изучения его",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Кузнец Ваула",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "SyCm8ouMhhZnXttt",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!SyCm8ouMhhZnXttt"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Lord of the Waves / Владыка Волн",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ttqxLwqFCoWfX2In",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может высвобождать заточенные в психосиловом оружии психосилы, уменьшая успехи на манифестацию вдвое (окр.▲) и добавляя их к любой следующей манифестации/превращая в эPR в расчёте эффектов психосилы. Не имеет ограничений на манифестации таким образом, но не может усиленную так психосилу запереть в оружии. Может использовать талант Psychic Collapse, даже не учитывая, что его психосилы не отнимают тPR.",
+    "tier": 3,
+    "requirement": "A Empyrean Storm",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Высший Варлок",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "I3S5N8JVc2IvIPfK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!I3S5N8JVc2IvIPfK"
+}

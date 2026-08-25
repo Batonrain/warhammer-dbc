@@ -1,0 +1,48 @@
+{
+  "name": "Art of Speed / Искусство Скорости",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "9O0IaIJXt3VLvehR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Атакуя противника, персонаж получает бонус к урону, равный разнице SPD между ним и противником в пользу персонажа.",
+    "tier": 3,
+    "requirement": "Prenatural Speed, Sprint",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Танцор Войны",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "tO41ClMASLnr0eXJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!tO41ClMASLnr0eXJ"
+}

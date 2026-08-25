@@ -1,0 +1,47 @@
+{
+  "name": "Thirst for War / Жажда Войны",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж перманентно находится в Ярости, но может спокойно разговаривать и отличать врагов от союзников. Не считает кровь и трупы трудным ландшафтом, не получает штрафов от брызг крови. При Полной Атаке, пробившей броню цели, заставляет её пройти тест W-10 — при провале существо получает Метку Войны (при непоглощённом уроне от персонажа проходит тест против Кровотечения, при провале — 2 Обескровливания). Персонаж перебрасывает тесты попадания по существам с Меткой Войны. На поле битвы может быть не более WS.b существ с Меткой Войны одновременно. Персонаж может использовать Parry в тестах на сопротивление Варпу и Мистике.",
+    "source": "Элитный архетип: Принц Кхейна",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "4jRz5bNNhWFle5dT",
+  "effects": [],
+  "folder": "STxRWl80fiV0ujnH",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!4jRz5bNNhWFle5dT"
+}

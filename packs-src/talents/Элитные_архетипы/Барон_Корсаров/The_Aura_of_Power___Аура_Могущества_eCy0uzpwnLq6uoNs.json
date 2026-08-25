@@ -1,0 +1,48 @@
+{
+  "name": "The Aura of Power / Аура Могущества",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "lOeOsPFizs9UuAR2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Перед битвой барон корсаров может выбрать до F.b×20 подчинённых. Все эти подчинённые, независимо от расстояния и состояния, получают бонусы от Командного Присутствия, Коротких и Детальных Команд, которые исполняет персонаж. Раз в раунд барон корсаров может отдать Личную Команду кому угодно из своих подчинённых за Свободное действие (жест — если персонаж не может жестикулировать или подчинённый не видит жест, действие сгорает). Его миньоны-люди также получают +20 Лояльности.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Барон Корсаров",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "eCy0uzpwnLq6uoNs",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!eCy0uzpwnLq6uoNs"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Artisan Blade / Ремесленный Клинок",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "Q9tUrfy1KQ9bv4pq",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "По окончании крафта Ремесленного Предмета совершается бросок 1d100 на определение свойств итогового клинка по таблице книги (персонаж может добавить/отнять до ½(окр.▼) I.b от броска): −6 Клинок Эльданеша; −5–10 Клинок Ультанеша; 11–20 Клинок Морай-Хег; 21–30 Клинок Кхейна; 31–40 Клинок Курноуса; 41–50 Клинок Лилеат; 51–60 Клинок Хоека; 61–70 Клинок Ваула; 71–80 Клинок Геа; 81–90 Клинок Ахнакх-Йтх; 91–105 Клинок Иннеада; 106–109 Клинок Азуриана; 110 Клинок Цегораха. Полное описание эффектов каждого варианта — в таблице книги (страницы 128-129 «Книга Аэльдари: Ответвления»); запись «Клинок Цегораха» (результат 110) обрезана на границе разобранного диапазона страниц при восстановлении — сверить её текст по оригиналу PDF отдельно перед использованием в игре, остальные 13 вариантов таблицы (−6…109) вычитаны и задокументированы полностью в примечаниях ГМа к архетипу.",
+    "tier": 3,
+    "requirement": "Создать (не улучшить!) 3 Best.Q Рукопашного оружия минимум R2",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Мастер-Ремесленник",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "wGykbFgalvWzo7Bb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!wGykbFgalvWzo7Bb"
+}

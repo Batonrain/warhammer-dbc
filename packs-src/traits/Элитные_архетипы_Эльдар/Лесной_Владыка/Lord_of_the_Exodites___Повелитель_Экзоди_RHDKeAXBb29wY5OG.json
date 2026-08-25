@@ -1,0 +1,47 @@
+{
+  "name": "Lord of the Exodites / Повелитель Экзодитов",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж создаёт ауру радиусом F.b×2, внутри которой союзники получают +30 к тестам Морали и раз в раунд могут перебрасывать провалы Морали. За Полное действие может вывести до F.b эльдар из Страха, Шока и/или Подавления. До броска на командование может объявить автоуспех с числом успехов, равным его Unnatural F. Сражаясь на передовой против сильнейшего противника, может тестом Command(F)−10 восстановить по 1 очку судьбы всем эльдарам под командованием. Получает переброс на тесты Морали, но провал на +2 и более отнимает очко судьбы и превращает бонус союзников в штраф −20.",
+    "source": "Элитный архетип: Лесной Владыка",
+    "bookSource": "Книга Аэльдари: Ответвления",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "RHDKeAXBb29wY5OG",
+  "effects": [],
+  "folder": "aeaMUHNO38GIsUXh",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!RHDKeAXBb29wY5OG"
+}

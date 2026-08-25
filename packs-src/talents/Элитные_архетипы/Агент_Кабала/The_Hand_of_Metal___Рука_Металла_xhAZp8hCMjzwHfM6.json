@@ -1,0 +1,48 @@
+{
+  "name": "The Hand of Metal / Рука Металла",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "S1J31uqIlWvIxe3Q",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж знает тайны и таинства Механикум и Механикус, различия между Культом Механикум, Адептус Механикус, Тёмными Механикум, Малетехами и Еретехами, Универсальные Законы и Догмы Омниссии. Не получает штрафов общения с представителями Механикум и лишает их штрафов на общение с собой; воспринимается как равный, может ими командовать и создавать ячейки. Может устанавливать в себя импланты Механикум и Скитариев, игнорируя обычные ограничения, модифицируя их технологиями Кабала в незримые части — получает трейт Mechanicum Implants. Тёмные Механикум и хаоситы-поклонники Омниссии начнут охоту за персонажем.",
+    "tier": 3,
+    "requirement": "F.L (Mechanicum)+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Агент Кабала",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "xhAZp8hCMjzwHfM6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!xhAZp8hCMjzwHfM6"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Deus Ex Dicit / Бог из Костей",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "qJeFOziEtLd6ceM1",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж изучает таинство переселения тела, сознания и души в психокостяную оболочку. Может создать имплант всего тела, считая его имплантом 4-й редкости. Присоединив к нему заполненный камень душ (1 смена работы), душа может переселиться в психокостяное туловище или наоборот убежать в камень душ за Полудействие или Реакцию. Раны внутри оболочки равны Успехи+I.b при крафте, а её S, T и A равны I.b×5, но не более 80.",
+    "tier": 3,
+    "requirement": "Holy Hammer",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Кузнец Ваула",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "wuMBsUtPhYOh1pcJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!wuMBsUtPhYOh1pcJ"
+}

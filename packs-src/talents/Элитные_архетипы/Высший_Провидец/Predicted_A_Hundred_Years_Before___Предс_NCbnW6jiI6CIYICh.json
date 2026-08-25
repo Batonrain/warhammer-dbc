@@ -1,0 +1,48 @@
+{
+  "name": "Predicted A Hundred Years Before / Предсказанное За Тысячу Лет До",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "JufxwhOZ9FMj937e",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может сжечь своё Очко Судьбы, чтобы добавить к любому следующему тесту +W.b провалов или успехов. Если цель смогла изменить судьбу невероятным образом и это пойдёт на пользу миру-кораблю или самому провидцу, он немедленно восстанавливает сожжённое очко судьбы. Талант можно применить лишь раз за битву.",
+    "tier": 3,
+    "requirement": "Lost Farseer",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Высший Провидец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "NCbnW6jiI6CIYICh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!NCbnW6jiI6CIYICh"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Virtuoso of Weapons / Виртуоз Оружия",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "0U3OW3ftbJRWSx3c",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Выбирая талант, персонаж определяет один вид рукопашного оружия, виртуозному владению которым он обучается. Используя это оружие, он получает бонус +10 ко всем тестам с его участием, свойства Extreme (9/−1) и Proven (3/+1), а также увеличивает качество оружия на одну ступень (если повысить невозможно, то не выше Arts.Q).",
+    "tier": 1,
+    "requirement": "Оружие Наследия",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Воин Троп",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "7UTAXc6S8GUkgALo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!7UTAXc6S8GUkgALo"
+}

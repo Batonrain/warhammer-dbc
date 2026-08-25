@@ -1,0 +1,48 @@
+{
+  "name": "Crushing Gallop / Сокрушающий Галоп",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kSwid5gHHzkFOLBz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если скакун в прошлом раунде не передвигался дальше своего SPD, он увеличивает натиск до значения своего Бега; урон всадника от натиска увеличивается на S.b скакуна, а сила атак скакуна от натиска — на P.b всадника. Применяется лишь к первой атаке в раунде, совершённой персонажем и скакуном.",
+    "tier": 1,
+    "requirement": "Unstoppable Charge",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Воин Курноуса",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "K5Wi1IcNtHnU6LEK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!K5Wi1IcNtHnU6LEK"
+}

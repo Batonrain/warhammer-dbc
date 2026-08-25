@@ -1,0 +1,48 @@
+{
+  "name": "Exarch of the Eagle Pilots / Экзарх Орлиных Пилотов",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "908Vd6zlCzHDktpV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может управлять эльдарской техникой за всех членов экипажа, получая по +2 ОД за каждого отсутствующего члена экипажа внутри. Это ОД можно тратить лишь на действия отсутствующего члена экипажа.",
+    "tier": 3,
+    "requirement": "Мастер/Заблудившийся на Пути Орлиных Пилотов",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Экзарх Аспекта",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "HTW7JalHaV5bEsgs",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!HTW7JalHaV5bEsgs"
+}

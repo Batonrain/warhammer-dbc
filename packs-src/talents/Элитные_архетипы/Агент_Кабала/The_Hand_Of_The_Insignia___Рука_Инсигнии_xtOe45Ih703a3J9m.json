@@ -1,0 +1,48 @@
+{
+  "name": "The Hand Of The Insignia / Рука Инсигнии",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "S1J31uqIlWvIxe3Q",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж не получает штрафов общения с Инквизицией и лишает их штрафов на общение с собой; воспринимается Аколитами и связанными организациями как равный, может ими командовать. Получает знания о создании Инквизиторской Инсигнии (R5): +50 к реквизиции имперского снаряжения, +30 к Запугиванию/Допросу; включает до 2 (Best.Q — до 3) уникальных механизмов из набора: Древний Телепортариум (телепорт себя+5 существ без штрафов, игнорируя Пустотные Поля), Безупречная Гексаграмзащита (−40 на психотесты против носителя, +20 на Феномены, игнорирует Warp Weapon/Tainted в радиусе W.b), Мощь Тайн (3 Пальцевых оружия +I.b Dmg, Very Reliable, Independent, перезарядка раз в 4 часа), Святая Защита (демоны проходят тест W−5×W.b персонажа, за провал −10 к BS/WS демона), Защита Императора (Генератор Силового Поля Best.Q, активируется в любой момент), Закон Дозволения (подчинение незаражённого имперского корабля, −50 на неодобренные команды судна). Когнитэ получают от покровителей информацию о персонаже и начнут мешать его начинаниям.",
+    "tier": 3,
+    "requirement": "F.L (Inquisition)+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Агент Кабала",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "xtOe45Ih703a3J9m",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!xtOe45Ih703a3J9m"
+}

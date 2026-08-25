@@ -1,0 +1,48 @@
+{
+  "name": "Protect Me! / Защитите Меня!",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "lOeOsPFizs9UuAR2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если персонаж имеет меньше половины от максимума ран, все его подчинённые получают +5 ко всем характеристикам и трейт Fanatic. Персонаж получает дополнительные +½ (окр.▲) F.b Успехов на тесты Командования, пока подчинённые в таком состоянии. Желая захватить пленных, персонаж должен пройти тест W+10, чтобы подчинённые не разорвали врагов в слепом фанатизме.",
+    "tier": 2,
+    "requirement": "Into the Jaws of Hell",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Барон Корсаров",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "IgEk0E9i0AbJndiM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!IgEk0E9i0AbJndiM"
+}

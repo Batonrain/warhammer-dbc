@@ -1,0 +1,48 @@
+{
+  "name": "The Beginning of the Hunt / Начало Охоты",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "0aJ9NwwhSLbU7LUl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если персонаж избирает Духа Курноуса перед началом битвы, все, кто подчиняется его командам и использует копьё как основное оружие, получают +10 к WS и T; на расстоянии до F.b метров от персонажа могут в конце хода за Свободное действие войти в стойку Частокол, игнорируя ограничения. Если персонаж избирает Духа Фаолчу, все использующие лук или арбалет получают +10 к BS и P; на расстоянии до F.b метров снижают цену полу-/полного прицеливания на 1 ОД и могут совершать до двух атак в ход, если одна из них стрелковая.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Лесной Владыка",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "QmtUQShpA6zTeXJ5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!QmtUQShpA6zTeXJ5"
+}

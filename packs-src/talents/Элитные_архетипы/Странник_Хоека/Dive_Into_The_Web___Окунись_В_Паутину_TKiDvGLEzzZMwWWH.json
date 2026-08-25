@@ -1,0 +1,48 @@
+{
+  "name": "Dive Into The Web / Окунись В Паутину",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "nWMSMhFRJEzzRYVu",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В качестве реакции на атаку, направленную на него, или за Полудействие, персонаж может пройти тест F.L (SercamBelach)−10. При успехе создаёт разлом в Паутину 4×4×4 метров, существующий P.b раундов. В первый раунд появления он заставляет всех существ в радиусе 3 метров пройти тест S+0, иначе их притягивает к разлому на Провалы×3 метров или затягивает внутрь. Раз в час.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Странник Хоека",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "TKiDvGLEzzZMwWWH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!TKiDvGLEzzZMwWWH"
+}

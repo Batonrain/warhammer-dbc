@@ -1,0 +1,48 @@
+{
+  "name": "Kurnathi / Курнати",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "b9LR2aEAbfoO7HjR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж должен иметь два силовых оружия-клинка и сюрикен пистолет (по решению ГМа оружие может быть изменено). Покупка WS и BS становится на +1 ступень дружественнее независимо от условий; взятие или убирание выбранного оружия в начале хода — Свободное действие. В начале своего хода персонаж может поставить Метку Охотника на видимого противника. Лимит атак в ход вырастает до 2-х; первая атака против выбранного противника получает преимущество. Если персонаж атаковал и рукопашной, и стрелковой атакой за ход — в начале следующего хода получает +1 ОД на тесты с оружием Курнати. Взяв 5+ талантов, персонаж получает Unnatural WS, BS (+2).",
+    "tier": 3,
+    "requirement": "4 таланта из категории Рукопашные или Стрелок 3-го уровня",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Присягнувшие Клинки",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "LLGdYpVGB4pVlaFe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!LLGdYpVGB4pVlaFe"
+}

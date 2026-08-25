@@ -1,0 +1,47 @@
+{
+  "name": "Field Experience / Полевой Опыт",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Феларх может обучать до F.b×5 подчинённых, если их Влияние не выше его собственного. Если подчинённые заканчивают бой под его командованием — это засчитывается за полную сессию обучения для всех, кто участвовал; за каждое совершённое подчинённым убийство в этом бою он получает дополнительный успех на тест Обучения. Так можно проводить до F.b полных сессий обучения в месяц, не получая монотонности по естественным причинам, а ученики персонажа могут обучаться таким образом неограниченное число раз.",
+    "source": "Элитный архетип: Феларх",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "mGZCQtN1ly8TI7Ei",
+  "effects": [],
+  "folder": "HgUQf25x47jouw34",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!mGZCQtN1ly8TI7Ei"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Blade of Death / Клинок Смерти",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "pxVusJn7kd8Wxo09",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда у персонажа максимум Мёртвого Могущества, он получает свойство Warp Weapon на свои рукопашные атаки клинковым оружием.",
+    "tier": 3,
+    "requirement": "Conductor of Death",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Клинковое Воинство",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "GY1z21OnNKCDpINO",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!GY1z21OnNKCDpINO"
+}

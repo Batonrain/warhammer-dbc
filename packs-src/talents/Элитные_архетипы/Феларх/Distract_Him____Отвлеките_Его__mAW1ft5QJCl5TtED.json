@@ -1,0 +1,48 @@
+{
+  "name": "Distract Him! / Отвлеките Его!",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "iLGvfcjCX7IO9OyG",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В качестве Длительной Команды за 4 успеха персонаж может вынудить своих подчинённых совершить Одиночную атаку или Короткую очередь по указанной им цели. Все атаки подчинённых получают свойство Surge (+2). Если цель не сможет увернуться от половины или более атак, персонаж получает возможность совершить Незримую Одиночную Атаку любым удерживаемым оружием, дотягивающимся до противника, независимо от исхода полностью разряжая своё оружие.",
+    "tier": 2,
+    "requirement": "Sniper Assasin",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Феларх",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "mAW1ft5QJCl5TtED",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!mAW1ft5QJCl5TtED"
+}

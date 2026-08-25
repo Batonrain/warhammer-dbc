@@ -1,0 +1,48 @@
+{
+  "name": "The Chorus of the Died / Хор Умерших",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "dnkpYudFCgf6ZHfT",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж создаёт ауру I.b×10 метров. За каждого подчинённого психокостяного конструкта в этой ауре союзные существа в психокостяной броне и психокостяные конструкты получают бонус ко всем тестам, кроме T, Inf и Cor, равный +I.b. Тесты против Страха и Шока в этой ауре получают штраф −30. Персонаж может деактивировать и включать эту ауру за Полное действие.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Высший Духовидец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "zDqUrLQqIaGpQsvq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!zDqUrLQqIaGpQsvq"
+}

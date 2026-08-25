@@ -1,0 +1,47 @@
+{
+  "name": "The Predicted Event / Предсказанное Событие",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Перед началом битвы персонаж получает P.b+½ (окр.▲) WP.b Успехов, которые может распределять на любые не-атакующие действия и психосилы, а также передавать союзникам без трейта Blunted и не являющимся Парией. Непотраченные успехи сгорают в конце боя.",
+    "source": "Элитный архетип: Высший Провидец",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "vL94k9MvPAujTjxw",
+  "effects": [],
+  "folder": "kDSwzVIzNl2QzFb1",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!vL94k9MvPAujTjxw"
+}

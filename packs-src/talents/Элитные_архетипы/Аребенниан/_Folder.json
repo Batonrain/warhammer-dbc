@@ -1,0 +1,23 @@
+{
+  "name": "Аребенниан",
+  "type": "Item",
+  "sorting": "m",
+  "_id": "XjMVe2nCTJe3QiRv",
+  "description": "",
+  "folder": "Xlmt0vNMtK47xqJ7",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!XjMVe2nCTJe3QiRv"
+}

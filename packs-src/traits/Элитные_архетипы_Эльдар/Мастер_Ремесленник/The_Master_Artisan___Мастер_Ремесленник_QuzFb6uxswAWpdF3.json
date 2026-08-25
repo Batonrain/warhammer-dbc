@@ -1,0 +1,47 @@
+{
+  "name": "The Master Artisan / Мастер Ремесленник",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Создавая Comm.Q вещь, персонаж создаёт I.b вещей вместо одной; создавая Good.Q вещь — создаёт две (не распространяется на вещи R3 и выше). Персонаж перебрасывает критические Провалы на тестах крафта или улучшения любых вещей и не может намеренно создавать вещи Poor.Q.",
+    "source": "Элитный архетип: Мастер-Ремесленник",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "QuzFb6uxswAWpdF3",
+  "effects": [],
+  "folder": "pABL1oK3dMYgiDBL",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!QuzFb6uxswAWpdF3"
+}

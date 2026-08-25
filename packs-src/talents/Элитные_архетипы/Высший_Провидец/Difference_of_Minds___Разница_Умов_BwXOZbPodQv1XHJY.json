@@ -1,0 +1,48 @@
+{
+  "name": "Difference of Minds / Разница Умов",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "JufxwhOZ9FMj937e",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает бонус на манифестацию психосил против противника, равный разнице WP между ними. Если разница равна или больше 40, Провидец вместо теста на манифестацию может объявить об Автоуспехе с числом успехов, равных его Unnatural WP.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Высший Провидец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "BwXOZbPodQv1XHJY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!BwXOZbPodQv1XHJY"
+}

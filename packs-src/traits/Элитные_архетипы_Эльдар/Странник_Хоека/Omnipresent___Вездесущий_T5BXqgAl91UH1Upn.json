@@ -1,0 +1,47 @@
+{
+  "name": "Omnipresent / Вездесущий",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "За Полное действие в P.b метрах от себя персонаж может создать свою нефизичную полуфазовую копию (P.b ран и поглощения, характеристики и навыки равны персонажу; тест Awareness(P)-10 для раскрытия истинности). Персонаж может двигать копии в конце своего хода; копия не может атаковать. Нераскрытая копия принимает на себя ближайшую стрелковую атаку по персонажу вместо него. Персонаж видит и ощущает всё через копии, как через себя. Копии живут до P.b часов; персонаж может создать не более P.b копий одновременно и уничтожить их за ментальное Полудействие.",
+    "source": "Элитный архетип: Странник Хоека",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "T5BXqgAl91UH1Upn",
+  "effects": [],
+  "folder": "KmzB5XkC9Sc3sLSz",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!T5BXqgAl91UH1Upn"
+}

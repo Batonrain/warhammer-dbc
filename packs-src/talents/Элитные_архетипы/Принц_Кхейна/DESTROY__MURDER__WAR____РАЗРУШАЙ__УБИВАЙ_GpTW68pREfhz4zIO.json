@@ -1,0 +1,48 @@
+{
+  "name": "DESTROY! MURDER! WAR! / РАЗРУШАЙ! УБИВАЙ! ВОЙНА!",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "1zY3e1PEhsxpLyHO",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда персонаж совершает рукопашную атаку по укрытию или технике, его S.b удваивается, и перед атакой из AP укрытия/брони техники высчитывается S.b персонажа. Рукопашные атаки персонажа увеличивают рейтинг перегрузки вражеского силового щита на S.b+WS.b. Свойство Flame от его рукопашных атак распространяется на всех существ, кроме иммунных к огню из-за варп-природы.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Принц Кхейна",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "GpTW68pREfhz4zIO",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!GpTW68pREfhz4zIO"
+}

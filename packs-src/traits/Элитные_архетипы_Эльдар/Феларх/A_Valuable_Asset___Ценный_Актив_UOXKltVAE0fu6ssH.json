@@ -1,0 +1,47 @@
+{
+  "name": "A Valuable Asset / Ценный Актив",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В свой ход персонаж может отдавать свои очки судьбы подчинённым, находящимся в радиусе F метров от него, выбирая до F.b подчинённых (вне или во время битвы). Такие подчинённые получают те же бонусы от траты очка судьбы, что и сам Феларх; если подчинённый не использует полученный бонус до конца своего следующего хода, бонус сгорает.",
+    "source": "Элитный архетип: Феларх",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "UOXKltVAE0fu6ssH",
+  "effects": [],
+  "folder": "HgUQf25x47jouw34",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!UOXKltVAE0fu6ssH"
+}

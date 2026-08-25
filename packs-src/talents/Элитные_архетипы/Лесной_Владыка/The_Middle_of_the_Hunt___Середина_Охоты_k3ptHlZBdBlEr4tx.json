@@ -1,0 +1,48 @@
+{
+  "name": "The Middle of the Hunt / Середина Охоты",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "0aJ9NwwhSLbU7LUl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В начале 3-го и 4-го раундов персонаж поднимает значение своей инициативы на 10. Может выбрать до F.b союзников, чтобы увеличить их инициативу на +2, потенциально сдвигая их по порядковой лестнице.",
+    "tier": 2,
+    "requirement": "The Beginning of the Hunt",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Лесной Владыка",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "k3ptHlZBdBlEr4tx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!k3ptHlZBdBlEr4tx"
+}
