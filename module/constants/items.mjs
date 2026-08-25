@@ -124,22 +124,30 @@ export const ARMOR_MOD_GROUPS = {
   }
 };
 
+// Директивы auto.* (читает module/combat/armor-properties.mjs, применяет
+// module/documents/actor.mjs при сборе AP по локациям + module/combat/damage.mjs
+// при поглощении): noApVsType — не даёт AP от указанного типа урона;
+// doubleApVsType — удваивает AP от указанного типа урона; noApRanged — не даёт
+// AP от стрелковых атак; noApJointCalled/noApEyeCalled — не даёт AP при
+// Избирательном попадании в Сочленение/Глаз; blocksPrimitiveDouble — Примитивное
+// оружие атакующего не удваивает AP этой брони. Свойство без auto — только
+// напоминание (десk/label на листе), как у большинства WEAPON_PROPERTIES.
 export const ARMOR_PROPERTIES = {
   blinders:   { label: "Blinders / Шоры",        desc: "Шлем. Уменьшает угол обзора до X°." },
   cloak:      { label: "Cloak / Плащ",            desc: "Не защищает с фронта 90°, кроме особых позиций." },
-  conductive: { label: "Conductive / Проводящая", desc: "Не даёт AP от E(El) урона." },
-  flak:       { label: "Flak / Флак",             desc: "Удваивает AP против X(Fr) урона, кроме прямых попаданий." },
+  conductive: { label: "Conductive / Проводящая", desc: "Не даёт AP от E(El) урона.", auto: { noApVsType: "energy" } },
+  flak:       { label: "Flak / Флак",             desc: "Удваивает AP против X(Fr) урона, кроме прямых попаданий.", auto: { doubleApVsType: "blast" } },
   gorget:     { label: "Gorget / Горжет",          desc: "Защищает шею. При случайном попадании в голову — бросок 1d10." },
   hard:       { label: "Hard / Жёсткая",          desc: "Нельзя снимать, не оставляя Усталость. Нельзя носить 2 жёстких на одной части." },
   heavy:      { label: "Heavy / Тяжёлая",         desc: "−10 к Stealth. Нельзя плавать." },
-  open:       { label: "Open / Открытый",          desc: "Шлем. Нет визора. Избирательные атаки в лицо игнорируют AP." },
-  primitive:  { label: "Primitive / Примитивная", desc: "Не получает бонус AP от примитивного оружия." },
+  open:       { label: "Open / Открытый",          desc: "Шлем. Нет визора. Избирательные атаки в лицо игнорируют AP.", auto: { noApEyeCalled: true } },
+  primitive:  { label: "Primitive / Примитивная", desc: "Не получает бонус AP от примитивного оружия.", auto: { blocksPrimitiveDouble: true } },
   protective: { label: "Protective / Защитная",   desc: "+X AP против урона от среды." },
-  rods:       { label: "Rods / Стержни",           desc: "Не даёт AP против стрелковых атак и Избирательных попаданий в сочленения." },
+  rods:       { label: "Rods / Стержни",           desc: "Не даёт AP против стрелковых атак и Избирательных попаданий в сочленения.", auto: { noApRanged: true, noApJointCalled: true } },
   sealed:     { label: "Sealed / Закрытая",        desc: "Защита от химии на коже. Теряется при пробитии брони." },
   stealthed:  { label: "Stealthed / Скрытная",    desc: "+10 к Stealth. Скрывает от тепловизора." },
   undersuit:  { label: "Undersuit / Подкладка",   desc: "Носится под другой бронёй." },
-  soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений." },
+  soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений.", auto: { noApVsType: "impact" } },
   void:       { label: "Void / Пустотная",         desc: "Защита от вакуума, жара, газов, радиации. 6 часов воздуха." },
   // ── Эльдарские (Азуриане) ──
   aspect:     { label: "Aspect / Аспект",          desc: "Броня аспекта. Без соответствующего Пути — штраф −20 на все тесты, пока носишь броню. Не-Асуриане/Иннари: модификация R3 убирает штраф." },
