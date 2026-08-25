@@ -67,7 +67,9 @@ const TYPE_ICON = {
   psychicPower: "psychicpower", techPower: "techpower",
   mutation: "mutation", navigatorPower: "navigatorpower",
   mentalDisorder: "mentaldisorder", component: "component", shipHull: "component",
-  cargo: "cargo", torpedo: "torpedo", disease: "disease"
+  cargo: "cargo", torpedo: "torpedo", disease: "disease",
+  // Своей иконки нет — вязь такая же «модификация носителя», как armorMod.
+  runicWeave: "armormod"
 };
 
 /** Путь к иконке для типа+подтипа, либо null (тип без своей иконки). */

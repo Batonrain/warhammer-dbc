@@ -61,6 +61,70 @@ describe("isItemActive: модификация и её носитель", () => 
   });
 });
 
+const weapon = (id, equipped) => ({ id, type: "weapon", system: { equipped } });
+const holder = (id, installedOn, slots = 3) =>
+  ({ id, type: "armorMod", system: { installedOn, runicWeaveSlots: slots } });
+const weave = (id, extra = {}) => ({ id, type: "runicWeave", system: { installedOnType: "carrier", ...extra } });
+
+describe("isItemActive: Руническая Вязь", () => {
+  it("не установлена — неактивна", () => {
+    expect(isItemActive(weave("w"))).toBe(false);
+  });
+
+  it("установлена на снятую броню — неактивна", () => {
+    const w = weave("w", { installedOn: "armor-1" });
+    actorWith(armor("armor-1", false), w);
+    expect(isItemActive(w)).toBe(false);
+  });
+
+  it("единственная вязь на надетой броне — активна", () => {
+    const w = weave("w", { installedOn: "armor-1" });
+    actorWith(armor("armor-1", true), w);
+    expect(isItemActive(w)).toBe(true);
+  });
+
+  it("на надетом оружии — активна", () => {
+    const w = weave("w", { installedOn: "wpn-1" });
+    actorWith(weapon("wpn-1", true), w);
+    expect(isItemActive(w)).toBe(true);
+  });
+
+  it("две вязи на одной броне — активна только ближайшая к телу (изнутри)", () => {
+    const outer = weave("outer", { installedOn: "armor-1", wornPosition: "outer" });
+    const inner = weave("inner", { installedOn: "armor-1", wornPosition: "inner" });
+    actorWith(armor("armor-1", true), outer, inner);
+    expect(isItemActive(inner)).toBe(true);
+    expect(isItemActive(outer)).toBe(false);
+  });
+
+  it("держатель (Загадка Маата) — активность решает ручной тумблер, не положение", () => {
+    const h = holder("holder", "armor-1");
+    const on  = weave("on",  { installedOn: "holder", active: true });
+    const off = weave("off", { installedOn: "holder", active: false });
+    actorWith(armor("armor-1", true), h, on, off);
+    expect(isItemActive(on)).toBe(true);
+    expect(isItemActive(off)).toBe(false);
+  });
+
+  it("держатель установлен, но носитель держателя снят — неактивна", () => {
+    const h = holder("holder", "armor-1");
+    const on = weave("on", { installedOn: "holder", active: true });
+    actorWith(armor("armor-1", false), h, on);
+    expect(isItemActive(on)).toBe(false);
+  });
+
+  it("installedOnType:vehicle — активна самим фактом владения, без носителя", () => {
+    const w = weave("w", { installedOnType: "vehicle" });
+    actorWith(w);
+    expect(isItemActive(w)).toBe(true);
+  });
+
+  it("installedOnType:region — активна всегда (живой пересчёт снаружи, см. runic-weave-zone.mjs)", () => {
+    const w = weave("w", { installedOnType: "region", installedOn: "" });
+    expect(isItemActive(w)).toBe(true);
+  });
+});
+
 // У ActiveEffect картинка называется img: поле icon Foundry объединила с ним в
 // v12, и схема v13+ чужое имя молча отбрасывает — эффект получает умолчание
 // ядра icons/svg/aura.svg. Видно по packs-src: у всех созданных миграцией

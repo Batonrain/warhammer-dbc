@@ -8,6 +8,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { toggleParentId, isToggleOn } from "../rules/toggle-abilities.mjs";
+import { activeRunicWeaveId } from "../rules/runic-weave.mjs";
 
 /**
  * Активен ли предмет прямо сейчас (по его собственным полям состояния) —
@@ -51,6 +52,28 @@ export function isItemActive(item) {
     case "navigatorPower": return !!sys.isSustained;
     case "implant":
       return !!item.getFlag("warhammer-dbc", "installed") && !item.getFlag("warhammer-dbc", "disabled");
+    case "runicWeave": {
+      // "region" (помещение/стены) — не читается отсюда вовсе: живой пересчёт
+      // там клонирует предмет-источник тем, чей токен стоит в Region (см.
+      // module/regions/runic-weave-zone.mjs), а сам клон сюда попадает уже
+      // БЕЗ installedOnType (toObject снимает флаг привязки, не поле схемы —
+      // достаточно оставить его "активным всегда", как трейт/талант).
+      if (sys.installedOnType === "region") return true;
+      // "vehicle" — сама вязь embedded-предметом на акторе техники: сам факт
+      // владения ей И есть нанесение, отдельного «носителя» нет.
+      if (sys.installedOnType === "vehicle") return true;
+      // "carrier" (по умолчанию, включая старые/непроставленные данные) —
+      // на конкретном предмете (броне/оружии/держателе) того же актора.
+      if (!sys.installedOn) return false;
+      const host = item.parent?.items?.get(sys.installedOn);
+      if (!host) return true; // предмет пака/битая ссылка — судим по своим полям
+      if (!isItemActive(host)) return false;
+      if (host.type === "armorMod") return !!sys.active; // держатель (Загадка Маата) — ручной тумблер
+      const siblings = [...(item.parent?.items ?? [])]
+        .filter(i => i.type === "runicWeave" && i.system?.installedOn === sys.installedOn)
+        .map(i => ({ id: i.id, wornPosition: i.system?.wornPosition || "" }));
+      return activeRunicWeaveId(siblings) === item.id;
+    }
     default: return true;
   }
 }

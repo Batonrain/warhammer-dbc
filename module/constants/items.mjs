@@ -26,14 +26,15 @@ export const ITEM_TYPES = {
   vehicleTrait:   "Черта техники",
   smallCraft:     "Малое судно (МЛА)",
   race:           "Раса",
-  subrace:        "Субраса"
+  subrace:        "Субраса",
+  runicWeave:     "Руническая Вязь"
 };
 
 // Типы снаряжения (вкладка «Снаряжение»). Кнопка «Добавить предмет» предлагает
 // только их — без талантов/черт/психосил/расстройств и прочих способностей.
 export const GEAR_ITEM_TYPES = [
   "weapon", "weaponMod", "ammo", "armor", "armorMod",
-  "forcefield", "gear", "drug", "tool"
+  "forcefield", "gear", "drug", "tool", "runicWeave"
 ];
 
 export const WEAPON_CLASSES = {

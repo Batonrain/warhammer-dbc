@@ -30,6 +30,10 @@ export class ArmorModData extends foundry.abstract.TypeDataModel {
       quality:      new StringField({ initial: "common", label: "Качество" }),
       activatable:  new BooleanField({ initial: false, label: "Включаемая" }),
       active:       new BooleanField({ initial: false, label: "Включена" }),
+      // Держатель Рунических Вязей (напр. «Загадка Маата», корбук стр. 433) —
+      // сколько вязей может нести слоями и переключать свободным действием
+      // вместо физического «изнутри/снаружи». 0 — обычная модификация, не держатель.
+      runicWeaveSlots: new NumberField({ initial: 0, integer: true, nullable: false, label: "Слотов под Вязи" }),
       effects: new SchemaField({
         apAll:         ap("AP: все зоны"),
         apHead:        ap("AP: голова"),

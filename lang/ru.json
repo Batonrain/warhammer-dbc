@@ -55,7 +55,8 @@
       "celestialBody": "Небесное тело",
       "race": "Раса",
       "subrace": "Субраса",
-      "eliteArchetype": "Элитный архетип"
+      "eliteArchetype": "Элитный архетип",
+      "runicWeave": "Руническая Вязь"
     }
   }
 }

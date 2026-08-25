@@ -38,6 +38,9 @@ import { SKILLS_DEF }                                from "../constants/skills.m
 import { CHARACTERISTICS, APTITUDES }                from "../constants/characteristics.mjs";
 import { dynamicAptKind }                            from "../constants/advancement.mjs";
 import { masteryTargets }                            from "../rules/mastery-targets.mjs";
+import { activeRunicWeaveId, siblingRunicWeaves }    from "../rules/runic-weave.mjs";
+import { RUNIC_WEAVE_POSITIONS, RUNIC_WEAVE_INSTALLED_ON_TYPES,
+         RUNIC_WEAVE_SURFACE_KINDS }                  from "../constants/runic-weaves.mjs";
 import { PSY_DISCIPLINES, TECH_DISCIPLINES,
          buildDisciplineContext }                    from "../constants/disciplines.mjs";
 import { DW_GODS_MAP }                               from "../constants/demon-weapon.mjs";
@@ -1164,6 +1167,43 @@ export class WarhammerItemSheet
       context.charBonusesActive = sys.effects.charBonuses.map(cb => ({
         stat: cb.stat, value: cb.value ?? 0, abbr: CHARACTERISTICS[cb.stat]?.abbr ?? cb.stat
       }));
+    }
+
+    // ── Руническая Вязь (корбук стр. 433-434) ─────────────────────────────────
+    if (this.item.type === "runicWeave") {
+      context.runicWeavePositions = RUNIC_WEAVE_POSITIONS;
+      context.runicWeaveInstalledOnTypes = RUNIC_WEAVE_INSTALLED_ON_TYPES;
+      context.runicWeaveUuid = this.item.uuid;
+
+      const sys = context.system;
+      if (!Array.isArray(sys.surfaceKinds)) sys.surfaceKinds = [];
+      context.runicWeaveSurfaceOptions = Object.entries(RUNIC_WEAVE_SURFACE_KINDS)
+        .map(([key, label]) => ({ key, label, active: sys.surfaceKinds.includes(key) }));
+
+      const parentActor = this.item.parent;
+      // Носители «carrier» — броня/оружие того же актора и держатели (модификации
+      // силовой брони с runicWeaveSlots>0, напр. Загадка Маата).
+      context.runicWeaveInstallTargets = (parentActor?.items ?? [])
+        .filter(i => i.type === "armor" || i.type === "weapon"
+          || (i.type === "armorMod" && Number(i.system?.runicWeaveSlots) > 0))
+        .map(i => ({
+          id: i.id, name: i.name, equipped: i.system.equipped,
+          isHolder: i.type === "armorMod"
+        }));
+
+      const host = sys.installedOn ? (parentActor?.items?.get(sys.installedOn) ?? null) : null;
+      context.runicWeaveHostIsHolder = host?.type === "armorMod";
+
+      const siblings = siblingRunicWeaves(parentActor?.items?.contents ?? [], this.item)
+        .map(i => ({ id: i.id, wornPosition: i.system?.wornPosition || "" }));
+      context.runicWeaveActiveId = activeRunicWeaveId(siblings);
+      context.runicWeaveOverridden = !context.runicWeaveHostIsHolder && sys.installedOn
+        && context.runicWeaveActiveId != null && context.runicWeaveActiveId !== this.item.id;
+      if (context.runicWeaveHostIsHolder) {
+        const used = (parentActor?.items ?? []).filter(i =>
+          i.type === "runicWeave" && i.system?.installedOn === sys.installedOn).length;
+        context.runicWeaveSlotUsage = { used, slots: Number(host.system?.runicWeaveSlots) || 0 };
+      }
     }
 
     // ── Психосилы / Техночудеса: доп. типы, навык, бонус характеристики ──────────
@@ -2485,6 +2525,13 @@ export class WarhammerItemSheet
       const props = [];
       [...el.querySelectorAll(".armormod-prop-cb:checked")].forEach(cb => props.push(cb.dataset.prop));
       this.item.update({ "system.effects.addProps": props });
+    });
+
+    // ── Руническая Вязь: допустимые виды поверхности (чекбоксы) ────────────────
+    on(".runic-weave-surface-cb", "change", () => {
+      const kinds = [];
+      [...el.querySelectorAll(".runic-weave-surface-cb:checked")].forEach(cb => kinds.push(cb.dataset.key));
+      this.item.update({ "system.surfaceKinds": kinds });
     });
 
     // ── Особенности брони (как у оружия: добавление чипами) ────────────────────

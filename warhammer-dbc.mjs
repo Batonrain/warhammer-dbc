@@ -67,6 +67,8 @@ import { initMovementActionsHud } from "./module/combat/movement-actions.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
+import { RunicWeaveZoneBehaviorType, RUNIC_WEAVE_ZONE_TYPE,
+         checkRunicWeaveZones }        from "./module/regions/runic-weave-zone.mjs";
 import { syncTokenBaseSize } from "./module/combat/tactical-map.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
@@ -161,6 +163,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/faction-roster.hbs",
     "systems/warhammer-dbc/templates/item/parts/race.hbs",
     "systems/warhammer-dbc/templates/item/parts/subrace.hbs",
+    "systems/warhammer-dbc/templates/item/parts/runic-weave.hbs",
     // Звёздная система
     "systems/warhammer-dbc/templates/item/parts/celestial-body.hbs",
     "systems/warhammer-dbc/templates/actor/star-system-sheet.hbs",
@@ -211,6 +214,12 @@ Hooks.once("init", () => {
   CONFIG.RegionBehavior.dataModels[COVER_TYPE] = CoverBehaviorType;
   CONFIG.RegionBehavior.typeLabels[COVER_TYPE] = "Укрытие";
   CONFIG.RegionBehavior.typeIcons[COVER_TYPE]  = "fa-solid fa-shield-halved";
+
+  // Зона «Руническая Вязь» (корбук стр. 433-434) на помещение/стены — ГМ
+  // размечает комнату Region и указывает вязь-источник (module/regions/runic-weave-zone.mjs).
+  CONFIG.RegionBehavior.dataModels[RUNIC_WEAVE_ZONE_TYPE] = RunicWeaveZoneBehaviorType;
+  CONFIG.RegionBehavior.typeLabels[RUNIC_WEAVE_ZONE_TYPE] = "Руническая Вязь (помещение)";
+  CONFIG.RegionBehavior.typeIcons[RUNIC_WEAVE_ZONE_TYPE]  = "fa-solid fa-rug";
 
   // ── Регистрация листов (только новый API v13) ─────────────────────────────
 
@@ -1568,6 +1577,19 @@ Hooks.on("updateItem", (item, changes) => {
     .some(k => k in changes || foundry.utils.hasProperty(changes, k));
   if (touched) checkAuras(canvas.scene);
 });
+
+// ── Рунические Вязи на помещение (стены) — тот же живой пересчёт, что у Аур,
+// см. module/regions/runic-weave-zone.mjs. Отдельные хуки: триггер — не
+// ЛЮБОЕ движение/предмет, а ещё и правка самого Region/поведения на сцене.
+Hooks.on("canvasReady", () => checkRunicWeaveZones(canvas.scene));
+Hooks.on("createToken", doc => checkRunicWeaveZones(doc.parent));
+Hooks.on("deleteToken", doc => checkRunicWeaveZones(doc.parent));
+Hooks.on("updateToken", (doc, changes) => {
+  if (["x", "y", "elevation", "hidden"].some(k => k in changes)) checkRunicWeaveZones(doc.parent);
+});
+Hooks.on("createRegionBehavior", doc => checkRunicWeaveZones(canvas.scene));
+Hooks.on("updateRegionBehavior", doc => checkRunicWeaveZones(canvas.scene));
+Hooks.on("deleteRegionBehavior", doc => checkRunicWeaveZones(canvas.scene));
 
 // ── «Пламенная вера» (Мир-храм): шанс не потратить Очко ──────────────────────
 // Ловим ЛЮБОЕ уменьшение system.fate.value одним хуком, а не правим каждое из

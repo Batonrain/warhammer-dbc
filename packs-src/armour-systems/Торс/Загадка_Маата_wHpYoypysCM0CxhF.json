@@ -15,6 +15,7 @@
     "quality": "common",
     "activatable": false,
     "active": false,
+    "runicWeaveSlots": 3,
     "effects": {
       "apAll": 0,
       "apHead": 0,
