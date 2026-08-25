@@ -1,6 +1,7 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
-import { testOutcome } from "../rules/roll-outcome.mjs";
+import { testOutcome, criticalOutcome } from "../rules/roll-outcome.mjs";
+import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
 import { MELEE_STANCES }                           from "../constants/combat.mjs";
 import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
@@ -152,6 +153,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // заново, потому что «в упор/в рукопашной» — ситуативная галочка игрока,
   // не хранимое состояние на акторе.
   const { success: hit, deg } = testOutcome(rv, threshold, { autoSuccess: !!opts.forceHit });
+  // Крит-диапазон (натуральные 1-5/96-100, стр. 25) — не путать с «Критическим
+  // Результатом/Эффектом» ниже: тот триггерится свойством Extreme оружия по
+  // граням урона, этот — только по натуральному броску атаки, независимо от
+  // оружия. Расширяется правилом kind:"critRangeMod", см. attack-dialog.mjs.
+  const critLine = critLineHtml(criticalOutcome(rv, opts.crit));
 
   // ── Заклинивание (только для дальнобойного оружия со свойством надёжности) ──
   const jamAt    = jamThreshold(wp);
@@ -392,7 +398,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     speaker: ChatMessage.getSpeaker({ actor }),
     content: attackCard({
       actorName: actor.name, weaponName: item.name, wp,
-      threshold, rv, hit, deg, hitsCount, hits, rerollDropped,
+      threshold, rv, hit, deg, hitsCount, hits, rerollDropped, critLine,
       modeLine: (isMelee && rofMode === "melee") ? "Рукопашная" : rofLabel,
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,

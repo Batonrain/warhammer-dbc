@@ -4,7 +4,7 @@
 // сам бросок кубика тут не участвует, только арифметика книги.
 
 import { describe, it, expect } from "vitest";
-import { testOutcome } from "../../module/rules/roll-outcome.mjs";
+import { testOutcome, criticalOutcome } from "../../module/rules/roll-outcome.mjs";
 
 describe("testOutcome", () => {
   it("бросок равный порогу — успех с 1 степенью", () => {
@@ -43,5 +43,38 @@ describe("testOutcome", () => {
 
   it("без autoSuccess перебор броска — обычный провал", () => {
     expect(testOutcome(80, 45)).toEqual({ success: false, deg: 4 });
+  });
+});
+
+describe("criticalOutcome", () => {
+  it("натуральные 1-5 — Критический Успех по умолчанию", () => {
+    expect(criticalOutcome(1)).toEqual({ success: true, failure: false });
+    expect(criticalOutcome(5)).toEqual({ success: true, failure: false });
+  });
+
+  it("натуральные 96-100 — Критический Провал по умолчанию", () => {
+    expect(criticalOutcome(96)).toEqual({ success: false, failure: true });
+    expect(criticalOutcome(100)).toEqual({ success: false, failure: true });
+  });
+
+  it("вне диапазона — ни то ни другое", () => {
+    expect(criticalOutcome(6)).toEqual({ success: false, failure: false });
+    expect(criticalOutcome(95)).toEqual({ success: false, failure: false });
+    expect(criticalOutcome(50)).toEqual({ success: false, failure: false });
+  });
+
+  it("не зависит от Предела — только от натурального броска", () => {
+    // Критический Провал даже если бросок формально прошёл бы обычный тест.
+    expect(criticalOutcome(97)).toEqual({ success: false, failure: true });
+  });
+
+  it("successExtra расширяет диапазон Критического Успеха", () => {
+    expect(criticalOutcome(10, { successExtra: 5 })).toEqual({ success: true, failure: false });
+    expect(criticalOutcome(11, { successExtra: 5 })).toEqual({ success: false, failure: false });
+  });
+
+  it("failExtra расширяет диапазон Критического Провала", () => {
+    expect(criticalOutcome(91, { failExtra: 5 })).toEqual({ success: false, failure: true });
+    expect(criticalOutcome(90, { failExtra: 5 })).toEqual({ success: false, failure: false });
   });
 });

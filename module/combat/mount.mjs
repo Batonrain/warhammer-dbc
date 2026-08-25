@@ -18,6 +18,11 @@
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
 import { SKILL_RANKS }   from "../constants/characteristics.mjs";
+import { criticalOutcome } from "../rules/roll-outcome.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
+import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { testKindHtml, diceModeHtml, critLineHtml, readTestKind, readDiceChoice,
+         mergeReroll, wireTestKindLive } from "../rules/test-kind-widget.mjs";
 import {
   MOUNT_SPEEDS, MOUNT_SKID, MOUNT_TERRAIN_MOD, STAY_MOD, BIKE_REPAIR, SELECTIVE_MODS,
   mountTraits, isBike, riderControl, testMod, turnOptions, skidInfo,
@@ -40,17 +45,58 @@ export function speedKeyOf(rider) {
   return key in MOUNT_SPEEDS ? key : "still";
 }
 
-/** Один бросок d100 против порога: степени считаются как везде в системе. */
+/**
+ * Один бросок d100 против порога: степени считаются как везде в системе.
+ * Крит (натуральные 1-5/96-100, стр. 25) — общий диапазон без расширения
+ * правилом: верховые тесты не сводятся к одному ключу Навыка/Характеристики
+ * (то Навык управления, то A, то смешанный тест), поэтому здесь — базовый
+ * диапазон на всех, а не resolveTest под каждый из шести разных случаев.
+ * `critLine` — готовая строка карточки, пустая, если не сработало.
+ */
 async function rollAgainst(threshold) {
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const passed = rv <= threshold;
   const deg = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;
-  return { roll, rv, passed, deg, critFail: rv >= 96 };
+  const critLine = critLineHtml(criticalOutcome(rv));
+  return { roll, rv, passed, deg, critLine };
 }
 
 /** Список поправок в подпись порога: «навык +10, Манёвренный +20». */
 const modLine = parts => parts.filter(p => p.value).map(p => `${p.label} ${sgn(p.value)}`).join(", ");
+
+/**
+ * Адаптер `val(selector)` для rules/test-kind-widget.mjs поверх jQuery-обёртки
+ * старого `Dialog` — тот же приём, что в sheets/tabs/disorders.mjs.
+ */
+function valOf(html) {
+  return sel => { const v = html.find(sel).val(); return v === undefined ? null : v; };
+}
+
+/**
+ * Полный конвейер Вида теста для верховых тестов, куда его раскатали (Поворот,
+ * Занос, Ландшафт, Седло, Ремонт байка). Бросок + Комбинированный/Расширенный/
+ * Встречный/Крит — как у остальных раскатанных диалогов, через
+ * rules/kind-outcome.mjs::resolveKindOutcome. `baseEff` — уже посчитанный
+ * порог теста ДО Сложности (её добавляет сюда).
+ */
+async function rollWithKind(actor, baseEff, tk, ctx) {
+  const reroll = tk.reroll || null;
+  const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+  const rolls = [];
+  for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+  const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
+  const roll = rolls[picked.index];
+  const rv = picked.value;
+  const rerollNote = reroll
+    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+    : "";
+  const outcome = await resolveKindOutcome(actor, {
+    kind: tk.kind, baseEff: baseEff + tk.difficulty, rv,
+    combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
+  });
+  return { roll, rv, rerollNote, outcome };
+}
 
 async function postCard(actor, html, rolls = []) {
   await ChatMessage.create(ChatMessage.applyRollMode({
@@ -117,21 +163,40 @@ export async function showTurnDialog(rider) {
           ${control.label}: <b>${control.value}</b>${control.combined ? " — Навыком не владеет, тест комбинированный" : ""}.
           При неудаче скакун поворачивает только на ${turns.fallbackAngle}°, а всадник проходит тест A.
         </div>
+        ${testKindHtml({ defaultKind: "base", label: "Поворот" })}
+        ${diceModeHtml()}
+        <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
     buttons: {
       roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Поворот!",
         callback: async html => {
+          const val = valOf(html);
           const idx = parseInt(html.find("#mt-angle").val()) || 0;
           const extra = parseInt(html.find("#mt-mod").val()) || 0;
-          await resolveTurn(rider, ctx, turns, idx, extra);
+          const tk = readTestKind(val, { label: "Поворот" });
+          tk.reroll = mergeReroll(null, readDiceChoice(val));
+          await resolveTurn(rider, ctx, turns, idx, extra, tk);
         } },
       cancel: { label: "Отмена" }
     },
-    default: "roll"
+    default: "roll",
+    render: html => {
+      const root = html[0];
+      const { updateAutoOutcomeNote } = wireTestKindLive(root, {
+        actor: rider, label: "Поворот",
+        getBaseEff: () => {
+          const idx = parseInt(root.querySelector("#mt-angle")?.value) || 0;
+          const extra = parseInt(root.querySelector("#mt-mod")?.value) || 0;
+          const option = turns.options[idx];
+          return control.value + (option?.mod || 0) + extra;
+        }
+      });
+      root.querySelectorAll("#mt-angle, #mt-mod").forEach(el => el.addEventListener("input", updateAutoOutcomeNote));
+    }
   }, { classes: ["dialog", "wh-attack-dialog"], width: 440 }).render(true);
 }
 
-async function resolveTurn(rider, ctx, turns, idx, extraMod) {
+async function resolveTurn(rider, ctx, turns, idx, extraMod, tk = { kind: "base", difficulty: 0 }) {
   const option = turns.options[idx];
   const { control, speedKey } = ctx;
 
@@ -142,8 +207,9 @@ async function resolveTurn(rider, ctx, turns, idx, extraMod) {
         option.action === "half" ? " (полудействие)" : option.action === "free" ? " (свободное действие)" : ""}.</span></div>`);
   }
 
-  const threshold = control.value + option.mod + extraMod;
-  const { roll, rv, passed, deg } = await rollAgainst(threshold);
+  const baseEff = control.value + option.mod + extraMod;
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, tk, { actor: rider, kind: "skill" });
+  const { success: passed, deg } = outcome;
 
   const body = passed
     ? `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Поворот на ${option.angle}°.</span></div>`
@@ -151,16 +217,27 @@ async function resolveTurn(rider, ctx, turns, idx, extraMod) {
        ${saddleButton(rider, "agility", option.riderMod, `неудачный поворот на ${option.angle}°`)}`;
 
   await postCard(rider, `
-    <div class="roll-header">${rollIcon("run")}Поворот на ${option.angle}° — ${esc(rider.name)}</div>
+    <div class="roll-header">${rollIcon("run")}Поворот на ${option.angle}°${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}</div>
     <div class="roll-threshold">${control.label} <b>${control.value}</b> ${sgn(option.mod + extraMod)}
-      (${MOUNT_SPEEDS[speedKey].label}${turns.manoeuvreParts.length ? `, ${modLine(turns.manoeuvreParts)}` : ""}) → Порог <b>${threshold}</b></div>
+      (${MOUNT_SPEEDS[speedKey].label}${turns.manoeuvreParts.length ? `, ${modLine(turns.manoeuvreParts)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff}</b></div>
+    ${outcome.combinedLine}
     ${control.combined ? `<div class="roll-defense-note">Навыком не владеет — по книге это комбинированный тест с основным действием.</div>` : ""}
     <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d100: <b>${rv}</b></div>
-    ${body}`, [roll]);
+    ${rerollNote}
+    ${outcome.critLine}
+    ${body}
+    ${outcome.extendedLine}
+    ${outcome.opposedLine}`, [roll]);
 }
 
 // ── Занос (стр. 477) ──────────────────────────────────────────────────────
 
+/**
+ * Раньше катился сразу по клику, без диалога — тест давал только Занос
+ * (стр. 477), выбирать было не из чего. Появились Вид теста/Сложность/Кубик,
+ * поэтому маленький DialogV2, как у остальных раскатанных тестов без диалога
+ * (Безумие, Нестабильность Демона).
+ */
 export async function showSkidDialog(rider) {
   const ctx = await mountContext(rider);
   if (!ctx) return;
@@ -173,19 +250,57 @@ export async function showSkidDialog(rider) {
       : "⚠️ Занос возможен только после Натиска или Бега.");
   }
 
-  const threshold = control.value + info.mod;
-  const { roll, rv, passed, deg } = await rollAgainst(threshold);
+  const baseEff = control.value + info.mod;
+  const result = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Занос — ${mount.name}` },
+    classes: ["wh-roll-dialog-window"],
+    position: { width: 340 },
+    content: `
+      <div class="wh-skill-roll-form">
+        <div class="roll-dlg-header"><span>Занос — ${esc(mount.name)}</span></div>
+        <div class="roll-dlg-row"><label>${control.label}:</label><span>${control.value} ${sgn(info.mod)} = ${baseEff}</span></div>
+        ${testKindHtml({ defaultKind: "base", label: "Занос" })}
+        ${diceModeHtml()}
+        <div id="auto-outcome-note" class="roll-dlg-note"></div>
+      </div>`,
+    buttons: [
+      {
+        action: "roll", icon: "fas fa-dice-d10", label: "Занос!", default: true,
+        callback: (event, button) => {
+          const val = sel => button.form.querySelector(sel)?.value ?? null;
+          const tk = readTestKind(val, { label: "Занос" });
+          tk.reroll = mergeReroll(null, readDiceChoice(val));
+          return tk;
+        }
+      },
+      { action: "cancel", label: "Отмена", callback: () => false }
+    ],
+    render: (event, dialog) => wireTestKindLive(dialog.element, {
+      actor: rider, label: "Занос",
+      getBaseEff: () => baseEff + (parseInt(dialog.element.querySelector("#test-difficulty")?.value) || 0)
+    }),
+    rejectClose: false
+  });
+  if (!result) return;
+
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, result, { actor: rider, kind: "skill" });
+  const { success: passed, deg } = outcome;
 
   const body = passed
     ? `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Поворот ещё на ${info.angle}°.</span></div>`
     : `<div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Дополнительного поворота нет.</span></div>`;
 
   await postCard(rider, `
-    <div class="roll-header">${rollIcon("burst", "#ff8a3a")}Занос — ${esc(rider.name)}</div>
+    <div class="roll-header">${rollIcon("burst", "#ff8a3a")}Занос${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}</div>
     <div class="roll-threshold">${control.label} <b>${control.value}</b> ${sgn(info.mod)}
-      (Занос ${sgn(MOUNT_SKID.mod)}${info.manoeuvreParts.length ? `, ${modLine(info.manoeuvreParts)}` : ""}) → Порог <b>${threshold}</b></div>
+      (Занос ${sgn(MOUNT_SKID.mod)}${info.manoeuvreParts.length ? `, ${modLine(info.manoeuvreParts)}` : ""})${result.difficulty ? ` ${sgn(result.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff}</b></div>
+    ${outcome.combinedLine}
     <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d100: <b>${rv}</b></div>
+    ${rerollNote}
+    ${outcome.critLine}
     ${body}
+    ${outcome.extendedLine}
+    ${outcome.opposedLine}
     <div class="roll-allout-note">Независимо от исхода: −10 на все физические действия до начала следующего Хода.</div>`, [roll]);
 
   await rider.update({ "system.mount.skidUsed": true });
@@ -217,26 +332,46 @@ export async function showMountTerrainDialog(rider) {
           Провал: 1 непоглощаемого I(Cr) скакуну и тест ${bike ? "Operate−10" : "Survival+0"} — или выпадение из седла.
           ${trot ? "<br>Талант «Рысь»: двигаясь не более SPD в Ход, скакун игнорирует Трудный Ландшафт вовсе." : ""}
         </div>
+        ${testKindHtml({ defaultKind: "base", label: "Трудный Ландшафт верхом" })}
+        ${diceModeHtml()}
+        <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
     buttons: {
       roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Тест!",
         callback: async html => {
+          const val = valOf(html);
           const skill = parseInt(html.find("#mtt-skill").val()) || 0;
           const zone  = parseInt(html.find("#mtt-zone").val()) || 0;
           const extra = parseInt(html.find("#mtt-mod").val()) || 0;
-          await resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod });
+          const tk = readTestKind(val, { label: "Трудный Ландшафт верхом" });
+          tk.reroll = mergeReroll(null, readDiceChoice(val));
+          await resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod, tk });
         } },
       cancel: { label: "Отмена" }
     },
-    default: "roll"
+    default: "roll",
+    render: html => {
+      const root = html[0];
+      const { updateAutoOutcomeNote } = wireTestKindLive(root, {
+        actor: rider, label: "Трудный Ландшафт верхом",
+        getBaseEff: () => {
+          const skill = parseInt(root.querySelector("#mtt-skill")?.value) || 0;
+          const zone  = parseInt(root.querySelector("#mtt-zone")?.value) || 0;
+          const extra = parseInt(root.querySelector("#mtt-mod")?.value) || 0;
+          return skill + terrainMod + zone + extra;
+        }
+      });
+      root.querySelectorAll("#mtt-skill, #mtt-zone, #mtt-mod").forEach(el => el.addEventListener("input", updateAutoOutcomeNote));
+    }
   }, { classes: ["dialog", "wh-attack-dialog"], width: 460 }).render(true);
 }
 
-async function resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod }) {
+async function resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod, tk = { kind: "base", difficulty: 0 } }) {
   const { mount, control } = ctx;
   const total = terrainMod + zone + extra;
-  const threshold = skill + total;
-  const { roll, rv, passed, deg } = await rollAgainst(threshold);
+  const baseEff = skill + total;
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, tk, { actor: rider, kind: "skill" });
+  const { success: passed, deg } = outcome;
 
   const body = passed
     ? `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Проехал чисто.</span></div>`
@@ -253,11 +388,16 @@ async function resolveMountTerrain(rider, ctx, { skill, zone, extra, terrainMod 
        ${saddleButton(rider, "control", testMod(STAY_MOD, mount), "провал Трудного Ландшафта")}`;
 
   await postCard(rider, `
-    <div class="roll-header">${rollIcon("burst", "#b0a080")}Трудный Ландшафт верхом — ${esc(rider.name)}</div>
+    <div class="roll-header">${rollIcon("burst", "#b0a080")}Трудный Ландшафт верхом${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}</div>
     <div class="roll-threshold">${control.label} <b>${skill}</b> ${sgn(total)}
-      (верхом ${sgn(terrainMod)}${zone ? `, зона ${sgn(zone)}` : ""}${extra ? `, мод ${sgn(extra)}` : ""}) → Порог <b>${threshold}</b></div>
+      (верхом ${sgn(terrainMod)}${zone ? `, зона ${sgn(zone)}` : ""}${extra ? `, мод ${sgn(extra)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff}</b></div>
+    ${outcome.combinedLine}
     <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d100: <b>${rv}</b></div>
-    ${body}`, [roll]);
+    ${rerollNote}
+    ${outcome.critLine}
+    ${body}
+    ${outcome.extendedLine}
+    ${outcome.opposedLine}`, [roll]);
 }
 
 // ── Удержание в седле ─────────────────────────────────────────────────────
@@ -286,7 +426,11 @@ function saddleButton(rider, kind, mod, reason) {
 /**
  * Тест удержания в седле. Провал — выпадение: урон падения и «лежит».
  * Талант «Опытный Всадник» даёт переброс — карточка предлагает его кнопкой,
- * а не бросает сама: переброс всегда выбор игрока.
+ * а не бросает сама: переброс всегда выбор игрока. Это отдельная, книжная
+ * возможность («Опытный Всадник»), а не общий Кубик — тест ей не пользуется:
+ * маленький DialogV2 перед броском предлагает Вид теста/Сложность/Кубик,
+ * как у остальных верховых тестов; булев `reroll` (переброс Опытного Всадника)
+ * — параметр самой функции, не путать с объектом Кубика внутри `tk`.
  */
 export async function saddleTest(rider, { kind = "agility", mod = 0, reason = "", reroll = false } = {}) {
   const ctx = await mountContext(rider);
@@ -310,8 +454,43 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
 
   // «Сращивание» одержимого скакуна: +5×W.b демона именно на эти тесты.
   const splice = spliceBonus(mount);
-  const threshold = base + Number(mod) + splice;
-  const { roll, rv, passed, deg } = await rollAgainst(threshold);
+  const baseEff = base + Number(mod) + splice;
+
+  const tk = await foundry.applications.api.DialogV2.wait({
+    window: { title: "Удержаться в седле" },
+    classes: ["wh-roll-dialog-window"],
+    position: { width: 340 },
+    content: `
+      <div class="wh-skill-roll-form">
+        <div class="roll-dlg-header"><span>Удержаться в седле</span></div>
+        <div class="roll-dlg-row"><label>${label}:</label><span>${baseEff}</span></div>
+        ${reason ? `<div class="roll-dlg-note">${esc(reason)}</div>` : ""}
+        ${testKindHtml({ defaultKind: "base", label: "Удержаться в седле" })}
+        ${diceModeHtml()}
+        <div id="auto-outcome-note" class="roll-dlg-note"></div>
+      </div>`,
+    buttons: [
+      {
+        action: "roll", icon: "fas fa-dice-d10", label: "Тест!", default: true,
+        callback: (event, button) => {
+          const val = sel => button.form.querySelector(sel)?.value ?? null;
+          const t = readTestKind(val, { label: "Удержаться в седле" });
+          t.reroll = mergeReroll(null, readDiceChoice(val));
+          return t;
+        }
+      },
+      { action: "cancel", label: "Отмена", callback: () => false }
+    ],
+    render: (event, dialog) => wireTestKindLive(dialog.element, {
+      actor: rider, label: "Удержаться в седле",
+      getBaseEff: () => baseEff + (parseInt(dialog.element.querySelector("#test-difficulty")?.value) || 0)
+    }),
+    rejectClose: false
+  });
+  if (!tk) return;
+
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, tk, { actor: rider, kind: "skill" });
+  const { success: passed, deg } = outcome;
 
   const skilled = hasTalent(rider, "Skilled Rider", "Опытный Всадник");
   const rerollBtn = !passed && skilled && !reroll
@@ -327,12 +506,17 @@ export async function saddleTest(rider, { kind = "agility", mod = 0, reason = ""
        ${fallSection(rider, mount, speedKey)}`;
 
   await postCard(rider, `
-    <div class="roll-header">${rollIcon("warn", "#ffb84d")}Удержаться в седле — ${esc(rider.name)}</div>
+    <div class="roll-header">${rollIcon("warn", "#ffb84d")}Удержаться в седле${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}</div>
     <div class="roll-threshold">${label} <b>${base}</b> ${sgn(Number(mod) + splice)}
-      ${splice ? `(Сращивание +${splice}) ` : ""}→ Порог <b>${threshold}</b></div>
+      ${splice ? `(Сращивание +${splice}) ` : ""}${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff}</b></div>
+    ${outcome.combinedLine}
     ${reason ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Причина: ${esc(reason)}</div>` : ""}
     <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d100: <b>${rv}</b></div>
-    ${body}`, [roll]);
+    ${rerollNote}
+    ${outcome.critLine}
+    ${body}
+    ${outcome.extendedLine}
+    ${outcome.opposedLine}`, [roll]);
 }
 
 /** Блок выпадения: высота, формула урона и кнопка применения к всаднику. */
@@ -445,7 +629,7 @@ async function resolveMountedDodge(rider, ctx, target, extraMod, attackDeg) {
   const dodgeMod = riderHit ? -10 : 0;
   const dodgeThreshold = dodgeBase + dodgeMod + extraMod;
 
-  const { roll: dodgeRoll, rv: dodgeRv, passed: dodgePassed, deg: dodgeDeg } = await rollAgainst(dodgeThreshold);
+  const { roll: dodgeRoll, rv: dodgeRv, passed: dodgePassed, deg: dodgeDeg, critLine } = await rollAgainst(dodgeThreshold);
   const rolls = [dodgeRoll];
 
   // Комбинированный тест: вторая половина — Навык управления. Обе должны
@@ -482,6 +666,7 @@ async function resolveMountedDodge(rider, ctx, target, extraMod, attackDeg) {
     ${ctrlPart ? `<div class="roll-threshold">${control.label} <b>${control.value}</b> ${sgn(testMod(STAY_MOD, mount))}
       → Порог <b>${ctrlPart.threshold}</b> · 1d100: <b>${ctrlPart.rv}</b> — ${ctrlPart.passed ? "успех" : "провал"}</div>` : ""}
     ${opposed ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Встречная проверка — атака: <b>${attackDeg}</b> ${_degWord(attackDeg)}</div>` : ""}
+    ${critLine}
     <div class="roll-outcome">${outcome}</div>`, rolls);
 }
 
@@ -563,25 +748,45 @@ export async function showBikeRepairDialog(bikeActor) {
           Требуется смена работы. Каждый Успех — +${mode.perSuccess} Структуры.
           ${broken ? "<b>Провал: остов годится только на лом — новый байк сделать легче, чем починить этот.</b>" : ""}
         </div>
+        ${testKindHtml({ defaultKind: "base", label: "Ремонт байка" })}
+        ${diceModeHtml()}
+        <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
     buttons: {
       roll: { icon: '<i class="fas fa-wrench"></i>', label: "Ремонт!",
         callback: async html => {
+          const val = valOf(html);
           const skill = parseInt(html.find("#br-skill").val()) || 0;
           const parts = parseInt(html.find("#br-parts").val()) || 0;
           const extra = parseInt(html.find("#br-mod").val()) || 0;
-          await resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken });
+          const tk = readTestKind(val, { label: "Ремонт байка" });
+          tk.reroll = mergeReroll(null, readDiceChoice(val));
+          await resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken, tk });
         } },
       cancel: { label: "Отмена" }
     },
-    default: "roll"
+    default: "roll",
+    render: html => {
+      const root = html[0];
+      const { updateAutoOutcomeNote } = wireTestKindLive(root, {
+        actor: bikeActor, label: "Ремонт байка",
+        getBaseEff: () => {
+          const skill = parseInt(root.querySelector("#br-skill")?.value) || 0;
+          const parts = parseInt(root.querySelector("#br-parts")?.value) || 0;
+          const extra = parseInt(root.querySelector("#br-mod")?.value) || 0;
+          return skill + mode.mod + parts + extra;
+        }
+      });
+      root.querySelectorAll("#br-skill, #br-parts, #br-mod").forEach(el => el.addEventListener("input", updateAutoOutcomeNote));
+    }
   }, { classes: ["dialog", "wh-attack-dialog"], width: 460 }).render(true);
 }
 
-async function resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken }) {
+async function resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken, tk = { kind: "base", difficulty: 0 } }) {
   const total = mode.mod + parts + extra;
-  const threshold = skill + total;
-  const { roll, rv, passed, deg } = await rollAgainst(threshold);
+  const baseEff = skill + total;
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(bikeActor, baseEff, tk, { actor: bikeActor, kind: "skill", skill: "techUse" });
+  const { success: passed, deg } = outcome;
 
   const s = bikeActor.system.structure ?? {};
   const max = Number(s.max) || 0;
@@ -605,10 +810,15 @@ async function resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken 
   }
 
   await postCard(bikeActor, `
-    <div class="roll-header">${rollIcon("wrench", "#c9b08a")}Ремонт байка — ${esc(bikeActor.name)}</div>
-    <div class="roll-threshold">Tech-Use <b>${skill}</b> ${sgn(total)} (ремонт ${sgn(mode.mod)}${parts ? `, детали +${parts}` : ""}${extra ? `, мод ${sgn(extra)}` : ""}) → Порог <b>${threshold}</b></div>
+    <div class="roll-header">${rollIcon("wrench", "#c9b08a")}Ремонт байка${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(bikeActor.name)}</div>
+    <div class="roll-threshold">Tech-Use <b>${skill}</b> ${sgn(total)} (ремонт ${sgn(mode.mod)}${parts ? `, детали +${parts}` : ""}${extra ? `, мод ${sgn(extra)}` : ""})${tk.difficulty ? ` ${sgn(tk.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff}</b></div>
+    ${outcome.combinedLine}
     <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d100: <b>${rv}</b></div>
-    ${body}`, [roll]);
+    ${rerollNote}
+    ${outcome.critLine}
+    ${body}
+    ${outcome.extendedLine}
+    ${outcome.opposedLine}`, [roll]);
 }
 
 // ── Сводка для панели ─────────────────────────────────────────────────────

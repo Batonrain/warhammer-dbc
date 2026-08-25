@@ -27,3 +27,25 @@ export function testOutcome(rv, threshold, { autoSuccess = false } = {}) {
     : Math.floor((rv - threshold) / 10) + 1;
   return { success, deg };
 }
+
+/**
+ * Критический Успех/Провал (стр. 25): натуральные 1–5 и 96–100 всегда
+ * драматичны, независимо от Предела и степени — этим отличается от `deg`
+ * выше, который степень как раз от Предела и считает. Диапазон расширяется
+ * `successExtra`/`failExtra` — то, что собирает
+ * rules/resolve-test.mjs::critModsFromRules из эффектов `critRangeMod`.
+ *
+ * @param {number}  rv           результат d100 (натуральный, до модификаторов)
+ * @param {object}  [opts]
+ * @param {number}  [opts.successExtra] на сколько шире 1–5 снизу
+ * @param {number}  [opts.failExtra]    на сколько шире 96–100 сверху
+ * @returns {{success:boolean, failure:boolean}}
+ */
+export function criticalOutcome(rv, { successExtra = 0, failExtra = 0 } = {}) {
+  const successRange = 5 + (Number(successExtra) || 0);
+  const failRange     = 5 + (Number(failExtra) || 0);
+  return {
+    success: rv <= successRange,
+    failure: rv >  100 - failRange
+  };
+}

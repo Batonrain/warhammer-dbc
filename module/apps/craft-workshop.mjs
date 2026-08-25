@@ -19,6 +19,11 @@ import { VAT_QUALITY, BIO_TARGET_QUALITY, BIO_TEST_SKILLS, BIO_OUTCOMES,
 import { DRUKHARI_BIOIMPLANTS } from "../constants/drukhari-bio.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { diceModeFor } from "../rules/test-kind.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
+import { critLineHtml } from "../rules/test-kind-widget.mjs";
+import { criticalOutcome } from "../rules/roll-outcome.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
 
 const { Application } = foundry.appv1.api;
 
@@ -46,6 +51,9 @@ function _newProject() {
     categoryKey: CRAFT_CATEGORIES[3].key,
     rarity: 1, quality: "common", toolKey: "common",
     gmMod: 0, assistants: 0, baseBank: null, improve: false, monotony: false,
+    // Кубик смены (Преимущество/Помеха, стр. 26) — Сложность у Крафта уже
+    // есть своя («Модификатор ГМа»), второй дропдаун не заводим.
+    diceMode: "normal",
     researchKind: "blueprint",
     // Биолаборатория: чан, цель, выбранный имплант и счётчик циклов.
     vatKey: "common", bioTarget: "common", bioSkill: "medicae",
@@ -209,6 +217,7 @@ export class CraftWorkshop extends Application {
       tools: CRAFT_TOOLS.map(t => ({ ...t, selected: t.key === proj.toolKey })),
 
       gmMod: proj.gmMod, assistants: proj.assistants, improve: proj.improve, monotony: proj.monotony,
+      diceMode: proj.diceMode || "normal",
       baseBankVal: R.baseBank, machineNote: R.machineNote, notCraftable: R.notCraftable,
 
       testRows, limit,
@@ -262,6 +271,7 @@ export class CraftWorkshop extends Application {
     on("[name=assistants]", "change", e => upd(e.currentTarget, p => p.assistants = Math.max(0, num(e.target.value))));
     on("[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
     on("[name=monotony]", "change", e => upd(e.currentTarget, p => p.monotony = e.target.checked));
+    on("[name=dicemode]", "change", e => upd(e.currentTarget, p => p.diceMode = e.target.value));
 
     // Биолаборатория
     on("[name=vat]", "change", e => upd(e.currentTarget, p => p.vatKey = e.target.value));
@@ -345,9 +355,20 @@ export class CraftWorkshop extends Application {
     const assistBonus = assist * 10;
     const limit = R.combined.limit + mono + assistBonus;
 
-    // Комбинированный тест — ОДНА проверка против наименьшего/итогового Предела.
-    const roll = await new Roll("1d100").evaluate();
-    const rv = roll.total, dos = degreesOfSuccess(rv, limit);
+    // Комбинированный тест — ОДНА проверка против наименьшего/итогового Предела
+    // (свой книжный расчёт, не общий combinedThreshold — см. computeCombined).
+    // Кубик смены (Преимущество/Помеха) — тот же приём, что и везде.
+    const diceMode = diceModeFor(proj.diceMode);
+    const rollCount = diceMode ? diceMode.rolls : 1;
+    const rolls = [];
+    for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+    const picked = pickReroll(rolls.map(r => r.total), diceMode?.mode);
+    const roll = rolls[picked.index];
+    const rv = picked.value, dos = degreesOfSuccess(rv, limit);
+    const diceNote = diceMode
+      ? `<div class="wh-craft-roll-line">${proj.diceMode === "advantage" ? "Преимущество" : "Помеха"}: отброшено ${picked.dropped.join(", ")}</div>`
+      : "";
+    const critLine = critLineHtml(criticalOutcome(rv, resolveTest({ actor: crafter, kind: "skill" }).crit));
 
     const gain = Math.max(0, dos) + assist;
     proj.project.shifts += 1;
@@ -369,10 +390,13 @@ export class CraftWorkshop extends Application {
           <div class="wh-craft-msg-head">${rollIcon("wrench","#6fe6ff")}${proj.mode === "research" ? "Смена исследования" : "Смена крафта"} — ${esc(crafter.name)}</div>
           <div class="wh-craft-roll-line">${skillList}</div>
           <div class="wh-craft-roll-line ${dos > 0 ? "ok" : "fail"}">Комбинированный тест: <b>${rv}</b> vs Предел ${limit} → ${dos > 0 ? `+${dos} успеха` : `${dos} (провал)`}</div>
+          ${diceNote}
+          ${critLine}
           ${assist ? `<div class="wh-craft-roll-line ok">Ассистенты (${assist}): +${assistBonus} к тесту, +${assist} успеха</div>` : ""}
           <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
           <div class="wh-craft-msg-foot">Смена №${proj.project.shifts} · Усталость +1 (крафтеру)${mono ? " · монотонность −30" : ""}</div>
-        </div>`
+        </div>`,
+      rolls: [roll], sound: CONFIG.sounds.dice
     }, rollMode);
     await ChatMessage.create(msg);
     this.render(false);

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { captured, fakeHtml, resetCaptured } from "../support/foundry-stub.mjs";
+import { captured, fakeHtml, fakeForm, resetCaptured } from "../support/foundry-stub.mjs";
 import { openFearDialog, openTraumaDialog, rollTrauma, createDisorderItem,
          rollDisorderTest, suppressMental } from "../../module/sheets/tabs/disorders.mjs";
 import { createTraumaItem } from "../../module/combat/fear.mjs";
@@ -79,13 +79,16 @@ describe("mental disorders", () => {
     expect(captured.chat[0].content).toContain("Провал");
   });
 
-  // ruleRollModsHtml пуст (в подставном акторе нет предметов с testMod) — раз
-  // выбирать нечего, диалог не нужен, поведение как у прежнего rollTrauma().
-  it("openTraumaDialog без доступных правил катает сразу, без диалога", async () => {
+  // Раньше при пустом ruleRollModsHtml (нет предметов с testMod) диалог вовсе
+  // пропускался — кроме галочек правил тесту нечего было настраивать. Теперь
+  // есть ещё Вид теста/Сложность/Кубик, поэтому диалог открывается всегда.
+  it("openTraumaDialog без доступных правил всё равно открывает диалог", async () => {
     captured.nextRoll = 90;
-    await openTraumaDialog(actor({ wp: 40 }));
+    openTraumaDialog(actor({ wp: 40 }));
 
-    expect(captured.dialog).toBeFalsy();
+    expect(captured.dialog).toBeTruthy();
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#trauma-mod": "0" }));
+
     expect(captured.chat[0].content).toContain("Ментальная Травма");
   });
 
@@ -137,15 +140,42 @@ describe("mental disorders", () => {
     expect(captured.created).toEqual([]);
   });
 
+  // rollDisorderTest теперь открывает DialogV2 (Вид теста/Сложность/Кубик,
+  // как у остальных раскатанных тестов) — раньше катился сразу по клику.
   it("rollDisorderTest считает порог как W + testMod", async () => {
     captured.nextRoll = 35;
-    await rollDisorderTest(actor({ wp: 40 }), {
+    const promise = rollDisorderTest(actor({ wp: 40 }), {
       name: "Фобия",
       system: { testChar: "wp", testMod: -10, description: "Описание" }
     });
+    await captured.press("roll", fakeForm());
+    await promise;
 
     expect(captured.chat[0].content).toContain("Порог: <b>30</b>");
     expect(captured.chat[0].content).toContain("Провал");
+  });
+
+  it("rollDisorderTest: Сложность входит в Порог", async () => {
+    captured.nextRoll = 25;
+    const promise = rollDisorderTest(actor({ wp: 40 }), {
+      name: "Фобия", system: { testChar: "wp", testMod: -10, description: "" }
+    });
+    await captured.press("roll", fakeForm({ "#test-difficulty": "-20" }));
+    await promise;
+
+    // 40 - 10 - 20 = 10
+    expect(captured.chat[0].content).toContain("Порог: <b>10</b>");
+  });
+
+  it("rollDisorderTest: натуральный бросок 1-5 — Критический Успех", async () => {
+    captured.nextRoll = 4;
+    const promise = rollDisorderTest(actor({ wp: 40 }), {
+      name: "Фобия", system: { testChar: "wp", testMod: 0, description: "" }
+    });
+    await captured.press("roll", fakeForm());
+    await promise;
+
+    expect(captured.chat[0].content).toContain("Критический Успех");
   });
 });
 
@@ -195,13 +225,16 @@ describe("подавление", () => {
     system: { description: "текст", testChar: "wp", testMod: 0 }
   });
 
-  it("единственную запись тестирует сразу, без выбора", async () => {
+  // Одна запись — без выбора «какую», но rollDisorderTest всё равно открывает
+  // свой DialogV2 (Вид теста/Сложность/Кубик) перед броском.
+  it("единственную запись тестирует сразу, без выбора «какую»", async () => {
     captured.nextRoll = 10;
     const a = actor({ items: [trauma("t1", "Кошмары")], wp: 40 });
     a.items.filter = Array.prototype.filter.bind(a.items);
-    await suppressMental(a, "mentalTrauma");
+    const promise = suppressMental(a, "mentalTrauma");
+    await captured.press("roll", fakeForm());
+    await promise;
 
-    expect(captured.dialog).toBeFalsy();
     expect(captured.chat[0].content).toContain("Кошмары");
   });
 

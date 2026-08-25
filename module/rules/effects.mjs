@@ -18,6 +18,7 @@ export const EFFECT_KINDS = {
   grantFlag:   ["target"],            // возможность по имени, см. rules/flags.mjs
   fearRating:  ["value"],             // берётся максимум, не сумма
   grantItem:   ["uuid"],              // выдать предмет; `qty` необязателен
+  critRangeMod:["target", "side", "value"], // шире диапазон Крит. Успеха/Провала
   script:      ["code"]               // аварийный выход, см. docs/rules-format.md
 };
 

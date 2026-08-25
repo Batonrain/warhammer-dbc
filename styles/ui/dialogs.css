@@ -25,14 +25,18 @@
   text-align: center;
 }
 
-.wh-skill-roll-form .roll-dlg-row {
+/* Вид теста/Сложность/Кубик (rules/test-kind-widget.mjs) — общая разметка,
+   которую теперь вставляют разные диалоги (Навык/Характеристика, Атака,
+   Отряд, Безумие, Страх, Демон), поэтому классы НЕ скопированы под
+   .wh-skill-roll-form: одна копия правил на все формы. */
+.roll-dlg-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
 }
 
-.wh-skill-roll-form .roll-dlg-row label {
+.roll-dlg-row label {
   font-weight: bold;
   white-space: nowrap;
   min-width: 90px;
@@ -40,7 +44,7 @@
   color: var(--wh-text);
 }
 
-.wh-skill-roll-form .roll-dlg-row select {
+.roll-dlg-row select {
   flex: 1;
   background: var(--wh-input-bg);
   border: 1px solid var(--wh-border);
@@ -50,7 +54,7 @@
   color: var(--wh-text);
 }
 
-.wh-skill-roll-form .roll-dlg-row input[type="number"] {
+.roll-dlg-row input[type="number"] {
   width: 80px;
   text-align: center;
   background: var(--wh-input-bg);
@@ -58,6 +62,64 @@
   font-family: inherit;
   font-size: 1em;
   padding: 3px 4px;
+}
+
+.roll-dlg-row input[type="text"] {
+  flex: 1;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  font-family: inherit;
+  font-size: 0.92em;
+  padding: 3px 4px;
+}
+
+.roll-dlg-subblock {
+  border-left: 2px solid var(--wh-border);
+  padding-left: 8px;
+  margin: 2px 0 8px;
+}
+
+.roll-dlg-subrow label { min-width: 110px; font-weight: normal; }
+
+.roll-dlg-note {
+  font-size: 0.82em;
+  font-style: italic;
+  color: var(--wh-text);
+  opacity: 0.75;
+}
+
+#auto-outcome-note:not(:empty) {
+  margin-bottom: 8px;
+  padding: 3px 6px;
+  border-left: 3px solid var(--wh-red);
+  background: rgba(0, 0, 0, 0.05);
+  font-style: normal;
+  opacity: 1;
+}
+
+.roll-dlg-mini-btn {
+  font-family: inherit;
+  font-size: 0.82em;
+  padding: 2px 8px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  cursor: pointer;
+}
+
+.dice-mode-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  flex: 1;
+}
+
+.dice-mode-opt-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: normal;
+  font-size: 0.88em;
+  white-space: nowrap;
 }
 
 /* ── Диалог «+» к показателю (Безумие/Порча/Опыт/Благосклонность) ── */

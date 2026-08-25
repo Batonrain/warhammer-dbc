@@ -10,7 +10,8 @@ import { _degWord, esc }                               from "../helpers/utils.mj
 import { rollIcon }                                from "../constants/roll-icons.mjs";
 import { ruleFlagLabels }                          from "../rules/flags.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
-import { testOutcome }                             from "../rules/roll-outcome.mjs";
+import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
+import { pickReroll }                              from "../rules/reroll-pick.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -26,11 +27,29 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const wp = actor.system.characteristics.wp?.total ?? 0;
   const r  = FEAR_RATINGS[ratingKey] || FEAR_RATINGS[1];
   const ratingMod = type === "important" ? r.important : r.normal;
-  const eff      = wp + ratingMod + mod;
+  // Вид теста/Кубик/Крит из диалога (rules/test-kind-widget.mjs) — только у
+  // самого первого броска; бесплатный переброс Демона (opts.free) идёт уже
+  // Базовым тестом без tk, это отдельная книжная механика, не общий Кубик.
+  const tk = opts.tk || {};
+  const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0);
   const autoPass = infamy >= r.infamy;
-  const roll     = await new Roll("1d100").evaluate();
-  const rv       = roll.total;
-  const { success, deg } = testOutcome(rv, eff, { autoSuccess: autoPass });
+
+  const reroll = tk.reroll || null;
+  const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+  const rolls = [];
+  for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+  const picked = pickReroll(rolls.map(rr => rr.total), reroll?.mode);
+  const roll   = rolls[picked.index];
+  const rv     = picked.value;
+  const rerollNote = reroll
+    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+    : "";
+
+  const outcome = await resolveKindOutcome(actor, {
+    kind: tk.kind || "base", baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
+    ctx: { actor, kind: "skill", char: "wp" }, autoSuccess: autoPass
+  });
+  const { eff, success, deg } = outcome;
   const dof      = success ? 0 : deg;
   const allRolls = [roll];
   let shockHtml  = "";
@@ -61,8 +80,12 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const faithCtx = faithLabel ? { actorId: actor.id, label: faithLabel } : null;
 
   const canReroll = !!properties.demon && !success && !opts.free;
-  await _postFearMsg(actor, "Тест Страха", r.label, wp, ratingMod + mod, rv, eff, success, dof, shockHtml, allRolls,
-    properties, canReroll ? { ratingKey, type, infamy, mod } : null, faithCtx);
+  await _postFearMsg(actor, "Тест Страха", r.label, wp, ratingMod + mod, rv, eff, success, dof, shockHtml, allRolls, {
+    properties, rerollCtx: canReroll ? { ratingKey, type, infamy, mod } : null, faithCtx,
+    rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
+    combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
+    difficulty: tk.difficulty || 0
+  });
 }
 
 /**
@@ -85,13 +108,27 @@ export async function createTraumaItem(actor, row) {
   return item;
 }
 
-/** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без Демона/переброса. */
-export async function _executeTraumaRoll(actor, mod = 0) {
+/** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без Демона. */
+export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
   const wp   = actor.system.characteristics.wp?.total ?? 0;
-  const eff  = wp + mod;
-  const roll = await new Roll("1d100").evaluate();
-  const rv   = roll.total;
-  const { success, deg } = testOutcome(rv, eff);
+  const baseEff = wp + mod + (tk.difficulty || 0);
+
+  const reroll = tk.reroll || null;
+  const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+  const rolls = [];
+  for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+  const picked = pickReroll(rolls.map(rr => rr.total), reroll?.mode);
+  const roll   = rolls[picked.index];
+  const rv     = picked.value;
+  const rerollNote = reroll
+    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+    : "";
+
+  const outcome = await resolveKindOutcome(actor, {
+    kind: tk.kind || "base", baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
+    ctx: { actor, kind: "skill", char: "wp" }
+  });
+  const { eff, success, deg } = outcome;
   const dof  = success ? 0 : deg;
   const allRolls = [roll];
   let traumaHtml = "";
@@ -108,7 +145,11 @@ export async function _executeTraumaRoll(actor, mod = 0) {
     await createTraumaItem(actor, row);
   }
   const sub = mod ? `тест W${mod >= 0 ? "+" : ""}${mod}` : "тест W+0";
-  await _postFearMsg(actor, "🧠 Ментальная Травма", sub, wp, mod, rv, eff, success, dof, traumaHtml, allRolls);
+  await _postFearMsg(actor, "🧠 Ментальная Травма", sub, wp, mod, rv, eff, success, dof, traumaHtml, allRolls, {
+    rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
+    combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
+    difficulty: tk.difficulty || 0
+  });
 }
 
 /**
@@ -116,7 +157,9 @@ export async function _executeTraumaRoll(actor, mod = 0) {
  * непройденном тесте с «Демон») добавляет кнопку и кладёт контекст в
  * flags.warhammer-dbc.fearTest — оттуда её читает обработчик в hooks.mjs.
  */
-export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls, properties = {}, rerollCtx = null, faithCtx = null) {
+export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls,
+  { properties = {}, rerollCtx = null, faithCtx = null, rerollNote = "", critLine = "",
+    kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0 } = {}) {
   const rollMode = game.settings.get("core", "rollMode");
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
@@ -151,14 +194,19 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${header} — ${esc(actor.name)}</div>
-        <div class="roll-threshold">${sub} | W: <b>${wp}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог: <b>${eff}</b></div>
+        <div class="roll-header">${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}</div>
+        <div class="roll-threshold">${sub} | W: <b>${wp}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff}</b></div>
+        ${combinedLine}
         ${propsHtml}
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        ${rerollNote}
+        ${critLine}
         <div class="roll-outcome">${success
           ? `<span class="roll-success">Успех — выстоял</span>`
           : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}</span>`}</div>
         ${extraHtml}
+        ${extendedLine}
+        ${opposedLine}
         ${rerollHtml}
         ${faithHtml}
         <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>

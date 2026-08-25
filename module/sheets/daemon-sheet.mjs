@@ -6,7 +6,8 @@
 import { WarhammerCharacterSheet, onSkillRoll } from "./actor-sheet.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
-import { testOutcome } from "../rules/roll-outcome.mjs";
+import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { testKindHtml, readTestKind, wireTestKindLive } from "../rules/test-kind-widget.mjs";
 import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_KEY_TRAITS,
          allegianceMeta, formDuration } from "../constants/demon-mechanics.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -131,20 +132,56 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     for (const t of this.actor.getActiveTokens()) await t.document.update({ "texture.src": path, "texture.tint": tint });
   }
 
+  /**
+   * Диалог перед тестом Нестабильности: Вид теста/Сложность — но БЕЗ Кубика.
+   * Книга даёт этому тесту максимум один автоматический переброс (см.
+   * _rollInstability ниже) — ручной выбор Преимущества/Помехи противоречил бы
+   * этому «не из чего выбирать», поэтому здесь только diceModeHtml не зовём.
+   */
+  async _showInstabilityDialog() {
+    const wp = this.actor.system.characteristics?.wp?.total ?? 0;
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Тест Нестабильности" },
+      classes: ["wh-roll-dialog-window"],
+      position: { width: 340 },
+      content: `
+        <div class="wh-skill-roll-form">
+          <div class="roll-dlg-header"><span>Тест Нестабильности</span></div>
+          <div class="roll-dlg-row"><label>Сила Воли:</label><span>${wp}</span></div>
+          ${testKindHtml({ defaultKind: "base", label: "Нестабильность" })}
+          <div id="auto-outcome-note" class="roll-dlg-note"></div>
+        </div>`,
+      buttons: [
+        {
+          action: "roll", icon: "fas fa-dice-d10", label: "Бросок", default: true,
+          callback: (event, button) => readTestKind(sel => button.form.querySelector(sel)?.value ?? null, { label: "Нестабильность" })
+        },
+        { action: "cancel", label: "Отмена", callback: () => false }
+      ],
+      render: (event, dialog) => wireTestKindLive(dialog.element, {
+        actor: this.actor, label: "Нестабильность",
+        getBaseEff: () => wp + (parseInt(dialog.element.querySelector("#test-difficulty")?.value) || 0)
+      }),
+      rejectClose: false
+    });
+  }
+
   // Тест Варп-Нестабильности (W+0). Провал → урон/изгнание в Варп (по решению ГМа).
   //
   // Идёт через общий конвейер правил (kind:"instability"), а не мимо него: иначе
   // Локус Цепей («+Inf герольда на все тесты Нестабильности») и всё, что книга
-  // даст к этому тесту позже, до броска бы не доехало. Модификаторы и перебросы
-  // предлагаются игроку так же, как в прочих тестах, — молча система их не
-  // применяет.
+  // даст к этому тесту позже, до броска бы не доехало. Модификаторы предлагаются
+  // игроку так же, как в прочих тестах, — молча система их не применяет.
   async _rollInstability() {
+    const tk = await this._showInstabilityDialog();
+    if (!tk) return;
+
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
     const rating = this.actor.system.instabilityRating ?? 1;
     const ctx = { kind: "instability" };
     const { mods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
     const bonus = mods.reduce((n, m) => n + (Number(m.value) || 0), 0);
-    const threshold = wp + bonus;
+    const threshold = wp + bonus + tk.difficulty;
 
     // Переброс берём первый доступный: выбирать не из чего — на тест
     // Нестабильности книга даёт максимум один (Локус Цепей его не даёт вовсе).
@@ -154,21 +191,30 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     const picked = pickReroll(rolled.map(r => r.total), rr?.mode);
     const roll = rolled[picked.index];
     const rv = picked.value;
-    const { success, deg } = testOutcome(rv, threshold);
+
+    const outcome = await resolveKindOutcome(this.actor, {
+      kind: tk.kind, baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
+    });
+    const { success, deg } = outcome;
     const rollMode = game.settings.get("core", "rollMode");
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result wh-daemon-card">
-          <div class="roll-header">🌀 Тест Нестабильности — ${esc(this.actor.name)}</div>
+          <div class="roll-header">🌀 Тест Нестабильности${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}</div>
           <div class="roll-threshold">Сила Воли: <b>${wp}</b>${
-            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${mods.map(m => m.label).join(", ")}) → Порог: <b>${threshold}</b>` : ""
-          } · Warp Instability (${rating})</div>
+            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${mods.map(m => m.label).join(", ")})` : ""
+          }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b>
+            · Warp Instability (${rating})</div>
+          ${outcome.combinedLine}
           <div class="roll-dice">Бросок: <b>${rv}</b>${
             picked.dropped.length ? ` <em class="roll-reroll-note">(переброс, отброшено ${picked.dropped.join(", ")})</em>` : ""}</div>
+          ${outcome.critLine}
           <div class="roll-outcome">${success
             ? `<span class="roll-success">Удержался — ${deg} ст.</span>`
             : `<span class="roll-failure">Дестабилизация — ${deg} ст.: варп-урон / изгнание в Варп (по решению ГМа).</span>`}</div>
+          ${outcome.extendedLine}
+          ${outcome.opposedLine}
         </div>`,
       rolls: [roll], sound: CONFIG.sounds.dice
     }, rollMode));

@@ -11,13 +11,27 @@ import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
-import { testOutcome } from "../../rules/roll-outcome.mjs";
+import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
+import { pickReroll } from "../../rules/reroll-pick.mjs";
+import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice,
+         mergeReroll, wireTestKindLive } from "../../rules/test-kind-widget.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
 function checkedRuleMods(form) {
   let sum = 0;
   for (const cb of form?.querySelectorAll?.(".rule-mod:checked") ?? []) sum += parseInt(cb.dataset.value) || 0;
   return sum;
+}
+
+/**
+ * Адаптер `val(selector)` для читателей rules/test-kind-widget.mjs поверх
+ * jQuery-обёртки старого `Dialog`. `.val()` на несовпавшей выборке (реальный
+ * jQuery) или на несуществующем ключе (заглушка теста, test/support/
+ * foundry-stub.mjs::fakeHtml) одинаково отдаёт `undefined` — оба случая
+ * приводятся к `null`, как ждёт readTestKind/readDiceChoice.
+ */
+function valOf(html) {
+  return sel => { const v = html.find(sel).val(); return v === undefined ? null : v; };
 }
 
 /** Диалог теста Страха: форма живёт рядом с остальными кнопками безумия. */
@@ -28,7 +42,6 @@ export function openFearDialog(actor) {
   // Галочки правил (Конструктор, kind:"testMod", область char:wp) — та же
   // область, что у Травмы ниже: Каталептический Узел и подобное сюда же.
   const rm = ruleRollModsHtml(actor, { kind: "skill", char: "wp" });
-
   new Dialog({
     title: "😱 Тест Страха",
     content: `
@@ -41,12 +54,16 @@ export function openFearDialog(actor) {
         <div class="atk-dlg-section">Свойства</div>
         <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"/> Демон</label></div>
         ${rm.html}
+        ${testKindHtml({ defaultKind: "base", label: "Тест Страха" })}
+        ${diceModeHtml()}
+        <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
     buttons: {
       roll: {
         icon: '<i class="fas fa-dice-d10"></i>',
         label: "Бросок!",
         callback: async html => {
+          const val = valOf(html);
           const ratingKey = html.find("#fear-rating").val();
           const type = html.find("#fear-type").val();
           const infamy = parseInt(html.find("#fear-infamy").val()) || 0;
@@ -54,12 +71,32 @@ export function openFearDialog(actor) {
           // Свойства источника Страха — читаются в карточку/флаги сообщения;
           // Демон уже даёт бесплатный переброс при провале (см. fear.mjs).
           const properties = { demon: html.find("#fear-prop-demon").is(":checked") };
-          await _executeFearRoll(actor, ratingKey, type, infamy, mod, properties);
+          const tk = readTestKind(val, { label: "Тест Страха" });
+          tk.reroll = mergeReroll(null, readDiceChoice(val));
+          await _executeFearRoll(actor, ratingKey, type, infamy, mod, properties, { tk });
         }
       },
       cancel: { label: "Отмена" }
     },
-    default: "roll"
+    default: "roll",
+    render: html => {
+      const root = html[0];
+      const wp = actor.system.characteristics.wp?.total ?? 0;
+      const { updateAutoOutcomeNote } = wireTestKindLive(root, {
+        actor, label: "Тест Страха",
+        getBaseEff: () => {
+          const ratingKey = html.find("#fear-rating").val();
+          const type = html.find("#fear-type").val();
+          const r = FEAR_RATINGS[ratingKey] || FEAR_RATINGS[1];
+          const ratingMod = type === "important" ? r.important : r.normal;
+          const mod = (parseInt(html.find("#fear-mod").val()) || 0) + checkedRuleMods(root);
+          const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
+          return wp + ratingMod + mod + difficulty;
+        }
+      });
+      root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, .rule-mod").forEach(el =>
+        el.addEventListener("change", updateAutoOutcomeNote));
+    }
   }, { classes: ["dialog", "wh-attack-dialog"], width: 380 }).render(true);
 }
 
@@ -69,14 +106,13 @@ export async function rollTrauma(actor) {
 }
 
 /**
- * Диалог перед тестом Ментальной Травмы — раньше кнопка катала сразу, без
- * шага выбора: у теста не было ни одного модификатора, спрашивать было не о
- * чем. Появились галочки правил (Каталептический Узел и подобное, область
- * char:wp) — тем же диалоговым приёмом, что и у Страха выше.
+ * Диалог перед тестом Ментальной Травмы. Раньше при пустом списке галочек
+ * правил кнопка катала сразу — спрашивать было не о чем; теперь есть ещё Вид
+ * теста/Сложность/Кубик, так что диалог нужен всегда.
  */
 export function openTraumaDialog(actor) {
   const rm = ruleRollModsHtml(actor, { kind: "skill", char: "wp" });
-  if (!rm.mods.length) return rollTrauma(actor);   // нечего выбирать — как раньше, сразу бросок
+  const wp = actor.system.characteristics.wp?.total ?? 0;
 
   new Dialog({
     title: "🧠 Тест Ментальной Травмы",
@@ -84,19 +120,38 @@ export function openTraumaDialog(actor) {
       <form class="wh-attack-form" style="padding:6px;">
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="trauma-mod" type="number" value="0"/></div>
         ${rm.html}
+        ${testKindHtml({ defaultKind: "base", label: "Ментальная Травма" })}
+        ${diceModeHtml()}
+        <div id="auto-outcome-note" class="roll-dlg-note"></div>
       </form>`,
     buttons: {
       roll: {
         icon: '<i class="fas fa-dice-d10"></i>',
         label: "Бросок!",
         callback: async html => {
+          const val = valOf(html);
           const mod = (parseInt(html.find("#trauma-mod").val()) || 0) + checkedRuleMods(html[0]);
-          await _executeTraumaRoll(actor, mod);
+          const tk = readTestKind(val, { label: "Ментальная Травма" });
+          tk.reroll = mergeReroll(null, readDiceChoice(val));
+          await _executeTraumaRoll(actor, mod, tk);
         }
       },
       cancel: { label: "Отмена" }
     },
-    default: "roll"
+    default: "roll",
+    render: html => {
+      const root = html[0];
+      const { updateAutoOutcomeNote } = wireTestKindLive(root, {
+        actor, label: "Ментальная Травма",
+        getBaseEff: () => {
+          const mod = (parseInt(html.find("#trauma-mod").val()) || 0) + checkedRuleMods(root);
+          const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
+          return wp + mod + difficulty;
+        }
+      });
+      root.querySelectorAll("#trauma-mod, .rule-mod").forEach(el =>
+        el.addEventListener("change", updateAutoOutcomeNote));
+    }
   }, { classes: ["dialog", "wh-attack-dialog"], width: 340 }).render(true);
 }
 
@@ -217,29 +272,89 @@ function activateDisorderPicker(html, actor) {
   });
 }
 
-/** Тест конкретного расстройства (W + его testMod). */
+/**
+ * Тест конкретного расстройства (W + его testMod). Раньше катился сразу по
+ * клику, без диалога — ни одного модификатора выбирать было не нужно.
+ * Появились Вид теста/Сложность/Кубик, поэтому маленький DialogV2 перед
+ * броском, как и у остальных раскатанных тестов.
+ */
 export async function rollDisorderTest(actor, item) {
   const system = item.system;
   const charKey = system.testChar || "wp";
   const meta = CHARACTERISTICS[charKey];
   const charVal = actor.system.characteristics[charKey]?.total ?? 0;
-  const eff = charVal + (system.testMod || 0);
-  const roll = await new Roll("1d100").evaluate();
-  const rv = roll.total;
-  const { success, deg } = testOutcome(rv, eff);
+  const baseEffNoDiff = charVal + (system.testMod || 0);
+
+  const result = await foundry.applications.api.DialogV2.wait({
+    window: { title: item.name },
+    classes: ["wh-roll-dialog-window"],
+    position: { width: 340 },
+    content: `
+      <div class="wh-skill-roll-form">
+        <div class="roll-dlg-header"><span>${esc(item.name)}</span></div>
+        <div class="roll-dlg-row"><label>${meta?.abbr ?? charKey}:</label><span>${baseEffNoDiff}</span></div>
+        ${testKindHtml({ defaultKind: "base", label: item.name })}
+        ${diceModeHtml()}
+        <div id="auto-outcome-note" class="roll-dlg-note"></div>
+      </div>`,
+    buttons: [
+      {
+        action: "roll", icon: "fas fa-dice-d10", label: "Бросок", default: true,
+        callback: (event, button) => {
+          const form = button.form;
+          const val  = sel => form.querySelector(sel)?.value ?? null;
+          const tk = readTestKind(val, { label: item.name });
+          tk.reroll = mergeReroll(null, readDiceChoice(val));
+          return tk;
+        }
+      },
+      { action: "cancel", label: "Отмена", callback: () => false }
+    ],
+    render: (event, dialog) => {
+      wireTestKindLive(dialog.element, {
+        actor, label: item.name,
+        getBaseEff: () => baseEffNoDiff + (parseInt(dialog.element.querySelector("#test-difficulty")?.value) || 0)
+      });
+    },
+    rejectClose: false
+  });
+  if (!result) return;
+  const { kind, difficulty, combined, extended, opposed, reroll } = result;
+
+  const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+  const rolls = [];
+  for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+  const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
+  const roll   = rolls[picked.index];
+  const rv     = picked.value;
+  const rerollNote = reroll
+    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+    : "";
+
+  const eff0 = baseEffNoDiff + difficulty;
+  const outcome = await resolveKindOutcome(actor, {
+    kind, baseEff: eff0, rv, combined, extended, opposed,
+    ctx: { actor, kind: "skill", char: charKey }
+  });
+  const { success, deg } = outcome;
   const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("spark","#c98bff")}${esc(item.name)} — ${esc(actor.name)}</div>
-        <div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""} → Порог: <b>${eff}</b></div>
+        <div class="roll-header">${rollIcon("spark","#c98bff")}${esc(item.name)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(actor.name)}</div>
+        <div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff0}</b></div>
+        ${outcome.combinedLine}
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        ${rerollNote}
+        ${outcome.critLine}
         <div class="roll-outcome">${success
           ? `<span class="roll-success">Успех — контроль удержан (${deg} ${_degWord(deg)})</span>`
           : `<span class="roll-failure">Провал — расстройство проявляется (${deg} ${_degWord(deg)})</span>`}</div>
         ${system.description ? `<div class="roll-threshold" style="font-size:0.9em;">${system.description}</div>` : ""}
+        ${outcome.extendedLine}
+        ${outcome.opposedLine}
         <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
       </div>`,
     rolls: [roll],
