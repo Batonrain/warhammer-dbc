@@ -103,11 +103,20 @@ describe("auraDescriptorsOf", () => {
   });
 
   it("активный талант с аурой попадает в список с нормализованными полями", () => {
-    const item = itemWith({ aura: { radius: 5, affects: "enemies", includesSelf: true, grant: ["Item.abc"] } });
+    const item = itemWith({
+      aura: { radius: 5, affects: "enemies", includesSelf: true, grant: [{ uuid: "Item.abc", rating: 1 }] }
+    });
     const [d] = auraDescriptorsOf(actorWith(item));
     expect(d).toMatchObject({
-      sourceItemUuid: item.uuid, radius: 5, affects: "enemies", includesSelf: true, grant: ["Item.abc"]
+      sourceItemUuid: item.uuid, radius: 5, affects: "enemies", includesSelf: true,
+      grant: [{ uuid: "Item.abc", rating: 1 }]
     });
+  });
+
+  it("grant в устаревшем формате (голый uuid, без rating) отфильтровывается", () => {
+    const item = itemWith({ aura: { radius: 5, affects: "allies", grant: ["Item.abc"] } });
+    const [d] = auraDescriptorsOf(actorWith(item));
+    expect(d.grant).toEqual([]);
   });
 
   it("affects по умолчанию — allies, если значение неизвестно", () => {

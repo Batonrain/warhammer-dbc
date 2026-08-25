@@ -286,6 +286,7 @@ const KIND_LABELS = {
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
+  aura: "Аура (эффект на окружающих)",
   group: "Вложенная группа",
   script: "Код"
 };
@@ -502,6 +503,12 @@ export function blankMechEntry(kind = "characteristic") {
     equipBudgetMode: "count", equipBudgetValue: 1,
     // loyalty — тип миньона ("" = любой), знак и величина (см. шапку файла)
     loyaltyMinionType: "", loyaltyOp: "add", loyaltyValue: 1,
+    // aura — «X метров вокруг актора» (module/regions/auras.mjs); grant —
+    // предмет, перетащенный в ту же drop-зону, что у trait/talent
+    // (sourceUuid/sourceName/sourceImg), но БЕЗ ограничения по типу и БЕЗ
+    // смены kind при дропе (см. _onDropAuraGrant в item-sheet.mjs) — движок
+    // ауры клонирует любой предмет по UUID, не только Черту/Талант.
+    auraRadius: "1", auraAffects: "allies", auraIncludesSelf: false,
     // weaponProp — «Свойство» перетаскивается (weaponPropKey/Label/HasRating[2]),
     // «Новое свойство» — только при weaponPropAction:"replace".
     weaponPropAction: "add",
@@ -647,6 +654,12 @@ export function describeMechEntry(entry) {
       const sign = entry.loyaltyOp === "subtract" ? "−" : "+";
       return `Лояльность: ${sign}${entry.loyaltyValue} миньонам (${typeLabel})`;
     }
+    case "aura": {
+      const affectsLabel = { allies: "союзникам", enemies: "врагам", all: "всем" }[entry.auraAffects] || "союзникам";
+      const selfNote = entry.auraIncludesSelf ? ", включая себя" : "";
+      if (!entry.sourceUuid) return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote} (перетащите предмет)`;
+      return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote} → ${entry.sourceName || "?"}`;
+    }
     case "rollmod": {
       if (!entry.skillKey) return "Модификатор броска: (не выбран навык)";
       const def = entry.skillScope === "group" ? GROUP_SKILLS_DEF[entry.skillKey] : SKILLS_DEF[entry.skillKey];
@@ -759,6 +772,8 @@ function isEntryComplete(e) {
       return numOk(e.value);
     case "poolMax":
       return formulaOk(e.value);
+    case "aura":
+      return formulaOk(e.auraRadius) && !!e.sourceUuid;
     case "weaponProp":
       if (!e.weaponPropKey) return false;
       if (e.weaponPropAction === "replace") return !!e.weaponPropNewKey;
@@ -1122,6 +1137,13 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
   if (entry.kind === "terrainIgnore") {
     // Ничего не пишем и не создаём — см. комментарий в шапке файла:
     // ignoredTerrainKeysForActor() читает Механику предмета напрямую, живьём.
+    return;
+  }
+
+  if (entry.kind === "aura") {
+    // Ничего не пишем и не создаём здесь — как terrainIgnore выше:
+    // flags.warhammer-dbc.aura на предмете (не в этом applied-цикле) ведёт
+    // syncAuraFlag ниже, а исполняет её живьём module/regions/auras.mjs.
     return;
   }
 
@@ -1504,6 +1526,64 @@ function collectDirectEquipmentEntries(groups, actor = null, item = null) {
   };
   for (const g of groups) walk(g.entries || [], g.operator);
   return out.filter(e => entryWhenOk(actor, e, item));
+}
+
+// Записи kind:"aura" из АНД-цепочек — та же оговорка про ИЛИ-ветки, что и у
+// equipment/ability выше: аура не переспрашивает разовый выбор на каждой
+// пересинхронизации.
+function collectAuraEntries(groups) {
+  const out = [];
+  const walk = (entries, operator) => {
+    if (operator === "OR") return;
+    for (const e of entries || []) {
+      if (e.kind === "aura" && isEntryComplete(e)) out.push(e);
+      else if (e.kind === "group" && e.group) walk(e.group.entries || [], e.group.operator);
+    }
+  };
+  for (const g of groups) walk(g.entries || [], g.operator);
+  return out;
+}
+
+/**
+ * Приводит flags.warhammer-dbc.aura предмета в соответствие с его
+ * kind:"aura" записями Механики. Не создаёт ActiveEffect и не эмбедит
+ * предметы сама — только настраивает конфиг-флаг в формате, который живьём
+ * читает module/regions/auras.mjs (radius/affects/includesSelf/grant). Тот же
+ * приём, что syncMechanicsEffects (idempotent, трогает только свой ключ) —
+ * только результат не эффект, а флаг.
+ *
+ * Несколько записей kind:"aura" разом на одном предмете — радиус/область/
+ * «включая себя» берутся у ПЕРВОЙ завершённой (одна аура — один набор правил
+ * геометрии), а их grant-предметы собираются в один список: так один Дар
+ * может выдавать окружающим сразу несколько Черт одной аурой.
+ */
+export async function syncAuraFlag(item) {
+  const actor = item.parent instanceof Actor ? item.parent : null;
+  const entries = collectAuraEntries(getItemMechanics(item)).filter(e => entryWhenOk(actor, e, item));
+  const cur = item.getFlag(FLAG, "aura") || null;
+  if (!entries.length) {
+    if (cur) await item.unsetFlag(FLAG, "aura");
+    return;
+  }
+  const rd = mechRollData(actor);
+  const first = entries[0];
+  // {uuid, rating} — не голый uuid: «Аура Жизни» выдаёт Regeneration(1), а
+  // шаблон в паке хранит Regeneration(3) — без рейтинга запись auras.mjs
+  // клонировала бы предмет как есть, и рейтинг разошёлся бы с текстом.
+  // rating === null у записей без параметра («X» в имени шаблона нет).
+  const want = {
+    radius: mechFormulaTotalSafe(first.auraRadius, rd),
+    affects: first.auraAffects === "enemies" || first.auraAffects === "all" ? first.auraAffects : "allies",
+    includesSelf: !!first.auraIncludesSelf,
+    grant: entries.filter(e => e.sourceUuid).map(e => ({
+      uuid: e.sourceUuid,
+      rating: (e.rating !== "" && e.rating != null) ? mechFormulaTotalSafe(e.rating, rd) : null
+    }))
+  };
+  const same = cur && cur.radius === want.radius && cur.affects === want.affects
+    && cur.includesSelf === want.includesSelf
+    && JSON.stringify(cur.grant || []) === JSON.stringify(want.grant);
+  if (!same) await item.setFlag(FLAG, "aura", want);
 }
 
 /**
@@ -1905,6 +1985,7 @@ async function _applyItemMechanics(item) {
   }, item, applied);
   await syncMechanicsEffects(item);
   await syncWeaponPropItemEffects(item);
+  await syncAuraFlag(item);
   // Источник мог родиться неактивным (напр. Имплант создан ещё не
   // установленным) — откатывает то, что applyMechEntry(equipment) уже
   // успел выдать выше, чтобы конечное состояние сразу было верным.
@@ -2204,6 +2285,23 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
 
   if (ent.kind === "poolMax") {
     return `<input type="text" class="mech-poolmax-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. -1, 2 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
+  }
+
+  if (ent.kind === "aura") {
+    const affectsOpts = [["allies", "Союзникам"], ["enemies", "Врагам"], ["all", "Всем"]]
+      .map(([v, l]) => optHtml(v, l, (ent.auraAffects || "allies") === v)).join("");
+    const dropInner = ent.sourceUuid
+      ? `<img src="${esc(ent.sourceImg || "icons/svg/item-bag.svg")}" class="grant-drop-img"/>
+         <span class="grant-drop-name">${esc(ent.sourceName || "?")}</span>
+         ${canEdit ? `<button type="button" class="grant-drop-clear" data-action="grantDropClear" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Убрать предмет">✕</button>` : ""}`
+      : `<span class="grant-drop-placeholder">${canEdit ? "Перетащите предмет сюда" : "—"}</span>`;
+    return `<input type="text" class="mech-aura-radius" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.auraRadius ?? "")}" placeholder="напр. 3 или cor" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>
+      <span>м</span>
+      <select class="mech-aura-affects" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${affectsOpts}</select>
+      <label class="grant-when-negate-label" title="Действует и на самого владельца, не только на окружающих">
+        <input type="checkbox" class="mech-aura-self" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.auraIncludesSelf ? "checked" : ""} ${dis}/> вкл. себя
+      </label>
+      <div class="grant-drop-zone aura-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}">${dropInner}</div>`;
   }
 
   if (ent.kind === "weaponProp") {

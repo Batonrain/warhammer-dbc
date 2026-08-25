@@ -7,10 +7,15 @@
 //
 //  Формат: item.flags["warhammer-dbc"].aura = {
 //    radius: <метры>, affects: "allies"|"enemies"|"all",
-//    includesSelf: <bool>, grant: [<uuid>, ...]
+//    includesSelf: <bool>, grant: [{uuid: <uuid>, rating: <number|null>}, ...]
 //  }
-//  Простановка флага пока ручная (Конструктор подключается позже отдельным
-//  тикетом) — этот модуль только исполняет уже проставленный флаг.
+//  rating — не голый uuid: «Черта-шаблон (X)» (Regeneration и т.п.) хранит
+//  в паке свой базовый рейтинг, а выдача Ауры может требовать другой —
+//  rescaleTraitByRating() пересчитывает эффект под него, как и путь
+//  kind:"trait" в Конструкторе (module/apps/mechanics.mjs). null — рейтинг
+//  не задан записью, клонируем как есть.
+//  Флаг ведёт module/apps/mechanics.mjs::syncAuraFlag() по записям
+//  kind:"aura" — этот модуль только исполняет уже проставленный флаг.
 //
 //  Два слоя: чистые функции (tokenRelationship/auraDescriptorsOf/
 //  auraAffects) без обращения к canvas — тестируются напрямую; и
@@ -20,6 +25,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { isItemActive } from "../apps/effects.mjs";
+import { rescaleTraitByRating } from "../apps/mechanics.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -61,7 +67,7 @@ export function auraDescriptorsOf(actor) {
       radius: Number(aura.radius),
       affects: aura.affects === "enemies" || aura.affects === "all" ? aura.affects : "allies",
       includesSelf: !!aura.includesSelf,
-      grant: Array.isArray(aura.grant) ? aura.grant.filter(Boolean) : []
+      grant: Array.isArray(aura.grant) ? aura.grant.filter(g => g?.uuid) : []
     });
   }
   return out;
@@ -169,11 +175,18 @@ export async function sweepAurasOnScene(scene) {
     for (const src of want) {
       if (have.has(src)) continue;
       const descriptor = bySourceUuid.get(src);
-      for (const uuid of descriptor?.grant ?? []) {
-        const source = await fromUuid(uuid).catch(() => null);
+      for (const g of descriptor?.grant ?? []) {
+        const source = await fromUuid(g.uuid).catch(() => null);
         if (!source) continue;
         const data = source.toObject();
         delete data._id;
+        // Тот же пересчёт, что у kind:"trait" в Конструкторе (wdbc-1pa.2) —
+        // шаблонная Черта «(X)» несёт эффект, равный своему базовому рейтингу.
+        if (g.rating != null && data.system) {
+          rescaleTraitByRating(data, g.rating);
+          data.system.hasRating = true;
+          data.system.rating = g.rating;
+        }
         data.flags = foundry.utils.mergeObject(data.flags || {}, { [FLAG]: { auraSource: src, auraScene: scene.id } });
         toCreate.push(data);
       }

@@ -563,6 +563,11 @@ export class WarhammerItemSheet
     if (reqZone && data?.type === "Item") return this._onDropReqItem(event, data, reqZone);
     const targetZone = event.target?.closest?.(".talent-target-drop");
     if (targetZone && data?.type === "Item") return this._onDropTalentTarget(event, data);
+    // Зона Ауры несёт ОБА класса (.aura-drop-zone .grant-drop-zone), как и
+    // зона Требования выше — проверяется РАНЬШЕ дженерик-зоны Черты/Таланта,
+    // иначе _onDropGrantItem перезаписал бы kind:"aura" на trait/talent.
+    const auraZone = event.target?.closest?.(".aura-drop-zone");
+    if (auraZone && data?.type === "Item") return this._onDropAuraGrant(event, data, auraZone);
     const grantZone = event.target?.closest?.(".grant-drop-zone");
     if (grantZone && data?.type === "Item") return this._onDropGrantItem(event, data, grantZone);
     if (data?.type === "ActiveEffect") return this._onDropActiveEffect(event, data);
@@ -802,6 +807,25 @@ export class WarhammerItemSheet
     ent.sourceHasRating  = !!src.system.hasRating;
     ent.rating           = src.system.hasRating ? (src.system.rating ?? 0) : "";
     ent.specialization   = src.type === "talent" ? (src.system.specialization || "") : "";
+    await saveMechanics(this.item, groups);
+  }
+
+  /**
+   * Драг-н-дроп предмета в grant-зону записи kind:"aura" — в отличие от
+   * _onDropGrantItem (Черта/Талант) НЕ трогает kind записи и НЕ ограничивает
+   * тип перетащенного: движок ауры (module/regions/auras.mjs) клонирует
+   * любой предмет по UUID, не только Черту/Талант.
+   */
+  async _onDropAuraGrant(event, data, dropZone) {
+    const groupId = dropZone.dataset.groupId, entryId = dropZone.dataset.entryId;
+    const src = await Item.implementation.fromDropData(data);
+    if (!src) return;
+    const groups = foundry.utils.deepClone(getItemMechanics(this.item));
+    const ent = findMechEntry(groups, groupId, entryId);
+    if (!ent) return;
+    ent.sourceUuid = src.uuid;
+    ent.sourceName = src.name;
+    ent.sourceImg  = src.img;
     await saveMechanics(this.item, groups);
   }
 
@@ -1948,6 +1972,22 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.value = ev.currentTarget.value; saveMech(arr); }
+    });
+    // Аура (kind:"aura") — drop-зона обрабатывается _onDropAuraGrant/_onDrop.
+    on(".mech-aura-radius", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.auraRadius = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-aura-affects", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.auraAffects = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-aura-self", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.auraIncludesSelf = !!ev.currentTarget.checked; saveMech(arr); }
     });
     // Код (kind:"script")
     on(".mech-script-label", "change", ev => {
