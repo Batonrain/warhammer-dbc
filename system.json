@@ -434,6 +434,30 @@
       }
     },
     {
+      "name": "aeldari-traits",
+      "label": "Черты Аэльдари — Библиотека (DBC)",
+      "path": "packs/aeldari-traits",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
+      "name": "aeldari-talents",
+      "label": "Таланты Аэльдари — Библиотека (DBC)",
+      "path": "packs/aeldari-talents",
+      "type": "Item",
+      "system": "warhammer-dbc",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER",
+        "GAMEMASTER": "OWNER"
+      }
+    },
+    {
       "name": "aspirations",
       "label": "Стремления — Библиотека (DBC)",
       "path": "packs/aspirations",
@@ -752,7 +776,9 @@
           "packs": [
             "book-aeldari",
             "book-aeldari-branches",
-            "book-eldar-vehicles"
+            "book-eldar-vehicles",
+            "aeldari-traits",
+            "aeldari-talents"
           ]
         },
         {

@@ -21,6 +21,7 @@ import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
 import { arsenalSpecKind, arsenalSpecOptions } from "../constants/weapon-categories.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { TRAIT_LIB_PACKS, TALENT_LIB_PACKS } from "../constants/library-packs.mjs";
 
 /**
  * Талант из дерева «Дополнительных Талантов» Элитного архетипа несёт гейт не
@@ -266,12 +267,15 @@ export function promptArsenalSpec(doc, kind) {
  * Поиск, раскрытие описания стрелкой, добавление по «＋». kind: "talent"|"trait".
  */
 export async function openItemPicker(actor, kind) {
-  const PACKS = { trait: "warhammer-dbc.traits", mutation: "warhammer-dbc.mutations",
-                  talent: "warhammer-dbc.talents" };
-  const packName = PACKS[kind] || PACKS.talent;
-  const pack = game.packs.get(packName);
-  if (!pack) return ui.notifications.warn(`Компендиум не найден: ${packName}`);
-  const docs = await pack.getDocuments();
+  const PACKS = { trait: TRAIT_LIB_PACKS, mutation: ["warhammer-dbc.mutations"],
+                  talent: TALENT_LIB_PACKS };
+  const packNames = PACKS[kind] || PACKS.talent;
+  const docs = [];
+  for (const packName of packNames) {
+    const pack = game.packs.get(packName);
+    if (!pack) { ui.notifications.warn(`Компендиум не найден: ${packName}`); continue; }
+    docs.push(...await pack.getDocuments());
+  }
   // Группировка по папкам (учёт родителя) + порядок по folder.sort (порядок корбука).
   const groups = new Map();
   for (const d of docs) {

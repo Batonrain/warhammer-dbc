@@ -215,6 +215,7 @@ import { entryWhenOk, whenConditions, whenSubmutations } from "../rules/mech-whe
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { TRAIT_LIB_PACKS, TALENT_LIB_PACKS } from "../constants/library-packs.mjs";
 
 const FLAG = "warhammer-dbc";
 // Подсказка полям «Значение»/«Рейтинг», принимающим формулу mech-formula.mjs
@@ -830,14 +831,17 @@ async function resolveMechSource(entry) {
     if (doc) return doc;
   }
   if (!entry.sourceName) return null;
-  const packId = entry.kind === "trait" ? "warhammer-dbc.traits" : "warhammer-dbc.talents";
-  const pack = game.packs.get(packId);
-  if (!pack) return null;
+  const packIds = entry.kind === "trait" ? TRAIT_LIB_PACKS : TALENT_LIB_PACKS;
   const norm = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
-  const index = await pack.getIndex();
-  const hit = index.find(e => norm(e.name) === norm(entry.sourceName)
-    || norm(e.name.split("/")[0]) === norm(entry.sourceName.split("/")[0]));
-  return hit ? pack.getDocument(hit._id) : null;
+  for (const packId of packIds) {
+    const pack = game.packs.get(packId);
+    if (!pack) continue;
+    const index = await pack.getIndex();
+    const hit = index.find(e => norm(e.name) === norm(entry.sourceName)
+      || norm(e.name.split("/")[0]) === norm(entry.sourceName.split("/")[0]));
+    if (hit) return pack.getDocument(hit._id);
+  }
+  return null;
 }
 
 /**

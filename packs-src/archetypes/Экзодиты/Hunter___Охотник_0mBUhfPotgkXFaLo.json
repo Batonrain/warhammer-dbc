@@ -222,7 +222,7 @@
               "field": "total",
               "op": "add",
               "value": 1,
-              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.UVzBdhwk2XYTsqM7",
+              "sourceUuid": "Compendium.warhammer-dbc.aeldari-traits.Item.UVzBdhwk2XYTsqM7",
               "sourceName": "Precise Hunting / Точная Охота",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,
