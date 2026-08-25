@@ -202,6 +202,9 @@ export async function fatigueSleep(actor) {
 
 /** Крестик в строке состояния: снять его, а со счётчиком — обнулить и счётчик. */
 export async function removeCondition(actor, key) {
+  // «Усталость» правится только Усталостью на ТЕЛЕ (см. showAddConditionDialog) —
+  // крестик тут ничего не изменит, тег пересчитается обратно из fatigue.value.
+  if (key === "fatigued") return;
   const def     = CONDITIONS_DEF[key];
   const updates = { [`system.conditions.${key}`]: false };
   if (def?.hasLevel && def.levelField) {
@@ -212,6 +215,7 @@ export async function removeCondition(actor, key) {
 
 /** Поле уровня: раунды оглушения, стадии кровотечения и прочие счётчики. */
 export async function setConditionLevel(actor, key, value) {
+  if (key === "fatigued") return;
   const def = CONDITIONS_DEF[key];
   const val = parseInt(value) || 0;
   if (!def?.hasLevel || !def.levelField) return;
@@ -221,7 +225,10 @@ export async function setConditionLevel(actor, key, value) {
 export function showAddConditionDialog(actor) {
   const conditions = actor.system.conditions || {};
   const inactive = Object.entries(CONDITIONS_DEF)
-    .filter(([key]) => !conditions[key])
+    // «Усталость» — не ручное состояние: тег зеркалит system.fatigue.value
+    // (см. actor.mjs prepareDerivedData), в диалоге добавления ей делать
+    // нечего — включать нужно самой Усталостью на вкладке ТЕЛО.
+    .filter(([key]) => key !== "fatigued" && !conditions[key])
     .map(([key, def]) =>
       `<label class="add-cond-label" style="--cond-color:${def.color || "#4dffa6"};">
         <input type="checkbox" class="add-cond-cb" data-condition="${key}"/>

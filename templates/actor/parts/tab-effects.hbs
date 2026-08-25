@@ -163,8 +163,8 @@
       <button type="button" class="conditions-add-btn" title="Добавить состояние">＋</button> </div> {{#if activeConditions.length}}
     <div class="conditions-active-list"> {{#each activeConditions as |cond|}}
       <div class="condition-tag {{cond.css}}" data-condition="{{cond.key}}" style="--cond-color:{{cond.color}};"> <span class="condition-tag-icon">{{{cond.svg}}}</span> <span class="condition-tag-name">{{cond.label}}</span> {{#if cond.hasLevel}}
-        <span class="condition-tag-level-wrap"> <input type="number" class="condition-level-input" data-condition="{{cond.key}}" value="{{cond.level}}" min="0" title="Уровень / Раунды"/> </span> {{/if}}
-        <button type="button" class="condition-remove-btn" data-condition="{{cond.key}}" title="Снять состояние">✕</button> </div> {{/each}}
+        <span class="condition-tag-level-wrap"> <input type="number" class="condition-level-input" data-condition="{{cond.key}}" value="{{cond.level}}" min="0" {{#if (eq cond.key "fatigued")}}readonly title="Значение — со вкладки ТЕЛО"{{else}}title="Уровень / Раунды"{{/if}}/> </span> {{/if}}
+        {{#unless (eq cond.key "fatigued")}}<button type="button" class="condition-remove-btn" data-condition="{{cond.key}}" title="Снять состояние">✕</button>{{/unless}} </div> {{/each}}
     </div> {{else}}
     <div class="conditions-empty">Нет активных состояний</div> {{/if}}
   </div>

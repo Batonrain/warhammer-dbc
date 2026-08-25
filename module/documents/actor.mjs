@@ -1042,6 +1042,18 @@ export class WarhammerActor extends Actor {
       system.fatigue.max = (chars.t?.bonus ?? 0) + (chars.wp?.bonus ?? 0);
     }
 
+    // Тег «Усталость» в СОСТОЯНИЯХ — не отдельное поле, а зеркало настоящего
+    // счётчика Усталости (вкладка ТЕЛО). Раньше их правили независимо (кнопки
+    // ТЕЛА addFatigue/removeFatigue не трогали conditions.fatigued вовсе),
+    // из-за чего тег мог показывать «Усталость 3», когда реальная Усталость
+    // давно снята. Считаем здесь заново на каждый прогон — источник истины
+    // один, отдельно писать в conditions.fatigued/-Level больше не нужно.
+    if (system.conditions && system.fatigue) {
+      const fatVal = Math.max(0, Number(system.fatigue.value) || 0);
+      system.conditions.fatiguedLevel = fatVal;
+      system.conditions.fatigued = fatVal > 0;
+    }
+
     // Мёртвое Могущество (Иннари): максимум = W.b × 3
     if (system.deadMight) {
       system.deadMight.max = (chars.wp?.bonus ?? 0) * 3;
