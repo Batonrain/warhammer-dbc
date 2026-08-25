@@ -13,6 +13,9 @@
 /* ── Происхождение Аэльдари (Мир-Корабль / Корсарская Банда) ── */
 .warhammer-dbc .aeldari-origin-panel .origin-grid { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
 
+/* ── Геносемя и Культура (Астартес) — read-only, выбор только в Мастере создания ── */
+.warhammer-dbc .astartes-geneseed-panel .origin-grid { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+
 /* ── Родной мир и Предсказание (переехали из шапки) ── */
 .warhammer-dbc .homeworld-panel .origin-grid { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 
@@ -24,6 +27,9 @@
 .warhammer-dbc .origin-select {
   flex: 1 1 auto; background: var(--wh-input-bg); border: 1px solid var(--wh-border);
   color: var(--wh-text); font-family: inherit; font-size: 0.9em; padding: 2px 4px;
+}
+.warhammer-dbc .origin-value {
+  flex: 1 1 auto; font-size: 0.9em; color: var(--wh-text);
 }
 .warhammer-dbc .origin-info {
   margin: 0 0 6px 0; padding: 5px 8px; border-left: 3px solid var(--wh-border-light);

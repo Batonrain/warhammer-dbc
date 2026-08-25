@@ -99,6 +99,15 @@
     </div>
     <div class="gene-seed-hint">Маска (труппа) определяет бонусы характеристик и особый эффект. Бонусы характеристик применяются в Базу вручную при создании; особенность — справка. Это не то же, что Мириада Масок (Света/Сумерек/Ночи) из Черты «Myriad Masks».</div>
   </div> {{/if}}
+  {{#if isAstartes}}
+  <div class="notes-section-panel astartes-geneseed-panel"> <div class="panel-title">ГЕНОСЕМЯ И КУЛЬТУРА (АСТАРТЕС)</div>
+    <div class="origin-grid">
+      <div class="origin-row"> <label class="origin-label">Геносемя</label> <div class="origin-value">{{#if headerGeneSeedName}}{{headerGeneSeedName}}{{else}}— не выбрано —{{/if}}</div> </div>
+      {{#if geneSeedText}}<div class="origin-info"> <div class="origin-special">{{geneSeedText}}</div> </div>{{/if}}
+      <div class="origin-row"> <label class="origin-label">Культура</label> <div class="origin-value">{{#if headerCultureName}}{{headerCultureName}}{{else}}— не выбрано —{{/if}}</div> </div>
+      {{#if cultureText}}<div class="origin-info"> <div class="origin-special">{{cultureText}}</div> </div>{{/if}}
+    </div>
+  </div> {{/if}}
 
   <div class="notes-section-panel"> <div class="panel-title">БИОГРАФИЯ</div> <div class="bio-grid"> <label>Пол<input type="text" name="system.bio.gender" value="{{system.bio.gender}}"/></label> <label>Возраст<input type="number" name="system.bio.age" value="{{system.bio.age}}"/></label> <label>Рост<input type="text" name="system.bio.height" value="{{system.bio.height}}"/></label> <label>Сложение<input type="text" name="system.bio.build" value="{{system.bio.build}}"/></label> <label>Волосы<input type="text" name="system.bio.hair" value="{{system.bio.hair}}"/></label> </div> </div>
 

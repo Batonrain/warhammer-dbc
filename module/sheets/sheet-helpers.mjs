@@ -1058,6 +1058,13 @@ export function buildGetData(actor) {
   } else {
     context.headerCultureName = context.headerGeneSeedName;
   }
+  // Текст «что даёт» — для read-only панели на Записях (мутации Геносемени,
+  // склонности/бонусы Культуры). Своя культура берётся из того же
+  // легиона/ордена, что и Геносемя, если перенятой культуры нет.
+  context.geneSeedText = context.selectedChapter?.geneseed || context.selectedLegion?.geneseed || "";
+  context.cultureText  = context.hasCultureOverride
+    ? (context.resolvedCulture?.culture || "")
+    : (context.selectedChapter?.culture || context.selectedLegion?.culture || "");
 
   // ── Псайкер (сводка для вкладки) ────────────────────────────────────────────
   const isEldarPsyker = isAeldariRace(system.race);
