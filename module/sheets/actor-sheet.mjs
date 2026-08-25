@@ -69,6 +69,7 @@ import { applyDivination } from "../apps/divinations.mjs";
 import { applyRace, applySubrace, clearRace, clearSubrace,
          actorRaceItem, actorSubraceItem,
          applyYnnari, applyHarlequin } from "../apps/races.mjs";
+import { raceDef } from "../apps/race-library.mjs";
 import { raceKeyOf, isAeldariRace } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
@@ -540,7 +541,16 @@ function onRaceOpen()    { return actorRaceItem(this.actor)?.sheet?.render(true)
 function onSubraceOpen() { return actorSubraceItem(this.actor)?.sheet?.render(true); }
 function onRaceClear()   { return clearRace(this.actor); }
 function onSubraceClear(){ return clearSubrace(this.actor); }
-function onRaceApply()   { return applyRace(this.actor, this.actor.system.race || ""); }
+// Кроме Черт (их выдаёт Механика носителя расы) — и стартовые таланты по
+// констанам расы: раньше их выдавала только кнопка Геносемени (geneApply,
+// снята по просьбе пользователя) и Мастер создания; для уже существующих
+// персонажей ручной путь остался только здесь.
+async function onRaceApply() {
+  const key = this.actor.system.race || "";
+  await applyRace(this.actor, key);
+  const def = raceDef(key);
+  if (key && def?.talents?.length) await this._applyStartingTalents([def.talents].flat(), def?.label || key);
+}
 function onSubraceApply(){ return applySubrace(this.actor, this.actor.system.subrace || ""); }
 
 export class WarhammerCharacterSheet
