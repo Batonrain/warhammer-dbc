@@ -54,8 +54,9 @@ export function blankEntry(kind = "race") {
     case "skill":  return { ...base, scope: "plain", skillKey: Object.keys(SKILLS_DEF)[0],
                             rank: "knows", count: 1 };
     case "talent": return { ...base, name: "", specialization: "", uuid: "", count: 1 };
-    case "or":     return { ...base, items: [] };
-    case "patron": return { ...base, key: "" };
+    case "or":       return { ...base, items: [] };
+    case "notEldar": return { ...base };
+    case "patron":   return { ...base, key: "" };
     case "other":  return { ...base, text: "" };
     case "corruption": case "infamy": case "xp": return { ...base, value: 0 };
     case "characteristic": return { ...base, charKey: Object.keys(CHARACTERISTICS)[0], value: 0 };
@@ -85,6 +86,7 @@ function fieldsHtml(e, dis) {
   switch (e.kind) {
     case "race":    return dropField(e, dis, "Расу");
     case "subrace": return dropField(e, dis, "Субрасу");
+    case "notEldar": return `<span class="elite-req-drop filled">Любая раса, кроме Аэльдари</span>`;
     case "trait":   return dropField(e, dis, "Черту");
     case "talent": {
       // «Мастерство» без привязки — это не Талант, а пустое место: он владеет

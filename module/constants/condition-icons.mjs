@@ -54,7 +54,39 @@ export const CONDITION_ICONS = {
   addicted: { color: "#6fd6ff", body:
     `<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
      <path d="M2.5 13.5L9 7"/><path d="M7 5L11 9"/><path d="M9.6 3.4L12.6 6.4"/>
-     <path d="M2.5 13.5L1.6 14.4"/><path d="M5 11L6.4 12.4"/><path d="M7 9L8.4 10.4"/></g>` }
+     <path d="M2.5 13.5L1.6 14.4"/><path d="M5 11L6.4 12.4"/><path d="M7 9L8.4 10.4"/></g>` },
+  // ── Стр. 30-31 (Раны и Урон, «Статусы») — довели набор до книги ──────────
+  dazed: { color: "#c9a8ff", body:
+    `<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.2"/>
+     <path d="M5.8 9.4C6.4 10.2 9.6 10.2 10.2 9.4"/></g>
+     <circle cx="5.7" cy="6.3" r="0.9" fill="currentColor" stroke="none"/>
+     <circle cx="10.3" cy="6.3" r="0.9" fill="currentColor" stroke="none"/>` },
+  suffocating: { color: "#8fb0c4", body:
+    `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M3 6.5Q8 3 13 6.5M3 9.5Q8 13 13 9.5"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M3.2 3.2L12.8 12.8"/>` },
+  gangrene: { color: "#7a8a4d", body:
+    `<path fill="currentColor" d="M8 2C5.5 2 4 4.5 4 7.2 4 10.5 6 13 8 14.5 10 13 12 10.5 12 7.2 12 4.5 10.5 2 8 2Z" fill-opacity="0.35"/>
+     <circle cx="6.6" cy="6.8" r="0.9" fill="currentColor"/><circle cx="9.6" cy="8.2" r="0.7" fill="currentColor"/>
+     <circle cx="7.6" cy="10.4" r="0.8" fill="currentColor"/>` },
+  lostHands: { color: "#c99a7a", body:
+    `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 12V6.5M3 12H9M9 12V8.5"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M10.5 4L14.5 12"/>` },
+  lostArms: { color: "#c99a7a", body:
+    `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 3V7.5A3 3 0 0 0 6.3 10.5H9" stroke-dasharray="1.6 1.6"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M10 6L14 13"/>` },
+  lostFeet: { color: "#c99a7a", body:
+    `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M6 3V8.5H12"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 10.5L9 13.5"/>` },
+  lostLegs: { color: "#c99a7a", body:
+    `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M7 2.5V7L9.5 10.5" stroke-dasharray="1.6 1.6"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M4 12.5L12.5 9"/>` },
+  lostEyes: { color: "#cf9fff", body:
+    `<path fill="none" stroke="currentColor" stroke-width="1.5" d="M4 8Q8 5.4 12 8"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M5 9.5L6 8M7.3 10L7.6 8.3M9.6 10L9.3 8.3M11 9.5L10 8"/>` },
+  grappling: { color: "#e08a3a", body:
+    `<g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+     <path d="M2.5 5.5C4 4 5.5 4.5 6 6.5S5 10.5 6.5 12.5"/>
+     <path d="M13.5 5.5C12 4 10.5 4.5 10 6.5S11 10.5 9.5 12.5"/></g>` }
 };
 
 /** Готовый HTML-глиф состояния (inline svg в цветной обёртке). */

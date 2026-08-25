@@ -139,6 +139,24 @@ const DEVIATIONS = {
     // Состояние «Беспомощный» заведено гораздо позже template.json (auto-успех
     // и удвоенный урон против него — attack-dialog.mjs/attack.mjs).
     "conditions.helpless": false,
+    // Стр. 30-31 («Раны и Урон», «Статусы») — Ступор/Удушье/Гангрена/Потеря
+    // Конечностей (по частям тела) заведены гораздо позже template.json.
+    "conditions.dazed": false,
+    "conditions.suffocating": false,
+    "conditions.suffocatingRounds": 0,
+    "conditions.gangrene": false,
+    "conditions.lostHands": false,
+    "conditions.lostHandsCount": 0,
+    "conditions.lostArms": false,
+    "conditions.lostArmsCount": 0,
+    "conditions.lostFeet": false,
+    "conditions.lostFeetCount": 0,
+    "conditions.lostLegs": false,
+    "conditions.lostLegsCount": 0,
+    "conditions.lostEyes": false,
+    "conditions.lostEyesCount": 0,
+    // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
+    "conditions.grappling": false,
     // Экономика действий (стр. 12, wdbc-qleg/wdbc-fkdd): ОД — новое поле,
     // Реакции раньше были свободным текстовым полем-памяткой (умолчание ""),
     // теперь структурный пул — см. module/combat/action-economy.mjs.

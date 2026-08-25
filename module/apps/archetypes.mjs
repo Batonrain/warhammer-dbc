@@ -57,24 +57,60 @@ export async function refreshArchetypeCache() {
 /** { key: def } — источник для всего, что раньше читало ARCHETYPES напрямую. */
 export function archetypeEntries() { return CACHE || ARCHETYPES; }
 
-/** Записи архетипов, доступные выбранной расе — та же фильтрация, что у Мастера создания. */
-export function archetypesForRace(raceKey) {
+// Друкхарийские архетипы по субрасе (Книга Аэльдари: Ответвления, таблица
+// доступа). Недорождённый — базовая раса без выбранной субрасы: всё, кроме
+// Придворного (он только у Истиннорождённого). Ключи — system.key записей
+// компендиума archetypes/Друкхари.
+const DRUKHARI_BASE = ["drFreebooter", "drAssassin", "drOutcast", "drDuelist", "drPitFighter", "drAlchemist", "drKabalite"];
+const DRUKHARI_SUBRACE_ARCHETYPES = {
+  "":                 DRUKHARI_BASE,                                                          // Недорождённый
+  truebornDrukhari:   [...DRUKHARI_BASE, "drCourtier"],                                        // Истиннорождённый
+  mandrake:           ["drAssassin", "drOutcast", "drPitFighter"],                              // Мандрагора
+  wrack:              ["drFreebooter", "drAssassin", "drAlchemist", "drOutcast", "drPitFighter", "drKabalite"] // Развалина
+};
+// Сслит — не эльдар (races/Другие_Ксеносы), своих архетипов не имеет: таблица
+// даёт доступ к части архетипов Друкхари напрямую, теми же записями компендиума.
+const SSLYTH_ARCHETYPES = ["drFreebooter", "drDuelist", "drAssassin", "drOutcast", "drPitFighter"];
+
+/**
+ * Записи архетипов, доступные выбранной расе — та же фильтрация, что у Мастера создания.
+ * @param {string} raceKey
+ * @param {{subrace?: string, pastRace?: string}} [opts]
+ *   subrace  — для Друкхари: сужает список (Мандрагора/Развалина/Истиннорождённый).
+ *   pastRace — для Иннари: раса, чей архетип наследуется (actor.system.ynnariPast).
+ */
+export function archetypesForRace(raceKey, opts = {}) {
+  const { subrace = "", pastRace = "" } = opts;
   const all = Object.entries(archetypeEntries());
+  const byRace = r => all.filter(([, a]) => a.race === r);
   const human = () => all.filter(([, a]) => !["astartes", "azuriane", "drukhari", "harlequin"].includes(a.race));
-  if (raceKey === "astartes")  return all.filter(([, a]) => a.race === "astartes");
-  if (raceKey === "azuriane")  return all.filter(([, a]) => a.race === "azuriane");
-  if (raceKey === "drukhari")  return all.filter(([, a]) => a.race === "drukhari");
-  if (raceKey === "harlequin") return all.filter(([, a]) => a.race === "harlequin");
-  if (raceKey === "human")     return human();
-  // Аэльдари используют Пути, Сслиты — без архетипа; всё прочее — человеческие архетипы.
-  if (!isAeldariRace(raceKey) && raceKey !== "sslyth") return human();
+
+  if (raceKey === "astartes")  return byRace("astartes");
+  if (raceKey === "azuriane")  return byRace("azuriane");
+  if (raceKey === "harlequin") return byRace("harlequin");
+  if (raceKey === "drukhari") {
+    const keys = DRUKHARI_SUBRACE_ARCHETYPES[subrace] || DRUKHARI_BASE;
+    return byRace("drukhari").filter(([k]) => keys.includes(k));
+  }
+  if (raceKey === "sslyth") return byRace("drukhari").filter(([k]) => SSLYTH_ARCHETYPES.includes(k));
+  if (raceKey === "human")  return human();
+  // Иннари: своих архетипов нет — «выберите любую прошлую расу и архетип».
+  if (raceKey === "ynnari") return pastRace ? archetypesForRace(pastRace) : [];
+  // Полуэльдар: любой архетип людей, Азуриани или Друкхари (на договоре с ГМ).
+  if (raceKey === "halfEldar") return [...human(), ...byRace("azuriane"), ...byRace("drukhari")];
+  // Прочие Аэльдари (Экзодиты) используют Пути — архетипов в паке пока нет
+  // (см. [WIP]-заготовки); всё не-эльдарское прочее — человеческие архетипы.
+  if (!isAeldariRace(raceKey)) return human();
   return [];
 }
 
 /** Данные селектора «Архетип» для шапки листа: группы (по .group) + текущий выбор. */
 export function archetypeSheetContext(actor) {
   const raceKey = actor.system.race || "human";
-  const entries = archetypesForRace(raceKey);
+  const entries = archetypesForRace(raceKey, {
+    subrace: actor.system.subrace || "",
+    pastRace: actor.system.ynnariPast || ""
+  });
   const rawCur = actor.system.archetype || "";
   // Обратная совместимость: раньше поле хранило ИМЯ архетипа (текст), не ключ.
   const byKey  = entries.find(([k]) => k === rawCur);

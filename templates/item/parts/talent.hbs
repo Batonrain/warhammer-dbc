@@ -107,6 +107,23 @@
   </div>
 </div>
 
+{{!-- Проверяемое требование (в дополнение к текстовому полю «Требование» выше):
+      кто вправе взять/купить этот Талант. Для Талантов из дерева Элитного
+      архетипа сюда кладут reqArchetype — «взял архетип X», а не только пишут
+      это в Специализации. Тот же Конструктор, что у Ритуала (стр. 393-425),
+      движок ни к чему ритуальному не привязан. --}}
+<div class="item-section">
+  <div class="item-section-title">
+    ПРОВЕРЯЕМОЕ ТРЕБОВАНИЕ
+    {{#if isGM}}<span class="effects-tab-actions">
+      <button type="button" class="req-group-add" data-action="reqGroupAdd" data-req="req" data-op="AND" title="Новая группа — нужны ВСЕ условия">➕ И-группа</button>
+      <button type="button" class="req-group-add" data-action="reqGroupAdd" data-req="req" data-op="OR" title="Новая группа — достаточно ОДНОГО условия">➕ ИЛИ-группа</button>
+    </span>{{/if}}
+  </div>
+  <div class="trait-fx-hint">Кто может взять этот Талант: Навык нужного ранга, Талант/Черта нужного рейтинга, Раса, Элитный архетип или Покровительство Бога. Пусто — берёт кто угодно (текстовое поле «Требование» выше по-прежнему читает ГМ глазами).</div>
+  <div class="req-groups" data-req="req">{{{talentReqHtml}}}</div>
+</div>
+
 <div class="item-section">
   <div class="item-section-title">АВТО-ЭФФЕКТЫ</div>
   <div class="trait-fx-hint">Числовые авто-эффекты (бонус характеристики, Инициатива, Рейтинг Страха) переехали на вкладку «Эффекты» — добавьте их там как Active Effect. Старые значения этого предмета уже перенесены автоматически.</div>

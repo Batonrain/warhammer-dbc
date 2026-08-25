@@ -7,7 +7,7 @@
     "key": "wrack",
     "parentKey": "drukhari",
     "cost": 2000,
-    "effect": "Гемаколит, хирургически перестроенный Гемункулами. +5 S/T. Таланты Ambidextrous, Bulging Biceps, Resistance (Cold, Heat, Poisons), Unarmed Warrior. Архетипы: Убийца, Алхимик, Неприкаянный, Боец Ямы. Элитный архетип Гемункул вдвое дешевле.",
+    "effect": "Гемаколит, хирургически перестроенный Гемункулами. +5 S/T. Таланты Ambidextrous, Bulging Biceps, Resistance (Cold, Heat, Poisons), Unarmed Warrior. Архетипы: Вольный Стрелок, Убийца, Алхимик, Неприкаянный, Боец Ямы, Кабалит. Элитный архетип Гемункул вдвое дешевле.",
     "god": "",
     "charMods": {
       "s": 5,
@@ -15,7 +15,7 @@
     },
     "talents": "",
     "removesTraits": [],
-    "description": "Гемаколит, хирургически перестроенный Гемункулами. +5 S/T. Таланты Ambidextrous, Bulging Biceps, Resistance (Cold, Heat, Poisons), Unarmed Warrior. Архетипы: Убийца, Алхимик, Неприкаянный, Боец Ямы. Элитный архетип Гемункул вдвое дешевле.",
+    "description": "Гемаколит, хирургически перестроенный Гемункулами. +5 S/T. Таланты Ambidextrous, Bulging Biceps, Resistance (Cold, Heat, Poisons), Unarmed Warrior. Архетипы: Вольный Стрелок, Убийца, Алхимик, Неприкаянный, Боец Ямы, Кабалит. Элитный архетип Гемункул вдвое дешевле.",
     "notes": "",
     "bookSource": "Книга Аэльдари: Ответвления",
     "skills": "",

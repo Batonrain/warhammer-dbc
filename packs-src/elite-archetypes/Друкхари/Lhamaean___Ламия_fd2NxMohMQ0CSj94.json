@@ -6,8 +6,22 @@
     "key": "10deba39",
     "cost": 3000,
     "requirements": {
-      "primary": [],
-      "secondary": []
+      "primary": [
+        {
+          "id": "eldarReq207",
+          "kind": "race",
+          "key": "drukhari",
+          "name": "Drukhari / Друкхари",
+          "uuid": "Compendium.warhammer-dbc.races.Item.TeACrZE3JcfSfEAT"
+        }
+      ],
+      "secondary": [
+        {
+          "id": "eldarReq208",
+          "kind": "other",
+          "text": "Только женщины (Друкхари)"
+        }
+      ]
     },
     "race": "Друкхари, Развалина, Сслит",
     "god": "",

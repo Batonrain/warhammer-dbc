@@ -6,7 +6,28 @@
     "key": "939630d9",
     "cost": 1500,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "eldarReq204",
+          "kind": "or",
+          "items": [
+            {
+              "id": "eldarReq202",
+              "kind": "race",
+              "key": "drukhari",
+              "name": "Drukhari / Друкхари",
+              "uuid": "Compendium.warhammer-dbc.races.Item.TeACrZE3JcfSfEAT"
+            },
+            {
+              "id": "eldarReq203",
+              "kind": "race",
+              "key": "sslyth",
+              "name": "Sslyth / Сслиты",
+              "uuid": "Compendium.warhammer-dbc.races.Item.7NJJYRq3u3QW0qKp"
+            }
+          ]
+        }
+      ],
       "secondary": []
     },
     "race": "Любая",

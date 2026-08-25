@@ -6,7 +6,12 @@
     "key": "2ce2087e",
     "cost": 0,
     "requirements": {
-      "primary": [],
+      "primary": [
+        {
+          "id": "eldarReq310",
+          "kind": "notEldar"
+        }
+      ],
       "secondary": []
     },
     "race": "Любая",

@@ -408,7 +408,10 @@ export class CharacterWizard extends Application {
 
   _archetypeStepContext() {
     const sys = this.actor.system;
-    const entries = archetypesForRace(sys.race || "human");
+    const entries = archetypesForRace(sys.race || "human", {
+      subrace: sys.subrace || "",
+      pastRace: sys.ynnariPast || ""
+    });
     const grouped = {};
     for (const [k, a] of entries) (grouped[a.group || ""] ??= []).push({ key: k, name: a.name, selected: k === sys.archetype });
     const archGroups = Object.entries(grouped).map(([g, opts]) => ({ label: g, opts }));
@@ -421,7 +424,7 @@ export class CharacterWizard extends Application {
       archKey: sys.archetype || "",
       archDesc: arch?.desc || "",
       archNote: !entries.length
-        ? "Для этой расы архетип не выбирается (Аэльдари используют Пути; Сслиты — без архетипа)."
+        ? "Для этой расы архетип не выбирается (Экзодиты используют Пути; для Иннари без Прошлого список пуст)."
         : "",
       talentFixedNames: fixed.map(e => this._talentNameOf(e)),
       talentChoiceRows: choices.map((c, i) => this._talentChoiceRow(c, i)),

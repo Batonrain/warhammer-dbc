@@ -12,6 +12,7 @@
 import { MELEE_CONTESTS } from "../../constants/combat.mjs";
 import { showAttackDialog } from "../attack-dialog.mjs";
 import { _showContestDialog } from "../../combat/techniques.mjs";
+import { showGrappleDialog } from "../../combat/grapple.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
@@ -63,6 +64,10 @@ export function activateCombatListeners(root, actor) {
     const techDef = MELEE_CONTESTS[ev.currentTarget.dataset.technique];
     if (techDef) _showContestDialog(actor, techDef);
   });
+
+  // ── Борьба (стр. 12) — кнопка видна, пока активно conditions.grappling
+  // (выставляется module/combat/grapple.mjs после попадания Приёмом «Захват»).
+  on(root, ".grapple-btn", "click", () => showGrappleDialog(actor));
 
   // ── Экономика действий (стр. 12): ручная трата для действий без своей
   // кнопки в другом месте листа — Уклонение/Парирование уже тратят Реакцию

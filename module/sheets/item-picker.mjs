@@ -22,6 +22,35 @@ import { centerPicker, pickerPos } from "./picker-ui.mjs";
 import { arsenalSpecKind, arsenalSpecOptions } from "../constants/weapon-categories.mjs";
 import { esc } from "../helpers/utils.mjs";
 
+/**
+ * Талант из дерева «Дополнительных Талантов» Элитного архетипа несёт гейт не
+ * в `system.requirement` (там — зависимость внутри дерева, «Нет» или другой
+ * Талант), а в `system.specialization`. Без отдельной проверки пикер вообще
+ * не смотрит на это поле — персонаж без архетипа видел и мог купить любой
+ * его Талант, как только выполнялось внутридревесное «Нет». Возвращает
+ * true/false, если это гейт архетипа, иначе null (требование навыка/
+ * снаряжения не при чём).
+ *
+ * Формат специализации у существующих 58 архетипов и у новых различается:
+ * старые пишут только русскую половину («Элитный архетип: Архимаг»), новые —
+ * полное двуязычное имя («Элитный архетип: Felarch / Феларх»). Сверка идёт
+ * по ЛЮБОЙ половине с любой стороны, а не только по английской — иначе гейт
+ * ложно проваливался бы у всех 58 старых архетипов, даже когда персонаж
+ * архетип честно взял.
+ */
+export function archetypeGateOk(actor, specialization) {
+  const m = /^Элитный архетип:\s*(.+)$/.exec(String(specialization || "").trim());
+  if (!m) return null;
+  const wantParts = m[1].split(" / ").map(s => s.trim().toLowerCase()).filter(Boolean);
+  if (!wantParts.length) return null;
+  return (actor.items || []).some(i => {
+    if (i.type !== "eliteArchetype") return false;
+    const nameParts = String(i.name || "").replace(/^\[WIP\]\s*/, "")
+      .split(" / ").map(s => s.trim().toLowerCase());
+    return wantParts.some(w => nameParts.includes(w));
+  });
+}
+
 function cultFxOf(actor) {
   const gs = actor?.system?.geneSeed;
   if (!gs) return null;
@@ -267,8 +296,15 @@ export async function openItemPicker(actor, kind) {
       .map(d => {
         const tier = (kind === "talent" && d.system.tier) ? `<span class="pick-tier">Ур.${d.system.tier}</span>` : "";
         // Требования сверяются с листом: невыполненные подсвечиваются красным.
-        const chk  = d.system.requirement ? checkRequirement(actor, d.system.requirement)
-                                          : { state: "ok", unmet: [] };
+        let chk  = d.system.requirement ? checkRequirement(actor, d.system.requirement)
+                                        : { state: "ok", unmet: [] };
+        // Гейт Элитного архетипа лежит в Специализации, не в Требовании (см.
+        // archetypeGateOk) — красит строку независимо от того, что решило
+        // внутридревесное требование выше.
+        const archGate = archetypeGateOk(actor, d.system.specialization);
+        if (archGate === false) {
+          chk = { state: "fail", unmet: [...chk.unmet, d.system.specialization] };
+        }
         const reqTitle = chk.state === "fail"
           ? `Не выполнено: ${esc(chk.unmet.join(", "))}`
           : (chk.state === "unknown" ? "Требование не удалось проверить автоматически" : "Требования выполнены");

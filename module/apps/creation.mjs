@@ -931,18 +931,18 @@ export function showCreationWizard(actor, deps) {
     // если выбор уже применяется, ответ даст сам callback, когда закончит.
     close: () => { if (!applying) settle(false); },
     render: html => {
-      const rebuild = () => {
-        const rk    = html.find("#wiz-race").val();
-        // Субрасы — отбором по родителю (subracesOf), а не по списку внутри расы:
-        // тот же приём, что читает и шапка листа.
-        const subOpts = ['<option value="">— нет —</option>']
-          .concat(subracesOf(rk).map(s => `<option value="${s.key}">${s.label}</option>`));
-        html.find("#wiz-subrace").html(subOpts.join(""));
-        // Архетипы: Астартес/Азуриане/Друкхари/Арлекины — свои; Человек — обычные.
-        // Прочие (сплайсы, гарпии, наги, скваты и т.п.) — человеческие архетипы.
-        // Исключения: Аэльдари (используют Пути) и Сслиты — архетипа не выбирают.
-        // (фильтрация вынесена в archetypesForRace — тот же приём, что читает и шапка листа)
-        const archEntries = archetypesForRace(rk);
+      // Архетипы: Астартес/Азуриане/Друкхари/Арлекины — свои; Человек — обычные.
+      // Прочие (сплайсы, гарпии, наги, скваты и т.п.) — человеческие архетипы.
+      // Друкхари сужает список по Субрасе (Мандрагора/Развалина/Истиннорождённый),
+      // Иннари — по Прошлому (наследует список расы-предка). Экзодиты используют
+      // Пути — архетипов в паке пока нет. (фильтрация — archetypesForRace, тот
+      // же приём, что читает и шапка листа)
+      const rebuildArch = () => {
+        const rk = html.find("#wiz-race").val();
+        const archEntries = archetypesForRace(rk, {
+          subrace: html.find("#wiz-subrace").val() || "",
+          pastRace: html.find("#wiz-ynnari-past").val() || ""
+        });
         // Группировка по полю group (если есть)
         const grouped = {};
         for (const [k, a] of archEntries) (grouped[a.group || ""] ??= []).push([k, a]);
@@ -951,8 +951,18 @@ export function showCreationWizard(actor, deps) {
               const opts = list.map(([k, a]) => `<option value="${k}">${esc(a.name)}</option>`).join("");
               return g ? `<optgroup label="${g}">${opts}</optgroup>` : opts;
             }).join("")
-          : '<option value="">— нет (Аэльдари используют Пути; Сслиты — без архетипа) —</option>';
+          : '<option value="">— нет —</option>';
         html.find("#wiz-arch").html(archOpts);
+      };
+
+      const rebuild = () => {
+        const rk    = html.find("#wiz-race").val();
+        // Субрасы — отбором по родителю (subracesOf), а не по списку внутри расы:
+        // тот же приём, что читает и шапка листа.
+        const subOpts = ['<option value="">— нет —</option>']
+          .concat(subracesOf(rk).map(s => `<option value="${s.key}">${s.label}</option>`));
+        html.find("#wiz-subrace").html(subOpts.join(""));
+        rebuildArch();
         html.find(".wiz-ynnari-row").toggle(rk === "ynnari");
         html.find(".wiz-harlequin-row").toggle(rk === "harlequin");
         // Аэльдари используют Пути, а не Мировоззрение — скрываем выбор.
@@ -1123,7 +1133,13 @@ export function showCreationWizard(actor, deps) {
       aptState();
 
       html.find("#wiz-race").on("change", rebuild);
-      html.find("#wiz-subrace, #wiz-arch, #wiz-ynnari-past, #wiz-harlequin-past").on("change", () => {
+      // Субраса и Прошлое Иннари сужают список Архетипов (Мандрагора/Развалина/
+      // Истиннорождённый; «любая прошлая раса эльдар» у Иннари) — пересобрать
+      // #wiz-arch до общего updateWizardNote/renderGen, иначе список отстанет.
+      html.find("#wiz-subrace, #wiz-ynnari-past").on("change", () => {
+        rebuildArch(); updateWizardNote(html); renderGen();
+      });
+      html.find("#wiz-arch, #wiz-harlequin-past").on("change", () => {
         updateWizardNote(html); renderGen();
       });
       // Астартес: зависимые селекты легиона/культуры.
