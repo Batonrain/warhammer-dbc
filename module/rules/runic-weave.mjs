@@ -31,5 +31,5 @@ export function siblingRunicWeaves(actorItems, item) {
   const installedOn = item.system?.installedOn || "";
   if (!installedOn) return [item];
   return (actorItems ?? []).filter(i =>
-    i.type === "gear" && i.system?.gearCategory === "runicWeave" && i.system?.installedOn === installedOn);
+    i.type === "runicWeave" && i.system?.installedOn === installedOn);
 }

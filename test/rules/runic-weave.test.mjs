@@ -28,7 +28,7 @@ describe("Рунические Вязи — какая активна", () => {
 });
 
 describe("siblingRunicWeaves", () => {
-  const weave = (id, installedOn) => ({ id, type: "gear", system: { gearCategory: "runicWeave", installedOn } });
+  const weave = (id, installedOn) => ({ id, type: "runicWeave", system: { installedOn } });
 
   it("без installedOn — вязь одна сама с собой", () => {
     const w = weave("a", "");

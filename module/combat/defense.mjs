@@ -19,7 +19,7 @@ export const COUNTER_ATTACK_CAPABILITY = "technique.counterAttack";
 // Уклонение/Парирование — Реакция (стр. 12): вне активного Encounter
 // spendReaction ничего не считает и всегда отдаёт true, поэтому вне боя
 // кнопки продолжают работать как раньше, без ограничений.
-async function _noReactionCard(actor, label) {
+export async function _noReactionCard(actor, label) {
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),

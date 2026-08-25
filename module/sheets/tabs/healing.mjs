@@ -239,7 +239,7 @@ async function applyCauterize(medic, patient, { restrained }) {
   }
 
   if (!restrained) {
-    const wp = (patient.system.characteristics?.wp?.value ?? 0) - 20;
+    const wp = (patient.system.characteristics?.wp?.total ?? 0) - 20;
     const roll = await new Roll("1d100").evaluate();
     rolls.push(roll);
     const success = roll.total <= wp;

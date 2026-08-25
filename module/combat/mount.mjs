@@ -16,6 +16,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { _degWord, esc } from "../helpers/utils.mjs";
+import { spendReaction }  from "./action-economy.mjs";
+import { _noReactionCard } from "./defense.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
 import { SKILL_RANKS }   from "../constants/characteristics.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
@@ -620,6 +622,9 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, attackDeg = nu
 }
 
 async function resolveMountedDodge(rider, ctx, target, extraMod, attackDeg) {
+  // Уклонение — Реакция (стр. 12) и верхом тоже: та же трата, что в
+  // _performDodge, иначе конный всадник уклонялся бы бесплатно без лимита.
+  if (!(await spendReaction(rider, { forDefense: true }))) return _noReactionCard(rider, "Уклонение");
   const { mount, control } = ctx;
   const chars = rider.system.characteristics ?? {};
   const rank = rider.system.skills?.dodge?.rank ?? "untrained";

@@ -218,7 +218,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // ── Тактическая карта (wdbc-8k0i): дистанция/контакт/Укрытие по токенам ───
   // сцены. Меряется один раз при открытии окна (позиции не двигаются, пока
   // диалог открыт) — подсказка и автоподстановка, всё остаётся правимо рукой.
-  const attackerToken = actor.getActiveTokens?.(true, true)?.[0] ?? null;
+  // Именно placeable (второй аргумент false): coverBonusForShot меряет по
+  // .center, которого у TokenDocument нет — с документом Укрытие молча даёт 0.
+  const attackerToken = actor.getActiveTokens?.(true)?.[0] ?? null;
   const targetToken    = [...(game.user?.targets ?? [])][0] ?? null;
   const measured        = (attackerToken && targetToken) ? measureTokens(attackerToken, targetToken) : null;
   const autoCoverMod    = (attackerToken && targetToken) ? coverBonusForShot(attackerToken, targetToken) : 0;

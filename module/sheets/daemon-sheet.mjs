@@ -178,7 +178,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
 
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
     const rating = this.actor.system.instabilityRating ?? 1;
-    const ctx = { kind: "instability" };
+    const ctx = { actor: this.actor, kind: "instability" };
     const { mods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
     const bonus = mods.reduce((n, m) => n + (Number(m.value) || 0), 0);
     const threshold = wp + bonus + tk.difficulty;

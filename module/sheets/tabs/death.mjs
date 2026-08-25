@@ -92,7 +92,7 @@ async function doDivineProtection(actor) {
 
 /** Замедленная Анимация — не тратит Судьбу/Бесчестье, отдельный тест W+30 (Сус-ан Мембрана). */
 async function doSusAnimation(actor) {
-  const w = Number(actor.system.characteristics?.w?.total) || 0;
+  const w = Number(actor.system.characteristics?.wp?.total) || 0;
   const threshold = w + SUS_AN_TEST_MOD;
   const roll = await new Roll("1d100").evaluate();
   const success = roll.total <= threshold;

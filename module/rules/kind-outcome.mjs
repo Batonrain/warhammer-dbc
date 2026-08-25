@@ -42,11 +42,16 @@ export async function resolveKindOutcome(actor, { kind = "base", baseEff, rv, ct
   let eff = baseEff;
   let combinedLine = "";
   if (kind === "combined" && combined) {
-    const otherTotal = actor.system.characteristics?.[combined.charKey]?.total ?? 0;
-    const otherEff = combined.target || otherTotal;
+    // Явный Предел (даже 0 не вводят намеренно — 0 здесь «не задан»), иначе
+    // характеристика по ключу; ключ не распознан — второй половины нет, порог
+    // остаётся базовым, а не схлопывается в 0 с гарантированным провалом.
+    const otherChar = actor.system.characteristics?.[combined.charKey] ?? null;
+    const otherEff = combined.target || (otherChar ? Number(otherChar.total) || 0 : baseEff);
     eff = combinedThreshold(baseEff, otherEff);
     const otherLabel = CHARACTERISTICS[combined.charKey]?.label ?? combined.charKey;
-    combinedLine = `<div class="roll-threshold">🔗 Комбинированный: второй Предел <b>${otherEff}</b> (${esc(otherLabel)}) → итоговый Порог <b>${eff}</b></div>`;
+    const unresolved = !combined.target && !otherChar
+      ? ` <span class="roll-failure">(характеристика «${esc(combined.charKey || "—")}» не распознана — вторая половина не учтена)</span>` : "";
+    combinedLine = `<div class="roll-threshold">🔗 Комбинированный: второй Предел <b>${otherEff}</b> (${esc(otherLabel)})${unresolved} → итоговый Порог <b>${eff}</b></div>`;
   }
 
   const { success, deg: baseDeg } = testOutcome(rv, eff, { autoSuccess });
