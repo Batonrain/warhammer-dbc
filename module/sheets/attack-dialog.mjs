@@ -224,14 +224,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const targetToken    = [...(game.user?.targets ?? [])][0] ?? null;
   const measured        = (attackerToken && targetToken) ? measureTokens(attackerToken, targetToken) : null;
   const autoCoverMod    = (attackerToken && targetToken) ? coverBonusForShot(attackerToken, targetToken) : 0;
-  const ruleMods = ruleRollModsHtml(actor, attackCtx);
+  // Один обход правил актора на диалог: mods/rerolls/crit из одного результата.
+  const resolvedAttack = resolveTest({ actor, ...attackCtx });
+  const ruleMods = ruleRollModsHtml(actor, attackCtx, resolvedAttack);
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
-  const ruleRerolls = ruleRerollsHtml(actor, attackCtx);
+  const ruleRerolls = ruleRerollsHtml(actor, attackCtx, resolvedAttack);
   // Перебросы, навязанные ЦЕЛИ (Локус Кровопролития), в свой блок не идут:
   // бросает их защищающийся у себя. Они уезжают атрибутом на кнопки защиты в
   // карточке атаки — см. combat/attack-card.mjs.
-  const forcedDefenceReroll = (resolveTest({ actor, ...attackCtx }).rerolls || [])
+  const forcedDefenceReroll = (resolvedAttack.rerolls || [])
     .find(r => r.who === "target")?.mode || "";
 
   // Стойка цели (стр. 15, Защитная/Прикрывающая) меняет ЧУЖИЕ атаки против
@@ -1159,7 +1161,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               // Успеха/Провала тем же правилом (kind:"critRangeMod"); сам
               // натуральный диапазон 1-5/96-100 применяется уже в attack.mjs.
               reroll: f.reroll,
-              crit: resolveTest({ actor, ...attackCtx }).crit,
+              crit: resolvedAttack.crit,
               forcedDefenceReroll,
               techniqueOpts: finalTechniqueOpts,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,

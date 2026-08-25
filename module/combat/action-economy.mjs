@@ -74,17 +74,17 @@ export async function resetActionEconomy(actor) {
   const defenseMaxBase = Number(sys.reactions?.defenseMax) || 0;
   const defenseBonus   = stanceDefenseReactionBonus(actor);
 
-  await actor.update({
-    "system.actionPoints.value": apMax,
-    "system.reactions.value": reactMax,
-    "system.reactions.defenseValue": defenseMaxBase + defenseBonus
-  });
-  if (actor.getFlag("warhammer-dbc", "exposedAggressive")) {
-    await actor.unsetFlag("warhammer-dbc", "exposedAggressive");
-  }
-  if (actor.getFlag("warhammer-dbc", "running")) {
-    await actor.unsetFlag("warhammer-dbc", "running");
-  }
+  // Один update на всё (значения + снятие флагов через -=): каждая отдельная
+  // запись — это раунд-трип в базу и полный re-render листов/токенов у всех
+  // клиентов; на смене хода их было до трёх. Ничего не изменилось — ноль.
+  const upd = {};
+  if ((Number(sys.actionPoints?.value) || 0) !== apMax) upd["system.actionPoints.value"] = apMax;
+  if ((Number(sys.reactions?.value) || 0) !== reactMax) upd["system.reactions.value"] = reactMax;
+  if ((Number(sys.reactions?.defenseValue) || 0) !== defenseMaxBase + defenseBonus)
+    upd["system.reactions.defenseValue"] = defenseMaxBase + defenseBonus;
+  if (actor.getFlag("warhammer-dbc", "exposedAggressive")) upd["flags.warhammer-dbc.-=exposedAggressive"] = null;
+  if (actor.getFlag("warhammer-dbc", "running"))           upd["flags.warhammer-dbc.-=running"] = null;
+  if (Object.keys(upd).length) await actor.update(upd);
 }
 
 /**
