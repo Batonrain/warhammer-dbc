@@ -800,8 +800,66 @@
       ]
     }
   ],
-  "gridDistance": 1,
-  "gridUnits": "м",
+  "documentTypes": {
+    "Actor": {
+      "character": {},
+      "ship": {},
+      "starSystem": {},
+      "horde": {},
+      "vehicle": {},
+      "daemon": {},
+      "demonPrince": {},
+      "squad": {},
+      "formation": {},
+      "minion": {}
+    },
+    "Item": {
+      "weapon": {},
+      "weaponMod": {},
+      "ammo": {},
+      "armor": {},
+      "armorMod": {},
+      "forcefield": {},
+      "gear": {},
+      "drug": {},
+      "tool": {},
+      "cybernetic": {},
+      "talent": {},
+      "ability": {},
+      "trait": {},
+      "psychicPower": {},
+      "techPower": {},
+      "implant": {},
+      "mutation": {},
+      "navigatorPower": {},
+      "mentalDisorder": {},
+      "mentalTrauma": {},
+      "ritual": {},
+      "component": {},
+      "shipHull": {},
+      "cargo": {},
+      "torpedo": {},
+      "disease": {},
+      "celestialBody": {},
+      "vehicleGear": {},
+      "vehicleTrait": {},
+      "smallCraft": {},
+      "homeworld": {},
+      "divination": {},
+      "weaponProperty": {},
+      "armourHistoryEntry": {},
+      "aspiration": {},
+      "archetype": {},
+      "faction": {},
+      "race": {},
+      "subrace": {},
+      "eliteArchetype": {}
+    }
+  },
+  "grid": {
+    "distance": 1,
+    "units": "м"
+  },
   "primaryTokenAttribute": "wounds.value",
   "secondaryTokenAttribute": "fate.value"
 }

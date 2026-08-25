@@ -561,11 +561,11 @@ const TYPES = {
 };
 
 describe("типы данных предметов", () => {
-  // Полей в template.json больше нет вовсе, остался только перечень типов:
+  // Полей в system.json больше нет вовсе, остался только перечень типов:
   // тип, попавший в этот перечень без схемы, не получит ни одного поля.
-  it("у каждого типа из template.json есть схема, и каждая проверена", () => {
-    const declared = JSON.parse(fs.readFileSync(
-      path.resolve(import.meta.dirname, "../../template.json"), "utf8")).Item.types;
+  it("у каждого типа из system.json есть схема, и каждая проверена", () => {
+    const declared = Object.keys(JSON.parse(fs.readFileSync(
+      path.resolve(import.meta.dirname, "../../system.json"), "utf8")).documentTypes.Item);
     expect(Object.keys(ITEM_DATA_MODELS).sort()).toEqual([...declared].sort());
     expect(Object.keys(TYPES).sort()).toEqual([...declared].sort());
   });
