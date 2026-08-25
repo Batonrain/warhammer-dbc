@@ -16,6 +16,7 @@ import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
+import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import { on } from "../../helpers/utils.mjs";
 
 export function activateCombatListeners(root, actor) {
@@ -62,4 +63,20 @@ export function activateCombatListeners(root, actor) {
     const techDef = MELEE_CONTESTS[ev.currentTarget.dataset.technique];
     if (techDef) _showContestDialog(actor, techDef);
   });
+
+  // ── Экономика действий (стр. 12): ручная трата для действий без своей
+  // кнопки в другом месте листа — Уклонение/Парирование уже тратят Реакцию
+  // сами (module/combat/defense.mjs). Вне активного Encounter кнопки
+  // остаются кликабельны, но ничего не списывают (spendActionPoints/
+  // spendReaction сами проверяют game.combat?.started).
+  on(root, ".ae-spend-btn", "click", async ev => {
+    const kind = ev.currentTarget.dataset.aeSpend;
+    if (kind === "ap") {
+      const cost = parseInt(ev.currentTarget.dataset.aeCost) || 1;
+      if (!await spendActionPoints(actor, cost)) ui.notifications.warn("⚠️ Не хватает ОД.");
+    } else if (kind === "reaction") {
+      if (!await spendReaction(actor)) ui.notifications.warn("⚠️ Не хватает Реакций.");
+    }
+  });
+  on(root, ".ae-reset-btn", "click", () => resetActionEconomy(actor));
 }

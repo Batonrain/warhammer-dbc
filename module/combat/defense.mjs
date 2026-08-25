@@ -10,12 +10,31 @@ import { disabledArmourPenalty } from "./armor-mods.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
+import { spendReaction }  from "./action-economy.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
 export const COUNTER_ATTACK_CAPABILITY = "technique.counterAttack";
 
+// Уклонение/Парирование — Реакция (стр. 12): вне активного Encounter
+// spendReaction ничего не считает и всегда отдаёт true, поэтому вне боя
+// кнопки продолжают работать как раньше, без ограничений.
+async function _noReactionCard(actor, label) {
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("sword")}${label} — ${esc(actor.name)}</div>
+        <div class="roll-outcome">
+          <span class="roll-failure">${rollIcon("ban","#ff6b6b")}Нет доступных Реакций в этом Ходу.</span>
+        </div>
+      </div>`
+  }, rollMode));
+}
+
 export async function _performDodge(actor, extraMod = 0, attackDeg = null, forcedReroll = "") {
+  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
   const dodgeSkill = actor.system.skills?.dodge;
   const rankBonus  = SKILL_RANKS[dodgeSkill?.rank ?? "untrained"]?.bonus ?? -20;
@@ -129,6 +148,8 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null, attac
     await ChatMessage.create(messageData);
     return;
   }
+
+  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Парирование");
 
   const stance    = actor.system.meleeStance || "standard";
   const stBonus   = MELEE_STANCES[stance]?.parryBonus ?? 0;

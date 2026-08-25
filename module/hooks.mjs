@@ -17,6 +17,11 @@ import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
+import { resetActionEconomy, applyTurnEndStanceEffects } from "./combat/action-economy.mjs";
+
+// Последний обработанный ходящий на Combat.id — экономика действий (см. блок
+// updateCombat ниже) сама отслеживает, чей Ход только что закончился.
+const _lastTurnCombatant = new Map();
 
 export function registerHooks() {
 
@@ -861,6 +866,29 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolvePendingSusAnHeals(combat, { force: true });
+    _lastTurnCombatant.delete(combat.id);
+  });
+
+  // ── Экономика действий (стр. 12): восполнить ОД/Реакции актору, чей Ход
+  // начался, и применить конец Хода уходящего (потеря Реакции Агрессивной
+  // Стойки) — module/combat/action-economy.mjs. Своя пара Hooks.on, а не
+  // ветка в обработчике Орд/Сус-ан выше: тот резолвит только по смене
+  // РАУНДА, экономика действий — по смене ХОДА (combatant) внутри раунда
+  // тоже. combat.previous в разных версиях Foundry вёл себя по-разному
+  // (wdbc, доступность combatantId «до» апдейта не гарантирована), поэтому
+  // «кто ходил до этого» отслеживается своей мапой combat.id → combatantId,
+  // а не встроенным геттером.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.user.isGM) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    const nextCombatant = combat.combatant;
+    const prevId = _lastTurnCombatant.get(combat.id);
+    if (prevId && prevId !== nextCombatant?.id) {
+      const prevActor = combat.combatants.get(prevId)?.actor;
+      if (prevActor) await applyTurnEndStanceEffects(prevActor);
+    }
+    if (nextCombatant?.actor) await resetActionEconomy(nextCombatant.actor);
+    if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });
 
   // ── Таймер периодического теста перевеса выключенной силовой брони ──────

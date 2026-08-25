@@ -47,6 +47,8 @@ import { divinationSheetContext }                from "../apps/divinations.mjs";
 import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
 import { MELEE_BASES, MELEE_CONTESTS }           from "../constants/combat.mjs";
+import { hasActionEconomy, isEncounterActive,
+         effectiveDefenseReactionMax }            from "../combat/action-economy.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -86,6 +88,26 @@ export function characterContext(actor) {
       return categoryOk && baseOk;
     })
     .map(([key, c]) => ({ key, label: c.label, modLabel: c.modLabel }));
+
+  // ── Бой: Очки Действия / Реакции (стр. 12) ──────────────────────────────
+  // Только отображение и статус — сама трата/сброс идёт через
+  // module/combat/action-economy.mjs (спенд уже вшит в Уклонение/Парирование,
+  // остальные действия тратятся кнопками combat.mjs::activateCombatListeners).
+  if (hasActionEconomy(actor)) {
+    const defenseMax = effectiveDefenseReactionMax(actor);
+    context.actionEconomy = {
+      ap:        { value: system.actionPoints?.value ?? 0, max: system.actionPoints?.max ?? 0 },
+      reactions: { value: system.reactions?.value ?? 0, max: system.reactions?.max ?? 0 },
+      // Доп. Реакции «только на Избегание» видны лишь пока есть что показать —
+      // вне Защитной Стойки (или без надбавки от будущего Таланта) их 0,
+      // отдельная строка на листе была бы пустым шумом.
+      defense: (system.reactions?.defenseValue || defenseMax)
+        ? { value: system.reactions?.defenseValue ?? 0, max: defenseMax }
+        : null,
+      encounterActive: isEncounterActive(),
+      exposed: !!actor.getFlag("warhammer-dbc", "exposedAggressive")
+    };
+  }
 
   // ── Снаряжение: сенсор нагрузки (когитатор) ─────────────────────────────
   const _enc = system.encumbrance || {};

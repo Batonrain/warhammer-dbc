@@ -55,7 +55,15 @@ Object.assign(EFFECT_KEY_LABELS, {
   "system.sizeMod":     "Размер (модификатор)",
   "system.initiative":  "Инициатива",
   "system.speed":       "Скорость",
-  "system.incomingDamageReduction": "Снижение входящего урона"
+  "system.incomingDamageReduction": "Снижение входящего урона",
+  // Экономика действий (стр. 12, module/combat/action-economy.mjs) — надбавка
+  // к максимуму пула, складывается с базой 2 ОД / 1 Реакция. Пример: Eldar
+  // Agility «+1 ОД в начале каждого хода, до 3 взятий» — берётся Талантом
+  // с активируемым эффектом (см. armor-mod.mjs activatable/active), не голым
+  // ADD на списанном предмете.
+  "system.actionPoints.max":    "ОД (максимум)",
+  "system.reactions.max":       "Реакции (максимум, универсальные)",
+  "system.reactions.defenseMax": "Реакции (максимум, только Избегание)"
 });
 
 /** Все пути, куда разрешено целиться эффектам (используется тестами/миграцией). */
@@ -87,8 +95,11 @@ const INITIAL_PHASE_KEYS = [
                                      // складывает его в traitSizeMod ДО calcMovement);
                                      // "final" ложился поверх посчитанного SPD и не
                                      // успевал в движение, хотя бейдж на листе был верный
-  "system.incomingDamageReduction"  // плоское снижение урона (combat/damage.mjs читает
-                                     // ХРАНИМОЕ поле напрямую, не производное)
+  "system.incomingDamageReduction",  // плоское снижение урона (combat/damage.mjs читает
+                                      // ХРАНИМОЕ поле напрямую, не производное)
+  "system.actionPoints.max",         // база экономики действий — ХРАНИМОЕ поле,
+  "system.reactions.max",            // сбрасывается в .value каждый Ход
+  "system.reactions.defenseMax"      // (module/combat/action-economy.mjs)
 ];
 
 /** Фаза, в которой ключ обязан применяться. */

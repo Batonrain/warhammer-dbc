@@ -307,7 +307,23 @@ export function creatureSchema({ granted = false } = {}) {
       swapBs:           bool(false, "Подмена BS"),
       notes:            str("", "Заметки")
     }, { label: "Одержимость" }),
-    reactions:        str("", "Реакции"),
+    // Экономика действий в бою (стр. 12): 2 ОД + 1 Реакция в начале своего
+    // Хода, восполняются полностью каждый Ход — тратятся только пока активен
+    // Encounter (module/combat/action-economy.mjs). max — база (2/1) плюс
+    // надбавка ActiveEffect Таланта (эффект складывает прямо в max, фаза
+    // "initial" — тот же приём, что у system.movement.spdBonus).
+    actionPoints: new SchemaField({
+      value: num(2, "Текущие"), max: num(2, "Максимум")
+    }, { label: "Очки действия" }),
+    // defenseValue/defenseMax — доп. Реакции, которые тратятся ТОЛЬКО на
+    // Избегание (Уклонение/Парирование, стр. 12) и расходуются раньше
+    // универсальных (Защитная Стойка, стр. 15, даёт ровно такую — см.
+    // MELEE_STANCES.defensive в constants/combat.mjs).
+    reactions: new SchemaField({
+      value: num(1, "Текущие"), max: num(1, "Максимум"),
+      defenseValue: num(0, "Текущие (только Избегание)"),
+      defenseMax:   num(0, "Максимум (только Избегание)")
+    }, { label: "Реакции" }),
     aptitudes:        strList("Склонности"),
     advanceTalents:   objList("Таланты в Развитии"),
     paths:            objList("Пути"),
