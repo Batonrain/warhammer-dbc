@@ -1,0 +1,48 @@
+{
+  "name": "The Bloody Aura / Кровавая Аура",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "1zY3e1PEhsxpLyHO",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж создаёт ауру 10×S.b метров, внутри которой все союзные существа (включая него) получают +5 к S и T, а также наносят на ½ (окр.▲) WS.b/BS.b (что больше) урона больше всеми своими атаками. Все существа, получающие обескровливание в этой ауре, удваивают его. Персонаж может отключать и включать этот талант перед и после битвы.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Принц Кхейна",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "91YpE4qKoRhhntUr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!91YpE4qKoRhhntUr"
+}

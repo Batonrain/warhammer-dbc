@@ -5,6 +5,7 @@ import { carryRow }                        from "../helpers/utils.mjs";
 import { getArmorModEffects, armorModApForLocation, armorAgilityCap,
          disabledArmourOverloadTier, disabledArmourWeight } from "../combat/armor-mods.mjs";
 import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
+import { resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags, emptyArmorLocFlags } from "../combat/armor-properties.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
 import { fieldModeEffects } from "../constants/drukhari-armor-fields.mjs";
 import { cloneFieldTier } from "../constants/drukhari-gear.mjs";
@@ -1105,6 +1106,15 @@ export class WarhammerActor extends Actor {
 
     // Бонусы AP против типов урона от модов брони (всегда складываются)
     const armorVsType = { energy: 0, impact: 0, rending: 0, blast: 0 };
+    // Флаги свойств брони (Conductive/Flak/Soft/Rods/Open/Primitive) по
+    // локациям — OR всех надетых предметов, чьё AP в этой локации > 0 (тот же
+    // уровень точности, что и у armorVsType выше: не отслеживаем, какой именно
+    // предмет «выиграл» Math.max в этой локации). См. module/combat/damage.mjs.
+    const propFlagsByLoc = {
+      head: emptyArmorLocFlags(), body: emptyArmorLocFlags(),
+      leftArm: emptyArmorLocFlags(), rightArm: emptyArmorLocFlags(),
+      leftLeg: emptyArmorLocFlags(), rightLeg: emptyArmorLocFlags()
+    };
 
     for (const item of this.items) {
       if (item.type !== "armor" || !item.system.equipped) continue;
@@ -1119,6 +1129,13 @@ export class WarhammerActor extends Actor {
         leftLeg:  (s.leftLeg  || 0) + armorModApForLocation(aFx, "leftLeg"),
         rightLeg: (s.rightLeg || 0) + armorModApForLocation(aFx, "rightLeg")
       };
+      // Свойства этого предмета брони (Conductive/Flak/Soft/Rods/Open/Primitive)
+      // — распространяются на все локации, куда он реально даёт AP (ap[k] > 0).
+      const propAuto = aggregateArmorAuto(resolveArmorProps(item));
+      for (const k of Object.keys(ap)) {
+        if (ap[k] > 0) propFlagsByLoc[k] = mergeArmorLocFlags(propFlagsByLoc[k], propAuto);
+      }
+
       // Качество брони: Best.Q даёт +1 AP всем частям (сочленения +2 — напоминание).
       const qArmor = qualityEffects(item).auto;
       if (qArmor.apAll) { for (const k of Object.keys(ap)) ap[k] += qArmor.apAll; }
@@ -1197,7 +1214,8 @@ export class WarhammerActor extends Actor {
       rightLeg:       armorAP.rightLeg + tb,
       toughnessBonus: tb,
       armorOnly:      armorAP,
-      vsType:         armorVsType
+      vsType:         armorVsType,
+      propFlags:      propFlagsByLoc
     };
 
     // ── Навыки ────────────────────────────────────────────────────────────

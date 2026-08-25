@@ -1,0 +1,48 @@
+{
+  "name": "Ishar / Ишар",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "4emZkTeQiY3l6ZOv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж увеличивает бонус к Unnatural I от данного Элитного Архетипа до 6 и получает I.b к максимуму Ран. Рукопашные атаки персонажа, нанёсшие хотя бы 1 непоглощённый урон противнику, лишают его действия сверхъестественных мутаций на 1 Раунд (персонаж выбирает, применять ли эффект на каждое попадание отдельно). В начале каждого раунда все союзные существа в ауре от таланта The Aura of Eternal Life лечат 1 рану.",
+    "tier": 3,
+    "requirement": "Выполнить специальную миссию по нахождению более могущественного артефакта Иши в Старых Мирах в Оке Ужаса",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Избранный Иши",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "e4onVwQtMGL5sFlF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!e4onVwQtMGL5sFlF"
+}

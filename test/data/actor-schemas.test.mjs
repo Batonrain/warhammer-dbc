@@ -165,6 +165,9 @@ const DEVIATIONS = {
     // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от
     // эффектов, заведено гораздо позже template.json — см. combat/damage.mjs.
     incomingDamageReduction: 0,
+    // Высота полёта (стр. 30, wdbc-n1cy) — состояние Хода, заведено гораздо
+    // позже template.json, тем же приёмом, что mount.speed.
+    "movement.altitude": "ground",
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]
@@ -192,11 +195,11 @@ const MIGRATED_AWAY = {
 };
 
 describe("типы данных акторов", () => {
-  // Полей в template.json больше нет вовсе, остался только перечень типов:
+  // Полей в system.json больше нет вовсе, остался только перечень типов:
   // тип, попавший в этот перечень без схемы, не получит ни одного поля.
-  it("у каждого типа из template.json есть схема, и каждая проверена", () => {
-    const declared = JSON.parse(fs.readFileSync(
-      path.resolve(import.meta.dirname, "../../template.json"), "utf8")).Actor.types;
+  it("у каждого типа из system.json есть схема, и каждая проверена", () => {
+    const declared = Object.keys(JSON.parse(fs.readFileSync(
+      path.resolve(import.meta.dirname, "../../system.json"), "utf8")).documentTypes.Actor);
     expect(Object.keys(ACTOR_DATA_MODELS).sort()).toEqual([...declared].sort());
     expect(Object.keys(PACKS).sort()).toEqual([...declared].sort());
   });

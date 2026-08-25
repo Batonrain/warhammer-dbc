@@ -39,6 +39,9 @@ import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
+import { spendActionPoints, apCostForActionType } from "../combat/action-economy.mjs";
+import { measureTokens }                      from "../combat/tactical-map.mjs";
+import { coverBonusForShot }                  from "../combat/cover.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -106,6 +109,7 @@ function readAttackForm(form, ammoConds) {
     autoSuccess: all(".atk-mod-cb[data-autosuccess]:checked").length > 0,
     char:       el("#atk-char")?.value,
     modifier:   parseInt(el("#atk-modifier")?.value) || 0,
+    coverMod:   parseInt(el("#atk-cover")?.value) || 0,
     rofMode:    el(ROF)?.value,
     rofBonus:   attr(ROF, "bonus"),
     aimVal:     el("#atk-aim")?.value,
@@ -210,6 +214,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     char: charKey,
     targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
   };
+
+  // ── Тактическая карта (wdbc-8k0i): дистанция/контакт/Укрытие по токенам ───
+  // сцены. Меряется один раз при открытии окна (позиции не двигаются, пока
+  // диалог открыт) — подсказка и автоподстановка, всё остаётся правимо рукой.
+  const attackerToken = actor.getActiveTokens?.(true, true)?.[0] ?? null;
+  const targetToken    = [...(game.user?.targets ?? [])][0] ?? null;
+  const measured        = (attackerToken && targetToken) ? measureTokens(attackerToken, targetToken) : null;
+  const autoCoverMod    = (attackerToken && targetToken) ? coverBonusForShot(attackerToken, targetToken) : 0;
   const ruleMods = ruleRollModsHtml(actor, attackCtx);
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
@@ -241,6 +253,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Агрессивная Стойка: цель уже потеряла все Реакции в конце своего Хода">⚔️ Цель раскрыта (+20)</span>`
     : "";
 
+  // Бег (стр. 32): до начала следующего Хода бегущего вся Стрельба по нему
+  // −20, вся Рукопашная +20 (module/combat/movement-actions.mjs, declareRun
+  // ставит флаг; снимается resetActionEconomy — action-economy.mjs).
+  const targetRunning = !!attackCtx.targetActor?.getFlag?.("warhammer-dbc", "running");
+  const runningMod = targetRunning ? (isMelee ? 20 : -20) : 0;
+  const runningBadge = targetRunning
+    ? `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`
+    : "";
+
   // Беспомощная цель: рукопашная (и выстрел в упор/в рукопашной, стр. ...) бьёт
   // автоматически и удваивает урон до Поглощения; прочая стрельба — только
   // +30. Рукопашный случай безусловен (badge), стрелковый «в упор/в рукопашной»
@@ -256,7 +277,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ? `<span class="atk-training-warn" title="Беспомощная цель: бонус к стрельбе">🪢 Цель Беспомощна (+${helplessRangedMod})</span>`
       : "";
 
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -512,7 +533,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -819,27 +840,40 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="atk-mods-title">${rollIcon("gear","#8fd0ff")}Свойства оружия</div>
       <div class="atk-wprops-list">${wpDialogList}</div>
     </div>` : "") + legionHtml + weaponTrainingHtml;
+  // Тактическая карта (wdbc-8k0i): «Короткая дистанция» по половине Дальности
+  // (устоявшееся правило Мельты/Рассеивания в WH40k-семействе систем) — авто-
+  // галочка, но её всё ещё можно снять руками, если ситуация особая.
+  const autoShortRange = !!(measured && !isMelee && Number(sys.range) > 0
+    && measured.edgeM <= Number(sys.range) / 2);
   const shortRangeHtml = wantShortBox ? `
     <label class="attack-mod-check">
-      <input type="checkbox" id="atk-shortrange" class="atk-mod-cb" data-value="${wp.scatter ? 10 : 0}"/>
+      <input type="checkbox" id="atk-shortrange" class="atk-mod-cb" data-value="${wp.scatter ? 10 : 0}" ${autoShortRange ? "checked" : ""}/>
       <span>${rollIcon("target","#4dffa6")}Короткая дистанция / в упор${wp.meltaShort ? " — Мельта ×2 Проб." : ""}${wp.scatter ? " — Рассеив. +10/+1d10" : ""}</span>
     </label>` : "";
   // Полосы дальности: у оружия свой список бонусов по дистанции (стр. 193-197).
+  // Числовых порогов (min/max, м) у контента пока почти нигде нет — где их
+  // авторы проставят, выбор подставится сам; иначе остаётся текстовая подсказка
+  // с измеренной дистанцией ниже, а полосу игрок выбирает по описанию сам.
   const bands = Array.isArray(sys.rangeBands) ? sys.rangeBands : [];
+  const autoBandIdx = measured
+    ? bands.findIndex(b => b.min != null && b.max != null && measured.edgeM >= b.min && measured.edgeM <= b.max)
+    : -1;
   const bandHtml = bands.length ? `
     <label class="attack-mod-check attack-mod-select">
       <span>${rollIcon("target", "#8fd0ff")}Дистанция</span>
       <select id="atk-band">
-        <option value="-1">Обычная — без бонусов</option>
+        <option value="-1" ${autoBandIdx < 0 ? "selected" : ""}>Обычная — без бонусов</option>
         ${bands.map((b, i) => {
           const bits = [];
           if (b.dice) bits.push(`+${b.dice}d10 урона`);
           if (b.dmg)  bits.push(`+${b.dmg} урона`);
           if (b.pen)  bits.push(`+${b.pen} Проб.`);
-          return `<option value="${i}">${b.label}${bits.length ? " — " + bits.join(", ") : ""}</option>`;
+          return `<option value="${i}" ${autoBandIdx === i ? "selected" : ""}>${b.label}${bits.length ? " — " + bits.join(", ") : ""}</option>`;
         }).join("")}
       </select>
     </label>` : "";
+  const distanceHintHtml = measured ? `
+    <div class="atk-distance-hint">${rollIcon("target","#8fd0ff")}Измеренная дистанция: ${measured.edgeM} м${Number(sys.range) ? ` (Дальность оружия: ${sys.range} м)` : ""}</div>` : "";
   // Выключенное оружие (стр. 209-211): цепное/шоковое/силовое можно погасить
   // свободным действием, и полем Haywire — принудительно.
   const OFF_HINT = { chain: "−2 урона, −1 Проб., без Рвущего",
@@ -872,8 +906,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Под пилюлями каждой группы — своя заметка с полным текстом эффекта
   // текущего выбора (id для updateTotal ниже), тем же приёмом, что раньше
   // был только у Хвата/Профиля (общий atk-gripnote).
+  // Тактическая карта (wdbc-8k0i): вид контакта — чисто информационно (нет
+  // автоматических триггеров «Свободной Атаки», это ручная Реакция, стр. 12),
+  // подсказывает игроку/ГМ, легален ли рукопашный Приём вообще.
+  const CONTACT_BADGE = {
+    deep: `<span class="atk-training-warn" title="Базы налагаются — как при переносе раненого">🔶 Глубокий контакт</span>`,
+    base: `<span class="atk-training-warn" title="Грани Баз соприкасаются">⚔ Базовый контакт</span>`,
+    none: `<span class="atk-training-warn" title="Базы не касаются — рукопашная может быть недоступна">⚠ Нет контакта</span>`
+  };
+  const contactBadgeHtml = (isMelee && measured) ? CONTACT_BADGE[measured.contact] : "";
   const maneuverBlockHtml = isMelee ? `
     <div class="av-section">
+      ${contactBadgeHtml}
       <div class="av-sec-lbl">Приём</div>
       <div class="av-pills" id="atk-maneuver-pills">${pillsHtml("atk-maneuver", computeManeuverOptions(dyn0.baseKey, dyn0.pIdx), dyn0.maneuverKey)}</div>
       <div class="av-opt-note" id="atk-maneuver-note">${dyn0.mDef.note}</div>
@@ -941,6 +985,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <label>Доп. мод</label>
         <input id="atk-modifier" class="av-input av-num" type="number" value="${presetModifier}"/>
       </div>
+      <div class="av-row">
+        <label>Укрытие</label>
+        <input id="atk-cover" class="av-input av-num" type="number" value="${autoCoverMod}"
+               title="Авто по зоне Укрытия на линии огня (regions/cover.mjs) — всегда можно поправить руками"/>
+      </div>
 
       ${techSectionsHtml}
       <div class="av-opt-note" id="atk-gripnote">${dyn0.note}</div>
@@ -961,6 +1010,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ${mountHtml}
 
       ${rangeInfoHtml}
+      ${distanceHintHtml}
       ${shortRangeHtml}${bandHtml}${offHtml}${maximalHtml}
       ${ammoCondHtml}
       ${ruleMods.html}
@@ -1000,7 +1050,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       base: (actor.system.characteristics[f.char]?.total ?? 0)
             + (sys.attackBonus || 0) + wpAttackMod + sel.techBon + sel.stanceBon + ammoAtkMod + sel.gWs
             + (wp.noAim ? 0 : f.aimBonus),
-      mods: [f.modifier, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty,
+      mods: [f.modifier, f.coverMod, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty,
              f.mountPenalty, f.extraBonus],
       halvePenalty: f.halvePenalty
     });
@@ -1046,6 +1096,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
                   <span class="roll-failure">Защитная Стойка без щита — атака запрещена (стр. 15)</span>
                 </div></div>`
             });
+            return false;
+          }
+
+          // Экономика действий (стр. 12, wdbc-niv7): рукопашная атака тратит
+          // ОД по actionType выбранной Базы (MELEE_BASES) — Натиск/Полная
+          // Атака и т.п. уже несут это поле. Стрелковые режимы (rofModes)
+          // пока не несут своего actionType (нерешённая часть wdbc-niv7,
+          // не связанная с Движением) — для них ОД сознательно не тратятся.
+          const apCost = isMelee ? apCostForActionType(sel.bDef.actionType) : 0;
+          if (!await spendActionPoints(actor, apCost)) {
+            ui.notifications.warn("⚠️ Не хватает ОД.");
             return false;
           }
 

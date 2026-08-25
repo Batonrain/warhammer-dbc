@@ -1,0 +1,48 @@
+{
+  "name": "Warlock Coven / Ковен Варлоков",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ttqxLwqFCoWfX2In",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может манифестировать все свои психосилы через путь Психического Хора, формируя психическую связь с эльдарами-псайкерами, обладающими бPR 5 и выше (расстояние не более W.b(Хормейстера)×15 м). Персонаж получает доступ ко всем психосилам подчинённых и участников хора. Если бPR от Хора спадает, Хормейстер продолжает поддерживать манифестированные психосилы, пока сам не развеет их. Если в любом ритуале персонажа поддерживают участники хора, вместо 2×PR бонуса персонаж получает бонус 5×PR.",
+    "tier": 3,
+    "requirement": "Обладать 4 Миньонами/Товарищами с бPR 5 и выше",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Высший Варлок",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "G8LjgaKMTSgc1p3d",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!G8LjgaKMTSgc1p3d"
+}

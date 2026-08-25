@@ -1,0 +1,48 @@
+{
+  "name": "The Blind Eye of the Seer / Слепое Око Провидца",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "JufxwhOZ9FMj937e",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может активировать данный талант за Полное действие, создав ауру, что центрируется на нём и перемещается с ним, радиусом W.b×20 метров. В данной ауре все Пути Силы, кроме Древнее Мастерство, Руны Судьбы, Руны Битвы и Психофокуса перестают давать свои бонусы.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Высший Провидец",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "AcC6U1x53zK0Tc2a",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!AcC6U1x53zK0Tc2a"
+}

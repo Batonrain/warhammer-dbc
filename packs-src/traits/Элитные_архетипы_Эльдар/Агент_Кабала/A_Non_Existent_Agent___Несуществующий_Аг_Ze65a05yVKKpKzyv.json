@@ -1,0 +1,47 @@
+{
+  "name": "A Non-Existent Agent / Несуществующий Агент",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж не привлекает внимания, находясь в толпе или на задворках внимания; истинную суть персонажа можно раскрыть лишь через тактильные ощущения. Может изменять манеры, тембр и иное (кроме тактильных ощущений). Автоматически преуспевает в тестах сокрытия своих мыслей и присутствия. Может подделывать воспоминания и знания, каталогизируя их так, что доступ к ним есть только у него. Любые тесты одержимости, индоктринации или прочтения мыслей персонажа автоматически проваливаются без ведома проводящего, и персонаж может заменить результаты на желаемые. Персонаж получает Weapon Training (All), Melee Training (All) и навык Scholastic Lore (Тактика)+0.",
+    "source": "Элитный архетип: Агент Кабала",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "Ze65a05yVKKpKzyv",
+  "effects": [],
+  "folder": "6Ydx0866KzAXmKmH",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!Ze65a05yVKKpKzyv"
+}

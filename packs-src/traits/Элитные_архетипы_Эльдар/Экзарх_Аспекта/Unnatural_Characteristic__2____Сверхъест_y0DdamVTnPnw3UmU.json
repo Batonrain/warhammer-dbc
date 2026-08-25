@@ -1,0 +1,47 @@
+{
+  "name": "Unnatural Characteristic (2) / Сверхъест. Характеристика (выбор)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "+2 к Бонусу одной из трёх характеристик, выбранных при получении Экзарха Аспекта (обычно WS, BS или A — конкретный выбор фиксируется на листе персонажа).",
+    "source": "Элитный архетип: Экзарх Аспекта",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "y0DdamVTnPnw3UmU",
+  "effects": [],
+  "folder": "nWjkR7yZ3x3xHMYT",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!y0DdamVTnPnw3UmU"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Следопыт",
+  "type": "Item",
+  "sorting": "m",
+  "_id": "GDUUTb2KwVF5v1wD",
+  "description": "",
+  "folder": "5GEXooNcRQS6Kgza",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!GDUUTb2KwVF5v1wD"
+}

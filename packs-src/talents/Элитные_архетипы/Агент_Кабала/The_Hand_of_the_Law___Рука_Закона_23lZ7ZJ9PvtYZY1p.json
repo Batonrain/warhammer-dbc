@@ -1,0 +1,48 @@
+{
+  "name": "The Hand of the Law / Рука Закона",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "S1J31uqIlWvIxe3Q",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж не получает штрафов общения с Адептус Арбитрес и лишает их штрафов на общение с собой; воспринимается как равный, может ими командовать и создавать ячейки. Знает весь свод Лекс Империалис и может манипулировать им ради своей выгоды на имперских мирах, обвиняя почти любого в нарушении закона, чтобы устранить слишком много знающего или неприятную личность. Взяв все таланты этого элитного архетипа, Агент Кабала может возвыситься до Мастера Кабала.",
+    "tier": 3,
+    "requirement": "S.L (Judgement)+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Агент Кабала",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "23lZ7ZJ9PvtYZY1p",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!23lZ7ZJ9PvtYZY1p"
+}

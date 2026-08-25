@@ -63,8 +63,11 @@ import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/app
 import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
+import { initMovementActionsHud } from "./module/combat/movement-actions.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
+import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
+import { syncTokenBaseSize } from "./module/combat/tactical-map.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
 import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
@@ -202,6 +205,12 @@ Hooks.once("init", () => {
   CONFIG.RegionBehavior.dataModels[LINGER_ZONE_TYPE] = LingerZoneBehaviorType;
   CONFIG.RegionBehavior.typeLabels[LINGER_ZONE_TYPE] = "Остаётся (Linger)";
   CONFIG.RegionBehavior.typeIcons[LINGER_ZONE_TYPE]  = "fa-solid fa-cloud";
+
+  // Зона «Укрытие» (wdbc-8k0i, стр. 30-31) — нативный Region Behavior,
+  // тот же паттерн, что у Трудного ландшафта.
+  CONFIG.RegionBehavior.dataModels[COVER_TYPE] = CoverBehaviorType;
+  CONFIG.RegionBehavior.typeLabels[COVER_TYPE] = "Укрытие";
+  CONFIG.RegionBehavior.typeIcons[COVER_TYPE]  = "fa-solid fa-shield-halved";
 
   // ── Регистрация листов (только новый API v13) ─────────────────────────────
 
@@ -776,6 +785,7 @@ Hooks.once("ready", () => initHUD());
 // Варианты облика токена: кнопка в меню токена (игрок выбирает сам).
 Hooks.once("init", () => initTokenVariants());
 Hooks.once("init", () => initDifficultTerrainHud());
+Hooks.once("init", () => initMovementActionsHud());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());
 
@@ -1229,6 +1239,27 @@ Hooks.on("updateActor", async (doc, changes) => {
     try { await scene.updateEmbeddedDocuments("Token", upd); }
     catch (e) { console.warn("Warhammer DBC | sync token name/art:", e); }
   }
+});
+
+// ── Тактическая карта (wdbc-8k0i): живой ресинк размера токена ────────────────
+// Раса (Огрин и т.п.) или надетая/снятая крупная броня (Терминаторская)
+// меняют Базу актора — prototypeToken.width/height И уже стоящие на сцене
+// токены обновляются сразу, без пересоздания токена (см. combat/tactical-map.mjs).
+Hooks.on("updateActor", (doc, changes) => {
+  if (!game.user.isGM) return;
+  if (changes.system?.race === undefined && changes.system?.subrace === undefined) return;
+  syncTokenBaseSize(doc);
+});
+Hooks.on("createItem", (item) => {
+  if (game.user.isGM && item.type === "armor" && item.parent) syncTokenBaseSize(item.parent);
+});
+Hooks.on("deleteItem", (item) => {
+  if (game.user.isGM && item.type === "armor" && item.parent) syncTokenBaseSize(item.parent);
+});
+Hooks.on("updateItem", (item, changes) => {
+  if (!game.user.isGM || item.type !== "armor" || !item.parent) return;
+  if (changes.system?.equipped === undefined && changes.system?.largeBase === undefined) return;
+  syncTokenBaseSize(item.parent);
 });
 
 // Кэш библиотек Происхождения и Предсказаний для дропдаунов в шапке листа.

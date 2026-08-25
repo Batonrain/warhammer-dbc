@@ -20,7 +20,6 @@ import { packFileName } from "../../tools/pack-file-name.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const system = JSON.parse(fs.readFileSync(path.join(root, "system.json"), "utf8"));
-const template = JSON.parse(fs.readFileSync(path.join(root, "template.json"), "utf8"));
 
 const docsOnly = list => list.filter(d => d.doc.type === "eliteArchetype");
 
@@ -77,7 +76,7 @@ describe("перенос Элитных архетипов в компендиу
 
 describe("объявление библиотеки", () => {
   it("тип предмета объявлен", () => {
-    expect(template.Item.types).toContain("eliteArchetype");
+    expect(Object.keys(system.documentTypes.Item)).toContain("eliteArchetype");
   });
 
   it("пак объявлен рядом с обычными Архетипами", () => {

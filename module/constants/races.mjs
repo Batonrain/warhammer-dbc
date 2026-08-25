@@ -197,6 +197,7 @@ export const RACES = {
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
     size: 1,
+    largeBase: true, // Крупная База 3×3 (wdbc-8k0i) — не путать с `size` (бонус к SPD).
     skills:  "Athletics, Linguistics (Low Gothic)",
     gear:    "3 элемента Снаряжения/Инструментов до R1 (1 Good.Q); снаряжение бесплатно модифицируется под размер Огрина",
     talents: ["Bulging Biceps", "Hardy", "Iron Jaw", "Resistance (Cold, Heat)", "Unarmed Warrior"],

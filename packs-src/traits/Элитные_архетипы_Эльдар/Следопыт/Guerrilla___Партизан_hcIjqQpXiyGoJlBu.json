@@ -1,0 +1,47 @@
+{
+  "name": "Guerrilla / Партизан",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "В расчёте нарративного движения персонаж удваивает свой SPD, утраивая его на территории сложного ландшафта (лес, тропики, арктика, горы и подобное). Он автоматически проходит все тесты на ландшафт, игнорируя его штрафы, и получает преимущество на тесты Stealth и Survival, находясь в таком ландшафте. Персонаж игнорирует штрафы от Комплекта Для Заметания Следов; попытки обнаружить его следы получают помеху и штраф −20. Перед действием для саботажа или диверсии он может пройти тест Awareness(P)+10 и добавить себе бонус 3×Успехи к следующему тесту. Персонаж получает преимущество на распознание имперского вооружения, техники, снаряжения, технологии и геральдики, а при наличии Forbidden Lore (Xenos)+20 соответствующей расы — преимущество и на их опознание.",
+    "source": "Элитный архетип: Следопыт",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "hcIjqQpXiyGoJlBu",
+  "effects": [],
+  "folder": "GDUUTb2KwVF5v1wD",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!hcIjqQpXiyGoJlBu"
+}

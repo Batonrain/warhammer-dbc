@@ -186,9 +186,10 @@ const TYPES = {
   },
   race: {
     pack: "races",
+    // `largeBase` (wdbc-8k0i) — крупная База токена (3×3), в template.json не было.
     defaults: {
       key: "", group: "", chars: {}, bonusRolls: 0, skills: "", gear: "", talents: "",
-      description: "", notes: "", hasGeneSeed: false, pastRaces: [],
+      description: "", notes: "", hasGeneSeed: false, pastRaces: [], largeBase: false,
       size: 0, bonusPoints: 0, charShift: 0, fateRoll: "", skillsNote: "", adaptations: "",
       bookSource: ""
     }
@@ -355,6 +356,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", infoguard: 0, armorType: "simple", stacks: false,
       maxAgility: 100, propRatings: {}, apSecond: {}, equipped: false,
+      // `largeBase` (wdbc-8k0i) — пока надета, токен носителя 3×3, в template.json не было.
+      largeBase: false,
       head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
       quality: "common", availability: 0, weight: 0, properties: [],
       strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
@@ -558,11 +561,11 @@ const TYPES = {
 };
 
 describe("типы данных предметов", () => {
-  // Полей в template.json больше нет вовсе, остался только перечень типов:
+  // Полей в system.json больше нет вовсе, остался только перечень типов:
   // тип, попавший в этот перечень без схемы, не получит ни одного поля.
-  it("у каждого типа из template.json есть схема, и каждая проверена", () => {
-    const declared = JSON.parse(fs.readFileSync(
-      path.resolve(import.meta.dirname, "../../template.json"), "utf8")).Item.types;
+  it("у каждого типа из system.json есть схема, и каждая проверена", () => {
+    const declared = Object.keys(JSON.parse(fs.readFileSync(
+      path.resolve(import.meta.dirname, "../../system.json"), "utf8")).documentTypes.Item);
     expect(Object.keys(ITEM_DATA_MODELS).sort()).toEqual([...declared].sort());
     expect(Object.keys(TYPES).sort()).toEqual([...declared].sort());
   });

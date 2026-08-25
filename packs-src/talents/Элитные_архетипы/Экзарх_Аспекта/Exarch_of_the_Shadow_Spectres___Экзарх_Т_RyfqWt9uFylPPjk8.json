@@ -1,0 +1,48 @@
+{
+  "name": "Exarch of the Shadow Spectres / Экзарх Теневых Фантомов",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "908Vd6zlCzHDktpV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Экзархи Теневых Фантомов наблюдают за своими целями издалека, заряжая своё оружие с помощью своих подчинённых, в конце концов выпуская луч, способный сразить любую сверхтяжёлую вражескую технику за одно точное попадание — после чего Экзарх и его подчинённые скрываются. Точная числовая формула заряда/урона обрезана на границе страницы книги при разборе — сверить точный профиль атаки по оригиналу перед боевым использованием, пока условно считать это тяжёлым одиночным выстрелом Devastating большой мощности раз за несколько раундов подготовки.",
+    "tier": 3,
+    "requirement": "Мастер/Заблудившийся на Пути Теневых Фантомов",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Экзарх Аспекта",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "RyfqWt9uFylPPjk8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!RyfqWt9uFylPPjk8"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Great Actor / Великолепный Актёр",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "cnirdSTMnpBj2xjj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может проводить тесты избегания через Acrobatics, а обычные атаки и финты — через Trade (Dance). Находясь на острие атаки, получает бонус F.b×3 на все тесты командования. Имея наивысшую инициативу во всей битве, получает один переброс любого физического теста в раунд. Персонаж может открывать за таланты своего элитного архетипа Маски — чтобы применить маску, нужно создать Саэдат и перед началом боя объявить о применении одной определённой маски; механические эффекты маски снимаются в конце боя.",
+    "tier": 3,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Атхаир (Мастер Труппы)",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "hxFo1POmzdU5cYM5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!hxFo1POmzdU5cYM5"
+}

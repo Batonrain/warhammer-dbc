@@ -1,0 +1,47 @@
+{
+  "name": "All Together! / Все Вместе!",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Принимая боевые наркотики, персонаж может пройти тест W+0; при успехе он распространяет эффект принятого им наркотика на союзников в радиусе ½ F (окр.▼) метров, повторяя на них и эффекты собственных талантов, касающихся наркотиков. Если персонаж участвует в соревновательном социальном тесте против воздействия противника (убеждение сдаться, страх, подавление и подобное) — все его подчинённые получают переброс в этом же тесте; если персонаж провалил свой тест, подчинённые переброса не получают.",
+    "source": "Элитный архетип: Барон Корсаров",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "Z9F5oDyTBypSZSa7",
+  "effects": [],
+  "folder": "rg7EN7pYKaYZ9Qkn",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!Z9F5oDyTBypSZSa7"
+}

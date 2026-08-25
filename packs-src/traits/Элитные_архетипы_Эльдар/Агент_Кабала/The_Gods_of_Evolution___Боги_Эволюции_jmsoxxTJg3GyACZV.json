@@ -1,0 +1,47 @@
+{
+  "name": "The Gods of Evolution / Боги Эволюции",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает знание (R5) о генетических технологиях Кабала — Терраформирующем и Эволюционном Двигателях (крафт 8000 успехов, разные тоннажи и радиусы воздействия) и о создании Вечных (Неполноценный — бессмертие от болезней, Очищение от Скверны, Безвременный; Полноценный — то же плюс знание о материале Фульгурит, оружие из которого убивает Вечных навсегда). Детали крафта и радиусы — на усмотрение ГМа, не автоматизированы Конструктором ввиду масштаба (текст-справочник для игры, не механика листа персонажа).",
+    "source": "Элитный архетип: Агент Кабала",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "jmsoxxTJg3GyACZV",
+  "effects": [],
+  "folder": "6Ydx0866KzAXmKmH",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!jmsoxxTJg3GyACZV"
+}

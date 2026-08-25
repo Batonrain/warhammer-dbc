@@ -1,0 +1,47 @@
+{
+  "name": "An Inescapable Event / Неизбежное Событие",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает +2 к базовому Психическому Рейтингу (PR). Все важные и именные персонажи в начале боя, где участвует персонаж, получают +1 Очко Судьбы (персонаж восстанавливает это очко союзникам в начале своего хода, но не более 1 раза). Когда противник использует Очко Судьбы или Бесчестия, персонаж получает Очко Неизбежности — может тратить их в любой момент битвы даже вне своего хода на фиксированные эффекты по нарастающей цене (1 ОН: Усталость/Вскрытые Раны/Неудача/Гибель; 2 ОН: Случай/Ошибка/Раскрытие Варпа; 3 ОН: Боль/Видения; 4 ОН: Судьба/Немилость Варпа; 8 ОН: Падшая Судьба). Накопленные Очки Неизбежности сгорают в конце битвы.",
+    "source": "Элитный архетип: Высший Провидец",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "NmGYj9cLnKCW73Ws",
+  "effects": [],
+  "folder": "kDSwzVIzNl2QzFb1",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!NmGYj9cLnKCW73Ws"
+}

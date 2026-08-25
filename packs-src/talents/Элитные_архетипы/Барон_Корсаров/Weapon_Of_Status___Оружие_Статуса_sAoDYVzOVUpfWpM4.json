@@ -1,0 +1,48 @@
+{
+  "name": "Weapon Of Status / Оружие Статуса",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "lOeOsPFizs9UuAR2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может выбрать до I.b предметов до R4, которыми он орудует, превратив их в Good.Q, пока их использует только он. За очко судьбы может дать одному предмету снаряжения бонусы по типу (теряя очко судьбы в начале боя, восстанавливая в конце): Рукопашное — за каждое R +1 Dmg или Pen (R3 Tearing+Reinforced, R4 Eldar Accurate, R5 Eldar Razor Sharp); Стрелковое — за каждое R +10 Rng или +1 RoF и +1 Dmg/Pen (R3 Very Reliable, R4 Maximal, R5 Eldar Accurate+Precise); Броня — за каждое R +1 AP в выбранную конечность (R3 Stealthed, R4 Undersuit, R5 +1 AP везде, полное поглощение Варп-урона); Снаряжение — за каждое R +5 к тестам; Силовой Щит — за каждое R −3 к шансу Перегрузки и +3 к Рейтингу.",
+    "tier": 3,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Барон Корсаров",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "sAoDYVzOVUpfWpM4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!sAoDYVzOVUpfWpM4"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Determination To Fight / Решительность Сражаться",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "0U3OW3ftbJRWSx3c",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Имея отрицательные раны, персонаж снижает весь получаемый урон на WP.b (после поглощения, минимум 1) и получает +1 ОД, а лимит атак за ход увеличивается до двух. Если в прошлом раунде находился в Защитной Стойке, также снижает урон на WS.b (минимум 1) и получает бонус +30 к тестам Парирования.",
+    "tier": 3,
+    "requirement": "Virtuoso of Weapons и Virtuoso of Protection, Spear Stand или Sword Stance",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Воин Троп",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "FqtMwaocaGaDA4YM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!FqtMwaocaGaDA4YM"
+}

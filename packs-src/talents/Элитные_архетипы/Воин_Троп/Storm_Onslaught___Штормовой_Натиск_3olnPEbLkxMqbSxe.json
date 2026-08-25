@@ -1,0 +1,48 @@
+{
+  "name": "Storm Onslaught / Штормовой Натиск",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "0U3OW3ftbJRWSx3c",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Когда персонаж добивается +5 успехов при атаке, он может совершить точно такую же атаку (тот же приём, стойка, база), сохраняя бонусы, но получая штраф −20; каждое новое попадание в серии снижает урон на −1 (для Быстрой или Молниеносной атаки). После Штормового Натиска может потратить 2 Реакции, чтобы немедленно закончить ход и войти в Защитную Стойку.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Воин Троп",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "3olnPEbLkxMqbSxe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!3olnPEbLkxMqbSxe"
+}

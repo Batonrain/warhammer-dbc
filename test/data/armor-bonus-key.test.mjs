@@ -14,24 +14,18 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import fs   from "node:fs";
-import path from "node:path";
 
 import { EFFECT_KEY_LABELS, EFFECT_KEY_WHITELIST, expectedPhase,
          legacyEffectsToChanges, summarizeEffectChanges } from "../../module/constants/effect-keys.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
-const template = JSON.parse(
-  fs.readFileSync(path.resolve(import.meta.dirname, "../../template.json"), "utf8"));
-
 const LOCATIONS = ["head", "body", "leftArm", "rightArm", "leftLeg", "rightLeg"];
 /** Типы актора, чей лист считает броню по зонам (одна ветка prepareDerivedData). */
 const ARMORED_ACTORS = ["character", "daemon", "demonPrince"];
 
-/** Схема типа: у переведённых — класс данных, у остальных ещё template.json. */
+/** Схема типа берётся из класса данных — все типы актора переведены. */
 function armorBonusOf(type) {
-  const Model = ACTOR_DATA_MODELS[type];
-  return Model ? new Model({}).armorBonus : template.Actor[type]?.armorBonus;
+  return new ACTOR_DATA_MODELS[type]({}).armorBonus;
 }
 
 describe("ключ складываемой брони", () => {

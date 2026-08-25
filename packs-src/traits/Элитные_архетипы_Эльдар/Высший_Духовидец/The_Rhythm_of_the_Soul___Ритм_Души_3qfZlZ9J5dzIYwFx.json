@@ -1,0 +1,47 @@
+{
+  "name": "The Rhythm of the Soul / Ритм Души",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает +1 к базовому Психическому Рейтингу (PR). Все психокостяные конструкты, которые подчиняются персонажу или психически связаны с ним, получают +I.b персонажа ко всем своим характеристикам, пока связаны с ним, а также бонус +10 на определённый тип тестов, который персонаж выбирает в начале сцены или перед битвой.",
+    "source": "Элитный архетип: Высший Духовидец",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "3qfZlZ9J5dzIYwFx",
+  "effects": [],
+  "folder": "iBUXiHIdr34m7yH6",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!3qfZlZ9J5dzIYwFx"
+}

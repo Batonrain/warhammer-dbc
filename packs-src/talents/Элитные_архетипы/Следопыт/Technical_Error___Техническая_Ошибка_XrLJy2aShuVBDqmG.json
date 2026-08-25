@@ -1,0 +1,48 @@
+{
+  "name": "Technical Error / Техническая Ошибка",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CFDdwRpqR0FW20hm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может грубо взаимодействовать с ноосферой; нося ретинальный дисплей, может использовать Инфозрение и проводить Ноосферное Сканирование через Awareness(P). Коснувшись рукой имперской техники или высокотехнологичного вооружения, может начать соревновательный тест Tech-Use(P)+0 vs Инфограждение и при успехе внести в дух машины приказ, активируемый по слову, действию или условию. Техножрецы могут пытаться обнаружить приказ через Tech-Use(P)+0 и вырвать его через Tech-Use(I)+0 vs Успехи персонажа (+20 если соединён с техникой). При провале Дух Машины экстренно активирует приказ.",
+    "tier": 2,
+    "requirement": "Mastery Tech-Use(Imperium), Forbidden Lore (Mechanicum)+30",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Следопыт",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "XrLJy2aShuVBDqmG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!XrLJy2aShuVBDqmG"
+}

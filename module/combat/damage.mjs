@@ -9,6 +9,7 @@ import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { ablativeDamage } from "../rules/mount.mjs";
+import { resolveArmorAbsorptionAP } from "./armor-properties.mjs";
 import { applyWoundLoss } from "../rules/wounds.mjs";
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
@@ -158,7 +159,8 @@ export async function applyDamageToActor(actor, damageData) {
     ignoreShield = false, // Омывание (Flush) / Варп-Оружие: игнор щита
     warpSoak = false,  // Варп-Оружие: поглощение по W.b вместо AP+T.b
     lance = false,     // Копьё/Пика: AP цели капается до 20 (до вычета Pen)
-    sanctified = false // Освящённое: игнорирует чародейские (варп) щиты
+    sanctified = false, // Освящённое: игнорирует чародейские (варп) щиты
+    melee = false      // Рукопашная атака — нужно свойству брони Rods (Стержни)
   } = damageData;
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
@@ -191,12 +193,15 @@ export async function applyDamageToActor(actor, damageData) {
       tb -= Math.min(felling, Math.max(0, unnaturalT));
       tb  = Math.max(0, tb);
     }
-    // AP брони — может быть уменьшен пробитием
-    armorAP = (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0);
-    // Доп. AP против конкретного типа урона (модификации брони)
-    armorAP += (absorption.vsType?.[damageType] ?? 0);
-    // Примитивное: броня цели удваивается (бонус не выше +6)
-    if (primitive && armorAP > 0) armorAP += Math.min(armorAP, 6);
+    // AP брони — может быть уменьшен пробитием. Свойства брони этой локации
+    // (Conductive/Flak/Soft/Rods/Open/Primitive) — см. armor-properties.mjs и
+    // сбор флагов по локациям в documents/actor.mjs.
+    armorAP = resolveArmorAbsorptionAP({
+      baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
+      vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
+      damageType, melee, hitLocation, primitive,
+      flags: absorption.propFlags?.[armorKey]
+    });
     // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
     // поглощения, ДО вычета пробития (стр. 168).
     if (lance && armorAP > 20) armorAP = 20;
@@ -231,6 +236,16 @@ export async function applyDamageToActor(actor, damageData) {
   if (primitive)   propNotes.push("Примитивное: броня ×2");
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
+  if (!warpSoak) {
+    const pfNote = absorption.propFlags?.[armorKey] || {};
+    if (pfNote.noEnergy && damageType === "energy")  propNotes.push("Проводящая: без AP от Энергии");
+    if (pfNote.noImpact && damageType === "impact")  propNotes.push("Мягкая: без AP от Удара");
+    if (pfNote.doubleBlast && damageType === "blast") propNotes.push("Флак: AP брони ×2");
+    if (pfNote.noRanged && !melee)                    propNotes.push("Стержни: без AP от стрелковой атаки");
+    if (pfNote.noJointCalled && hitLocation === "Сочленение / Шея") propNotes.push("Стержни: без AP в Сочленение");
+    if (pfNote.noEyeCalled  && hitLocation === "Глаз (Голова)")     propNotes.push("Открытый шлем: без AP в Глаз");
+    if (primitive && pfNote.blocksPrimitiveDouble)    propNotes.push("Примитивная броня: без бонуса AP примитивного оружия");
+  }
 
   const reductionNote = incomingReduction > 0
     ? `<div class="dmg-tb-note">Доп. снижение входящего урона: <b>−${incomingReduction}</b></div>`

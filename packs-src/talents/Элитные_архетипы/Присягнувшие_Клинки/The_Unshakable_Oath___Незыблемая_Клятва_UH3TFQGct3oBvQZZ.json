@@ -1,0 +1,48 @@
+{
+  "name": "The Unshakable Oath / Незыблемая Клятва",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "b9LR2aEAbfoO7HjR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает дополнительное очко судьбы, восстанавливающееся в начале каждой сессии. За каждый взятый талант персонаж должен взять (или бросить и выбрать итоговую) одну из усложняющих клятв (Самобичевания −1 T.b/−2 AP брони/−½ ран; Страдания — разделяет непоглощаемый урон с повелителем; Ярости — всегда входит в ярость в начале боя; Безумца — не может носить камень душ, +1 Cor от всех источников; Мастерства — −20 на избегания/атаки против более слабых WS/BS; Совершенства — −10 на взаимодействие с предметами ниже Good.Q). Между сессиями за 100 опыта можно отказаться от клятвы.",
+    "tier": 3,
+    "requirement": "Нет (можно взять до 3 раз)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Присягнувшие Клинки",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "UH3TFQGct3oBvQZZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!UH3TFQGct3oBvQZZ"
+}

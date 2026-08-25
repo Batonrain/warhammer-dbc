@@ -1,0 +1,48 @@
+{
+  "name": "The Weight of Gold / Вес Золота",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "lOeOsPFizs9UuAR2",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Барон Корсаров может начать соревновательный тест Charm(F)+10 vs W-10 против своих противников (за противников бросает самый способный или предводитель группы). За каждый нечётный успех начиная с 5 (5, 7, 9) персонаж получает рейтинг Fear (+1) против существ, проваливших тест — рейтинг спадает до Fear (1) после битвы. За каждую вещь R5 Good.Q персонаж гарантированно получает Fear (+1), а за Best.Q — Fear (+2).",
+    "tier": 1,
+    "requirement": "Обладать 4 вещами с R4, либо 4 вещами R3 Good.Q, либо 4 вещами R2 Best.Q",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Барон Корсаров",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "BsNOWqWxExg1Jr6D",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!BsNOWqWxExg1Jr6D"
+}

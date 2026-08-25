@@ -44,6 +44,7 @@ const raceFromDoc = doc => ({
   talents: doc.system?.talents || "", desc: doc.system?.description || "",
   hasGeneSeed: !!doc.system?.hasGeneSeed,
   pastRaces: [...(doc.system?.pastRaces || [])],
+  largeBase: !!doc.system?.largeBase, // wdbc-8k0i: крупная База 3×3 (Огрин и т.п.)
   uuid: doc.uuid
 });
 
@@ -53,7 +54,9 @@ const raceFromConst = (key, r) => ({
   skills: r.skills || "", gear: r.gear || "",
   talents: Array.isArray(r.talents) ? r.talents.join(", ") : (r.talents || ""),
   desc: r.desc || "", hasGeneSeed: !!r.hasGeneSeed,
-  pastRaces: [...(r.pastRaces || [])], uuid: ""
+  pastRaces: [...(r.pastRaces || [])],
+  largeBase: !!r.largeBase, // wdbc-8k0i: крупная База 3×3 (Огрин и т.п.)
+  uuid: ""
 });
 
 const subFromDoc = doc => ({

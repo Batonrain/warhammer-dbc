@@ -1,0 +1,47 @@
+{
+  "name": "The Sorrow of the Hearer / Горе Слышащего",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает штраф −10 на любые социальные тесты, направленные на общение с кем угодно, кроме психокостяных конструктов и следующих Пути Скорби, и бонус +20 на социальные тесты, направленные на психокостяные конструкты. Все психокостяные конструкты в радиусе 100×I.b метров от персонажа становятся Важными персонажами в расчёте урона и смерти.",
+    "source": "Элитный архетип: Высший Духовидец",
+    "bookSource": "Книга Аэльдари",
+    "hasRating": false,
+    "rating": 1,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "speedMod": 0,
+      "initMod": 0
+    }
+  },
+  "_id": "G8hWcJDKdnqX4qoR",
+  "effects": [],
+  "folder": "iBUXiHIdr34m7yH6",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!G8hWcJDKdnqX4qoR"
+}

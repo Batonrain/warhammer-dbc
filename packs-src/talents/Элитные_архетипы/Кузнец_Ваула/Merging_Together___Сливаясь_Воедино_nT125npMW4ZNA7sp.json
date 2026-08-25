@@ -1,0 +1,48 @@
+{
+  "name": "Merging Together / Сливаясь Воедино",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "qJeFOziEtLd6ceM1",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может использовать I.b вместо WS.b, BS.b и S.b в тестах, связанных с использованием психокостяных конечностей. Также может дать себе раз в два раунда бонус I.b×3 на следующий тест, совершаемый одной рукой. Чтобы бонус распространялся на обе конечности, персонажу нужно купить этот талант ещё раз.",
+    "tier": 1,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Кузнец Ваула",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "nT125npMW4ZNA7sp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!nT125npMW4ZNA7sp"
+}

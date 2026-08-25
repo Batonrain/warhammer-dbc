@@ -1,0 +1,48 @@
+{
+  "name": "Push back the Enemy! / Оттеснить Врага!",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "b9LR2aEAbfoO7HjR",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Совершая рукопашную атаку с любой базой, персонаж может начать соревновательный тест WS+20 vs WS+0. Если противник провалил тест — он должен отойти на расстояние Rng рукопашного оружия персонажа×2 метров или получить одиночную атаку и в любом случае отойти на Rng рукопашного оружия персонажа метров.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Присягнувшие Клинки",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "fMRsvgTTVxxnQRpz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!fMRsvgTTVxxnQRpz"
+}

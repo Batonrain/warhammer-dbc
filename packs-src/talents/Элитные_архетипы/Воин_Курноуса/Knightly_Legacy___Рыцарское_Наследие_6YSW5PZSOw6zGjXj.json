@@ -1,0 +1,48 @@
+{
+  "name": "Knightly Legacy / Рыцарское Наследие",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "kSwid5gHHzkFOLBz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Проводя верховую атаку натиском, персонаж даёт противнику штраф к уклонению, равный числу успехов в атаке×5 (максимум 40). Атака оружием типа «Копьё» до поглощения наносит дополнительно 1d10+S.b скакуна урона; любым другим типом — 1d5+S.b.",
+    "tier": 2,
+    "requirement": "Crushing Blow",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Воин Курноуса",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "6YSW5PZSOw6zGjXj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!6YSW5PZSOw6zGjXj"
+}

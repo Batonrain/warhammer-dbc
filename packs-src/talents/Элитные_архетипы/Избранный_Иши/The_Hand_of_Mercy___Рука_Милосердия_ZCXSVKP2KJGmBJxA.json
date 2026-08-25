@@ -1,0 +1,48 @@
+{
+  "name": "The Hand of Mercy / Рука Милосердия",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "4emZkTeQiY3l6ZOv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Совершая атаку по больному существу, персонаж вместо урона может исцелить его, начав тест Medicae(I)−20 vs W+10 (соревновательный, если существо враждебно или не желает лечения). При успехе эффекты болезни отступают на I.b дней; если существо — последователь Нургла, оно получает Cor.b+Inf.b непоглощаемого E урона. Персонаж имеет физический контакт в расчёте своих психосил со всеми существами в радиусе I.b метров от себя.",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Избранный Иши",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "ZCXSVKP2KJGmBJxA",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!ZCXSVKP2KJGmBJxA"
+}

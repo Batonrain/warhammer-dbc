@@ -1,0 +1,48 @@
+{
+  "name": "Acupuncture / Иглоукалывание",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CFDdwRpqR0FW20hm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Обладая высокой точностью в использовании игольного оружия, персонаж игнорирует Natural Armour в расчёте вражеского поглощения урона от игольного оружия, попавшего в сочленение. Если попадание было в Шею или Глаза, оно также игнорирует T.b в расчёте поглощения.",
+    "tier": 2,
+    "requirement": "Weapon Training (Needler)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Следопыт",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "hiN0P0DXg5cSBvUx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!hiN0P0DXg5cSBvUx"
+}

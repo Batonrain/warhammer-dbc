@@ -1,0 +1,23 @@
+{
+  "name": "Арлекины",
+  "type": "Item",
+  "sorting": "m",
+  "_id": "9qsnQoC1Vxe0uKtS",
+  "description": "",
+  "folder": null,
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!9qsnQoC1Vxe0uKtS"
+}

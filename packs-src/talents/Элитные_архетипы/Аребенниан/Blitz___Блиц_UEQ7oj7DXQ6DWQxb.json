@@ -1,0 +1,48 @@
+{
+  "name": "Blitz / Блиц",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "XjMVe2nCTJe3QiRv",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж может объявить Блиц раз в бой в начале любого раунда: совершает ещё два броска инициативы и добавляет в порядок раунда свои дополнительные два хода (порядок определяется новым броском инициативы). Слишком активное применение блица может разочаровать Цегораха в своём актёре — он может вмешаться в план Цегораха и отправить персонажа на суицидальную миссию без шанса на выживание. Взяв все таланты, Солитер открывает Путь Возвышения в Роль Рхана Дандре: Маска Слаанеш.",
+    "tier": 3,
+    "requirement": "Все прошлые таланты Элитного Архетипа",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Аребенниан (Солитер)",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "UEQ7oj7DXQ6DWQxb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!UEQ7oj7DXQ6DWQxb"
+}

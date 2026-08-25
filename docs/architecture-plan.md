@@ -1027,6 +1027,16 @@ Foundry увидит пустые компендиумы. Это записан�
 читается пикером Черт (`_openItemPicker` показывает требование и подсвечивает
 невыполненное), поэтому переехало в схему, а не пропало.
 
+**Хвост, закрытый 24.08.2026:** оставшийся в `template.json` перечень типов
+(`Actor.types`/`Item.types`) переехал в `system.json` → `documentTypes` — так,
+как рекомендует статья Foundry про System Data Models. `template.json` удалён
+физически, из релизного архива (`.github/workflows/release.yml`) тоже. Четыре
+теста, читавшие список типов из файла напрямую (`test/data/lang.test.mjs`,
+`item-schemas.test.mjs`, `actor-schemas.test.mjs`,
+`test/tools/elite-archetypes-pack.test.mjs`) и один мёртвый фолбэк
+(`armor-bonus-key.test.mjs`) переключены на `system.json`. `npm test` — 2964
+теста зелёных.
+
 Миграция нашлась там же, где и требовал план, — на настоящих данных. Одиночный
 бонус к Бонусу характеристики лежит двумя полями (`effects.charBonusStat` +
 `effects.charBonusValue`), а поздние Черты пишут тот же бонус списком

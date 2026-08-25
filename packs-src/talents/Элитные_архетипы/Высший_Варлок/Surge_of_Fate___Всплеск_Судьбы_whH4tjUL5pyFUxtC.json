@@ -1,0 +1,48 @@
+{
+  "name": "Surge of Fate / Всплеск Судьбы",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "ttqxLwqFCoWfX2In",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Если психосиловое оружие полностью заполнено психосилами, требующими бPR 4 и выше, персонаж может их моментально выпустить, спровоцировав на себе Варп-феномен с бонусом +10, взамен получив Очко Судьбы или лишив любого врага в радиусе видимости одного Очка Судьбы/Бесчестия. На одного и того же противника нельзя использовать этот приём в течение 30 секунд (5 Ходов).",
+    "tier": 2,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Высший Варлок",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "whH4tjUL5pyFUxtC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!whH4tjUL5pyFUxtC"
+}

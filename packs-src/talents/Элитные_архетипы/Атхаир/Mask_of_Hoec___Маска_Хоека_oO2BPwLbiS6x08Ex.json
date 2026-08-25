@@ -1,0 +1,48 @@
+{
+  "name": "Mask of Hoec / Маска Хоека",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "cnirdSTMnpBj2xjj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "При активации получает постоянную способность психосилы Webway Dance и может манифестировать психосилу Сумрачные Пути через энергии паутины, считая свой PR за W.b, но поддерживать её может только за Полное действие. Персонаж не любит находиться в материальном мире и стремится перемещаться только в паутине. Это Талант-Маска: применяется через создание и активацию Саэдата по правилам таланта Great Actor, эффекты снимаются в конце боя. Каждый взятый доп. Талант этого Архетипа повышает цену прочих Талантов Архетипа на 250 xp (кроме To Fan The Flames).",
+    "tier": 3,
+    "requirement": "Нет",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Атхаир (Мастер Труппы)",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "oO2BPwLbiS6x08Ex",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!oO2BPwLbiS6x08Ex"
+}

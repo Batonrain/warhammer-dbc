@@ -1,0 +1,48 @@
+{
+  "name": "Transience / Быстротечность",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "CFDdwRpqR0FW20hm",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает крафт особенной иглы, считающейся боеприпасом (R4) со свойством Toxic (3). Попав этой иглой в существо, персонаж может уменьшить число кубиков урона (от свойства Eldar Accurate), увеличив Toxic на +1 за каждый пожертвованный кубик. Отравление от этой иглы длится лишь 2 Раунда; попадание в Шею или Глаз добавляет к Toxic ½ T.b цели.",
+    "tier": 3,
+    "requirement": "Weapon Training (Needler)",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Следопыт",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "r5Rclp9o5kRWNSng",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!r5Rclp9o5kRWNSng"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "The Horn of Hunting / Рог Охоты",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "LxuLQVd7e1MeL0Mc",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает Size (1), Nimble (20) и увеличивает рейтинги Unnatural BS, WS от элитного архетипа до 4. Теряет бонусы от носимой брони, если та не Best.Q, но взамен его T.b удваивается в расчёте поглощения. Получает артефакт Рог Дикой Охоты — за 2 ОД начинает Дикую Охоту, лишаясь лимита на число атак и получая трейт Fear (3); за убийство существа во время Дикой Охоты получает 1 Реакцию (не восстанавливается, сгорает в конце битвы). Эффект кончается при гибели персонажа, конце боя или гибели самой достойной жертвы.",
+    "tier": 3,
+    "requirement": "Найти Целые Глаза Курноуса",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Охотник Курноуса",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "1Q7MgKwuztlQAWIq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!1Q7MgKwuztlQAWIq"
+}

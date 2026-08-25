@@ -36,7 +36,33 @@
       <div class="helmet-hint">Многие боевые братья снимают шлем, когда нет прямой угрозы: это стоит защиты головы и авточувств, но подкупает врагов и соратников.</div> {{/if}}
     </div> </div> {{/if}}
     {{!-- ДВИЖЕНИЕ --}}
-    <div class="stat-panel"> <div class="panel-title">ДВИЖЕНИЕ</div> <div class="panel-body movement-body"> <div class="movement-row"> <label>Полушаг</label> <span class="movement-val">{{system.movement.halfMove}}</span> </div> <div class="movement-row"> <label>Шаг</label> <span class="movement-val">{{system.movement.move}}</span> </div> <div class="movement-row"> <label>Натиск</label> <span class="movement-val">{{system.movement.charge}}</span> </div> <div class="movement-row"> <label>Бег</label> <span class="movement-val">{{system.movement.run}}</span> </div> </div> <div class="panel-title" style="margin-top:4px;">ПРОЧЕЕ</div> <div class="panel-body movement-body"> <div class="movement-row initiative-row"> <label title="1d10 + Ag.Бонус + модификатор">Инициатива</label> <div class="initiative-controls"> <span class="movement-val initiative-base" title="Ag.Бонус (авторасчёт)">{{system.initiative}}</span> <span class="initiative-sep">+</span> <input type="number" class="initiative-mod-input" name="system.initiativeMod" value="{{system.initiativeMod}}" min="-99" max="99" title="Доп. модификатор к инициативе" placeholder="0"/> <button type="button" class="initiative-roll-btn" data-action="initiativeRoll" title="Бросок Инициативы в трекер (1d10 + Ag.Бонус + модификатор)">🎲</button> </div> </div> <div class="movement-row"> <label>Размер{{#if system.sizeMod}} <span class="size-trait-badge" title="Вклад Черт">(+{{system.sizeMod}} от Черт)</span>{{/if}}</label> <input type="number" name="system.size" value="{{system.size}}" min="-4" max="6" title="База. Итоговый размер с Чертами: {{system.sizeTotal}}"/> {{#if system.sizeMod}}
+    <div class="stat-panel"> <div class="panel-title">ДВИЖЕНИЕ</div> <div class="panel-body movement-body"> <div class="movement-row"> <label>Полушаг</label> <span class="movement-val">{{system.movement.halfMove}}</span> </div> <div class="movement-row"> <label>Шаг</label> <span class="movement-val">{{system.movement.move}}</span> </div> <div class="movement-row"> <label>Натиск</label> <span class="movement-val">{{system.movement.charge}}</span> </div> <div class="movement-row"> <label>Бег</label> <span class="movement-val">{{system.movement.run}}</span> </div> </div>
+      {{!-- Кнопки боевых типов движения (стр. 32) и отдельных механик
+            (стр. 29-30) — module/combat/movement-actions.mjs, тот же
+            обработчик, что у Token HUD-кнопки «Движение». --}}
+      <div class="panel-body movement-actions-body">
+        <div class="movement-actions-row">
+          <button type="button" class="wh-move-btn" data-move-action="halfmove" title="Полудействие (1 ОД). Перемещение до SPD×1.">Полудвижение</button>
+          <button type="button" class="wh-move-btn" data-move-action="fullmove" title="Полное действие (2 ОД). Перемещение до SPD×2.">Полное движение</button>
+          <button type="button" class="wh-move-btn" data-move-action="charge" title="Выбирает Базу «Натиск» — рукопашный приём +20, 2 ОД спишутся на броске атаки.">Натиск</button>
+          <button type="button" class="wh-move-btn" data-move-action="run" title="Полное действие (2 ОД). До начала следующего Хода: нельзя Реакции, Стрельба по персонажу −20, Рукопашная +20.">Бег</button>
+        </div>
+        <div class="movement-actions-row">
+          <button type="button" class="wh-move-btn" data-move-action="climb" title="Карабканье (стр. 29): Athletics/Acrobatics.">Карабканье</button>
+          <button type="button" class="wh-move-btn" data-move-action="jump" title="Прыжок (стр. 29-30): Acrobatics.">Прыжок</button>
+          <button type="button" class="wh-move-btn" data-move-action="swim" title="Плавание (стр. 30): Athletics.">Плавание</button>
+          <button type="button" class="wh-move-btn" data-move-action="fall" title="Падение и Группирование (стр. 30).">Падение</button>
+          {{#if movementCanFly}}
+          <button type="button" class="wh-move-btn" data-move-action="fly" title="Высота полёта и потеря управления (стр. 30).">Полёт</button>
+          {{/if}}
+        </div>
+        <div class="movement-actions-row">
+          <button type="button" class="wh-move-btn" data-move-action="march-accelerated" title="Ускоренный марш (стр. 29): ×2 SPD, тест T.">Ускор. марш</button>
+          <button type="button" class="wh-move-btn" data-move-action="march-run" title="Бег вне боя (стр. 29): ×3 SPD, тест T каждый час.">Бег (марш)</button>
+          <button type="button" class="wh-move-btn" data-move-action="march-forced" title="Форсированный марш (стр. 29): после 8ч, Усталость восстанавливается вдвое медленнее.">Форс. марш</button>
+        </div>
+      </div>
+      <div class="panel-title" style="margin-top:4px;">ПРОЧЕЕ</div> <div class="panel-body movement-body"> <div class="movement-row initiative-row"> <label title="1d10 + Ag.Бонус + модификатор">Инициатива</label> <div class="initiative-controls"> <span class="movement-val initiative-base" title="Ag.Бонус (авторасчёт)">{{system.initiative}}</span> <span class="initiative-sep">+</span> <input type="number" class="initiative-mod-input" name="system.initiativeMod" value="{{system.initiativeMod}}" min="-99" max="99" title="Доп. модификатор к инициативе" placeholder="0"/> <button type="button" class="initiative-roll-btn" data-action="initiativeRoll" title="Бросок Инициативы в трекер (1d10 + Ag.Бонус + модификатор)">🎲</button> </div> </div> <div class="movement-row"> <label>Размер{{#if system.sizeMod}} <span class="size-trait-badge" title="Вклад Черт">(+{{system.sizeMod}} от Черт)</span>{{/if}}</label> <input type="number" name="system.size" value="{{system.size}}" min="-4" max="6" title="База. Итоговый размер с Чертами: {{system.sizeTotal}}"/> {{#if system.sizeMod}}
           <span class="size-total-value" title="Итоговый Размер (база + Черты)">= {{system.sizeTotal}}</span> {{/if}}
         </div> </div> </div>{{!-- /движение --}}
 

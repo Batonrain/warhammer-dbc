@@ -1,0 +1,48 @@
+{
+  "name": "Exarch of the Shining Spears / Экзарх Сияющих Копий",
+  "type": "talent",
+  "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+  "folder": "908Vd6zlCzHDktpV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "benefit": "Персонаж получает бонус +10 на тесты атаки при помощи Копий. За каждый размер противника больше 0 персонаж получает бонус +5 к Dmg.",
+    "tier": 3,
+    "requirement": "Мастер/Заблудившийся на Пути Сияющих Копий",
+    "aptitudes": [],
+    "aptSource": "",
+    "aspirations": [],
+    "god": "Неделимый",
+    "specialization": "Элитный архетип: Экзарх Аспекта",
+    "cost": 0,
+    "purchased": false,
+    "granted": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "initMod": 0,
+      "fearRating": 0,
+      "speedMod": 0
+    },
+    "bookSource": "Книга Аэльдари: Ответвления"
+  },
+  "_id": "oIJ1jkj823ZlnmaU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!oIJ1jkj823ZlnmaU"
+}
