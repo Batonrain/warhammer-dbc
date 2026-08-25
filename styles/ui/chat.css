@@ -640,6 +640,14 @@
 .wh-roll-result .roll-defense-btns button:hover,
 .wh-roll-result .wh-apply-dmg-btn:hover { background: #14512f; border-color: #4dffa6; }
 
+/* Разовый Шаблон зоны поражения (Взрывное/Распыление) — во всю ширину, отдельно от кнопок попаданий */
+.wh-roll-result .wh-place-template-btn {
+  display: block; width: 100%; margin: 0 0 6px 0; padding: 4px 10px;
+  background: #3a1e0e; color: #ffdcb0; border: 1px solid #c07a2f;
+  border-radius: 3px; cursor: pointer; font-size: 0.9em;
+}
+.wh-roll-result .wh-place-template-btn:hover { background: #52290f; border-color: #ffb35e; }
+
 /* ── Варп: Феномен / Прорыв / Шок — яркие алерт-карточки ── */
 .wh-roll-result .psy-phenomenon {
   background: rgba(176,108,217,0.15) !important; border-left: 3px solid #b06cd9 !important;

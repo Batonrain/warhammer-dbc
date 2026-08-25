@@ -271,7 +271,9 @@ globalThis.CONST = {
     BEHAVIOR_VIEWED: "behaviorViewed", BEHAVIOR_UNVIEWED: "behaviorUnviewed",
     REGION_BOUNDARY: "regionBoundary", TOKEN_MOVE_IN: "tokenMoveIn",
     TOKEN_MOVE_OUT: "tokenMoveOut", TOKEN_ANIMATE_IN: "tokenAnimateIn",
-    TOKEN_ANIMATE_OUT: "tokenAnimateOut"
+    TOKEN_ANIMATE_OUT: "tokenAnimateOut", TOKEN_ENTER: "tokenEnter",
+    TOKEN_EXIT: "tokenExit", TOKEN_TURN_START: "tokenTurnStart",
+    TOKEN_TURN_END: "tokenTurnEnd"
   }
 };
 
@@ -440,6 +442,14 @@ export function sheetOf(cls, { items = [], ...system } = {}) {
   const sheet = Object.create(cls.prototype);
   const list  = [...items];
   list.get = id => list.find(i => i.id === id) ?? null;
+  // Флаги актора — plain-объект по scope, ключ читается/пишется как путь через
+  // точку, как и в настоящем getFlag/setFlag/unsetFlag (Банк Расширенного
+  // теста хранится там: flags.warhammer-dbc.extendedTests.<ключ>).
+  const flagStore = {};
+  const flagPath = (scope, key) => {
+    const bag = flagStore[scope] ?? {};
+    return { parts: String(key).split("."), bag };
+  };
   Object.defineProperty(sheet, "actor", {
     // `update` — заглушка: диалог атаки сбрасывает им прицеливание, а тест
     // проверяет порог броска, а не запись в актора. Выданные предметы, наоборот,
@@ -447,6 +457,25 @@ export function sheetOf(cls, { items = [], ...system } = {}) {
     value: {
       id: "actor-stub", name: "Подставной", system, items: list,
       update: async () => {},
+      getFlag: (scope, key) => {
+        const { parts, bag } = flagPath(scope, key);
+        return parts.reduce((o, k) => o?.[k], bag);
+      },
+      setFlag: async (scope, key, value) => {
+        flagStore[scope] ??= {};
+        const parts = String(key).split(".");
+        let node = flagStore[scope];
+        for (const k of parts.slice(0, -1)) node = (node[k] ??= {});
+        node[parts.at(-1)] = value;
+      },
+      unsetFlag: async (scope, key) => {
+        const bag = flagStore[scope];
+        if (!bag) return;
+        const parts = String(key).split(".");
+        let node = bag;
+        for (const k of parts.slice(0, -1)) node = node?.[k];
+        if (node) delete node[parts.at(-1)];
+      },
       createEmbeddedDocuments: async (type, docs) => {
         captured.created.push(...docs);
         // Выданный предмет умеет и обновляться: бросок субмутации пишет

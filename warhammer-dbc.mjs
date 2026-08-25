@@ -64,6 +64,7 @@ import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
+import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
 import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
@@ -195,6 +196,12 @@ Hooks.once("init", () => {
   CONFIG.RegionBehavior.dataModels[DIFFICULT_TERRAIN_TYPE] = DifficultTerrainBehaviorType;
   CONFIG.RegionBehavior.typeLabels[DIFFICULT_TERRAIN_TYPE] = "Трудный ландшафт";
   CONFIG.RegionBehavior.typeIcons[DIFFICULT_TERRAIN_TYPE]  = "fa-solid fa-person-hiking";
+
+  // Зона «Остаётся» (свойство Linger) — программно создаётся при атаке,
+  // не рисуется ГМом вручную (module/regions/linger-zone.mjs).
+  CONFIG.RegionBehavior.dataModels[LINGER_ZONE_TYPE] = LingerZoneBehaviorType;
+  CONFIG.RegionBehavior.typeLabels[LINGER_ZONE_TYPE] = "Остаётся (Linger)";
+  CONFIG.RegionBehavior.typeIcons[LINGER_ZONE_TYPE]  = "fa-solid fa-cloud";
 
   // ── Регистрация листов (только новый API v13) ─────────────────────────────
 
