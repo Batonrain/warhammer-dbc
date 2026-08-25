@@ -338,10 +338,37 @@ function renderNodeHtml(node, multi) {
  *   count > 1 — массив uuid длиной count (или null);
  *   без pickMode — undefined, обычный просмотр.
  */
+/**
+ * Открытые окна Мастера создания персонажа (id вида "wh-char-wizard-<actorId>",
+ * см. character-wizard.mjs). Через duck typing по id, а не импорт класса —
+ * тот сам тянет mechanics.mjs → compendium-browser.mjs, обратный импорт
+ * замкнул бы цикл.
+ */
+function findRenderedCharacterWizards() {
+  if (!ui?.windows) return [];
+  return Object.values(ui.windows).filter(a =>
+    a?.rendered && typeof a.minimize === "function" && a.options?.id?.startsWith?.("wh-char-wizard-"));
+}
+
 export function openCompendiumBrowser(force = false, pickMode = null) {
   return new Promise(async resolveFn => {
     let resolved = false;
-    const finish = v => { if (!resolved) { resolved = true; resolveFn(v); } };
+    // В режиме pickMode это окно почти всегда открывается ИЗ фонового кода
+    // (Мастер создания — applyArchetype/applyRace, kind:"equipment"
+    // equipMode:"choice") поверх уже открытого окна Мастера. Само по себе
+    // render(true) кладёт диалог выше по z-index, но стоит игроку кликнуть
+    // ЧТО-ТО в самом Мастере (в т.ч. по заблокированной «Далее» — клик всё
+    // равно поднимает окно) — и диалог визуально прячется под ним, выглядит
+    // так, будто Мастер «завис», а выбор снаряжения находится уже после его
+    // закрытия. Сворачиваем Мастера на время выбора и разворачиваем обратно
+    // при любом исходе — единственная точка выхода ниже.
+    const wizardApps = pickMode ? findRenderedCharacterWizards() : [];
+    const finish = v => {
+      if (resolved) return;
+      resolved = true;
+      for (const a of wizardApps) { try { a.maximize(); } catch (e) {} }
+      resolveFn(v);
+    };
 
     const pick = normalizePick(pickMode);
     const allCats = await buildAllTrees(force);
@@ -592,6 +619,7 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
       }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-item-picker-dialog", "cbrowse-dialog"],
          width: 640, height: 740, resizable: true });
+    for (const a of wizardApps) { try { a.minimize(); } catch (e) {} }
     dlg.render(true);
   });
 }
