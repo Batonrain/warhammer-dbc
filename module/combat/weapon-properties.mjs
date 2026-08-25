@@ -38,7 +38,7 @@ export function aggregateAuto(props) {
     razorSharp: false, meltaShort: false, mightySB: false, containedSB: false,
     fellingRating: 0, primitive: false, flexible: false, defensive: false,
     powerField: false, reinforced: false, reliabilityScore: 0, recharge: false,
-    extraHits: null, multiStrikeRating: 0, ammoMult: 1, scatter: false,
+    extraHits: null, multiStrikeRating: 0, stormRating: 0, ammoMult: 1, scatter: false,
     maximal: false, ignoreShield: false, lance: false, taintedCorB: false,
     spray: false, forcePR: false, deflagrate: false, deflagrateRating: 0,
     warpSoak: false, sanctified: false,
@@ -83,6 +83,7 @@ export function aggregateAuto(props) {
     if (au.extraHits) {
       a.extraHits = au.extraHits;
       if (au.extraHits === "multiStrike") a.multiStrikeRating = Math.max(a.multiStrikeRating, r);
+      if (au.extraHits === "storm")       a.stormRating = Math.max(a.stormRating, r);
     }
     if (au.ammoMult === null)            a.ammoMult *= Math.max(1, r || 1);
     else if (typeof au.ammoMult === "number") a.ammoMult *= au.ammoMult;

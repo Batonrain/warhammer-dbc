@@ -15,7 +15,7 @@ import {
 
 /** Свойства оружия по умолчанию — то же, что даёт aggregateAuto на пустом списке. */
 const noProps = {
-  multiStrikeRating: 0, extraHits: null, tearing: false, provenRating: 0,
+  multiStrikeRating: 0, extraHits: null, stormRating: 0, tearing: false, provenRating: 0,
   razorSharp: false, meltaShort: false, mightySB: false, containedSB: false,
   accurate: false, scatter: false
 };
@@ -51,11 +51,19 @@ describe("hitCount", () => {
       .toEqual({ count: 0, label: "Подавление" });
   });
 
-  it("Шторм удваивает попадания, Спаренное добавляет одно", () => {
-    const storm = hitCount({ hit: true, isMelee: false, rofMode: "semi", deg: 3, wp: withProps({ extraHits: "storm" }), sys: ranged });
-    const twin  = hitCount({ hit: true, isMelee: false, rofMode: "semi", deg: 3, wp: withProps({ extraHits: "twinLinked" }), sys: ranged });
-    expect(storm.count).toBe(4);   // 2 × 2
+  it("Шторм (X) умножает попадания на рейтинг, Спаренное добавляет одно", () => {
+    const storm2 = hitCount({ hit: true, isMelee: false, rofMode: "semi", deg: 3, wp: withProps({ extraHits: "storm", stormRating: 2 }), sys: ranged });
+    const storm3 = hitCount({ hit: true, isMelee: false, rofMode: "semi", deg: 3, wp: withProps({ extraHits: "storm", stormRating: 3 }), sys: ranged });
+    const twin   = hitCount({ hit: true, isMelee: false, rofMode: "semi", deg: 3, wp: withProps({ extraHits: "twinLinked" }), sys: ranged });
+    expect(storm2.count).toBe(4);  // 2 × 2
+    expect(storm3.count).toBe(6);  // 2 × 3
     expect(twin.count).toBe(3);    // 2 + 1
+  });
+
+  it("Шторм (X) держит потолок RoF после умножения, а не только сырое число попаданий", () => {
+    // rof_semi=3, deg=9 → сырых попаданий min(ceil(9/2),3)=3, ×3 = 9 (потолок 3×3=9 тоже).
+    const storm = hitCount({ hit: true, isMelee: false, rofMode: "semi", deg: 9, wp: withProps({ extraHits: "storm", stormRating: 3 }), sys: ranged });
+    expect(storm.count).toBe(9);
   });
 
   it("Спаренное на промахе ничего не добавляет", () => {
