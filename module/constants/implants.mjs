@@ -266,7 +266,7 @@ export const CYBERNETICS = [
     "R:2."),
   I("Joint Reconfiguration / Реконфигурация Суставов", "cybernetic",
     "Бионические суставы: +10 A (макс. 1 Раунд перебросов выбраться из Захвата); двигается через узкие проходы. Poor.Q −15 vs −10; Good.Q −5 vs −10; Best.Q без штрафов.",
-    "R:2.", { charBonusStat: "ag", charBonusValue: 10 }),
+    "R:2.", { charValueBonuses: [{ stat: "ag", value: 10 }] }),
   I("Pheromone Generator / Генератор Феромонов", "cybernetic",
     "Выпускает феромоны: +20 на встречные тесты социальных взаимодействий (вентиляция вдвое, обычно −20). Poor.Q −5; Good.Q −15; Best.Q −20.",
     "R:2."),

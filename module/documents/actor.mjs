@@ -858,11 +858,16 @@ export class WarhammerActor extends Actor {
         hasBlackCarapaceBackup = true;
       }
       // Бионические конечности: +2 к эффективному Поглощению этой частью тела.
+      // Сторона не выбрана (флаг снят) — бонус никуда не начислять: раньше
+      // невыбранная сторона молча уходила в "rightArm"/"rightLeg" через
+      // тернарник по умолчанию, и снятие галочки Л/П не убирало бонус.
       if (t === "implant" && item.system.category === "bionic") {
-        const k = classifyImplant(item.name, item.system.installed)?.kind;
+        const k = classifyImplant(item.name, item.system.installed, item.system.category)?.kind;
         const side = item.getFlag("warhammer-dbc", "bodySide");
-        if (k === "arm") traitArmorLoc[side === "left" ? "leftArm" : "rightArm"] += 2;
-        else if (k === "leg") traitArmorLoc[side === "left" ? "leftLeg" : "rightLeg"] += 2;
+        if (side === "left" || side === "right") {
+          if (k === "arm") traitArmorLoc[side === "left" ? "leftArm" : "rightArm"] += 2;
+          else if (k === "leg") traitArmorLoc[side === "left" ? "leftLeg" : "rightLeg"] += 2;
+        }
       }
       // Роспись механик Техночудес. Числовое (un/val/ap) отсюда ушло: его
       // складывали по ИМЕНИ предмета, мимо эффектов и Конструктора, так что на
@@ -1190,7 +1195,10 @@ export class WarhammerActor extends Actor {
       };
       // Свойства этого предмета брони (Conductive/Flak/Soft/Rods/Open/Primitive)
       // — распространяются на все локации, куда он реально даёт AP (ap[k] > 0).
+      // isPowerArmor — не свойство из properties[], а сам armorType предмета:
+      // силовой шлем даёт 4 AP на глаза даже при Избирательном в Глаз (стр. 34).
       const propAuto = aggregateArmorAuto(resolveArmorProps(item));
+      propAuto.isPowerArmor = s.armorType === "power";
       for (const k of Object.keys(ap)) {
         if (ap[k] > 0) propFlagsByLoc[k] = mergeArmorLocFlags(propFlagsByLoc[k], propAuto);
       }

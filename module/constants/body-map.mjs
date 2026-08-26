@@ -38,8 +38,16 @@ const IMPLANT_KINDS = [
     re: /carapace|панцирь|war plate|латы|mantle|мантия|rib|рёбр|ребр|torso|тулов|\bbody\b|тело|internal|внутрен|bio-monitor|биомонитор|gastral|гастрал|sucroregul|сахарорег|waste proc|обработк\w* отход|бископе|biscopea|преомнор|preomnor|омофаге|omophage|оолитическ|oolitic|прогеноид|progenoid/i },
 ];
 
-/** Возвращает {kind} для импланта или null, если не удалось локализовать. */
-export function classifyImplant(name = "", installed = "") {
+/**
+ * Возвращает {kind} для импланта или null, если не удалось локализовать.
+ * category — system.category импланта: у Механодендритов он уже своё
+ * "mechadendrite" (packs-src/implants/Адептус_Механикус/Мехадендриты) —
+ * надёжнее regex по названию, которое ловит не все варианты (Мехатендрил/
+ * Фуцелиновый Факел/Плазменный Резак вообще не содержат "мехадендрит", а
+ * Серво-Коготь по слову "коготь" ложно уезжал в kind:"leg").
+ */
+export function classifyImplant(name = "", installed = "", category = "") {
+  if (category === "mechadendrite") return { kind: "mechadendrite" };
   const hay = `${name} ${installed}`.toLowerCase();
   if (/всё тело|все тело|полностью|whole body|full body|all body/i.test(hay))
     return { kind: "fullbody" };
@@ -90,16 +98,21 @@ export function buildBodyState(implants = []) {
   };
 
   for (const imp of implants) {
-    const c = classifyImplant(imp.name, imp.installed) || { kind: "other" };
+    const c = classifyImplant(imp.name, imp.installed, imp.category) || { kind: "other" };
     const cat = imp.category || "cybernetic";
     let locus = "", side = null;
     switch (c.kind) {
       case "fullbody":
         for (const r of Object.keys(regions)) if (regions[r] === "flesh") regions[r] = cat;
         overlays.armored = true; locus = "всё тело"; break;
-      case "arm": { side = pick(imp, "arm"); const reg = side === "right" ? "armR" : "armL"; regions[reg] = cat; locus = side === "right" ? "прав. рука" : "лев. рука"; break; }
-      case "leg": { side = pick(imp, "leg"); const reg = side === "right" ? "legR" : "legL"; regions[reg] = cat; locus = side === "right" ? "прав. нога" : "лев. нога"; break; }
-      case "eye": { side = pick(imp, "eye"); if (side === "right") overlays.eyeR = cat; else overlays.eyeL = cat; locus = side === "right" ? "прав. глаз" : "лев. глаз"; break; }
+      // Фигура нарисована анфас (лицом к зрителю, см. respiratorGlyph — маска
+      // ложится на видимое лицо) — анатомическая сторона персонажа зеркальна
+      // экранной: его правая рука приходится на ЛЕВУЮ половину полотна.
+      // `anat` — для текста подсказки (говорит правду про персонажа), `side` —
+      // экранный регион/ключ рендера (armL/armR и т.д.), зеркальный к `anat`.
+      case "arm": { const anat = pick(imp, "arm"); side = anat === "right" ? "left" : "right"; const reg = side === "right" ? "armR" : "armL"; regions[reg] = cat; locus = anat === "right" ? "прав. рука" : "лев. рука"; break; }
+      case "leg": { const anat = pick(imp, "leg"); side = anat === "right" ? "left" : "right"; const reg = side === "right" ? "legR" : "legL"; regions[reg] = cat; locus = anat === "right" ? "прав. нога" : "лев. нога"; break; }
+      case "eye": { const anat = pick(imp, "eye"); side = anat === "right" ? "left" : "right"; if (side === "right") overlays.eyeR = cat; else overlays.eyeL = cat; locus = anat === "right" ? "прав. глаз" : "лев. глаз"; break; }
       case "cranial": overlays.cranial = cat; locus = "череп"; break;
       case "heart":   overlays.heart = cat;   locus = "сердце"; break;
       case "lung":       overlays.lungs = cat;      locus = "лёгкие"; break;

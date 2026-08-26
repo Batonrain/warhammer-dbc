@@ -109,6 +109,7 @@ function readAttackForm(form, ammoConds) {
     autoSuccess: all(".atk-mod-cb[data-autosuccess]:checked").length > 0,
     char:       el("#atk-char")?.value,
     modifier:   parseInt(el("#atk-modifier")?.value) || 0,
+    dmgBonus:   parseInt(el("#atk-dmg-bonus")?.value) || 0,
     coverMod:   parseInt(el("#atk-cover")?.value) || 0,
     rofMode:    el(ROF)?.value,
     rofBonus:   attr(ROF, "bonus"),
@@ -147,10 +148,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Counter Attack): «−10» уже вписаны, когда открывается окно, а не молча
   // сидят в пороге — игрок видит и волен поправить/убрать.
   const presetModifier = Number(techniqueOpts.modifier) || 0;
-  // forceMelee: стрелковое оружие используется как рукопашное (приклад/в упор,
-  // стр. 40) — тест по WS, рукопашные режимы/модификаторы.
+  // forceMelee: стрелковое/метательное оружие используется как рукопашное
+  // (приклад/в упор либо метательное — как рукопашное, стр. 40) — тест по WS,
+  // рукопашные режимы/модификаторы. Метательное (Гранаты и т.п.) по умолчанию
+  // бросается по BS — стр. 40: «В рукопашной оно МОЖЕТ использоваться как
+  // рукопашное», это не значение по умолчанию.
   const forceMelee = !!techniqueOpts.forceMelee;
-  const isMelee = sys.weaponClass === "melee" || sys.weaponClass === "thrown" || forceMelee;
+  const isMelee = sys.weaponClass === "melee" || forceMelee;
   const charKey = isMelee ? "ws" : "bs";
 
   // ── Хват и профиль: значения по умолчанию (из HUD-флагов оружия или opts) ──
@@ -988,6 +992,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <input id="atk-modifier" class="av-input av-num" type="number" value="${presetModifier}"/>
       </div>
       <div class="av-row">
+        <label>Бонус урона</label>
+        <input id="atk-dmg-bonus" class="av-input av-num" type="number" value="0"
+               title="Ручной бонус к урону этой атаки — прибавляется к итоговому урону после броска, отдельно от порога теста"/>
+      </div>
+      <div class="av-row">
         <label>Укрытие</label>
         <input id="atk-cover" class="av-input av-num" type="number" value="${autoCoverMod}"
                title="Авто по зоне Укрытия на линии огня (regions/cover.mjs) — всегда можно поправить руками"/>
@@ -1162,6 +1171,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               crit: resolveTest({ actor, ...attackCtx }).crit,
               forcedDefenceReroll,
               techniqueOpts: finalTechniqueOpts,
+              dmgBonus: f.dmgBonus,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
               profile: sel.prof, attackNote: sel.note,
               weaponOff: f.weaponOff, gripKey: sel.gKey,

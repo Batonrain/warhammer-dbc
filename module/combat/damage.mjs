@@ -244,6 +244,10 @@ export async function applyDamageToActor(actor, damageData) {
     if (pfNote.noRanged && !melee)                    propNotes.push("Стержни: без AP от стрелковой атаки");
     if (pfNote.noJointCalled && hitLocation === "Сочленение / Шея") propNotes.push("Стержни: без AP в Сочленение");
     if (pfNote.noEyeCalled  && hitLocation === "Глаз (Голова)")     propNotes.push("Открытый шлем: без AP в Глаз");
+    if (!pfNote.noJointCalled && hitLocation === "Сочленение / Шея")
+      propNotes.push(pfNote.noJointReduction ? "Мягкая: без сочленений, полный AP" : "Сочленение: AP÷3");
+    if (!pfNote.noEyeCalled && hitLocation === "Глаз (Голова)")
+      propNotes.push(pfNote.isPowerArmor ? "Силовой шлем: 4 AP на глаза" : "Глаз: AP шлема проигнорирован");
     if (primitive && pfNote.blocksPrimitiveDouble)    propNotes.push("Примитивная броня: без бонуса AP примитивного оружия");
   }
 

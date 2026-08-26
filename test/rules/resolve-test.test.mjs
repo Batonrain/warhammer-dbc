@@ -227,9 +227,10 @@ describe("область атаки", () => {
     expect(rollModsFromRules([rule("weapon:ranged")], melee)).toHaveLength(0);
   });
 
-  it("метательное считается рукопашным — как и в самой атаке", () => {
-    const thrown = buildTestContext({ kind: "attack", weaponClass: "thrown", isMelee: true, char: "ws" });
-    expect(rollModsFromRules([rule("weapon:melee")], thrown)).toHaveLength(1);
+  it("метательное по умолчанию бросается по BS — как и в самой атаке (стр. 40)", () => {
+    const thrown = buildTestContext({ kind: "attack", weaponClass: "thrown", isMelee: false, char: "bs" });
+    expect(rollModsFromRules([rule("weapon:ranged")], thrown)).toHaveLength(1);
+    expect(rollModsFromRules([rule("weapon:melee")],  thrown)).toHaveLength(0);
   });
 
   it("«weapon:<класс>» попадает только в свой класс оружия", () => {
