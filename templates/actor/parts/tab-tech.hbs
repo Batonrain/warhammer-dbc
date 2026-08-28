@@ -17,7 +17,11 @@
       {{!-- две консоли: Когниция (данные) и Энергия (Катушка Потенции) --}}
       <div class="tech-gauges">
         <div class="tech-gauge tech-gauge-cog">
-          <div class="tg-head">{{{techIcon "cognition"}}} <span class="tg-lbl">КОГНИЦИЯ</span> <button type="button" class="cognition-rest-btn" title="Начало Хода: +½ Int.b Когниции">↻ +{{system.cognition.regen}}</button></div>
+          <div class="tg-head">{{{techIcon "cognition"}}} <span class="tg-lbl">КОГНИЦИЯ</span>
+            <label class="tg-noosphere" title="Читают Таланты вида «Виртуальная Память» — некоторые дают бонус к максимуму Когниции, только пока подключён.">
+              <input type="checkbox" name="system.noosphereConnected" {{#if system.noosphereConnected}}checked{{/if}}/> Ноосфера
+            </label>
+            <button type="button" class="cognition-rest-btn" title="Начало Хода: +½ Int.b Когниции">↻ +{{system.cognition.regen}}</button></div>
           <div class="tg-body">
             <div class="tg-readout"><input type="number" class="cognition-input" value="{{system.cognition.value}}" min="0"/><span class="tg-slash">/</span><span class="tg-max" title="Пул = Int.b">{{system.cognition.max}}</span></div>
             <div class="tg-pips">{{#each cognition.pips as |p|}}<i class="tg-pip cog {{#if p.on}}on{{/if}}"></i>{{/each}}{{#unless cognition.pips.length}}<span class="tg-empty">— пул 0 —</span>{{/unless}}</div>
