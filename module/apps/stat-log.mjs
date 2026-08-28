@@ -32,13 +32,23 @@ function parseDelta(raw, allowDice) {
  * @param {number} [opts.bonusPercent=0] — надбавка сверху на положительное значение
  *   (Ловит на Лету / Fast Learner (X): +X% к опыту, ГМ округляет вверх — на
  *   отрицательные и нулевые правки не действует, книга говорит только про «получает»)
+ * @param {string} [opts.bonusLabel] — подпись источника модификатора (для окна и чата);
+ *   умолчание — единственный источник, который сейчас передаёт bonusPercent.
  */
-export async function promptStatAdd(actor, { label, path, allowDice = false, clampMin = 0, clampMax = null, bonusPercent = 0 } = {}) {
+export async function promptStatAdd(actor, { label, path, allowDice = false, clampMin = 0, clampMax = null,
+    bonusPercent = 0, bonusLabel = "Ловит на Лету / Fast Learner" } = {}) {
   const hint = allowDice ? "целое число, либо XdY+Z, напр. 2d10+3" : "целое число";
+  // Видно ДО ввода, не только в чате постфактум — иначе игрок вводит число
+  // вслепую, не зная, что оно вырастет.
+  const bonusHint = bonusPercent > 0
+    ? `<div class="wh-statlog-bonus" title="Действует только на положительные значения — книга говорит про «получает», не про правки задним числом.">
+         ⚡ Активен модификатор: <b>${esc(bonusLabel)} +${bonusPercent}%</b></div>`
+    : "";
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: `${label} — добавить` },
     content: `
       <div class="wh-statlog-form">
+        ${bonusHint}
         <label>Значение <small>(${hint})</small>
           <input type="text" name="delta" autofocus required/>
         </label>
@@ -72,7 +82,7 @@ export async function promptStatAdd(actor, { label, path, allowDice = false, cla
   if (bonusPercent > 0 && amount > 0) {
     const base = amount;
     amount = Math.ceil(amount * (1 + bonusPercent / 100));
-    formulaText += ` → Ловит на Лету +${bonusPercent}%: ${base} → ${amount}`;
+    formulaText += ` → ${bonusLabel} +${bonusPercent}%: ${base} → ${amount}`;
   }
 
   const cur = Number(foundry.utils.getProperty(actor, path)) || 0;
