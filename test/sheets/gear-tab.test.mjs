@@ -5,6 +5,7 @@ import {
   equipItem,
   installGearMod,
   setShieldHand,
+  setWeaponHand,
   setWeaponLoadedAmmo,
   toggleGearModActive,
   toggleShieldRaised,
@@ -112,6 +113,19 @@ describe("gear tab helpers", () => {
     expect(shield.flags.shieldHand).toBe("right");
   });
 
+  it("setWeaponHand записывает руку оружия, повторный клик той же рукой снимает", async () => {
+    const weapon = item();
+
+    await setWeaponHand(weapon, "right");
+    expect(weapon.flags.weaponHand).toBe("right");
+
+    await setWeaponHand(weapon, "right");
+    expect(weapon.flags.weaponHand).toBe("");
+
+    await setWeaponHand(weapon, "left");
+    expect(weapon.flags.weaponHand).toBe("left");
+  });
+
   it("toggleShieldRaised переключает поднятый щит", async () => {
     const shield = item({ name: "Ростовой щит", raised: false });
 
@@ -184,6 +198,7 @@ describe("gear tab listeners", () => {
     await handlers[".weapon-equip-cb:change"](event({ itemId: "weapon-1", checked: true }));
     await handlers[".armor-equip-cb:change"](event({ itemId: "armor-1", checked: true }));
     await handlers[".shield-hand-btn:click"](event({ itemId: "shield-1", hand: "right" }));
+    await handlers[".weapon-hand-btn:click"](event({ itemId: "weapon-1", hand: "right" }));
     await handlers[".shield-raise-btn:click"](event({ itemId: "shield-1" }));
     await handlers[".weapon-ammo-select:change"](event({ itemId: "weapon-1", value: "ammo-2" }));
     await handlers[".weapon-reload-btn:click"](event({ itemId: "weapon-1" }));
@@ -205,6 +220,7 @@ describe("gear tab listeners", () => {
     ]);
     expect(shield.flags.shieldHand).toBe("right");
     expect(shield.flags.shieldRaised).toBe(true);
+    expect(weapon.flags.weaponHand).toBe("right");
     expect(shield.sheet.rendered).toBe(1);
     expect(calls.map(c => c[0])).toEqual(["reload", "toggle", "roll", "repair"]);
     expect(calls.every(c => c[1] === a)).toBe(true);

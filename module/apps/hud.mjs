@@ -83,16 +83,15 @@ const HUD_TYPES = ["character", "ship"];
 export function hudActor() {
   if (!game.user) return null;
   const mine = game.user.character;
-  if (game.user.isGM) {
-    const t = canvas?.tokens?.controlled?.[0]?.actor;
-    if (HUD_TYPES.includes(t?.type)) return t;
-    return HUD_TYPES.includes(mine?.type) ? mine : null;
-  }
-  // Выбранный игроком токен корабля важнее назначенного персонажа: капитан
-  // управляет судном, оставаясь тем же персонажем.
   const t = canvas?.tokens?.controlled?.[0]?.actor;
-  if (t?.type === "ship" && t.isOwner) return t;
-  if (mine?.type === "character") return mine;
+  // Выбранный на сцене токен важнее назначенного персонажа — так HUD следует
+  // за тем, кого выделили (ГМ ведёт бой по чужим токенам; игрок переключается
+  // между своими персонажем/кораблём/миньоном). Игроку токен должен
+  // принадлежать (isOwner) — иначе с выделением чужого юнита на сцене HUD
+  // молча показал бы его лист.
+  if (HUD_TYPES.includes(t?.type) && (game.user.isGM || t.isOwner)) return t;
+  if (HUD_TYPES.includes(mine?.type)) return mine;
+  if (game.user.isGM) return null;
   const own = game.actors?.filter(a => HUD_TYPES.includes(a.type) && a.isOwner) ?? [];
   return own.length === 1 ? own[0] : null;
 }
@@ -103,27 +102,31 @@ function equippedWeapons(actor) {
   return actor.items.filter(i => i.type === "weapon" && i.system.equipped);
 }
 
-// Две руки: правая (основная) и левая (вторая). Хранятся во флагах hudMainHand /
-// hudOffHand как id надетого оружия. Не заданы — правая берёт первое надетое,
-// левая — следующее (чтобы связка «пистолет + меч» показывалась сразу).
+// Две руки: правая (основная) и левая (вторая). Источник истины — предметный
+// флаг weaponHand ("right"/"left", module/sheets/tabs/gear.mjs setWeaponHand),
+// назначаемый кнопками Л/П прямо на вкладке БОЙ листа — HUD руку больше не
+// назначает сам (было: акторные флаги hudMainHand/hudOffHand + клик по слоту
+// в HUD). Рука ещё не назначена ни разу — прежний фолбэк (первое/второе
+// надетое), чтобы у нового персонажа HUD не пустовал.
 function handWeaponIds(actor) {
   const eq = equippedWeapons(actor);
-  // Интегральные атаки (кулак/пинок/головой) надеты всегда — по умолчанию в
-  // руки не назначаются, иначе они занимали бы слоты раньше настоящего оружия.
-  // Фолбэк: другого надетого нет — в руки идут они. Явно назначенные игроком
-  // (savedMain/savedOff) — остаются в любом случае.
+  // Интегральные атаки (кулак/пинок/головой) надеты всегда — в руки не
+  // назначаются, иначе они занимали бы слоты раньше настоящего оружия.
   const real = eq.filter(w => !isIntegralAttack(w));
-  const def  = real.length ? real : eq;
-  const has = id => id && eq.some(w => w.id === id);
-  const savedMain = actor?.getFlag(SYSTEM, "hudMainHand");
-  const savedOff  = actor?.getFlag(SYSTEM, "hudOffHand");
+  const byHand = h => real.find(w => w.getFlag(SYSTEM, "weaponHand") === h)
+                    ?? eq.find(w => w.getFlag(SYSTEM, "weaponHand") === h) ?? null;
 
-  let mainId = has(savedMain) ? savedMain
-             : (savedMain === undefined ? (def[0]?.id ?? null) : null);
+  let mainId = byHand("right")?.id ?? null;
+  let offId  = byHand("left")?.id  ?? null;
 
-  let offId;
-  if (savedOff !== undefined) offId = has(savedOff) ? savedOff : null;
-  else offId = def.find(w => w.id !== mainId)?.id ?? null;
+  if (!mainId && !offId) {
+    const def = real.length ? real : eq;
+    mainId = def[0]?.id ?? null;
+    offId  = def.find(w => w.id !== mainId)?.id ?? null;
+  } else {
+    if (!mainId) mainId = real.find(w => w.id !== offId)?.id ?? eq.find(w => w.id !== offId)?.id ?? null;
+    if (!offId)  offId  = real.find(w => w.id !== mainId)?.id ?? null;
+  }
   if (offId && offId === mainId) offId = null;   // один ствол — не в обе руки
 
   return { mainId, offId };
@@ -222,12 +225,6 @@ function hudData(actor) {
   const showOff = !hands[1].empty || equippedWeapons(actor).length > 1;
   if (!showOff) hands[1].hide = true;
 
-  const slots = equippedWeapons(actor).map(w => ({
-    id: w.id, name: w.name, img: w.img,
-    hand: w.id === mainId ? "main" : w.id === offId ? "off" : null,
-    melee: w.system.weaponClass === "melee"
-  }));
-
   // Силовые поля: активное (для readout) + первое доступное для тумблера.
   const shields = actor.items.filter(i => i.type === "forcefield");
   const activeShield = shields.find(s => s.system.status === "active");
@@ -283,9 +280,16 @@ function hudData(actor) {
 
   const woundPct = pctOf(ws.value, ws.max);
 
+  // Кнопка «Закончить ход»: активна только когда сейчас ход именно этого
+  // актора (по actorId текущего combatant — то же сравнение, что делает
+  // нативный трекер боя, независимо от того, сколько у актора токенов).
+  const combatant = game.combat?.combatant;
+  const myTurn = !!(combatant && combatant.actorId === actor.id);
+
   return {
     name: actor.name, img: actor.img,
     isGM: game.user.isGM,
+    myTurn,
     armor,
     // Раны — крупным блоком.
     wounds: {
@@ -308,7 +312,6 @@ function hudData(actor) {
     lamps,
     hands, showOff,
     hasWeapon: !!(mainId || offId),
-    slots,
     shield: shieldBtn ? {
       id: shieldBtn.id, name: shieldBtn.name,
       active: shieldBtn.system.status === "active",
@@ -357,6 +360,15 @@ function wire(el, actor) {
   el.querySelector("[data-toggle-hotbar]")?.addEventListener("click", () => {
     document.body.classList.toggle("wh-hotbar-on");
   });
+  // «Закончить ход»: тот же вызов, что у нативной кнопки трекера боя
+  // (client/applications/sidebar/tabs/combat-tracker.mjs, action "endTurn" →
+  // combat.nextTurn()) — HUD не переизобретает переход хода, просто даёт
+  // быстрый доступ к нему без открытия вкладки Encounter.
+  el.querySelector("[data-end-turn]")?.addEventListener("click", async ev => {
+    ev.preventDefault();
+    if (ev.currentTarget.disabled) return;
+    await game.combat?.nextTurn();
+  });
   if (!actor) return;
   const own = actor.isOwner;
 
@@ -365,25 +377,6 @@ function wire(el, actor) {
     const id = hand === "off" ? ids.offId : ids.mainId;
     return id ? actor.items.get(id) : null;
   };
-
-  // Назначение оружия по рукам: ЛКМ по слоту — в правую руку, ПКМ — в левую.
-  // Повторный клик той же рукой по тому же оружию — снять из руки.
-  const assign = async (id, hand) => {
-    const ids = handWeaponIds(actor);
-    const upd = {};
-    if (hand === "main") {
-      upd["flags." + SYSTEM + ".hudMainHand"] = (ids.mainId === id) ? "" : id;
-      if (ids.offId === id) upd["flags." + SYSTEM + ".hudOffHand"] = "";
-    } else {
-      upd["flags." + SYSTEM + ".hudOffHand"] = (ids.offId === id) ? "" : id;
-      if (ids.mainId === id) upd["flags." + SYSTEM + ".hudMainHand"] = "";
-    }
-    await actor.update(upd);
-  };
-  el.querySelectorAll("[data-weapon]").forEach(b => {
-    b.addEventListener("click", (ev) => { ev.preventDefault(); if (own) assign(b.dataset.weapon, "main"); });
-    b.addEventListener("contextmenu", (ev) => { ev.preventDefault(); if (own) assign(b.dataset.weapon, "off"); });
-  });
 
   // Перезарядка (по руке).
   el.querySelectorAll("[data-reload]").forEach(b => b.addEventListener("click", () => {

@@ -12,7 +12,7 @@
 //  только GM, прокрутка тоже только GM.
 // ════════════════════════════════════════════════════════════════════════
 
-import { formatImperialDateParts, formatClock, currentWatch, currentEnabledPhases, HOURS24_WATCHES, DEFAULT_CALENDAR_CONFIG, WATCH_PRESETS, checkDigitTooltip, DATE_PART_TOOLTIPS }
+import { formatImperialDateParts, formatClock, currentEnabledPhases, DEFAULT_CALENDAR_CONFIG, WATCH_PRESETS, checkDigitTooltip, DATE_PART_TOOLTIPS }
   from "../constants/imperial-calendar.mjs";
 import { triggerNewScene, triggerSessionEnd } from "./game-session.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -88,10 +88,9 @@ function _widgetHTML() {
   const cfg = calendarConfig();
   const worldTime = game.time?.worldTime ?? 0;
   const dateParts = formatImperialDateParts(worldTime, cfg);
-  // Основное деление — ВСЕГДА 24 часа, не настраивается и не отключается.
-  // Подпись — живые часы:минуты (не фиксированная "HH:00" метка сегмента),
-  // иначе прокрутка минутами visually ничего не меняла бы внутри часа.
-  const w = currentWatch(worldTime, { watches: HOURS24_WATCHES });
+  // Основные часы:минуты — живьём из worldTime (не через сегменты
+  // HOURS24_WATCHES, у тех подпись фиксирована на "HH:00" и не покажет
+  // минуты — см. formatClock).
   const clockStr = formatClock(worldTime);
   const phases = currentEnabledPhases(worldTime, cfg);
   const isGM = game.user.isGM;
@@ -128,6 +127,15 @@ function _widgetHTML() {
     <button type="button" class="wh-cal-w-session-btn" data-session-act="session" title="Конец сессии — откатить разовые-за-сессию эффекты, восполнить Судьбу/Бесчестие">⏻ Сессия</button>
   </div>` : "";
 
+  // Заголовок под датой: если GM включил хотя бы одно обозначение вахт
+  // (по умолчанию — Каликсида, стр. настроек), первое идёт крупной подписью
+  // прямо под датой (макетный «средняя вахта»); остальные включённые сразу —
+  // мелкими строками ниже, как и раньше (функциональность не теряем).
+  const [primaryPhase, ...extraPhases] = phases;
+  const dateNote = primaryPhase
+    ? `<span class="wh-cal-w-note-ic">${esc(primaryPhase.watch.icon || "")}</span>${esc(primaryPhase.watch.label)}`
+    : "место для дополнительного летоисчисления";
+
   return `<div class="wh-cal-w-head">
       <span class="wh-cal-w-led"></span>
       <span class="wh-cal-w-title">ЛЕТОИСЧИСЛЕНИЕ</span>
@@ -144,10 +152,9 @@ function _widgetHTML() {
         ><span class="wh-cal-w-date-dot">.</span
         ><span class="wh-cal-w-date-part" title="${esc(DATE_PART_TOOLTIPS.millennium)}">${esc(dateParts.millennium)}</span>
       </div>
-      <div class="wh-cal-w-watch wh-cal-w-watch-primary">
-        <span class="wh-cal-w-watch-ic">${esc(w.watch.icon || "")}</span><span class="wh-cal-w-watch-lbl">${esc(clockStr)}</span>
-      </div>
-      ${phases.map(p => `
+      <div class="wh-cal-w-note"${primaryPhase ? ` title="${esc(primaryPhase.label)}${primaryPhase.description ? " — " + esc(primaryPhase.description) : ""}"` : ""}>${dateNote}</div>
+      <div class="wh-cal-w-clock">${esc(clockStr)}</div>
+      ${extraPhases.map(p => `
       <div class="wh-cal-w-watch wh-cal-w-watch-secondary" title="${esc(p.label)}${p.description ? " — " + esc(p.description) : ""}">
         <span class="wh-cal-w-watch-ic">${esc(p.watch.icon || "")}</span><span class="wh-cal-w-watch-lbl">${esc(p.watch.label)}</span>
       </div>`).join("")}

@@ -11,6 +11,7 @@
 // и от переопределяемых им путей — Очки Бесчестия у Демон-Принца.
 
 import { CHARACTERISTICS }                       from "../constants/characteristics.mjs";
+import { CHAR_IMP_STEPS }                        from "./tabs/advance.mjs";
 import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
 import { charAptitudeSet, resolveCharCat }       from "../constants/advancement.mjs";
 import { fateTerm }                              from "../helpers/utils.mjs";
@@ -377,6 +378,12 @@ export function characterContext(actor) {
     // сохранённый Бонус отличается, значит его подняли Чертой/Талантом/
     // Сверхъестественным и т.п., и на листе это стоит показать надстрочно.
     const naturalBonus = Math.floor(total / 10);
+    const improvement = system.characteristics[key]?.improvement ?? "none";
+    // Ступеней куплено (0-5) — тот же счётчик, что считает цену (advance.mjs).
+    // Ряд из 5 меток под ячейкой (module/sheets/tabs/advance.mjs
+    // CHAR_IMP_STEPS) — по образцу fatePips ниже: массив с {on} строится тут,
+    // а не хелпером в hbs.
+    const improvementSteps = CHAR_IMP_STEPS[improvement] ?? 0;
     return {
       key,
       // Категория цены по склонностям (стр. 24) — для подсветки в «Развитии».
@@ -386,7 +393,9 @@ export function characterContext(actor) {
       base:         system.characteristics[key]?.base         ?? 0,
       advance:      system.characteristics[key]?.advance      ?? 0,
       supernatural: system.characteristics[key]?.supernatural ?? 0,
-      improvement:  system.characteristics[key]?.improvement  ?? "none",
+      improvement,
+      improvementSteps,
+      improvementPips: Array.from({ length: 5 }, (_, i) => ({ on: i < improvementSteps })),
       grantedImp:   system.characteristics[key]?.grantedImp   ?? "none",
       // Помечено ли улучшение как выданное архетипом/расой (кнопка ★).
       isGranted:   (system.characteristics[key]?.grantedImp ?? "none") !== "none",
