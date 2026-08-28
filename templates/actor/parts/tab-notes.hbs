@@ -21,7 +21,7 @@
       {{/if}}
       {{#if divination}}
       <div class="header-cell" title="Предсказание судьбы: эффект по таблице к100"> <label>Предсказание</label> <div class="hw-controls"> <select class="dv-select"> <option value="">— не выбрано —</option> <option value="random">🎲 Бросить к100</option> {{#each divination.options as |o|}}
-          <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option> {{/each}}
+          <option value="{{o.key}}" {{#if o.selected}}selected{{/if}} title="{{o.effect}}">{{o.name}}</option> {{/each}}
         </select> </div> </div>
       {{/if}}
     </div>
