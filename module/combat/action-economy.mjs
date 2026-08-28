@@ -74,17 +74,21 @@ export async function resetActionEconomy(actor) {
   const defenseMaxBase = Number(sys.reactions?.defenseMax) || 0;
   const defenseBonus   = stanceDefenseReactionBonus(actor);
 
-  await actor.update({
+  // Один actor.update() вместо трёх последовательных запросов (основной +
+  // 2 unsetFlag) — на смене Хода это раньше давало заметную задержку в
+  // трекере боя (каждый await — отдельный круг до сервера и обратно).
+  const upd = {
     "system.actionPoints.value": apMax,
     "system.reactions.value": reactMax,
     "system.reactions.defenseValue": defenseMaxBase + defenseBonus
-  });
+  };
   if (actor.getFlag("warhammer-dbc", "exposedAggressive")) {
-    await actor.unsetFlag("warhammer-dbc", "exposedAggressive");
+    upd["flags.warhammer-dbc.-=exposedAggressive"] = null;
   }
   if (actor.getFlag("warhammer-dbc", "running")) {
-    await actor.unsetFlag("warhammer-dbc", "running");
+    upd["flags.warhammer-dbc.-=running"] = null;
   }
+  await actor.update(upd);
 }
 
 /**

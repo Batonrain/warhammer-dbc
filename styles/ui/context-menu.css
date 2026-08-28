@@ -33,6 +33,20 @@
 .wh-ctx-rename:hover { color: #6fe6ff; }
 .wh-ctx-delete:hover { background: #3a1414; color: #ff8a8a; }
 
+/* ── Пункт-родитель каскадного подменю («Мировоззрение», «Открыть доступ» и
+      т.п., «Настройки листа») — раскрывается наведением, влево: сама кнопка
+      обычно стоит у правого края шапки листа, вправо подменю ушло бы за экран. */
+.wh-ctx-parent { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; }
+.wh-ctx-arrow { opacity: 0.6; font-size: 0.85em; }
+.wh-ctx-submenu {
+  display: none;
+  position: absolute;
+  top: -1px;
+  right: 100%;
+  left: auto;
+}
+.wh-ctx-parent:hover > .wh-ctx-submenu { display: block; }
+
 /* ── Контекстные меню ядра Foundry — тоже под когитатор ── */
 #context-menu, .context-menu, nav#context-menu, menu#context-menu {
   background: #0a1c12 !important;

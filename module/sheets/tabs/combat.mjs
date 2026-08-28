@@ -1,8 +1,11 @@
 // module/sheets/tabs/combat.mjs
 //
-// Вкладка БОЙ: состязательные приёмы, кнопка атаки у оружия, лечение и Очки
-// Боли Друкхари. Стойка/База/обычные Приёмы выбираются прямо в диалоге атаки
-// (attack-dialog.mjs) и своих кнопок на этой вкладке больше не имеют.
+// Вкладка БОЙ: состязательные приёмы, кнопка атаки у оружия, лечение, Очки
+// Боли Друкхари и Стойка/База. Обычные Приёмы выбираются прямо в диалоге атаки
+// (attack-dialog.mjs) и своих кнопок на этой вкладке не имеют — но Стойка/База
+// персистентны на акторе (system.meleeStance/meleeBase), диалог их только
+// читает как стартовое значение, поэтому свои кнопки здесь тоже есть (клик
+// пишет то же поле, что и диалог — расхождения не будет).
 // Состязания (Повалить/Финт/Давление/Напролом) — отдельный встречный тест без
 // диалога атаки вовсе (combat/techniques.mjs), поэтому свои кнопки сохраняют.
 //
@@ -68,6 +71,18 @@ export function activateCombatListeners(root, actor) {
   on(root, ".technique-btn", "click", ev => {
     const techDef = MELEE_CONTESTS[ev.currentTarget.dataset.technique];
     if (techDef) _showContestDialog(actor, techDef);
+  });
+
+  // ── Стойка/База — то же actor.update, что читает как стартовое значение
+  // и умеет сменить на разовый бросок диалог атаки (attack-dialog.mjs):
+  // клик здесь виден и там, и наоборот, без отдельной синхронизации.
+  on(root, ".technique-btn-stance", "click", ev => {
+    const key = ev.currentTarget.dataset.stance;
+    if (key) actor.update({ "system.meleeStance": key });
+  });
+  on(root, ".technique-btn-base", "click", ev => {
+    const key = ev.currentTarget.dataset.base;
+    if (key) actor.update({ "system.meleeBase": key });
   });
 
   // ── Борьба (стр. 12) — кнопка видна, пока активно conditions.grappling

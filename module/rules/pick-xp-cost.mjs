@@ -15,7 +15,7 @@
 //  Модуль знает про актора, но не про Foundry: на вход идут его system и items.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { talentCostXP, aptitudeCat, charAptitudeSet } from "../constants/advancement.mjs";
+import { talentCostXP, resolveTalentCat, charAptitudeSet } from "../constants/advancement.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -43,5 +43,5 @@ export function pickXPCost(actor, item) {
  */
 export function pickCostCategory(actor, item) {
   if (item?.type !== "talent") return null;
-  return aptitudeCat(charAptitudeSet(actor?.system?.aptitudes || []), item.aptitudes || []);
+  return resolveTalentCat(item.name, item.aptitudes || [], charAptitudeSet(actor?.system?.aptitudes || []), actor);
 }

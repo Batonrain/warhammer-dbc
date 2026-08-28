@@ -112,6 +112,33 @@ describe("openContextMenu", () => {
     expect(checked).toBe(true);
   });
 
+  it("каскадный пункт {submenu} раскрывает вложенные листовые пункты и вешает их клики", () => {
+    const jq = fakeJq();
+    const calls = [];
+
+    const menu = openContextMenu(contextEvent(), [
+      {
+        cls: "wh-ctx-align", label: "Мировоззрение", submenu: [
+          { cls: "wh-ctx-align-a", label: "Лоялист", onClick: () => calls.push("loyalist") },
+          { cls: "wh-ctx-align-b", label: "Ренегат", checkbox: true, checked: true,
+            onClick: () => calls.push("renegade") }
+        ]
+      },
+      { cls: "wh-ctx-plain", label: "Обычный пункт", onClick: () => calls.push("plain") }
+    ], jq);
+
+    // Родитель — сам без клика, только контейнер: рисуется, но не вешает
+    // обработчик на свой класс (у него нет onClick).
+    expect(menu.html).toContain('class="wh-ctx-item wh-ctx-parent wh-ctx-align"');
+    expect(menu.html).toContain("wh-ctx-submenu");
+    expect(menu.handlers[".wh-ctx-align:click"]).toBeUndefined();
+
+    // Вложенные листовые пункты кликаются как обычные, независимо от глубины.
+    menu.handlers[".wh-ctx-align-a:click"]({ stopPropagation: () => {} });
+    expect(calls).toEqual(["loyalist"]);
+    expect(menu.removed).toBe(true);
+  });
+
   it("одноразовое закрытие вешается с задержкой — клик-открытие не схлопывает меню", async () => {
     vi.useFakeTimers();
     const jq = fakeJq();

@@ -34,6 +34,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // выбор, — включая имперцев (wdbc-osz). Тему и сигил листа пустое
       // значение не ломает: там своя подстановка Неделимого.
       patronGod:   new StringField({ initial: "", label: "Покровитель" }),
+      // Стереотип Покровительства (стр. 24) — определяет союзную/враждебные
+      // Характеристики для цены Продвижения в режимах "patronage"/"mixed"
+      // (constants/patronage.mjs, CHAR_STEREOTYPES). Пусто, пока не выбран.
+      patronStereotype: new StringField({ initial: "", label: "Стереотип Покровителя" }),
+      // Своя система цены Продвижения для ЭТОГО персонажа — переопределяет
+      // мировую настройку advancePricingMode (Настройки листа). Пусто =
+      // наследовать от мира (constants/patronage.mjs, effectivePricingMode()).
+      pricingModeOverride: new StringField({ initial: "", label: "Своя система продвижения" }),
       patronFavor: new SchemaField({
         undivided: favor("Неделимый"),
         khorne:    favor("Кхорн"),

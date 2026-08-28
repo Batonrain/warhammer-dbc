@@ -6,9 +6,9 @@
 
 import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
-import { talentCostXP, aptitudeCat, charAptitudeSet, ALIGN_LABEL,
+import { talentCostXP, charAptitudeSet, ALIGN_LABEL,
          raceAllyTalent, dynamicAptKind, CHAR_APTITUDES,
-         resolveTalentAptitudes } from "../constants/advancement.mjs";
+         resolveTalentAptitudes, resolveCharCat, resolveSkillCat, resolveTalentCat } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
 import { createOrRankTalent } from "../rules/duplicate-grants.mjs";
@@ -165,9 +165,17 @@ export function dynamicTalentOptions(actor, doc, kind, charApts) {
     const apts = kind === "char"
       ? resolveTalentAptitudes(doc.name, doc.system?.aptitudes || [], key, defs)
       : masteryAptitudes(key);
-    const cat  = aptitudeCat(charApts, apts);
-    return { key, label, apts, cat, cost: talentCostXP(tier, apts, charApts,
-      talentCategory(actor, label)) };
+    // Категория берётся по САМОЙ характеристике/навыку, к которой привязан
+    // динамический талант (стр. 62) — не по его собственному имени/Богу,
+    // тем же принципом, что и у Склонностей (resolveTalentAptitudes выше).
+    let cat;
+    if (kind === "char") {
+      cat = resolveCharCat(key, charApts, actor);
+    } else {
+      const [groupKey, spec] = String(key).split(":");
+      cat = resolveSkillCat(groupKey, spec || "", apts, charApts, actor);
+    }
+    return { key, label, apts, cat, cost: talentCostXP(tier, apts, charApts, cat) };
   }).sort((a, b) => a.cost - b.cost || a.label.localeCompare(b.label, "ru"));
 }
 
@@ -322,10 +330,9 @@ export async function openItemPicker(actor, kind) {
             cost = `<span class="pick-cost cost-dyn" title="Склонности «как у ${dyn === "char" ? "Характеристики" : "Навыка"}» — цена зависит от выбора при покупке (стр. 62)">${range} XP</span>`;
           } else {
             const forced = talentCategory(actor, d.name, d.folder);
-            const cat = forced === "ally" ? "ally" : aptitudeCat(charApts, d.system.aptitudes || []);
-            const xp  = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
-              talentCategory(actor, d.name, d.folder),
-              { name: d.name, patron: actor.system.patronGod });
+            const cat = forced || resolveTalentCat(d.name, d.system.aptitudes || [], charApts, actor);
+            const xp  = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts, forced,
+              { name: d.name, patron: actor.system.patronGod, actor });
             cost = `<span class="pick-cost cost-${cat}" title="${ALIGN_LABEL[cat]} — совпадений склонностей: ${(d.system.aptitudes||[]).filter(a=>charApts.has(a)).length}">${xp} XP</span>`;
           }
         }

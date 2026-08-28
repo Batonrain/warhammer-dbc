@@ -29,6 +29,12 @@ function actorFor({ type = "character", meleeStance = "standard", ...overrides }
   };
   doc.update = async (changes = {}) => {
     for (const [path, value] of Object.entries(changes)) {
+      const m = path.match(/^flags\.([^.]+)\.(-=)?(.+)$/);
+      if (m) {
+        const [, scope, del, key] = m;
+        if (del) delete store[`${scope}.${key}`]; else store[`${scope}.${key}`] = value;
+        continue;
+      }
       const keys = path.split(".");
       let node = doc;
       for (const key of keys.slice(0, -1)) node = (node[key] ??= {});

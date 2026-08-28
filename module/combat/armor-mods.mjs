@@ -254,14 +254,19 @@ export async function syncDisabledArmourOverloadTimer(actor) {
   if (!game.user.isGM || !actor) return;
   const overload = actor.system?.disabledArmourOverload;
   const testAt = actor.getFlag(FLAG, OVERLOAD_TEST_AT_FLAG);
+  // Один actor.update() вместо до двух последовательных setFlag/unsetFlag —
+  // этот хук стреляет на КАЖДЫЙ updateActor в игре, лишний круг до сервера
+  // на каждый из них давал накопительную задержку в бою.
+  const upd = {};
   if (overload && testAt == null) {
-    await actor.setFlag(FLAG, OVERLOAD_TEST_AT_FLAG, game.time.worldTime);
+    upd[`flags.${FLAG}.${OVERLOAD_TEST_AT_FLAG}`] = game.time.worldTime;
   } else if (!overload && testAt != null) {
-    await actor.unsetFlag(FLAG, OVERLOAD_TEST_AT_FLAG);
+    upd[`flags.${FLAG}.-=${OVERLOAD_TEST_AT_FLAG}`] = null;
   }
   if (!overload && actor.getFlag(FLAG, MAX_AGILITY_FORCED_FLAG)) {
-    await actor.unsetFlag(FLAG, MAX_AGILITY_FORCED_FLAG);
+    upd[`flags.${FLAG}.-=${MAX_AGILITY_FORCED_FLAG}`] = null;
   }
+  if (Object.keys(upd).length) await actor.update(upd);
 }
 
 /**

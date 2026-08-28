@@ -16,7 +16,7 @@ import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constant
 import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/disciplines.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
-import { aptitudeCat, charAptitudeSet }             from "../constants/advancement.mjs";
+import { charAptitudeSet, resolveSkillCat } from "../constants/advancement.mjs";
 import { isFriendlySpecialty }                       from "../rules/friendly-specialties.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
@@ -413,7 +413,7 @@ export function buildGetData(actor) {
       isGranted: (sk.grantedRank ?? "untrained") !== "untrained",
       total: sk.total ?? -20,
       cost:  sk.cost  ?? 0,
-      aptCat: aptitudeCat(_skApts, [def.char, def.apt2])
+      aptCat: resolveSkillCat(key, "", [def.char, def.apt2], _skApts, actor)
     };
   });
 
@@ -428,7 +428,7 @@ export function buildGetData(actor) {
       // Отношение группы к склонностям (стр. 24) — по [char группы, apt2].
       // Общие знания и Ремесло всегда Дружественные (стр. 58, 61).
       alwaysAlly: !!def.alwaysAlly,
-      aptCat: def.alwaysAlly ? "ally" : aptitudeCat(_skApts, [def.char, def.apt2]),
+      aptCat: def.alwaysAlly ? "ally" : resolveSkillCat(groupKey, "", [def.char, def.apt2], _skApts, actor),
       entries: entries.map((e, i) => {
         const charKey = e.char || def.char;
         return {
@@ -438,7 +438,7 @@ export function buildGetData(actor) {
           isGranted: (e.grantedRank ?? "untrained") !== "untrained",
           aptCat: def.alwaysAlly ? "ally"
             : isFriendlySpecialty(actor, groupKey, e.specialty) ? "ally"
-            : aptitudeCat(_skApts, [charKey, def.apt2]),
+            : resolveSkillCat(groupKey, e.specialty, [charKey, def.apt2], _skApts, actor),
           charOptions: GS_CHAR_KEYS.map(k => ({
             key: k, abbr: CHARACTERISTICS[k]?.abbr ?? k.toUpperCase(), selected: k === charKey
           }))

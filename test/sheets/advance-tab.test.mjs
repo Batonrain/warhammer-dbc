@@ -5,6 +5,7 @@ import {
   addAdvTalent,
   addAptitude,
   charImpCost,
+  recalcAllAdvanceCosts,
   removeAdvTalent,
   removeAptitude,
   removeGroupEntry,
@@ -94,6 +95,72 @@ describe("накопительные цены продвижения", () => {
       "knows", null, "untrained")).toBe(100);
     expect(skillCumCost(a, { char: "int", apt2: "knowledge" },
       "knows", null, "untrained")).toBe(300);
+  });
+});
+
+// pricingModeOverride — per-actor оверрайд системы цены (constants/patronage.mjs),
+// не требует game.settings (мировая настройка), поэтому тестируем его отдельно.
+describe("режим цены Продвижения — Покровительство/Смешанная (patronage.mjs)", () => {
+  function patronActor(overrides = {}) {
+    const a = actor(overrides);
+    a.system.pricingModeOverride = overrides.pricingModeOverride ?? "patronage";
+    a.system.patronGod = overrides.patronGod ?? "slaanesh";
+    a.system.patronStereotype = overrides.patronStereotype ?? "slaanesh-dancer";
+    return a;
+  }
+
+  it("charImpCost считает по стереотипу Покровителя, не по Склонностям", () => {
+    // Танцор Клинка (Слаанеш): союзная Ловкость (ag), враждебные Интеллект/Стойкость.
+    const a = patronActor();
+    expect(charImpCost(a, "ag", "simple")).toBe(100);    // Союзная
+    expect(charImpCost(a, "int", "simple")).toBe(500);   // Враждебная
+    expect(charImpCost(a, "s", "simple")).toBe(250);     // Нейтральная (не в списке)
+  });
+
+  it("skillCumCost считает по Богу Навыка ↔ Покровителю", () => {
+    const a = patronActor();
+    const dodgeDef = { char: "ag", apt2: "defence", label: "Уклонение" };
+    // Dodge — Слаанеш, тот же Бог, что у персонажа → Союзная.
+    expect(skillCumCost(a, dodgeDef, "knows", null, "untrained", null, "", "dodge")).toBe(100);
+    const athlDef = { char: "s", apt2: "general", label: "Атлетика" };
+    // Athletics — Кхорн, враждебен Слаанешу → Враждебная.
+    expect(skillCumCost(a, athlDef, "knows", null, "untrained", null, "", "athletics")).toBe(300);
+  });
+
+  it("Смешанная система комбинирует Склонности и Покровительство", () => {
+    // Склонности дают Союзную (ws/offence — обе есть), Покровительство (Кхорн,
+    // Авангард) тоже даёт Союзную для ws → результат Союзная (mixedCat).
+    const a = patronActor({
+      aptitudes: ["ws", "offence"], pricingModeOverride: "mixed",
+      patronGod: "khorne", patronStereotype: "khorne-vanguard"
+    });
+    expect(charImpCost(a, "ws", "simple")).toBe(100);
+  });
+
+  it("recalcAllAdvanceCosts пересчитывает уже купленное при смене режима/Покровителя", async () => {
+    const bought = talent({ name: "Lightning Reflexes / Молниеносные Рефлексы", cost: 999 });
+    const a = patronActor({
+      characteristics: { ag: { improvement: "simple", cost: 999 } },
+      items: [bought]
+    });
+
+    await recalcAllAdvanceCosts(a);
+
+    expect(a.system.characteristics.ag.cost).toBe(100);            // Танцор Клинка: ag союзная
+    // Lightning Reflexes — Бог Слаанеш в библиотеке, тот же, что у персонажа → Союзная (150).
+    expect(a.itemUpdates).toEqual([{ _id: "tal-1", "system.cost": 150 }]);
+  });
+
+  it("без per-actor оверрайда — прежнее поведение по Склонностям (game.settings недоступен в тестах)", () => {
+    const a = actor({ aptitudes: ["ag", "finesse"] });
+    a.system.patronGod = "slaanesh";
+    a.system.patronStereotype = "slaanesh-dancer";
+    // pricingModeOverride не задан → фолбэк на "aptitude" (worldAdvancePricingMode
+    // без game.settings) — цена должна идти по Складностям, а не по стереотипу.
+    // Per (P) — Нейтральная у стереотипа Танцора Клинка (не союзная и не
+    // враждебная), но 0 совпадений склонностей ⇒ Враждебная по Склонностям:
+    // если бы диспетчер ошибочно читал стереотип, число было бы другим (250).
+    expect(charImpCost(a, "per", "simple")).toBe(500);
   });
 });
 

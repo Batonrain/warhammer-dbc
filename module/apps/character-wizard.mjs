@@ -48,6 +48,8 @@ import { CREATION_ROLL_CHARS, creationBonusRolls, rollCharSet, creationCharSum,
          grantCreationSkills, grantMechanicusImplants, grantMechanicumImplantsTrait,
          grantSkitariiWarPlate, ruSpec } from "./creation.mjs";
 import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
+import { CHAOS_PATRONS } from "../constants/chaos-patron.mjs";
+import { effectivePricingMode, charStereotypesFor } from "../constants/patronage.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "./aspirations.mjs";
 import { activateAspirationListeners } from "../sheets/tabs/aspirations.mjs";
@@ -902,6 +904,12 @@ export class CharacterWizard extends Application {
     this.charAssign = {};
     this.armedVi = null;
     this.pickedApts = new Set(this.actor.system.aptitudes || []);
+    // Режим цены Продвижения (constants/patronage.mjs) — на момент создания
+    // персонажа известно только мировое умолчание: personal-оверрайд (Настройки
+    // листа) можно поставить только ПОСЛЕ того, как актор уже существует.
+    this._pricingMode = effectivePricingMode(this.actor);
+    this.pickedPatronGod = this.actor.system.patronGod || "";
+    this.pickedPatronStereotype = this.actor.system.patronStereotype || "";
   }
 
   /** База характеристик расы+Прошлого+субрасы — БЕЗ архетипа: тот выбирается только на Этапе 3. */
@@ -924,10 +932,31 @@ export class CharacterWizard extends Application {
     return out;
   }
 
-  _aptReady() {
+  _aptitudesReady() {
     return APT_CHAR_KEYS.filter(k => this.pickedApts.has(k)).length === APT_PICK.char
         && APT_OTHER_KEYS.filter(k => this.pickedApts.has(k)).length === APT_PICK.other;
   }
+  _patronReady() {
+    return !!this.pickedPatronGod && !!this.pickedPatronStereotype;
+  }
+  /**
+   * Готовность Этапа 2 к «Далее» — по действующему режиму цены Продвижения
+   * (constants/patronage.mjs): Склонности, Покровитель+стереотип, или оба
+   * разом (Смешанная). Мировая настройка на момент создания, см. _ensureCharState.
+   */
+  _aptReady() {
+    this._ensureCharState();
+    if (this._pricingMode === "patronage") return this._patronReady();
+    if (this._pricingMode === "mixed") return this._aptitudesReady() && this._patronReady();
+    return this._aptitudesReady();
+  }
+  _setPatronGod(key) {
+    this.pickedPatronGod = key;
+    // Смена Бога сбрасывает стереотип — старый почти наверняка принадлежит
+    // другому Богу (CHAR_STEREOTYPES), оставлять его выбранным бессмысленно.
+    this.pickedPatronStereotype = "";
+  }
+  _setPatronStereotype(key) { this.pickedPatronStereotype = key; }
 
   _charStepContext() {
     this._ensureCharState();
@@ -960,7 +989,18 @@ export class CharacterWizard extends Application {
       }),
       aptChar:  aptRow(APT_CHAR_KEYS, APT_PICK.char),
       aptOther: aptRow(APT_OTHER_KEYS, APT_PICK.other),
-      aptReady: this._aptReady()
+      aptReady: this._aptReady(),
+      // Режим цены Продвижения (constants/patronage.mjs) — какие блоки Этапа 2
+      // показывать: Склонности, Покровитель+стереотип, или оба (Смешанная).
+      usesAptitudes: this._pricingMode !== "patronage",
+      usesPatron: this._pricingMode === "patronage" || this._pricingMode === "mixed",
+      patronReady: this._patronReady(),
+      patronGods: CHAOS_PATRONS.map(p => ({ key: p.key, label: p.label, selected: p.key === this.pickedPatronGod })),
+      patronStereotypes: this.pickedPatronGod
+        ? charStereotypesFor(this.pickedPatronGod).map(s => ({
+            key: s.key, label: s.label, selected: s.key === this.pickedPatronStereotype
+          }))
+        : []
     };
   }
 
@@ -988,10 +1028,18 @@ export class CharacterWizard extends Application {
   async _confirmCharacteristics() {
     const actor = this.actor;
     if (!this._aptReady()) return false;
+    // Покровитель+стереотип (constants/patronage.mjs) — пишутся вместе со
+    // Склонностями независимо от режима: даже в режиме "aptitude" ГМ мог
+    // разрешить этому персонажу personal-оверрайд ПОЗЖЕ (Настройки листа), и
+    // выбор здесь не будет потерян. Пусты, если Этап их не показывал.
+    const patronUpdates = {
+      "system.patronGod": this.pickedPatronGod || "",
+      "system.patronStereotype": this.pickedPatronStereotype || ""
+    };
     if (this._wasEmpty) {
       const sum = this._charSum();
       const rolls = this._charValues();
-      const updates = { "system.aptitudes": [...this.pickedApts] };
+      const updates = { "system.aptitudes": [...this.pickedApts], ...patronUpdates };
       for (const k of CREATION_ROLL_CHARS) {
         if (this._wasEmpty[k]) updates[`system.characteristics.${k}.base`] = (sum[k] || 0) + (rolls[k] || 0);
       }
@@ -1008,7 +1056,7 @@ export class CharacterWizard extends Application {
         if (infv) await actor.update({ "system.characteristics.inf.base": infv });
       }
     } else {
-      await actor.update({ "system.aptitudes": [...this.pickedApts] });
+      await actor.update({ "system.aptitudes": [...this.pickedApts], ...patronUpdates });
     }
     return true;
   }
@@ -1817,6 +1865,8 @@ export class CharacterWizard extends Application {
       this.render(false);
     });
     on(".wiz-apt", "change", ev => { this._toggleApt(ev.currentTarget.value); this.render(false); });
+    on(".wiz-patron-god", "change", ev => { this._setPatronGod(ev.currentTarget.value); this.render(false); });
+    on(".wiz-patron-stereotype", "change", ev => { this._setPatronStereotype(ev.currentTarget.value); this.render(false); });
 
     // ── Этап 3/1: ИЛИ/спец-выборы Конструктора, собранные в форму шага ──
     // Ни один из этих обработчиков больше НЕ применяет выбор сразу — только

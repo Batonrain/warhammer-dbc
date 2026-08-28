@@ -74,6 +74,9 @@
 .warhammer-dbc .gear-cog .gl-status { font-size: 0.76em; letter-spacing: 0.09em; color: var(--cg); }
 .warhammer-dbc .gear-cog .gl-status.load-over { color: var(--cg-red); animation: cogStatusBlink 1s steps(2) infinite; }
 @keyframes cogStatusBlink { 50% { opacity: 0.4; } }
+.warhammer-dbc .gear-cog .gl-index {
+  font-size: 0.68em; opacity: 0.6; letter-spacing: 0.03em; margin-top: 4px;
+}
 .warhammer-dbc .gear-cog .gl-tiers {
   display: flex; gap: 10px; flex-wrap: wrap; margin-top: 3px;
   font-size: 0.68em; opacity: 0.75; letter-spacing: 0.03em;

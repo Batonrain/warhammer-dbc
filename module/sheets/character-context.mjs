@@ -12,8 +12,7 @@
 
 import { CHARACTERISTICS }                       from "../constants/characteristics.mjs";
 import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
-import { aptitudeCat, charAptitudeSet,
-         CHAR_APTITUDES }                        from "../constants/advancement.mjs";
+import { charAptitudeSet, resolveCharCat }       from "../constants/advancement.mjs";
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
@@ -62,7 +61,7 @@ function charTotalTooltip(total, breakdown) {
 import { divinationSheetContext }                from "../apps/divinations.mjs";
 import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
-import { MELEE_BASES, MELEE_CONTESTS }           from "../constants/combat.mjs";
+import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive,
          effectiveDefenseReactionMax }            from "../combat/action-economy.mjs";
 
@@ -79,13 +78,22 @@ export function characterContext(actor) {
   // ── Архетип (шапка): селектор из компендиума, только доступные текущей расе ──
   context.archetype = archetypeSheetContext(actor);
 
-  // ── Бой: Состязания — Стойка/База/обычные Приёмы теперь выбираются прямо в
-  // диалоге атаки (module/sheets/attack-dialog.mjs) и своей постоянной панели
-  // на листе больше не имеют. Состязания (Повалить/Финт/Давление/Напролом) в
-  // диалог не переехали — это отдельный встречный тест без диалога атаки
-  // вовсе (module/combat/techniques.mjs, _showContestDialog), поэтому свою
-  // панель на вкладке БОЙ сохраняют: без неё их вообще нечем запустить.
+  // ── Бой: Стойка/База — постоянное состояние актора (system.meleeStance/
+  // meleeBase), диалог атаки лишь ЧИТАЕТ его как стартовое значение и умеет
+  // сменить на разовый бросок (module/sheets/attack-dialog.mjs) — но нигде,
+  // кроме диалога, было не посмотреть и не сменить текущий выбор без начала
+  // атаки. Панель на БОЙ восстановлена — та же пара полей, что пишет диалог,
+  // так что оба места остаются в силе автоматически, простой read/write
+  // одного и того же actor.update. Состязания (Повалить/Финт/Давление/
+  // Напролом) в диалог атаки не переехали — это отдельный встречный тест без
+  // диалога атаки вовсе (module/combat/techniques.mjs, _showContestDialog),
+  // их панель на вкладке БОЙ была и остаётся нужна.
   const meleeBaseKey  = system.meleeBase in MELEE_BASES ? system.meleeBase : "standard";
+  const meleeStanceKey = system.meleeStance in MELEE_STANCES ? system.meleeStance : "standard";
+  context.combatStanceOptions = Object.entries(MELEE_STANCES)
+    .map(([key, s]) => ({ key, label: s.label, desc: s.shortDesc, active: key === meleeStanceKey }));
+  context.combatBaseOptions = Object.entries(MELEE_BASES)
+    .map(([key, b]) => ({ key, label: b.label, desc: b.shortDesc, active: key === meleeBaseKey }));
   // Тот же экипированный рукопашный/метательный предмет, что берёт клик по
   // кнопке Состязания (module/sheets/tabs/combat.mjs) — его категория решает,
   // какие кнопки показывать (Повалить книгой ограничен Оружием и Базой, стр.
@@ -137,6 +145,12 @@ export function characterContext(actor) {
   context.encumbrancePct   = Math.max(0, Math.min(100, _pct));
   context.encumbranceOver  = _pct > 100;
   context.encumbranceLevel = _pct >= 100 ? "over" : _pct >= 66 ? "heavy" : "ok";
+  // T.b + S.b — база строки Ношение/Подъём/Толкание (стр. 27, carryRow) —
+  // напоказ перед тремя числами: не сама итоговая цифра (та ещё учитывает
+  // Родной мир и Мод. Экзоскелета/подобных через Механику, kind:"weight"),
+  // а именно голая сумма бонусов, как попросил пользователь.
+  context.encumbranceIndexSum =
+    (Number(system.characteristics?.t?.bonus) || 0) + (Number(system.characteristics?.s?.bonus) || 0);
 
   // ── Показатели: сенсоры Порчи/Безумия (когитатор) ───────────────────────
   const _cor = system.corruption || {};
@@ -366,7 +380,7 @@ export function characterContext(actor) {
     return {
       key,
       // Категория цены по склонностям (стр. 24) — для подсветки в «Развитии».
-      aptCat:       aptitudeCat(_charApts, CHAR_APTITUDES[key] || []),
+      aptCat:       resolveCharCat(key, _charApts, actor),
       label:        charLabel(key, system.alignment),
       abbr:         meta.abbr,
       base:         system.characteristics[key]?.base         ?? 0,

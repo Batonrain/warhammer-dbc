@@ -438,7 +438,7 @@ export function stubDocument(data = {}) {
  * Лист без Foundry: объект с прототипом класса и подставным актором. Конструктор
  * ApplicationV1 не вызывается — методам расчёта нужен только this.actor.
  */
-export function sheetOf(cls, { items = [], ...system } = {}) {
+export function sheetOf(cls, { items = [], type = "character", ...system } = {}) {
   const sheet = Object.create(cls.prototype);
   const list  = [...items];
   list.get = id => list.find(i => i.id === id) ?? null;
@@ -455,7 +455,7 @@ export function sheetOf(cls, { items = [], ...system } = {}) {
     // проверяет порог броска, а не запись в актора. Выданные предметы, наоборот,
     // запоминаются: тест мутаций проверяет, что именно легло на лист.
     value: {
-      id: "actor-stub", name: "Подставной", system, items: list,
+      id: "actor-stub", name: "Подставной", type, system, items: list,
       update: async () => {},
       getFlag: (scope, key) => {
         const { parts, bag } = flagPath(scope, key);

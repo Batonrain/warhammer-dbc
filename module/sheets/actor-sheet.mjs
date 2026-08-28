@@ -53,6 +53,7 @@ import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
+import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
@@ -709,17 +710,43 @@ export class WarhammerCharacterSheet
     context.notesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
       this.actor.system.notes, { relativeTo: this.actor, secrets: this.actor.isOwner });
 
+    // ── ДАННЫЕ (Limited Vision): отдельное поле для ГМ — текст, который видит
+    // владелец Ограниченного зрения. Заполняет и правит только ГМ; игроку
+    // блок на Записях не показывается вовсе (см. limitedVisionData ниже).
+    context.isGM = game.user.isGM;
+    if (context.isGM) {
+      context.limitedVisionDataEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
+        this.actor.system.limitedVisionData, { relativeTo: this.actor, secrets: true });
+    }
+
     // ── Сворачивание секций: состояние окна, переживает перерисовку ─────────
     context.combatTechCollapsed   = !!this._combatCollapse?.tech;
     context.gearCollapse = this._gearCollapse || {};
 
-    // ── Очки Бесчестия (корбук 438): доступны Хаоситам ─────────────────────
-    // Путь к счётчику и его максимум задают геттеры листа: у Демон-Принца это
-    // не Судьба, а собственные ОБ, поэтому расчёт остаётся здесь.
-    if (context.isHeretic && this._infamyEnabled) {
-      const ip = Math.max(0, Number(foundry.utils.getProperty(this.actor, this._infamyPath)) || 0);
-      context.infamy = infamyContext(this.actor, this._infamyKey,
-        { ip, ipMax: this._infamyMax, showCounter: this._infamyShowCounter });
+    // ── Режим цены Продвижения (constants/patronage.mjs) — НЕ только для
+    // Хаоситов: Лоялист/Ксенос тоже может получить personal-оверрайд «Смешанная»
+    // или (реже) «Покровительство» от ГМа, поэтому считается безусловно для
+    // любого Персонажа, до блока Очков Бесчестия ниже — тот читает
+    // usesPatronStereotype, вычисленный здесь.
+    if (this.actor.type === "character") {
+      const mode = effectivePricingMode(this.actor);
+      const patronChosen = this.actor.system.patronGod || "";
+      context.advancePricingMode = mode;
+      context.usesPatronStereotype = (mode === "patronage" || mode === "mixed") && !!patronChosen;
+      // Блок 8 Склонностей на «Развитии» не нужен, когда цена персонажа
+      // считается строго по Покровительству — Смешанная всё ещё их читает.
+      context.usesAptitudes = mode !== "patronage";
+    }
+
+    // ── Покровитель Хаоса: выбор Бога — либо ради Очков Бесчестия (Хаосит,
+    // как раньше), либо ради цены Продвижения по Покровительству/Смешанной
+    // системе, которую ГМ может включить и НЕ-Хаоситу через per-actor
+    // оверрайд (см. advancePricingMode выше). Раньше весь этот блок жил
+    // строго внутри `isHeretic`, и Лоялист/Ренегат с таким оверрайдом не мог
+    // выбрать Бога вовсе — цена молча садилась на «Нейтрально» везде.
+    const needsPatronPicker = context.isHeretic ||
+      context.advancePricingMode === "patronage" || context.advancePricingMode === "mixed";
+    if (needsPatronPicker) {
       // Отметка радиокнопки — по ХРАНИМОМУ полю, а не по _infamyKey: тот
       // подставляет Неделимого, когда Бог не выбран, и селектор показывал бы
       // выбранным то, чего в акторе нет (wdbc-osz).
@@ -729,6 +756,25 @@ export class WarhammerCharacterSheet
       // Селектор Бога в ЗАПИСЯХ — только там, где патрон не выбирается иначе.
       // У Демон-Принца патрон = «Патрон» в шапке (allegiance) → селектор скрыт.
       context.showPatronPicker = this._showPatronPicker;
+
+      // Стереотип Покровительства (constants/patronage.mjs) — только у
+      // Персонажа (поле есть только в его схеме) и только пока режим цены
+      // реально его читает (Покровительство/Смешанная), и Бог уже выбран.
+      if (this.actor.type === "character" && context.usesPatronStereotype) {
+        const cur = this.actor.system.patronStereotype || "";
+        context.patronStereotypes = charStereotypesFor(patronChosen)
+          .map(s => ({ key: s.key, label: s.label, selected: s.key === cur }));
+      }
+    }
+
+    // ── Очки Бесчестия (корбук 438): доступны только Хаоситам — отдельно от
+    // выбора Бога выше, Инфейми не связано с ценой Продвижения.
+    // Путь к счётчику и его максимум задают геттеры листа: у Демон-Принца это
+    // не Судьба, а собственные ОБ, поэтому расчёт остаётся здесь.
+    if (context.isHeretic && this._infamyEnabled) {
+      const ip = Math.max(0, Number(foundry.utils.getProperty(this.actor, this._infamyPath)) || 0);
+      context.infamy = infamyContext(this.actor, this._infamyKey,
+        { ip, ipMax: this._infamyMax, showCounter: this._infamyShowCounter });
     }
 
     return context;
@@ -869,25 +915,6 @@ export class WarhammerCharacterSheet
   }
 
   /**
-   * «Сменить телосложение» из меню «Настройки листа» — раньше был блок
-   * радиокнопок на вкладке ЗАПИСИ (убран оттуда), задаёт набор PNG-масок
-   * фигуры на вкладке «ТЕЛО» и в Хирургиконе.
-   */
-  async _changeBodyType() {
-    const current = this.actor.system.bodyType || "male";
-    const choice = await foundry.applications.api.DialogV2.wait({
-      window: { title: "Сменить телосложение" },
-      classes: ["warhammer-dbc", "wh-holo"],
-      content: `<p>Определяет силуэт на вкладке «ТЕЛО» и в Хирургиконе. «Другое» использует нейтральный набор — отдельной графики под него нет.</p>`,
-      buttons: Object.entries(BODY_TYPES).map(([key, label]) => ({
-        action: key, label, default: key === current
-      })),
-      rejectClose: false
-    });
-    if (choice && choice !== current) await this.actor.update({ "system.bodyType": choice });
-  }
-
-  /**
    * Переключатели в меню «Настройки листа» — те же поля, что раньше жили в
    * блоке СТАТУС на вкладке ЗАПИСИ (блок оттуда убран для типов, у которых
    * есть эта кнопка — дублировать было незачем). Каждый — ручной оверрайд
@@ -927,7 +954,58 @@ export class WarhammerCharacterSheet
     return [
       ["loyalist", "Лоялист"], ["renegade", "Ренегат"], ["heretic", "Хаосит"]
     ].map(([key, label]) => ({
-      cls: `wh-ctx-align-${key}`, label: `Мировоззрение: ${label}`,
+      cls: `wh-ctx-align-${key}`, label,
+      checkbox: true, checked: cur === key, onClick: () => set(key)
+    }));
+  }
+
+  /** Мировоззрение как один каскадный пункт (вместо трёх плоских). */
+  _alignmentSubmenu() {
+    return { cls: "wh-ctx-align", label: "🎭 Мировоззрение", submenu: this._alignmentEntries() };
+  }
+
+  /**
+   * Телосложение (Мужское/Женское/Другое) — каскадный пункт вместо кнопки,
+   * открывавшей отдельный Dialog. Общий для Персонажа и Миньона (оба
+   * показывают его в _sheetSettingsEntries).
+   */
+  _bodyTypeSubmenu() {
+    if (this.actor.system.race === "astartes") return null;   // Астартес всегда мужчины
+    const cur = this.actor.system.bodyType || "male";
+    return {
+      cls: "wh-ctx-bodytype", label: "🧍 Телосложение",
+      submenu: Object.entries(BODY_TYPES).map(([key, label]) => ({
+        cls: `wh-ctx-bodytype-${key}`, label,
+        checkbox: true, checked: cur === key,
+        onClick: () => this.actor.update({ "system.bodyType": key })
+      }))
+    };
+  }
+
+  /** Одержимость/Техножрец/Пси-Пробуждение — под одним каскадным пунктом
+   * «Открыть доступ»: все три открывают вкладку листа вручную, минуя
+   * автоопределение по Черте/Архетипу, и логически принадлежат вместе. */
+  _accessSubmenu(keys) {
+    const entries = this._sheetToggleEntries(keys);
+    if (!entries.length) return null;
+    return { cls: "wh-ctx-access", label: "🔓 Открыть доступ", submenu: entries };
+  }
+
+  /**
+   * Своя система цены Продвижения для ЭТОГО персонажа (constants/patronage.mjs,
+   * pricingModeOverride) — на случай, если ГМ разрешает конкретному игроку
+   * систему, отличную от мировой настройки. Пустая строка (первый пункт) —
+   * наследовать от мира. Мьютекс-пункты, тот же паттерн, что _alignmentEntries().
+   */
+  _advancePricingEntries() {
+    const cur = this.actor.system.pricingModeOverride || "";
+    const world = worldAdvancePricingMode();
+    const set = (value) => this.actor.update({ "system.pricingModeOverride": value });
+    return [
+      ["", `Как у мира (${PRICING_MODES[world]})`],
+      ...Object.entries(PRICING_MODES)
+    ].map(([key, label]) => ({
+      cls: `wh-ctx-pricing-${key || "world"}`, label: `Система продвижения: ${label}`,
       checkbox: true, checked: cur === key, onClick: () => set(key)
     }));
   }
@@ -1244,16 +1322,21 @@ export class WarhammerCharacterSheet
   }
 
   /**
-   * Состав меню «Настройки листа» по типу актора (таблица от пользователя):
-   *  - Персонаж — Мастер, Сменить телосложение, [разделитель], Мировоззрение
-   *    (3 пункта, кроме Аэльдари), [разделитель], все 5 флажков, В Орду.
+   * Состав меню «Настройки листа» по типу актора (таблица от пользователя).
+   * Мировоззрение, Телосложение и «Одержимость/Пси-Пробуждение/Техножрец» —
+   * каскадные подпункты (submenu, раскрываются наведением, см. _alignmentSubmenu/
+   * _bodyTypeSubmenu/_accessSubmenu), а не плоский список, как раньше:
+   *  - Персонаж — Мастер, Телосложение▸, [разделитель], Мировоззрение▸ (кроме
+   *    Аэльдари), [разделитель], Система продвижения, [разделитель], Открыть
+   *    доступ▸ (Одержимость/Пси-Пробуждение/Техножрец), Доступен для ремёсел,
+   *    Фактор Прибыли (кроме Аэльдари), В Орду.
    *  - Демон — Пси-Пробуждение, Доступен для ремёсел, В Орду. Нет ни Мастера,
-   *    ни поля system.bodyType, ни трёх остальных флажков.
+   *    ни поля system.bodyType, ни подменю «Открыть доступ».
    *  - Принц Демона — Фактор Прибыли, Пси-Пробуждение, Доступен для ремёсел.
    *    Без «В Орду»: своя кнопка уже есть на вкладке ЗАПИСИ, дублировать не
    *    просили.
-   *  - Миньон — Пси-Пробуждение, В Орду, Сменить телосложение, Доступен для
-   *    ремёсел, Одержимость, Техножрец. Без Мастера и Фактора Прибыли.
+   *  - Миньон — Открыть доступ▸ (Пси-Пробуждение/Одержимость/Техножрец), В
+   *    Орду, Телосложение▸, Доступен для ремёсел. Без Мастера и Фактора Прибыли.
    * Пустой массив ⇒ кнопка в шапке вообще не рисуется (см. _attachFrameListeners) —
    * у Формирования/Отряда/Корабля/Техники/Звёздной системы этот класс не
    * используется (свои классы листов), там пунктов и не просили.
@@ -1264,12 +1347,6 @@ export class WarhammerCharacterSheet
       cls: "wh-ctx-charwizard", label: "🧙 Перезапустить мастера создания",
       onClick: () => this.openCreationWizard()
     };
-    // Астартес всегда мужчины — выбора и раньше не было (блок на ЗАПИСЯХ
-    // прятался тем же условием); у Демона поля system.bodyType нет вовсе.
-    const bodytype = this.actor.system.race !== "astartes" ? {
-      cls: "wh-ctx-bodytype", label: "🧍 Сменить телосложение",
-      onClick: () => this._changeBodyType()
-    } : null;
     const horde = {
       cls: "wh-ctx-tohorde", label: "☠ Превратить в Орду",
       onClick: () => convertActorToHorde(this.actor)
@@ -1279,12 +1356,13 @@ export class WarhammerCharacterSheet
       // Техножрец/Фактор Прибыли — имперские понятия; у Аэльдари (и ветвей)
       // их не показывали и в старом блоке СТАТУС (там же — Мировоззрение).
       const aeldari = isAeldariRace(this.actor.system.race);
-      const keys = ["possessed", "isPsyker", ...(aeldari ? [] : ["isTechpriest"]), "craftAvailable",
-        ...(aeldari ? [] : ["isRogueTrader"])];
+      const accessKeys = ["possessed", "isPsyker", ...(aeldari ? [] : ["isTechpriest"])];
       return [
-        wizard, bodytype, { sep: true },
-        ...(aeldari ? [] : [...this._alignmentEntries(), { sep: true }]),
-        ...this._sheetToggleEntries(keys),
+        wizard, this._bodyTypeSubmenu(), { sep: true },
+        ...(aeldari ? [] : [this._alignmentSubmenu(), { sep: true }]),
+        ...this._advancePricingEntries(), { sep: true },
+        this._accessSubmenu(accessKeys),
+        ...this._sheetToggleEntries(["craftAvailable", ...(aeldari ? [] : ["isRogueTrader"])]),
         horde
       ].filter(Boolean);
     }
@@ -1295,10 +1373,10 @@ export class WarhammerCharacterSheet
       return this._sheetToggleEntries(["isRogueTrader", "isPsyker", "craftAvailable"]);
     }
     if (type === "minion") {
-      const [psyker] = this._sheetToggleEntries(["isPsyker"]);
       return [
-        psyker, horde, bodytype,
-        ...this._sheetToggleEntries(["craftAvailable", "possessed", "isTechpriest"])
+        this._accessSubmenu(["isPsyker", "possessed", "isTechpriest"]),
+        horde, this._bodyTypeSubmenu(),
+        ...this._sheetToggleEntries(["craftAvailable"])
       ].filter(Boolean);
     }
     return [];

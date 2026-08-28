@@ -61,7 +61,7 @@
     "damageType": "energy",
     "penetration": 6,
     "quality": "common",
-    "availability": 5,
+    "availability": 3,
     "weight": 4,
     "attackBonus": 0,
     "special": "Топор; Хват 2р [Бл]; Досягаемость 4–5. Копьё (5–6): 1d10+6 E, Pen 5, Power Field; Посох (2–4): 1d10-2 I(Cr), Imprecise, Primitive, Reinforced.",

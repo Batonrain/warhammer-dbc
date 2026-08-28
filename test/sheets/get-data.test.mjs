@@ -57,6 +57,27 @@ describe("сенсоры когитатора", () => {
     expect(ctxOf({ insanity: { value: 70 } }).insanityLevel).toBe("over");
   });
 
+  it("нагрузка: T.b + S.b показывается перед строкой Ношение/Подъём/Толкание", () => {
+    const ctx = ctxOf({ characteristics: { t: char(40), s: char(35) } });
+    expect(ctx.encumbranceIndexSum).toBe(7);   // 4 + 3
+  });
+});
+
+describe("Стойка/База на вкладке БОЙ", () => {
+  it("список из constants/combat.mjs, отмечена текущая (по умолчанию — Стандартная)", () => {
+    const ctx = ctxOf({});
+    expect(ctx.combatStanceOptions.find(s => s.key === "standard").active).toBe(true);
+    expect(ctx.combatStanceOptions.filter(s => s.active)).toHaveLength(1);
+    expect(ctx.combatBaseOptions.find(b => b.key === "standard").active).toBe(true);
+  });
+
+  it("невалидное/непустое значение на акторе тоже отмечается активным", () => {
+    const ctx = ctxOf({ meleeStance: "aggressive", meleeBase: "charge" });
+    expect(ctx.combatStanceOptions.find(s => s.key === "aggressive").active).toBe(true);
+    expect(ctx.combatStanceOptions.filter(s => s.active)).toHaveLength(1);
+    expect(ctx.combatBaseOptions.find(b => b.key === "charge").active).toBe(true);
+  });
+
   it("Опыт: доля потраченного, у пустого листа — ноль", () => {
     expect(ctxOf({ experience: { total: 1000, spent: 250 } }).xpPct).toBe(25);
     expect(ctxOf({ experience: { total: 0, spent: 0 } }).xpPct).toBe(0);
