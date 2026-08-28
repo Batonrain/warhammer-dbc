@@ -11,6 +11,10 @@
   margin-bottom: 8px;
 }
 
+/* ДВИЖЕНИЕ: своя строка на всю ширину сетки — три колонки типов движения
+   (боевые/механики/марши) не помещаются в 155px-слот третьей колонки. */
+.warhammer-dbc .combat-layout .movement-panel-full { grid-column: 1 / -1; }
+
 /* ── Раны ── */
 .warhammer-dbc .wounds-body .wounds-row {
   display: flex;

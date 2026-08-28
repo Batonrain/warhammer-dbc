@@ -206,23 +206,9 @@
       </div> {{/each}}
     </div> </div> {{/if}}
 
-  {{!-- ── ПРИМЕНИТЬ ПРЕПАРАТ ─────────────────────────────────────────────── --}}
-  <div class="effects-subsection"> <div class="panel-title">ПРИМЕНИТЬ ПРЕПАРАТ</div> {{#if gearDrugs.length}}
-    <table class="items-table effects-drug-table"> <thead> <tr> <th>Препарат</th> <th>Категория</th> <th>Приём</th> <th>Длит.</th> <th>Кол-во</th> <th></th> </tr> </thead> <tbody> {{#each gearDrugs as |drug|}}
-        <tr class="drug-apply-row {{#if drug.isActive}}drug-row-active{{/if}}"> <td class="drug-name-cell"> <span class="drug-name-link" data-item-id="{{drug.id}}">{{drug.name}}</span> {{#if drug.isActive}}
-              <span class="drug-active-dot" title="Активен · {{drug.roundsRemaining}} ход.">●</span> {{/if}}
-            {{#if drug.hasAddiction}}
-            <button type="button" class="addiction-test-btn drug-name-test-btn" data-item-id="{{drug.id}}" data-char="{{drug.addictionTestChar}}" data-mod="{{drug.addictionTestMod}}" title="Тест Зависимости">Зав.</button> {{/if}}
-          </td> <td>{{drug.categoryLabel}}</td> <td>{{drug.deliveryLabel}}</td> <td class="drug-duration-cell"> {{#if drug.duration}}
-            <span class="drug-duration-text" title="Бросается автоматически при применении">{{drug.duration}}</span> {{else}}—{{/if}}
-          </td> <td class="drug-qty-cell">{{drug.quantity}}</td> <td> <div class="drug-apply-actions"> <button type="button" class="drug-apply-btn" data-item-id="{{drug.id}}" {{#if (eq drug.quantity 0)}}disabled{{/if}}
-                      title="Применить на себе: {{drug.name}}"> Применить
-              </button> <button type="button" class="drug-apply-other-btn" data-item-id="{{drug.id}}" {{#if (eq drug.quantity 0)}}disabled{{/if}}
-                      title="Применить на выделенной/нацеленной цели (другой токен)"> На другом
-              </button> </div> </td> </tr> {{/each}}
-      </tbody> </table> {{else}}
-    <div class="effects-empty">Нет препаратов в снаряжении</div> {{/if}}
-  </div>
+  {{!-- ПРИМЕНИТЬ ПРЕПАРАТ переехал на вкладку БОЙ (tab-combat.hbs) — по
+        просьбе пользователя, ближе к остальным боевым действиям. АКТИВНЫЕ
+        ПРЕПАРАТЫ (выше) и остальные секции ТЕЛА остались на месте. --}}
 
   {{!-- ── МУТАЦИИ И ДАРЫ БОГОВ (общий пул, стр. 440-460) ───────────────────── --}}
   <div class="effects-subsection"> <div class="panel-title"> МУТАЦИИ И ДАРЫ БОГОВ

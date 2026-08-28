@@ -20,7 +20,7 @@
     "sustainable": false,
     "sustainCost": 1,
     "sustainAction": "free",
-    "damage": "3d10+2×PR",
+    "damage": "3d10+2*PR",
     "damageType": "blast",
     "penetration": 0,
     "weaponProps": [],

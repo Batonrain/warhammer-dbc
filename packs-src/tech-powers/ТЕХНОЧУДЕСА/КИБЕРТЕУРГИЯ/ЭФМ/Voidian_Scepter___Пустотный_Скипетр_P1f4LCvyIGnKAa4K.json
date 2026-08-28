@@ -23,7 +23,7 @@
     "sustained": false,
     "compiled": false,
     "range": "Сам",
-    "damage": "3d10+2×I.b",
+    "damage": "3d10+2*I.b",
     "damageType": "energy",
     "penetration": 12,
     "effect": "[Железо: EFM Circuits, Unctor Cognis · Цена: 4К+3Э · Процесс: Нет · Тип: Компенсатор (1), Славословие (1)] Треб.: For.Lore (Mechanicum)+20. Силовое оружие в Унктор Когнис до начала след. Хода: 3d10+2×I.b E, Pen 12, Contained, Extreme (7), Imprecise, Power Field, Razor Sharp, Bl −2. Считается на 2 Размера больше при Парировании; успешное Парирование — S+0 vs S+0 или удар проходит. Активация перегружает техно-щиты в 3м (кроме своих и до I.b союзников).",

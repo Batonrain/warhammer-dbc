@@ -8,10 +8,10 @@
 
 /* ── Единая перекраска в цвет Бога: ВСЯ шапка + все данные-вкладки ──
    Источник — когитаторная зелень; один hue-rotate двигает её в цвет Бога
-   (шапка, поля ввода, панели, ТЕЛО, ЗАПИСИ). Портрет и карточки Богов
-   контр-развёрнуты, чтобы сохранить истинные цвета. ПСИ/ТЕХ/НАВ/
-   ОДЕРЖИМОСТЬ не трогаем (свои темы); полоса Очков и навигация красятся
-   напрямую через --gc (см. ниже). */
+   (шапка, поля ввода, панели, ТЕЛО, СОЦИУМ, ЗАПИСИ). Портрет и карточки
+   Богов контр-развёрнуты, чтобы сохранить истинные цвета. ПСИ (своя тема по
+   Природе Дара, см. actor-psy.css) /ТЕХ/НАВ/ОДЕРЖИМОСТЬ не трогаем; полоса
+   Очков и навигация красятся напрямую через --gc (см. ниже). */
 .warhammer-dbc.chaos-heretic .sheet-header,
 .warhammer-dbc.chaos-heretic .stats-cog,
 .warhammer-dbc.chaos-heretic .combat-cog,
@@ -19,6 +19,7 @@
 .warhammer-dbc.chaos-heretic .gear-cog,
 .warhammer-dbc.chaos-heretic .advance-cog,
 .warhammer-dbc.chaos-heretic .body-tab,
+.warhammer-dbc.chaos-heretic .social-tab,
 .warhammer-dbc.chaos-heretic .notes-cog .notes-section-panel {
   filter: hue-rotate(var(--dp-hue)) saturate(var(--dp-sat, 1)) brightness(var(--dp-bright, 1));
 }

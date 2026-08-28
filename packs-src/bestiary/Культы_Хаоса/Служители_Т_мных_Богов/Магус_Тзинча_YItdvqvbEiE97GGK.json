@@ -595,7 +595,7 @@
         "sustainable": false,
         "sustainCost": 1,
         "sustainAction": "free",
-        "damage": "1d10+2×PR",
+        "damage": "1d10+2*PR",
         "damageType": "energy",
         "penetration": 0,
         "weaponProps": [],

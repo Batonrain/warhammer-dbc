@@ -81,15 +81,34 @@
 .warhammer-dbc .combat-cog .tech-action { color: #7fbf9c; }
 .warhammer-dbc .combat-cog .tech-mod { color: var(--cg-fire); text-shadow: 0 0 5px rgba(255,184,77,0.4); }
 
-/* движение — кнопки типов/механик (стр. 28-32), тот же стиль, что у приёмов */
-.warhammer-dbc .combat-cog .movement-actions-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+/* движение — кнопки типов/механик (стр. 28-32), тот же стиль, что у приёмов.
+   Три колонки бок о бок (боевые/механики/марши) — каждая своя вертикальная
+   стопка кнопок, вместо прежних full-width строк, что переносились сами. */
+.warhammer-dbc .combat-cog .movement-cols { display: flex; gap: 6px; margin-top: 4px; align-items: flex-start; }
+.warhammer-dbc .combat-cog .movement-col { flex: 1 1 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .warhammer-dbc .combat-cog .wh-move-btn {
-  flex: 1 1 auto; min-width: 84px; padding: 3px 6px; font-size: 0.82em;
+  width: 100%; padding: 3px 6px; font-size: 0.82em;
   background: linear-gradient(180deg, #0c2418, #071510) !important; border: 1px solid var(--cg-line) !important;
   color: #c8ffe4 !important; font-family: inherit; border-radius: 3px; transition: all 0.12s;
 }
 .warhammer-dbc .combat-cog .wh-move-btn:hover { border-color: var(--cg) !important; box-shadow: 0 0 12px -4px var(--cg); color: #eafff4 !important; transform: translateY(-1px); }
 .warhammer-dbc .combat-cog .wh-move-btn:active { background: rgba(77,255,166,0.14) !important; transform: none; }
+/* Кнопка + отдельное поле дистанции рядом — заменяет прежнюю таблицу
+   Полушаг/Шаг/Натиск/Бег и превью-значения у Карабканья/Плавания/маршей. */
+.warhammer-dbc .combat-cog .movement-item { display: flex; gap: 4px; }
+.warhammer-dbc .combat-cog .movement-item .wh-move-btn { flex: 1 1 auto; min-width: 0; }
+.warhammer-dbc .combat-cog .mv-box {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+  min-width: 32px; padding: 3px 6px; font-size: 0.82em; font-weight: bold; white-space: nowrap;
+  background: linear-gradient(180deg, #0c2418, #071510); border: 1px solid var(--cg-line);
+  border-radius: 3px; color: var(--cg); text-shadow: 0 0 7px rgba(77,255,166,0.45);
+}
+.warhammer-dbc .combat-cog .mv-box-wide { min-width: 64px; }
+/* Базовая нарративная скорость (стр. 29) над кнопками маршей. */
+.warhammer-dbc .combat-cog .movement-col-note {
+  font-size: 0.74em; color: #8fe0b4; line-height: 1.25; padding: 1px 2px 2px;
+  border-bottom: 1px solid rgba(77,255,166,0.2); margin-bottom: 1px;
+}
 
 /* ── Таблицы оружия / карточки ──────────────────────────── */
 .warhammer-dbc .combat-cog .combat-weapons-table thead th,

@@ -20,7 +20,7 @@
     "sustainable": false,
     "sustainCost": 1,
     "sustainAction": "free",
-    "damage": "2d10+2×PR",
+    "damage": "2d10+2*PR",
     "damageType": "rending",
     "penetration": 0,
     "weaponProps": [],
