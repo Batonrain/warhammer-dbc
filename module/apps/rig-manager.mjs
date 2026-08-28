@@ -6,7 +6,7 @@
 //  хранится на акторе во флаге warhammer-dbc.stowage = { itemId: location }.
 // ════════════════════════════════════════════════════════════════════════
 
-import { RIG_VARIANT_FLAG, rigManagerData } from "../constants/rig.mjs";
+import { RIG_VARIANT_FLAG, rigManagerData, fits, itemSizeStr } from "../constants/rig.mjs";
 
 const { Application } = foundry.appv1.api;
 const NS = "warhammer-dbc";
@@ -17,8 +17,8 @@ export class RigManager extends Application {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ["warhammer-dbc", "wh-holo", "wh-rig"],
       template: "systems/warhammer-dbc/templates/apps/rig-manager.hbs",
-      width: 640, height: 720, resizable: true,
-      scrollY: [".wh-rig-scroll"]
+      width: 760, height: 720, resizable: true,
+      scrollY: [".wr-col-rigs", ".wr-col-unassigned"]
     });
   }
   constructor(actor, options = {}) {
@@ -74,23 +74,61 @@ export class RigManager extends Application {
   activateListeners(html) {
     super.activateListeners(html);
     const el = html[0] ?? html;
-    // Назначить предмет в слот
-    el.querySelectorAll("[data-slot-assign]").forEach(sel => sel.addEventListener("change", e => {
-      const itemId = e.target.value; if (!itemId) return;
-      this._assign(itemId, sel.dataset.slotAssign);
-    }));
     // Убрать из слота
     el.querySelectorAll("[data-slot-clear]").forEach(b => b.addEventListener("click", () => this._clearSlot(b.dataset.slotClear)));
     // Сменить вариант слота (кобура → ножны → петля)
     el.querySelectorAll("[data-slot-variant]").forEach(sel => sel.addEventListener("change", e =>
       this._setVariant(sel.dataset.slotVariant, e.target.value)));
-    // Добавить в рюкзак
-    el.querySelectorAll("[data-bp-add]").forEach(sel => sel.addEventListener("change", e => {
-      const itemId = e.target.value; if (!itemId) return;
-      this._assign(itemId, `bp:${sel.dataset.bpAdd}`);
-    }));
     // Достать (сделать не размещённым)
     el.querySelectorAll("[data-item-clear]").forEach(b => b.addEventListener("click", () => this._unassign(b.dataset.itemClear)));
+
+    // ── Drag-and-drop: тащим предмет за карточку в слот / рюкзак / «Не размещено» ──
+    el.querySelectorAll("[data-drag-item]").forEach(h => {
+      h.addEventListener("dragstart", e => {
+        e.dataTransfer.setData("text/plain", h.dataset.dragItem);
+        e.dataTransfer.effectAllowed = "move";
+        h.classList.add("dragging");
+      });
+      h.addEventListener("dragend", () => h.classList.remove("dragging"));
+    });
+    // Слот: принимает только предмет, который в него помещается (та же проверка, что и раньше в списке выбора).
+    el.querySelectorAll("[data-slot-drop]").forEach(zone => {
+      zone.addEventListener("dragover", e => {
+        e.preventDefault(); e.dataTransfer.dropEffect = "move"; zone.classList.add("wr-drop-hover");
+      });
+      zone.addEventListener("dragleave", e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove("wr-drop-hover"); });
+      zone.addEventListener("drop", e => {
+        e.preventDefault(); zone.classList.remove("wr-drop-hover");
+        const itemId = e.dataTransfer.getData("text/plain");
+        const item = this.actor?.items?.get(itemId);
+        if (!item) return;
+        if (!fits(itemSizeStr(item), zone.dataset.slotSize)) {
+          ui.notifications.warn(`«${item.name}» не помещается в этот слот (${zone.dataset.slotSize}).`);
+          return;
+        }
+        this._assign(itemId, zone.dataset.slotDrop);
+      });
+    });
+    // Рюкзак-контейнер: без ограничения по размеру.
+    el.querySelectorAll("[data-bp-drop]").forEach(zone => {
+      zone.addEventListener("dragover", e => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; zone.classList.add("wr-drop-hover"); });
+      zone.addEventListener("dragleave", e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove("wr-drop-hover"); });
+      zone.addEventListener("drop", e => {
+        e.preventDefault(); zone.classList.remove("wr-drop-hover");
+        const itemId = e.dataTransfer.getData("text/plain"); if (!itemId) return;
+        this._assign(itemId, `bp:${zone.dataset.bpDrop}`);
+      });
+    });
+    // «Не размещено»: сбросить локацию предмета.
+    el.querySelectorAll("[data-unassign-drop]").forEach(zone => {
+      zone.addEventListener("dragover", e => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; zone.classList.add("wr-drop-hover"); });
+      zone.addEventListener("dragleave", e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove("wr-drop-hover"); });
+      zone.addEventListener("drop", e => {
+        e.preventDefault(); zone.classList.remove("wr-drop-hover");
+        const itemId = e.dataTransfer.getData("text/plain"); if (!itemId) return;
+        this._unassign(itemId);
+      });
+    });
     // Клик по зоне схемы силовой брони — подсветить и проскроллить к слотам той же зоны.
     el.querySelectorAll("[data-slot-region]").forEach(r => r.addEventListener("click", () => {
       const region = r.dataset.slotRegion;

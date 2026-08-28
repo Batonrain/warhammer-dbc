@@ -21,7 +21,96 @@
     "properties": [],
     "strengthBonus": 20,
     "wpBonus": 0,
-    "special": "Древняя силовая броня Механикум. Носят только персонажи с Имплантами Механикум (питается от Катушки Потенции, без батареи). Даёт Трейт Nimble (10), не подавляет Трейты, совместима с имплантами/мутациями."
+    "special": "Древняя силовая броня Механикум. Носят только персонажи с Имплантами Механикум (питается от Катушки Потенции, без батареи). Даёт Трейт Nimble (10), не подавляет Трейты, совместима с имплантами/мутациями.",
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, слева"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, слева",
+          "variants": [
+            {
+              "key": "holster",
+              "label": "кобура",
+              "size": "2x1"
+            }
+          ]
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, справа"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, справа",
+          "variants": [
+            {
+              "key": "holster",
+              "label": "кобура",
+              "size": "2x1"
+            }
+          ]
+        }
+      ],
+      "magLocks": [
+        {
+          "size": "4x1",
+          "count": 2,
+          "note": "бёдра"
+        },
+        {
+          "size": "3x1",
+          "count": 2,
+          "note": "бока кирасы"
+        },
+        {
+          "size": "2x1",
+          "count": 2,
+          "note": "голени спереди",
+          "awkward": true
+        },
+        {
+          "size": "2x1",
+          "count": 2,
+          "note": "голени сзади",
+          "awkward": "veryAwkward"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "предплечья",
+          "variants": [
+            {
+              "key": "shield",
+              "label": "щит",
+              "size": "3x3"
+            }
+          ]
+        },
+        {
+          "size": "4x1",
+          "count": 1,
+          "note": "пояс сзади",
+          "awkward": true
+        },
+        {
+          "size": "5x3",
+          "count": 1,
+          "note": "ранец сзади",
+          "awkward": "veryAwkward"
+        }
+      ]
+    }
   },
   "_id": "GF3RwVbQ9ZRKK9mG",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
