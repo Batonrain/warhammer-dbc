@@ -128,9 +128,396 @@
   color: var(--wh-text, #1a1008);
 }
 
+/* ── Селекты ── */
+.wr-select {
+  padding: 2px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  max-width: 90px;
+}
+
+.wr-select-sm {
+  padding: 2px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  max-width: 80px;
+}
+
+.wr-select-avail {
+  padding: 2px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--wh-text, #1a1008);
+  max-width: 150px;
+}
+
+/* ── Textarea ── */
+.item-textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: none;
+  font-family: inherit;
+  font-size: 0.88em;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  color: var(--wh-text, #1a1008);
+  display: block;
+}
+
+.item-textarea-tall { min-height: 200px; }
+
+/* ── prose-mirror вместо textarea (Описание/Заметки): та же рамка/фон через
+      .item-textarea выше, но контейнеру редактора нужен flex, а не block —
+      иначе тулбар и текст ProseMirror схлопываются. Базовые 80px хватает под
+      обычный <textarea>, но у prose-mirror свой тулбар сам съедает ~42px —
+      с тем же min-height тексту остаётся полоска в пару строк с вечным
+      скроллом (баг wdbc-описание, найден 28.08.2026). Поэтому у prose-mirror
+      свой, больший min-height, обычные <textarea> с тем же классом не трогает. */
+prose-mirror.item-textarea { display: flex; min-height: 180px; }
+prose-mirror.item-textarea-tall { min-height: 260px; }
+/* Кнопка «Изменить»: у ядра прячется до наведения — здесь видна всегда. */
+prose-mirror.item-textarea button.toggle:enabled { display: block; }
+
+/* ── Таблица дистанций ── */
+.weapon-range-table {
+  margin: 4px 8px 6px;
+  border: 1px solid var(--wh-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.wrt-title {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  font-size: 0.78em;
+  font-weight: bold;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+.wrt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wh-border-light);
+  font-size: 0.83em;
+}
+
+.wrt-row:last-child { border-bottom: none; }
+.wrt-name  { font-weight: bold; min-width: 100px; }
+.wrt-range { flex: 1; color: var(--wh-text-mid); }
+.wrt-mod   { font-weight: bold; min-width: 36px; text-align: right; }
+
+.wrt-pointblank { background: #e8ffe8; }
+.wrt-pointblank .wrt-mod { color: #1a7a1a; }
+.wrt-short { background: #f4ffe8; }
+.wrt-short .wrt-mod { color: #4a7a1a; }
+.wrt-combat { background: #f8f8f0; }
+.wrt-combat .wrt-mod { color: #5a5a3a; }
+.wrt-long { background: #fff4e8; }
+.wrt-long .wrt-mod { color: #8a4a00; }
+.wrt-extreme { background: #ffe8e8; }
+.wrt-extreme .wrt-mod { color: #8a0000; }
+
+/* ── Боеприпасы: модификаторы ── */
+.ammo-mods-section {
+  margin: 4px 0;
+  border-top: 1px solid var(--wh-border-light);
+}
+
+.ammo-mods-title {
+  background: var(--wh-panel-mid);
+  color: var(--wh-text-light);
+  font-size: 0.78em;
+  font-weight: bold;
+  padding: 2px 8px;
+  letter-spacing: 0.05em;
+}
+
+.ammo-mods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 5px 8px;
+  background: var(--wh-bg);
+}
+
+.ammo-mod-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ammo-mod-cell label {
+  font-size: 0.78em;
+  font-weight: bold;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+  min-width: 55px;
+}
+
+.ammo-mod-wide { grid-column: span 2; }
+.ammo-mod-wide label { min-width: 90px; }
+
+/* ── Чекбоксы типов оружия ── */
+.ammo-weapon-types-row {
+  align-items: flex-start !important;
+  padding: 6px 8px !important;
+}
+
+.ammo-types-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  flex: 1;
+}
+
+.ammo-type-cb-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82em;
+  color: var(--wh-text);
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: background 0.1s;
+}
+
+.ammo-type-cb-label:hover { background: var(--wh-input-bg); }
+
+.ammo-type-cb-label input[type="checkbox"] {
+  accent-color: var(--wh-red);
+  margin: 0;
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+}
+
+/* ─── Сетка AP по частям тела ─── */
+.armor-location-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px 8px;
+  padding: 6px;
+  margin: 4px 0;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+}
+
+.alg-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.alg-cell label {
+  font-size: 0.82em;
+  color: var(--wh-text-mid);
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.alg-spacer {
+  /* пустая ячейка для выравнивания */
+  display: block;
+}
+
+/* ─── Особенности брони ─── */
+.armor-properties-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 4px 0;
+}
+
+.armor-prop-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82em;
+  cursor: pointer;
+  color: var(--wh-text-mid);
+}
+
+.armor-prop-label:hover {
+  color: var(--wh-text-dark);
+}
+
+.armor-prop-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* ─── Силовая броня ─── */
+.armor-power-block {
+  margin: 6px 0;
+  padding: 6px 8px;
+  background: rgba(60,20,20,0.08);
+  border-left: 3px solid #8b3a3a;
+  border-radius: 2px;
+}
+
+.armor-power-title {
+  font-weight: bold;
+  font-size: 0.88em;
+  color: #6b1a1a;
+  margin-bottom: 4px;
+}
+
+.armor-power-note {
+  font-size: 0.8em;
+  color: var(--wh-text-mid);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Лист предмета
+═══════════════════════════════════════════════════════ */
+
+/* ── Шапка ── */
+.item-sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--wh-red, #6b1a1a);
+  background: var(--wh-panel-dark, #2a1a0e);
+}
+
+.item-sheet-header .item-img {
+  width: 60px;
+  height: 60px;
+  border: 2px solid var(--wh-red, #6b1a1a);
+  cursor: pointer;
+  object-fit: cover;
+}
+
+.item-header-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.item-name-label {
+  color: var(--wh-text-light, #e8e0d0);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.item-name-input {
+  flex: 1;
+  font-size: 1.1em;
+  font-weight: bold;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  padding: 3px 6px;
+  font-family: inherit;
+  color: var(--wh-text, #1a1008);
+}
+
+/* ── Секции ── */
+.item-section {
+  margin: 6px 6px 0;
+  border: 1px solid var(--wh-border, #7a5c2e);
+}
+
+.item-section-title {
+  background: var(--wh-panel-mid, #4a2e18);
+  color: var(--wh-text-light, #e8e0d0);
+  font-weight: bold;
+  font-size: 0.82em;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  text-align: center;
+}
+
+/* ── Строки полей ── */
+.weapon-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--wh-border-light, #b8a882);
+  flex-wrap: nowrap;
+}
+
+.weapon-row:last-child { border-bottom: none; }
+
+.wr-label {
+  font-size: 0.8em;
+  color: var(--wh-text-mid, #5a4a30);
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.wr-sep {
+  color: var(--wh-text-mid, #5a4a30);
+  font-weight: bold;
+  padding: 0 1px;
+}
+
+/* ── Поля ввода ── */
+.wr-input-xs {
+  width: 40px;
+  text-align: center;
+  padding: 2px 3px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-sm {
+  width: 55px;
+  text-align: center;
+  padding: 2px 3px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-md {
+  width: 100px;
+  padding: 2px 4px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
 .wr-input-wide {
   flex: 1;
   min-width: 80px;
+  padding: 2px 4px;
+  background: var(--wh-input-bg, #ccc8bc);
+  border: 1px solid var(--wh-border, #7a5c2e);
+  font-family: inherit;
+  font-size: 0.88em;
+  color: var(--wh-text, #1a1008);
+}
+
+.wr-input-special {
+  flex: 1;
   padding: 2px 4px;
   background: var(--wh-input-bg, #ccc8bc);
   border: 1px solid var(--wh-border, #7a5c2e);
@@ -343,7 +730,6 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
 }
 
 .alg-spacer {
-  /* пустая ячейка для выравнивания */
   display: block;
 }
 
