@@ -67,6 +67,7 @@ import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { initMovementActionsHud } from "./module/combat/movement-actions.mjs";
+import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
@@ -836,6 +837,7 @@ Hooks.once("ready", () => initHUD());
 Hooks.once("init", () => initTokenVariants());
 Hooks.once("init", () => initDifficultTerrainHud());
 Hooks.once("init", () => initMovementActionsHud());
+Hooks.once("init", () => initFreeAttackHooks());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());
 

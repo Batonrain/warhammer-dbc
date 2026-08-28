@@ -1,10 +1,13 @@
 // module/combat/movement-actions.mjs
 // ════════════════════════════════════════════════════════════════════════
 //  Движение (стр. 28-30), кроме Трудного Ландшафта (движение-terrain.mjs):
-//   A. Боевые типы (Полудвижение/Полное/Натиск/Бег, стр. 32) — тратят ОД
-//      через action-economy.mjs, Бег ставит флаг flags.warhammer-dbc.running,
-//      читаемый в module/sheets/attack-dialog.mjs (модификатор атакующим по
-//      бегущему) и в action-economy.mjs (блокирует Реакции бегущего).
+//   A. Боевые типы (Полудвижение/Полное/Натиск/Бег/Выход из Боя, стр. 32) —
+//      тратят ОД через action-economy.mjs, Бег ставит флаг
+//      flags.warhammer-dbc.running, читаемый в module/sheets/attack-dialog.mjs
+//      (модификатор атакующим по бегущему) и в action-economy.mjs (блокирует
+//      Реакции бегущего). Выход из Боя ставит disengageActive — гасит
+//      Свободную Атаку на следующее движение (module/combat/free-attack.mjs,
+//      wdbc-2xku), блокируется Вызовом/Challenge (system.conditions.challenged).
 //   B. Отдельные механики кнопками (Карабканье/Прыжки/Плавание/Падение/
 //      Полёт) — по образцу showDifficultTerrainDialog из movement-terrain.mjs:
 //      Dialog + тест 1d100 + чат-карточка исхода.
@@ -95,6 +98,32 @@ export async function declareCharge(actor) {
     <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>
     <div class="roll-threshold">Перемещение до SPD×3 (не менее 4м), заканчивая в контакте с противником.</div>
     <div class="roll-threshold" style="font-size:0.85em;">База «Натиск» выбрана — рукопашный приём +20, 2 ОД спишутся на броске атаки.</div>
+  </div>`);
+}
+
+/**
+ * Выход из Боя (wdbc-2xku): Полное действие, перемещение до SPD×1, не
+ * провоцирует Свободную Атаку (module/combat/free-attack.mjs) — ставит разовый
+ * флаг disengageActive, гасящий первое же обнаруженное перемещение этого
+ * токена. Вызов/Challenge (X) блокирует добровольный выход из рукопашной,
+ * пока наложено system.conditions.challenged (снимается по книге — кроме
+ * уклонения от атаки по площади, решает ГМ, поэтому подтверждение, а не
+ * жёсткий запрет).
+ */
+export async function declareDisengage(actor) {
+  if (!actor) return;
+  if (actor.system.conditions?.challenged) {
+    const confirmed = await Dialog.confirm({
+      title: "Вызов (Challenge)",
+      content: `<p>${esc(actor.name)} под эффектом Вызова: нельзя добровольно выходить из рукопашной, кроме как чтобы увернуться от атаки по площади.</p><p>Это тот самый случай?</p>`
+    });
+    if (!confirmed) return;
+  }
+  if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  await actor.setFlag("warhammer-dbc", "disengageActive", true);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Выход из Боя</div>
+    <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>
   </div>`);
 }
 
@@ -551,6 +580,7 @@ export function showMovementMenu(actor) {
     buttons.fullmove = { label: "Полное движение (2 ОД)", callback: () => declareFullMove(actor) };
     buttons.charge   = { label: "Натиск", callback: () => declareCharge(actor) };
     buttons.run      = { label: "Бег (2 ОД)", callback: () => declareRun(actor) };
+    buttons.disengage = { label: "Выход из Боя (2 ОД)", callback: () => declareDisengage(actor) };
   }
   buttons.climb = { label: "Карабканье", callback: () => showClimbDialog(actor) };
   buttons.jump  = { label: "Прыжок", callback: () => showJumpDialog(actor) };
