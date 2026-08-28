@@ -78,6 +78,8 @@ import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs
 import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
 import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs";
 import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs";
+import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
+import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
@@ -316,6 +318,22 @@ Hooks.once("init", () => {
       + "систему, их нужно снять в исходники командой npm run packs:unpack.",
     scope: "world", config: true, type: Boolean, default: false,
     onChange: async (on) => { if (game.user.isGM) await setSystemPackLocks(!on); }
+  });
+
+  // «Обновить мир» — превью и выборочное применение расхождений предметов
+  // актёров с текущим паком (module/apps/content-sync-app.mjs).
+  game.settings.registerMenu("warhammer-dbc", "contentSyncMenu", {
+    name: "Обновить мир",
+    label: "Обновить мир",
+    hint: "Сверяет предметы актёров с текущими данными компендиумов и позволяет выборочно подтянуть изменившиеся поля.",
+    icon: "fa-solid fa-rotate",
+    type: ContentSyncApp,
+    restricted: true
+  });
+
+  // Версия бутстрапа опоры «Обновить мир» (одноразовая, см. миграцию)
+  game.settings.register("warhammer-dbc", "contentSyncBaselineVersion", {
+    scope: "world", config: false, type: Number, default: 0
   });
 
   // Настройка: убрать серую рамку у заметок-пинов на сцене.
@@ -711,7 +729,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -784,6 +802,18 @@ Hooks.once("ready", async () => {
     await backfillAspirationGrants();
     await game.settings.set("warhammer-dbc", "aspirationGrantsVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Довыдача Стремлений:", e); }
+});
+
+// ── Одноразовый бутстрап: опора для «Обновить мир» у существующих предметов ───
+// Ручной перезапуск: game.warhammerDBC.stampContentSyncBaseline()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "contentSyncBaselineVersion") || 0) >= VERSION) return;
+  try {
+    await stampContentSyncBaseline();
+    await game.settings.set("warhammer-dbc", "contentSyncBaselineVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Опора синхронизации контента:", e); }
 });
 
 // ── Одноразовая довыдача: aptSource Миньонам Хаоса, купленным до фикса цены ───

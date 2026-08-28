@@ -1,0 +1,74 @@
+<div class="wh-cs">
+  <div class="wh-cs-toolbar">
+    <button type="button" data-act="refresh" title="Пересчитать заново"><i class="fa-solid fa-rotate"></i> Обновить список</button>
+    <span class="wh-cs-dim">Отмечено полей: {{selectedCount}}</span>
+    <button type="button" class="wh-cs-apply" data-act="apply" {{#unless hasRows}}disabled{{/unless}}>Применить</button>
+  </div>
+
+  <div class="wh-cs-body">
+    {{#if hasRows}}
+    <table class="wh-cs-table">
+      <thead>
+        <tr>
+          <th class="wh-cs-c"></th>
+          <th>Предмет пака / поле</th>
+          <th>Было</th>
+          <th>Станет</th>
+          <th class="wh-cs-c">Актёров</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows as |row|}}
+        <tr class="wh-cs-row{{#if row.anyConflict}} wh-cs-conflict{{/if}}" data-row="{{row.key}}">
+          <td class="wh-cs-c">
+            {{#if row.soloEntry}}
+            <input type="checkbox" data-entry="{{row.soloEntry.entryKey}}" {{#if row.soloEntry.checked}}checked{{/if}}/>
+            {{else}}
+            <input type="checkbox" data-act="toggle-row" data-row="{{row.key}}"
+                   {{#if row.allChecked}}checked{{/if}}/>
+            {{/if}}
+          </td>
+          <td class="wh-cs-name">
+            <span class="wh-cs-type">{{row.itemTypeLabel}}</span> {{row.packName}} — <span class="wh-cs-field">{{row.path}}</span>
+            {{#if row.anyConflict}}<span class="wh-cs-badge wh-cs-badge-conflict" title="Хотя бы у одного актёра поле правили и в паке, и вручную">конфликт</span>{{/if}}
+            {{#unless row.soloEntry}}
+            <a class="wh-cs-toggle" data-act="toggle-group" title="Раскрыть по актёрам">{{#if row.expanded}}▾{{else}}▸{{/if}} {{row.count}} акт.</a>
+            {{/unless}}
+          </td>
+          <td class="wh-cs-val">{{#if row.soloEntry}}{{row.soloEntry.actorValStr}}{{else}}—{{/if}}</td>
+          <td class="wh-cs-val wh-cs-new">{{row.packValStr}}</td>
+          <td class="wh-cs-c">{{row.count}}</td>
+        </tr>
+        {{#if row.expanded}}
+        {{#each row.entries as |e|}}
+        <tr class="wh-cs-entry{{#if (eq e.status "conflict")}} wh-cs-conflict{{/if}}">
+          <td class="wh-cs-c"><input type="checkbox" data-entry="{{e.entryKey}}" {{#if e.checked}}checked{{/if}}/></td>
+          <td class="wh-cs-name wh-cs-entry-name">{{e.actorName}}{{#if (eq e.status "conflict")}} <span class="wh-cs-badge wh-cs-badge-conflict">конфликт</span>{{/if}}</td>
+          <td class="wh-cs-val">{{e.actorValStr}}</td>
+          <td class="wh-cs-val wh-cs-new">{{row.packValStr}}</td>
+          <td class="wh-cs-c"></td>
+        </tr>
+        {{/each}}
+        {{/if}}
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="wh-cs-empty">Расхождений с текущим паком не найдено.</div>
+    {{/if}}
+
+    {{#if hasUnmatched}}
+    <details class="wh-cs-unmatched">
+      <summary>Без соответствия в паке ({{unmatchedCount}}) — не трогаются</summary>
+      <table class="wh-cs-table">
+        <thead><tr><th>Актёр</th><th>Предмет</th><th>Тип</th></tr></thead>
+        <tbody>
+          {{#each unmatched as |u|}}
+          <tr><td>{{u.actorName}}</td><td>{{u.itemName}}</td><td>{{u.itemTypeLabel}}</td></tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </details>
+    {{/if}}
+  </div>
+</div>
