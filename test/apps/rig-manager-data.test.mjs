@@ -106,3 +106,25 @@ describe("rigManagerData — перекладка между слотами", ()
     expect(data.unassigned.map(i => i.id)).toContain("knife1");
   });
 });
+
+describe("rigManagerData — предмет, надетый на другой (wornOn)", () => {
+  it("визор, надетый на шлем, не числится «не размещённым» и не занимает слот", () => {
+    const belt = beltItem();
+    const helmet = { id: "helm1", name: "Шлем", type: "armor", system: { weight: 2, equipped: true } };
+    const visor = gearItem("visor1", "Визор", { wornOn: "helm1" });
+    const a = actor([belt, helmet, visor]);
+
+    const data = rigManagerData(a);
+    expect(data.unassigned.map(i => i.id)).not.toContain("visor1");
+    expect(data.rigs[0].slots[0].opts.map(o => o.id)).not.toContain("visor1");
+  });
+
+  it("wornOn на несуществующий/неподходящий id не освобождает от слота (вещь остаётся обычной)", () => {
+    const belt = beltItem();
+    const visor = gearItem("visor1", "Визор", { wornOn: "nope" });
+    const a = actor([belt, visor]);
+
+    const data = rigManagerData(a);
+    expect(data.unassigned.map(i => i.id)).toContain("visor1");
+  });
+});

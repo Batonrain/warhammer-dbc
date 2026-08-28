@@ -1402,6 +1402,11 @@ export class WarhammerItemSheet
         context.gearCategories = GEAR_CATEGORIES;
         context.rigComfort     = RIG_COMFORT;
         context.rigSlotSizes   = RIG_SLOT_SIZES;
+        // «Надеть на» (не занимает слот в разгрузке, см. constants/rig.mjs
+        // wornOnHost) — носитель тот же набор типов, что у Рунической Вязи.
+        context.gearWornOnTargets = (this.item.parent?.items ?? [])
+          .filter(i => (i.type === "armor" || i.type === "weapon") && i.id !== this.item.id)
+          .map(i => ({ id: i.id, name: i.name, equipped: i.system.equipped }));
       } else {
         if (!sys.toolCategory) sys.toolCategory = "general";
         context.toolCategories = TOOL_CATEGORIES;

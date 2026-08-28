@@ -13,6 +13,15 @@
     <input type="text" name="system.worn" value="{{system.worn}}" class="wr-input-md" placeholder="напр. Спина / Голова (И,П)"/>
   </div>
   <div class="weapon-row">
+    <label class="wr-label" title="Мелочь, жёстко закреплённая на другом предмете (визор на шлеме, крепление на броне) — не занимает слот в разгрузке, пока указан носитель.">Надеть на</label>
+    <select name="system.wornOn" class="wr-select">
+      <option value="" {{#if (eq system.wornOn "")}}selected{{/if}}>— не надето —</option>
+      {{#each gearWornOnTargets as |t|}}
+      <option value="{{t.id}}" {{#if (eq @root.system.wornOn t.id)}}selected{{/if}}>{{t.name}}{{#if t.equipped}} ✓{{/if}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="weapon-row">
     <label class="wr-label">Кол-во</label>
     <input type="number" name="system.quantity" value="{{system.quantity}}" min="0" class="wr-input-xs"/>
     <label class="wr-label">Вес/ед.</label>

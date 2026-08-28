@@ -33,6 +33,12 @@ export class GearData extends foundry.abstract.TypeDataModel {
       gearCategory: new StringField({ initial: "misc", label: "Категория" }),
       linkedWeapon: new StringField({ initial: "", label: "Связанное оружие" }),
       worn:         new StringField({ initial: "", label: "Как носится" }),
+      // Мелочь, жёстко закреплённая на другом предмете (визор на шлеме,
+      // крепление на броне, штык-нож на цевье) — не лежит в разгрузке сама
+      // по себе и не занимает в ней слот, пока указан носитель. Та же форма
+      // выбора, что у armorMod.installedOn (см. item-sheet.mjs), но подпись
+      // и цель другие — здесь просто «надето на», бонусов не даёт.
+      wornOn:       new StringField({ initial: "", label: "Надето на" }),
       effect:       new StringField({ initial: "", label: "Эффект" }),
       reminder:     new StringField({ initial: "", label: "Напоминание" }),
       qualityEffects: qualityEffectsField(),
