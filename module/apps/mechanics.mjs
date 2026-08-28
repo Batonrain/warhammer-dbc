@@ -184,7 +184,9 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { SKILLS_DEF, GROUP_SKILLS_DEF }      from "../constants/skills.mjs";
-import { skillGrantOutcome, findSameTalent, createOrRankTalent } from "../rules/duplicate-grants.mjs";
+import { skillGrantOutcome, findSameTalent, createOrRankTalent,
+         talentDuplicatePolicy, skillDuplicatePolicy,
+         altTalentCandidates, altSkillCandidates, talentLibraryEntry } from "../rules/duplicate-grants.mjs";
 import { refundXP, skillStepsCost, talentCost, skillReason, talentReason }
   from "./duplicate-refund.mjs";
 import { MINION_TYPES, minionsOf, loyaltyAfterChange } from "./minions.mjs";
@@ -1012,6 +1014,85 @@ function showSpecChoiceDialog(skillLabel, choices, need = 1) {
 }
 
 /**
+ * Диалог настройки «Повтор Таланта — Выбор альтернативного» (rules/
+ * duplicate-grants.mjs, talentDuplicatePolicy). Список — уже отфильтрованные
+ * кандидаты той же Группы/Ступени, минус имеющиеся. Пусто/отмена → null,
+ * вызывающий код фолбэчит на компенсацию опытом.
+ */
+function showAltTalentDialog(dupName, candidates) {
+  const rows = candidates.map((c, i) => `<label class="grant-choice-row">
+    <input type="radio" name="alt-talent" value="${i}" ${i === 0 ? "checked" : ""}/>
+    <span>${esc(c.name)}</span></label>`).join("");
+  return new Promise(resolve => {
+    let resolved = false;
+    new Dialog({
+      title: `Дубль Таланта: ${dupName}`,
+      content: `<div class="wh-grant-choice">
+        <p>«${esc(dupName)}» уже есть — выберите вместо него другой Талант той же Группы и Ступени:</p>
+        ${rows}</div>`,
+      buttons: {
+        pick: {
+          icon: '<i class="fas fa-check"></i>', label: "Выдать",
+          callback: html => {
+            if (resolved) return;
+            const idx = parseInt(html.find('input[name="alt-talent"]:checked').val());
+            resolved = true;
+            resolve(candidates[idx] ?? null);
+          }
+        },
+        refund: { label: "Компенсировать опытом", callback: () => { if (!resolved) { resolved = true; resolve(null); } } }
+      },
+      default: "pick",
+      close: () => { if (!resolved) { resolved = true; resolve(null); } }
+    }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 420 }).render(true);
+  });
+}
+
+/**
+ * Диалог настройки «Повтор Навыка — Выбор альтернативного» (skillDuplicatePolicy).
+ * Групповой Навык (Общие знания и т.п.) — специализация свободным текстом:
+ * закрытого списка вариантов книга не даёт. Обычный — выбор другого Навыка
+ * из полного списка (candidates от altSkillCandidates). Пусто/отмена → null.
+ */
+function showAltSkillDialog(dupLabel, { group, candidates }) {
+  const body = group
+    ? `<div class="wh-grant-choice">
+        <p>«${esc(dupLabel)}» с такой Специализацией уже есть — впишите другую:</p>
+        <input type="text" id="alt-skill-spec" class="pm-input pm-wide" placeholder="Новая специализация"/></div>`
+    : `<div class="wh-grant-choice">
+        <p>«${esc(dupLabel)}» уже на этой или более высокой ступени — выберите другой Навык:</p>
+        ${candidates.map((c, i) => `<label class="grant-choice-row">
+          <input type="radio" name="alt-skill" value="${i}" ${i === 0 ? "checked" : ""}/>
+          <span>${esc(c.label)}</span></label>`).join("")}</div>`;
+  return new Promise(resolve => {
+    let resolved = false;
+    new Dialog({
+      title: `Дубль Навыка: ${dupLabel}`,
+      content: body,
+      buttons: {
+        pick: {
+          icon: '<i class="fas fa-check"></i>', label: "Выдать",
+          callback: html => {
+            if (resolved) return;
+            resolved = true;
+            if (group) {
+              const spec = String(html.find("#alt-skill-spec").val() || "").trim();
+              resolve(spec ? { specialty: spec } : null);
+            } else {
+              const idx = parseInt(html.find('input[name="alt-skill"]:checked').val());
+              resolve(candidates[idx] ?? null);
+            }
+          }
+        },
+        refund: { label: "Компенсировать опытом", callback: () => { if (!resolved) { resolved = true; resolve(null); } } }
+      },
+      default: "pick",
+      close: () => { if (!resolved) { resolved = true; resolve(null); } }
+    }, { classes: ["dialog", "warhammer-dbc", "wh-holo"], width: 420 }).render(true);
+  });
+}
+
+/**
  * Если у записи skill/rollmod specKey:"__choice__" — просит актора выбрать ОДНУ
  * специализацию из отмеченных GM'ом кандидатов (specChoiceKeys) и возвращает
  * КОПИЮ записи с уже подставленными specKey/specialty; иначе — запись как есть.
@@ -1281,6 +1362,21 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     if (entry.kind === "talent") {
       const same = findSameTalent(actor.items, { name: data.name, system: { specialization: spec } });
       if (same) {
+        if (talentDuplicatePolicy() === "altTalent") {
+          const owned = actor.items.filter(i => i.type === "talent").map(i => i.name);
+          const candidates = altTalentCandidates(data.name, owned);
+          const picked = candidates.length ? await showAltTalentDialog(data.name, candidates) : null;
+          const altSrc = picked ? talentLibraryEntry(picked.name) : null;
+          if (altSrc) {
+            const altData = foundry.utils.deepClone(altSrc);
+            altData.system = { ...altData.system, granted: true, purchased: false, cost: 0 };
+            altData.flags = { [FLAG]: { grantedByItem: sourceItem.id, abilityEntryId: entry.id } };
+            await actor.createEmbeddedDocuments("Item", [altData]);
+            return;
+          }
+        }
+        // Политика «Компенсация опытом» (по умолчанию) или фолбэк altTalent
+        // без кандидатов/без выбора — как раньше.
         await refundXP(actor, talentCost(actor, same),
           talentReason(same.name, same.system?.specialization));
         return;
@@ -1363,16 +1459,26 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       (found.specKey && e.specKey === found.specKey) || (!found.specKey && e.specialty === found.specialty)) : -1;
     if (idx >= 0) {
       // Тот же групповой Навык из второго источника: ступень выше, а на
-      // потолке — возврат опыта (rules/duplicate-grants.mjs).
+      // потолке — возврат опыта (rules/duplicate-grants.mjs), либо, по
+      // настройке ГМ, другая Специализация того же Навыка вместо возврата.
       const prev = arr[idx].rank || "untrained";
       const out  = skillGrantOutcome(prev, entry.rank);
-      arr[idx].rank        = out.rank;
-      arr[idx].grantedRank = higherRank(arr[idx].grantedRank || "untrained", out.rank);
-      if (out.refundSteps.length) {
-        await refundXP(actor,
-          skillStepsCost(actor, entry.skillKey, out.refundSteps, { group: true, specialty: arr[idx].specialty }),
-          skillReason(`${GROUP_SKILLS_DEF[entry.skillKey]?.label || entry.skillKey}`
-            + ` (${arr[idx].specialty || arr[idx].specKey || "?"})`, entry.rank, prev));
+      let altSpec = null;
+      if (out.duplicate && skillDuplicatePolicy() === "altSkill") {
+        const label = GROUP_SKILLS_DEF[entry.skillKey]?.label || entry.skillKey;
+        altSpec = await showAltSkillDialog(label, { group: true, candidates: [] });
+      }
+      if (altSpec?.specialty) {
+        arr.push({ specialty: altSpec.specialty, rank: entry.rank, grantedRank: entry.rank, cost: 0 });
+      } else {
+        arr[idx].rank        = out.rank;
+        arr[idx].grantedRank = higherRank(arr[idx].grantedRank || "untrained", out.rank);
+        if (out.refundSteps.length) {
+          await refundXP(actor,
+            skillStepsCost(actor, entry.skillKey, out.refundSteps, { group: true, specialty: arr[idx].specialty }),
+            skillReason(`${GROUP_SKILLS_DEF[entry.skillKey]?.label || entry.skillKey}`
+              + ` (${arr[idx].specialty || arr[idx].specKey || "?"})`, entry.rank, prev));
+        }
       }
     } else {
       arr.push({
@@ -1385,18 +1491,29 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
   } else {
     const cur = actor.system.skills?.[entry.skillKey] || {};
     // Тот же Навык из второго источника поднимает ступень, а на потолке
-    // возвращает цену третьей покупки (rules/duplicate-grants.mjs).
+    // возвращает цену третьей покупки (rules/duplicate-grants.mjs), либо, по
+    // настройке ГМ, выдаёт ту же ступень другому Навыку вместо возврата.
     const out = skillGrantOutcome(cur.rank || "untrained", entry.rank);
-    const newRank    = out.rank;
-    const newGranted = higherRank(cur.grantedRank || "untrained", out.rank);
-    if (out.refundSteps.length) {
+    let altKey = null;
+    if (out.duplicate && skillDuplicatePolicy() === "altSkill") {
+      const label = SKILLS_DEF[entry.skillKey]?.label || entry.skillKey;
+      const candidates = altSkillCandidates(entry.skillKey, actor.system.skills || {});
+      const picked = candidates.length ? await showAltSkillDialog(label, { group: false, candidates }) : null;
+      altKey = picked?.key || null;
+    }
+    const targetKey = altKey || entry.skillKey;
+    const targetCur = altKey ? (actor.system.skills?.[altKey] || {}) : cur;
+    const targetOut = altKey ? skillGrantOutcome(targetCur.rank || "untrained", entry.rank) : out;
+    const newRank    = targetOut.rank;
+    const newGranted = higherRank(targetCur.grantedRank || "untrained", targetOut.rank);
+    if (targetOut.refundSteps.length) {
       await refundXP(actor,
-        skillStepsCost(actor, entry.skillKey, out.refundSteps, { entryChar: entry.char }),
-        skillReason(SKILLS_DEF[entry.skillKey]?.label || entry.skillKey, entry.rank, cur.rank));
+        skillStepsCost(actor, targetKey, targetOut.refundSteps, { entryChar: entry.char }),
+        skillReason(SKILLS_DEF[targetKey]?.label || targetKey, entry.rank, targetCur.rank || "untrained"));
     }
     const upd = {
-      [`system.skills.${entry.skillKey}.rank`]: newRank,
-      [`system.skills.${entry.skillKey}.grantedRank`]: newGranted
+      [`system.skills.${targetKey}.rank`]: newRank,
+      [`system.skills.${targetKey}.grantedRank`]: newGranted
     };
     // См. комментарий в history: точный пересчёт .cost требует skillCumCost()
     // (приватный замыкающий метод actor-sheet.mjs, завязан на Склонности и
@@ -1406,7 +1523,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     // выше выдаваемого — cost осознанно не трогаем, GM пересчитает вручную
     // кнопкой ★ на «Развитии».
     if (SKILL_RANK_STEPS[newGranted] >= SKILL_RANK_STEPS[newRank]) {
-      upd[`system.skills.${entry.skillKey}.cost`] = 0;
+      upd[`system.skills.${targetKey}.cost`] = 0;
     }
     await actor.update(upd);
   }

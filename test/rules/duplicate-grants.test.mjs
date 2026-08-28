@@ -12,7 +12,9 @@ import { describe, it, expect, vi } from "vitest";
 import {
   RANK_ORDER, rankIndex, nextRank, higherOf, stepsUpTo,
   skillGrantOutcome, isSameTalent, findSameTalent,
-  repeatableTalentTarget, createOrRankTalent
+  repeatableTalentTarget, createOrRankTalent,
+  talentDuplicatePolicy, skillDuplicatePolicy,
+  talentGroupOf, talentLibraryEntry, altTalentCandidates, altSkillCandidates
 } from "../../module/rules/duplicate-grants.mjs";
 
 const talent = (name, specialization = "") => ({ type: "talent", name, system: { specialization } });
@@ -142,5 +144,51 @@ describe("Талант с накоплением ранга (system.hasRating)",
 
     expect(res).toEqual({ item: created, ranked: false, rating: 1 });
     expect(actor.createEmbeddedDocuments).toHaveBeenCalledWith("Item", [rateable("Enemy")]);
+  });
+});
+
+// Настройка ГМ: политика повтора для Механики (applyMechEntry). Без запущенного
+// Foundry (нет game.settings) — тихий фолбэк на прежнее поведение, не ошибка.
+describe("политика повтора — фолбэк без game.settings", () => {
+  it("Талант по умолчанию — компенсация опытом (прежнее единственное поведение)", () => {
+    expect(talentDuplicatePolicy()).toBe("refund");
+  });
+  it("Навык по умолчанию — подъём (прежний единственный алгоритм skillGrantOutcome)", () => {
+    expect(skillDuplicatePolicy()).toBe("raise");
+  });
+});
+
+describe("альтернативный Талант той же Группы и Ступени", () => {
+  it("группа/ступень берутся из статической библиотеки по имени", () => {
+    expect(talentGroupOf("Combat Formation / Боевое Построение")).toEqual({ folder: "Общие", tier: 1 });
+    expect(talentGroupOf("Такого таланта нет")).toBeNull();
+  });
+
+  it("кандидаты — та же папка и ступень, без уже имеющихся у персонажа", () => {
+    const cands = altTalentCandidates("Combat Formation / Боевое Построение",
+      ["Combat Formation / Боевое Построение"]);
+    expect(cands.every(c => c.folder === "Общие" && c.tier === 1)).toBe(true);
+    expect(cands.map(c => c.name)).not.toContain("Combat Formation / Боевое Построение");
+    expect(cands.map(c => c.name)).toContain("Combat Sense / Чувство Боя");
+  });
+
+  it("неизвестное имя — пустой список кандидатов", () => {
+    expect(altTalentCandidates("Такого таланта нет", [])).toEqual([]);
+  });
+
+  it("полная запись библиотеки доступна по имени для выдачи выбранной альтернативы", () => {
+    const entry = talentLibraryEntry("Combat Sense / Чувство Боя");
+    expect(entry?.type).toBe("talent");
+    expect(entry?.system?.tier).toBe(1);
+    expect(talentLibraryEntry("Такого таланта нет")).toBeNull();
+  });
+});
+
+describe("альтернативный Навык", () => {
+  it("список — все прочие обычные Навыки с их текущим рангом у персонажа", () => {
+    const cands = altSkillCandidates("dodge", { athletics: { rank: "trained" } });
+    expect(cands.map(c => c.key)).not.toContain("dodge");
+    expect(cands.find(c => c.key === "athletics")).toEqual({ key: "athletics", label: "Атлетика", rank: "trained" });
+    expect(cands.find(c => c.key === "stealth").rank).toBe("untrained");
   });
 });
