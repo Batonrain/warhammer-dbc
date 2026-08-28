@@ -219,6 +219,17 @@ describe("боеприпас", () => {
     expect(hits()).toEqual([{ index: 1, damage: 14, location: "Торс" }]);
     expect(card()).toContain("против одушевлённых");
   });
+
+  it("ручной бонус урона из диалога атаки (atk-dmg-bonus) прибавляется к итоговому урону", async () => {
+    const weapon = weaponFor();
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [23, 6];
+
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, { dmgBonus: 5 });
+
+    expect(damageFormula()).toBe("1d10+5 + 5");
+    expect(hits()).toEqual([{ index: 1, damage: 16, location: "Торс" }]);
+  });
 });
 
 describe("прицеливание", () => {
