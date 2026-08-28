@@ -150,6 +150,7 @@ export function attackPenetration({ base, wp, hit, deg, shortRange = false, maxi
   if (wp.razorSharp && hit && deg >= 3) pen *= 2;
   if (wp.meltaShort && shortRange)      pen *= 2;
   if (maximal)                          pen += 2;
+  if (wp.prismaAtMax)                   pen += 4;
   if (band?.pen)                        pen += Number(band.pen) || 0;
   return pen + forceBonus;
 }
@@ -188,6 +189,7 @@ export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, max
   }
   if (wp.scatter && shortRange) dice += 1;
   if (maximal)                  dice += 1;
+  if (wp.prismaAtMax)           dice += 1;
   if (band?.dice)               dice += Number(band.dice) || 0;
   return dice + (Number(ammoDice) || 0);
 }

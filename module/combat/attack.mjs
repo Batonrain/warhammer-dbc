@@ -21,6 +21,9 @@ import { vehicleHitLocation }                        from "../constants/vehicle.
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
+import { suppressionTestMod }                         from "./suppression.mjs";
+import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
+import { withWitchsEdge }                             from "./witchs-edge.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -88,6 +91,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     condProps:   opts.ammoCondProps || [],
     removeProps: loadedAmmo?.system?.removeProps || []
   });
+  // Колдовское Лезвие (стр. 74 Книги Аэльдари): выбор бонуса на Encounter
+  // (флаг на предмете, module/combat/witchs-edge.mjs) добавляет свои записи.
+  _mergedEntries = withWitchsEdge(item, _mergedEntries);
 
   // ── Выключенное оружие (стр. 209-211) ────────────────────────────────────
   const off = weaponOffEffects({
@@ -106,6 +112,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const wProps    = resolveWeaponPropsList(_mergedEntries);
   const wp         = aggregateAuto(wProps);
   wp.reliabilityScore += modFx.reliabilityMod || 0;
+  // Призма (стр. 74 Книги Аэльдари): текущий заряд живёт на предмете, не в
+  // реестре — обогащаем wp здесь же, до того как его читают downstream
+  // (bonusDamageDice/attackPenetration/расход патронов).
+  const prisma = prismaFireBonus(item, wp);
+  wp.prismaAtMax = prisma.atMax;
+  wp.prismaCharge = prisma.charge;
   // ── Качество оружия ──────────────────────────────────────────────────────
   //   Стрелковое: ±Надёжность; Рукопашное Best: +1 урон; Best: теряет Primitive.
   //   (Мод теста для рукопашного применяется в _showAttackDialog → threshold.)
@@ -236,12 +248,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Тратим патроны
   let ammoWarning = "";
   if (!isMelee && rofMode !== "melee") {
-    ammoSpent = _getAmmoSpent(item, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1);
+    ammoSpent = _getAmmoSpent(item, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
     // При перебросе/+10 за Очко Судьбы это тот же выстрел — патроны не тратятся повторно.
     if (ammoSpent > 0 && !opts.skipAmmo) {
       const curMag = sys.magazineCur || 0;
       const newMag = Math.max(0, curMag - ammoSpent);
       await item.update({ "system.magazineCur": newMag });
+      // Призма сбрасывается наполовину (окр. вниз) после ЛЮБОГО выстрела —
+      // тем же условием, что реальный расход патронов (не переброс/Судьба).
+      if (!opts.skipAmmo) await halvePrismaCharge(item, wp);
       if (newMag === 0) {
         ammoWarning = `<div class="roll-allout-note">Магазин пуст! Требуется перезарядка.</div>`;
       } else if (newMag <= Math.ceil((sys.magazineMax || 1) * 0.25)) {
@@ -257,8 +272,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Психосиловое в руках псайкера: +PR к урону и Pen (макс +10)
   const forceBonus = (wp.forcePR && isPsyker) ? Math.min(pr, 10) : 0;
 
+  // Перемены (Change, стр. 74 Книги Аэльдари): +X Pen, если цель отмечена
+  // бездушной/техникой в диалоге атаки (галочка, не авто — трейта «бездушный»
+  // на акторе нет).
+  const changePenBonus = (opts.changeSoulless && wp.changeRating) ? wp.changeRating : 0;
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0),
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus,
     wp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
   });
 
@@ -371,9 +390,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Стр. 35: ГМ распределяет одно попадание в торс за каждый нечётный Успех
   // (1, 3, 5…) до максимума в выбранный RoF, по СЛУЧАЙНЫМ целям в секторе —
   // поэтому урон не бросается автоматически, карточка лишь называет их число.
+  // Штраф теста Подавления зависит от RoF (полуавтомат −10 / автомат −20,
+  // module/combat/suppression.mjs), не от класса оружия. Импульсное (стр. 73
+  // Книги Аэльдари) добавляет ещё −10 цели.
   const supCap      = sys.rof_full || sys.rof_semi || 1;
   const suppression = (rofMode === "suppression" && hit)
-    ? { pen:  sys.weaponClass === "heavy" ? "−20" : "±0",
+    ? { testMod: suppressionTestMod(sys) - (wp.impulse ? 10 : 0),
         hits: Math.min(Math.ceil(deg / 2), supCap), cap: supCap }
     : null;
 

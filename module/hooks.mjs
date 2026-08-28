@@ -12,7 +12,11 @@ import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog } from "./combat/mount.mjs";
-import { CONDITION_LEVEL_FIELD }         from "./combat/weapon-properties.mjs";
+import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto } from "./combat/weapon-properties.mjs";
+import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
+import { processPrismaTurnStart } from "./combat/prisma.mjs";
+import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
+import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
@@ -117,7 +121,11 @@ export function registerHooks() {
         }
         // forceBase: Контратака — атака со штрафом −10 с нейтральной Базой,
         // персистентная «Полная Атака» (+30) сюда протекать не должна.
-        await actor.sheet._showAttackDialog?.(weapon, { modifier: -10, forceBase: "standard" });
+        // Дуэлянтское (+10 к таланту Counter Attack, стр. 73 Книги Аэльдари)
+        // снимает этот штраф целиком.
+        const cwProps    = resolveWeaponPropsList(mergeWeaponPropEntries(weapon, getModEffects(actor, weapon)));
+        const counterMod = aggregateAuto(cwProps).duelingParry ? 0 : -10;
+        await actor.sheet._showAttackDialog?.(weapon, { modifier: counterMod, forceBase: "standard" });
       });
     });
 
@@ -408,6 +416,27 @@ export function registerHooks() {
       });
     });
 
+    // Тест на Подавление (Стрельба на подавление, стр. 32-33) — по выбранному
+    // токену цели, штраф уже посчитан (RoF + Импульсное) в attack.mjs.
+    html.querySelectorAll(".wh-suppression-test-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const token = canvas.tokens?.controlled?.[0];
+        if (!token?.actor) return ui.notifications.warn("⚠️ Выберите токен цели на сцене!");
+        const mod = parseInt(ev.currentTarget.dataset.testMod || "0");
+        await rollSuppressionTest(token.actor, { mod, sourceLabel: "Стрельба на подавление" });
+      });
+    });
+    html.querySelectorAll(".wh-suppression-recovery-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Подавленный персонаж не найден.");
+        await rollSuppressionRecovery(actor, { bonus: parseInt(ds.bonus || "0") });
+      });
+    });
+
     // Непоглощаемый урон в Ходовую техники (Трудный Ландшафт) → Структура
     html.querySelectorAll(".wh-vehicle-track-dmg-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -504,7 +533,12 @@ async function _applyWeaponPropEffect(ds) {
   const perDoP    = ds.wpLevelPerDop === "1";
   const useRounds = ds.wpRounds === "1";
   const fixedRnd  = parseInt(ds.wpFixedRounds || "0");
-  const dmgFormula = ds.wpDamage  || "";
+  const dmgFormula   = ds.wpDamage  || "";
+  const rating       = parseInt(ds.wpRating || "0");
+  const isProvaly    = ds.wpProvaly === "1";
+  const provalyMult  = parseInt(ds.wpProvalyMult || "1");
+  const provalyAdd   = parseInt(ds.wpProvalyAdd  || "0");
+  const minDoP       = parseInt(ds.wpMinDop || "1") || 1;
   const rollMode  = game.settings.get("core", "rollMode");
 
   const allRolls = [];
@@ -527,10 +561,12 @@ async function _applyWeaponPropEffect(ds) {
         : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`}</div>`;
   }
 
-  // Состояния, которые накладываем при провале
+  // Состояния, которые накладываем при провале. minDoP (Вибро — Ничком только
+  // при 5+ Провалах, не при любом провале) отсекает состояние по degrees of
+  // failure, не влияя на сам факт провала теста/доп. урон.
   const conditionsToApply = [];
   if (kind === "grav") conditionsToApply.push(["prone", false], ["pinned", false]);
-  else if (condition)  conditionsToApply.push([condition, true]);
+  else if (condition && deg >= minDoP) conditionsToApply.push([condition, true]);
 
   let appliedNote = "";
   if (!resisted && conditionsToApply.length) {
@@ -560,6 +596,12 @@ async function _applyWeaponPropEffect(ds) {
     const dmg = dmgRoll.total;
     const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
     dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
+  } else if (!resisted && isProvaly) {
+    // «X+Провалы» (Bane, Vibro и т.п.): не кубик, а рейтинг×mult + add + Провалы
+    // проваленного теста сопротивления — уже посчитано выше как deg.
+    const dmg = rating * provalyMult + provalyAdd + deg;
+    const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
+    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню, ${rating}×${provalyMult}+${provalyAdd}+${deg} Провалы): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
   }
 
   const messageData = ChatMessage.applyRollMode({
@@ -973,6 +1015,12 @@ function _attachFateContextMenu(message, html) {
   // (wdbc, доступность combatantId «до» апдейта не гарантирована), поэтому
   // «кто ходил до этого» отслеживается своей мапой combat.id → combatantId,
   // а не встроенным геттером.
+  // Колдовское Лезвие (стр. 74 Книги Аэльдари): выбор бонуса на весь
+  // Encounter — спрашиваем ровно раз, в момент старта боя («Begin Combat»).
+  Hooks.on("combatStart", async (combat) => {
+    await processWitchsEdgeCombatStart(combat);
+  });
+
   Hooks.on("updateCombat", async (combat, changed) => {
     if (!game.user.isGM) return;
     if (changed?.round === undefined && changed?.turn === undefined) return;
@@ -980,9 +1028,16 @@ function _attachFateContextMenu(message, html) {
     const prevId = _lastTurnCombatant.get(combat.id);
     if (prevId && prevId !== nextCombatant?.id) {
       const prevActor = combat.combatants.get(prevId)?.actor;
-      if (prevActor) await applyTurnEndStanceEffects(prevActor);
+      if (prevActor) {
+        await applyTurnEndStanceEffects(prevActor);
+        // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
+        if (prevActor.system.conditions?.pinned) await postSuppressionRecoveryPrompt(prevActor);
+      }
     }
-    if (nextCombatant?.actor) await resetActionEconomy(nextCombatant.actor);
+    if (nextCombatant?.actor) {
+      await resetActionEconomy(nextCombatant.actor);
+      await processPrismaTurnStart(nextCombatant.actor);
+    }
     if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });
 

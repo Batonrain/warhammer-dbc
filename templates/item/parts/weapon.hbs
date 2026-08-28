@@ -207,7 +207,10 @@
       <div class="wprop-chip" title="{{p.def.desc}}">
         <span class="wprop-name">{{p.def.label}}</span>
         {{#if p.def.rating}}
-        {{#if p.def.ratingDice}}
+        {{#if p.def.ratingText}}
+        <input type="text" class="wprop-rating-dice" data-key="{{p.key}}" data-field="rating"
+               value="{{p.rating}}" title="Путь/группа (напр. Варп-Пауки)" placeholder="Путь/группа"/>
+        {{else if p.def.ratingDice}}
         <input type="text" class="wprop-rating-dice" data-key="{{p.key}}" data-field="rating"
                value="{{p.rating}}" title="Формула (напр. 1d10)" placeholder="1d10"/>
         {{else}}
@@ -224,6 +227,11 @@
         <input type="number" class="wprop-rating" data-key="{{p.key}}" data-field="rating2"
                value="{{p.rating2}}" title="Рейтинг Y"/>
         {{/if}}
+        {{/if}}
+        {{#if (eq p.key "prisma")}}
+        <span class="wprop-slash">⚡</span>
+        <input type="number" class="wprop-prisma-charge" min="0" max="{{p.rating}}"
+               value="{{p.prismaCharge}}" title="Текущий заряд (авто +1/Ход в руках, ½ после выстрела)"/>
         {{/if}}
         <button type="button" class="wprop-remove" data-action="wpropRemove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
       </div>

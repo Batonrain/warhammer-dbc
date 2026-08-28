@@ -10,7 +10,8 @@
     "hasRating": false,
     "hasRating2": false,
     "autoKey": "witchsEdge",
-    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
+    "notes": "Автоматизация: диалог выбора в начале Encounter (Hooks combatStart), выбор хранится флагом на предмете весь бой — реализовано. Не требует талант Secrets of the Seer программно (доступ не проверяется).",
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Особые свойства оружия эльдар»)"
   },
   "_id": "mOE2Dz9FvwnrML0i",
   "effects": [],

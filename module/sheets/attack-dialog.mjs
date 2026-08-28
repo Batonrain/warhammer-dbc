@@ -40,7 +40,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
 import { spendActionPoints, apCostForActionType } from "../combat/action-economy.mjs";
-import { measureTokens }                      from "../combat/tactical-map.mjs";
+import { measureTokens, meleeContactCount }    from "../combat/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
@@ -135,6 +135,8 @@ function readAttackForm(form, ammoConds) {
     allOut,
     extraBonus: allOut ? 20 : 0,
     shortRange: on("#atk-shortrange"),
+    // Перемены (Change, стр. 74 Книги Аэльдари): цель бездушна/техника → +X Pen.
+    changeSoulless: on("#atk-change-soulless"),
     weaponOff:  on("#atk-weaponoff"),
     maximal:    on("#atk-maximal"),
     bandIdx:    Number(el("#atk-band")?.value ?? -1),
@@ -283,7 +285,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ? `<span class="atk-training-warn" title="Беспомощная цель: бонус к стрельбе">🪢 Цель Беспомощна (+${helplessRangedMod})</span>`
       : "";
 
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod;
+  // Шаг За Шагом (стр. 73 Книги Аэльдари): +10, пока персонаж инициировал
+  // рукопашный бой или продолжает в нём находиться — то есть практически
+  // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
+  const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -573,10 +579,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   } else {
     if (sys.rof_single > 0)
       rofModes.push({ value: "single", label: "Одиночный выстрел (+10)", bonus: 10 });
+    // Импульсное (стр. 73 Книги Аэльдари): +10 к очередям. Удвоение «если
+    // оружие не двигали с прошлого раунда» — не автоматизировано (нет
+    // трекинга движения по раундам), считается за ГМ вручную.
+    const impulseBonus = wp.impulse ? 10 : 0;
+    const fmtMod = n => n === 0 ? "±0" : (n > 0 ? `+${n}` : `${n}`);
     if (sys.rof_semi > 0)
-      rofModes.push({ value: "semi",   label: `Короткая очередь (±0, ${sys.rof_semi} выстр.)`,  bonus: 0   });
+      rofModes.push({ value: "semi",   label: `Короткая очередь (${fmtMod(impulseBonus)}, ${sys.rof_semi} выстр.)`,  bonus: impulseBonus   });
     if (sys.rof_full > 0)
-      rofModes.push({ value: "full",   label: `Длинная очередь (−10, ${sys.rof_full} выстр.)`,  bonus: -10 });
+      rofModes.push({ value: "full",   label: `Длинная очередь (${fmtMod(impulseBonus - 10)}, ${sys.rof_full} выстр.)`,  bonus: impulseBonus - 10 });
     if (sys.rof_semi > 0 || sys.rof_full > 0)
       rofModes.push({ value: "suppression", label: "Стрельба на подавление (−20)", bonus: -20 });
   }
@@ -730,6 +741,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const charSwapWhy  = ruleFlagLabels(actor, "charSwap.wp.forWsS", attackCtx);
   const twoWeaponWhy = ruleFlagLabels(actor, "penalty.twoWeapon.off", attackCtx);
   const twoWeaponOff  = twoWeaponWhy.length > 0;
+  // Дуэлянтское (стр. 73 Книги Аэльдари): бой 1-на-1, когда никто не мешает,
+  // — +5 на все тесты с оружием. Считаем реальные контакты на карте
+  // (meleeContactCount), а не спрашиваем игрока на глаз — галочка лишь
+  // подтверждает то, что уже видно на сцене, и её можно снять руками.
+  const duelContacts = (wp.duelingParry && attackerToken) ? meleeContactCount(attackerToken) : null;
   const specificMods = isMelee ? [
     { label: "Трудный ландшафт",       value: -10 },
     { label: "Очень трудный ландшафт", value: -20 },
@@ -737,6 +753,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { label: "Числ. перевес 3к1",      value:  20 },
     { label: "Положение выше",         value:  10 },
     { label: "Более длинное оружие",   value:   5 },
+    ...(wp.duelingParry ? [{
+      label: "Дуэлянтское: бой 1-на-1 (никто не мешает)", value: 5,
+      autoCheck: duelContacts === 1,
+      note: duelContacts === null ? "нет токена атакующего — отметьте вручную"
+          : `врагов в контакте: ${duelContacts}; Финт/Давление в такой дуэли — с Преимуществом (отметьте на кубике)`
+    }] : []),
     // Локус Быстроты (стр. 29) снимает этот штраф. Строку не прячем, а обнуляем
     // с подписью: игрок должен видеть, ЧТО его сняло, иначе исчезнувшая галочка
     // выглядит как баг диалога.
@@ -745,7 +767,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           note: `штраф снят: ${twoWeaponWhy.join(", ")}` }
       : { label: "Бой несколькими руками", value: -20, note: "осн./неосн. рука" }
   ] : [
-    { label: "Подавлен огнём",          value: -20 },
+    // Стр. 33: Подавленный персонаж в укрытии получает −20 ко всем тестам BS.
+    // «В укрытии относительно источника» не проверяем (ситуативно) — авто-
+    // отмечаем по самому факту Подавления, галочку можно снять руками.
+    { label: "Подавлен огнём", value: -20, autoCheck: !!actor.system.conditions?.pinned },
     { label: "Стрельба в рукопашную",   value: -20 },
     { label: "Дистанция в упор",        value:  30 },
     { label: "Короткая дистанция",      value:  10 },
@@ -996,6 +1021,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <input id="atk-dmg-bonus" class="av-input av-num" type="number" value="0"
                title="Ручной бонус к урону этой атаки — прибавляется к итоговому урону после броска, отдельно от порога теста"/>
       </div>
+      ${wp.changeRating ? `
+      <div class="av-row">
+        <label class="attack-mod-check">
+          <input type="checkbox" id="atk-change-soulless"/>
+          Цель бездушна/техника (Перемены: +${wp.changeRating} Pen, не к попаданию)
+        </label>
+      </div>` : ""}
       <div class="av-row">
         <label>Укрытие</label>
         <input id="atk-cover" class="av-input av-num" type="number" value="${autoCoverMod}"
@@ -1171,7 +1203,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               crit: resolveTest({ actor, ...attackCtx }).crit,
               forcedDefenceReroll,
               techniqueOpts: finalTechniqueOpts,
-              dmgBonus: f.dmgBonus,
+              dmgBonus: f.dmgBonus, changeSoulless: f.changeSoulless,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
               profile: sel.prof, attackNote: sel.note,
               weaponOff: f.weaponOff, gripKey: sel.gKey,

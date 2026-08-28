@@ -927,7 +927,10 @@ export class WarhammerItemSheet
           key:     p.key,
           rating:  p.rating  ?? 0,
           rating2: p.rating2 ?? 0,
-          def:     WEAPON_PROPERTIES[p.key]
+          def:     WEAPON_PROPERTIES[p.key],
+          // Призма: текущий накопленный заряд (не рейтинг-максимум X, а живое
+          // состояние на предмете) — своя мини-панель в чипе, не общий rating2.
+          prismaCharge: p.key === "prisma" ? (context.system.prismaCharge ?? 0) : null
         }))
         .filter(p => p.def);
       context.weaponPropsAvailable = WEAPON_PROPERTIES_LIST.filter(d => !activeKeys.has(d.key));
@@ -2344,6 +2347,11 @@ export class WarhammerItemSheet
       const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
       const p     = props.find(x => x.key === key);
       if (p) { p[field] = val; await this.item.update({ "system.weaponProps": props }); }
+    });
+    // Призма: живой заряд на предмете (не weaponProps[].rating — тот X-максимум).
+    on(".wprop-prisma-charge", "change", async ev => {
+      const val = Math.max(0, parseInt(ev.currentTarget.value) || 0);
+      await this.item.update({ "system.prismaCharge": val });
     });
     // Рейтинг-бросок (например, Дуга/Arc: 2-е значение — формула кубика, напр. «2d10»).
     on(".wprop-rating-dice", "change", async ev => {

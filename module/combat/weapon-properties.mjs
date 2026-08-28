@@ -37,6 +37,7 @@ export function aggregateAuto(props) {
     accurate: false, tearing: false, provenRating: 0, extremeThreshold: 10,
     razorSharp: false, meltaShort: false, mightySB: false, containedSB: false,
     fellingRating: 0, primitive: false, flexible: false, defensive: false,
+    duelingParry: false, stepByStep: false, impulse: false, prismaRating: 0, throughShot: false, changeRating: 0,
     powerField: false, reinforced: false, reliabilityScore: 0, recharge: false,
     extraHits: null, multiStrikeRating: 0, stormRating: 0, ammoMult: 1, scatter: false,
     maximal: false, ignoreShield: false, lance: false, taintedCorB: false,
@@ -77,6 +78,12 @@ export function aggregateAuto(props) {
     if (au.flexible)      a.flexible = true;
     if (au.defensive)     a.defensive = true;
     if (au.powerField)    a.powerField = true;
+    if (au.duelingParry)  a.duelingParry = true;
+    if (au.stepByStep)    a.stepByStep = true;
+    if (au.impulse)       a.impulse = true;
+    if (au.prisma)        a.prismaRating = Math.max(a.prismaRating, r);
+    if (au.throughShot)   a.throughShot = true;
+    if (au.change)        a.changeRating = Math.max(a.changeRating, r);
     if (au.reinforced)    a.reinforced = true;
     if (typeof au.reliability === "number") a.reliabilityScore += au.reliability;
     if (au.recharge)      a.recharge = true;
@@ -202,42 +209,56 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
   const btns = [];
 
   for (const p of props) {
-    const te = p.def.auto?.targetEffect;
-    if (!te) continue;
+    // Свойство может нести больше одного независимого эффекта на цель (Вибро —
+    // отдельно T-тест на урон и S-тест на отброс) — targetEffect тогда массив,
+    // иначе как раньше, один объект.
+    const teRaw  = p.def.auto?.targetEffect;
+    const teList = Array.isArray(teRaw) ? teRaw : (teRaw ? [teRaw] : []);
 
-    const r       = p.rating || 0;
-    const testMod = (te.testMod ?? 0) + (te.testPerRating ? te.testPerRating * r : 0);
+    for (const te of teList) {
+      const r       = p.rating || 0;
+      const testMod = (te.testMod ?? 0) + (te.testPerRating ? te.testPerRating * r : 0);
 
-    // Особые «зональные» эффекты без per-target теста — выводим как заметку
-    if (te.kind && te.kind !== "grav") {
-      btns.push(`<div class="roll-wprop-note">${fillRating(p.def.reminder || p.def.label, p)}</div>`);
-      continue;
+      // Особые «зональные» эффекты без per-target теста — выводим как заметку
+      if (te.kind && te.kind !== "grav") {
+        btns.push(`<div class="roll-wprop-note">${fillRating(p.def.reminder || p.def.label, p)}</div>`);
+        continue;
+      }
+      // Кнопка нужна, если есть состояние, «зональный» kind (grav), кубик урона
+      // или урон вида «рейтинг×mult + add + Провалы» (provalyDamage) — иначе
+      // эффекту нечего накладывать, и показывать нечего.
+      if (!te.condition && te.kind !== "grav" && !te.damage && !te.damageFromRating && !te.provalyDamage) continue;
+
+      // Эффекты «при непоглощённом уроне» показываем кнопку только если урон прошёл
+      if (te.onUnsoaked && netDamageKnown && !hadUnsoaked) continue;
+
+      const label = p.def.label + (te.labelSuffix ? ` (${te.labelSuffix})` : "");
+      const data = [
+        `data-wp-label="${label}"`,
+        `data-wp-kind="${te.kind ?? ""}"`,
+        `data-wp-condition="${te.condition ?? ""}"`,
+        `data-wp-test-char="${te.testChar ?? ""}"`,
+        `data-wp-test-mod="${testMod}"`,
+        `data-wp-level-per-dop="${te.levelPerDoP ? 1 : 0}"`,
+        `data-wp-rounds="${te.rounds ? 1 : 0}"`,
+        `data-wp-fixed-rounds="${te.fixedRounds ?? 0}"`,
+        `data-wp-damage="${te.damageFromRating ? (p.rating || "") : (te.damage ?? "")}"`,
+        `data-wp-rating="${r}"`,
+        `data-wp-provaly="${te.provalyDamage ? 1 : 0}"`,
+        `data-wp-provaly-mult="${te.provalyDamage?.mult ?? 1}"`,
+        `data-wp-provaly-add="${te.provalyDamage?.add ?? 0}"`,
+        `data-wp-min-dop="${te.conditionMinDoP ?? 1}"`
+      ].join(" ");
+
+      const testStr = te.testChar
+        ? ` (тест ${te.testChar.toUpperCase()}${testMod >= 0 ? "+" : ""}${testMod})`
+        : "";
+      btns.push(
+        `<button class="wh-wprop-apply-btn" type="button" ${data}>
+          ${label}${testStr}
+        </button>`
+      );
     }
-    if (!te.condition && te.kind !== "grav") continue;
-
-    // Эффекты «при непоглощённом уроне» показываем кнопку только если урон прошёл
-    if (te.onUnsoaked && netDamageKnown && !hadUnsoaked) continue;
-
-    const data = [
-      `data-wp-label="${p.def.label}"`,
-      `data-wp-kind="${te.kind ?? ""}"`,
-      `data-wp-condition="${te.condition ?? ""}"`,
-      `data-wp-test-char="${te.testChar ?? ""}"`,
-      `data-wp-test-mod="${testMod}"`,
-      `data-wp-level-per-dop="${te.levelPerDoP ? 1 : 0}"`,
-      `data-wp-rounds="${te.rounds ? 1 : 0}"`,
-      `data-wp-fixed-rounds="${te.fixedRounds ?? 0}"`,
-      `data-wp-damage="${te.damageFromRating ? (p.rating || "") : (te.damage ?? "")}"`
-    ].join(" ");
-
-    const testStr = te.testChar
-      ? ` (тест ${te.testChar.toUpperCase()}${testMod >= 0 ? "+" : ""}${testMod})`
-      : "";
-    btns.push(
-      `<button class="wh-wprop-apply-btn" type="button" ${data}>
-        ${p.def.label}${testStr}
-      </button>`
-    );
   }
 
   if (!btns.length) return "";
