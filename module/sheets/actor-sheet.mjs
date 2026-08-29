@@ -20,7 +20,7 @@ import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
 import { activateDiseaseListeners } from "./tabs/diseases.mjs";
-import { fatiguePenalty, marchPenalty, activateConditionsListeners } from "./tabs/conditions.mjs";
+import { fatiguePenalty, marchPenalty, activateConditionsListeners, addCondition } from "./tabs/conditions.mjs";
 import { disabledArmourPenalty } from "../combat/armor-mods.mjs";
 import { painChatMsg } from "./tabs/pain.mjs";
 import { applyHealing } from "./tabs/healing.mjs";
@@ -30,6 +30,7 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners } from "./tabs/gear.mjs";
+import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
 import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minions-panel.mjs";
@@ -1252,6 +1253,27 @@ export class WarhammerCharacterSheet
   //    зрачок Третьего Глаза, драг предметов с листа.
 
   /**
+   * Пилюля состояния из карточки успешного Ритуала (module/apps/ritual-cast.mjs,
+   * module/hooks.mjs dragstart) — перехватываем свой payload type:"wh-condition"
+   * до штатных _onDropItem/_onDropActor: это не Item и не Actor, а просто ключ
+   * CONDITIONS_DEF. Неизвестный ключ и не-JSON payload молча уходят к super —
+   * штатному дропу Item/Actor/Folder.
+   */
+  async _onDrop(event) {
+    let payload;
+    try {
+      payload = JSON.parse(event.dataTransfer.getData("text/plain"));
+    } catch { payload = null; }
+
+    if (payload?.type === "wh-condition") {
+      event.preventDefault();
+      return addCondition(this.actor, payload.key, payload.level || null);
+    }
+
+    return super._onDrop(event);
+  }
+
+  /**
    * Раса и субраса на листе — не предмет в списке, а происхождение персонажа:
    * дроп уходит в применение, а обычное создание предмета не выполняется.
    * Бросить можно в любое место листа, слот лишь подсказывает куда целиться.
@@ -1511,6 +1533,9 @@ export class WarhammerCharacterSheet
     activateTechListeners(html, this.actor, {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts)
     });
+
+    // ── Ритуалы (стр. 393-425): добавление предмета + «Провести ритуал» ────
+    activateRitualListeners(html, this.actor);
 
     activateGearListeners(root, this.actor);
 
