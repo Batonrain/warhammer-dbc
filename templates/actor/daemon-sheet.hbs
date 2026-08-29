@@ -1,5 +1,34 @@
-{{!-- Обёртка — <div>: форма теперь корневой элемент окна (ApplicationV2). --}}
-<div class="warhammer-dbc daemon-sheet daemon-god-{{daemon.alg.key}}" style="--gc:{{daemon.alg.color}}; --gc2:{{daemon.alg.gc2}}; --glow:{{daemon.alg.glow}}; --dp-hue:{{daemon.alg.hue}};">
+{{!-- Обёртка — <div>: форма теперь корневой элемент окна (ApplicationV2,
+     PARTS.body.root=true) — классы/стиль, написанные прямо здесь на корне,
+     на реальный DOM не попадают (см. character-sheet.hbs и skill
+     dbc-housing). Раньше здесь висели daemon-god-{{daemon.alg.key}} и
+     инлайн --gc/--gc2/--glow/--dp-hue — они НИКОГДА не применялись (bug,
+     найден и исправлен при wdbc-nzn7): каждый демон визуально красился в
+     дефолт «Неделимый» независимо от выбранного Патрона. Теперь класс/
+     переменные навешивает daemon-sheet.mjs → _applyDaemonTheme() на
+     this.element после рендера — как _applyChaosPatronTheme() у Персонажа.
+
+     .cog-frame/.cog-rivet/.cog-plate-row/.cog-screen/.cog-status-row —
+     обшивка «инфопланшет» (wdbc-nzn7), тот же слой styles/sheets/
+     actor-housing.css, что у Персонажа/Миньона. .screen-status-line
+     («Дух машины пробуждён») сюда НЕ идёт — по мокапу Демон/Демон-Принц
+     эту строку не получают (машинный дух — не демоническая метафора). --}}
+<div class="warhammer-dbc daemon">
+  <div class="cog-rivet tl"></div>
+  <div class="cog-rivet tr"></div>
+  <div class="cog-rivet bl"></div>
+  <div class="cog-rivet br"></div>
+
+  <div class="cog-plate-row">
+    <span class="cog-plate">Инфопланшет модели XIL</span>
+    <div class="cog-leds">
+      <i class="cog-led cog-led-green on"></i>
+      <i class="cog-led cog-led-amber {{#if (eq actor.system.wounds.tier "heavy")}}on{{/if}}"></i>
+      <i class="cog-led cog-led-red {{#if (eq actor.system.wounds.tier "dying")}}on{{/if}}"></i>
+    </div>
+  </div>
+
+  <div class="cog-screen">
   {{!-- ── ДЕМОНИЧЕСКАЯ ШАПКА ──────────────────────────────────────────────── --}}
   <header class="daemon-header">
     <div class="daemon-warp-layer"></div><div class="daemon-warp-layer daemon-warp-b"></div>
@@ -112,4 +141,7 @@
 
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
   </div>
+  </div>
+
+  <div class="cog-status-row"></div>
 </div>
