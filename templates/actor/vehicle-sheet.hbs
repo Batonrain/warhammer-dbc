@@ -1,3 +1,24 @@
+{{!-- Обшивка «инфопланшет» (wdbc-84ja, skill dbc-housing). Существующая
+     когитаторная тема листа (styles/sheets/vehicle-sheet.css, «КОГИТАТОРНЫЙ
+     ЛОСК») не трогается — обшивка просто оборачивает готовые .veh-tabs/
+     .sheet-body, без редизайна под стиль Проводника (по ТЗ тикета: только
+     housing-слой, никаких UX-переработок). .vehicle-sheet — свой класс без
+     подклассов, безопасен как CSS-скоуп без доп. JS-маркера. --}}
+<div class="cog-rivet tl"></div>
+<div class="cog-rivet tr"></div>
+<div class="cog-rivet bl"></div>
+<div class="cog-rivet br"></div>
+
+<div class="cog-plate-row">
+  <span class="cog-plate">Инфопланшет модели XIL</span>
+  <div class="cog-leds">
+    <i class="cog-led cog-led-green on"></i>
+    <i class="cog-led cog-led-amber {{#if (eq structLevel "warn")}}on{{/if}}"></i>
+    <i class="cog-led cog-led-red {{#if (or (eq structLevel "crit") (eq structLevel "dead"))}}on{{/if}}"></i>
+  </div>
+</div>
+
+<div class="cog-screen">
 <header class="veh-header">
   <div class="veh-portrait-frame">
     <img class="veh-portrait" src="{{actor.img}}" data-action="portrait" data-edit="img" title="Изображение техники"/>
@@ -372,4 +393,8 @@
     </label>
   </div>
 
+  <div class="screen-status-line"><i class="cog-status-dot"></i><span>Двигатель в норме — экипаж на местах</span></div>
 </section>
+</div>
+
+<div class="cog-status-row"></div>
