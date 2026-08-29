@@ -854,6 +854,13 @@ export class WarhammerCharacterSheet
   _applyThemeClasses() {
     const root = this.element;
     if (!root) return;
+    // Обшивка «инфопланшет» (wdbc-m6as Персонаж, wdbc-ri8b Миньон,
+    // wdbc-nzn7 Демон, wdbc-xzvt Принц Демона) — PARTS.body.root=true
+    // отбрасывает классы, написанные прямо в шаблоне (см. комментарий в
+    // шапке character-sheet.hbs/minion-sheet.hbs/daemon-sheet.hbs/
+    // demon-prince-sheet.hbs), поэтому cog-frame навешивается здесь же, где
+    // и wh-align-*/wh-race-*.
+    root.classList.toggle("cog-frame", ["character", "minion", "daemon", "demonPrince"].includes(this.actor.type));
     const sys = this.actor.system;
     const cls = sys.isTechpriest ? "techpriest" : (sys.isPsyker ? "psyker" : "adept");
     root.classList.remove(...[...root.classList].filter(c => /^wh-(align|race|class)-/.test(c)));

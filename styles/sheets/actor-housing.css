@@ -1,0 +1,171 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — Обшивка «инфопланшет» (wdbc-m6as — Персонаж, wdbc-0owk —
+   Отряд; общий рецепт — skill dbc-housing). Металлический корпус вокруг
+   листа: заклёпки-черепа, шильдик-плашка с LED, нижняя решётка. Один
+   контур-кольцо на стыке корпус→экран (.cog-screen) — НЕ рамка на каждой
+   панели. Тема (когитатор/пергамент/мистика/тех) не трогается — корпус
+   ссылается на общие переменные (--wh-bg/--wh-parchment/--cg), а не
+   хардкодит цвет; --cg не определена вне .character-sheet — для листов без
+   когитаторной темы (Отряд) везде есть тот же зелёный через fallback
+   var(--cg, #4dffa6), совпадающий с общим --wh-accent.
+
+   Классы .cog-* нигде больше не используются — скоуп на голый .warhammer-dbc
+   безопасен для ЛЮБОГО листа, взявшего этот слой; отдельного JS-маркера не
+   требуется, кроме случаев, где базовый класс листа расшарен с подклассами
+   без housing (см. .cog-frame ниже и skill dbc-housing про character-sheet
+   vs Демон/Демон-Принц).
+
+   Спрайт-текстура вырезана из assets/overlays/dataslate.png (1131×1600,
+   см. Dataslate 2.png мира iz-pepla) через background-position — без
+   офлайн-нарезки на отдельные PNG.
+═══════════════════════════════════════════════════════ */
+
+/* Корпус: .cog-frame — JS-маркер у листов, чей базовый класс расшарен с
+   подклассами БЕЗ обшивки (Персонаж/Миньон — Демон/Принц Демона наследуют
+   character-sheet, см. dbc-housing); .squad-sheet/.wh-horde/.vehicle-sheet/
+   .ship-sheet/.formation-sheet/.star-system-sheet — свои классы без
+   подклассов, безопасны как есть, доп. маркер не нужен.
+
+   !important на background — модуль Monk's Little Details навешивает на
+   body.change-windows.theme-dark свой глобальный фон ЛЮБОГО .application
+   (специфичность ~(0,7,1) — селектор из 7 классов/:not(), бьёт даже длинный
+   наш селектор без него). Обнаружено 29.08.2026 при переносе обшивки на
+   squad-sheet: рамка визуально была плоско-серой вместо металла с текстурой
+   — обычная сверка компьютед-стиля (border/padding) не поймала бы это, т.к.
+   те свойства модуль не трогает, ловится только через CSSOM обход
+   document.styleSheets с рекурсией по @import/CSSImportRule. */
+.warhammer-dbc.character-sheet.cog-frame,
+.warhammer-dbc.squad-sheet,
+.warhammer-dbc.wh-horde,
+.warhammer-dbc.vehicle-sheet,
+.warhammer-dbc.ship-sheet,
+.warhammer-dbc.formation-sheet,
+.warhammer-dbc.star-system-sheet {
+  /* НЕ position:relative — это this.element, реальное плавающее окно
+     Foundry (.application задаёт ему position:fixed). Оверрайд на relative
+     вынимал окно из fixed-позиционирования и превращал его в обычного
+     flex-ребёнка body — оно начинало отжимать #interface (тоже flex-ребёнок
+     body) вбок, утаскивая #sidebar за пределы экрана (bd wdbc-*, репорт
+     29.08.2026 «открытие листа персонажа сдвигает боковую панель»). Якорь
+     для .cog-rivet (position:absolute) не нужен отдельно — fixed уже
+     валидный containing block для absolute-потомков. */
+  padding: 14px 14px 8px;
+  border: 1px solid #4a331a;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(115deg, rgba(0,0,0,0.16) 0 2px, transparent 2px 4px),
+    linear-gradient(135deg, #d8d8d8, #9a9a9a 25%, #5a5a5a 50%, #8f8f8f 75%, #cfcfcf) !important;
+  box-shadow:
+    0 14px 44px rgba(0,0,0,0.6),
+    inset 0 0 24px rgba(0,0,0,0.5),
+    inset 0 0 0 1px rgba(255,214,140,0.08);
+}
+
+/* ── Заклёпки-черепа по углам ── */
+.warhammer-dbc .cog-rivet {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  background-image: url("../../assets/overlays/dataslate.png");
+  background-repeat: no-repeat;
+  background-size: 240px 340px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+  pointer-events: none;
+  z-index: 2;
+}
+.warhammer-dbc .cog-rivet.tl { top: 6px;    left: 6px;   background-position: -6px -6px; }
+.warhammer-dbc .cog-rivet.tr { top: 6px;    right: 6px;  background-position: -200px -6px; }
+.warhammer-dbc .cog-rivet.bl { bottom: 6px; left: 6px;   background-position: -6px -300px; }
+.warhammer-dbc .cog-rivet.br { bottom: 6px; right: 6px; background-position: -200px -300px; }
+
+/* ── Шильдик-плашка: модель + 3 LED ── */
+.warhammer-dbc .cog-plate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 40px 8px;
+}
+.warhammer-dbc .cog-plate {
+  font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+  font-size: 0.62em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e8dcc0;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.8);
+  opacity: 0.92;
+}
+.warhammer-dbc .cog-leds { display: flex; gap: 5px; }
+.warhammer-dbc .cog-led {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(0,0,0,0.5);
+}
+.warhammer-dbc .cog-led-green.on {
+  background: var(--cg, #4dffa6); box-shadow: 0 0 6px var(--cg, #4dffa6);
+  animation: cogLedPulse 2.4s ease-in-out infinite;
+}
+.warhammer-dbc .cog-led-amber.on {
+  background: var(--cg-fire, #ffb84d); box-shadow: 0 0 6px var(--cg-fire, #ffb84d);
+}
+.warhammer-dbc .cog-led-red.on {
+  background: #ff6b6b; box-shadow: 0 0 6px #ff6b6b;
+}
+@keyframes cogLedPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* ── Экран: контур-кольцо ровно на стыке корпус→экран (один раз, не по
+   панелям). Двойной background (padding-box + border-box) даёт скошенный
+   металлический ободок без лишних слоёв разметки. ── */
+.warhammer-dbc .cog-screen {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 7px solid transparent;
+  border-radius: 4px;
+  background:
+    linear-gradient(var(--wh-bg), var(--wh-bg)) padding-box,
+    linear-gradient(150deg, #e2e2e2, #7a7a7a 28%, #242424 52%, #8c8c8c 76%, #dcdcdc) border-box;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,0.65),
+    0 0 22px 1px rgba(77,255,166,0.18),
+    0 8px 26px rgba(0,0,0,0.5);
+}
+
+/* ── Строка статуса — на экране (в .sheet-body), не на корпусе ── */
+.warhammer-dbc .screen-status-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+  font-size: 0.7em;
+  letter-spacing: 0.09em;
+  color: var(--cg, #4dffa6);
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(77,255,166,0.4);
+}
+.warhammer-dbc .cog-status-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto;
+  background: var(--cg, #4dffa6); box-shadow: 0 0 6px var(--cg, #4dffa6);
+  animation: cogLedPulse 2.4s ease-in-out infinite;
+}
+
+/* ── Нижняя решётка (спрайт из того же dataslate.png) ── */
+.warhammer-dbc .cog-status-row {
+  flex: 0 0 auto;
+  height: 68px;
+  margin: 6px auto 0;
+  width: 282px;
+  max-width: 60%;
+  background-image: url("../../assets/overlays/dataslate.png");
+  background-repeat: no-repeat;
+  background-size: 452px 640px;
+  background-position: -76px -568px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warhammer-dbc .cog-led.on,
+  .warhammer-dbc .cog-status-dot { animation: none !important; }
+}
