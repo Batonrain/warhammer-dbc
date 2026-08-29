@@ -1,3 +1,24 @@
+{{!-- Обшивка «инфопланшет» (wdbc-8rsk) — formation-sheet.hbs без единого
+     корневого <div> (top-level siblings), как и Отряд/Орда: root:true всё
+     равно распаковывает верхний уровень в this.element, обёртка снаружи не
+     нужна — см. skill dbc-housing. .warhammer-dbc.formation-sheet уже
+     присутствует статикой в DEFAULT_OPTIONS.classes (самостоятельный лист,
+     без подклассов) — доп. JS-маркер вроде .cog-frame не требуется. --}}
+<div class="cog-rivet tl"></div>
+<div class="cog-rivet tr"></div>
+<div class="cog-rivet bl"></div>
+<div class="cog-rivet br"></div>
+
+<div class="cog-plate-row">
+  <span class="cog-plate">Инфопланшет модели XIL</span>
+  <div class="cog-leds">
+    <i class="cog-led cog-led-green on"></i>
+    <i class="cog-led cog-led-amber {{#if derived.routed}}on{{/if}}"></i>
+    <i class="cog-led cog-led-red {{#if derived.broken}}on{{/if}}"></i>
+  </div>
+</div>
+
+<div class="cog-screen">
 {{!-- ═══════════════ ШАПКА (по образцу листа персонажа) ═══════════════ --}}
 <header class="sheet-header fm-header">
   <div class="portrait-block">
@@ -555,3 +576,6 @@
   </div>
 
 </div>
+</div>
+
+<div class="cog-status-row"></div>
