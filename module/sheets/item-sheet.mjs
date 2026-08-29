@@ -917,6 +917,10 @@ export class WarhammerItemSheet
     // Оружие Наследия — только у оружия (стр. 426-428).
     context.legacy        = legacyContext(this.item);
     context.system = this.item.system;
+    // Легаси-эффекты (AP/charBonuses), уже перенесённые в ActiveEffect миграцией —
+    // партиалы armor/tech-power/psychic-power.hbs прячут эти поля за флагом вместо
+    // молчаливого расхождения с актором (wdbc-o80l).
+    context.effectsMigrated = !!this.item.getFlag("warhammer-dbc", "migratedEffect");
 
     // ── Описание/Заметки: prose-mirror с переключаемым режимом (как у Journal
     // Entries) — пока не открыт на правку, показывается обогащённый HTML.
