@@ -32,11 +32,16 @@ export const SECONDS_PER_YEAR = 365 * SECONDS_PER_DAY;
 // длину полного цикла (обычно 24ч, но для Колхиды — 170.4ч, см. ниже).
 
 // Классические 4 деления суток (ночь/утро/день/вечер), по 6 часов.
+// У каждого деления встроенного пресета — стабильный id (не meняется между
+// версиями кода): на него навешиваются триггеры (cfg.watchTriggers) и он же
+// используется движком обнаружения смены деления (см. checkCalendarWatchTriggers
+// в module/apps/imperial-calendar.mjs) — переименование label не должно рвать
+// уже настроенные звук/чат/титр у GM.
 export const CLASSIC4_WATCHES = Object.freeze([
-  { label: "Ночь",  icon: "🌑", hours: 6 },
-  { label: "Утро",  icon: "🌅", hours: 6 },
-  { label: "День",  icon: "☀", hours: 6 },
-  { label: "Вечер", icon: "🌆", hours: 6 }
+  { id: "classic4-night",   label: "Ночь",  icon: "🌑", hours: 6 },
+  { id: "classic4-morning", label: "Утро",  icon: "🌅", hours: 6 },
+  { id: "classic4-day",     label: "День",  icon: "☀", hours: 6 },
+  { id: "classic4-evening", label: "Вечер", icon: "🌆", hours: 6 }
 ]);
 export const CLASSIC4_DESCRIPTION = "Классическое деление суток на ночь/утро/день/вечер, по 6 часов каждое.";
 
@@ -48,13 +53,13 @@ export const HOURS24_WATCHES = Object.freeze(
 // (две «собачьи» вахты по 2 часа режут стандартные 4-часовые интервалы,
 // чтобы вахтенный состав менялся по разным часам каждый день).
 export const CALIXIS_WATCHES = Object.freeze([
-  { label: "Средняя вахта",           icon: "⚓", hours: 4 }, // 00:00–04:00
-  { label: "Утренняя вахта",          icon: "⚓", hours: 4 }, // 04:00–08:00
-  { label: "Предполуденная вахта",    icon: "⚓", hours: 4 }, // 08:00–12:00
-  { label: "Послеполуденная вахта",   icon: "⚓", hours: 4 }, // 12:00–16:00
-  { label: "Первая собачья вахта",    icon: "⚓", hours: 2 }, // 16:00–18:00
-  { label: "Последняя собачья вахта", icon: "⚓", hours: 2 }, // 18:00–20:00
-  { label: "Первая вахта",            icon: "⚓", hours: 4 }  // 20:00–00:00
+  { id: "calixis-mid",       label: "Средняя вахта",           icon: "⚓", hours: 4 }, // 00:00–04:00
+  { id: "calixis-morning",   label: "Утренняя вахта",          icon: "⚓", hours: 4 }, // 04:00–08:00
+  { id: "calixis-forenoon",  label: "Предполуденная вахта",    icon: "⚓", hours: 4 }, // 08:00–12:00
+  { id: "calixis-afternoon", label: "Послеполуденная вахта",   icon: "⚓", hours: 4 }, // 12:00–16:00
+  { id: "calixis-dog1",      label: "Первая собачья вахта",    icon: "⚓", hours: 2 }, // 16:00–18:00
+  { id: "calixis-dog2",      label: "Последняя собачья вахта", icon: "⚓", hours: 2 }, // 18:00–20:00
+  { id: "calixis-first",     label: "Первая вахта",            icon: "⚓", hours: 4 }  // 20:00–00:00
 ]);
 export const CALIXIS_DESCRIPTION = "Вахты линейного флота Каликсиды: 4-часовые смены, кроме двух 2-часовых «собачьих» вахт вечером (16:00–20:00), чтобы состав вахтенных смещался день ото дня.";
 
@@ -66,13 +71,13 @@ export const CALIXIS_DESCRIPTION = "Вахты линейного флота К�
 const COLCHIS_DAY_HOURS = 170.4;
 const COLCHIS_SUBDAY_HOURS = COLCHIS_DAY_HOURS / 7; // ≈24.34ч
 export const COLCHIS_WATCHES = Object.freeze([
-  { label: "Предсвет (Dawnaway)",    icon: "🌄", hours: COLCHIS_SUBDAY_HOURS },
-  { label: "Утрень (Mornday)",       icon: "🌅", hours: COLCHIS_SUBDAY_HOURS },
-  { label: "Долгодень (Long Noon)",  icon: "☀",  hours: COLCHIS_SUBDAY_HOURS },
-  { label: "Последень (Post-noon)",  icon: "🌇", hours: COLCHIS_SUBDAY_HOURS },
-  { label: "Сумерица (Duskeve)",     icon: "🌆", hours: COLCHIS_SUBDAY_HOURS },
-  { label: "Хладомрак (Coldfall)",   icon: "🌑", hours: COLCHIS_SUBDAY_HOURS },
-  { label: "Полночье (High Night)",  icon: "🌌", hours: COLCHIS_SUBDAY_HOURS }
+  { id: "colchis-dawnaway", label: "Предсвет (Dawnaway)",    icon: "🌄", hours: COLCHIS_SUBDAY_HOURS },
+  { id: "colchis-mornday",  label: "Утрень (Mornday)",       icon: "🌅", hours: COLCHIS_SUBDAY_HOURS },
+  { id: "colchis-longnoon", label: "Долгодень (Long Noon)",  icon: "☀",  hours: COLCHIS_SUBDAY_HOURS },
+  { id: "colchis-postnoon", label: "Последень (Post-noon)",  icon: "🌇", hours: COLCHIS_SUBDAY_HOURS },
+  { id: "colchis-duskeve",  label: "Сумерица (Duskeve)",     icon: "🌆", hours: COLCHIS_SUBDAY_HOURS },
+  { id: "colchis-coldfall", label: "Хладомрак (Coldfall)",   icon: "🌑", hours: COLCHIS_SUBDAY_HOURS },
+  { id: "colchis-highnight",label: "Полночье (High Night)",  icon: "🌌", hours: COLCHIS_SUBDAY_HOURS }
 ]);
 export const COLCHIS_DESCRIPTION = "Колхидское времяисчисление: солнечные сутки Колхиды длятся 170.4 терранского часа (7.1 терранских суток), поделены на 7 примерно равных субдней.";
 
@@ -89,13 +94,50 @@ export const DEFAULT_CALENDAR_CONFIG = Object.freeze({
   // чьи обозначения показаны на виджете — КАЖДОЕ отдельной строкой под часами.
   // Основное деление (крупный лейбл 24ч) НЕ входит сюда — оно всегда фиксировано.
   enabledPresets: ["calixis"],
-  // Свои пресеты, заведённые GM: [{key, label, watches:[{label,icon,hours}]}].
+  // Свои пресеты, заведённые GM: [{key, label, watches:[{id,label,icon,hours}]}].
   customPresets: [],
   // Описание пресета (правится GM в настройках, всплывает подсказкой при
   // наведении на строку на виджете) — {presetKey: text}. Переопределяет
   // дефолтное description встроенного пресета, если задано непустым.
-  presetDescriptions: {}
+  presetDescriptions: {},
+  // Правки делений ВСТРОЕННЫХ пресетов — {presetKey: {watches:[...]}}. Сами
+  // WATCH_PRESETS не трогаем (frozen-константы, заводской эталон); GM правит
+  // построчно icon/label/hours через настройки, это ложится сюда и
+  // накладывается поверх заводского набора в presetRegistry(). Кнопка
+  // «Вернуть заводской пресет» просто убирает ключ отсюда.
+  presetOverrides: {},
+  // Триггеры на смену деления — {watchId: {sound, chatMessage, screenMessage}},
+  // ОБЩАЯ карта для всех пресетов (встроенных и своих), ключ — стабильный
+  // watch.id. Пустая строка/отсутствие поля = действие не выполняется.
+  watchTriggers: {},
+  // События: [{id, title, description, targetWorldTime, visibleToPlayers}].
+  // targetWorldTime считается один раз в момент создания (game.time.worldTime
+  // + заданная длительность, либо перевод конкретной имперской даты) —
+  // дальше живёт как обычный момент на шкале worldTime.
+  events: [],
+  // Сколько ближайших (для текущего пользователя видимых) Событий показывать
+  // отдельными строками на виджете — 0 прячет блок целиком. Автосортировка
+  // по возрастанию targetWorldTime, ближайшее всегда сверху.
+  eventsShownCount: 1,
+  // Ключ из SCREEN_FONT_PRESETS — шрифт титра на экране (screenMessage у
+  // триггеров деления). "" = дефолтный Oswald из game-session.css, тот же,
+  // что у баннеров Сессии/Сцены.
+  screenMessageFont: ""
 });
+
+/** Готовые шрифтовые пары для титра на экране — те же семейства, что уже используются по проекту (см. styles/base/common.css, ui/environment.css), никаких новых веб-шрифтов. */
+export const SCREEN_FONT_PRESETS = Object.freeze([
+  { key: "",        label: "По умолчанию (Oswald)",              stack: "" },
+  { key: "mono",     label: "Моноширинный (когитатор)",           stack: `"Consolas", "Lucida Console", "Courier New", monospace` },
+  { key: "book",     label: "Книжный (Book Antiqua)",             stack: `"Book Antiqua", Palatino, Georgia, serif` },
+  { key: "serif",    label: "Крупный засечный (Times/PT Serif)",  stack: `"Times New Roman", "PT Serif", serif` },
+  { key: "georgia",  label: "Классика (Georgia)",                 stack: `"Georgia", "Times New Roman", serif` }
+]);
+
+/** CSS font-family stack по ключу пресета — пустая строка и неизвестный ключ дают "" (не переопределять, оставить дефолт CSS). */
+export function screenFontStack(key) {
+  return SCREEN_FONT_PRESETS.find(f => f.key === key)?.stack || "";
+}
 
 const pad3 = (n) => String(Math.abs(Math.trunc(n))).padStart(3, "0");
 
@@ -241,9 +283,16 @@ export const WATCH_PRESETS = Object.freeze({
   }
 });
 
-/** Встроенный пресет + пользовательские (cfg.customPresets), по ключу. */
+/**
+ * Встроенный пресет (с накладкой правок GM из cfg.presetOverrides, если
+ * есть) + пользовательские (cfg.customPresets), по ключу.
+ */
 function presetRegistry(cfg = DEFAULT_CALENDAR_CONFIG) {
-  const registry = { ...WATCH_PRESETS };
+  const registry = {};
+  for (const [key, preset] of Object.entries(WATCH_PRESETS)) {
+    const override = cfg.presetOverrides?.[key];
+    registry[key] = override?.watches?.length ? { ...preset, watches: override.watches } : preset;
+  }
   for (const p of cfg.customPresets ?? []) if (p?.key && p.watches?.length) registry[p.key] = p;
   return registry;
 }
@@ -266,4 +315,49 @@ export function currentEnabledPhases(worldTime, cfg = DEFAULT_CALENDAR_CONFIG) {
       description: cfg.presetDescriptions?.[key] || registry[key].description || "",
       ...currentWatch(worldTime, { watches: registry[key].watches })
     }));
+}
+
+/** Тот же реестр (встроенные+свои, с накладкой правок), наружу — нужен диалогу настроек. */
+export function watchPresetRegistry(cfg = DEFAULT_CALENDAR_CONFIG) {
+  return presetRegistry(cfg);
+}
+
+// ══════════════════════════════ СОБЫТИЯ ══════════════════════════════
+
+/**
+ * Компактная длительность на русском, топ-2 ненулевых единицы
+ * (годы/дни/часы/минуты) — "2д 6ч", "8ч", "45мин". Используется и на
+ * виджете (ETA ближайшего События), и в списке Событий настроек.
+ */
+export function formatDuration(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds));
+  if (s < 60) return "<1мин";
+  const years = Math.floor(s / SECONDS_PER_YEAR);
+  let rem = s - years * SECONDS_PER_YEAR;
+  const days = Math.floor(rem / SECONDS_PER_DAY);
+  rem -= days * SECONDS_PER_DAY;
+  const hours = Math.floor(rem / SECONDS_PER_HOUR);
+  rem -= hours * SECONDS_PER_HOUR;
+  const minutes = Math.floor(rem / 60);
+  const parts = [];
+  if (years) parts.push(`${years}г`);
+  if (days) parts.push(`${days}д`);
+  if (hours) parts.push(`${hours}ч`);
+  if (minutes) parts.push(`${minutes}мин`);
+  return parts.slice(0, 2).join(" ") || "<1мин";
+}
+
+/**
+ * Ближайшие ещё-не-наступившие События для виджета — отсортированы по
+ * возрастанию targetWorldTime (ближайшее первым), обрезаны до
+ * cfg.eventsShownCount, отфильтрованы по видимости (ГМ видит и скрытые
+ * от игроков — вызывающая сторона такие помечает значком сама).
+ */
+export function visibleFutureEvents(worldTime, cfg = DEFAULT_CALENDAR_CONFIG, { isGM = false } = {}) {
+  const count = Math.max(0, Math.min(20, Number(cfg.eventsShownCount) || 0));
+  if (!count) return [];
+  return (cfg.events ?? [])
+    .filter(ev => Number.isFinite(ev?.targetWorldTime) && ev.targetWorldTime > worldTime && (isGM || ev.visibleToPlayers))
+    .sort((a, b) => a.targetWorldTime - b.targetWorldTime)
+    .slice(0, count);
 }

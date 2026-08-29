@@ -35,12 +35,22 @@ function bannerCard(title, text) {
     </div>`;
 }
 
-/** Показать 3-секундную надпись поверх экрана (локально на этом клиенте). */
-export function showFateTurnBanner(text) {
+/**
+ * Показать 3-секундную надпись поверх экрана (локально на этом клиенте).
+ * `fontFamily` — необязательный CSS font-family stack, переопределяет
+ * дефолтный Oswald только у ЭТОГО баннера (используется календарём — свой
+ * шрифт титра, см. imperial-calendar.mjs); Сессия/Сцена его не передают и
+ * остаются на дефолтном шрифте.
+ */
+export function showFateTurnBanner(text, { fontFamily } = {}) {
   try {
     const el = document.createElement("div");
     el.className = "wh-sess-banner";
-    el.innerHTML = `<span class="wh-sess-banner-text">${text}</span>`;
+    const span = document.createElement("span");
+    span.className = "wh-sess-banner-text";
+    span.textContent = text; // textContent, не innerHTML — text может быть произвольным GM-вводом
+    if (fontFamily) span.style.fontFamily = fontFamily;
+    el.appendChild(span);
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 3000);
   } catch (e) { console.warn("Warhammer DBC | game-session banner", e); }

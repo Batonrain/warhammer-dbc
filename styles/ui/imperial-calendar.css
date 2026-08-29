@@ -94,6 +94,21 @@
   border-radius: 3px; border: 1px solid rgba(90,180,230,0.4); background: rgba(10,30,45,0.5); color: #eaf6ff;
 }
 
+/* ── Строки ближайших Событий — фиолетовая гамма (не занята другими блоками) ── */
+.wh-cal-w-events { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+.wh-cal-w-event {
+  padding: 4px 6px; border-radius: 5px; cursor: help;
+  border: 1px solid rgba(154,120,235,0.45); background: rgba(28,16,46,0.55);
+  display: flex; align-items: baseline; gap: 5px;
+  box-shadow: inset 0 0 12px -8px #cbb2ff;
+}
+.wh-cal-w-event-ic { font-size: 0.85em; flex: 0 0 auto; }
+.wh-cal-w-event-title {
+  font-size: 0.72em; color: #cbb2ff; font-weight: 700; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wh-cal-w-event-eta { font-size: 0.66em; color: #9a86c9; flex: 0 0 auto; }
+
 /* ── Строка «Сессия/Сцена» — тёплая золотая гамма, тема Судьбы ── */
 .wh-cal-w-session-row { margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(230,175,90,0.35); }
 .wh-cal-w-session-btn {
@@ -104,6 +119,18 @@
 .wh-cal-w-session-btn:hover { background: rgba(230,175,90,0.5); color: #fff6e0; }
 
 /* ══════════════════ ДИАЛОГ НАСТРОЕК ══════════════════ */
+
+/* ── Вкладки Эпоха / Деления / События — тот же приём show/hide, что и в
+   apps/callouts.mjs (.wh-callout-tabs), свой набор классов во избежание
+   пересечения стилей между диалогами. ── */
+.wh-cal-tabs { display: flex; gap: 2px; margin-bottom: 10px; border-bottom: 1px solid rgba(47,158,106,0.3); }
+.wh-cal-tabs .item {
+  padding: 5px 12px; font-size: 0.85em; letter-spacing: 0.03em; color: #6a9c82; cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.wh-cal-tabs .item.active { color: var(--cg); border-bottom-color: var(--cg); text-shadow: 0 0 6px rgba(77,255,166,0.4); }
+.wh-cal-tabs .item:hover { color: #9af2c4; }
+
 .wh-cal-settings-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
 .wh-cal-settings-row label { font-size: 0.85em; opacity: 0.85; }
 .wh-cal-settings-row input[type="number"] { width: 4.5em; }
@@ -119,9 +146,12 @@
 
 .wh-cal-preset-checklist { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
 .wh-cal-preset-row {
-  display: flex; align-items: center; gap: 6px; padding: 3px 5px; border-radius: 4px; font-size: 0.85em;
+  border-radius: 4px; font-size: 0.85em;
 }
 .wh-cal-preset-row:hover { background: rgba(47,158,106,0.15); }
+.wh-cal-preset-row-main { display: flex; align-items: center; gap: 6px; padding: 3px 5px; }
+.wh-cal-preset-caret { width: 1em; text-align: center; font-size: 0.8em; color: #6a9c82; cursor: pointer; flex: 0 0 auto; }
+.wh-cal-preset-caret:hover, .wh-cal-preset-caret.open { color: var(--cg); }
 .wh-cal-preset-row-check { display: flex; align-items: center; gap: 6px; cursor: pointer; flex: 0 0 auto; }
 .wh-cal-preset-row input[type="checkbox"] { margin: 0; }
 .wh-cal-preset-row-label { flex: 0 0 auto; }
@@ -136,6 +166,92 @@
   margin-top: 6px; padding: 8px; border: 1px dashed rgba(47,158,106,0.4); border-radius: 6px;
 }
 .wh-cal-preset-name { flex: 1; }
+
+/* ── Раскрытый пресет (аккордеон): построчное редактирование делений
+   (в т.ч. заводских, через presetOverrides) + 🔔-триггер на каждое ── */
+.wh-cal-preset-expand {
+  margin: 2px 0 6px 20px; padding: 6px 8px; border-radius: 5px;
+  border: 1px solid rgba(47,158,106,0.3); background: rgba(47,158,106,0.06);
+}
+.wh-cal-expand-tools { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.wh-cal-preset-revert {
+  font-size: 0.78em; color: #9fc4b2; cursor: pointer; border-bottom: 1px dotted rgba(159,196,178,0.5);
+}
+.wh-cal-preset-revert:hover { color: var(--cg); }
+.wh-cal-watch-units { display: flex; flex-direction: column; gap: 4px; }
+.wh-cal-watch-unit + .wh-cal-watch-unit { margin-top: 2px; }
+.wh-cal-watch-bell {
+  width: auto; padding: 1px 6px; border-radius: 3px; cursor: pointer; font-size: 0.9em;
+  border: 1px solid rgba(47,158,106,0.35); background: rgba(15,58,38,0.35); color: #9fc4b2;
+}
+.wh-cal-watch-bell.active {
+  border-color: rgba(154,120,235,0.6); background: rgba(154,120,235,0.22); color: #cbb2ff;
+  box-shadow: 0 0 8px -1px rgba(154,120,235,0.6);
+}
+.wh-cal-trigger-panel {
+  margin: 3px 0 5px; padding: 6px 8px; border-radius: 5px;
+  border: 1px solid rgba(154,120,235,0.4); background: rgba(28,16,46,0.5);
+  display: flex; flex-direction: column; gap: 5px;
+}
+.wh-cal-trigger-row { display: flex; align-items: center; gap: 6px; }
+.wh-cal-trigger-ic { width: 1.2em; text-align: center; font-size: 0.9em; flex: 0 0 auto; }
+.wh-cal-trigger-sound, .wh-cal-trigger-chat, .wh-cal-trigger-screen {
+  flex: 1; min-width: 0; font-size: 0.85em; padding: 3px 6px;
+  border-radius: 3px; border: 1px solid rgba(154,120,235,0.35); background: rgba(15,10,24,0.5); color: #eee3ff;
+}
+.wh-cal-trigger-sound::placeholder, .wh-cal-trigger-chat::placeholder, .wh-cal-trigger-screen::placeholder { color: #8574ab; }
+.wh-cal-trigger-browse {
+  flex: 0 0 auto; font-size: 0.78em; padding: 3px 8px; border-radius: 3px; cursor: pointer;
+  border: 1px solid rgba(154,120,235,0.4); background: rgba(154,120,235,0.15); color: #cbb2ff;
+}
+.wh-cal-trigger-test {
+  flex: 0 0 auto; width: 1.8em; height: 1.8em; line-height: 1; padding: 0; font-size: 0.8em; cursor: pointer;
+  border-radius: 3px; border: 1px solid var(--cg-line); background: rgba(47,158,106,0.15); color: var(--cg);
+}
+.wh-cal-trigger-test:hover { background: rgba(47,158,106,0.3); }
+
+/* ══════════════════ ВКЛАДКА «СОБЫТИЯ» ══════════════════ */
+.wh-cal-event-count-row { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
+.wh-cal-event-count-label { font-size: 0.85em; flex: 1; }
+.wh-cal-event-count-stepper { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+.wh-cal-event-count-btn {
+  width: 1.6em; height: 1.6em; line-height: 1; border-radius: 3px; cursor: pointer; font-size: 0.85em;
+  border: 1px solid rgba(154,120,235,0.4); background: rgba(154,120,235,0.15); color: #cbb2ff;
+}
+.wh-cal-event-count-value {
+  min-width: 1.6em; text-align: center; font-size: 0.95em; font-weight: 700; color: #eee3ff;
+  border-radius: 3px; border: 1px solid rgba(154,120,235,0.4); background: rgba(15,10,24,0.5); padding: 2px 4px;
+}
+
+.wh-cal-event-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.wh-cal-event-row {
+  display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; font-size: 0.85em;
+  border: 1px solid rgba(154,120,235,0.4); background: rgba(28,16,46,0.35);
+}
+.wh-cal-event-row.past { border-color: rgba(120,120,130,0.3); background: rgba(20,20,24,0.3); opacity: 0.65; }
+.wh-cal-event-title { flex: 1; min-width: 0; color: #eee3ff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: help; }
+.wh-cal-event-row.past .wh-cal-event-title { color: #9a9aa4; text-decoration: line-through; }
+.wh-cal-event-eta { flex: 0 0 auto; font-size: 0.9em; color: #cbb2ff; }
+.wh-cal-event-row.past .wh-cal-event-eta { color: #7a7a84; }
+.wh-cal-event-lock { flex: 0 0 auto; cursor: pointer; font-size: 0.9em; }
+.wh-cal-event-lock.locked { filter: drop-shadow(0 0 3px rgba(255,184,77,0.5)); }
+.wh-cal-event-remove { flex: 0 0 auto; border: none; background: transparent; color: #6a9c82; cursor: pointer; font-size: 0.9em; }
+.wh-cal-event-remove:hover { color: #ff8a8a; }
+.wh-cal-event-add { margin-bottom: 8px; }
+
+.wh-cal-event-form {
+  margin-top: 4px; padding: 8px; border: 1px dashed rgba(154,120,235,0.4); border-radius: 6px;
+}
+.wh-cal-ev-mode-toggle {
+  display: flex; border-radius: 4px; overflow: hidden; border: 1px solid rgba(154,120,235,0.4);
+  width: fit-content; margin-bottom: 8px;
+}
+.wh-cal-ev-mode-opt { padding: 4px 12px; font-size: 0.8em; cursor: pointer; color: #9a86c9; }
+.wh-cal-ev-mode-opt.active { background: rgba(154,120,235,0.25); color: #cbb2ff; }
+.wh-cal-ev-visible-row { display: flex; align-items: center; gap: 6px; font-size: 0.85em; margin: 4px 0 8px; cursor: pointer; }
+.wh-cal-ev-unit-field { display: flex; align-items: center; gap: 4px; }
+.wh-cal-ev-unit-field input[type="number"] { width: 4em; }
+.wh-cal-ev-unit-lbl { font-size: 0.8em; color: #9a86c9; }
 
 @media (prefers-reduced-motion: reduce) {
   .wh-cal-w-led { animation: none !important; }
