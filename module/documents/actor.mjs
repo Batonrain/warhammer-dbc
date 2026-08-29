@@ -9,62 +9,25 @@ import { resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags, emptyArmorLo
 import { qualityEffects } from "../constants/quality.mjs";
 import { fieldModeEffects } from "../constants/drukhari-armor-fields.mjs";
 import { cloneFieldTier } from "../constants/drukhari-gear.mjs";
-import { shipQualityMods, clampQuality } from "../constants/ship-quality.mjs";
 import { classifyImplant } from "../constants/body-map.mjs";
 import { implantMech, ironModForQuality } from "../constants/implant-mechanics.mjs";
 import { readEnvForScene } from "../constants/scene-nexus.mjs";
 import { computePathPassives } from "../constants/aeldari-paths.mjs";
 import { manifestProfile } from "../constants/possession.mjs";
 import { vitalCharMods } from "../constants/vitals.mjs";
-import { spFromInfluence, parseWeaponCapacity, SHIP_WEAPON_ARCS, WC_ORDER } from "../constants/ship.mjs";
-import { SHIP_PROPERTIES } from "../constants/ship-properties.mjs";
-import { crossedThresholds, DAEMON_SHIP_DP, SHIP_DEFILEMENT_THRESHOLDS } from "../constants/ship-corruption.mjs";
-import { COHESION_LIMIT, COHESION_START_CAP, RISK_LEVELS,
-         cohesionBand, cohesionBonus, riskCap } from "../constants/squad.mjs";
-import { TROOP_TYPES, TRAINING_LEVELS, FORMATION_SIZES, ORDERS, ATTRITION,
-         totalStrength, defenceFrom, damageDice, effectiveSpeed, totalCover,
-         attritionPenalty, availabilityMod } from "../constants/formation.mjs";
 import { disabledActorTypes, featureForActorType, isFeatureEnabled,
          featureForRace, isRaceDisabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
-import { HORDE_SIZE_LABELS, hordeSizeFor, hordeMagDamageDice, hordeState,
-         massDamageThreshold, WEAKENED_WP_PENALTY, noRecoveryHours }
-  from "../rules/horde-damage.mjs";
 import { sanityMax, madnessLevels } from "../rules/dreadnought.mjs";
 import { psyRatingFromTalents } from "../rules/psyker.mjs";
 import { woundLevel } from "../rules/wound-tier.mjs";
-
-/**
- * Расчёт движения по таблице Warhammer FFG.
- * SPD = Ag.bonus + size (size — прямой модификатор, 0 = Человек)
- *
- * Таблица:
- * SPD | Полушаг | Шаг | Натиск | Бег
- * 0.5 |   0.5   |  1  |  1.5   |  3
- *  1  |    1    |  2  |   3    |  6
- *  2  |    2    |  4  |   6    | 12
- *  3  |    3    |  6  |   9    | 18
- *  4  |    4    |  8  |  12    | 24
- * ...и т.д. (SPD × 1, ×2, ×3, ×6)
- */
-function calcMovement(agBonus, size) {
-  // SPD = Ag.bonus + size_mod
-  // size — прямой мод: 0=Человек, -1=Ребёнок, 1=Орк-нob, итд
-  const spdRaw = agBonus + (size ?? 0);
-
-  // Если SPD <= 0 → особый случай: SPD = 0.5
-  const spd = spdRaw <= 0 ? 0.5 : spdRaw;
-
-  return {
-    spd,
-    halfMove: spd,        // SPD × 1
-    move:     spd * 2,    // SPD × 2
-    charge:   spd * 3,    // SPD × 3
-    run:      spd * 6     // SPD × 6
-  };
-}
-
+import { calcMovement } from "../rules/movement.mjs";
+import { prepareShipDerived } from "../rules/ship.mjs";
+import { prepareVehicleDerived } from "../rules/vehicle.mjs";
+import { prepareHordeDerived } from "../rules/horde.mjs";
+import { prepareFormationDerived } from "../rules/formation.mjs";
+import { prepareSquadDerived } from "../rules/squad.mjs";
 
 /**
  * Именованный вклад предметов-носителей Механики (Архетип/Раса/Субраса/
@@ -172,182 +135,10 @@ export class WarhammerActor extends Actor {
    * отдельный тип "shipHull" (задаёт SPC/P.Gen/HI/характеристики/поворот/WC),
    * выбирается пикером в шапке листа (sheets/hull-picker.mjs), а не узлом
    * среди прочих — на корабле он всегда один (apps/ship-hull.mjs).
+   * Чистая агрегация — rules/ship.mjs.
    */
   _prepareShipData(system) {
-    const comps = this.items.filter(i => i.type === "component");
-    const hullItem = this.items.find(i => i.type === "shipHull") || null;
-    let powerUsed = 0, powerExtra = 0, spaceUsed = 0, spSpent = 0;
-    let moraleMaxBonus = 0, crewMaxBonus = 0, shipAimer = 0;
-    let lcBonus = 0, pcBonus = 0;
-    // Агрегаты свойств: модификаторы потерь экипажа, обороны, ремонта, DP, скрытности.
-    let cmLossMod = 0, cpLossMod = 0, boardingDef = 0, repairHiBonus = 0;
-    let dpReduce = 0, dpFloor = 0, dpExtra = 0, silentRun = 0, augurVs = 0;
-    let suppliesMax = 0;
-    const mods = { speed: 0, manoeuvrability: 0, detection: 0, voidShields: 0, armour: 0, turretRating: 0, hullIntegrity: 0 };
-
-    // Применение авто-свойств узла (Aspects) к производным значениям корабля.
-    const applyAuto = (props, isWeapon) => {
-      for (const p of (Array.isArray(props) ? props : [])) {
-        const a = SHIP_PROPERTIES[p.key]?.auto;
-        if (!a) continue;
-        const r = Number(p.rating) || 0;
-        if (a.charKey && mods[a.charKey] !== undefined) mods[a.charKey] += (a.per || 0) * r;
-        if (a.powerGenPer) powerExtra      += a.powerGenPer * r;
-        if (a.hiPer)       mods.hullIntegrity += a.hiPer * r;
-        if (a.moralePer)   moraleMaxBonus  += a.moralePer * r;
-        if (a.crewPer)     crewMaxBonus    += a.crewPer * r;
-        if (a.aimer && !isWeapon) shipAimer += r; // на не-орудии Aimer — всем орудиям
-        if (a.cmLossPer)      cmLossMod     += a.cmLossPer * r;
-        if (a.cpLossPer)      cpLossMod     += a.cpLossPer * r;
-        if (a.boardingDefPer) boardingDef   += a.boardingDefPer * r;
-        if (a.repairHiPer)    repairHiBonus += a.repairHiPer * r;
-        if (a.dpReducePer)    dpReduce      += a.dpReducePer * r;
-        if (a.dpFloor)        dpFloor        = Math.max(dpFloor, Number(p.rating2) || 0);
-        if (a.dpExtraPer)     dpExtra       += a.dpExtraPer * r;
-        if (a.silentRunPer)   silentRun     += a.silentRunPer * r;
-        if (a.augurVsPer)     augurVs       += a.augurVsPer * (Number(p.rating2) || 0);
-        // Запасы путешествия задают максимум месяцев (берём наибольший узел).
-        if (a.suppliesMonths) suppliesMax    = Math.max(suppliesMax, r);
-      }
-    };
-
-    // Корпус — не узел (не в comps): свои SP/качество и авто-свойства считаем отдельно.
-    if (hullItem) {
-      const hs = hullItem.system;
-      const qm = shipQualityMods(hs);
-      hs.qualityMods = qm;                                  // для листа Корпуса
-      spSpent += (Number(hs.sp) || 0) + qm.sp;
-      applyAuto(hs.shipProps, false);
-    }
-
-    for (const it of comps) {
-      const s = it.system;
-      // Качество узла меняет энергию, пространство, цену и профиль орудия.
-      const qm = shipQualityMods(s);
-      s.qualityMods = qm;                                   // для листа узла
-      spSpent += (Number(s.sp) || 0) + qm.sp;
-      lcBonus += Number(s.lcBonus) || 0;   // грузоподъёмность от грузовых узлов
-      pcBonus += Number(s.pcBonus) || 0;   // пассажировместимость от пассажирских узлов
-      // Узел не работает, если помечен damaged ИЛИ его статус не «невредим»
-      // (обесточен/повреждён/уничтожен — таблица повреждений).
-      const dmg = !!s.damaged || (s.status && s.status !== "intact");
-      const p   = clampQuality(s.power, qm.power);  // >0 потребляет, <0 вырабатывает
-      if (!dmg) { if (p > 0) powerUsed += p; else powerExtra += -p; }
-      // Внешние узлы — снаружи корпуса, пространства не занимают.
-      if (!s.external) spaceUsed += clampQuality(s.space, qm.space);
-      if (!dmg) {
-        if (s.modChar && mods[s.modChar] !== undefined) mods[s.modChar] += Number(s.modValue) || 0;
-        applyAuto(s.shipProps, s.kind === "weapon");
-      }
-    }
-
-    const hb = hullItem?.system.hull  || {};
-    const hc = hullItem?.system.chars || {};
-    const powerGen = (Number(hb.powerGen) || 0) + powerExtra;
-    const spaceMax = Number(hb.spaceMax) || 0;
-    // Бюджет Очков Корабля задаётся вручную (поле «Очки Корабля (макс.)» в Записях).
-    const spBudget = Number(system.spMax) || 0;
-    const cv = (k) => (Number(hc[k]) || 0) + mods[k];
-
-    // ── Грузы и пассажиры ──
-    // Базовая LC = полный SPC корабля; узлы добавляют LC. Базовая PC = 1 за каждую
-    // полную десятку SPC; пассажирские узлы добавляют PC.
-    // LC у груза — объём ОДНОЙ единицы; занятый трюм = объём × количество.
-    // Груз для обслуживания корабля (shipSupply) трюм не занимает.
-    const cargoItems = this.items.filter(i => i.type === "cargo");
-    let lcUsed = 0, lcSupply = 0, cargoValue = 0, cargoUnits = 0;
-    for (const c of cargoItems) {
-      const vol = (Number(c.system.lc) || 0) * (Number(c.system.quantity) || 0);
-      cargoUnits += Number(c.system.quantity) || 0;
-      cargoValue += (Number(c.system.price) || 0) * (Number(c.system.quantity) || 0);
-      if (c.system.shipSupply) lcSupply += vol; else lcUsed += vol;
-    }
-    const lcBase   = spaceMax;
-    const lcMax    = lcBase + lcBonus;
-    const pcBase   = Math.floor(spaceMax / 10);
-    const pcMax    = pcBase + pcBonus;
-    const pcAboard = Number(system.passengersAboard) || 0;
-    // Каждое занятое БАЗОВОЕ место пассажира даёт Weak Spirit (1): чужаки на
-    // борту давят на мораль. Места от пассажирских узлов этого не делают.
-    const pcWeakSpirit = Math.min(pcAboard, pcBase);
-
-    // ── Запасы путешествия ──
-    // Базово хватает на полгода; свойство Travel Supplies (X) задаёт свой максимум.
-    const supMax  = suppliesMax || 6;
-    const supNow  = Math.min(Number(system.supplies?.value ?? supMax) || 0, supMax);
-
-    // ── Осквернение (DP) ──
-    // ── Орудийная оснащённость (WC): слоты по позициям и их занятость ──
-    const wcMax  = parseWeaponCapacity(hb.weaponCapacity || "");
-    const wcUsed = { prow: 0, dorsal: 0, port: 0, star: 0, keel: 0 };
-    let wcUnassigned = 0;
-    for (const it of comps) {
-      if (it.system.kind !== "weapon") continue;
-      if (it.system.weapon?.wType === "bay") continue;   // ангар — не орудие
-      const a = it.system.weapon?.arc;
-      if (wcUsed[a] !== undefined) wcUsed[a]++; else wcUnassigned++;
-    }
-    const wcPositions = WC_ORDER
-      .map(k => ({ key: k, label: SHIP_WEAPON_ARCS[k], used: wcUsed[k], max: wcMax[k], over: wcUsed[k] > wcMax[k] }))
-      .filter(p => p.max > 0 || p.used > 0);
-    const wcOver = wcPositions.some(p => p.over) || (wcUnassigned > 0);
-
-    const dp        = Number(system.defilement) || 0;
-    const crossed   = crossedThresholds(dp);
-    const isDaemon  = dp >= DAEMON_SHIP_DP;
-    // Weak Spirit (5) за каждый пересечённый порог — если экипаж не хаоситы.
-    const weakSpiritDp = system.crewIsChaos ? 0 : crossed.length;
-    const nextThr   = SHIP_DEFILEMENT_THRESHOLDS.find(t => dp < t.dp);
-
-    system.derived = {
-      hasHull:  !!hullItem,
-      hullName: hullItem?.name || "",
-      power: { generated: powerGen, used: powerUsed, free: powerGen - powerUsed },
-      space: { max: spaceMax, used: spaceUsed, free: spaceMax - spaceUsed },
-      sp:    { budget: spBudget, spent: spSpent, free: spBudget - spSpent },
-      chars: {
-        speed: cv("speed"), manoeuvrability: cv("manoeuvrability"), detection: cv("detection"),
-        voidShields: system.voidShieldsDown ? 0 : cv("voidShields"),  // эфф. (0 при схлопнутых)
-        armour: cv("armour"), turretRating: cv("turretRating")
-      },
-      voidShieldsBase: cv("voidShields"),
-      voidShieldsDown: !!system.voidShieldsDown,
-      hullIntegrityMax: (Number(hb.hullIntegrity) || 0) + mods.hullIntegrity,
-      // Полуразрушен: Прочность на нуле. Перегруз: не сходится любой из бюджетов.
-      crippled:   (Number(system.hullIntegrity?.value) || 0) <= 0,
-      overBudget: (powerGen - powerUsed < 0) || (spaceMax - spaceUsed < 0) || (spBudget - spSpent < 0),
-      turnArc:        hb.turnArc || "—",
-      weaponCapacity: hb.weaponCapacity || "—",
-      wc: { positions: wcPositions, over: wcOver, unassigned: wcUnassigned },
-      componentCount: comps.length,
-      moraleMaxBonus, crewMaxBonus, aimer: shipAimer,
-      lc: {
-        base: lcBase, bonus: lcBonus, max: lcMax, used: lcUsed, free: lcMax - lcUsed,
-        supply: lcSupply, over: lcUsed > lcMax,
-        pct: lcMax > 0 ? Math.min(100, Math.round((lcUsed / lcMax) * 100)) : 0,
-        value: cargoValue, units: cargoUnits, entries: cargoItems.length
-      },
-      pc: {
-        base: pcBase, bonus: pcBonus, max: pcMax, aboard: pcAboard, free: pcMax - pcAboard,
-        over: pcAboard > pcMax, weakSpirit: pcWeakSpirit,
-        pct: pcMax > 0 ? Math.min(100, Math.round((pcAboard / pcMax) * 100)) : 0
-      },
-      supplies: {
-        value: supNow, max: supMax, custom: !!suppliesMax,
-        pct: supMax > 0 ? Math.min(100, Math.round((supNow / supMax) * 100)) : 0,
-        low: supNow <= 1, empty: supNow <= 0
-      },
-      // Итоговые модификаторы потерь экипажа: DP и пассажиры добавляют Weak Spirit.
-      crewMods: {
-        cmLoss: cmLossMod + (weakSpiritDp * 5) + pcWeakSpirit,
-        cpLoss: cpLossMod, boardingDef, repairHiBonus, silentRun, augurVs
-      },
-      dpMods: { reduce: dpReduce, floor: dpFloor, extra: dpExtra },
-      defilement: {
-        value: dp, crossed: crossed.length, levels: crossed.map(t => t.name),
-        weakSpirit: weakSpiritDp, isDaemon, nextDp: nextThr?.dp || null
-      }
-    };
+    prepareShipDerived(this.items, system);
   }
 
   /** Сводка звёздной системы: подсчёт тел по типам и ресурсам. */
@@ -382,34 +173,7 @@ export class WarhammerActor extends Actor {
    * прочитать чужой документ в prepareDerivedData на этапе загрузки мира нельзя.
    */
   _prepareSquadData(system) {
-    const coh = system.cohesion || (system.cohesion = { base: 0, start: 0, value: 0 });
-    const clamp = (v, lim) => Math.max(-lim, Math.min(lim, Math.round(Number(v) || 0)));
-
-    coh.base  = clamp(coh.base,  COHESION_START_CAP);
-    coh.start = clamp(coh.start, COHESION_START_CAP);
-    coh.value = clamp(coh.value, COHESION_LIMIT);
-
-    const value = coh.value;
-    const band  = cohesionBand(value);
-    const risk  = Math.max(1, Math.min(5, Number(system.risk) || 1));
-    system.risk = risk;
-
-    system.derived = {
-      cohesion:        value,
-      cohesionCmd:     cohesionBonus(value, false),   // модификатор Команд Командира/Лидера
-      cohesionCoord:   cohesionBonus(value, true),    // модификатор Команд Координатора
-      cohesionBand:    band.key,
-      cohesionLabel:   band.label,
-      cohesionHint:    band.hint,
-      // Шкала −40…+40 в процентах (для полосы состояния).
-      cohesionPct:     Math.round((value + COHESION_LIMIT) / (COHESION_LIMIT * 2) * 100),
-      belowStart:      value < coh.start,             // условие Детальной Команды «Сплочение»
-      broken:          value < 0,                     // отряд может проходить тесты Сломленного Отряда
-      risk,
-      riskCap:         riskCap(risk),
-      riskLabel:       RISK_LEVELS.find(r => r.level === risk)?.label || "",
-      memberCount:     Array.isArray(system.members) ? system.members.length : 0
-    };
+    prepareSquadDerived(system);
   }
 
   /**
@@ -419,324 +183,28 @@ export class WarhammerActor extends Actor {
    * Инициатива формирования — 1к10 + бонус характеристики войск (Выучка/10),
    * поэтому пишем её в system.initiative: боевой трекер системы считает
    * «1d10 + @initiative + @initiativeMod» и работает без отдельной логики.
+   * Чистая агрегация — rules/formation.mjs.
    */
   _prepareFormationData(system) {
-    const troop = TROOP_TYPES[system.troopType] || {};
-    const train = TRAINING_LEVELS[system.training] || {};
-    const size  = FORMATION_SIZES[system.size] || {};
-
-    const s   = totalStrength(system);
-    const def = defenceFrom(s);
-
-    // Ситуативные модификаторы костей урона от текущего приказа и состояния.
-    const st = system.status || (system.status = {});
-    let diceMod = 0;
-    if (system.order?.key === "advance") diceMod -= 1;   // марш: на кость меньше
-    if (st.exhausted) diceMod -= 3;                      // после форсированного марша
-    const dice = damageDice(system.size, diceMod);
-
-    // Скорость: ландшафт × множитель приказа.
-    const orderFx   = ORDERS[system.order?.key]?.effect || {};
-    const speedMult = orderFx.speedMult ?? 1;
-    const spd = effectiveSpeed({
-      troopType: system.troopType, terrain: system.terrain,
-      speedMult, speedOverride: system.speedOverride
-    });
-
-    const cover = totalCover({
-      terrain: system.terrain, dugIn: system.cover?.dugIn,
-      aaCover: system.cover?.aa, coverMod: system.cover?.mod
-    });
-
-    // Численность и боевой дух.
-    const num     = system.numbers || (system.numbers = { value: 0, max: 0 });
-    const mor     = system.morale  || (system.morale  = { value: 0, max: 0, gearRoll: 0 });
-    const numMax  = Math.max(0, Number(num.max) || 0);
-    const numVal  = Math.max(0, Number(num.value) || 0);
-    // Предел боевого духа: подготовка + разовый бросок за качество снаряжения.
-    const morMax  = Math.max(0, (Number(mor.max) || 0));
-    const morVal  = Math.max(0, Number(mor.value) || 0);
-
-    // Титаны не имеют боевого духа и все его тесты проходят автоматически.
-    const fearless = !!troop.fearless;
-
-    const numLost = Math.max(0, numMax - numVal);
-    const morLost = Math.max(0, morMax - morVal);
-    const penalty = fearless ? 0 : attritionPenalty(morMax, morVal);
-
-    const halfMorale    = Math.floor(morMax * ATTRITION.thresholds[0]);
-    const quarterMorale = Math.floor(morMax * ATTRITION.thresholds[1]);
-
-    // Инициатива: бонус характеристики войск = Выучка / 10.
-    const skill = Number(train.skill) || 0;
-    system.initiative = Math.floor(skill / 10);
-
-    system.derived = {
-      // Боевые показатели
-      strength: s,
-      defence:  def,
-      dice,
-      diceMod,
-      damageFormula: dice > 0 ? `${dice}d10 + ${s}` : `${s}`,
-      speed: spd,
-      baseSpeed: troop.spd ?? 0,
-      range: troop.rng ?? null,
-      rangeLabel: troop.rng == null ? "С" : `${troop.rng} км`,
-      rangeNote: troop.rngNote || "",
-      cover,
-      rating: troop.r ?? 0,
-      category: troop.cat || "",
-      isAir: troop.cat === "air",
-      isAA:  troop.cat === "aa",
-      isArmour: troop.cat === "armour" || troop.cat === "mech",
-      aaRadius: troop.aaRadius ?? 0,
-      aaGrant:  troop.aaCover ?? 0,
-      fearless,
-
-      // Тесты формирования (когда командует не герой, а его офицеры)
-      skillValue: skill,
-      testValue:  skill + penalty + (Number(st.disorder) || 0),
-      moraleBase: Number(train.morale) || 0,
-
-      // Истощение
-      numbersLost: numLost,
-      numbersPct:  numMax > 0 ? Math.round(numVal / numMax * 100) : 0,
-      moraleLost:  morLost,
-      moralePct:   morMax > 0 ? Math.round(morVal / morMax * 100) : 0,
-      penalty,
-      halfMorale, quarterMorale,
-      atHalf:    !fearless && morMax > 0 && morVal <= halfMorale,
-      atQuarter: !fearless && morMax > 0 && morVal <= quarterMorale,
-      broken:    numMax > 0 && numVal <= 0,
-      routed:    !fearless && morMax > 0 && morVal <= 0,
-
-      // Организация
-      sizeLabel:    size.label || "",
-      sizeHeadcount: size.headcount || "",
-      isFormation:  size.formation !== false,
-      availability: availabilityMod(system.techLevel, system.training),
-      attachedCount: Array.isArray(system.attached) ? system.attached.length : 0
-    };
+    prepareFormationDerived(system);
   }
 
   /**
    * Производные данные Орды: Характеристики (total/bonus), Размер и боевые
    * показатели по текущей Магнитуде, движение, состояние (Ослаблена/Сломлена).
+   * Чистая агрегация — rules/horde.mjs.
    */
   _prepareHordeData(system) {
-    // Характеристики: total = база + продвижение + Мод. (знаковый ручной
-    // модификатор, как у Персонажа/Демона/Миньона/Принца Демона); бонус = ⌊total/10⌋.
-    const charDamage = system.charDamage || {};
-    for (const [key, char] of Object.entries(system.characteristics || {})) {
-      const dmgMod = charDamage[key] || 0;
-      char.charDamage = dmgMod;
-      char.total = (Number(char.base) || 0) + (Number(char.advance) || 0) + dmgMod;
-      char.bonus = Math.floor(char.total / 10);
-    }
-    // Навыки: значение = характеристика навыка + надбавка ранга. Считается так
-    // же, как у существ, но без продвижений за опыт — у орды их нет.
-    for (const [key, sk] of Object.entries(system.skills || {})) {
-      const def     = SKILLS_DEF[key];
-      const charVal = def ? (system.characteristics?.[def.char]?.total ?? 0) : 0;
-      sk.total = charVal + (SKILL_RANKS[sk.rank]?.bonus ?? -20);
-    }
-
-    // Групповые навыки — те же правила, но характеристику может задавать сама
-    // запись (у Ремесла она своя у каждой специализации).
-    for (const [groupKey, entries] of Object.entries(system.groupSkills || {})) {
-      if (!Array.isArray(entries)) continue;
-      const def = GROUP_SKILLS_DEF[groupKey];
-      for (const entry of entries) {
-        const charKey = entry.char || def?.char;
-        const charVal = charKey ? (system.characteristics?.[charKey]?.total ?? 0) : 0;
-        entry.total = charVal + (SKILL_RANKS[entry.rank]?.bonus ?? -20);
-      }
-    }
-
-    const mag   = system.magnitude || (system.magnitude = { value: 0, start: 0 });
-    const value = Math.max(0, Number(mag.value) || 0);
-    const start = Math.max(0, Number(mag.start) || 0);
-
-    // Боевой Размер по Магнитуде (не влияет на SPD) и бонусные кубы урона —
-    // счёт общий с конвейером урона, rules/horde-damage.mjs.
-    const magSize       = hordeSizeFor(value);
-    const magDamageDice = hordeMagDamageDice(value);
-
-    // Движение: SPD = Ag.bonus + собственный размер существа (не Размер Орды).
-    const agB = system.characteristics?.ag?.bonus ?? 0;
-    system.movement = calcMovement(agB, Number(system.sizeMod) || 0);
-
-    // Боевые показатели Орды.
-    const meleeTargets = Math.max(1, Math.floor(value / 5));
-    const enemiesMelee = Math.max(0, Number(system.enemiesInMelee) || 0);
-    // Отдельные стрелки (расчёты тяжёлого оружия) бьют своими атаками и в
-    // стрельбе Орды не участвуют — их Магнитуда из расчёта вычитается.
-    const detached     = Math.min(value, Math.max(0, Number(system.detachedMagnitude) || 0));
-    const shootingMag  = Math.max(0, value - detached);
-    const rangedShots  = Math.max(0, Math.floor(shootingMag / 10) - Math.floor(enemiesMelee / 2));
-
-    // Состояние по доле от стартовой Магнитуды.
-    const pct = start > 0 ? value / start : 1;
-    const immune = !!system.immuneFear;
-    const state = hordeState({ value, start, immune });
-
-    // Броня Орды: все попадания идут в торс, поэтому считается AP тела, и не
-    // суммой, а по лучшему предмету — как у существ (несколько слоёв брони не
-    // складываются). Поле system.absorption мастер по-прежнему ставит руками:
-    // там сумма «броня + бонус Стойкости», как было до появления предметов.
-    let armourAP = 0;
-    for (const item of this.items ?? []) {
-      if (item.type !== "armor" || !item.system?.equipped) continue;
-      armourAP = Math.max(armourAP, Number(item.system.body) || 0);
-    }
-    const manualAbsorption = Math.max(0, Number(system.absorption) || 0);
-
-    system.derived = {
-      magSize,
-      magSizeLabel: HORDE_SIZE_LABELS[magSize] || "",
-      armourAP,
-      absorptionTotal: manualAbsorption + armourAP,
-      magDamageDice,
-      magDamageStr: magDamageDice ? `+${magDamageDice}d10` : "—",
-      meleeTargets,
-      rangedShots,
-      detached,
-      psychTestBonus: value,                    // бонус к тестам Страха/Запугивания/Подавления = Магнитуда
-      pct: Math.round(pct * 100),
-      state,
-      immune,
-      lost: Math.max(0, start - value),
-      psychDamage: Math.max(0, Number(system.psychDamage) || 0),
-      halfThreshold: Math.floor(start * 0.5),
-      quarterThreshold: Math.floor(start * 0.25),
-      massDamageThreshold: massDamageThreshold(start),  // 25%+ за раунд → тест W+Магнитуда
-      // Ослабленная Орда катит Волю с −10 и не лечит психологический урон
-      // 10−W.b часов. Штраф уже сложен в порог теста Воли ниже.
-      wpPenalty: state === "weakened" ? WEAKENED_WP_PENALTY : 0,
-      wpTestThreshold: (system.characteristics?.wp?.total ?? 0)
-                     + (state === "weakened" ? WEAKENED_WP_PENALTY : 0),
-      // Порог психологического теста: Воля плюс Магнитуда (толпа держится числом).
-      psychTestThreshold: (system.characteristics?.wp?.total ?? 0) + value
-                        + (state === "weakened" ? WEAKENED_WP_PENALTY : 0),
-      noRecoveryHours: noRecoveryHours(system.characteristics?.wp?.bonus ?? 0),
-      roundDamage: Number(this.getFlag?.("warhammer-dbc", "hordeRoundDamage")) || 0
-    };
+    prepareHordeDerived(this, system);
   }
 
   /**
    * Производные данные Техники: эффективная SPD (с учётом повреждений Ходовой),
    * дистанции хода, суммарный модификатор Маневрирования (Ходовая + повреждения),
-   * состояние (полуразрушена при Структуре ≤ 0).
+   * состояние (полуразрушена при Структуре ≤ 0). Чистая агрегация — rules/vehicle.mjs.
    */
   _prepareVehicleData(system) {
-    const ch      = system.chassis || (system.chassis = {});
-    const type    = ch.type || "tracked";
-
-    // ── Агрегация авто-эффектов Черт техники (Item type=vehicleTrait) ──
-    // vehicleTrait не входит в MIGRATE_EFFECT_TYPES (migrations/item-effects.mjs)
-    // и не будет: это отдельная, самостоятельная система бонусов техники, не
-    // легаси-счётчик, ожидающий переноса в ActiveEffect — задокументированное
-    // исключение (wdbc-ng6c, B5). Вынос в module/rules/ — отдельная задача
-    // wdbc-yo4n, здесь только пометка, без рефакторинга.
-    const tf = {
-      openTopped: false, manoeuvreMod: 0, spdMod: 0, spdDamageReduce: 0, noMove: false,
-      swerveDisabled: false, fullMoveSpdMult: 0, smallMoveOnly: false, ignoreDifficultTerrain: false,
-      critHalved: false, trackHitsToHull: false, siege: false, reloadRapid: false,
-      commandBonus: 0, repairBonus: 0,
-      deflector: 0, deflectorDaemonic: false, ignoreCrewCrits: false,
-      autonomous: false, autonomousBS: 0, autonomousOperate: 0, autonomousAwareness: 0,
-      flickerfield: false
-    };
-    for (const it of this.items) {
-      if (it.type !== "vehicleTrait") continue;
-      const e = it.system.effects || {};
-      if (e.openTopped)             tf.openTopped = true;
-      if (e.noMove)                 tf.noMove = true;
-      if (e.swerveDisabled)         tf.swerveDisabled = true;
-      if (e.smallMoveOnly)          tf.smallMoveOnly = true;
-      if (e.ignoreDifficultTerrain) tf.ignoreDifficultTerrain = true;
-      if (e.critHalved)             tf.critHalved = true;
-      if (e.trackHitsToHull)        tf.trackHitsToHull = true;
-      if (e.siege)                  tf.siege = true;
-      if (e.reloadRapid)            tf.reloadRapid = true;
-      if (e.ignoreCrewCrits)        tf.ignoreCrewCrits = true;
-      if (e.flickerfield)           tf.flickerfield = true;
-      // Щит-дефлектор 1-X: X = рейтинг черты (берём максимальный).
-      if (e.deflectorShield) {
-        const x = Number(it.system.rating) || 0;
-        if (x > tf.deflector) { tf.deflector = x; tf.deflectorDaemonic = !!e.deflectorDaemonic; }
-      }
-      // Автопилот: рейтинги = Operate(X)/BS(Y)/Awareness(Z) — заменяет экипаж.
-      if (e.autonomous) {
-        tf.autonomous = true;
-        tf.autonomousOperate   = Math.max(tf.autonomousOperate,   Number(it.system.rating)  || 0);
-        tf.autonomousBS        = Math.max(tf.autonomousBS,        Number(it.system.rating2) || 0);
-        tf.autonomousAwareness = Math.max(tf.autonomousAwareness, Number(it.system.rating3) || 0);
-      }
-      tf.manoeuvreMod    += Number(e.manoeuvreMod)    || 0;
-      tf.spdMod          += Number(e.spdMod)          || 0;
-      tf.spdDamageReduce += Number(e.spdDamageReduce) || 0;
-      tf.commandBonus    += Number(e.commandBonus)    || 0;
-      tf.repairBonus     += Number(e.repairBonus)     || 0;
-      const fm = Number(e.fullMoveSpdMult) || 0;
-      if (fm > tf.fullMoveSpdMult) tf.fullMoveSpdMult = fm;
-    }
-    // Open Topped теперь задаётся Чертой (ручной чекбокс убран из Обзора).
-    system.openTopped = tf.openTopped;
-
-    const baseSpd = Number(ch.spd) || 0;
-    // Многоногая (X) снижает урон Ходовой к SPD.
-    const spdDmg  = Math.max(0, (Number(ch.spdDamage) || 0) - tf.spdDamageReduce);
-    let effSpd    = Math.max(0, baseSpd + tf.spdMod - spdDmg);
-    if (tf.noMove) effSpd = 0;   // Неподвижная
-
-    const CHASSIS_BONUS = { wheeled: 10, tracked: 0, walker: 0, skimmer: 10, plane: 0 };
-    const manoeuvreDmg  = Math.max(0, Number(ch.manoeuvreDamage) || 0);
-    const manoeuvreMod  = (Number(system.manoeuvrability) || 0)
-                        + (CHASSIS_BONUS[type] || 0)
-                        - manoeuvreDmg + tf.manoeuvreMod;
-
-    // Шагоход: Бег = 4×SPD, прочие манёвры машины — до SPD×2 (Большой/Полный Ход).
-    const runMult = type === "walker" ? 4 : 6;
-    // Полный Ход: Быстрая = ×3 SPD; Громоздкая — только Малый Ход.
-    const fullMult = tf.fullMoveSpdMult > 0 ? tf.fullMoveSpdMult : 2;
-    const fullMove = tf.smallMoveOnly ? effSpd : effSpd * fullMult;
-
-    const strMod  = Number(ch.strength) || 0;
-    const unS     = Number(ch.unnaturalS) || 0;
-    const sBonus  = Math.floor((strMod + unS) / 10);   // S.b шагохода
-
-    const structVal = Number(system.structure?.value) || 0;
-    const structMax = Number(system.structure?.max) || 0;
-
-    system.derived = {
-      chassisType:  type,
-      effSpd,
-      spdDamaged:   spdDmg > 0,
-      movement: {
-        smallMove: effSpd,        // Малый Ход / Хаотичное / Погрузка (SPD×1)
-        fullMove,                 // Большой / Полный Ход / Таран
-        run:       effSpd * runMult
-      },
-      manoeuvreMod,
-      swerveMod:    -(Number(system.size) || 0) * 10 + (type === "tracked" ? -10 : 0),
-      swerveDisabled: tf.swerveDisabled || tf.noMove,
-      walker:       type === "walker",
-      skimmer:      type === "skimmer",
-      plane:        type === "plane",
-      strengthBonus: sBonus,
-      liftKg:       sBonus * 2,   // расчётная база подъёма (S.b×2)
-      halfWrecked:  structMax > 0 && structVal <= 0,
-      deflector:    tf.deflector,
-      deflectorDaemonic: tf.deflectorDaemonic,
-      ignoreCrewCrits:   tf.ignoreCrewCrits,
-      autonomous:        tf.autonomous,
-      autonomousBS:      tf.autonomousBS,
-      autonomousOperate: tf.autonomousOperate,
-      autonomousAwareness: tf.autonomousAwareness,
-      flickerfield:      tf.flickerfield,
-      traitFlags:   tf
-    };
+    prepareVehicleDerived(this.items, system);
   }
 
   prepareDerivedData() {
