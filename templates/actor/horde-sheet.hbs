@@ -1,3 +1,26 @@
+{{!-- Обшивка «инфопланшет» (wdbc-cpv7, тот же приём — skill dbc-housing).
+     Лист без единого корневого div (root=true просто переносит все
+     top-level теги детьми this.element, который уже несёт класс .wh-horde —
+     свой, без подклассов, безопасен как CSS-скоуп без доп. JS-маркера).
+     Тема Орды (тёмный холо, НЕ пергамент/когитатор) не трогается — housing
+     облегает .horde-tabs/.horde-body как есть, без переделки под Проводник
+     (по ТЗ тикета, мокап их не менял). Статус-строки на экране здесь нет —
+     ни в одном из 4 артбордов мокапа её не было. --}}
+<div class="cog-rivet tl"></div>
+<div class="cog-rivet tr"></div>
+<div class="cog-rivet bl"></div>
+<div class="cog-rivet br"></div>
+
+<div class="cog-plate-row">
+  <span class="cog-plate">Инфопланшет модели XIL</span>
+  <div class="cog-leds">
+    <i class="cog-led cog-led-green on"></i>
+    <i class="cog-led cog-led-amber {{#if (eq d.state "weakened")}}on{{/if}}"></i>
+    <i class="cog-led cog-led-red {{#if (eq d.state "broken")}}on{{/if}}"></i>
+  </div>
+</div>
+
+<div class="cog-screen">
 {{!-- ── Шапка ── --}}
 <header class="horde-head">
   <div class="horde-portrait-wrap" title="Кликните, чтобы выбрать изображение">
@@ -291,3 +314,6 @@
   </div>
 
 </div>
+</div>
+
+<div class="cog-status-row"></div>
