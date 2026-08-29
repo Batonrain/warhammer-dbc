@@ -9,6 +9,8 @@
 //  свободный объект, а не разобранная схема.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+
 export class HomeworldData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -29,4 +31,7 @@ export class HomeworldData extends foundry.abstract.TypeDataModel {
       effects:       new ObjectField({ initial: () => ({ charValueBonuses: [] }), label: "Механика" })
     };
   }
+
+  /** @override — общий разбор пары charBonusStat/charBonusValue. */
+  static migrateData(source) { return migrateCharBonusPair(source); }
 }

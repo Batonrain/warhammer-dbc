@@ -393,7 +393,8 @@ const TYPES = {
           damageMod: 0, penMod: 0, rangeMod: 0, addProps: []
         }
       }
-    }
+    },
+    migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },
   techPower: {
     pack: "tech-powers",
@@ -405,7 +406,8 @@ const TYPES = {
       compiled: false, range: "", damage: "", damageType: "energy",
       penetration: 0, weaponProps: [], effect: "",
       effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] }
-    }
+    },
+    migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },
   navigatorPower: {
     // Предметов этого типа в паках нет — силы Навигатора заводит сам ГМ.

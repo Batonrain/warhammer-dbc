@@ -12,6 +12,8 @@
 //  у непомеченных предметов.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+
 export class ArmorModData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -51,4 +53,7 @@ export class ArmorModData extends foundry.abstract.TypeDataModel {
       drukhari:     new BooleanField({ initial: false, label: "Друкхари" })
     };
   }
+
+  /** @override — общий разбор пары charBonusStat/charBonusValue. */
+  static migrateData(source) { return migrateCharBonusPair(source); }
 }
