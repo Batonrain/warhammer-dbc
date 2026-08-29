@@ -1570,6 +1570,11 @@ function showMechChoiceDialog(item, entries) {
  * addProps/removeProps) — чтобы не задевать ручной раздел «Даруемые свойства»
  * на листе модификации; getModEffects (combat/weapon-mods.mjs) сливает оба
  * источника при броске. Идемпотентно — пишет, только если результат отличается.
+ *
+ * Запись напрямую в system.effects, в обход ActiveEffect — намеренное,
+ * задокументированное исключение (WEAPON_MOD_EFFECT_KEYS в
+ * migrations/item-effects.mjs, wdbc-ng6c, B6): changes не умеет выразить
+ * «добавить элемент в массив свойств оружия», а не случайный обход правила.
  */
 export async function syncWeaponPropItemEffects(item) {
   const groups = getItemMechanics(item);

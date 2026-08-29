@@ -3,8 +3,16 @@
 //  Миграция: system.effects.* существующих предметов → embedded ActiveEffect.
 //  Переводит старые числовые эффекты в реальный, работающий Active Effect —
 //  единственный источник правды для этих 10 типов отныне. Сам system.effects НЕ
-//  стираем (легаси/справка), только перестаём его читать в prepareDerivedData и
-//  показывать для редактирования (см. партиалы листов).
+//  стираем (легаси/справка), только перестаём его читать в prepareDerivedData.
+//  Партиалы листов (armor/tech-power/psychic-power.hbs) прячут за флагом
+//  migratedEffect поля charBonuses и AP-эффекты армор-модов (item-sheet.mjs:
+//  context.effectsMigrated) — до wdbc-o80l правка визуально сохранялась, но не
+//  доходила до актора (миграция гоняется один раз на ready, не на updateItem).
+//  Исключение: addProps/removeProps/weaponBuff (module/combat/weapon-mods.mjs)
+//  этот флаг не проверяют вовсе — они и не входят в перенос
+//  (legacyEffectsToChanges его не знает), поэтому их правка через лист всегда
+//  доходит до актора и в UI не прячется (см. находку B4 — незадокументированное
+//  исключение из архитектуры, решение за владельцем).
 //
 //  Признаком «уже перенесено» служит сама механика в эффектах (по ключам, см.
 //  carriedKeys), а НЕ флаг `migratedEffect`: флаг ставила и прошлая версия
@@ -38,6 +46,15 @@ const MIGRATE_COMPENDIA = [
   "warhammer-dbc.armor-mods", "warhammer-dbc.weapon-mods"
 ];
 
+// vehicleTrait НЕ входит в этот набор и не должен: у Техники своя, отдельная
+// система бонусов (_prepareVehicleData, documents/actor.mjs) — она читает
+// system.effects Черт техники (openTopped/spdMod/deflectorShield/autonomous и
+// т.д.) вручную при каждом prepareData, без ActiveEffect и без гейта
+// migratedEffect вовсе. Это не пробел миграции, а второй, параллельный
+// источник истины для бонусов техники — задокументированное исключение
+// (wdbc-ng6c, находка B5). Рефакторинг в module/rules/ — отдельная задача
+// wdbc-yo4n, этой миграции не касается.
+
 // Поля старого формата, которым в ActiveEffect соответствия нет. Пока такое
 // поле заполнено, помечать предмет перенесённым нельзя: старое поле актор у
 // помеченного не читает (documents/actor.mjs, combat/armor-mods.mjs) — механика
@@ -65,6 +82,35 @@ export function legacyOnlyKeys(item) {
     ? [...LEGACY_ONLY_KEYS, ...MOD_LEGACY_ONLY_KEYS]
     : LEGACY_ONLY_KEYS;
 }
+
+// Поля модификаций оружия (weaponMod: attackMod/damageMod/penMod/rangeMod/
+// clipMod/rofMod/addProps/removeProps/mechAddProps/mechRemoveProps) и весовых
+// психосил (psychicPower: weaponBuff) — реестр НЕ выше, LEGACY_ONLY_KEYS/
+// MOD_LEGACY_ONLY_KEYS. Эти поля combat/weapon-mods.mjs (getModEffects) читает
+// из system.effects НАПРЯМУЮ, всегда, вне зависимости от migratedEffect — своя
+// самостоятельная система «эффектов оружия» (числовые бонусы и список
+// даруемых свойств), не легаси-счётчик характеристик, ожидающий переноса в
+// ActiveEffect. В LEGACY_ONLY_KEYS их заносить НЕЛЬЗЯ: тот список блокирует
+// простановку migratedEffect, пока поле заполнено — а у реальных модификаций
+// оно заполнено всегда (это их обычные данные, не остаток старой миграции),
+// поэтому весь тип встал бы немигрируемым навсегда (проверено: тест «ни один
+// предмет пака не помечен перенесённым с полем мимо ActiveEffect» ловит это
+// как ложное срабатывание). Перечислены здесь только затем, чтобы при чтении
+// кода это выглядело как явное, зафиксированное решение, а не как то, что
+// legacyEffectsToChanges (constants/effect-keys.mjs) просто повезло не знать
+// про эти ключи — не гарантия, а факт архитектуры (wdbc-ng6c, находки B4/B6).
+// mechAddProps/mechRemoveProps сюда же: их пишет напрямую Конструктор Механики
+// (syncWeaponPropItemEffects, apps/mechanics.mjs, kind:"weaponProp") — тоже
+// намеренное исключение, не случайный обход правила «эффекты только через
+// ActiveEffect»: changes не умеет выразить «добавить элемент в массив свойств
+// оружия».
+export const WEAPON_MOD_EFFECT_KEYS = [
+  "attackMod", "damageMod", "penMod", "rangeMod", "rangeMult",
+  "clipMod", "clipMult", "rofSemiMod", "rofFullMod",
+  "reliabilityMod", "balanceMod", "weightPct", "addProps", "removeProps",
+  "mechAddProps", "mechRemoveProps"
+];
+export const PSYCHIC_WEAPON_BUFF_KEY = "weaponBuff";
 
 // Суффикс имени перенесённого эффекта. Единственный признак, по которому дубль
 // отличим от эффекта Конструктора: ключ у них один и тот же, а имена своим

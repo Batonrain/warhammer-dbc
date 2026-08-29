@@ -16,6 +16,14 @@ export function getInstalledMods(actor, weapon) {
  * Сворачивает эффекты всех установленных модификаций в один объект.
  * Числовые — складываются; множители (rangeMult/clipMult) — перемножаются.
  * addProps — список {key,rating,rating2}; removeProps — массив ключей.
+ *
+ * Поля читаются из system.effects НАПРЯМУЮ, без проверки migratedEffect — и
+ * это не пробел, а задокументированное исключение: WEAPON_MOD_EFFECT_KEYS /
+ * PSYCHIC_WEAPON_BUFF_KEY в migrations/item-effects.mjs перечисляют их явно.
+ * В LEGACY_ONLY_KEYS их заносить нельзя (это заблокировало бы migratedEffect
+ * навсегда для любой реальной модификации — там эти поля заполнены штатно, не
+ * как остаток старой миграции) — сами поля в ActiveEffect не переносятся
+ * вовсе, это отдельная, самостоятельная система «эффектов оружия» (wdbc-ng6c, B4).
  */
 export function getModEffects(actor, weapon) {
   const fx = {

@@ -633,6 +633,11 @@ export class WarhammerActor extends Actor {
     const type    = ch.type || "tracked";
 
     // ── Агрегация авто-эффектов Черт техники (Item type=vehicleTrait) ──
+    // vehicleTrait не входит в MIGRATE_EFFECT_TYPES (migrations/item-effects.mjs)
+    // и не будет: это отдельная, самостоятельная система бонусов техники, не
+    // легаси-счётчик, ожидающий переноса в ActiveEffect — задокументированное
+    // исключение (wdbc-ng6c, B5). Вынос в module/rules/ — отдельная задача
+    // wdbc-yo4n, здесь только пометка, без рефакторинга.
     const tf = {
       openTopped: false, manoeuvreMod: 0, spdMod: 0, spdDamageReduce: 0, noMove: false,
       swerveDisabled: false, fullMoveSpdMult: 0, smallMoveOnly: false, ignoreDifficultTerrain: false,
