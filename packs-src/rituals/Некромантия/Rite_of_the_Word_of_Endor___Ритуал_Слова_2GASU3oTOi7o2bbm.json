@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "qzRCeEvcR8nhiZKJ",
   "system": {
-    "description": "",
+    "description": "<p>Этот ритуал позволяет установить телепатический контакт с душой, запертой в неживом сосуде, будь то душа человека или дух демона.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист рисует небольшой круг из символов вокруг сосуда (или большой, если сам сосуд большой, вроде демонической машины) и еще один круг с теми же символами на собственной голове, образуя венец (это может потребовать выбрить волосы, т.к. круг должен быть нанесен на кожу, профессиональные некроманты наносят его в виде татуировки, чтобы сэкономить время). Ритуалист закрепляет ритуал, проводя тест на Scholastic Lore (Occult) (I) –20.",
+    "result": "Запертая душа и Ритуалист могут общаться, пока один из кругов не будет нарушен или сосуд не покинет его круга. Хотя общение и телепатическое, в сознании как колдуна, так и духа, оно воспринимается как вербальное, но обе стороны должны иметь хотя бы один общий язык, чтобы понимать друг друга. Учтите, что души людей, не обладающих псайкерским даром, не сохраняют свои воспоминания вне тела, так что душа обычного человека не будет знать ни одного языка, делая общение невозможным.",
+    "cost": "Разговор с запертым духом на время влияет на манеры и эмоции Ритуалиста, частично наслаивая личность и манеры духа на его. В течение 1d10 дней он получает штраф –20 на все социальные взаимодействия с живыми.",
+    "failureCost": "Вместо назначенной цели Ритуалист связывается с чуждым разумом в непознаваемых глубинах Варпа. Ритуалист получат 3d10 урона в W и 1d5 Порчи до максимума в Cor 90.",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "2GASU3oTOi7o2bbm",
   "effects": [],
@@ -28,7 +30,54 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "0d2980cc976f41da",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "784fc87d5ea3440e",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "019d3b79d5a34c65",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

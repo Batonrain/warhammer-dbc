@@ -76,6 +76,19 @@
 
 .wh-roll-result .roll-crit { margin: 3px 0; font-weight: bold; font-size: 1.02em; }
 .wh-roll-result .roll-crit-success { color: #166316; }
+
+/* Состояния, накладываемые Ритуалом (module/apps/ritual-cast.mjs) — пилюли
+   перетаскиваются на лист актора, который их получает (module/hooks.mjs
+   ловит dragstart, module/sheets/actor-sheet.mjs — drop). */
+.wh-ritual-conditions { margin-top: 6px; font-size: 0.92em; }
+.wh-cond-drag {
+  display: inline-flex; align-items: center; gap: 3px;
+  margin: 2px 4px 2px 0; padding: 1px 7px;
+  background: #d9cbaa; border: 1px solid var(--wh-border); border-radius: 10px;
+  cursor: grab; user-select: none;
+}
+.wh-cond-drag:active { cursor: grabbing; }
+.wh-cond-drag svg { width: 1em; height: 1em; }
 .wh-roll-result .roll-crit-failure { color: #9a0000; }
 
 /* Затемняем «приглушённые» подписи-заметки для читаемости */

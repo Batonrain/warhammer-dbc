@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "hSLgsl8mE1dFhq6g",
   "system": {
-    "description": "",
+    "description": "<p>Когда слуги и солдаты Хаоса подводят своих владык, смерть – не худшая судьба, на которую они могут надеяться. Одним из распространенных наказаний является превращение в Отродья Хаоса, которых затем можно бросить на врагов, получив хоть какую-то пользу с нерадивых слуг.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 1,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалисты рисуют простой ритуальный круг на земле и помещают в него жертву (обычно в клетках или как-то еще скованных надежнее, чем просто путами или кандалами). Ритуалисты в течение 10 минут зачитывают вокруг круга строфы ритуала, после чего Главный Ритуалист закрепляет его, проводя тест Forbidden Lore (Heresy) (W) +0 или Forbidden Lore (Warp) (I) –10.\nХаосит с Inf 60+ и Cor 80+ может провести этот ритуал в одиночестве, без жертв или ассистентов, сохранив Успехи до момента, когда он высвободит энергии ритуала.",
+    "result": "До Успехов целей в круге (по выбору Главного Ритуалиста) поднимают свою Порчу до 100, обычно превращаясь в Отродий Хаоса. Отродья стабилизированы и не начинают отсчет своего существования, пока не покинут круг.\nЕсли ритуал проводит могучий лорд Хаоса, задерживая эффект, его на Cor.b×2ч окружают завитки черного маслянистого дыма, пробивающиеся из сочленений брони и сочащиеся из глаз и рта. Он может в любой момент за полное действие потратить 1 Успех и применить результат на одном существе в пределах Cor м, если оно признает его своим командиром, применив эффект ритуала на нем. При этом он может выбрать сделать Отродье растекшейся Беспомощной массой плоти, не представляющей никакой опасности. Подчиненные Ритуалиста с Cor 30+ инстинктивно ощущают исходящую от него угрозу и авторитет, и понимают, что он может усилием мысли обречь их на участь хуже смерти, что дает Ритуалисту бонус +10 на тесты Command и +30 на тесты Intimidate против них. Если Ритуалист не потратит все Успехи до завершения действия ритуала, энергии ритуала и его эффекты безвредно рассеиваются.",
+    "cost": "Все участники, имеющие меньше Cor 60, получают +1d5 Порчи до максимума в 60.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа – Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "wp",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "binding",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": -10,
+        "label": ""
+      }
+    ]
   },
   "_id": "o4MR4o4HjeZcGoag",
   "effects": [],
@@ -28,7 +40,98 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "e1220852cc274a05",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "737d317954364c5a",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "1f363ca8c22646d6",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "409c404c2924421a",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "ead32b445afc43fe",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "bfd5d7a148fd4fc8",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

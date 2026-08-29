@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "Ty6J9LvdHEQWGLi2",
   "system": {
-    "description": "",
+    "description": "<p>С помощью колдовских заговоров и символизма можно заключить энергию смерти в чародейский эликсир.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 4,
     "assistMin": 2,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Разумное живое существо, обладающее душой, ритуально приносится в жертву внутри колдовского круга и его жизненные соки (кровь, мозговая жидкость, склера глаз и желчь) собираются и смешиваются в определенных пропорциях в течение 1 часа. В конце главный Ритуалист закрепляет ритуал, проводя тест на Scholastic Lore (Occult) (I) –30 или Forbidden Lore (Warp) (I) –30.",
+    "result": "За каждый Успех на тесте ритуал позволяет создать один эликсир с Редкостью 3, но не больше, чем W.b жертвы. Критический Успех позволяет создать один из эликсиров как эликсир с Редкостью 4. Если Жертва является псайкером или истинно верующим в Императора, способным использовать Чудеса Веры, из ее жизненных соков можно создавать эликсиры с Редкостью 4 и на обычном Успехе.",
+    "cost": "Все Ритуалисты получают 1 Усталости.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +5 за каждый Провал после первого – Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -30
+    "testMod": -30,
+    "failureType": "binding",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": -30,
+        "label": ""
+      }
+    ]
   },
   "_id": "wd7aZ9CPfMDnI1sJ",
   "effects": [],
@@ -28,7 +40,164 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "ad8e98f84b7746a7",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "348e35977c844e35",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "medicae",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "2c5b682416f94ff4",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "trade",
+              "specKey": "chymist",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "9188ebe39d4946c6",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "8376b25d99854af3",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "6da4d1868ac64168",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "8fe29058461f4eee",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "7a2beeb711b64b62",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "medicae",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "8dff574855bb4afb",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "20fa17a78bb44068",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "7ab338333257480d",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

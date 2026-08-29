@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "uKAJ7aWd77e8ZozH",
   "system": {
-    "description": "",
+    "description": "<p>Это проклятье используется как изощренное наказание для врагов, для которых даже смерть – слишком слабая кара, или как средство предовращения воскрешения особо могущественных противников.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,34 @@
     "record": 5,
     "assistMin": 4,
     "assistMax": 8,
-    "procedure": "",
-    "result": "",
+    "procedure": "Это проклятье накладывается непосредственно на жертву, которую нужно разрисовать сложными руническими связями на голую кожу и поместить внутрь ритуального круга, вокруг которого ритуалисты в унисон распевают строки ритуала в течение 8 часов. В конце главный Ритуалист закрепляет ритуал, проводя тест на Scholastic Lore (Occult) (I) –80 или Forbidden Lore (Heresy) (W) –80.",
+    "result": "Призрачные лезвия и когти возникают в воздухе, разрубая и разрывая тело жертвы на куски – главный Ритуалист сам решает, на сколько и каким образом, включая описание ран в инкантации проклятья. Если жертва была без сознания, она при этом приходит в сознание. Несмотря на то, что жертву разрубает на дюжину кусков, она остается живой и в сознании, в то время как противоестественные энергии поддерживают в ней жизнь и связь между кусками, связывая их с ее душой. Более того, куски жертвы становятся абсолютно неуязвимыми. Жертва может использовать свои уцелевшие органы как обычно, например, если уцелела глазница и глаз, она может моргать и вращать глазом и видеть сквозь него. Жертва продолжает чувствовать боль от всех своих ран, она больше не нуждается в еде или воздухе, хотя испытывает голод и удушье. Сила проклятья сдерживает изменения в разуме жертвы, не позволяя ей привыкнуть к боли или сойти с ума. Жертва Беспомощна из-за разрывающей ее сознание боли (другие сверхъестественные эффекты не могут ее подавить), но если у нее работают соответствующие части тела, она может пытаться общаться с их помощью.\nКуски жертвы, как правило, разделяют и прячут в труднодостижимых местах, но если какой-то из них оказывается в принципиально недостижимом месте, вроде сброшенный в звезду, или оставленный в межзвездном космосе, он исчезает и появляется в забытом тайнике в случайном обитаемом месте.\nУсловия Снятия: Проклятье спадает, если все куски жертвы собирают вместе и соединяют обратно, заживляя все раны. Повторное накладывание (для которого нужен только один из кусков как фокус) позволяет жертве нормально умереть.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -80
+    "testMod": -80,
+    "failureType": "curse",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Heresy",
+        "char": "wp",
+        "mod": -80,
+        "label": ""
+      }
+    ],
+    "conditionsGranted": [
+      {
+        "key": "helpless",
+        "level": 0,
+        "note": "жертва — постоянно, пока проклятье не снято"
+      }
+    ]
   },
   "_id": "XfltPdjxSmUiCG4T",
   "effects": [],
@@ -28,7 +47,98 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "cfdb4e0ca91043fe",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "cc9543ae5f8148f1",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "expert",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "ed200a3b80fb4fad",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "expert",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "be2b27816dd4417e",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "0a2a9f7bd4934ead",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "5166fb02de0e4a38",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

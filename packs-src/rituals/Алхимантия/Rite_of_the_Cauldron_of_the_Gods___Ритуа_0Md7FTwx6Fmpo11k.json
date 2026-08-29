@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "Ty6J9LvdHEQWGLi2",
   "system": {
-    "description": "",
+    "description": "<p>Когда кланы и племена демонических миров идут на войну, их колдуны и шаманы готовят боевое варево, что вселяет в простых бойцов частицу силы и смелости их вождя.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 2,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист в течение 4 часов готовит в котле похлебку в огромном бронзовом котле, кроме нормальных ингредиентов используя мясо и внутренности свежеубитого разумного живого существа, обладающего душой, и ложка крови лидера людей, что будут отпивать это варево. В конце каждого часа варки ритуалисты распевают над котлом инкантации ритуала. В конце главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Heresy) (W) –20. Этот тест бросается ГМом втайне.",
+    "result": "Любой, кто признает пожертвовавшего кровь, как своего командира, отпив похлебки из котла, получает таланты Fearless и Frenzy, а также Навыки Athletics, Dodge и Parry на один уровень ниже, чем у пожертвовавшего кровь, если собственные не лучше. Эффект длится до следующего заката, или пока лидер не умрет. На 3+ Успеха на ритуале похлебка также дает принявшим ее один боевой Талант лидера.\nЕсли кто-то, не признающий пожертвовавшего кровь, как своего лидера, отпивает похлебки, он получает 2d10 урона в T и его немедленно начинает сильно тошнить, Оглушая на 1d10 Раундов.",
+    "cost": "Нет.",
+    "failureCost": "Похлебка вызывает пищевое отравление через час после ее приема, накладывая 1 Усталости и дополнительный штраф –10 на все тесты ее отведавших на Провалы часов.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "wp",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "0Md7FTwx6Fmpo11k",
   "effects": [],
@@ -28,7 +30,62 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "a9707fcd23564304",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "ca5113fda6494aed",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "95edcc7fa5484b97",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "9fad0de3819b4fed",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

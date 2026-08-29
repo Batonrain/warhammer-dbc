@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Этот сложный и масштабный ритуал призывает целый отряд демонов.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,49 @@
     "record": 0,
     "assistMin": 4,
     "assistMax": 16,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Круг призыва рисуется на любой твердой поверхности и ритуальные строки призыва распеваются вокруг него в течение 10×W.b демона минут. В процессе ритуала может быть умерщвлено любое количество жертв, дающих соответствующий бонус и служащих как трупы для Вселения демонов. В конце главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Daemons) (I) –60 или Forbidden Lore (Heresy) (W) –70 или Forbidden Lore (Warp) (I) –70 со следующими модификаторами:\n\n- –10 если призывается высший демонический зверь или кавалерия на низших зверях;\n\n- –20 если призывается кавалерия на высших демонических зверях;\n\n- –30 если призывается инфернальная машина (всегда только одна);\n\n- +10 за каждого ассистента, которого конце ритуала принесли в жертву вместе с обычными жертвами.\nГлавный Ритуалист может поддерживать успешный ритуал незавершенным в течение до I.b часов, оттягивая его результат до нужного момента.",
+    "result": "В центр круга призывается один низший демон или низший демонический зверь за каждый Успех или один высший демонический зверь или демонический всадник на низшем звере за каждые полные 2 Успеха или один демонический всадник на высшем звере за каждые 3 полных Успеха или 1 демоническая колесница за каждые 5 Успехов. Весь отряд должен состоять из одного типа демонов. Если ритуал включал жертвоприношения или в круг были помещены трупы, главный Ритуалист может выбрать Вселить часть или всех демонов в трупы. Сразу после призыва Главный Ритуалист может провести Демоническое Владычество над всеми призванными демонами сразу за свободное действие, но получает штраф на тест –5 за каждого демона после первого (–10 за высшего зверя или кавалерию, –25 за колесницу).",
+    "cost": "Все участники, имеющие меньше Cor 70, получают +1d5 Порчи до максимума в 70.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +10 за каждый Провал после первого – Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Daemons",
     "testChar": "int",
-    "testMod": -60
+    "testMod": -60,
+    "failureType": "summon",
+    "aversionPerFail": 10,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Heresy",
+        "char": "wp",
+        "mod": -70,
+        "label": ""
+      },
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": -70,
+        "label": ""
+      }
+    ],
+    "extraMods": [
+      {
+        "label": "Призывается высший демонический зверь или кавалерия на низших зверях",
+        "value": -10
+      },
+      {
+        "label": "Призывается кавалерия на высших демонических зверях",
+        "value": -20
+      },
+      {
+        "label": "Призывается инфернальная машина (всегда только одна)",
+        "value": -30
+      }
+    ]
   },
   "_id": "R5oVmudPSPPOaGdM",
   "effects": [],
@@ -28,7 +62,134 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "391efba398d344c0",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "93e3dbf329cd4c1d",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "4cf9ff9dd87c4455",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "b60a3b039842413f",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "87f5ca8a254b4401",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "584cb2635ee14efa",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "66112c52e1774cd5",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "953acfef0ca5465e",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "qzRCeEvcR8nhiZKJ",
   "system": {
-    "description": "",
+    "description": "<p>Один из самых распространенных ритуалов некромантии, позволяющий оттиснуть пути судьбы на органах умирающего и потом прочесть их, расшифровывая нити вероятности и предопределенности.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 1,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист разрисовывает оккультными формулами разумное живое существо, обладающее душой, и согласное на эту жертву, после чего убивает его, вскрывает, и в течение 1 часа детально изучает его органы, в конце закрепляя ритуал тестом на Forbidden Lore (Warp) (I) +0.",
+    "result": "Энергии ритуала оттискивают узоры судьбы на органах, жилах, и кровеносных сосудах жертвы, слегка изменяя их. После детального осмотра ритуалисты могут прочесть во внутренностях жертвы значимые события в грядущем будущем. За каждый нечетный Успех Главный ритуалист может получить весьма туманное и часто аллегорическое пророчество, касающееся судьбы сообщества, из которого была выбрана жертва, предрекая в основном ближайшие испытания, что ему угрожают. Главный Ритуалист может уменьшить количество полученных пророчеств, за каждое добавляя в одно из других пророчеств подсказки о наиболее действенных путях преодоления этих испытаний.",
+    "cost": "Нет.",
+    "failureCost": "Все Ритуалисты получают 1d5 Усталости, которую они не могут снять никаким образом в течение Провалы суток, т.к. неверно проведенный ритуал оттискивается на их органах вместо органов жертвы, и тем нужно время, чтобы регенерировать неестественные искажения.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "akwOd2jkhtqUgF6v",
   "effects": [],
@@ -28,7 +30,98 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "1db4ba0d01d64d2b",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "b858132c4a9d45e1",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "medicae",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "e368652025054652",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "088ef6e78bc34de3",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "85085b0a98c04edd",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "medicae",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "0d623e79ccee4917",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Вершиной мастерства демонологии является подчинение Высшего Демона или Демонпринца своей воле. Немногие знают секреты столь могучих ритуалов и еще меньше пробовали их на практике и выжили, чтобы рассказать о пережитом.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 5,
     "assistMin": 4,
     "assistMax": 16,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Этот ритуал может проводиться только на расстоянии не более Inf демона м от Демонпринца или Высшего Демона в Истинной Форме или Вселении. В течение Inf.b демона Раундов ритуалисты распевают строфы ритуала и зачитывают полное Истинное Имя демона, после чего главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Daemons) (I) –60 с бонусом +10 за каждого ассистента, которого в конце ритуала принесли в жертву. Демон понимает, что ритуал предназначен для его порабощения, и делает все в свои силах, чтобы сорвать его.",
+    "result": "Главный Ритуалист может немедленно пройти Демоническое Владычество как часть ритуала против демона. Власть этого ритуала столь сильна, что в случае Успеха, демон не может сопротивляться приказам, что противоречат его натуре и полностью порабощен, пока не покинет смертный план.",
+    "cost": "Все участники ритуала получают 3d10 урона во все Характеристики и 1d5 Усталости (бросайте отдельно за каждого) от чудовищных энергий Варпа, что проходят сквозь их тела.",
+    "failureCost": "Демон получает бонус +5 ко всем Характеристикам и +10 текущих и максимальных Ран за каждый Провал и игнорирует все средства сдерживания в области ритуала. Если он убивает кого-то из участников Ритуала, он пожирает его душу, ослабленную попыткой, восстанавливая себе W.b d10 Ран. Он автоматически проходит тесты Нестабильности и временно останавливает счетчик пребывания в Реальности. Этот эффект длится в течение Провалы часов.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Daemons",
     "testChar": "int",
-    "testMod": -60
+    "testMod": -60,
+    "failureType": "dominion",
+    "aversionPerFail": 5
   },
   "_id": "kEDVZuSUCvF6HdhG",
   "effects": [],
@@ -28,7 +30,80 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "6f5d1807bf76435e",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "40938e3ff28b42a1",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "expert",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "63deaac58b7645ea",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "expert",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "af4ca48f024f4083",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "5d2d423e25e9499b",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

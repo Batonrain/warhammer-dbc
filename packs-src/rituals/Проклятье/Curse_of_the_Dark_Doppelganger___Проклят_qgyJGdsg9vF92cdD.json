@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "uKAJ7aWd77e8ZozH",
   "system": {
-    "description": "",
+    "description": "<p>Это сложное проклятье насылает на жертву мстительного демона, что периодически вселяется в нее, совершая ужасные преступления.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,33 @@
     "record": 4,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
+    "procedure": "Фокус ритуала, заключенный полноразмерную статую цели, помещается в круг призыва низшего демона, после чего проводится ритуал призыва демона в Истинной Форме, дополненный инкантацией, занимающей 1 час, и требующей тест на Scholastic Lore (Occult) (I) –70, или Forbidden Lore (Daemons) (I) –50. Этот тест получает бонус +40, если вместо статуи с фокусом в круг помещается сама жертва.",
+    "result": "Раз в 28 дней по определенному при накладывании проклятья условию, например при определенной фазе луны, приливе/отливе моря или определенной погоде демон манифестируется возле жертвы в бесплотной Истинной Форме и атакует ее Атакой Одержимости до тех пор, пока один из них не победит, при этом демон имеет бонус +30 на свои тесты Одержимости. Если демон побеждает, жертва действует как Одержимый с Cor 100 под контролем демона. Ритуалист может при накладывании проклятья дать демону Даров Одержимого на до 1500 xp. Демон остается в контроле только на 8 часов, но Жертва не помнит ничего, что демон делал все это время.\nПроклятье является наследным и отмечает души всех детей жертвы (или наследников Геносемени для Астартес). Когда жертва умирает, ее старейший наследник получает Проклятье в наследство. Если он умирает, его проклятье передается в первую очередь его прямым наследникам, но если их нет, проклятье передается следующему по старшинству наследнику предыдущего поколения проклятья.\nУсловия Снятия: Проклятье спадает, если в жертву вселяется другой демон в любом виде.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -70
+    "testMod": -70,
+    "failureType": "curse",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Daemons",
+        "char": "int",
+        "mod": -50,
+        "label": ""
+      }
+    ],
+    "extraMods": [
+      {
+        "label": "В круг помещена сама жертва вместо статуи с фокусом",
+        "value": 40
+      }
+    ]
   },
   "_id": "qgyJGdsg9vF92cdD",
   "effects": [],
@@ -28,7 +46,98 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "bb1667849da24c86",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "fa8fc198473d46eb",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "752abbaad0bc43d3",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "319a1606c1cc4e56",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "28c031968f204909",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "915941e59ee5403f",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

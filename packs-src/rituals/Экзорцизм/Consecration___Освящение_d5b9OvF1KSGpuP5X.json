@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "QTCsuJzd1hEchlzu",
   "system": {
-    "description": "",
+    "description": "<p>Опытные священники и исповедники Экклезиархии способны проецировать свою веру в оружие, наполняя его силой Императора.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Ритуалист проводит один час, распевая псалмы ненависти над рукопашным оружием или боеприпасом для стрелкового оружия (для огнеметов это может быть целая канистра, достаточная, чтобы заправить тяжелый огнемет или 3 обычных огнемета). В конце Ритуалист должен пройти тест на Scholastic Lore (Imperial Creed) (W)–20. Ритуалист может совершать этот ритуал только один раз в сутки.",
+    "result": "В течение следующих суток урон освященным оружием или боеприпасом игнорирует Трейт Daemonic и, если оно наносит урон демону, тот должен проходить тест на Нестабильность, независимо от того, наносил он урон в свой Ход или нет.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Imperial Creed",
     "testChar": "wp",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "exorcism",
+    "aversionPerFail": 5
   },
   "_id": "d5b9OvF1KSGpuP5X",
   "effects": [],
@@ -28,7 +30,36 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "77d791c2aa6f4abe",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "8eb9c64f95a04bfc",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "imperialCreed",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

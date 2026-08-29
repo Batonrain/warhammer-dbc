@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Этот ритуал позволяет просителю заполучить себе на службу стремительного и чувственного Скакуна Слаанеш.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Проситель проводит ритуал в своей цитадели силы – это может быть как тронный зал его дворца, так и походная палатка, главное чтобы сам проситель воспринимал ее как место своего величия и свершений. Он выкладывает на земле круг из своих самых ценных трофеев и шедевров (это может включать рабов и слуг). После этого он произносит обращение к Слаанеш, требующее награды за свои свершения на Пути Излишеств, перечисляя их в как можно более тщеславной форме и проходит тест на Forbidden Lore (Heresy) (W) +0 или Forbidden Lore (Warp) (I) +0 с возможными модификаторами за особо впечатляющие или скромные трофеи по выбору ГМа.\nВ случае Успеха, проситель переносится в двор Первого Круга Дворца Слаанеш, где он должен впечатлить Герольдов внешнего круга, будь это своим мастерством клинка, сладкими речами, искусством боли, или чистой силой самомнения. Конкретная механика испытания остается на откуп ГМу. После прохождения испытания он возвращается в круг в следующий миг после вступления в него, независимо от того, сколько времени заняло испытание в Варпе.",
+    "result": "Проситель получает возможность призывать в реальность Скакуна Слаанеш в Истинной Форме или Вселении простым пятиминутным ритуалом, не требующим теста. Скакун может телепатически общаться с Хозяином и выполняет его команды, считаясь покоренным Демоническим Владычеством Хозяина. Пока Хозяин ездит верхом на Скакуне, тот стабилизируется в реальности и временно прекращает отсчет дестабилизации.",
+    "cost": "Нет.",
+    "failureCost": "Провал ритуала вызывает Отвращение Варпа с модификатором +5 за каждый Провал после первого. В случае провала испытания проситель остается в Дворце Слаанеш навечно, плененный чарами двора. Персонаж выбывает из игры, хотя другие персонажи могут предпринять миссию по его спасению, если обладают возможностью проникать в царства Варпа.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "wp",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "summon",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": 0,
+        "label": ""
+      }
+    ]
   },
   "_id": "8b6g2FOQ7g1rvFcq",
   "effects": [],
@@ -28,7 +40,78 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "fc79d833d1b1473c",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "cda73c7053b14892",
+              "kind": "reqPatron",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "slaanesh",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "f34f8e0797524057",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "6baae1bbbdcd4c9f",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "b08b115bba064b3f",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

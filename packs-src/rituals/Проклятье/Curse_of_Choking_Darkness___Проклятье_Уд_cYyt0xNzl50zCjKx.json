@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "uKAJ7aWd77e8ZozH",
   "system": {
-    "description": "",
+    "description": "<p>Еретик просит Темных Богов наслать морок на своего врага.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,29 @@
     "record": 1,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Этот ритуал проводится в полном одиночестве и в кромешной тьме. Ритуалист сжигает фокус в закрытом кадиле, чтобы свет огня не освещал комнату, и в течение часа произносит молитвы Темным Богам, взывающие кару на голову своей цели. В конце Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Heresy) (W) +10.",
+    "result": "Цель Ослеплена и Оглохшая. В начале своего Хода цель может пройти тест на W+0, чтобы подавить эффект на Успехи Раундов. Чистые душой жертвы (не-Хаоситы с Cor 0-9) иммунны к эффекту.\nУсловия Снятия: Удушающая Тьма развеивается сама через Cor.b цели дней. Если Cor цели каким-либо образом уменьшается, проклятье спадает досрочно.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "wp",
-    "testMod": 10
+    "testMod": 10,
+    "failureType": "curse",
+    "aversionPerFail": 5,
+    "conditionsGranted": [
+      {
+        "key": "blinded",
+        "level": 0,
+        "note": "снимается тестом W+0 на Успехи Раундов; длится Cor.b цели дней"
+      },
+      {
+        "key": "deafened",
+        "level": 0,
+        "note": "снимается тестом W+0 на Успехи Раундов; длится Cor.b цели дней"
+      }
+    ]
   },
   "_id": "cYyt0xNzl50zCjKx",
   "effects": [],
@@ -28,7 +42,36 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "d46398a4adc942c2",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "35d70e5dda474c28",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

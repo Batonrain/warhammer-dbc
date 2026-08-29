@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "UdpVbIiQAHiQZfS5",
   "system": {
-    "description": "",
+    "description": "<p>Могучим колдунам порой приходится работать скрытно, но их силы оставляют за собой следы, которые любой Одаренный может прочесть. Чтобы запутать следы они используют этот круг.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Этот круг рисуется кровью ритуалиста, который будет им пользоваться, и являет собой сложный узор кривых линий, вписанный в гексаграмму. Создание круга требует целой смены работы и комбинированный тест на Scholastic Lore (Occult) (I) –40 и Trade (Calligraphy)(I) –20, а также тратит от 3 литров крови самого Ритуалиста, которую, как правило, нужно собирать несколько месяцев.",
+    "result": "Только псайкер, чьей кровью написан круг, может замкнуть его. Пока он находится внутри замкнутого круга, он может при манифестации поддерживаемой психосилы замаскировать ее так, чтобы тесты на Пси-чутье показывали эту силу и ее следы так, как он желает, определяя самостоятельно пси-рейтинг, личные следы и саму психосилу, даже если он не владеет ей сам, но имеет знания о ней. Он может также исказить следы природы силы (связанная, несвязанная, демоническая) и, если он оставляет фальшивые следы демонической силы, он может также выбрать оставлять фрагменты Истинного Имени – либо известного ему, либо полностью сфабрикованного.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -40
+    "testMod": -40,
+    "failureType": "circle",
+    "aversionPerFail": 5
   },
   "_id": "vUZ33oYIUuiTBoBy",
   "effects": [],
@@ -28,7 +30,36 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "1a70de19a489411d",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "1a02bf22180d4da2",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "expert",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

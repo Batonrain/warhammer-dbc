@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "p6l9DMaZHahXOvrt",
   "system": {
-    "description": "",
+    "description": "<p>Когти Варпа, искушенные в оккультных искусствах, способны разрывать раны в ткани мироздания, раскрывая пути для элитных отрядов и даже небольших армий хоть на другой конец Галактики.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Для проведения этого ритуала необходимо заранее связаться с союзным культом в месте назначения и достать тело достаточно могучего чемпиона (Inf 40+ или аналог для не-Хаоситов). Культ в месте назначение создает символическое отображение-куклу этого жертвенного чемпиона в масштабе 1 к 1. Когда кукла готова, Коготь Варпа ритуально расчленяет труп и пожирает его избранные части – сердце, печень, глаза, и т.п.. Трапеза занимает у него как минимум 10 минут, и с каждой съеденной частичкой чемпиона когти Когтя Варпа укутываются мистической силой и начинают искрить молниями сильнее и ярче, а кукла жертвенного чемпиона на другом конце укутывается иллюзией, делающей ее все более похожей на оригинал. Завершив трапезу, Коготь Варпа вонзает когти в останки и разрывает их, закрепляя ритуал тестом на Forbidden Lore (Warp) (I) +20. Если он проваливает этот тест, Коготь Варпа может потратить Очко Бесчестия (в т.ч. от Таланта Vulture), чтобы вместо этого автоматически преуспеть на Inf.b Успехов.",
+    "result": "Коготь Варпа разрывает реальность на месте трупа, открывая портал радиусом Inf.b (Когтя Варпа, а не жертвы) метров, и такой же портал на месте куклы. Сквозь порталы можно свободно видеть, слышать, и проходить, и он существует Успехи Раундов. Когда портал должен закрыться, создавший его Коготь Варпа может выбрать потратить Очко Бесчестия (в т.ч. от Таланта Vulture), чтобы продлить его существование на еще Inf.b Раундов. Он может делать это сколько угодно раз, пока у него хватает Очков Бесчестия.",
+    "cost": "Нет.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +5 за каждый Провал после первого.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": 20
+    "testMod": 20,
+    "failureType": "gate",
+    "aversionPerFail": 5
   },
   "_id": "3PJSKawA2MKLK4tJ",
   "effects": [],
@@ -28,7 +30,80 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "127719e38ff34169",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e00db7b37f0d4d0c",
+              "kind": "reqArchetype",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "Коготь Варпа",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "b1571ce098c94ca6",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "d9fe662fc62b4273",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "6701418ec835444d",
+              "kind": "reqStat",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": "",
+              "statKey": "inf",
+              "statThreshold": 40
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

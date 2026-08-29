@@ -49,6 +49,9 @@ class ApplicationStub {
   activateListeners() {}
   /** То же для ApplicationV2: базовый контекст пустой, лист дополняет его сам. */
   async _prepareContext() { return {}; }
+  /** Штатный дроп Foundry (Item/Actor/Folder) — тестам содержимое не нужно. */
+  async _onDrop() {}
+  async _onDropItem() {}
 }
 
 // Лист восстанавливает прокрутку следующим кадром; в node кадров нет.

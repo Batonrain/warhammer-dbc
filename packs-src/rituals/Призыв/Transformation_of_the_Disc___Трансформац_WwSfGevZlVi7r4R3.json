@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Этот ритуал позволяет Ритуалисту трансформировать призванного Крикуна Тзинча в покорный Диск, который он может использовать как личный транспорт и символ статуса.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист создает ритуальный круг, после чего призывает в него Крикуна Тзинча любым другим способом. После этого он закрепляет ритуал тестом на Forbidden Lore (Daemons) (I) –20 или Forbidden Lore (Warp) (I) –30.\nВ случае Успеха, воля ритуалиста устремляется к сущности Крикуна, перековывая ее в новую форму. Ритуалист должен пройти 9 встречных тестов W+0 vs W+0 против Крикуна, каждый из тестов занимает целый час. Если он проваливает хотя бы один встречный тест, ритуал срывается.",
+    "result": "Крикун трансформируется в Диск Тзинча. Диск лишен собственной воли и полностью подконтролен создавшему его Ритуалисту. Диск стабилизируется в реальности, пока не будет уничтожен, или пока создавший его Ритуалист не умрет, и не имеет срока существования в реальности, как другие демоны. Когда диск изгоняется в Варп или его хозяин умирает, он возвращается обратно к своей изначальной форме Крикуна.",
+    "cost": "Колоссальное ментальное напряжение от перековки самой сути демона истощает ритуалиста и он получает 3d10 урона в W.",
+    "failureCost": "Провал ритуала вызывает Отвращение Варпа с модификатором +5 за каждый Провал после первого. Срыв ритуала из-за провала встречного теста освобождает Крикуна от любых средств сдерживания и призывает еще 1 Крикуна в Истинной Форме за каждый час ритуала (т.е. если Ритуалист провалил 5-й встречный тест, он призывает 5 Крикунов). Призванные Крикуны иммунны к Демоническому Владычеству и игнорируют магические круги в области ритуала. Они враждебны всему живому, приоритезируя атаку самого Ритуалиста.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Daemons",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "binding",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": -30,
+        "label": ""
+      }
+    ]
   },
   "_id": "WwSfGevZlVi7r4R3",
   "effects": [],
@@ -28,7 +40,78 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "6197d2b6dd2a483d",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "c5fd80ea209b4a33",
+              "kind": "reqPatron",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "tzeentch",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "8114c64d87e14ef1",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "e40de9c7c01648df",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "2c8c3bad249b40c0",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

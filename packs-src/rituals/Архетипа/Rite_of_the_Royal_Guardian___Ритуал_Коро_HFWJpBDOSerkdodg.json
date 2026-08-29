@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "p6l9DMaZHahXOvrt",
   "system": {
-    "description": "",
+    "description": "<p>Могучие Короли Червей способны улучшать своих верных Стражей Панциря, сливая их плоть со своими верными последователями, чтобы создавать могучего воина, совмещающего дары Короля с независимым человеческим разумом и волей.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 2,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Доброволец-человек и освобожденный Страж Панциря помещаются в круг из хитиновых колышков, созданных Рукой Изобилия, и заполненный плотью (которая должна быть добыта со стороны, а не произведена Рукой Изобилия) им по пояс, после чего Король Червей взывает к Нурглу в течение 7 минут и проходит тест на Forbidden Lore (Heresy) (W) +20.",
+    "result": "Плоть человека и стража сливаются, поглощая также всю остальную плоть в круге, и формируются в куколку с жестким хитиновым панцирем, которая созревает в течение 7 дней. Куколка имеет Характеристики как у Стража, но ее AP 20 и количество Ран вдвое больше. Король Червей генерирует формирующегося Королевского Стража как высшего Миньона-Человека, сохраняя как минимум половину Трейтов Стража Панциря, из которого он был создан (возможно поднимая их рейтинги). За каждый Успех на Ритуал после первого Королевский Страж получает 1 Очко Трейтов, Талантов, или Навыков для генерации Миньона. После 7 дней формирования, Королевский Страж вылупляется из куколки. Он сохраняет личность и память человека, что был использован в ритуале, но становится фанатично предан Королю Червей и его пастве, считает всех персонажей, что носят Метку Опарыша, своими командирами (с +30 на командование) и получает способность командовать свободными Извивающимися Роями, Червеходами и Стражами Панциря, как если бы он имел свою Метку Опарыша.\nКороль Червей может иметь до Inf.b Королевских Стражей. Он не может создавать новых, пока один из предыдущих не умрет.",
+    "cost": "Жизнь и дух Королевского Стража связаны с его королем. Если создавший его Король Червей умрет, все его Королевские Стражи умрут вместе с ним.",
+    "failureCost": "Страж Панциря и человек в круге умирают в ужасных муках, сгнивая заживо, а вся плоть в круге обращается в гнойную массу. Король Червей получает 3d10 урона в T от психической отдачи.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "wp",
-    "testMod": 20
+    "testMod": 20,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "HFWJpBDOSerkdodg",
   "effects": [],
@@ -28,7 +30,98 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "ab93dfc3cc1840c4",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "edd8bfc06a1244e9",
+              "kind": "reqArchetype",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "Король Червей",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "73118310f7544ede",
+              "kind": "reqTalent",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "Shell Guard / Стражи Панциря",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "a0f9f0577b3b4217",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "0a2348b746ce4232",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "cc7b40b2c4514606",
+              "kind": "reqStat",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": "",
+              "statKey": "psyRating",
+              "statThreshold": 6
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

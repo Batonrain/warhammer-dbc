@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "SlUiaVFmbXI89Lao",
   "system": {
-    "description": "",
+    "description": "<p>Могущественные псайкеры способны с помощью ритуала создавать незримый глаз, чтобы шпионить за их врагами с огромных расстояний из безопасности своих твердынь.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 4,
     "assistMin": 4,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "В замкнутом помещении на полу рисуется огромная пентаграмма, испещренная оккультными символами в каждом луче, и ритуалисты в унисон зачитывают слова инкантации, разместившись на каждом из ее острий. В конце главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Warp) (I) –60.",
+    "result": "В центре пентаграммы формируется нематериальная сфера, выглядящая как огромная капля ртути 2 м в диаметре. Главный Ритуалист усилием воли создает незримый сенсор где угодно в пределах той же звездной системы и может перемещать его со скоростью до 500 км/ч. – все, что видит этот глаз, транслируется на поверхность блестящей сферы в центре пентаграммы, хотя звуки передаются искаженными как через глубокое эхо и чтобы разобрать их нужно пройти тест на Awareness –20.\nРитуал может поддерживаться до 9 ч, пока главный Ритуалист не решит его прервать, или пока любой из ритуалистов не покинет свою позицию на пентаграмме, потеряет сознание или умрет.\nСенсор считается психосилой Прорицания и может быть засечен псичутьем как таковая, а также активирует любые контрмеры как психосила Прорицания. Сенсор не может проникать на освященную землю, пропитанную верой, будь это Имперский храм, святилище культа Хаоса (особенно Кхорнитского), реликварий ордена Космодесанта, или возле идолов Орков, в т.ч. их космических кораблей и Гаргантов, которые считаются в равной мере боевыми машинами и кумирами их богов.",
+    "cost": "Могучий Лорд Демонов Аэтаос'Рау'Керес, первый из Владык Перемен, видит и слышит сквозь сенсор то же, что и ритуалисты, добавляя все раскрытые ими секреты к своим знаниям. Когда ритуал прекращается, все его участники должны пройти тест на W–30 (считающийся как против психосилы), или получить 1d5 Усталости и 2d10 урона в P. Ритуалисты, имеющие покровительство Тзинча, проходят этот тест с +0 вместо –30. Если кто-то из них Проваливает этот тест Критически, Аэтаос'Рау'Керес видит и слышит сквозь их чувства до самой их смерти.",
+    "failureCost": "За каждый Провал на тесте вызывается один Феномен Варпа. Главный Ритуалист может выбрать центрировать любые из них на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": -60
+    "testMod": -60,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "soA1AG5dMxuqc77U",
   "effects": [],
@@ -28,7 +30,114 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "4414255045f54358",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "bebda17d3f614af2",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "30532ab9532c486a",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "788ad07854a641bb",
+              "kind": "reqStat",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": "",
+              "statKey": "psyRating",
+              "statThreshold": 7
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "e801bf9ade574d45",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "0975ff057c234deb",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "7c6238d5285c486e",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "3e27f973496f4d0b",
+              "kind": "reqStat",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": "",
+              "statKey": "psyRating",
+              "statThreshold": 4
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "QTCsuJzd1hEchlzu",
   "system": {
-    "description": "",
+    "description": "<p>Более активный экзорцизм, заставляющий демонов убегать от Ритуалиста, понукая их волнами психической энергии.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Ритуалист протягивает вперед символический фокус, изрекая слова инкантации в течение 7–W.b Ходов (минимум 1). В конце проведения он должен пройти тест на Scholastic Lore (Imperial Creed) (W)+0 или Scholastic Lore (Occult) (I) –10.",
+    "result": "Все демоны в Истинной Форме и Вселении в пределах W Ритуалиста метров должны пройти тест на W+0 и набрать больше Успехов, чем Ритуалист, иначе они обязаны в свой Ход тратить все свои действия, чтобы убраться как можно дальше от Ритуалиста. Демоны в Истинной Форме при провале также немедленно должны пройти тесты на Нестабильность. В конце своего Хода они могут повторить тест, чтобы избавиться от эффекта – если они при этом находятся вне радиуса W Ритуалиста метров от него, им достаточно одного Успеха. Однажды пройдя тест против Отрицания, демон становится иммунным к эффекту на 24 ч.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Imperial Creed",
     "testChar": "wp",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "exorcism",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "scholasticLore",
+        "specialty": "Occult",
+        "char": "int",
+        "mod": -10,
+        "label": ""
+      }
+    ]
   },
   "_id": "J45tJUzRi6Tfqv28",
   "effects": [],
@@ -28,7 +40,54 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "c73a96b0f0814e08",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "ab0e84a11f684299",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "imperialCreed",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "02a26fb0f6734a9c",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "QTCsuJzd1hEchlzu",
   "system": {
-    "description": "",
+    "description": "<p>Демоны в Истинной Форме особенно уязвимы к символическому воздействию, и опытный экзорцист способен изгонять их одним словом, но только с очень близкого расстояния, зачастую требуя все это время находиться в рукопашной с изгоняемым демоном.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Для этого ритуала символический фокус не обязательно держать в руке – достаточно иметь его где-то на своем снаряжении. Ритуалист изрекает слова инкантации в течение W.b цели Ходов –1 Ход за каждый уровень продвижения его Навыка для ритуала выше +0 и еще –1 за Талант Mastery для этого Навыка (минимум 1 Ход). В течение всего ритуала цель – демон в Истинной Форме – должна находится в пределах прямой видимости Ритуалиста и не далее W.b ритуалиста метров от него. В конце проведения Ритуалист должен пройти тест на Scholastic Lore (Imperial Creed) (W)+10 или Scholastic Lore (Occult) (I) +0. Этот тест получает бонусы или штрафы от Модификаторов Призыва. Демон автоматически понимает, чем ему грозит это ритуал, и, скорее всего, будет пытаться помешать ему всеми силами.",
+    "result": "Демон должен пройти тест на W+0 и набрать больше Успехов, чем Ритуалист, иначе его немедленно изгоняет из Материума и выбрасывает в Варп.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Imperial Creed",
     "testChar": "wp",
-    "testMod": 10
+    "testMod": 10,
+    "failureType": "exorcism",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "scholasticLore",
+        "specialty": "Occult",
+        "char": "int",
+        "mod": 0,
+        "label": ""
+      }
+    ]
   },
   "_id": "PxNtwwRiBGLmkMh7",
   "effects": [],
@@ -28,7 +40,54 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "394552da52804880",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "2bc22da5ff3b40f4",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "imperialCreed",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "e1453ca087b74aba",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

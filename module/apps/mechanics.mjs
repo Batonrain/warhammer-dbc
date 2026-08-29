@@ -2730,8 +2730,28 @@ export const REQ_KIND_LABELS = {
   reqRace:       "Раса",
   reqArchetype:  "Элитный архетип",
   reqPatron:     "Покровительство Бога",
-  reqCapability: "Возможность"
+  reqCapability: "Возможность",
+  reqStat:       "Показатель (характеристика/Порча/Психорейтинг)",
+  reqPower:      "Психосила"
 };
+
+// Показатель — общий числовой порог: 10 характеристик + Порча + Психорейтинг.
+// Один вид записи вместо трёх (reqCorruption/reqInfamy/reqPR по отдельности),
+// т.к. форма проверки одинаковая — «значение поля ≥ N» — как reqSkill одним
+// видом накрывает и обычные, и групповые навыки.
+export const REQ_STAT_OPTIONS = [
+  ...Object.entries(CHARACTERISTICS).map(([key, c]) => ({ key, label: c.label })),
+  { key: "corruption", label: "Порча" },
+  { key: "psyRating",  label: "Психорейтинг" }
+];
+const REQ_STAT_MAP = Object.fromEntries(REQ_STAT_OPTIONS.map(s => [s.key, s]));
+
+/** Текущее значение показателя у актора — читает нужное поле по ключу. */
+function actorStatValue(actor, key) {
+  if (key === "corruption") return Number(actor.system?.corruption?.value) || 0;
+  if (key === "psyRating")  return Number(actor.system?.psyker?.rating) || 0;
+  return Number(actor.system?.characteristics?.[key]?.total) || 0;
+}
 
 /** Сравнение имён: регистр и лишние пробелы значения не имеют. */
 const normReq = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -2742,13 +2762,17 @@ export function blankReqEntry(kind = "reqSkill") {
     id: foundry.utils.randomID(), kind,
     // reqSkill
     skillScope: "plain", skillKey: "", specKey: "", specialty: "", rank: "knows",
-    // reqTalent / reqTrait — источник перетаскивается, рейтинг необязателен
+    // reqTalent / reqTrait / reqPower — источник перетаскивается, рейтинг
+    // необязателен и есть только у Черты
     sourceUuid: "", sourceName: "", sourceImg: "", sourceHasRating: false, rating: "",
     // reqRace / reqArchetype / reqPatron
     raceKey: "", archetypeName: "", patronKey: "",
     // reqCapability — имя из constants/capabilities.mjs. Так книжное «доступно
     // только пилоту Дредноута» становится проверяемым условием, а не примечанием.
-    capabilityKey: ""
+    capabilityKey: "",
+    // reqStat — «Cor 60», «PR 7+», «Inf 40+» (стр. 393-425): характеристика
+    // или Порча/Психорейтинг не ниже порога.
+    statKey: "", statThreshold: ""
   };
 }
 
@@ -2773,8 +2797,9 @@ export function describeReqEntry(e) {
       return `Навык: ${def?.label || e.skillKey}${spec} — не ниже «${rank}»`;
     }
     case "reqTalent":
-    case "reqTrait": {
-      const what = e.kind === "reqTalent" ? "Талант" : "Черта";
+    case "reqTrait":
+    case "reqPower": {
+      const what = e.kind === "reqTalent" ? "Талант" : e.kind === "reqTrait" ? "Черта" : "Психосила";
       if (!e.sourceName) return `${what}: (перетащите)`;
       const r = (e.kind === "reqTrait" && e.rating !== "" && e.rating != null)
         ? ` — рейтинг не ниже ${e.rating}` : "";
@@ -2792,6 +2817,12 @@ export function describeReqEntry(e) {
       return e.capabilityKey
         ? (CAPABILITIES[e.capabilityKey]?.label || e.capabilityKey)
         : "Возможность: (не выбрана)";
+    case "reqStat": {
+      if (!e.statKey) return "Показатель: (не выбран)";
+      const label = REQ_STAT_MAP[e.statKey]?.label || e.statKey;
+      const thr = e.statThreshold === "" || e.statThreshold == null ? "?" : e.statThreshold;
+      return `${label}: не ниже ${thr}`;
+    }
     default:
       return "(неизвестное требование)";
   }
@@ -2803,11 +2834,13 @@ export function isReqComplete(e) {
     case "reqSkill":     return !!e.skillKey;
     // Сверка идёт по имени, поэтому один только UUID проверять нечем.
     case "reqTalent":
-    case "reqTrait":     return !!e.sourceName;
+    case "reqTrait":
+    case "reqPower":     return !!e.sourceName;
     case "reqRace":      return !!e.raceKey;
     case "reqArchetype": return !!e.archetypeName;
     case "reqPatron":    return !!e.patronKey;
     case "reqCapability": return !!e.capabilityKey;
+    case "reqStat":      return !!e.statKey && e.statThreshold !== "" && e.statThreshold != null;
     default:             return false;
   }
 }
@@ -2834,8 +2867,9 @@ export function actorMeetsReq(actor, e) {
       return (SKILL_RANK_STEPS[actor.system.skills?.[e.skillKey]?.rank] ?? 0) >= need;
     }
     case "reqTalent":
-    case "reqTrait": {
-      const type = e.kind === "reqTalent" ? "talent" : "trait";
+    case "reqTrait":
+    case "reqPower": {
+      const type = e.kind === "reqTalent" ? "talent" : e.kind === "reqTrait" ? "trait" : "psychicPower";
       const want = normReq(e.sourceName);
       // Пустое имя не выполняется ничем: сверка вхождением сделала бы пустую
       // строку подходящей к любому предмету.
@@ -2870,6 +2904,9 @@ export function actorMeetsReq(actor, e) {
     // (место экипажа саркофага), и в system персонажа её нет вовсе.
     case "reqCapability":
       return hasRuleFlag(actor, e.capabilityKey);
+    case "reqStat":
+      if (!e.statKey) return false;
+      return actorStatValue(actor, e.statKey) >= (Number(e.statThreshold) || 0);
     default:
       return false;
   }
@@ -2915,8 +2952,9 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
       return out;
     }
     case "reqTalent":
-    case "reqTrait": {
-      const what = e.kind === "reqTalent" ? "Талант" : "Черту";
+    case "reqTrait":
+    case "reqPower": {
+      const what = e.kind === "reqTalent" ? "Талант" : e.kind === "reqTrait" ? "Черту" : "Психосилу";
       const inner = (e.sourceUuid || e.sourceName)
         ? `<img src="${esc(e.sourceImg || "icons/svg/aura.svg")}" class="grant-drop-img"/>
            <span class="grant-drop-name">${esc(e.sourceName || "?")}</span>
@@ -2952,6 +2990,12 @@ function buildReqFieldsHtml(reqKey, groupId, e, dis) {
     case "reqPatron": {
       const opts = WARP_GODS.map(g => optHtml(g.key, g.label, e.patronKey === g.key)).join("");
       return `<select class="req-patron" ${d} ${dis}><option value="">— выберите Бога —</option>${opts}</select>`;
+    }
+    case "reqStat": {
+      const opts = REQ_STAT_OPTIONS.map(s => optHtml(s.key, s.label, e.statKey === s.key)).join("");
+      return `<select class="req-stat-key" ${d} ${dis}><option value="">— показатель —</option>${opts}</select>
+        <input type="number" class="req-stat-threshold" ${d} value="${esc(e.statThreshold ?? "")}"
+               placeholder="не ниже…" title="Минимальное значение" ${dis}/>`;
     }
     default:
       return "";

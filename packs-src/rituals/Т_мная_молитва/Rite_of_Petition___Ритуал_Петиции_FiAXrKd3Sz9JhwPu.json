@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "hSLgsl8mE1dFhq6g",
   "system": {
-    "description": "",
+    "description": "<p>Этот ритуал проводится, чтобы воззвать к Богам об исправлении чего-то ими свершенного – как правило, чтобы избавиться от мутации (или заменить ее другой) или переделать способности оружия Наследия или Демонического оружия, но также может включать цели вроде получения демонического скакуна или фамилиара, или небольшой модификации Характеристик.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Кровью 4-х невинных рисуется ритуальный круг, который пересекается с 4-мя кругами поменьше: один нарисован кровью человека, убитого в гневе, один – человека, убитого предателем, один – кровью человека, отнявшего свою жизнь, и еще один – кровью человека, который умер от отравления стимуляторами. Ритуалист закрепляет ритуал, тестом на Scholastic Lore (Occult) –20 или Forbidden Lore (Heresy) –30.",
+    "result": "Проситель, который может быть Ритуалистом или кем-то другим, входит в центр большого круга, приносит жертву богам, и просит их милости в выполнении своего желания. Жертва должна быть предметом или персонажем, что дороги просителю. После принесения жертвы просящий должен провести тест на Inf с бонусом или штрафом в зависимости от принесенной им жертвы (по решению ГМа). В зависимости от результатов этого теста, боги могут отказать в прошении, выполнить просьбу немедленно, или послать просящему видение о миссии, которую он должен выполнить, чтобы получить то, чего он просит.",
+    "cost": "Нет.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +10 за каждый Провал после первого.",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "blessing",
+    "aversionPerFail": 10,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Heresy",
+        "char": "wp",
+        "mod": -30,
+        "label": ""
+      }
+    ]
   },
   "_id": "FiAXrKd3Sz9JhwPu",
   "effects": [],
@@ -28,7 +40,54 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "1466c2fdb2274d8c",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "94ac93f0a43f4a6c",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "c63749480a1a44d2",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

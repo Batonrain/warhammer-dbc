@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "uKAJ7aWd77e8ZozH",
   "system": {
-    "description": "",
+    "description": "<p>Это проклятье обращает боль и травмы, наносимые жертвой, против нее самой, отражая плоды ее оружия на ее теле как болезненные стигматы, повторяющие форму и природу ее собственного оружия.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Ритуалист сжигает фокус и посыпает его пеплом символическое отображение жертвы (куклу, портрет, пикт) и небольшое зеркало, после чего уничтожает как отображение, так и зеркало, и формирует из их кусков колдовской круг, в котором он распевает строки ритуала в течение 6 часов. После этого Ритуалист закрепляет ритуал, проводя тест на Scholastic Lore (Occult) (I) –20, или Forbidden Lore (Heresy) (W) –20.",
+    "result": "Каждый раз, когда жертва наносит кому-то кроме себя непоглощенный урон, она должна проходить тест на W–20, или получить 1d5 непоглощаемого урона того же типа в ту же часть тела (но не больше нанесенного ее цели урона). Жертва может получать этот урон только один раз в Раунд.\nУсловия Снятия: Проклятье спадает, если жертва проявляет искреннее милосердие к поверженному врагу.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "curse",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Heresy",
+        "char": "wp",
+        "mod": -20,
+        "label": ""
+      }
+    ]
   },
   "_id": "nEQJmiDFwcFXmTAB",
   "effects": [],
@@ -28,7 +40,54 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "0a9da74680564c45",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "04f680f73612448c",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "ac6386fe28be4a1e",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

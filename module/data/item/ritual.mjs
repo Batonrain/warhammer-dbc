@@ -4,15 +4,20 @@
 //  числа проведения и прозу книги; сам бросок ведёт движок Завесы
 //  (`module/constants/rituals.mjs`).
 //
-//  Два разных «типа» ритуала легко перепутать, поэтому здесь только один:
-//  `ritualType` — КОНТЕНТНЫЙ раздел книги (RITUAL_ITEM_TYPES). Движковый тип,
-//  от которого зависит вид Цены Ошибки при провале, живёт в RITUAL_TYPES и
-//  предметом не хранится — его подставляет пресет проведения.
+//  Два разных «типа» ритуала легко перепутать:
+//  `ritualType` — КОНТЕНТНЫЙ раздел книги (RITUAL_ITEM_TYPES): куда ритуал
+//  подшит в компендиуме/на листе (Призыв/Круг/Проклятье/...).
+//  `failureType` — ДВИЖКОВЫЙ тип (RITUAL_TYPES): какой вид Цены Ошибки при
+//  провале (Отвращение Варпа/Феномен/Проклятье/ничего). Один контентный
+//  раздел книги смешивает разные движковые типы (напр. «Призыв» содержит и
+//  summon, и dominion, и gate), поэтому это отдельное поле, не производное.
 //
 //  Поля теста (testSkillScope/testSkillKey/testSpecialty/testChar/testMod)
 //  описывают путь проведения по умолчанию: каким Навыком и от какой
-//  характеристики ритуал кидается. Ритуалист вправе выбрать другой путь —
-//  остальные варианты остаются в пресетах, предмету хватает основного.
+//  характеристики ритуал кидается. Книга часто даёт несколько равноценных
+//  путей («...тест на X −20 или Y −30 или Z −30...») — остальные лежат в
+//  `rollPaths` (дополнительно к основному, не дублируя его), диалог
+//  проведения (module/sheets/ritual-cast-dialog.mjs) даёт выбрать любой.
 //
 //  Требования к ритуалисту и к ассистентам полем НЕ хранятся: они
 //  механические и лежат во флагах `warhammer-dbc.req` / `.assistReq`
@@ -23,7 +28,7 @@ export class RitualData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { HTMLField, StringField, NumberField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, ArrayField, SchemaField } = foundry.data.fields;
     const num = label => new NumberField({ initial: 0, integer: true, nullable: false, label });
     return {
       description:    new HTMLField({ initial: "", label: "Описание" }),
@@ -32,9 +37,15 @@ export class RitualData extends foundry.abstract.TypeDataModel {
       bookSource:     new StringField({ initial: "", label: "Книга-источник" }),
 
       ritualType:     new StringField({ initial: "summon", label: "Тип ритуала" }),
+      // failureType — движковый тип (RITUAL_TYPES): summon/dominion/binding/
+      // exorcism/curse/circle/gate/blessing/other. Пустое — не заполнено.
+      failureType:    new StringField({ initial: "", label: "Тип провала" }),
       record:         num("Запись"),
       assistMin:      num("Ассистентов минимум"),
       assistMax:      num("Ассистентов максимум"),
+      // Модификатор Отвращения Варпа «+N за каждый Провал после первого»
+      // (стр. 393-425: у большинства ритуалов +5, но встречаются +10/+20).
+      aversionPerFail: new NumberField({ initial: 5, integer: true, nullable: false, label: "Отвращение/Провал" }),
 
       // Проза книги. У ритуалов, разложенных из пресетов, поля пустые: в
       // пресетах прозы нет, она дописывается в packs-src по мере вычитки PDF.
@@ -49,7 +60,43 @@ export class RitualData extends foundry.abstract.TypeDataModel {
       testSpecialty:  new StringField({ initial: "", label: "Специализация теста" }),
       testChar:       new StringField({ initial: "int", label: "Характеристика теста" }),
       // Модификатор теста бывает отрицательным — ритуалы книги идут и в минус.
-      testMod:        num("Модификатор теста")
+      testMod:        num("Модификатор теста"),
+
+      // Альтернативные пути проведения (стр. 393-425: «...тест на X (I) −20
+      // или Y (W) −30 или Z (I) −30...») — ТОЛЬКО дополнительные к основному
+      // пути (testSkillScope/Key/Specialty/Char/Mod выше); пусто — путь один.
+      // scope: "group"|"plain" (см. templates/item/parts/ritual.hbs).
+      rollPaths: new ArrayField(new SchemaField({
+        scope:     new StringField({ initial: "group", label: "Вид навыка" }),
+        key:       new StringField({ initial: "", label: "Навык" }),
+        specialty: new StringField({ initial: "", label: "Специализация" }),
+        char:      new StringField({ initial: "int", label: "Характеристика" }),
+        mod:       num("Модификатор"),
+        label:     new StringField({ initial: "", label: "Подпись (необязательно)" })
+      }), { label: "Альтернативные пути проведения" }),
+
+      // Ситуативные модификаторы, специфичные ЭТОМУ ритуалу (из его же прозы
+      // Ритуал/Результат/Цена/Цена ошибки), поверх общих списков движка
+      // (Модификаторы Призыва/Симпатия Проклятья) — не дублируют их, а
+      // добавляются сверху в диалоге проведения.
+      extraMods: new ArrayField(new SchemaField({
+        label: new StringField({ initial: "", label: "Подпись" }),
+        value: num("Модификатор")
+      }), { label: "Доп. модификаторы ритуала" }),
+
+      // Состояния (CONDITIONS_DEF, module/sheets/sheet-helpers.mjs), которые
+      // ЭТОТ ритуал накладывает при успехе — не применяются автоматически
+      // (у ритуала часто нет фиксированной цели на листе): карточка в чате
+      // (module/apps/ritual-cast.mjs) показывает их перетаскиваемыми
+      // пилюлями, ГМ сам тащит на лист актора, который их получает.
+      conditionsGranted: new ArrayField(new SchemaField({
+        key:   new StringField({ initial: "", label: "Состояние (ключ CONDITIONS_DEF)" }),
+        // Только для состояний со счётчиком (Оглушение, Ослепление и т.п.) —
+        // фиксированное число из книги; 0 — уровень не задан книгой (ГМ сам
+        // впишет на листе актора после переноса).
+        level: num("Уровень"),
+        note:  new StringField({ initial: "", label: "Примечание (напр. «на 1 час»)" })
+      }), { label: "Накладываемые состояния" })
     };
   }
 }

@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "JOHmLGId0SBT61W5",
   "system": {
-    "description": "",
+    "description": "<p>Темные Магосы и Варп-Кузнецы, избавляясь от лишней плоти в стремлении к совершенству Машины, часто сохраняют эту плоть и используют ее для улучшения связи со своими машинными слугами.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист использует от 500г своей плоти и 100г своей крови, помещая их в пустой стальной контейнер в форме вокс-приемника, после чего зачитывает над ним строки ритуала на Бинарном Канте, одновременно вслух и в Ноосфере в течение 1 часа. В конце он закрепляет ритуал, проводя тест на Forbidden Lore (Warp) (I) +0.",
+    "result": "Контейнер действует как полноценный вокс-передатчик, обеспечивающий двустороннюю вокс и Ноосферную связь с ритуалистом, если он и контейнер Стальной Крови находятся в одной системе и их не разделяют психические барьеры. Контейнер не является технологическим предметом, не выключается ЭМИ-полем, связь через него не может быть заглушена или перехвачена, а Ноосферная связь через Стальную Кровь не засекается Ноосферным Сканированием. Ритуалист получает бонус +30 на все тесты Командования и Техночудес против машин и Скитариев, к механизмам которых напрямую подключена Стальная Кровь.\nЕсли контейнер Стальной Крови когда-либо откроют, плоть и кровь в нем мгновенно выгорает и обращается в прах, а Ритуалист получает 2d10 урона в I и W, если только его и контейнер не разделяет какой-либо психический барьер.",
+    "cost": "Нет.",
+    "failureCost": "Используемая плоть и кровь стремительно выгорают и обращаются в прах.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "mXPfR2PdZ38KSGr2",
   "effects": [],
@@ -28,7 +30,72 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "5abb5269ab5a45fd",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "3106c1458cbd4dcf",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "techUse",
+              "specKey": "",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "413c4f95cef64aac",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "52d6c272780e4a6e",
+              "kind": "reqTrait",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "Mechanicum Implants / Импланты Механикум",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Этот ритуал призывает сонм нижайших и слабейших из демонов, вроде Фурий или Фантомов на службу Ритуалисту. Этот ритуал, как правило, проводится только из отчаянья, или для использования демонов в других ритуалах, потому как столь слабые демоны практически бесполезны как в бою, так и в добыче знаний.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,35 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Круг призыва рисуется на любой твердой поверхности и ритуальные строки призыва распеваются вокруг него в течение 1 минуты. В процессе ритуала может быть умерщвлено любое количество жертв, дающих соответствующий бонус, и служащих как трупы для Вселения демонов. В конце главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Daemons) (I) +0 или Forbidden Lore (Heresy) (W) –10 или Forbidden Lore (Warp) (I) –10 со следующими модификаторами. Главный Ритуалист может поддерживать успешный ритуал незавершенным в течение до I.b часов, оттягивая его результат до нужного момента.",
+    "result": "До Успехи низших демонов Ничтожества призываются в центре круга (предположительно). Если ритуал включал жертвоприношения или в круг были помещены трупы, главный Ритуалист может выбрать Вселить часть или всех демонов в трупы. Сразу после призыва Главный Ритуалист может провести Демоническое Владычество над всеми призванными демонами сразу за свободное действие, но получает штраф на тест –5 за каждого демона после первого.",
+    "cost": "Все участники, имеющие меньше Cor 60, получают +1d5 Порчи до максимума в 60.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +5 за каждый Провал после первого – Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Daemons",
     "testChar": "int",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "summon",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Heresy",
+        "char": "wp",
+        "mod": -10,
+        "label": ""
+      },
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": -10,
+        "label": ""
+      }
+    ]
   },
   "_id": "W6ed2p3zpMU3cLiP",
   "effects": [],
@@ -28,7 +48,134 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "1b63d3fdc69e47d0",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "24feebd2a1124794",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "45f68defe25f4c26",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "57efdb2c53464804",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "6e17bc6de8ff4fd0",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "a2c9d5ed23844ecc",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "67a51a6e82634150",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "0ee0c091838b412f",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

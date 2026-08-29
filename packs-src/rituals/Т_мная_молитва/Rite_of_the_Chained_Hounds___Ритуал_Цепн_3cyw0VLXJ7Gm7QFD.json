@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "hSLgsl8mE1dFhq6g",
   "system": {
-    "description": "",
+    "description": "<p>Отродья Хаоса, в отличие от демонов, трудно применять с ощутимой пользой, т.к. они обычно враждебны всему живому и даже друг к другу, слишком глупы, безумны, и мимолетны для дрессировки. С помощью этого ритуала эти недостатки можно исправить и превратить Отродья в верных цепных псов и расходное пушечное мясо.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалисты создают комплект кожаных браслетов или ремней из кожи одного разумного существа и надевают по одному на каждого ритуалиста и каждое Отродье, которое они хотят подчинить (обычно используя петлю на палке, чтобы безопасно обмотать кожаную ленту вокруг какой-то конечности Отродья, запертого в клетке). Находясь в прямой видимости от отмеченных таким образом Отродий, ритуалисты в течение 10 минут зачитывают строки ритуала, после чего Главный Ритуалист закрепляет ритуал тестом на Forbidden Lore (Heresy) (W) +0 или Forbidden Lore (Warp) (I) +0.\nС кожи обычного человека можно наделать 12-15 браслетов и ремней (12, +1 если это мужчина, +1 если толстый, и +1 если высокий), при этом если Отродье впоследствии умирает, с его трупа можно снять ремень и использовать повторно.",
+    "result": "За каждый Успех ритуалисты подчиняют одно «окольцованное» Отродье. Подчиненное Отродье стабилизируется и перестает дегенерировать со временем, пока хотя бы один из ритуалистов жив и носит свой браслет. Отродья слушаются устных приказов ритуалистов и понимают их, невзирая на свое безумие и глупость, хотя не способны понимать приказы сложнее «стой здесь», «иди туда» или «убей вон тех». Если оно получает конфликтующие приказы от разных ритуалистов, Отродье приоретизирует приказ Главного Ритуалиста, а если оба приказа от ассистентов – выполняет последний полученный.",
+    "cost": "Нет.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа – Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "wp",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "binding",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": 0,
+        "label": ""
+      }
+    ]
   },
   "_id": "3cyw0VLXJ7Gm7QFD",
   "effects": [],
@@ -32,16 +44,16 @@
     "warhammer-dbc": {
       "req": [
         {
-          "id": "pvsAU8mcCB2VYKFG",
+          "id": "a918a36d8c67433e",
           "operator": "OR",
           "entries": [
             {
-              "id": "azn29EGPsjRpdbVl",
+              "id": "d29500f7adc04a64",
               "kind": "reqSkill",
               "skillScope": "group",
               "skillKey": "forbiddenLore",
               "specKey": "heresy",
-              "specialty": "Heresy",
+              "specialty": "",
               "rank": "trained",
               "sourceUuid": "",
               "sourceName": "",
@@ -50,15 +62,16 @@
               "rating": "",
               "raceKey": "",
               "archetypeName": "",
-              "patronKey": ""
+              "patronKey": "",
+              "capabilityKey": ""
             },
             {
-              "id": "dBjj8Chu1MDcKjBG",
+              "id": "59c0e41fe12c43bc",
               "kind": "reqSkill",
               "skillScope": "group",
               "skillKey": "forbiddenLore",
               "specKey": "warp",
-              "specialty": "Warp",
+              "specialty": "",
               "rank": "trained",
               "sourceUuid": "",
               "sourceName": "",
@@ -67,7 +80,52 @@
               "rating": "",
               "raceKey": "",
               "archetypeName": "",
-              "patronKey": ""
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "350047b572274fde",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "0c17c01c394449cc",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "75a2322506384e6f",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
             }
           ]
         }

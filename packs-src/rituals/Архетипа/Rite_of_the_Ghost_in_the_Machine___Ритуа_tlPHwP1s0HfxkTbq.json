@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "p6l9DMaZHahXOvrt",
   "system": {
-    "description": "",
+    "description": "<p>Могучие Колдуны Рубрики способны вселять души своих големов не только в доспехи, но и в бронетехнику Астартес.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 4,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Для проведения этого ритуала Колдун должен иметь хотя бы одну не задействованную душу Голема и танк, шагоход или скиммер Легиона, а также один слот высшего Миньона. Ритуалист в течение 9 часов тщательно трансмутирует корпус машины, покрывая ее изнутри сложной вязью и изменяя ее внешнюю отделку. В конце он закрепляет ритуал, проводя тест на Scholastic Lore (Occult) (I) –20.",
+    "result": "Дух Голема вселяется в технику. Та полностью управляется им (используя профиль Сехмет и нужный Навык Operate +10). Машина получает не перегружающийся чародейский щит-купол 1-35 и игнорирует Критические Эффекты, действующие на экипаж.",
+    "cost": "Если техника уничтожается, душа Голема получает серьезные травмы и становится бесполезной на 1d10 месяцев.",
+    "failureCost": "Поврежденная небрежным связыванием душа Голема становится бесполезной на 1 год.",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "tlPHwP1s0HfxkTbq",
   "effects": [],
@@ -28,7 +30,116 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "4559cbd492a24895",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "1d18f2697e3047e3",
+              "kind": "reqArchetype",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "Колдун Рубрики",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "ee82c27535be4a14",
+              "kind": "reqTalent",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "Sekhmet / Сехмет",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "a217923741774677",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "87600207c9734ad6",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "956bf73e0740494f",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "20e61168a94c4f0b",
+              "kind": "reqPower",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "Transmutation / Трансмутация",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": "",
+              "statKey": "",
+              "statThreshold": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

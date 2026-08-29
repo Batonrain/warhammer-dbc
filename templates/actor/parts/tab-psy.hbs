@@ -159,6 +159,7 @@
       <th class="col-narrow">Тип</th>
       <th class="col-narrow" title="Уровень Записи">Запись</th>
       <th class="col-narrow" title="Ассистенты: мин.—макс.">Асс.</th>
+      <th class="col-narrow"></th>
     </tr> </thead> <tbody>
       {{#if rituals.length}}
         {{#each rituals as |r|}}
@@ -171,8 +172,11 @@
           <td>{{r.typeLabel}}</td>
           <td>{{r.record}}</td>
           <td>{{r.assistLabel}}</td>
+          <td class="ritual-cast-cell">
+            <button type="button" class="ritual-cast-btn" data-item-id="{{r.id}}" title="Провести ритуал">🕯</button>
+          </td>
         </tr>
-        <tr class="ability-detail-row" data-item-id="{{r.id}}" style="display:none;"> <td colspan="5">
+        <tr class="ability-detail-row" data-item-id="{{r.id}}" style="display:none;"> <td colspan="6">
           <div class="ability-detail-text">
             {{!-- Каждая группа — своя строка: у ИЛИ-группы текст уже начинается
                   с «одно из: …», склеивать группы между собой нельзя. --}}
@@ -189,6 +193,6 @@
         </td> </tr>
         {{/each}}
       {{else}}
-        <tr class="items-empty"> <td colspan="5"><em>Нет ритуалов — перетащите сюда или нажмите ＋</em></td> </tr> {{/if}}
+        <tr class="items-empty"> <td colspan="6"><em>Нет ритуалов — перетащите сюда или нажмите ＋</em></td> </tr> {{/if}}
     </tbody> </table> </div>
 </div>{{!-- /tab psy --}}

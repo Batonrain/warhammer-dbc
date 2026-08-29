@@ -200,6 +200,21 @@ export async function fatigueSleep(actor) {
   }, rollMode));
 }
 
+/**
+ * Наложить состояние (диалог добавления, драг состояния из карточки ритуала
+ * в чате — module/sheets/actor-sheet.mjs, showRitualCastDialog). `level` —
+ * только для состояний со счётчиком (Кровотечение, Оглушение и т.п.).
+ */
+export async function addCondition(actor, key, level = null) {
+  const def = CONDITIONS_DEF[key];
+  if (!def || key === "fatigued") return;
+  const updates = { [`system.conditions.${key}`]: true };
+  if (def.hasLevel && def.levelField && level != null) {
+    updates[`system.conditions.${def.levelField}`] = Number(level) || 0;
+  }
+  await actor.update(updates);
+}
+
 /** Крестик в строке состояния: снять его, а со счётчиком — обнулить и счётчик. */
 export async function removeCondition(actor, key) {
   // «Усталость» правится только Усталостью на ТЕЛЕ (см. showAddConditionDialog) —

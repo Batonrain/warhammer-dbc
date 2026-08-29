@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "QTCsuJzd1hEchlzu",
   "system": {
-    "description": "",
+    "description": "<p>Тайные гимны ненависти или колдовские инкантации позволяют опалять мощью слова даже искусно связанных с Реальностью демонов.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 2,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Аналогичен Слову Сокрушения, кроме другой инкантации и того, что действует на Одержимых и Демонические Машины, а не только демонов в одной из трех форм призыва.",
+    "result": "Аналогичен Слову Сокрушения.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Imperial Creed",
     "testChar": "wp",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "exorcism",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "scholasticLore",
+        "specialty": "Occult",
+        "char": "int",
+        "mod": -10,
+        "label": ""
+      }
+    ]
   },
   "_id": "cMXfvLhj6Bf5mNlV",
   "effects": [],
@@ -28,7 +40,54 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "e9c594deb8884617",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "79f64299c88449f2",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "imperialCreed",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "a6448150aed345a3",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

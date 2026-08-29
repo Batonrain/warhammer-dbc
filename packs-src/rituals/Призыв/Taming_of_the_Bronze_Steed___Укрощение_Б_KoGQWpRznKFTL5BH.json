@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Этот ритуал позволяет просителю заполучить себе на службу могучего и яростного Джаггернаута Кхорна.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Проситель проводит ритуал на поле боя в луже крови могучего вражеского чемпиона, которого он сразил лично. Он срубает голову поверженному чемпиону и ритуально преподносит ее Богу Крови, прося о силе для еще большего кровопролития в будущем, и проходит тест на Forbidden Lore (Heresy) (W) +0 или Forbidden Lore (Warp) (I) +0 с возможными модификаторами, если сраженный им чемпион был особо силен или наоборот слишком слаб по решению ГМа.\nВ случае Успеха, проситель переносится в Охотничьи Поля во внешних пределах Царства Кхорна, где он должен самостоятельно выследить и победить Джаггернаута. Поля кишат хищными духами и усеяны опасностями, так что просителю наверняка придется немало потрудиться даже до того, как он найдет Джаггернаута для укрощения.\nЕсли проситель зарекомендовал себя охотником на ведьм, вместо Джаггернаута он найдет стаю Гончих Плоти и должен сразиться 1 на 1 с Гончей Крови в ее главе, получив его как скакуна.\nЕсли Кхорн находит просителя особенно достойным, он может вместо этого перенести его в стойла Джаггернаутов в Литейных Гнева, где он сразится на арене с Кровокрушителем за право отобрать его скакуна.",
+    "result": "Проситель получает возможность призывать в реальность Джаггернаута Кхорна в Истинной Форме или Вселении простым пятиминутным ритуалом, не требующим теста. Джаггернаут может телепатически общаться с Хозяином и выполняет его команды, считаясь покоренным Демоническим Владычеством Хозяина. Пока Хозяин ездит верхом на Джаггернауте, тот стабилизируется в реальности и временно прекращает отсчет дестабилизации.",
+    "cost": "Нет.",
+    "failureCost": "Провал ритуала вызывает Отвращение Варпа с модификатором +5 за каждый Провал после первого. В случае провала испытания, проситель скорее всего оказывается растерзан на куски Джаггернаутом или другими демонами Охотничьих Полей. Его тело утеряно в Варпе, а душа сожрана Нерожденными.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "wp",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "summon",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": 0,
+        "label": ""
+      }
+    ]
   },
   "_id": "KoGQWpRznKFTL5BH",
   "effects": [],
@@ -28,7 +40,78 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "446dc5fe074d4957",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "3a69e2deb43149a5",
+              "kind": "reqPatron",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "khorne",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "08ae257facca460b",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "ff6c33ec18424296",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "9b4c64d1aaa542f8",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
