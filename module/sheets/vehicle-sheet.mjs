@@ -10,7 +10,8 @@ import { VEHICLE_WEAPONS } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
-import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 
 const ROLE_ORDER = ["commander", "driver", "gunner", "loader", "pilot", "passenger"];
 
@@ -110,8 +111,7 @@ async function onStateDel(event, target) {
   await this.actor.update({ "system.damageStates": states });
 }
 
-export class WarhammerVehicleSheet
-  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
 
   static DEFAULT_OPTIONS = {
     // vehicle-sheet — на самой форме листа: CSS цепляется за
@@ -166,18 +166,11 @@ export class WarhammerVehicleSheet
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
-    context.actor = this.actor;
-    context.tab = this.tabGroups?.primary ?? WarhammerVehicleSheet.TABS.primary.initial;
-    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
-    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
-    context.system  = sys;
-    context.derived = sys.derived || {};
 
     // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
-    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
-    context.notesEnriched   = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.notes || "", enrichOpts);
-    context.gmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.gmNotes || "", enrichOpts);
+    context.notesEnriched   = await this._enrich(sys.notes);
+    context.gmNotesEnriched = await this._enrich(sys.gmNotes);
 
     context.chassisTypes  = CHASSIS_TYPES;
     context.chassisNote   = CHASSIS_NOTES[sys.chassis?.type] || "";
@@ -330,14 +323,7 @@ export class WarhammerVehicleSheet
 
   // Токен с холста может приходить как type:"Token" — маршрутизируем его (и Actor)
   // в посадку экипажа. Прочее (предметы и т.п.) — базовому обработчику.
-  async _onDrop(event) {
-    let data = null;
-    try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch (e) { /* нет данных */ }
-    if (data && (data.type === "Token" || data.type === "Actor")) {
-      return this._onDropActor(event, data);
-    }
-    return super._onDrop(event);
-  }
+  async _onDrop(event) { return this._dispatchActorOrItemDrop(event); }
 
   /** Предметы на технику может класть только владелец техники. */
   async _onDropItem(event, data) {
@@ -353,35 +339,16 @@ export class WarhammerVehicleSheet
    * своего персонажа в чужую технику) — запрос к активному ГМу по сокету.
    */
   async _persistStations(stations) {
-    if (this.actor.isOwner) {
-      await this.actor.update({ "system.stations": stations });
-      return true;
-    }
-    const gm = game.users.activeGM;
-    if (!gm) {
-      ui.notifications.warn("Нужен активный ГМ на сессии, чтобы занять место в чужой технике.");
-      return false;
-    }
-    game.socket.emit("system.warhammer-dbc", {
-      action: "vehicleStations",
-      vehicleUuid: this.actor.uuid,
-      stations,
-      userId: game.user.id
-    });
-    return true;
+    return this._persistOrRelay({ "system.stations": stations },
+      { action: "vehicleStations", vehicleUuid: this.actor.uuid, stations },
+      "Нужен активный ГМ на сессии, чтобы занять место в чужой технике.");
   }
 
   /** Перетаскивание актора на лист → посадить его в конкретное (или первое свободное) место. */
   async _onDropActor(event, data) {
-    const uuid = data.uuid
-      || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
-      || (data.type === "Token" && data.sceneId && data.tokenId ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null);
-    if (!uuid) return false;
-
-    let doc = null;
-    try { doc = await fromUuid(uuid); } catch (e) { doc = null; }
-    const actor = doc?.actor ?? doc;
-    if (!actor || actor.id === this.actor.id) return false;
+    const resolved = await this._resolveDroppedActor(data);
+    if (!resolved) return false;
+    const { uuid, actor } = resolved;
 
     // Игрок без прав на технику может сажать только своего персонажа.
     if (!this.actor.isOwner && !actor.isOwner) {
@@ -427,11 +394,7 @@ export class WarhammerVehicleSheet
     // Drop привязываем всегда, а не только на редактируемом листе: игрок-не-
     // владелец должен уметь перетащить своего персонажа в чужой транспорт
     // (запись идёт через активного ГМа по сокету, см. _persistStations).
-    try {
-      const DDC = foundry.applications?.ux?.DragDrop?.implementation
-               ?? foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
-      if (DDC) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
-    } catch (e) { console.warn("Warhammer DBC | vehicle DnD bind:", e); }
+    this._bindManualDragDrop(el, "vehicle");
 
     if (!this.isEditable) return;
 

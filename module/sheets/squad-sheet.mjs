@@ -15,22 +15,20 @@ import { SQUAD_LEAD_TYPES, SQUAD_MEMBER_TYPES, SQUAD_TYPE_LABEL,
          MORALE_RULES, BROKEN_SQUAD_RULE,
          cohesionBonus, riskCap } from "../constants/squad.mjs";
 import { commandReachFor, presenceNumber } from "../rules/command.mjs";
+import { degreesOfSuccess } from "../constants/craft.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { MINION_TIERS } from "../constants/minions.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
-import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
          readTestKind, readDiceChoice, mergeReroll, wireTestKindLive } from "../rules/test-kind-widget.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
-
-/** Экранирование пользовательского текста для вставки в HTML чата. */
-/** Степени успеха/провала по правилу системы: |порог − бросок| / 10 + 1. */
-const degrees = (threshold, roll) => Math.floor(Math.abs(threshold - roll) / 10) + 1;
 
 // ── Действия листа ───────────────────────────────────────────────────────────
 // Как на листах Орды, техники и звёздной системы: ApplicationV2 зовёт обработчик
@@ -115,8 +113,7 @@ function onMemberBroken(event, target) { return this._memberTest(memberIdOf(targ
 function onMemberFlag(event, target)   { return this._toggleMoraleFlag(memberIdOf(target)); }
 function onMoraleReset()               { return this._resetMoraleFlags(); }
 
-export class WarhammerSquadSheet
-  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+export class WarhammerSquadSheet extends WarhammerStructuralSheet {
 
   static DEFAULT_OPTIONS = {
     // squad-sheet-form — на самой форме листа: CSS цепляется за
@@ -259,18 +256,10 @@ export class WarhammerSquadSheet
     if (liveTab && this.tabGroups) this.tabGroups.primary = liveTab;
 
     const context = await super._prepareContext(options);
-    context.actor = this.actor;
-    context.tab = this.tabGroups?.primary ?? WarhammerSquadSheet.TABS.primary.initial;
-    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
-    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
-    context.system  = sys;
-    context.derived = sys.derived || {};
-    context.isGM    = game.user.isGM;
     // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
-    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
-    context.notesEnriched   = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.notes || "", enrichOpts);
-    context.gmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.gmNotes || "", enrichOpts);
+    context.notesEnriched   = await this._enrich(sys.notes);
+    context.gmNotesEnriched = await this._enrich(sys.gmNotes);
 
     // ── Командная вертикаль ──
     context.posts     = SQUAD_POST_ORDER.map(k => this._postData(k));
@@ -371,11 +360,7 @@ export class WarhammerSquadSheet
 
     // Дроп привязываем всегда, а не только на редактируемом листе: игрок без
     // прав на отряд приводит в него своего персонажа, запись идёт через ГМа.
-    try {
-      const DDC = foundry.applications?.ux?.DragDrop?.implementation
-               ?? foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
-      if (DDC) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
-    } catch (e) { console.warn("Warhammer DBC | squad DnD bind:", e); }
+    this._bindManualDragDrop(el, "squad");
 
     if (!this.isEditable) return;
 
@@ -408,12 +393,7 @@ export class WarhammerSquadSheet
   // персонажа. Права проверяются в самих обработчиках.
   _canDragDrop(_selector) { return true; }
 
-  async _onDrop(event) {
-    let data = null;
-    try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch (e) { /* нет данных */ }
-    if (data && (data.type === "Token" || data.type === "Actor")) return this._onDropActor(event, data);
-    return super._onDrop(event);
-  }
+  async _onDrop(event) { return this._dispatchActorOrItemDrop(event); }
 
   /** Отряд — не носитель снаряжения: предметы кладут на его участников. */
   async _onDropItem(_event, _data) {
@@ -426,32 +406,18 @@ export class WarhammerSquadSheet
    * персонажа в чужой отряд, — запросом к активному ГМу по сокету.
    */
   async _persistSquad(update) {
-    if (this.actor.isOwner) { await this.actor.update(update); return true; }
-    const gm = game.users.activeGM;
-    if (!gm) {
-      ui.notifications.warn("Нужен активный ГМ на сессии, чтобы войти в чужой отряд.");
-      return false;
-    }
-    game.socket.emit("system.warhammer-dbc", {
+    return this._persistOrRelay(update, {
       action: "squadRoster",
       squadUuid: this.actor.uuid,
       posts:   update["system.posts"]   ?? foundry.utils.deepClone(this.actor.system.posts   || {}),
-      members: update["system.members"] ?? foundry.utils.deepClone(this.actor.system.members || []),
-      userId: game.user.id
-    });
-    return true;
+      members: update["system.members"] ?? foundry.utils.deepClone(this.actor.system.members || [])
+    }, "Нужен активный ГМ на сессии, чтобы войти в чужой отряд.");
   }
 
   async _onDropActor(event, data) {
-    const uuid = data.uuid
-      || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
-      || (data.type === "Token" && data.sceneId && data.tokenId ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null);
-    if (!uuid) return false;
-
-    let doc = null;
-    try { doc = await fromUuid(uuid); } catch (e) { doc = null; }
-    const actor = doc?.actor ?? doc;
-    if (!actor || actor.id === this.actor.id) return false;
+    const resolved = await this._resolveDroppedActor(data);
+    if (!resolved) return false;
+    const { uuid, actor } = resolved;
 
     // Игрок без прав на отряд может приводить только своего персонажа.
     if (!this.actor.isOwner && !actor.isOwner) {
@@ -896,7 +862,7 @@ export class WarhammerSquadSheet
             // Комбинированный тест (свой, книжный: успех по худшему порогу) —
             // не трогаем, только Сложность/Кубик/Крит поверх него.
             const worst = Math.min(t1, t2);
-            const deg   = degrees(worst, rv);
+            const deg   = Math.abs(degreesOfSuccess(rv, worst));
             const sux   = ok ? deg : 0;
             const power = Math.floor(Math.floor((cmd.int ?? 0) / 10) / 2);
             const critLine = critLineHtml(criticalOutcome(rv,
@@ -968,8 +934,8 @@ export class WarhammerSquadSheet
             const rc = await new Roll("1d100").evaluate();
             const rw = await new Roll("1d100").evaluate();
             const okC = rc.total <= cTgt, okW = rw.total <= wTgt;
-            const degC = okC ? degrees(cTgt, rc.total) : 0;
-            const degW = okW ? degrees(wTgt, rw.total) : 0;
+            const degC = okC ? Math.abs(degreesOfSuccess(rc.total, cTgt)) : 0;
+            const degW = okW ? Math.abs(degreesOfSuccess(rw.total, wTgt)) : 0;
             // Встречный тест: побеждает успешный с бо́льшим числом Успехов;
             // при равенстве — сопротивляющийся (приказ не продавлен). Своя
             // механика, не трогаем — только Крит на броске Командира (сторона
@@ -1036,8 +1002,8 @@ export class WarhammerSquadSheet
             const r1 = await new Roll("1d100").evaluate();
             const r2 = await new Roll("1d100").evaluate();
             const ok1 = r1.total <= t1, ok2 = r2.total <= t2;
-            const d1 = ok1 ? degrees(t1, r1.total) : 0;
-            const d2 = ok2 ? degrees(t2, r2.total) : 0;
+            const d1 = ok1 ? Math.abs(degreesOfSuccess(r1.total, t1)) : 0;
+            const d2 = ok2 ? Math.abs(degreesOfSuccess(r2.total, t2)) : 0;
             const wins = ok1 && (!ok2 || d1 > d2);
             const critLine = critLineHtml(criticalOutcome(r1.total,
               resolveTest({ actor: this.actor, kind: "skill", skill: "command" }).crit));
@@ -1089,7 +1055,7 @@ export class WarhammerSquadSheet
     const roll = await new Roll("1d100").evaluate();
     const rv  = roll.total;
     const ok  = rv <= target;
-    const deg = degrees(target, rv);
+    const deg = Math.abs(degreesOfSuccess(rv, target));
     const crit = ok ? rv <= 5 : rv >= 96;
 
     // Провал теста Морали снимает с подчинённого все преимущества Командования.

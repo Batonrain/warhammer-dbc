@@ -1,4 +1,4 @@
-import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { BODY_TYPES, ZONES, STAR_CLASSES, STAR_CONFIGS, SYSTEM_FEATURES, BODY_SIZES, CLIMATE,
          HABITABILITY, ALLEGIANCE, XENOS_SPECIES, RESOURCE_TYPES, RESOURCE_ICONS, INHABITANTS,
          WORLD_CLASSES, WORLD_ENVIRONMENTS, TITHE_GRADES,
@@ -7,6 +7,7 @@ import { BODY_TYPES, ZONES, STAR_CLASSES, STAR_CONFIGS, SYSTEM_FEATURES, BODY_SI
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
+import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 
 // Видно ли улучшение зрителю: secret → после раскрытия, hidden → после разведки, иначе всегда.
 function impVisible(im, isGM, scouted, revealed) {
@@ -157,8 +158,7 @@ function onSystemEncounter() { return this._addEncounter(); }
 function onSystemJournal()   { return this._journalPin(); }
 function onSystemClear()     { return this._clearBodies(); }
 
-export class WarhammerStarSystemSheet
-  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+export class WarhammerStarSystemSheet extends WarhammerStructuralSheet {
 
   static DEFAULT_OPTIONS = {
     // star-system-sheet — на самой форме листа: CSS цепляется за
@@ -199,20 +199,12 @@ export class WarhammerStarSystemSheet
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
-    context.actor = this.actor;
-    context.tab = this.tabGroups?.primary ?? WarhammerStarSystemSheet.TABS.primary.initial;
-    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
-    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
-    context.system  = sys;
-    context.derived = sys.derived || {};
-    const isGM = game.user.isGM;
-    context.isGM = isGM;
+    const isGM = context.isGM;
     // ── Описание/Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
-    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
-    context.descriptionEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.description || "", enrichOpts);
-    context.warpRoutesEnriched  = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.warpRoutes  || "", enrichOpts);
-    context.gmNotesEnriched     = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.gmNotes     || "", enrichOpts);
+    context.descriptionEnriched = await this._enrich(sys.description);
+    context.warpRoutesEnriched  = await this._enrich(sys.warpRoutes);
+    context.gmNotesEnriched     = await this._enrich(sys.gmNotes);
 
     const regions = game.settings.get("warhammer-dbc", "regions") || [];
     const currentRegion = (sys.region || "").trim();

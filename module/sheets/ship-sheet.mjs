@@ -15,7 +15,8 @@ import { CRAFT_KINDS } from "../constants/small-craft.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
-import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { actorHullItem, clearHull } from "../apps/ship-hull.mjs";
 import { openHullPicker } from "./hull-picker.mjs";
 
@@ -361,8 +362,7 @@ function onCraftReturn(event, target) {
 
 function onCrewRecover(event, target) { return this._showCrewRecovery(target.dataset.kind); }
 
-export class WarhammerShipSheet
-  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+export class WarhammerShipSheet extends WarhammerStructuralSheet {
 
   static DEFAULT_OPTIONS = {
     // ship-sheet — на самой форме листа: CSS цепляется за
@@ -443,17 +443,10 @@ export class WarhammerShipSheet
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
-    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
-    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
-    context.actor = this.actor;
-    context.tab = this.tabGroups?.primary ?? WarhammerShipSheet.TABS.primary.initial;
     context.editable = this.isEditable;
-    context.system    = sys;
-    context.derived   = sys.derived || {};
     // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
-    context.notesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
-      sys.notes || "", { relativeTo: this.actor, secrets: this.actor.isOwner });
+    context.notesEnriched = await this._enrich(sys.notes);
     const _down = (s) => !!s.damaged || (s.status && s.status !== "intact");
 
     // ── Слот «Корпус» в шапке — выбор через пикер (sheets/hull-picker.mjs),
@@ -687,12 +680,7 @@ export class WarhammerShipSheet
 
   // ── Посадка офицеров (перетаскивание токена/актора) ──
   _canDragDrop(_selector) { return true; }
-  async _onDrop(event) {
-    let data = null;
-    try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch (e) {}
-    if (data && (data.type === "Token" || data.type === "Actor")) return this._onDropActor(event, data);
-    return super._onDrop(event);
-  }
+  async _onDrop(event) { return this._dispatchActorOrItemDrop(event); }
   // В V2 сюда приходит документ предмета, а не данные перетаскивания (V1).
   async _onDropItem(event, item) {
     if (!this.actor.isOwner) { ui.notifications.warn("Добавлять узлы на корабль может только его владелец или ГМ."); return false; }
@@ -706,20 +694,14 @@ export class WarhammerShipSheet
     return super._onDropItem(event, item);
   }
   async _persistOfficers(officers) {
-    if (this.actor.isOwner) { await this.actor.update({ "system.officers": officers }); return true; }
-    const gm = game.users.activeGM;
-    if (!gm) { ui.notifications.warn("Нужен активный ГМ, чтобы занять должность на чужом корабле."); return false; }
-    game.socket.emit("system.warhammer-dbc", { action: "shipOfficers", shipUuid: this.actor.uuid, officers, userId: game.user.id });
-    return true;
+    return this._persistOrRelay({ "system.officers": officers },
+      { action: "shipOfficers", shipUuid: this.actor.uuid, officers },
+      "Нужен активный ГМ, чтобы занять должность на чужом корабле.");
   }
   async _onDropActor(event, data) {
-    const uuid = data.uuid
-      || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
-      || (data.type === "Token" && data.sceneId && data.tokenId ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null);
-    if (!uuid) return false;
-    let doc = null; try { doc = await fromUuid(uuid); } catch (e) {}
-    const actor = doc?.actor ?? doc;
-    if (!actor || actor.id === this.actor.id) return false;
+    const resolved = await this._resolveDroppedActor(data);
+    if (!resolved) return false;
+    const { uuid, actor } = resolved;
     if (!this.actor.isOwner && !actor.isOwner) {
       ui.notifications.warn("На чужой корабль можно посадить только своего персонажа."); return false;
     }
@@ -1103,8 +1085,6 @@ export class WarhammerShipSheet
     }
   }
 
-  // Число степеней успеха по d100 (0 и меньше при провале).
-  _dos(rv, thr) { return rv <= thr ? Math.floor((thr - rv) / 10) + 1 : 0; }
   _chat(html, rolls = []) {
     return ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
