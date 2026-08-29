@@ -66,12 +66,15 @@ describe("двупрофильные предметы", () => {
     return { weaponNames, links };
   }
 
+  // Таймаут увеличен: полный обход packs-src подрос (flags.autoanimations на
+  // Оружии), под нагрузкой всего суйта иногда не укладывался в дефолтные 5с
+  // при заведомо валидном ~1.1с сольно.
   it("каждая ссылка на боевой профиль ведёт к оружию из паков", () => {
     const { weaponNames, links } = packIndex();
     expect(links.length).toBeGreaterThan(0);
     const broken = links.filter(l => !weaponNames.has(l.link));
     expect(broken).toEqual([]);
-  });
+  }, 15000);
 });
 
 describe("исходники книг", () => {

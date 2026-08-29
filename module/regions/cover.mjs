@@ -13,7 +13,8 @@
 //  Укрытие «на линии огня», а не под любым углом.
 // ════════════════════════════════════════════════════════════════════════
 
-export const COVER_TYPE = "warhammer-dbc.cover";
+// Без префикса пакета — см. комментарий у LINGER_ZONE_TYPE (module/regions/linger-zone.mjs).
+export const COVER_TYPE = "cover";
 
 export class CoverBehaviorType extends foundry.data.regionBehaviors.RegionBehaviorType {
 

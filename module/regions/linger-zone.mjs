@@ -32,8 +32,13 @@ import { tokensInRegion } from "../combat/templates.mjs";
 import { applyDamageToActor } from "../combat/damage.mjs";
 import { SCATTER_ROSE } from "../combat/scatter.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { triggerBlastAnimation } from "../integrations/autoanimations.mjs";
 
-export const LINGER_ZONE_TYPE = "warhammer-dbc.lingerZone";
+// Foundry v14: системные (не модульные) типы RegionBehavior регистрируются
+// БЕЗ префикса пакета — "lingerZone", не "warhammer-dbc.lingerZone" (тот
+// формат Foundry ожидает только от типов, объявленных МОДУЛЕМ, и падает на
+// точке в ключе от системы — см. system.json → documentTypes.RegionBehavior).
+export const LINGER_ZONE_TYPE = "lingerZone";
 
 export class LingerZoneBehaviorType extends foundry.data.regionBehaviors.RegionBehaviorType {
 
@@ -82,6 +87,10 @@ export class LingerZoneBehaviorType extends foundry.data.regionBehaviors.RegionB
 
     await this.behavior.update({ [`system.hitLog.${token.id}`]: key });
     await applyDamageToActor(actor, this.damageData);
+    triggerBlastAnimation({
+      attackerUuid: this.damageData.attackerUuid, itemUuid: this.damageData.itemUuid,
+      tokens: [token], region: this.region
+    });
   }
 
   /** @override */
@@ -113,8 +122,17 @@ export class LingerZoneBehaviorType extends foundry.data.regionBehaviors.RegionB
     await region.update({ shapes: [{ ...shapeData, x: shapeData.x + dx, y: shapeData.y + dy }] });
 
     for (const t of tokensInRegion(region)) before.set(t.id, t); // объединение «было ∪ стало» — путь дрейфа
+    const driftedHits = [];
     for (const token of before.values()) {
-      if (token.actor) await applyDamageToActor(token.actor, this.damageData);
+      if (!token.actor) continue;
+      await applyDamageToActor(token.actor, this.damageData);
+      driftedHits.push(token);
+    }
+    if (driftedHits.length) {
+      triggerBlastAnimation({
+        attackerUuid: this.damageData.attackerUuid, itemUuid: this.damageData.itemUuid,
+        tokens: driftedHits, region
+      });
     }
 
     await ChatMessage.create({

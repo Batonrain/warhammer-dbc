@@ -73,7 +73,7 @@ function hitLines(hits, { blastRating = 0 } = {}) {
  */
 function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, vehicleSide,
                                     isMelee = false, burst = false, weaponRange = 0,
-                                    attackerUuid = "", hordeHits = null }) {
+                                    attackerUuid = "", itemUuid = "", hordeHits = null }) {
   if (!hits.length) return "";
   // Взрывное/Распыление — разовый Шаблон (Region-плейсмент, module/combat/
   // templates.mjs): круг радиусом blastRating или конус 30° длиной Rng.
@@ -107,7 +107,9 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     <button class="wh-place-template-btn" type="button"
       data-shape="${wp.spray ? "cone" : "circle"}"
       data-meters="${wp.spray ? weaponRange : wp.blastRating}"
-      data-weapon-name="${weaponName}"${lingerAttrs}>
+      data-weapon-name="${weaponName}"
+      data-attacker-uuid="${attackerUuid}"
+      data-item-uuid="${itemUuid}"${lingerAttrs}>
       🎯 ${wp.lingerRating > 0
         ? `Разместить зону «Остаётся» (${wp.lingerRating} раунд.) и отметить цели`
         : "Разместить шаблон и отметить цели"}
@@ -282,7 +284,7 @@ export function attackCard({
   // Данные для урона по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый
   // Дождь», uuid — чтобы найти Таланты и Размер стрелка, hordeHits — раскладка
   // попаданий правилом «Прячась в Орде» (combat/horde-tokens.mjs).
-  weaponRange = 0, burst = false, attackerUuid = "", hordeHits = null,
+  weaponRange = 0, burst = false, attackerUuid = "", itemUuid = "", hordeHits = null,
   // Остаток пула неизрасходованных Успехов защиты с ДРУГИХ атак этого же
   // противника в этом Ходу (стр. 12) — null, если пула нет или он пуст.
   pool = null,
@@ -408,7 +410,7 @@ export function attackCard({
         ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,
-                                                attackerUuid, hordeHits })}
+                                                attackerUuid, itemUuid, hordeHits })}
         ${soulBurnActorId ? `
     <div class="roll-wprop-effects">
       <button class="wh-soulburn-btn" type="button" data-attacker-id="${soulBurnActorId}">

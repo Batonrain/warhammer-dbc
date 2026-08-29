@@ -16,7 +16,8 @@
 
 import { tokensInRegion } from "../combat/templates.mjs";
 
-export const RUNIC_WEAVE_ZONE_TYPE = "warhammer-dbc.runicWeaveZone";
+// Без префикса пакета — см. комментарий у LINGER_ZONE_TYPE (module/regions/linger-zone.mjs).
+export const RUNIC_WEAVE_ZONE_TYPE = "runicWeaveZone";
 const FLAG = "warhammer-dbc";
 
 export class RunicWeaveZoneBehaviorType extends foundry.data.regionBehaviors.RegionBehaviorType {

@@ -120,6 +120,20 @@ function onFieldMode(event, target) {
   return this.item.update({ "system.fieldMode": target.dataset.fieldMode || "" });
 }
 
+// ── Automated Animations (module/integrations/autoanimations.mjs) ──────────
+// AA 4.2.84 добавляет свою кнопку «A-A» только через устаревший V1-хук
+// getItemSheetHeaderButtons; наш лист построен на ItemSheetV2, и Foundry v14
+// этот хук для него не зовёт (ни старый, ни новый getHeaderControlsApplicationV2 —
+// проверено живьём, см. память doombc-autoanimations-integration). Дёргаем
+// хук сами и переиспользуем готовый onclick — он открывает штатное меню AA,
+// без правки самого модуля.
+function onOpenAutoAnimations() {
+  if (!game.modules.get("autoanimations")?.active) return;
+  const buttons = [];
+  Hooks.callAll("getItemSheetHeaderButtons", { item: this.item }, buttons);
+  buttons.find(b => b.class === "aaItemSettings")?.onclick?.();
+}
+
 // ── Эффекты (Active Effect Foundry) — общая вкладка для всех типов ──
 function onEffectCreate() { return createBlankEffect(this.item); }
 
@@ -469,12 +483,19 @@ export class WarhammerItemSheet
     // («weapon-sheet» и т.п.) добавляется в _onRender: он динамический.
     classes: ["warhammer-dbc", "sheet", "item", "wh-holo", "item-sheet"],
     position: { width: 600, height: 640 },
-    window: { resizable: true },
+    // controls — доступен всегда: game.modules ещё не гарантированно готов в
+    // момент вычисления static DEFAULT_OPTIONS (модульная загрузка идёт до
+    // ready), поэтому проверку на активность autoanimations делает сам
+    // onOpenAutoAnimations по клику, а не объявление кнопки.
+    window: { resizable: true, controls: [
+      { icon: "fa-solid fa-film", label: "Automated Animations", action: "openAutoAnimations" }
+    ] },
     form: { submitOnChange: true, closeOnSubmit: false },
     dragDrop: [{ dragSelector: null, dropSelector: ".effects-drop-target, .grant-drop-zone, .wprop-drop-zone" }],
     actions: {
       tab: onTab,
       fieldMode: onFieldMode,
+      openAutoAnimations: onOpenAutoAnimations,
       effectCreate: onEffectCreate,
       effectEdit: onEffectEdit,
       effectDelete: onEffectDelete,

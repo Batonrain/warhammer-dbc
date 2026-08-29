@@ -44,7 +44,7 @@ export function sprayConeShape(meters, pxPerMeter, angleDeg = 30) {
  * не сохраняется в сцену) и вернуть токены, чьи центры внутри неё.
  * @param {object} shape         Данные фигуры (blastCircleShape/sprayConeShape).
  * @param {string} [name]
- * @returns {Promise<{tokens: Token[]}|null>}  null — размещение отменено (ПКМ).
+ * @returns {Promise<{tokens: Token[], region: RegionDocument}|null>}  null — размещение отменено (ПКМ).
  */
 export async function placeAttackTemplate(shape, name = "Зона поражения") {
   if (!canvas.ready) throw new Error("Нет активной сцены");
@@ -56,7 +56,10 @@ export async function placeAttackTemplate(shape, name = "Зона поражен
     displayMeasurements: true
   }, { create: false });
   if (!region) return null;
-  return { tokens: tokensInRegion(region) };
+  // region отдаём наружу тоже — эфемерный (create:false), в canvas.scene.regions
+  // не попадает, поэтому это единственный способ передать его дальше (например,
+  // как options.templateData для Automated Animations, см. module/hooks.mjs).
+  return { tokens: tokensInRegion(region), region };
 }
 
 /**

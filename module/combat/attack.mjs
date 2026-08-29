@@ -24,6 +24,7 @@ import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
 import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
+import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -466,6 +467,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       weaponRange: Number(sys.range) || 0,
       burst: rofMode === "semi" || rofMode === "full",
       attackerUuid: actor.uuid || "",
+      // itemUuid — только для кнопки шаблона зоны поражения (Automated
+      // Animations читает его в module/hooks.mjs, см. triggerBlastAnimation).
+      itemUuid: item.uuid || "",
       hordeHits,
       pool: evasionPool,
       // Выжигание Души: Психосиловое оружие в руках псайкера при попадании.
@@ -530,4 +534,6 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     if (existing) { await existing.update(messageData); return; }
   }
   await ChatMessage.create(messageData);
+  // Automated Animations (если установлен и включён) — см. module/integrations/autoanimations.mjs.
+  triggerAttackAnimation({ actor, item, hit });
 }
