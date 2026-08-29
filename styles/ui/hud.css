@@ -327,7 +327,6 @@ body.wh-hud-on #chat-notifications { display: none !important; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 146px;
 }
 .wh-ship-name:hover { color: #4dffa6; }
-.wh-ship-class { font-size: .74em; color: #2f8f5e; text-transform: uppercase; letter-spacing: .06em; }
 
 .wh-ship-hi { display: flex; align-items: center; gap: 5px; margin-top: 3px; cursor: ns-resize; }
 .wh-ship-hi-lbl { font-size: .7em; color: #2f8f5e; letter-spacing: .08em; }

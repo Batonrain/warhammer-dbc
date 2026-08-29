@@ -437,7 +437,22 @@
 .warhammer-dbc .ship-panel.ship-daemon { box-shadow: 0 0 0 2px #7a1020 inset; }
 .warhammer-dbc .ship-panel.ship-daemon .ship-panel-title { background: #7a1020; }
 
-/* Журнал искажений (Записи) */
+/* Ручной выбор Искажения — рядом с броском (wdbc-zuf4) */
+.warhammer-dbc .ship-distort-manual-row { display: flex; align-items: center; gap: 7px; margin-top: 8px; }
+.warhammer-dbc .ship-distort-manual-row label {
+  font-size: 0.8em; font-weight: bold; color: var(--wh-panel-mid); min-width: 78px; flex: 0 0 auto;
+}
+.warhammer-dbc .ship-distort-manual-row select {
+  flex: 1; background: var(--wh-input-bg); border: 1px solid var(--wh-border-light);
+  color: var(--wh-text); font-family: inherit; font-size: 0.9em; padding: 2px 5px;
+}
+.warhammer-dbc .ship-distort-log-title {
+  font-size: 0.8em; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--wh-panel-mid); margin-top: 9px; border-bottom: 1px solid var(--wh-border-light);
+  padding-bottom: 3px;
+}
+
+/* Журнал искажений — теперь внутри панели «Осквернение» на «Обзоре» (wdbc-zuf4) */
 .warhammer-dbc .ship-distort-log { display: flex; flex-direction: column; gap: 5px; }
 .warhammer-dbc .ship-distort-entry {
   background: var(--wh-parchment3); border: 1px solid var(--wh-border-light);
@@ -454,10 +469,6 @@
 }
 .warhammer-dbc .ship-distort-del:hover { color: #d11; }
 .warhammer-dbc .ship-distort-entry-desc { font-size: 0.85em; color: var(--wh-text); opacity: 0.9; margin-top: 3px; white-space: pre-wrap; line-height: 1.35; }
-
-/* Поле «Очки Корабля (макс.)» в Записях */
-.warhammer-dbc .ship-spmax-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.86em; font-weight: bold; color: var(--wh-panel-mid); max-width: 200px; }
-.warhammer-dbc .ship-spmax-field input { background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); font-family: inherit; font-weight: normal; font-size: 1.1em; padding: 3px 5px; text-align: center; }
 
 /* Кнопка «Огонь» в таблице орудий */
 .warhammer-dbc .ship-comp-table .cc-fire { width: 54px; text-align: center; }

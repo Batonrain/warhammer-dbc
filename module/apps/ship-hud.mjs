@@ -85,7 +85,7 @@ export function shipHudData(actor) {
   return {
     ship: true,
     id: actor.id, name: actor.name, img: actor.img,
-    shipClass: sys.shipClass || "", isOwner: actor.isOwner,
+    isOwner: actor.isOwner,
     hi: { value: hiVal, max: hiMax, pct: hiPct, color: barColor(hiPct), crippled: hiVal <= 0 },
     shields, vsNow, vsBase, vsDown: !!d.voidShieldsDown,
     chars: d.chars || {},

@@ -16,7 +16,6 @@ export class ShipData extends foundry.abstract.TypeDataModel {
     const num = (initial, label) => new NumberField({ initial, nullable: false, label });
     const str = (initial, label) => new StringField({ initial, label });
     return {
-      shipClass:        str("", "Класс"),
       shipType:         str("transport", "Тип"),
       shipRelation:     str("neutral", "Отношение"),
       voidShieldsDown:  new BooleanField({ initial: false, label: "Пустотные щиты сбиты" }),
