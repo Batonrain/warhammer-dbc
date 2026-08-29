@@ -9,10 +9,15 @@
 // ready (src/index.js в его репозитории), так что если модуль не установлен
 // или выключен, Hooks.callAll ниже просто никто не услышит.
 
+/** Активен ли Automated Animations; вне Foundry (vitest) — всегда false. */
+export function isAutoAnimationsActive() {
+  return typeof game !== "undefined" && !!game.modules?.get?.("autoanimations")?.active;
+}
+
 /** Хук и game.modules вне Foundry не существуют: под vitest функция — no-op. */
 export function triggerAttackAnimation({ actor, item, hit }) {
-  if (typeof Hooks === "undefined" || typeof game === "undefined") return;
-  if (!game.modules?.get?.("autoanimations")?.active) return;
+  if (typeof Hooks === "undefined") return;
+  if (!isAutoAnimationsActive()) return;
   const sourceToken = actor?.getActiveTokens?.()[0];
   if (!sourceToken) return;
   const targets = Array.from(game.user?.targets ?? []);
@@ -29,8 +34,8 @@ export function triggerAttackAnimation({ actor, item, hit }) {
  * templateData (AA понимает Region-объекты для template-анимаций).
  */
 export async function triggerBlastAnimation({ attackerUuid, itemUuid, tokens, region }) {
-  if (typeof Hooks === "undefined" || typeof game === "undefined") return;
-  if (!game.modules?.get?.("autoanimations")?.active) return;
+  if (typeof Hooks === "undefined") return;
+  if (!isAutoAnimationsActive()) return;
   if (!tokens?.length || !attackerUuid || !itemUuid) return;
   const actor = await fromUuid(attackerUuid);
   const item = await fromUuid(itemUuid);

@@ -6,6 +6,8 @@
 //  свой кэш полных документов, только чтение — применение см. ship-hull.mjs.
 // ════════════════════════════════════════════════════════════════════════
 
+import { loadPackDocuments, registerPackCacheRefresh } from "./pack-doc-cache.mjs";
+
 const PACK = "warhammer-dbc.ship-components";
 
 /** Порядок классов корпусов — как в Книге Пустоты. */
@@ -29,13 +31,10 @@ const hullFromDoc = doc => ({
 
 /** Перечитать компендиум. Пустой/недоступный пак кэш не портит. */
 export async function refreshHullCache() {
-  try {
-    const pack = game.packs.get(PACK);
-    if (!pack) return;
-    const docs = await pack.getDocuments();
-    const hulls = docs.filter(d => d.type === "shipHull").map(hullFromDoc);
-    if (hulls.length) CACHE = Object.fromEntries(hulls.map(h => [h.id, h]));
-  } catch (e) { console.warn("Warhammer DBC | Кэш корпусов кораблей:", e); }
+  const docs = await loadPackDocuments(PACK, "Кэш корпусов кораблей");
+  if (!docs) return;
+  const hulls = docs.filter(d => d.type === "shipHull").map(hullFromDoc);
+  if (hulls.length) CACHE = Object.fromEntries(hulls.map(h => [h.id, h]));
 }
 
 /** { id: HullDef } — пусто, пока пак не прочитан. */
@@ -62,6 +61,4 @@ export function hullGroupList() {
   return seen.map(label => ({ label, hulls: all.filter(h => h.hullClass === label) }));
 }
 
-Hooks.once("ready", () => refreshHullCache());
-for (const h of ["createItem", "deleteItem", "updateItem"])
-  Hooks.on(h, (doc) => { if (doc?.pack === PACK) refreshHullCache(); });
+registerPackCacheRefresh(PACK, refreshHullCache);

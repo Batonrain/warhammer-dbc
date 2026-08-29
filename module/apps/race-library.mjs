@@ -12,6 +12,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { RACES, SUBRACES, SUBRACE_DATA, RACE_GROUPS } from "../constants/races.mjs";
+import { loadPackDocuments, registerPackCacheRefresh } from "./pack-doc-cache.mjs";
 
 const PACK = "warhammer-dbc.races";
 const AELDARI_GROUP = "Аэльдари";
@@ -83,25 +84,21 @@ const subFromConst = (key, label) => {
 
 /** Перечитать компендиум. Пустой или отсутствующий пак кэш не портит. */
 export async function refreshRaceCache() {
-  try {
-    const pack = game.packs.get(PACK);
-    if (!pack) return;
-    const docs = await pack.getDocuments();
-    if (!docs.length) return;
-    const races = {}, subs = {};
-    for (const d of docs) {
-      if (d.type === "race")    races[d.system?.key || d.id] = raceFromDoc(d);
-      if (d.type === "subrace") subs[d.system?.key || d.id]  = subFromDoc(d);
-    }
-    // Половины ставятся порознь и только непустые. Пустая половина — это не
-    // «в книге столько и есть», а «прочитать не удалось»: пак прочитан
-    // частично, пересобран под живым сервером, миграция сменила тип документа.
-    // Раньше такая половина молча вставала на место рабочего отката, и субрасы
-    // пропадали разом у ВСЕХ рас (пак с расами, но без субрас — ровно этот
-    // случай). Откат на константы хуже свежих данных, но лучше пустоты.
-    if (Object.keys(races).length) RACE_CACHE = races;
-    if (Object.keys(subs).length)  SUB_CACHE  = subs;
-  } catch (e) { console.warn("Warhammer DBC | Кэш рас:", e); }
+  const docs = await loadPackDocuments(PACK, "Кэш рас");
+  if (!docs || !docs.length) return;
+  const races = {}, subs = {};
+  for (const d of docs) {
+    if (d.type === "race")    races[d.system?.key || d.id] = raceFromDoc(d);
+    if (d.type === "subrace") subs[d.system?.key || d.id]  = subFromDoc(d);
+  }
+  // Половины ставятся порознь и только непустые. Пустая половина — это не
+  // «в книге столько и есть», а «прочитать не удалось»: пак прочитан
+  // частично, пересобран под живым сервером, миграция сменила тип документа.
+  // Раньше такая половина молча вставала на место рабочего отката, и субрасы
+  // пропадали разом у ВСЕХ рас (пак с расами, но без субрас — ровно этот
+  // случай). Откат на константы хуже свежих данных, но лучше пустоты.
+  if (Object.keys(races).length) RACE_CACHE = races;
+  if (Object.keys(subs).length)  SUB_CACHE  = subs;
 }
 
 /** { key: RaceDef } — то, что раньше читали прямо из RACES. */
@@ -139,6 +136,4 @@ export function raceGroupList() {
   }));
 }
 
-Hooks.once("ready", () => refreshRaceCache());
-for (const h of ["createItem", "deleteItem", "updateItem"])
-  Hooks.on(h, (doc) => { if (doc?.pack === PACK) refreshRaceCache(); });
+registerPackCacheRefresh(PACK, refreshRaceCache);

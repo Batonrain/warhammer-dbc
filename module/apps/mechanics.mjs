@@ -539,7 +539,7 @@ export function describeMechEntry(entry) {
   switch (entry.kind) {
     case "corruption": {
       if (entry.corruptionValue === "" || entry.corruptionValue == null) return "Порча: (не задано)";
-      const sign = entry.op === "subtract" ? "−" : "+";
+      const sign = OP_SIGN[entry.op] ?? "+";
       return `Порча: ${sign}${entry.corruptionValue}`;
     }
     case "wounds": {
@@ -589,14 +589,14 @@ export function describeMechEntry(entry) {
     case "movement": {
       const label = MOVEMENT_TARGET_LABELS[entry.movementTarget] ?? entry.movementTarget;
       if (entry.movementValue === "" || entry.movementValue == null) return `Движение: ${label} (не задано)`;
-      const sign = entry.op === "subtract" ? "−" : "+";
+      const sign = OP_SIGN[entry.op] ?? "+";
       return `Движение: ${label} ${sign}${entry.movementValue}`;
     }
     case "armour": {
       const loc = entry.armourLocation === "all"
         ? "все локации" : (AP_LOCATIONS[entry.armourLocation] ?? entry.armourLocation);
       if (entry.armourValue === "" || entry.armourValue == null) return `Очки Брони: ${loc} (не задано)`;
-      const sign = entry.op === "subtract" ? "−" : "+";
+      const sign = OP_SIGN[entry.op] ?? "+";
       return `Очки Брони: ${loc} ${sign}${entry.armourValue}`;
     }
     case "terrainIgnore": {
@@ -653,7 +653,7 @@ export function describeMechEntry(entry) {
         : "любой тип";
       if (entry.loyaltyValue === "" || entry.loyaltyValue == null)
         return `Лояльность: (не задано) — миньоны (${typeLabel})`;
-      const sign = entry.loyaltyOp === "subtract" ? "−" : "+";
+      const sign = OP_SIGN[entry.loyaltyOp] ?? "+";
       return `Лояльность: ${sign}${entry.loyaltyValue} миньонам (${typeLabel})`;
     }
     case "aura": {

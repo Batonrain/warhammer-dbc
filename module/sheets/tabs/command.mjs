@@ -22,6 +22,7 @@ import { commandReachFor, presenceNumber, commandHealsPsych } from "../../rules/
 import { healPsychDamage } from "../../combat/horde-psych.mjs";
 import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
+import { degreesOfSuccess } from "../../constants/craft.mjs";
 
 /** Кого можно взять под своё Присутствие. Шире состава Отряда: миньоны тоже. */
 export const FOLLOWER_TYPES =
@@ -36,11 +37,6 @@ const followersOf = actor =>
   foundry.utils.deepClone(Array.isArray(actor.system?.followers) ? actor.system.followers : []);
 
 const rootEl = root => (root?.jquery ? root[0] : root);
-
-/** Успехи теста: 1 за каждые полные 10 ниже порога, минимум 1 при успехе. */
-function degrees(threshold, rv) {
-  return Math.floor((threshold - rv) / 10) + 1;
-}
 
 // ── Показ ────────────────────────────────────────────────────────────────────
 
@@ -213,7 +209,7 @@ export async function rollCommand(actor, kind, { mod = 0, benefit = "", shortKey
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const ok = rv <= threshold;
-  const sux = ok ? degrees(threshold, rv) : 0;
+  const sux = ok ? degreesOfSuccess(rv, threshold) : 0;
 
   let effect = "", update = {};
 
@@ -306,7 +302,7 @@ export async function rallyHorde(actor, uuid, { mod = 0 } = {}) {
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const ok = rv <= threshold;
-  const sux = ok ? degrees(threshold, rv) : 0;
+  const sux = ok ? degreesOfSuccess(rv, threshold) : 0;
   const healed = ok ? await healPsychDamage(horde, sux) : 0;
 
   await ChatMessage.create(ChatMessage.applyRollMode({

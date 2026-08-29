@@ -9,6 +9,7 @@ import { legacyContext, rollAscension, breakLegacy, setHistory, rollHistory,
 import { shipQualityMods, qualityOptionsFor, effectiveWeapon, clampQuality, QUALITY_LABELS }
   from "../constants/ship-quality.mjs";
 import { availableFieldModes, fieldSuitFor } from "../constants/drukhari-armor-fields.mjs";
+import { isAutoAnimationsActive } from "../integrations/autoanimations.mjs";
 // module/sheets/item-sheet.mjs
 
 import { ARMOR_PROPERTIES,
@@ -128,7 +129,7 @@ function onFieldMode(event, target) {
 // хук сами и переиспользуем готовый onclick — он открывает штатное меню AA,
 // без правки самого модуля.
 function onOpenAutoAnimations() {
-  if (!game.modules.get("autoanimations")?.active) return;
+  if (!isAutoAnimationsActive()) return;
   const buttons = [];
   Hooks.callAll("getItemSheetHeaderButtons", { item: this.item }, buttons);
   buttons.find(b => b.class === "aaItemSettings")?.onclick?.();

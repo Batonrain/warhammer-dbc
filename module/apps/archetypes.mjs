@@ -18,6 +18,7 @@ import { clearGrantedBy } from "./origin-shared.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
 import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } from "../constants/implants.mjs";
+import { loadPackDocuments, registerPackCacheRefresh } from "./pack-doc-cache.mjs";
 
 const PACK = "warhammer-dbc.archetypes";
 const FLAG = "warhammer-dbc";
@@ -43,15 +44,11 @@ function docToDef(doc) {
 
 /** Перечитать компендиум в кэш; пока он не наполнен — константы как есть (fallback). */
 export async function refreshArchetypeCache() {
-  try {
-    const pack = game.packs.get(PACK);
-    if (!pack) return;
-    const docs = await pack.getDocuments();
-    if (!docs.length) return;
-    const out = {};
-    for (const d of docs) out[d.system?.key || d.id] = docToDef(d);
-    CACHE = out;
-  } catch (e) { console.warn("Warhammer DBC | Кэш архетипов:", e); }
+  const docs = await loadPackDocuments(PACK, "Кэш архетипов");
+  if (!docs || !docs.length) return;
+  const out = {};
+  for (const d of docs) out[d.system?.key || d.id] = docToDef(d);
+  CACHE = out;
 }
 
 /** { key: def } — источник для всего, что раньше читало ARCHETYPES напрямую. */
@@ -121,9 +118,7 @@ export function archetypeSheetContext(actor) {
   return { groups: Object.entries(grouped).map(([g, opts]) => ({ label: g, opts })) };
 }
 
-Hooks.once("ready", () => refreshArchetypeCache());
-for (const h of ["createItem", "deleteItem", "updateItem"])
-  Hooks.on(h, (doc) => { if (doc?.pack === PACK) refreshArchetypeCache(); });
+registerPackCacheRefresh(PACK, refreshArchetypeCache);
 
 // ── Выбор Архетипа в шапке листа: выдача через Механику ─────────────────────
 // Раньше select «Архетип» просто писал ключ в system.archetype и всё — сам

@@ -10,6 +10,7 @@ import { baseSizeCells, edgeDistanceMeters, centerDistanceMeters, contactType }
 import { raceDef } from "../apps/race-library.mjs";
 import { tokenRect } from "./horde-tokens.mjs";
 import { tokenRelationship } from "../regions/auras.mjs";
+import { pxPerMeter } from "./templates.mjs";
 
 /** Типы акторов личного масштаба, которым автоматизируем размер Базы. */
 export const BASE_SIZE_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -61,8 +62,7 @@ export function measureTokens(tokenA, tokenB) {
   const rectA = tokenRect(tokenA), rectB = tokenRect(tokenB);
   if (!rectA || !rectB) return null;
   const size = canvas?.grid?.size || canvas?.scene?.grid?.size || 100;
-  const pxPerMeter = canvas?.dimensions?.distancePixels || size;
-  const cellMeters = size / pxPerMeter;
+  const cellMeters = size / pxPerMeter();
   return {
     edgeM:   edgeDistanceMeters(rectA, rectB, cellMeters),
     centerM: centerDistanceMeters(rectA, rectB, cellMeters),

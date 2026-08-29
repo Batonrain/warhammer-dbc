@@ -23,7 +23,7 @@ import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
-import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens } from "./combat/templates.mjs";
+import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects } from "./combat/action-economy.mjs";
@@ -32,6 +32,13 @@ import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
 const _lastTurnCombatant = new Map();
+
+/** Актор выбранного на сцене токена, или предупреждение и null (нет выбора). */
+function requireControlledActor(warnMsg) {
+  const actor = canvas.tokens?.controlled?.[0]?.actor;
+  if (!actor) ui.notifications.warn(warnMsg);
+  return actor || null;
+}
 
 export function registerHooks() {
 
@@ -56,23 +63,21 @@ export function registerHooks() {
     html.querySelectorAll(".wh-dodge-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const selectedToken = canvas.tokens?.controlled?.[0];
-        if (!selectedToken?.actor) {
-          return ui.notifications.warn("⚠️ Выберите токен защищающегося персонажа на сцене!");
-        }
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        if (!await confirmHordeDefense(selectedToken.actor, "Уклонение")) return;
+        if (!await confirmHordeDefense(actor, "Уклонение")) return;
         // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
         // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
         // карточке одна, а знает о седле только сама цель, поэтому развилка
         // здесь: карточка на момент броска ещё не знает, в кого попадут.
-        if (selectedToken.actor.system?.mount?.uuid) {
-          const handled = await showMountedDodgeDialog(selectedToken.actor, extraMod, hitsCount, attackerUuid);
+        if (actor.system?.mount?.uuid) {
+          const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid);
           if (handled !== null) return;
         }
-        await _performDodge(selectedToken.actor, extraMod,
+        await _performDodge(actor, extraMod,
           ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid);
       });
     });
@@ -81,14 +86,12 @@ export function registerHooks() {
     html.querySelectorAll(".wh-parry-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const selectedToken = canvas.tokens?.controlled?.[0];
-        if (!selectedToken?.actor) {
-          return ui.notifications.warn("⚠️ Выберите токен защищающегося персонажа на сцене!");
-        }
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
-        if (!await confirmHordeDefense(selectedToken.actor, "Парирование")) return;
-        await _performParry(selectedToken.actor, extraMod,
+        if (!await confirmHordeDefense(actor, "Парирование")) return;
+        await _performParry(actor, extraMod,
           ev.currentTarget.dataset.attackerUuid || "", hitsCount);
       });
     });
@@ -145,14 +148,12 @@ export function registerHooks() {
     html.querySelectorAll(".wh-swerve-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const selectedToken = canvas.tokens?.controlled?.[0];
-        if (!selectedToken?.actor) {
-          return ui.notifications.warn("⚠️ Выберите токен машины на сцене!");
-        }
+        const actor = requireControlledActor("⚠️ Выберите токен машины на сцене!");
+        if (!actor) return;
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        await _performSwerve(selectedToken.actor, extraMod, hitsCount, attackerUuid);
+        await _performSwerve(actor, extraMod, hitsCount, attackerUuid);
       });
     });
 
@@ -162,12 +163,10 @@ export function registerHooks() {
     html.querySelectorAll(".wh-pool-spend-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const selectedToken = canvas.tokens?.controlled?.[0];
-        if (!selectedToken?.actor) {
-          return ui.notifications.warn("⚠️ Выберите токен защищающегося персонажа на сцене!");
-        }
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
         const el = ev.currentTarget;
-        await performPoolSpend(selectedToken.actor, {
+        await performPoolSpend(actor, {
           attackerUuid: el.dataset.attackerUuid || "",
           hitsCount: parseInt(el.dataset.hitsCount || "1"),
           dodgeMod: parseInt(el.dataset.dodgeMod || "0"),
@@ -367,7 +366,7 @@ export function registerHooks() {
         const ds = ev.currentTarget.dataset;
         const meters = parseFloat(ds.meters) || 0;
         if (meters <= 0) return ui.notifications.warn("⚠️ У оружия не задан радиус/дальность зоны.");
-        const px = canvas.dimensions.distancePixels;
+        const px = pxPerMeter();
         const shape = ds.shape === "cone" ? sprayConeShape(meters, px) : blastCircleShape(meters, px);
 
         const rounds = parseInt(ds.linger || "0") || 0;
@@ -441,10 +440,10 @@ export function registerHooks() {
     html.querySelectorAll(".wh-suppression-test-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const token = canvas.tokens?.controlled?.[0];
-        if (!token?.actor) return ui.notifications.warn("⚠️ Выберите токен цели на сцене!");
+        const actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
+        if (!actor) return;
         const mod = parseInt(ev.currentTarget.dataset.testMod || "0");
-        await rollSuppressionTest(token.actor, { mod, sourceLabel: "Стрельба на подавление" });
+        await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление" });
       });
     });
     html.querySelectorAll(".wh-suppression-recovery-btn").forEach(btn => {
@@ -549,11 +548,8 @@ async function _applyShipHullDamage(dmg) {
 
 // ── Применение эффекта свойства оружия (Оглушающее, Ослепляющее и т.п.) ──────
 async function _applyWeaponPropEffect(ds) {
-  const token = canvas.tokens?.controlled?.[0];
-  if (!token?.actor) {
-    return ui.notifications.warn("⚠️ Выберите токен цели на сцене!");
-  }
-  const actor     = token.actor;
+  const actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
+  if (!actor) return;
   const label     = ds.wpLabel    || "Эффект";
   const kind      = ds.wpKind      || "";
   const condition = ds.wpCondition || "";
