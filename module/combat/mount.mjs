@@ -30,7 +30,7 @@ import {
   MOUNT_SPEEDS, MOUNT_SKID, MOUNT_TERRAIN_MOD, STAY_MOD, BIKE_REPAIR, SELECTIVE_MODS,
   mountTraits, isBike, riderControl, testMod, turnOptions, skidInfo,
   fallFromSaddle, acrobaticsStayMod, spliceBonus, hasTalent, passengerCount,
-  maneuverMods, hitTarget, mountSpd, mountRangedPenalty, mountSelectiveMod
+  hitTarget, mountSpd, mountSelectiveMod
 } from "../rules/mount.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -834,24 +834,4 @@ async function resolveBikeRepair(bikeActor, { skill, parts, extra, mode, broken,
     ${body}
     ${outcome.extendedLine}
     ${outcome.opposedLine}`, [roll]);
-}
-
-// ── Сводка для панели ─────────────────────────────────────────────────────
-
-/**
- * Всё, что панель «ВЕРХОМ» показывает без броска: чем ведётся скакун, какие
- * штрафы уже висят, свободны ли руки, что доступно на этой скорости.
- */
-export function mountSummary(rider, mount, actors = []) {
-  const traits  = mountTraits(mount);
-  const control = riderControl(rider, mount, traits);
-  const speedKey = speedKeyOf(rider);
-  const passengers = passengerCount(mount, actors);
-  return {
-    control, traits, speedKey, passengers,
-    speedLabel: MOUNT_SPEEDS[speedKey].label,
-    ranged: mountRangedPenalty(speedKey, mount),
-    maneuver: maneuverMods(rider, mount, { passengers, traits }),
-    skid: skidInfo(speedKey, rider, mount, { passengers, traits })
-  };
 }

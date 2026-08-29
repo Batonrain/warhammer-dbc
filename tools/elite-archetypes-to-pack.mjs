@@ -74,8 +74,8 @@ export function eliteDocs() {
         race: arch.race || "", god: arch.god || "",
         req: arch.req || "", charBonus: arch.charBonus || "",
         freeTalents: arch.freeTalents || "", gear: arch.gear || "",
-        traits:  (arch.traits  || []).map(t => t[0]),
-        talents: (arch.talents || []).map(t => t[0]),
+        traits:  [...(arch.traits  || [])],
+        talents: [...(arch.talents || [])],
         description: "", notes: "", bookSource: SOURCE
       },
       _id: id, effects: [], folder: folder._id, sort: 0,
