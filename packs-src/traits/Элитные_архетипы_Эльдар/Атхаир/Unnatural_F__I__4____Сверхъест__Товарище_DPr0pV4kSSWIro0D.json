@@ -15,7 +15,16 @@
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,
-      "charBonuses": [],
+      "charBonuses": [
+        {
+          "stat": "fel",
+          "value": 4
+        },
+        {
+          "stat": "int",
+          "value": 4
+        }
+      ],
       "charValueBonuses": [],
       "armourAll": 0,
       "fearRating": 0,
