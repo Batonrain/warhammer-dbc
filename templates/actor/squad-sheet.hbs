@@ -1,3 +1,28 @@
+{{!-- Обшивка «инфопланшет» (wdbc-0owk, тот же приём, что character-sheet.hbs —
+     wdbc-m6as/skill dbc-housing). У этого листа PARTS.body.root=true, но
+     шаблон и без того рендерит несколько соседних тегов на верхнем уровне
+     (header/nav/div), а не единственный корневой div — Foundry просто
+     переносит их все детьми в this.element, который уже несёт класс
+     .squad-sheet (DEFAULT_OPTIONS.classes, у листа нет подклассов — сам
+     класс безопасен как CSS-скоуп, доп. JS-маркер не нужен). Отряд НЕ
+     когитаторный (нет squad-*-cog.css) — обшивка вокруг обычной пергаментной
+     темы, не перекрашивать в зелёный. --}}
+<div class="cog-rivet tl"></div>
+<div class="cog-rivet tr"></div>
+<div class="cog-rivet bl"></div>
+<div class="cog-rivet br"></div>
+
+<div class="cog-plate-row">
+  <span class="cog-plate">Инфопланшет модели XIL</span>
+  <div class="cog-leds">
+    <i class="cog-led cog-led-green on"></i>
+    <i class="cog-led cog-led-amber {{#if (eq derived.cohesionBand "strained")}}on{{/if}}"></i>
+    <i class="cog-led cog-led-red {{#if (eq derived.cohesionBand "spent")}}on{{/if}}"></i>
+  </div>
+</div>
+
+<div class="cog-screen">
+
 {{!-- ═══════════════ ШАПКА (по образцу листа персонажа) ═══════════════ --}}
 <header class="sheet-header sq-header">
   <div class="portrait-block">
@@ -18,10 +43,6 @@
         </div>
         {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
       </div>
-      <div class="header-cell">
-        <label>Кому служит</label>
-        <input type="text" name="system.faction" value="{{system.faction}}" placeholder="свободной строкой"/>
-      </div>
 
       {{!-- Слаженность — главный ресурс отряда, справа как Судьба у персонажа --}}
       <div class="header-cell fate-cell sq-coh-cell">
@@ -40,33 +61,9 @@
         </div>
         <div class="sq-coh-state sq-coh-band-{{derived.cohesionBand}}" title="{{derived.cohesionHint}}">{{derived.cohesionLabel}}</div>
       </div>
-
-      <div class="header-cell">
-        <label>Миссия</label>
-        <input type="text" name="system.mission" value="{{system.mission}}" placeholder="Текущая задача"/>
-      </div>
-      <div class="header-cell">
-        <label>Развёртывание</label>
-        <input type="text" name="system.deployment" value="{{system.deployment}}" placeholder="Где действует"/>
-      </div>
-
-      <div class="header-cell fate-cell sq-risk-cell">
-        <label title="Чем меньше Командир разделяет риск, тем ниже потолок Успехов">Риск</label>
-        <select name="system.risk" class="sq-risk-select">
-          {{#each riskLevels as |r|}}
-          <option value="{{r.level}}" {{#if r.selected}}selected{{/if}} title="{{r.label}}">{{r.level}} · Max.У {{r.capLabel}}</option>
-          {{/each}}
-        </select>
-        <div class="sq-risk-hint">{{derived.riskLabel}}</div>
-        {{#if effRisk.bonus}}<div class="sq-risk-bonus" title="Командующий снял шлем силовой брони: Риск +1 (немодифицированный Риск 2+)">Риск {{effRisk.value}} — шлем снят{{#if effRisk.who}} ({{effRisk.who}}){{/if}}</div>{{/if}}
-      </div>
     </div>
 
     <div class="header-checks sq-header-checks">
-      <label class="checkbox-label sq-delegate" title="Командир отдаёт приказы делегированным авторитетом Лидера: провал Морали Лидера бьёт и по Командам Командира">
-        <input type="checkbox" name="system.delegated" {{checked system.delegated}}/>
-        <span>Делегированный авторитет Лидера</span>
-      </label>
       <div class="sq-header-chips">
         <span class="sq-chip {{#if capacityOver}}sq-chip-warn{{/if}}" title="Command воздействует одновременно не более чем на F.b × 2 подчинённых">
           Под Командованием: <b>{{memberCount}}</b>{{#if capacity}} / {{capacity}}{{/if}}
@@ -121,6 +118,12 @@
             <div class="sq-post-empty">— перетащите сюда —</div>
             {{/if}}
             <div class="sq-post-hint">{{p.hint}}</div>
+            {{#if (and (eq p.key "leader") p.filled)}}
+            <label class="checkbox-label sq-delegate sq-post-delegate" title="Командир отдаёт приказы делегированным авторитетом Лидера: провал Морали Лидера бьёт и по Командам Командира">
+              <input type="checkbox" name="system.delegated" {{checked system.delegated}}/>
+              <span>Делегированный авторитет Лидера</span>
+            </label>
+            {{/if}}
           </div>
           {{/each}}
         </div>
@@ -223,6 +226,20 @@
     {{#unless activeCommander}}
     <div class="sq-warn">Ни Командир, ни Лидер не назначены — Команды отдавать некому. Перетащите актора на пост во вкладке «Отряд».</div>
     {{/unless}}
+
+    <div class="stat-panel sq-panel">
+      <div class="panel-title">УРОВЕНЬ РИСКА</div>
+      <div class="panel-body">
+        <div class="sq-hint">Чем меньше Командир разделяет риск, тем ниже потолок Успехов. Уровень определяет ГМ. Полная таблица — на вкладке «Справочник».</div>
+        <select name="system.risk" class="sq-risk-select">
+          {{#each riskLevels as |r|}}
+          <option value="{{r.level}}" {{#if r.selected}}selected{{/if}} title="{{r.label}}">{{r.level}} · Max.У {{r.capLabel}}</option>
+          {{/each}}
+        </select>
+        <div class="sq-note">Текущий: {{derived.riskLabel}}</div>
+        {{#if effRisk.bonus}}<div class="sq-risk-bonus" title="Командующий снял шлем силовой брони: Риск +1 (немодифицированный Риск 2+)">Риск {{effRisk.value}} — шлем снят{{#if effRisk.who}} ({{effRisk.who}}){{/if}}</div>{{/if}}
+      </div>
+    </div>
 
     <div class="stat-panel sq-panel sq-panel-presence{{#if presenceActive}} sq-panel-on{{/if}}">
       <div class="panel-title">КОМАНДНОЕ ПРИСУТСТВИЕ{{#if presenceActive}} — АКТИВНО{{/if}}</div>
@@ -432,4 +449,9 @@
     {{/if}}
   </div>
 
+  <div class="screen-status-line"><i class="cog-status-dot"></i><span>Вокс-связь с отрядом установлена</span></div>
 </div>
+
+</div>
+
+<div class="cog-status-row"></div>
