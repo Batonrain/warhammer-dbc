@@ -1,6 +1,32 @@
-{{!-- Обёртка — <div>: форма теперь корневой элемент окна (ApplicationV2). --}}
-<div class="warhammer-dbc demon-prince-sheet dp-god-{{dp.godKey}}" style="--gc:{{dp.god.color}}; --gc2:{{dp.god.gc2}}; --glow:{{dp.god.glow}};">
+{{!-- Обёртка — <div>: форма теперь корневой элемент окна (ApplicationV2,
+     PARTS.body.root=true) — классы/стиль корня сюда не попадают на реальный
+     DOM (см. character-sheet.hbs/daemon-sheet.hbs и skill dbc-housing).
+     Раньше здесь висели dp-god-{{dp.godKey}} и инлайн --gc/--gc2/--glow —
+     они НИКОГДА не применялись (тот же баг, что и у Демона, найден и
+     исправлен при wdbc-xzvt): любой Демон-Принц красился в дефолт
+     «Неделимый» независимо от Патрона. Теперь класс/переменные навешивает
+     demon-prince-sheet.mjs → _applyDpTheme() на this.element после рендера.
 
+     .cog-frame/.cog-rivet/.cog-plate-row/.cog-screen/.cog-status-row —
+     обшивка «инфопланшет» (wdbc-xzvt), тот же слой styles/sheets/
+     actor-housing.css. .screen-status-line сюда НЕ идёт — по мокапу
+     Демон/Демон-Принц эту строку не получают. --}}
+<div class="warhammer-dbc demon-prince">
+  <div class="cog-rivet tl"></div>
+  <div class="cog-rivet tr"></div>
+  <div class="cog-rivet bl"></div>
+  <div class="cog-rivet br"></div>
+
+  <div class="cog-plate-row">
+    <span class="cog-plate">Инфопланшет модели XIL</span>
+    <div class="cog-leds">
+      <i class="cog-led cog-led-green on"></i>
+      <i class="cog-led cog-led-amber {{#if (eq actor.system.wounds.tier "heavy")}}on{{/if}}"></i>
+      <i class="cog-led cog-led-red {{#if (eq actor.system.wounds.tier "dying")}}on{{/if}}"></i>
+    </div>
+  </div>
+
+  <div class="cog-screen">
   {{!-- ── ШАПКА-АПОФЕОЗ: чистый Варп ────────────────────────────────────── --}}
   <header class="dp-header">
     <div class="dp-warp-layer dp-warp-a"></div>
@@ -263,4 +289,7 @@
 
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
   </div>
+  </div>
+
+  <div class="cog-status-row"></div>
 </div>
