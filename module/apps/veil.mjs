@@ -98,7 +98,7 @@ function _newDefile() {
   };
 }
 
-const { Application } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 const FLAG_SCOPE = "warhammer-dbc";
 const FLAG_KEY   = "veil";
 
@@ -108,17 +108,20 @@ function veilContainerLabel(scene) {
   return c.kind === "group" ? `Группа: ${c.label}` : (scene?.name || "— нет сцены —");
 }
 
-export class VeilMystic extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "wh-veil",
-      classes: ["warhammer-dbc", "wh-holo", "wh-veil"],
-      title: "Завеса и Мистика",
+export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "wh-veil",
+    classes: ["warhammer-dbc", "wh-holo", "wh-veil"],
+    window: { title: "Завеса и Мистика", resizable: true },
+    position: { width: 960, height: 800 }
+  };
+
+  static PARTS = {
+    body: {
       template: "systems/warhammer-dbc/templates/apps/veil.hbs",
-      width: 960, height: 800, resizable: true,
-      scrollY: [".wh-veil-scroll"]
-    });
-  }
+      root: true, scrollable: [".wh-veil-scroll"]
+    }
+  };
 
   constructor(...args) {
     super(...args);
@@ -254,7 +257,7 @@ export class VeilMystic extends Application {
     };
   }
 
-  getData() {
+  async _prepareContext(options) {
     const scene = currentScene();
     const v = readVeil(scene);
     const total = veilTotal(v);
@@ -742,9 +745,9 @@ export class VeilMystic extends Application {
     return made.map(i => i.name);
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
     const rr = () => this.render(false);
     const isGM = game.user.isGM;
 

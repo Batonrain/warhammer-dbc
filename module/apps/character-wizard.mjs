@@ -16,7 +16,7 @@
 //  «Единый мастер создания персонажа», доступен в памяти сессии).
 // ════════════════════════════════════════════════════════════════════════
 
-const { Application } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
 // Флаг «Этап 4 применён» — раньше идемпотентность проверялась по
 // system.experience.total > 0, но возврат опыта за совпавший Навык из
@@ -117,20 +117,24 @@ export const WIZARD_STEPS = [
   { id: "gear",            label: "Снаряжение" }
 ];
 
-export class CharacterWizard extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "wh-holo", "wh-char-wizard"],
+export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "wh-char-wizard-{id}",
+    classes: ["warhammer-dbc", "wh-holo", "wh-char-wizard"],
+    position: { width: 620, height: 760 },
+    window: { resizable: true }
+  };
+
+  static PARTS = {
+    body: {
       template: "systems/warhammer-dbc/templates/apps/character-wizard.hbs",
-      width: 620, height: 760, resizable: true,
-      scrollY: [".wiz-step-body"]
-    });
-  }
+      root: true, scrollable: [".wiz-step-body"]
+    }
+  };
 
   constructor(actor, options = {}) {
-    super(options);
+    super({ id: `wh-char-wizard-${actor.id}`, ...options });
     this.actorId = actor.id;
-    this.options.id = "wh-char-wizard-" + actor.id;
     this.stepIndex = 0;
     // Поле Фракции (activateFactionFieldListeners, ./actor-factions.mjs)
     // создаёт/удаляет embedded-предмет само, без обратного вызова к нам —
@@ -219,7 +223,7 @@ export class CharacterWizard extends Application {
   get title() { return `Мастер создания — ${this.actor?.name || ""}`; }
   get step()  { return WIZARD_STEPS[this.stepIndex]; }
 
-  getData() {
+  async _prepareContext(options) {
     const actor = this.actor;
     if (!actor) return { missing: true };
     const sys = actor.system;
@@ -611,7 +615,7 @@ export class CharacterWizard extends Application {
   /**
    * Вариант коллектора для Стремлений: там выбор УЖЕ применяется сразу по
    * change дропдауна (activateAspirationListeners общая с листом актора —
-   * см. её вызов в _activateListeners), поэтому строка резолвится СРАЗУ по
+   * см. её вызов в _onRender), поэтому строка резолвится СРАЗУ по
    * ответу в форме, без ожидания «Далее» — в отличие от _mechCollector выше.
    * Одна строка максимум: у Стремления либо нет Механики с выбором вовсе,
    * либо один простой ИЛИ («Fel+5 или Per+5») — второй вопрос подряд для
@@ -1687,14 +1691,19 @@ export class CharacterWizard extends Application {
     if (objs.length) await actor.createEmbeddedDocuments("Item", objs);
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
+    // Модулям выбора Родного мира/Предсказания (wireHomeworldChoiceBlocks,
+    // wireGrantChoiceBlocks — origin-shared.mjs/homeworlds.mjs), ещё не снятым
+    // с jQuery (wdbc-z0z), нужна обёртка; свои же обработчики ниже — на чистом
+    // DOM. Тот же приём, что в actor-sheet.mjs (_onRender).
+    const html = globalThis.$(el);
     const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
 
-    on("[data-action='wizBack']",   "click", () => { if (!this._confirmingArchetype) this._goStep(this.stepIndex - 1); });
-    on("[data-action='wizNext']",   "click", () => this._onNext());
-    on("[data-action='wizFinish']", "click", async () => {
+    on("[data-wiz-action='wizBack']",   "click", () => { if (!this._confirmingArchetype) this._goStep(this.stepIndex - 1); });
+    on("[data-wiz-action='wizNext']",   "click", () => this._onNext());
+    on("[data-wiz-action='wizFinish']", "click", async () => {
       if (this._confirmingGear) return;
       if (this.step.id === "gear" && !this._gearDone) await this._confirmGear();
       // Лёгкое уведомление ГМ (wdbc-agc) — не блокирует персонажа, просто
@@ -1967,7 +1976,7 @@ export class CharacterWizard extends Application {
     this._isClosing = true;
     for (const row of this.pendingMechChoices.splice(0)) row.resolve(row.type === "spec" && row.need > 1 ? [] : null);
     for (const { hook, id } of this._factionHookIds.splice(0)) Hooks.off(hook, id);
-    return super.close(options);
+    return super.close?.(options);
   }
 
   async _onNext() {
@@ -1995,7 +2004,7 @@ export class CharacterWizard extends Application {
           this._pendingHomeworldKey = null;
           if (hw) {
             const picks = homeworldHasChoices(hw)
-              ? readHomeworldChoicePicks(this.element, hw, this._hwTargetState)
+              ? readHomeworldChoicePicks(globalThis.$(this.element), hw, this._hwTargetState)
               : {};
             await applyHomeworldPicks(this.actor, key, picks);
           }
@@ -2133,7 +2142,7 @@ export class CharacterWizard extends Application {
     this._pendingDivinationKey = null;
     const shape = { choices: def?.choices || [] };
     const picks = def && divinationHasChoices(def)
-      ? readGrantChoicePicks(this.element, shape, this._dvTargetState)
+      ? readGrantChoicePicks(globalThis.$(this.element), shape, this._dvTargetState)
       : {};
     await applyDivinationPicks(this.actor, key, picks);
   }
@@ -2152,7 +2161,7 @@ export class CharacterWizard extends Application {
     if (!hw) return;
     this._pendingHomeworldKey = null;
     const picks = homeworldHasChoices(hw)
-      ? readHomeworldChoicePicks(this.element, hw, this._hwTargetState)
+      ? readHomeworldChoicePicks(globalThis.$(this.element), hw, this._hwTargetState)
       : {};
     await applyHomeworldPicks(this.actor, key, picks);
   }

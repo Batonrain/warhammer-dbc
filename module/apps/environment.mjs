@@ -12,7 +12,7 @@ import {
 import { resolveEnvContainer, readEnvForScene, primaryGroupForScene, envSceneHasOverride } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
 
-const { Application } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 function currentScene() { return canvas?.scene ?? game.scenes?.current ?? null; }
 
 const CATS = [
@@ -22,20 +22,24 @@ const CATS = [
   { key: "rad",     label: "Радиация",     icon: "☢" }
 ];
 
-export class EnvironmentApp extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "wh-environment",
-      classes: ["warhammer-dbc", "wh-holo", "wh-environment"],
-      title: "Окружающая Среда",
+export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "wh-environment",
+    classes: ["warhammer-dbc", "wh-holo", "wh-environment"],
+    window: { title: "Окружающая Среда", resizable: true },
+    position: { width: 720, height: 560 }
+  };
+
+  static PARTS = {
+    body: {
       template: "systems/warhammer-dbc/templates/apps/environment.hbs",
-      width: 720, height: 560, resizable: true
-    });
-  }
+      root: true
+    }
+  };
 
   constructor(...args) { super(...args); this.state = { cat: "weather", target: null }; }
 
-  getData() {
+  async _prepareContext(options) {
     const isGM  = game.user.isGM;
     const scene = currentScene();
     const group = scene ? primaryGroupForScene(scene.id) : null;
@@ -84,9 +88,9 @@ export class EnvironmentApp extends Application {
     this.render(false);
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
 
     // Категории (левое меню)
     el.querySelectorAll("[data-cat]").forEach(b => b.addEventListener("click", () => { this.state.cat = b.dataset.cat; this.render(false); }));

@@ -9,8 +9,9 @@
 import { RESOURCE_TYPES, RESOURCE_ICONS, improvementPool, makeImprovement, improvementUpkeep,
   improvementOutput, improvementFlow, IMP_CATEGORIES, TITHE_GRADES, TITHE_RATES, titheRate, PRODUCTION_INPUTS } from "../constants/star-system.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { onTab, rootEl } from "../sheets/v2-helpers.mjs";
 
-const { Application } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
 const RAW_KEYS = Object.entries(RESOURCE_TYPES).filter(([, d]) => d.cat === "raw").map(([k]) => k);
 
@@ -62,21 +63,37 @@ function _impKey(s) {
   return a || "imperium";
 }
 
-export class StarSystemsOverview extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "wh-systems-overview",
-      classes: ["warhammer-dbc", "wh-holo", "wh-systems-overview"],
-      title: "Обзор звёздных систем",
-      template: "systems/warhammer-dbc/templates/apps/systems-overview.hbs",
-      width: 860, height: 720, resizable: true,
-      // Сохраняем позицию прокрутки при перерисовке (render) — не прыгает наверх.
-      scrollY: [".wh-so-body"],
-      tabs: [{ navSelector: ".wh-so-tabs", contentSelector: ".wh-so-body", initial: "protectorate" }]
-    });
-  }
+export class StarSystemsOverview extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "wh-systems-overview",
+    classes: ["warhammer-dbc", "wh-holo", "wh-systems-overview"],
+    window: { title: "Обзор звёздных систем", resizable: true },
+    position: { width: 860, height: 720 },
+    actions: { tab: onTab }
+  };
 
-  getData() {
+  // Один шаблон целиком; позиция прокрутки вкладок сохраняется при
+  // перерисовке (render) сама — не прыгает наверх.
+  static PARTS = {
+    body: {
+      template: "systems/warhammer-dbc/templates/apps/systems-overview.hbs",
+      root: true, scrollable: [".wh-so-body"]
+    }
+  };
+
+  static TABS = {
+    primary: {
+      initial: "protectorate",
+      tabs: [
+        { id: "systems",      label: "Системы" },
+        { id: "protectorate", label: "Протекторат" },
+        { id: "dynasties",    label: "Настройки" },
+        { id: "help",         label: "Справка" }
+      ]
+    }
+  };
+
+  async _prepareContext(options) {
     const isGM      = game.user.isGM;
     const canManage = isGM || _userIsRT();
     const all       = game.actors.filter(a => a.type === "starSystem");
@@ -239,6 +256,7 @@ export class StarSystemsOverview extends Application {
       ({ label: v, pct: Math.round((TITHE_RATES[k] || 0) * 100) }));
 
     return {
+      tab: this.tabGroups?.primary ?? "protectorate",
       isGM, canManage,
       regionGroups, hasSystems: sysList.length > 0,
       protList, hasProt: protList.length > 0,
@@ -258,9 +276,9 @@ export class StarSystemsOverview extends Application {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
     const set = (k, v) => game.settings.set("warhammer-dbc", k, v);
 
     el.querySelectorAll("[data-open-system]").forEach(b => b.addEventListener("click", () =>
@@ -396,9 +414,10 @@ export class StarSystemsOverview extends Application {
       </form>`,
       buttons: {
         ok: { icon: '<i class="fas fa-file-signature"></i>', label: contract ? "Сохранить" : "Заключить", callback: async html => {
-          const name = (html.find("#contract-name").val() || "").trim() || "Контракт";
-          const gain = (html.find("#contract-gain").val() || "").trim();
-          const readGrid = (cls) => { const o = {}; html.find(`.${cls}`).each((_, i) => { const v = Number(i.value) || 0; if (v) o[i.dataset.res] = v; }); return o; };
+          const root = rootEl(html);
+          const name = (root.querySelector("#contract-name")?.value || "").trim() || "Контракт";
+          const gain = (root.querySelector("#contract-gain")?.value || "").trim();
+          const readGrid = (cls) => { const o = {}; root.querySelectorAll(`.${cls}`).forEach(i => { const v = Number(i.value) || 0; if (v) o[i.dataset.res] = v; }); return o; };
           const costObj = readGrid("contract-cost");
           const incomeObj = readGrid("contract-income");
           const list = foundry.utils.deepClone(game.settings.get("warhammer-dbc", "protectorateContracts") || []);
@@ -555,15 +574,16 @@ export class StarSystemsOverview extends Application {
       </form>`,
       buttons: {
         ok: { icon: '<i class="fas fa-hammer"></i>', label: "Построить", callback: async html => {
-          const val = html.find("#imp-pick").val();
+          const root = rootEl(html);
+          const val = root.querySelector("#imp-pick")?.value;
           const list = foundry.utils.deepClone(item.system.improvements || []);
           if (val === "custom") {
-            const name = (html.find("#imp-name").val() || "").trim() || "Своё улучшение";
+            const name = (root.querySelector("#imp-name")?.value || "").trim() || "Своё улучшение";
             const res = {}, cost = {};
-            html.find(".imp-give").each((_, i)  => { const v = Number(i.value) || 0; if (v) res[i.dataset.res]  = v; });
-            html.find(".imp-spend").each((_, i) => { const v = Number(i.value) || 0; if (v) cost[i.dataset.res] = v; });
-            list.push({ id: foundry.utils.randomID(), name, desc: (html.find("#imp-cdesc").val() || "").trim(),
-                        cat: html.find("#imp-cat").val() || "", res, cost, hidden: false, secret: false, custom: true });
+            root.querySelectorAll(".imp-give").forEach(i  => { const v = Number(i.value) || 0; if (v) res[i.dataset.res]  = v; });
+            root.querySelectorAll(".imp-spend").forEach(i => { const v = Number(i.value) || 0; if (v) cost[i.dataset.res] = v; });
+            list.push({ id: foundry.utils.randomID(), name, desc: (root.querySelector("#imp-cdesc")?.value || "").trim(),
+                        cat: root.querySelector("#imp-cat")?.value || "", res, cost, hidden: false, secret: false, custom: true });
             await item.update({ "system.improvements": list });
             ui.notifications.info(`«${item.name}»: построено своё улучшение «${name}».`);
           } else {
@@ -577,19 +597,20 @@ export class StarSystemsOverview extends Application {
       },
       default: "ok",
       render: html => {
+        const root = rootEl(html);
         const upd = () => {
-          const val = html.find("#imp-pick").val();
+          const val = root.querySelector("#imp-pick")?.value;
           const custom = val === "custom";
-          html.find("#imp-custom").css("display", custom ? "" : "none");
+          root.querySelector("#imp-custom").style.display = custom ? "" : "none";
           if (custom) {
-            html.find("#imp-desc").html("Впишите название и эффекты: «Даёт» — производство, «Тратит» — содержание.");
+            root.querySelector("#imp-desc").innerHTML = "Впишите название и эффекты: «Даёт» — производство, «Тратит» — содержание.";
           } else {
             const p = pool[Number(val)];
             const plain = p ? _impPlain(p) : "";
-            html.find("#imp-desc").html(`${p?.d || ""}${plain ? `<br><b>${plain}</b>` : ""}`);
+            root.querySelector("#imp-desc").innerHTML = `${p?.d || ""}${plain ? `<br><b>${plain}</b>` : ""}`;
           }
         };
-        html.find("#imp-pick").on("change", upd); upd();
+        root.querySelector("#imp-pick").addEventListener("change", upd); upd();
       }
     }, { width: 480, classes: ["warhammer-dbc", "wh-holo"] }).render(true);
   }
@@ -630,16 +651,17 @@ export class StarSystemsOverview extends Application {
       </form>`,
       buttons: {
         ok: { icon: '<i class="fas fa-pen"></i>', label: "Сохранить", callback: async html => {
+          const root = rootEl(html);
           const newRes = {}, newCost = {};
-          html.find(".imp-give").each((_, i)  => { const v = Number(i.value) || 0; if (v) newRes[i.dataset.res]  = v; });
-          html.find(".imp-spend").each((_, i) => { const v = Number(i.value) || 0; if (v) newCost[i.dataset.res] = v; });
+          root.querySelectorAll(".imp-give").forEach(i  => { const v = Number(i.value) || 0; if (v) newRes[i.dataset.res]  = v; });
+          root.querySelectorAll(".imp-spend").forEach(i => { const v = Number(i.value) || 0; if (v) newCost[i.dataset.res] = v; });
           const updated = { ...imp,
-            name: (html.find("#imp-name").val() || "").trim() || imp.name,
-            desc: (html.find("#imp-cdesc").val() || "").trim(),
-            cat: html.find("#imp-cat").val() || "",
+            name: (root.querySelector("#imp-name")?.value || "").trim() || imp.name,
+            desc: (root.querySelector("#imp-cdesc")?.value || "").trim(),
+            cat: root.querySelector("#imp-cat")?.value || "",
             res: newRes,
-            hidden: html.find("#imp-hidden").is(":checked"),
-            secret: html.find("#imp-secret").is(":checked")
+            hidden: !!root.querySelector("#imp-hidden")?.checked,
+            secret: !!root.querySelector("#imp-secret")?.checked
           };
           if (Object.keys(newCost).length) updated.cost = newCost; else delete updated.cost;   // пусто → расход по формулам
           const list = (item.system.improvements || []).map(x => x.id === imp.id ? updated : x);
@@ -683,8 +705,9 @@ export class StarSystemsOverview extends Application {
       </form>`,
       buttons: {
         ok: { icon: '<i class="fas fa-landmark"></i>', label: "Применить", callback: async html => {
-          const g = html.find("#tithe-grade").val();
-          const ex = html.find(".tithe-exempt:checked").map((_, e) => e.dataset.res).get();
+          const root = rootEl(html);
+          const g = root.querySelector("#tithe-grade")?.value;
+          const ex = [...root.querySelectorAll(".tithe-exempt:checked")].map(e => e.dataset.res);
           await item.update({ "system.tithe": g, "system.titheExempt": ex });
           ui.notifications.info(`«${item.name}»: десятина — ${TITHE_GRADES[g]}.`);
           this.render();

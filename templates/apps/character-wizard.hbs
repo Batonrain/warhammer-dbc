@@ -455,11 +455,11 @@
   </div>
 
   <footer class="wiz-footer">
-    <button type="button" class="wh-slot-btn" data-action="wizBack" {{#if backDisabled}}disabled{{/if}}>← Назад</button>
+    <button type="button" class="wh-slot-btn" data-wiz-action="wizBack" {{#if backDisabled}}disabled{{/if}}>← Назад</button>
     {{#if isLastStep}}
-    <button type="button" class="wh-slot-btn" data-action="wizFinish" {{#if finishDisabled}}disabled{{/if}}>{{#if confirmingGear}}Применяется…{{else}}Готово{{/if}}</button>
+    <button type="button" class="wh-slot-btn" data-wiz-action="wizFinish" {{#if finishDisabled}}disabled{{/if}}>{{#if confirmingGear}}Применяется…{{else}}Готово{{/if}}</button>
     {{else}}
-    <button type="button" class="wh-slot-btn" data-action="wizNext" {{#if nextDisabled}}disabled{{/if}}>{{#if (or confirmingOrigin confirmingArchetype)}}Применяется…{{else}}Далее →{{/if}}</button>
+    <button type="button" class="wh-slot-btn" data-wiz-action="wizNext" {{#if nextDisabled}}disabled{{/if}}>{{#if (or confirmingOrigin confirmingArchetype)}}Применяется…{{else}}Далее →{{/if}}</button>
     {{/if}}
   </footer>
 </form>
