@@ -13,7 +13,39 @@
 //       aimer: true   : бонус BS орудия = rating (на узле-орудии — только ему,
 //                       на прочем узле — всем орудиям корабля)
 //       repairMod     : штраф к Tech-Use при ремонте (информативно)
+//
+//  Боевые директивы (читаются в module/combat/ship-attack.mjs::
+//  aggregateShipAttackAuto, подключены в ship-sheet.mjs::_resolveShipAttack —
+//  не в prepareShipDerived выше, это разовые модификаторы ОДНОГО выстрела,
+//  не характеристика корабля):
+//       havocBonus: true          : +rating к результату крита (getShipCrit)
+//       terminalPenetration: true : кубики урона ≤ rating перебрасываются один раз
+//       volkiteDouble: true       : попадания, прошедшие щиты, удваиваются
+//       lifetakerPer: true        : урон CP цели за непоглощённое попадание (wdbc-qhwb)
+//
+//  Ship-wide директивы (читаются в module/rules/ship.mjs::prepareShipDerived,
+//  накапливаются со ВСЕХ узлов + Корпуса, как armored/fast — не про один
+//  выстрел, а про весь корабль целиком, wdbc-qhwb):
+//       ramDicePer: true       : rating — формула кубика (ratingDice), суммируется
+//                                в derived.ramDice[], читает _resolveRam
+//       devastatingPer: true   : derived.devastatingByType[rating2] += rating
+//       orbitalStrikePer: true : derived.orbitalStrike += rating
+//
+//  ratingDice/ratingOptions/rating2Options — типы поля рейтинга чипа свойства
+//  (templates/item/parts/component.hbs и ship-hull.hbs): ratingDice — текстовое
+//  поле-формула («1d10», как у weapon.hbs); ratingOptions/rating2Options —
+//  чекбокс-группа/select из перечисленных {value,label}, а не число.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Типы узлов-оружия (совпадает с WTYPE_LABELS в ship-sheet.mjs) — переиспользуется
+// как rating2Options у devastating/effectiveDistance (Y — тип узла-оружия).
+export const WTYPE_OPTIONS = [
+  { value: "macrobattery", label: "Макробатарея" },
+  { value: "lance",        label: "Лэнс" },
+  { value: "nova",         label: "Нова-орудие" },
+  { value: "torpedo",      label: "Торпеды" },
+  { value: "bay",          label: "Ангар" }
+];
 
 export const SHIP_PROPERTIES = {
   aimer:           { key:"aimer", label:"Целеуказатель", en:"Aimer (X)", rating:true, cat:"weapon",
@@ -34,18 +66,18 @@ export const SHIP_PROPERTIES = {
                      desc:"Всегда виден при успешной Активной Авгурии — слишком велик для сокрытия." },
   crowded:         { key:"crowded", label:"Толпа", en:"Crowded (X)", rating:true, cat:"crew",
                      desc:"Вмещает больше экипажа: макс. CP +X.", auto:{ crewPer:1 } },
-  deadlyRamming:   { key:"deadlyRamming", label:"Смертельный Таран", en:"Deadly Ramming (X)", rating:true, cat:"weapon",
-                     desc:"Урон при таране +X." },
+  deadlyRamming:   { key:"deadlyRamming", label:"Смертельный Таран", en:"Deadly Ramming (X)", rating:true, ratingDice:true, cat:"weapon",
+                     desc:"Урон при таране +X (X — формула кубика, напр. 1d10).", auto:{ ramDicePer:true } },
   deathFromSky:    { key:"deathFromSky", label:"Смерть с небес", en:"Death From the Sky", cat:"weapon",
-                     desc:"Бомбардировочные орудия (макробатарея, только Н/НП/К слоты); орбитальная бомбардировка усилена." },
-  devastating:     { key:"devastating", label:"Разрушительное", en:"Devastating (X; Y)", rating:true, rating2:true, cat:"weapon",
-                     desc:"Все атаки узлов типа Y получают +X к урону." },
+                     desc:"Бомбардировочные орудия (макробатарея, только Н/НП/К слоты); орбитальная бомбардировка усилена. В системе нет резолва планетарной бомбардировки вообще — остаётся текстовым правилом, не автоматизировано (wdbc-qhwb)." },
+  devastating:     { key:"devastating", label:"Разрушительное", en:"Devastating (X; Y)", rating:true, rating2:true, rating2Options:WTYPE_OPTIONS, cat:"weapon",
+                     desc:"Все атаки узлов типа Y получают +X к урону.", auto:{ devastatingPer:true } },
   dreadnought:     { key:"dreadnought", label:"Дредноут", en:"Dreadnought", cat:"hull",
                      desc:"Колоссальный корпус: нет потерь CM/CP от пробоин до HI 100; Internal Defense (+20); нельзя «Проложить курс»/«Манёвр уклонения»." },
   easyToRepair:    { key:"easyToRepair", label:"Лёгкий в починке", en:"Easy to Repair (X)", rating:true, cat:"hull",
                      desc:"Длительный ремонт восстанавливает доп. +X Прочности корпуса при успехе." , auto:{ repairHiPer:1 } },
-  effectiveDistance:{ key:"effectiveDistance", label:"Эффективная дистанция", en:"Effective Distance (X; Y)", rating:true, rating2:true, cat:"weapon",
-                     desc:"Изменяет макс. эфф. дистанцию узлов типа Y на X." },
+  effectiveDistance:{ key:"effectiveDistance", label:"Эффективная дистанция", en:"Effective Distance (X; Y)", rating:true, rating2:true, rating2Options:WTYPE_OPTIONS, cat:"weapon",
+                     desc:"Изменяет макс. эфф. дистанцию узлов типа Y на X. Дальность в диалоге стрельбы выбирается вручную (не измеряется числом) — это только информативная пометка, не автобонус." },
   enduringSpirit:  { key:"enduringSpirit", label:"Стойкий Дух", en:"Enduring Spirit (X)", rating:true, cat:"crew",
                      desc:"Снижает все потери CM на X (мин. 1)." , auto:{ cmLossPer:-1 } },
   energyOnShields: { key:"energyOnShields", label:"Энергию на щиты", en:"Energy on Shields", cat:"misc",
@@ -69,7 +101,7 @@ export const SHIP_PROPERTIES = {
   fragileHull:     { key:"fragileHull", label:"Хрупкий Корпус", en:"Fragile Hull (X)", rating:true, cat:"hull",
                      desc:"−X из Прочности корпуса.", auto:{ hiPer:-1 } },
   havoc:           { key:"havoc", label:"Опустошительное", en:"Havoc (X)", rating:true, cat:"weapon",
-                     desc:"Криты от такой атаки получают +X к критическому результату." },
+                     desc:"Криты от такой атаки получают +X к критическому результату.", auto:{ havocBonus:true } },
   heretech:        { key:"heretech", label:"Техноересь", en:"Heretech (X)", rating:true, cat:"misc",
                      desc:"Ремонт: Tech-Use −30 (−10 c подходящим FL). Привлекает внимание Адепта.", auto:{ repairMod:-30 } },
   highSpirit:      { key:"highSpirit", label:"Высокая Мораль", en:"High Spirit (X)", rating:true, cat:"crew",
@@ -81,15 +113,22 @@ export const SHIP_PROPERTIES = {
   inertialess:     { key:"inertialess", label:"Безынерционный", en:"Inertialess", cat:"misc",
                      desc:"Не ограничен в направлении движения и числе поворотов, пока хватает SPD." },
   integral:        { key:"integral", label:"Встроенное", en:"Integral (X)", rating:true, cat:"misc",
-                     desc:"Нельзя стать целью критического попадания; уничтожение узла X отключает и это улучшение." },
+                     desc:"Нельзя стать целью критического попадания; уничтожение узла X отключает и это улучшение. X — ссылка на ДРУГОЙ узел; в системе нет поля-ссылки на предмет у рейтингов свойств — остаётся текстовым примечанием, не автоматизировано (wdbc-qhwb)." },
   internalDefense: { key:"internalDefense", label:"Внутренняя Оборона", en:"Internal Defense (X)", rating:true, cat:"crew",
                      desc:"Защита от Абордажа и «Ударил-отступил» +X." , auto:{ boardingDefPer:1 } },
   lifetaker:       { key:"lifetaker", label:"Забирающее жизни", en:"Lifetaker (X)", rating:true, cat:"weapon",
-                     desc:"При непоглощённом попадании макроорудиями призрачного света — урон CP X (за каждое попадание залпа)." },
+                     desc:"При непоглощённом попадании макроорудиями призрачного света — урон CP X (за каждое попадание залпа).", auto:{ lifetakerPer:true } },
   limited:         { key:"limited", label:"Ограниченный", en:"Limited (X)", rating:true, cat:"misc",
                      desc:"Определённые узлы/улучшения установить нельзя или они не действуют." },
-  locationReq:     { key:"locationReq", label:"Требования к расположению", en:"Location Requirements (X)", rating:true, cat:"weapon",
-                     desc:"Требования к слоту Орудийной оснащённости для установки." },
+  locationReq:     { key:"locationReq", label:"Требования к расположению", en:"Location Requirements (X)", rating:true,
+                     ratingOptions:[
+                       { value:"prow",   label:"Н (нос)" },
+                       { value:"dorsal", label:"НП (надпалуба)" },
+                       { value:"star",   label:"ПБ (правый борт)" },
+                       { value:"port",   label:"ЛБ (левый борт)" },
+                       { value:"keel",   label:"К (киль)" }
+                     ], cat:"weapon",
+                     desc:"Требования к слоту Орудийной оснащённости для установки (допустимые дуги)." },
   lowSpirit:       { key:"lowSpirit", label:"Низкая Мораль", en:"Low Spirit (X)", rating:true, cat:"crew",
                      desc:"Макс. CM −X.", auto:{ moralePer:-1 } },
   maneuverable:    { key:"maneuverable", label:"Манёвренный", en:"Maneuverable (X)", rating:true, cat:"char",
@@ -97,11 +136,16 @@ export const SHIP_PROPERTIES = {
   multipurpose:    { key:"multipurpose", label:"Многоцелевой Корабль", en:"Multipurpose Craft (X; Y, Z)", rating:true, cat:"misc",
                      desc:"Основное назначение X (Рейтинг Судна); может работать как Y с Рейтингом Z." },
   orbitalStrike:   { key:"orbitalStrike", label:"Орбитальный Удар", en:"Orbital Strike (X)", rating:true, cat:"weapon",
-                     desc:"Тесты BS по целям на поверхности планеты +X." },
+                     desc:"Тесты BS по целям на поверхности планеты +X.", auto:{ orbitalStrikePer:true } },
   paucity:         { key:"paucity", label:"Малочисленность", en:"Paucity (X)", rating:true, cat:"crew",
                      desc:"Макс. CP −X.", auto:{ crewPer:-1 } },
-  penetrating:     { key:"penetrating", label:"Пробивное", en:"Penetrating (X)", rating:true, cat:"weapon",
-                     desc:"Игнорирует определённые защиты X (голополя, броню, щиты)." },
+  penetrating:     { key:"penetrating", label:"Пробивное", en:"Penetrating (X)", rating:true,
+                     ratingOptions:[
+                       { value:"armour",      label:"Броню" },
+                       { value:"voidShields", label:"Пуст. щиты" },
+                       { value:"holofields",  label:"Голополя (не реализовано)" }
+                     ], cat:"weapon",
+                     desc:"Игнорирует определённые защиты X (голополя, броню, щиты). Голополя — нет такой механики защиты корабля в системе, остаётся текстовым примечанием." },
   repairDeck:      { key:"repairDeck", label:"Ремонтная палуба", en:"Repair Deck", cat:"misc",
                      desc:"После боя с потерями авиации: тест Tech-Use −10, за каждый успех восстановить 2 аппарата." },
   repulsionEffect: { key:"repulsionEffect", label:"Эффект Отталкивания", en:"Repulsion Effect", cat:"misc",
@@ -127,7 +171,7 @@ export const SHIP_PROPERTIES = {
   temperedFlesh:   { key:"temperedFlesh", label:"Закалённая Плоть", en:"Tempered Flesh (X)", rating:true, cat:"crew",
                      desc:"Снижает все потери CP на X (мин. 1)." , auto:{ cpLossPer:-1 } },
   terminalPenetration:{ key:"terminalPenetration", label:"Глубокое Пробитие", en:"Terminal Penetration (X)", rating:true, cat:"weapon",
-                     desc:"При броске на урон перебрасывайте результат ≤ X (повторный бросок окончателен)." },
+                     desc:"При броске на урон перебрасывайте результат ≤ X (повторный бросок окончателен).", auto:{ terminalPenetration:true } },
   travelSupplies:  { key:"travelSupplies", label:"Запасы путешествия", en:"Travel Supplies (X)", rating:true, cat:"misc",
                      desc:"Максимум запасов хватает на X месяцев (базово 6).", auto:{ suppliesMonths:true } },
   unseeing:        { key:"unseeing", label:"Незрячий", en:"Unseeing (X)", rating:true, cat:"char",
@@ -139,7 +183,7 @@ export const SHIP_PROPERTIES = {
   voidShadow:      { key:"voidShadow", label:"Пустотная Тень", en:"Void Shadow (X/Y)", rating:true, rating2:true, cat:"misc",
                      desc:"Манёвр «Тихий ход» +X; авгуры против корабля на тихом ходу −Y." , auto:{ silentRunPer:1, augurVsPer:1 } },
   volkite:         { key:"volkite", label:"Волкитное", en:"Volkite", cat:"weapon",
-                     desc:"Количество попаданий, прошедших пустотные щиты, удваивается." },
+                     desc:"Количество попаданий, прошедших пустотные щиты, удваивается.", auto:{ volkiteDouble:true } },
   warpLuring:      { key:"warpLuring", label:"Приманивающий Варп", en:"Warp Luring (X)", rating:true, cat:"misc",
                      desc:"Как часто (в днях) требуется бросок по таблице Столкновений в варпе." },
   warpSpeed:       { key:"warpSpeed", label:"Варп-скорость", en:"Warp Speed (X)", rating:true, cat:"misc",

@@ -26,7 +26,8 @@
         "key": "archeotech"
       },
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "prow"
       },
       {
         "key": "slowReload"

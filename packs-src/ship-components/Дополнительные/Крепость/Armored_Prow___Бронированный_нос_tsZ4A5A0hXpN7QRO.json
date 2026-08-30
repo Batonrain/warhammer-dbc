@@ -23,7 +23,8 @@
     "modValue": 0,
     "shipProps": [
       {
-        "key": "deadlyRamming"
+        "key": "deadlyRamming",
+        "rating": "1d10"
       },
       {
         "key": "limited"

@@ -23,7 +23,9 @@
     "modValue": 0,
     "shipProps": [
       {
-        "key": "devastating"
+        "key": "devastating",
+        "rating": 1,
+        "rating2": "lance"
       }
     ],
     "hull": {

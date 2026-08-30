@@ -13,6 +13,8 @@ import { CREW_POP_TABLE, CREW_MORALE_TABLE, CREW_RATING_TABLE, crewActiveRows, O
 import { SHIP_RELATIONS } from "../constants/ship-tokens.mjs";
 import { CRAFT_KINDS } from "../constants/small-craft.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
+import { resolveShipProps, aggregateShipAttackAuto } from "../combat/ship-attack.mjs";
+import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
@@ -888,6 +890,14 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       return ui.notifications.info("Ангары запускают эскадрильи через Длительные Действия (см. справочник «Бой»), а не действие Стрельба.");
     }
 
+    // Медленная Перезарядка (wdbc-qhwb): узел не стреляет на след. СХ после атаки —
+    // троттлинг по раунду боя (см. module/rules/cooldown.mjs), нет активного
+    // Combat — считаем доступным (отследить нечем).
+    const hasSlowReload = resolveShipProps(item).some(p => p.key === "slowReload");
+    if (hasSlowReload && !isCapabilityAvailable(item, "slowReload", "round")) {
+      return ui.notifications.warn(`⚠️ «${item.name}» — Медленная Перезарядка: не может стрелять в этот СХ.`);
+    }
+
     // BS канонира: из офицера-канонира (Мастер-канонир / любой «канонир»), если занят.
     let gunBS = 35, gunName = "";
     for (const o of (this.actor.system.officers || [])) {
@@ -936,6 +946,7 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
           </select>
         </div>
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="sf-mod" type="number" value="0"/></div>
+        ${der.orbitalStrike > 0 ? `<div class="atk-dlg-row"><label><input id="sf-orbital" type="checkbox"/> Цель на поверхности планеты (Orbital Strike +${der.orbitalStrike})</label></div>` : ""}
         <div class="atk-dlg-row"><label>Пустотные щиты цели:</label><input id="sf-vs" type="number" value="${tgtVS}" min="0"/></div>
         <div class="atk-dlg-row"><label>Броня цели:</label><input id="sf-arm" type="number" value="${tgtArm}" min="0"/></div>
         <div class="atk-range-info" style="font-size:0.84em;">
@@ -960,6 +971,7 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
               aim:     num("#sf-aim"),
               range:   num("#sf-range"),
               mod:     num("#sf-mod"),
+              orbital: form.querySelector("#sf-orbital")?.checked ? (Number(der.orbitalStrike) || 0) : 0,
               shields: num("#sf-vs"),
               armour:  num("#sf-arm"),
               // Строка торпеды есть только у торпедных аппаратов.
@@ -974,6 +986,9 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
   }
 
   async _resolveShipAttack(item, o) {
+    // Боевые auto-директивы узла (wdbc-jr93) — havoc/terminalPenetration/
+    // volkite, читает module/combat/ship-attack.mjs.
+    const shipAuto = aggregateShipAttackAuto(resolveShipProps(item));
     const w     = item.system.weapon || {};
     const wt    = w.wType || "macrobattery";
     const S     = Number(w.strength) || 1;
@@ -992,7 +1007,9 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     const dmgMatch = String(rawDmg).match(/\(?\d*\s*d\s*\d+\s*(?:[+\-]\s*\d+)?\)?\s*(?:[*x×]\s*\d+)?/i);
     const dmgF  = (dmgMatch ? dmgMatch[0] : rawDmg).replace(/\s+/g, "").replace(/[x×]/i, "*") || "1d10";
     const novaPenalty = wt === "nova" ? -20 : 0;
-    const threshold = o.bs + o.aim + o.range + o.mod + novaPenalty + navTR;
+    // Орбитальный Удар (wdbc-qhwb): бонус к BS по планетарным целям, выбирается
+    // чекбоксом в диалоге стрельбы, уже посчитан в o.orbital.
+    const threshold = o.bs + o.aim + o.range + o.mod + (o.orbital || 0) + novaPenalty + navTR;
     const roll = await (new Roll("1d100")).evaluate();
     const rv   = roll.total;
     const hit  = rv <= threshold;
@@ -1005,6 +1022,11 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     else if (wt === "nova")    { hitsRaw = (await (new Roll("1d5")).evaluate().then(r => { allRolls.push(r); return r.total; })); ignoreArmour = true; sumDamage = false; }
     else                       { hitsRaw = deg; }                 // макробатарея и пр.
     hitsRaw = Math.min(hitsRaw, wt === "nova" ? hitsRaw : S);
+    // Пробивное (Penetrating, wdbc-qhwb): X = набор защит узла, которые узел
+    // игнорирует. Holofields — нет такой механики защиты у корабля в системе,
+    // сюда не подмешивается (см. примечание в теле сообщения ниже).
+    if (shipAuto.penetrating.has("armour"))      ignoreArmour = true;
+    if (shipAuto.penetrating.has("voidShields")) shieldsApply = false;
     // Terminal Penetration снижает броню (только торпеды); звуковая — игнор брони.
     const effArmour = Math.max(0, o.armour - tpArmour);
 
@@ -1015,7 +1037,9 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       if (wt === "nova") body += `<div class="roll-threshold" style="font-size:0.82em;">Нова: точка смещается на 1 ПЕ (чёт — от стрелка, нечёт — к стрелку); суда в 1 ПЕ от точки получают 1d5 попаданий.</div>`;
     } else {
       const shieldsUsed = shieldsApply ? Math.min(o.shields, hitsRaw) : 0;
-      const hitsAfter   = Math.max(0, hitsRaw - shieldsUsed);
+      // Волкитное (wdbc-jr93): число попаданий, прошедших щиты, удваивается.
+      let hitsAfter = Math.max(0, hitsRaw - shieldsUsed);
+      if (shipAuto.volkiteDouble) hitsAfter *= 2;
       let totalHI = 0, dmgParts = [], critByNova = 0;
       for (let i = 0; i < hitsAfter; i++) {
         let dr;
@@ -1026,7 +1050,21 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
           dr = await (new Roll("1d10")).evaluate();
         }
         allRolls.push(dr);
-        dmgParts.push(dr.total);
+        // Глубокое Пробитие (Terminal Penetration X, wdbc-jr93): кубики урона
+        // ≤ X перебрасываются один раз, новый результат окончателен (даже если
+        // он тоже низкий). dr.total не трогаем — считаем поправку отдельно и
+        // прибавляем её к итогу, чтобы не лезть во внутренности Roll.
+        let dieAdjustment = 0;
+        if (shipAuto.terminalPenetration > 0) {
+          const term = dr.dice?.[0];
+          for (const die of (term?.results ?? [])) {
+            if (die.result > shipAuto.terminalPenetration) continue;
+            const reroll = await (new Roll(`1d${term.faces}`)).evaluate();
+            allRolls.push(reroll);
+            dieAdjustment += reroll.total - die.result;
+          }
+        }
+        dmgParts.push(dr.total + dieAdjustment);
         if (wt === "nova" && dr.dice?.[0]?.results?.some(d => d.result >= 10)) critByNova++;
         if (wt === "torpedo" && critN && dr.dice?.[0]?.results?.some(d => d.result >= critN)) critByNova++;
       }
@@ -1036,6 +1074,10 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       } else {
         totalHI = dmgParts.reduce((a, b) => a + (ignoreArmour ? b : Math.max(0, b - effArmour)), 0);
       }
+      // Разрушительное (Devastating, wdbc-qhwb): +X к урону ВСЕХ атак узлов типа
+      // wt — флотский баф с любого узла корабля, не обязательно стреляющего.
+      const devastatingBonus = Number(this.actor.system.derived?.devastatingByType?.[wt]) || 0;
+      if (devastatingBonus && hitsAfter > 0) totalHI += devastatingBonus;
 
       // Критическое попадание
       let critSection = "";
@@ -1044,13 +1086,43 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       if (critHappens || critByNova > 0) {
         const cr = await (new Roll("1d5")).evaluate();
         allRolls.push(cr);
-        critRollVal = cr.total;
+        // Опустошительное (Havoc X, wdbc-jr93): +X к результату крита ДО поиска в таблице.
+        critRollVal = cr.total + shipAuto.havocBonus;
         const ce = getShipCrit(critRollVal);
+        const havocNote = shipAuto.havocBonus ? ` +${shipAuto.havocBonus} Havoc = <b>${critRollVal}</b>` : "";
         const extra = critByNova > 1 ? ` (×${critByNova} крит. — для нова/торпед бросьте отдельно)` : "";
-        critSection = `<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ! 1d5 = <b>${critRollVal}</b> — ${esc(ce?.name)}${extra}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`;
+        // Цепная реакция / Испарение (wdbc-qhwb): только на 1–2 по таблице критов
+        // эффект бьёт по нескольким узлам сразу — выбор КОНКРЕТНЫХ узлов остаётся
+        // текстовым решением ГМа (вся таблица критов не резолвит узлы в коде),
+        // здесь только пометка числа.
+        const propsForCrit = resolveShipProps(item);
+        let multiNodeNote = "";
+        if (critRollVal <= 2) {
+          const chain = propsForCrit.find(p => p.key === "chainReaction");
+          if (chain) multiNodeNote = ` <span style="opacity:.8">(Цепная реакция: ×${Number(chain.rating) || 2} узла — выбрать вручную)</span>`;
+          else if (propsForCrit.some(p => p.key === "vapourisation")) multiNodeNote = ` <span style="opacity:.8">(Испарение: ×2 узла — выбрать вручную)</span>`;
+        }
+        critSection = `<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ! 1d5 = <b>${cr.total}</b>${havocNote} — ${esc(ce?.name)}${extra}${multiNodeNote}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`;
       }
       // Крит без урона Прочности всё равно наносит 1 очко Прочности.
       if ((critHappens || critByNova > 0) && totalHI === 0) totalHI = 1;
+
+      // Забирающее жизни (Lifetaker, wdbc-qhwb): урон CP цели за каждое
+      // непоглощённое попадание, В ДОПОЛНЕНИЕ к обычному урону макробатарей.
+      let lifetakerSection = "";
+      if (shipAuto.lifetakerCP > 0 && hitsAfter > 0) {
+        const cpDmg = shipAuto.lifetakerCP * hitsAfter;
+        const tgtShip = [...(game.user?.targets ?? [])].map(t => t.actor ?? t.document?.actor).find(a => a?.type === "ship");
+        if (tgtShip) {
+          const cpNow = Number(tgtShip.system.crew?.population) || 0;
+          await tgtShip.update({ "system.crew.population": Math.max(0, cpNow - cpDmg) });
+          lifetakerSection = `<div class="roll-threshold" style="font-size:0.84em;">${ICO.crit} Забирающее жизни: <b>${esc(tgtShip.name)}</b> CP −${cpDmg} (${cpNow} → ${Math.max(0, cpNow - cpDmg)})</div>`;
+        } else {
+          lifetakerSection = `<div class="roll-threshold" style="font-size:0.84em;">${ICO.crit} Забирающее жизни: CP −${cpDmg} (нет отмеченной цели — примените вручную)</div>`;
+        }
+      }
+      const holofieldsNote = shipAuto.penetrating.has("holofields")
+        ? `<div class="roll-threshold" style="font-size:0.8em;opacity:.7;">Penetrating: Holofields — в системе нет механики голополей, судить текстом.</div>` : "";
 
       const dtParts = dmgParts.length ? ` <span style="opacity:.7">[${dmgParts.join(" + ")}]</span>` : "";
       const armourNote = ignoreArmour ? "игнор брони"
@@ -1062,6 +1134,7 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
           <div class="roll-damage-label">${ICO.dmg} Урон Прочности: <b>${totalHI}</b>${dtParts}</div>
           <button class="wh-ship-dmg-btn" type="button" data-hi="${totalHI}">${ICO.dmg} Применить ${totalHI} урона Прочности → отмеченной цели</button>
         </div>
+        ${lifetakerSection}${holofieldsNote}
         ${critSection}`;
     }
 
@@ -1083,6 +1156,12 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     // Расход торпед из боезапаса.
     if (torpItem && launched > 0) {
       await torpItem.update({ "system.quantity": Math.max(0, torpAvail - launched) });
+    }
+
+    // Медленная Перезарядка (wdbc-qhwb): отметить узел выстрелившим на этот СХ
+    // (см. guard в начале _showFireDialog).
+    if (resolveShipProps(item).some(p => p.key === "slowReload")) {
+      await markCapabilityUsed(item, "slowReload", "round");
     }
   }
 
@@ -1398,13 +1477,16 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     const RAM_DICE = { transport: "1d5", raider: "1d5", frigate: "1d10", lightCruiser: "2d5" };
     const dice = RAM_DICE[this.actor.system.shipType] || "2d10";
     const prowArm = Number(der.chars?.armour) || 0;
+    // Смертельный Таран (Deadly Ramming, wdbc-qhwb): доп. кубики урона тарана
+    // с любых узлов+Корпуса корабля, агрегированы в prepareShipDerived.
+    const ramDice = der.ramDice || [];
 
     return foundry.applications.api.DialogV2.wait({
       window: { title: "Таран" },
       classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog"],
       position: { width: 400 },
       content: `<div class="wh-ship-fire" style="padding:6px;">
-        <div class="atk-range-info" style="font-size:0.82em;">${tgt ? `Цель: <b>${esc(tgt.name)}</b> (броня ${tgtArm}).` : "Отметьте (target) корабль-цель."} Урон тарана: ${dice} + Лоб. броня ${prowArm} (щиты не спасают). Таранящий получает 1d5 + броня цели (сквозь щиты).</div>
+        <div class="atk-range-info" style="font-size:0.82em;">${tgt ? `Цель: <b>${esc(tgt.name)}</b> (броня ${tgtArm}).` : "Отметьте (target) корабль-цель."} Урон тарана: ${dice}${ramDice.length ? ` + ${ramDice.join(" + ")} (Deadly Ramming)` : ""} + Лоб. броня ${prowArm} (щиты не спасают). Таранящий получает 1d5 + броня цели (сквозь щиты).</div>
         <div class="atk-dlg-row"><label>Operate (Voidship) рулевого:</label><input id="rm-op" type="number" value="35"/></div>
         <div class="atk-dlg-row"><label>Манёвренность (MN):</label><input id="rm-mn" type="number" value="${mn}"/></div>
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="rm-mod" type="number" value="0"/></div>
@@ -1413,14 +1495,14 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
         { action: "ram", icon: "fas fa-crosshairs", label: "Таранить!", default: true,
           callback: async (event, button) => {
             const v = id => parseInt(button.form.querySelector(id).value) || 0;
-            await this._resolveRam(v("#rm-op"), v("#rm-mn"), v("#rm-mod"), dice, prowArm, tgt, tgtArm);
+            await this._resolveRam(v("#rm-op"), v("#rm-mn"), v("#rm-mod"), dice, prowArm, tgt, tgtArm, ramDice);
           } },
         { action: "cancel", label: "Отмена" }
       ]
     });
   }
 
-  async _resolveRam(op, mn, mod, dice, prowArm, tgt, tgtArm) {
+  async _resolveRam(op, mn, mod, dice, prowArm, tgt, tgtArm, ramDice = []) {
     const threshold = op + mn - 20 + mod;
     const roll = await (new Roll("1d100")).evaluate();
     const hit  = roll.total <= threshold;
@@ -1432,7 +1514,16 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     } else {
       const dmgR = await (new Roll(dice)).evaluate(); allRolls.push(dmgR);
       const selfR = await (new Roll("1d5")).evaluate(); allRolls.push(selfR);
-      const ramDmg  = dmgR.total + prowArm;                 // цели (сквозь щиты)
+      // Смертельный Таран: каждая доп. формула кубика катается отдельно и суммируется.
+      let ramBonus = 0;
+      for (const formula of ramDice) {
+        try {
+          const rd = await (new Roll(formula)).evaluate();
+          allRolls.push(rd);
+          ramBonus += rd.total;
+        } catch (e) { /* невалидная формула на узле — пропускаем молча, не рушим таран */ }
+      }
+      const ramDmg  = dmgR.total + prowArm + ramBonus;      // цели (сквозь щиты)
       const selfDmg = selfR.total + tgtArm;                 // таранящему (сквозь щиты)
       // Урон таранящему применяем сразу к себе (+ CP/CM по общим правилам).
       const cur = Number(this.actor.system.hullIntegrity?.value) || 0;
@@ -1442,7 +1533,7 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       body = `
         <div class="roll-outcome"><span class="roll-success">${ICO.hit} Таран удался!</span></div>
         <div class="roll-damage-section">
-          <div class="roll-damage-label">${ICO.dmg} Урон цели: <b>${ramDmg}</b> (${dice} ${dmgR.total} + броня ${prowArm}, щиты не спасают)</div>
+          <div class="roll-damage-label">${ICO.dmg} Урон цели: <b>${ramDmg}</b> (${dice} ${dmgR.total} + броня ${prowArm}${ramBonus ? ` + Deadly Ramming ${ramBonus}` : ""}, щиты не спасают)</div>
           <button class="wh-ship-dmg-btn" type="button" data-hi="${ramDmg}">${ICO.dmg} Применить ${ramDmg} → отмеченной цели</button>
         </div>
         <div class="roll-threshold" style="font-size:0.85em;">Таранящий получил <b>${selfDmg}</b> Прочности (1d5 ${selfR.total} + броня цели ${tgtArm}): ${cur} → ${next}${lost ? `, экипаж −${lost} CP/CM` : ""}.</div>`;

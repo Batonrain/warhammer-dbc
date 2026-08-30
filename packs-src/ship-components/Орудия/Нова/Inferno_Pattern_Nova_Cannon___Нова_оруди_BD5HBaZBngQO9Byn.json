@@ -26,7 +26,8 @@
         "key": "coreArchitecture"
       },
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "prow"
       }
     ],
     "hull": {

@@ -33,7 +33,8 @@
         "rating": 5
       },
       {
-        "key": "effectiveDistance"
+        "key": "effectiveDistance",
+        "rating": 5
       }
     ],
     "hull": {

@@ -96,10 +96,26 @@
       {{#each shipPropsActive as |p|}}
       <div class="wprop-chip" title="{{p.def.desc}}">
         <span class="wprop-name">{{p.def.label}}</span>
-        {{#if p.def.rating}}
+        {{#if p.def.ratingDice}}
+        <input type="text" class="shipprop-rating-dice" data-key="{{p.key}}" data-field="rating" value="{{p.rating}}" placeholder="1d10" title="Рейтинг X (формула кубика)"/>
+        {{else if p.def.ratingOptions}}
+        <span class="shipprop-set">
+          {{#each p.def.ratingOptions as |o|}}
+          <label class="shipprop-set-opt"><input type="checkbox" class="shipprop-rating-set" data-key="{{../p.key}}" data-field="rating" value="{{o.value}}" {{#if (codeIncludes ../p.rating o.value)}}checked{{/if}}/>{{o.label}}</label>
+          {{/each}}
+        </span>
+        {{else if p.def.rating}}
         <input type="number" class="shipprop-rating" data-key="{{p.key}}" data-field="rating" value="{{p.rating}}" title="Рейтинг X"/>
         {{/if}}
-        {{#if p.def.rating2}}
+        {{#if p.def.rating2Options}}
+        <span class="wprop-slash">/</span>
+        <select class="shipprop-rating-select" data-key="{{p.key}}" data-field="rating2" title="Рейтинг Y">
+          <option value="">—</option>
+          {{#each p.def.rating2Options as |o|}}
+          <option value="{{o.value}}" {{#if (eq ../p.rating2 o.value)}}selected{{/if}}>{{o.label}}</option>
+          {{/each}}
+        </select>
+        {{else if p.def.rating2}}
         <span class="wprop-slash">/</span>
         <input type="number" class="shipprop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
         {{/if}}

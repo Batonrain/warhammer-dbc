@@ -23,10 +23,12 @@
     "modValue": 0,
     "shipProps": [
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "keel,dorsal"
       },
       {
-        "key": "penetrating"
+        "key": "penetrating",
+        "rating": "armour"
       }
     ],
     "hull": {

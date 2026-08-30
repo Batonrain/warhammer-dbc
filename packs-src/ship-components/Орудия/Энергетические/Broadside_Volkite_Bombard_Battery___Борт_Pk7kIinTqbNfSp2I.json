@@ -29,7 +29,8 @@
         "key": "volkite"
       },
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "star,port"
       }
     ],
     "hull": {

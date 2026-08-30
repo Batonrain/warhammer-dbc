@@ -26,7 +26,8 @@
         "key": "archeotech"
       },
       {
-        "key": "penetrating"
+        "key": "penetrating",
+        "rating": "armour"
       }
     ],
     "hull": {
