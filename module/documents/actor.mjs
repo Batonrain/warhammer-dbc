@@ -885,28 +885,29 @@ export class WarhammerActor extends Actor {
     if (Array.isArray(system.advanceTalents)) {
       for (const t of system.advanceTalents) autoTalentCost += (parseInt(t?.cost) || 0);
     }
+    // Психосилы/Техночудеса (item.system.cost) — синхронно с вкладками «ПСИ»/
+    // «Техно», каждая идёт в свою строку Опыта. Элитные архетипы (стр. 114):
+    // цена лежит на самом предмете и уже посчитана с множителем за предыдущие —
+    // сумма по предметам, а не отдельный счётчик, снятый с листа архетип обязан
+    // вернуть опыт сам, без ручной правки. Стоимость поддержания психосил
+    // (sustainedCost, читается ниже в блоке system.psyker) — тот же
+    // psychicPower, что и autoPsyCost, поэтому считается в том же проходе.
+    // Независимые аккумуляторы, один проход по this.items вместо четырёх.
+    let autoPsyCost = 0, autoTechCost = 0, autoEliteCost = 0, sustainedCost = 0;
     for (const it of this.items) {
-      if (it.type === "talent") autoTalentCost += (parseInt(it.system?.cost) || 0);
+      switch (it.type) {
+        case "talent": autoTalentCost += (parseInt(it.system?.cost) || 0); break;
+        case "psychicPower":
+          autoPsyCost += (parseInt(it.system?.cost) || 0);
+          if (it.system?.isSustained) sustainedCost += (it.system?.sustainCost ?? 1);
+          break;
+        case "techPower": autoTechCost += (parseInt(it.system?.cost) || 0); break;
+        case "eliteArchetype": autoEliteCost += (parseInt(it.system?.paidCost) || 0); break;
+      }
     }
     system.experience.spentTalents = autoTalentCost;
-
-    // Автосумма цен психосил и техночудес (item.system.cost) — синхронно с
-    // вкладками «ПСИ»/«Техно», но каждая идёт в свою строку Опыта.
-    let autoPsyCost = 0, autoTechCost = 0;
-    for (const it of this.items) {
-      if (it.type === "psychicPower") autoPsyCost += (parseInt(it.system?.cost) || 0);
-      else if (it.type === "techPower") autoTechCost += (parseInt(it.system?.cost) || 0);
-    }
     system.experience.spentPsy = autoPsyCost;
     system.experience.spentTech = autoTechCost;
-
-    // Элитные архетипы (стр. 114): цена лежит на самом предмете и уже посчитана
-    // с множителем за предыдущие. Сумма по предметам, а не отдельный счётчик:
-    // снятый с листа архетип обязан вернуть опыт сам, без ручной правки.
-    let autoEliteCost = 0;
-    for (const it of this.items) {
-      if (it.type === "eliteArchetype") autoEliteCost += (parseInt(it.system?.paidCost) || 0);
-    }
     system.experience.spentElite = autoEliteCost;
 
     const spentTotal =
@@ -1009,10 +1010,8 @@ export class WarhammerActor extends Actor {
       system.psyker.ratingFromTalent = derivedPR !== null;
       if (derivedPR !== null) system.psyker.rating = derivedPR;
 
-      let sustainedCost = 0;
-      for (const i of this.items) {
-        if (i.type === "psychicPower" && i.system.isSustained) sustainedCost += (i.system.sustainCost ?? 1);
-      }
+      // sustainedCost уже посчитан выше, в общем проходе по this.items
+      // (вместе с autoPsyCost) — тот же item.type "psychicPower".
       // Руническая Вязь «Стальной Гриммуар» (wdbc-unku): снимает штраф −1 эPR
       // за поддержание одной силы. Схема не различает, какая именно сила
       // «вписана» в Гриммуар — прощаем 1 очко суммарной стоимости поддержания
