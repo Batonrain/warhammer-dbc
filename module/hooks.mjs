@@ -22,6 +22,7 @@ import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
+import { resolveTrancesForCombat }       from "./apps/armour-history-trance.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
@@ -1016,6 +1017,13 @@ function _attachFateContextMenu(message, html) {
     _lastTurnCombatant.delete(combat.id);
     // «На поле боя X ходов стрелка» вне боя не имеет смысла — считать больше не от чего.
     await clearAllLingerZones();
+  });
+
+  // Бой кончился — снять транс «Дух героя» у всех, кто в него впадал, и
+  // разослать отложенную Порчу (module/apps/armour-history-trance.mjs).
+  Hooks.on("deleteCombat", async combat => {
+    if (!game.user.isGM) return;
+    await resolveTrancesForCombat(combat);
   });
 
   // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни

@@ -1000,6 +1000,18 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
 .warhammer-dbc .sus-an-heal-btn:disabled { opacity: .5; cursor: not-allowed; }
 .warhammer-dbc .sus-an-heal-status { font-size: .8em; opacity: .8; }
 .warhammer-dbc .sus-an-heal-status.sus-an-heal-ready { color: #4dffa6; opacity: 1; }
+
+/* Транс «Дух героя»: разовый выбор баффа на время боя (module/apps/armour-history-trance.mjs) */
+.warhammer-dbc .pa-trance {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px;
+  padding: 6px 8px; border: 1px solid rgba(255,210,77,.3); border-radius: 4px; background: rgba(255,210,77,.06);
+}
+.warhammer-dbc .pa-trance-btn {
+  width: auto; padding: 3px 10px; font-size: .85em;
+  border: 1px solid #b8862f; background: rgba(255,210,77,.12); color: #ffe9b8;
+}
+.warhammer-dbc .pa-trance-btn:hover { background: #ffd24d; color: #241a04; }
+.warhammer-dbc .pa-trance-status { font-size: .85em; opacity: .9; }
 .warhammer-dbc .grant-entry-preview { margin-top: 3px; font-size: .78em; color: #7fffba; opacity: .85; }
 .warhammer-dbc .grant-empty-hint { font-size: .82em; opacity: .7; padding: 2px 0; }
 .warhammer-dbc .grant-entry-add, .warhammer-dbc .req-entry-add {
