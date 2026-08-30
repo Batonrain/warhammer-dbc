@@ -7,7 +7,7 @@
 import { describe, it, expect } from "vitest";
 import {
   resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags,
-  emptyArmorLocFlags, resolveArmorAbsorptionAP
+  emptyArmorLocFlags, resolveArmorAbsorptionAP, aggregateArmorSkillMods
 } from "../../module/combat/armor-properties.mjs";
 
 describe("resolveArmorProps", () => {
@@ -67,6 +67,32 @@ describe("aggregateArmorAuto", () => {
   it("свойства без auto (gorget, hard, void…) не поднимают ни одного флага", () => {
     const props = resolveArmorProps({ system: { properties: ["gorget", "hard", "void", "cloak"] } });
     expect(aggregateArmorAuto(props)).toEqual(emptyArmorLocFlags());
+  });
+});
+
+describe("aggregateArmorSkillMods (wdbc-vzyi)", () => {
+  it("пустой список — пустая карта", () => {
+    expect(aggregateArmorSkillMods([])).toEqual({});
+  });
+
+  it("heavy → stealth −10", () => {
+    const props = resolveArmorProps({ system: { properties: ["heavy"] } });
+    expect(aggregateArmorSkillMods(props)).toEqual({ stealth: -10 });
+  });
+
+  it("stealthed → stealth +10", () => {
+    const props = resolveArmorProps({ system: { properties: ["stealthed"] } });
+    expect(aggregateArmorSkillMods(props)).toEqual({ stealth: 10 });
+  });
+
+  it("heavy и stealthed на одном предмете — складываются в 0", () => {
+    const props = resolveArmorProps({ system: { properties: ["heavy", "stealthed"] } });
+    expect(aggregateArmorSkillMods(props)).toEqual({ stealth: 0 });
+  });
+
+  it("свойства без skillMod (conductive, gorget…) не поднимают запись", () => {
+    const props = resolveArmorProps({ system: { properties: ["conductive", "gorget"] } });
+    expect(aggregateArmorSkillMods(props)).toEqual({});
   });
 });
 

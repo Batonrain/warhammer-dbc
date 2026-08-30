@@ -46,6 +46,23 @@ export function aggregateArmorAuto(props) {
   return a;
 }
 
+/**
+ * Модификаторы Навыков от свойств ОДНОГО предмета брони (Heavy/Stealthed и
+ * подобные) — плоская карта {skillKey: дельта}, суммируется по всем auto.
+ * skillMod свойствам предмета. Отдельно от aggregateArmorAuto: тот считает
+ * флаги для поглощения урона (damage.mjs), это — для диалога броска Навыка
+ * (module/sheets/actor-sheet.mjs::_armorSkillModsHtml, wdbc-vzyi).
+ */
+export function aggregateArmorSkillMods(props) {
+  const out = {};
+  for (const p of props) {
+    const skillMod = p.def.auto?.skillMod;
+    if (!skillMod) continue;
+    for (const [skillKey, value] of Object.entries(skillMod)) out[skillKey] = (out[skillKey] || 0) + value;
+  }
+  return out;
+}
+
 /** OR флагов нескольких предметов брони, покрывающих одну и ту же локацию. */
 export function mergeArmorLocFlags(a, b) {
   return {

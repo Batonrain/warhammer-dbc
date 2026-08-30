@@ -78,6 +78,7 @@ import { isFeatureEnabled } from "../constants/features.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { toggleAbility } from "../apps/toggle-abilities.mjs";
+import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-properties.mjs";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
@@ -1754,11 +1755,44 @@ export class WarhammerCharacterSheet
     return ruleRollModsHtml(this.actor, context);
   }
 
+  /**
+   * Галочки модификаторов Навыка от НАДЕТОЙ брони (Heavy/Stealthed и подобные
+   * свойства из закрытого реестра ARMOR_PROPERTIES, wdbc-vzyi) — вычисляются
+   * на лету из system.properties[] каждого предмета, авторства на предмете не
+   * требуют: одна правка реестра (constants/items.mjs) действует сразу на всю
+   * текущую и будущую броню с этим свойством. Отдельно от _itemRollModsHtml
+   * (та читает ЯВНО записанный flags.rollMods, этот источник — вычисляемый).
+   */
+  _armorSkillModsHtml(context) {
+    if (context.kind !== "skill" || !context.skill) return { html: "", mods: [] };
+    const groups = [];
+    for (const it of this.actor.items) {
+      if (it.type !== "armor" || !it.system.equipped) continue;
+      const value = aggregateArmorSkillMods(resolveArmorProps(it))[context.skill];
+      if (value) groups.push({ item: it, value });
+    }
+    if (!groups.length) return { html: "", mods: [] };
+    const mods = groups.map(g => ({ value: g.value, label: g.item.name }));
+    const rows = groups.map((g, i) => {
+      const sign = g.value > 0 ? `+${g.value}` : `${g.value}`;
+      return `<label class="attack-mod-check armor-roll-mod">
+        <input type="checkbox" class="armor-mod" data-idx="${i}" data-value="${g.value}"/>
+        <span>${esc(g.item.name)} <b>(${sign})</b></span></label>`;
+    }).join("");
+    return {
+      mods,
+      html: `<div class="atk-dlg-modifiers armor-mods">
+        <div class="atk-mods-title">Броня</div>
+        <div class="atk-mods-list">${rows}</div></div>`
+    };
+  }
+
   _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
     const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
     const rl = this._ruleRollModsHtml(rollCtx);
+    const am = this._armorSkillModsHtml(rollCtx);
     // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
     // блоком, а не галочкой среди модификаторов: их не с чем складывать.
     const rr = ruleRerollsHtml(this.actor, rollCtx);
@@ -1794,7 +1828,7 @@ export class WarhammerCharacterSheet
     const modifierSumOf = formEl => {
       let modifier = parseInt(formEl.querySelector("#skill-modifier")?.value) || 0;
       let halve = false;
-      for (const sel of [".hw-mod:checked", ".item-mod:checked", ".rule-mod:checked"]) {
+      for (const sel of [".hw-mod:checked", ".item-mod:checked", ".rule-mod:checked", ".armor-mod:checked"]) {
         for (const cb of formEl.querySelectorAll(sel)) {
           modifier += parseInt(cb.dataset.value) || 0;
           if (cb.dataset.halve === "1") halve = true;
@@ -1834,6 +1868,7 @@ export class WarhammerCharacterSheet
             ${hw.html}
             ${im.html}
             ${rl.html}
+            ${am.html}
             ${rr.html}
             ${diceModeHtml()}
             <div id="auto-outcome-note" class="roll-dlg-note"></div>
@@ -1907,7 +1942,7 @@ export class WarhammerCharacterSheet
         });
         root.querySelector("#skill-target")?.addEventListener("input", updateAutoOutcomeNote);
         root.querySelector("#skill-modifier")?.addEventListener("input", updateAutoOutcomeNote);
-        root.querySelectorAll(".hw-mod, .item-mod, .rule-mod").forEach(cb =>
+        root.querySelectorAll(".hw-mod, .item-mod, .rule-mod, .armor-mod").forEach(cb =>
           cb.addEventListener("change", updateAutoOutcomeNote));
 
         // ── Ассистенты: зона дропа, чипы, счётчик ──────────────────────────
