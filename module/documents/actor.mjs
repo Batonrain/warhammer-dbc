@@ -736,14 +736,18 @@ export class WarhammerActor extends Actor {
     // encumbrance.indexBonus. Ложится рядом с traitArmourAll: после снятия
     // шлема, поэтому естественная броня головы вместе с ним не теряется.
     const fxArmor = system.armorBonus || {};
+    // Свойство оружия Corrosive (wdbc-plsf): стойкая потеря AP в месте
+    // попадания, пока броню не починят (combat/damage.mjs пишет сюда).
+    const corrosion = system.armorCorrosion || {};
+    const corroded = (k) => Math.max(0, (Number(corrosion[k]) || 0));
     // Естественная броня (трейты) + пер-локационная от имплантов складываются с носимой/ручной
     const armorAP = {
-      head:     best("head")     + traitArmourAll + traitArmorLoc.head     + (fxArmor.head     || 0),
-      body:     best("body")     + traitArmourAll + traitArmorLoc.body     + (fxArmor.body     || 0),
-      leftArm:  best("leftArm")  + traitArmourAll + traitArmorLoc.leftArm  + (fxArmor.leftArm  || 0),
-      rightArm: best("rightArm") + traitArmourAll + traitArmorLoc.rightArm + (fxArmor.rightArm || 0),
-      leftLeg:  best("leftLeg")  + traitArmourAll + traitArmorLoc.leftLeg  + (fxArmor.leftLeg  || 0),
-      rightLeg: best("rightLeg") + traitArmourAll + traitArmorLoc.rightLeg + (fxArmor.rightLeg || 0),
+      head:     Math.max(0, best("head")     + traitArmourAll + traitArmorLoc.head     + (fxArmor.head     || 0) - corroded("head")),
+      body:     Math.max(0, best("body")     + traitArmourAll + traitArmorLoc.body     + (fxArmor.body     || 0) - corroded("body")),
+      leftArm:  Math.max(0, best("leftArm")  + traitArmourAll + traitArmorLoc.leftArm  + (fxArmor.leftArm  || 0) - corroded("leftArm")),
+      rightArm: Math.max(0, best("rightArm") + traitArmourAll + traitArmorLoc.rightArm + (fxArmor.rightArm || 0) - corroded("rightArm")),
+      leftLeg:  Math.max(0, best("leftLeg")  + traitArmourAll + traitArmorLoc.leftLeg  + (fxArmor.leftLeg  || 0) - corroded("leftLeg")),
+      rightLeg: Math.max(0, best("rightLeg") + traitArmourAll + traitArmorLoc.rightLeg + (fxArmor.rightLeg || 0) - corroded("rightLeg")),
     };
 
     system.absorption = {
@@ -954,8 +958,13 @@ export class WarhammerActor extends Actor {
     const overload = disabledArmourOverloadTier(this, disabledArmourWeight(this));
     system.disabledArmourOverload = overload;
     const overloadSpdMod = overload?.spdMod || 0;
-    if (traitSpeedMod || spdBonus || overloadSpdMod) {
-      spd = Math.max(0.5, spd + traitSpeedMod + spdBonus + overloadSpdMod);
+    // Свойство оружия Piercing (wdbc-plsf): снаряд в ране торса/ноги — плоский
+    // −1 SPD, пока не извлечён (не складывается за несколько таких ран —
+    // книга не описывает накопление, см. combat/damage.mjs, где рана ставится).
+    const pw = system.piercingWounds || {};
+    const piercingSpdMod = (pw.body || pw.leftLeg || pw.rightLeg) ? -1 : 0;
+    if (traitSpeedMod || spdBonus || overloadSpdMod || piercingSpdMod) {
+      spd = Math.max(0.5, spd + traitSpeedMod + spdBonus + overloadSpdMod + piercingSpdMod);
       halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
     }
 

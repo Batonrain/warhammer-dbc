@@ -27,6 +27,11 @@ describe("buildTargetEffectButtons: базовое поведение (не до
     expect(html).toContain("тест T");
   });
 
+  it("кнопка несёт data-wp-key — ключ свойства для проверки иммунитета (wdbc-plsf)", () => {
+    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-key="toxic"');
+  });
+
   it("свойство без targetEffect (например ordnance — только числовые auto) не даёт кнопку", () => {
     const html = buildTargetEffectButtons(props([{ key: "ordnance" }]), { hit: true });
     expect(html).toBe("");
@@ -114,4 +119,15 @@ describe("Dreaming — Ступор (dazed) через ту же гейтящу�
     expect(html).toContain('data-wp-condition="dazed"');
     expect(html).toContain("тест WP");
   });
+});
+
+describe("Corrosive/Crippling/Piercing/Haywire (wdbc-plsf) — больше не идут через эту кнопку", () => {
+  // Раньше это были targetEffect.kind → текстовая заметка (roll-wprop-note).
+  // Теперь применяются напрямую в combat/damage.mjs (applyDamageToActor), и
+  // здесь для них не должно быть ни кнопки, ни заметки.
+  it.each(["corrosive", "crippling", "piercing", "haywire"])(
+    "%s: buildTargetEffectButtons ничего не рисует", (key) => {
+      const html = buildTargetEffectButtons(props([{ key, rating: 2 }]), { hit: true });
+      expect(html).toBe("");
+    });
 });

@@ -6,6 +6,27 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+
+/**
+ * Иммунитет к свойству оружия (wdbc-plsf): capability
+ * `weaponPropertyImmunity.<key>`, где key — ключ свойства из WEAPON_PROPERTIES
+ * (corrosive/crippling/piercing/haywire — совпадает с targetEffect.kind; для
+ * flame/toxic/shocking/snare — ключ САМОГО свойства, не накладываемого им
+ * состояния: см. data-wp-key на кнопках эффектов и damage.mjs).
+ *
+ * Второй, условный вариант — `weaponPropertyImmunityInRage.<key>` — даёт
+ * иммунитет ТОЛЬКО пока актор в Ярости (system.inRage, простой тумблер —
+ * полная механика Ярости не реализована). Отдельное пространство имён, а не
+ * общий `when`-гейт Конструктора: Дар Кхорна «Purity of Wrath» — единственный
+ * известный на 30.08.2026 источник такого условного иммунитета, заводить
+ * ради него новый универсальный тип условия Конструктора избыточно.
+ */
+export function hasWeaponPropertyImmunity(actor, propKey) {
+  if (hasRuleFlag(actor, `weaponPropertyImmunity.${propKey}`)) return true;
+  if (actor?.system?.inRage && hasRuleFlag(actor, `weaponPropertyImmunityInRage.${propKey}`)) return true;
+  return false;
+}
 
 /** Разрешает массив записей {key,rating,rating2} в список с .def из реестра. */
 export function resolveWeaponPropsList(list) {
@@ -45,7 +66,13 @@ export function aggregateAuto(props) {
     combi: false, cognis: false, arcing: false, arcRating: 0, arcDamage: 0,
     shrinkTemplate: 0, difficultTerrain: 0,
     // Свойства, дающие Орде дополнительные попадания (rules/horde-damage.mjs).
-    blastRating: 0, flame: false
+    blastRating: 0, flame: false,
+    // Corrosive/Crippling/Piercing/Haywire (wdbc-plsf) — применяются в
+    // combat/damage.mjs (applyDamageToActor), не в диалоге атаки/броске.
+    // haywire (bool) отдельно от haywireRating: Haywire(0) — валидный рейтинг
+    // («привязан к цели», книга стр. 168), 0 не должен читаться как «нет
+    // свойства», в отличие от Corrosive/Crippling, где рейтинг 0 бессмыслен.
+    corrosiveRating: 0, cripplingRating: 0, piercing: false, haywire: false, haywireRating: 0
   };
 
   for (const p of props) {
@@ -94,6 +121,10 @@ export function aggregateAuto(props) {
     if (au.spray)         a.spray = true;
     if (au.blast)         a.blastRating = Math.max(a.blastRating, r);
     if (au.flame)         a.flame = true;
+    if (au.corrosive)     a.corrosiveRating = Math.max(a.corrosiveRating, r);
+    if (au.crippling)     a.cripplingRating = Math.max(a.cripplingRating, r);
+    if (au.piercing)      a.piercing = true;
+    if (au.haywire)     { a.haywire = true; a.haywireRating = Math.max(a.haywireRating, r); }
     if (au.forcePR)       a.forcePR = true;
     if (au.deflagrate) { a.deflagrate = true; a.deflagrateRating = Math.max(a.deflagrateRating, r); }
     if (au.warpSoak)      a.warpSoak = true;
@@ -227,6 +258,9 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
       const label = p.def.label + (te.labelSuffix ? ` (${te.labelSuffix})` : "");
       const data = [
         `data-wp-label="${label}"`,
+        // Ключ свойства (не состояния) — иммунитет проверяется в
+        // _applyWeaponPropEffect по нему (wdbc-plsf), а не по te.condition.
+        `data-wp-key="${p.def.key}"`,
         `data-wp-kind="${te.kind ?? ""}"`,
         `data-wp-condition="${te.condition ?? ""}"`,
         `data-wp-test-char="${te.testChar ?? ""}"`,
