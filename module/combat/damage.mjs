@@ -9,7 +9,7 @@ import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { ablativeDamage } from "../rules/mount.mjs";
-import { resolveArmorAbsorptionAP } from "./armor-properties.mjs";
+import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
 import { applyWoundLoss } from "../rules/wounds.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 
@@ -221,6 +221,10 @@ export async function applyDamageToActor(actor, damageData) {
   // его до 1, пока запас Ран полон, — первый же удар снимает слой, и дальше
   // Черта молчит до полного восстановления.
   const rawNet = Math.max(0, rawDamage - totalAbsorption - incomingReduction);
+  // Пробитие (wdbc-k0ff): непоглощённый урон дошёл до цели — броня этой
+  // локации скомпрометирована. warpSoak не считается: варп-оружие обходит
+  // броню целиком, а не проламывает её физически.
+  if (rawNet > 0 && !warpSoak) await breachArmorAtLocation(actor, armorKey);
   const netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
 

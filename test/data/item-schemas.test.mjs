@@ -376,7 +376,8 @@ const TYPES = {
       // template.json объявлен не был.
       special: "",
       weightless: false,
-      active: true
+      active: true,
+      breached: false
     }
   },
   // ── Силы (wdbc-ff4.1.4) ────────────────────────────────────────────────────
