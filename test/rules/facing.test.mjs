@@ -7,7 +7,8 @@
 import { describe, it, expect } from "vitest";
 import {
   normalizeAngle360, normalizeAngle180, bearingDegrees,
-  relativeBearing, isWithinArc, isFrontArcHit
+  relativeBearing, isWithinArc, isFrontArcHit,
+  parseMountArc, isWithinMountArc
 } from "../../module/rules/facing.mjs";
 
 describe("normalizeAngle360", () => {
@@ -98,5 +99,46 @@ describe("isFrontArcHit — передняя арка 90° Плаща (Cloak)", 
 
   it("нестандартная ширина арки — параметр, не захардкожен", () => {
     expect(isFrontArcHit(defender, 0, { x: 10, y: 0 }, 210)).toBe(true);
+  });
+});
+
+describe("parseMountArc — vehicleMount.hArc/vArc (wdbc-m38e)", () => {
+  it("360° и пустое/нераспознанное значение — не ограничено (null)", () => {
+    expect(parseMountArc("360°")).toBeNull();
+    expect(parseMountArc("")).toBeNull();
+    expect(parseMountArc(undefined)).toBeNull();
+    expect(parseMountArc("—")).toBeNull();
+    expect(parseMountArc("рука")).toBeNull(); // пометка на рукопашном — не число
+  });
+  it("одиночное число — полная ширина по центру оси", () => {
+    expect(parseMountArc("180°")).toEqual({ width: 180, center: 0 });
+  });
+  it("диапазон без переноса через 0 — центр и ширина как у обычного интервала", () => {
+    expect(parseMountArc("−25°..+25°")).toEqual({ width: 50, center: 0 });
+    expect(parseMountArc("−135°..−45°")).toEqual({ width: 90, center: -90 });
+    expect(parseMountArc("+45°..+135°")).toEqual({ width: 90, center: 90 });
+  });
+  it("широкий спонсонный сектор (борт) — тоже просто интервал, без особого переноса", () => {
+    expect(parseMountArc("−5°..−175°")).toEqual({ width: 170, center: -90 });
+    expect(parseMountArc("+175°..+5°")).toEqual({ width: 170, center: 90 });
+  });
+});
+
+describe("isWithinMountArc", () => {
+  it("не ограничено (360°/—) — цель попадает при любом пеленге", () => {
+    expect(isWithinMountArc(0, 179, "360°")).toBe(true);
+    expect(isWithinMountArc(0, 179, "—")).toBe(true);
+  });
+  it("узкий корпусной сектор (±25°) — цель строго спереди попадает, сбоку нет", () => {
+    expect(isWithinMountArc(0, 10, "−25°..+25°")).toBe(true);
+    expect(isWithinMountArc(0, 90, "−25°..+25°")).toBe(false);
+  });
+  it("левый спонсон (центр −90°) — попадает цель слева, не попадает справа", () => {
+    expect(isWithinMountArc(0, -90, "−135°..−45°")).toBe(true);
+    expect(isWithinMountArc(0, 90, "−135°..−45°")).toBe(false);
+  });
+  it("разворот машины сдвигает сектор вместе с ней", () => {
+    // Машина развернулась на восток (90) — «левый» спонсон (центр −90 от курса) теперь смотрит на север (0).
+    expect(isWithinMountArc(90, 0, "−135°..−45°")).toBe(true);
   });
 });

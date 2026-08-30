@@ -4,7 +4,7 @@
 //  Foundry-токен: центр в пиксельных координатах сцены + rotation.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { isFrontArcHit as isFrontArcHitPure } from "../rules/facing.mjs";
+import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc } from "../rules/facing.mjs";
 
 /** Центр токена в пиксельных координатах сцены (не клетках — углу масштаб не важен). */
 function tokenCenter(token) {
@@ -52,4 +52,22 @@ export async function resolveAttackerToken(attackerUuid) {
   const actor = await fromUuid(attackerUuid).catch(() => null);
   const tokens = actor?.getActiveTokens?.(true, true) ?? [];
   return tokens[0] ?? null;
+}
+
+/**
+ * В секторе ли наводки орудия техники цель (wdbc-m38e: vehicleMount.hArc,
+ * та же геометрия, что и Cloak, применённая не к броне, а к тому, может ли
+ * машина вообще довернуть это орудие на цель). Отсутствующая позиция любого
+ * токена — не ограничиваем (тот же безопасный дефолт, что у isFrontArcHit,
+ * но в другую сторону: там «нет геометрии» защищает Плащом, здесь «нет
+ * геометрии» не мешает выстрелу).
+ * @param {Token} vehicleToken
+ * @param {string} arcSpec        vehicleMount.hArc (или vArc)
+ * @param {Token} targetToken
+ */
+export function isTargetWithinVehicleArc(vehicleToken, arcSpec, targetToken) {
+  const vehiclePos = tokenCenter(vehicleToken);
+  const targetPos  = tokenCenter(targetToken);
+  if (!vehiclePos || !targetPos) return true;
+  return isWithinMountArc(tokenRotation(vehicleToken), bearingDegrees(vehiclePos, targetPos), arcSpec);
 }

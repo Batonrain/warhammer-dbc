@@ -279,7 +279,7 @@
           "operator": "gunner",
           "stationId": "UNRyuM4E2mFfiN23",
           "mount": "hull",
-          "hArc": "фикс.",
+          "hArc": "−8°..+8°",
           "vArc": "—",
           "standard": true,
           "reloads": 10,

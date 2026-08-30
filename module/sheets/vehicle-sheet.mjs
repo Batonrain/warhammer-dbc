@@ -6,6 +6,7 @@ import { CHASSIS_TYPES, CHASSIS_NOTES, VEHICLE_TYPES, CREW_ROLES,
          REPAIR_CONDITIONS, REPAIR_REQUIREMENTS, REQUISITION_NOTES } from "../constants/vehicle.mjs";
 import { _executeAttackRoll } from "../combat/attack.mjs";
 import { showRamDialog, showTerrainDialog, showRepairDialog } from "../combat/vehicle.mjs";
+import { isTargetWithinVehicleArc } from "../combat/facing.mjs";
 import { vehicleWeaponProfile } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
@@ -523,6 +524,17 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     const fixedNote = vm.mount === "fixed"
       ? `<div class="atk-range-info" style="font-size:0.82em;">Закреплённое: выстрел комбинирован с Operate +10 мехвода — поворачивайте корпусом.</div>` : "";
 
+    // Сектор наводки (wdbc-m38e, geometry: rules/facing.mjs) — предупреждение,
+    // не блокировка: как и остальные правила установки орудий в этом окне
+    // (см. fixedNote выше), решение остаётся за игроком/ГМ.
+    const vehicleToken = this.actor.getActiveTokens?.(true, true)?.[0] || null;
+    const outOfArcTargets = (!isMelee && vehicleToken)
+      ? [...(game.user?.targets ?? [])].filter(t => !isTargetWithinVehicleArc(vehicleToken, vm.hArc, t))
+      : [];
+    const arcNote = outOfArcTargets.length
+      ? `<div class="atk-range-info" style="color:#c0392b;font-size:0.82em;">⚠ Вне сектора наводки (${esc(vm.hArc || "—")}): ${outOfArcTargets.map(t => esc(t.name)).join(", ")} — довернуть корпус/башню или сменить цель.</div>`
+      : "";
+
     // Без <form>: DialogV2 сам оборачивает содержимое в форму, и вложенная
     // ломала бы button.form, через который читаются поля.
     const content = `
@@ -544,6 +556,7 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="vf-mod" type="number" value="0"/></div>
         <label class="veh-check"><input type="checkbox" id="vf-short"/> Короткая дистанция (Мельта/Рассеивание)</label>
         ${fixedNote}
+        ${arcNote}
       </div>`;
 
     return foundry.applications.api.DialogV2.wait({
