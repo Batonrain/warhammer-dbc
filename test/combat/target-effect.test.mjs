@@ -121,6 +121,15 @@ describe("Dreaming — Ступор (dazed) через ту же гейтящу�
   });
 });
 
+describe("Challenge — Вызван (challenged) сразу на попадании, без onUnsoaked", () => {
+  it("кнопка есть уже на простом попадании (Погибель/Сновидение требуют непоглощённый урон, Вызов — нет)", () => {
+    const html = buildTargetEffectButtons(props([{ key: "challenge", rating: 2 }]),
+      { hit: true, netDamageKnown: true, hadUnsoaked: false });
+    expect(html).toContain('data-wp-condition="challenged"');
+    expect(html).toContain("тест WP");
+  });
+});
+
 describe("Corrosive/Crippling/Piercing/Haywire (wdbc-plsf) — больше не идут через эту кнопку", () => {
   // Раньше это были targetEffect.kind → текстовая заметка (roll-wprop-note).
   // Теперь применяются напрямую в combat/damage.mjs (applyDamageToActor), и

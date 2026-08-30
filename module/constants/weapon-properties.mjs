@@ -756,7 +756,18 @@ export const WEAPON_PROPERTIES = {
   challenge: {
     key: "challenge", label: "Вызов", en: "Challenge (X)", rating: true, cat: "melee",
     desc: "Жажда битвы и гордость вливаются в цель (Кхорн). При попадании или парировании — тест W−10×X, иначе до конца следующего Хода нельзя добровольно выходить из рукопашной (кроме уклонения от атаки по площади).",
-    reminder: "⚔️ Вызов (X): попадание/парир — W−10×X или нельзя выйти из рукопашной"
+    reminder: "⚔️ Вызов (X): попадание/парир — W−10×X или нельзя выйти из рукопашной",
+    // Состояние «Вызван» (system.conditions.challenged, wdbc-2xku) уже блокирует
+    // «Выход из Боя» диалогом-подтверждением — см. movement-actions.mjs. Тест
+    // W−10×X на ЕГО наложение при попадании автоматизирован здесь тем же
+    // движком, что Sновидение/Погибель (buildTargetEffectButtons → condition,
+    // без levelField — CONDITIONS_DEF.challenged.hasLevel=false). Половина
+    // «или парировании» НЕ покрыта: buildTargetEffectButtons вызывается только
+    // из веток «попадание» (attack.mjs/horde-sheet.mjs/psychic.mjs/tech.mjs),
+    // у Парирования (combat/defense.mjs _performParry) нет своего вызова этого
+    // движка — целевой эффект НАПАДАЮЩЕГО оружия при успешном Парировании
+    // защитником сейчас не наложить без правки defense.mjs.
+    auto: { targetEffect: { condition: "challenged", testChar: "wp", testPerRating: -10 } }
   },
   change: {
     key: "change", label: "Перемены", en: "Change (X)", rating: true, cat: "both",
