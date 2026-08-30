@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Персонаж может ездить на Миньоне верхом, если вес ношения Миньона выше веса персонажа. Открывает Трейты скакунов: по цене −1 — Unruly; по цене ½ — All-Terrain, Blades (1d10+2 R, Pen 0), Legion, Maneuverable, Stand, War-Trained; по цене 1 — Ablative Plating, Blades (2d10+2 R, Pen 2, Tearing). Комплексный Трейт Миньона: стоит 1 Очко Трейтов, доступен Зверю, Машине и Демону (корбук стр. 112).",
-    "notes": "",
+    "notes": "Открывает доступ к категории «Трейты скакунов» — флаг доступа к контенту, не сам эффект.",
     "benefit": "На Миньоне можно ездить верхом; открывает Трейты скакунов.",
     "source": "миньоны",
     "hasRating": false,

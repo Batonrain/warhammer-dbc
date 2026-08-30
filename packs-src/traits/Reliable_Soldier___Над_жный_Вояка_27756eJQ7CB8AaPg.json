@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Выбор ОДНОГО типа рукопашного и ОДНОГО типа стрелкового оружия получают +2 Dmg/+1 Pen/+1 надёжность — ближайший механизм (talent.system.effects.weaponBuff, wdbc-g53k) читается ТОЛЬКО у type:\"talent\" (module/combat/weapon-mods.mjs:79 явно фильтрует по типу предмета) и не различает выбор конкретного типа оружия — применение на Trait не сработает и не сузится до выбранных типов.",
     "benefit": "Выбирает по одному типу рукопашного и стрелкового оружия: +2 Dmg, +1 Pen, +1 надёжность.",
     "source": "архетип",
     "bookSource": "",

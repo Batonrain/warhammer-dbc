@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "«+1 Успех» (не % к порогу) при условии «против одного противника без союзников» + условный Unnatural Characteristic на встречных — оба вне формы testMod (доп. Успех и условное включение целой другой Черты).",
     "benefit": "Против одного противника без союзников: +1 Успех на успешные тесты WS, S и A; Unnatural Characteristic на встречные WS; правило «ничьей» при проигрыше не применяется.",
     "source": "архетип",
     "bookSource": "",

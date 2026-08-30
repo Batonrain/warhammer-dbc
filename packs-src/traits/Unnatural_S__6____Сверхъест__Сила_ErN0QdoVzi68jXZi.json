@@ -25,13 +25,64 @@
     }
   },
   "_id": "ErN0QdoVzi68jXZi",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Unnatural S (6) / Сверхъест. Сила (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.s.bonusFx",
+            "type": "add",
+            "value": 6,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "HL6eIOpZ5l2SAWgR",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1788090270619,
+        "modifiedTime": 1788090270619,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!ErN0QdoVzi68jXZi.HL6eIOpZ5l2SAWgR"
+    }
+  ],
   "folder": null,
   "sort": 0,
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

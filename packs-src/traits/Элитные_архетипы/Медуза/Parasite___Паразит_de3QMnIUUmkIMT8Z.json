@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "«Существует за счёт носителя» — нарративная зависимость без числового правила в этой записи.",
     "benefit": "Медуза существует за счёт носителя.",
     "source": "биология/Варп",
     "hasRating": false,

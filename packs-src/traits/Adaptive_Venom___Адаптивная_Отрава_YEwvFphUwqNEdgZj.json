@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Яд подстраивается под жертву: свойство Toxic использует 1d10 вместо 1d5.",
-    "notes": "",
+    "notes": "Профиль урона (Toxic 1d10) для естественного оружия-носителя — читается атакой самого оружия, не актором; отдельного числового поля у Черты нет.",
     "benefit": "Toxic 1d10.",
     "source": "Нага",
     "hasRating": false,

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Даёт Преимущество (диспозиция броска, не число) на Awareness + отдельное текстовое ограничение по кодам Скитария — Преимущество не входит в testMod (flat/charBonus), это отдельный механизм бросков.",
     "benefit": "Преимущество на тесты Awareness. Коды командования для Боевых Лат Скитария не работают на него.",
     "source": "архетип",
     "bookSource": "",

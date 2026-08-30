@@ -5,7 +5,7 @@
   "folder": "v2OWqUBFX6igfsnz",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Подмена НАВЫКА резолюции для целого списка тестов (Inquiry/Command/Charm/Commerce/Deceive/Scrutiny → Common Lore) — тот же класс, что False Blade: нет kind под подмену навыка теста.",
     "benefit": "Может пробрасывать Inquiry, Command, Charm, Commerce, Deceive и Scrutiny через Common Lore (Intrigue)(F/I). Может проходить Intimidate, используя Inf своего Архонта, если противник родом из Комморага или прожил там достаточно долго. +10 на социальные взаимодействия с Культами Ведьм, Святилищами Инкубов и Ковенами Гемункулов; Hatred участников этих организаций не влияет на переговоры в обе стороны.",
     "source": "Элитный архетип: Иерарх",
     "hasRating": false,

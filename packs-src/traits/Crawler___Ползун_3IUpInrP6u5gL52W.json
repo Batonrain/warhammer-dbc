@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Передвигается по земле извивающимся телом: нет штрафов за трудный ландшафт; Натиск/Шаг только раз в 2 Раунда.",
-    "notes": "",
+    "notes": "«Нет штрафов за трудный ландшафт» — тот же bespoke-диалог movement-terrain.mjs, что и Cloven One; отмена штрафа ландшафта не читается как testMod.",
     "benefit": "Нет штрафов за трудный ландшафт.",
     "source": "форма тела",
     "hasRating": false,

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Может входить и выходить из реальности: за полудействие получает или теряет Incorporeal.",
-    "notes": "",
+    "notes": "Переключает состояние Incorporeal (другой Черты) полудействием — общий каркас «переключаемая способность» (toggle-abilities.mjs) описан в плане [[doombc-buff-choice-mechanic-plan]], но ещё не реализован для произвольных пар Черт.",
     "benefit": "Переключает Incorporeal (полудействие).",
     "source": "Варп",
     "hasRating": false,

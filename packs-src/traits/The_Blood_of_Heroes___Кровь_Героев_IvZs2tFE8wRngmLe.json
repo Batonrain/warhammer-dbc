@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Раз/битву тест W+10 → условный временный Unnatural Characteristic по выбору до конца битвы, со сменой раз/битву — динамический временный грант с выбором, не статичный модификатор.",
     "benefit": "Раз/битву за Свободное действие тест W+10: при успехе — Unnatural Characteristic (+1) на выбор до конца битвы. Можно сменить раз/битву за Свободное действие тестом W−10.",
     "source": "архетип",
     "bookSource": "",

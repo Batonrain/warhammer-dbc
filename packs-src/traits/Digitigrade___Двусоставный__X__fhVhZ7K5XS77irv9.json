@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Ноги двусоставные, как у зверя: +X к SPD пешком и +5×X на тесты Группирования (Athletics).",
-    "notes": "",
+    "notes": "«+X к SPD» рейтинг-зависим (аналог Unnatural Characteristic — заполняется на дропнутой копии), а «+5×X на Группирование» целится в узкое под-действие Athletics (не весь Навык) — нет такого скоупа testMod.",
     "benefit": "+X к SPD; +5×X на группирование.",
     "source": "строение тела",
     "hasRating": true,

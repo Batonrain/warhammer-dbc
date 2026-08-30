@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Таланты групп Lore и Trade считаются враждебными, независимо от Покровителя.",
-    "notes": "",
+    "notes": "Lore/Trade считаются враждебными Навыками — у Групповых Навыков есть только положительный флаг alwaysAlly (см. skills.mjs), противоположного «alwaysHostile» на уровне Черты в схеме нет.",
     "benefit": "Lore/Trade враждебны.",
     "source": "Зверолюд",
     "hasRating": false,

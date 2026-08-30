@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Естественное оружие персонажа теряет свойство Primitive.",
-    "notes": "",
+    "notes": "Тот же случай, что рейтинговая версия выше — снятие Primitive с чужого предмета-оружия, канала нет.",
     "benefit": "Естественное оружие теряет Primitive.",
     "source": "биология",
     "hasRating": false,

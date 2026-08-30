@@ -5,7 +5,7 @@
   "folder": "Atst6W906sMj7L8D",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Механикой пока не выражено: невозможность снять доспех, отсутствие штрафа −10 на тонкие манипуляции, авто-регенерация 1 Раны/20−T.b мин, иммунитет к Кровотечению/ядам/болезням/бесполезным конечностям, использование AP против Горения и варп-оружия.",
     "benefit": "Доспех — больше чем силовая броня. Закалённый в пламени Варпа и эфирной крови демонов, слился с полумеханической плотью и стал новой кожей. Не может снять доспех, но имеет AP 12/12/12/12, все стандартные субсистемы и не имеет штрафа −10 на тонкие манипуляции руками. Не получает медицинского ухода, кроме как в полноценном Апотекарионе. Авто-регенерация 1 Раны каждые 20−T.b минут, иммунен к Кровотечению, ядам, болезням и эффектам бесполезных конечностей; может использовать AP брони против урона от Горения и варп-оружия.",
     "source": "Элитный архетип: Варп-Кузнец",
     "hasRating": false,
@@ -17,7 +17,7 @@
       "charBonusValue": 0,
       "charBonuses": [],
       "charValueBonuses": [],
-      "armourAll": 0,
+      "armourAll": 12,
       "fearRating": 0,
       "sizeMod": 0,
       "initMod": 0,
@@ -26,7 +26,89 @@
     "bookSource": "Домашнее правило (не из официальной книги)"
   },
   "_id": "gjtQQj1JT1qmI7r0",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Warpforged Plate / Закалённые Варпом Латы (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.armorBonus.head",
+            "type": "add",
+            "value": 12,
+            "phase": "initial",
+            "priority": 0
+          },
+          {
+            "key": "system.armorBonus.body",
+            "type": "add",
+            "value": 12,
+            "phase": "initial",
+            "priority": 0
+          },
+          {
+            "key": "system.armorBonus.leftArm",
+            "type": "add",
+            "value": 12,
+            "phase": "initial",
+            "priority": 0
+          },
+          {
+            "key": "system.armorBonus.rightArm",
+            "type": "add",
+            "value": 12,
+            "phase": "initial",
+            "priority": 0
+          },
+          {
+            "key": "system.armorBonus.leftLeg",
+            "type": "add",
+            "value": 12,
+            "phase": "initial",
+            "priority": 0
+          },
+          {
+            "key": "system.armorBonus.rightLeg",
+            "type": "add",
+            "value": 12,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "kMeNZj8li9pTNkLm",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1788036581211,
+        "modifiedTime": 1788036581211,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!gjtQQj1JT1qmI7r0.kMeNZj8li9pTNkLm"
+    }
+  ],
   "sort": 0,
   "ownership": {
     "default": 0,

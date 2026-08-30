@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Мощное тело-захват: +20 на тесты Захвата и Борьбы; в Захвате считается на Unnatural S выше.",
-    "notes": "",
+    "notes": "+20 к Захвату (не входит в SKILLS_DEF как отдельный навык — Захват/Grapple резолвится вне обычного теста Навыка) + «Unnatural S в Захвате» — условная подмена характеристики только в одном под-тесте, нет такого скоупа.",
     "benefit": "+20 Захват; Unnatural S в Захвате.",
     "source": "Нага",
     "hasRating": false,

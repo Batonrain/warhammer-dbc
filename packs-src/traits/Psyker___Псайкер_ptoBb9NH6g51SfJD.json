@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Одарённый псайкер с врождённым талантом к энергиям Варпа; может использовать психосилы.",
-    "notes": "",
+    "notes": "Даёт статус Псайкера (доступ к манифестации сил, свои поля PR) — управляется через actor.system.psyker и module/rules/psyker.mjs напрямую, не через словарь kind Механики Черты; сама по себе Черта-маркер без числового параметра для переноса.",
     "benefit": "Является псайкером.",
     "source": "Варп",
     "hasRating": false,
