@@ -151,6 +151,11 @@ export function prepareCharacterDerived(actor, system) {
     let traitSizeMod = 0;
     let traitInitMod = 0;
     let traitSpeedMod = 0;
+    // Навыки, у которых Черта/Талант/Импlant ополовинивает штрафы (Конструктор
+    // МЕХАНИКА, kind:"testMod" + modValueMode:"halvePenalty") — сам штраф теста
+    // остаётся галочкой в диалоге (item-rules.mjs), а вот штраф необученности
+    // здесь же, derived-полем skill.total, отдельного диалога для него нет.
+    const skillPenaltyHalved = new Set();
     // ── Кибернетика Механикум: авто-автоматизация Техночудес ────────────────
     let implantEnergyMax   = 0;   // +N к максимуму Катушки Потенции (Manipulus и т.п.)
     let implantCompBonus   = 0;   // лучший бонус к тесту Компенсатора среди имплантов
@@ -252,6 +257,14 @@ export function prepareCharacterDerived(actor, system) {
       if (e.sizeMod)    traitSizeMod    += e.sizeMod;
       if (e.initMod)    traitInitMod    += e.initMod;
       if (e.speedMod)   traitSpeedMod   += e.speedMod;
+      for (const g of item.flags?.["warhammer-dbc"]?.mechanics ?? []) {
+        if (g.operator === "OR") continue;
+        for (const me of g.entries ?? []) {
+          if (me?.kind === "testMod" && me.modScope === "skill" && me.modValueMode === "halvePenalty" && me.skillKey) {
+            skillPenaltyHalved.add(String(me.skillKey).toLowerCase());
+          }
+        }
+      }
     }
     // ── Одержимый: авто-эффекты Проявления (DoomBC 129-132) ─────────────────
     // Пока демон проявлен, профиль (по Cor) даёт Unnatural S, Daemonic (→T.b),
@@ -613,7 +626,9 @@ export function prepareCharacterDerived(actor, system) {
     for (const [key, sk] of Object.entries(skills)) {
       const def     = SKILLS_DEF[key];
       const charVal = def ? (chars[def.char]?.total ?? 0) : 0;
-      sk.total = charVal + (SKILL_RANKS[sk.rank]?.bonus ?? -20);
+      let rankBonus = SKILL_RANKS[sk.rank]?.bonus ?? -20;
+      if (rankBonus < 0 && skillPenaltyHalved.has(key)) rankBonus = Math.ceil(rankBonus / 2);
+      sk.total = charVal + rankBonus;
     }
 
     // ── Групповые навыки ──────────────────────────────────────────────────

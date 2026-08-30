@@ -97,6 +97,30 @@ export const CAPABILITIES = {
     source: "Модификации брони «Гексаграмматические Печати» / «Руническая Кольчуга»",
     reader: "module/combat/damage.mjs — ветка warpSoak в applyDamageToActor, armorAP = absorption[loc] целиком"
   },
+  // ── Крайне миролюбив (wdbc-gzuf) ──────────────────────────────────────────
+  "pacifism.requiresAttackToRage": {
+    label: "Не может войти в Ярость, пока не атакован в этом бою — иначе тест Воли−20 или отказ",
+    source: "Раса: Серый Человек (Oteshii)",
+    reader: "module/combat/damage.mjs (флаг «атакован»), warhammer-dbc.mjs (гейт на system.inRage), module/combat/pacifism.mjs (тест/карточки)"
+  },
+  // ── Всегда «Связанный» по трейту Psyker (wdbc-gzuf) ──────────────────────
+  "psyker.alwaysBound": {
+    label: "Независимо от обстоятельств всегда считается «Связанным» (system.psyker.class)",
+    source: "Раса: Серый Человек (Oteshii)",
+    reader: "module/documents/actor.mjs — prepareDerivedData(), блок system.psyker, пересчитывается каждый цикл"
+  },
+  // ── Иммунитет к физическим мутациям (wdbc-gzuf) ──────────────────────────
+  "mutation.physicalImmune": {
+    label: "Не получает физических мутаций (таблица «Общие мутации» недоступна; Дары Богов — доступны)",
+    source: "Раса: Серый Человек (Oteshii)",
+    reader: "module/sheets/tabs/mutations.mjs rollMutationOrGift()/openMutationPicker(), module/sheets/actor-sheet.mjs onMutgiftAdd() (Shift-путь)"
+  },
+  // ── «Считает Cor как Безумие» (wdbc-gzuf) ────────────────────────────────
+  "corruption.redirectsToMadness": {
+    label: "Любое изменение Порчи (рост и снижение) уходит в Безумие вместо Порчи",
+    source: "Раса: Серый Человек (Oteshii)",
+    reader: "warhammer-dbc.mjs — Hooks.on(\"preUpdateActor\") перехватывает system.corruption.value"
+  },
   // ── Избегание Орды как одиночной цели (wdbc-gzuf) ────────────────────────
   "horde.singleTargetImmune": {
     label: "Избегает атак Орды как одиночная цель (без бонусных кубиков урона за Магнитуду), теряется при Размере 2+",

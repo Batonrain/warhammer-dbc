@@ -14,6 +14,7 @@ import { mutationByRoll, giftByRoll, mutationCatalog,
 import { centerPicker, pickerPos }     from "../picker-ui.mjs";
 import { hasSubmutations }             from "../../rules/submutations.mjs";
 import { rollSubmutation }             from "../../apps/submutations.mjs";
+import { hasRuleFlag }                 from "../../rules/flags.mjs";
 import { esc } from "../../helpers/utils.mjs";
 
 /**
@@ -56,9 +57,13 @@ export function mutationPool(type, god, roll1, roll2, infB, failed) {
  * достижима только запись под самим броском.
  */
 export async function rollMutationOrGift(actor) {
+  // «Не получает физических мутаций» (Серый Человек, wdbc-gzuf) — таблица
+  // «Общие мутации» недоступна, только Дары Богов. Второй бросок Неделимого
+  // тоже не нужен: mutationPool() читает roll2 только для type:"mutation".
+  const physImmune = hasRuleFlag(actor, "mutation.physicalImmune");
   const infB = actor.system.characteristics?.inf?.bonus ?? 0;
   const patron = actor.system.patronGod || "";
-  const undivided = patron === "undivided";
+  const undivided = !physImmune && patron === "undivided";
   const roll1 = await new Roll("1d100").evaluate();
   const roll2 = undivided ? await new Roll("1d100").evaluate() : null;
   const defaultGod = GOD_GIFTS[patron] ? patron : Object.keys(GOD_GIFTS)[0];
@@ -77,14 +82,15 @@ export async function rollMutationOrGift(actor) {
       <div class="pick-desc" style="display:none;">${esc(x.text) || "<em>Описание ещё не перенесено из книги</em>"}</div>
     </div>`;
 
-  const defaultName = mutationByRoll(roll1.total);
+  const defaultName = physImmune ? (giftByRoll(defaultGod, roll1.total)?.name ?? "") : mutationByRoll(roll1.total);
+  const typeOptions = physImmune
+    ? `<option value="gift">Дар Бога</option>`
+    : `<option value="mutation">Мутация</option><option value="gift">Дар Бога</option>`;
   const content = `
     <form class="wh-attack-form" style="padding:6px;">
+      ${physImmune ? `<div class="atk-dlg-row"><em>Не получает физических мутаций — доступны только Дары Богов.</em></div>` : ""}
       <div class="atk-dlg-row"><label>Тип:</label>
-        <select id="mg-type" class="pm-input">
-          <option value="mutation">Мутация</option>
-          <option value="gift">Дар Бога</option>
-        </select></div>
+        <select id="mg-type" class="pm-input">${typeOptions}</select></div>
       <div class="atk-dlg-row" id="mg-god-row"><label>Бог-покровитель:</label>
         <select id="mg-god" class="pm-input">${godOptions}</select></div>
       <div class="atk-dlg-row"><label>Бросок:</label><span><b>${rollsLabel}</b></span></div>
@@ -177,6 +183,9 @@ export async function rollMutationOrGift(actor) {
  * ограничиваясь Богом-покровителем персонажа.
  */
 export async function openMutationPicker(actor) {
+  // «Не получает физических мутаций» (Серый Человек, wdbc-gzuf) — общий пул
+  // мутаций не показывается вовсе, только Дары Богов.
+  const physImmune = hasRuleFlag(actor, "mutation.physicalImmune");
   const cat = mutationCatalog();
   const row = (x) => `
     <div class="pick-row" data-name="${esc(x.name.toLowerCase())}">
@@ -190,7 +199,7 @@ export async function openMutationPicker(actor) {
       <div class="pick-desc" style="display:none;">${esc(x.text) || "<em>Описание ещё не перенесено из книги</em>"}</div>
     </div>`;
   const groups = [
-    { label: "Общие мутации (стр. 440)", items: cat.common },
+    ...(physImmune ? [] : [{ label: "Общие мутации (стр. 440)", items: cat.common }]),
     ...cat.gifts.map(g => ({ label: `Дары — ${g.label}`, items: g.items }))
   ];
 

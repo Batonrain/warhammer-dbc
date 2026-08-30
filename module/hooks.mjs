@@ -8,6 +8,7 @@ import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger } from "./combat/damage.mjs";
+import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
@@ -315,6 +316,27 @@ export function registerHooks() {
       });
     });
 
+    // «Крайне миролюбив» (Серый Человек, wdbc-gzuf) — карточка-гейт на вход в
+    // Ярость до первой атаки по себе: тест Воли−20 или явный отказ.
+    html.querySelectorAll(".wh-pacifism-test-btn, .wh-pacifism-refuse-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ctx = message.flags?.["warhammer-dbc"]?.pacifismGate;
+        if (!ctx) return;
+        const actor = game.actors?.get(ctx.actorId);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Решить может только владелец персонажа (или ГМ).");
+        }
+        const row = ev.currentTarget.closest(".roll-defense-btns");
+        row?.querySelectorAll("button").forEach(b => { b.disabled = true; });
+        if (ev.currentTarget.classList.contains("wh-pacifism-test-btn")) {
+          await rollPacifismTest(actor);
+        } else {
+          ui.notifications.info(`${actor.name} отказывается входить в Ярость.`);
+        }
+      });
+    });
+
     // Применение урона
     html.querySelectorAll(".wh-apply-dmg-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -354,7 +376,12 @@ export function registerHooks() {
           // Haywire(0) — валидный рейтинг («привязан к цели»), поэтому наличие
           // свойства метится пустым/непустым атрибутом, а не самим числом.
           haywireActive:   ds.haywire !== "",
-          haywireRating:   parseInt(ds.haywire || "0")
+          haywireRating:   parseInt(ds.haywire || "0"),
+          // Куб(ы) Магнитуды Орды (wdbc-gzuf) — цель ещё не была известна на
+          // момент броска (карточка Орды применяется позже, кнопкой), поэтому
+          // эта часть урона едет отдельным числом: применяется в
+          // applyDamageToActor (combat/damage.mjs), где актор-цель уже известен.
+          magDiceBonus:    parseInt(ds.magDiceBonus || "0")
         };
         // «Прячась в Орде»: попадание уже расписано в Орду — цель не выбирается.
         if (ds.forceHorde) {

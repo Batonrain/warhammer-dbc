@@ -570,21 +570,26 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     let formula = flat !== 0 ? `${baseDmg} + ${flat}` : baseDmg;
     formula = applyDamageDiceMods(resolveCharFormula(formula, chars, actor.system.corruptionBonus ?? 0), wp);
     const magDice = hit ? (d.magDamageDice || 0) : 0;
-    const fullFormula = magDice ? `${formula} + ${magDice}d10` : formula;
-
-    const dmgRoll = await new Roll(fullFormula).evaluate();
+    // Отдельный бросок для кубов Магнитуды — не общей формулой: цель ещё не
+    // выбрана (карточка применяется позже кнопкой), а «Серый Человек избегает
+    // атак Орды как одиночная цель» (wdbc-gzuf) должен вычесть РОВНО эту
+    // надбавку из готового урона на шаге применения, не весь бросок целиком.
+    const magRoll = magDice ? await new Roll(`${magDice}d10`).evaluate() : null;
+    const dmgRoll = await new Roll(formula).evaluate();
+    const totalDamage = dmgRoll.total + (magRoll?.total || 0);
+    const allDice = [...(dmgRoll.dice || []), ...(magRoll?.dice || [])];
     const dtLabel = DAMAGE_TYPES[sys.damageType] || sys.damageType || "";
     const dtype = sys.damageType || "impact";
 
     // Дистанции дайсов урона для наглядности.
-    const diceParts = (dmgRoll.dice || []).map(die => `${die.number}d${die.faces} [${die.results.map(r => r.result).join(",")}]`).join(" + ");
+    const diceParts = allDice.map(die => `${die.number}d${die.faces} [${die.results.map(r => r.result).join(",")}]`).join(" + ");
 
     // Кнопки: применить урон всегда (попадание или «промах»); Уклонение — только при промахе
     // (обычное попадание Орды Избегать нельзя — это шквал/навал).
     // Свойства, дающие лишние попадания, едут и отсюда: Орда против Орды —
     // обычный случай, и Взрывное с Распылением там работают так же.
     const applyBtn = `<button class="wh-apply-dmg-btn" type="button"
-      data-damage="${dmgRoll.total}" data-penetration="${pen}" data-damage-type="${dtype}"
+      data-damage="${totalDamage}" data-penetration="${pen}" data-damage-type="${dtype}"
       data-hit-location="${hitLoc}" data-weapon-name="${w.name}" data-attacker="${actor.name}"
       data-attacker-uuid="${actor.uuid || ""}"
       data-felling="${wp.fellingRating || 0}" data-primitive="${wp.primitive ? 1 : 0}"
@@ -592,8 +597,9 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
       data-blast="${wp.blastRating || 0}" data-flame="${wp.flame ? 1 : 0}"
       data-power-field="${wp.powerField ? 1 : 0}" data-spray="${wp.spray ? 1 : 0}"
       data-devastating="${wp.devastatingRating || 0}"
+      data-mag-dice-bonus="${magRoll?.total || 0}"
       data-weapon-range="${Number(sys.range) || 0}" data-melee="${isMelee ? 1 : 0}">
-      Применить урон: <b>${dmgRoll.total}</b> → ${hitLoc}</button>`;
+      Применить урон: <b>${totalDamage}</b> → ${hitLoc}</button>`;
     const dodgeBtn = !hit
       ? `<div class="roll-defense-section"><div class="roll-section-head">Защита цели <span class="roll-head-hint">— промах Орды можно Избегать</span></div>
            <div class="roll-defense-btns"><button class="wh-dodge-btn" type="button" data-extra-mod="0" data-attack-deg="${deg}">Уклонение</button>
@@ -615,13 +621,13 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
           : `<span class="roll-failure">Промах = попадание без бонусов Магнитуды (можно Избегать)</span>`}</div>
         <div class="roll-damage-section">
           <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${isMelee ? `, S.b +${sbEff}` : ""}${magNote}</div>
-          <div class="roll-damage-line"><b>${hitLoc}</b>: <b class="roll-dmg-big">${dmgRoll.total}</b> <span class="horde-dmg-formula">= ${fullFormula}${diceParts ? ` → ${diceParts}` : ""}</span></div>
+          <div class="roll-damage-line"><b>${hitLoc}</b>: <b class="roll-dmg-big">${totalDamage}</b> <span class="horde-dmg-formula">= ${formula}${magDice ? ` + ${magDice}d10` : ""}${diceParts ? ` → ${diceParts}` : ""}</span></div>
         </div>
         ${targetEffectBtns}
         <div class="roll-apply-dmg-section"><div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>${applyBtn}</div>
         ${dodgeBtn}
       </div>`,
-      rolls: [roll, dmgRoll],
+      rolls: [roll, dmgRoll, ...(magRoll ? [magRoll] : [])],
       sound: CONFIG.sounds.dice
     }, game.settings.get("core", "rollMode")));
   }

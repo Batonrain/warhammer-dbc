@@ -22,6 +22,19 @@ function mutant(patronGod = "khorne") {
   return sheetOf(class {}, { patronGod, characteristics: { inf: { bonus: 3 } } }).actor;
 }
 
+// wdbc-gzuf (Серый Человек): «не получает физических мутаций» — грант
+// capabilityKey:"mutation.physicalImmune", тот же формат, что у трейта на
+// акторе в реальной игре.
+function immuneMutant(patronGod = "khorne") {
+  const item = {
+    id: "trait-immune", name: "Oteshii Physiology / Физиология Отеший", type: "trait",
+    flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+      { id: "e", kind: "capability", capabilityKey: "mutation.physicalImmune", label: "" }
+    ] }] } }
+  };
+  return sheetOf(class {}, { patronGod, characteristics: { inf: { bonus: 3 } }, items: [item] }).actor;
+}
+
 /** Нажать «Получить» в открытом диалоге с заданными полями. */
 const submit = fields => captured.dialog.buttons.ok.callback(fakeHtml(fields));
 
@@ -119,5 +132,29 @@ describe("бросок Мутации / Дара Бога", () => {
     expect(captured.chat).toHaveLength(1);
     expect(captured.chat[0].content).toContain("Освежеванный");
     expect(captured.chat[0].content).toContain("42");
+  });
+});
+
+describe("иммунитет к физическим мутациям (wdbc-gzuf, Серый Человек)", () => {
+  beforeEach(() => resetCaptured());
+
+  it("тип «Мутация» не предлагается в диалоге, только Дар Бога", async () => {
+    captured.dice = [42];
+    await rollMutationOrGift(immuneMutant());
+    expect(captured.dialog.content).not.toContain('value="mutation"');
+    expect(captured.dialog.content).toContain("Не получает физических мутаций");
+  });
+
+  it("Неделимый второй бросок не бросается — Мутация ему всё равно недоступна", async () => {
+    captured.dice = [42];
+    await rollMutationOrGift(immuneMutant("undivided"));
+    expect(captured.rolls).toEqual(["1d100"]);
+  });
+
+  it("выбор Дара Бога из списка по-прежнему работает как обычно", async () => {
+    captured.dice = [42];
+    await rollMutationOrGift(immuneMutant());
+    await submit({ "#mg-type": "gift", "#mg-god": "khorne", "#mg-pick-name": "Ведьмоискатель", "#mg-pick-god": "khorne" });
+    expect(captured.created[0].name).toBe("Ведьмоискатель"); // из таблицы Даров Кхорна, не Общих мутаций
   });
 });

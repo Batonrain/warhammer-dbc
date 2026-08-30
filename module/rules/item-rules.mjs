@@ -95,12 +95,18 @@ function ruleFromEntry(item, entry) {
   if (entry?.kind === "testMod") {
     const target = scopeTarget(entry.modScope, entry, id, "Модификатор теста");
     if (target === null) return null;
-    // Два режима значения: плоское число и «бонус своей характеристики».
-    // Второй нужен там, где числа в данных быть не может: «+Inf герольда»
-    // у каждого Герольда своё (Локус Цепей). modCharBonusMultiplier — для
-    // «+2×PR»/«+5×PR» (wdbc-jw81, Психосилы) — множитель selfCharBonus,
+    // Три режима значения: плоское число, «бонус своей характеристики» и
+    // «ополовинить штраф». Второй нужен там, где числа в данных быть не может:
+    // «+Inf герольда» у каждого Герольда своё (Локус Цепей). modCharBonusMultiplier
+    // — для «+2×PR»/«+5×PR» (wdbc-jw81, Психосилы) — множитель selfCharBonus,
     // читаемый effectValue() (module/rules/resolve-test.mjs); опущен/1 — как раньше.
-    const effect = entry.modValueMode === "charBonus"
+    // halvePenalty даёт ту же галочку диалога, что Особенности Происхождения
+    // (kind:"penaltyMul", resolve-test.mjs::rollModsFromRules) — по решению
+    // пользователя автоматической тихой отмены штрафа в системе нет нигде,
+    // галочка всегда предлагается игроку, а не применяется молча (wdbc-gzuf).
+    const effect = entry.modValueMode === "halvePenalty"
+      ? { kind: "penaltyMul", target, factor: 0.5 }
+      : entry.modValueMode === "charBonus"
       ? { kind: "rollBonus", target, valueFrom: {
           selfCharBonus: entry.modCharBonus || "inf",
           ...(Number(entry.modCharBonusMultiplier) > 1 ? { multiplier: Number(entry.modCharBonusMultiplier) } : {})

@@ -503,6 +503,9 @@ export function blankMechEntry(kind = "characteristic") {
     // Качество выданного («Narthecium (Good.Q)») и фильтры небоевых паков:
     // ступень Таланта, потолок Пси-Рейтинга.
     equipQuality: "common", equipTalentTier: "", equipMaxPsyRating: "", equipImplantCategory: "",
+    // Δ к ПР врождённой психосилы у КОПИИ, которую получает актор (equipMode
+    // "direct") — оригинал в компендиуме не трогается, см. wdbc-gzuf.
+    equipPrRequiredDelta: 0,
     // Бюджет выбора (rules/pick-budget.mjs): штуками или опытом.
     equipBudgetMode: "count", equipBudgetValue: 1,
     // loyalty — тип миньона ("" = любой), знак и величина (см. шапку файла)
@@ -615,6 +618,8 @@ export function describeMechEntry(entry) {
       if (!scope) return "Модификатор теста: (область не выбрана)";
       const val = entry.modValueMode === "charBonus"
         ? `+Бонус ${CHARACTERISTICS[entry.modCharBonus]?.label || entry.modCharBonus}`
+        : entry.modValueMode === "halvePenalty"
+        ? "½ штрафа (вкл. необученность)"
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
       return `Модификатор теста: ${scope} — ${val}`;
     }
@@ -643,7 +648,9 @@ export function describeMechEntry(entry) {
         return `Снаряжение: выбор — «${cat}»${filt}${avail} ×${qty}`;
       }
       if (!entry.equipSourceUuid) return "Снаряжение: (выберите предмет)";
-      return `Снаряжение: ${entry.equipSourceName || "?"} ×${qty}`;
+      const prDelta = Number(entry.equipPrRequiredDelta);
+      const prNote = prDelta ? `, ПР ${prDelta > 0 ? "+" : ""}${prDelta}` : "";
+      return `Снаряжение: ${entry.equipSourceName || "?"} ×${qty}${prNote}`;
     }
     case "integralAttack": {
       if (!entry.equipSourceUuid) return "Интегральная атака: (выберите оружие)";
@@ -759,6 +766,7 @@ function isEntryComplete(e) {
     case "testMod":
       if (e.modScope === "char")  return !!e.rerollChar;
       if (e.modScope === "skill") return !!e.skillKey;
+      if (e.modValueMode === "halvePenalty") return !!e.modScope;
       if (e.modValueMode === "charBonus") return !!e.modCharBonus;
       return !!e.modScope && numOk(e.value);
     case "capability":
@@ -1299,6 +1307,11 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     // зависят и Надёжность, и модификаторы. Ставим только там, где поле есть.
     if (entry.equipQuality && entry.equipQuality !== "common"
         && "quality" in (data.system || {})) data.system.quality = entry.equipQuality;
+    // Δ к ПР врождённой психосилы — правит только КОПИЮ на акторе, оригинал
+    // психосилы в компендиуме используют и другие персонажи (wdbc-gzuf).
+    if (Number(entry.equipPrRequiredDelta) && "prRequired" in (data.system || {})) {
+      data.system.prRequired = Math.max(1, (Number(data.system.prRequired) || 0) + Number(entry.equipPrRequiredDelta));
+    }
     // equipEntryId — какая именно запись Механики это выдала; читает
     // syncGrantedEquipment ниже, чтобы не плодить дубли и опознавать «своё»
     // при пересинхронизации по активности источника (импланты — installed/disabled).
@@ -2257,7 +2270,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "testMod") {
     const scopeOpts = REROLL_SCOPES
       .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
-    const modeOpts = [["flat", "число"], ["charBonus", "бонус характеристики"]]
+    const modeOpts = [["flat", "число"], ["charBonus", "бонус характеристики"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"]]
       .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const charSel = (cls, val) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
       Object.entries(CHARACTERISTICS).map(([k, c]) =>
@@ -2269,8 +2282,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
         <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
           `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
     }
-    const valueField = ent.modValueMode === "charBonus"
-      ? charSel("mech-mod-char", ent.modCharBonus)
+    const valueField = ent.modValueMode === "charBonus" ? charSel("mech-mod-char", ent.modCharBonus)
+      : ent.modValueMode === "halvePenalty" ? ""
       : `<input type="number" class="mech-entry-value" value="${esc(ent.value)}"
                 data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
     return `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
@@ -2390,6 +2403,11 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     out += `<select class="mech-equip-quality" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${qOpts}</select>`;
     if (mode === "direct") {
       out += `<input type="number" class="mech-equip-qty" min="1" step="1" placeholder="Кол-во" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipQty ?? 1)}" ${dis}/>`;
+      // Не про качество, а про ПР врождённой психосилы — поле бессмысленно
+      // для остальных категорий, но безвредно (см. применение в кланировании).
+      out += `<input type="number" class="mech-equip-pr-delta" step="1" placeholder="Δ ПР (если психосила)"
+        title="Δ к требуемому ПР у копии на акторе (только для врождённых психосил)"
+        data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.equipPrRequiredDelta ?? 0)}" ${dis}/>`;
     }
     return out;
   }

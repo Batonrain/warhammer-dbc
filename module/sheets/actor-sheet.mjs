@@ -17,6 +17,7 @@ import { buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
 import { showAttackDialog, showAttackDialogNoWeapon } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
 import { activateDiseaseListeners } from "./tabs/diseases.mjs";
@@ -518,6 +519,12 @@ function onTalentAdd(event) { event.preventDefault(); return this._openItemPicke
 async function onMutgiftAdd(event) {
   event.preventDefault();
   if (event.shiftKey) {   // Shift — пустая мутация с нуля
+    // «Не получает физических мутаций» (Серый Человек, wdbc-gzuf) — этот путь
+    // всегда создаёт type:"mutation" в обход общего пикера, где иммунитет уже
+    // фильтрует таблицу; закрыть его тем же флагом.
+    if (hasRuleFlag(this.actor, "mutation.physicalImmune")) {
+      return ui.notifications.warn(`${this.actor.name} не получает физических мутаций.`);
+    }
     const item = await Item.create({ name: "Новая мутация", type: "mutation" }, { parent: this.actor });
     return item?.sheet?.render(true);
   }

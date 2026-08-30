@@ -14,6 +14,7 @@ import { applyWoundLoss } from "../rules/wounds.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
+import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -260,6 +261,14 @@ async function _rollActiveShield(actor, { skipWarp = false } = {}) {
 
 // ─── Применить урон к актору ──────────────────────────────────────────────────
 export async function applyDamageToActor(actor, damageData) {
+  // «Крайне миролюбив» (wdbc-gzuf, Серый Человек) — флаг «атакован в этом
+  // бою» взводится здесь, в единой точке резолва урона (обычные атаки через
+  // hooks.mjs, атаки Орды через horde-sheet.mjs — оба пути доходят сюда).
+  // Сбрасывается Hooks.on("combatStart") в warhammer-dbc.mjs. Гейт на вход
+  // в Ярость читает флаг там же — module/combat/pacifism.mjs.
+  if (hasRuleFlag(actor, PACIFISM_CAPABILITY) && !actor.getFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG)) {
+    await actor.setFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG, true);
+  }
   // Техника: урон сразу в Структуру. Сторона брони пришла из окна атаки
   // (damageData.side), часть машины — из авто-места попадания (damageData.hitLocation).
   if (actor.type === "vehicle") {
@@ -273,6 +282,20 @@ export async function applyDamageToActor(actor, damageData) {
   // Орда: Ран у неё нет, Поглощение лежит одним числом, а попадания всегда идут
   // в торс — общий расчёт зон брони и Критических Ран ей не подходит.
   if (actor.type === "horde") return applyDamageToHorde(actor, damageData);
+
+  // «Избегает атак Орды как одиночная цель» (wdbc-gzuf, Серый Человек) —
+  // цель ещё не была известна на момент броска Орды (magDiceBonus едет
+  // отдельным числом от horde-sheet.mjs через hooks.mjs), поэтому кубы
+  // Магнитуды вычитаются здесь, где актор-цель уже точно известен. Теряется
+  // при Размере 2+ (тот же sizeTotal, что читает sizeOf() в horde-damage.mjs).
+  if (Number(damageData.magDiceBonus) > 0) {
+    const sizeTotal = actor.system?.sizeTotal != null
+      ? Number(actor.system.sizeTotal) || 0
+      : (Number(actor.system?.size) || 0) + (Number(actor.system?.sizeMod) || 0);
+    if (sizeTotal < 2 && hasRuleFlag(actor, "horde.singleTargetImmune")) {
+      damageData = { ...damageData, rawDamage: Math.max(0, (Number(damageData.rawDamage) || 0) - Number(damageData.magDiceBonus)) };
+    }
+  }
 
   const {
     rawDamage,       // число — урон до поглощения
